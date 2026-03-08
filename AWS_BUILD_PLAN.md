@@ -197,6 +197,109 @@ Borough data:
 
 ---
 
+## Quick Wins (Pre-AWS, do first)
+
+- [ ] **OG Meta Tags** - Add Open Graph tags so Twitter/LinkedIn show a rich card when sharing the link
+  - `og:title`, `og:description`, `og:image` (screenshot of the map), `og:url`
+  - Twitter card: `twitter:card=summary_large_image`
+  - Takes 5 minutes, massive impact on social sharing
+- [ ] **Favicon** - Add a small map/plane icon for browser tab
+- [ ] **Mobile responsiveness** - CSS media queries for sidebar collapse on small screens
+
+---
+
+## Additional Data Layers (Free APIs)
+
+| Data | API | Cost | Endpoint | Priority |
+|------|-----|------|----------|----------|
+| **TfL Transport** | api.tfl.gov.uk | Free (register for key) | `/StopPoint/`, `/Line/Status` | High |
+| **EPC Energy Ratings** | epc.opendatacommunities.org | Free (register for key) | `/api/v1/domestic/search` | High |
+| **NHS GP Surgeries** | api.nhs.uk | Free | `/service-search/search` | Medium |
+
+### TfL Integration Detail
+- Nearest tube/rail station to postcode (lat/lon proximity)
+- Live line status (disruptions affecting the area)
+- Journey time estimate to central London (Zone 1)
+- Cycle hire dock availability
+
+### EPC Integration Detail
+- Average energy rating for postcode (A-G band)
+- Band distribution breakdown
+- Estimated annual energy cost
+- Trend: is efficiency improving in this area?
+
+### NHS GP Integration Detail
+- Nearest GP surgeries (name, distance, accepting new patients)
+- Nearest A&E department
+- Dentist availability
+
+---
+
+## Monetisation Strategy
+
+### Freemium Model
+
+| Tier | Price | Features |
+|------|-------|----------|
+| **Free** | £0 | Map, noise contours, basic borough info, crime data |
+| **Pro** | £4.99/mo | AI chatbot, PDF reports, postcode comparison, saved searches, EPC data |
+| **Agent** | £19.99/mo | Branded reports, bulk postcode analysis, embed widget, API access |
+
+### Revenue Streams
+1. **Affiliate links** (immediate): Rightmove, Zoopla, OnTheMarket pay per click-through. Already linking to them - swap for tracked affiliate URLs
+2. **PDF reports** (Phase 5): £2.99 per one-off "Complete Area Report" for non-subscribers
+3. **API access** (future): Sell noise + liveability score as an API to other PropTech tools
+4. **White-label** (future): Sell to corporate relocation companies (London relocation is a big market)
+5. **Sponsored listings** (future): Estate agents pay to feature in borough sidebars
+
+### First Revenue Action
+Apply for Rightmove affiliate programme, replace current outbound links with tracked affiliate URLs. Earn from day one with zero code changes.
+
+---
+
+## Data Partner Strategy (Property Listings)
+
+### Zoopla (More Accessible)
+1. Register at developers.zoopla.co.uk
+2. Create application, describe use case: "Area intelligence tool that drives qualified traffic to Zoopla listings"
+3. OAuth 2.0 authentication
+4. Start with sold prices + rental listings
+5. **Pitch angle**: "We're a traffic source, not a competitor"
+
+### Rightmove (Harder, Higher Value)
+1. Their API (ADF / Property Feed) is for agents pushing listings TO Rightmove, not pulling data out
+2. Need to approach commercial/partnerships team directly
+3. Requires traction first: aim for 1,000+ monthly users before applying
+4. **Pitch angle**: "We send qualified buyers to your listings with deep area context they can't get on Rightmove itself"
+
+### Realistic Timeline
+1. Build traction (months 1-3): social media, hackathons, organic growth
+2. Apply to Zoopla developer programme (month 2)
+3. Hit 1,000+ MAU, approach Rightmove partnerships (month 4-6)
+4. Negotiate data access terms + affiliate revenue share
+
+---
+
+## Growth & Expansion Roadmap
+
+### Brand Evolution
+- Consider rebranding from "London Flight Path Map" to **"Quiet Streets"** or similar
+- Flight noise was the hook, but the tool now covers crime, schools, transport, flood, AQ, property
+- A broader brand supports expansion beyond just noise
+
+### Geographic Expansion
+- **Phase 1**: London (current - 29 boroughs)
+- **Phase 2**: Manchester, Birmingham, Edinburgh (all have airports + same DEFRA data)
+- **Phase 3**: All major UK cities
+- Same architecture, different GeoJSON boundaries and borough data
+
+### Product Extensions
+- **Browser extension**: When browsing Rightmove/Zoopla, auto-overlay noise and liveability scores on every listing
+- **Estate agent widget**: Embeddable noise score badge for agent websites (monetisation via Agent tier)
+- **Mobile app**: React Native wrapper around the web app
+
+---
+
 ## Cost Estimate (Demo/Hackathon with ~100 users)
 
 | Service | Monthly Cost |
@@ -237,4 +340,8 @@ Borough data:
 | v11 | User accounts (Cognito) + saved searches (DynamoDB) |
 | v12 | Data caching (DynamoDB + EventBridge) |
 | v13 | PDF reports (Lambda + S3) + email digests (SES) |
-| v14 | New data layers: TfL, EPC, postcode comparison |
+| v14 | New data layers: TfL, EPC, NHS GP, postcode comparison |
+| v15 | OG meta tags, favicon, mobile responsiveness |
+| v16 | Monetisation: affiliate links, freemium tiers |
+| v17 | Zoopla data partner integration |
+| v18 | Geographic expansion (Manchester, Birmingham) |
