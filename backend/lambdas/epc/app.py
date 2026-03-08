@@ -1,5 +1,7 @@
 import json
 import os
+import csv
+import io
 import base64
 from urllib.request import urlopen, Request
 from urllib.parse import quote
@@ -14,11 +16,12 @@ def handler(event, context):
             return response(400, {'error': 'postcode parameter is required'})
 
         api_key = os.environ.get('EPC_API_KEY', '')
-        if not api_key:
+        api_email = os.environ.get('EPC_API_EMAIL', '')
+        if not api_key or not api_email:
             return response(200, {
                 'postcode': postcode,
                 'available': False,
-                'message': 'EPC API key not configured. Register free at epc.opendatacommunities.org'
+                'message': 'EPC API key not configured.'
             })
 
         clean = postcode.strip().upper()
@@ -26,18 +29,30 @@ def handler(event, context):
         # EPC Open Data API - official UK government
         url = f'https://epc.opendatacommunities.org/api/v1/domestic/search?postcode={quote(clean)}&size=50'
 
-        # API uses basic auth with empty username and API key as password
-        auth = base64.b64encode(f':{api_key}'.encode()).decode()
+        # API uses basic auth with email:api_key
+        auth = base64.b64encode(f'{api_email}:{api_key}'.encode()).decode()
 
+        # Request CSV format (JSON returns empty for this API)
         req = Request(url, headers={
-            'Accept': 'application/json',
+            'Accept': 'text/csv',
             'Authorization': f'Basic {auth}'
         })
 
         with urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
+            raw = resp.read().decode()
 
-        rows = data.get('rows', [])
+        if not raw.strip():
+            return response(200, {
+                'postcode': postcode,
+                'available': True,
+                'count': 0,
+                'certificates': [],
+                'summary': None
+            })
+
+        # Parse CSV
+        reader = csv.DictReader(io.StringIO(raw))
+        rows = list(reader)
 
         if not rows:
             return response(200, {
@@ -54,23 +69,29 @@ def handler(event, context):
         certs = []
 
         for row in rows:
-            band = row.get('current-energy-rating', '')
+            band = row.get('current-energy-rating', '').strip()
             if band in bands:
                 bands[band] += 1
-            rating = row.get('current-energy-efficiency', 0)
-            if rating:
-                ratings.append(int(rating))
+            rating_str = row.get('current-energy-efficiency', '').strip()
+            if rating_str:
+                try:
+                    rating = int(rating_str)
+                    ratings.append(rating)
+                except ValueError:
+                    rating = 0
+            else:
+                rating = 0
 
             certs.append({
-                'address': row.get('address1', ''),
+                'address': row.get('address1', '').strip(),
                 'band': band,
                 'rating': rating,
-                'type': row.get('property-type', ''),
-                'date': row.get('lodgement-date', ''),
-                'floorArea': row.get('total-floor-area', ''),
-                'heatingCost': row.get('heating-cost-current', ''),
-                'hotWaterCost': row.get('hot-water-cost-current', ''),
-                'lightingCost': row.get('lighting-cost-current', ''),
+                'type': row.get('property-type', '').strip(),
+                'date': row.get('lodgement-date', '').strip(),
+                'floorArea': row.get('total-floor-area', '').strip(),
+                'heatingCost': row.get('heating-cost-current', '').strip(),
+                'hotWaterCost': row.get('hot-water-cost-current', '').strip(),
+                'lightingCost': row.get('lighting-cost-current', '').strip(),
             })
 
         avg_rating = round(sum(ratings) / len(ratings)) if ratings else 0

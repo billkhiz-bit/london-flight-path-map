@@ -73,6 +73,7 @@ Resources:
       Environment:
         Variables:
           EPC_API_KEY: !Ref EpcApiKey
+          EPC_API_EMAIL: !Ref EpcApiEmail
       Events:
         EpcGet:
           Type: Api
@@ -114,6 +115,10 @@ Parameters:
     Type: String
     Default: ''
     Description: EPC API key from epc.opendatacommunities.org (register for free)
+  EpcApiEmail:
+    Type: String
+    Default: ''
+    Description: Email used to register for EPC API
 
 Outputs:
   ApiUrl:
