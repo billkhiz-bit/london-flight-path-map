@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: London Flight Path Map - Backend API
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.11
+    MemorySize: 256
+    Environment:
+      Variables:
+        CORS_ORIGIN: '*'
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization'"
+      AllowOrigin: "'*'"
+    Auth:
+      DefaultAuthorizer: NONE
+
+Resources:
+
+  # --- API Gateway ---
+  FlightMapApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Description: London Flight Path Map API
+
+  # --- AI Chatbot (Bedrock Claude) ---
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/chat/
+      Handler: app.handler
+      Timeout: 60
+      MemorySize: 512
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: 'arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-6'
+      Events:
+        ChatPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /chat
+            Method: post
+
+  # --- Land Registry Sold Prices (CORS proxy) ---
+  SoldPricesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/sold_prices/
+      Handler: app.handler
+      Events:
+        SoldPricesGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /sold-prices
+            Method: get
+
+  # --- EPC Energy Ratings ---
+  EpcFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/epc/
+      Handler: app.handler
+      Environment:
+        Variables:
+          EPC_API_KEY: !Ref EpcApiKey
+      Events:
+        EpcGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /epc
+            Method: get
+
+  # --- TfL Transport ---
+  TransportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/transport/
+      Handler: app.handler
+      Events:
+        TransportGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /transport
+            Method: get
+
+  # --- NHS GP Surgeries ---
+  NhsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/nhs/
+      Handler: app.handler
+      Events:
+        NhsGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /nhs
+            Method: get
+
+Parameters:
+  EpcApiKey:
+    Type: String
+    Default: ''
+    Description: EPC API key from epc.opendatacommunities.org (register for free)
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${FlightMapApi}.execute-api.${AWS::Region}.amazonaws.com/prod/'

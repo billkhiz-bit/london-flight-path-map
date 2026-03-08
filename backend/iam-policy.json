@@ -1,0 +1,130 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CloudFormationSAM",
+            "Effect": "Allow",
+            "Action": [
+                "cloudformation:CreateChangeSet",
+                "cloudformation:CreateStack",
+                "cloudformation:DeleteStack",
+                "cloudformation:DescribeChangeSet",
+                "cloudformation:DescribeStackEvents",
+                "cloudformation:DescribeStacks",
+                "cloudformation:ExecuteChangeSet",
+                "cloudformation:GetTemplateSummary",
+                "cloudformation:ListStackResources",
+                "cloudformation:UpdateStack",
+                "cloudformation:TagResource"
+            ],
+            "Resource": [
+                "arn:aws:cloudformation:eu-west-2:072674217857:stack/london-flight-map/*",
+                "arn:aws:cloudformation:eu-west-2:072674217857:stack/aws-sam-cli-managed-default/*"
+            ]
+        },
+        {
+            "Sid": "CloudFormationTransform",
+            "Effect": "Allow",
+            "Action": "cloudformation:CreateChangeSet",
+            "Resource": "arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31"
+        },
+        {
+            "Sid": "S3SAMBucketAndHosting",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:GetBucketLocation",
+                "s3:ListBucket",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutBucketPolicy",
+                "s3:PutBucketTagging",
+                "s3:GetBucketPolicy",
+                "s3:PutBucketVersioning",
+                "s3:PutLifecycleConfiguration",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:PutEncryptionConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:DeleteBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::aws-sam-cli-managed-default-*",
+                "arn:aws:s3:::aws-sam-cli-managed-default-*/*",
+                "arn:aws:s3:::london-flight-map-*",
+                "arn:aws:s3:::london-flight-map-*/*"
+            ]
+        },
+        {
+            "Sid": "LambdaManagement",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateFunction",
+                "lambda:DeleteFunction",
+                "lambda:GetFunction",
+                "lambda:GetFunctionConfiguration",
+                "lambda:UpdateFunctionCode",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:ListTags",
+                "lambda:TagResource",
+                "lambda:AddPermission",
+                "lambda:RemovePermission",
+                "lambda:PublishVersion",
+                "lambda:CreateAlias"
+            ],
+            "Resource": "arn:aws:lambda:eu-west-2:072674217857:function:london-flight-map-*"
+        },
+        {
+            "Sid": "APIGateway",
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:GET",
+                "apigateway:POST",
+                "apigateway:PUT",
+                "apigateway:DELETE",
+                "apigateway:PATCH",
+                "apigateway:TagResource"
+            ],
+            "Resource": [
+                "arn:aws:apigateway:eu-west-2::*"
+            ]
+        },
+        {
+            "Sid": "IAMRolesForLambda",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:GetRole",
+                "iam:PassRole",
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:GetRolePolicy",
+                "iam:TagRole"
+            ],
+            "Resource": "arn:aws:iam::072674217857:role/london-flight-map-*"
+        },
+        {
+            "Sid": "BedrockInvoke",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock:InvokeModel"
+            ],
+            "Resource": "arn:aws:bedrock:eu-west-2::foundation-model/anthropic.*"
+        },
+        {
+            "Sid": "CloudWatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "logs:DescribeLogGroups"
+            ],
+            "Resource": "arn:aws:logs:eu-west-2:072674217857:*"
+        }
+    ]
+}
