@@ -119,6 +119,20 @@
             ]
         },
         {
+            "Sid": "CloudFrontHosting",
+            "Effect": "Allow",
+            "Action": [
+                "cloudfront:CreateDistribution",
+                "cloudfront:GetDistribution",
+                "cloudfront:UpdateDistribution",
+                "cloudfront:TagResource",
+                "cloudfront:CreateOriginAccessControl",
+                "cloudfront:GetOriginAccessControl",
+                "cloudfront:CreateInvalidation"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "CloudWatchLogs",
             "Effect": "Allow",
             "Action": [
