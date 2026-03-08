@@ -27,7 +27,7 @@ Resources:
       StageName: prod
       Description: London Flight Path Map API
 
-  # --- AI Chatbot (Bedrock Claude) ---
+  # --- AI Chatbot (Amazon Nova) ---
   ChatFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -41,7 +41,9 @@ Resources:
             - Effect: Allow
               Action:
                 - bedrock:InvokeModel
-              Resource: 'arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-6'
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
       Events:
         ChatPost:
           Type: Api

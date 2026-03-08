@@ -1182,7 +1182,7 @@ function renderEpcData(containerId, data) {
 }
 
 // ============================================================
-// AI CHATBOT (via AWS Bedrock)
+// AI CHATBOT (via AWS Bedrock - Amazon Nova)
 // ============================================================
 async function sendChatMessage(message) {
   try {
@@ -1236,8 +1236,7 @@ function renderSoldPrices(containerId, soldData, postcode) {
 
 function buildPropertyLinks(postcode, borough) {
   const pc = (postcode || '').trim();
-  const pcSlug = pc.replace(/\s+/g, '-');
-  const pcPlus = pc.replace(/\s+/g, '+');
+  const pcSlug = pc.replace(/\s+/g, '-').toLowerCase();
   const area = (borough || '').trim();
   const areaSlug = area.replace(/\s+/g, '-').toLowerCase();
   return `
@@ -1245,17 +1244,20 @@ function buildPropertyLinks(postcode, borough) {
       <h3>SEARCH PROPERTY LISTINGS</h3>
       <p class="info-note" style="margin-top:0;margin-bottom:8px;">No UK property portal offers a public API. These links open searches pre-filled with your postcode:</p>
       <div class="property-links">
-        <a class="property-link" href="https://www.rightmove.co.uk/property-for-sale/find.html?searchLocation=${encodeURIComponent(pc)}" target="_blank" rel="noopener">
-          Rightmove - For Sale<span class="link-arrow">&#8599;</span>
-        </a>
-        <a class="property-link" href="https://www.rightmove.co.uk/property-to-rent/find.html?searchLocation=${encodeURIComponent(pc)}" target="_blank" rel="noopener">
-          Rightmove - To Rent<span class="link-arrow">&#8599;</span>
-        </a>
-        <a class="property-link" href="https://www.zoopla.co.uk/for-sale/details/${areaSlug}/?q=${encodeURIComponent(pc)}" target="_blank" rel="noopener">
-          Zoopla - For Sale<span class="link-arrow">&#8599;</span>
-        </a>
         <a class="property-link" href="https://www.onthemarket.com/for-sale/property/${areaSlug}/" target="_blank" rel="noopener">
           OnTheMarket - For Sale<span class="link-arrow">&#8599;</span>
+        </a>
+        <a class="property-link" href="https://www.onthemarket.com/to-rent/property/${areaSlug}/" target="_blank" rel="noopener">
+          OnTheMarket - To Rent<span class="link-arrow">&#8599;</span>
+        </a>
+        <a class="property-link" href="https://www.zoopla.co.uk/for-sale/property/${pcSlug}/?q=${encodeURIComponent(pc)}&results_sort=newest_listings&search_source=for-sale" target="_blank" rel="noopener">
+          Zoopla - For Sale<span class="link-arrow">&#8599;</span>
+        </a>
+        <a class="property-link" href="https://www.zoopla.co.uk/to-rent/property/${pcSlug}/?q=${encodeURIComponent(pc)}&results_sort=newest_listings&search_source=to-rent" target="_blank" rel="noopener">
+          Zoopla - To Rent<span class="link-arrow">&#8599;</span>
+        </a>
+        <a class="property-link" href="https://www.rightmove.co.uk/house-prices/${pcSlug}.html" target="_blank" rel="noopener">
+          Rightmove - House Prices<span class="link-arrow">&#8599;</span>
         </a>
       </div>
       <h3 style="margin-top:16px;">SOLD PRICES</h3>
@@ -1885,28 +1887,12 @@ function updateSidebar(data) {
     ` + buildOptionalSections(extra, 'bor');
     })()}
 
-    <div class="sidebar-section">
-      <h3>NEAREST STATIONS (LIVE TfL DATA)</h3>
-      <div id="borough-transport-data"><span class="crime-loading">Loading from TfL API...</span></div>
-    </div>
-    <div class="sidebar-section">
-      <h3>ENERGY PERFORMANCE (EPC)</h3>
-      <div id="borough-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>
+    <div class="sidebar-section" style="background:rgba(242,125,38,0.05);border-left:3px solid var(--orange);padding-left:21px;">
+      <p class="info-note" style="margin:0;font-size:10px;line-height:1.5;">
+        <strong>Want nearest stations &amp; energy ratings?</strong><br>
+        Use the postcode search above for precise, location-specific TfL and EPC data.
+      </p>
     </div>`;
-
-  // Fetch TfL and EPC data for this borough
-  const coords = BOROUGH_COORDS[data.name];
-  const pc = BOROUGH_POSTCODES[data.name];
-  if (coords) {
-    fetchTransportData(coords[0], coords[1]).then(tData => {
-      renderTransportData('borough-transport-data', tData);
-    });
-  }
-  if (pc) {
-    fetchEpcData(pc).then(eData => {
-      renderEpcData('borough-epc-data', eData);
-    });
-  }
 }
 
 function postcodeNoiseSummary(analysis) {

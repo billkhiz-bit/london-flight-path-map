@@ -1,7 +1,8 @@
 import json
 import boto3
 
-bedrock = boto3.client('bedrock-runtime')
+# Use us-east-1 where Amazon Nova models are available
+bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
 
 BOROUGH_DATA = {
     "Hounslow": {"noise":"severe","price":"£430K","growth":"4.2%","crime":"medium","crimeRate":89,"schools":"good","flood":"low","airQuality":"moderate","transport":"good","transportNote":"Piccadilly line, direct Heathrow access"},
@@ -62,19 +63,22 @@ def handler(event, context):
             return response(400, {'error': 'Message is required'})
 
         result = bedrock.invoke_model(
-            modelId='anthropic.claude-sonnet-4-6',
+            modelId='us.amazon.nova-2-lite-v1:0',
             contentType='application/json',
             accept='application/json',
             body=json.dumps({
-                'anthropic_version': 'bedrock-2023-05-31',
-                'max_tokens': 1024,
-                'system': SYSTEM_PROMPT,
-                'messages': [{'role': 'user', 'content': message}]
+                'messages': [{'role': 'user', 'content': [{'text': message}]}],
+                'system': [{'text': SYSTEM_PROMPT}],
+                'inferenceConfig': {
+                    'maxTokens': 1024,
+                    'temperature': 0.7,
+                    'topP': 0.9
+                }
             })
         )
 
         result_body = json.loads(result['body'].read())
-        reply = result_body['content'][0]['text']
+        reply = result_body['output']['message']['content'][0]['text']
 
         return response(200, {'reply': reply})
 

@@ -113,7 +113,10 @@
             "Action": [
                 "bedrock:InvokeModel"
             ],
-            "Resource": "arn:aws:bedrock:eu-west-2::foundation-model/anthropic.*"
+            "Resource": [
+                "arn:aws:bedrock:*::foundation-model/amazon.nova-*",
+                "arn:aws:bedrock:*:072674217857:inference-profile/us.amazon.nova-*"
+            ]
         },
         {
             "Sid": "CloudWatchLogs",
