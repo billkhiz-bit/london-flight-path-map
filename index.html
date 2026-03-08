@@ -437,6 +437,30 @@
 const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
 const LONDON_CENTER = [-0.1278, 51.5074];
 
+// Representative postcodes and coords for each borough (for EPC/TfL lookup)
+const BOROUGH_POSTCODES = {
+  'Hounslow':'TW3 1ES','Hillingdon':'UB8 1LX','Richmond':'TW9 1DN','Wandsworth':'SW18 1EG',
+  'Kingston':'KT1 1EU','Ealing':'W5 2HL','Hammersmith':'W6 9RL','Lambeth':'SW9 7AA',
+  'Southwark':'SE1 1JA','Greenwich':'SE10 9HZ','Lewisham':'SE13 6JG','Tower Hamlets':'E1 6AN',
+  'Newham':'E15 1BG','Bexley':'DA6 7HJ','Bromley':'BR1 1LU','Croydon':'CR0 1NX',
+  'Sutton':'SM1 1EA','Merton':'SW19 2AA','Westminster':'SW1E 6QP','Camden':'WC1H 9AZ',
+  'Islington':'N1 0PN','Hackney':'E8 1EJ','Haringey':'N15 4RX','Enfield':'EN1 1TH',
+  'Waltham Forest':'E17 4JF','Redbridge':'IG1 1DD','Barking':'IG11 7LZ','Havering':'RM1 3ER',
+  'Barnet':'EN5 5ND'
+};
+const BOROUGH_COORDS = {
+  'Hounslow':[51.4690,-0.3615],'Hillingdon':[51.5353,-0.4497],'Richmond':[51.4613,-0.3037],
+  'Wandsworth':[51.4571,-0.1818],'Kingston':[51.4085,-0.3064],'Ealing':[51.5130,-0.3089],
+  'Hammersmith':[51.4928,-0.2229],'Lambeth':[51.4571,-0.1231],'Southwark':[51.5028,-0.0877],
+  'Greenwich':[51.4892,0.0648],'Lewisham':[51.4535,-0.0205],'Tower Hamlets':[51.5099,-0.0059],
+  'Newham':[51.5255,0.0352],'Bexley':[51.4549,0.1505],'Bromley':[51.4039,0.0198],
+  'Croydon':[51.3762,-0.0986],'Sutton':[51.3618,-0.1945],'Merton':[51.4098,-0.1872],
+  'Westminster':[51.4975,-0.1357],'Camden':[51.5290,-0.1255],'Islington':[51.5362,-0.1033],
+  'Hackney':[51.5450,-0.0553],'Haringey':[51.5906,-0.1110],'Enfield':[51.6538,-0.0799],
+  'Waltham Forest':[51.5886,-0.0118],'Redbridge':[51.5590,0.0741],'Barking':[51.5362,0.0798],
+  'Havering':[51.5779,0.2121],'Barnet':[51.6252,-0.1517]
+};
+
 const AIRPORTS = [
   {code:'LHR',name:'Heathrow',coords:[-0.4543,51.4700],passengers:'79.2M',type:'airport'},
   {code:'LGW',name:'Gatwick',coords:[-0.1821,51.1537],passengers:'40.9M',type:'airport'},
@@ -1848,7 +1872,30 @@ function updateSidebar(data) {
       <p class="info-note" style="margin-top:6px;">${extra.schoolNote}</p>
     </div>
     ` + buildOptionalSections(extra, 'bor');
-    })()}`;
+    })()}
+
+    <div class="sidebar-section">
+      <h3>NEAREST STATIONS (LIVE TfL DATA)</h3>
+      <div id="borough-transport-data"><span class="crime-loading">Loading from TfL API...</span></div>
+    </div>
+    <div class="sidebar-section">
+      <h3>ENERGY PERFORMANCE (EPC)</h3>
+      <div id="borough-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>
+    </div>`;
+
+  // Fetch TfL and EPC data for this borough
+  const coords = BOROUGH_COORDS[data.name];
+  const pc = BOROUGH_POSTCODES[data.name];
+  if (coords) {
+    fetchTransportData(coords[0], coords[1]).then(tData => {
+      renderTransportData('borough-transport-data', tData);
+    });
+  }
+  if (pc) {
+    fetchEpcData(pc).then(eData => {
+      renderEpcData('borough-epc-data', eData);
+    });
+  }
 }
 
 function postcodeNoiseSummary(analysis) {
