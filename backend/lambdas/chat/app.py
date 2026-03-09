@@ -54,36 +54,82 @@ Guidelines:
 """
 
 
+INSIGHT_PROMPT = """Based on the following property data for a specific location, write a concise 2-3 sentence buyer insight. Be direct and honest about trade-offs. Do not use bullet points. Do not repeat the data - interpret it and give actionable advice.
+
+Location: {location}
+Borough: {borough}
+Noise level: {noise} (score {noise_score}/10 where 10 is noisiest)
+Buyer Value Score: {score}/10
+Nearest airport: {airport} ({airport_dist} km)
+Nearest flight path: {path_dist} km away
+Crime: {crime}
+Schools: {schools}
+
+Write the insight as if speaking directly to a buyer considering this area."""
+
+
 def handler(event, context):
     try:
         body = json.loads(event.get('body', '{}'))
+        mode = body.get('mode', 'chat')
+
+        # Mode 1: Auto-insight for a searched location
+        if mode == 'insight':
+            location_data = body.get('locationData', {})
+            prompt = INSIGHT_PROMPT.format(**location_data)
+            reply = call_nova(
+                [{'role': 'user', 'content': [{'text': prompt}]}],
+                max_tokens=256
+            )
+            return response(200, {'reply': reply})
+
+        # Mode 2: Multi-turn chat with conversation history
         message = body.get('message', '')
+        history = body.get('history', [])
+        viewing_context = body.get('context', '')
 
         if not message:
             return response(400, {'error': 'Message is required'})
 
-        result = bedrock.invoke_model(
-            modelId='us.amazon.nova-2-lite-v1:0',
-            contentType='application/json',
-            accept='application/json',
-            body=json.dumps({
-                'messages': [{'role': 'user', 'content': [{'text': message}]}],
-                'system': [{'text': SYSTEM_PROMPT}],
-                'inferenceConfig': {
-                    'maxTokens': 1024,
-                    'temperature': 0.7,
-                    'topP': 0.9
-                }
+        # Build conversation messages from history
+        messages = []
+        for msg in history[-8:]:  # Keep last 8 messages for context window
+            messages.append({
+                'role': msg['role'],
+                'content': [{'text': msg['text']}]
             })
-        )
 
-        result_body = json.loads(result['body'].read())
-        reply = result_body['output']['message']['content'][0]['text']
+        # Add context about what user is viewing
+        user_text = message
+        if viewing_context:
+            user_text = f"[User is currently viewing: {viewing_context}]\n\n{message}"
 
+        messages.append({'role': 'user', 'content': [{'text': user_text}]})
+
+        reply = call_nova(messages, max_tokens=1024)
         return response(200, {'reply': reply})
 
     except Exception as e:
         return response(500, {'error': str(e)})
+
+
+def call_nova(messages, max_tokens=1024):
+    result = bedrock.invoke_model(
+        modelId='us.amazon.nova-2-lite-v1:0',
+        contentType='application/json',
+        accept='application/json',
+        body=json.dumps({
+            'messages': messages,
+            'system': [{'text': SYSTEM_PROMPT}],
+            'inferenceConfig': {
+                'maxTokens': max_tokens,
+                'temperature': 0.7,
+                'topP': 0.9
+            }
+        })
+    )
+    result_body = json.loads(result['body'].read())
+    return result_body['output']['message']['content'][0]['text']
 
 
 def response(status, body):

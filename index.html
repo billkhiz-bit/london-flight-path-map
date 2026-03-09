@@ -272,6 +272,8 @@
   .sold-date{color:var(--mid);font-size:9px;min-width:60px;text-align:right;}
 
   /* AI Chatbot */
+  #ai-insight-section{background:linear-gradient(135deg,rgba(242,125,38,0.04),rgba(38,125,242,0.04));border-left:3px solid var(--orange);}
+  #ai-insight-content{font-family:var(--font-sans);font-size:12px;line-height:1.6;color:#333;}
   .chat-fab{position:fixed;bottom:24px;right:24px;z-index:200;width:48px;height:48px;border-radius:50%;
     background:var(--dark);color:var(--white);border:none;font-size:20px;cursor:pointer;
     display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.3);
@@ -1286,18 +1288,47 @@ function renderEpcData(containerId, data) {
 // ============================================================
 // AI CHATBOT (via AWS Bedrock - Amazon Nova)
 // ============================================================
+// Chat conversation history and context
+let chatHistory = [];
+let currentViewingContext = '';
+
 async function sendChatMessage(message) {
   try {
     const resp = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message})
+      body: JSON.stringify({
+        message,
+        history: chatHistory,
+        context: currentViewingContext
+      })
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    return data.reply || data.error || 'No response received.';
+    const reply = data.reply || data.error || 'No response received.';
+    // Store in history
+    chatHistory.push({role: 'user', text: message});
+    chatHistory.push({role: 'assistant', text: reply});
+    // Keep history manageable
+    if (chatHistory.length > 16) chatHistory = chatHistory.slice(-16);
+    return reply;
   } catch(e) {
     return 'Sorry, the AI advisor is temporarily unavailable. Please try again.';
+  }
+}
+
+async function fetchInsight(locationData) {
+  try {
+    const resp = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({mode: 'insight', locationData})
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.reply || null;
+  } catch(e) {
+    return null;
   }
 }
 
@@ -1965,6 +1996,8 @@ function scoreColor(v) { return v>=7?'#26F27D':v>=4?'#F2B826':'#F27D26'; }
 function updateSidebar(data) {
   document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
   switchTab('analysis');
+  // Update viewing context for chatbot
+  currentViewingContext = `${data.name} borough - noise: ${data.impact}, avg price: ${Math.round(data.avg_price/1000)}K, score: ${data.score}/10`;
 
   const priceK = Math.round(data.avg_price/1000);
   const noiseClass = data.impact==='severe'||data.impact==='high'||data.impact==='moderate-high'?'noise-high':
@@ -2127,7 +2160,14 @@ function updateSidebarPostcode(analysis, boroughData) {
       </div>`;
   }
 
+  // Update viewing context for context-aware chatbot
+  currentViewingContext = `${analysis.postcode} in ${analysis.borough} - noise: ${analysis.noiseEstimate}, nearest airport: ${analysis.airportDists[0].name} (${analysis.airportDists[0].dist.toFixed(1)}km)`;
+
   document.getElementById('sidebar-content').innerHTML = `
+    <div class="sidebar-section" id="ai-insight-section">
+      <h3>AI INSIGHT <span style="font-size:8px;color:var(--mid);letter-spacing:1px;">POWERED BY AMAZON NOVA</span></h3>
+      <div id="ai-insight-content"><span class="crime-loading">Analysing this location...</span></div>
+    </div>
     <div class="sidebar-section">
       <h3>LOCATION</h3>
       <div class="postcode-result">
@@ -2192,7 +2232,27 @@ function updateSidebarPostcode(analysis, boroughData) {
       </p>
     </div>`;
 
-  // Crime data now uses curated borough stats (live API 1-mile radius was misleading)
+  // Fetch AI insight from Nova
+  fetchInsight({
+    location: analysis.postcode,
+    borough: analysis.borough,
+    noise: analysis.noiseEstimate,
+    noise_score: analysis.noiseScore,
+    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford||5)*0.35 + (boroughData.scores?.growth||5)*0.25)*10)/10) : 'N/A',
+    airport: analysis.airportDists[0].name,
+    airport_dist: analysis.airportDists[0].dist.toFixed(1),
+    path_dist: analysis.nearestPathDist.toFixed(1),
+    crime: extra?.crime || 'unknown',
+    schools: extra?.schools || 'unknown'
+  }).then(insight => {
+    const el = document.getElementById('ai-insight-content');
+    if (el && insight) {
+      el.innerHTML = `<p class="property-note" style="margin-top:0;">${formatChatReply(insight)}</p>`;
+    } else if (el) {
+      el.innerHTML = '<p class="info-note">AI insight unavailable.</p>';
+    }
+  });
+
   // Fetch TfL transport data async (works with lat/lon, fine for outcodes)
   fetchTransportData(analysis.lat, analysis.lon).then(data => {
     renderTransportData('postcode-transport-data', data);
@@ -2399,7 +2459,13 @@ async function init() {
 
   chatFab.addEventListener('click', () => {
     chatPanel.classList.toggle('open');
-    if (chatPanel.classList.contains('open')) chatInput.focus();
+    if (chatPanel.classList.contains('open')) {
+      chatInput.focus();
+      // Update placeholder based on what user is viewing
+      if (currentViewingContext) {
+        chatInput.placeholder = 'Ask about ' + currentViewingContext.split(' - ')[0] + ' or any area...';
+      }
+    }
   });
   chatClose.addEventListener('click', () => chatPanel.classList.remove('open'));
 
