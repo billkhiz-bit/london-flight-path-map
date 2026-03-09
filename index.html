@@ -341,7 +341,7 @@
   <div class="map-container" id="map-container">
     <div class="map-title">
       <h1>London Flight Path Analysis</h1>
-      <div class="subtitle">DEFRA NOISE DATA + POSTCODE ANALYSIS</div>
+      <div class="subtitle">DEFRA NOISE DATA + PROPERTY INTELLIGENCE</div>
     </div>
     <div class="live-count" id="live-count" style="display:none;">
       <div class="live-dot"></div>
@@ -397,11 +397,11 @@
 
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h2 id="sidebar-title">POSTCODE ANALYSIS</h2>
+      <h2 id="sidebar-title">PROPERTY INTELLIGENCE</h2>
     </div>
     <div class="search-box">
       <div class="search-wrapper">
-        <input type="text" id="search-input" placeholder="Enter postcode e.g. SW11 1AA" autocomplete="off" />
+        <input type="text" id="search-input" placeholder="Search postcode, area or borough" autocomplete="off" />
         <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
       </div>
       <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
@@ -414,7 +414,7 @@
       <div id="sidebar-content">
         <div class="empty-state">
           <div class="icon">&#9678;</div>
-          <p>Enter a London postcode above or click any borough on the map to get noise analysis with real DEFRA data, property insights, and a value score.</p>
+          <p>Search by postcode (SW11 1AA), area (Chelsea, Twickenham) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.</p>
         </div>
       </div>
     </div>
@@ -459,6 +459,67 @@ const BOROUGH_COORDS = {
   'Hackney':[51.5450,-0.0553],'Haringey':[51.5906,-0.1110],'Enfield':[51.6538,-0.0799],
   'Waltham Forest':[51.5886,-0.0118],'Redbridge':[51.5590,0.0741],'Barking':[51.5362,0.0798],
   'Havering':[51.5779,0.2121],'Barnet':[51.6252,-0.1517]
+};
+
+// London areas/neighbourhoods mapped to representative postcodes
+const AREA_MAP = {
+  // West London
+  'Chelsea':'SW3 5RZ','Fulham':'SW6 1BY','Kensington':'W8 7BU','Notting Hill':'W11 2BQ',
+  'Shepherd\'s Bush':'W12 8LJ','Hammersmith':'W6 9RL','Chiswick':'W4 2DR','Acton':'W3 6UP',
+  'Ealing Broadway':'W5 2HL','Hanwell':'W7 1JD','Southall':'UB1 1QA','Greenford':'UB6 0AA',
+  'Northolt':'UB5 4AA','Hayes':'UB3 1HH','Uxbridge':'UB8 1LX','Ruislip':'HA4 7AA',
+  'Harefield':'UB9 6PE','West Drayton':'UB7 7QR',
+  // South West
+  'Battersea':'SW11 1JQ','Clapham':'SW4 7AA','Brixton':'SW2 1JF','Putney':'SW15 1LY',
+  'Wandsworth':'SW18 1EG','Tooting':'SW17 0RG','Balham':'SW12 9AP','Streatham':'SW16 1BW',
+  'Wimbledon':'SW19 7NL','Mitcham':'CR4 3HD','Morden':'SM4 5DX','New Malden':'KT3 3LB',
+  'Surbiton':'KT6 4DE','Kingston':'KT1 1EU','Teddington':'TW11 8EZ',
+  'Twickenham':'TW1 3QS','Richmond':'TW9 1DN','Hampton':'TW12 2SA','Feltham':'TW13 4GU',
+  'Hounslow':'TW3 1ES','Isleworth':'TW7 6BD','Brentford':'TW8 0GP',
+  // Central
+  'Mayfair':'W1K 1BJ','Soho':'W1D 4TW','Covent Garden':'WC2E 8HD','Marylebone':'W1U 1PJ',
+  'Fitzrovia':'W1T 5HE','Bloomsbury':'WC1B 3QJ','Holborn':'WC1V 6DR',
+  'Victoria':'SW1V 1QA','Pimlico':'SW1V 2SA','Belgravia':'SW1X 7EE',
+  'Westminster':'SW1E 6QP','Paddington':'W2 1HB','Bayswater':'W2 4RH',
+  'St John\'s Wood':'NW8 7NE','Regent\'s Park':'NW1 4NR','Baker Street':'NW1 5LA',
+  // North West
+  'Camden Town':'NW1 8QS','Kentish Town':'NW5 2AG','Hampstead':'NW3 1QG',
+  'Kilburn':'NW6 7JR','West Hampstead':'NW6 3EA','Swiss Cottage':'NW3 5EL',
+  'Cricklewood':'NW2 6QG','Golders Green':'NW11 8EL','Finchley':'N3 1BH',
+  'Hendon':'NW4 3HF','Mill Hill':'NW7 1PG','Edgware':'HA8 7EJ',
+  'Stanmore':'HA7 3BQ','Wembley':'HA9 0WS','Harrow':'HA1 1BA','Pinner':'HA5 3AA',
+  'Northwood':'HA6 1BL','Kingsbury':'NW9 8UA','Neasden':'NW10 1QD',
+  'Willesden':'NW10 2JR',
+  // North
+  'Angel':'N1 0PS','Highbury':'N5 1RA','Holloway':'N7 6PA','Finsbury Park':'N4 2DH',
+  'Crouch End':'N8 8PR','Muswell Hill':'N10 3HS','Highgate':'N6 5HX',
+  'Tottenham':'N17 8NN','Wood Green':'N22 6BH','Southgate':'N14 6BP',
+  'Palmers Green':'N13 5RB','Enfield Town':'EN1 1TH','Edmonton':'N9 0TZ',
+  'Winchmore Hill':'N21 1PH','Arnos Grove':'N11 1JJ','Barnet':'EN5 5ND',
+  // East
+  'Shoreditch':'EC2A 3AY','Whitechapel':'E1 1BB','Bethnal Green':'E2 0AN',
+  'Mile End':'E3 4AX','Bow':'E3 2SE','Canary Wharf':'E14 5AB',
+  'Limehouse':'E14 7EQ','Poplar':'E14 0AE','Stratford':'E15 1BG',
+  'West Ham':'E13 9BT','East Ham':'E6 1BU','Plaistow':'E13 0QA',
+  'Barking':'IG11 7LZ','Dagenham':'RM10 7BN','Ilford':'IG1 1DD',
+  'Romford':'RM1 3ER','Hornchurch':'RM12 4TN','Upminster':'RM14 2SJ',
+  'Hackney Central':'E8 1EJ','Dalston':'E8 2PB','Stoke Newington':'N16 0AP',
+  'Clapton':'E5 0LH','Leyton':'E10 5NR','Leytonstone':'E11 1HB',
+  'Walthamstow':'E17 4JF','Chingford':'E4 7EA',
+  // South East
+  'Greenwich':'SE10 9HZ','Woolwich':'SE18 6HQ','Blackheath':'SE3 9LA',
+  'Eltham':'SE9 5DA','Charlton':'SE7 8QS','Deptford':'SE8 4PA',
+  'Lewisham':'SE13 6JG','Catford':'SE6 4RU','Sydenham':'SE26 5EZ',
+  'Forest Hill':'SE23 3HF','Peckham':'SE15 5JT','Bermondsey':'SE1 3UW',
+  'Rotherhithe':'SE16 5EY','Camberwell':'SE5 8QZ','Dulwich':'SE21 7AA',
+  'Crystal Palace':'SE19 1PP','Norwood':'SE27 9NS','Beckenham':'BR3 1ED',
+  'Bromley':'BR1 1LU','Orpington':'BR6 0JF','Sidcup':'DA14 6BJ',
+  'Bexleyheath':'DA6 7HJ','Erith':'DA8 1QY','Thamesmead':'SE28 8AS',
+  'Abbey Wood':'SE2 9BS',
+  // South
+  'Croydon':'CR0 1NX','Thornton Heath':'CR7 8RY','Norbury':'SW16 4AA',
+  'Sutton':'SM1 1EA','Cheam':'SM3 8BD','Carshalton':'SM5 2HW',
+  'Wallington':'SM6 0HB','Purley':'CR8 1AA','Coulsdon':'CR5 2NH',
 };
 
 const AIRPORTS = [
@@ -813,10 +874,25 @@ function updateDefraTiles() {
 async function lookupPostcode(postcode) {
   const clean = postcode.replace(/\s+/g,'').toUpperCase();
   try {
+    // Try full postcode first
     const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
     const data = await resp.json();
     if (data.status === 200 && data.result) {
       return data.result;
+    }
+    // Fall back to outcode (partial postcode like TW3, SW1, E1)
+    const outResp = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
+    const outData = await outResp.json();
+    if (outData.status === 200 && outData.result) {
+      const r = outData.result;
+      return {
+        postcode: r.outcode,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        admin_district: r.admin_district?.[0] || 'Unknown',
+        admin_ward: r.admin_ward?.[0] || r.outcode + ' area',
+        _isOutcode: true
+      };
     }
     return null;
   } catch(e) {
@@ -924,6 +1000,7 @@ function analysePostcode(result) {
     lsoa: result.lsoa,
     postcode: result.postcode,
     nearestHeli,
+    isOutcode: !!result._isOutcode,
   };
 }
 
@@ -948,7 +1025,7 @@ async function fetchCrimeData(lat, lon) {
   }
 }
 
-function renderCrimeResult(containerId, crimeData) {
+function renderCrimeResult(containerId, crimeData, boroughExtra) {
   const el = document.getElementById(containerId);
   if (!el) return;
   if (!crimeData) {
@@ -962,14 +1039,39 @@ function renderCrimeResult(containerId, crimeData) {
     'theft-from-the-person':'Theft from person','possession-of-weapons':'Weapons','other-crime':'Other crime',
   };
   const label = c => catNames[c] || c.replace(/-/g,' ');
+
+  // London-wide average: ~87 crimes per 1-mile radius per month (based on Met Police data)
+  const londonAvg = 87;
+  const ratio = crimeData.total / londonAvg;
+  let areaRating, ratingClass;
+  if (ratio <= 0.6) { areaRating = 'Well below average'; ratingClass = 'rating-low'; }
+  else if (ratio <= 0.85) { areaRating = 'Below average'; ratingClass = 'rating-low'; }
+  else if (ratio <= 1.15) { areaRating = 'Around average'; ratingClass = 'rating-medium'; }
+  else if (ratio <= 1.5) { areaRating = 'Above average'; ratingClass = 'rating-medium'; }
+  else { areaRating = 'Well above average'; ratingClass = 'rating-high'; }
+
+  // Borough comparison
+  let boroughComp = '';
+  if (boroughExtra) {
+    boroughComp = `<div style="margin-top:8px;">
+      <span class="rating-badge ${ratingBadgeClass(boroughExtra.crime)}">Borough avg: ${boroughExtra.crime}</span>
+      <span style="font-size:10px;color:var(--mid);margin-left:6px;">~${boroughExtra.crimeRate}/1,000 residents/yr</span>
+    </div>`;
+  }
+
   el.innerHTML = `
     <div class="crime-summary">
-      <div class="crime-stat"><div class="crime-stat-value">${crimeData.total}</div><div class="crime-stat-label">Crimes (1 mile, ${crimeData.month})</div></div>
+      <div class="crime-stat">
+        <div class="crime-stat-value">${crimeData.total}</div>
+        <div class="crime-stat-label">Crimes near this postcode (${crimeData.month})</div>
+      </div>
     </div>
-    <div class="crime-categories">${crimeData.categories.map(([cat,count]) =>
+    <div style="margin:8px 0;"><span class="rating-badge ${ratingClass}">${areaRating} for London</span></div>
+    ${boroughComp}
+    <div class="crime-categories" style="margin-top:10px;">${crimeData.categories.map(([cat,count]) =>
       `<div class="crime-cat-row"><span>${label(cat)}</span><span style="font-weight:600;">${count}</span></div>`
     ).join('')}</div>
-    <div class="info-note" style="margin-top:6px;">Source: data.police.uk. Shows crimes within 1 mile for the most recent available month.</div>`;
+    <div class="info-note" style="margin-top:8px;">Source: data.police.uk. Data covers a small area around this postcode for the most recent month. Numbers may include nearby high streets or town centres - always check your specific street.</div>`;
 }
 
 function getExtraData(boroughName) {
@@ -1283,26 +1385,44 @@ async function fetchAutocomplete(partial) {
 
 function showAutocomplete(results) {
   const dropdown = document.getElementById('autocomplete-dropdown');
-  acResults = results;
   acHighlightIndex = -1;
-  if (!results || results.length === 0) {
-    dropdown.classList.remove('visible');
-    dropdown.innerHTML = '';
-    return;
-  }
-  // Also check for borough name matches
+  const inputVal = document.getElementById('search-input').value.toLowerCase().trim();
+
+  // Check for borough name matches
   const boroughMatches = Object.keys(BOROUGH_DATA).filter(b =>
-    b.toLowerCase().includes(document.getElementById('search-input').value.toLowerCase().trim())
+    b.toLowerCase().includes(inputVal)
   ).slice(0,3);
 
+  // Check for area/neighbourhood matches
+  const areaMatches = Object.keys(AREA_MAP).filter(a =>
+    a.toLowerCase().startsWith(inputVal)
+  ).slice(0,5);
+
+  const hasAny = boroughMatches.length > 0 || areaMatches.length > 0 || (results && results.length > 0);
+  if (!hasAny) {
+    dropdown.classList.remove('visible');
+    dropdown.innerHTML = '';
+    acResults = [];
+    return;
+  }
+  acResults = results || [];
+
   let html = '';
-  boroughMatches.forEach((b, i) => {
-    html += `<div class="autocomplete-item" data-type="borough" data-value="${b}" data-index="${i}">
+  let idx = 0;
+  boroughMatches.forEach(b => {
+    html += `<div class="autocomplete-item" data-type="borough" data-value="${b}" data-index="${idx}">
       <span class="ac-postcode">${b}</span><span class="ac-area">Borough</span></div>`;
+    idx++;
   });
-  results.forEach((pc, i) => {
-    html += `<div class="autocomplete-item" data-type="postcode" data-value="${pc}" data-index="${boroughMatches.length + i}">
+  areaMatches.forEach(a => {
+    html += `<div class="autocomplete-item" data-type="area" data-value="${a}" data-index="${idx}">
+      <span class="ac-postcode">${a}</span><span class="ac-area">Area &middot; ${AREA_MAP[a].split(' ')[0]}</span></div>`;
+    idx++;
+  });
+  (results||[]).forEach(pc => {
+    html += `<div class="autocomplete-item" data-type="postcode" data-value="${pc}" data-index="${idx}">
       <span class="ac-postcode">${pc}</span></div>`;
+    idx++;
   });
   dropdown.innerHTML = html;
   dropdown.classList.add('visible');
@@ -1316,6 +1436,8 @@ function showAutocomplete(results) {
       if (item.dataset.type === 'borough') {
         const match = matchBorough(val);
         if (match) selectBoroughByName(match.name);
+      } else if (item.dataset.type === 'area') {
+        triggerSearch(AREA_MAP[val]);
       } else {
         triggerSearch(val);
       }
@@ -1336,12 +1458,50 @@ function highlightAcItem(index) {
 async function triggerSearch(query) {
   const q = query.trim();
   if (!q) return;
+  // Hide autocomplete dropdown
+  const dd = document.getElementById('autocomplete-dropdown');
+  dd.classList.remove('visible');
+  dd.innerHTML = '';
 
   // Borough match
   const boroughMatch = matchBorough(q);
-  if (boroughMatch && q.length > 3 && !/\d/.test(q)) {
+  if (boroughMatch && q.length > 3 && !/\d/.test(q) && !AREA_MAP[q[0].toUpperCase()+q.slice(1).toLowerCase()]) {
     selectBoroughByName(boroughMatch.name);
     return;
+  }
+
+  // Area/neighbourhood match (e.g. "Chelsea", "Twickenham")
+  const areaKey = Object.keys(AREA_MAP).find(a => a.toLowerCase() === q.toLowerCase());
+  if (areaKey) {
+    document.getElementById('search-input').value = areaKey;
+    document.getElementById('sidebar-title').textContent = 'SEARCHING...';
+    const areaResult = await lookupPostcode(AREA_MAP[areaKey]);
+    if (areaResult) {
+      areaResult.postcode = areaKey + ' (' + areaResult.postcode + ')';
+      const analysis = analysePostcode(areaResult);
+      const borData = matchBorough(analysis.borough);
+      if (borData) {
+        selectedBorough = borData.name;
+        g.selectAll('path.borough').attr('fill',d=>{
+          const n=getName(d);const m=matchBorough(n);
+          return(m&&m.name===selectedBorough)?'#141414':'#E4E3E0';
+        });
+        g.selectAll('.noise-overlay').remove();
+        const feature=boroughFeatures.find(f=>{const m=matchBorough(getName(f));return m&&m.name===borData.name;});
+        if(feature)renderNoiseOverlay(feature);
+      }
+      renderPostcodePin(analysis.lat, analysis.lon);
+      const [px,py] = projection([analysis.lon, analysis.lat]);
+      const container = document.getElementById('map-container');
+      const cw = container.clientWidth/2;
+      const ch = container.clientHeight/2;
+      svg.transition().duration(800).call(
+        zoom.transform,
+        d3.zoomIdentity.translate(cw-px*2, ch-py*2).scale(2)
+      );
+      updateSidebarPostcode(analysis, borData);
+      return;
+    }
   }
 
   // Postcode
@@ -1351,7 +1511,7 @@ async function triggerSearch(query) {
     document.getElementById('sidebar-title').textContent = 'NOT FOUND';
     document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
-        <p>Postcode not found. Try a valid London postcode like SW11 1AA, E1 6AN, or W5 2HB.</p>
+        <p>Postcode, area or borough not found. Try e.g. Chelsea, TW3, SW11 1AA, or Hounslow.</p>
       </div>`;
     return;
   }
@@ -1921,28 +2081,47 @@ function updateSidebarPostcode(analysis, boroughData) {
   const extra = getExtraData(analysis.borough);
   if (boroughData) {
     const priceK = Math.round(boroughData.avg_price/1000);
-    const q=boroughData.scores?.quiet||5, a=boroughData.scores?.afford||5, gr=boroughData.scores?.growth||5;
+    const a=boroughData.scores?.afford||5, gr=boroughData.scores?.growth||5;
+    // Use postcode-specific noise to calculate Quiet Skies score
+    const pcQuiet = Math.max(0, Math.min(10, 10 - analysis.noiseScore));
+    // Recalculate Buyer Value Score with postcode noise
+    const pcScore = Math.round((pcQuiet * 0.4 + a * 0.35 + gr * 0.25) * 10) / 10;
+    // Generate postcode-specific verdict
+    const pcVerdict = pcScore >= 7.5
+      ? `<strong>Excellent pick.</strong> This location combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`
+      : pcScore >= 6
+        ? (pcQuiet >= 7 && a < 5 ? `<strong>Quiet but pricey.</strong> This location has peaceful skies, but property prices are above average.`
+          : pcQuiet < 5 && a >= 7 ? `<strong>Affordable but noisy.</strong> Good prices, but aircraft noise is a real factor at this postcode. Visit before committing.`
+          : `<strong>Solid option.</strong> This location offers a reasonable balance of quiet skies, affordability, and growth.`)
+        : pcScore >= 4
+          ? (pcQuiet < 3 ? `<strong>Noise is a concern here.</strong> Aircraft regularly fly over this location. Check the DEFRA overlay and visit at peak times before buying.`
+            : `<strong>Mixed picture.</strong> This location scores well on some factors but is held back by ${pcQuiet<5?'noise':'high prices'}.`)
+          : `<strong>Think carefully.</strong> This location scores low due to ${pcQuiet<3?'significant aircraft noise':'very high prices'}${pcQuiet<3&&a<3?' combined with high prices':''}. Only buy here if you have specific reasons.`;
     boroughHtml = `
       <div class="sidebar-section">
-        <h3>BOROUGH: ${boroughData.name.toUpperCase()}</h3>
+        <h3>BUYER VALUE SCORE - THIS LOCATION</h3>
         <div class="summary-card">
-          <div class="summary-verdict" style="color:${scoreColor(boroughData.score)}">${boroughData.score}/10  -  Buyer Value Score</div>
-          ${getVerdict(boroughData)}
-        </div>
-        <div class="stat-grid" style="margin-top:12px;">
-          <div class="stat"><div class="stat-value">&pound;${priceK}K</div><div class="stat-label">AVG PRICE</div></div>
-          <div class="stat"><div class="stat-value">${boroughData.trend_pct}</div><div class="stat-label">ANNUAL GROWTH</div></div>
+          <div class="summary-verdict" style="color:${scoreColor(pcScore)}">${pcScore}/10 - Buyer Value Score</div>
+          ${pcVerdict}
         </div>
         <div class="score-breakdown" style="margin-top:14px;">
           <div class="score-row"><span class="score-row-label">Quiet Skies</span>
-            <div class="score-bar-track"><div class="score-bar-fill" style="width:${q*10}%;background:${scoreColor(q)};"></div></div>
-            <span class="score-row-value">${q}/10</span></div>
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:${pcQuiet*10}%;background:${scoreColor(pcQuiet)};"></div></div>
+            <span class="score-row-value">${pcQuiet}/10</span></div>
           <div class="score-row"><span class="score-row-label">Affordability</span>
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${a*10}%;background:${scoreColor(a)};"></div></div>
             <span class="score-row-value">${a}/10</span></div>
           <div class="score-row"><span class="score-row-label">Growth</span>
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${gr*10}%;background:${scoreColor(gr)};"></div></div>
             <span class="score-row-value">${gr}/10</span></div>
+        </div>
+        <p class="info-note" style="margin-top:8px;font-size:9px;">Quiet Skies uses your postcode's noise data. Affordability and Growth are ${boroughData.name} borough averages.</p>
+      </div>
+      <div class="sidebar-section">
+        <h3>BOROUGH: ${boroughData.name.toUpperCase()}</h3>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">&pound;${priceK}K</div><div class="stat-label">AVG PRICE</div></div>
+          <div class="stat"><div class="stat-value">${boroughData.trend_pct}</div><div class="stat-label">ANNUAL GROWTH</div></div>
         </div>
         <p class="property-note" style="margin-top:12px;">${boroughData.property}</p>
       </div>`;
@@ -1955,6 +2134,7 @@ function updateSidebarPostcode(analysis, boroughData) {
         <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${analysis.postcode}</div>
         <div style="font-size:10px;color:var(--mid);">${analysis.ward}, ${analysis.borough}</div>
       </div>
+      ${analysis.isOutcode?'<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> This is an outcode (postcode district). For street-level crime, EPC and sold price data, enter a full postcode e.g. '+analysis.postcode+' 1AA.</p>':''}
     </div>
     <div class="sidebar-section">
       <h3>WHAT YOU NEED TO KNOW ABOUT NOISE HERE</h3>
@@ -1977,12 +2157,15 @@ function updateSidebarPostcode(analysis, boroughData) {
         <span class="noise-detail-value">${a.dist.toFixed(1)} km</span></div>`).join('')}
     </div>
     ${boroughHtml}
+    ${extra?`
     <div class="sidebar-section">
-      <h3>CRIME (LIVE FROM POLICE API)</h3>
-      <div id="postcode-crime-data"><span class="crime-loading">Loading real crime data from data.police.uk...</span></div>
-      ${extra?`<div style="margin-top:8px;"><span class="rating-badge ${ratingBadgeClass(extra.crime)}">BOROUGH AVG: ${extra.crime}</span>
-        <span style="font-size:10px;color:var(--mid);margin-left:6px;">~${extra.crimeRate}/1,000 residents/yr (Met Police est.)</span></div>`:''}
-    </div>
+      <h3>CRIME</h3>
+      <span class="rating-badge ${ratingBadgeClass(extra.crime)}">${extra.crime}</span>
+      <div style="margin-top:8px;">
+        <div class="crime-stat"><div class="crime-stat-value">${extra.crimeRate}</div><div class="crime-stat-label">Per 1,000 residents/yr (${extra.name} borough)</div></div>
+      </div>
+      <p class="info-note" style="margin-top:8px;">${extra.crime==='low'?'This borough has lower crime than the London average.':extra.crime==='medium'?'This borough is around the London average for crime.':'This borough has above-average crime rates - often driven by nightlife, tourism, or town centre activity.'} Based on Met Police published statistics.</p>
+    </div>`:''}
     ${extra?`
     <div class="sidebar-section">
       <h3>SCHOOLS</h3>
@@ -2009,22 +2192,26 @@ function updateSidebarPostcode(analysis, boroughData) {
       </p>
     </div>`;
 
-  // Fetch live crime data async
-  fetchCrimeData(analysis.lat, analysis.lon).then(crimeData => {
-    renderCrimeResult('postcode-crime-data', crimeData);
-  });
-  // Fetch sold prices async (via Lambda - no CORS issues)
-  fetchSoldPrices(analysis.postcode).then(soldData => {
-    renderSoldPrices('sold-prices-data', soldData, analysis.postcode);
-  });
-  // Fetch TfL transport data async
+  // Crime data now uses curated borough stats (live API 1-mile radius was misleading)
+  // Fetch TfL transport data async (works with lat/lon, fine for outcodes)
   fetchTransportData(analysis.lat, analysis.lon).then(data => {
     renderTransportData('postcode-transport-data', data);
   });
-  // Fetch EPC data async
-  fetchEpcData(analysis.postcode).then(data => {
-    renderEpcData('postcode-epc-data', data);
-  });
+  if (!analysis.isOutcode) {
+    // These need a full postcode
+    fetchSoldPrices(analysis.postcode).then(soldData => {
+      renderSoldPrices('sold-prices-data', soldData, analysis.postcode);
+    });
+    fetchEpcData(analysis.postcode).then(data => {
+      renderEpcData('postcode-epc-data', data);
+    });
+  } else {
+    // Show guidance for outcode searches
+    const epcEl = document.getElementById('postcode-epc-data');
+    if (epcEl) epcEl.innerHTML = '<p class="info-note">Enter a full postcode for EPC data.</p>';
+    const soldEl = document.getElementById('sold-prices-data');
+    if (soldEl) soldEl.innerHTML = '<p class="info-note">Enter a full postcode for sold prices.</p>';
+  }
 }
 
 function renderBoroughRanking() {
@@ -2156,7 +2343,7 @@ async function init() {
     }
     acDebounceTimer = setTimeout(async()=>{
       const results = await fetchAutocomplete(val);
-      showAutocomplete(results);
+      showAutocomplete(results.length > 0 ? results : []);
     }, 250);
   });
 
@@ -2174,10 +2361,13 @@ async function init() {
       dropdown.classList.remove('visible');
       if (acHighlightIndex >= 0 && items[acHighlightIndex]) {
         const val = items[acHighlightIndex].dataset.value;
+        const type = items[acHighlightIndex].dataset.type;
         input.value = val;
-        if (items[acHighlightIndex].dataset.type === 'borough') {
+        if (type === 'borough') {
           const match = matchBorough(val);
           if (match) selectBoroughByName(match.name);
+        } else if (type === 'area') {
+          triggerSearch(AREA_MAP[val]);
         } else {
           triggerSearch(val);
         }
