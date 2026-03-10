@@ -1,10 +1,20 @@
 # Amazon Nova AI Hackathon - Submission
 
 ## Project Title
-**Flight Path Intelligence — AI-Powered Property Analysis for Aircraft Noise (London & New York)**
+**Sky Score — AI-Powered Property Analysis for Aircraft Noise (London & New York)**
 
 ## Tagline
 Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite chat, neighbourhood-level scoring across 290+ areas, live government data from 10+ sources, and interactive D3.js mapping — helping buyers avoid hidden aircraft noise before they commit.
+
+---
+
+## Inspiration
+
+I was viewing a property in London when I first noticed it. Standing in the garden, the roar of aircraft overhead was constant. I looked up and realised the house sat directly under a Heathrow arrival path. The estate agent hadn't mentioned it. The listing said nothing about it. And yet it would shape every morning, every evening, every summer barbecue for years to come.
+
+That evening I checked Rightmove, Zoopla, and every property platform I could find. None of them showed flight path data, noise contours, or any indication of aircraft noise impact. I searched government websites and found the data existed — buried across DEFRA noise maps, CAA flight path records, and airport authority publications — but it was scattered, technical, and impossible for a normal buyer to use.
+
+That was the moment I knew this needed to exist: a single tool that brings together all the noise data, combines it with property intelligence, and uses AI to make it instantly understandable for anyone searching for a home. Sky Score was born from that frustration — the gap between what buyers need to know and what they're actually shown.
 
 ---
 
@@ -18,7 +28,7 @@ The data exists — buried across government agencies, airport authorities, and 
 
 ### The Solution
 
-Flight Path Intelligence is a free, AI-powered property analysis tool that combines **Amazon Nova 2 Lite and Nova Pro** with **10+ live data sources** across two cities to give buyers a complete picture of any location before they commit.
+Sky Score is a free, AI-powered property analysis tool that combines **Amazon Nova 2 Lite and Nova Pro** with **10+ live data sources** across two cities to give buyers a complete picture of any location before they commit.
 
 It covers **London** (33 boroughs, 5 airports, 5 heliports, ~143 searchable neighbourhoods) and **New York City** (5 boroughs, 4 airports, ~151 searchable neighbourhoods) — nearly **300 neighbourhoods** with individually computed scores, proving the concept scales globally.
 
@@ -45,7 +55,7 @@ Every search instantly triggers a full analysis: noise assessment, buyer score, 
 - Heliport proximity analysis (London)
 - Official government noise contour overlays on the map
 
-**AI-Powered Buyer Score (1–10):**
+**AI-Powered Buyer Score (1-10):**
 Each location receives a personalised score computed from four factors:
 1. **Quiet Skies** — computed from actual geographic distance to airports and flight path corridors (not borough-level averages)
 2. **Affordability** — neighbourhood-specific median prices (not borough averages): e.g., DUMBO at $1.6M vs East New York at $420K, both in Brooklyn
@@ -88,18 +98,18 @@ A conversational AI advisor with full conversation history (last 8 messages) and
 - *"Is the noise in Hounslow really that bad?"*
 
 **Mode 2: Auto-Insights**
-Every postcode/neighbourhood search automatically triggers a 2–3 sentence AI insight tailored to that specific location, covering noise, value, and buyer advice. No button press needed — it appears instantly in the sidebar.
+Every postcode/neighbourhood search automatically triggers a 2-3 sentence AI insight tailored to that specific location, covering noise, value, and buyer advice. No button press needed — it appears instantly in the sidebar.
 
 ### Amazon Nova Pro (`us.amazon.nova-pro-v1:0`)
 
 **Mode 3: Complex Multi-Criteria Reasoning**
-When the system detects a complex query (comparisons, multi-factor analysis, budget constraints), it automatically routes to Nova Pro for deeper reasoning. Example: *"Compare the top 5 boroughs for a family with a £600K budget, good schools, and a 30-minute commute to the City"* triggers Pro-level analysis with structured recommendations.
+When the system detects a complex query (comparisons, multi-factor analysis, budget constraints), it automatically routes to Nova Pro for deeper reasoning. Example: *"Compare the top 5 boroughs for a family with a 600K budget, good schools, and a 30-minute commute to the City"* triggers Pro-level analysis with structured recommendations.
 
 **Mode 4: Property Photo Analysis (Multimodal)**
 Users upload a property listing photo and Nova Pro analyses:
 - Property type and approximate age
 - External condition and maintenance state
-- Window glazing type (single, double, triple — critical for noise)
+- Window glazing type (single, double, triple — critical for noise insulation)
 - Visible issues (damp, cracks, roof condition)
 - Buyer concerns specific to aircraft noise areas
 
@@ -123,9 +133,9 @@ Reports are printable and include all data points from the analysis.
 ### Intelligent Model Routing
 
 The system automatically detects query complexity and routes to the appropriate model:
-- **Simple queries** → Nova Lite (fast, cost-effective): factual questions, single-area lookups
-- **Complex queries** → Nova Pro (deeper reasoning): comparisons, multi-criteria recommendations, "best area for..." questions
-- **Multimodal inputs** → Nova Pro: all image and document analysis
+- **Simple queries** -> Nova Lite (fast, cost-effective): factual questions, single-area lookups
+- **Complex queries** -> Nova Pro (deeper reasoning): comparisons, multi-criteria recommendations, "best area for..." questions
+- **Multimodal inputs** -> Nova Pro: all image and document analysis
 
 This optimises both cost and response quality — Nova Lite handles ~70% of chat queries at a fraction of the cost.
 
@@ -156,7 +166,7 @@ Three different rendering techniques were implemented to handle the variety of g
 
 ### Map Features
 - Zoom and pan with D3 zoom behaviour
-- Click borough → highlight, show noise overlay, display data
+- Click borough -> highlight, show noise overlay, display data
 - Postcode pin rendering with zoom-to-location animation
 - Dynamic legend (city-aware: "LHR PATHS" vs "JFK PATHS", "DEFRA NOISE" vs "BTS NOISE")
 - Responsive layout with sidebar
@@ -229,7 +239,7 @@ The entire backend is serverless, deployed via AWS SAM:
 | Source | Data | Type |
 |--------|------|------|
 | DEFRA Strategic Noise Maps | Aircraft + road noise contours (WMS) | Live |
-| Met Police / NYPD | Crime rates per borough | Curated |
+| Met Police | Crime rates per borough | Curated |
 | TfL Unified API | Nearest stations, lines, zones | Live |
 | EPC Open Data Communities | Energy performance certificates | Live |
 | HM Land Registry | Sold prices history | Live |
@@ -271,7 +281,7 @@ City switching is instant — one click swaps the map, data layers, scoring, sea
 
 ## Community Impact
 
-Aircraft noise affects property values by 10–20% in severely impacted areas, yet this information is almost impossible for buyers to find in one place. By making this data free and accessible, the tool helps:
+Aircraft noise affects property values by 10-20% in severely impacted areas, yet this information is almost impossible for buyers to find in one place. By making this data free and accessible, the tool helps:
 
 - **First-time buyers** avoid costly mistakes — many discover aircraft noise only after exchanging contracts
 - **Families** find quiet areas with good schools within budget — the Family persona weights liveability at 50%
@@ -299,7 +309,7 @@ Aircraft noise affects property values by 10–20% in severely impacted areas, y
 
 ## Technical Highlights
 
-- **Single-page application**: ~3,800 lines of vanilla HTML/CSS/JS — no frameworks, no build step, no dependencies beyond D3.js
+- **Single-page application**: ~3,900 lines of vanilla HTML/CSS/JS — no frameworks, no build step, no dependencies beyond D3.js
 - **D3.js v7 SVG mapping**: custom projection, zoom, pan, click interactions, dynamic overlays — no Leaflet or Mapbox
 - **Haversine distance calculations**: real geographic distance to airports and flight paths for noise scoring
 - **Three overlay rendering engines**: WMS tile URLs, ArcGIS REST image exports, and computed tile grid assembly

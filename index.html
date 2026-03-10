@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>London Flight Path Analysis - Property Buyer Intelligence Tool</title>
+<title>Sky Score - AI-Powered Property Analysis for Aircraft Noise</title>
 
 <!-- OG Meta Tags for social sharing -->
-<meta name="description" content="Interactive map helping London property buyers assess aircraft noise, crime, schools, flood risk, air quality and transport links across 29 boroughs. Powered by live government data.">
-<meta property="og:title" content="London Flight Path Analysis">
-<meta property="og:description" content="AI-powered property intelligence tool combining aircraft noise data, live flight tracking, crime stats, school ratings and more across 29 London boroughs.">
+<meta name="description" content="AI-powered property intelligence combining Amazon Nova AI, aircraft noise data, neighbourhood scoring across 290+ areas in London and New York. Free tool for home buyers.">
+<meta property="og:title" content="Sky Score - AI-Powered Property Analysis">
+<meta property="og:description" content="AI-powered property intelligence combining Amazon Nova AI, neighbourhood scoring across 290+ areas, live government data, and interactive D3.js mapping for London and New York.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://billkhiz-bit.github.io/london-flight-path-map/">
-<meta property="og:image" content="https://billkhiz-bit.github.io/london-flight-path-map/preview.png">
-<meta property="og:site_name" content="London Flight Path Map">
+<meta property="og:url" content="https://d1oe4ftwutjpf.cloudfront.net">
+<meta property="og:image" content="https://d1oe4ftwutjpf.cloudfront.net/preview.png">
+<meta property="og:site_name" content="Sky Score">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="London Flight Path Analysis">
-<meta name="twitter:description" content="AI-powered property intelligence tool combining aircraft noise, live flights, crime, schools and more across 29 London boroughs.">
-<meta name="twitter:image" content="https://billkhiz-bit.github.io/london-flight-path-map/preview.png">
+<meta name="twitter:title" content="Sky Score - AI-Powered Property Analysis">
+<meta name="twitter:description" content="AI-powered property intelligence combining Amazon Nova AI, neighbourhood scoring across 290+ areas, live government data for London and New York.">
+<meta name="twitter:image" content="https://d1oe4ftwutjpf.cloudfront.net/preview.png">
 
 <!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;</text></svg>">
@@ -420,8 +420,8 @@
 <div id="app" class="app" style="display:none;">
   <div class="map-container" id="map-container">
     <div class="map-title">
-      <h1 id="map-title-text">London Flight Path Analysis</h1>
-      <div class="subtitle" id="map-subtitle">DEFRA NOISE DATA + PROPERTY INTELLIGENCE</div>
+      <h1 id="map-title-text">Sky Score</h1>
+      <div class="subtitle" id="map-subtitle">AI-POWERED PROPERTY NOISE INTELLIGENCE</div>
     </div>
     <div class="city-selector" id="city-selector">
       <button class="city-btn active" data-city="london" onclick="switchCity('london')">London</button>
@@ -3311,7 +3311,7 @@ function formatReportHtml(reportText, locData) {
     .replace(/\n/g, '<br>');
   html += `<div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--bg);font-size:9px;color:var(--mid);text-align:center;">
     <strong>Disclaimer:</strong> This report is AI-generated guidance, not professional property advice. Always conduct independent due diligence.<br>
-    Powered by Amazon Nova Pro - Flight Path Intelligence
+    Powered by Amazon Nova Pro - Sky Score
   </div>`;
   return html;
 }
@@ -3349,12 +3349,12 @@ async function switchCity(city) {
   const searchInput = document.getElementById('search-input');
 
   if (city === 'nyc') {
-    titleEl.textContent = 'New York Flight Path Analysis';
-    subtitleEl.textContent = 'FAA NOISE DATA + PROPERTY INTELLIGENCE';
+    titleEl.textContent = 'Sky Score';
+    subtitleEl.textContent = 'NEW YORK - AI PROPERTY NOISE INTELLIGENCE';
     searchInput.placeholder = 'Search ZIP code, area or borough';
   } else {
-    titleEl.textContent = 'London Flight Path Analysis';
-    subtitleEl.textContent = 'DEFRA NOISE DATA + PROPERTY INTELLIGENCE';
+    titleEl.textContent = 'Sky Score';
+    subtitleEl.textContent = 'LONDON - AI PROPERTY NOISE INTELLIGENCE';
     searchInput.placeholder = 'Search postcode, area or borough';
   }
 

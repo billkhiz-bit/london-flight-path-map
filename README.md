@@ -1,4 +1,4 @@
-# Flight Path Intelligence
+# Sky Score
 
 **AI-Powered Property Analysis for Aircraft Noise — London & New York**
 
