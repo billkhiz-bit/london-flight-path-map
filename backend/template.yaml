@@ -52,6 +52,31 @@ Resources:
             Path: /chat
             Method: post
 
+  # --- Multi-Agent Orchestrator (Nova Lite + Pro) ---
+  MultiAgentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/multi_agent/
+      Handler: app.handler
+      Timeout: 90
+      MemorySize: 512
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
+      Events:
+        MultiAgentPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /multi-agent
+            Method: post
+
   # --- Land Registry Sold Prices (CORS proxy) ---
   SoldPricesFunction:
     Type: AWS::Serverless::Function

@@ -1,8 +1,8 @@
 # Sky Score
 
-**AI-Powered Property Analysis for Aircraft Noise — London & New York**
+**AI-Powered Property Analysis for Aircraft Noise - London & New York**
 
-> Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite chat, neighbourhood-level scoring across 290+ areas, live government data, and interactive D3.js mapping.
+> Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite multi-agent orchestration, neighbourhood-level scoring across 290+ areas, live government data, and interactive D3.js mapping.
 
 **[Live Demo](https://d1oe4ftwutjpf.cloudfront.net)** | Built for the Amazon Nova AI Hackathon
 
@@ -10,7 +10,7 @@
 
 ## The Problem
 
-Every year, thousands of home buyers unknowingly purchase properties under flight paths. Aircraft noise is the single most common complaint from new homeowners — yet no property platform shows flight path data or noise contours. Rightmove, Zoopla, Zillow, and StreetEasy show zero noise data.
+Every year, thousands of home buyers unknowingly purchase properties under flight paths. Aircraft noise is the single most common complaint from new homeowners - yet no property platform shows flight path data or noise contours. Rightmove, Zoopla, Zillow, and StreetEasy show zero noise data.
 
 ## The Solution
 
@@ -29,20 +29,27 @@ A free tool that combines **Amazon Nova AI** with **10+ live data sources** to g
 - Instant noise assessment: distance to airports, flight paths, estimated plane altitude
 - Official government noise contour overlays (DEFRA WMS / BTS ArcGIS)
 
-### Amazon Nova AI — 6 Modes
-1. **Multi-turn chat** (Nova Lite) — conversational property advisor with context
-2. **Auto-insights** (Nova Lite) — instant AI summary for every search
-3. **Complex reasoning** (Nova Pro) — multi-criteria comparisons, "best area for..." queries
-4. **Photo analysis** (Nova Pro multimodal) — upload listing photos for condition/glazing analysis
-5. **Document analysis** (Nova Pro multimodal) — upload EPC certificates or survey reports
-6. **Report generation** (Nova Pro) — 7-section property intelligence reports
+### Amazon Nova AI - 6 Modes + Multi-Agent System
+1. **Multi-turn chat** (Nova Lite) - conversational property advisor with context
+2. **Auto-insights** (Nova Lite) - instant AI summary for every search
+3. **Complex reasoning** (Nova Pro) - multi-criteria comparisons via multi-agent orchestration
+4. **Photo analysis** (Nova Pro multimodal) - upload listing photos for condition/glazing analysis
+5. **Document analysis** (Nova Pro multimodal) - upload EPC certificates or survey reports
+6. **Report generation** (Nova Pro) - 7-section property intelligence reports
+
+### Multi-Agent Orchestration
+Complex queries activate a multi-agent pipeline:
+- **Orchestrator** (Nova Lite) decomposes queries into sub-tasks
+- **Noise Analyst**, **Property Researcher**, **Neighbourhood Scorer** agents run in parallel
+- **Synthesiser** (Nova Pro) combines agent outputs into unified recommendations
+- Frontend displays agent contribution badges on responses
 
 ### Neighbourhood Scoring Engine
 Each of 290+ neighbourhoods gets a unique score computed from:
-- **Quiet Skies** — actual distance to airports and flight paths (Haversine)
-- **Affordability** — neighbourhood-specific median prices
-- **Growth** — annual price trends
-- **Liveability** — schools + crime safety + transport + healthcare
+- **Quiet Skies** - actual distance to airports and flight paths (Haversine)
+- **Affordability** - neighbourhood-specific median prices
+- **Growth** - annual price trends
+- **Liveability** - schools + crime safety + transport + healthcare
 
 5 buyer personas (Balanced, Family, Investor, First-Time, Quiet Life) dynamically reweight all scores.
 
@@ -62,16 +69,16 @@ Each of 290+ neighbourhoods gets a unique score computed from:
 10 AWS services, fully serverless:
 
 ```
-CloudFront → S3 (frontend)
-                ↓
-API Gateway → Lambda (x9) → Bedrock (Nova Lite + Pro)
-                           → DynamoDB (favourites)
+CloudFront -> S3 (frontend)
+                |
+API Gateway -> Lambda (x10) -> Bedrock (Nova Lite + Pro)
+                             -> DynamoDB (favourites)
 ```
 
 | Service | Role |
 |---------|------|
 | Amazon Bedrock | Nova 2 Lite + Nova Pro |
-| AWS Lambda (x9) | Chat, image/doc analysis, reports, favourites, data proxies |
+| AWS Lambda (x10) | Multi-agent orchestrator, chat, image/doc analysis, reports, favourites, data proxies |
 | Amazon API Gateway | REST API with CORS |
 | Amazon DynamoDB | Favourites storage |
 | Amazon S3 | Static hosting |
@@ -85,9 +92,9 @@ API Gateway → Lambda (x9) → Bedrock (Nova Lite + Pro)
 
 ## Tech Stack
 
-- **Frontend**: Single HTML file (~3,900 lines), D3.js v7, vanilla JS — no frameworks, no build step
+- **Frontend**: Single HTML file (~3,900 lines), D3.js v7, vanilla JS - no frameworks, no build step
 - **Backend**: Python 3.11 Lambdas, SAM template
-- **AI**: Amazon Bedrock — Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`) + Nova Pro (`us.amazon.nova-pro-v1:0`)
+- **AI**: Amazon Bedrock - Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`) + Nova Pro (`us.amazon.nova-pro-v1:0`)
 - **Data**: DEFRA, BTS, FEMA, EPA, TfL, Land Registry, Postcodes.io, Met Police, NYPD CompStat
 
 ## Deployment

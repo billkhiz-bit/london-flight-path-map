@@ -2025,16 +2025,33 @@ function renderEpcData(containerId, data) {
 let chatHistory = [];
 let currentViewingContext = '';
 
+const MULTI_AGENT_KEYWORDS = [
+  'compare', 'recommend', 'best', 'worst', 'rank', 'vs', 'versus',
+  'better than', 'safer than', 'which borough', 'where should',
+  'top 5', 'top 3', 'top 10', 'family with', 'commute to',
+  'budget of', 'under 400', 'under 500', 'under 600', 'under 700',
+  'should i buy', 'should i move', 'investment', 'first time buyer',
+  'quietest area', 'safest area', 'best area', 'best neighbourhood'
+];
+
+function shouldUseMultiAgent(message) {
+  const lower = message.toLowerCase();
+  const matches = MULTI_AGENT_KEYWORDS.filter(kw => lower.includes(kw));
+  return matches.length >= 1 && message.length > 30;
+}
+
 async function sendChatMessage(message) {
   try {
-    const resp = await fetch(`${API_BASE}/chat`, {
+    const useMultiAgent = shouldUseMultiAgent(message);
+    const endpoint = useMultiAgent ? 'multi-agent' : 'chat';
+    const payload = useMultiAgent
+      ? { message, context: currentViewingContext }
+      : { message, history: chatHistory, context: currentViewingContext };
+
+    const resp = await fetch(`${API_BASE}/${endpoint}`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        message,
-        history: chatHistory,
-        context: currentViewingContext
-      })
+      body: JSON.stringify(payload)
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
@@ -2044,9 +2061,9 @@ async function sendChatMessage(message) {
     chatHistory.push({role: 'assistant', text: reply});
     // Keep history manageable
     if (chatHistory.length > 16) chatHistory = chatHistory.slice(-16);
-    return reply;
+    return { reply, model: data.model || 'lite', agents: data.agents_used || [] };
   } catch(e) {
-    return 'Sorry, the AI advisor is temporarily unavailable. Please try again.';
+    return { reply: 'Sorry, the AI advisor is temporarily unavailable. Please try again.', model: 'error', agents: [] };
   }
 }
 
@@ -3811,15 +3828,23 @@ async function init() {
     const msg = chatInput.value.trim();
     if (!msg) return;
     chatInput.value = '';
+    const isMultiAgent = shouldUseMultiAgent(msg);
     // Add user message
     chatMessages.innerHTML += `<div class="chat-msg user"><div class="chat-bubble">${msg.replace(/</g,'&lt;')}</div></div>`;
-    chatMessages.innerHTML += '<div class="chat-msg bot" id="chat-typing"><div class="chat-bubble chat-typing">Thinking...</div></div>';
+    chatMessages.innerHTML += `<div class="chat-msg bot" id="chat-typing"><div class="chat-bubble chat-typing">${isMultiAgent ? 'Multi-agent analysis...' : 'Thinking...'}</div></div>`;
     chatMessages.scrollTop = chatMessages.scrollHeight;
     // Call API
-    const reply = await sendChatMessage(msg);
+    const result = await sendChatMessage(msg);
     const typingEl = document.getElementById('chat-typing');
     if (typingEl) typingEl.remove();
-    chatMessages.innerHTML += `<div class="chat-msg bot"><div class="chat-bubble">${formatChatReply(reply)}</div></div>`;
+    // Build agent badges if multi-agent was used
+    let agentBadges = '';
+    if (result.agents && result.agents.length > 0) {
+      const agentLabels = {'NOISE_ANALYST':'Noise','PROPERTY_RESEARCHER':'Market','NEIGHBOURHOOD_SCORER':'Livability'};
+      const badges = result.agents.map(a => `<span style="display:inline-block;background:rgba(0,200,150,0.15);color:#0fa;font-size:9px;padding:2px 6px;border-radius:3px;margin-right:4px;">${agentLabels[a]||a}</span>`).join('');
+      agentBadges = `<div style="margin-bottom:6px;"><span style="font-size:9px;color:rgba(255,255,255,0.5);">Agents:</span> ${badges}</div>`;
+    }
+    chatMessages.innerHTML += `<div class="chat-msg bot"><div class="chat-bubble">${agentBadges}${formatChatReply(result.reply)}</div></div>`;
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 

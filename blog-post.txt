@@ -1,0 +1,31 @@
+How Sky Score Helps Home Buyers Avoid Hidden Aircraft Noise
+
+Every year, thousands of home buyers unknowingly purchase properties under flight paths. Aircraft noise is the most common complaint from new homeowners, yet Rightmove, Zoopla, Zillow, and StreetEasy show zero noise data. Buyers discover the problem after signing the contract.
+
+Sky Score is a free, AI-powered tool that changes this. It combines Amazon Nova AI with 10+ live government data sources to give buyers a complete noise and property picture for any location in London or New York before they commit.
+
+Who It Helps
+
+First-time buyers are most vulnerable, stretched on budget and lacking experience to ask about flight paths. Sky Score's First-Time Buyer persona weights affordability at 40% while still flagging noise risk, helping buyers avoid costly mistakes.
+
+Families need quiet areas with good schools and safe streets. The Family persona weights liveability at 50%, combining school ratings, crime safety, transport access, and healthcare into one score across 290+ neighbourhoods.
+
+Renters get no noise disclosures in lease agreements. A renter considering Astoria, Queens, just 0.5km from LaGuardia, deserves to know before signing.
+
+Investors can identify undervalued neighbourhoods where noise has discounted otherwise strong fundamentals.
+
+How Amazon Nova Powers It
+
+Sky Score uses a multi-agent orchestration system powered by Amazon Nova. For complex queries, an Orchestrator (Nova Lite) decomposes the question into sub-tasks and invokes three specialist agents in parallel: a Noise Analyst, a Property Researcher, and a Neighbourhood Scorer. Each agent analyses its domain independently, then Nova Pro synthesises their outputs into a unified recommendation.
+
+For simpler queries, Nova 2 Lite responds directly. Nova Pro also handles multimodal analysis: users can upload property photos for glazing and condition assessment, or EPC certificates and building surveys for document extraction. This intelligent routing keeps costs low while delivering deep analysis when needed.
+
+Live Today, Growing Tomorrow
+
+Sky Score covers 33 London boroughs, 5 NYC boroughs, and 290+ individually scored neighbourhoods. It is deployed on AWS CloudFront, free, with no sign-up required.
+
+What is next: more cities (the architecture supports any city with airports and property data), estate agent widgets to embed noise scores on listing platforms, a mobile app for GPS-based analysis during viewings, and live flight tracking showing real-time aircraft positions.
+
+Aircraft noise affects property values by 10-20% in impacted areas. By making this data free and instant, Sky Score ensures no buyer is surprised after they have committed.
+
+Try it now: https://d1oe4ftwutjpf.cloudfront.net

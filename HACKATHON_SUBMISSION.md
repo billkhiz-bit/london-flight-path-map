@@ -1,10 +1,6 @@
-# Amazon Nova AI Hackathon - Submission
+# Sky Score - AI-Powered Property Analysis for Aircraft Noise
 
-## Project Title
-**Sky Score — AI-Powered Property Analysis for Aircraft Noise (London & New York)**
-
-## Tagline
-Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite chat, neighbourhood-level scoring across 290+ areas, live government data from 10+ sources, and interactive D3.js mapping — helping buyers avoid hidden aircraft noise before they commit.
+Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite chat, neighbourhood-level scoring across 290+ areas, live government data from 10+ sources, and interactive D3.js mapping - helping buyers avoid hidden aircraft noise before they commit.
 
 ---
 
@@ -12,141 +8,61 @@ Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova L
 
 I was viewing a property in London when I first noticed it. Standing in the garden, the roar of aircraft overhead was constant. I looked up and realised the house sat directly under a Heathrow arrival path. The estate agent hadn't mentioned it. The listing said nothing about it. And yet it would shape every morning, every evening, every summer barbecue for years to come.
 
-That evening I checked Rightmove, Zoopla, and every property platform I could find. None of them showed flight path data, noise contours, or any indication of aircraft noise impact. I searched government websites and found the data existed — buried across DEFRA noise maps, CAA flight path records, and airport authority publications — but it was scattered, technical, and impossible for a normal buyer to use.
+That evening I checked Rightmove, Zoopla, and every property platform I could find. None of them showed flight path data, noise contours, or any indication of aircraft noise impact. I searched government websites and found the data existed - buried across DEFRA noise maps, CAA flight path records, and airport authority publications - but it was scattered, technical, and impossible for a normal buyer to use.
 
-That was the moment I knew this needed to exist: a single tool that brings together all the noise data, combines it with property intelligence, and uses AI to make it instantly understandable for anyone searching for a home. Sky Score was born from that frustration — the gap between what buyers need to know and what they're actually shown.
+Aircraft noise is the single most common complaint from new homeowners in London and New York, and it affects property values by 10-20% in severely impacted areas. Yet buyers only discover the problem after they've moved in, when it's too late to negotiate or walk away.
 
----
-
-## Description
-
-### The Problem
-
-Every year, thousands of home buyers unknowingly purchase properties under flight paths. Aircraft noise is the single most common complaint from new homeowners in London and New York — yet no existing property platform shows flight path data, noise contours, or helps buyers assess the true noise impact at a specific address. Rightmove, Zoopla, Zillow, and StreetEasy show zero noise data. Buyers only discover the problem after they've moved in, when it's too late to negotiate or walk away.
-
-The data exists — buried across government agencies, airport authorities, and environmental bodies — but nobody has brought it together in one place with AI-powered analysis.
-
-### The Solution
-
-Sky Score is a free, AI-powered property analysis tool that combines **Amazon Nova 2 Lite and Nova Pro** with **10+ live data sources** across two cities to give buyers a complete picture of any location before they commit.
-
-It covers **London** (33 boroughs, 5 airports, 5 heliports, ~143 searchable neighbourhoods) and **New York City** (5 boroughs, 4 airports, ~151 searchable neighbourhoods) — nearly **300 neighbourhoods** with individually computed scores, proving the concept scales globally.
+That was the moment I knew this needed to exist: a single tool that brings together all the noise data, combines it with property intelligence, and uses AI to make it instantly understandable for anyone searching for a home. Sky Score was born from that frustration - the gap between what buyers need to know and what they're actually shown.
 
 ---
 
-## How It Works
+## What it does
+
+Sky Score is a free, AI-powered property analysis tool that combines **Amazon Nova 2 Lite and Nova Pro** with **10+ live data sources** across two cities to give buyers a complete noise and property picture for any location before they commit.
+
+It covers **London** (33 boroughs, 5 airports, 5 heliports, ~143 neighbourhoods) and **New York City** (5 boroughs, 4 airports, ~151 neighbourhoods) - nearly **300 neighbourhoods** with individually computed scores.
 
 ### Search Anything
+Users search by postcode/ZIP code, neighbourhood name, borough name, or by clicking the interactive D3.js map. Every search instantly triggers a full analysis: noise assessment, buyer score, crime data, school ratings, transport links, and an AI-generated insight.
 
-Users can search by:
-- **Postcode / ZIP code** — full (SW11 1AA) or partial (TW3, 11102)
-- **Neighbourhood name** — 290+ areas across both cities (Chelsea, Williamsburg, Astoria, Dulwich...)
-- **Borough name** — click or type (Hounslow, Queens, Brooklyn...)
-- **Map click** — click any borough on the interactive D3.js map
+### Noise Intelligence
+For every location: distance to nearest airport and flight path corridor, estimated aircraft altitude overhead, noise classification (Low/Moderate/High), heliport proximity (London), and official government noise contour overlays rendered directly on the map.
 
-Every search instantly triggers a full analysis: noise assessment, buyer score, crime data, school ratings, transport links, and an AI-generated insight — all in under 3 seconds.
+### AI-Powered Buyer Score (1-10)
+Each of 290+ neighbourhoods gets a unique score computed from four factors:
+1. **Quiet Skies** - actual geographic distance (Haversine formula) to airports and flight path corridors
+2. **Affordability** - neighbourhood-specific median prices (not borough averages): DUMBO at $1.6M vs East New York at $420K, both in Brooklyn
+3. **Growth** - annual price trend percentage
+4. **Liveability** - composite of schools (35%), crime safety (30%), transport access (25%), and healthcare (10%), with per-neighbourhood crime modifiers and transport proximity bonuses
 
-### What You Get for Every Location
+**Five Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life) dynamically reweight all four factors and instantly re-rank all 290+ neighbourhoods.
 
-**Noise Intelligence:**
-- Distance to nearest airport (km) and nearest flight path corridor
-- Estimated aircraft altitude overhead
-- Noise classification (Low / Moderate / High) with confidence score
-- Heliport proximity analysis (London)
-- Official government noise contour overlays on the map
+### Amazon Nova AI - 6 Modes
 
-**AI-Powered Buyer Score (1-10):**
-Each location receives a personalised score computed from four factors:
-1. **Quiet Skies** — computed from actual geographic distance to airports and flight path corridors (not borough-level averages)
-2. **Affordability** — neighbourhood-specific median prices (not borough averages): e.g., DUMBO at $1.6M vs East New York at $420K, both in Brooklyn
-3. **Growth** — annual price trend percentage inherited from borough data
-4. **Liveability** — composite of schools (35%), crime safety (30%), transport access (25%), and healthcare (10%), adjusted per neighbourhood with crime modifiers and transport proximity bonuses
+**Nova 2 Lite:**
+1. **Multi-turn chat** - conversational property advisor with context awareness (knows what postcode you're viewing)
+2. **Auto-insights** - instant 2-3 sentence AI summary for every search, no button press needed
 
-**Five Buyer Personas** dynamically reweight these factors:
-| Persona | Quiet | Afford | Growth | Live | Best For |
-|---------|-------|--------|--------|------|----------|
-| Balanced | 30% | 25% | 20% | 25% | General buyers |
-| Family | 20% | 20% | 10% | 50% | Schools + safety |
-| Investor | 10% | 30% | 40% | 20% | Growth + value |
-| First-Time | 15% | 40% | 20% | 25% | Budget entry |
-| Quiet Life | 50% | 20% | 10% | 20% | Peace above all |
+**Nova Pro:**
+3. **Complex reasoning** - auto-routes complex queries (comparisons, multi-criteria, budget constraints) to Pro for deeper analysis
+4. **Photo analysis (multimodal)** - upload listing photos for property type, condition, glazing type, and noise-relevant concerns
+5. **Document analysis (multimodal)** - upload EPC certificates or building survey reports for extraction and interpretation
+6. **Report generation** - one-click 7-section Property Intelligence Reports (executive summary, noise, market, amenities, risks, investment outlook, verdict)
 
-Switching persona instantly recalculates all 290+ neighbourhood scores and re-ranks the entire table.
+The system automatically detects query complexity and routes to the appropriate model - Nova Lite handles ~70% of queries at a fraction of the cost.
 
-**Additional Data Per Location:**
-- Crime statistics with borough-level rates and neighbourhood adjustment
-- School quality ratings (Outstanding/Excellent/Good/Mixed)
-- Transport connectivity ratings with distance to nearest station hub
-- Flood risk assessment
-- Air quality assessment
-- Property listing links (Zoopla/Rightmove/OnTheMarket for London; Zillow/StreetEasy/Redfin for NYC)
-- Sold prices from HM Land Registry (London)
-- Energy Performance Certificate data from EPC Register (London)
+### Multi-Agent Orchestration
+For complex queries (comparisons, multi-criteria recommendations, "best area for..." questions), the system activates a **multi-agent pipeline**:
 
----
+1. **Orchestrator** (Nova Lite) - analyses the query, decomposes it into sub-tasks, and determines which specialist agents to invoke
+2. **Noise Analyst Agent** (Nova Lite) - assesses aircraft noise, airport proximity, flight path impact, and sound insulation needs
+3. **Property Researcher Agent** (Nova Lite) - analyses prices, affordability, growth trends, and investment potential
+4. **Neighbourhood Scorer Agent** (Nova Lite) - evaluates schools, crime, transport, healthcare, and overall livability
+5. **Synthesiser** (Nova Pro) - combines all agent outputs into a single coherent recommendation with trade-offs
 
-## Amazon Nova AI Integration — 6 Distinct Modes
+Agents run **in parallel** using concurrent execution, then Nova Pro synthesises the results. The frontend shows which agents contributed to each response. Simple queries bypass the multi-agent system and go directly to Nova Lite for speed.
 
-This project uses **two Amazon Nova models** across **six distinct AI modes** — not just a chatbot wrapper, but deep integration where AI enhances every aspect of the user experience.
-
-### Amazon Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`)
-
-**Mode 1: Multi-Turn Property Chat**
-A conversational AI advisor with full conversation history (last 8 messages) and context awareness. It knows what postcode you're viewing and incorporates that into responses. Users can ask natural language questions like:
-- *"Where's the quietest area in Queens under $500K with good schools?"*
-- *"Compare Dulwich vs Blackheath for a family"*
-- *"Is the noise in Hounslow really that bad?"*
-
-**Mode 2: Auto-Insights**
-Every postcode/neighbourhood search automatically triggers a 2-3 sentence AI insight tailored to that specific location, covering noise, value, and buyer advice. No button press needed — it appears instantly in the sidebar.
-
-### Amazon Nova Pro (`us.amazon.nova-pro-v1:0`)
-
-**Mode 3: Complex Multi-Criteria Reasoning**
-When the system detects a complex query (comparisons, multi-factor analysis, budget constraints), it automatically routes to Nova Pro for deeper reasoning. Example: *"Compare the top 5 boroughs for a family with a 600K budget, good schools, and a 30-minute commute to the City"* triggers Pro-level analysis with structured recommendations.
-
-**Mode 4: Property Photo Analysis (Multimodal)**
-Users upload a property listing photo and Nova Pro analyses:
-- Property type and approximate age
-- External condition and maintenance state
-- Window glazing type (single, double, triple — critical for noise insulation)
-- Visible issues (damp, cracks, roof condition)
-- Buyer concerns specific to aircraft noise areas
-
-**Mode 5: Document Analysis (Multimodal)**
-Users upload EPC certificates or building survey reports (image or PDF) and Nova Pro extracts and interprets:
-- **EPC**: Energy rating, wall/roof/floor insulation, heating system, estimated costs, improvement recommendations with payback periods
-- **Surveys**: Condition ratings, urgent defects, damp/subsidence risk, structural issues, estimated repair costs, negotiation points
-
-**Mode 6: AI Report Generation**
-One-click generation of comprehensive 7-section Property Intelligence Reports:
-1. Executive Summary
-2. Noise Assessment (with flight path analysis)
-3. Property Market Analysis (prices, trends, comparables)
-4. Local Amenities (schools, transport, healthcare)
-5. Risk Factors (flooding, air quality, crime)
-6. Investment Outlook (growth trajectory, rental yields)
-7. Verdict & Recommendation
-
-Reports are printable and include all data points from the analysis.
-
-### Intelligent Model Routing
-
-The system automatically detects query complexity and routes to the appropriate model:
-- **Simple queries** -> Nova Lite (fast, cost-effective): factual questions, single-area lookups
-- **Complex queries** -> Nova Pro (deeper reasoning): comparisons, multi-criteria recommendations, "best area for..." questions
-- **Multimodal inputs** -> Nova Pro: all image and document analysis
-
-This optimises both cost and response quality — Nova Lite handles ~70% of chat queries at a fraction of the cost.
-
----
-
-## Interactive Map & Data Layers
-
-The frontend is built with **D3.js v7** rendering SVG-based interactive maps with real-time data overlays. No Leaflet, no Mapbox — pure D3 for maximum control and zero API key dependencies.
-
-### Map Layers (Toggle On/Off)
-
+### Data Layers (Toggle On/Off)
 | Layer | London Source | NYC Source |
 |-------|-------------|-----------|
 | Flight Paths | Manual path data (8 routes) | Manual path data (8 routes) |
@@ -155,166 +71,105 @@ The frontend is built with **D3.js v7** rendering SVG-based interactive maps wit
 | Transport Stations | 18 major hubs | 16 major hubs |
 | Flood Risk | Environment Agency WMS | FEMA NFHL ArcGIS REST |
 | Air Quality | DEFRA AQMA | EPA Nonattainment ArcGIS REST |
-| Borough/Area Labels | D3 text overlay | D3 text overlay |
 
-### Rendering Approaches
-
-Three different rendering techniques were implemented to handle the variety of government data services:
-1. **WMS (Web Map Service)** — standard for DEFRA data, uses EPSG:4326 bbox
-2. **ArcGIS REST export** — for FEMA flood and EPA air quality, single image per viewport
-3. **Tile grid rendering** — for BTS noise data (tile-only services), computes slippy map tile coordinates and assembles a grid of `<image>` elements
-
-### Map Features
-- Zoom and pan with D3 zoom behaviour
-- Click borough -> highlight, show noise overlay, display data
-- Postcode pin rendering with zoom-to-location animation
-- Dynamic legend (city-aware: "LHR PATHS" vs "JFK PATHS", "DEFRA NOISE" vs "BTS NOISE")
-- Responsive layout with sidebar
+### Additional Data Per Location
+Crime statistics, school quality ratings, transport connectivity, flood risk, air quality, property listing links (Zoopla/Rightmove/OnTheMarket for London; Zillow/StreetEasy/Redfin for NYC), sold prices from HM Land Registry, and EPC data.
 
 ---
 
-## Neighbourhood-Level Scoring Engine
+## How we built it
 
-Unlike property platforms that give borough-level summaries, this tool computes **individual scores for each of 290+ neighbourhoods** using actual geographic coordinates.
+### Frontend
+A single HTML file (~3,900 lines) using **D3.js v7** for SVG-based interactive mapping - no React, no Leaflet, no Mapbox, no build step. Pure vanilla JavaScript with D3 for maximum control and zero API key dependencies. The map supports zoom, pan, click-to-search, postcode pin rendering, and dynamic data overlays.
 
-### How Neighbourhood Scores Are Computed
+### Three Overlay Rendering Engines
+Government data services use different standards, so three rendering techniques were implemented:
+1. **WMS (Web Map Service)** - for DEFRA noise and Environment Agency flood data, using EPSG:4326 bbox
+2. **ArcGIS REST export** - for FEMA flood zones and EPA air quality, single image per viewport
+3. **Tile grid rendering** - for BTS aviation noise (tile-only service), computing slippy map tile coordinates and assembling a grid of `<image>` elements
 
-For each neighbourhood, the engine:
-
-1. **Calculates noise** by measuring actual distance (Haversine formula) from the neighbourhood's coordinates to every airport and every flight path coordinate point. Astoria (0.5km from LaGuardia) scores very differently from Bayside (12km away), even though both are in Queens.
-
-2. **Uses neighbourhood-specific prices** — 290+ median property prices researched and embedded (not borough averages). Park Slope ($1.4M) ranks differently from East New York ($420K) despite both being Brooklyn.
-
-3. **Adjusts crime per neighbourhood** — each neighbourhood has a crime modifier (-2 = much safer to +2 = much higher) relative to its borough average. Riverdale (-2) vs South Bronx (+2) in the same borough.
-
-4. **Computes transport proximity** — distance to nearest major station/subway hub gives a liveability bonus or penalty.
-
-### Rankings View
-
-The Rankings tab shows all neighbourhoods sorted by score with:
-- Rank number
-- Neighbourhood name + borough
-- Noise impact tag (colour-coded: green/yellow/orange)
-- Median property price
-- Composite score (colour-coded)
-- Toggle button to switch between neighbourhood view and borough-only view
-- Click any row to search that neighbourhood
-
----
-
-## Architecture — 10 AWS Services
-
-The entire backend is serverless, deployed via AWS SAM:
-
+### Backend - 10 AWS Services, Fully Serverless
 | Service | Role |
 |---------|------|
 | **Amazon Bedrock** | Nova 2 Lite + Nova Pro (chat, multimodal, reasoning, reports) |
-| **AWS Lambda** (x9) | Chat, image analysis, document analysis, report generation, favourites CRUD, transport proxy, EPC proxy, sold prices proxy, NHS data |
+| **AWS Lambda** (x10) | Multi-agent orchestrator, chat, image analysis, document analysis, report generation, favourites CRUD, transport proxy, EPC proxy, sold prices proxy, healthcare data |
 | **Amazon API Gateway** | REST API with CORS |
 | **Amazon DynamoDB** | Favourites storage (device-ID based, PAY_PER_REQUEST) |
 | **Amazon S3** | Static website hosting |
 | **Amazon CloudFront** | Global CDN with HTTPS |
-| **AWS CloudFormation** | Infrastructure as code via SAM template |
-| **AWS IAM** | Least-privilege policies for deployment and runtime |
+| **AWS CloudFormation/SAM** | Infrastructure as code |
+| **AWS IAM** | Least-privilege policies |
 | **Amazon CloudWatch** | Logging and monitoring |
 | **AWS STS** | Cross-region Bedrock access |
 
-### Lambda Functions (9 total)
+### Multi-Agent System
+Complex queries are handled by a multi-agent orchestration pipeline. The Orchestrator Lambda receives the query, uses Nova Lite to classify intent and decompose it into sub-tasks, then invokes 3 specialist agents (Noise Analyst, Property Researcher, Neighbourhood Scorer) in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. Each agent runs a Nova Lite call with a domain-specific system prompt. Once all agents complete, Nova Pro synthesises their outputs into a unified recommendation. The frontend detects complex queries client-side and routes them to the `/multi-agent` endpoint, displaying agent contribution badges on responses.
 
-1. **ChatFunction** — Multi-turn chat with Nova Lite/Pro routing, conversation history
-2. **AnalyzeImageFunction** — Nova Pro multimodal property photo analysis
-3. **AnalyzeDocumentFunction** — Nova Pro multimodal EPC/survey document analysis
-4. **ReportFunction** — Nova Pro 7-section report generation
-5. **FavouritesFunction** — DynamoDB CRUD for saved locations
-6. **TransportFunction** — TfL API proxy for nearest stations
-7. **EpcFunction** — EPC Register API proxy for energy ratings
-8. **SoldPricesFunction** — HM Land Registry proxy for sold price history
-9. **NhsFunction** — Healthcare data proxy
+### Neighbourhood Scoring Engine
+For each of 290+ neighbourhoods, the engine calculates noise using Haversine distance from actual coordinates to every airport and flight path point, pulls neighbourhood-specific median prices, applies crime modifiers (-2 to +2 relative to borough average), and computes transport proximity to major station hubs. Five buyer personas dynamically reweight all scores in real-time.
+
+### Data Integration
+10+ live APIs across both cities: DEFRA Strategic Noise Maps, Met Police, TfL Unified API, EPC Open Data, HM Land Registry, Postcodes.io, Environment Agency, BTS/DOT, FEMA NFHL, EPA, NYPD CompStat, and curated school/healthcare data.
 
 ---
 
-## Data Sources (10+ Live APIs)
+## Challenges we ran into
 
-### London
-| Source | Data | Type |
-|--------|------|------|
-| DEFRA Strategic Noise Maps | Aircraft + road noise contours (WMS) | Live |
-| Met Police | Crime rates per borough | Curated |
-| TfL Unified API | Nearest stations, lines, zones | Live |
-| EPC Open Data Communities | Energy performance certificates | Live |
-| HM Land Registry | Sold prices history | Live |
-| Postcodes.io | Geolocation + autocomplete | Live |
-| Environment Agency | Flood risk zones (WMS) | Live |
-| Ofsted / School data | School quality ratings | Curated |
+**Government data fragmentation.** London and New York use completely different data standards. London's DEFRA noise maps use WMS, while NYC's BTS data only serves tiles. FEMA flood data uses ArcGIS REST, and EPA air quality uses yet another ArcGIS format. Each required a different rendering engine, and getting all three to overlay correctly on a D3.js SVG map (not a standard web map library) took significant effort.
 
-### New York City
-| Source | Data | Type |
-|--------|------|------|
-| BTS/DOT | Aviation + road noise (ArcGIS) | Live |
-| FEMA NFHL | Flood hazard zones (ArcGIS REST) | Live |
-| EPA | Air quality nonattainment areas (ArcGIS REST) | Live |
-| NYPD CompStat | Crime rates per borough | Curated |
-| NYC DOE | School quality ratings | Curated |
+**Neighbourhood-level scoring at scale.** Property platforms give borough-level summaries, but a borough like Brooklyn contains neighbourhoods ranging from $420K (East New York) to $1.6M (DUMBO). Building a scoring engine that computes individual scores for 290+ neighbourhoods using actual geographic coordinates, neighbourhood-specific prices, and per-area crime adjustments was far more complex than borough-level averaging.
+
+**Multi-agent orchestration.** Designing the orchestrator to reliably decompose natural language queries into the right combination of specialist agents required careful prompt engineering. The orchestrator must return structured JSON specifying which agents to invoke and which areas to analyse. Getting Nova Lite to consistently produce valid JSON (handling edge cases like markdown code blocks in responses) and routing correctly - a noise-only question should invoke one agent, while "compare Hounslow vs Richmond for a family" should invoke all three in parallel - took significant iteration.
+
+**Multi-city architecture.** Adding New York wasn't just adding data - it meant making every part of the system city-aware: search behaviour, currency symbols, property listing links, map projections, data layer sources, legend labels, noise scoring (different airports, different flight paths), and AI chat context. A single `currentCity` toggle controls the entire application.
+
+**Multimodal document analysis.** Getting Nova Pro to reliably extract structured data from EPC certificates and building survey reports required iterating on prompts to handle the variety of document formats, layouts, and terminology differences between energy assessors and chartered surveyors.
 
 ---
 
-## Multi-City: London + New York
+## Accomplishments that we're proud of
 
-To demonstrate global scalability, the tool covers two of the world's busiest aviation markets:
+**290+ individually scored neighbourhoods.** Not borough averages - each neighbourhood has its own score computed from actual geographic distance to airports and flight paths, neighbourhood-specific property prices, local crime adjustment, and transport proximity. Astoria (0.5km from LaGuardia) scores very differently from Bayside (12km away), even though both are in Queens.
 
-### London
-- **5 airports**: Heathrow (79.2M pax), Gatwick (40.9M), Stansted (28M), Luton (16.8M), London City (5.1M)
-- **5 heliports**: Battersea, Elstree, Denham, Royal London Hospital, King's College Hospital
-- **33 boroughs** with full data: prices, crime, schools, transport, flood, air quality, healthcare
-- **~143 searchable neighbourhoods** with individual scores
-- **Property links**: OnTheMarket, Zoopla, Rightmove
+**Multi-agent orchestration with parallel execution.** Complex queries activate a genuine multi-agent pipeline: an orchestrator decomposes the query, 3 specialist agents (Noise Analyst, Property Researcher, Neighbourhood Scorer) run in parallel via concurrent threads, and Nova Pro synthesises their outputs. This isn't a chatbot wrapper - it's a coordinated AI system where specialist agents collaborate to produce richer analysis than any single model call could achieve.
 
-### New York City
-- **4 airports**: JFK (62.5M pax), Newark (46.0M), LaGuardia (31.0M), Teterboro (GA)
-- **5 boroughs** with full data: prices, crime, schools, transport, flood, air quality, healthcare
-- **~151 searchable neighbourhoods** across all boroughs with individual scores
-- **Property links**: Zillow, StreetEasy, Redfin
+**Three rendering engines for government data.** WMS, ArcGIS REST export, and tile grid assembly all working together on a single D3.js SVG map. No other property tool combines this many government data formats in one view.
 
-City switching is instant — one click swaps the map, data layers, scoring, search behaviour, currency symbols, property links, layer labels, legend, and chat context.
+**Multi-city in one codebase.** London and New York - two of the world's busiest aviation markets with completely different data standards - running from one single-page application with instant city switching. This proves the concept scales globally.
+
+**Production-ready and free.** Deployed live on CloudFront, no sign-up, no paywall. Anyone can use it right now to check any location in London or New York before committing to a property.
+
+**~3,900 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk.
 
 ---
 
-## Community Impact
+## What we learned
 
-Aircraft noise affects property values by 10-20% in severely impacted areas, yet this information is almost impossible for buyers to find in one place. By making this data free and accessible, the tool helps:
+**Multi-agent systems produce better results than single-model calls.** When a user asks "Compare Hounslow vs Richmond for a family with a 600K budget", a single Nova Pro call gives a decent answer. But splitting the query across specialist agents (noise, market, livability) running in parallel, then synthesising with Pro, produces a more structured and thorough analysis. Each agent focuses deeply on its domain without context window competition. Nova Lite handles the agent calls cheaply, and Pro only fires once for synthesis.
 
-- **First-time buyers** avoid costly mistakes — many discover aircraft noise only after exchanging contracts
-- **Families** find quiet areas with good schools within budget — the Family persona weights liveability at 50%
-- **Investors** identify undervalued neighbourhoods with growth potential — noise-affected areas often have strong fundamentals that the market has discounted
-- **Renters** check noise before signing a lease — rental agreements don't require the same disclosures as purchases
-- **Estate agents** provide data-backed advice to clients about noise-sensitive locations
-- **Policy makers** visualise the cumulative impact of flight paths on residential areas
+**Government data is powerful but fragmented.** The data buyers need already exists across DEFRA, BTS, FEMA, EPA, Environment Agency, and more. The challenge is that each agency publishes in a different format (WMS, ArcGIS REST, tiles, JSON APIs). Bridging these standards into a unified view is where the real value lies.
 
----
+**Borough-level data hides critical differences.** A "safe borough" might have neighbourhoods with very different crime profiles. An "expensive borough" might contain both luxury and affordable areas. Neighbourhood-level granularity completely changes the analysis and makes the tool genuinely useful for buyers making specific location decisions.
 
-## What Makes This Different
+**D3.js is powerful but demanding.** Building interactive maps with D3 instead of Leaflet or Mapbox meant writing custom projection logic, zoom behaviour, click handling, and overlay positioning from scratch. But it also meant zero API key dependencies, full control over rendering, and the ability to overlay WMS/ArcGIS/tile data in ways that standard map libraries don't easily support.
 
-1. **Deep Nova integration** — 6 AI modes across 2 models, not just a chatbot wrapper. AI enhances search, analysis, photos, documents, and reports.
-2. **Multimodal AI** — upload property photos, EPC certificates, and building surveys for Nova Pro visual analysis
-3. **Intelligent model routing** — auto-detects query complexity for optimal cost and quality balance
-4. **Neighbourhood-level scoring** — 290+ areas with individually computed scores using actual coordinates, not borough averages
-5. **Buyer personas** — 5 preset profiles that dynamically reweight all 290+ scores in real-time
-6. **Real government data** — 10+ live data sources including DEFRA, BTS, FEMA, EPA, TfL, Land Registry
-7. **Multi-city** — London + New York proves the concept works globally with different data standards
-8. **Three rendering techniques** — WMS, ArcGIS REST export, and tile grid assembly for maximum data source compatibility
-9. **Full serverless stack** — 10 AWS services, 9 Lambda functions, DynamoDB persistence
-10. **Production-ready** — deployed and live on CloudFront, no sign-up, no paywall, completely free
+**Multimodal AI has immediate practical value.** Buyers already take photos of properties and receive EPC certificates. Letting them upload these directly for AI analysis - glazing type assessment for noise, energy efficiency interpretation, survey defect extraction - creates value that text-only AI cannot.
 
 ---
 
-## Technical Highlights
+## What's next for Sky Score
 
-- **Single-page application**: ~3,900 lines of vanilla HTML/CSS/JS — no frameworks, no build step, no dependencies beyond D3.js
-- **D3.js v7 SVG mapping**: custom projection, zoom, pan, click interactions, dynamic overlays — no Leaflet or Mapbox
-- **Haversine distance calculations**: real geographic distance to airports and flight paths for noise scoring
-- **Three overlay rendering engines**: WMS tile URLs, ArcGIS REST image exports, and computed tile grid assembly
-- **Responsive design**: works on desktop and tablet with collapsible sidebar
-- **Context-aware AI**: the chatbot knows what postcode you're viewing and incorporates it into responses
+**More cities.** The architecture already supports two cities with different data standards. Dubai, Sydney, Tokyo, Paris - any city with airports and property data can be added. The scoring engine, persona system, and AI integration are city-agnostic.
+
+**Real-time flight tracking.** Integrate live ADS-B flight data to show actual aircraft positions over the map in real-time, giving buyers a live view of how busy the skies really are above their prospective home.
+
+**Noise measurement crowdsourcing.** Let users record actual noise levels from their phone microphone at specific locations, building a community-sourced noise database that supplements official government contour data.
+
+**Mobile app.** A native mobile experience would let buyers check noise levels on-site during property viewings, with GPS-based instant analysis.
+
+**Estate agent partnerships.** Provide an embeddable widget that estate agents can add to property listings, showing the Sky Score and noise assessment directly on Rightmove, Zoopla, or Zillow listings.
+
+**Historical flight path changes.** Track how flight paths have changed over time and predict future changes based on airport expansion plans (e.g., Heathrow third runway proposals, LaGuardia redesign), helping buyers assess long-term noise trajectory.
 
 ---
 
@@ -323,7 +178,7 @@ Aircraft noise affects property values by 10-20% in severely impacted areas, yet
 - Amazon CloudFront
 - Amazon S3
 - Amazon DynamoDB
-- AWS Lambda (x9, Python 3.11)
+- AWS Lambda (x10, Python 3.11)
 - Amazon API Gateway
 - AWS SAM / CloudFormation
 - AWS IAM
@@ -336,7 +191,6 @@ Aircraft noise affects property values by 10-20% in severely impacted areas, yet
 ## Links
 - **Live Demo**: https://d1oe4ftwutjpf.cloudfront.net
 - **Code Repository**: https://github.com/billkhiz-bit/london-flight-path-map
-- **Video Demo**: [YouTube link - to be added]
 
 ## Category
 Freestyle
