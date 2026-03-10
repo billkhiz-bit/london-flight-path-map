@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: London Flight Path Map - Backend API
+Description: Sky Score - Backend API
 
 Globals:
   Function:
@@ -25,7 +25,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: prod
-      Description: London Flight Path Map API
+      Description: Sky Score API
 
   # --- AI Chatbot (Amazon Nova) ---
   ChatFunction:
@@ -193,7 +193,7 @@ Resources:
     Properties:
       CodeUri: lambdas/report/
       Handler: app.handler
-      Timeout: 60
+      Timeout: 90
       MemorySize: 512
       Policies:
         - Version: '2012-10-17'

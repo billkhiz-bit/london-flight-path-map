@@ -95,7 +95,7 @@ def haversine(lat1, lon1, lat2, lon2):
     R = 6371000
     p = math.pi / 180
     a = 0.5 - math.cos((lat2-lat1)*p)/2 + math.cos(lat1*p)*math.cos(lat2*p)*(1-math.cos((lon2-lon1)*p))/2
-    return R * 2 * 2 * math.asin(math.sqrt(a))
+    return R * 2 * math.asin(math.sqrt(a))
 
 
 def response(status, body):

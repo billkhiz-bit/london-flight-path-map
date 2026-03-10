@@ -43,7 +43,7 @@ def fetch_nearby_stations(lat, lon):
 
     req = Request(url, headers={
         'Accept': 'application/json',
-        'User-Agent': 'LondonFlightMap/1.0'
+        'User-Agent': 'SkyScore/1.0'
     })
     try:
         with urlopen(req, timeout=15) as resp:

@@ -1,2 +1,13 @@
 backend/samconfig.toml
 backend/.aws-sam/
+.claude/
+__pycache__/
+*.pyc
+.env
+.env.*
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.vscode/
+.idea/

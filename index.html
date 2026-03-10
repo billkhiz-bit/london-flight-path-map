@@ -544,31 +544,6 @@
 // CONSTANTS & DATA
 // ============================================================
 const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
-const LONDON_CENTER = [-0.1278, 51.5074];
-
-// Representative postcodes and coords for each borough (for EPC/TfL lookup)
-const BOROUGH_POSTCODES = {
-  'Hounslow':'TW3 1ES','Hillingdon':'UB8 1LX','Richmond':'TW9 1DN','Wandsworth':'SW18 1EG',
-  'Kingston':'KT1 1EU','Ealing':'W5 2HL','Hammersmith':'W6 9RL','Lambeth':'SW9 7AA',
-  'Southwark':'SE1 1JA','Greenwich':'SE10 9HZ','Lewisham':'SE13 6JG','Tower Hamlets':'E1 6AN',
-  'Newham':'E15 1BG','Bexley':'DA6 7HJ','Bromley':'BR1 1LU','Croydon':'CR0 1NX',
-  'Sutton':'SM1 1EA','Merton':'SW19 2AA','Westminster':'SW1E 6QP','Camden':'WC1H 9AZ',
-  'Islington':'N1 0PN','Hackney':'E8 1EJ','Haringey':'N15 4RX','Enfield':'EN1 1TH',
-  'Waltham Forest':'E17 4JF','Redbridge':'IG1 1DD','Barking':'IG11 7LZ','Havering':'RM1 3ER',
-  'Barnet':'EN5 5ND'
-};
-const BOROUGH_COORDS = {
-  'Hounslow':[51.4690,-0.3615],'Hillingdon':[51.5353,-0.4497],'Richmond':[51.4613,-0.3037],
-  'Wandsworth':[51.4571,-0.1818],'Kingston':[51.4085,-0.3064],'Ealing':[51.5130,-0.3089],
-  'Hammersmith':[51.4928,-0.2229],'Lambeth':[51.4571,-0.1231],'Southwark':[51.5028,-0.0877],
-  'Greenwich':[51.4892,0.0648],'Lewisham':[51.4535,-0.0205],'Tower Hamlets':[51.5099,-0.0059],
-  'Newham':[51.5255,0.0352],'Bexley':[51.4549,0.1505],'Bromley':[51.4039,0.0198],
-  'Croydon':[51.3762,-0.0986],'Sutton':[51.3618,-0.1945],'Merton':[51.4098,-0.1872],
-  'Westminster':[51.4975,-0.1357],'Camden':[51.5290,-0.1255],'Islington':[51.5362,-0.1033],
-  'Hackney':[51.5450,-0.0553],'Haringey':[51.5906,-0.1110],'Enfield':[51.6538,-0.0799],
-  'Waltham Forest':[51.5886,-0.0118],'Redbridge':[51.5590,0.0741],'Barking':[51.5362,0.0798],
-  'Havering':[51.5779,0.2121],'Barnet':[51.6252,-0.1517]
-};
 
 // London areas/neighbourhoods mapped to representative postcodes
 const AREA_MAP = {
@@ -1405,12 +1380,10 @@ const NYC_STATIONS = [
 // APP STATE
 // ============================================================
 let selectedBorough = null;
-let postcodeMarker = null;
 let boroughFeatures = [];
 let nycBoroughFeatures = [];
 let projection, pathGenerator, svg, g, zoom;
 let layers = { paths:true, 'defra-aircraft':true, 'defra-road':false, 'live-flights':false, transport:false, flood:false, 'air-quality':false, labels:false };
-let defraImages = {};
 
 // ============================================================
 // GEOJSON LOAD
@@ -1736,76 +1709,6 @@ function analysePostcode(result) {
     nearestHeli,
     isOutcode: !!result._isOutcode,
   };
-}
-
-// ============================================================
-// CRIME DATA (data.police.uk - free, no auth)
-// ============================================================
-async function fetchCrimeData(lat, lon) {
-  try {
-    const resp = await fetch(`https://data.police.uk/api/crimes-street/all-crime?lat=${lat}&lng=${lon}`);
-    if (!resp.ok) return null;
-    const crimes = await resp.json();
-    // Count by category
-    const cats = {};
-    crimes.forEach(c => { cats[c.category] = (cats[c.category]||0) + 1; });
-    const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]);
-    const total = crimes.length;
-    const month = crimes[0]?.month || 'recent';
-    return { total, categories: sorted.slice(0,5), month, allCategories: sorted };
-  } catch(e) {
-    console.warn('Crime API failed:', e);
-    return null;
-  }
-}
-
-function renderCrimeResult(containerId, crimeData, boroughExtra) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  if (!crimeData) {
-    el.innerHTML = '<span class="info-note">Crime data unavailable for this location.</span>';
-    return;
-  }
-  const catNames = {
-    'anti-social-behaviour':'Anti-social behaviour','burglary':'Burglary','criminal-damage-arson':'Criminal damage',
-    'drugs':'Drugs','other-theft':'Other theft','vehicle-crime':'Vehicle crime','violent-crime':'Violence/sexual offences',
-    'shoplifting':'Shoplifting','public-order':'Public order','robbery':'Robbery','bicycle-theft':'Bike theft',
-    'theft-from-the-person':'Theft from person','possession-of-weapons':'Weapons','other-crime':'Other crime',
-  };
-  const label = c => catNames[c] || c.replace(/-/g,' ');
-
-  // London-wide average: ~87 crimes per 1-mile radius per month (based on Met Police data)
-  const cityAvg = currentCity === 'nyc' ? 95 : 87;
-  const ratio = crimeData.total / cityAvg;
-  let areaRating, ratingClass;
-  if (ratio <= 0.6) { areaRating = 'Well below average'; ratingClass = 'rating-low'; }
-  else if (ratio <= 0.85) { areaRating = 'Below average'; ratingClass = 'rating-low'; }
-  else if (ratio <= 1.15) { areaRating = 'Around average'; ratingClass = 'rating-medium'; }
-  else if (ratio <= 1.5) { areaRating = 'Above average'; ratingClass = 'rating-medium'; }
-  else { areaRating = 'Well above average'; ratingClass = 'rating-high'; }
-
-  // Borough comparison
-  let boroughComp = '';
-  if (boroughExtra) {
-    boroughComp = `<div style="margin-top:8px;">
-      <span class="rating-badge ${ratingBadgeClass(boroughExtra.crime)}">Borough avg: ${boroughExtra.crime}</span>
-      <span style="font-size:10px;color:var(--mid);margin-left:6px;">~${boroughExtra.crimeRate}/1,000 residents/yr</span>
-    </div>`;
-  }
-
-  el.innerHTML = `
-    <div class="crime-summary">
-      <div class="crime-stat">
-        <div class="crime-stat-value">${crimeData.total}</div>
-        <div class="crime-stat-label">Crimes near this postcode (${crimeData.month})</div>
-      </div>
-    </div>
-    <div style="margin:8px 0;"><span class="rating-badge ${ratingClass}">${areaRating} for ${currentCity==='nyc'?'NYC':'London'}</span></div>
-    ${boroughComp}
-    <div class="crime-categories" style="margin-top:10px;">${crimeData.categories.map(([cat,count]) =>
-      `<div class="crime-cat-row"><span>${label(cat)}</span><span style="font-weight:600;">${count}</span></div>`
-    ).join('')}</div>
-    <div class="info-note" style="margin-top:8px;">Source: data.police.uk. Data covers a small area around this postcode for the most recent month. Numbers may include nearby high streets or town centres - always check your specific street.</div>`;
 }
 
 function getExtraData(boroughName) {
@@ -2431,34 +2334,6 @@ function renderDefraTiles() {
   updateDefraTiles();
 }
 
-function renderFlightPaths() {
-  const pg = g.append('g').attr('class','layer-paths');
-  if (!layers.paths) pg.style('display','none');
-
-  FLIGHT_PATHS.forEach(fp => {
-    const lineData = fp.coordinates.map(c => projection(c));
-    const line = d3.line().x(d=>d[0]).y(d=>d[1]).curve(d3.curveBasis);
-    const color = fp.airport==='LHR'?'#F27D26':fp.airport==='LCY'?'#267DF2':fp.airport==='LGW'?'#7B1FA2':'#26B8F2';
-
-    pg.append('path').attr('d',line(lineData)).attr('fill','none')
-      .attr('stroke',color).attr('stroke-width',fp.freq==='high'?1.5:1)
-      .attr('stroke-dasharray','4,4').attr('opacity',0.5).style('pointer-events','none');
-
-    // Animated dot travelling along the path
-    const dot = pg.append('circle').attr('r',2.5).attr('fill',color).attr('opacity',0.8);
-    function animateDot(){
-      const tmp=pg.append('path').attr('d',line(lineData)).style('display','none');
-      const node=tmp.node();const len=node.getTotalLength();tmp.remove();
-      const dur=4000+Math.random()*4000;const rev=fp.type==='departure';
-      dot.transition().duration(dur).ease(d3.easeLinear)
-        .attrTween('cx',()=>t=>{const p=node.getPointAtLength((rev?1-t:t)*len);return p.x;})
-        .attrTween('cy',()=>t=>{const p=node.getPointAtLength((rev?1-t:t)*len);return p.y;})
-        .on('end',animateDot);
-    }
-    animateDot();
-  });
-}
-
 // ============================================================
 // LIVE FLIGHTS (OpenSky Network API - real aircraft positions)
 // ============================================================
@@ -2671,27 +2546,6 @@ function stopLiveFlights() {
   currentFlights = [];
   document.getElementById('live-count').style.display = 'none';
   closeFlightPopup();
-}
-
-function renderAirports() {
-  const ag = g.append('g').attr('class','layer-airports');
-  AIRPORTS.forEach(ap=>{
-    const[x,y]=projection(ap.coords);
-    ag.append('circle').attr('cx',x).attr('cy',y).attr('r',3.5)
-      .attr('fill','#141414').attr('stroke','#FAFAF9').attr('stroke-width',1);
-    ag.append('text').attr('x',x+7).attr('y',y+3.5).text(ap.code)
-      .attr('font-size','9px').attr('font-family','var(--font-mono)')
-      .attr('font-weight','600').attr('fill','#141414');
-  });
-  HELIPORTS.forEach(hp=>{
-    const[x,y]=projection(hp.coords);
-    ag.append('rect').attr('x',x-3).attr('y',y-3).attr('width',6).attr('height',6)
-      .attr('fill','#F27D26').attr('stroke','#FAFAF9').attr('stroke-width',0.5)
-      .attr('transform','rotate(45,'+x+','+y+')');
-    ag.append('text').attr('x',x+6).attr('y',y+3).text(hp.code)
-      .attr('font-size','7px').attr('font-family','var(--font-mono)')
-      .attr('font-weight','500').attr('fill','#F27D26');
-  });
 }
 
 function renderTransport() {
@@ -3354,7 +3208,6 @@ function printReport() {
 function getActiveAirports() { return currentCity === 'nyc' ? NYC_AIRPORTS : AIRPORTS; }
 function getActiveFlightPaths() { return currentCity === 'nyc' ? NYC_FLIGHT_PATHS : FLIGHT_PATHS; }
 function getActiveBoroughData() { return currentCity === 'nyc' ? NYC_BOROUGH_DATA : BOROUGH_DATA; }
-function getActiveBoroughExtra() { return currentCity === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA; }
 
 async function switchCity(city) {
   if (city === currentCity) return;

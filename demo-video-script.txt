@@ -1,0 +1,63 @@
+Sky Score - Demo Video Script (2-3 minutes)
+=============================================
+
+OPENING (10 seconds)
+Show the app loaded on London view.
+
+"Sky Score is a free AI-powered tool that helps property buyers assess aircraft noise before they commit. It covers London and New York with over 290 individually scored neighbourhoods."
+
+SEARCH A POSTCODE (20 seconds)
+Type TW3 (Hounslow) and hit search. Show the sidebar data loading - noise assessment, buyer score, crime, schools, transport.
+
+"Search any postcode and get an instant analysis - noise level, distance to airports, flight paths, crime, schools, transport, and an AI-generated insight."
+
+MAP LAYERS (15 seconds)
+Toggle on Flight Paths, then Aircraft Noise overlay. Zoom in slightly.
+
+"Toggle official government noise contours from DEFRA directly on the map, alongside flight paths, flood risk, and air quality data."
+
+RANKINGS + PERSONAS (20 seconds)
+Click the Rankings tab. Show the neighbourhood list. Switch persona from Balanced to Family - show scores recalculate.
+
+"Every neighbourhood is individually scored using actual distance to airports, local property prices, crime data, and transport links. Switch between five buyer personas and all 290 scores recalculate instantly."
+
+MULTI-AGENT CHAT (30 seconds)
+Open the chat. Type: "Compare Hounslow vs Richmond for a family with a 600K budget"
+
+Wait for the multi-agent typing indicator to appear - pause on it briefly. Then show the response with agent badges.
+
+"Complex questions activate our multi-agent system. An orchestrator decomposes the query, three specialist agents - Noise Analyst, Market Researcher, and Livability Scorer - analyse in parallel, then Nova Pro synthesises a unified recommendation."
+
+CITY SWITCH (10 seconds)
+Click New York. Show the map switch. Search Astoria or 11102.
+
+"Switch to New York instantly. Same scoring engine, same AI, different data sources - BTS noise data, FEMA flood zones, Zillow and StreetEasy listings."
+
+PHOTO ANALYSIS (20 seconds)
+Open chat, click the upload button, upload a property photo. Show the Nova Pro analysis appearing.
+
+"Upload a property listing photo and Nova Pro analyses the condition, glazing type - critical for noise insulation - and flags any visible issues."
+
+DOCUMENT ANALYSIS (15 seconds)
+Navigate to document analysis or upload a PDF in chat. Use the sample EPC PDF. Show the extraction.
+
+"Upload an EPC certificate or building survey and Nova Pro extracts the key data - energy rating, insulation, estimated costs, and improvement recommendations."
+
+GENERATE REPORT (15 seconds)
+Search a location, click Generate Report. Show the report modal opening with the 7 sections.
+
+"One click generates a full 7-section Property Intelligence Report covering noise, market analysis, amenities, risks, investment outlook, and a verdict."
+
+CLOSING (10 seconds)
+Zoom out to show the full map.
+
+"Sky Score. Free, no sign-up, live now. Built with Amazon Nova on AWS."
+
+Show the URL: d1oe4ftwutjpf.cloudfront.net
+
+RECORDING TIPS
+- Keep each section tight - if over 3 minutes, cut the document analysis section
+- Pause briefly on multi-agent badges and typing indicator - judges look for this
+- Record at 1080p or higher
+- Use OBS Studio or Windows Game Bar (Win+G) to screen record
+- Add voiceover live or record separately and overlay

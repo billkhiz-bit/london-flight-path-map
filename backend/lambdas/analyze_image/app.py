@@ -1,6 +1,5 @@
 import json
 import boto3
-import base64
 
 bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
 
