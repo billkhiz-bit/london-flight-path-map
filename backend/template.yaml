@@ -112,6 +112,130 @@ Resources:
             Path: /nhs
             Method: get
 
+  # --- Property Photo Analysis (Nova Pro Multimodal) ---
+  AnalyzeImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/analyze_image/
+      Handler: app.handler
+      Timeout: 60
+      MemorySize: 512
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
+      Events:
+        AnalyzeImagePost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /analyze-image
+            Method: post
+
+  # --- Document Analysis (EPC/Survey via Nova Pro) ---
+  AnalyzeDocumentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/analyze_document/
+      Handler: app.handler
+      Timeout: 60
+      MemorySize: 512
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
+      Events:
+        AnalyzeDocumentPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /analyze-document
+            Method: post
+
+  # --- AI Report Generation (Nova Pro) ---
+  ReportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/report/
+      Handler: app.handler
+      Timeout: 60
+      MemorySize: 512
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
+      Events:
+        ReportPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /report
+            Method: post
+
+  # --- Favourites (DynamoDB) ---
+  FavouritesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/favourites/
+      Handler: app.handler
+      Environment:
+        Variables:
+          FAVOURITES_TABLE: !Ref FavouritesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FavouritesTable
+      Events:
+        FavouritesGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /favourites
+            Method: get
+        FavouritesPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /favourites
+            Method: post
+        FavouritesDelete:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /favourites
+            Method: delete
+
+  # --- DynamoDB Table ---
+  FavouritesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: london-flight-map-favourites
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: postcode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: postcode
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
 Parameters:
   EpcApiKey:
     Type: String

@@ -68,6 +68,22 @@ Schools: {schools}
 Write the insight as if speaking directly to a buyer considering this area."""
 
 
+COMPLEX_KEYWORDS = [
+    'compare', 'recommend', 'best', 'worst', 'rank', 'investment',
+    'which borough', 'where should', 'top 5', 'top 3', 'top 10',
+    'negotiate', 'vs', 'versus', 'better than', 'safer than',
+    'family with', 'commute to', 'budget of', 'under 400', 'under 500',
+    'under 600', 'under 700', '5 year', 'five year', 'long term',
+    'first time buyer', 'rental yield', 'regeneration',
+]
+
+
+def is_complex_query(message):
+    msg_lower = message.lower()
+    matches = sum(1 for kw in COMPLEX_KEYWORDS if kw in msg_lower)
+    return matches >= 1 and len(message) > 30
+
+
 def handler(event, context):
     try:
         body = json.loads(event.get('body', '{}'))
@@ -106,8 +122,12 @@ def handler(event, context):
 
         messages.append({'role': 'user', 'content': [{'text': user_text}]})
 
-        reply = call_nova(messages, max_tokens=1024)
-        return response(200, {'reply': reply})
+        # Route complex queries to Nova Pro for deeper reasoning
+        if is_complex_query(message):
+            reply = call_nova_pro(messages, max_tokens=1536)
+        else:
+            reply = call_nova(messages, max_tokens=1024)
+        return response(200, {'reply': reply, 'model': 'pro' if is_complex_query(message) else 'lite'})
 
     except Exception as e:
         return response(500, {'error': str(e)})
@@ -116,6 +136,26 @@ def handler(event, context):
 def call_nova(messages, max_tokens=1024):
     result = bedrock.invoke_model(
         modelId='us.amazon.nova-2-lite-v1:0',
+        contentType='application/json',
+        accept='application/json',
+        body=json.dumps({
+            'messages': messages,
+            'system': [{'text': SYSTEM_PROMPT}],
+            'inferenceConfig': {
+                'maxTokens': max_tokens,
+                'temperature': 0.7,
+                'topP': 0.9
+            }
+        })
+    )
+    result_body = json.loads(result['body'].read())
+    return result_body['output']['message']['content'][0]['text']
+
+
+def call_nova_pro(messages, max_tokens=1536):
+    """Use Nova Pro for complex multi-criteria queries requiring deeper reasoning."""
+    result = bedrock.invoke_model(
+        modelId='us.amazon.nova-pro-v1:0',
         contentType='application/json',
         accept='application/json',
         body=json.dumps({
