@@ -460,7 +460,9 @@
       <div class="legend-row"><div class="legend-swatch" style="background:#1e3a8a;opacity:0.55;"></div><span id="legend-flood">HIGH FLOOD</span></div>
       <div class="legend-row"><div class="legend-swatch" style="background:#3b82f6;opacity:0.55;"></div><span>MED FLOOD</span></div>
       <div class="legend-row"><div class="legend-swatch" style="background:#93c5fd;opacity:0.55;"></div><span>LOW FLOOD</span></div>
-      <div class="legend-row"><div class="legend-swatch" style="background:rgba(168,0,168,0.3);"></div><span id="legend-aq">AQMA ZONE (CITY-WIDE)</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#dc2626;opacity:0.55;"></div><span id="legend-aq">POOR AIR</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#f59e0b;opacity:0.55;"></div><span>MOD AIR</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#22c55e;opacity:0.55;"></div><span>GOOD AIR</span></div>
     </div>
     <svg id="map-svg"></svg>
   </div>
@@ -2360,17 +2362,28 @@ function renderDefraTiles() {
   floodG.append('image').attr('id','flood-wms-img')
     .attr('preserveAspectRatio','none').style('pointer-events','none');
 
-  // Air quality overlay (AQMA zones / EPA nonattainment — city-wide designated areas)
-  const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.5);
+  // Air quality overlay — borough-level coloring (visible at all zoom levels) + WMS detail
+  const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.55);
   if (!layers['air-quality']) aqG.style('display','none');
+  // Borough-level air quality fill
+  const aqColors = {poor:'#dc2626', moderate:'#f59e0b', good:'#22c55e', excellent:'#16a34a'};
+  const aqFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+  aqFeatures.forEach(f => {
+    const n = getName(f);
+    const extra = getExtraData(n);
+    const aq = extra?.airQuality || 'moderate';
+    aqG.append('path').attr('d', pathGenerator(f))
+      .attr('fill', aqColors[aq] || aqColors.moderate)
+      .attr('stroke', '#991b1b').attr('stroke-width', 0.5)
+      .style('pointer-events', 'none');
+  });
+  aqG.append('text').attr('x', 10).attr('y', 20)
+    .style('font-family','var(--font-mono)').style('font-size','9px')
+    .style('fill','#991b1b').style('font-weight','600').style('letter-spacing','1px')
+    .text(currentCity === 'nyc' ? 'EPA AIR QUALITY BY BOROUGH' : 'AIR QUALITY BY BOROUGH');
+  // WMS detail overlay
   aqG.append('image').attr('id','aq-wms-img')
     .attr('preserveAspectRatio','none').style('pointer-events','none');
-  // Add explanatory label so users understand the uniform coverage
-  aqG.append('text').attr('class','aq-zone-label')
-    .attr('x', 10).attr('y', 20)
-    .style('font-family','var(--font-mono)').style('font-size','9px')
-    .style('fill','#8B0000').style('font-weight','600').style('letter-spacing','1px')
-    .text(currentCity === 'nyc' ? 'EPA NONATTAINMENT ZONE (ENTIRE METRO)' : 'DEFRA AIR QUALITY MANAGEMENT AREA (ALL LONDON)');
 
   updateDefraTiles();
 }
@@ -2722,9 +2735,14 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
 
   document.getElementById('sidebar-content').innerHTML = `
     <div class="sidebar-section">
-      <div class="summary-card">
-        <div class="summary-verdict" style="color:${scoreColor(data.score)}">${data.score}/10  -  ${PERSONAS[currentPersona].label} Buyer Score</div>
-        ${getVerdict(data)}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="summary-card" style="flex:1;margin-bottom:0;">
+          <div class="summary-verdict" style="color:${scoreColor(data.score)}">${data.score}/10  -  ${PERSONAS[currentPersona].label} Buyer Score</div>
+          ${getVerdict(data)}
+        </div>
+        <button class="fav-btn ${isFavourite(data.name)?'saved':''}" onclick="toggleFavourite('${data.name.replace(/'/g,"\\'")}','${data.name.replace(/'/g,"\\'")}','${(data.impact||'unknown').toUpperCase()}',${data.score})" style="margin-left:10px;">
+          <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(data.name)?'SAVED':'SAVE'}
+        </button>
       </div>
     </div>
 
@@ -3313,7 +3331,7 @@ async function switchCity(city) {
     document.getElementById('legend-heli-row').style.display = 'none';
     document.getElementById('legend-noise-title').textContent = 'BTS NOISE (dB DNL)';
     document.getElementById('legend-flood').textContent = 'FEMA FLOOD';
-    document.getElementById('legend-aq').textContent = 'EPA ZONE (METRO-WIDE)';
+    document.getElementById('legend-aq').textContent = 'POOR AIR';
     // Auto-enable labels for NYC (no built-in borough labels)
     if (!layers.labels) {
       layers.labels = true;
@@ -3330,7 +3348,7 @@ async function switchCity(city) {
     document.getElementById('legend-heli-row').style.display = '';
     document.getElementById('legend-noise-title').textContent = 'DEFRA NOISE (dB Lden)';
     document.getElementById('legend-flood').textContent = 'FLOOD ZONE';
-    document.getElementById('legend-aq').textContent = 'AQMA ZONE (CITY-WIDE)';
+    document.getElementById('legend-aq').textContent = 'POOR AIR';
   }
 
   // Re-render map with new city data

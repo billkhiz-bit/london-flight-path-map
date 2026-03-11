@@ -106,7 +106,7 @@ All APIs used are **free, public, and require no authentication**.
 | Live Aircraft | OFF | OpenSky Network API |
 | Transport Stations | OFF | Curated (18 major stations) |
 | Flood Risk Zones | OFF | Borough-level coloring (EA data) + WMS detail at street zoom |
-| Air Quality Areas | OFF | DEFRA AQMA WMS (zoom-aware refresh) |
+| Air Quality Areas | OFF | Borough-level coloring + DEFRA AQMA WMS (zoom-aware refresh) |
 | Borough Labels | OFF | Computed from GeoJSON centroids |
 
 ### Live Aircraft Tracking (Toggle)
@@ -124,7 +124,7 @@ All APIs used are **free, public, and require no authentication**.
 ### Additional Insights (Expandable Cards)
 
 - **Flood Risk**: Borough-level rating + colour-coded borough overlay (dark blue=high, medium blue=medium, light blue=low)
-- **Air Quality**: Borough-level rating + DEFRA AQMA WMS overlay (zoom-aware)
+- **Air Quality**: Borough-level coloring (poor/moderate/good) + DEFRA AQMA WMS overlay (zoom-aware)
 - **Transport Links**: Rating with specific line/station details
 
 ---

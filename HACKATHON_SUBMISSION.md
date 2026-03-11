@@ -72,7 +72,7 @@ Agents run **in parallel** using concurrent execution, then Nova Pro synthesises
 | Road Noise | DEFRA WMS | DOT ArcGIS |
 | Transport Stations | 18 major hubs | 16 major hubs |
 | Flood Risk | Borough-level EA data + WMS detail | Borough-level FEMA data + ArcGIS REST |
-| Air Quality | DEFRA AQMA WMS | EPA Nonattainment ArcGIS REST |
+| Air Quality | Borough-level coloring + DEFRA AQMA WMS | Borough-level coloring + EPA Nonattainment ArcGIS REST |
 
 ### Additional Data Per Location
 Crime statistics, school quality ratings, transport connectivity, flood risk, air quality, property listing links (Zoopla/Rightmove/OnTheMarket for London; Zillow/StreetEasy/Redfin for NYC), sold prices from HM Land Registry, and EPC data.
@@ -89,7 +89,7 @@ Government data services use different standards, so three rendering techniques 
 1. **WMS (Web Map Service)** - for DEFRA noise and air quality data, using EPSG:4326 bbox with zoom-aware viewport refresh
 2. **ArcGIS REST export** - for EPA air quality, single image per viewport
 3. **Tile grid rendering** - for BTS aviation/road noise (tile-only service), computing slippy map tile coordinates and assembling a grid of `<image>` elements
-4. **Borough-level SVG overlays** - flood risk data rendered as coloured borough polygons (high/medium/low), visible at all zoom levels
+4. **Borough-level SVG overlays** - flood risk and air quality rendered as colour-coded borough polygons, visible at all zoom levels
 
 ### Backend - 10 AWS Services, Fully Serverless
 | Service | Role |

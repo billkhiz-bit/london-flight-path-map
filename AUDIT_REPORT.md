@@ -149,6 +149,7 @@ Only excludes `backend/samconfig.toml` and `backend/.aws-sam/`. Updated to inclu
 
 ### Map overlay visibility (FIXED)
 - Road noise: opacity 0.5 too faint → increased to 0.65
-- Air quality: `mix-blend-mode: multiply` at 0.35 opacity made blue AQMA overlay invisible on cream background → removed blend mode, opacity to 0.5
+- Air quality: `mix-blend-mode: multiply` at 0.35 opacity made AQMA overlay invisible → replaced with borough-level air quality coloring (poor=red, moderate=amber, good=green) + WMS detail, opacity 0.55
 - Flood risk: DEFRA WMS only renders at street-level zoom (sub-pixel at city-wide) → replaced with borough-level flood risk coloring (high/medium/low as dark/medium/light blue)
+- Save button: added to borough click view (was only in postcode search view)
 - All overlays now zoom-aware: `updateDefraTiles()` accounts for D3 zoom transform, debounced refresh on pan/zoom (400ms)
