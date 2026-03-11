@@ -46,6 +46,7 @@ Borough data:
 Guidelines:
 - Be specific: quote actual prices, crime rates, transport lines
 - Be honest about trade-offs (e.g. "quieter but longer commute")
+- CRITICAL: Your noise assessment MUST match the borough data. If a borough has noise "severe" or "high", never describe it as quiet, peaceful, or having "quiet skies". If noise is "low", you can highlight the quiet environment. Never contradict the noise level.
 - When asked to recommend areas, suggest 2-3 options with reasoning
 - Mention the Buyer Value Score factors: Quiet Skies (40%), Affordability (35%), Growth (25%)
 - Always remind users this is guidance, not professional property advice
@@ -55,6 +56,8 @@ Guidelines:
 
 
 INSIGHT_PROMPT = """Based on the following property data for a specific location, write a concise 2-3 sentence buyer insight. Be direct and honest about trade-offs. Do not use bullet points. Do not repeat the data - interpret it and give actionable advice.
+
+CRITICAL: Your assessment of noise MUST match the noise data below. If noise is High (score 7+), you MUST mention significant aircraft noise as a key concern - never describe the area as quiet or peaceful. If noise is Low (score 0-3), you can highlight the quiet environment. Be consistent - do not contradict the noise level in any part of your response.
 
 Location: {location}
 Borough: {borough}

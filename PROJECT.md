@@ -73,7 +73,7 @@ All APIs used are **free, public, and require no authentication**.
      - Affordability (35%) - price vs London min/max
      - Price Growth (25%) - annual appreciation rate
    - Formula: `total = quiet*0.4 + afford*0.35 + growth*0.25`
-   - Plain English verdicts (e.g., "Excellent pick", "Noise is a concern")
+   - Plain English verdicts (e.g., "Excellent pick", "Affordable but noisy", "Noise is a concern")
    - Full score breakdown with visual bars
 
 6. **Crime Data**

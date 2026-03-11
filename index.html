@@ -458,7 +458,7 @@
       <div class="legend-row"><div class="legend-swatch" style="background:rgba(242,38,38,0.5);"></div><span>75+ dB</span></div>
       <div style="margin:6px 0 4px;font-size:8px;color:var(--mid);letter-spacing:1px;">OPTIONAL LAYERS</div>
       <div class="legend-row"><div class="legend-swatch" style="background:rgba(38,125,242,0.4);"></div><span id="legend-flood">FLOOD ZONE</span></div>
-      <div class="legend-row"><div class="legend-swatch" style="background:rgba(168,0,168,0.3);"></div><span id="legend-aq">AIR QUALITY MGMT</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:rgba(168,0,168,0.3);"></div><span id="legend-aq">AQMA ZONE (CITY-WIDE)</span></div>
     </div>
     <svg id="map-svg"></svg>
   </div>
@@ -1512,11 +1512,13 @@ function updateDefraTiles() {
   const isNyc = currentCity === 'nyc';
 
   function setImg(id, url) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.setAttribute('href', url);
-    el.setAttribute('x', 0); el.setAttribute('y', 0);
-    el.setAttribute('width', w); el.setAttribute('height', h);
+    // Use D3 selection for proper SVG namespace handling
+    const sel = d3.select('#' + id);
+    if (sel.empty()) { console.warn('Overlay element not found:', id); return; }
+    sel.attr('xlink:href', url)
+       .attr('href', url)
+       .attr('x', 0).attr('y', 0)
+       .attr('width', w).attr('height', h);
   }
 
   // Aircraft noise
@@ -2320,16 +2322,22 @@ function renderDefraTiles() {
   }
 
   // Flood risk overlay
-  const floodG = g.append('g').attr('class','layer-flood').style('opacity',0.5);
+  const floodG = g.append('g').attr('class','layer-flood').style('opacity',0.7).style('filter','saturate(1.4) contrast(1.2)');
   if (!layers.flood) floodG.style('display','none');
   floodG.append('image').attr('id','flood-wms-img')
     .attr('preserveAspectRatio','none').style('pointer-events','none');
 
-  // Air quality overlay
-  const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.4);
+  // Air quality overlay (AQMA zones / EPA nonattainment — city-wide designated areas)
+  const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.35).style('mix-blend-mode','multiply');
   if (!layers['air-quality']) aqG.style('display','none');
   aqG.append('image').attr('id','aq-wms-img')
     .attr('preserveAspectRatio','none').style('pointer-events','none');
+  // Add explanatory label so users understand the uniform coverage
+  aqG.append('text').attr('class','aq-zone-label')
+    .attr('x', 10).attr('y', 20)
+    .style('font-family','var(--font-mono)').style('font-size','9px')
+    .style('fill','#8B0000').style('font-weight','600').style('letter-spacing','1px')
+    .text(currentCity === 'nyc' ? 'EPA NONATTAINMENT ZONE (ENTIRE METRO)' : 'DEFRA AIR QUALITY MANAGEMENT AREA (ALL LONDON)');
 
   updateDefraTiles();
 }
@@ -2644,17 +2652,22 @@ function getVerdict(data) {
   const s = data.score;
   const q = data.scores?.quiet || 5;
   const a = data.scores?.afford || 5;
-  if (s >= 7.5) return `<strong>Excellent pick.</strong> ${data.name} combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`;
+  if (s >= 7.5) {
+    if (q < 5) return `<strong>Great value despite noise.</strong> ${data.name} scores highly on affordability${a>=7?' and growth':''}, but aircraft noise is significant. Visit before committing.`;
+    return `<strong>Excellent pick.</strong> ${data.name} combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`;
+  }
   if (s >= 6) {
     if (q >= 7 && a < 5) return `<strong>Quiet but pricey.</strong> ${data.name} has peaceful skies, but you'll pay above average for property here.`;
-    if (q < 5 && a >= 7) return `<strong>Affordable but noisy.</strong> Prices are good, but aircraft noise is a real factor. Visit before committing.`;
+    if (q < 5 && a >= 5) return `<strong>Affordable but noisy.</strong> ${data.name} has competitive prices, but aircraft noise is a real factor. Visit before committing.`;
+    if (q < 5) return `<strong>Noisy area.</strong> Aircraft noise is significant in ${data.name}. Check the noise overlay and visit at peak times before buying.`;
     return `<strong>Solid option.</strong> ${data.name} offers a reasonable balance of quiet skies, affordability, and growth.`;
   }
   if (s >= 4) {
-    if (q < 3) return `<strong>Noise is a concern.</strong> Aircraft regularly fly over this borough. Check the noise overlay and visit at peak times before buying.`;
-    return `<strong>Mixed picture.</strong> ${data.name} scores well on some factors but is held back by ${q<5?'noise':'high prices'}.`;
+    if (q < 3) return `<strong>Noise is a concern.</strong> Aircraft regularly fly over this area. Check the noise overlay and visit at peak times before buying.`;
+    if (q < 5) return `<strong>Mixed picture.</strong> ${data.name} scores well on some factors but aircraft noise is a drawback.`;
+    return `<strong>Mixed picture.</strong> ${data.name} scores well on some factors but is held back by ${a<5?'high prices':'some trade-offs'}.`;
   }
-  return `<strong>Think carefully.</strong> This borough scores low because of ${q<3?'significant aircraft noise':'very high prices'}${q<3&&a<3?' combined with high prices':''}. Only buy here if you have specific reasons.`;
+  return `<strong>Think carefully.</strong> This area scores low because of ${q<3?'significant aircraft noise':'very high prices'}${q<3&&a<3?' combined with high prices':''}. Only buy here if you have specific reasons.`;
 }
 
 function scoreColor(v) { return v>=7?'#26F27D':v>=4?'#F2B826':'#F27D26'; }
@@ -2795,16 +2808,24 @@ function updateSidebarPostcode(analysis, boroughData) {
     // Recalculate Buyer Value Score with postcode noise + persona weights
     const pcScore = Math.round((pcQuiet * pw.quiet + a * pw.afford + gr * pw.growth + lv * pw.live) * 10) / 10;
     // Generate postcode-specific verdict
-    const pcVerdict = pcScore >= 7.5
-      ? `<strong>Excellent pick.</strong> This location combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`
-      : pcScore >= 6
-        ? (pcQuiet >= 7 && a < 5 ? `<strong>Quiet but pricey.</strong> This location has peaceful skies, but property prices are above average.`
-          : pcQuiet < 5 && a >= 7 ? `<strong>Affordable but noisy.</strong> Good prices, but aircraft noise is a real factor here. Visit before committing.`
-          : `<strong>Solid option.</strong> This location offers a reasonable balance of quiet skies, affordability, and growth.`)
-        : pcScore >= 4
-          ? (pcQuiet < 3 ? `<strong>Noise is a concern here.</strong> Aircraft regularly fly over this location. Check the noise overlay and visit at peak times before buying.`
-            : `<strong>Mixed picture.</strong> This location scores well on some factors but is held back by ${pcQuiet<5?'noise':'high prices'}.`)
-          : `<strong>Think carefully.</strong> This location scores low due to ${pcQuiet<3?'significant aircraft noise':'very high prices'}${pcQuiet<3&&a<3?' combined with high prices':''}. Only buy here if you have specific reasons.`;
+    const pcVerdict = (() => {
+      if (pcScore >= 7.5) {
+        if (pcQuiet < 5) return `<strong>Great value despite noise.</strong> This location scores highly on affordability${a>=7?' and growth':''}, but aircraft noise is significant. Visit before committing.`;
+        return `<strong>Excellent pick.</strong> This location combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`;
+      }
+      if (pcScore >= 6) {
+        if (pcQuiet >= 7 && a < 5) return `<strong>Quiet but pricey.</strong> This location has peaceful skies, but property prices are above average.`;
+        if (pcQuiet < 5 && a >= 5) return `<strong>Affordable but noisy.</strong> Good prices, but aircraft noise is a real factor here. Visit before committing.`;
+        if (pcQuiet < 5) return `<strong>Noisy area.</strong> Aircraft noise is significant at this location. Check the noise overlay and visit at peak times before buying.`;
+        return `<strong>Solid option.</strong> This location offers a reasonable balance of quiet skies, affordability, and growth.`;
+      }
+      if (pcScore >= 4) {
+        if (pcQuiet < 3) return `<strong>Noise is a concern here.</strong> Aircraft regularly fly over this location. Check the noise overlay and visit at peak times before buying.`;
+        if (pcQuiet < 5) return `<strong>Mixed picture.</strong> This location scores well on some factors but aircraft noise is a drawback.`;
+        return `<strong>Mixed picture.</strong> This location scores well on some factors but is held back by ${a<5?'high prices':'some trade-offs'}.`;
+      }
+      return `<strong>Think carefully.</strong> This location scores low due to ${pcQuiet<3?'significant aircraft noise':'very high prices'}${pcQuiet<3&&a<3?' combined with high prices':''}. Only buy here if you have specific reasons.`;
+    })();
     boroughHtml = `
       <div class="sidebar-section">
         <h3>${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} SCORE - THIS LOCATION</h3>
@@ -3258,7 +3279,7 @@ async function switchCity(city) {
     document.getElementById('legend-heli-row').style.display = 'none';
     document.getElementById('legend-noise-title').textContent = 'BTS NOISE (dB DNL)';
     document.getElementById('legend-flood').textContent = 'FEMA FLOOD';
-    document.getElementById('legend-aq').textContent = 'EPA NONATTAINMENT';
+    document.getElementById('legend-aq').textContent = 'EPA ZONE (METRO-WIDE)';
     // Auto-enable labels for NYC (no built-in borough labels)
     if (!layers.labels) {
       layers.labels = true;
@@ -3275,7 +3296,7 @@ async function switchCity(city) {
     document.getElementById('legend-heli-row').style.display = '';
     document.getElementById('legend-noise-title').textContent = 'DEFRA NOISE (dB Lden)';
     document.getElementById('legend-flood').textContent = 'FLOOD ZONE';
-    document.getElementById('legend-aq').textContent = 'AIR QUALITY MGMT';
+    document.getElementById('legend-aq').textContent = 'AQMA ZONE (CITY-WIDE)';
   }
 
   // Re-render map with new city data
