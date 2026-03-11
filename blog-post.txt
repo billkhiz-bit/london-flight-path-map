@@ -12,13 +12,23 @@ Families need quiet areas with good schools and safe streets. The Family persona
 
 Renters get no noise disclosures in lease agreements. A renter considering Astoria, Queens, just 0.5km from LaGuardia, deserves to know before signing.
 
+Quiet Life seekers simply want peace. The Quiet Life persona weights noise at 50%, surfacing neighbourhoods far from flight paths and airports that other tools would never flag.
+
 Investors can identify undervalued neighbourhoods where noise has discounted otherwise strong fundamentals.
+
+The default Balanced persona weights all four factors equally, and is the best starting point for buyers who are still exploring. In total, Sky Score offers five buyer personas - Balanced, Family, Investor, First-Time, and Quiet Life - each instantly re-ranking all 290+ neighbourhoods.
+
+See the Noise, Not Just the Numbers
+
+Sky Score overlays official government noise contours from DEFRA directly on an interactive map, alongside flight paths, flood risk zones, and air quality data. Buyers can visually confirm whether a property sits under a flight path or inside a noise contour - something no listing site offers.
 
 How Amazon Nova Powers It
 
-Sky Score uses a multi-agent orchestration system powered by Amazon Nova. For complex queries, an Orchestrator (Nova Lite) decomposes the question into sub-tasks and invokes three specialist agents in parallel: a Noise Analyst, a Property Researcher, and a Neighbourhood Scorer. Each agent analyses its domain independently, then Nova Pro synthesises their outputs into a unified recommendation.
+Sky Score uses a multi-agent orchestration system powered by Amazon Nova. For complex queries, an Orchestrator (Nova 2 Lite) decomposes the question into sub-tasks and invokes three specialist agents in parallel: a Noise Analyst, a Property Researcher, and a Neighbourhood Scorer. Each agent analyses its domain independently, then Nova Pro synthesises their outputs into a unified recommendation.
 
 For simpler queries, Nova 2 Lite responds directly. Nova Pro also handles multimodal analysis: users can upload property photos for glazing and condition assessment, or EPC certificates and building surveys for document extraction. This intelligent routing keeps costs low while delivering deep analysis when needed.
+
+One click also generates a full 7-section Property Intelligence Report covering noise assessment, market analysis, local amenities, environmental risks, investment outlook, and a final verdict - powered by Nova Pro.
 
 Live Today, Growing Tomorrow
 

@@ -65,7 +65,7 @@ cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=
 - **Frontend**: Single `index.html` (~3,750 lines) — vanilla JS, D3.js maps, all UI logic inline
 - **Backend**: `backend/template.yaml` — SAM/CloudFormation defining 10 Lambdas + API Gateway + DynamoDB
 - **Lambda functions** (all in `backend/lambdas/<name>/app.py`):
-  - `chat` — Nova Lite for simple queries, Nova Pro for complex reasoning (auto-routed)
+  - `chat` — Nova 2 Lite for simple queries, Nova Pro for complex reasoning (auto-routed)
   - `multi_agent` — Orchestrator + 3 specialist agents (Noise/Market/Livability) + Synthesiser
   - `analyze_image` — Nova Pro multimodal for property listing photos
   - `analyze_document` — Nova Pro multimodal for EPC certs, surveys

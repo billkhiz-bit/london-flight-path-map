@@ -500,7 +500,7 @@
     </div>
     <div class="search-box">
       <div class="search-wrapper">
-        <input type="text" id="search-input" placeholder="Search postcode, area or borough" autocomplete="off" />
+        <input type="text" id="search-input" placeholder="Search area, neighbourhood or borough" autocomplete="off" />
         <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
       </div>
       <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
@@ -514,7 +514,7 @@
       <div id="sidebar-content">
         <div class="empty-state">
           <div class="icon">&#9678;</div>
-          <p>Search by postcode (SW11 1AA), area (Chelsea, Twickenham) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.</p>
+          <p>Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.</p>
         </div>
       </div>
     </div>
@@ -530,7 +530,7 @@
     <div id="tab-favourites" style="display:none;">
       <div class="sidebar-section">
         <h3>SAVED LOCATIONS</h3>
-        <div id="favourites-list"><p class="info-note">No saved locations yet. Search a postcode and click the bookmark icon to save it.</p></div>
+        <div id="favourites-list"><p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p></div>
       </div>
     </div>
     <div class="disclaimer">
@@ -1321,12 +1321,12 @@ const DEFRA_WMS = {
     layer: 'Road_Noise_Lden_England_Round_4_All',
   },
   flood: {
-    url: 'https://environment.data.gov.uk/spatialdata/flood-map-for-planning-rivers-and-sea-flood-zone-3/wms',
-    layer: 'Flood_Map_for_Planning_Rivers_and_Sea_Flood_Zone_3',
+    url: 'https://environment.data.gov.uk/spatialdata/flood-map-for-planning-flood-zones/wms',
+    layer: 'Flood_Zones_2_3_Rivers_and_Sea',
   },
   airQuality: {
-    url: 'https://environment.data.gov.uk/spatialdata/air-quality-management-areas-england/wms',
-    layer: 'Air_Quality_Management_Areas_England',
+    url: 'https://ukair.maps.rcdo.co.uk/ukairserver/services/AQMA/aqma_no2/MapServer/WMSServer',
+    layer: '0',
   }
 };
 
@@ -1889,7 +1889,7 @@ function renderEpcData(containerId, data) {
     return;
   }
   if (data.count === 0) {
-    el.innerHTML = '<p class="info-note">No EPC certificates found for this postcode.</p>';
+    el.innerHTML = '<p class="info-note">No EPC certificates found for this area.</p>';
     return;
   }
   const s = data.summary;
@@ -2000,7 +2000,7 @@ function renderSoldPrices(containerId, soldData, postcode) {
   if (soldData === 'cors-blocked' || !soldData) {
     el.innerHTML = `<p class="info-note" style="margin-top:0;">
       Sold prices cannot be loaded directly due to browser security restrictions.
-      View sold prices for this postcode on these official sources:</p>
+      View sold prices for this area on these official sources:</p>
       <div class="property-links" style="margin-top:6px;">
         <a class="property-link" href="https://www.rightmove.co.uk/house-prices/${pc}.html" target="_blank" rel="noopener">
           Rightmove Sold Prices<span class="link-arrow">&#8599;</span></a>
@@ -2058,7 +2058,7 @@ function buildPropertyLinks(postcode, borough) {
   return `
     <div class="sidebar-section">
       <h3>SEARCH PROPERTY LISTINGS</h3>
-      <p class="info-note" style="margin-top:0;margin-bottom:8px;">These links open searches pre-filled with your postcode:</p>
+      <p class="info-note" style="margin-top:0;margin-bottom:8px;">These links open searches pre-filled with your area:</p>
       <div class="property-links">
         <a class="property-link" href="https://www.onthemarket.com/for-sale/property/${areaSlug}/" target="_blank" rel="noopener">
           OnTheMarket - For Sale<span class="link-arrow">&#8599;</span>
@@ -2235,7 +2235,7 @@ async function triggerSearch(query) {
     document.getElementById('sidebar-title').textContent = 'NOT FOUND';
     document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
-        <p>Postcode, area or borough not found. Try e.g. Chelsea, TW3, SW11 1AA, or Hounslow.</p>
+        <p>Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.</p>
       </div>`;
     return;
   }
@@ -2659,9 +2659,9 @@ function getVerdict(data) {
 
 function scoreColor(v) { return v>=7?'#26F27D':v>=4?'#F2B826':'#F27D26'; }
 
-function updateSidebar(data) {
+function updateSidebar(data, {switchToAnalysis = true} = {}) {
   document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
-  switchTab('analysis');
+  if (switchToAnalysis) switchTab('analysis');
   // Update viewing context for chatbot
   currentViewingContext = `${data.name} borough - noise: ${data.impact}, avg price: ${Math.round(data.avg_price/1000)}K, score: ${data.score}/10`;
 
@@ -2743,7 +2743,7 @@ function updateSidebar(data) {
       <div class="crime-summary">
         <div class="crime-stat"><div class="crime-stat-value">${extra.crimeRate}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (EST.)</div></div>
       </div>
-      <p class="info-note">${extra.crime==='low'?'This borough has lower crime than the '+(currentCity==='nyc'?'NYC':'London')+' average.':extra.crime==='medium'?'This borough is around the '+(currentCity==='nyc'?'NYC':'London')+' average for crime.':'This borough has above-average crime rates - often driven by nightlife, tourism, or town centre activity.'} ${currentCity==='nyc'?'Based on NYPD CompStat data.':'Estimate based on Met Police published statistics. Use the postcode search for live crime data from data.police.uk.'}</p>
+      <p class="info-note">${extra.crime==='low'?'This borough has lower crime than the '+(currentCity==='nyc'?'NYC':'London')+' average.':extra.crime==='medium'?'This borough is around the '+(currentCity==='nyc'?'NYC':'London')+' average for crime.':'This borough has above-average crime rates - often driven by nightlife, tourism, or town centre activity.'} ${currentCity==='nyc'?'Based on NYPD CompStat data.':'Estimate based on Met Police published statistics. Use the area search for live crime data from data.police.uk.'}</p>
     </div>
 
     <div class="sidebar-section">
@@ -2757,7 +2757,7 @@ function updateSidebar(data) {
     <div class="sidebar-section" style="background:rgba(242,125,38,0.05);border-left:3px solid var(--orange);padding-left:21px;">
       <p class="info-note" style="margin:0;font-size:10px;line-height:1.5;">
         <strong>Want nearest stations &amp; ${currentCity==='nyc'?'property data':'energy ratings'}?</strong><br>
-        Use the ${currentCity==='nyc'?'ZIP code':'postcode'} search above for precise, location-specific ${currentCity==='nyc'?'transit and listing':'TfL and EPC'} data.
+        Use the area search above for precise, location-specific ${currentCity==='nyc'?'transit and listing':'TfL and EPC'} data.
       </p>
     </div>`;
 }
@@ -2767,12 +2767,12 @@ function postcodeNoiseSummary(analysis) {
   const alt = analysis.altEstimate;
   const ap = analysis.airportDists[0];
   if (analysis.noiseEstimate === 'High') {
-    return `This postcode is <strong>heavily affected by aircraft noise</strong>. ${ap.name} is only ${ap.dist.toFixed(1)}km away${d<2?', and you are within '+d.toFixed(1)+'km of a flight path':''}. ${alt!=='N/A'?'Planes pass overhead at approximately '+alt+', which is low enough to be clearly audible.':''} <strong>Visit during peak flying hours before making any offer.</strong>`;
+    return `This area is <strong>heavily affected by aircraft noise</strong>. ${ap.name} is only ${ap.dist.toFixed(1)}km away${d<2?', and you are within '+d.toFixed(1)+'km of a flight path':''}. ${alt!=='N/A'?'Planes pass overhead at approximately '+alt+', which is low enough to be clearly audible.':''} <strong>Visit during peak flying hours before making any offer.</strong>`;
   }
   if (analysis.noiseEstimate === 'Moderate') {
-    return `This postcode has <strong>moderate aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away. ${alt!=='N/A'?'Planes pass at roughly '+alt+' - audible outdoors on quiet days but typically manageable indoors.':''} <strong>Worth checking on a calm day with windows open.</strong>`;
+    return `This area has <strong>moderate aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away. ${alt!=='N/A'?'Planes pass at roughly '+alt+' - audible outdoors on quiet days but typically manageable indoors.':''} <strong>Worth checking on a calm day with windows open.</strong>`;
   }
-  return `This postcode has <strong>low aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away${d>5?' and flight paths are '+d.toFixed(1)+'km away':''}. Aircraft noise is unlikely to be a significant factor here.`;
+  return `This area has <strong>low aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away${d>5?' and flight paths are '+d.toFixed(1)+'km away':''}. Aircraft noise is unlikely to be a significant factor here.`;
 }
 
 function updateSidebarPostcode(analysis, boroughData) {
@@ -2799,7 +2799,7 @@ function updateSidebarPostcode(analysis, boroughData) {
       ? `<strong>Excellent pick.</strong> This location combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`
       : pcScore >= 6
         ? (pcQuiet >= 7 && a < 5 ? `<strong>Quiet but pricey.</strong> This location has peaceful skies, but property prices are above average.`
-          : pcQuiet < 5 && a >= 7 ? `<strong>Affordable but noisy.</strong> Good prices, but aircraft noise is a real factor at this postcode. Visit before committing.`
+          : pcQuiet < 5 && a >= 7 ? `<strong>Affordable but noisy.</strong> Good prices, but aircraft noise is a real factor here. Visit before committing.`
           : `<strong>Solid option.</strong> This location offers a reasonable balance of quiet skies, affordability, and growth.`)
         : pcScore >= 4
           ? (pcQuiet < 3 ? `<strong>Noise is a concern here.</strong> Aircraft regularly fly over this location. Check the noise overlay and visit at peak times before buying.`
@@ -2826,7 +2826,7 @@ function updateSidebarPostcode(analysis, boroughData) {
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${lv*10}%;background:${scoreColor(lv)};"></div></div>
             <span class="score-row-value">${lv}/10</span></div>
         </div>
-        <p class="info-note" style="margin-top:8px;font-size:9px;">Quiet Skies uses your postcode's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
+        <p class="info-note" style="margin-top:8px;font-size:9px;">Quiet Skies uses your location's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
       </div>
       <div class="sidebar-section">
         <h3>BOROUGH: ${boroughData.name.toUpperCase()}</h3>
@@ -2880,7 +2880,7 @@ function updateSidebarPostcode(analysis, boroughData) {
           </button>
         </div>
       </div>
-      ${analysis.isOutcode?'<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> This is an outcode (postcode district). For street-level crime, EPC and sold price data, enter a full postcode e.g. '+analysis.postcode+' 1AA.</p>':''}
+      ${analysis.isOutcode?'<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. '+analysis.postcode+' 1AA.</p>':''}
     </div>
     <div class="sidebar-section">
       <h3>WHAT YOU NEED TO KNOW ABOUT NOISE HERE</h3>
@@ -2957,7 +2957,7 @@ function updateSidebarPostcode(analysis, boroughData) {
     <div class="sidebar-section">
       <h3>YOUR NEXT STEPS</h3>
       <p class="property-note" style="margin-top:0;">
-        <strong>1. Check noise overlay</strong> - zoom into the map to see official ${currentCity==='nyc'?'FAA/BTS':'government'} noise contours at your ${currentCity==='nyc'?'location':'postcode'}.<br><br>
+        <strong>1. Check noise overlay</strong> - zoom into the map to see official ${currentCity==='nyc'?'FAA/BTS':'government'} noise contours at your location.<br><br>
         ${currentCity==='nyc'
           ? '<strong>2. Check FAA data</strong> - review flight tracking tools for JFK, LaGuardia and Newark to see which planes fly over this area.<br><br>'
           : '<strong>2. Use WebTrak</strong> - <a href="https://webtrak.emsbk.com/lhr6" target="_blank" style="color:var(--orange);">Heathrow WebTrak</a> shows exactly which planes fly over this location and how often.<br><br>'}
@@ -3127,18 +3127,25 @@ function renderFavouritesList() {
   const el = document.getElementById('favourites-list');
   if (!el) return;
   if (userFavourites.length === 0) {
-    el.innerHTML = '<p class="info-note">No saved locations yet. Search a postcode and click the bookmark icon to save it.</p>';
+    el.innerHTML = '<p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p>';
     return;
   }
-  el.innerHTML = userFavourites.map(f => `
-    <div class="fav-item" onclick="triggerSearch('${f.postcode.replace(/'/g, "\\'")}')">
-      <div>
-        <div style="font-weight:600;">${f.postcode}</div>
-        <div style="font-size:9px;color:var(--mid);">${f.borough || ''} - Noise: ${f.noiseLevel || 'N/A'} - Score: ${f.buyerScore || 'N/A'}/10</div>
+  const londonFavs = userFavourites.filter(f => f.city !== 'nyc');
+  const nycFavs = userFavourites.filter(f => f.city === 'nyc');
+  const renderGroup = (favs, label) => {
+    if (favs.length === 0) return '';
+    return `<div style="margin-top:8px;margin-bottom:6px;font-size:9px;letter-spacing:1px;color:var(--mid);text-transform:uppercase;font-weight:600;">${label}</div>`
+      + favs.map(f => `
+      <div class="fav-item" onclick="(async()=>{await switchCity('${f.city||'london'}');triggerSearch('${f.postcode.replace(/'/g, "\\'")}')})()">
+        <div>
+          <div style="font-weight:600;">${f.postcode}</div>
+          <div style="font-size:9px;color:var(--mid);">${f.borough || ''} &middot; Noise: ${f.noiseLevel || 'N/A'} &middot; Score: ${f.buyerScore || 'N/A'}/10</div>
+        </div>
+        <span class="fav-remove" onclick="event.stopPropagation();removeFavourite('${f.postcode.replace(/'/g, "\\'")}')">&times;</span>
       </div>
-      <span class="fav-remove" onclick="event.stopPropagation();removeFavourite('${f.postcode.replace(/'/g, "\\'")}')">&times;</span>
-    </div>
-  `).join('');
+    `).join('');
+  };
+  el.innerHTML = renderGroup(londonFavs, 'London') + renderGroup(nycFavs, 'New York');
 }
 
 // ============================================================
@@ -3221,11 +3228,11 @@ async function switchCity(city) {
   if (city === 'nyc') {
     titleEl.textContent = 'Sky Score';
     subtitleEl.textContent = 'NEW YORK - AI PROPERTY NOISE INTELLIGENCE';
-    searchInput.placeholder = 'Search ZIP code, area or borough';
+    searchInput.placeholder = 'Search area, neighbourhood or borough';
   } else {
     titleEl.textContent = 'Sky Score';
     subtitleEl.textContent = 'LONDON - AI PROPERTY NOISE INTELLIGENCE';
-    searchInput.placeholder = 'Search postcode, area or borough';
+    searchInput.placeholder = 'Search area, neighbourhood or borough';
   }
 
   // Reset chat for new city
@@ -3301,7 +3308,7 @@ async function switchCity(city) {
 
   // Reset sidebar
   document.getElementById('sidebar-content').innerHTML = `<div class="empty-state"><div class="icon">&#9678;</div>
-    <p>${city === 'nyc' ? 'Click a borough on the map to see noise analysis and property data for New York.' : 'Search by postcode (SW11 1AA), area (Chelsea, Twickenham) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.'}</p></div>`;
+    <p>${city === 'nyc' ? 'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.' : 'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.'}</p></div>`;
   document.getElementById('sidebar-title').textContent = 'PROPERTY INTELLIGENCE';
 }
 
@@ -3393,10 +3400,10 @@ function initPersonaSelector() {
     document.getElementById('persona-desc').textContent = PERSONAS[currentPersona].desc;
     recalcAllScores();
     renderBoroughRanking();
-    // Refresh sidebar if a borough is selected
+    // Refresh sidebar if a borough is selected (stay on Rankings tab)
     if (selectedBorough) {
       const data = getActiveBoroughData()[selectedBorough];
-      if (data) updateSidebar({name: selectedBorough, ...data});
+      if (data) updateSidebar({name: selectedBorough, ...data}, {switchToAnalysis: false});
     }
   });
 }
@@ -3693,7 +3700,7 @@ async function init() {
     // Build agent badges if multi-agent was used
     let agentBadges = '';
     if (result.agents && result.agents.length > 0) {
-      const agentLabels = {'NOISE_ANALYST':'Noise Analyst','PROPERTY_RESEARCHER':'Market Researcher','NEIGHBOURHOOD_SCORER':'Livability Scorer'};
+      const agentLabels = {'NOISE_ANALYST':'Noise Analyst','PROPERTY_RESEARCHER':'Property Researcher','NEIGHBOURHOOD_SCORER':'Neighbourhood Scorer'};
       const agentIcons = {'NOISE_ANALYST':'\u2708','PROPERTY_RESEARCHER':'\u2302','NEIGHBOURHOOD_SCORER':'\u2605'};
       const badges = result.agents.map(a => `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;"><span style="font-size:11px;">${agentIcons[a]||''}</span><span style="font-size:10px;color:#141414;font-weight:600;">${agentLabels[a]||a}</span><span style="font-size:9px;color:#A0A0A0;">&#10003;</span></div>`).join('');
       agentBadges = `<div style="margin-bottom:10px;padding:8px 10px;background:#D9D8D5;border-radius:6px;border-left:3px solid #141414;"><div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#141414;margin-bottom:4px;">Multi-Agent Analysis</div>${badges}</div>`;

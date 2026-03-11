@@ -2,7 +2,7 @@
 
 **AI-Powered Property Analysis for Aircraft Noise - London & New York**
 
-> Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite multi-agent orchestration, neighbourhood-level scoring across 290+ areas, live government data, and interactive D3.js mapping.
+> Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova 2 Lite multi-agent orchestration, neighbourhood-level scoring across 290+ areas, live government data, and interactive D3.js mapping.
 
 **[Live Demo](https://d1oe4ftwutjpf.cloudfront.net)** | Built for the Amazon Nova AI Hackathon
 
@@ -30,8 +30,8 @@ A free tool that combines **Amazon Nova AI** with **10+ live data sources** to g
 - Official government noise contour overlays (DEFRA WMS / BTS ArcGIS)
 
 ### Amazon Nova AI - 6 Modes + Multi-Agent System
-1. **Multi-turn chat** (Nova Lite) - conversational property advisor with context
-2. **Auto-insights** (Nova Lite) - instant AI summary for every search
+1. **Multi-turn chat** (Nova 2 Lite) - conversational property advisor with context
+2. **Auto-insights** (Nova 2 Lite) - instant AI summary for every search
 3. **Complex reasoning** (Nova Pro) - multi-criteria comparisons via multi-agent orchestration
 4. **Photo analysis** (Nova Pro multimodal) - upload listing photos for condition/glazing analysis
 5. **Document analysis** (Nova Pro multimodal) - upload EPC certificates or survey reports
@@ -39,7 +39,7 @@ A free tool that combines **Amazon Nova AI** with **10+ live data sources** to g
 
 ### Multi-Agent Orchestration
 Complex queries activate a multi-agent pipeline:
-- **Orchestrator** (Nova Lite) decomposes queries into sub-tasks
+- **Orchestrator** (Nova 2 Lite) decomposes queries into sub-tasks
 - **Noise Analyst**, **Property Researcher**, **Neighbourhood Scorer** agents run in parallel
 - **Synthesiser** (Nova Pro) combines agent outputs into unified recommendations
 - Frontend displays agent contribution badges on responses
@@ -71,7 +71,7 @@ Each of 290+ neighbourhoods gets a unique score computed from:
 ```
 CloudFront -> S3 (frontend)
                 |
-API Gateway -> Lambda (x10) -> Bedrock (Nova Lite + Pro)
+API Gateway -> Lambda (x10) -> Bedrock (Nova 2 Lite + Pro)
                              -> DynamoDB (favourites)
 ```
 

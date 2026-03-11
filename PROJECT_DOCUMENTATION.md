@@ -65,17 +65,17 @@
 
 ### Intelligent Model Routing
 The chat Lambda detects query complexity using keyword analysis:
-- Simple queries ("What's the noise like in Hounslow?") -> Nova Lite (fast, cheap)
+- Simple queries ("What's the noise like in Hounslow?") -> Nova 2 Lite (fast, cheap)
 - Complex queries ("Compare the top 5 boroughs for a family with 600K budget commuting to Canary Wharf") -> Nova Pro (deeper reasoning)
 - Keywords trigger Pro: compare, recommend, rank, investment, budget, commute, vs, negotiate, top 5, first time buyer, etc.
 
 ### Multi-Agent Orchestration
 For complex queries (comparisons, multi-criteria recommendations), the system activates a multi-agent pipeline:
 
-1. **Orchestrator** (Nova Lite) - analyses the query, decomposes it into sub-tasks, determines which specialist agents to invoke
-2. **Noise Analyst Agent** (Nova Lite) - assesses aircraft noise, airport proximity, flight path impact, and sound insulation needs
-3. **Property Researcher Agent** (Nova Lite) - analyses prices, affordability, growth trends, and investment potential
-4. **Neighbourhood Scorer Agent** (Nova Lite) - evaluates schools, crime, transport, healthcare, and overall livability
+1. **Orchestrator** (Nova 2 Lite) - analyses the query, decomposes it into sub-tasks, determines which specialist agents to invoke
+2. **Noise Analyst Agent** (Nova 2 Lite) - assesses aircraft noise, airport proximity, flight path impact, and sound insulation needs
+3. **Property Researcher Agent** (Nova 2 Lite) - analyses prices, affordability, growth trends, and investment potential
+4. **Neighbourhood Scorer Agent** (Nova 2 Lite) - evaluates schools, crime, transport, healthcare, and overall livability
 5. **Synthesiser** (Nova Pro) - combines all agent outputs into a single coherent recommendation with trade-offs
 
 Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova Pro synthesises the results. The frontend shows which agents contributed to each response.
@@ -93,7 +93,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 ### 2. MultiAgentFunction (`/multi-agent` POST)
 - **File:** `backend/lambdas/multi_agent/app.py`
 - **Purpose:** Multi-agent orchestration for complex queries
-- **Models:** Nova Lite (orchestrator + 3 agents) + Nova Pro (synthesiser)
+- **Models:** Nova 2 Lite (orchestrator + 3 agents) + Nova Pro (synthesiser)
 - **Timeout:** 90s (runs 4 Bedrock calls in parallel + synthesis)
 
 ### 3. AnalyzeImageFunction (`/analyze-image` POST)
@@ -138,7 +138,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 ## Frontend Architecture
 
 ### Single-Page Application
-- **File:** `index.html` (~3,900 lines)
+- **File:** `index.html` (~3,750 lines)
 - **Framework:** None (vanilla JavaScript)
 - **Mapping:** D3.js v7 with SVG-based interactive rendering
 - **Build step:** None required
@@ -280,7 +280,7 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 
 ```
 Sky Score/
-|-- index.html                     # Frontend SPA (~3,900 lines)
+|-- index.html                     # Frontend SPA (~3,750 lines)
 |-- HACKATHON_SUBMISSION.md        # Devpost submission text
 |-- PROJECT_DOCUMENTATION.md       # This file
 |-- AUDIT_REPORT.md                # Code audit findings
@@ -290,7 +290,7 @@ Sky Score/
     |-- template.yaml              # SAM/CloudFormation template
     |-- iam-policy.json            # IAM deployment policy (v6)
     |-- lambdas/
-        |-- chat/app.py            # AI chatbot (Nova Lite + Pro)
+        |-- chat/app.py            # AI chatbot (Nova 2 Lite + Pro)
         |-- multi_agent/app.py     # Multi-agent orchestration
         |-- analyze_image/app.py   # Photo analysis (Nova Pro)
         |-- analyze_document/app.py # Document analysis (Nova Pro)
@@ -312,7 +312,7 @@ Sky Score/
 | Lambda (10 functions) | ~$0.01 (free tier: 1M requests) |
 | API Gateway | ~$0.01 (free tier: 1M calls) |
 | DynamoDB | ~$0.01 (PAY_PER_REQUEST, minimal reads/writes) |
-| Bedrock Nova Lite | ~$0.10 (per 1000 chat messages) |
+| Bedrock Nova 2 Lite | ~$0.10 (per 1000 chat messages) |
 | Bedrock Nova Pro | ~$0.50 (per 100 complex queries/reports) |
 | **Total** | **< $1/month at low traffic** |
 

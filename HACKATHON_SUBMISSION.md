@@ -1,6 +1,6 @@
 # Sky Score - AI-Powered Property Analysis for Aircraft Noise
 
-Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova Lite chat, neighbourhood-level scoring across 290+ areas, live government data from 10+ sources, and interactive D3.js mapping - helping buyers avoid hidden aircraft noise before they commit.
+Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova 2 Lite chat, neighbourhood-level scoring across 290+ areas, live government data from 10+ sources, and interactive D3.js mapping - helping buyers avoid hidden aircraft noise before they commit.
 
 ---
 
@@ -19,6 +19,8 @@ That was the moment I knew this needed to exist: a single tool that brings toget
 ## What it does
 
 Sky Score is a free, AI-powered property analysis tool that combines **Amazon Nova 2 Lite and Nova Pro** with **10+ live data sources** across two cities to give buyers a complete noise and property picture for any location before they commit.
+
+Aircraft noise is the most common complaint from new homeowners, yet no major property platform shows noise data. In London alone, over 300,000 homes are sold each year, with millions more renting across London and New York. Buyers in these two cities live under some of the busiest airspace in the world — Heathrow handles 480,000+ flights per year, JFK and LaGuardia combined exceed 700,000 — and noise impacts property values by 10-20% in affected areas. Sky Score makes this invisible problem visible, for free, before anyone signs a contract.
 
 It covers **London** (33 boroughs, 5 airports, 5 heliports, ~143 neighbourhoods) and **New York City** (5 boroughs, 4 airports, ~151 neighbourhoods) - nearly **300 neighbourhoods** with individually computed scores.
 
@@ -49,18 +51,18 @@ Each of 290+ neighbourhoods gets a unique score computed from four factors:
 5. **Document analysis (multimodal)** - upload EPC certificates or building survey reports for extraction and interpretation
 6. **Report generation** - one-click 7-section Property Intelligence Reports (executive summary, noise, market, amenities, risks, investment outlook, verdict)
 
-The system automatically detects query complexity and routes to the appropriate model - Nova Lite handles ~70% of queries at a fraction of the cost.
+The system automatically detects query complexity and routes to the appropriate model - Nova 2 Lite handles ~70% of queries at a fraction of the cost.
 
 ### Multi-Agent Orchestration
 For complex queries (comparisons, multi-criteria recommendations, "best area for..." questions), the system activates a **multi-agent pipeline**:
 
-1. **Orchestrator** (Nova Lite) - analyses the query, decomposes it into sub-tasks, and determines which specialist agents to invoke
-2. **Noise Analyst Agent** (Nova Lite) - assesses aircraft noise, airport proximity, flight path impact, and sound insulation needs
-3. **Property Researcher Agent** (Nova Lite) - analyses prices, affordability, growth trends, and investment potential
-4. **Neighbourhood Scorer Agent** (Nova Lite) - evaluates schools, crime, transport, healthcare, and overall livability
+1. **Orchestrator** (Nova 2 Lite) - analyses the query, decomposes it into sub-tasks, and determines which specialist agents to invoke
+2. **Noise Analyst Agent** (Nova 2 Lite) - assesses aircraft noise, airport proximity, flight path impact, and sound insulation needs
+3. **Property Researcher Agent** (Nova 2 Lite) - analyses prices, affordability, growth trends, and investment potential
+4. **Neighbourhood Scorer Agent** (Nova 2 Lite) - evaluates schools, crime, transport, healthcare, and overall livability
 5. **Synthesiser** (Nova Pro) - combines all agent outputs into a single coherent recommendation with trade-offs
 
-Agents run **in parallel** using concurrent execution, then Nova Pro synthesises the results. The frontend shows which agents contributed to each response. Simple queries bypass the multi-agent system and go directly to Nova Lite for speed.
+Agents run **in parallel** using concurrent execution, then Nova Pro synthesises the results. The frontend shows which agents contributed to each response. Simple queries bypass the multi-agent system and go directly to Nova 2 Lite for speed.
 
 ### Data Layers (Toggle On/Off)
 | Layer | London Source | NYC Source |
@@ -80,7 +82,7 @@ Crime statistics, school quality ratings, transport connectivity, flood risk, ai
 ## How we built it
 
 ### Frontend
-A single HTML file (~3,900 lines) using **D3.js v7** for SVG-based interactive mapping - no React, no Leaflet, no Mapbox, no build step. Pure vanilla JavaScript with D3 for maximum control and zero API key dependencies. The map supports zoom, pan, click-to-search, postcode pin rendering, and dynamic data overlays.
+A single HTML file (~3,750 lines) using **D3.js v7** for SVG-based interactive mapping - no React, no Leaflet, no Mapbox, no build step. Pure vanilla JavaScript with D3 for maximum control and zero API key dependencies. The map supports zoom, pan, click-to-search, postcode pin rendering, and dynamic data overlays.
 
 ### Three Overlay Rendering Engines
 Government data services use different standards, so three rendering techniques were implemented:
@@ -103,10 +105,10 @@ Government data services use different standards, so three rendering techniques 
 | **AWS STS** | Cross-region Bedrock access |
 
 ### Multi-Agent System
-Complex queries are handled by a multi-agent orchestration pipeline. The Orchestrator Lambda receives the query, uses Nova Lite to classify intent and decompose it into sub-tasks, then invokes 3 specialist agents (Noise Analyst, Property Researcher, Neighbourhood Scorer) in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. Each agent runs a Nova Lite call with a domain-specific system prompt. Once all agents complete, Nova Pro synthesises their outputs into a unified recommendation. The frontend detects complex queries client-side and routes them to the `/multi-agent` endpoint, displaying agent contribution badges on responses.
+Complex queries are handled by a multi-agent orchestration pipeline. The Orchestrator Lambda receives the query, uses Nova 2 Lite to classify intent and decompose it into sub-tasks, then invokes 3 specialist agents (Noise Analyst, Property Researcher, Neighbourhood Scorer) in parallel using Python's `concurrent.futures.ThreadPoolExecutor`. Each agent runs a Nova 2 Lite call with a domain-specific system prompt. Once all agents complete, Nova Pro synthesises their outputs into a unified recommendation. The frontend detects complex queries client-side and routes them to the `/multi-agent` endpoint, displaying agent contribution badges on responses.
 
 ### Neighbourhood Scoring Engine
-For each of 290+ neighbourhoods, the engine calculates noise using Haversine distance from actual coordinates to every airport and flight path point, pulls neighbourhood-specific median prices, applies crime modifiers (-2 to +2 relative to borough average), and computes transport proximity to major station hubs. Five buyer personas dynamically reweight all scores in real-time.
+For each of 290+ neighbourhoods, the engine calculates noise using Haversine distance from actual coordinates to every airport and flight path point, pulls neighbourhood-specific median prices, applies crime modifiers (-2 to +2 relative to borough average), and computes transport proximity to major station hubs. Five buyer personas (Balanced, Family, Investor, First-Time, Quiet Life) dynamically reweight all scores in real-time.
 
 ### Data Integration
 10+ live APIs across both cities: DEFRA Strategic Noise Maps, Met Police, TfL Unified API, EPC Open Data, HM Land Registry, Postcodes.io, Environment Agency, BTS/DOT, FEMA NFHL, EPA, NYPD CompStat, and curated school/healthcare data.
@@ -119,7 +121,7 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 **Neighbourhood-level scoring at scale.** Property platforms give borough-level summaries, but a borough like Brooklyn contains neighbourhoods ranging from $420K (East New York) to $1.6M (DUMBO). Building a scoring engine that computes individual scores for 290+ neighbourhoods using actual geographic coordinates, neighbourhood-specific prices, and per-area crime adjustments was far more complex than borough-level averaging.
 
-**Multi-agent orchestration.** Designing the orchestrator to reliably decompose natural language queries into the right combination of specialist agents required careful prompt engineering. The orchestrator must return structured JSON specifying which agents to invoke and which areas to analyse. Getting Nova Lite to consistently produce valid JSON (handling edge cases like markdown code blocks in responses) and routing correctly - a noise-only question should invoke one agent, while "compare Hounslow vs Richmond for a family" should invoke all three in parallel - took significant iteration.
+**Multi-agent orchestration.** Designing the orchestrator to reliably decompose natural language queries into the right combination of specialist agents required careful prompt engineering. The orchestrator must return structured JSON specifying which agents to invoke and which areas to analyse. Getting Nova 2 Lite to consistently produce valid JSON (handling edge cases like markdown code blocks in responses) and routing correctly - a noise-only question should invoke one agent, while "compare Hounslow vs Richmond for a family" should invoke all three in parallel - took significant iteration.
 
 **Multi-city architecture.** Adding New York wasn't just adding data - it meant making every part of the system city-aware: search behaviour, currency symbols, property listing links, map projections, data layer sources, legend labels, noise scoring (different airports, different flight paths), and AI chat context. A single `currentCity` toggle controls the entire application.
 
@@ -137,15 +139,21 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 **Multi-city in one codebase.** London and New York - two of the world's busiest aviation markets with completely different data standards - running from one single-page application with instant city switching. This proves the concept scales globally.
 
-**Production-ready and free.** Deployed live on CloudFront, no sign-up, no paywall. Anyone can use it right now to check any location in London or New York before committing to a property.
+**Five buyer personas that reweight 290+ scores in real-time.** No other property tool lets users switch perspective and instantly see how every neighbourhood re-ranks. A family prioritises schools and safety; an investor prioritises growth; a noise-sensitive buyer prioritises quiet skies. The same data, five completely different rankings — computed client-side with zero latency.
 
-**~3,900 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk.
+**Auto-insights on every search.** Every postcode or neighbourhood search automatically triggers a Nova 2 Lite AI summary — no button press, no chat interaction needed. This means every single user gets AI-powered analysis, not just those who open the chatbot. It is the deepest possible integration: AI is woven into the core search experience, not bolted on as a sidebar.
+
+**Production-ready and free.** Deployed live on CloudFront, no sign-up, no paywall. Anyone can use it right now to check any location in London or New York before committing to a property. This is not a prototype — it is a working tool solving a real problem for real buyers today.
+
+**Addressing a genuine market gap.** Rightmove, Zoopla, Zillow, and StreetEasy collectively serve hundreds of millions of property searches per year. None of them show aircraft noise data, flight paths, or noise contours. Sky Score is the only free tool that combines noise intelligence with property data and AI analysis across two of the world's busiest aviation markets. The community impact is direct: buyers who would otherwise discover noise problems after signing a contract can now check any location in seconds.
+
+**~3,750 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk. Building interactive maps with D3 instead of Leaflet or Mapbox required writing custom projection logic, zoom behaviour, and overlay positioning from scratch — but it also meant zero API key dependencies and the ability to overlay WMS, ArcGIS REST, and tile-based government data in ways that standard map libraries do not support.
 
 ---
 
 ## What we learned
 
-**Multi-agent systems produce better results than single-model calls.** When a user asks "Compare Hounslow vs Richmond for a family with a 600K budget", a single Nova Pro call gives a decent answer. But splitting the query across specialist agents (noise, market, livability) running in parallel, then synthesising with Pro, produces a more structured and thorough analysis. Each agent focuses deeply on its domain without context window competition. Nova Lite handles the agent calls cheaply, and Pro only fires once for synthesis.
+**Multi-agent systems produce better results than single-model calls.** When a user asks "Compare Hounslow vs Richmond for a family with a 600K budget", a single Nova Pro call gives a decent answer. But splitting the query across specialist agents (noise, market, livability) running in parallel, then synthesising with Pro, produces a more structured and thorough analysis. Each agent focuses deeply on its domain without context window competition. Nova 2 Lite handles the agent calls cheaply, and Pro only fires once for synthesis.
 
 **Government data is powerful but fragmented.** The data buyers need already exists across DEFRA, BTS, FEMA, EPA, Environment Agency, and more. The challenge is that each agency publishes in a different format (WMS, ArcGIS REST, tiles, JSON APIs). Bridging these standards into a unified view is where the real value lies.
 
@@ -154,6 +162,8 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 **D3.js is powerful but demanding.** Building interactive maps with D3 instead of Leaflet or Mapbox meant writing custom projection logic, zoom behaviour, click handling, and overlay positioning from scratch. But it also meant zero API key dependencies, full control over rendering, and the ability to overlay WMS/ArcGIS/tile data in ways that standard map libraries don't easily support.
 
 **Multimodal AI has immediate practical value.** Buyers already take photos of properties and receive EPC certificates. Letting them upload these directly for AI analysis - glazing type assessment for noise, energy efficiency interpretation, survey defect extraction - creates value that text-only AI cannot.
+
+**Free tools create the most impact.** The decision to make Sky Score completely free, with no sign-up, no paywall, and no API keys, means the people who need it most — first-time buyers stretched on budget, renters with no negotiating power — can access the same intelligence that a paid consultant would provide. Removing every barrier to access maximises the community benefit.
 
 ---
 
