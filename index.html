@@ -457,7 +457,9 @@
       <div class="legend-row"><div class="legend-swatch" style="background:rgba(242,125,38,0.5);"></div><span>70-74 dB</span></div>
       <div class="legend-row"><div class="legend-swatch" style="background:rgba(242,38,38,0.5);"></div><span>75+ dB</span></div>
       <div style="margin:6px 0 4px;font-size:8px;color:var(--mid);letter-spacing:1px;">OPTIONAL LAYERS</div>
-      <div class="legend-row"><div class="legend-swatch" style="background:rgba(38,125,242,0.4);"></div><span id="legend-flood">FLOOD ZONE</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#1e3a8a;opacity:0.55;"></div><span id="legend-flood">HIGH FLOOD</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#3b82f6;opacity:0.55;"></div><span>MED FLOOD</span></div>
+      <div class="legend-row"><div class="legend-swatch" style="background:#93c5fd;opacity:0.55;"></div><span>LOW FLOOD</span></div>
       <div class="legend-row"><div class="legend-swatch" style="background:rgba(168,0,168,0.3);"></div><span id="legend-aq">AQMA ZONE (CITY-WIDE)</span></div>
     </div>
     <svg id="map-svg"></svg>
@@ -2335,9 +2337,26 @@ function renderDefraTiles() {
       .attr('preserveAspectRatio','none').style('pointer-events','none');
   }
 
-  // Flood risk overlay
-  const floodG = g.append('g').attr('class','layer-flood').style('opacity',0.7).style('filter','saturate(1.4) contrast(1.2)');
+  // Flood risk overlay — borough-level coloring (visible at all zoom levels) + WMS detail when zoomed in
+  const floodG = g.append('g').attr('class','layer-flood').style('opacity',0.55);
   if (!layers.flood) floodG.style('display','none');
+  // Borough-level flood risk fill
+  const floodColors = {high:'#1e3a8a', medium:'#3b82f6', low:'#93c5fd'};
+  const floodFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+  floodFeatures.forEach(f => {
+    const n = getName(f);
+    const extra = getExtraData(n);
+    const risk = extra?.flood || 'low';
+    floodG.append('path').attr('d', pathGenerator(f))
+      .attr('fill', floodColors[risk] || floodColors.low)
+      .attr('stroke', '#1e40af').attr('stroke-width', 0.5)
+      .style('pointer-events', 'none');
+  });
+  floodG.append('text').attr('x', 10).attr('y', 20)
+    .style('font-family','var(--font-mono)').style('font-size','9px')
+    .style('fill','#1e3a8a').style('font-weight','600').style('letter-spacing','1px')
+    .text(currentCity === 'nyc' ? 'FEMA FLOOD RISK BY BOROUGH' : 'EA FLOOD RISK BY BOROUGH');
+  // WMS detail overlay for zoomed-in street-level view
   floodG.append('image').attr('id','flood-wms-img')
     .attr('preserveAspectRatio','none').style('pointer-events','none');
 
