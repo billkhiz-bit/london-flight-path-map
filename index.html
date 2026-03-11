@@ -2237,7 +2237,7 @@ async function triggerSearch(query) {
     document.getElementById('sidebar-title').textContent = 'NOT FOUND';
     document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
-        <p>Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.</p>
+        <p>${currentCity === 'nyc' ? 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.' : 'Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.'}</p>
       </div>`;
     return;
   }
@@ -2676,7 +2676,7 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
   document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
   if (switchToAnalysis) switchTab('analysis');
   // Update viewing context for chatbot
-  currentViewingContext = `${data.name} borough - noise: ${data.impact}, avg price: ${Math.round(data.avg_price/1000)}K, score: ${data.score}/10`;
+  currentViewingContext = `${data.name} borough (${currentCity === 'nyc' ? 'New York City' : 'London'}) - noise: ${data.impact}, avg price: ${Math.round(data.avg_price/1000)}K, score: ${data.score}/10`;
 
   const priceK = Math.round(data.avg_price/1000);
   const noiseClass = data.impact==='severe'||data.impact==='high'||data.impact==='moderate-high'?'noise-high':
@@ -2860,7 +2860,7 @@ function updateSidebarPostcode(analysis, boroughData) {
   }
 
   // Update viewing context for context-aware chatbot
-  currentViewingContext = `${analysis.postcode} in ${analysis.borough} - noise: ${analysis.noiseEstimate}, nearest airport: ${analysis.airportDists[0].name} (${analysis.airportDists[0].dist.toFixed(1)}km)`;
+  currentViewingContext = `${analysis.postcode} in ${analysis.borough} (${currentCity === 'nyc' ? 'New York City' : 'London'}) - noise: ${analysis.noiseEstimate}, nearest airport: ${analysis.airportDists[0].name} (${analysis.airportDists[0].dist.toFixed(1)}km)`;
 
   // Set report data for AI report generation
   const reportExtra = getExtraData(analysis.borough);
@@ -2989,6 +2989,7 @@ function updateSidebarPostcode(analysis, boroughData) {
 
   // Fetch AI insight from Nova
   fetchInsight({
+    city: currentCity === 'nyc' ? 'New York City' : 'London',
     location: analysis.postcode,
     borough: analysis.borough,
     noise: analysis.noiseEstimate,
