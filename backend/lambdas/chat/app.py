@@ -33,12 +33,17 @@ BOROUGH_DATA = {
     "Redbridge": {"noise":"low","price":"£440K","growth":"4.5%","crime":"medium","crimeRate":78,"schools":"excellent","flood":"low","airQuality":"moderate","transport":"good","transportNote":"Central line, Elizabeth line"},
     "Barking": {"noise":"moderate","price":"£320K","growth":"6.0%","crime":"high","crimeRate":98,"schools":"improving","flood":"high","airQuality":"poor","transport":"good","transportNote":"District line, Hammersmith line, Overground, C2C"},
     "Havering": {"noise":"low","price":"£380K","growth":"4.0%","crime":"low","crimeRate":65,"schools":"good","flood":"medium","airQuality":"good","transport":"moderate","transportNote":"Elizabeth line, District line, C2C"},
-    "Barnet": {"noise":"low","price":"£560K","growth":"3.5%","crime":"medium","crimeRate":72,"schools":"excellent","flood":"low","airQuality":"good","transport":"good","transportNote":"Northern line, Thameslink"}
+    "Barnet": {"noise":"low","price":"£560K","growth":"3.5%","crime":"medium","crimeRate":72,"schools":"excellent","flood":"low","airQuality":"good","transport":"good","transportNote":"Northern line, Thameslink"},
+    "Manhattan": {"noise":"moderate","price":"$1,200K","growth":"2.8%","crime":"medium","crimeRate":45,"schools":"mixed","flood":"high","airQuality":"moderate","transport":"excellent","transportNote":"Extensive subway, PATH, ferry services"},
+    "Brooklyn": {"noise":"moderate","price":"$780K","growth":"4.5%","crime":"medium","crimeRate":38,"schools":"mixed","flood":"medium","airQuality":"moderate","transport":"excellent","transportNote":"Multiple subway lines, LIRR, ferry"},
+    "Queens": {"noise":"severe","price":"$620K","growth":"5.2%","crime":"medium","crimeRate":32,"schools":"good","flood":"medium","airQuality":"moderate","transport":"good","transportNote":"Subway, LIRR, JFK AirTrain. Near JFK and LaGuardia airports"},
+    "Bronx": {"noise":"moderate","price":"$380K","growth":"6.0%","crime":"high","crimeRate":58,"schools":"mixed","flood":"medium","airQuality":"poor","transport":"good","transportNote":"Multiple subway lines, Metro-North"},
+    "Staten Island": {"noise":"low","price":"$550K","growth":"3.5%","crime":"low","crimeRate":22,"schools":"good","flood":"high","airQuality":"good","transport":"limited","transportNote":"Staten Island Railway, ferry to Manhattan"}
 }
 
-SYSTEM_PROMPT = f"""You are an AI property advisor for London. You help property buyers assess areas based on real data.
+SYSTEM_PROMPT = f"""You are an AI property advisor for London and New York City. You help property buyers assess areas based on real data.
 
-You have access to data for 29 London boroughs covering: noise impact, average property prices, price growth, crime rates, school ratings, flood risk, air quality, and transport links.
+You have access to data for 29 London boroughs and 5 NYC boroughs covering: noise impact, average property prices, price growth, crime rates, school ratings, flood risk, air quality, and transport links.
 
 Borough data:
 {json.dumps(BOROUGH_DATA, indent=2)}
