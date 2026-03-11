@@ -1072,7 +1072,7 @@ function calcScores(data, city) {
 
   const result = {};
   for (const [name,d] of Object.entries(data)) {
-    const quiet = IMPACT_TO_QUIET[d.impact]||5;
+    const quiet = IMPACT_TO_QUIET[d.impact]??5;
     const afford = ((maxPrice - d.avg_price)/(maxPrice - minPrice))*10;
     const growth = (d.trend / maxTrend)*10;
     const live = getLiveScore(name, city || 'london');
