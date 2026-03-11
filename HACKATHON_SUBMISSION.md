@@ -71,8 +71,8 @@ Agents run **in parallel** using concurrent execution, then Nova Pro synthesises
 | Aircraft Noise | DEFRA WMS (dB Lden) | BTS/DOT ArcGIS (dB DNL) |
 | Road Noise | DEFRA WMS | DOT ArcGIS |
 | Transport Stations | 18 major hubs | 16 major hubs |
-| Flood Risk | Environment Agency WMS | FEMA NFHL ArcGIS REST |
-| Air Quality | DEFRA AQMA | EPA Nonattainment ArcGIS REST |
+| Flood Risk | Borough-level EA data + WMS detail | Borough-level FEMA data + ArcGIS REST |
+| Air Quality | DEFRA AQMA WMS | EPA Nonattainment ArcGIS REST |
 
 ### Additional Data Per Location
 Crime statistics, school quality ratings, transport connectivity, flood risk, air quality, property listing links (Zoopla/Rightmove/OnTheMarket for London; Zillow/StreetEasy/Redfin for NYC), sold prices from HM Land Registry, and EPC data.
@@ -86,9 +86,10 @@ A single HTML file (~3,750 lines) using **D3.js v7** for SVG-based interactive m
 
 ### Three Overlay Rendering Engines
 Government data services use different standards, so three rendering techniques were implemented:
-1. **WMS (Web Map Service)** - for DEFRA noise and Environment Agency flood data, using EPSG:4326 bbox
-2. **ArcGIS REST export** - for FEMA flood zones and EPA air quality, single image per viewport
-3. **Tile grid rendering** - for BTS aviation noise (tile-only service), computing slippy map tile coordinates and assembling a grid of `<image>` elements
+1. **WMS (Web Map Service)** - for DEFRA noise and air quality data, using EPSG:4326 bbox with zoom-aware viewport refresh
+2. **ArcGIS REST export** - for EPA air quality, single image per viewport
+3. **Tile grid rendering** - for BTS aviation/road noise (tile-only service), computing slippy map tile coordinates and assembling a grid of `<image>` elements
+4. **Borough-level SVG overlays** - flood risk data rendered as coloured borough polygons (high/medium/low), visible at all zoom levels
 
 ### Backend - 10 AWS Services, Fully Serverless
 | Service | Role |

@@ -175,13 +175,14 @@ Each of 290+ neighbourhoods gets a unique score computed from four factors:
 | Aircraft Noise | DEFRA WMS (dB Lden) | BTS/DOT ArcGIS (dB DNL) |
 | Road Noise | DEFRA WMS | DOT ArcGIS |
 | Transport Stations | 18 major hubs | 16 major hubs |
-| Flood Risk | Environment Agency WMS | FEMA NFHL ArcGIS REST |
-| Air Quality | DEFRA AQMA | EPA Nonattainment ArcGIS REST |
+| Flood Risk | Borough-level EA data + WMS at street zoom | Borough-level FEMA data + ArcGIS REST |
+| Air Quality | DEFRA AQMA WMS | EPA Nonattainment ArcGIS REST |
 
-Three overlay rendering engines handle different government data standards:
-1. **WMS** - for DEFRA noise and Environment Agency flood data (EPSG:4326 bbox)
-2. **ArcGIS REST export** - for FEMA flood zones and EPA air quality (single image per viewport)
-3. **Tile grid rendering** - for BTS aviation noise (computing slippy map tile coordinates)
+Four overlay rendering engines handle different government data standards:
+1. **WMS** - for DEFRA noise and air quality data (EPSG:4326 bbox, zoom-aware refresh)
+2. **ArcGIS REST export** - for EPA air quality (single image per viewport)
+3. **Tile grid rendering** - for BTS aviation/road noise (computing slippy map tile coordinates)
+4. **Borough SVG overlay** - flood risk rendered as colour-coded borough polygons (high/medium/low), visible at all zoom levels
 
 #### AI Features (Frontend)
 - **Chat FAB button** - "ASK AI" pill button with pulsing glow

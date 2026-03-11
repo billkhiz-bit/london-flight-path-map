@@ -90,9 +90,16 @@ cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=
 - Frontend communicates with backend via fetch to API Gateway endpoints
 - SAM stack name: `london-flight-map`
 
-## Known Issues (from audit March 10, 2026)
+## Known Issues (from audit March 10-11, 2026)
 
 See `AUDIT_REPORT.md` for full details. Remaining items:
 - **Hackathon submission** needs demo video and inline screenshots
 - **Favourites endpoint** has no authentication (post-hackathon)
 - **Accessibility**: zero ARIA attributes (post-hackathon)
+
+### Fixed March 11:
+- Contradictory verdicts ("quiet skies" for noisy areas) — `||` vs `??` bug in scoring + verdict rewrite
+- Backend data out of sync with frontend (15 noise mismatches, 4 missing boroughs)
+- CORS blocking DELETE on favourites, saved location click-to-navigate broken
+- Map overlays invisible (road noise too faint, air quality blend mode, flood WMS blank at city zoom)
+- All overlays now zoom-aware with debounced refresh

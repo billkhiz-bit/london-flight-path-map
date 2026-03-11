@@ -1,5 +1,5 @@
 # Sky Score — Full Project Audit Report
-**Date:** March 10, 2026 | **Deadline:** March 17, 2026
+**Date:** March 10-11, 2026 | **Deadline:** March 17, 2026
 
 ---
 
@@ -121,3 +121,34 @@ Only excludes `backend/samconfig.toml` and `backend/.aws-sam/`. Updated to inclu
 10. ~~Remove dead code from index.html~~ DONE (147 lines removed, 3,898 -> 3,751)
 11. Add basic accessibility attributes (post-hackathon)
 12. Add favourites authentication (post-hackathon)
+
+---
+
+## March 11, 2026 — Additional Fixes
+
+### Contradictory search verdicts (FIXED)
+- `getVerdict()` could say "quiet skies" for boroughs with severe/high noise
+- Root cause: `IMPACT_TO_QUIET[d.impact] || 5` treated score 0 (severe noise) as falsy, defaulting to 5
+- Fix: Changed `||` to `??` (nullish coalescing) in `calcScores()` and all display logic (8 instances)
+- Rewrote `getVerdict()` and inline postcode verdicts to check quiet score before allowing "quiet skies" text
+
+### Backend data sync (FIXED)
+- 15 noise level mismatches between frontend and backend Lambda data
+- 4 missing London boroughs in backend (Kensington and Chelsea, Brent, City of London, Harrow)
+- Borough naming inconsistencies (e.g., "Richmond" vs "Richmond upon Thames")
+- NYC boroughs missing from chat Lambda
+- Fix: Synced all backend BOROUGH_DATA to match frontend source of truth (34 London + 5 NYC)
+
+### CORS blocking DELETE for favourites (FIXED)
+- API Gateway AllowMethods was `GET,POST,OPTIONS` — missing `DELETE`
+- Fix: Added DELETE to `template.yaml` global CORS config
+
+### Saved locations click-to-navigate (FIXED)
+- Stored format "Chelsea (SW3 5JR)" couldn't be parsed by `triggerSearch()`
+- Fix: Added regex parsing to extract area name from saved-item format
+
+### Map overlay visibility (FIXED)
+- Road noise: opacity 0.5 too faint → increased to 0.65
+- Air quality: `mix-blend-mode: multiply` at 0.35 opacity made blue AQMA overlay invisible on cream background → removed blend mode, opacity to 0.5
+- Flood risk: DEFRA WMS only renders at street-level zoom (sub-pixel at city-wide) → replaced with borough-level flood risk coloring (high/medium/low as dark/medium/light blue)
+- All overlays now zoom-aware: `updateDefraTiles()` accounts for D3 zoom transform, debounced refresh on pan/zoom (400ms)
