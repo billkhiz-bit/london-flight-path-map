@@ -1501,8 +1501,18 @@ function updateDefraTiles() {
   const container = document.getElementById('map-container');
   const w = container.clientWidth;
   const h = container.clientHeight;
-  const topLeft = projection.invert([0, 0]);
-  const bottomRight = projection.invert([w, h]);
+
+  // Account for current zoom transform to get visible geographic extent
+  const svgNode = svg.node();
+  const currentTransform = d3.zoomTransform(svgNode);
+  const k = currentTransform.k, tx = currentTransform.x, ty = currentTransform.y;
+
+  // Convert screen corners to g-local coordinates (inverse of zoom transform)
+  const localTL = [(0 - tx) / k, (0 - ty) / k];
+  const localBR = [(w - tx) / k, (h - ty) / k];
+
+  const topLeft = projection.invert(localTL);
+  const bottomRight = projection.invert(localBR);
   if (!topLeft || !bottomRight) return;
 
   const minLat = bottomRight[1], minLon = topLeft[0];
@@ -1515,10 +1525,11 @@ function updateDefraTiles() {
     // Use D3 selection for proper SVG namespace handling
     const sel = d3.select('#' + id);
     if (sel.empty()) { console.warn('Overlay element not found:', id); return; }
+    // Position in g-local coordinates so zoom transform maps to screen correctly
     sel.attr('xlink:href', url)
        .attr('href', url)
-       .attr('x', 0).attr('y', 0)
-       .attr('width', w).attr('height', h);
+       .attr('x', localTL[0]).attr('y', localTL[1])
+       .attr('width', localBR[0] - localTL[0]).attr('height', localBR[1] - localTL[1]);
   }
 
   // Aircraft noise
@@ -2315,7 +2326,7 @@ function renderDefraTiles() {
   }
 
   // Road noise overlay
-  const roadG = g.append('g').attr('class','layer-defra-road').style('opacity',0.5);
+  const roadG = g.append('g').attr('class','layer-defra-road').style('opacity',0.65);
   if (!layers['defra-road']) roadG.style('display','none');
   if (currentCity === 'nyc') {
     roadG.attr('id','us-road-tiles');
@@ -2331,7 +2342,7 @@ function renderDefraTiles() {
     .attr('preserveAspectRatio','none').style('pointer-events','none');
 
   // Air quality overlay (AQMA zones / EPA nonattainment — city-wide designated areas)
-  const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.35).style('mix-blend-mode','multiply');
+  const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.5);
   if (!layers['air-quality']) aqG.style('display','none');
   aqG.append('image').attr('id','aq-wms-img')
     .attr('preserveAspectRatio','none').style('pointer-events','none');
@@ -3573,10 +3584,12 @@ async function init() {
     .scale(w<600?cityData.scale*0.625:cityData.scale).translate([w/2,h/2]);
   pathGenerator = d3.geoPath().projection(projection);
 
+  let zoomTileTimer = null;
   zoom = d3.zoom().scaleExtent([0.5,8]).on('zoom',(event)=>{
     g.attr('transform',event.transform);
-    // DEFRA tiles need re-rendering at new position
-    // We keep them in the transform group so they move with the map
+    // Debounced refresh of WMS tiles at new zoom/position for better resolution
+    clearTimeout(zoomTileTimer);
+    zoomTileTimer = setTimeout(()=>{ updateDefraTiles(); }, 400);
   });
   svg.call(zoom);
 
