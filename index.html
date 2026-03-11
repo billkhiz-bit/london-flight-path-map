@@ -2174,8 +2174,11 @@ function highlightAcItem(index) {
 }
 
 async function triggerSearch(query) {
-  const q = query.trim();
+  let q = query.trim();
   if (!q) return;
+  // Parse saved-item format "AreaName (Postcode)" back to just the area name
+  const savedMatch = q.match(/^(.+?)\s*\(([^)]+)\)$/);
+  if (savedMatch) q = savedMatch[1].trim();
   // Hide autocomplete dropdown
   const dd = document.getElementById('autocomplete-dropdown');
   dd.classList.remove('visible');
