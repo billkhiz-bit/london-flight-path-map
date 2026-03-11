@@ -1188,7 +1188,7 @@ function calcNeighbourhoodScores(city) {
     const growth = (borData.trend || boroughRaw[borough]?.trend || 3) / maxTrend * 10;
 
     // 4. LIVEABILITY - borough base adjusted by crime modifier
-    const borLive = borData.scores?.live || 5;
+    const borLive = borData.scores?.live ?? 5;
     // Each crime step = ~0.7 points of liveability adjustment (crime is 30% of live)
     const live = Math.max(0, Math.min(10, borLive - crimeMod * 0.7));
 
@@ -2653,8 +2653,8 @@ function renderPostcodePin(lat, lon) {
 // ============================================================
 function getVerdict(data) {
   const s = data.score;
-  const q = data.scores?.quiet || 5;
-  const a = data.scores?.afford || 5;
+  const q = data.scores?.quiet ?? 5;
+  const a = data.scores?.afford ?? 5;
   if (s >= 7.5) {
     if (q < 5) return `<strong>Great value despite noise.</strong> ${data.name} scores highly on affordability${a>=7?' and growth':''}, but aircraft noise is significant. Visit before committing.`;
     return `<strong>Excellent pick.</strong> ${data.name} combines quiet skies with affordable prices${a>=7?' and strong growth':''}.`;
@@ -2687,7 +2687,7 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
   const noisePct = {severe:100,high:80,'moderate-high':65,moderate:50,'low-moderate':30,low:15}[data.impact]||20;
   const noiseCol = noiseClass==='noise-high'?'#F27D26':noiseClass==='noise-moderate'?'#F2B826':'#26F27D';
 
-  const q = data.scores?.quiet||5, a = data.scores?.afford||5, gr = data.scores?.growth||5, lv = data.scores?.live||5;
+  const q = data.scores?.quiet??5, a = data.scores?.afford??5, gr = data.scores?.growth??5, lv = data.scores?.live??5;
   const pw = PERSONAS[currentPersona].weights;
 
   document.getElementById('sidebar-content').innerHTML = `
@@ -2804,7 +2804,7 @@ function updateSidebarPostcode(analysis, boroughData) {
   const extra = getExtraData(analysis.borough);
   if (boroughData) {
     const priceK = Math.round(boroughData.avg_price/1000);
-    const a=boroughData.scores?.afford||5, gr=boroughData.scores?.growth||5, lv=boroughData.scores?.live||5;
+    const a=boroughData.scores?.afford??5, gr=boroughData.scores?.growth??5, lv=boroughData.scores?.live??5;
     const pw = PERSONAS[currentPersona].weights;
     // Use postcode-specific noise to calculate Quiet Skies score
     const pcQuiet = Math.max(0, Math.min(10, 10 - analysis.noiseScore));
@@ -2872,7 +2872,7 @@ function updateSidebarPostcode(analysis, boroughData) {
     borough: analysis.borough,
     noise: analysis.noiseEstimate,
     noise_score: analysis.noiseScore,
-    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford||5)*0.35 + (boroughData.scores?.growth||5)*0.25)*10)/10) : 'N/A',
+    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford??5)*0.35 + (boroughData.scores?.growth??5)*0.25)*10)/10) : 'N/A',
     airport: analysis.airportDists[0].name,
     airport_dist: analysis.airportDists[0].dist.toFixed(1),
     path_dist: analysis.nearestPathDist.toFixed(1),
@@ -2899,7 +2899,7 @@ function updateSidebarPostcode(analysis, boroughData) {
             <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${analysis.postcode}</div>
             <div style="font-size:10px;color:var(--mid);">${analysis.ward}, ${analysis.borough}</div>
           </div>
-          <button class="fav-btn ${isFavourite(analysis.postcode)?'saved':''}" onclick="toggleFavourite('${analysis.postcode.replace(/'/g,"\\'")}','${analysis.borough.replace(/'/g,"\\'")}','${analysis.noiseEstimate}',${boroughData?(Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4+(boroughData.scores?.afford||5)*0.35+(boroughData.scores?.growth||5)*0.25)*10)/10):'0'})">
+          <button class="fav-btn ${isFavourite(analysis.postcode)?'saved':''}" onclick="toggleFavourite('${analysis.postcode.replace(/'/g,"\\'")}','${analysis.borough.replace(/'/g,"\\'")}','${analysis.noiseEstimate}',${boroughData?(Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4+(boroughData.scores?.afford??5)*0.35+(boroughData.scores?.growth??5)*0.25)*10)/10):'0'})">
             <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode)?'SAVED':'SAVE'}
           </button>
         </div>
@@ -2997,7 +2997,7 @@ function updateSidebarPostcode(analysis, boroughData) {
     borough: analysis.borough,
     noise: analysis.noiseEstimate,
     noise_score: analysis.noiseScore,
-    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford||5)*0.35 + (boroughData.scores?.growth||5)*0.25)*10)/10) : 'N/A',
+    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford??5)*0.35 + (boroughData.scores?.growth??5)*0.25)*10)/10) : 'N/A',
     airport: analysis.airportDists[0].name,
     airport_dist: analysis.airportDists[0].dist.toFixed(1),
     path_dist: analysis.nearestPathDist.toFixed(1),
