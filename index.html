@@ -1543,11 +1543,22 @@ function updateDefraTiles() {
     setImg('defra-aircraft-img', getWmsTileUrl(DEFRA_WMS.aircraft.all.url, DEFRA_WMS.aircraft.all.layer, bbox, w, h));
   }
 
-  // Road noise
+  // Road noise — only load WMS when zoomed in (data too dense at city-wide zoom, DEFRA server times out)
+  const lonSpan = maxLon - minLon;
+  const zoomedIn = lonSpan < 0.25; // roughly borough-level or closer
   if (isNyc) {
     renderTileGrid('us-road-tiles', US_MAP_SERVICES.road.url, minLat, minLon, maxLat, maxLon);
   } else {
-    setImg('defra-road-img', getWmsTileUrl(DEFRA_WMS.road.url, DEFRA_WMS.road.layer, bbox, w, h));
+    const hintEl = d3.select('#road-zoom-hint');
+    if (zoomedIn) {
+      setImg('defra-road-img', getWmsTileUrl(DEFRA_WMS.road.url, DEFRA_WMS.road.layer, bbox, w, h));
+      if (!hintEl.empty()) hintEl.style('display','none');
+    } else {
+      // Clear image at city-wide zoom, show hint
+      const sel = d3.select('#defra-road-img');
+      if (!sel.empty()) sel.attr('href', null).attr('xlink:href', null);
+      if (!hintEl.empty()) hintEl.style('display',null);
+    }
   }
 
   // Flood risk
@@ -2337,6 +2348,10 @@ function renderDefraTiles() {
   } else {
     roadG.append('image').attr('id','defra-road-img')
       .attr('preserveAspectRatio','none').style('pointer-events','none');
+    roadG.append('text').attr('id','road-zoom-hint').attr('x', 10).attr('y', 20)
+      .style('font-family','var(--font-mono)').style('font-size','9px')
+      .style('fill','#7c3aed').style('font-weight','600').style('letter-spacing','1px')
+      .text('ZOOM IN TO SEE DEFRA ROAD NOISE CONTOURS');
   }
 
   // Flood risk overlay — borough-level coloring (visible at all zoom levels) + WMS detail when zoomed in
