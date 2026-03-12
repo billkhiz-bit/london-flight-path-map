@@ -147,14 +147,15 @@ def handler(event, context):
         messages.append({'role': 'user', 'content': [{'text': user_text}]})
 
         # Route complex queries to Nova Pro for deeper reasoning
-        if is_complex_query(message):
+        use_pro = is_complex_query(message)
+        if use_pro:
             reply = call_nova_pro(messages, max_tokens=1536)
         else:
             reply = call_nova(messages, max_tokens=1024)
-        return response(200, {'reply': reply, 'model': 'pro' if is_complex_query(message) else 'lite'})
+        return response(200, {'reply': reply, 'model': 'pro' if use_pro else 'lite'})
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def call_nova(messages, max_tokens=1024):

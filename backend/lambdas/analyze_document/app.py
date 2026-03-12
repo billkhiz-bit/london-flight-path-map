@@ -53,6 +53,13 @@ def handler(event, context):
         if not doc_data:
             return response(400, {'error': 'Document data is required'})
 
+        ALLOWED_FORMATS = {'jpeg', 'png', 'gif', 'webp', 'pdf'}
+        if doc_format not in ALLOWED_FORMATS:
+            return response(400, {'error': f'Unsupported format. Use one of: {ALLOWED_FORMATS}'})
+
+        if len(doc_data) > 2_000_000:
+            return response(400, {'error': 'Document too large (max ~1.5MB)'})
+
         prompt = EPC_PROMPT if doc_type == 'epc' else SURVEY_PROMPT
 
         # Build content based on format
@@ -109,8 +116,8 @@ def handler(event, context):
             'disclaimer': 'AI-generated summary. Always read the full document and consult qualified professionals before making property decisions.'
         })
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def response(status, body):

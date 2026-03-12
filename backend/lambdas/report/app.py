@@ -94,8 +94,8 @@ def handler(event, context):
 
         return response(200, {'report': report})
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def response(status, body):

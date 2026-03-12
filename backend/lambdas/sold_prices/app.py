@@ -40,8 +40,8 @@ def handler(event, context):
 
         return response(200, {'postcode': postcode, 'transactions': results})
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def response(status, body):

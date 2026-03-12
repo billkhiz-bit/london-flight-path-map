@@ -29,6 +29,13 @@ def handler(event, context):
         if not image_data:
             return response(400, {'error': 'Image data is required'})
 
+        ALLOWED_FORMATS = {'jpeg', 'png', 'gif', 'webp'}
+        if image_format not in ALLOWED_FORMATS:
+            return response(400, {'error': f'Unsupported format. Use one of: {ALLOWED_FORMATS}'})
+
+        if len(image_data) > 1_000_000:
+            return response(400, {'error': 'Image too large (max ~750KB)'})
+
         if analysis_type == 'listing':
             user_prompt = 'Analyze this property listing photo. What can you tell a potential buyer about this property from the image? Focus on condition, type, and any noise-insulation features like window glazing.'
         elif analysis_type == 'street':
@@ -70,8 +77,8 @@ def handler(event, context):
 
         return response(200, {'analysis': analysis})
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def response(status, body):

@@ -69,8 +69,8 @@ def handler(event, context):
 
         return response(405, {'error': 'Method not allowed'})
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def response(status, body):

@@ -129,6 +129,7 @@ Resources:
     Properties:
       CodeUri: lambdas/nhs/
       Handler: app.handler
+      Timeout: 45
       Events:
         NhsGet:
           Type: Api

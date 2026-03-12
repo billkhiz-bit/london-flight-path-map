@@ -251,8 +251,8 @@ def handler(event, context):
             }
         })
 
-    except Exception as e:
-        return api_response(500, {'error': str(e)})
+    except Exception:
+        return api_response(500, {'error': 'Internal server error'})
 
 
 def api_response(status, body):

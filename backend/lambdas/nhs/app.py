@@ -14,6 +14,9 @@ def handler(event, context):
 
         lat, lon = float(lat), float(lon)
 
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            return response(400, {'error': 'lat/lon out of range'})
+
         # NHS Service Search API - official, free, no key required
         # Search for GP surgeries near the location
         gp_results = search_nhs_services(lat, lon, 'GP')
@@ -27,8 +30,8 @@ def handler(event, context):
             'hospitals': hospital_results
         })
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def search_nhs_services(lat, lon, service_type):

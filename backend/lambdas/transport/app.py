@@ -17,6 +17,9 @@ def handler(event, context):
 
         lat, lon = float(lat), float(lon)
 
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            return response(400, {'error': 'lat/lon out of range'})
+
         # 1. Find nearest stations (tube, rail, DLR) within 1km
         stations = fetch_nearby_stations(lat, lon)
 
@@ -33,8 +36,8 @@ def handler(event, context):
             'location': {'lat': lat, 'lon': lon}
         })
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def fetch_nearby_stations(lat, lon):
@@ -47,8 +50,8 @@ def fetch_nearby_stations(lat, lon):
     try:
         with urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode())
-    except Exception as e:
-        return [{'error': str(e)}]
+    except Exception:
+        return []
 
     stops = data.get('stopPoints', [])
     results = []

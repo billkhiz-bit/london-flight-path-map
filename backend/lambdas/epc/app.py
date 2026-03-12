@@ -111,8 +111,8 @@ def handler(event, context):
             'certificates': certs[:10]
         })
 
-    except Exception as e:
-        return response(500, {'error': str(e)})
+    except Exception:
+        return response(500, {'error': 'Internal server error'})
 
 
 def rating_to_band(rating):
