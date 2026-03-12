@@ -31,7 +31,7 @@ Available commands:
   /project:deploy-frontend   Upload to S3 + invalidate CloudFront
   /project:deploy-backend    SAM build + deploy Lambdas
   /project:deploy-all        Deploy everything
-  /project:preflight         Pre-deploy health check
+  /preflight                 Pre-commit quality checks (lint, security, a11y)
   /project:test-apis         Test all API endpoints
   /project:review            Summarise recent changes
   /project:hackathon-prep    Review submission readiness
@@ -48,6 +48,14 @@ Sky Score — a full-stack property noise & livability scoring tool for NYC/Lond
 Always use "Sky Score" in all public-facing files and UI text.
 
 ## Do NOT add Co-Authored-By lines to git commits
+
+## Quality & Plugins
+
+- Run `/preflight` before every commit — checks ESLint, HTML validation, Prettier, Python lambdas, security, and Playwright tests
+- Use **context7** to look up D3.js, AWS SDK, or SAM docs before using unfamiliar APIs
+- Use **security-guidance** when editing Lambda functions or API Gateway config
+- Use **code-review** on all changed files before committing
+- Use **frontend-design** when modifying the UI in index.html
 
 ## Build & Deploy
 
