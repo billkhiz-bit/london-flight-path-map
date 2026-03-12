@@ -108,6 +108,14 @@ def handler(event, context):
         # Mode 1: Auto-insight for a searched location
         if mode == 'insight':
             location_data = body.get('locationData', {})
+            defaults = {
+                'city': 'Unknown', 'location': 'Unknown', 'borough': 'Unknown',
+                'noise': 'Unknown', 'noise_score': 'N/A', 'score': 'N/A',
+                'airport': 'Unknown', 'airport_dist': 'N/A', 'path_dist': 'N/A',
+                'crime': 'Unknown', 'schools': 'Unknown'
+            }
+            for k, v in defaults.items():
+                location_data.setdefault(k, v)
             prompt = INSIGHT_PROMPT.format(**location_data)
             reply = call_nova(
                 [{'role': 'user', 'content': [{'text': prompt}]}],

@@ -220,8 +220,12 @@ def handler(event, context):
                 for agent in agents_to_run
             }
             for future in concurrent.futures.as_completed(futures):
-                result = future.result()
-                agent_results[result['agent']] = result['analysis']
+                agent_name = futures[future]
+                try:
+                    result = future.result()
+                    agent_results[result['agent']] = result['analysis']
+                except Exception as agent_err:
+                    agent_results[agent_name] = f"Analysis unavailable: agent encountered an error"
 
         # Step 3: Synthesise all agent outputs with Nova Pro
         synthesis_input = f"User query: {user_message}\n\n"

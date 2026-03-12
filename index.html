@@ -28,7 +28,7 @@
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
   :root {
     --bg:#E4E3E0;--dark:#141414;--mid:#636363;--light:#C8C7C4;--white:#FAFAF9;
-    --orange:#F27D26;--blue:#267DF2;--yellow:#F2B826;--green:#26F27D;--red:#F22626;
+    --orange:#F27D26;--blue:#267DF2;--yellow:#9A7400;--green:#0A7A3E;--red:#F22626;
     --font-mono:'JetBrains Mono',monospace;--font-sans:'Inter',sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -480,7 +480,7 @@
 
   <!-- AI Chatbot -->
   <button type="button" class="chat-fab" id="chat-fab" title="Ask AI about any area"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="10" r="1.2"/><circle cx="16" cy="10" r="1.2"/></svg>ASK AI</button>
-  <div class="chat-panel" id="chat-panel">
+  <div class="chat-panel" id="chat-panel" role="dialog" aria-label="AI Property Advisor">
     <div class="chat-header">
       <span>AI PROPERTY ADVISOR</span>
       <span class="chat-close" id="chat-close">&times;</span>
@@ -492,14 +492,14 @@
       <button type="button" class="chat-upload-btn" id="chat-upload-btn" title="Upload property photo for AI analysis">
         <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
       </button>
-      <input type="text" id="chat-input" placeholder="Ask about any area...">
+      <input type="text" id="chat-input" placeholder="Ask about any area..." aria-label="Ask AI about any area">
       <button type="button" id="chat-send">ASK</button>
     </div>
     <input type="file" id="chat-image-input" accept="image/*" style="display:none">
   </div>
 
   <!-- Report Modal -->
-  <div class="report-modal" id="report-modal">
+  <div class="report-modal" id="report-modal" role="dialog" aria-modal="true" aria-label="Property Intelligence Report">
     <div class="report-content" id="report-content">
       <span class="report-close" onclick="closeReport()">&times;</span>
       <div id="report-body"><span class="crime-loading">Generating report with Amazon Nova Pro...</span></div>
@@ -515,7 +515,7 @@
     </div>
     <div class="search-box">
       <div class="search-wrapper">
-        <input type="text" id="search-input" placeholder="Search area, neighbourhood or borough" autocomplete="off">
+        <input type="text" id="search-input" placeholder="Search area, neighbourhood or borough" autocomplete="off" aria-label="Search area, neighbourhood or borough">
         <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
       </div>
       <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
