@@ -11,10 +11,10 @@ Type TW3 (Hounslow) and hit search. Show the sidebar data loading - noise assess
 
 "Search any postcode and get an instant analysis - noise level, distance to airports, flight paths, crime, schools, transport, and an AI-generated insight."
 
-MAP LAYERS (15 seconds)
-Toggle on Flight Paths, then Aircraft Noise overlay. Zoom in slightly.
+MAP LAYERS (20 seconds)
+Toggle on Flight Paths, then Aircraft Noise overlay. Toggle Flood Risk - show the blue borough coloring. Toggle Air Quality - show the red/amber/green borough coloring. Toggle Road Noise and zoom into a borough to see the detailed DEFRA contours appear.
 
-"Toggle official government noise contours from DEFRA directly on the map, alongside flight paths, flood risk, and air quality data."
+"Toggle data layers directly on the map. Flood risk and air quality show borough-level ratings at a glance. Zoom in and road noise contours from DEFRA appear street by street. All data comes from official government sources."
 
 RANKINGS + PERSONAS (20 seconds)
 Click the Rankings tab. Show the neighbourhood list. Switch persona from Balanced to Family - show scores recalculate.

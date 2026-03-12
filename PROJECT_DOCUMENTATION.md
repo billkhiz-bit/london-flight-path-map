@@ -173,7 +173,7 @@ Each of 290+ neighbourhoods gets a unique score computed from four factors:
 |-------|-------------|-----------|
 | Flight Paths | Manual path data | Manual path data |
 | Aircraft Noise | DEFRA WMS (dB Lden) | BTS/DOT ArcGIS (dB DNL) |
-| Road Noise | DEFRA WMS | DOT ArcGIS |
+| Road Noise | DEFRA WMS (zoom-triggered, borough level+) | DOT ArcGIS |
 | Transport Stations | 18 major hubs | 16 major hubs |
 | Flood Risk | Borough-level EA data + WMS at street zoom | Borough-level FEMA data + ArcGIS REST |
 | Air Quality | Borough-level coloring + DEFRA AQMA WMS | Borough-level coloring + EPA Nonattainment ArcGIS REST |

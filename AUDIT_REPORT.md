@@ -153,3 +153,29 @@ Only excludes `backend/samconfig.toml` and `backend/.aws-sam/`. Updated to inclu
 - Flood risk: DEFRA WMS only renders at street-level zoom (sub-pixel at city-wide) → replaced with borough-level flood risk coloring (high/medium/low as dark/medium/light blue)
 - Save button: added to borough click view (was only in postcode search view)
 - All overlays now zoom-aware: `updateDefraTiles()` accounts for D3 zoom transform, debounced refresh on pan/zoom (400ms)
+
+## March 12, 2026 — Additional Fixes
+
+### Air quality overlay invisible (FIXED)
+- WMS-only overlay at 0.5 opacity was too subtle on cream background
+- Fix: Replaced with borough-level colored polygons (poor=red, moderate=amber, good=green) matching flood risk approach
+- WMS detail image retained on top for zoomed-in detail
+- Updated legend to 3-tier scale (POOR AIR / MOD AIR / GOOD AIR)
+- Works for both London (BOROUGH_EXTRA.airQuality) and NYC (NYC_BOROUGH_EXTRA.airQuality)
+
+### Save button missing from borough view (FIXED)
+- Save/bookmark button only existed in `updateSidebarPostcode()` (postcode/area search)
+- Fix: Added save button to `updateSidebar()` (borough click view) using borough name as identifier
+- Users can now save boroughs as favourites, not just postcodes/areas
+
+### Road noise overlay blank at city-wide zoom (FIXED)
+- DEFRA road noise WMS times out at city-wide zoom due to extreme data density (every road in London)
+- Fix: Added zoom-level check — only requests WMS when zoomed to borough level or closer (lon span < 0.25°)
+- Shows "ZOOM IN TO SEE DEFRA ROAD NOISE CONTOURS" hint label at city-wide zoom
+- NYC tile-based road noise unaffected (BTS tiles work at all zoom levels)
+
+### Live aircraft not visible (NOTED — not a code bug)
+- OpenSky Network API returns fewer aircraft at night (tested at 23:40 UTC — only 2 in-flight over London)
+- API has CORS enabled, returns valid data — code is functioning correctly
+- Rate limit: ~10 requests/min for anonymous users; frequent toggling may temporarily show no results
+- Daytime usage will show significantly more aircraft

@@ -102,7 +102,7 @@ All APIs used are **free, public, and require no authentication**.
 |-------|---------|--------|
 | Flight Paths (animated) | ON | Curated route data |
 | DEFRA Aircraft Noise | ON | environment.data.gov.uk WMS |
-| DEFRA Road Noise | OFF | environment.data.gov.uk WMS |
+| DEFRA Road Noise | OFF | environment.data.gov.uk WMS (loads on zoom in) |
 | Live Aircraft | OFF | OpenSky Network API |
 | Transport Stations | OFF | Curated (18 major stations) |
 | Flood Risk Zones | OFF | Borough-level coloring (EA data) + WMS detail at street zoom |

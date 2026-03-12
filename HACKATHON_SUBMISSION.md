@@ -69,7 +69,7 @@ Agents run **in parallel** using concurrent execution, then Nova Pro synthesises
 |-------|-------------|-----------|
 | Flight Paths | Manual path data (8 routes) | Manual path data (8 routes) |
 | Aircraft Noise | DEFRA WMS (dB Lden) | BTS/DOT ArcGIS (dB DNL) |
-| Road Noise | DEFRA WMS | DOT ArcGIS |
+| Road Noise | DEFRA WMS (zoom-triggered) | DOT ArcGIS |
 | Transport Stations | 18 major hubs | 16 major hubs |
 | Flood Risk | Borough-level EA data + WMS detail | Borough-level FEMA data + ArcGIS REST |
 | Air Quality | Borough-level coloring + DEFRA AQMA WMS | Borough-level coloring + EPA Nonattainment ArcGIS REST |
