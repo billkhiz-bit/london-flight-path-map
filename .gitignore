@@ -15,3 +15,8 @@ node_modules/
 reports/
 playwright-report/
 test-results/
+
+# Legacy prototype files
+london_flight_paths.html
+london_flight_paths.py
+test-docs/

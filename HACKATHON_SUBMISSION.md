@@ -82,7 +82,7 @@ Crime statistics, school quality ratings, transport connectivity, flood risk, ai
 ## How we built it
 
 ### Frontend
-A single HTML file (~3,750 lines) using **D3.js v7** for SVG-based interactive mapping - no React, no Leaflet, no Mapbox, no build step. Pure vanilla JavaScript with D3 for maximum control and zero API key dependencies. The map supports zoom, pan, click-to-search, postcode pin rendering, and dynamic data overlays.
+A single HTML file (~3,870 lines) using **D3.js v7** for SVG-based interactive mapping - no React, no Leaflet, no Mapbox, no build step. Pure vanilla JavaScript with D3 for maximum control and zero API key dependencies. The map supports zoom, pan, click-to-search, postcode pin rendering, and dynamic data overlays.
 
 ### Three Overlay Rendering Engines
 Government data services use different standards, so three rendering techniques were implemented:
@@ -148,7 +148,7 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 **Addressing a genuine market gap.** Rightmove, Zoopla, Zillow, and StreetEasy collectively serve hundreds of millions of property searches per year. None of them show aircraft noise data, flight paths, or noise contours. Sky Score is the only free tool that combines noise intelligence with property data and AI analysis across two of the world's busiest aviation markets. The community impact is direct: buyers who would otherwise discover noise problems after signing a contract can now check any location in seconds.
 
-**~3,750 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk. Building interactive maps with D3 instead of Leaflet or Mapbox required writing custom projection logic, zoom behaviour, and overlay positioning from scratch — but it also meant zero API key dependencies and the ability to overlay WMS, ArcGIS REST, and tile-based government data in ways that standard map libraries do not support.
+**~3,870 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk. Building interactive maps with D3 instead of Leaflet or Mapbox required writing custom projection logic, zoom behaviour, and overlay positioning from scratch — but it also meant zero API key dependencies and the ability to overlay WMS, ArcGIS REST, and tile-based government data in ways that standard map libraries do not support.
 
 ---
 

@@ -92,7 +92,7 @@ API Gateway -> Lambda (x10) -> Bedrock (Nova 2 Lite + Pro)
 
 ## Tech Stack
 
-- **Frontend**: Single HTML file (~3,750 lines), D3.js v7, vanilla JS - no frameworks, no build step
+- **Frontend**: Single HTML file (~3,870 lines), D3.js v7, vanilla JS - no frameworks, no build step
 - **Backend**: Python 3.11 Lambdas, SAM template
 - **AI**: Amazon Bedrock - Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`) + Nova Pro (`us.amazon.nova-pro-v1:0`)
 - **Data**: DEFRA, BTS, FEMA, EPA, TfL, Land Registry, Postcodes.io, Met Police, NYPD CompStat

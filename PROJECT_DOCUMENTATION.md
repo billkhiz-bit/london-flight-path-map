@@ -138,7 +138,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 ## Frontend Architecture
 
 ### Single-Page Application
-- **File:** `index.html` (~3,750 lines)
+- **File:** `index.html` (~3,870 lines)
 - **Framework:** None (vanilla JavaScript)
 - **Mapping:** D3.js v7 with SVG-based interactive rendering
 - **Build step:** None required
@@ -281,7 +281,7 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 
 ```
 Sky Score/
-|-- index.html                     # Frontend SPA (~3,750 lines)
+|-- index.html                     # Frontend SPA (~3,870 lines)
 |-- HACKATHON_SUBMISSION.md        # Devpost submission text
 |-- PROJECT_DOCUMENTATION.md       # This file
 |-- AUDIT_REPORT.md                # Code audit findings

@@ -81,7 +81,8 @@ All in `catch` blocks (console.warn/console.error). Acceptable for production �
 Lines 3127, 3138, 3142, 3145 in `updateSidebarPostcode()` — low risk since underlying functions have internal try/catch.
 
 ### Accessibility
-Significant gap — zero ARIA attributes, no labels, no keyboard navigation. Full compliance is post-hackathon work.
+~~Significant gap — zero ARIA attributes, no labels, no keyboard navigation. Full compliance is post-hackathon work.~~
+**FIXED (March 12):** Added 24+ ARIA attributes including `role="dialog"`, `role="tablist"`, `role="tab"`, `role="tabpanel"`, `role="button"`, `aria-label`, `aria-pressed`, `aria-selected`, `aria-modal`, `aria-controls`. Added keyboard support (Enter/Space) for layer toggles. Replaced `<div>` containers with semantic `<main>`, `<aside>`, `<nav>` landmarks. Darkened yellow/green CSS variables for WCAG 4.5:1 contrast ratio. Remaining: focus trapping for modals, skip-nav link, full ARIA combobox for search (post-hackathon).
 
 ### Other
 - Line 3889: Fragile resize handler calls `renderNycBoroughs()` without features argument
@@ -118,8 +119,8 @@ Only excludes `backend/samconfig.toml` and `backend/.aws-sam/`. Updated to inclu
 7. Add demo video to hackathon submission
 8. Add screenshots to hackathon submission
 9. ~~LICENSE file~~ ALREADY EXISTS
-10. ~~Remove dead code from index.html~~ DONE (147 lines removed, 3,898 -> 3,751)
-11. Add basic accessibility attributes (post-hackathon)
+10. ~~Remove dead code from index.html~~ DONE (147 lines removed, 3,898 -> 3,751, now ~3,870 after additions)
+11. ~~Add basic accessibility attributes~~ DONE (ARIA roles, labels, keyboard support, semantic HTML, WCAG contrast)
 12. Add favourites authentication (post-hackathon)
 
 ---
@@ -173,6 +174,15 @@ Only excludes `backend/samconfig.toml` and `backend/.aws-sam/`. Updated to inclu
 - Fix: Added zoom-level check — only requests WMS when zoomed to borough level or closer (lon span < 0.25°)
 - Shows "ZOOM IN TO SEE DEFRA ROAD NOISE CONTOURS" hint label at city-wide zoom
 - NYC tile-based road noise unaffected (BTS tiles work at all zoom levels)
+
+### Security hardening (FIXED)
+- All 10 Lambdas: replaced `str(e)` error messages with generic "Internal server error" to prevent leaking AWS ARNs, internal URLs, and stack traces
+- Added lat/lon range validation to transport and NHS endpoints
+- Added format allowlist and file size limits to image/document upload endpoints
+- Fixed transport `fetch_nearby_stations` returning error objects instead of empty list
+- Bumped NHS Lambda timeout from 30s to 45s (3 sequential API calls can exceed 30s)
+- Added SRI integrity hash to D3.js CDN script tag
+- Replaced render-blocking `@import` with `<link>` for Google Fonts
 
 ### Live aircraft not visible (NOTED — not a code bug)
 - OpenSky Network API returns fewer aircraft at night (tested at 23:40 UTC — only 2 in-flight over London)
