@@ -23,7 +23,7 @@
 <!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;</text></svg>">
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
@@ -420,7 +420,7 @@
 </div>
 
 <div id="app" class="app" style="display:none;">
-  <div class="map-container" id="map-container">
+  <main class="map-container" id="map-container">
     <div class="map-title">
       <h1 id="map-title-text">Sky Score</h1>
       <div class="subtitle" id="map-subtitle">AI-POWERED PROPERTY NOISE INTELLIGENCE</div>
@@ -434,19 +434,19 @@
       <span id="live-count-text"></span>
     </div>
     <div class="map-controls">
-      <button type="button" id="zoom-in" title="Zoom in">+</button>
-      <button type="button" id="zoom-out" title="Zoom out">&minus;</button>
-      <button type="button" id="zoom-reset" title="Reset">&#8634;</button>
+      <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+      <button type="button" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
+      <button type="button" id="zoom-reset" title="Reset" aria-label="Reset zoom">&#8634;</button>
     </div>
     <div class="layer-toggles" id="layer-toggles">
-      <div class="layer-toggle active" data-layer="paths"><div class="indicator"></div>FLIGHT PATHS</div>
-      <div class="layer-toggle active" data-layer="defra-aircraft"><div class="indicator"></div><span id="label-aircraft">DEFRA AIRCRAFT NOISE</span></div>
-      <div class="layer-toggle" data-layer="defra-road"><div class="indicator"></div><span id="label-road">DEFRA ROAD NOISE</span></div>
-      <div class="layer-toggle" data-layer="live-flights"><div class="indicator"></div>LIVE AIRCRAFT</div>
-      <div class="layer-toggle" data-layer="transport"><div class="indicator"></div><span id="label-transport">TRANSPORT</span></div>
-      <div class="layer-toggle" data-layer="flood"><div class="indicator"></div><span id="label-flood">FLOOD RISK ZONES</span></div>
-      <div class="layer-toggle" data-layer="air-quality"><div class="indicator"></div><span id="label-aq">AIR QUALITY</span></div>
-      <div class="layer-toggle" data-layer="labels"><div class="indicator"></div>LABELS</div>
+      <div class="layer-toggle active" data-layer="paths" role="button" tabindex="0" aria-pressed="true"><div class="indicator"></div>FLIGHT PATHS</div>
+      <div class="layer-toggle active" data-layer="defra-aircraft" role="button" tabindex="0" aria-pressed="true"><div class="indicator"></div><span id="label-aircraft">DEFRA AIRCRAFT NOISE</span></div>
+      <div class="layer-toggle" data-layer="defra-road" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-road">DEFRA ROAD NOISE</span></div>
+      <div class="layer-toggle" data-layer="live-flights" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div>LIVE AIRCRAFT</div>
+      <div class="layer-toggle" data-layer="transport" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-transport">TRANSPORT</span></div>
+      <div class="layer-toggle" data-layer="flood" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-flood">FLOOD RISK ZONES</span></div>
+      <div class="layer-toggle" data-layer="air-quality" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-aq">AIR QUALITY</span></div>
+      <div class="layer-toggle" data-layer="labels" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div>LABELS</div>
     </div>
     <div class="map-legend" id="map-legend">
       <div class="legend-row"><div class="legend-line" style="border-color:var(--orange);"></div><span id="legend-path1">LHR PATHS</span></div>
@@ -478,7 +478,7 @@
       </div>
     </div>
     <svg id="map-svg"></svg>
-  </div>
+  </main>
 
   <!-- AI Chatbot -->
   <button type="button" class="chat-fab" id="chat-fab" title="Ask AI about any area"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="10" r="1.2"/><circle cx="16" cy="10" r="1.2"/></svg>ASK AI</button>
@@ -511,7 +511,7 @@
     </div>
   </div>
 
-  <div class="sidebar" id="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h2 id="sidebar-title">PROPERTY INTELLIGENCE</h2>
     </div>
@@ -522,12 +522,12 @@
       </div>
       <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
     </div>
-    <div class="tab-bar">
-      <div class="tab active" data-tab="analysis" onclick="switchTab('analysis')">ANALYSIS</div>
-      <div class="tab" data-tab="ranking" onclick="switchTab('ranking')">RANKINGS</div>
-      <div class="tab" data-tab="favourites" onclick="switchTab('favourites')">SAVED</div>
-    </div>
-    <div id="tab-analysis">
+    <nav class="tab-bar" role="tablist" aria-label="Content sections">
+      <div class="tab active" data-tab="analysis" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-analysis" onclick="switchTab('analysis')">ANALYSIS</div>
+      <div class="tab" data-tab="ranking" role="tab" tabindex="0" aria-selected="false" aria-controls="tab-ranking" onclick="switchTab('ranking')">RANKINGS</div>
+      <div class="tab" data-tab="favourites" role="tab" tabindex="0" aria-selected="false" aria-controls="tab-favourites" onclick="switchTab('favourites')">SAVED</div>
+    </nav>
+    <div id="tab-analysis" role="tabpanel" aria-labelledby="tab-analysis">
       <div id="sidebar-content">
         <div class="empty-state">
           <div class="icon">&#9678;</div>
@@ -535,7 +535,7 @@
         </div>
       </div>
     </div>
-    <div id="tab-ranking" style="display:none;">
+    <div id="tab-ranking" role="tabpanel" aria-labelledby="tab-ranking" style="display:none;">
       <div class="sidebar-section">
         <h3>I AM A...</h3>
         <div class="persona-bar" id="persona-bar"></div>
@@ -544,7 +544,7 @@
         <div id="borough-ranking"></div>
       </div>
     </div>
-    <div id="tab-favourites" style="display:none;">
+    <div id="tab-favourites" role="tabpanel" aria-labelledby="tab-favourites" style="display:none;">
       <div class="sidebar-section">
         <h3>SAVED LOCATIONS</h3>
         <div id="favourites-list"><p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p></div>
@@ -553,7 +553,7 @@
     <div class="disclaimer">
       <strong>Disclaimer:</strong> This tool is for informational purposes only and is not a replacement for professional property advice. Data shown is indicative and may not reflect current conditions. Always commission a proper survey, instruct a solicitor for environmental searches, and visit properties at different times before making any purchase decision.
     </div>
-  </div>
+  </aside>
 </div>
 
 <script>
@@ -2607,6 +2607,11 @@ function startLiveFlights() {
   updateLiveFlights();
   // Refresh every 15 seconds (OpenSky updates ~every 10s, rate limit ~10 req/min for anon)
   liveFlightInterval = setInterval(updateLiveFlights, 15000);
+  // Pause polling when tab is hidden to save API calls and battery
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden && liveFlightInterval){clearInterval(liveFlightInterval);liveFlightInterval='paused';}
+    else if(!document.hidden && liveFlightInterval==='paused'){liveFlightInterval=setInterval(updateLiveFlights,15000);updateLiveFlights();}
+  });
 }
 function stopLiveFlights() {
   if (liveFlightInterval) { clearInterval(liveFlightInterval); liveFlightInterval = null; }
@@ -3566,7 +3571,11 @@ function toggleRankingView() {
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.tab').forEach(t=>{
+    const isActive = t.dataset.tab===tab;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
   document.getElementById('tab-analysis').style.display = tab==='analysis'?'block':'none';
   document.getElementById('tab-ranking').style.display = tab==='ranking'?'block':'none';
   document.getElementById('tab-favourites').style.display = tab==='favourites'?'block':'none';
@@ -3676,10 +3685,11 @@ async function init() {
 
   // Layer toggles
   document.querySelectorAll('.layer-toggle').forEach(el=>{
-    el.addEventListener('click',()=>{
+    function toggleLayer(){
       const layer=el.dataset.layer;
       layers[layer]=!layers[layer];
       el.classList.toggle('active');
+      el.setAttribute('aria-pressed', layers[layer] ? 'true' : 'false');
       // Handle live flights toggle specially
       if (layer === 'live-flights') {
         if (layers[layer]) startLiveFlights();
@@ -3696,7 +3706,9 @@ async function init() {
       if(legendMap[layer]){const lg=document.getElementById(legendMap[layer]);if(lg)lg.style.display=layers[layer]?'':'none';}
       // Refresh aircraft noise tiles when toggling on (only overlay using WMS/tiles)
       if(layer==='defra-aircraft' && layers[layer]) updateDefraTiles();
-    });
+    }
+    el.addEventListener('click', toggleLayer);
+    el.addEventListener('keydown', e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleLayer();}});
   });
 
   // Search with autocomplete
