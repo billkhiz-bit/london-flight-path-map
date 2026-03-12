@@ -1,7 +1,6 @@
 import json
 import math
-from urllib.request import urlopen, Request
-
+from urllib.request import Request, urlopen
 
 # TfL API - free, no key required (key optional for higher rate limits)
 TFL_BASE = 'https://api.tfl.gov.uk'

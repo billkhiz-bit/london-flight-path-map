@@ -1,7 +1,8 @@
 import json
-import boto3
 import os
 from datetime import datetime
+
+import boto3
 
 dynamodb = boto3.resource('dynamodb', region_name='eu-west-2')
 table_name = os.environ.get('FAVOURITES_TABLE', 'london-flight-map-favourites')

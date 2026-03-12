@@ -1,10 +1,10 @@
-import json
-import os
+import base64
 import csv
 import io
-import base64
-from urllib.request import urlopen, Request
+import json
+import os
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 
 def handler(event, context):

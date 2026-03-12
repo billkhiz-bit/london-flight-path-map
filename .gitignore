@@ -11,3 +11,7 @@ desktop.ini
 *.log
 .vscode/
 .idea/
+node_modules/
+reports/
+playwright-report/
+test-results/

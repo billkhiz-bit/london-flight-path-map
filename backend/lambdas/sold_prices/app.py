@@ -1,6 +1,6 @@
 import json
-from urllib.request import urlopen, Request
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 
 def handler(event, context):
