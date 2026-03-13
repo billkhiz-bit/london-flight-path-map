@@ -36,6 +36,12 @@ Sky Score covers 33 London boroughs, 5 NYC boroughs, and 290+ individually score
 
 What is next: more cities (the architecture supports any city with airports and property data), estate agent widgets to embed noise scores on listing platforms, a mobile app for GPS-based analysis during viewings, and live flight tracking showing real-time aircraft positions.
 
+Encouraging Adoption
+
+Sky Score is live and free today, but reaching the buyers who need it most requires distribution beyond a single URL. The immediate plan is threefold: first, partnering with estate agents to offer an embeddable noise score widget on listing platforms like Rightmove, Zoopla, and Zillow - giving buyers noise data exactly where they already search. Second, working with local councils and citizen advice services to include Sky Score in their home-buying guidance, particularly in boroughs with high aircraft noise impact like Hounslow, Hillingdon, and Queens. Third, building a mobile app that lets buyers check noise levels on-site during property viewings using GPS-based instant analysis.
+
+The architecture already supports multiple cities. Adding Dubai, Sydney, Tokyo, or Paris requires only mapping local airports, flight paths, and property data into the existing scoring engine. Every new city expands the community of buyers who can make informed decisions.
+
 Aircraft noise affects property values by 10-20% in impacted areas. By making this data free and instant, Sky Score ensures no buyer is surprised after they have committed.
 
 Try it now: https://d1oe4ftwutjpf.cloudfront.net

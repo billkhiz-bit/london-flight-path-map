@@ -1949,6 +1949,46 @@ function renderEpcData(containerId, data) {
 }
 
 // ============================================================
+// NHS HEALTHCARE DATA (via AWS Lambda)
+// ============================================================
+async function fetchNhsData(lat, lon) {
+  try {
+    const resp = await fetch(`${API_BASE}/nhs?lat=${lat}&lon=${lon}`);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch(e) {
+    console.warn('NHS API failed:', e);
+    return null;
+  }
+}
+
+function renderNhsData(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!el || !data) return;
+  const gp = data.gp || [];
+  const pharmacies = data.pharmacies || [];
+  const hospitals = data.hospitals || [];
+  if (gp.length === 0 && pharmacies.length === 0 && hospitals.length === 0) {
+    el.innerHTML = '<p class="info-note">No NHS services found within 3km.</p>';
+    return;
+  }
+  const renderGroup = (title, items) => {
+    if (!items.length) return '';
+    if (items[0].fallback) return `<p class="info-note"><a href="${items[0].url}" target="_blank" style="color:var(--orange);">Search NHS ${title} services</a></p>`;
+    return `<h3 style="margin-top:10px;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">${title}</h3>` +
+      items.map(s => `<div class="transport-station">
+        <div>
+          <div class="station-name">${s.name}</div>
+          ${s.address ? `<div class="station-lines"><span class="line-badge">${s.address}</span></div>` : ''}
+        </div>
+        ${s.distance != null ? `<span class="station-dist">${s.distance}m</span>` : ''}
+      </div>`).join('');
+  };
+  el.innerHTML = renderGroup('GP SURGERIES', gp) + renderGroup('PHARMACIES', pharmacies) + renderGroup('HOSPITALS', hospitals) +
+    '<p class="info-note" style="margin-top:8px;">Source: NHS Service Search API.</p>';
+}
+
+// ============================================================
 // AI CHATBOT (via AWS Bedrock - Amazon Nova)
 // ============================================================
 // Chat conversation history and context
@@ -3016,6 +3056,10 @@ function updateSidebarPostcode(analysis, boroughData) {
     <div class="sidebar-section">
       <h3>ENERGY PERFORMANCE (EPC)</h3>
       <div id="postcode-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>
+    </div>
+    <div class="sidebar-section">
+      <h3>NEARBY NHS SERVICES</h3>
+      <div id="postcode-nhs-data"><span class="crime-loading">Loading from NHS API...</span></div>
     </div>`:`<div class="sidebar-section">
       <h3>NEAREST SUBWAY STATIONS</h3>
       <div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange);">MTA.info</a> for schedules.</span></div>
@@ -3083,6 +3127,9 @@ function updateSidebarPostcode(analysis, boroughData) {
   if (currentCity === 'london') {
     fetchTransportData(analysis.lat, analysis.lon).then(data => {
       renderTransportData('postcode-transport-data', data);
+    });
+    fetchNhsData(analysis.lat, analysis.lon).then(data => {
+      renderNhsData('postcode-nhs-data', data);
     });
     if (!analysis.isOutcode) {
       fetchSoldPrices(analysis.postcode).then(soldData => {

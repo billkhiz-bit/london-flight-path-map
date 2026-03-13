@@ -6,13 +6,13 @@ Multi-city property intelligence combining Amazon Nova Pro multimodal AI, Nova 2
 
 ## Inspiration
 
-I was viewing a property in London when I first noticed it. Standing in the garden, the roar of aircraft overhead was constant. I looked up and realised the house sat directly under a Heathrow arrival path. The estate agent hadn't mentioned it. The listing said nothing about it. And yet it would shape every morning, every evening, every summer barbecue for years to come.
+I was viewing a property in London when I looked up and realised the house sat directly under a Heathrow arrival path. It seemed like an afterthought when it came to viewings yet it would shape my entire home experience if I ever lived in the property.
 
 That evening I checked Rightmove, Zoopla, and every property platform I could find. None of them showed flight path data, noise contours, or any indication of aircraft noise impact. I searched government websites and found the data existed - buried across DEFRA noise maps, CAA flight path records, and airport authority publications - but it was scattered, technical, and impossible for a normal buyer to use.
 
 Aircraft noise is the single most common complaint from new homeowners in London and New York, and it affects property values by 10-20% in severely impacted areas. Yet buyers only discover the problem after they've moved in, when it's too late to negotiate or walk away.
 
-That was the moment I knew this needed to exist: a single tool that brings together all the noise data, combines it with property intelligence, and uses AI to make it instantly understandable for anyone searching for a home. Sky Score was born from that frustration - the gap between what buyers need to know and what they're actually shown.
+That was the moment I knew this needed to exist: a single tool that brings together all the noise data, combines it with property intelligence, and it uses AI to make it instantly understandable for anyone searching for a home.
 
 ---
 
@@ -75,7 +75,7 @@ Agents run **in parallel** using concurrent execution, then Nova Pro synthesises
 | Air Quality | Borough-level coloring + DEFRA AQMA WMS | Borough-level coloring + EPA Nonattainment ArcGIS REST |
 
 ### Additional Data Per Location
-Crime statistics, school quality ratings, transport connectivity, flood risk, air quality, property listing links (Zoopla/Rightmove/OnTheMarket for London; Zillow/StreetEasy/Redfin for NYC), sold prices from HM Land Registry, and EPC data.
+Crime statistics, school quality ratings, transport connectivity, nearby NHS services (GP surgeries, pharmacies, hospitals), flood risk, air quality, property listing links (Zoopla/Rightmove/OnTheMarket for London; Zillow/StreetEasy/Redfin for NYC), sold prices from HM Land Registry, and EPC data.
 
 ---
 
@@ -112,7 +112,7 @@ Complex queries are handled by a multi-agent orchestration pipeline. The Orchest
 For each of 290+ neighbourhoods, the engine calculates noise using Haversine distance from actual coordinates to every airport and flight path point, pulls neighbourhood-specific median prices, applies crime modifiers (-2 to +2 relative to borough average), and computes transport proximity to major station hubs. Five buyer personas (Balanced, Family, Investor, First-Time, Quiet Life) dynamically reweight all scores in real-time.
 
 ### Data Integration
-10+ live APIs across both cities: DEFRA Strategic Noise Maps, Met Police, TfL Unified API, EPC Open Data, HM Land Registry, Postcodes.io, Environment Agency, BTS/DOT, FEMA NFHL, EPA, NYPD CompStat, and curated school/healthcare data.
+10+ live APIs across both cities: DEFRA Strategic Noise Maps, Met Police, TfL Unified API, EPC Open Data, HM Land Registry, Postcodes.io, Environment Agency, NHS Service Search, BTS/DOT, FEMA NFHL, EPA, NYPD CompStat, and curated school data.
 
 ---
 
