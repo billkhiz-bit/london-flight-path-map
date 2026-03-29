@@ -91,6 +91,7 @@ cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=
 - **Stack**: Three.js (CDN), CSS2DRenderer for labels, UnrealBloomPass for bloom
 - **Features**: 3D wireframe terrain, live flight tracking (OpenSky Network), day/night cycle (real GMT/BST), noise contour rings, borough boundaries, corridor heatmap/timelapse
 - **Controls**: `R` Reset, `1-3` Camera presets, `P` Screenshot, `N` Time-lapse, `C` Contours, `B` Boroughs, `L` Live/Sim toggle, `V` Corridor view (Daily/Weekly/Monthly), `T` Timelapse replay, `H` Heatmap toggle
+- **Mobile**: Fully responsive — touch button bar replaces keyboard shortcuts, collapsible panels via ☰ menu, breakpoints at 768px and 480px. OrbitControls supports pinch/drag natively.
 - **Live Data**: OpenSky Network API via CORS proxy (free, no key). Falls back to simulated flights if unavailable.
 - **Analytics**: GoatCounter (same `cubitt33` tracker as main site) — prototype visits appear as `/prototype/index.html`
 - **Naming**: Use "Sky Score Radar" for the prototype, "Sky Score" for the main app

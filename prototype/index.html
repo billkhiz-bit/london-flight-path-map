@@ -479,6 +479,193 @@
     letter-spacing: 2px;
     color: rgba(255,255,255,0.3);
   }
+
+  /* ── Mobile touch bar ─────────────────────────── */
+  #mobile-touch-bar {
+    display: none;
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    pointer-events: auto;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: calc(100vw - 24px);
+  }
+
+  #mobile-touch-bar button {
+    background: rgba(3, 3, 8, 0.9);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    color: rgba(0, 255, 255, 0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 8px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  #mobile-touch-bar button:active {
+    border-color: rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+    background: rgba(0, 255, 255, 0.1);
+  }
+
+  #mobile-touch-bar button.active {
+    border-color: rgba(0, 255, 255, 0.5);
+    color: #00ffff;
+    background: rgba(0, 255, 255, 0.08);
+  }
+
+  /* ── Panel collapse on mobile ─────────────────── */
+  .panel-header.collapsible { cursor: pointer; pointer-events: auto; }
+  .panel-header.collapsible::after {
+    content: '▾';
+    font-size: 10px;
+    color: rgba(0, 255, 255, 0.3);
+    margin-left: 6px;
+    transition: transform 0.2s;
+  }
+  .panel.collapsed .panel-header.collapsible::after {
+    transform: rotate(-90deg);
+  }
+  .panel.collapsed .row,
+  .panel.collapsed .divider,
+  .panel.collapsed .panel-header:not(:first-child) {
+    display: none;
+  }
+
+  /* ── Mobile menu toggle ───────────────────────── */
+  #mobile-menu-toggle {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 25;
+    pointer-events: auto;
+    background: rgba(3, 3, 8, 0.9);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    color: rgba(0, 255, 255, 0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    line-height: 1;
+  }
+
+  #mobile-menu-toggle:active {
+    border-color: rgba(0, 255, 255, 0.6);
+    color: #00ffff;
+  }
+
+  /* ── Responsive: Tablet / landscape phone (≤768px) ── */
+  @media (max-width: 768px) {
+    #mobile-touch-bar { display: flex; }
+    #mobile-menu-toggle { display: block; }
+    #kb-help { display: none; }
+    #crosshair { display: none; }
+
+    .corner { width: 20px; height: 20px; }
+    .corner.tl { top: 6px; left: 6px; }
+    .corner.tr { top: 6px; right: 6px; }
+    .corner.bl { bottom: 6px; left: 6px; }
+    .corner.br { bottom: 6px; right: 6px; }
+
+    #header { height: 38px; padding: 0 12px; }
+    #header .title { font-size: 11px; letter-spacing: 3px; }
+    #header .subtitle { display: none; }
+    #header .timestamp { font-size: 9px; }
+
+    #panel-left {
+      top: 44px;
+      left: 8px;
+      width: 220px;
+      max-height: calc(100vh - 160px);
+      display: none;
+    }
+
+    #panel-left.mobile-visible { display: block; }
+
+    #panel-right {
+      top: 44px;
+      right: 8px;
+      width: 200px;
+      display: none;
+    }
+
+    #panel-right.mobile-visible { display: block; }
+
+    #selected-flight {
+      top: 44px;
+      right: 8px;
+      width: 220px;
+    }
+
+    #panel-camera { display: none; }
+    #panel-system { display: none; }
+
+    #minimap-container {
+      bottom: 78px;
+      width: 100px;
+      height: 100px;
+    }
+
+    #minimap { width: 100px; height: 100px; }
+
+    #daynight-indicator {
+      top: 44px;
+      right: 50px;
+      font-size: 8px;
+    }
+
+    #flight-legend {
+      bottom: 36px;
+      right: auto;
+      left: 8px;
+      font-size: 7px;
+      gap: 8px;
+    }
+
+    #ticker-bar { height: 28px; }
+    #ticker-label { font-size: 8px; padding: 0 8px; }
+    #ticker-text { font-size: 9px; }
+
+    .panel { padding: 8px 10px; }
+    .panel-header { font-size: 8px; letter-spacing: 2px; margin-bottom: 6px; }
+    .row { font-size: 9px; }
+    .label { font-size: 8px; }
+  }
+
+  /* ── Responsive: Small phone (≤480px) ─────────── */
+  @media (max-width: 480px) {
+    #header .title { font-size: 10px; letter-spacing: 2px; }
+
+    #panel-left.mobile-visible { width: calc(100vw - 16px); left: 8px; }
+    #panel-right.mobile-visible { width: calc(100vw - 16px); right: 8px; }
+    #selected-flight { width: calc(100vw - 16px); }
+
+    #minimap-container { display: none; }
+    #flight-legend { display: none; }
+
+    #mobile-touch-bar button {
+      font-size: 8px;
+      padding: 7px 8px;
+    }
+
+    #ticker-bar { height: 24px; }
+    #ticker-label { font-size: 7px; padding: 0 6px; }
+    #ticker-text { font-size: 8px; }
+
+    .corner { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -522,6 +709,23 @@
     <kbd>L</kbd> Live/Sim &nbsp; <kbd>V</kbd> Corridors &nbsp; <kbd>T</kbd> Timelapse &nbsp; <kbd>H</kbd> Heatmap &nbsp;
     <kbd>P</kbd> Screenshot &nbsp; <kbd>N</kbd> Day cycle &nbsp;
     <kbd>C</kbd> Contours &nbsp; <kbd>B</kbd> Boroughs &nbsp; Click aircraft to inspect
+  </div>
+
+  <!-- Mobile menu toggle -->
+  <button id="mobile-menu-toggle" aria-label="Toggle panels">☰</button>
+
+  <!-- Mobile touch bar (replaces keyboard shortcuts) -->
+  <div id="mobile-touch-bar">
+    <button data-action="r" aria-label="Reset camera">⟲ RST</button>
+    <button data-action="1" aria-label="View 1">V1</button>
+    <button data-action="2" aria-label="View 2">V2</button>
+    <button data-action="3" aria-label="View 3">V3</button>
+    <button data-action="l" aria-label="Toggle live mode">✦ LIVE</button>
+    <button data-action="c" aria-label="Toggle contours">◎ CTR</button>
+    <button data-action="b" aria-label="Toggle boroughs">▦ BRO</button>
+    <button data-action="v" aria-label="Cycle corridors">⇶ COR</button>
+    <button data-action="h" aria-label="Toggle heatmap">▧ HEAT</button>
+    <button data-action="n" aria-label="Day/night cycle">☀ DAY</button>
   </div>
 
   <div id="daynight-indicator"></div>
@@ -2091,13 +2295,18 @@ function selectFlight(f) {
 
   panel.style.display = 'block';
   $('panel-right').style.display = 'none';
+  $('panel-right').classList.remove('mobile-visible');
 }
 
 function deselectFlight() {
   if (!selectedFlight) return;
   selectedFlight = null;
   $('selected-flight').style.display = 'none';
-  $('panel-right').style.display = 'block';
+  if (isMobile) {
+    if (mobilePanelsOpen) $('panel-right').classList.add('mobile-visible');
+  } else {
+    $('panel-right').style.display = 'block';
+  }
   flightObjs.forEach(fo => { fo.hlArc.material.opacity = 0; fo.dot.scale.set(1, 1, 1); });
   liveAircraft.forEach(ac => { ac.dot.scale.set(1, 1, 1); });
 }
@@ -2452,7 +2661,119 @@ window.addEventListener('resize', () => {
   renderer.setSize(w, h);
   composer.setSize(w, h);
   labelRenderer.setSize(w, h);
+  updateMobileState();
 });
+
+/* ══════════════════════════════════════════════════════════
+   §22  MOBILE RESPONSIVENESS
+   ══════════════════════════════════════════════════════════ */
+
+const MOBILE_BP = 768;
+let isMobile = window.innerWidth <= MOBILE_BP;
+let mobilePanelsOpen = false;
+
+function updateMobileState() {
+  const wasMobile = isMobile;
+  isMobile = window.innerWidth <= MOBILE_BP;
+
+  /* Switching from desktop to mobile — collapse panels */
+  if (isMobile && !wasMobile) {
+    $('panel-left').classList.remove('mobile-visible');
+    $('panel-right').classList.remove('mobile-visible');
+    mobilePanelsOpen = false;
+    enableCollapsiblePanels();
+  }
+
+  /* Switching from mobile to desktop — restore panels */
+  if (!isMobile && wasMobile) {
+    $('panel-left').classList.remove('mobile-visible');
+    $('panel-right').classList.remove('mobile-visible');
+    $('panel-left').style.display = '';
+    $('panel-right').style.display = '';
+    disableCollapsiblePanels();
+  }
+
+  /* Update minimap canvas size for smaller container */
+  if (isMobile && window.innerWidth > 480) {
+    const mc = $('minimap');
+    mc.width = 100;
+    mc.height = 100;
+  } else if (!isMobile) {
+    const mc = $('minimap');
+    mc.width = 160;
+    mc.height = 160;
+  }
+}
+
+/* ── Collapsible panels ──────────────────────── */
+function enableCollapsiblePanels() {
+  document.querySelectorAll('.panel .panel-header').forEach(header => {
+    header.classList.add('collapsible');
+  });
+  /* Default: collapse all panels on mobile */
+  document.querySelectorAll('.panel').forEach(p => {
+    if (p.id !== 'selected-flight') p.classList.add('collapsed');
+  });
+}
+
+function disableCollapsiblePanels() {
+  document.querySelectorAll('.panel .panel-header').forEach(header => {
+    header.classList.remove('collapsible');
+  });
+  document.querySelectorAll('.panel').forEach(p => {
+    p.classList.remove('collapsed');
+  });
+}
+
+/* Tap header to toggle panel body */
+document.addEventListener('click', (e) => {
+  const header = e.target.closest('.panel-header.collapsible');
+  if (!header) return;
+  const panel = header.closest('.panel');
+  if (panel) panel.classList.toggle('collapsed');
+});
+
+/* ── Mobile menu toggle (hamburger) ──────────── */
+$('mobile-menu-toggle').addEventListener('click', () => {
+  mobilePanelsOpen = !mobilePanelsOpen;
+  const menuBtn = $('mobile-menu-toggle');
+
+  if (mobilePanelsOpen) {
+    $('panel-left').classList.add('mobile-visible');
+    if (!selectedFlight) $('panel-right').classList.add('mobile-visible');
+    menuBtn.textContent = '✕';
+  } else {
+    $('panel-left').classList.remove('mobile-visible');
+    $('panel-right').classList.remove('mobile-visible');
+    menuBtn.textContent = '☰';
+  }
+});
+
+/* ── Touch bar: dispatch same actions as keyboard ── */
+const touchToggleState = { c: false, b: false, h: false, l: false, n: false };
+
+$('mobile-touch-bar').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  /* Dispatch a synthetic keydown event so the existing handler runs */
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: action }));
+
+  /* Toggle active state for stateful buttons */
+  if (['c', 'b', 'h', 'l', 'n'].includes(action)) {
+    touchToggleState[action] = !touchToggleState[action];
+    btn.classList.toggle('active', touchToggleState[action]);
+  }
+});
+
+/* Sync live mode button state with actual live mode */
+const origEnterLive = typeof enterLiveMode === 'function' ? enterLiveMode : null;
+const origExitLive = typeof exitLiveMode === 'function' ? exitLiveMode : null;
+
+/* ── Initialise mobile state on load ─────────── */
+updateMobileState();
+if (isMobile) enableCollapsiblePanels();
 </script>
 
 <!-- GoatCounter analytics (same tracker as main Sky Score site) -->
