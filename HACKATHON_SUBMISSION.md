@@ -201,7 +201,9 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 ## Links
 - **Live Demo**: https://d1oe4ftwutjpf.cloudfront.net
-- **Code Repository**: https://github.com/billkhiz-bit/london-flight-path-map
+- **Code Repository**: https://github.com/billkhiz-bit/london-flight-path-map (private — access shared with testing@devpost.com and Amazon-Nova-hackathon@amazon.com)
+- **Video Demo**: 3:10, with voiceover
+- **Blog Post**: Published on AWS Builder Center (builder.aws.com bonus prize)
 
 ## Category
 Freestyle
