@@ -1,7 +1,10 @@
 import concurrent.futures
 import json
+import os
 
 import boto3
+
+CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
 bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
 
@@ -260,7 +263,7 @@ def api_response(status, body):
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
         },

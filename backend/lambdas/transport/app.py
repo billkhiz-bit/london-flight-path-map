@@ -1,6 +1,9 @@
 import json
 import math
+import os
 from urllib.request import Request, urlopen
+
+CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
 # TfL API - free, no key required (key optional for higher rate limits)
 TFL_BASE = 'https://api.tfl.gov.uk'
@@ -115,7 +118,7 @@ def response(status, body):
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'GET,OPTIONS'
         },

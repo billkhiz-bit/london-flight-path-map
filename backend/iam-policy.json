@@ -18,8 +18,8 @@
                 "cloudformation:TagResource"
             ],
             "Resource": [
-                "arn:aws:cloudformation:eu-west-2:072674217857:stack/london-flight-map/*",
-                "arn:aws:cloudformation:eu-west-2:072674217857:stack/aws-sam-cli-managed-default/*"
+                "arn:aws:cloudformation:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:stack/london-flight-map/*",
+                "arn:aws:cloudformation:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:stack/aws-sam-cli-managed-default/*"
             ]
         },
         {
@@ -73,7 +73,7 @@
                 "lambda:PublishVersion",
                 "lambda:CreateAlias"
             ],
-            "Resource": "arn:aws:lambda:eu-west-2:072674217857:function:london-flight-map-*"
+            "Resource": "arn:aws:lambda:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:function:london-flight-map-*"
         },
         {
             "Sid": "APIGateway",
@@ -105,7 +105,7 @@
                 "iam:GetRolePolicy",
                 "iam:TagRole"
             ],
-            "Resource": "arn:aws:iam::072674217857:role/london-flight-map-*"
+            "Resource": "arn:aws:iam::REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:role/london-flight-map-*"
         },
         {
             "Sid": "BedrockInvoke",
@@ -115,7 +115,7 @@
             ],
             "Resource": [
                 "arn:aws:bedrock:*::foundation-model/amazon.nova-*",
-                "arn:aws:bedrock:*:072674217857:inference-profile/us.amazon.nova-*"
+                "arn:aws:bedrock:*:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:inference-profile/us.amazon.nova-*"
             ]
         },
         {
@@ -146,7 +146,7 @@
                 "dynamodb:UpdateItem",
                 "dynamodb:TagResource"
             ],
-            "Resource": "arn:aws:dynamodb:eu-west-2:072674217857:table/london-flight-map-*"
+            "Resource": "arn:aws:dynamodb:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:table/london-flight-map-*"
         },
         {
             "Sid": "CloudWatchLogs",
@@ -157,7 +157,7 @@
                 "logs:PutLogEvents",
                 "logs:DescribeLogGroups"
             ],
-            "Resource": "arn:aws:logs:eu-west-2:072674217857:*"
+            "Resource": "arn:aws:logs:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:*"
         }
     ]
 }

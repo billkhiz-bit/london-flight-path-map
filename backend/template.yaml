@@ -9,12 +9,12 @@ Globals:
     MemorySize: 256
     Environment:
       Variables:
-        CORS_ORIGIN: '*'
+        CORS_ORIGIN: 'https://d1oe4ftwutjpf.cloudfront.net'
   Api:
     Cors:
       AllowMethods: "'GET,POST,DELETE,OPTIONS'"
       AllowHeaders: "'Content-Type,Authorization'"
-      AllowOrigin: "'*'"
+      AllowOrigin: "'https://d1oe4ftwutjpf.cloudfront.net'"
     Auth:
       DefaultAuthorizer: NONE
 
@@ -26,6 +26,11 @@ Resources:
     Properties:
       StageName: prod
       Description: Sky Score API
+      MethodSettings:
+        - HttpMethod: '*'
+          ResourcePath: '/*'
+          ThrottlingRateLimit: 10
+          ThrottlingBurstLimit: 20
 
   # --- AI Chatbot (Amazon Nova) ---
   ChatFunction:

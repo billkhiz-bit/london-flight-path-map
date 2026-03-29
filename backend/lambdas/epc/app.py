@@ -6,6 +6,8 @@ import os
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
+
 
 def handler(event, context):
     try:
@@ -130,7 +132,7 @@ def response(status, body):
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'GET,OPTIONS'
         },

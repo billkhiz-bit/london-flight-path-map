@@ -6,6 +6,7 @@ import boto3
 
 dynamodb = boto3.resource('dynamodb', region_name='eu-west-2')
 table_name = os.environ.get('FAVOURITES_TABLE', 'london-flight-map-favourites')
+CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 table = dynamodb.Table(table_name)
 
 
@@ -78,7 +79,7 @@ def response(status, body):
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS'
         },
