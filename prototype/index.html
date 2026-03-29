@@ -1,0 +1,2461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKY SCORE — Terrain Intelligence Prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #030308;
+    color: #e0e0e0;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    cursor: crosshair;
+  }
+
+  #canvas-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+  }
+
+  /* ── CSS2D Label layer ─────────────────────────── */
+  .label-3d {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    text-transform: uppercase;
+  }
+
+  .label-3d.landmark {
+    color: rgba(255, 255, 255, 0.45);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .label-3d.airport {
+    color: #00ffff;
+    font-weight: 700;
+    font-size: 11px;
+    text-shadow: 0 0 12px rgba(0,255,255,0.6);
+  }
+
+  .label-3d.borough {
+    color: rgba(0, 255, 255, 0.25);
+    font-size: 8px;
+    letter-spacing: 3px;
+  }
+
+  .label-3d.noise-label {
+    color: rgba(255, 68, 68, 0.5);
+    font-size: 8px;
+  }
+
+  .label-3d.river-label {
+    color: rgba(60, 130, 200, 0.5);
+    font-size: 8px;
+    font-style: italic;
+    letter-spacing: 4px;
+  }
+
+  /* ── HUD Overlay Layer ─────────────────────────── */
+  #hud {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  #hud.hidden { opacity: 0; }
+
+  /* ── Scanline effect ───────────────────────────── */
+  #hud::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 255, 0.012) 2px,
+      rgba(0, 255, 255, 0.012) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* ── Corner brackets ───────────────────────────── */
+  .corner {
+    position: absolute;
+    width: 30px; height: 30px;
+    border-color: rgba(0, 255, 255, 0.25);
+    border-style: solid;
+    border-width: 0;
+  }
+  .corner.tl { top: 12px; left: 12px; border-top-width: 2px; border-left-width: 2px; }
+  .corner.tr { top: 12px; right: 12px; border-top-width: 2px; border-right-width: 2px; }
+  .corner.bl { bottom: 12px; left: 12px; border-bottom-width: 2px; border-left-width: 2px; }
+  .corner.br { bottom: 12px; right: 12px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  /* ── Header bar ────────────────────────────────── */
+  #header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: linear-gradient(180deg, rgba(3,3,8,0.95) 0%, rgba(3,3,8,0) 100%);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.06);
+  }
+
+  #header .title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0,255,255,0.5);
+  }
+
+  #header .subtitle {
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  #header .timestamp {
+    font-size: 10px;
+    color: rgba(255, 176, 0, 0.6);
+    letter-spacing: 1px;
+  }
+
+  /* ── Panel base ────────────────────────────────── */
+  .panel {
+    position: absolute;
+    background: rgba(3, 3, 8, 0.85);
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    padding: 12px 14px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .panel-header {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(0, 255, 255, 0.5);
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #00ff88;
+    box-shadow: 0 0 6px #00ff88;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 2px 0;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .label { color: rgba(255, 255, 255, 0.3); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+  .value { color: #d0d0d0; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .value.hl { color: #ffb000; text-shadow: 0 0 8px rgba(255,176,0,0.3); }
+  .value.cy { color: #00ffff; text-shadow: 0 0 8px rgba(0,255,255,0.3); }
+  .value.gn { color: #00ff88; }
+  .value.rd { color: #ff4444; }
+  .divider { height: 1px; background: rgba(0, 255, 255, 0.05); margin: 4px 0; }
+
+  /* ── Left panel ────────────────────────────────── */
+  #panel-left {
+    top: 56px;
+    left: 14px;
+    width: 250px;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  #panel-left::-webkit-scrollbar { display: none; }
+
+  /* ── Right panel ───────────────────────────────── */
+  #panel-right {
+    top: 56px;
+    right: 14px;
+    width: 250px;
+    pointer-events: auto;
+  }
+
+  /* ── Selected flight detail ────────────────────── */
+  #selected-flight {
+    top: 56px;
+    right: 14px;
+    width: 260px;
+    display: none;
+    pointer-events: auto;
+    border-color: rgba(255, 176, 0, 0.25);
+  }
+
+  #selected-flight .panel-header { color: #ffb000; border-color: rgba(255,176,0,0.15); }
+
+  #selected-flight .close-btn {
+    cursor: pointer;
+    pointer-events: auto;
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+  }
+  #selected-flight .close-btn:hover { color: #fff; }
+
+  /* ── Mini panels ───────────────────────────────── */
+  #panel-camera {
+    bottom: 88px;
+    left: 14px;
+    width: 190px;
+  }
+
+  #panel-system {
+    bottom: 88px;
+    right: 14px;
+    width: 200px;
+  }
+
+  /* ── Crosshair ─────────────────────────────────── */
+  #crosshair {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px; height: 80px;
+    pointer-events: none;
+  }
+
+  #crosshair .ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 46px; height: 46px;
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: 50%;
+  }
+
+  #crosshair .ring-outer {
+    width: 68px; height: 68px;
+    border: 1px solid rgba(0, 255, 255, 0.06);
+    border-radius: 50%;
+    animation: spin-slow 25s linear infinite;
+  }
+
+  @keyframes spin-slow {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  #crosshair .line-h, #crosshair .line-v {
+    position: absolute;
+    background: rgba(0, 255, 255, 0.1);
+  }
+  #crosshair .line-h { top: 50%; left: 0; width: 100%; height: 1px; }
+  #crosshair .line-v { top: 0; left: 50%; width: 1px; height: 100%; }
+  #crosshair .dot {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px; height: 3px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #00ffff;
+  }
+
+  /* ── Mini-map ──────────────────────────────────── */
+  #minimap-container {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 160px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    background: rgba(3, 3, 8, 0.85);
+    backdrop-filter: blur(4px);
+  }
+
+  #minimap-label {
+    position: absolute;
+    top: -16px;
+    left: 0;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: rgba(0, 255, 255, 0.35);
+  }
+
+  #minimap { display: block; }
+
+  /* ── Ticker ────────────────────────────────────── */
+  #ticker-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 32px;
+    background: rgba(3, 3, 8, 0.9);
+    border-top: 1px solid rgba(0, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  #ticker-label {
+    flex-shrink: 0;
+    padding: 0 12px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #ffb000;
+    border-right: 1px solid rgba(255, 176, 0, 0.15);
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  #ticker-content { flex: 1; overflow: hidden; white-space: nowrap; }
+
+  #ticker-text {
+    display: inline-block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 1px;
+    animation: ticker-scroll 80s linear infinite;
+    padding-left: 100%;
+  }
+
+  @keyframes ticker-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+
+  #ticker-text .sep { color: rgba(0,255,255,0.25); margin: 0 18px; }
+  #ticker-text .fid { color: #ffb000; }
+
+  /* ── Keyboard help ─────────────────────────────── */
+  #kb-help {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    line-height: 1.8;
+    pointer-events: none;
+  }
+
+  #kb-help kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid rgba(0,255,255,0.15);
+    border-radius: 2px;
+    color: rgba(0,255,255,0.4);
+    font-family: inherit;
+    font-size: 9px;
+    margin: 0 2px;
+  }
+
+  /* ── Flight legend ─────────────────────────────── */
+  #flight-legend {
+    position: absolute;
+    bottom: 42px;
+    right: 14px;
+    display: flex;
+    gap: 14px;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-swatch { width: 14px; height: 2px; border-radius: 1px; }
+
+  /* ── Day/night indicator ───────────────────────── */
+  #daynight-indicator {
+    position: absolute;
+    top: 50px;
+    right: 270px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+  }
+
+  /* ── Toast ─────────────────────────────────────── */
+  #toast {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(0,255,255,0.6);
+    background: rgba(3,3,8,0.9);
+    border: 1px solid rgba(0,255,255,0.15);
+    padding: 10px 24px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  #toast.show { opacity: 1; }
+
+  /* ── Loading screen ────────────────────────────── */
+  #loading {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1000;
+    background: #030308;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 1s ease;
+  }
+
+  #loading.fade-out { opacity: 0; pointer-events: none; }
+
+  #loading .logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    color: #00ffff;
+    text-shadow: 0 0 20px rgba(0,255,255,0.5);
+    margin-bottom: 30px;
+  }
+
+  #loading .progress-bar {
+    width: 200px; height: 2px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  #loading .progress-fill {
+    height: 100%;
+    background: #00ffff;
+    box-shadow: 0 0 10px #00ffff;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  #loading .status-text {
+    margin-top: 16px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.3);
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="logo-text">SKY SCORE</div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="status-text" id="loading-status">INITIALISING TERRAIN ENGINE</div>
+</div>
+
+<!-- Three.js canvas -->
+<div id="canvas-container"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div id="header">
+    <div>
+      <span class="title">SKY SCORE</span>
+      <span class="subtitle" id="header-subtitle">&nbsp; TERRAIN INTELLIGENCE v0.3 &nbsp;·&nbsp; CONNECTING…</span>
+    </div>
+    <div class="timestamp" id="header-time"></div>
+  </div>
+
+  <div id="crosshair">
+    <div class="ring ring-outer"></div>
+    <div class="ring"></div>
+    <div class="line-h"></div>
+    <div class="line-v"></div>
+    <div class="dot"></div>
+  </div>
+
+  <!-- Keyboard hint (fades after 10s) -->
+  <div id="kb-help">
+    <kbd>R</kbd> Reset &nbsp; <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Views &nbsp;
+    <kbd>L</kbd> Live/Sim &nbsp; <kbd>V</kbd> Corridors &nbsp; <kbd>T</kbd> Timelapse &nbsp;
+    <kbd>P</kbd> Screenshot &nbsp; <kbd>N</kbd> Time-lapse &nbsp;
+    <kbd>C</kbd> Contours &nbsp; <kbd>B</kbd> Boroughs &nbsp; Click aircraft to inspect
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="daynight-indicator"></div>
+
+  <!-- Left panel -->
+  <div class="panel" id="panel-left">
+    <div class="panel-header"><span>AIRPORT INTELLIGENCE — EGLL</span><div class="status-dot"></div></div>
+    <div class="row"><span class="label">ICAO / IATA</span><span class="value">EGLL / LHR</span></div>
+    <div class="row"><span class="label">Position</span><span class="value cy">51.4700°N 0.4543°W</span></div>
+    <div class="row"><span class="label">Elevation</span><span class="value">83 ft AMSL</span></div>
+    <div class="divider"></div>
+    <div class="row"><span class="label">Flights Today</span><span class="value hl" id="flights-today">1,247</span></div>
+    <div class="row"><span class="label">Peak Hour</span><span class="value" id="peak-hour">06:00–07:00 local</span></div>
+    <div class="row"><span class="label">Peak Movements</span><span class="value hl" id="peak-mvts">87</span></div>
+    <div class="divider"></div>
+    <div class="row"><span class="label">RWY 27L/09R</span><span class="value gn" id="rwy-27l">▮▮▮▮▮▮▮▯▯▯ 74%</span></div>
+    <div class="row"><span class="label">RWY 27R/09L</span><span class="value gn" id="rwy-27r">▮▮▮▮▮▮▯▯▯▯ 68%</span></div>
+    <div class="divider"></div>
+    <div class="row"><span class="label">Wind</span><span class="value">270° / 12kt G18</span></div>
+    <div class="row"><span class="label">Visibility</span><span class="value gn">9999m</span></div>
+    <div class="row"><span class="label">QNH</span><span class="value">1013 hPa</span></div>
+    <div class="row"><span class="label">Cloud</span><span class="value">FEW040 SCT080</span></div>
+    <div class="row"><span class="label">Temp / Dew</span><span class="value">12°C / 04°C</span></div>
+    <div class="row"><span class="label">METAR Age</span><span class="value" id="metar-age">0m 00s</span></div>
+    <div class="divider"></div>
+    <div class="panel-header" style="margin-top:4px"><span>NOISE MONITORING</span></div>
+    <div class="row"><span class="label">Hounslow (2.1km)</span><span class="value rd">72.4 dB</span></div>
+    <div class="row"><span class="label">Richmond (8.3km)</span><span class="value hl">63.1 dB</span></div>
+    <div class="row"><span class="label">Putney (14.7km)</span><span class="value">57.8 dB</span></div>
+    <div class="row"><span class="label">Westminster (21km)</span><span class="value gn">48.2 dB</span></div>
+  </div>
+
+  <!-- Right panel: flight list -->
+  <div class="panel" id="panel-right">
+    <div class="panel-header"><span id="flight-panel-title">TRACKED FLIGHTS</span><div class="status-dot" id="flight-status-dot"></div></div>
+    <div id="flight-list"></div>
+  </div>
+
+  <!-- Selected flight detail (hidden by default) -->
+  <div class="panel" id="selected-flight">
+    <div class="panel-header">
+      <span id="sel-title">FLIGHT DETAIL</span>
+      <span class="close-btn" id="sel-close">✕</span>
+    </div>
+    <div id="sel-body"></div>
+  </div>
+
+  <!-- Bottom-left: camera -->
+  <div class="panel" id="panel-camera">
+    <div class="panel-header"><span>CAMERA</span></div>
+    <div class="row"><span class="label">Azimuth</span><span class="value" id="cam-az">0.00°</span></div>
+    <div class="row"><span class="label">Elevation</span><span class="value" id="cam-el">45.00°</span></div>
+    <div class="row"><span class="label">Distance</span><span class="value" id="cam-dist">160.0</span></div>
+    <div class="row"><span class="label">View</span><span class="value cy" id="cam-view">FREE</span></div>
+  </div>
+
+  <!-- Bottom-right: system -->
+  <div class="panel" id="panel-system">
+    <div class="panel-header"><span>SYSTEM</span></div>
+    <div class="row"><span class="label">Renderer</span><span class="value">WebGL 2.0</span></div>
+    <div class="row"><span class="label">FPS</span><span class="value gn" id="sys-fps">60</span></div>
+    <div class="row"><span class="label">Triangles</span><span class="value" id="sys-tris">0</span></div>
+    <div class="row"><span class="label">Draw Calls</span><span class="value" id="sys-draws">0</span></div>
+    <div class="row"><span class="label">Phase</span><span class="value" id="sys-cycle">—</span></div>
+  </div>
+
+  <!-- Mini-map -->
+  <div id="minimap-container">
+    <div id="minimap-label">RADAR</div>
+    <canvas id="minimap" width="160" height="160"></canvas>
+  </div>
+
+  <!-- Legend -->
+  <div id="flight-legend">
+    <div class="leg-item"><div class="leg-swatch" style="background:#00ffff;box-shadow:0 0 4px #00ffff"></div>DEPARTURE</div>
+    <div class="leg-item"><div class="leg-swatch" style="background:#ffb000;box-shadow:0 0 4px #ffb000"></div>ARRIVAL</div>
+    <div class="leg-item"><div class="leg-swatch" style="background:#ff4488;box-shadow:0 0 4px #ff4488"></div>OVERFLIGHT</div>
+  </div>
+
+  <!-- Ticker -->
+  <div id="ticker-bar">
+    <div id="ticker-label">▶ LIVE</div>
+    <div id="ticker-content"><div id="ticker-text"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+/* ══════════════════════════════════════════════════════════
+   §1  CONFIGURATION
+   ══════════════════════════════════════════════════════════ */
+
+const TERRAIN = {
+  size: 400,
+  segments: 220,
+  maxElev: 16,
+  noiseScale: 0.011,
+  octaves: 5,
+};
+
+const BLOOM = { strength: 0.55, radius: 0.35, threshold: 0.15 };
+
+/* Heathrow at terrain-space origin. 1 unit ≈ 180 m */
+const SCALE = 180; // metres per unit
+
+/* ══════════════════════════════════════════════════════════
+   §2  DATA
+   ══════════════════════════════════════════════════════════ */
+
+/*
+ * London landmarks — ACCURATE positions calculated from real lat/lng.
+ * Heathrow = 51.4700°N, 0.4543°W (terrain origin).
+ * 1° lat ≈ 617 terrain units, 1° lng ≈ 384 terrain units at this latitude.
+ */
+const LANDMARKS = [
+  { name: 'HEATHROW',         x: 0,    z: 0,    type: 'airport' },
+  { name: 'Windsor Castle',   x: -58,  z: -9,   type: 'landmark' }, // 51.484°N 0.604°W
+  { name: 'Staines',          x: -20,  z: 22,   type: 'landmark' }, // 51.434°N 0.507°W
+  { name: 'Richmond',         x: 59,   z: 5,    type: 'landmark' }, // 51.461°N 0.302°W
+  { name: 'Ealing',           x: 57,   z: -27,  type: 'landmark' }, // 51.513°N 0.305°W
+  { name: 'Wembley',          x: 67,   z: -53,  type: 'landmark' }, // 51.556°N 0.280°W
+  { name: 'Hammersmith',      x: 88,   z: -14,  type: 'landmark' }, // 51.493°N 0.225°W
+  { name: 'Camden',           x: 120,  z: -43,  type: 'landmark' }, // 51.539°N 0.143°W
+  { name: 'Westminster',      x: 122,  z: -17,  type: 'landmark' }, // 51.498°N 0.136°W
+  { name: 'City of London',   x: 139,  z: -28,  type: 'landmark' }, // 51.516°N 0.092°W
+  { name: 'Brixton',          x: 130,  z: 5,    type: 'landmark' }, // 51.461°N 0.115°W
+  { name: 'Canary Wharf',     x: 166,  z: -22,  type: 'landmark' }, // 51.505°N 0.024°W
+  { name: 'Stratford',        x: 173,  z: -45,  type: 'landmark' }, // 51.543°N 0.003°W
+  { name: 'Greenwich',        x: 174,  z: -4,   type: 'landmark' }, // 51.477°N 0.001°W
+  { name: 'Croydon',          x: 137,  z: 58,   type: 'landmark' }, // 51.376°N 0.099°W
+];
+
+/* Borough boundaries — adjusted to match corrected geography */
+const BOROUGHS = [
+  { name: 'Hillingdon',    pts: [[-70,-60],[-70,30],[-10,30],[-10,-60]] },
+  { name: 'Hounslow',      pts: [[-10,-20],[-10,30],[55,30],[55,-20]] },
+  { name: 'Richmond',      pts: [[40,-30],[40,15],[75,15],[75,-30]] },
+  { name: 'Ealing',        pts: [[30,-45],[30,-15],[70,-15],[70,-45]] },
+  { name: 'Hammersmith',   pts: [[75,-25],[75,0],[100,0],[100,-25]] },
+  { name: 'Westminster',   pts: [[105,-30],[105,-5],[135,-5],[135,-30]] },
+  { name: 'Camden',        pts: [[105,-55],[105,-30],[135,-30],[135,-55]] },
+  { name: 'City of London',pts: [[130,-35],[130,-20],[150,-20],[150,-35]] },
+  { name: 'Tower Hamlets', pts: [[150,-40],[150,-10],[180,-10],[180,-40]] },
+  { name: 'Southwark',     pts: [[120,-5],[120,20],[150,20],[150,-5]] },
+];
+
+/*
+ * Thames path — accurate S-curve from Staines through central London.
+ * Waypoints trace real river bends at key landmarks.
+ */
+const THAMES = [
+  [-180,25],[-140,22],[-100,20],[-60,18],[-30,16],[-20,14],
+  [-10,12],[0,9],[15,6],[30,3],[45,0],[55,-2],[65,-5],
+  [78,-8],[88,-10],[98,-13],[108,-15],[118,-16],[125,-17],
+  [130,-19],[136,-22],[142,-24],[148,-22],[155,-18],[162,-15],
+  [170,-8],[178,-2],[185,2],[195,6],
+];
+
+/*
+ * Flight arc data — accurate great-circle bearings from Heathrow (51.47°N, 0.45°W).
+ * Bearings calculated using initial heading formula:
+ *   θ = atan2(sin(Δλ)·cos(φ2), cos(φ1)·sin(φ2) − sin(φ1)·cos(φ2)·cos(Δλ))
+ *
+ * Altitudes are typical cruise flight levels for the route distance.
+ * Speeds are realistic cruise TAS for each aircraft type.
+ * Callsigns are real flight numbers that operate these routes.
+ */
+const FLIGHTS = [
+  /*
+   * DEPARTURES — outbound from Heathrow
+   * Bearings: initial great-circle heading from LHR
+   * realKm: actual great-circle distance to destination
+   */
+  { dest:'Paris CDG',     code:'BA304',  bearing:148, dist:95,  alt:28, speed:450, ac:'A320neo',    col:0x00ffff, type:'DEP', realKm:347 },
+  { dest:'Amsterdam AMS', code:'BA430',  bearing:68,  dist:100, alt:30, speed:460, ac:'A320neo',    col:0x00ffff, type:'DEP', realKm:370 },
+  { dest:'Dublin DUB',    code:'EI155',  bearing:305, dist:92,  alt:26, speed:440, ac:'A320',       col:0x00ffff, type:'DEP', realKm:449 },
+  { dest:'Madrid MAD',    code:'BA460',  bearing:195, dist:120, alt:36, speed:480, ac:'A321neo',    col:0x00ffff, type:'DEP', realKm:1261 },
+  { dest:'New York JFK',  code:'BA117',  bearing:288, dist:135, alt:39, speed:490, ac:'B777-300ER', col:0x00ffff, type:'DEP', realKm:5540 },
+
+  /* ARRIVALS — inbound to Heathrow */
+  { dest:'Frankfurt FRA', code:'LH922',  bearing:95,  dist:110, alt:32, speed:470, ac:'A320neo',    col:0xffb000, type:'ARR', realKm:654 },
+  { dest:'Rome FCO',      code:'AZ201',  bearing:139, dist:125, alt:38, speed:490, ac:'A321neo',    col:0xffb000, type:'ARR', realKm:1435 },
+  { dest:'Lisbon LIS',    code:'TP1355', bearing:207, dist:118, alt:36, speed:470, ac:'A330-900neo', col:0xffb000, type:'ARR', realKm:1586 },
+
+  /* OVERFLIGHTS — transiting London TMA */
+  { dest:'Edinburgh EDI', code:'BA1452', bearing:336, dist:88,  alt:34, speed:450, ac:'A319',       col:0xff4488, type:'OVR', realKm:534 },
+  { dest:'Oslo OSL',      code:'SK802',  bearing:24,  dist:105, alt:37, speed:470, ac:'B737-800',   col:0xff4488, type:'OVR', realKm:1153 },
+];
+
+/* Noise contour rings (dB level → approximate radius in terrain units) */
+const NOISE_CONTOURS = [
+  { db: 72, radius: 8,  col: 0xff4444 },
+  { db: 66, radius: 18, col: 0xff6633 },
+  { db: 63, radius: 30, col: 0xffaa22 },
+  { db: 57, radius: 50, col: 0xffdd44 },
+  { db: 51, radius: 75, col: 0x88aa44 },
+];
+
+/* Camera preset views */
+const VIEWS = {
+  '1': { pos: [60, 280, 5],     target: [60, 0, -10],  name: 'OVERHEAD' },
+  '2': { pos: [180, 45, 10],    target: [0, 5, 0],     name: 'APPROACH' },
+  '3': { pos: [-50, 18, 130],   target: [80, 0, -15],  name: 'PANORAMIC' },
+};
+
+/* ══════════════════════════════════════════════════════════
+   §3  SIMPLEX NOISE
+   ══════════════════════════════════════════════════════════ */
+
+class SimplexNoise {
+  constructor(seed = 42) {
+    this.p = new Uint8Array(512);
+    const perm = new Uint8Array(256);
+    for (let i = 0; i < 256; i++) perm[i] = i;
+    let s = seed;
+    for (let i = 255; i > 0; i--) {
+      s = (s * 16807) % 2147483647;
+      const j = s % (i + 1);
+      [perm[i], perm[j]] = [perm[j], perm[i]];
+    }
+    for (let i = 0; i < 512; i++) this.p[i] = perm[i & 255];
+    this.g = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+  }
+  noise2D(x, y) {
+    const F = 0.5*(Math.sqrt(3)-1), G = (3-Math.sqrt(3))/6;
+    const s = (x+y)*F, i = Math.floor(x+s), j = Math.floor(y+s);
+    const t = (i+j)*G, x0 = x-(i-t), y0 = y-(j-t);
+    const i1 = x0>y0?1:0, j1 = x0>y0?0:1;
+    const x1=x0-i1+G, y1=y0-j1+G, x2=x0-1+2*G, y2=y0-1+2*G;
+    const ii=i&255, jj=j&255;
+    const gi0=this.p[ii+this.p[jj]]%12, gi1=this.p[ii+i1+this.p[jj+j1]]%12, gi2=this.p[ii+1+this.p[jj+1]]%12;
+    let n0=0,n1=0,n2=0;
+    let t0=0.5-x0*x0-y0*y0; if(t0>0){t0*=t0;n0=t0*t0*(this.g[gi0][0]*x0+this.g[gi0][1]*y0)}
+    let t1=0.5-x1*x1-y1*y1; if(t1>0){t1*=t1;n1=t1*t1*(this.g[gi1][0]*x1+this.g[gi1][1]*y1)}
+    let t2=0.5-x2*x2-y2*y2; if(t2>0){t2*=t2;n2=t2*t2*(this.g[gi2][0]*x2+this.g[gi2][1]*y2)}
+    return 70*(n0+n1+n2);
+  }
+  fbm(x,y,oct,lac=2,gain=0.5){let s=0,a=1,f=1,m=0;for(let i=0;i<oct;i++){s+=this.noise2D(x*f,y*f)*a;m+=a;a*=gain;f*=lac}return s/m}
+}
+
+/* ══════════════════════════════════════════════════════════
+   §4  LOADING HELPERS
+   ══════════════════════════════════════════════════════════ */
+
+const $  = id => document.getElementById(id);
+const pf = $('progress-fill');
+const ls = $('loading-status');
+function prog(p, m) { pf.style.width = p+'%'; ls.textContent = m; }
+
+/* ══════════════════════════════════════════════════════════
+   §5  RENDERER + SCENE + CAMERA
+   ══════════════════════════════════════════════════════════ */
+
+prog(5, 'CREATING RENDERER');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x030308);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+$('canvas-container').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x030308, 0.003);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1200);
+camera.position.set(40, 120, 180);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.minDistance = 30;
+controls.maxDistance = 350;
+controls.maxPolarAngle = Math.PI / 2.05;
+controls.target.set(40, 5, -10);
+
+/* CSS2D label renderer */
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.left = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+labelRenderer.domElement.style.zIndex = '5';
+$('canvas-container').appendChild(labelRenderer.domElement);
+
+/* ── Post-processing ─────────────────────────────── */
+prog(10, 'INITIALISING POST-PROCESSING');
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  BLOOM.strength, BLOOM.radius, BLOOM.threshold
+);
+composer.addPass(bloomPass);
+
+/* ══════════════════════════════════════════════════════════
+   §6  TERRAIN GENERATION (with vertex colours)
+   ══════════════════════════════════════════════════════════ */
+
+prog(20, 'GENERATING TERRAIN HEIGHTMAP');
+
+const noise = new SimplexNoise(12345);
+const { size: tSize, segments: tSeg, maxElev, noiseScale, octaves } = TERRAIN;
+
+const terrainGeo = new THREE.PlaneGeometry(tSize, tSize, tSeg, tSeg);
+terrainGeo.rotateX(-Math.PI / 2);
+const pos = terrainGeo.attributes.position;
+
+/* Height generation */
+for (let i = 0; i < pos.count; i++) {
+  const x = pos.getX(i), z = pos.getZ(i);
+  let h = noise.fbm(x * noiseScale, z * noiseScale, octaves);
+  const ridge = 1 - Math.abs(noise.fbm(x*noiseScale*1.5+100, z*noiseScale*1.5+100, 3));
+  h = h * 0.65 + ridge * 0.35;
+
+  /* Thames valley */
+  const tz = z - (5 + Math.sin(x * 0.015) * 12);
+  const valleyW = 18 + Math.sin(x * 0.02) * 5;
+  const valley = Math.max(0, 1 - Math.abs(tz) / valleyW);
+  h -= valley * 0.7;
+
+  /* Flatten Heathrow area */
+  const dHub = Math.sqrt(x*x + z*z);
+  h *= 1 - Math.max(0, 1 - dHub / 20) * 0.85;
+
+  /* Edge falloff */
+  const edge = Math.max(Math.abs(x)/(tSize/2), Math.abs(z)/(tSize/2));
+  const fade = Math.max(0, 1 - Math.pow(edge, 2.5));
+
+  pos.setY(i, Math.max(0, h) * maxElev * fade);
+}
+terrainGeo.computeVertexNormals();
+
+/* Vertex colour gradient by elevation */
+prog(30, 'APPLYING ELEVATION COLOURS');
+
+const colLow  = new THREE.Color(0x0a1628);
+const colMid  = new THREE.Color(0x0e3050);
+const colHigh = new THREE.Color(0x1a7090);
+const colPeak = new THREE.Color(0x00ffff);
+
+const colours = new Float32Array(pos.count * 3);
+for (let i = 0; i < pos.count; i++) {
+  const h = pos.getY(i) / maxElev; // 0–1
+  const c = new THREE.Color();
+  if (h < 0.15)      c.lerpColors(colLow, colMid, h / 0.15);
+  else if (h < 0.45) c.lerpColors(colMid, colHigh, (h - 0.15) / 0.3);
+  else if (h < 0.75) c.lerpColors(colHigh, colPeak, (h - 0.45) / 0.3);
+  else                c.lerpColors(colPeak, new THREE.Color(0xffffff), (h - 0.75) / 0.25);
+  colours[i*3]   = c.r;
+  colours[i*3+1] = c.g;
+  colours[i*3+2] = c.b;
+}
+terrainGeo.setAttribute('color', new THREE.BufferAttribute(colours, 3));
+
+const terrainMat = new THREE.MeshBasicMaterial({
+  vertexColors: true,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.4,
+});
+const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+scene.add(terrain);
+
+/* Solid dark fill */
+scene.add(new THREE.Mesh(terrainGeo, new THREE.MeshBasicMaterial({ color: 0x030308, side: THREE.BackSide })));
+
+/* Base grid */
+const grid = new THREE.GridHelper(440, 88, 0x0a1628, 0x0a1628);
+grid.position.y = -0.5;
+grid.material.transparent = true;
+grid.material.opacity = 0.25;
+scene.add(grid);
+
+/* ══════════════════════════════════════════════════════════
+   §7  THAMES RIVER
+   ══════════════════════════════════════════════════════════ */
+
+prog(35, 'CARVING THE THAMES');
+
+function getTerrainHeight(tx, tz) {
+  /* Sample height from terrain geometry */
+  const nx = ((tx + tSize/2) / tSize) * tSeg;
+  const nz = ((tz + tSize/2) / tSize) * tSeg;
+  const ix = Math.round(Math.max(0, Math.min(tSeg, nx)));
+  const iz = Math.round(Math.max(0, Math.min(tSeg, nz)));
+  const idx = iz * (tSeg + 1) + ix;
+  return idx < pos.count ? pos.getY(idx) : 0;
+}
+
+const thamesPts = THAMES.map(([x, z]) => new THREE.Vector3(x, getTerrainHeight(x, z) + 0.4, z));
+const thamesCurve = new THREE.CatmullRomCurve3(thamesPts);
+const thamesSmooth = thamesCurve.getPoints(200);
+
+const thamesMat = new THREE.LineBasicMaterial({ color: 0x2060a0, transparent: true, opacity: 0.45 });
+scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(thamesSmooth), thamesMat));
+
+/* Wider glow line */
+const thamesGlow = new THREE.LineBasicMaterial({ color: 0x3080c0, transparent: true, opacity: 0.12 });
+scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(thamesSmooth), thamesGlow));
+
+/* ══════════════════════════════════════════════════════════
+   §8  LABELS (CSS2D)
+   ══════════════════════════════════════════════════════════ */
+
+prog(40, 'PLACING LOCATION MARKERS');
+
+function makeLabel(text, cssClass) {
+  const el = document.createElement('div');
+  el.className = 'label-3d ' + cssClass;
+  el.textContent = text;
+  return new CSS2DObject(el);
+}
+
+LANDMARKS.forEach(lm => {
+  const y = getTerrainHeight(lm.x, lm.z) + (lm.type === 'airport' ? 3 : 1.5);
+  const label = makeLabel(lm.name, lm.type);
+  label.position.set(lm.x, y, lm.z);
+  scene.add(label);
+
+  if (lm.type === 'landmark') {
+    /* Tiny vertical tick */
+    const tickPts = [
+      new THREE.Vector3(lm.x, getTerrainHeight(lm.x, lm.z) + 0.2, lm.z),
+      new THREE.Vector3(lm.x, y - 0.3, lm.z),
+    ];
+    scene.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(tickPts),
+      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 })
+    ));
+  }
+});
+
+/* Thames label */
+const thamesLabel = makeLabel('River Thames', 'river-label');
+thamesLabel.position.set(50, getTerrainHeight(50, -6) + 2, -6);
+scene.add(thamesLabel);
+
+/* ══════════════════════════════════════════════════════════
+   §9  BOROUGH BOUNDARIES
+   ══════════════════════════════════════════════════════════ */
+
+prog(45, 'DRAWING BOROUGH BOUNDARIES');
+
+const boroughGroup = new THREE.Group();
+boroughGroup.visible = true;
+
+BOROUGHS.forEach(b => {
+  const pts = b.pts.map(([x,z]) => new THREE.Vector3(x, getTerrainHeight(x,z) + 0.3, z));
+  pts.push(pts[0].clone()); // close polygon
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineDashedMaterial({
+    color: 0x00ffff, transparent: true, opacity: 0.08,
+    dashSize: 2, gapSize: 1.5,
+  });
+  const line = new THREE.Line(geo, mat);
+  line.computeLineDistances();
+  boroughGroup.add(line);
+
+  /* Borough name label */
+  const cx = b.pts.reduce((s,p)=>s+p[0],0) / b.pts.length;
+  const cz = b.pts.reduce((s,p)=>s+p[1],0) / b.pts.length;
+  const label = makeLabel(b.name, 'borough');
+  label.position.set(cx, getTerrainHeight(cx,cz) + 1.2, cz);
+  boroughGroup.add(label);
+});
+scene.add(boroughGroup);
+
+/* ══════════════════════════════════════════════════════════
+   §10  HEATHROW AIRPORT DETAIL
+   ══════════════════════════════════════════════════════════ */
+
+prog(50, 'BUILDING AIRPORT LAYOUT');
+
+const airportGroup = new THREE.Group();
+
+/* Runway material */
+const rwyMat = new THREE.LineBasicMaterial({ color: 0xffb000, transparent: true, opacity: 0.6 });
+const rwyDash = new THREE.LineDashedMaterial({ color: 0xffb000, transparent: true, opacity: 0.3, dashSize: 1, gapSize: 0.8 });
+
+/* RWY 27L/09R (northern) — approx 3.9km = 22 units, heading ~270° */
+function addRunway(z, label1, label2) {
+  const pts = [new THREE.Vector3(-11, 0.3, z), new THREE.Vector3(11, 0.3, z)];
+  airportGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), rwyMat));
+  /* Centre-line dashes */
+  const cl = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), rwyDash);
+  cl.computeLineDistances();
+  airportGroup.add(cl);
+  /* Threshold labels */
+  const l1 = makeLabel(label1, 'airport'); l1.position.set(-12, 1.2, z); l1.element.style.fontSize = '7px';
+  const l2 = makeLabel(label2, 'airport'); l2.position.set(12, 1.2, z); l2.element.style.fontSize = '7px';
+  airportGroup.add(l1, l2);
+}
+
+addRunway(-2.5, '27L', '09R');
+addRunway(2.5, '27R', '09L');
+
+/* Terminal outlines (simplified rectangles) */
+const termMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.15 });
+function addTerminal(cx, cz, w, h, name) {
+  const hw = w/2, hh = h/2, y = 0.35;
+  const pts = [
+    new THREE.Vector3(cx-hw, y, cz-hh),
+    new THREE.Vector3(cx+hw, y, cz-hh),
+    new THREE.Vector3(cx+hw, y, cz+hh),
+    new THREE.Vector3(cx-hw, y, cz+hh),
+    new THREE.Vector3(cx-hw, y, cz-hh),
+  ];
+  airportGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), termMat));
+  const tl = makeLabel(name, 'landmark');
+  tl.position.set(cx, 0.8, cz);
+  tl.element.style.fontSize = '7px';
+  tl.element.style.color = 'rgba(0,255,255,0.3)';
+  airportGroup.add(tl);
+}
+
+addTerminal(-4, -5, 4, 2.5, 'T1-3');
+addTerminal(2, -6, 3, 2, 'T4');
+addTerminal(-6, 5, 5, 3, 'T5');
+
+/* Taxiway hints */
+const taxiMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.06 });
+[[-4,-2.5,-4,-5],[2,-2.5,2,-6],[-6,2.5,-6,5]].forEach(([x1,z1,x2,z2]) => {
+  airportGroup.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,0.3,z1), new THREE.Vector3(x2,0.3,z2)]),
+    taxiMat
+  ));
+});
+
+scene.add(airportGroup);
+
+/* Pulsing hub ring */
+const hubRingGeo = new THREE.RingGeometry(4, 4.5, 48);
+const hubRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+const hubRing = new THREE.Mesh(hubRingGeo, hubRingMat);
+hubRing.rotation.x = -Math.PI / 2;
+hubRing.position.y = 0.5;
+scene.add(hubRing);
+
+const pulseRing = new THREE.Mesh(
+  new THREE.RingGeometry(6, 6.3, 48),
+  new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.25 })
+);
+pulseRing.rotation.x = -Math.PI / 2;
+pulseRing.position.y = 0.4;
+scene.add(pulseRing);
+
+/* Vertical beacon */
+scene.add(new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,65,0)]),
+  new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.1 })
+));
+
+/* ══════════════════════════════════════════════════════════
+   §11  NOISE CONTOUR RINGS
+   ══════════════════════════════════════════════════════════ */
+
+prog(55, 'PLOTTING NOISE CONTOURS');
+
+const contourGroup = new THREE.Group();
+
+NOISE_CONTOURS.forEach(nc => {
+  const ringPts = [];
+  for (let a = 0; a <= Math.PI * 2; a += Math.PI / 48) {
+    const rx = Math.cos(a) * nc.radius;
+    const rz = Math.sin(a) * nc.radius;
+    ringPts.push(new THREE.Vector3(rx, getTerrainHeight(rx, rz) + 0.5, rz));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(ringPts);
+  const mat = new THREE.LineDashedMaterial({
+    color: nc.col, transparent: true, opacity: 0.2,
+    dashSize: 1.5, gapSize: 1,
+  });
+  const line = new THREE.Line(geo, mat);
+  line.computeLineDistances();
+  contourGroup.add(line);
+
+  /* Label */
+  const lbl = makeLabel(nc.db + ' dB', 'noise-label');
+  lbl.position.set(nc.radius * 0.71, getTerrainHeight(nc.radius*0.71, -nc.radius*0.71) + 1.5, -nc.radius * 0.71);
+  contourGroup.add(lbl);
+});
+
+scene.add(contourGroup);
+
+/* ══════════════════════════════════════════════════════════
+   §12  APPROACH / DEPARTURE CORRIDORS
+   ══════════════════════════════════════════════════════════ */
+
+prog(58, 'RENDERING FLIGHT CORRIDORS');
+
+function addCorridor(startX, endX, halfWidthNear, halfWidthFar, colour, yOff) {
+  const verts = new Float32Array([
+    startX, yOff + 0.3, -halfWidthNear,
+    startX, yOff + 0.3,  halfWidthNear,
+    endX,   yOff + 0.3, -halfWidthFar,
+    endX,   yOff + 0.3,  halfWidthFar,
+  ]);
+  const idx = [0,1,2, 2,1,3];
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+
+  /* Solid fill */
+  scene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+    color: colour, transparent: true, opacity: 0.04, side: THREE.DoubleSide,
+  })));
+
+  /* Wireframe outline */
+  const edgePts = [
+    new THREE.Vector3(startX, yOff+0.35, -halfWidthNear),
+    new THREE.Vector3(endX, yOff+0.35, -halfWidthFar),
+    new THREE.Vector3(endX, yOff+0.35, halfWidthFar),
+    new THREE.Vector3(startX, yOff+0.35, halfWidthNear),
+    new THREE.Vector3(startX, yOff+0.35, -halfWidthNear),
+  ];
+  scene.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(edgePts),
+    new THREE.LineBasicMaterial({ color: colour, transparent: true, opacity: 0.12 })
+  ));
+}
+
+/* Departure corridor (west, expanding outward) */
+addCorridor(-12, -100, 3, 30, 0x00ffff, 0);
+/* Approach corridor (east, narrowing inward) */
+addCorridor(12, 100, 3, 28, 0xffb000, 0);
+
+/* Corridor labels */
+const depLabel = makeLabel('DEPARTURE CORRIDOR (WEST)', 'noise-label');
+depLabel.position.set(-55, 2, -18); depLabel.element.style.color = 'rgba(0,255,255,0.3)';
+scene.add(depLabel);
+const arrLabel = makeLabel('APPROACH CORRIDOR (EAST)', 'noise-label');
+arrLabel.position.set(55, 2, -16); arrLabel.element.style.color = 'rgba(255,176,0,0.3)';
+scene.add(arrLabel);
+
+/* ══════════════════════════════════════════════════════════
+   §13  FLIGHT PATHS + ANIMATED TRAILS
+   ══════════════════════════════════════════════════════════ */
+
+prog(65, 'COMPUTING FLIGHT TRAJECTORIES');
+
+const TRAIL_LEN = 35;
+const flightObjs = [];
+
+FLIGHTS.forEach(f => {
+  const rad = (f.bearing * Math.PI) / 180;
+  const ex = Math.sin(rad) * f.dist;
+  const ez = -Math.cos(rad) * f.dist;
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(0, 2, 0),
+    new THREE.Vector3(ex*0.5, f.alt, ez*0.5),
+    new THREE.Vector3(ex, 3, ez),
+  );
+
+  /* Arc line */
+  const arcPts = curve.getPoints(80);
+  scene.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(arcPts),
+    new THREE.LineBasicMaterial({ color: f.col, transparent: true, opacity: 0.35 })
+  ));
+
+  /* Ground shadow (dashed) */
+  const groundPts = arcPts.map(p => new THREE.Vector3(p.x, 0.15, p.z));
+  const gl = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(groundPts),
+    new THREE.LineDashedMaterial({ color: f.col, transparent: true, opacity: 0.06, dashSize: 2, gapSize: 2 })
+  );
+  gl.computeLineDistances();
+  scene.add(gl);
+
+  /* Aircraft dot */
+  const dotMat = new THREE.MeshBasicMaterial({ color: f.col, transparent: true, opacity: 0.95 });
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), dotMat);
+  dot.userData = f; // for raycasting
+  scene.add(dot);
+
+  /* Vertical connector */
+  const connGeo = new THREE.BufferGeometry();
+  connGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+  const connLine = new THREE.Line(connGeo, new THREE.LineBasicMaterial({ color: f.col, transparent: true, opacity: 0.1 }));
+  scene.add(connLine);
+
+  /* Comet trail */
+  const trailPos = new Float32Array(TRAIL_LEN * 3);
+  const trailCol = new Float32Array(TRAIL_LEN * 3);
+  const baseCol = new THREE.Color(f.col);
+  for (let i = 0; i < TRAIL_LEN; i++) {
+    const a = 1 - i / TRAIL_LEN;
+    trailCol[i*3]   = baseCol.r * a;
+    trailCol[i*3+1] = baseCol.g * a;
+    trailCol[i*3+2] = baseCol.b * a;
+  }
+  const trailGeo = new THREE.BufferGeometry();
+  trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+  trailGeo.setAttribute('color', new THREE.BufferAttribute(trailCol, 3));
+  const trailLine = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.7 }));
+  scene.add(trailLine);
+
+  /* Destination marker */
+  const destRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.5, 2, 6),
+    new THREE.MeshBasicMaterial({ color: f.col, side: THREE.DoubleSide, transparent: true, opacity: 0.2 })
+  );
+  destRing.rotation.x = -Math.PI / 2;
+  destRing.position.set(ex, 0.3, ez);
+  scene.add(destRing);
+
+  /* Highlighted arc (hidden, shown on selection) */
+  const hlArc = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(arcPts),
+    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
+  );
+  scene.add(hlArc);
+
+  /* Direction: DEP moves 0→1 (outbound), ARR moves 1→0 (inbound), OVR uses a through-path */
+  const isInbound = f.type === 'ARR';
+  const startT = isInbound ? 0.8 + Math.random() * 0.2 : Math.random();
+
+  flightObjs.push({
+    flight: f, curve, dot, connLine, trailGeo, trailPos, trailLine, hlArc,
+    t: startT,
+    speed: 0.05 + Math.random() * 0.035,
+    direction: isInbound ? -1 : 1,
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   §14  LIVE FLIGHT DATA (OpenSky Network — free, no key)
+   ══════════════════════════════════════════════════════════
+
+   Fetches real aircraft positions within a bounding box around
+   London. Falls back to simulated flights if the API is
+   unreachable (CORS, rate limit, network error).
+
+   Aircraft are auto-classified by vertical rate:
+     Climbing  (>2 m/s)  → cyan  (departure)
+     Descending (<-2 m/s) → amber (arrival)
+     Level                → pink  (transit/cruise)
+*/
+
+const LHR_POS = { lat: 51.4700, lng: -0.4543 };
+const FETCH_BBOX = { lamin: 50.8, lamax: 52.2, lomin: -1.5, lomax: 0.8 };
+const LIVE_FETCH_SEC = 15;
+const LIVE_TRAIL = 20;
+const STALE_MS = 90000; // remove aircraft not seen for 90s
+
+let liveMode = false;
+let liveFetchTimer = 0;
+let liveCount = 0;
+let liveFetchFails = 0;
+const liveAircraft = new Map(); // icao24 → aircraft object
+const liveGroup = new THREE.Group();
+scene.add(liveGroup);
+const liveDots = []; // for raycasting
+
+/* ── Coordinate conversion ───────────────────────── */
+
+const LAT_SCALE = 111000 / SCALE; // terrain units per degree latitude
+const LNG_SCALE = 111000 * Math.cos(LHR_POS.lat * Math.PI / 180) / SCALE;
+
+function geoToTerrain(lat, lng) {
+  return {
+    x: (lng - LHR_POS.lng) * LNG_SCALE,
+    z: -(lat - LHR_POS.lat) * LAT_SCALE,
+  };
+}
+
+function altToY(m) { return Math.max(0.5, (m || 0) / 250); }
+
+function classifyByVRate(vRate) {
+  if (vRate > 2)  return { type: 'CLB', label: 'CLIMBING',    col: 0x00ffff };
+  if (vRate < -2) return { type: 'DES', label: 'DESCENDING',  col: 0xffb000 };
+  return              { type: 'CRZ', label: 'CRUISING',    col: 0xff4488 };
+}
+
+function distFromHub(pos) {
+  return Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+}
+
+/* ── Fetch with CORS proxy fallback ──────────────── */
+
+async function fetchLiveData() {
+  const { lamin, lamax, lomin, lomax } = FETCH_BBOX;
+  const apiUrl = `https://opensky-network.org/api/states/all?lamin=${lamin}&lamax=${lamax}&lomin=${lomin}&lomax=${lomax}`;
+
+  /* Try CORS proxies first (direct browser→OpenSky is blocked by CORS) */
+  const proxies = [
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+
+  for (const makeUrl of proxies) {
+    try {
+      const res = await fetch(makeUrl(apiUrl), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.states?.length) { liveFetchFails = 0; return data.states; }
+    } catch { /* try next proxy */ }
+  }
+
+  /* Last resort: direct fetch (may work in some environments) */
+  try {
+    const res = await fetch(apiUrl, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.states?.length) { liveFetchFails = 0; return data.states; }
+    }
+  } catch { /* fall through */ }
+
+  liveFetchFails++;
+  return null;
+}
+
+/* ── Process state vectors into 3D aircraft ──────── */
+
+function createLiveAc(icao, pos, y, cls, flightData, now) {
+  const dotMat = new THREE.MeshBasicMaterial({ color: cls.col, transparent: true, opacity: 0.95 });
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 8), dotMat);
+  dot.position.set(pos.x, y, pos.z);
+  dot.userData = flightData;
+  liveGroup.add(dot);
+  liveDots.push(dot);
+
+  /* Connector */
+  const cGeo = new THREE.BufferGeometry();
+  cGeo.setAttribute('position', new THREE.BufferAttribute(
+    new Float32Array([pos.x, y, pos.z, pos.x, 0.15, pos.z]), 3));
+  const conn = new THREE.Line(cGeo, new THREE.LineBasicMaterial({
+    color: cls.col, transparent: true, opacity: 0.1 }));
+  liveGroup.add(conn);
+
+  /* Trail */
+  const tPos = new Float32Array(LIVE_TRAIL * 3);
+  const tCol = new Float32Array(LIVE_TRAIL * 3);
+  const bc = new THREE.Color(cls.col);
+  for (let i = 0; i < LIVE_TRAIL; i++) {
+    const a = 1 - i / LIVE_TRAIL;
+    tCol[i*3] = bc.r*a; tCol[i*3+1] = bc.g*a; tCol[i*3+2] = bc.b*a;
+    tPos[i*3] = pos.x; tPos[i*3+1] = y; tPos[i*3+2] = pos.z;
+  }
+  const tGeo = new THREE.BufferGeometry();
+  tGeo.setAttribute('position', new THREE.BufferAttribute(tPos, 3));
+  tGeo.setAttribute('color', new THREE.BufferAttribute(tCol, 3));
+  const tLine = new THREE.Line(tGeo, new THREE.LineBasicMaterial({
+    vertexColors: true, transparent: true, opacity: 0.5 }));
+  liveGroup.add(tLine);
+
+  liveAircraft.set(icao, {
+    dot, conn, tGeo, tPos, tLine, tCol,
+    history: [{ x: pos.x, y, z: pos.z }],
+    data: flightData,
+    lastSeen: now,
+  });
+}
+
+function updateLiveTrail(ac) {
+  const tp = ac.tPos;
+  for (let i = 0; i < LIVE_TRAIL; i++) {
+    const h = i < ac.history.length ? ac.history[i] : ac.history[ac.history.length - 1];
+    tp[i*3] = h.x; tp[i*3+1] = h.y; tp[i*3+2] = h.z;
+  }
+  ac.tGeo.attributes.position.needsUpdate = true;
+}
+
+function processLiveStates(states) {
+  const now = Date.now();
+  const seen = new Set();
+
+  for (const s of states) {
+    const icao = s[0];
+    const callsign = (s[1] || '').trim();
+    const lng = s[5], lat = s[6];
+    const alt = s[7] ?? s[13] ?? 0;
+    const onGround = s[8];
+    const velocity = s[9];
+    const heading = s[10];
+    const vRate = s[11] ?? 0;
+    const country = s[2];
+
+    if (!lat || !lng || onGround || !callsign) continue;
+
+    seen.add(icao);
+    const pos = geoToTerrain(lat, lng);
+    const y = altToY(alt);
+    const cls = classifyByVRate(vRate);
+
+    const fd = {
+      callsign, lat, lng, alt: Math.round(alt),
+      speed: velocity ? Math.round(velocity * 1.944) : 0,
+      heading: heading ? Math.round(heading) : 0,
+      vRate: Math.round((vRate ?? 0) * 196.85),
+      country, type: cls.type, label: cls.label, col: cls.col,
+    };
+
+    if (liveAircraft.has(icao)) {
+      const ac = liveAircraft.get(icao);
+      ac.dot.position.set(pos.x, y, pos.z);
+      ac.dot.material.color.setHex(cls.col);
+      ac.dot.userData = fd;
+      ac.conn.material.color.setHex(cls.col);
+
+      const cp = ac.conn.geometry.attributes.position;
+      cp.setXYZ(0, pos.x, y, pos.z);
+      cp.setXYZ(1, pos.x, 0.15, pos.z);
+      cp.needsUpdate = true;
+
+      ac.history.unshift({ x: pos.x, y, z: pos.z });
+      if (ac.history.length > LIVE_TRAIL) ac.history.pop();
+      updateLiveTrail(ac);
+
+      /* Update trail colours to match current classification */
+      const bc = new THREE.Color(cls.col);
+      for (let i = 0; i < LIVE_TRAIL; i++) {
+        const a = 1 - i / LIVE_TRAIL;
+        ac.tCol[i*3] = bc.r*a; ac.tCol[i*3+1] = bc.g*a; ac.tCol[i*3+2] = bc.b*a;
+      }
+      ac.tGeo.attributes.color.needsUpdate = true;
+
+      ac.data = fd;
+      ac.lastSeen = now;
+    } else {
+      createLiveAc(icao, pos, y, cls, fd, now);
+    }
+  }
+
+  /* Remove stale aircraft */
+  for (const [icao, ac] of liveAircraft) {
+    if (!seen.has(icao) && now - ac.lastSeen > STALE_MS) {
+      liveGroup.remove(ac.dot, ac.conn, ac.tLine);
+      const idx = liveDots.indexOf(ac.dot);
+      if (idx !== -1) liveDots.splice(idx, 1);
+      ac.dot.geometry.dispose(); ac.dot.material.dispose();
+      ac.conn.geometry.dispose(); ac.conn.material.dispose();
+      ac.tLine.geometry.dispose(); ac.tLine.material.dispose();
+      ac.tGeo.dispose();
+      liveAircraft.delete(icao);
+    }
+  }
+
+  liveCount = liveAircraft.size;
+}
+
+/* ── Enter/exit live mode ────────────────────────── */
+
+function enterLiveMode() {
+  if (liveMode) return;
+  liveMode = true;
+  /* Hide simulated dots, trails, connectors (keep static arcs as route indicators) */
+  flightObjs.forEach(fo => {
+    fo.dot.visible = false;
+    fo.connLine.visible = false;
+    fo.trailLine.visible = false;
+  });
+}
+
+function exitLiveMode() {
+  if (!liveMode) return;
+  liveMode = false;
+  /* Restore simulated flights */
+  flightObjs.forEach(fo => {
+    fo.dot.visible = true;
+    fo.connLine.visible = true;
+    fo.trailLine.visible = true;
+  });
+  /* Hide live aircraft */
+  liveGroup.visible = false;
+}
+
+function restoreLiveGroup() { liveGroup.visible = true; }
+
+/* ── Initial fetch ───────────────────────────────── */
+
+fetchLiveData().then(states => {
+  if (states) {
+    processLiveStates(states);
+    enterLiveMode();
+  }
+});
+
+/* ── Radar sweep disc ────────────────────────────── */
+const sweep = new THREE.Mesh(
+  new THREE.CircleGeometry(130, 64, 0, Math.PI/8),
+  new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.025, side: THREE.DoubleSide })
+);
+sweep.rotation.x = -Math.PI / 2;
+sweep.position.y = 0.6;
+scene.add(sweep);
+
+/* ══════════════════════════════════════════════════════════
+   §14b  FLIGHT CORRIDOR HEATMAP & TIMELAPSE
+   ══════════════════════════════════════════════════════════
+
+   Renders accumulated flight positions as a point cloud,
+   showing corridor patterns. Three data sources:
+     - LIVE: positions accumulated during session from OpenSky
+     - SYNTHETIC: pre-generated data along known Heathrow SIDs/STARs
+   View modes: REALTIME / DAILY / WEEKLY / MONTHLY
+*/
+
+const CORRIDOR_VIEWS = ['REALTIME', 'DAILY', 'WEEKLY', 'MONTHLY'];
+let corridorViewIdx = 0;
+let corridorVisible = false;
+
+/* ── Gaussian random (Box-Muller) ────────────────── */
+function gaussian() {
+  return Math.sqrt(-2 * Math.log(Math.random() || 1e-10)) * Math.cos(2 * Math.PI * Math.random());
+}
+
+/* ── Known Heathrow corridors (SIDs & STARs in terrain coords) ── */
+const CORRIDOR_PATHS = [
+  /* Departure SIDs (from runway westward/outward) */
+  { name: 'DEP-S MAKIT',   pts: [[0,0],[-10,8],[-25,20],[-45,40],[-65,65],[-90,95],[-120,130]], spread: 5, weight: 1.2 },
+  { name: 'DEP-W CPT',     pts: [[0,0],[-15,2],[-35,4],[-60,5],[-90,8],[-130,10],[-170,12]], spread: 4, weight: 1.0 },
+  { name: 'DEP-N BPK',     pts: [[0,0],[5,-5],[12,-15],[25,-30],[40,-50],[60,-75],[85,-105]], spread: 4, weight: 1.1 },
+  { name: 'DEP-E DET',     pts: [[0,0],[10,-3],[25,-5],[50,-8],[80,-10],[115,-12],[155,-15]], spread: 4, weight: 0.8 },
+  { name: 'DEP-NW WOBUN',  pts: [[0,0],[-8,-5],[-20,-15],[-40,-30],[-65,-50],[-95,-75]], spread: 4, weight: 0.7 },
+  { name: 'DEP-SW SAM',    pts: [[0,0],[-8,5],[-20,15],[-40,35],[-60,55],[-85,80]], spread: 4, weight: 0.6 },
+
+  /* Arrival STARs (from holding stacks inward to runway) */
+  { name: 'ARR-SE BIG',    pts: [[150,35],[130,28],[110,20],[90,12],[70,6],[45,3],[20,1],[0,0]], spread: 3, weight: 1.3 },
+  { name: 'ARR-N BNN',     pts: [[30,-90],[28,-70],[25,-50],[20,-35],[15,-20],[8,-10],[0,0]], spread: 3, weight: 1.2 },
+  { name: 'ARR-SW OCK',    pts: [[40,75],[35,60],[28,45],[20,30],[12,18],[5,8],[0,0]], spread: 3, weight: 1.1 },
+  { name: 'ARR-E LAM',     pts: [[175,-35],[150,-30],[125,-25],[100,-18],[75,-12],[50,-6],[25,-2],[0,0]], spread: 3, weight: 1.0 },
+
+  /* Final approach (east, very dense — ILS 27L/27R) */
+  { name: 'FINAL-27',      pts: [[160,-1],[130,0],[100,0],[70,0],[40,0],[20,0],[0,0]], spread: 1.5, weight: 2.0 },
+];
+
+/* ── Generate synthetic corridor points ──────────── */
+
+function pathLength(pts) {
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i][0] - pts[i-1][0];
+    const dz = pts[i][1] - pts[i-1][1];
+    len += Math.sqrt(dx*dx + dz*dz);
+  }
+  return len;
+}
+
+function interpolatePath(pts, t) {
+  const totalLen = pathLength(pts);
+  let target = t * totalLen;
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i][0] - pts[i-1][0];
+    const dz = pts[i][1] - pts[i-1][1];
+    const segLen = Math.sqrt(dx*dx + dz*dz);
+    if (target <= segLen || i === pts.length - 1) {
+      const frac = segLen > 0 ? target / segLen : 0;
+      return [
+        pts[i-1][0] + dx * frac,
+        pts[i-1][1] + dz * frac,
+        Math.atan2(dz, dx), // angle for spread direction
+      ];
+    }
+    target -= segLen;
+  }
+  return [pts[pts.length-1][0], pts[pts.length-1][1], 0];
+}
+
+function generateCorridorData(totalPoints) {
+  const positions = [];
+  const totalWeight = CORRIDOR_PATHS.reduce((s, c) => s + c.weight * pathLength(c.pts), 0);
+
+  CORRIDOR_PATHS.forEach(corridor => {
+    const n = Math.round(totalPoints * corridor.weight * pathLength(corridor.pts) / totalWeight);
+    for (let i = 0; i < n; i++) {
+      const t = Math.random();
+      const [px, pz, angle] = interpolatePath(corridor.pts, t);
+      const lateralOffset = gaussian() * corridor.spread;
+      const perpAngle = angle + Math.PI / 2;
+      const x = px + Math.cos(perpAngle) * lateralOffset;
+      const z = pz + Math.sin(perpAngle) * lateralOffset;
+      /* Place points ABOVE terrain to ensure visibility */
+      const terrainY = getTerrainHeight(x, z);
+      positions.push(x, terrainY + 1.0, z);
+    }
+  });
+  return new Float32Array(positions);
+}
+
+/* Pre-generate corridor datasets */
+const corridorData = {
+  DAILY:   generateCorridorData(3000),
+  WEEKLY:  generateCorridorData(15000),
+  MONTHLY: generateCorridorData(50000),
+};
+
+/* Live accumulated positions */
+const liveCorridorPositions = [];
+const MAX_LIVE_CORRIDOR = 20000;
+
+/* ── Three.js point cloud for corridors ──────────── */
+
+const corridorGroup = new THREE.Group();
+corridorGroup.visible = false;
+scene.add(corridorGroup);
+
+let activeCorridorMesh = null;
+
+function showCorridorView(mode) {
+  /* Remove previous mesh */
+  if (activeCorridorMesh) {
+    corridorGroup.remove(activeCorridorMesh);
+    activeCorridorMesh.geometry.dispose();
+    activeCorridorMesh.material.dispose();
+    activeCorridorMesh = null;
+  }
+
+  let data;
+  if (mode === 'REALTIME') {
+    corridorGroup.visible = false;
+    return;
+  } else {
+    data = corridorData[mode];
+  }
+
+  if (!data || data.length === 0) return;
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(data, 3));
+
+  /* Colour gradient: bright cyan/white near hub → dimmer cyan far out */
+  const colours = new Float32Array(data.length);
+  for (let i = 0; i < data.length / 3; i++) {
+    const x = data[i*3], z = data[i*3+2];
+    const dist = Math.sqrt(x*x + z*z);
+    const t = Math.min(1, dist / 160); // 0=hub, 1=far
+    /* Hub = bright white-cyan, far = deeper cyan */
+    colours[i*3]   = 0.3 * (1 - t);           // R (warm tint near hub)
+    colours[i*3+1] = 0.9 + (1 - t) * 0.1;     // G
+    colours[i*3+2] = 1.0;                       // B (always full)
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colours, 3));
+
+  const mat = new THREE.PointsMaterial({
+    vertexColors: true,
+    size: mode === 'MONTHLY' ? 0.8 : mode === 'WEEKLY' ? 1.0 : 1.2,
+    transparent: true,
+    opacity: mode === 'MONTHLY' ? 0.35 : mode === 'WEEKLY' ? 0.45 : 0.55,
+    sizeAttenuation: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+
+  activeCorridorMesh = new THREE.Points(geo, mat);
+  corridorGroup.add(activeCorridorMesh);
+  corridorGroup.visible = true;
+}
+
+/* ── Timelapse replay ────────────────────────────── */
+
+let timelapsePlaying = false;
+let timelapseProgress = 0;
+const TIMELAPSE_DURATION = 8; // seconds for full buildup
+
+function startCorridorTimelapse() {
+  if (corridorViewIdx === 0) return; // no timelapse in realtime
+  timelapsePlaying = true;
+  timelapseProgress = 0;
+  showToast('CORRIDOR TIMELAPSE — BUILDING...');
+}
+
+function updateCorridorTimelapse(dt) {
+  if (!timelapsePlaying || !activeCorridorMesh) return;
+  timelapseProgress += dt / TIMELAPSE_DURATION;
+  if (timelapseProgress >= 1) {
+    timelapseProgress = 1;
+    timelapsePlaying = false;
+  }
+  /* Reveal points progressively using drawRange */
+  const total = activeCorridorMesh.geometry.attributes.position.count;
+  activeCorridorMesh.geometry.setDrawRange(0, Math.floor(total * timelapseProgress));
+}
+
+/* Accumulate live positions into corridor layer */
+function accumulateLiveCorridor() {
+  if (!liveMode) return;
+  liveAircraft.forEach(ac => {
+    if (liveCorridorPositions.length < MAX_LIVE_CORRIDOR * 3) {
+      liveCorridorPositions.push(ac.dot.position.x, 0.35, ac.dot.position.z);
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   §15  DAY/NIGHT CYCLE
+   ══════════════════════════════════════════════════════════ */
+
+/*
+ * Real GMT-based day/night cycle with approximate sunrise/sunset
+ * for London (51.5°N). Uses a simplified solar declination model
+ * to calculate sunrise and sunset times for the current date.
+ */
+
+const LONDON_LAT = 51.5 * Math.PI / 180;
+
+function getSunTimes() {
+  /* Day of year */
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const doy = Math.floor((now - start) / 86400000);
+
+  /* Solar declination (simplified Spencer formula) */
+  const B = (2 * Math.PI / 365) * (doy - 81);
+  const decl = 23.45 * Math.PI / 180 * Math.sin(B);
+
+  /* Hour angle at sunrise/sunset */
+  const cosH = -Math.tan(LONDON_LAT) * Math.tan(decl);
+  const H = Math.acos(Math.max(-1, Math.min(1, cosH)));
+  const halfDayHours = (H * 180 / Math.PI) / 15; // hours from noon
+
+  const sunrise = 12 - halfDayHours; // UTC (London ≈ 0° longitude)
+  const sunset  = 12 + halfDayHours;
+
+  return { sunrise, sunset };
+}
+
+const sunTimes = getSunTimes();
+
+/*
+ * UK local time utilities — uses Intl API so BST/GMT transitions
+ * are handled automatically (last Sunday of March → BST,
+ * last Sunday of October → GMT).
+ */
+const ukTimeFormat = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+});
+const ukDateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London',
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+});
+const ukTzName = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London', timeZoneName: 'short',
+});
+
+function getUkOffsetHours() {
+  /* Compare UK local hour with UTC hour to determine offset (0 for GMT, 1 for BST) */
+  const now = new Date();
+  const ukParts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London', hour: 'numeric', hour12: false,
+  }).formatToParts(now);
+  const ukHour = parseInt(ukParts.find(p => p.type === 'hour').value);
+  const utcHour = now.getUTCHours();
+  return ((ukHour - utcHour) + 24) % 24;
+}
+
+function getUkTimeString(now) {
+  return ukTimeFormat.format(now || new Date());
+}
+
+function getUkDateTimeString(now) {
+  return ukDateTimeFormat.format(now || new Date());
+}
+
+function getUkTzLabel() {
+  const parts = ukTzName.formatToParts(new Date());
+  const tz = parts.find(p => p.type === 'timeZoneName');
+  return tz ? tz.value : 'GMT';
+}
+
+/* Convert UTC decimal hours to UK local time string (e.g. sunrise/sunset display) */
+function utcDecimalToUkString(utcHours) {
+  const offset = getUkOffsetHours();
+  const localH = (utcHours + offset) % 24;
+  const h = Math.floor(localH);
+  const m = Math.round((localH % 1) * 60);
+  return h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0');
+}
+
+/* Get current cycle position from real UTC clock (solar time — not affected by BST) */
+function getGmtCycleTime() {
+  const now = new Date();
+  const h = now.getUTCHours() + now.getUTCMinutes() / 60 + now.getUTCSeconds() / 3600;
+  return h / 24; // 0–1 where 0 = midnight UTC, 0.5 = noon UTC
+}
+
+/* Convert 24h fraction to sunrise/sunset-relative phase (0–1) for colour mixing.
+ *  0.00–dawnStart  = deep night
+ *  dawnStart–sunrise = dawn (golden hour)
+ *  sunrise–sunset  = day
+ *  sunset–duskEnd  = dusk (golden hour)
+ *  duskEnd–1.00    = deep night
+ */
+const DAWN_DURATION = 0.75; // hours of golden hour before sunrise
+const DUSK_DURATION = 0.75; // hours of golden hour after sunset
+
+/* Background colours for each phase */
+const nightBg     = new THREE.Color(0x030308);
+const dawnEarlyBg = new THREE.Color(0x0c0510); // purple-ish predawn
+const dawnBg      = new THREE.Color(0x1a0a08); // warm amber dawn
+const dayBg       = new THREE.Color(0x060a14); // dark blue-ish day
+const duskBg      = new THREE.Color(0x150808); // warm red-amber dusk
+const duskLateBg  = new THREE.Color(0x0a0510); // purple-ish post-dusk
+
+function getCycleColour(gmtFrac) {
+  const h = gmtFrac * 24; // current hour
+  const sr = sunTimes.sunrise;
+  const ss = sunTimes.sunset;
+  const dawnStart = sr - DAWN_DURATION;
+  const duskEnd   = ss + DUSK_DURATION;
+  const c = new THREE.Color();
+
+  if (h < dawnStart || h > duskEnd) {
+    /* Deep night */
+    c.copy(nightBg);
+  } else if (h < sr) {
+    /* Dawn phase */
+    const p = (h - dawnStart) / DAWN_DURATION; // 0→1
+    if (p < 0.4) c.lerpColors(nightBg, dawnEarlyBg, p / 0.4);
+    else         c.lerpColors(dawnEarlyBg, dawnBg, (p - 0.4) / 0.6);
+  } else if (h < sr + 0.5) {
+    /* Sunrise → day transition */
+    c.lerpColors(dawnBg, dayBg, (h - sr) / 0.5);
+  } else if (h < ss - 0.5) {
+    /* Full day */
+    c.copy(dayBg);
+  } else if (h < ss) {
+    /* Day → dusk transition */
+    c.lerpColors(dayBg, duskBg, (h - (ss - 0.5)) / 0.5);
+  } else {
+    /* Dusk phase */
+    const p = (h - ss) / DUSK_DURATION; // 0→1
+    if (p < 0.6) c.lerpColors(duskBg, duskLateBg, p / 0.6);
+    else         c.lerpColors(duskLateBg, nightBg, (p - 0.6) / 0.4);
+  }
+  return c;
+}
+
+function getCycleLabel(gmtFrac) {
+  const h = gmtFrac * 24;
+  const sr = sunTimes.sunrise;
+  const ss = sunTimes.sunset;
+  if (h >= sr - DAWN_DURATION && h < sr) return 'DAWN';
+  if (h >= sr && h < sr + 0.3) return 'SUNRISE';
+  if (h >= sr + 0.3 && h < ss - 0.3) return 'DAY';
+  if (h >= ss - 0.3 && h < ss) return 'SUNSET';
+  if (h >= ss && h <= ss + DUSK_DURATION) return 'DUSK';
+  return 'NIGHT';
+}
+
+/* Night intensity: 1 = full night, 0 = full day, smooth transitions */
+function getNightIntensity(gmtFrac) {
+  const h = gmtFrac * 24;
+  const sr = sunTimes.sunrise;
+  const ss = sunTimes.sunset;
+  if (h < sr - DAWN_DURATION || h > ss + DUSK_DURATION) return 1;
+  if (h >= sr + 0.5 && h <= ss - 0.5) return 0;
+  if (h < sr + 0.5) {
+    /* Dawn → morning */
+    const total = (sr + 0.5) - (sr - DAWN_DURATION);
+    return 1 - (h - (sr - DAWN_DURATION)) / total;
+  }
+  /* Evening → night */
+  const total = (ss + DUSK_DURATION) - (ss - 0.5);
+  return (h - (ss - 0.5)) / total;
+}
+
+let cycleTime = getGmtCycleTime();
+let timelapseMode = false;
+let timelapseOffset = 0; // accumulated offset in day-fraction
+
+/* City glow points (visible at night) */
+const cityLights = [];
+[{ x:68,z:-8 }, { x:80,z:-6 }, { x:90,z:2 }, { x:58,z:-26 }, { x:36,z:-36 }, { x:66,z:6 }].forEach(p => {
+  const light = new THREE.PointLight(0xffcc66, 0, 30);
+  light.position.set(p.x, getTerrainHeight(p.x, p.z) + 3, p.z);
+  scene.add(light);
+  cityLights.push(light);
+});
+
+/* Ambient */
+const ambient = new THREE.AmbientLight(0x111122, 0.5);
+scene.add(ambient);
+
+/* ══════════════════════════════════════════════════════════
+   §16  MINI-MAP (2D canvas)
+   ══════════════════════════════════════════════════════════ */
+
+prog(80, 'INITIALISING RADAR DISPLAY');
+
+const mmCanvas = $('minimap');
+const mm = mmCanvas.getContext('2d');
+const mmSize = 160;
+const mmScale = mmSize / tSize; // terrain-to-pixel
+let mmSweepAngle = 0;
+
+function drawMinimap(elapsed) {
+  mm.clearRect(0, 0, mmSize, mmSize);
+
+  /* Background */
+  mm.fillStyle = 'rgba(3,3,8,0.95)';
+  mm.fillRect(0, 0, mmSize, mmSize);
+
+  const cx = mmSize / 2, cy = mmSize / 2;
+
+  /* Range rings */
+  mm.strokeStyle = 'rgba(0,255,255,0.08)';
+  mm.lineWidth = 0.5;
+  [20, 40, 60].forEach(r => {
+    mm.beginPath();
+    mm.arc(cx, cy, r, 0, Math.PI*2);
+    mm.stroke();
+  });
+
+  /* Cross hairs */
+  mm.strokeStyle = 'rgba(0,255,255,0.06)';
+  mm.beginPath(); mm.moveTo(cx, 0); mm.lineTo(cx, mmSize); mm.stroke();
+  mm.beginPath(); mm.moveTo(0, cy); mm.lineTo(mmSize, cy); mm.stroke();
+
+  /* Radar sweep (createConicGradient not supported in older browsers) */
+  mmSweepAngle = (elapsed * 0.5) % (Math.PI * 2);
+  try {
+    const grad = mm.createConicGradient(mmSweepAngle, cx, cy);
+    grad.addColorStop(0, 'rgba(0,255,255,0.12)');
+    grad.addColorStop(0.08, 'rgba(0,255,255,0)');
+    grad.addColorStop(1, 'rgba(0,255,255,0)');
+    mm.fillStyle = grad;
+    mm.beginPath();
+    mm.arc(cx, cy, 75, 0, Math.PI*2);
+    mm.fill();
+  } catch { /* Graceful fallback: draw a simple sweep line instead */
+    mm.strokeStyle = 'rgba(0,255,255,0.12)';
+    mm.lineWidth = 1;
+    mm.beginPath();
+    mm.moveTo(cx, cy);
+    mm.lineTo(cx + Math.cos(mmSweepAngle) * 75, cy + Math.sin(mmSweepAngle) * 75);
+    mm.stroke();
+  }
+
+  /* Hub marker */
+  mm.fillStyle = '#00ffff';
+  mm.beginPath();
+  mm.arc(cx, cy, 2, 0, Math.PI*2);
+  mm.fill();
+
+  /* Aircraft dots */
+  flightObjs.forEach(fo => {
+    const px = cx + fo.dot.position.x * mmScale;
+    const py = cy + fo.dot.position.z * mmScale;
+    const hex = '#' + fo.flight.col.toString(16).padStart(6, '0');
+    mm.fillStyle = hex;
+    mm.beginPath();
+    mm.arc(px, py, 1.5, 0, Math.PI*2);
+    mm.fill();
+  });
+
+  /* Camera position (triangle) */
+  const camPx = cx + camera.position.x * mmScale;
+  const camPy = cy + camera.position.z * mmScale;
+  mm.fillStyle = '#ffffff';
+  mm.beginPath();
+  mm.moveTo(camPx, camPy - 3);
+  mm.lineTo(camPx - 2, camPy + 2);
+  mm.lineTo(camPx + 2, camPy + 2);
+  mm.closePath();
+  mm.fill();
+
+  /* Border */
+  mm.strokeStyle = 'rgba(0,255,255,0.12)';
+  mm.lineWidth = 1;
+  mm.strokeRect(0, 0, mmSize, mmSize);
+}
+
+/* ══════════════════════════════════════════════════════════
+   §17  CLICK-TO-INSPECT (Raycaster)
+   ══════════════════════════════════════════════════════════ */
+
+prog(85, 'CALIBRATING FLIGHT TRACKER');
+
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points = { threshold: 2 };
+const mouse = new THREE.Vector2();
+let selectedFlight = null;
+
+const simDots = flightObjs.map(fo => fo.dot);
+
+renderer.domElement.addEventListener('click', (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  const targets = liveMode ? liveDots : simDots;
+  const hits = raycaster.intersectObjects(targets);
+  if (hits.length > 0) {
+    selectFlight(hits[0].object.userData);
+  } else {
+    deselectFlight();
+  }
+});
+
+/* Sanitise strings before innerHTML insertion (prevent XSS from API data) */
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s ?? '');
+  return d.innerHTML;
+}
+
+function selectFlight(f) {
+  deselectFlight();
+  selectedFlight = f;
+  const panel = $('selected-flight');
+  const colHex = '#' + f.col.toString(16).padStart(6, '0');
+
+  if (f.callsign !== undefined) {
+    /* ── Live flight ─────────────────────────────── */
+    const fl = Math.round(f.alt / 30.48 / 100); // metres → flight level
+    $('sel-title').textContent = f.callsign;
+    $('sel-body').innerHTML = `
+      <div class="row"><span class="label">Callsign</span><span class="value" style="color:${colHex}">${esc(f.callsign)}</span></div>
+      <div class="row"><span class="label">Country</span><span class="value">${esc(f.country)}</span></div>
+      <div class="row"><span class="label">Status</span><span class="value">${esc(f.label)}</span></div>
+      <div class="divider"></div>
+      <div class="row"><span class="label">Altitude</span><span class="value hl">FL${fl} (${f.alt}m)</span></div>
+      <div class="row"><span class="label">Speed</span><span class="value">${f.speed} kt</span></div>
+      <div class="row"><span class="label">Heading</span><span class="value cy">${f.heading}°</span></div>
+      <div class="row"><span class="label">V/S</span><span class="value ${f.vRate > 100 ? 'gn' : f.vRate < -100 ? 'rd' : ''}">${f.vRate > 0 ? '+' : ''}${f.vRate} ft/min</span></div>
+      <div class="divider"></div>
+      <div class="row"><span class="label">Latitude</span><span class="value">${f.lat.toFixed(4)}°N</span></div>
+      <div class="row"><span class="label">Longitude</span><span class="value">${Math.abs(f.lng).toFixed(4)}°${f.lng < 0 ? 'W' : 'E'}</span></div>
+    `;
+    /* Scale up selected live dot */
+    liveAircraft.forEach(ac => {
+      if (ac.data.callsign === f.callsign) ac.dot.scale.set(2.5, 2.5, 2.5);
+    });
+  } else {
+    /* ── Simulated flight ────────────────────────── */
+    $('sel-title').textContent = f.code + ' — ' + f.dest;
+    $('sel-body').innerHTML = `
+      <div class="row"><span class="label">Callsign</span><span class="value" style="color:${colHex}">${f.code}</span></div>
+      <div class="row"><span class="label">${f.type === 'ARR' ? 'Origin' : 'Destination'}</span><span class="value">${f.dest}</span></div>
+      <div class="row"><span class="label">Aircraft</span><span class="value">${f.ac}</span></div>
+      <div class="divider"></div>
+      <div class="row"><span class="label">Altitude</span><span class="value hl">FL${f.alt * 10}</span></div>
+      <div class="row"><span class="label">Speed</span><span class="value">${f.speed} kt</span></div>
+      <div class="row"><span class="label">Bearing</span><span class="value cy">${f.bearing}°</span></div>
+      <div class="row"><span class="label">Distance</span><span class="value">${f.realKm.toLocaleString()} km</span></div>
+    `;
+    flightObjs.forEach(fo => {
+      if (fo.flight === f) { fo.hlArc.material.opacity = 0.6; fo.dot.scale.set(2, 2, 2); }
+    });
+  }
+
+  panel.style.display = 'block';
+  $('panel-right').style.display = 'none';
+}
+
+function deselectFlight() {
+  if (!selectedFlight) return;
+  selectedFlight = null;
+  $('selected-flight').style.display = 'none';
+  $('panel-right').style.display = 'block';
+  flightObjs.forEach(fo => { fo.hlArc.material.opacity = 0; fo.dot.scale.set(1, 1, 1); });
+  liveAircraft.forEach(ac => { ac.dot.scale.set(1, 1, 1); });
+}
+
+$('sel-close').addEventListener('click', deselectFlight);
+
+/* ══════════════════════════════════════════════════════════
+   §18  KEYBOARD SHORTCUTS
+   ══════════════════════════════════════════════════════════ */
+
+prog(88, 'BINDING CONTROLS');
+
+let hudVisible = true;
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function animateCamera(target, lookAt, duration = 1200) {
+  const start = { pos: camera.position.clone(), target: controls.target.clone() };
+  const end = { pos: new THREE.Vector3(...target), target: new THREE.Vector3(...lookAt) };
+  const startTime = performance.now();
+
+  function step(now) {
+    const p = Math.min(1, (now - startTime) / duration);
+    const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
+    camera.position.lerpVectors(start.pos, end.pos, ease);
+    controls.target.lerpVectors(start.target, end.target, ease);
+    controls.update();
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+
+  /* Camera presets */
+  if (VIEWS[key]) {
+    const v = VIEWS[key];
+    animateCamera(v.pos, v.target);
+    $('cam-view').textContent = v.name;
+    showToast(v.name + ' VIEW');
+    return;
+  }
+
+  switch (key) {
+    case 'r': // Reset
+      animateCamera([40, 120, 180], [40, 5, -10]);
+      $('cam-view').textContent = 'FREE';
+      showToast('CAMERA RESET');
+      break;
+
+    case 'p': // Screenshot mode
+      hudVisible = !hudVisible;
+      $('hud').classList.toggle('hidden');
+      labelRenderer.domElement.style.display = hudVisible ? 'block' : 'none';
+      if (!hudVisible) {
+        showToast('SCREENSHOT MODE — PRESS P TO RESTORE');
+        /* Briefly show toast even with HUD hidden */
+        $('toast').style.zIndex = '200';
+      }
+      break;
+
+    case 'n': // Toggle time-lapse demo vs real GMT
+      timelapseMode = !timelapseMode;
+      if (!timelapseMode) showToast('REAL GMT MODE');
+      else showToast('TIME-LAPSE MODE (60× SPEED)');
+      break;
+
+    case 'c': // Toggle contours
+      contourGroup.visible = !contourGroup.visible;
+      showToast(contourGroup.visible ? 'NOISE CONTOURS ON' : 'NOISE CONTOURS OFF');
+      break;
+
+    case 'b': // Toggle boroughs (lines + labels)
+      boroughGroup.visible = !boroughGroup.visible;
+      /* CSS2D labels need explicit element display toggle */
+      boroughGroup.traverse(child => {
+        if (child.isCSS2DObject) child.element.style.display = boroughGroup.visible ? '' : 'none';
+      });
+      showToast(boroughGroup.visible ? 'BOROUGHS ON' : 'BOROUGHS OFF');
+      break;
+
+    case 'l': // Toggle live / simulated
+      if (liveMode) {
+        exitLiveMode();
+        showToast('SIMULATED MODE');
+      } else {
+        restoreLiveGroup();
+        fetchLiveData().then(states => {
+          if (states) { processLiveStates(states); enterLiveMode(); showToast('LIVE MODE — ' + liveCount + ' AIRCRAFT'); }
+          else showToast('LIVE DATA UNAVAILABLE');
+        });
+      }
+      break;
+
+    case 'v': { // Cycle corridor views
+      corridorViewIdx = (corridorViewIdx + 1) % CORRIDOR_VIEWS.length;
+      const vn = CORRIDOR_VIEWS[corridorViewIdx];
+      showCorridorView(vn);
+      showToast('VIEW: ' + vn + (vn !== 'REALTIME' ? ' CORRIDORS' : ''));
+      break;
+    }
+
+    case 't': // Timelapse replay
+      if (corridorViewIdx === 0) {
+        showToast('PRESS V FIRST TO SELECT A CORRIDOR VIEW');
+      } else {
+        startCorridorTimelapse();
+      }
+      break;
+
+    case 'h': // Toggle corridor heatmap overlay
+      corridorVisible = !corridorVisible;
+      if (corridorVisible && corridorViewIdx === 0) corridorViewIdx = 1;
+      showCorridorView(corridorVisible ? CORRIDOR_VIEWS[corridorViewIdx] : 'REALTIME');
+      corridorViewIdx = corridorVisible ? corridorViewIdx : 0;
+      showToast(corridorVisible ? 'CORRIDORS: ' + CORRIDOR_VIEWS[corridorViewIdx] : 'CORRIDORS OFF');
+      break;
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   §19  TICKER
+   ══════════════════════════════════════════════════════════ */
+
+prog(90, 'POPULATING DATA FEEDS');
+
+function buildTicker() {
+  const msgs = [];
+  FLIGHTS.forEach(f => {
+    const act = f.type==='DEP' ? 'DEP RWY 27L → ' + f.dest
+      : f.type==='ARR' ? 'INBOUND FROM ' + f.dest + ' ← APP ILS 27R'
+      : 'TRANSIT FL' + (f.alt*10) + ' ' + f.dest;
+    msgs.push(`<span class="fid">${f.code}</span> ${act}<span class="sep">◆</span>`);
+  });
+  msgs.push(
+    `METAR EGLL 291250Z 27012G18KT 9999 FEW040 12/04 Q1013<span class="sep">◆</span>`,
+    `ATIS CHARLIE — RWY 27L/27R — TL FL70<span class="sep">◆</span>`,
+    `NOISE ABATEMENT: CDA IN EFFECT — MIN ALT 6000FT WITHIN 15NM<span class="sep">◆</span>`,
+    `SKY SCORE TERRAIN INTELLIGENCE v0.2 — PROTOTYPE<span class="sep">◆</span>`,
+  );
+  $('ticker-text').innerHTML = msgs.join('');
+}
+buildTicker();
+
+/* Flight list (rotating subset) */
+let flightOffset = 0;
+function updateFlightList() {
+  let html = '';
+  if (liveMode && liveAircraft.size > 0) {
+    /* Show live aircraft sorted by proximity to Heathrow */
+    const sorted = [...liveAircraft.values()]
+      .sort((a, b) => distFromHub(a.dot.position) - distFromHub(b.dot.position))
+      .slice(0, 6);
+
+    sorted.forEach((ac, i) => {
+      const d = ac.data;
+      const col = '#' + d.col.toString(16).padStart(6,'0');
+      const fl = Math.round(d.alt / 30.48 / 100);
+      const arrow = d.type === 'CLB' ? '↑ CLB' : d.type === 'DES' ? '↓ DES' : '→ CRZ';
+      html += `<div class="row"><span class="label" style="color:${col}">${esc(d.callsign)} ${arrow}</span><span class="value">FL${fl}</span></div>`;
+      html += `<div class="row"><span class="label">HDG/SPD</span><span class="value">${d.heading}° / ${d.speed}kt</span></div>`;
+      if (i < sorted.length - 1) html += '<div class="divider"></div>';
+    });
+  } else {
+    /* Simulated fallback */
+    for (let i = 0; i < 5; i++) {
+      const f = FLIGHTS[(flightOffset + i) % FLIGHTS.length];
+      const col = '#' + f.col.toString(16).padStart(6,'0');
+      const arrow = f.type === 'DEP' ? '↑ OUT' : f.type === 'ARR' ? '↓ IN' : '↔ TRN';
+      html += `<div class="row"><span class="label" style="color:${col}">${f.code} ${arrow}</span><span class="value">${f.dest.split(' ')[0]}</span></div>`;
+      html += `<div class="row"><span class="label">ALT/SPD</span><span class="value">FL${f.alt*10+Math.floor(Math.random()*5)} / ${f.speed+Math.floor(Math.random()*8-4)}kt</span></div>`;
+      if (i < 4) html += '<div class="divider"></div>';
+    }
+    flightOffset = (flightOffset + 1) % FLIGHTS.length;
+  }
+  $('flight-list').innerHTML = html;
+}
+updateFlightList();
+setInterval(updateFlightList, 4000);
+
+/* Fade keyboard hint after 10s */
+/* Keyboard hints stay visible permanently */
+
+/* ══════════════════════════════════════════════════════════
+   §20  ANIMATION LOOP
+   ══════════════════════════════════════════════════════════ */
+
+prog(100, 'SYSTEMS ONLINE');
+setTimeout(() => $('loading').classList.add('fade-out'), 500);
+
+const clock = new THREE.Clock();
+let frames = 0, lastFps = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  /* getDelta() MUST be called first — getElapsedTime() resets the internal delta timer */
+  const dt = clock.getDelta();
+  const t = clock.elapsedTime;
+  frames++;
+
+  controls.update();
+
+  /* ── Day/night cycle (real GMT or time-lapse) ──── */
+  if (timelapseMode) {
+    /* 60× speed: a full 24h cycle in ~24 minutes */
+    timelapseOffset = (timelapseOffset + dt * 60 / 86400) % 1;
+    cycleTime = (getGmtCycleTime() + timelapseOffset) % 1;
+  } else {
+    cycleTime = getGmtCycleTime();
+  }
+  const bgCol = getCycleColour(cycleTime);
+  renderer.setClearColor(bgCol);
+  scene.fog.color.copy(bgCol);
+
+  const nightIntensity = getNightIntensity(cycleTime);
+  cityLights.forEach(l => { l.intensity = nightIntensity * 0.8; });
+  ambient.intensity = 0.3 + (1 - nightIntensity) * 0.4;
+
+  /* Terrain: brighter wireframe during day, dimmer at night */
+  terrainMat.opacity = 0.3 + (1 - nightIntensity) * 0.2;
+
+  /* Bloom shifts: stronger glow at night, subtler during day */
+  bloomPass.strength = 0.4 + nightIntensity * 0.3;
+
+  /* ── Hub pulse ───────────────────────────────── */
+  hubRingMat.opacity = 0.4 + Math.sin(t * 2) * 0.2;
+  const ps = 1 + Math.sin(t * 1.5) * 0.15;
+  pulseRing.scale.set(ps, ps, 1);
+  pulseRing.material.opacity = 0.25 * (1 - (ps - 1) / 0.15);
+
+  /* ── Radar sweep ─────────────────────────────── */
+  sweep.rotation.z = t * 0.4;
+
+  /* ── Corridor timelapse + accumulation ─────────── */
+  updateCorridorTimelapse(dt);
+  accumulateLiveCorridor();
+
+  /* ── Live flight fetch timer ──────────────────── */
+  liveFetchTimer += dt;
+  if (liveFetchTimer >= LIVE_FETCH_SEC) {
+    liveFetchTimer = 0;
+    fetchLiveData().then(states => {
+      if (states) {
+        processLiveStates(states);
+        if (!liveMode) { enterLiveMode(); restoreLiveGroup(); }
+      } else if (liveFetchFails > 3 && liveMode) {
+        /* Lost connection — revert to simulated */
+        exitLiveMode();
+      }
+    });
+  }
+
+  /* ── Simulated flight dots + trails (only when not live) ── */
+  if (!liveMode) {
+    flightObjs.forEach(fo => {
+      fo.t += fo.speed * 0.008 * fo.direction;
+      if (fo.flight.type === 'OVR') {
+        if (fo.t > 1) { fo.t = 1; fo.direction = -1; }
+        if (fo.t < 0) { fo.t = 0; fo.direction = 1; }
+      } else if (fo.direction === 1) {
+        if (fo.t > 1) fo.t -= 1;
+      } else {
+        if (fo.t < 0) fo.t += 1;
+      }
+      const p = fo.curve.getPoint(fo.t);
+      fo.dot.position.copy(p);
+      const cp = fo.connLine.geometry.attributes.position;
+      cp.setXYZ(0, p.x, p.y, p.z); cp.setXYZ(1, p.x, 0.2, p.z);
+      cp.needsUpdate = true;
+      const tp = fo.trailPos;
+      for (let i = TRAIL_LEN - 1; i > 0; i--) {
+        tp[i*3] = tp[(i-1)*3]; tp[i*3+1] = tp[(i-1)*3+1]; tp[i*3+2] = tp[(i-1)*3+2];
+      }
+      tp[0] = p.x; tp[1] = p.y; tp[2] = p.z;
+      fo.trailGeo.attributes.position.needsUpdate = true;
+    });
+  }
+
+  /* ── HUD updates (every 10 frames) ──────────── */
+  if (frames % 10 === 0) {
+    const now = new Date();
+    const tzLabel = getUkTzLabel();
+    $('header-time').textContent = getUkDateTimeString(now) + ' ' + tzLabel;
+
+    const az = (Math.atan2(camera.position.x, camera.position.z) * 180/Math.PI + 360) % 360;
+    const d = camera.position.length();
+    const el = Math.asin(camera.position.y / d) * 180 / Math.PI;
+    $('cam-az').textContent = az.toFixed(1) + '°';
+    $('cam-el').textContent = el.toFixed(1) + '°';
+    $('cam-dist').textContent = d.toFixed(0);
+
+    const info = renderer.info;
+    $('sys-tris').textContent = info.render.triangles.toLocaleString();
+    $('sys-draws').textContent = info.render.calls;
+    const cycleLabel = getCycleLabel(cycleTime);
+    $('sys-cycle').textContent = cycleLabel;
+
+    /* Live/simulated status + corridor view */
+    const corridorLabel = corridorViewIdx > 0 ? ` · ${CORRIDOR_VIEWS[corridorViewIdx]} CORRIDORS` : '';
+    if (liveMode) {
+      $('header-subtitle').innerHTML = `&nbsp; v0.4 &nbsp;·&nbsp; <span style="color:#00ff88">● LIVE</span> ${liveCount} AIRCRAFT${corridorLabel}`;
+      $('flight-panel-title').textContent = `LIVE FLIGHTS (${liveCount})`;
+      $('flight-status-dot').style.background = '#00ff88';
+    } else {
+      $('header-subtitle').innerHTML = `&nbsp; v0.4 &nbsp;·&nbsp; SIMULATED${corridorLabel}`;
+      $('flight-panel-title').textContent = 'TRACKED FLIGHTS (SIM)';
+      $('flight-status-dot').style.background = '#ffb000';
+    }
+
+    const ms = Math.floor(t) % 300;
+    $('metar-age').textContent = Math.floor(ms/60) + 'm ' + (ms%60).toString().padStart(2,'0') + 's';
+
+    $('flights-today').textContent = (1247 + Math.floor(Math.sin(t*0.1)*20)).toLocaleString();
+    $('peak-mvts').textContent = 87 + Math.floor(Math.random()*5-2);
+
+    /* UK local time + sunrise/sunset in local time */
+    const ukTime = getUkTimeString();
+    const srLocal = utcDecimalToUkString(sunTimes.sunrise);
+    const ssLocal = utcDecimalToUkString(sunTimes.sunset);
+    $('daynight-indicator').textContent = `${cycleLabel} · ${tzLabel} ${ukTime.substring(0,5)} · ↑${srLocal} ↓${ssLocal}`;
+  }
+
+  /* FPS (every second) */
+  if (t - lastFps >= 1) {
+    $('sys-fps').textContent = frames;
+    frames = 0;
+    lastFps = t;
+  }
+
+  /* ── Mini-map ────────────────────────────────── */
+  drawMinimap(t);
+
+  /* ── Render ──────────────────────────────────── */
+  composer.render();
+  labelRenderer.render(scene, camera);
+}
+
+animate();
+
+/* ══════════════════════════════════════════════════════════
+   §21  RESIZE
+   ══════════════════════════════════════════════════════════ */
+
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  composer.setSize(w, h);
+  labelRenderer.setSize(w, h);
+});
+</script>
+
+<!-- GoatCounter analytics (same tracker as main Sky Score site) -->
+<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

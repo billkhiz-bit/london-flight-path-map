@@ -25,16 +25,17 @@ If they say yes, create a commit with a clear message describing what changed. K
 When the user starts a new conversation (first message, greeting, or asks what they can do), display this welcome message:
 
 ```
-Sky Score — Hackathon deadline: March 17, 2026
+Sky Score
 
 Available commands:
   /project:deploy-frontend   Upload to S3 + invalidate CloudFront
   /project:deploy-backend    SAM build + deploy Lambdas
   /project:deploy-all        Deploy everything
   /preflight                 Pre-commit quality checks (lint, security, a11y)
+  /careful                   Enable production safety mode (blocks destructive AWS commands)
+  /aws-debug                 Debug Lambda/API Gateway issues
   /project:test-apis         Test all API endpoints
   /project:review            Summarise recent changes
-  /project:hackathon-prep    Review submission readiness
 
 Or just describe what you need — I have full context of this project.
 ```
@@ -52,6 +53,8 @@ Always use "Sky Score" in all public-facing files and UI text.
 ## Quality & Plugins
 
 - Run `/preflight` before every commit — checks ESLint, HTML validation, Prettier, Python lambdas, security, and Playwright tests
+- Run `/careful` before touching live AWS resources — blocks destructive commands
+- Use `/aws-debug` when Lambda errors or API Gateway 5xx issues occur
 - Use **context7** to look up D3.js, AWS SDK, or SAM docs before using unfamiliar APIs
 - Use **security-guidance** when editing Lambda functions or API Gateway config
 - Use **code-review** on all changed files before committing
@@ -80,6 +83,18 @@ cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=
   - `report` — Nova Pro 7-section property reports
   - `favourites` — DynamoDB CRUD for saved properties
   - `transport`, `epc`, `sold_prices`, `nhs` — external data API proxies
+
+## Prototype (Sky Score Radar)
+
+- **Location**: `prototype/index.html` — standalone HTML, no dependencies on main app
+- **Live URL**: `https://d1oe4ftwutjpf.cloudfront.net/prototype/index.html`
+- **Stack**: Three.js (CDN), CSS2DRenderer for labels, UnrealBloomPass for bloom
+- **Features**: 3D wireframe terrain, live flight tracking (OpenSky Network), day/night cycle (real GMT/BST), noise contour rings, borough boundaries, corridor heatmap/timelapse
+- **Controls**: `R` Reset, `1-3` Camera presets, `P` Screenshot, `N` Time-lapse, `C` Contours, `B` Boroughs, `L` Live/Sim toggle, `V` Corridor view (Daily/Weekly/Monthly), `T` Timelapse replay, `H` Heatmap toggle
+- **Live Data**: OpenSky Network API via CORS proxy (free, no key). Falls back to simulated flights if unavailable.
+- **Analytics**: GoatCounter (same `cubitt33` tracker as main site) — prototype visits appear as `/prototype/index.html`
+- **Naming**: Use "Sky Score Radar" for the prototype, "Sky Score" for the main app
+- **Deploy**: `AWS_PROFILE=flightmap aws s3 cp prototype/index.html s3://london-flight-map-frontend/prototype/index.html --content-type "text/html" --region eu-west-2`
 
 ## AWS Resources
 
