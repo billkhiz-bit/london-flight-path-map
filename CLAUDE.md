@@ -114,10 +114,17 @@ cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=
 - Frontend communicates with backend via fetch to API Gateway endpoints
 - SAM stack name: `london-flight-map`
 
-## Known Issues (from audit March 10-12, 2026)
+## Submissions
+
+- **Amazon Nova AI Hackathon** (March 2026): Submitted, won $200 AWS credits (blog-post category). Video demo (3:10, with voiceover) complete.
+- **Red Bull Basement** (submitted 2026-04-12): Awaiting shortlist decision; if invited, record 60-second pitch video. Positioning: "local friend" AI for renters with health risks.
+- **Emergent Ventures / Mercatus** (submitted 2026-04-20): £45,000 ask over 9 months. Awaiting response (form promises within ~1 week). Draft at `Desktop/emergent-ventures-application.txt`.
+
+Related separate project (not in this repo): **LedgerAgent** is a semi-finalist in the AWS 10,000 AIdeas Competition.
+
+## Known Issues (from audit March 10-12, 2026 — NOTE: >40 days old, suggest re-running `/audit`)
 
 See `AUDIT_REPORT.md` for full details. Remaining items:
-- **Hackathon submission** needs demo video and inline screenshots
 - **Favourites endpoint** has no authentication (post-hackathon)
 - **Accessibility**: zero ARIA attributes (post-hackathon)
 - **Live aircraft**: OpenSky Network has limited coverage at night and rate limits (~10 req/min anonymous)
