@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sky Score API — Status</title>
+<meta name="description" content="Live status of the Sky Score API endpoints.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06070d;
+    --panel: #0d0f1a;
+    --border: #1f2333;
+    --text: #e8e8ee;
+    --muted: #8b8fa3;
+    --amber: #f59e0b;
+    --green: #26F27D;
+    --red: #F27D26;
+    --grad: linear-gradient(135deg, #f59e0b 0%, #e25822 100%);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  header { padding: 32px 24px 16px; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.5px; }
+  h1 .accent { color: var(--amber); }
+  .tag { color: var(--muted); font-size: 14px; margin: 0; }
+  .tag a { color: var(--amber); text-decoration: none; }
+  main { max-width: 800px; margin: 0 auto; padding: 0 24px 64px; }
+  .overall {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .pulse {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--muted);
+    box-shadow: 0 0 0 0 currentColor;
+    animation: pulse 2s infinite;
+  }
+  .pulse.up    { background: var(--green); color: var(--green); }
+  .pulse.down  { background: var(--red);   color: var(--red); }
+  .pulse.warn  { background: var(--amber); color: var(--amber); }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 currentColor; }
+    70%  { box-shadow: 0 0 0 12px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .overall-text { flex: 1; }
+  .overall-text .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .overall-text .state { font-size: 22px; font-weight: 600; }
+  .grid {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .row {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row .name { flex: 1; font-weight: 500; }
+  .row .url { font-family: 'Geist Mono', monospace; color: var(--muted); font-size: 12px; }
+  .row .status {
+    font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--border); color: var(--muted);
+  }
+  .row .status.up    { background: rgba(38,242,125,0.12); color: var(--green); }
+  .row .status.down  { background: rgba(242,125,38,0.15); color: var(--red); }
+  .row .status.warn  { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .meta {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .meta strong { color: var(--text); font-weight: 500; }
+  .meta a { color: var(--amber); text-decoration: none; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 32px 16px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sky Score API <span class="accent">— Status</span></h1>
+  <p class="tag">Live status of public Sky Score endpoints. Auto-refreshed every 60s. <a href="./index.html">← Demo</a> · <a href="./api-docs.html">Reference</a></p>
+</header>
+
+<main>
+  <div class="overall">
+    <span class="pulse" id="overallPulse"></span>
+    <div class="overall-text">
+      <div class="label">Overall</div>
+      <div class="state" id="overallState">Checking…</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="label" style="text-align: right;">Last checked</div>
+      <div style="font-family: 'Geist Mono', monospace; font-size: 13px;" id="lastChecked">—</div>
+    </div>
+  </div>
+
+  <div class="grid" id="endpointsGrid">
+    <!-- populated by JS -->
+  </div>
+
+  <div class="meta">
+    <strong>Methodology version</strong>: <span id="methodologyVersion">—</span><br>
+    <strong>API version</strong>: <span id="apiVersion">—</span><br>
+    <strong>Region</strong>: AWS eu-west-2 (London)<br>
+    <strong>SLA</strong>: relies on AWS API Gateway and Lambda published SLAs (~99.95% target). No published Sky Score SLA yet.<br>
+    <strong>Issues / questions</strong>: file a GitHub issue at <a href="https://github.com/billkhiz-bit/london-flight-path-map/issues">the public repo</a>.
+  </div>
+</main>
+
+<footer>
+  Sky Score &middot; <a href="https://d1oe4ftwutjpf.cloudfront.net/">Main site</a> &middot; <a href="./api-docs.html">API reference</a>
+</footer>
+
+<script>
+  // Public read-only checks. The score endpoint requires an API key, so we
+  // show a sample-response check by hitting it with the public free-tier key.
+  // The key has a low rate limit and is intentionally exposed for the
+  // browser demo at /score-demo/ — same usage pattern.
+  const API_KEY = 'T2NpQbYF6P1zdRsmdO4le5WNTa7YoWeA1j0nbk5i';
+
+  const ENDPOINTS = [
+    {
+      name: 'GET /v1/regions',
+      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/regions',
+      method: 'GET',
+      headers: { 'X-Api-Key': API_KEY },
+    },
+    {
+      name: 'GET /v1/score (London)',
+      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=N1+7SX',
+      method: 'GET',
+      headers: { 'X-Api-Key': API_KEY },
+    },
+    {
+      name: 'GET /v1/score (NYC)',
+      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=10001',
+      method: 'GET',
+      headers: { 'X-Api-Key': API_KEY },
+    },
+    {
+      name: 'POST /v1/score/batch',
+      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score/batch',
+      method: 'POST',
+      headers: { 'X-Api-Key': API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ queries: [{ postcode: 'SW11 1AA' }] }),
+    },
+    {
+      name: 'API browser demo',
+      url: 'https://d1oe4ftwutjpf.cloudfront.net/score-demo/index.html',
+      method: 'GET',
+    },
+    {
+      name: 'OpenAPI spec',
+      url: 'https://d1oe4ftwutjpf.cloudfront.net/score-demo/openapi.yaml',
+      method: 'GET',
+    },
+  ];
+
+  async function check(endpoint) {
+    const t0 = performance.now();
+    try {
+      const opts = { method: endpoint.method, headers: endpoint.headers || {} };
+      if (endpoint.body) opts.body = endpoint.body;
+      const r = await fetch(endpoint.url, opts);
+      const elapsed = Math.round(performance.now() - t0);
+      const ok = r.status >= 200 && r.status < 400;
+      return {
+        ...endpoint,
+        ok,
+        status: r.status,
+        elapsed,
+        statusText: ok ? 'Up' : `${r.status}`,
+      };
+    } catch (err) {
+      return { ...endpoint, ok: false, status: 0, elapsed: 0, statusText: 'Error' };
+    }
+  }
+
+  async function runAllChecks() {
+    document.getElementById('lastChecked').textContent = new Date().toISOString().replace('T', ' ').replace('Z', ' UTC').slice(0, 23);
+    const results = await Promise.all(ENDPOINTS.map(check));
+    renderEndpoints(results);
+    const allUp = results.every(r => r.ok);
+    const pulse = document.getElementById('overallPulse');
+    const state = document.getElementById('overallState');
+    if (allUp) {
+      pulse.className = 'pulse up';
+      state.textContent = 'All systems operational';
+    } else {
+      const upCount = results.filter(r => r.ok).length;
+      const downCount = results.length - upCount;
+      pulse.className = downCount === results.length ? 'pulse down' : 'pulse warn';
+      state.textContent = `${upCount}/${results.length} endpoints up`;
+    }
+
+    // Pull methodology version from the score response if available
+    const scoreCheck = results.find(r => r.name.includes('London') && r.ok);
+    if (scoreCheck) {
+      try {
+        const r = await fetch(scoreCheck.url, { headers: scoreCheck.headers });
+        const data = await r.json();
+        document.getElementById('methodologyVersion').textContent = data.methodologyVersion || '—';
+        document.getElementById('apiVersion').textContent = data.apiVersion || '—';
+      } catch {}
+    }
+  }
+
+  function renderEndpoints(results) {
+    const grid = document.getElementById('endpointsGrid');
+    grid.innerHTML = results.map(r => `
+      <div class="row">
+        <div>
+          <div class="name">${r.name}</div>
+          <div class="url">${r.url.replace('https://', '').replace('/prod/', '/').slice(0, 60)}${r.url.length > 60 ? '…' : ''}</div>
+        </div>
+        <div style="font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--muted);">${r.elapsed}ms</div>
+        <span class="status ${r.ok ? 'up' : 'down'}">${r.statusText}</span>
+      </div>
+    `).join('');
+  }
+
+  runAllChecks();
+  setInterval(runAllChecks, 60_000);
+</script>
+
+</body>
+</html>

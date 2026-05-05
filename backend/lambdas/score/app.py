@@ -570,6 +570,35 @@ def parse_weights(raw):
     return result
 
 
+RESPONSE_FIELDS = {
+    'score', 'components', 'context', 'location', 'persona', 'weights',
+    'methodologyVersion', 'methodologyUrl', 'apiVersion', 'generatedAt',
+    'sources', 'sourceBreakdown', 'plannedComponents',
+}
+
+
+def parse_include(raw):
+    """Parse `?include=score,components,context` into a set of allowed
+    response fields. Returns None when no filter (full response). Unknown
+    fields are ignored silently. Always-included meta fields stay regardless."""
+    if not raw:
+        return None
+    requested = {p.strip() for p in raw.split(',') if p.strip()}
+    if not requested:
+        return None
+    return requested & RESPONSE_FIELDS
+
+
+def filter_response(body, include):
+    """Apply an include-filter to a response body. Always retains meta
+    fields (apiVersion, methodologyVersion, generatedAt, sources)."""
+    if not include:
+        return body
+    always = {'apiVersion', 'methodologyVersion', 'methodologyUrl', 'generatedAt', 'sources'}
+    keep = include | always
+    return {k: v for k, v in body.items() if k in keep}
+
+
 def resolve_query(query):
     """Run a single score query. Returns the response body or an error dict."""
     postcode = (query.get('postcode') or '').strip()
@@ -577,6 +606,7 @@ def resolve_query(query):
     city = (query.get('city') or 'london').strip().lower()
     persona = (query.get('persona') or 'balanced').strip().lower()
     weights_override = parse_weights(query.get('weights'))
+    include = parse_include(query.get('include'))
 
     if city not in CITIES:
         return {
@@ -666,7 +696,7 @@ def resolve_query(query):
     pc_clean = (location_meta.get('postcode') or postcode or '').strip().upper().replace(' ', '')
     score_data = calc_score(borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean)
 
-    return {
+    body = {
         **score_data,
         'location': location_meta,
         'persona': persona_label,
@@ -677,7 +707,17 @@ def resolve_query(query):
         'generatedAt': datetime.now(timezone.utc).isoformat(),
         'sources': SOURCES,
         'sourceBreakdown': SOURCE_BREAKDOWN,
-    }, 200
+    }
+    # Roadmap-visible placeholder components — let prospects see what's planned
+    # before they ask. Each entry has a status flag so integrators don't try
+    # to consume placeholder data as if it were live.
+    body['plannedComponents'] = {
+        'flood': {'status': 'planned', 'source': 'Environment Agency Flood Map for Planning (planned, OGL v3.0)', 'eta': 'roadmap'},
+        'airQuality': {'status': 'planned', 'source': 'DEFRA Daily Air Quality Index (planned, OGL v3.0)', 'eta': 'roadmap'},
+        'epcDistribution': {'status': 'planned', 'source': 'MHCLG Get Energy Performance Data (currently in /epc; planned in /v1/score)', 'eta': 'roadmap'},
+        'crimeBreakdown': {'status': 'planned', 'source': 'ONS LSOA-level crime by category (planned, OGL v3.0)', 'eta': 'roadmap'},
+    }
+    return filter_response(body, include), 200
 
 
 def handle_options():
