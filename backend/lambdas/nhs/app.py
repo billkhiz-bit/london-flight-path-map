@@ -5,6 +5,10 @@ from urllib.request import Request, urlopen
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
+ATTRIBUTION = (
+    'NHS service data: NHS Service Search API (NHS Digital).'
+)
+
 
 def handler(event, context):
     try:
@@ -30,7 +34,8 @@ def handler(event, context):
             'location': {'lat': lat, 'lon': lon},
             'gp': gp_results,
             'pharmacies': pharmacy_results,
-            'hospitals': hospital_results
+            'hospitals': hospital_results,
+            'sources': [ATTRIBUTION],
         })
 
     except Exception:

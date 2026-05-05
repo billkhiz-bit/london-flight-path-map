@@ -96,7 +96,7 @@ Resources:
             Path: /sold-prices
             Method: get
 
-  # --- EPC Energy Ratings ---
+  # --- EPC Energy Ratings (new MHCLG service from 2026-05-30) ---
   EpcFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -104,8 +104,7 @@ Resources:
       Handler: app.handler
       Environment:
         Variables:
-          EPC_API_KEY: !Ref EpcApiKey
-          EPC_API_EMAIL: !Ref EpcApiEmail
+          EPC_BEARER_TOKEN: !Ref EpcBearerToken
       Events:
         EpcGet:
           Type: Api
@@ -250,6 +249,63 @@ Resources:
             Path: /favourites
             Method: delete
 
+  # --- B2B Score API (/v1/score) — API-key gated ---
+  ScoreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/score/
+      Handler: app.handler
+      MemorySize: 256
+      Timeout: 10
+      Environment:
+        Variables:
+          # Score endpoint is the productised B2B surface; allow any origin so
+          # third-party integrators can call it. API-key auth gates abuse.
+          CORS_ORIGIN: '*'
+      Events:
+        ScoreGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/score
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+
+  ScoreApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    DependsOn: FlightMapApiprodStage
+    Properties:
+      Name: SkyScoreFreeTierKey
+      Description: Initial free-tier API key for /v1/score. Rotate via console.
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref FlightMapApi
+          StageName: prod
+
+  ScoreFreeUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: FlightMapApiprodStage
+    Properties:
+      UsagePlanName: SkyScoreFreeTier
+      Description: Free tier — 1000 requests/month, 5 req/sec burst.
+      ApiStages:
+        - ApiId: !Ref FlightMapApi
+          Stage: prod
+      Quota:
+        Limit: 1000
+        Period: MONTH
+      Throttle:
+        BurstLimit: 5
+        RateLimit: 2
+
+  ScoreFreeUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ScoreApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ScoreFreeUsagePlan
+
   # --- DynamoDB Table ---
   FavouritesTable:
     Type: AWS::DynamoDB::Table
@@ -268,14 +324,11 @@ Resources:
       BillingMode: PAY_PER_REQUEST
 
 Parameters:
-  EpcApiKey:
+  EpcBearerToken:
     Type: String
     Default: ''
-    Description: EPC API key from epc.opendatacommunities.org (register for free)
-  EpcApiEmail:
-    Type: String
-    Default: ''
-    Description: Email used to register for EPC API
+    NoEcho: true
+    Description: Bearer token from get-energy-performance-data.communities.gov.uk (sign in via GOV.UK One Login, copy from the My account page). Pass at deploy time, never commit.
 
 Outputs:
   ApiUrl:

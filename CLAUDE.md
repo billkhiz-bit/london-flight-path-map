@@ -10,6 +10,14 @@ When context fills up, always preserve:
 - Any file changes made during this session that haven't been committed
 - Branding: always "Sky Score", never "London Flight Path Map" in user-facing text
 
+## Rolling planning docs
+
+Two project-level planning docs live alongside this file. Read them when picking up work between sessions:
+- **`ROADMAP.md`** — the broader rolling plan: vision, three parallel tracks (consumer site, B2B API, competitions/outreach), near-term task list with deadlines, open decisions. The source of truth for "what next".
+- **`BUILDATHON_PLAN.md`** — focused single-purpose doc for the Shared Futures Buildathon (deadline 2026-05-15, event 2026-06-07). Will be archived after the event.
+
+When a task ships or a decision lands, update the relevant doc rather than relying on chat memory.
+
 ## Before conversation ends
 
 When the user says goodbye, thanks you, or indicates they're done, run `git status` to check for uncommitted changes. If there are any, remind the user:
@@ -68,8 +76,17 @@ AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
 
 # Backend — SAM build + deploy (always clean .aws-sam first)
-cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=flightmap sam deploy
+# EPC bearer token is required after the 2026-05-30 service migration.
+# Source from .env (gitignored); never paste the token into source files or chat.
+set -a && source ../.env && set +a && \
+  cd backend && rm -rf .aws-sam && \
+  AWS_PROFILE=flightmap sam build && \
+  AWS_PROFILE=flightmap sam deploy --parameter-overrides EpcBearerToken="$EPC_BEARER_TOKEN"
 ```
+
+**Local env setup**: copy `.env.example` to `.env` and fill in `EPC_BEARER_TOKEN`. The `.env` file is gitignored. The SAM template parameter is `NoEcho: true` so the token doesn't appear in CloudFormation events.
+
+**Token rotation**: regenerate from the My account page on `get-energy-performance-data.communities.gov.uk` whenever the token has touched a chat log, terminal scrollback, or any unencrypted persistence. Update `.env` and redeploy.
 
 ## Architecture
 
@@ -119,6 +136,7 @@ cd backend && rm -rf .aws-sam && AWS_PROFILE=flightmap sam build && AWS_PROFILE=
 - **Amazon Nova AI Hackathon** (March 2026): Submitted, won $200 AWS credits (blog-post category). Video demo (3:10, with voiceover) complete.
 - **Red Bull Basement** (submitted 2026-04-12): Awaiting shortlist decision; if invited, record 60-second pitch video. Positioning: "local friend" AI for renters with health risks.
 - **Emergent Ventures / Mercatus** (submitted 2026-04-20): £45,000 ask over 9 months. Awaiting response (form promises within ~1 week). Draft at `Desktop/emergent-ventures-application.txt`.
+- **Luma event** (applied 2026-04-23, `luma.com/vy4bnkom`): Submitted Sky Score as the idea (3-sentence pitch). Form fields: name, email, LinkedIn, GitHub (`billkhiz-bit`), phone, cofounder status. No project-URL field on the form. Event name/theme TBC.
 
 Related separate project (not in this repo): **LedgerAgent** is a semi-finalist in the AWS 10,000 AIdeas Competition.
 

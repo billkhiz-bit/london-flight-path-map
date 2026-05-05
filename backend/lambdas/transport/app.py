@@ -8,6 +8,11 @@ CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 # TfL API - free, no key required (key optional for higher rate limits)
 TFL_BASE = 'https://api.tfl.gov.uk'
 
+ATTRIBUTION = (
+    'Transport data powered by TfL Open Data. '
+    'Contains OS data © Crown copyright and database rights 2016 and Geomni UK Map data © and database rights [2019].'
+)
+
 
 def handler(event, context):
     try:
@@ -36,7 +41,8 @@ def handler(event, context):
         return response(200, {
             'stations': stations,
             'lineStatus': line_status,
-            'location': {'lat': lat, 'lon': lon}
+            'location': {'lat': lat, 'lon': lon},
+            'sources': [ATTRIBUTION],
         })
 
     except Exception:

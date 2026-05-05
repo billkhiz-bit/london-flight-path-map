@@ -5,6 +5,11 @@ from urllib.request import Request, urlopen
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
+OGL_ATTRIBUTION = (
+    'Sold prices: HM Land Registry. '
+    'Contains public sector information licensed under the Open Government Licence v3.0.'
+)
+
 
 def handler(event, context):
     try:
@@ -41,7 +46,11 @@ def handler(event, context):
                 'newBuild': item.get('newBuild', False),
             })
 
-        return response(200, {'postcode': postcode, 'transactions': results})
+        return response(200, {
+            'postcode': postcode,
+            'transactions': results,
+            'sources': [OGL_ATTRIBUTION],
+        })
 
     except Exception:
         return response(500, {'error': 'Internal server error'})
