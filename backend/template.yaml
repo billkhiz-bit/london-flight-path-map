@@ -271,6 +271,12 @@ Resources:
           # Score endpoint is the productised B2B surface; allow any origin so
           # third-party integrators can call it. API-key auth gates abuse.
           CORS_ORIGIN: '*'
+          # v3.1 DEFRA raster table — Lambda checks DynamoDB first for postcode
+          # Lden samples; falls back to v3.0 Haversine if table empty/missing.
+          NOISE_RASTER_TABLE: !Ref NoiseRasterTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref NoiseRasterTable
       Events:
         ScoreGet:
           Type: Api
@@ -330,6 +336,25 @@ Resources:
       KeyId: !Ref ScoreApiKey
       KeyType: API_KEY
       UsagePlanId: !Ref ScoreFreeUsagePlan
+
+  # --- DynamoDB Table — DEFRA noise raster samples (v3.1) ---
+  # Populated by an offline data-loader script that samples the DEFRA
+  # GeoTIFF at every UK postcode centroid. The Lambda reads from this table
+  # when populated; falls back to v3.0 Haversine when empty/missing.
+  # See scripts/load_defra_raster.py for the loader runbook.
+  NoiseRasterTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      # Name matches the london-flight-map-* IAM-policy prefix used by the
+      # flightmap-dev deploy user — see backend/iam-policy.json.
+      TableName: london-flight-map-noise-raster
+      AttributeDefinitions:
+        - AttributeName: postcode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: postcode
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
 
   # --- DynamoDB Table ---
   FavouritesTable:

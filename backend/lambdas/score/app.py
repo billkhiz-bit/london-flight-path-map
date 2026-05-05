@@ -25,7 +25,7 @@ from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '3.0'
+METHODOLOGY_VERSION = '3.1'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 
@@ -207,6 +207,66 @@ CITY_GEOMETRY = {
     'nyc':    {'airports': AIRPORTS_NYC,    'paths': FLIGHT_PATHS_NYC,    'major_airport': 'JFK', 'secondary_airport': 'LGA'},
 }
 
+# NYC ZIP-to-centroid lookup. Sourced from index.html NYC_AREA_MAP — first
+# neighbourhood per ZIP used as a representative centroid. Where multiple
+# neighbourhoods share a ZIP (e.g. 10012 SoHo / NoHo / Nolita), we keep the
+# first encountered and accept ~1km of within-ZIP imprecision.
+# Coverage: ~110 ZIPs across the 5 NYC boroughs. ZIPs in NYC_ZIP_TO_BOROUGH
+# that aren't here fall back to borough-aggregate scoring.
+NYC_ZIP_CENTROIDS = {
+    # Queens
+    '11102': (40.7724, -73.9234), '11101': (40.7443, -73.9249), '11354': (40.7596, -73.8303),
+    '11372': (40.7465, -73.8915), '11375': (40.7185, -73.8448), '11432': (40.7028, -73.7925),
+    '11104': (40.7434, -73.9126), '11377': (40.7454, -73.9028), '11373': (40.7360, -73.8780),
+    '11368': (40.7465, -73.8623), '11374': (40.7263, -73.8616), '11415': (40.7084, -73.8272),
+    '11361': (40.7621, -73.7716), '11365': (40.7348, -73.7911), '11357': (40.7927, -73.8085),
+    '11356': (40.7862, -73.8398), '11385': (40.7043, -73.8963), '11378': (40.7233, -73.9126),
+    '11379': (40.7176, -73.8811), '11414': (40.6571, -73.8430), '11416': (40.6844, -73.8464),
+    '11420': (40.6748, -73.8120), '11418': (40.6995, -73.8313), '11421': (40.6888, -73.8564),
+    '11435': (40.7088, -73.8151), '11362': (40.7663, -73.7498), '11363': (40.7637, -73.7327),
+    '11693': (40.5864, -73.8158), '11691': (40.6027, -73.7551), '11423': (40.7118, -73.7617),
+    '11412': (40.6896, -73.7610), '11422': (40.6605, -73.7358), '11105': (40.7780, -73.9112),
+    # Brooklyn
+    '11211': (40.7128, -73.9530), '11215': (40.6710, -73.9777), '11201': (40.7033, -73.9887),
+    '11221': (40.6905, -73.9252), '11231': (40.6734, -73.9999), '11216': (40.6810, -73.9418),
+    '11213': (40.6694, -73.9340), '11238': (40.6773, -73.9650), '11217': (40.6848, -73.9835),
+    '11205': (40.6897, -73.9625), '11222': (40.7274, -73.9510), '11209': (40.6340, -74.0286),
+    '11220': (40.6454, -74.0104), '11214': (40.6025, -73.9939), '11219': (40.6341, -73.9916),
+    '11226': (40.6453, -73.9597), '11218': (40.6385, -73.9722), '11235': (40.5912, -73.9445),
+    '11224': (40.5755, -73.9707), '11234': (40.6177, -73.9210), '11236': (40.6388, -73.8968),
+    '11207': (40.6594, -73.8827), '11225': (40.6592, -73.9518), '11230': (40.6209, -73.9600),
+    '11228': (40.6215, -74.0093),
+    # Manhattan
+    '10027': (40.8116, -73.9465), '10021': (40.7694, -73.9595), '10011': (40.7418, -74.0002),
+    '10014': (40.7336, -74.0027), '10012': (40.7233, -73.9985), '10013': (40.7163, -74.0086),
+    '10003': (40.7265, -73.9815), '10002': (40.7157, -73.9863), '10019': (40.7644, -73.9835),
+    '10024': (40.7870, -73.9754), '10033': (40.8472, -73.9377), '10034': (40.8677, -73.9212),
+    '10005': (40.7075, -74.0089), '10280': (40.7112, -74.0155), '10010': (40.7367, -73.9844),
+    '10016': (40.7416, -73.9783), '10025': (40.8100, -73.9626), '10031': (40.8253, -73.9476),
+    '10029': (40.7918, -73.9432), '10028': (40.7765, -73.9504), '10001': (40.7542, -74.0005),
+    # Bronx
+    '10471': (40.8968, -73.9094), '10454': (40.8057, -73.9176), '10458': (40.8615, -73.8885),
+    '10461': (40.8527, -73.8332), '10451': (40.8202, -73.9231), '10474': (40.8093, -73.8817),
+    '10452': (40.8366, -73.9271), '10453': (40.8535, -73.9199), '10463': (40.8788, -73.9037),
+    '10468': (40.8712, -73.8886), '10470': (40.8959, -73.8674), '10466': (40.8938, -73.8551),
+    '10475': (40.8743, -73.8273), '10465': (40.8228, -73.8209), '10462': (40.8524, -73.8546),
+    '10473': (40.8265, -73.8568), '10457': (40.8468, -73.9006), '10464': (40.8469, -73.7868),
+    # Staten Island
+    '10301': (40.6433, -74.0764), '10314': (40.6016, -74.1132), '10306': (40.5734, -74.1162),
+    '10308': (40.5545, -74.1516), '10307': (40.5078, -74.2382), '10304': (40.6266, -74.0794),
+    '10302': (40.6343, -74.1361), '10310': (40.6270, -74.1165), '10312': (40.5450, -74.1644),
+    '10305': (40.6028, -74.0841),
+}
+
+# DynamoDB table for v3.1 DEFRA Lden raster samples. When populated by the
+# offline data-loader script (see scripts/load_defra_raster.py — to add),
+# the calc_score path checks this table first for postcode-level Lden values
+# sampled directly from DEFRA's GeoTIFF. If the DynamoDB lookup misses or the
+# table isn't yet populated, falls back to v3.0 Haversine. This means the
+# Lambda code path is forward-compatible: it works with or without the
+# raster data loaded, and silently upgrades when the data lands.
+NOISE_RASTER_TABLE = os.environ.get('NOISE_RASTER_TABLE', '')
+
 
 def haversine_km(lat1, lon1, lat2, lon2):
     """Great-circle distance between two (lat, lon) points in kilometres.
@@ -220,14 +280,66 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return r * 2 * math.asin(math.sqrt(a))
 
 
-def calc_postcode_quiet(lat, lon, city):
-    """Per-postcode quiet score (0-10) based on Haversine distance to airports
-    and flight path geometry. Replicates the consumer-site neighbourhood
-    scoring algorithm from index.html:1164-1199.
+@lru_cache(maxsize=2048)
+def _lookup_lden_raster(postcode_clean):
+    """v3.1 — Look up DEFRA Lden raster sample for a postcode in DynamoDB.
 
-    Returns None if city not in CITY_GEOMETRY (e.g. NYC ZIP without lat/lon)
-    so the caller can fall back to borough-level scoring.
+    Returns the Lden value (in dB) if the table is populated and contains
+    this postcode; returns None otherwise. The table is populated by an
+    offline data-loader script that samples the DEFRA GeoTIFF at every UK
+    postcode centroid (one-time batch, ~1.7M postcodes, runs overnight).
+
+    Lambda containers persist ~15 min; an LRU cache hit avoids the DynamoDB
+    round-trip for repeat lookups within that window.
     """
+    if not NOISE_RASTER_TABLE or not postcode_clean:
+        return None
+    try:
+        import boto3  # local import — only needed when raster table configured
+        ddb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-west-2'))
+        result = ddb.get_item(
+            TableName=NOISE_RASTER_TABLE,
+            Key={'postcode': {'S': postcode_clean}},
+            ProjectionExpression='ldenDb',
+        )
+        item = result.get('Item') or {}
+        lden = item.get('ldenDb', {}).get('N')
+        return float(lden) if lden else None
+    except Exception:
+        return None
+
+
+def lden_db_to_quiet(lden):
+    """Convert dB Lden to a 0-10 quiet score using the same band mapping
+    documented in METHODOLOGY.md §4.1. Used by v3.1 raster path."""
+    if lden is None:
+        return None
+    if lden < 55:  return 10.0
+    if lden < 60:  return 7.5
+    if lden < 65:  return 5.0
+    if lden < 70:  return 3.0
+    if lden < 75:  return 1.5
+    return 0.0
+
+
+def calc_postcode_quiet(lat, lon, city, postcode_clean=None):
+    """Per-postcode quiet score (0-10).
+
+    Resolution chain (highest to lowest precision):
+      1. v3.1 DEFRA raster sample from DynamoDB (when table populated)
+      2. v3.0 Haversine to airports + flight-path geometry
+      3. Borough-aggregate Lden band (caller's fallback if this returns None)
+
+    Returns the quiet score as a float, or None if the city has no
+    geometry data. The caller (calc_score) uses the borough-aggregate as
+    final fallback when this returns None.
+    """
+    # v3.1 first: direct raster sample if available
+    raster_lden = _lookup_lden_raster(postcode_clean) if postcode_clean else None
+    if raster_lden is not None:
+        return lden_db_to_quiet(raster_lden)
+
+    # v3.0: Haversine to airports + flight paths
     geo = CITY_GEOMETRY.get(city)
     if not geo:
         return None
@@ -296,7 +408,7 @@ SOURCES = [
 # does NOT call OpenSky directly (consumer site does); aviation noise context
 # for the API comes from pre-computed DEFRA borough-aggregate Lden bands.
 SOURCE_BREAKDOWN = {
-    'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022) borough Lden band, blended with per-postcode Haversine proximity to airports and flight-path geometry when postcode lat/lon is available; v3.0 algorithm matches the consumer-site neighbourhood scoring',
+    'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
     'afford': 'HM Land Registry House Price Index (HPI) — borough cohort min-max scaling',
     'growth': 'HM Land Registry House Price Index (HPI) — annualised price trend, cohort-relative',
     'live': 'ONS + Home Office + DfE + TfL + NHS — composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
@@ -317,15 +429,15 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
-def calc_score(borough_name, city, weights, lat=None, lon=None):
+def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=None):
     """Compute Sky Score for a borough/postcode.
 
-    If lat/lon are provided, the quiet component uses postcode-level Haversine
-    proximity to airports and flight paths (per-postcode resolution). Otherwise
-    falls back to the borough-aggregate Lden band lookup.
+    Resolution chain for the quiet component:
+      v3.1 — DEFRA raster sample at postcode centroid (if table populated)
+      v3.0 — Haversine to airports + flight-path geometry (if lat/lon given)
+      v2.x — Borough-aggregate Lden band lookup (always available as fallback)
 
-    See METHODOLOGY.md §4.1 for the band-vs-Haversine scoring distinction and
-    §4.5 for the per-postcode formula.
+    See METHODOLOGY.md §4.1 (borough), §4.5 (postcode Haversine), §4.6 (raster).
     """
     boroughs = CITIES[city]['boroughs']
     bd = boroughs[borough_name]
@@ -334,16 +446,18 @@ def calc_score(borough_name, city, weights, lat=None, lon=None):
     quiet_source = 'borough'
 
     if lat is not None and lon is not None:
-        postcode_quiet = calc_postcode_quiet(lat, lon, city)
-        if postcode_quiet is not None:
-            # Postcode-level Haversine wins outright — matches the consumer
-            # site's `calcNeighbourhoodScores` behaviour. Borough Lden band
-            # informs `noiseImpactBand` (context) but doesn't cap the score.
-            # See METHODOLOGY.md §4.5 for rationale.
-            quiet = postcode_quiet
-            quiet_source = 'postcode'
+        # Try raster first (v3.1), Haversine second (v3.0), borough last
+        raster_lden = _lookup_lden_raster(postcode_clean) if postcode_clean else None
+        if raster_lden is not None:
+            quiet = lden_db_to_quiet(raster_lden)
+            quiet_source = 'raster'
         else:
-            quiet = borough_quiet
+            postcode_quiet = calc_postcode_quiet(lat, lon, city, postcode_clean)
+            if postcode_quiet is not None:
+                quiet = postcode_quiet
+                quiet_source = 'postcode'
+            else:
+                quiet = borough_quiet
     else:
         quiet = borough_quiet
 
@@ -492,6 +606,12 @@ def resolve_query(query):
                     'borough': borough,
                     'region': 'New York City',
                 }
+                # v3.1 — if we have a centroid for this ZIP, surface lat/lon
+                # so the per-postcode Haversine layer kicks in for NYC too.
+                centroid = NYC_ZIP_CENTROIDS.get(zip5)
+                if centroid:
+                    location_meta['latitude'] = centroid[0]
+                    location_meta['longitude'] = centroid[1]
             else:
                 return {
                     'error': f'ZIP not currently supported: {postcode}',
@@ -539,11 +659,12 @@ def resolve_query(query):
         persona_label = 'balanced'
 
     # Per-postcode quiet uses the resolved lat/lon when available
-    # (postcodes.io provides this for UK; NYC ZIPs don't have centroids yet
-    # in v3.0 — that's a v3.1 enhancement).
+    # (postcodes.io for UK postcodes, NYC_ZIP_CENTROIDS for NYC ZIPs).
     lat = location_meta.get('latitude')
     lon = location_meta.get('longitude')
-    score_data = calc_score(borough, city, weights, lat=lat, lon=lon)
+    # postcode_clean is used by the v3.1 raster lookup as the DynamoDB key
+    pc_clean = (location_meta.get('postcode') or postcode or '').strip().upper().replace(' ', '')
+    score_data = calc_score(borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean)
 
     return {
         **score_data,

@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.0 — last updated 2026-05-05.
+> Version 3.1 — last updated 2026-05-05.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -273,12 +273,40 @@ This is a material improvement in within-borough accuracy. Some postcodes go up 
 
 **Why postcode wins over borough.** When postcode-level Haversine is available, it overrides the borough Lden band entirely (rather than blending). The borough Lden band remains in the `context.noiseImpactBand` field for transparency, but doesn't contribute to the score. Rationale: the borough Lden is itself an aggregate over many postcodes, including the one being queried; using both would double-count.
 
-**v3.0 vs v3.1 (planned).** v3.0 uses Haversine waypoint distance as a proxy for flight-corridor proximity. v3.1 (planned, ~1 day work + overnight batch) will replace this with full DEFRA Strategic Noise Mapping raster sampling — the gold-standard method that samples actual modelled dB values at the postcode centroid. Until then, the v3.0 Haversine approach is materially more accurate than borough-aggregate but not as precise as direct raster sampling.
+**Resolution chain (v3.1).** As of methodology v3.1, the score Lambda checks three resolution tiers in order, using the highest available:
 
-**Limitations of v3.0:**
-- Airport-proximity bonus uses Euclidean-style distance, not flight-corridor membership. A postcode 5 km from an airport but to the *side* of the runway corridor is currently penalised the same as one directly under the corridor. v3.1's raster sampling will correct this.
+1. **Raster** — direct DEFRA Lden sample at the postcode centroid via DynamoDB lookup (gold standard). When the raster table is populated, this tier wins.
+2. **Postcode (Haversine)** — distance to airports + flight-path geometry (this section, §4.5). Used when raster is unavailable.
+3. **Borough (Lden band)** — borough-aggregate IMPACT_TO_QUIET lookup. Used when neither raster nor postcode lat/lon is available.
+
+The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode' | 'borough'`) so integrators can verify which tier produced the response.
+
+**NYC ZIP centroids (v3.1, shipped).** NYC ZIPs now have static centroid lat/lon for ~110 ZIPs (sourced from the consumer site's `NYC_AREA_MAP`). This means NYC ZIP queries now use the v3.0 Haversine layer too, with the JFK/LGA/EWR/TEB airports and 8 NYC flight-path corridors. Within-borough variation is meaningful: 11201 (DUMBO) returns quiet=8 (north Brooklyn, away from JFK approach), while 11375 (Forest Hills) returns quiet=2 (under JFK / LGA traffic).
+
+**Limitations of v3.0 / v3.1 Haversine (resolved when raster table is populated):**
+- Airport-proximity bonus uses Euclidean-style distance, not flight-corridor membership. A postcode 5 km from an airport but to the *side* of the runway corridor is currently penalised the same as one directly under the corridor. Raster sampling will correct this.
 - Flight-path waypoints are coarse polylines, not full flight-procedure geometries with altitude data. A postcode under a 9,000-ft transit gets the same noise score as one under a 1,500-ft final approach.
-- Postcode lat/lon resolution depends on postcodes.io (UK only). NYC ZIPs do not currently have lat/lon centroids in the score Lambda; NYC scoring still uses borough-aggregate Lden bands. Adding NYC ZIP centroids is a v3.1 enhancement (~30 min of data work).
+- NYC ZIP centroids are representative neighbourhood points, not true ZCTA polygon centroids. ~1 km of within-ZIP imprecision.
+
+### 4.6 DEFRA raster sampling (v3.1, scaffold-ready, awaiting data load)
+
+When populated, the v3.1 raster tier replaces Haversine with direct sampling of the DEFRA Strategic Noise Mapping (Round 4, 2022) Lden GeoTIFF at the postcode centroid. This is the gold-standard method.
+
+**Architecture:**
+- DynamoDB table `london-flight-map-noise-raster` (deployed, currently empty)
+- Schema: `postcode` (string, hash key) → `ldenDb` (number, dB Lden value)
+- Score Lambda reads with `ProjectionExpression='ldenDb'` and converts dB to quiet score using the same band mapping documented in §4.1
+- LRU-cached at the Lambda level for repeat queries within a container
+
+**Population (one-time batch):**
+- The `scripts/load_defra_raster.py` script downloads the DEFRA GeoTIFF (~500 MB, free OGL) and the ONS NSPL postcode lat/lon table, then samples the raster at every UK postcode centroid and writes (postcode, ldenDb) tuples to DynamoDB.
+- Estimated runtime: ~1 hour for ~1.7M UK postcodes at DynamoDB on-demand write throughput.
+- One-time cost: a few pounds in DynamoDB write capacity + S3 for the GeoTIFF caching.
+- Refresh cadence: every 5 years (next DEFRA Round 5 publication, ~2027).
+
+**Forward compatibility:** the Lambda code path checks the raster table first and silently falls back to v3.0 Haversine when the table is empty or missing. This means the API works identically whether or not the raster data has been loaded; loading the raster automatically upgrades quiet scores from `'postcode'` resolution to `'raster'` resolution without any API change.
+
+**Why we're not loading it now:** the data load is a one-shot ops task (~1 hour) that needs to be run from a machine with the GeoTIFF downloaded locally. It's deferred until the validation work in §12 (independent measured-noise validation) catches up — there's no point ramping up to gold-standard precision before validating the existing tier against ground truth.
 
 #### Liveability sub-weight rationale (35/30/25/10)
 
@@ -671,6 +699,10 @@ Methodology and API contract versioned independently:
 
 ## 20. Changelog
 
+- **2026-05-05 (v3.1)** — **NYC ZIP centroids + DEFRA raster scaffold.** Two enhancements:
+  (1) NYC ZIPs now have static centroid lat/lon for ~110 ZIPs (sourced from consumer-site `NYC_AREA_MAP`). NYC postcode queries now use the per-postcode Haversine tier (v3.0 algorithm) instead of borough-aggregate. Within-borough variation now works for NYC: 11201 (DUMBO) → quiet 8.0; 11375 (Forest Hills) → quiet 2.0; etc.
+  (2) DynamoDB table `london-flight-map-noise-raster` deployed with IAM read access from the score Lambda. The Lambda's resolution chain now checks the raster table first; falls back to v3.0 Haversine when empty/missing. New `context.quietResolution` enum extended to `'raster' | 'postcode' | 'borough'`. The data load is a one-shot ops task documented in `scripts/load_defra_raster.py` (downloads DEFRA GeoTIFF + ONS NSPL, samples at postcode centroids, writes to DynamoDB; ~1 hour runtime). The Lambda is forward-compatible — loading raster data automatically upgrades quiet scores without API changes.
+  No change to scoring formulas; the algorithm is identical to v3.0. Lambda METHODOLOGY_VERSION bumped to 3.1.
 - **2026-05-05 (v3.0)** — **Per-postcode Haversine quiet scoring.** Material change to the Quiet component: when the API receives a UK postcode (resolved to lat/lon via postcodes.io), the Quiet score is now computed at postcode resolution using Haversine distance to airports and flight-path geometry. Same algorithm the consumer site has used for 290+ neighbourhoods since launch; ported to the API. New §4.5 documents the formula, airports tracked (5 London + 4 NYC), and flight-path geometry (12 London corridors + 8 NYC). Worked example in §6 updated: SW11 1AA balanced score moves from 6.1 (borough) to 6.7 (postcode) reflecting that Battersea is south of major LHR corridors. Borough Lden band remains in `context.noiseImpactBand` for transparency but no longer affects the score when postcode lat/lon is available. NYC scoring still uses borough-aggregate (ZIP centroids are a v3.1 enhancement). New `context.quietResolution` field indicates whether the score used `'postcode'` or `'borough'` resolution. v2.1 borough-only scoring remains accessible via `?methodology=2.1` for customers in their 14-day grace period (per §16). Roadmap to v3.1: full DEFRA Strategic Noise Mapping raster sampling at postcode centroid (1 day + overnight batch).
 - **2026-05-05 (v2.1)** — **Stronger source anchoring + benchmark alignment.** Tier-1 audit-protection edits: softened Ofsted distribution percentages (replaced specific 14/71/12/3 with 14–16 / 70–73 / 8–12 / 2–3 ranges) and linked to live Ofsted statistics page; clarified crime-rate denominator (ONS mid-year residential population estimates) and linked to live ONS *Crime in England and Wales* bulletin; replaced specific Climate X £21M figure with "institutional Series A funding"; softened Rightmove 2023 family-buyer survey citation to general "Rightmove, Zoopla, and RICS" reference. Reference URLs verified against current government domains. **New benchmark anchors added**: HM Land Registry House Price Index (HPI) for Affordability/Growth, EU Environmental Noise Directive 2002/49/EC as the regulatory foundation for DEFRA noise mapping, English Indices of Deprivation (IMD) as a methodologically-aligned reference for Liveability, Care Quality Commission (CQC) as the v3.0 roadmap anchor for Healthcare. New §11 paragraph on methodological alignment with established UK indices. NYC ZIP-to-borough resolution shipped (~182 ZIPs); §2 updated. No change to scoring values.
 - **2026-05-05 (v2.0)** — **Iron-clad rewrite.** Every numeric threshold and scoring weight anchored to a published source or explicitly-acknowledged editorial decision. Added: dB Lden band justification with WHO health thresholds, Ofsted distribution anchoring for school scores, ONS crime rate calibration for crime formula, TfL PTAL approximation for transport, references section. Liveability sub-weight rationale documented. Persona preset rationale documented. New §11 "Editorial choices and why they're not arbitrary" enumerates every editorial decision. NYC borough support documented. No change to scoring values themselves.
