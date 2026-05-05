@@ -41,6 +41,24 @@ tags:
     description: Single-postcode and bulk property scoring.
 
 paths:
+  /v1/regions:
+    get:
+      tags: [Score]
+      summary: List supported cities and boroughs.
+      description: |
+        Discovery endpoint for integrators. Returns the supported cities,
+        their borough lists, postcode formats, and resolver methods. Use
+        this to know what queries to issue without scraping responses.
+      responses:
+        '200':
+          description: Supported regions and metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegionsResponse'
+        '403':
+          description: API key missing or invalid.
+
   /v1/score:
     get:
       tags: [Score]
@@ -54,9 +72,11 @@ paths:
         - name: postcode
           in: query
           description: |
-            UK postcode to score. Resolved via postcodes.io to a London
-            borough. Spaces are URL-encoded (%20). Required if `borough`
-            is not provided.
+            Postcode/ZIP to score. UK postcodes (e.g. `SW11 1AA`) resolve
+            via postcodes.io to a London borough. US ZIPs (e.g. `10001`,
+            5-digit with optional `+4` suffix) auto-detect to NYC and use
+            a static borough lookup. Spaces in UK postcodes are URL-encoded
+            (`%20`). Required if `borough` is not provided.
           schema:
             type: string
             example: SW11 1AA
@@ -229,6 +249,64 @@ components:
           description: |
             OGL attribution lines for the underlying data sources.
             Consumers redistributing the response must preserve these.
+        sourceBreakdown:
+          type: object
+          description: |
+            Per-component data lineage. Each property describes the source
+            and methodology for that component. The `/v1/score` endpoint
+            does NOT depend on OpenSky Network — aviation noise context is
+            sourced from pre-computed DEFRA borough-aggregate Lden bands.
+          properties:
+            quiet:
+              type: string
+            afford:
+              type: string
+            growth:
+              type: string
+            live:
+              type: string
+
+    RegionsResponse:
+      type: object
+      required: [cities, apiVersion, methodologyVersion, generatedAt]
+      properties:
+        cities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                enum: [london, nyc]
+              name:
+                type: string
+              country:
+                type: string
+              currency:
+                type: string
+              postcodeFormat:
+                type: string
+              postcodeResolver:
+                type: string
+              boroughCount:
+                type: integer
+              boroughs:
+                type: array
+                items:
+                  type: string
+              supportedZipCount:
+                type: integer
+                description: NYC only — number of ZIPs in the static lookup.
+        apiVersion:
+          type: string
+        methodologyVersion:
+          type: string
+        methodologyUrl:
+          type: string
+          format: uri
+        generatedAt:
+          type: string
+          format: date-time
 
     Components:
       type: object

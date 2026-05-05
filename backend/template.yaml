@@ -288,6 +288,14 @@ Resources:
             Method: post
             Auth:
               ApiKeyRequired: true
+        RegionsGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/regions
+            Method: get
+            Auth:
+              ApiKeyRequired: true
 
   ScoreApiKey:
     Type: AWS::ApiGateway::ApiKey
