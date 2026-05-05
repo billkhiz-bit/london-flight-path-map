@@ -24,7 +24,7 @@ from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '2.0'
+METHODOLOGY_VERSION = '2.1'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 
