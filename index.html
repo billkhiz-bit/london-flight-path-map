@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sky Score - AI-Powered Property Analysis for Aircraft Noise</title>
+<title>Sky Score — UK property quality data · noise, livability, affordability</title>
 
 <!-- OG Meta Tags for social sharing -->
-<meta name="description" content="AI-powered property intelligence combining Amazon Nova AI, aircraft noise data, neighbourhood scoring across 290+ areas in London and New York. Free tool for home buyers.">
-<meta property="og:title" content="Sky Score - AI-Powered Property Analysis">
-<meta property="og:description" content="AI-powered property intelligence combining Amazon Nova AI, neighbourhood scoring across 290+ areas, live government data, and interactive D3.js mapping for London and New York.">
+<meta name="description" content="Sky Score — postcode-level property quality data for UK and NYC. Free site for renters and buyers; B2B API for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology v3.1, live in production.">
+<meta property="og:title" content="Sky Score — UK property quality data API">
+<meta property="og:description" content="Postcode-level noise, livability, affordability scoring for UK and NYC property. Consumer site for buyers; B2B API for integrators. Methodology fully documented and reproducible.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://d1oe4ftwutjpf.cloudfront.net">
 <meta property="og:image" content="https://d1oe4ftwutjpf.cloudfront.net/preview.png">
@@ -16,8 +16,8 @@
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sky Score - AI-Powered Property Analysis">
-<meta name="twitter:description" content="AI-powered property intelligence combining Amazon Nova AI, neighbourhood scoring across 290+ areas, live government data for London and New York.">
+<meta name="twitter:title" content="Sky Score — UK property quality data API">
+<meta name="twitter:description" content="Postcode-level noise, livability, affordability scoring for UK and NYC. Free consumer site; B2B API for integrators.">
 <meta name="twitter:image" content="https://d1oe4ftwutjpf.cloudfront.net/preview.png">
 
 <!-- Favicon -->
@@ -45,6 +45,15 @@
   .map-title{position:absolute;top:24px;left:32px;z-index:10;}
   .map-title h1{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
   .map-title .subtitle{font-size:10px;font-weight:300;color:var(--mid);margin-top:2px;letter-spacing:1px;}
+  .map-title .dev-link{font-size:9px;font-weight:500;color:var(--orange);margin-top:6px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;display:inline-block;border-bottom:1px solid var(--orange);padding-bottom:1px;}
+  .map-title .dev-link:hover{color:var(--dark);border-color:var(--dark);}
+
+  /* Subtle B2B footer — small, unobtrusive, sits below the legend */
+  .site-footer{position:absolute;bottom:8px;left:32px;z-index:10;display:flex;gap:14px;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);pointer-events:none;}
+  .site-footer a{color:var(--mid);text-decoration:none;pointer-events:auto;border-bottom:1px solid transparent;padding-bottom:1px;}
+  .site-footer a:hover{color:var(--dark);border-bottom-color:var(--dark);}
+  .site-footer .sep{opacity:0.5;}
+  @media (max-width: 768px) { .site-footer{display:none;} }
 
   .map-legend{position:absolute;bottom:24px;left:32px;background:rgba(250,250,249,0.85);backdrop-filter:blur(8px);
     border:1px solid var(--dark);padding:12px 16px;font-size:10px;font-family:var(--font-mono);z-index:10;}
@@ -424,6 +433,7 @@
     <div class="map-title">
       <h1 id="map-title-text">Sky Score</h1>
       <div class="subtitle" id="map-subtitle">AI-POWERED PROPERTY NOISE INTELLIGENCE</div>
+      <a class="dev-link" href="/score-demo/" target="_blank" rel="noopener" title="Sky Score B2B API — try the live API in a browser demo">DEVELOPERS · API DEMO &#8594;</a>
     </div>
     <div class="city-selector" id="city-selector">
       <button type="button" class="city-btn active" data-city="london" onclick="switchCity('london')">London</button>
@@ -478,6 +488,17 @@
       </div>
     </div>
     <svg id="map-svg"></svg>
+    <div class="site-footer" aria-label="Sky Score links">
+      <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">Methodology v3.1</a>
+      <span class="sep">·</span>
+      <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
+      <span class="sep">·</span>
+      <a href="/score-demo/status.html" target="_blank" rel="noopener">Status</a>
+      <span class="sep">·</span>
+      <a href="https://github.com/billkhiz-bit/london-flight-path-map" target="_blank" rel="noopener">GitHub</a>
+      <span class="sep">·</span>
+      <span title="Open Government Licence v3.0">OGL v3.0</span>
+    </div>
   </main>
 
   <!-- AI Chatbot -->
