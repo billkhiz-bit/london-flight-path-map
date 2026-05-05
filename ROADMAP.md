@@ -139,6 +139,95 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 - `README.md` — public-facing project documentation
 - Memory: `project_api_target_customers.md`, `project_buildathon_focus.md`, `project_competitive_landscape.md`, `feedback_no_riba_customers.md`, `project_siraj_noor.md` (sister project)
 
+## Design notes for deferred work
+
+Detailed scoping for the two main outstanding items in Track 2. Captured 2026-05-05 so future-self picks up with context.
+
+### NYC ZIP-to-borough resolution
+
+**Scope is smaller than originally implied** (this had been treated as a major task). It's a 2–3-hour build:
+
+- ~230 NYC ZIPs static-mapped to 5 boroughs (Manhattan 100/101/102xx, Bronx 104xx, Brooklyn 112xx, Queens 110/111/113/114/116xx, Staten Island 103xx)
+- Open data from NYC OpenData ZCTA boundary file or USPS — no API needed
+- Add detection logic in `resolve_query`: if input matches `^\d{5}$`, look up in `NYC_ZIP_TO_BOROUGH`, set `city='nyc'`
+- Update OpenAPI examples with NYC ZIPs
+- Test with: 10001 (Midtown Manhattan), 11201 (Brooklyn Heights), 11375 (Forest Hills, Queens)
+
+What it gives:
+- `?postcode=10001` works alongside UK postcodes
+- Removes a known limitation in the existing API for US prospects
+- Marketing line "Sky Score works for UK and NYC postcodes" becomes substantively true
+- Swagger UI shows NYC examples
+
+What it doesn't change:
+- Underlying NYC scoring methodology (already in place via borough-name lookup)
+- ZIP-to-neighbourhood resolution (a level finer; out of scope)
+- US-specific data integrations (ACRIS, NYPD CompStat) — separate workstream
+
+**Effort: 2–3 hours.**
+
+### Per-postcode noise sampling — vs current borough-level
+
+#### Current limitation (concrete)
+
+The Lambda's quiet component is a single categorical lookup per *borough*, so every postcode in a borough gets the same quiet score. Within-borough variation can be 10–15 dB Lden — a 2–3 component-point error in a 0–10 score.
+
+| Borough | Borough Lden band | Reality at specific postcodes |
+|---|---|---|
+| **Hounslow** | severe (≥75 dB) | TW6 (Heathrow approach): genuinely severe. **TW1 (Twickenham, ~62 dB)**: should score ~5/10. **TW8 (Brentford, ~58 dB)**: should score ~6.5/10. |
+| **Richmond upon Thames** | high (70–75 dB) | West (Hampton, Teddington): 70+ dB. **East (Richmond town centre, Sheen, ~62 dB)**: should score ~5. |
+| **Wandsworth** | moderate (60–65 dB) | Battersea Heliport area: ~68 dB. **Tooting Bec (~55 dB)**: should score ~7.5. |
+| **Greenwich** | moderate | London City approach corridor: ~70 dB. **Blackheath (~55 dB)**: should score ~7.5. |
+
+This is the methodology weakness B2B audit teams will challenge first.
+
+#### Replacement approach
+
+Use the postcode's lat/long (postcodes.io already returns it) to sample two data sources:
+1. **DEFRA Strategic Noise Mapping raster** — sample Lden value at postcode centroid (10m grid resolution)
+2. **Haversine distance to flight paths and airports** — already implemented in the consumer site (`index.html` lines 1118–1247)
+
+Combine into continuous dB-based score:
+```
+quiet = 10 × clip( (75 - effective_lden) / 25, 0, 1 )
+```
+Where `effective_lden = max(raster_lden, flight_path_proximity_lden)`.
+
+#### Side-by-side
+
+| Aspect | Borough-level (now) | Per-postcode (deferred) |
+|---|---|---|
+| Within-borough variation | None | Real |
+| Accuracy | ~80% at borough; ±3 points within borough | ~95% (limited by raster resolution) |
+| Defensibility | "DEFRA borough-aggregate" — coarse | "DEFRA raster sampled at postcode centroid + Haversine flight-path proximity" — gold standard |
+| Audit risk | Real — surveyors will challenge | Should pass clean |
+| Latency per request | <5ms | <20ms (pre-computed in DynamoDB) |
+| Build effort | Done | ~1 day + overnight batch |
+
+#### Build plan
+
+1. **Acquire DEFRA Lden raster** for England round 4 (2022) — 1h, free from data.gov.uk, ~500 MB GeoTIFF
+2. **Pre-compute postcode-centroid samples** — script over ~1.7M UK postcodes, store in DynamoDB. Overnight batch, ~£5 compute.
+3. **Lambda code change** — replace `IMPACT_TO_QUIET[impact]` with DynamoDB read by postcode, fall back to borough-aggregate if missing. ~2h.
+4. **Port flight-path distance scoring** from consumer site Haversine logic — ~2h.
+5. **Methodology update** — §4.1 revision, version bump to 3.0. ~1h.
+6. **Validation** — spot-check 20 postcodes against DEFRA noise contour map. ~1h.
+
+**Effort: ~1 working day + overnight pre-compute.**
+
+#### When to ship
+
+The trigger is **first paying B2B customer asks "do you have postcode-level noise resolution?"** — aggregator-tier customers will ask in their first audit. Until then, borough-level + the documented limitation in methodology §9 is honest and acceptable.
+
+### Recommended order for deferred work
+
+| When | What | Why |
+|---|---|---|
+| Next short session (2–3h) | NYC ZIP resolution | Highest leverage per minute spent. Removes a known limitation cheaply. Marketing-ready. |
+| Next focused day | Per-postcode noise sampling | Larger accuracy win. Best done with fresh head over a longer block. Closes the audit-defensibility gap. |
+| Before any paying B2B customer | OpenSky commercial-licence resolution (negotiate / replace / decouple) | Unblocks aviation-data integrations |
+| Before public launch | Polish: domain (`skyscore.uk`), homepage CTA for "API access", contact form | Commercial-readiness |
+
 ## Update protocol
 
 When a task ships or a decision lands: update this file rather than the chat. Treat unresolved items in "Near-term tasks" and "Open decisions" as the source of truth between sessions.
