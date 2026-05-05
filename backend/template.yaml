@@ -13,7 +13,7 @@ Globals:
   Api:
     Cors:
       AllowMethods: "'GET,POST,DELETE,OPTIONS'"
-      AllowHeaders: "'Content-Type,Authorization'"
+      AllowHeaders: "'Content-Type,Authorization,X-Api-Key'"
       AllowOrigin: "'https://d1oe4ftwutjpf.cloudfront.net'"
     Auth:
       DefaultAuthorizer: NONE

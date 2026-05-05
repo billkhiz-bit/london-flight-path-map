@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sky Score API — Live Demo</title>
+<meta name="description" content="Try the Sky Score B2B property data API live. Returns noise, livability, and affordability for any UK postcode.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06070d;
+    --panel: #0d0f1a;
+    --border: #1f2333;
+    --text: #e8e8ee;
+    --muted: #8b8fa3;
+    --amber: #f59e0b;
+    --amber-dim: #b97a08;
+    --green: #26F27D;
+    --red: #F27D26;
+    --grad: linear-gradient(135deg, #f59e0b 0%, #e25822 100%);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(245,158,11,0.08), transparent 40%),
+      radial-gradient(circle at 90% 30%, rgba(226,88,34,0.06), transparent 50%);
+  }
+  header {
+    padding: 32px 24px 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
+  }
+  h1 .accent { color: var(--amber); }
+  .tag {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  .tag a { color: var(--amber); text-decoration: none; }
+  .tag a:hover { text-decoration: underline; }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 64px;
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 24px;
+  }
+  @media (max-width: 760px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h2 {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+
+  /* Form */
+  form { display: flex; flex-direction: column; gap: 14px; }
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  input[type="text"], select {
+    width: 100%;
+    padding: 10px 12px;
+    background: #060810;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+  }
+  input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--amber);
+  }
+  button {
+    padding: 12px 16px;
+    background: var(--grad);
+    color: #06070d;
+    border: 0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.06s ease, opacity 0.2s ease;
+  }
+  button:hover { transform: translateY(-1px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .examples button {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 400;
+    border-radius: 6px;
+  }
+  .examples button:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* Result */
+  .result-empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 14px;
+  }
+  .score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 4px;
+  }
+  .score-big {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-feature-settings: 'tnum';
+  }
+  .score-label { color: var(--muted); font-size: 14px; }
+  .borough-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .borough { font-size: 22px; font-weight: 600; }
+  .postcode {
+    font-family: 'Geist Mono', monospace;
+    color: var(--muted);
+    font-size: 14px;
+    background: var(--border);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .components {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .comp {
+    padding: 12px 14px;
+    background: #060810;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .comp .name {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .comp .val {
+    font-size: 22px;
+    font-weight: 600;
+    font-family: 'Geist Mono', monospace;
+    margin-bottom: 6px;
+  }
+  .comp .bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .comp .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--amber);
+    transition: width 0.4s ease;
+  }
+  .comp.weighted-low .name { opacity: 0.5; }
+
+  .context {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 480px) {
+    .components, .context { grid-template-columns: 1fr; }
+  }
+  .context-cell {
+    padding: 10px 12px;
+    background: #060810;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .context-cell .name {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .context-cell .val {
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .meta {
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-top: 12px;
+  }
+  .meta a { color: var(--amber); text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+
+  details {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #060810;
+  }
+  details summary {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  details summary:hover { color: var(--text); }
+  details pre {
+    margin: 0;
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .error {
+    background: rgba(242, 125, 38, 0.08);
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .loading {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    padding: 40px 0;
+  }
+  .loading::after {
+    content: '';
+    display: inline-block;
+    width: 12px; height: 12px;
+    margin-left: 8px;
+    border: 2px solid var(--amber);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 32px 16px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  footer a { color: var(--amber); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sky Score API <span class="accent">— Live Demo</span></h1>
+  <p class="tag">A noise + livability data API for UK property. Live endpoint at <code>/v1/score</code>. Methodology: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">github</a>.</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Try the API</h2>
+    <form id="form">
+      <div>
+        <label for="postcode">Postcode</label>
+        <input type="text" id="postcode" placeholder="SW11 1AA" value="N1 7SX" autocomplete="off">
+      </div>
+      <div>
+        <label for="persona">Persona</label>
+        <select id="persona">
+          <option value="balanced">Balanced (default)</option>
+          <option value="family">Family — schools and quiet matter most</option>
+          <option value="investor">Investor — affordability and growth</option>
+          <option value="firsttime">First-time buyer — affordability heavy</option>
+          <option value="quietlife">Quiet life — peace above all</option>
+        </select>
+      </div>
+      <button type="submit" id="submitBtn">Get Sky Score</button>
+
+      <div>
+        <label>Try an example</label>
+        <div class="examples">
+          <button type="button" data-pc="N1 7SX" data-pers="balanced">Hackney (quiet)</button>
+          <button type="button" data-pc="TW3 4DX" data-pers="balanced">Hounslow (severe)</button>
+          <button type="button" data-pc="TW3 4DX" data-pers="family">Hounslow + family</button>
+          <button type="button" data-pc="SW11 1AA" data-pers="investor">Wandsworth + investor</button>
+          <button type="button" data-pc="SE1 9SG" data-pers="quietlife">Southwark + quiet life</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" id="resultCard">
+    <h2>Response</h2>
+    <div id="result" class="result-empty">Submit a postcode to see the live API response, rendered.</div>
+  </section>
+</main>
+
+<footer>
+  Sky Score &middot; <a href="https://d1oe4ftwutjpf.cloudfront.net/">Main site</a> &middot; <a href="https://d1oe4ftwutjpf.cloudfront.net/prototype/">Sky Score Radar</a> &middot; OGL v3.0 attribution
+</footer>
+
+<script>
+  // Free-tier API key. Rotate by deleting + recreating the SkyScoreFreeTierKey
+  // resource via API Gateway console + redeploying. Public-tier limits cap
+  // abuse: 1000 req/month, 5 burst, 2 sustained.
+  const API_KEY = 'T2NpQbYF6P1zdRsmdO4le5WNTa7YoWeA1j0nbk5i';
+  const BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score';
+
+  const PERSONA_LABELS = {
+    balanced: 'Balanced',
+    family: 'Family',
+    investor: 'Investor',
+    firsttime: 'First-time buyer',
+    quietlife: 'Quiet life',
+    custom: 'Custom weights',
+  };
+
+  const form = document.getElementById('form');
+  const result = document.getElementById('result');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    fetchScore(
+      document.getElementById('postcode').value.trim(),
+      document.getElementById('persona').value,
+    );
+  });
+
+  document.querySelectorAll('.examples button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('postcode').value = btn.dataset.pc;
+      document.getElementById('persona').value = btn.dataset.pers;
+      fetchScore(btn.dataset.pc, btn.dataset.pers);
+    });
+  });
+
+  async function fetchScore(postcode, persona) {
+    if (!postcode) {
+      renderError('Please enter a postcode.');
+      return;
+    }
+    submitBtn.disabled = true;
+    result.innerHTML = '<div class="loading">Calling /v1/score</div>';
+
+    try {
+      // encodeURIComponent handles spaces → %20 correctly. Don't replace
+      // spaces with '+' first — that double-encodes to %2B, which the API
+      // sees as a literal '+' character, breaking postcodes.io lookups.
+      const url = `${BASE}?postcode=${encodeURIComponent(postcode)}&persona=${encodeURIComponent(persona)}`;
+      const t0 = performance.now();
+      const r = await fetch(url, { headers: { 'X-Api-Key': API_KEY } });
+      const elapsed = Math.round(performance.now() - t0);
+      const data = await r.json();
+      if (!r.ok) {
+        renderError(data.error || `Request failed (${r.status})`, data);
+      } else {
+        render(data, elapsed);
+      }
+    } catch (err) {
+      renderError('Network error: ' + err.message);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+
+  function render(d, elapsed) {
+    const w = d.weights || {};
+    const compRow = (key, label) => {
+      const value = d.components[key];
+      const weight = w[key] || 0;
+      const pct = Math.max(0, Math.min(100, value * 10));
+      const dim = weight < 0.15 ? ' weighted-low' : '';
+      return `
+        <div class="comp${dim}">
+          <div class="name">${label} &middot; weight ${(weight * 100).toFixed(0)}%</div>
+          <div class="val">${value.toFixed(1)}</div>
+          <div class="bar"><span style="width:${pct}%"></span></div>
+        </div>`;
+    };
+
+    result.innerHTML = `
+      <div class="borough-row">
+        <span class="borough">${escapeHtml(d.location.borough || 'Unknown')}</span>
+        <span class="postcode">${escapeHtml(d.location.postcode || '')}</span>
+      </div>
+      <div class="score-row">
+        <span class="score-big">${d.score.toFixed(1)}</span>
+        <span class="score-label">/ 10 &middot; ${PERSONA_LABELS[d.persona] || d.persona} persona</span>
+      </div>
+      <div class="components">
+        ${compRow('quiet', 'Quiet')}
+        ${compRow('afford', 'Affordability')}
+        ${compRow('growth', 'Growth')}
+        ${compRow('live', 'Liveability')}
+      </div>
+      <div class="context">
+        <div class="context-cell">
+          <div class="name">Avg price</div>
+          <div class="val">£${(d.context.avgPriceGbp / 1000).toFixed(0)}K</div>
+        </div>
+        <div class="context-cell">
+          <div class="name">Trend</div>
+          <div class="val">+${d.context.priceTrendPct.toFixed(1)}%</div>
+        </div>
+        <div class="context-cell">
+          <div class="name">Noise band</div>
+          <div class="val">${escapeHtml(d.context.noiseImpactBand)}</div>
+        </div>
+      </div>
+      <div class="meta">
+        Methodology v${d.methodologyVersion} &middot;
+        API v${d.apiVersion} &middot;
+        ${elapsed} ms &middot;
+        <a href="${d.methodologyUrl}" target="_blank" rel="noopener">Methodology</a>
+      </div>
+      <details>
+        <summary>Raw JSON response</summary>
+        <pre>${escapeHtml(JSON.stringify(d, null, 2))}</pre>
+      </details>
+    `;
+  }
+
+  function renderError(msg, raw) {
+    result.innerHTML = `
+      <div class="error">${escapeHtml(msg)}</div>
+      ${raw ? `<details><summary>Raw response</summary><pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre></details>` : ''}
+    `;
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+</script>
+</body>
+</html>

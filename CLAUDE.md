@@ -75,6 +75,10 @@ Always use "Sky Score" in all public-facing files and UI text.
 AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
 
+# Score demo (B2B API tester) — same pattern as prototype
+AWS_PROFILE=flightmap aws s3 cp score-demo/index.html s3://london-flight-map-frontend/score-demo/index.html --content-type "text/html" --region eu-west-2
+AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/score-demo/*"
+
 # Backend — SAM build + deploy (always clean .aws-sam first)
 # EPC bearer token is required after the 2026-05-30 service migration.
 # Source from .env (gitignored); never paste the token into source files or chat.
