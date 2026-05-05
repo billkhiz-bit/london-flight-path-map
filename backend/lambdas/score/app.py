@@ -14,6 +14,7 @@ documented in the methodology changelog.
 """
 
 import json
+import math
 import os
 import re
 from datetime import datetime, timezone
@@ -24,7 +25,7 @@ from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '2.1'
+METHODOLOGY_VERSION = '3.0'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 
@@ -147,6 +148,131 @@ NYC_ZIP_TO_BOROUGH = {
 
 US_ZIP_PATTERN = re.compile(r'^\d{5}(-\d{4})?$')
 
+# ---------------------------------------------------------------------------
+# Airports + flight paths for per-postcode quiet calculation.
+#
+# Sourced verbatim from the consumer site (`index.html`) which has been
+# scoring 290+ neighbourhoods in production for months. Lat/lon stored as
+# (lat, lon) tuples for clean Haversine calls. Coordinates in the consumer
+# site are [lon, lat] (GeoJSON convention); we transpose at port time so the
+# Python code can call haversine_km(lat1, lon1, lat2, lon2) directly.
+# ---------------------------------------------------------------------------
+
+AIRPORTS_LONDON = [
+    {'code': 'LHR', 'name': 'Heathrow',     'lat': 51.4700, 'lon': -0.4543},
+    {'code': 'LGW', 'name': 'Gatwick',      'lat': 51.1537, 'lon': -0.1821},
+    {'code': 'LCY', 'name': 'London City',  'lat': 51.5053, 'lon': 0.0553},
+    {'code': 'STN', 'name': 'Stansted',     'lat': 51.8860, 'lon': 0.2389},
+    {'code': 'LTN', 'name': 'Luton',        'lat': 51.8747, 'lon': -0.3684},
+]
+
+AIRPORTS_NYC = [
+    {'code': 'JFK', 'name': 'John F. Kennedy', 'lat': 40.6413, 'lon': -73.7781},
+    {'code': 'LGA', 'name': 'LaGuardia',       'lat': 40.7769, 'lon': -73.8740},
+    {'code': 'EWR', 'name': 'Newark Liberty',  'lat': 40.6895, 'lon': -74.1745},
+    {'code': 'TEB', 'name': 'Teterboro',       'lat': 40.8501, 'lon': -74.0608},
+]
+
+# Flight path geometry: list of paths, each with a sequence of (lat, lon)
+# waypoints. Distance to nearest waypoint is used as proxy for distance to
+# the corridor — same approach as the consumer site.
+FLIGHT_PATHS_LONDON = [
+    {'name': 'Lambourne Stack',  'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.65,0.15),(51.62,0.08),(51.59,0.02),(51.565,-0.04),(51.54,-0.10),(51.52,-0.18),(51.505,-0.25),(51.495,-0.32),(51.485,-0.38),(51.4775,-0.428)]},
+    {'name': 'Biggin Stack',     'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.33,0.03),(51.35,-0.02),(51.37,-0.06),(51.39,-0.11),(51.41,-0.16),(51.425,-0.22),(51.44,-0.28),(51.45,-0.34),(51.46,-0.39),(51.4644,-0.428)]},
+    {'name': 'Ockham Stack',     'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.28,-0.45),(51.31,-0.44),(51.34,-0.435),(51.37,-0.435),(51.40,-0.435),(51.42,-0.435),(51.44,-0.435),(51.4644,-0.435)]},
+    {'name': 'Bovingdon Stack',  'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.72,-0.55),(51.68,-0.52),(51.64,-0.50),(51.60,-0.49),(51.56,-0.48),(51.53,-0.47),(51.505,-0.46),(51.4775,-0.45)]},
+    {'name': 'Dep West',         'airport': 'LHR', 'type': 'departure', 'freq': 'high',   'coords': [(51.4775,-0.489),(51.48,-0.55),(51.485,-0.62),(51.49,-0.70),(51.495,-0.78)]},
+    {'name': 'Dep SE (Detling)', 'airport': 'LHR', 'type': 'departure', 'freq': 'medium', 'coords': [(51.4775,-0.428),(51.47,-0.35),(51.46,-0.25),(51.445,-0.15),(51.43,-0.05),(51.41,0.05),(51.39,0.15)]},
+    {'name': 'Dep NE (BPK)',     'airport': 'LHR', 'type': 'departure', 'freq': 'medium', 'coords': [(51.4775,-0.428),(51.49,-0.35),(51.51,-0.25),(51.53,-0.15),(51.55,-0.05),(51.57,0.05),(51.59,0.15)]},
+    {'name': 'Approach East',    'airport': 'LCY', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.48,0.20),(51.485,0.17),(51.488,0.14),(51.492,0.11),(51.497,0.09),(51.502,0.07),(51.5053,0.0553)]},
+    {'name': 'Approach West',    'airport': 'LCY', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.52,-0.02),(51.517,-0.005),(51.513,0.01),(51.51,0.025),(51.508,0.04),(51.5053,0.0553)]},
+    {'name': 'Dep East',         'airport': 'LCY', 'type': 'departure', 'freq': 'medium', 'coords': [(51.5053,0.067),(51.505,0.09),(51.503,0.12),(51.498,0.16),(51.49,0.21)]},
+    {'name': 'Approach N',       'airport': 'LGW', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.35,-0.10),(51.32,-0.12),(51.28,-0.14),(51.23,-0.16),(51.19,-0.17),(51.1537,-0.182)]},
+    {'name': 'Approach S',       'airport': 'LTN', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.60,-0.30),(51.65,-0.32),(51.70,-0.34),(51.75,-0.35),(51.80,-0.36),(51.8747,-0.368)]},
+]
+
+FLIGHT_PATHS_NYC = [
+    {'name': 'JFK 31L Arrival',          'airport': 'JFK', 'type': 'arrival',   'freq': 'high',   'coords': [(40.60,-73.60),(40.61,-73.64),(40.62,-73.68),(40.63,-73.72),(40.64,-73.76),(40.6413,-73.7781)]},
+    {'name': 'JFK 13R Departure',        'airport': 'JFK', 'type': 'departure', 'freq': 'high',   'coords': [(40.6413,-73.7781),(40.62,-73.76),(40.60,-73.74),(40.58,-73.72),(40.56,-73.70)]},
+    {'name': 'JFK 22L Arrival (ILS)',    'airport': 'JFK', 'type': 'arrival',   'freq': 'medium', 'coords': [(40.70,-73.70),(40.69,-73.72),(40.68,-73.74),(40.66,-73.76),(40.6413,-73.7781)]},
+    {'name': 'LGA 31 Arrival',           'airport': 'LGA', 'type': 'arrival',   'freq': 'high',   'coords': [(40.72,-73.80),(40.73,-73.82),(40.74,-73.84),(40.76,-73.86),(40.7769,-73.8740)]},
+    {'name': 'LGA 4 Departure',          'airport': 'LGA', 'type': 'departure', 'freq': 'high',   'coords': [(40.7769,-73.8740),(40.79,-73.87),(40.81,-73.86),(40.83,-73.85),(40.86,-73.84)]},
+    {'name': 'LGA Expressway Visual 31', 'airport': 'LGA', 'type': 'arrival',   'freq': 'medium', 'coords': [(40.78,-73.95),(40.78,-73.93),(40.78,-73.91),(40.78,-73.89),(40.7769,-73.8740)]},
+    {'name': 'EWR 4R Arrival',           'airport': 'EWR', 'type': 'arrival',   'freq': 'high',   'coords': [(40.62,-74.10),(40.64,-74.12),(40.66,-74.14),(40.68,-74.16),(40.6895,-74.1745)]},
+    {'name': 'EWR 22L Departure',        'airport': 'EWR', 'type': 'departure', 'freq': 'medium', 'coords': [(40.6895,-74.1745),(40.68,-74.18),(40.66,-74.19),(40.64,-74.20),(40.62,-74.22)]},
+]
+
+CITY_GEOMETRY = {
+    'london': {'airports': AIRPORTS_LONDON, 'paths': FLIGHT_PATHS_LONDON, 'major_airport': 'LHR', 'secondary_airport': None},
+    'nyc':    {'airports': AIRPORTS_NYC,    'paths': FLIGHT_PATHS_NYC,    'major_airport': 'JFK', 'secondary_airport': 'LGA'},
+}
+
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    """Great-circle distance between two (lat, lon) points in kilometres.
+    Standard Haversine formula; used for airport and flight-path proximity."""
+    r = 6371.0
+    p = math.pi / 180.0
+    a = (
+        0.5 - math.cos((lat2 - lat1) * p) / 2
+        + math.cos(lat1 * p) * math.cos(lat2 * p) * (1 - math.cos((lon2 - lon1) * p)) / 2
+    )
+    return r * 2 * math.asin(math.sqrt(a))
+
+
+def calc_postcode_quiet(lat, lon, city):
+    """Per-postcode quiet score (0-10) based on Haversine distance to airports
+    and flight path geometry. Replicates the consumer-site neighbourhood
+    scoring algorithm from index.html:1164-1199.
+
+    Returns None if city not in CITY_GEOMETRY (e.g. NYC ZIP without lat/lon)
+    so the caller can fall back to borough-level scoring.
+    """
+    geo = CITY_GEOMETRY.get(city)
+    if not geo:
+        return None
+
+    # 1. Distance to nearest airport
+    airport_dists = [
+        (ap['code'], haversine_km(lat, lon, ap['lat'], ap['lon']))
+        for ap in geo['airports']
+    ]
+    nearest_ap_dist = min(d for _, d in airport_dists)
+
+    noise_score = 0.0
+    if   nearest_ap_dist < 3:  noise_score += 5
+    elif nearest_ap_dist < 6:  noise_score += 4
+    elif nearest_ap_dist < 10: noise_score += 3
+    elif nearest_ap_dist < 15: noise_score += 2
+    elif nearest_ap_dist < 20: noise_score += 1
+
+    # 2. Distance to nearest flight path waypoint
+    min_path_dist = float('inf')
+    for path in geo['paths']:
+        for plat, plon in path['coords']:
+            d = haversine_km(lat, lon, plat, plon)
+            if d < min_path_dist:
+                min_path_dist = d
+
+    if   min_path_dist < 1: noise_score += 4
+    elif min_path_dist < 2: noise_score += 3
+    elif min_path_dist < 4: noise_score += 2
+    elif min_path_dist < 6: noise_score += 1
+
+    # 3. Major-airport bonus (matches consumer site)
+    major_dist = next((d for code, d in airport_dists if code == geo['major_airport']), None)
+    if major_dist is not None and major_dist < 15:
+        noise_score += 2
+
+    secondary = geo.get('secondary_airport')
+    if secondary:
+        secondary_dist = next((d for code, d in airport_dists if code == secondary), None)
+        if secondary_dist is not None and secondary_dist < 10:
+            noise_score += 1
+
+    quiet = max(0.0, min(10.0, 10.0 - noise_score))
+    return quiet
+
 # Aliases for boroughs whose canonical name differs from postcodes.io's
 # admin_district output, or common variants.
 BOROUGH_ALIASES = {
@@ -170,10 +296,10 @@ SOURCES = [
 # does NOT call OpenSky directly (consumer site does); aviation noise context
 # for the API comes from pre-computed DEFRA borough-aggregate Lden bands.
 SOURCE_BREAKDOWN = {
-    'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022) — borough-aggregate Lden band; the API does not depend on OpenSky',
-    'afford': 'HM Land Registry Price Paid Data — borough cohort min-max scaling',
-    'growth': 'HM Land Registry Price Paid Data — annualised price trend, cohort-relative',
-    'live': 'ONS + Home Office + DfE + TfL + NHS — composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%)',
+    'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022) borough Lden band, blended with per-postcode Haversine proximity to airports and flight-path geometry when postcode lat/lon is available; v3.0 algorithm matches the consumer-site neighbourhood scoring',
+    'afford': 'HM Land Registry House Price Index (HPI) — borough cohort min-max scaling',
+    'growth': 'HM Land Registry House Price Index (HPI) — annualised price trend, cohort-relative',
+    'live': 'ONS + Home Office + DfE + TfL + NHS — composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
 }
 
 
@@ -191,11 +317,35 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
-def calc_score(borough_name, city, weights):
+def calc_score(borough_name, city, weights, lat=None, lon=None):
+    """Compute Sky Score for a borough/postcode.
+
+    If lat/lon are provided, the quiet component uses postcode-level Haversine
+    proximity to airports and flight paths (per-postcode resolution). Otherwise
+    falls back to the borough-aggregate Lden band lookup.
+
+    See METHODOLOGY.md §4.1 for the band-vs-Haversine scoring distinction and
+    §4.5 for the per-postcode formula.
+    """
     boroughs = CITIES[city]['boroughs']
     bd = boroughs[borough_name]
 
-    quiet = IMPACT_TO_QUIET.get(bd['impact'], 5.0)
+    borough_quiet = IMPACT_TO_QUIET.get(bd['impact'], 5.0)
+    quiet_source = 'borough'
+
+    if lat is not None and lon is not None:
+        postcode_quiet = calc_postcode_quiet(lat, lon, city)
+        if postcode_quiet is not None:
+            # Postcode-level Haversine wins outright — matches the consumer
+            # site's `calcNeighbourhoodScores` behaviour. Borough Lden band
+            # informs `noiseImpactBand` (context) but doesn't cap the score.
+            # See METHODOLOGY.md §4.5 for rationale.
+            quiet = postcode_quiet
+            quiet_source = 'postcode'
+        else:
+            quiet = borough_quiet
+    else:
+        quiet = borough_quiet
 
     prices = [b['avgPrice'] for b in boroughs.values()]
     max_price, min_price = max(prices), min(prices)
@@ -231,6 +381,7 @@ def calc_score(borough_name, city, weights):
             currency_field: bd['avgPrice'],
             'priceTrendPct': bd['trend'],
             'noiseImpactBand': bd['impact'],
+            'quietResolution': quiet_source,
         },
     }
 
@@ -387,7 +538,12 @@ def resolve_query(query):
         weights = PERSONAS['balanced']
         persona_label = 'balanced'
 
-    score_data = calc_score(borough, city, weights)
+    # Per-postcode quiet uses the resolved lat/lon when available
+    # (postcodes.io provides this for UK; NYC ZIPs don't have centroids yet
+    # in v3.0 — that's a v3.1 enhancement).
+    lat = location_meta.get('latitude')
+    lon = location_meta.get('longitude')
+    score_data = calc_score(borough, city, weights, lat=lat, lon=lon)
 
     return {
         **score_data,

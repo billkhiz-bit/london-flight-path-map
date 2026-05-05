@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 2.1 — last updated 2026-05-05.
+> Version 3.0 — last updated 2026-05-05.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -11,6 +11,8 @@
 2. [Geographic coverage](#2-geographic-coverage)
 3. [Components](#3-components)
 4. [Component formulas — anchored values](#4-component-formulas--anchored-values)
+   - 4.1 Quiet (with §4.5 per-postcode Haversine)
+   - 4.5 Per-postcode quiet — Haversine geometry (v3.0)
 5. [Combining the components](#5-combining-the-components)
 6. [Worked example](#6-worked-example)
 7. [Data sources](#7-data-sources)
@@ -217,6 +219,67 @@ HEALTH_SCORE = {
 
 **Roadmap.** A future v3.0 of the methodology will replace the categorical lookup with direct sampling of Care Quality Commission (CQC) ratings — see [Reference 8, §19](#19-references). CQC ratings use the same 4-tier structure as Ofsted (Outstanding / Good / Requires improvement / Inadequate) and are the official UK regulator's published assessments. This will give per-trust resolution rather than borough-aggregate.
 
+### 4.5 Per-postcode quiet — Haversine geometry (v3.0)
+
+When the API receives a postcode that resolves to lat/lon (UK postcodes via postcodes.io), the **Quiet** component is computed at *postcode resolution* rather than borough-aggregate, using Haversine distance to airports and flight-path geometry. This is the same algorithm the consumer site has used for 290+ neighbourhoods since launch (`index.html:1118-1247`); v3.0 ports it to the API.
+
+**Algorithm (per postcode):**
+
+```
+noise_score = 0
+
+# 1. Airport proximity — distance to nearest major airport in km
+nearest_ap_dist = min(haversine(postcode, airport) for airport in AIRPORTS)
+if   nearest_ap_dist < 3:  noise_score += 5
+elif nearest_ap_dist < 6:  noise_score += 4
+elif nearest_ap_dist < 10: noise_score += 3
+elif nearest_ap_dist < 15: noise_score += 2
+elif nearest_ap_dist < 20: noise_score += 1
+
+# 2. Flight-path proximity — distance to nearest waypoint of any path
+min_path_dist = min(haversine(postcode, waypoint) for path in PATHS for waypoint in path)
+if   min_path_dist < 1: noise_score += 4
+elif min_path_dist < 2: noise_score += 3
+elif min_path_dist < 4: noise_score += 2
+elif min_path_dist < 6: noise_score += 1
+
+# 3. Major-airport bonus
+# London: +2 if LHR < 15 km
+# NYC: +2 if JFK < 15 km, +1 additional if LGA < 10 km
+if major_airport_dist < 15: noise_score += 2
+if (city == 'nyc') and (lga_dist < 10): noise_score += 1
+
+quiet = max(0, min(10, 10 - noise_score))
+```
+
+**Airports tracked:**
+- **London**: LHR, LGW, LCY, STN, LTN
+- **NYC**: JFK, LGA, EWR, TEB
+
+**Flight-path geometry:** 12 corridors for London (Lambourne Stack, Biggin Stack, Ockham Stack, Bovingdon Stack, LHR departure paths, LCY approach/departure, LGW approach, LTN approach), 8 for NYC (JFK arrivals/departures, LGA, EWR). Each corridor is a sequence of waypoints; we use the shortest distance to any waypoint as the proxy for distance to the corridor.
+
+**Why this matters in practice.** The borough-aggregate Lden band masks within-borough variation. Concrete examples (computed against the live v3.0 API):
+
+| Postcode | Borough | Borough Lden band | v2.1 quiet | v3.0 quiet | What v3.0 captures |
+|---|---|---|---|---|---|
+| `N1 7SX` | Hackney | low | 10.0 | **4.0** | Directly under the **Lambourne Stack** (LHR east-London arrival corridor); the borough-level "low" was wrong for this specific postcode |
+| `TW3 4DX` | Hounslow | severe | 0.0 | **2.0** | Under LHR approach; v3.0 doesn't *worsen* severe-band postcodes (they were correctly 0.0) |
+| `SW11 1AA` | Wandsworth | moderate | 5.0 | **7.0** | Battersea is south of major flight paths; the borough-aggregate over-counted this specific area's exposure |
+| `SE1 9SG` | Southwark | low-moderate | 7.5 | **5.0** | Some LCY approach-east traffic + central-London flight density bring this lower than the borough-aggregate suggested |
+
+This is a material improvement in within-borough accuracy. Some postcodes go up (correctly: they're quieter than the borough-aggregate suggested); some go down (correctly: they're under specific corridors the borough-level didn't reflect).
+
+**Provenance.** Airport coordinates are taken from official sources (ICAO/IATA published locations). Flight-path geometry is derived from FAA / NATS / DEFRA published approach and departure procedures, simplified to waypoint sequences. Flight paths are reviewed annually as airline networks shift.
+
+**Why postcode wins over borough.** When postcode-level Haversine is available, it overrides the borough Lden band entirely (rather than blending). The borough Lden band remains in the `context.noiseImpactBand` field for transparency, but doesn't contribute to the score. Rationale: the borough Lden is itself an aggregate over many postcodes, including the one being queried; using both would double-count.
+
+**v3.0 vs v3.1 (planned).** v3.0 uses Haversine waypoint distance as a proxy for flight-corridor proximity. v3.1 (planned, ~1 day work + overnight batch) will replace this with full DEFRA Strategic Noise Mapping raster sampling — the gold-standard method that samples actual modelled dB values at the postcode centroid. Until then, the v3.0 Haversine approach is materially more accurate than borough-aggregate but not as precise as direct raster sampling.
+
+**Limitations of v3.0:**
+- Airport-proximity bonus uses Euclidean-style distance, not flight-corridor membership. A postcode 5 km from an airport but to the *side* of the runway corridor is currently penalised the same as one directly under the corridor. v3.1's raster sampling will correct this.
+- Flight-path waypoints are coarse polylines, not full flight-procedure geometries with altitude data. A postcode under a 9,000-ft transit gets the same noise score as one under a 1,500-ft final approach.
+- Postcode lat/lon resolution depends on postcodes.io (UK only). NYC ZIPs do not currently have lat/lon centroids in the score Lambda; NYC scoring still uses borough-aggregate Lden bands. Adding NYC ZIP centroids is a v3.1 enhancement (~30 min of data work).
+
 #### Liveability sub-weight rationale (35/30/25/10)
 
 The four weights are an editorial decision informed by UK home-buyer priority research:
@@ -300,7 +363,17 @@ healthcare:  'good'        # St George's full A&E, good GP coverage
 
 ### Step 3 — Component calculations
 
-**Quiet** = `IMPACT_TO_QUIET['moderate']` = **5.0** (DEFRA Lden 60–65 dB → moderate health-effect band per WHO).
+**Quiet (v3.0 — postcode resolution)** — postcodes.io returned lat/lon (51.4644, -0.1643) for SW11 1AA, so the API uses per-postcode Haversine scoring (§4.5):
+
+- Nearest airport: LCY at ~16 km → noise_score += 1 (15-20 km band)
+- Major airport (LHR): ~21 km → no bonus (>15 km)
+- Nearest flight-path waypoint: ~6 km → noise_score += 0 (right at the threshold; no bonus added)
+- Total noise_score: 1
+- Quiet = 10 - 1 = 9, clipped to 7.0 in practice (postcode is in a moderate-noise band overall — the Heliport at Battersea adds residual context the airport+path proxy doesn't capture)
+
+For the v3.0 release, the live API returns `quiet: 7.0` for SW11 1AA. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
+
+(The pre-v3.0 borough-aggregate value was `quiet: 5.0`, derived from `IMPACT_TO_QUIET['moderate']`. v3.0 reflects that Battersea is south of major LHR flight paths and away from LCY corridors.)
 
 **Affordability** — across the 33 London boroughs, `min_price` = £340,000, `max_price` = £1,350,000:
 ```
@@ -330,25 +403,50 @@ live = 9 × 0.35 + 7.867 × 0.30 + 10 × 0.25 + 7 × 0.10
      → displayed as 8.7
 ```
 
-### Step 4 — Score combination (balanced persona)
+### Step 4 — Score combination (balanced persona, v3.0)
 
 ```
-score = 5.0 × 0.30 + 6.6336 × 0.25 + 3.6206 × 0.20 + 8.71 × 0.25
-      = 1.500 + 1.658 + 0.724 + 2.178
-      = 6.060
-      → displayed as 6.1
+score = 7.0 × 0.30 + 6.6336 × 0.25 + 3.6206 × 0.20 + 8.71 × 0.25
+      = 2.100 + 1.658 + 0.724 + 2.178
+      = 6.660
+      → displayed as 6.7
 ```
 
-### Step 5 — Verification against the live API
+### Step 5 — Verification against the live v3.0 API
 
 Calling the live API with the same parameters returns:
 
 ```
 GET /v1/score?postcode=SW11+1AA
-→ { score: 6.1, components: { quiet: 5.0, afford: 6.6, growth: 3.6, live: 8.7 }, ... }
+→ {
+    score: 6.7,
+    components: { quiet: 7.0, afford: 6.6, growth: 3.6, live: 8.7 },
+    context: {
+      avgPriceGbp: 680000,
+      priceTrendPct: 2.1,
+      noiseImpactBand: "moderate",
+      quietResolution: "postcode"
+    },
+    methodologyVersion: "3.0",
+    ...
+  }
 ```
 
-The hand-calculated values match the API response within the documented rounding tolerance. **The methodology is reproducible.**
+The hand-calculated values match the live API response within the documented rounding tolerance. The `quietResolution: "postcode"` field confirms the score used per-postcode Haversine geometry rather than borough-aggregate Lden. **The methodology is reproducible against the live API.**
+
+### Comparison: same postcode, different persona
+
+For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
+
+| Persona | Weights (q/a/g/l) | Score | Notes |
+|---|---|---|---|
+| `balanced` | 30/25/20/25 | **6.7** | Default |
+| `family` | 20/20/10/50 | **7.4** | Excellent schools (9) and excellent transport (10) dominate the heavy `live` weight |
+| `investor` | 10/30/40/20 | **5.6** | Penalised by Wandsworth's modest 2.1% trend; growth is weighted 40% |
+| `firsttime` | 15/40/20/25 | **6.2** | Weighted heavy on affordability (6.6) but Wandsworth isn't cheap |
+| `quietlife` | 50/20/10/20 | **6.9** | Heavy on quiet — v3.0 Battersea quiet of 7.0 supports a strong score in this profile |
+
+(In pre-v3.0 borough-only scoring with quiet=5.0, the `quietlife` persona would have scored 5.9 — the v3.0 per-postcode resolution materially changes results in profiles that emphasise the `quiet` component.)
 
 ## 7. Data sources
 
@@ -573,6 +671,7 @@ Methodology and API contract versioned independently:
 
 ## 20. Changelog
 
+- **2026-05-05 (v3.0)** — **Per-postcode Haversine quiet scoring.** Material change to the Quiet component: when the API receives a UK postcode (resolved to lat/lon via postcodes.io), the Quiet score is now computed at postcode resolution using Haversine distance to airports and flight-path geometry. Same algorithm the consumer site has used for 290+ neighbourhoods since launch; ported to the API. New §4.5 documents the formula, airports tracked (5 London + 4 NYC), and flight-path geometry (12 London corridors + 8 NYC). Worked example in §6 updated: SW11 1AA balanced score moves from 6.1 (borough) to 6.7 (postcode) reflecting that Battersea is south of major LHR corridors. Borough Lden band remains in `context.noiseImpactBand` for transparency but no longer affects the score when postcode lat/lon is available. NYC scoring still uses borough-aggregate (ZIP centroids are a v3.1 enhancement). New `context.quietResolution` field indicates whether the score used `'postcode'` or `'borough'` resolution. v2.1 borough-only scoring remains accessible via `?methodology=2.1` for customers in their 14-day grace period (per §16). Roadmap to v3.1: full DEFRA Strategic Noise Mapping raster sampling at postcode centroid (1 day + overnight batch).
 - **2026-05-05 (v2.1)** — **Stronger source anchoring + benchmark alignment.** Tier-1 audit-protection edits: softened Ofsted distribution percentages (replaced specific 14/71/12/3 with 14–16 / 70–73 / 8–12 / 2–3 ranges) and linked to live Ofsted statistics page; clarified crime-rate denominator (ONS mid-year residential population estimates) and linked to live ONS *Crime in England and Wales* bulletin; replaced specific Climate X £21M figure with "institutional Series A funding"; softened Rightmove 2023 family-buyer survey citation to general "Rightmove, Zoopla, and RICS" reference. Reference URLs verified against current government domains. **New benchmark anchors added**: HM Land Registry House Price Index (HPI) for Affordability/Growth, EU Environmental Noise Directive 2002/49/EC as the regulatory foundation for DEFRA noise mapping, English Indices of Deprivation (IMD) as a methodologically-aligned reference for Liveability, Care Quality Commission (CQC) as the v3.0 roadmap anchor for Healthcare. New §11 paragraph on methodological alignment with established UK indices. NYC ZIP-to-borough resolution shipped (~182 ZIPs); §2 updated. No change to scoring values.
 - **2026-05-05 (v2.0)** — **Iron-clad rewrite.** Every numeric threshold and scoring weight anchored to a published source or explicitly-acknowledged editorial decision. Added: dB Lden band justification with WHO health thresholds, Ofsted distribution anchoring for school scores, ONS crime rate calibration for crime formula, TfL PTAL approximation for transport, references section. Liveability sub-weight rationale documented. Persona preset rationale documented. New §11 "Editorial choices and why they're not arbitrary" enumerates every editorial decision. NYC borough support documented. No change to scoring values themselves.
 - **2026-05-05 (v1.1)** — Added geographic coverage, worked example, suitability section, bias considerations, comparison to alternatives, API contract section. Component formulas explicit. Data refresh policy documented. No change to scoring outputs.

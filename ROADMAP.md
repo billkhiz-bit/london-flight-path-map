@@ -168,6 +168,8 @@ What it doesn't change:
 
 ### Per-postcode noise sampling — vs current borough-level
 
+> **v3.0 update (2026-05-05)**: Option 2 (Haversine port from consumer site) **shipped**. Per-postcode quiet via airport + flight-path geometry is now live in `/v1/score` for UK postcodes. Methodology v3.0 documents the formula in §4.5. The full DEFRA raster sampling described below is now formally **Option 3 / v3.1**, deferred to a fresh-head longer block when validation work catches up. NYC ZIP centroids (~30 min) are also a v3.1 enhancement.
+
 #### Current limitation (concrete)
 
 The Lambda's quiet component is a single categorical lookup per *borough*, so every postcode in a borough gets the same quiet score. Within-borough variation can be 10–15 dB Lden — a 2–3 component-point error in a 0–10 score.

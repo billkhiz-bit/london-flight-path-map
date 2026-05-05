@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0–10 across four components — quiet, affordability, growth, liveability — surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v2.0 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs)
+> Methodology v3.0 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs) · Per-postcode Haversine quiet resolution
 
 ## Try it in 30 seconds
 
@@ -88,12 +88,13 @@ Response shape (single):
   "context": {
     "avgPriceGbp": 590000,
     "priceTrendPct": 3.0,
-    "noiseImpactBand": "low"
+    "noiseImpactBand": "low",
+    "quietResolution": "postcode"
   },
   "location": { "city": "london", "borough": "Hackney", "postcode": "N1 7SX" },
   "persona": "balanced",
   "weights": { "quiet": 0.30, "afford": 0.25, "growth": 0.20, "live": 0.25 },
-  "methodologyVersion": "2.0",
+  "methodologyVersion": "3.0",
   "apiVersion": "1.0",
   "sources": [ "EPC data: MHCLG, OGL v3.0", "..." ],
   "sourceBreakdown": {
