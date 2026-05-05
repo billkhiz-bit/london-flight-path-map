@@ -11,10 +11,19 @@ Globals:
       Variables:
         CORS_ORIGIN: 'https://d1oe4ftwutjpf.cloudfront.net'
   Api:
+    # CORS opened to any origin so third-party browser integrations can call
+    # the public B2B endpoints (/v1/score and /v1/score/batch) directly.
+    # The score endpoints are API-key-gated; the Bedrock-using endpoints
+    # (chat, multi_agent) are protected by per-stage API Gateway throttling
+    # rather than CORS. CORS does not protect against server-side abuse, so
+    # the previous CloudFront-only origin restriction was protecting against
+    # browser abuse only — opening it does not materially change the threat
+    # model. Tighten via per-Lambda origin checks if browser-from-other-origin
+    # abuse on Bedrock endpoints becomes observed.
     Cors:
       AllowMethods: "'GET,POST,DELETE,OPTIONS'"
       AllowHeaders: "'Content-Type,Authorization,X-Api-Key'"
-      AllowOrigin: "'https://d1oe4ftwutjpf.cloudfront.net'"
+      AllowOrigin: "'*'"
     Auth:
       DefaultAuthorizer: NONE
 
@@ -269,6 +278,14 @@ Resources:
             RestApiId: !Ref FlightMapApi
             Path: /v1/score
             Method: get
+            Auth:
+              ApiKeyRequired: true
+        ScoreBatchPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/score/batch
+            Method: post
             Auth:
               ApiKeyRequired: true
 

@@ -44,21 +44,26 @@ The consumer site is the marketing engine, not the revenue centre. Keep it sharp
 - Authentication for favourites endpoint (post-hackathon item from `AUDIT_REPORT.md`)
 - ARIA accessibility pass (post-hackathon item)
 
-### Track 2 — B2B API (`/v1/score`)
+### Track 2 — B2B API (`/v1/score`, `/v1/score/batch`)
 
-The product. Wraps the existing scoring logic into a stable, documented, monetisable endpoint for aggregators and Islamic-finance providers.
+The product. Wraps the scoring engine into a stable, documented, monetisable endpoint for aggregators and Islamic-finance providers.
 
-**Critical-path work**:
-1. **Extract `/v1/score` to a Lambda** (currently the scoring lives in `index.html:1066-1110`). One endpoint: `GET /v1/score?postcode=…` returns `{ score, components: {quiet, afford, growth, live}, postcode, borough, generated_at, version }`.
-2. **API key auth** via API Gateway Usage Plans (built-in, free at low volume).
-3. **Methodology doc** — written, public, addresses: data sources (DEFRA noise, OpenSky, ONS, Land Registry), refresh cadence, accuracy claims.
-4. **Versioning**: lock `/v1/*` contract; track changes in `CHANGELOG.md`.
-5. **OpenAPI spec** at `/docs/openapi.yaml`; render with Swagger UI for prospects.
+**Shipped (2026-05-05)**:
+- ✅ `GET /v1/score` — single-postcode (London) or borough (London + NYC) lookup with persona presets and custom weights override
+- ✅ `POST /v1/score/batch` — bulk endpoint, up to 100 queries per call, partial-failure-tolerant (failed items return error per-row)
+- ✅ API key auth via API Gateway Usage Plan (1000 req/month free tier, 5/sec burst, 2/sec sustained)
+- ✅ Methodology v2.0 — every threshold and weight anchored to DEFRA Lden bands, WHO noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL; references section
+- ✅ OpenAPI 3.0 spec at `/score-demo/openapi.yaml` + interactive Swagger UI at `/score-demo/api-docs.html`
+- ✅ NYC light support — borough-name lookup for Manhattan, Brooklyn, Queens, Bronx, Staten Island; ZIP resolution still on roadmap
+- ✅ CORS opened to `*` so third-party browser integrations work; abuse vector unchanged (server-side abuse was always possible regardless)
+- ✅ OGL attribution in every response
 
-**Scoping decisions still open**:
-- Channel wall design (granularity vs volume vs format) — defaulting to **granularity wall**
-- Pricing model — defaulting to **per-query, tiered** (£0.05–£0.50/lookup, white-labellable into search bundles)
-- Opinionated score vs components vs both — defaulting to **both** (return components + default score, accept optional `?weights=` override)
+**Outstanding**:
+- 🟡 Per-postcode noise sampling (replacing borough-level Lden bands with DEFRA WMS raster sampling at postcode centroid + Haversine flight-path distance) — ~1-day task
+- 🟡 NYC ZIP-to-borough resolution — adds ~250 ZIP lookups; dependent on a non-postcodes.io resolver
+- 🟡 UK Core Cities (Manchester, Birmingham, Bristol, etc.) — geographic expansion, gated on liveability data acquisition
+- 🟡 Pricing tiers beyond free — define when first paying integrator commits
+- 🟡 Status page at `status.skyscore.com`
 
 ### Track 3 — Competitions & outreach
 
@@ -88,7 +93,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 |---|---|---|---|
 | **EPC API migration** to `get-energy-performance-data.communities.gov.uk` | **2026-05-30** (hard) | Old service shuts down; current `lambdas/epc/app.py` will 404 | **Done 2026-05-05** — deployed and verified live against `prod/epc?postcode=N1+7SX` (returned 72 real certificates, summary, pagination, OGL attribution). Bearer auth via `EpcBearerToken` SAM parameter sourced from `.env`. **Still pending**: token rotation on the dashboard + redeploy (the version in chat history is considered exposed). |
 | Buildathon application (if eligible) | 2026-05-15 | Competition deadline | Awaiting Foundation reply |
-| `/v1/score` Lambda extraction | 2026-05-22 | Unblocks both API track + buildathon pre-work | **Done 2026-05-05** — deployed and verified live. Live URL: `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score`. Verified `?postcode=SW11+1AA` (Wandsworth, score 6.1, balanced persona), `?postcode=TW3+4DX&persona=family` (Hounslow, score 5.7, quiet 0.0 reflecting severe noise), `?weights=...` custom override, and 403 without `X-Api-Key`. Free-tier API key + Usage Plan (1000/month, 5 burst) live. **Open**: browser-CORS for third-party origins (works server-to-server today). |
+| `/v1/score` Lambda extraction | 2026-05-22 | Unblocks both API track + buildathon pre-work | **Done 2026-05-05.** Plus on the same day: bulk endpoint (`POST /v1/score/batch`, up to 100 queries), NYC borough support, methodology v2.0 (iron-clad anchoring of every threshold), OpenAPI spec, Swagger UI, CORS opened to `*`. All verified live. Free-tier API key + Usage Plan (1000/month, 5 burst). |
 | OGL attribution on data Lambdas | done | Required for any B2B sale | Done 2026-05-05 — `epc`, `sold_prices`, `transport`, `nhs` now return `sources` array |
 | Methodology document | done | Required for B2B audit / Buildathon judging | Done 2026-05-05 — `METHODOLOGY.md` v1.0 |
 
@@ -119,9 +124,10 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | Score response shape (opinionated / components / both) | **Resolved 2026-05-05**: both. `/v1/score` returns `score` + `components` + `context`. Optional `?weights=` lets customers override defaults. | n/a |
 | Buildathon fork repo name | `sky-score-halal` | When Foundation confirms eligibility |
 | Whether to drop `multi_agent` Lambda from API surface in favour of leaner score-only | TBD | After first 3 customer conversations |
-| CORS handling for `/v1/score` from third-party browser origins | Server-to-server works today (no CORS issue). For browser-direct integrations, need to add per-resource CORS config (currently global Cors locks to CloudFront). | Before first browser-integrating customer |
+| CORS for `/v1/score` from third-party browser origins | **Resolved 2026-05-05**: global CORS opened to `*`. The score endpoints are API-key gated; the Bedrock endpoints are throttled at API Gateway (10 req/s) and CORS does not protect against server-side abuse anyway. | n/a |
 | OpenSky commercial-licensing — replace, negotiate, or decouple | Decouple (consumer only) until first paying integration; negotiate or swap before then | Before any B2B aviation-data integration |
 | EPC: API-on-demand vs bulk download | API now; bulk download once approaching rate-limit pressure (~50% of 6000-per-5-min quota) | When B2B traffic ramps |
+| NYC ZIP-to-borough resolution | **Deferred** — borough-name lookup works for now (`?city=nyc&borough=Manhattan`) | When first NYC integrator asks |
 
 ---
 

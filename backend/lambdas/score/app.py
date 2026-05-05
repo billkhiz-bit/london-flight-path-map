@@ -1,12 +1,16 @@
 """
-Sky Score B2B API — /v1/score endpoint.
+Sky Score B2B API.
 
-Computes a per-postcode (or per-borough) Sky Score from the structural inputs
-extracted from the consumer-site scoring engine in index.html. Designed for
-B2B integration partners (data aggregators, conveyancers, Islamic-finance
-providers); the consumer site continues to use its own client-side scoring.
+Endpoints:
+  GET  /v1/score          — single-postcode/borough score
+  POST /v1/score/batch    — bulk lookup (up to 100 queries per call)
+  OPTIONS for both        — browser CORS preflight (open to any origin
+                            since the GET/POST are API-key gated anyway)
 
-Methodology: see METHODOLOGY.md at the project root.
+Methodology: see METHODOLOGY.md at the project root. The scoring values and
+formulas in this file are anchored to that document; any change to weights,
+thresholds, or component formulas should bump METHODOLOGY_VERSION and be
+documented in the methodology changelog.
 """
 
 import json
@@ -18,7 +22,9 @@ from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '1.1'
+METHODOLOGY_VERSION = '2.0'
+API_VERSION = '1.0'
+MAX_BATCH_SIZE = 100
 
 SCHOOL_SCORE = {'outstanding': 10, 'excellent': 9, 'good': 6, 'mixed': 3}
 TRANSPORT_SCORE = {'excellent': 10, 'good': 7, 'moderate': 4, 'poor': 2}
@@ -36,10 +42,9 @@ PERSONAS = {
     'quietlife': {'quiet': 0.50, 'afford': 0.20, 'growth': 0.10, 'live': 0.20},
 }
 
-# London borough dataset — structural inputs only (narrative fields stripped).
-# Sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA (consumer site).
-# Schema: impact, avgPrice, trend (% growth), schools, crimeRate (per 1000),
-# transport, healthcare.
+# London borough dataset — sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
+# Schema: impact (DEFRA Lden band), avgPrice (GBP), trend (% YoY),
+# schools/transport/healthcare (categorical), crimeRate (per 1,000 ONS).
 LONDON_BOROUGHS = {
     'Hounslow':              {'impact': 'severe',         'avgPrice': 465000,  'trend': 3.2, 'schools': 'good',      'crimeRate': 89,  'transport': 'good',      'healthcare': 'good'},
     'Hillingdon':            {'impact': 'severe',         'avgPrice': 480000,  'trend': 2.8, 'schools': 'good',      'crimeRate': 72,  'transport': 'good',      'healthcare': 'good'},
@@ -76,8 +81,25 @@ LONDON_BOROUGHS = {
     'Harrow':                {'impact': 'low',            'avgPrice': 490000,  'trend': 3.2, 'schools': 'excellent', 'crimeRate': 70,  'transport': 'good',      'healthcare': 'good'},
 }
 
-# Aliases for boroughs whose postcodes.io admin_district name differs from
-# the canonical Sky Score borough name.
+# NYC borough dataset — sourced from index.html NYC_BOROUGH_DATA_RAW + NYC_BOROUGH_EXTRA.
+# avgPrice in USD (not GBP). Crime rates use the same per-1,000 convention but
+# are derived from NYPD CompStat / NYC ONS-equivalent denominators; cross-city
+# comparison should be approached with caution (different methodologies).
+NYC_BOROUGHS = {
+    'Queens':         {'impact': 'severe',       'avgPrice': 620000,  'trend': 4.5, 'schools': 'good',      'crimeRate': 78,  'transport': 'excellent', 'healthcare': 'good'},
+    'Brooklyn':       {'impact': 'high',         'avgPrice': 850000,  'trend': 3.8, 'schools': 'good',      'crimeRate': 82,  'transport': 'excellent', 'healthcare': 'excellent'},
+    'Manhattan':      {'impact': 'moderate',     'avgPrice': 1200000, 'trend': 2.0, 'schools': 'excellent', 'crimeRate': 95,  'transport': 'excellent', 'healthcare': 'excellent'},
+    'Bronx':          {'impact': 'low-moderate', 'avgPrice': 420000,  'trend': 5.5, 'schools': 'good',      'crimeRate': 110, 'transport': 'good',      'healthcare': 'good'},
+    'Staten Island':  {'impact': 'low',          'avgPrice': 550000,  'trend': 3.0, 'schools': 'good',      'crimeRate': 52,  'transport': 'poor',      'healthcare': 'moderate'},
+}
+
+CITIES = {
+    'london': {'boroughs': LONDON_BOROUGHS, 'currency': 'GBP'},
+    'nyc':    {'boroughs': NYC_BOROUGHS,    'currency': 'USD'},
+}
+
+# Aliases for boroughs whose canonical name differs from postcodes.io's
+# admin_district output, or common variants.
 BOROUGH_ALIASES = {
     'Barking and Dagenham': 'Barking and Dagenham',
     'Barking': 'Barking and Dagenham',
@@ -108,20 +130,20 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
-def calc_score(borough_name, weights):
-    bd = LONDON_BOROUGHS[borough_name]
+def calc_score(borough_name, city, weights):
+    boroughs = CITIES[city]['boroughs']
+    bd = boroughs[borough_name]
 
     quiet = IMPACT_TO_QUIET.get(bd['impact'], 5.0)
 
-    # Min-max scale price across the cohort, inverted (cheaper = higher).
-    prices = [b['avgPrice'] for b in LONDON_BOROUGHS.values()]
+    prices = [b['avgPrice'] for b in boroughs.values()]
     max_price, min_price = max(prices), min(prices)
     if max_price == min_price:
         afford = 5.0
     else:
         afford = ((max_price - bd['avgPrice']) / (max_price - min_price)) * 10
 
-    trends = [b['trend'] for b in LONDON_BOROUGHS.values()]
+    trends = [b['trend'] for b in boroughs.values()]
     max_trend = max(trends) or 1.0
     growth = (bd['trend'] / max_trend) * 10
 
@@ -134,6 +156,8 @@ def calc_score(borough_name, weights):
         + live * weights['live']
     )
 
+    currency_field = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
+
     return {
         'score': round(total * 10) / 10,
         'components': {
@@ -143,7 +167,7 @@ def calc_score(borough_name, weights):
             'live': round(live * 10) / 10,
         },
         'context': {
-            'avgPriceGbp': bd['avgPrice'],
+            currency_field: bd['avgPrice'],
             'priceTrendPct': bd['trend'],
             'noiseImpactBand': bd['impact'],
         },
@@ -151,7 +175,7 @@ def calc_score(borough_name, weights):
 
 
 def lookup_postcode(postcode):
-    """Resolve postcode → admin_district via postcodes.io (free, OGL)."""
+    """Resolve UK postcode → admin_district via postcodes.io (free, OGL)."""
     clean = postcode.strip().replace(' ', '').upper()
     if not clean:
         return None
@@ -162,37 +186,47 @@ def lookup_postcode(postcode):
             payload = json.loads(resp.read().decode())
     except (HTTPError, URLError):
         return None
-
     if payload.get('status') != 200:
         return None
     return payload.get('result')
 
 
-def normalise_borough(name):
+def normalise_borough(name, city):
     if not name:
         return None
-    if name in LONDON_BOROUGHS:
+    boroughs = CITIES[city]['boroughs']
+    if name in boroughs:
         return name
-    return BOROUGH_ALIASES.get(name)
+    aliased = BOROUGH_ALIASES.get(name)
+    if aliased and aliased in boroughs:
+        return aliased
+    return None
 
 
 def parse_weights(raw):
-    """Parse ?weights=quiet:0.5,afford:0.2,growth:0.1,live:0.2.
+    """Parse '?weights=quiet:0.5,afford:0.2,growth:0.1,live:0.2'.
 
     Returns dict, or None if unparsable. Sum must be ~1 (within 1%).
     """
     if not raw:
         return None
-    try:
-        parts = raw.split(',')
-        result = {}
-        for part in parts:
-            key, value = part.split(':')
-            result[key.strip()] = float(value.strip())
-    except (ValueError, AttributeError):
-        return None
+    if isinstance(raw, dict):
+        result = raw
+    else:
+        try:
+            parts = raw.split(',')
+            result = {}
+            for part in parts:
+                key, value = part.split(':')
+                result[key.strip()] = float(value.strip())
+        except (ValueError, AttributeError):
+            return None
 
     if set(result.keys()) != {'quiet', 'afford', 'growth', 'live'}:
+        return None
+    try:
+        result = {k: float(v) for k, v in result.items()}
+    except (ValueError, TypeError):
         return None
     total = sum(result.values())
     if not (0.99 <= total <= 1.01):
@@ -200,75 +234,187 @@ def parse_weights(raw):
     return result
 
 
-def handler(event, context):
+def resolve_query(query):
+    """Run a single score query. Returns the response body or an error dict."""
+    postcode = (query.get('postcode') or '').strip()
+    borough_input = (query.get('borough') or '').strip()
+    city = (query.get('city') or 'london').strip().lower()
+    persona = (query.get('persona') or 'balanced').strip().lower()
+    weights_override = parse_weights(query.get('weights'))
+
+    if city not in CITIES:
+        return {
+            'error': f'Unsupported city: {city}',
+            'supportedCities': sorted(CITIES.keys()),
+        }, 400
+
+    if not postcode and not borough_input:
+        return {
+            'error': 'Provide either postcode or borough.',
+            'example': '/v1/score?postcode=SW11+1AA',
+        }, 400
+
+    location_meta = {'city': city}
+    if postcode:
+        if city != 'london':
+            return {
+                'error': 'Postcode resolution is currently UK-only (London). For other cities, use ?borough= instead.',
+            }, 400
+        pc = lookup_postcode(postcode)
+        if not pc:
+            return {
+                'error': f'Postcode not recognised by postcodes.io: {postcode}',
+            }, 404
+        borough = normalise_borough(pc.get('admin_district'), city)
+        location_meta.update({
+            'postcode': pc.get('postcode'),
+            'borough': borough,
+            'longitude': pc.get('longitude'),
+            'latitude': pc.get('latitude'),
+            'region': pc.get('region'),
+        })
+    else:
+        borough = normalise_borough(borough_input, city)
+        location_meta['borough'] = borough
+
+    if not borough or borough not in CITIES[city]['boroughs']:
+        return {
+            'error': f'Borough not currently supported in {city}.',
+            'attemptedBorough': borough_input or location_meta.get('borough'),
+            'supportedBoroughs': sorted(CITIES[city]['boroughs'].keys()),
+        }, 404
+
+    if weights_override:
+        weights = weights_override
+        persona_label = 'custom'
+    elif persona in PERSONAS:
+        weights = PERSONAS[persona]
+        persona_label = persona
+    else:
+        weights = PERSONAS['balanced']
+        persona_label = 'balanced'
+
+    score_data = calc_score(borough, city, weights)
+
+    return {
+        **score_data,
+        'location': location_meta,
+        'persona': persona_label,
+        'weights': weights,
+        'methodologyVersion': METHODOLOGY_VERSION,
+        'methodologyUrl': METHODOLOGY_URL,
+        'apiVersion': API_VERSION,
+        'generatedAt': datetime.now(timezone.utc).isoformat(),
+        'sources': SOURCES,
+    }, 200
+
+
+def handle_options():
+    """CORS preflight response. Open to any origin — the GET/POST are
+    API-key gated, so origin restriction adds no security."""
+    return {
+        'statusCode': 200,
+        'headers': cors_headers(),
+        'body': '',
+    }
+
+
+def handle_get(event):
+    params = event.get('queryStringParameters') or {}
+    body, status = resolve_query(params)
+    return response(status, body)
+
+
+def handle_batch(event):
+    raw_body = event.get('body') or ''
+    if event.get('isBase64Encoded'):
+        import base64
+        try:
+            raw_body = base64.b64decode(raw_body).decode()
+        except Exception:
+            return response(400, {'error': 'Invalid base64-encoded body'})
+
     try:
-        params = event.get('queryStringParameters') or {}
-        postcode = (params.get('postcode') or '').strip()
-        borough_input = (params.get('borough') or '').strip()
-        persona = (params.get('persona') or 'balanced').strip().lower()
-        weights_override = parse_weights(params.get('weights'))
+        payload = json.loads(raw_body) if raw_body else {}
+    except json.JSONDecodeError:
+        return response(400, {'error': 'Invalid JSON body'})
 
-        if not postcode and not borough_input:
-            return response(400, {
-                'error': 'Provide either postcode or borough.',
-                'example': '/v1/score?postcode=SW11+1AA',
-            })
+    queries = payload.get('queries')
+    if not isinstance(queries, list):
+        return response(400, {
+            'error': 'Body must contain a "queries" array.',
+            'example': {
+                'queries': [
+                    {'postcode': 'SW11 1AA', 'persona': 'balanced'},
+                    {'postcode': 'TW3 4DX', 'persona': 'family'},
+                    {'borough': 'Hackney', 'city': 'london',
+                     'weights': {'quiet': 0.5, 'afford': 0.2, 'growth': 0.1, 'live': 0.2}},
+                ],
+            },
+        })
 
-        # Resolve borough.
-        location_meta = {'city': 'london'}
-        if postcode:
-            pc = lookup_postcode(postcode)
-            if not pc:
-                return response(404, {
-                    'error': f'Postcode not recognised by postcodes.io: {postcode}',
-                })
-            borough = normalise_borough(pc.get('admin_district'))
-            location_meta.update({
-                'postcode': pc.get('postcode'),
-                'borough': borough,
-                'longitude': pc.get('longitude'),
-                'latitude': pc.get('latitude'),
-                'region': pc.get('region'),
-            })
+    if len(queries) == 0:
+        return response(400, {'error': 'queries array is empty.'})
+
+    if len(queries) > MAX_BATCH_SIZE:
+        return response(400, {
+            'error': f'Batch size exceeds limit of {MAX_BATCH_SIZE} queries.',
+            'submitted': len(queries),
+            'limit': MAX_BATCH_SIZE,
+        })
+
+    results = []
+    success = 0
+    error = 0
+    for idx, query in enumerate(queries):
+        if not isinstance(query, dict):
+            results.append({'queryIndex': idx, 'error': 'Query must be an object.'})
+            error += 1
+            continue
+        body, status = resolve_query(query)
+        result = {'queryIndex': idx, 'status': status}
+        if status == 200:
+            result.update(body)
+            success += 1
         else:
-            borough = normalise_borough(borough_input)
-            location_meta['borough'] = borough
+            result['error'] = body.get('error', 'Unknown error')
+            for k in ('attemptedBorough', 'supportedBoroughs', 'supportedCities', 'example'):
+                if k in body:
+                    result[k] = body[k]
+            error += 1
+        results.append(result)
 
-        if not borough or borough not in LONDON_BOROUGHS:
-            return response(404, {
-                'error': 'Borough not currently supported. London boroughs only in v1.',
-                'attemptedBorough': borough_input or location_meta.get('borough'),
-                'supportedBoroughs': sorted(LONDON_BOROUGHS.keys()),
-            })
+    return response(200, {
+        'totalQueries': len(queries),
+        'successCount': success,
+        'errorCount': error,
+        'apiVersion': API_VERSION,
+        'methodologyVersion': METHODOLOGY_VERSION,
+        'generatedAt': datetime.now(timezone.utc).isoformat(),
+        'sources': SOURCES,
+        'results': results,
+    })
 
-        # Resolve weights (explicit override > persona preset > balanced).
-        if weights_override:
-            weights = weights_override
-            persona_label = 'custom'
-        elif persona in PERSONAS:
-            weights = PERSONAS[persona]
-            persona_label = persona
-        else:
-            weights = PERSONAS['balanced']
-            persona_label = 'balanced'
 
-        score_data = calc_score(borough, weights)
-
-        body = {
-            **score_data,
-            'location': location_meta,
-            'persona': persona_label,
-            'weights': weights,
-            'methodologyVersion': METHODOLOGY_VERSION,
-            'methodologyUrl': METHODOLOGY_URL,
-            'apiVersion': '1.0',
-            'generatedAt': datetime.now(timezone.utc).isoformat(),
-            'sources': SOURCES,
-        }
-        return response(200, body)
-
+def handler(event, context):
+    method = (event.get('httpMethod') or 'GET').upper()
+    try:
+        if method == 'OPTIONS':
+            return handle_options()
+        if method == 'POST':
+            return handle_batch(event)
+        return handle_get(event)
     except Exception:
         return response(500, {'error': 'Internal server error'})
+
+
+def cors_headers():
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key',
+        'Access-Control-Max-Age': '86400',
+    }
 
 
 def response(status, body):
@@ -276,9 +422,7 @@ def response(status, body):
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': CORS_ORIGIN,
-            'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key',
-            'Access-Control-Allow-Methods': 'GET,OPTIONS',
+            **cors_headers(),
         },
         'body': json.dumps(body),
     }

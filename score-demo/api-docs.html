@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sky Score API — Reference Documentation</title>
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css">
+<style>
+  body { margin: 0; background: #06070d; }
+  .topbar {
+    background: #0d0f1a;
+    border-bottom: 1px solid #1f2333;
+    padding: 16px 24px;
+    color: #e8e8ee;
+    font-family: system-ui, sans-serif;
+  }
+  .topbar h1 {
+    font-size: 18px;
+    margin: 0;
+    font-weight: 600;
+  }
+  .topbar h1 .accent { color: #f59e0b; }
+  .topbar p {
+    font-size: 13px;
+    color: #8b8fa3;
+    margin: 4px 0 0;
+  }
+  .topbar a { color: #f59e0b; text-decoration: none; }
+  .topbar a:hover { text-decoration: underline; }
+  #swagger-ui { background: #fff; min-height: calc(100vh - 80px); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Sky Score API <span class="accent">— Reference</span></h1>
+  <p>
+    Interactive API documentation. Try requests in-browser using the "Try it out" buttons below.
+    <a href="./index.html">← Back to demo</a> &middot;
+    <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">Methodology</a> &middot;
+    <a href="./openapi.yaml" target="_blank" rel="noopener">OpenAPI spec (yaml)</a>
+  </p>
+</div>
+
+<div id="swagger-ui"></div>
+
+<script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
+<script>
+  window.onload = () => {
+    SwaggerUIBundle({
+      url: './openapi.yaml',
+      dom_id: '#swagger-ui',
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset
+      ],
+      layout: 'BaseLayout',
+      deepLinking: true,
+      tryItOutEnabled: true,
+      filter: false,
+      docExpansion: 'list',
+    });
+  };
+</script>
+
+</body>
+</html>

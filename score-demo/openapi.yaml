@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: Sky Score API
+  description: |
+    Sky Score is a noise + livability data API for UK property. The score
+    is a 0-10 holistic property quality signal computed from four
+    components: Quiet (aviation + road noise), Affordability (cohort-relative
+    price), Growth (price-trend signal), and Liveability (schools, crime,
+    transport, healthcare).
+
+    **Authentication.** All endpoints require an API key passed in the
+    `X-Api-Key` header. Free tier provides 1000 requests/month, 5/sec burst,
+    2/sec sustained. Contact via the [consumer site](https://d1oe4ftwutjpf.cloudfront.net/)
+    for a key.
+
+    **Methodology.** Every numeric threshold and weight is anchored to a
+    published source or explicit editorial decision in the
+    [methodology document](https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md).
+    The methodology is reproducible: a worked example walks through every
+    calculation against a real postcode.
+
+    **Coverage.** 33 London boroughs by postcode resolution. 5 NYC boroughs
+    by borough-name lookup (no ZIP resolution yet).
+  version: "1.0"
+  contact:
+    name: Sky Score
+    url: https://d1oe4ftwutjpf.cloudfront.net/
+  license:
+    name: Proprietary
+    url: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSE
+
+servers:
+  - url: https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod
+    description: Production API
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Score
+    description: Single-postcode and bulk property scoring.
+
+paths:
+  /v1/score:
+    get:
+      tags: [Score]
+      summary: Get Sky Score for a single postcode or borough.
+      description: |
+        Returns the 0-10 Sky Score for a given UK postcode (resolved via
+        postcodes.io to a London borough) or a borough name in a supported
+        city. Optionally accepts a persona preset or a custom weights
+        override.
+      parameters:
+        - name: postcode
+          in: query
+          description: |
+            UK postcode to score. Resolved via postcodes.io to a London
+            borough. Spaces are URL-encoded (%20). Required if `borough`
+            is not provided.
+          schema:
+            type: string
+            example: SW11 1AA
+        - name: borough
+          in: query
+          description: |
+            Borough name to score. Required if `postcode` is not provided.
+            Supported names depend on `city`.
+          schema:
+            type: string
+            example: Wandsworth
+        - name: city
+          in: query
+          description: City context for borough lookup.
+          schema:
+            type: string
+            enum: [london, nyc]
+            default: london
+        - name: persona
+          in: query
+          description: |
+            Persona preset that determines the weighting of the four
+            components. See the methodology document for the precise weight
+            values. Ignored if `weights` is provided.
+          schema:
+            type: string
+            enum: [balanced, family, investor, firsttime, quietlife]
+            default: balanced
+        - name: weights
+          in: query
+          description: |
+            Custom weights override. Format: `quiet:W,afford:X,growth:Y,live:Z`
+            where W+X+Y+Z must equal 1.0 (within ±0.01). If invalid, the
+            persona preset (or balanced) is used. When applied, the response
+            indicates `persona: "custom"`.
+          schema:
+            type: string
+            example: "quiet:0.5,afford:0.2,growth:0.1,live:0.2"
+      responses:
+        '200':
+          description: Score successfully computed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResponse'
+        '400':
+          description: Invalid request (missing postcode/borough, or bad parameter).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: API key missing or invalid.
+        '404':
+          description: |
+            Postcode not recognised by postcodes.io, or borough not in dataset
+            for the requested city. Response includes `supportedBoroughs`
+            for graceful fallback.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded.
+
+  /v1/score/batch:
+    post:
+      tags: [Score]
+      summary: Bulk Sky Score lookup (up to 100 queries per call).
+      description: |
+        Submits up to 100 score queries in a single API call. Each query is
+        independent — failures do not abort the batch; failed queries return
+        an error per item and the batch continues. Suitable for aggregator
+        and conveyancing-search workflows that look up many properties at
+        once.
+
+        **Counting against rate limits.** A batch call counts as 1 API
+        request against your monthly quota, regardless of the number of
+        queries. The 100-query limit per batch caps the work per request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchRequest'
+            example:
+              queries:
+                - postcode: "SW11 1AA"
+                  persona: balanced
+                - postcode: "TW3 4DX"
+                  persona: family
+                - borough: "Hackney"
+                  city: london
+                  weights:
+                    quiet: 0.5
+                    afford: 0.2
+                    growth: 0.1
+                    live: 0.2
+      responses:
+        '200':
+          description: Batch processed (each query may individually succeed or fail).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: Invalid batch (missing queries array, exceeds limit, malformed JSON).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: API key missing or invalid.
+        '429':
+          description: Rate limit exceeded.
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: |
+        API key issued via the SkyScoreFreeTierKey usage plan (1000 req/month,
+        5/sec burst, 2/sec sustained on the free tier). Contact for paid
+        tiers.
+
+  schemas:
+    ScoreResponse:
+      type: object
+      required: [score, components, location, persona, weights, methodologyVersion, apiVersion, generatedAt, sources]
+      properties:
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Headline Sky Score (one decimal precision).
+          example: 6.1
+        components:
+          $ref: '#/components/schemas/Components'
+        context:
+          $ref: '#/components/schemas/Context'
+        location:
+          $ref: '#/components/schemas/Location'
+        persona:
+          type: string
+          enum: [balanced, family, investor, firsttime, quietlife, custom]
+          description: |
+            Which weighting profile produced the score. `"custom"` indicates
+            the `weights` query parameter was applied.
+        weights:
+          $ref: '#/components/schemas/Weights'
+        methodologyVersion:
+          type: string
+          example: "2.0"
+        methodologyUrl:
+          type: string
+          format: uri
+        apiVersion:
+          type: string
+          example: "1.0"
+        generatedAt:
+          type: string
+          format: date-time
+        sources:
+          type: array
+          items:
+            type: string
+          description: |
+            OGL attribution lines for the underlying data sources.
+            Consumers redistributing the response must preserve these.
+
+    Components:
+      type: object
+      required: [quiet, afford, growth, live]
+      properties:
+        quiet:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Aviation + road noise impact, 10 = quietest.
+        afford:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Cohort-relative affordability, 10 = cheapest in cohort.
+        growth:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Linear price trend scaled to cohort max.
+        live:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Liveability composite (35% schools + 30% crime + 25% transport + 10% healthcare).
+
+    Context:
+      type: object
+      description: Underlying inputs used to compute the components.
+      properties:
+        avgPriceGbp:
+          type: number
+          description: Borough average sold price in GBP (London).
+        avgPriceUsd:
+          type: number
+          description: Borough average price in USD (NYC).
+        priceTrendPct:
+          type: number
+          description: Annualised price growth percentage.
+        noiseImpactBand:
+          type: string
+          enum: [low, low-moderate, moderate, moderate-high, high, severe]
+          description: DEFRA Lden band classification.
+
+    Location:
+      type: object
+      properties:
+        city:
+          type: string
+          enum: [london, nyc]
+        postcode:
+          type: string
+        borough:
+          type: string
+        longitude:
+          type: number
+        latitude:
+          type: number
+        region:
+          type: string
+
+    Weights:
+      type: object
+      required: [quiet, afford, growth, live]
+      properties:
+        quiet:
+          type: number
+          minimum: 0
+          maximum: 1
+        afford:
+          type: number
+          minimum: 0
+          maximum: 1
+        growth:
+          type: number
+          minimum: 0
+          maximum: 1
+        live:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    BatchRequest:
+      type: object
+      required: [queries]
+      properties:
+        queries:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: object
+            properties:
+              postcode:
+                type: string
+              borough:
+                type: string
+              city:
+                type: string
+                enum: [london, nyc]
+              persona:
+                type: string
+                enum: [balanced, family, investor, firsttime, quietlife]
+              weights:
+                $ref: '#/components/schemas/Weights'
+
+    BatchResponse:
+      type: object
+      required: [totalQueries, successCount, errorCount, results, apiVersion, methodologyVersion, generatedAt, sources]
+      properties:
+        totalQueries:
+          type: integer
+        successCount:
+          type: integer
+        errorCount:
+          type: integer
+        apiVersion:
+          type: string
+        methodologyVersion:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        sources:
+          type: array
+          items:
+            type: string
+        results:
+          type: array
+          items:
+            type: object
+            description: |
+              Each result includes `queryIndex` and `status`. On 200, the
+              full ScoreResponse fields are merged in. On error, includes
+              `error` and optionally `attemptedBorough`/`supportedBoroughs`.
+            properties:
+              queryIndex:
+                type: integer
+              status:
+                type: integer
+              error:
+                type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        attemptedBorough:
+          type: string
+        supportedBoroughs:
+          type: array
+          items:
+            type: string
+        supportedCities:
+          type: array
+          items:
+            type: string
+        example:
+          type: object
