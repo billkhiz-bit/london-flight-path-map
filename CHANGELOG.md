@@ -6,6 +6,16 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Added
+- **Consumer site B2B integration links** (commit `00cf1d7`):
+  - Updated `<title>`, meta description, OG tags, Twitter card to reflect dual-product positioning ("UK property quality data — consumer + B2B API"). Removes the original Amazon Nova hackathon framing.
+  - Small "DEVELOPERS · API DEMO →" link in the map title block, linking to `/score-demo/`.
+  - New site footer at the map bottom-left with: methodology link (GitHub `METHODOLOGY.md`), API reference (Swagger UI), status page, GitHub repo, OGL v3.0 attribution. Hidden on mobile (<768px) to avoid crowding the legend.
+  - Consumer features unchanged — no removal, no down-grade.
+
+### Decisions
+- **Monetisation strategy resolved** (see [`ROADMAP.md`](./ROADMAP.md#monetisation-strategy-decided-2026-05-05)): Sky Score will charge for *integration value* (SLA, structured JSON, batch, audit trail, methodology pinning, support, contracts) rather than data exclusivity. The consumer site keeps all features; the API earns its price on reliability + ergonomics. Pattern matches Hometrack/Zoopla, Companies House, Land Registry, Ordnance Survey. Revisit triggers documented for if/when a real paying customer asks for restrictions.
+
 ### Planned
 - DEFRA Lden raster data load (one-shot ~1-hour batch, scaffolded in v3.1)
 - Independent measured-noise validation (gating contractual accuracy claims)
@@ -13,8 +23,12 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 - Per-postcode air quality component (`airQuality`)
 - LSOA-level crime breakdown (`crimeBreakdown`)
 - Per-customer API keys + Usage Plans (replaces shared free-tier key)
+- Optional `/api` landing page (B2B discovery surface — defer until outreach signals warrant)
 - Public methodology change-history page
 - ISO 27001 / SOC 2 attestation tracks
+- MSA + DPA template (use CommonPaper.com or PandaDoc UK template; do not draft from scratch)
+- First commercial contract with a paying integrator
+- Pricing tier structure firmed up post first prospect conversation
 
 ## [3.1] — 2026-05-05
 

@@ -230,6 +230,88 @@ The trigger is **first paying B2B customer asks "do you have postcode-level nois
 | Before any paying B2B customer | OpenSky commercial-licence resolution (negotiate / replace / decouple) | Unblocks aviation-data integrations |
 | Before public launch | Polish: domain (`skyscore.uk`), homepage CTA for "API access", contact form | Commercial-readiness |
 
+## Monetisation strategy (decided 2026-05-05)
+
+**Decision: Convenience-tier monetisation. NOT granularity wall.**
+
+Sky Score charges for *integration value* (SLA, structured JSON, batch, audit trail, methodology version pinning, support, contracts), **not** for data exclusivity. Consumer site keeps all features; the API earns its price through reliability and ergonomics.
+
+### The four models considered
+
+| Model | What you charge for | What stays free on consumer site | Real-world example |
+|---|---|---|---|
+| **Convenience tier** ⭐ chosen | Integration ergonomics: SLA, structured JSON, batch, OpenAPI, audit log | Everything | Hometrack/Zoopla, Companies House, Land Registry, Ordnance Survey |
+| Granularity wall | Per-postcode resolution; per-component access | Borough-level summaries only | Bloomberg Terminal vs free public data |
+| Volume wall | Rate-limited access above a threshold | First N lookups free per session | Newspapers, metered SaaS |
+| Format wall | Structured / embeddable / batch data | UI-rendered display only | Spotify embed vs API |
+
+### Why convenience tier (and not granularity wall)
+
+1. **Target customers don't compete with the consumer site.** Landmark, TM Group, OneSearch (aggregators) want SLA + batch + structured JSON; Al Rayan, StrideUp, Gatehouse (Islamic finance) want underwriting depth; conveyancers want product-bundle integration; B2R operators want site selection. None of these customers' value depends on Sky Score not having a public site.
+2. **Consumer site is the marketing engine.** Every prospect who searches "Sky Score" lands here first. Stripping features means losing inbound pipeline.
+3. **Removing features creates support cost without revenue.** "Why does the consumer site no longer show X?" emails don't convert.
+4. **Real customer feedback should drive feature decisions.** Don't optimise for theoretical objections — wait for actual ones.
+
+### What customers actually pay for (the convenience-tier value list)
+
+| Value | Sky Score has it? |
+|---|---|
+| **SLA** with refund/credit commitments | Not yet — commit one in first contract |
+| **Per-customer API key + Usage Plan** (billing isolation) | API Gateway supports; hand-issue per customer in Phase 1 |
+| **Bulk endpoint** (`POST /v1/score/batch`) | Shipped |
+| **Structured response** (OpenAPI 3.0 spec) | Shipped |
+| **Audit log access** (per-key CloudWatch filter) | Available; could expose to customers |
+| **Methodology document for due diligence** | Shipped (v3.1) |
+| **Methodology version pinning** (`?methodology=` for grace periods) | Documented in §16 |
+| **Custom weights + persona profiles** | Shipped (`?weights=`, `?persona=`) |
+| **Selective response shaping** | Shipped (`?include=`) |
+| **Data refresh on a schedule** | Documented commitment in §7 |
+| **Dedicated support channel** | Email per contract; future Slack Connect |
+| **Status page + uptime visibility** | Shipped (`/score-demo/status.html`) |
+| **MSA + DPA template** | Use CommonPaper.com or PandaDoc UK template — recommendation, not for me to draft |
+| **Future: ISO 27001 / SOC 2** | Multi-year track |
+
+### Pricing structure (illustrative; firm up after first conversation)
+
+| Tier | Quota | Indicative price/month | Customer profile |
+|---|---|---|---|
+| **Developer** | 5,000 req/month | £49 | Individual integrator, evaluating |
+| **Professional** | 100,000 req/month | £499 | Small platform integrating Sky Score |
+| **Enterprise** | Custom | £2k–£20k+ | Aggregators, large integrators (Landmark-shape) |
+
+### Revisit triggers
+
+Switch toward granularity / volume / format wall **only when**:
+- A real paying customer says "your consumer site undermines my product"
+- Multiple customers (3+) ask for the same restriction
+- Pricing pressure from prospect feedback becomes evident
+
+Until those triggers fire: keep all consumer features. Charge for integration value.
+
+### What we explicitly will NOT do pre-emptively
+
+- ❌ Remove per-postcode / per-neighbourhood scoring from consumer site
+- ❌ Add a consumer signup wall pre-emptively
+- ❌ Hide methodology behind a paywall (transparency wins B2B trust)
+- ❌ Remove AI features (Bedrock cost is small; consumer engagement is real)
+- ❌ Split consumer site into "free borough / paid postcode" tiers
+
+These are theoretical optimisations against problems that don't exist yet.
+
+### Optional intermediate step
+
+If outreach picks up and prospects look confused about how to find the API: add a focused `/api` landing page on the consumer site (B2B discovery surface). Routes prospects toward the API funnel without removing consumer features. ~30 min to build; defer until outreach signal warrants it.
+
+### When *each* customer might ask for restrictions (and how to handle case-by-case)
+
+| Their objection | Real fix (without breaking other customers) |
+|---|---|
+| "Our customers can Google your free site" | Custom contract clause: integration doesn't show "Powered by Sky Score" branding; consumers Googling don't connect the dots |
+| "Free per-postcode data undermines our pricing" | Move per-postcode access behind a consumer signup wall (capture email; rate-limit). Site still works; data still public; their pricing unaffected. |
+| "We need data exclusivity" | Custom enterprise tier with API-only fields not on the consumer site (e.g., commercial-tier aviation source, future paid-data sources) |
+
+Each is a *case-by-case fix triggered by real feedback*, not pre-emptive site stripping.
+
 ## Update protocol
 
 When a task ships or a decision lands: update this file rather than the chat. Treat unresolved items in "Near-term tasks" and "Open decisions" as the source of truth between sessions.
