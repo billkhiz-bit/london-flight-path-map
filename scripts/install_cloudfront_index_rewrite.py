@@ -45,10 +45,8 @@ import time
 
 DISTRIBUTION_ID = 'EGSSPJKLFL33M'
 FUNCTION_NAME = 'sky-score-rewrite-index'
-FUNCTION_COMMENT = (
-    'Append index.html to URIs ending in / or with no file extension. '
-    'Fixes 403 on /score-demo/ etc. See scripts/install_cloudfront_index_rewrite.py.'
-)
+# CloudFront caps Comment at 64 chars — keep it terse.
+FUNCTION_COMMENT = 'Append index.html to subdir URIs (Sky Score)'
 FUNCTION_CODE = """function handler(event) {
     var request = event.request;
     var uri = request.uri;
@@ -88,7 +86,7 @@ def main():
 
     # ----- Step 4: attach function if not already attached -----
     print('Step 4/5: attaching function to default cache behaviour ...')
-    function_arn = describe_function(cf)['FunctionMetadata']['FunctionARN']
+    function_arn = describe_function(cf)['FunctionSummary']['FunctionMetadata']['FunctionARN']
     needs_update, distribution_config = ensure_function_associated(
         distribution_config, function_arn,
     )
