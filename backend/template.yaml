@@ -151,6 +151,37 @@ Resources:
             Path: /nhs
             Method: get
 
+  # --- Live Aircraft Proxy (OpenSky Network) ---
+  # OpenSky restricts browser CORS to their own origin; we proxy through
+  # this Lambda so the consumer site at skyscore.co.uk can call it.
+  LiveFlightsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/live_flights/
+      Handler: app.handler
+      Timeout: 20
+      Environment:
+        Variables:
+          # Slightly longer than the front-end's 15s polling so cache
+          # absorbs concurrent visitors without going stale on screen.
+          LIVE_FLIGHTS_CACHE_TTL: '12'
+          # Public data, no sensitive info — open CORS so the consumer
+          # site at skyscore.co.uk and the legacy CloudFront URL both
+          # work. (The global default is locked to one origin.)
+          CORS_ORIGIN: '*'
+          # OpenSky OAuth2 client credentials (anonymous access is
+          # blocked on AWS Lambda IPs). Set these via SAM parameter at
+          # deploy time. Free tier: 4000 credits/day.
+          OPENSKY_CLIENT_ID: !Ref OpenSkyClientId
+          OPENSKY_CLIENT_SECRET: !Ref OpenSkyClientSecret
+      Events:
+        LiveFlightsGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /live-flights
+            Method: get
+
   # --- Property Photo Analysis (Nova Pro Multimodal) ---
   AnalyzeImageFunction:
     Type: AWS::Serverless::Function
@@ -469,6 +500,16 @@ Parameters:
     Default: ''
     NoEcho: true
     Description: Bearer token from get-energy-performance-data.communities.gov.uk (sign in via GOV.UK One Login, copy from the My account page). Pass at deploy time, never commit.
+  OpenSkyClientId:
+    Type: String
+    Default: ''
+    NoEcho: true
+    Description: OpenSky Network OAuth2 client_id for the live-flights proxy. Sign up free at opensky-network.org, then go to My Account > API. Empty value = anonymous (will time out from AWS Lambda IPs).
+  OpenSkyClientSecret:
+    Type: String
+    Default: ''
+    NoEcho: true
+    Description: OpenSky Network OAuth2 client_secret. Pair with OpenSkyClientId. Pass at deploy time, never commit.
 
 Outputs:
   ApiUrl:

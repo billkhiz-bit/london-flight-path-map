@@ -85,12 +85,22 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 set -a && source ../.env && set +a && \
   cd backend && rm -rf .aws-sam && \
   AWS_PROFILE=flightmap sam build && \
-  AWS_PROFILE=flightmap sam deploy --parameter-overrides EpcBearerToken="$EPC_BEARER_TOKEN"
+  AWS_PROFILE=flightmap sam deploy --parameter-overrides \
+    EpcBearerToken="$EPC_BEARER_TOKEN" \
+    OpenSkyClientId="$OPENSKY_CLIENT_ID" \
+    OpenSkyClientSecret="$OPENSKY_CLIENT_SECRET"
 ```
 
-**Local env setup**: copy `.env.example` to `.env` and fill in `EPC_BEARER_TOKEN`. The `.env` file is gitignored. The SAM template parameter is `NoEcho: true` so the token doesn't appear in CloudFormation events.
+**Local env setup**: copy `.env.example` to `.env` and fill in:
+- `EPC_BEARER_TOKEN` — from the My account page on `get-energy-performance-data.communities.gov.uk`
+- `OPENSKY_CLIENT_ID` + `OPENSKY_CLIENT_SECRET` — from the My Account > API page on `opensky-network.org` (free signup; required because OpenSky blocks anonymous access from AWS Lambda IPs as of 2025)
 
-**Token rotation**: regenerate from the My account page on `get-energy-performance-data.communities.gov.uk` whenever the token has touched a chat log, terminal scrollback, or any unencrypted persistence. Update `.env` and redeploy.
+The `.env` file is gitignored. All three SAM parameters use `NoEcho: true` so values don't appear in CloudFormation events.
+
+**Token rotation**:
+- EPC: regenerate from the My account page on `get-energy-performance-data.communities.gov.uk` whenever the token has touched a chat log, terminal scrollback, or any unencrypted persistence
+- OpenSky: regenerate via opensky-network.org > My Account > API
+- Update `.env` and redeploy after either rotation
 
 ## Architecture
 

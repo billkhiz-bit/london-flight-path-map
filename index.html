@@ -2717,32 +2717,19 @@ function renderDefraTiles() {
 let liveFlightLayer = null;
 
 async function fetchLiveFlights() {
+  // OpenSky locks browser CORS to their own origin, so we proxy through
+  // /live-flights on our API Gateway. Lambda caches per-city for ~12s so
+  // multiple concurrent visitors don't spam OpenSky's anonymous tier.
+  // The Lambda also normalises the positional state arrays into named
+  // fields so this client doesn't need to know the OpenSky schema.
   try {
-    // Bounding box covering city area
-    const bounds = currentCity === 'nyc'
-      ? 'lamin=40.45&lomin=-74.3&lamax=40.95&lomax=-73.6'
-      : 'lamin=51.15&lomin=-0.6&lamax=51.85&lomax=0.4';
-    const resp = await fetch(
-      'https://opensky-network.org/api/states/all?' + bounds
-    );
+    const resp = await fetch(`${API_BASE}/live-flights?city=${currentCity}`);
     if (!resp.ok) return null;
     const data = await resp.json();
-    if (!data.states) return null;
-    // Each state: [icao24, callsign, origin_country, time_position, last_contact,
-    // longitude, latitude, baro_altitude, on_ground, velocity,
-    // true_track, vertical_rate, sensors, geo_altitude, squawk, spi, position_source]
-    return data.states.filter(s => s[5] != null && s[6] != null && !s[8]).map(s => ({
-      icao: s[0],
-      callsign: (s[1]||'').trim(),
-      lon: s[5],
-      lat: s[6],
-      altitude: s[7] ? Math.round(s[7] * 3.28084) : null, // meters to feet
-      speed: s[9] ? Math.round(s[9] * 1.944) : null, // m/s to knots
-      track: s[10] || 0,
-      vertRate: s[11] || 0,
-    }));
-  } catch(e) {
-    console.warn('OpenSky API failed:', e);
+    if (data.available === false) return null;
+    return data.flights || [];
+  } catch (e) {
+    console.warn('Live-flights proxy failed:', e);
     return null;
   }
 }
