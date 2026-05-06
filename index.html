@@ -80,10 +80,11 @@
   .legend-swatch{width:16px;height:10px;border:1px solid rgba(0,0,0,0.2);}
 
   .map-controls{position:absolute;top:24px;right:24px;display:flex;flex-direction:column;gap:4px;z-index:10;}
-  .map-controls button{width:36px;height:36px;background:rgba(250,250,249,0.85);backdrop-filter:blur(8px);
+  .map-controls button{width:40px;height:40px;background:rgba(250,250,249,0.85);backdrop-filter:blur(8px);
     border:1px solid var(--dark);font-family:var(--font-mono);font-size:16px;cursor:pointer;
     display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
   .map-controls button:hover{background:var(--dark);color:var(--white);}
+  .map-controls button:focus-visible{outline:2px solid var(--orange);outline-offset:1px;}
 
   .layer-toggles{position:absolute;bottom:24px;right:24px;display:flex;flex-direction:column;gap:3px;z-index:10;}
   .layer-toggle{display:flex;align-items:center;gap:6px;font-size:9px;font-family:var(--font-mono);
@@ -429,13 +430,29 @@
     border-bottom:1px solid var(--bg);font-size:10px;cursor:pointer;transition:color 0.15s;}
   .fav-item:hover{color:var(--orange);}
   .fav-item:last-child{border-bottom:none;}
-  .fav-remove{color:var(--mid);cursor:pointer;padding:2px 6px;font-size:12px;}
+  .fav-remove{color:var(--mid);cursor:pointer;padding:6px 10px;font-size:14px;
+    min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;}
   .fav-remove:hover{color:var(--orange);}
 
   @media(max-width:900px){
     .app{grid-template-columns:1fr;grid-template-rows:55vh 45vh;}
     .sidebar{border-left:none;border-top:1px solid var(--dark);}
     .chat-panel{width:calc(100vw - 48px);right:24px;}
+    /* Phone-friendly tap targets on layer toggles */
+    .layer-toggle{padding:8px 12px;font-size:10px;min-height:32px;}
+    .map-controls button{width:44px;height:44px;}
+  }
+  @media(max-width:480px){
+    /* Compress UI on small phones. Keep the default control positions
+       (map-controls top-right, layer-toggles bottom-right, legend
+       bottom-left) so they don't collide; just shrink chrome. */
+    .map-title{padding:12px 16px;}
+    .map-title h1{font-size:18px;}
+    .map-title .subtitle{font-size:8px;}
+    .map-title .dev-link{font-size:8px;}
+    .map-legend{display:none;}
+    .map-controls{top:8px;right:8px;}
+    .layer-toggles{bottom:8px;right:8px;}
   }
 </style>
 </head>
