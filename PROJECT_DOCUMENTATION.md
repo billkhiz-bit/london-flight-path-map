@@ -338,7 +338,7 @@ Sky Score/
 
 ## Known Limitations
 
-- NYC search currently works by clicking boroughs (no ZIP code geocoding API integrated yet)
+- Consumer site UI: NYC search accepts borough names (e.g. "Manhattan") and neighbourhood names (e.g. "Astoria", "Williamsburg") but not raw 5-digit ZIPs — typing `10001` falls through to postcodes.io and returns "NOT FOUND". The B2B `/v1/score` API *does* accept ZIPs; consumer-site parity is an open product item.
 - EPC API requires registration for an API key
 - OpenSky Network has rate limits (~10 requests/min for anonymous users)
 - DEFRA WMS tiles can be slow to load on first request

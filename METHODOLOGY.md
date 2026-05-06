@@ -48,12 +48,12 @@ The product exists to address a structural information asymmetry in UK property:
 ## 2. Geographic coverage
 
 **Currently supported:**
-- 33 London boroughs (32 boroughs plus the City of London)
-- 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island), borough-name lookup only
+- 33 London boroughs (32 boroughs plus the City of London) — UK postcode resolution
+- 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island) — borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
 
 **Planned:** UK Core Cities (Manchester, Birmingham, Bristol, Leeds, Edinburgh, Glasgow, Liverpool, Newcastle, Sheffield, Cardiff, Belfast, Nottingham), then England + Wales.
 
-**Postcode → borough resolution** uses `postcodes.io` for UK postcodes. NYC ZIP-to-borough resolution is on the roadmap but not currently implemented — NYC scoring is borough-name-based today.
+**Postcode → borough resolution** uses `postcodes.io` for UK postcodes; NYC ZIPs use a static lookup table baked into the Lambda (sourced from NYC OpenData ZCTA boundaries + USPS). ZIPs without an explicit centroid fall back to the borough-aggregate Lden band for the quiet score; non-NYC US ZIPs (e.g. 90210) return a structured 404 with the supported borough list.
 
 A request for a postcode outside the supported geography returns a 404 with a `supportedBoroughs` list so the caller can fall back gracefully.
 
