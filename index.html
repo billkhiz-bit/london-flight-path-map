@@ -50,8 +50,12 @@
     --font-mono:'JetBrains Mono',monospace;--font-sans:'Inter',sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--dark);font-family:var(--font-mono);overflow:hidden;height:100vh;width:100vw;}
-  .app{display:grid;grid-template-columns:1fr 400px;height:100vh;width:100vw;}
+  /* On iOS Safari, 100vh includes the URL bar so content is clipped at the
+     bottom (chat-fab, layer toggles). 100dvh is the dynamic viewport that
+     accounts for the URL bar; height fallback chain ensures older browsers
+     still get a viewport-height layout. */
+  body{background:var(--bg);color:var(--dark);font-family:var(--font-mono);overflow:hidden;height:100vh;height:100dvh;width:100vw;}
+  .app{display:grid;grid-template-columns:1fr 400px;height:100vh;height:100dvh;width:100vw;}
 
   /* MAP */
   .map-container{position:relative;overflow:hidden;background:var(--bg);}
@@ -61,15 +65,20 @@
   .map-title{position:absolute;top:24px;left:32px;z-index:10;}
   .map-title h1{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
   .map-title .subtitle{font-size:10px;font-weight:300;color:var(--mid);margin-top:2px;letter-spacing:1px;}
-  .map-title .dev-link{font-size:9px;font-weight:500;color:var(--orange);margin-top:6px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;display:inline-block;border-bottom:1px solid var(--orange);padding-bottom:1px;}
-  .map-title .dev-link:hover{color:var(--dark);border-color:var(--dark);}
 
-  /* Subtle B2B footer, small, unobtrusive, sits below the legend */
-  .site-footer{position:absolute;bottom:8px;left:32px;z-index:10;display:flex;gap:14px;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);pointer-events:none;}
+  /* Subtle B2B footer, small, unobtrusive, sits below the legend.
+     Stays visible on mobile (compressed) so the dev-link remains
+     reachable; previously hidden < 768 px which broke B2B discovery. */
+  .site-footer{position:absolute;bottom:8px;left:32px;right:32px;z-index:10;display:flex;flex-wrap:wrap;gap:8px 14px;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);pointer-events:none;}
   .site-footer a{color:var(--mid);text-decoration:none;pointer-events:auto;border-bottom:1px solid transparent;padding-bottom:1px;}
   .site-footer a:hover{color:var(--dark);border-bottom-color:var(--dark);}
   .site-footer .sep{opacity:0.5;}
-  @media (max-width: 768px) { .site-footer{display:none;} }
+  /* Highlight the For Developers link a touch so it's discoverable */
+  .site-footer .for-devs{color:var(--orange);}
+  .site-footer .for-devs:hover{color:var(--dark);}
+  @media (max-width: 768px) {
+    .site-footer{bottom:auto;top:auto;position:static;padding:8px 16px;background:rgba(20,20,20,0.04);justify-content:center;}
+  }
 
   .map-legend{position:absolute;bottom:24px;left:32px;background:rgba(250,250,249,0.85);backdrop-filter:blur(8px);
     border:1px solid var(--dark);padding:12px 16px;font-size:10px;font-family:var(--font-mono);z-index:10;}
@@ -170,10 +179,16 @@
   .methodology-content{display:none;margin-top:8px;}
 
   .search-box{padding:16px 24px;border-bottom:1px solid var(--bg);}
-  .search-box input{width:100%;padding:8px 12px;border:1px solid var(--dark);background:transparent;
-    font-family:var(--font-mono);font-size:11px;outline:none;transition:border-color 0.15s;}
-  .search-box input:focus{border-color:var(--orange);}
-  .search-box input::placeholder{color:var(--mid);text-transform:uppercase;letter-spacing:1px;font-size:9px;}
+  .search-box input{width:100%;padding:11px 14px 11px 36px;border:1px solid var(--dark);background:#fff;
+    font-family:var(--font-sans);font-size:14px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;
+    color:var(--dark);}
+  .search-box input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(242,125,38,0.15);}
+  .search-box input::placeholder{color:var(--mid);font-size:13px;text-transform:none;letter-spacing:0;font-style:normal;}
+  .search-wrapper{position:relative;}
+  .search-wrapper::before{content:'';position:absolute;left:11px;top:50%;width:14px;height:14px;margin-top:-7px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23636363' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-size:contain;pointer-events:none;}
+  .search-hint{font-size:11px;color:var(--mid);margin-top:6px;letter-spacing:0.3px;}
 
   .search-hint{font-size:9px;color:var(--mid);margin-top:6px;font-family:var(--font-sans);}
 
@@ -311,11 +326,16 @@
   /* AI Chatbot */
   #ai-insight-section{background:linear-gradient(135deg,rgba(242,125,38,0.04),rgba(38,125,242,0.04));border-left:3px solid var(--orange);}
   #ai-insight-content{font-family:var(--font-sans);font-size:12px;line-height:1.6;color:#333;}
+  /* The chat FAB pulses for the first ~12s only — long enough to draw the
+     eye on first paint, short enough to stop being visual noise after the
+     user has had a chance to notice it. JS removes the .pulsing class
+     after the first interaction OR after 12 seconds. */
   .chat-fab{position:fixed;bottom:24px;right:24px;z-index:200;height:44px;border-radius:22px;padding:0 18px 0 14px;
     background:linear-gradient(135deg,var(--orange),#e06a20);color:var(--white);border:none;font-size:13px;font-weight:700;
     font-family:var(--font-mono);letter-spacing:1px;cursor:pointer;
     display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(242,125,38,0.4);
-    transition:transform 0.2s,box-shadow 0.2s;animation:fab-pulse 3s ease-in-out infinite;}
+    transition:transform 0.2s,box-shadow 0.2s;}
+  .chat-fab.pulsing{animation:fab-pulse 3s ease-in-out 4;}  /* 4 cycles ≈ 12 s */
   .chat-fab:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(242,125,38,0.6);}
   .chat-fab svg{width:20px;height:20px;fill:currentColor;}
   @keyframes fab-pulse{0%,100%{box-shadow:0 4px 16px rgba(242,125,38,0.4);}50%{box-shadow:0 4px 24px rgba(242,125,38,0.7);}}
@@ -467,7 +487,6 @@
     <div class="map-title">
       <h1 id="map-title-text">Sky Score</h1>
       <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVABILITY DATA</div>
-      <a class="dev-link" href="/score-demo/index.html" target="_blank" rel="noopener" title="Sky Score B2B API, try the live API in a browser demo">DEVELOPERS · API DEMO &#8594;</a>
     </div>
     <div class="city-selector" id="city-selector">
       <button type="button" class="city-btn active" data-city="london" onclick="switchCity('london')">London</button>
@@ -483,14 +502,14 @@
       <button type="button" id="zoom-reset" title="Reset" aria-label="Reset zoom">&#8634;</button>
     </div>
     <div class="layer-toggles" id="layer-toggles" role="group" aria-label="Map layer toggles">
-      <button type="button" class="layer-toggle active" data-layer="paths" aria-pressed="true"><div class="indicator" aria-hidden="true"></div>FLIGHT PATHS</button>
-      <button type="button" class="layer-toggle active" data-layer="defra-aircraft" aria-pressed="true"><div class="indicator" aria-hidden="true"></div><span id="label-aircraft">DEFRA AIRCRAFT NOISE</span></button>
-      <button type="button" class="layer-toggle" data-layer="defra-road" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-road">DEFRA ROAD NOISE</span></button>
-      <button type="button" class="layer-toggle" data-layer="live-flights" aria-pressed="false"><div class="indicator" aria-hidden="true"></div>LIVE AIRCRAFT</button>
-      <button type="button" class="layer-toggle" data-layer="transport" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-transport">TRANSPORT</span></button>
-      <button type="button" class="layer-toggle" data-layer="flood" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-flood">FLOOD RISK ZONES</span></button>
-      <button type="button" class="layer-toggle" data-layer="air-quality" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-aq">AIR QUALITY</span></button>
-      <button type="button" class="layer-toggle" data-layer="labels" aria-pressed="false"><div class="indicator" aria-hidden="true"></div>LABELS</button>
+      <button type="button" class="layer-toggle active" data-layer="paths" aria-pressed="true" title="Show typical flight paths over the city"><div class="indicator" aria-hidden="true"></div>Flight paths</button>
+      <button type="button" class="layer-toggle active" data-layer="defra-aircraft" aria-pressed="true" title="Aircraft noise contours from official DEFRA strategic noise mapping"><div class="indicator" aria-hidden="true"></div><span id="label-aircraft">Aircraft noise</span></button>
+      <button type="button" class="layer-toggle" data-layer="defra-road" aria-pressed="false" title="Road traffic noise contours from official DEFRA strategic noise mapping"><div class="indicator" aria-hidden="true"></div><span id="label-road">Road noise</span></button>
+      <button type="button" class="layer-toggle" data-layer="live-flights" aria-pressed="false" title="Live aircraft positions overhead, updated every 15 seconds"><div class="indicator" aria-hidden="true"></div>Live aircraft</button>
+      <button type="button" class="layer-toggle" data-layer="transport" aria-pressed="false" title="Tube and rail stations within range"><div class="indicator" aria-hidden="true"></div><span id="label-transport">Transport</span></button>
+      <button type="button" class="layer-toggle" data-layer="flood" aria-pressed="false" title="Environment Agency flood-risk zones"><div class="indicator" aria-hidden="true"></div><span id="label-flood">Flood risk</span></button>
+      <button type="button" class="layer-toggle" data-layer="air-quality" aria-pressed="false" title="Air quality across boroughs"><div class="indicator" aria-hidden="true"></div><span id="label-aq">Air quality</span></button>
+      <button type="button" class="layer-toggle" data-layer="labels" aria-pressed="false" title="Borough name labels on the map"><div class="indicator" aria-hidden="true"></div>Labels</button>
     </div>
     <div class="map-legend" id="map-legend">
       <div class="legend-row"><div class="legend-line" style="border-color:var(--orange);"></div><span id="legend-path1">LHR PATHS</span></div>
@@ -523,6 +542,8 @@
     </div>
     <svg id="map-svg" role="application" aria-label="Interactive map of London and New York City boroughs with overlay toggles for noise, transport, flood and air-quality data. Use the search box, layer toggles, or city switcher above to explore."><title>Sky Score borough map</title></svg>
     <div class="site-footer" aria-label="Sky Score links">
+      <a class="for-devs" href="/score-demo/index.html" target="_blank" rel="noopener" title="Sky Score B2B API live demo">For Developers</a>
+      <span class="sep">·</span>
       <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">Methodology v3.1</a>
       <span class="sep">·</span>
       <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -536,7 +557,7 @@
   </main>
 
   <!-- AI Chatbot -->
-  <button type="button" class="chat-fab" id="chat-fab" title="Ask AI about any area"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="10" r="1.2"/><circle cx="16" cy="10" r="1.2"/></svg>ASK AI</button>
+  <button type="button" class="chat-fab pulsing" id="chat-fab" title="Ask AI about any area"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="10" r="1.2"/><circle cx="16" cy="10" r="1.2"/></svg>ASK AI</button>
   <div class="chat-panel" id="chat-panel" role="dialog" aria-label="AI Property Advisor">
     <div class="chat-header">
       <span>AI PROPERTY ADVISOR</span>
@@ -572,7 +593,7 @@
     </div>
     <div class="search-box">
       <div class="search-wrapper">
-        <input type="text" id="search-input" placeholder="Search area, neighbourhood or borough" autocomplete="off" aria-label="Search area, neighbourhood or borough">
+        <input type="text" id="search-input" placeholder="Search a postcode, area or borough" autocomplete="off" aria-label="Search a postcode, area or borough">
         <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
       </div>
       <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
@@ -1160,6 +1181,27 @@ const SCHOOL_SCORE = { outstanding:10, excellent:9, good:6, mixed:3 };
 const CRIME_TO_SCORE = (rate) => Math.max(0, Math.min(10, 10 - (rate - 50) / 15));
 const TRANSPORT_SCORE = { excellent:10, good:7, moderate:4, poor:2 };
 const HEALTH_SCORE = { excellent:10, good:7, moderate:4 };
+
+// Price formatting: £1,350,000 (full pounds with thousand separators) instead
+// of the older £1350K abbreviation, which is harder to read at a glance.
+// Returns 'N/A' for null/0/missing.
+function formatPrice(rawPrice, city) {
+  if (rawPrice == null || rawPrice === 0) return 'N/A';
+  const symbol = city === 'nyc' ? '$' : '£';
+  return symbol + Math.round(rawPrice).toLocaleString('en-GB');
+}
+
+// Compact form for table rows where horizontal space is tight (rankings,
+// compare table). Still avoids the lossy K abbreviation by using a
+// clearer format: £1.35M or £680K. Falls back to N/A when missing.
+function formatPriceCompact(rawPrice, city) {
+  if (rawPrice == null || rawPrice === 0) return 'N/A';
+  const symbol = city === 'nyc' ? '$' : '£';
+  if (rawPrice >= 1_000_000) {
+    return symbol + (rawPrice / 1_000_000).toFixed(2).replace(/\.?0+$/, '') + 'M';
+  }
+  return symbol + Math.round(rawPrice / 1000).toLocaleString('en-GB') + 'k';
+}
 
 function getLiveScore(boroughName, city) {
   const extraData = city === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA;
@@ -2944,9 +2986,9 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
   document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
   if (switchToAnalysis) switchTab('analysis');
   // Update viewing context for chatbot
-  currentViewingContext = `${data.name} borough (${currentCity === 'nyc' ? 'New York City' : 'London'}) - noise: ${data.impact}, avg price: ${Math.round(data.avg_price/1000)}K, score: ${data.score}/10`;
+  currentViewingContext = `${data.name} borough (${currentCity === 'nyc' ? 'New York City' : 'London'}) - noise: ${data.impact}, avg price: ${formatPrice(data.avg_price, currentCity)}, score: ${data.score}/10`;
 
-  const priceK = Math.round(data.avg_price/1000);
+  const priceFull = formatPrice(data.avg_price, currentCity);
   const noiseClass = data.impact==='severe'||data.impact==='high'||data.impact==='moderate-high'?'noise-high':
     data.impact==='moderate'?'noise-moderate':'noise-low';
   const noisePct = {severe:100,high:80,'moderate-high':65,moderate:50,'low-moderate':30,low:15}[data.impact]||20;
@@ -2970,7 +3012,7 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
 
     <div class="sidebar-section">
       <h3>SCORE BREAKDOWN <span style="font-weight:400;font-size:10px;color:var(--mid);">${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} PROFILE</span></h3>
-      <p class="property-note" style="margin-top:0;margin-bottom:12px;font-size:11px;">Four factors, weighted for <strong>${PERSONAS[currentPersona].label.toLowerCase()}</strong> buyers. Change profile in the Rankings tab.</p>
+      <p class="property-note" style="margin-top:0;margin-bottom:12px;font-size:11px;">Four factors, weighted for <strong>${PERSONAS[currentPersona].label.toLowerCase()}</strong> buyers. <button type="button" onclick="switchTab('ranking')" style="background:none;border:none;border-bottom:1px dotted var(--orange);color:var(--orange);cursor:pointer;padding:0;font:inherit;">Change profile</button></p>
       <div class="score-breakdown">
         <div class="score-row">
           <span class="score-row-label">Quiet Skies</span>
@@ -2984,7 +3026,7 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
           <div class="score-bar-track"><div class="score-bar-fill" style="width:${a*10}%;background:${scoreColor(a)};"></div></div>
           <span class="score-row-value">${a}/10</span>
         </div>
-        <div class="score-explain">${currentCity==='nyc'?'$':'&pound;'}${priceK}K avg. Cheapest=10, priciest=0. Weight: <strong>${Math.round(pw.afford*100)}%</strong></div>
+        <div class="score-explain">${priceFull} average. Cheapest=10, priciest=0. Weight: <strong>${Math.round(pw.afford*100)}%</strong></div>
 
         <div class="score-row" style="margin-top:10px;">
           <span class="score-row-label">Growth</span>
@@ -3013,7 +3055,7 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
     <div class="sidebar-section">
       <h3>PROPERTY ADVICE</h3>
       <div class="stat-grid">
-        <div class="stat"><div class="stat-value">${currentCity==='nyc'?'$':'&pound;'}${priceK>0?priceK+'K':'N/A'}</div><div class="stat-label">AVG PRICE</div></div>
+        <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
         <div class="stat"><div class="stat-value">${data.trend_pct||data.trend}</div><div class="stat-label">ANNUAL GROWTH</div></div>
       </div>
       <p class="property-note" style="margin-top:12px;">${data.property}</p>
@@ -3073,7 +3115,7 @@ function updateSidebarPostcode(analysis, boroughData) {
   let boroughHtml = '';
   const extra = getExtraData(analysis.borough);
   if (boroughData) {
-    const priceK = Math.round(boroughData.avg_price/1000);
+    const priceFull = formatPrice(boroughData.avg_price, currentCity);
     const a=boroughData.scores?.afford??5, gr=boroughData.scores?.growth??5, lv=boroughData.scores?.live??5;
     const pw = PERSONAS[currentPersona].weights;
     // Use postcode-specific noise to calculate Quiet Skies score
@@ -3125,7 +3167,7 @@ function updateSidebarPostcode(analysis, boroughData) {
       <div class="sidebar-section">
         <h3>BOROUGH: ${boroughData.name.toUpperCase()}</h3>
         <div class="stat-grid">
-          <div class="stat"><div class="stat-value">${currentCity==='nyc'?'$':'&pound;'}${priceK}K</div><div class="stat-label">AVG PRICE</div></div>
+          <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
           <div class="stat"><div class="stat-value">${boroughData.trend_pct}</div><div class="stat-label">ANNUAL GROWTH</div></div>
         </div>
         <p class="property-note" style="margin-top:12px;">${boroughData.property}</p>
@@ -3146,7 +3188,7 @@ function updateSidebarPostcode(analysis, boroughData) {
     airport: analysis.airportDists[0].name,
     airport_dist: analysis.airportDists[0].dist.toFixed(1),
     path_dist: analysis.nearestPathDist.toFixed(1),
-    avg_price: boroughData ? (currentCity==='nyc'?'$':'£') + Math.round(boroughData.avg_price/1000) + 'K' : 'N/A',
+    avg_price: boroughData ? formatPrice(boroughData.avg_price, currentCity) : 'N/A',
     growth: boroughData ? boroughData.trend_pct : 'N/A',
     crime: reportExtra?.crime || 'unknown',
     crime_rate: reportExtra?.crimeRate || 'N/A',
@@ -3596,13 +3638,15 @@ async function switchCity(city) {
     }
   }
 
-  // Update layer toggle labels and legend for city
+  // Update layer toggle labels and legend for city. Plain English (no
+  // agency acronyms) — the source of the data is shown in the tooltip
+  // (`title` attribute) and the methodology footer link.
   if (city === 'nyc') {
-    document.getElementById('label-aircraft').textContent = 'FAA AIRCRAFT NOISE';
-    document.getElementById('label-road').textContent = 'DOT ROAD NOISE';
-    document.getElementById('label-transport').textContent = 'SUBWAY / RAIL';
-    document.getElementById('label-flood').textContent = 'FEMA FLOOD ZONES';
-    document.getElementById('label-aq').textContent = 'EPA AIR QUALITY';
+    document.getElementById('label-aircraft').textContent = 'Aircraft noise';
+    document.getElementById('label-road').textContent = 'Road noise';
+    document.getElementById('label-transport').textContent = 'Subway / rail';
+    document.getElementById('label-flood').textContent = 'Flood risk';
+    document.getElementById('label-aq').textContent = 'Air quality';
     document.getElementById('legend-path1').textContent = 'JFK PATHS';
     document.getElementById('legend-path2').textContent = 'LGA / OTHER';
     document.getElementById('legend-heli-row').style.display = 'none';
@@ -3615,11 +3659,11 @@ async function switchCity(city) {
       document.querySelector('[data-layer="labels"]').classList.add('active');
     }
   } else {
-    document.getElementById('label-aircraft').textContent = 'DEFRA AIRCRAFT NOISE';
-    document.getElementById('label-road').textContent = 'DEFRA ROAD NOISE';
-    document.getElementById('label-transport').textContent = 'TRANSPORT';
-    document.getElementById('label-flood').textContent = 'FLOOD RISK ZONES';
-    document.getElementById('label-aq').textContent = 'AIR QUALITY';
+    document.getElementById('label-aircraft').textContent = 'Aircraft noise';
+    document.getElementById('label-road').textContent = 'Road noise';
+    document.getElementById('label-transport').textContent = 'Transport';
+    document.getElementById('label-flood').textContent = 'Flood risk';
+    document.getElementById('label-aq').textContent = 'Air quality';
     document.getElementById('legend-path1').textContent = 'LHR PATHS';
     document.getElementById('legend-path2').textContent = 'LCY / OTHER';
     document.getElementById('legend-heli-row').style.display = '';
@@ -3781,12 +3825,11 @@ function renderBoroughRanking() {
     // Neighbourhood-level scoring with computed noise, price, crime, transport
     const neighbourhoods = calcNeighbourhoodScores(currentCity);
     neighbourhoods.forEach((n, i) => {
-      const priceK = Math.round(n.avg_price / 1000);
       tableRows += `<tr data-rank-name="${esc(n.name)}" data-rank-action="search" style="cursor:pointer;">
         <td>${i + 1}</td>
         <td>${esc(n.name)}<span style="display:block;font-size:9px;color:var(--mid);">${esc(n.borough)}</span></td>
         <td class="col-noise">${noiseTag(n.impact)}</td>
-        <td class="col-price">${currency}${priceK}K</td>
+        <td class="col-price">${formatPriceCompact(n.avg_price, currentCity)}</td>
         <td class="col-score" style="color:${scoreColor(n.score)}">${n.score}</td>
       </tr>`;
     });
@@ -3794,12 +3837,11 @@ function renderBoroughRanking() {
     // Borough-level view
     const sorted = Object.entries(activeData).sort((a,b) => b[1].score - a[1].score);
     sorted.forEach(([name, data], i) => {
-      const priceK = Math.round(data.avg_price / 1000);
       tableRows += `<tr data-rank-name="${esc(name)}" data-rank-action="borough" style="cursor:pointer;">
         <td>${i + 1}</td>
         <td>${esc(name)}</td>
         <td class="col-noise">${noiseTag(data.impact)}</td>
-        <td class="col-price">${currency}${priceK}K</td>
+        <td class="col-price">${formatPriceCompact(data.avg_price, currentCity)}</td>
         <td class="col-score" style="color:${scoreColor(data.score)}">${data.score}</td>
       </tr>`;
     });
@@ -4051,6 +4093,7 @@ async function init() {
   const chatMessages = document.getElementById('chat-messages');
 
   chatFab.addEventListener('click', () => {
+    chatFab.classList.remove('pulsing');  // stop drawing the eye once user has noticed
     chatPanel.classList.toggle('open');
     if (chatPanel.classList.contains('open')) {
       chatInput.focus();
