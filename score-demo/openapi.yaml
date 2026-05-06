@@ -19,8 +19,10 @@ info:
     The methodology is reproducible: a worked example walks through every
     calculation against a real postcode.
 
-    **Coverage.** 33 London boroughs by postcode resolution. 5 NYC boroughs
-    by borough-name lookup (no ZIP resolution yet).
+    **Coverage.** 33 London boroughs by UK postcode resolution (postcodes.io).
+    5 NYC boroughs by borough-name lookup or 5-digit US ZIP auto-detection
+    (~182 residential ZIPs covered; ~110 with per-ZIP centroid for finer
+    quiet-score resolution).
   version: "1.0"
   contact:
     name: Sky Score

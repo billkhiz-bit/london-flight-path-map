@@ -54,13 +54,13 @@ The product. Wraps the scoring engine into a stable, documented, monetisable end
 - ✅ API key auth via API Gateway Usage Plan (1000 req/month free tier, 5/sec burst, 2/sec sustained)
 - ✅ Methodology v2.0 — every threshold and weight anchored to DEFRA Lden bands, WHO noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL; references section
 - ✅ OpenAPI 3.0 spec at `/score-demo/openapi.yaml` + interactive Swagger UI at `/score-demo/api-docs.html`
-- ✅ NYC light support — borough-name lookup for Manhattan, Brooklyn, Queens, Bronx, Staten Island; ZIP resolution still on roadmap
+- ✅ NYC support — borough-name lookup + 5-digit US ZIP auto-detection. ~182 residential ZIPs covered across all 5 boroughs; ~110 of those have per-ZIP centroids that drive the v3.0 Haversine quiet-score path (verified live 2026-05-06: 10001 Manhattan → score 5.0 / postcode-resolution, 11201 Brooklyn → 6.9 / postcode-resolution, 11375 Forest Hills → 6.0 / postcode-resolution). Non-NYC US ZIPs (e.g. 90210) return a structured 404 with the supported borough list.
+- ✅ Per-postcode quiet score — v3.0 Haversine to airports + flight-path geometry, applied to both UK postcodes (postcodes.io centroid) and NYC ZIPs (static centroid lookup). v3.1 raster scaffold present in code (DynamoDB lookup) for once the offline DEFRA loader runs.
 - ✅ CORS opened to `*` so third-party browser integrations work; abuse vector unchanged (server-side abuse was always possible regardless)
 - ✅ OGL attribution in every response
 
 **Outstanding**:
-- 🟡 Per-postcode noise sampling (replacing borough-level Lden bands with DEFRA WMS raster sampling at postcode centroid + Haversine flight-path distance) — ~1-day task
-- 🟡 NYC ZIP-to-borough resolution — adds ~250 ZIP lookups; dependent on a non-postcodes.io resolver
+- 🟡 DEFRA Lden raster offline data-load (`scripts/load_defra_raster.py`) — populates the DynamoDB table the v3.1 code path already reads from. Once loaded, quiet-score precision moves from "Haversine proxy" to "DEFRA raster sample at postcode centroid". One-time overnight batch (~1.7M UK postcodes).
 - 🟡 UK Core Cities (Manchester, Birmingham, Bristol, etc.) — geographic expansion, gated on liveability data acquisition
 - 🟡 Pricing tiers beyond free — define when first paying integrator commits
 - 🟡 Status page at `status.skyscore.com`
@@ -127,7 +127,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | CORS for `/v1/score` from third-party browser origins | **Resolved 2026-05-05**: global CORS opened to `*`. The score endpoints are API-key gated; the Bedrock endpoints are throttled at API Gateway (10 req/s) and CORS does not protect against server-side abuse anyway. | n/a |
 | OpenSky commercial-licensing — replace, negotiate, or decouple | Decouple (consumer only) until first paying integration; negotiate or swap before then | Before any B2B aviation-data integration |
 | EPC: API-on-demand vs bulk download | API now; bulk download once approaching rate-limit pressure (~50% of 6000-per-5-min quota) | When B2B traffic ramps |
-| NYC ZIP-to-borough resolution | **Deferred** — borough-name lookup works for now (`?city=nyc&borough=Manhattan`) | When first NYC integrator asks |
+| NYC ZIP-to-borough resolution | **Resolved 2026-05-05/06**: ~182 residential ZIPs supported via static lookup; ~110 with per-ZIP centroids for Haversine quiet-score. `?postcode=10001` and `?postcode=11201` work alongside UK postcodes. Non-NYC US ZIPs return a structured 404. | n/a |
 
 ---
 
@@ -143,28 +143,9 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 
 Detailed scoping for the two main outstanding items in Track 2. Captured 2026-05-05 so future-self picks up with context.
 
-### NYC ZIP-to-borough resolution
+### ~~NYC ZIP-to-borough resolution~~ — **shipped 2026-05-05/06**
 
-**Scope is smaller than originally implied** (this had been treated as a major task). It's a 2–3-hour build:
-
-- ~230 NYC ZIPs static-mapped to 5 boroughs (Manhattan 100/101/102xx, Bronx 104xx, Brooklyn 112xx, Queens 110/111/113/114/116xx, Staten Island 103xx)
-- Open data from NYC OpenData ZCTA boundary file or USPS — no API needed
-- Add detection logic in `resolve_query`: if input matches `^\d{5}$`, look up in `NYC_ZIP_TO_BOROUGH`, set `city='nyc'`
-- Update OpenAPI examples with NYC ZIPs
-- Test with: 10001 (Midtown Manhattan), 11201 (Brooklyn Heights), 11375 (Forest Hills, Queens)
-
-What it gives:
-- `?postcode=10001` works alongside UK postcodes
-- Removes a known limitation in the existing API for US prospects
-- Marketing line "Sky Score works for UK and NYC postcodes" becomes substantively true
-- Swagger UI shows NYC examples
-
-What it doesn't change:
-- Underlying NYC scoring methodology (already in place via borough-name lookup)
-- ZIP-to-neighbourhood resolution (a level finer; out of scope)
-- US-specific data integrations (ACRIS, NYPD CompStat) — separate workstream
-
-**Effort: 2–3 hours.**
+Captured original 2–3-hour scope; actual build came in close to estimate plus a v3.1 follow-up that added per-ZIP centroids for the Haversine path. Final shape: 182 residential ZIPs across the five boroughs, ~110 with explicit centroids; ZIPs without centroid fall back to borough-aggregate Lden bands; non-NYC US ZIPs return a structured 404 with the supported borough list. Live-verified against test postcodes 10001, 11201, 11375. See commits `af201fb` (initial detection + tests), `156b622` (v3.1 centroids), and `app.py` lines 105-260 for the data structures.
 
 ### Per-postcode noise sampling — vs current borough-level
 
