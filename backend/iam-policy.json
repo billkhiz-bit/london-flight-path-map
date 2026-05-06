@@ -124,11 +124,28 @@
             "Action": [
                 "cloudfront:CreateDistribution",
                 "cloudfront:GetDistribution",
+                "cloudfront:GetDistributionConfig",
                 "cloudfront:UpdateDistribution",
                 "cloudfront:TagResource",
                 "cloudfront:CreateOriginAccessControl",
                 "cloudfront:GetOriginAccessControl",
                 "cloudfront:CreateInvalidation"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CloudFrontFunctions",
+            "Effect": "Allow",
+            "Action": [
+                "cloudfront:CreateFunction",
+                "cloudfront:UpdateFunction",
+                "cloudfront:DeleteFunction",
+                "cloudfront:DescribeFunction",
+                "cloudfront:GetFunction",
+                "cloudfront:ListFunctions",
+                "cloudfront:PublishFunction",
+                "cloudfront:TestFunction",
+                "cloudfront:AssociateFunction"
             ],
             "Resource": "*"
         },
