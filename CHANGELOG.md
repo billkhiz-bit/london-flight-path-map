@@ -91,6 +91,6 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 ## [0.9], 2026-04-XX
 
 ### Added (consumer site, pre-API)
-- Sky Score consumer site (London + NYC) at `https://d1oe4ftwutjpf.cloudfront.net/`.
+- Sky Score consumer site (London + NYC) at `https://skyscore.co.uk/`.
 - Sky Score Radar 3D prototype at `/prototype/`.
 - Amazon Nova hackathon submission.

@@ -38,7 +38,7 @@ Sky Score is a per-postcode (or per-borough) property quality score from 0 to 10
 
 Two surfaces:
 
-- A **consumer site** at `https://d1oe4ftwutjpf.cloudfront.net` that informs renters and buyers.
+- A **consumer site** at `https://skyscore.co.uk` that informs renters and buyers.
 - A **B2B API** (`/v1/score` for single postcode, `/v1/score/batch` for bulk) intended for property data aggregators, conveyancers, and Sharia-compliant home-finance providers whose customers benefit from accurate due-diligence data.
 
 The score is a transparent, weighted combination of four components, Quiet, Affordability, Growth, and Liveability. It is not a market valuation, an EPC rating, or a regulatory rating; it is a holistic quality signal designed to *complement* those.
@@ -680,7 +680,7 @@ Methodology and API contract versioned independently:
 
 - **Source code**: <https://github.com/billkhiz-bit/london-flight-path-map>
 - **Live API**: `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
-- **API browser demo**: <https://d1oe4ftwutjpf.cloudfront.net/score-demo/index.html>
+- **API browser demo**: <https://skyscore.co.uk/score-demo/index.html>
 - **Methodology document** is committed to the repository and versioned with the codebase.
 - **Issues / methodology questions**: GitHub issues, or via the consumer site contact form.
 

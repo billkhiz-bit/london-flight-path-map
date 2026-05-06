@@ -12,7 +12,7 @@ Sky Score is the noise + livability layer for UK property data, designed to be h
 
 ## Current state
 
-- **Consumer site live**: `https://d1oe4ftwutjpf.cloudfront.net`, covers London + NYC, postcode/borough scoring, AI chat, multi-agent reports, image/document analysis, favourites
+- **Consumer site live**: `https://skyscore.co.uk`, covers London + NYC, postcode/borough scoring, AI chat, multi-agent reports, image/document analysis, favourites
 - **Backend**: 10 Lambdas behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
 - **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with live OpenSky aircraft data
 - **Recent wins**: Amazon Nova hackathon ($200 AWS credits, blog category), Emergent Ventures application submitted (awaiting response), Red Bull Basement application submitted (awaiting shortlist), Luma event applied
@@ -31,7 +31,7 @@ These shape every product decision:
 
 ## Three parallel tracks
 
-### Track 1, Consumer site (`d1oe4ftwutjpf.cloudfront.net`)
+### Track 1, Consumer site (`skyscore.co.uk`)
 
 The consumer site is the marketing engine, not the revenue centre. Keep it sharp; don't compete with the paid API.
 

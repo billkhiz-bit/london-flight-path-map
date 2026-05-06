@@ -260,7 +260,7 @@ def handle_post(event):
         'note': ('Save this key now. It is shown ONCE and cannot be '
                  'retrieved after this response. Pass it as the X-Api-Key '
                  'header on /v1/score requests.'),
-        'docs': 'https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html',
+        'docs': 'https://skyscore.co.uk/score-demo/api-docs.html',
     })
 
 

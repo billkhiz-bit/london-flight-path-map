@@ -22,7 +22,7 @@ How Nova powers it:
 
 290+ individually scored neighbourhoods across 33 London boroughs and 5 NYC boroughs. Five buyer personas instantly re-rank every neighbourhood based on what matters most to each buyer.
 
-Live demo: https://d1oe4ftwutjpf.cloudfront.net
+Live demo: https://skyscore.co.uk
 
 #AmazonNova
 
@@ -49,6 +49,6 @@ The frontend is a single HTML file (~3,870 lines) using D3.js for interactive ma
 
 10+ live government data sources. Five buyer personas. Six Amazon Nova AI modes. Zero sign-up required.
 
-Live demo: https://d1oe4ftwutjpf.cloudfront.net
+Live demo: https://skyscore.co.uk
 
 #AmazonNova #AWS #Serverless

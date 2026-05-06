@@ -73,9 +73,9 @@ LinkedIn 1st/2nd-degree connections at target companies. Higher-leverage than an
 ## Live artefacts to reference in outreach
 
 - Live API: `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score`
-- Browser demo: `https://d1oe4ftwutjpf.cloudfront.net/score-demo/index.html`
-- API reference (Swagger): `https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html`
-- Status page: `https://d1oe4ftwutjpf.cloudfront.net/score-demo/status.html`
+- Browser demo: `https://skyscore.co.uk/score-demo/index.html`
+- API reference (Swagger): `https://skyscore.co.uk/score-demo/api-docs.html`
+- Status page: `https://skyscore.co.uk/score-demo/status.html`
 - Methodology: `https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md`
 - Public repo: `https://github.com/billkhiz-bit/london-flight-path-map`
 
@@ -237,7 +237,7 @@ These are the public-facing launch drafts. Different audience, different tone fr
 > - **OGL-attributed throughout.** All UK government data is sourced under Open Government Licence v3.0 with attribution.
 > - **No commercial agenda toward your membership.** I'm not asking for anything from HACAN East. Just sharing in case you think the tool would be useful for members researching neighbourhoods to move to (or to flag to friends and family who don't know the story behind specific flight paths).
 >
-> Live tool: [https://d1oe4ftwutjpf.cloudfront.net/](https://d1oe4ftwutjpf.cloudfront.net/), try a postcode you know well; the score should match your intuition.
+> Live tool: [https://skyscore.co.uk/](https://skyscore.co.uk/), try a postcode you know well; the score should match your intuition.
 >
 > If it's useful for HACAN East to share with members in a newsletter or blog post, I'd be glad to. If not, no follow-up needed, I'd rather not waste your time.
 >
@@ -310,7 +310,7 @@ These are the public-facing launch drafts. Different audience, different tone fr
 
 **Tweet 7, close:**
 
-> Free, public, no sign-up: [https://d1oe4ftwutjpf.cloudfront.net/](https://d1oe4ftwutjpf.cloudfront.net/)
+> Free, public, no sign-up: [https://skyscore.co.uk/](https://skyscore.co.uk/)
 >
 > If you're a renter or buyer, try the postcode you live in or are about to move to. If the score doesn't match your gut, tell me, that's how it gets better.
 >
@@ -337,9 +337,9 @@ These are the public-facing launch drafts. Different audience, different tone fr
 >
 > Stack: vanilla JS + D3 frontend, AWS Lambda + API Gateway + DynamoDB backend (SAM-deployed), Amazon Bedrock for the AI chat / multi-agent property reports. All inputs OGL v3.0 attributed.
 >
-> Live: [https://d1oe4ftwutjpf.cloudfront.net/](https://d1oe4ftwutjpf.cloudfront.net/)
+> Live: [https://skyscore.co.uk/](https://skyscore.co.uk/)
 > Methodology: [https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md](https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md)
-> API docs: [https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html](https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html)
+> API docs: [https://skyscore.co.uk/score-demo/api-docs.html](https://skyscore.co.uk/score-demo/api-docs.html)
 >
 > Happy to answer technical questions. Strongest feedback I'm looking for: anywhere the score doesn't match your intuition, that's a methodology bug I want to know about.
 

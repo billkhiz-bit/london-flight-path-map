@@ -10,7 +10,7 @@ info:
 
     **Authentication.** All endpoints require an API key passed in the
     `X-Api-Key` header. Free tier provides 1000 requests/month, 5/sec burst,
-    2/sec sustained. Contact via the [consumer site](https://d1oe4ftwutjpf.cloudfront.net/)
+    2/sec sustained. Contact via the [consumer site](https://skyscore.co.uk/)
     for a key.
 
     **Methodology.** Every numeric threshold and weight is anchored to a
@@ -26,7 +26,7 @@ info:
   version: "1.0"
   contact:
     name: Sky Score
-    url: https://d1oe4ftwutjpf.cloudfront.net/
+    url: https://skyscore.co.uk/
   license:
     name: Proprietary
     url: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSE

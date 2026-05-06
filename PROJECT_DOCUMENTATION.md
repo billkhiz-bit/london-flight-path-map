@@ -9,7 +9,7 @@
 
 Built on Amazon Bedrock (Nova 2 Lite + Nova Pro) for AI chat, multi-agent property reports, and multimodal listing-photo/EPC-document analysis. ~290 individually scored neighbourhoods on the consumer side; 33 London boroughs + 5 NYC boroughs (plus ~182 NYC ZIPs) on the API.
 
-**Live URL:** https://d1oe4ftwutjpf.cloudfront.net
+**Live URL:** https://skyscore.co.uk
 **API:** https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/
 **Methodology:** [METHODOLOGY.md](./METHODOLOGY.md) (v3.1)
 **GitHub:** https://github.com/billkhiz-bit/london-flight-path-map

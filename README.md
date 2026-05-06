@@ -9,10 +9,10 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 ## Try it in 30 seconds
 
 Browser demo (no setup):
-> <https://d1oe4ftwutjpf.cloudfront.net/score-demo/index.html>
+> <https://skyscore.co.uk/score-demo/index.html>
 
 Interactive API reference (Swagger UI):
-> <https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html>
+> <https://skyscore.co.uk/score-demo/api-docs.html>
 
 Or one curl:
 
@@ -27,11 +27,11 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 
 | What | URL |
 |---|---|
-| Consumer site | <https://d1oe4ftwutjpf.cloudfront.net/> |
-| Sky Score Radar (3D prototype) | <https://d1oe4ftwutjpf.cloudfront.net/prototype/> |
-| API browser demo | <https://d1oe4ftwutjpf.cloudfront.net/score-demo/index.html> |
-| API reference (Swagger UI) | <https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html> |
-| OpenAPI 3.0 spec | <https://d1oe4ftwutjpf.cloudfront.net/score-demo/openapi.yaml> |
+| Consumer site | <https://skyscore.co.uk/> |
+| Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
+| API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
+| API reference (Swagger UI) | <https://skyscore.co.uk/score-demo/api-docs.html> |
+| OpenAPI 3.0 spec | <https://skyscore.co.uk/score-demo/openapi.yaml> |
 | `/v1/score` endpoint | <https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score> |
 | Methodology | [METHODOLOGY.md](./METHODOLOGY.md), the document that closes B2B audits |
 
@@ -206,7 +206,7 @@ Frontend deploy commands are in [`CLAUDE.md`](./CLAUDE.md).
 
 Proprietary. See [LICENSE](./LICENSE). Source-available for inspection and methodology audit; commercial use requires a licence agreement.
 
-For licensing, integration, or partnership enquiries, contact via the [live site](https://d1oe4ftwutjpf.cloudfront.net/).
+For licensing, integration, or partnership enquiries, contact via the [live site](https://skyscore.co.uk/).
 
 ## Acknowledgements
 
