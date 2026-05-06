@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sky Score API — Live Demo</title>
+<title>Sky Score API, Live Demo</title>
 <meta name="description" content="Try the Sky Score B2B property data API live. Returns noise, livability, and affordability for any UK postcode.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -335,14 +335,14 @@
 <body>
 
 <header>
-  <h1>Sky Score API <span class="accent">— Live Demo</span></h1>
+  <h1>Sky Score API <span class="accent">, Live Demo</span></h1>
   <p class="tag">A noise + livability data API for UK property. Live endpoint at <code>/v1/score</code>. Methodology: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">github</a>.</p>
 </header>
 
 <main>
   <section class="card signup-card" aria-labelledby="signup-heading">
     <h2 id="signup-heading">Get your own API key</h2>
-    <p class="tag" style="margin-bottom:12px;">Free tier: 1000 requests / month, 5 burst, 2 sustained. One key per email. Shown once on signup — save it somewhere durable.</p>
+    <p class="tag" style="margin-bottom:12px;">Free tier: 1000 requests / month, 5 burst, 2 sustained. One key per email. Shown once on signup, save it somewhere durable.</p>
     <form id="signupForm">
       <div class="signup-row">
         <div>
@@ -361,7 +361,7 @@
 
   <section class="card">
     <h2>Try the API</h2>
-    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only — same 1000 req/month limit as the free tier, but shared across all visitors. For production use, sign up for your own key above.</p>
+    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only, same 1000 req/month limit as the free tier, but shared across all visitors. For production use, sign up for your own key above.</p>
     <form id="form">
       <div>
         <label for="postcode">Postcode</label>
@@ -371,10 +371,10 @@
         <label for="persona">Persona</label>
         <select id="persona">
           <option value="balanced">Balanced (default)</option>
-          <option value="family">Family — schools and quiet matter most</option>
-          <option value="investor">Investor — affordability and growth</option>
-          <option value="firsttime">First-time buyer — affordability heavy</option>
-          <option value="quietlife">Quiet life — peace above all</option>
+          <option value="family">Family, schools and quiet matter most</option>
+          <option value="investor">Investor, affordability and growth</option>
+          <option value="firsttime">First-time buyer, affordability heavy</option>
+          <option value="quietlife">Quiet life, peace above all</option>
         </select>
       </div>
       <button type="submit" id="submitBtn">Get Sky Score</button>
@@ -382,12 +382,12 @@
       <div>
         <label>Try an example</label>
         <div class="examples">
-          <button type="button" data-pc="N1 7SX" data-pers="balanced">London — Hackney (quiet)</button>
-          <button type="button" data-pc="TW3 4DX" data-pers="balanced">London — Hounslow (severe)</button>
-          <button type="button" data-pc="TW3 4DX" data-pers="family">London — Hounslow + family</button>
-          <button type="button" data-pc="10001" data-pers="balanced">NYC — Midtown Manhattan</button>
-          <button type="button" data-pc="11201" data-pers="family">NYC — Brooklyn Heights + family</button>
-          <button type="button" data-pc="11375" data-pers="balanced">NYC — Forest Hills (under JFK)</button>
+          <button type="button" data-pc="N1 7SX" data-pers="balanced">London, Hackney (quiet)</button>
+          <button type="button" data-pc="TW3 4DX" data-pers="balanced">London, Hounslow (severe)</button>
+          <button type="button" data-pc="TW3 4DX" data-pers="family">London, Hounslow + family</button>
+          <button type="button" data-pc="10001" data-pers="balanced">NYC, Midtown Manhattan</button>
+          <button type="button" data-pc="11201" data-pers="family">NYC, Brooklyn Heights + family</button>
+          <button type="button" data-pc="11375" data-pers="balanced">NYC, Forest Hills (under JFK)</button>
         </div>
       </div>
     </form>
@@ -404,7 +404,7 @@
 </footer>
 
 <script>
-  // Public demo key — intentionally embedded in the served HTML for the
+  // Public demo key, intentionally embedded in the served HTML for the
   // "Try the API" form below. Capped at 1000 req/month (the SkyScoreFreeTier
   // usage plan), shared across all visitors. For production use, sign up
   // above for your own per-email key. Rotated 2026-05-06 (audit C2)
@@ -451,7 +451,7 @@
 
     try {
       // encodeURIComponent handles spaces → %20 correctly. Don't replace
-      // spaces with '+' first — that double-encodes to %2B, which the API
+      // spaces with '+' first, that double-encodes to %2B, which the API
       // sees as a literal '+' character, breaking postcodes.io lookups.
       const url = `${BASE}?postcode=${encodeURIComponent(postcode)}&persona=${encodeURIComponent(persona)}`;
       const t0 = performance.now();
@@ -552,7 +552,7 @@
   signupForm.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     const email = document.getElementById('signupEmail').value.trim();
-    const name  = document.getElementById('signupName').value.trim();
+    const name = document.getElementById('signupName').value.trim();
     if (!email) return;
 
     signupBtn.disabled = true;
@@ -577,7 +577,7 @@
             <span id="signupKeyVal">${escapeHtml(data.apiKey)}</span>
             <button type="button" id="signupCopyBtn">Copy</button>
           </div>
-          <div class="signup-warn">${escapeHtml(data.note || 'Save this key — it cannot be retrieved later.')}</div>
+          <div class="signup-warn">${escapeHtml(data.note || 'Save this key, it cannot be retrieved later.')}</div>
           <div style="margin-top:8px;font-size:12px;">Limits: ${data.limits.monthlyQuota.toLocaleString()} req/month, ${data.limits.burstLimit} burst, ${data.limits.sustainedRateLimit}/sec sustained.</div>
         `;
         document.getElementById('signupCopyBtn').addEventListener('click', () => {

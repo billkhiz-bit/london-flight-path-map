@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sky Score — UK property quality data · noise, livability, affordability</title>
+<title>Sky Score, UK property quality data · noise, livability, affordability</title>
 
 <!-- OG Meta Tags for social sharing -->
-<meta name="description" content="Sky Score — postcode-level noise, livability and affordability data for UK and NYC property. Independent of estate agents and listings sites. Free, open methodology.">
-<meta property="og:title" content="Sky Score — independent property quality data">
+<meta name="description" content="Sky Score, postcode-level noise, livability and affordability data for UK and NYC property. Independent of estate agents and listings sites. Free, open methodology.">
+<meta property="og:title" content="Sky Score, independent property quality data">
 <meta property="og:description" content="The noise + livability data UK listings sites have a structural reason not to show. Free postcode-level scoring for UK and NYC. Open methodology, reproducible.">
 <link rel="canonical" href="https://d1oe4ftwutjpf.cloudfront.net/">
 <meta name="theme-color" content="#141414">
@@ -32,7 +32,7 @@
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sky Score — UK property quality data API">
+<meta name="twitter:title" content="Sky Score, UK property quality data API">
 <meta name="twitter:description" content="Postcode-level noise, livability, affordability scoring for UK and NYC. Free consumer site; B2B API for integrators.">
 <meta name="twitter:image" content="https://d1oe4ftwutjpf.cloudfront.net/preview.png">
 
@@ -64,7 +64,7 @@
   .map-title .dev-link{font-size:9px;font-weight:500;color:var(--orange);margin-top:6px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;display:inline-block;border-bottom:1px solid var(--orange);padding-bottom:1px;}
   .map-title .dev-link:hover{color:var(--dark);border-color:var(--dark);}
 
-  /* Subtle B2B footer — small, unobtrusive, sits below the legend */
+  /* Subtle B2B footer, small, unobtrusive, sits below the legend */
   .site-footer{position:absolute;bottom:8px;left:32px;z-index:10;display:flex;gap:14px;font-family:var(--font-mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);pointer-events:none;}
   .site-footer a{color:var(--mid);text-decoration:none;pointer-events:auto;border-bottom:1px solid transparent;padding-bottom:1px;}
   .site-footer a:hover{color:var(--dark);border-bottom-color:var(--dark);}
@@ -467,7 +467,7 @@
     <div class="map-title">
       <h1 id="map-title-text">Sky Score</h1>
       <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVABILITY DATA</div>
-      <a class="dev-link" href="/score-demo/index.html" target="_blank" rel="noopener" title="Sky Score B2B API — try the live API in a browser demo">DEVELOPERS · API DEMO &#8594;</a>
+      <a class="dev-link" href="/score-demo/index.html" target="_blank" rel="noopener" title="Sky Score B2B API, try the live API in a browser demo">DEVELOPERS · API DEMO &#8594;</a>
     </div>
     <div class="city-selector" id="city-selector">
       <button type="button" class="city-btn active" data-city="london" onclick="switchCity('london')">London</button>
@@ -803,20 +803,20 @@ const NYC_AREA_MAP = {
   'Grasmere':{zip:'10305',lat:40.6028,lon:-74.0841,borough:'Staten Island'},'Rosebank':{zip:'10305',lat:40.6136,lon:-74.0683,borough:'Staten Island'},
 };
 
-// US ZIP detection — same regex as backend/lambdas/score/app.py for parity.
+// US ZIP detection, same regex as backend/lambdas/score/app.py for parity.
 const US_ZIP_PATTERN = /^\d{5}(-\d{4})?$/;
 
-// NYC ZIPs grouped by borough — mirrors backend/lambdas/score/app.py
+// NYC ZIPs grouped by borough, mirrors backend/lambdas/score/app.py
 // _NYC_ZIPS_BY_BOROUGH (covers the 182 residential / general-use ZIPs across
 // the 5 boroughs). Keep this in sync with the Lambda when ZIP coverage changes.
 // ZIPs without an explicit centroid in NYC_AREA_MAP fall back to borough-level
 // view (matching the API's borough-aggregate fallback for the same ZIPs).
 const NYC_ZIPS_BY_BOROUGH = {
   'Manhattan': ['10001','10002','10003','10004','10005','10006','10007','10009','10010','10011','10012','10013','10014','10016','10017','10018','10019','10020','10021','10022','10023','10024','10025','10026','10027','10028','10029','10030','10031','10032','10033','10034','10035','10036','10037','10038','10039','10040','10044','10065','10069','10075','10128','10280','10282'],
-  'Bronx':         ['10451','10452','10453','10454','10455','10456','10457','10458','10459','10460','10461','10462','10463','10464','10465','10466','10467','10468','10469','10470','10471','10472','10473','10474','10475'],
+  'Bronx': ['10451','10452','10453','10454','10455','10456','10457','10458','10459','10460','10461','10462','10463','10464','10465','10466','10467','10468','10469','10470','10471','10472','10473','10474','10475'],
   'Staten Island': ['10301','10302','10303','10304','10305','10306','10307','10308','10309','10310','10311','10312','10314'],
-  'Brooklyn':      ['11201','11203','11204','11205','11206','11207','11208','11209','11210','11211','11212','11213','11214','11215','11216','11217','11218','11219','11220','11221','11222','11223','11224','11225','11226','11228','11229','11230','11231','11232','11233','11234','11235','11236','11237','11238','11239','11249'],
-  'Queens':        ['11004','11005','11101','11102','11103','11104','11105','11106','11109','11354','11355','11356','11357','11358','11359','11360','11361','11362','11363','11364','11365','11366','11367','11368','11369','11370','11372','11373','11374','11375','11377','11378','11379','11385','11411','11412','11413','11414','11415','11416','11417','11418','11419','11420','11421','11422','11423','11426','11427','11428','11429','11432','11433','11434','11435','11436','11691','11692','11693','11694','11697'],
+  'Brooklyn': ['11201','11203','11204','11205','11206','11207','11208','11209','11210','11211','11212','11213','11214','11215','11216','11217','11218','11219','11220','11221','11222','11223','11224','11225','11226','11228','11229','11230','11231','11232','11233','11234','11235','11236','11237','11238','11239','11249'],
+  'Queens': ['11004','11005','11101','11102','11103','11104','11105','11106','11109','11354','11355','11356','11357','11358','11359','11360','11361','11362','11363','11364','11365','11366','11367','11368','11369','11370','11372','11373','11374','11375','11377','11378','11379','11385','11411','11412','11413','11414','11415','11416','11417','11418','11419','11420','11421','11422','11423','11426','11427','11428','11429','11432','11433','11434','11435','11436','11691','11692','11693','11694','11697'],
 };
 
 // Flat ZIP → borough lookup, derived once at module load.
@@ -1088,24 +1088,24 @@ const FLIGHT_PATHS = [
 
 // Borough data - scores are COMPUTED, not hardcoded. See calcScores().
 const BOROUGH_DATA_RAW={
-  'Hounslow':{impact:'severe',avg_price:465000,trend:3.2,note:'Directly under Heathrow flight paths. The most noise-affected borough in London  -  you will hear planes constantly, especially in the western parts around Cranford, Heston and Feltham.',property:'Prices are lower here because of noise. Chiswick (eastern end) is pricier but also quieter. If you can tolerate noise, this is one of the more affordable west London boroughs.'},
-  'Hillingdon':{impact:'severe',avg_price:480000,trend:2.8,note:'Heathrow airport sits inside this borough. The south is severely affected by aircraft noise, but the north (Ruislip, Ickenham, Uxbridge) is surprisingly quiet.',property:'The north is excellent value  -  leafy suburbs with good schools, far enough from the runways. Avoid anything south of the A4 if noise matters to you.'},
-  'Richmond upon Thames':{impact:'high',avg_price:825000,trend:1.5,note:'A beautiful borough on the Thames, but it sits under several Heathrow arrival and departure paths. The eastern side (Twickenham, Isleworth) gets more noise than the west.',property:'You pay a premium for the parks and river, but use noise as a bargaining chip  -  many buyers don\'t check flight paths before viewing. Visit on a busy flying day before making an offer.'},
-  'Ealing':{impact:'high',avg_price:540000,trend:4.1,note:'Southern Ealing (Southall, Hanwell) is under Heathrow paths. Northern Ealing and Pitshanger Lane are much quieter and have benefited from the Elizabeth Line.',property:'North Ealing is a sweet spot  -  quiet skies, Elizabeth Line access, and prices well below neighbouring Chiswick. Southall is affordable but expect regular aircraft noise.'},
-  'Wandsworth':{impact:'moderate',avg_price:680000,trend:2.1,note:'One of the more noise-affected boroughs due to its position under Heathrow\'s final approach during westerly operations (~70% of the time). The London Heliport in Battersea also generates low-altitude helicopter traffic during business hours. The borough also gets some higher-altitude Gatwick and City airport traffic.',property:'Tooting offers the best value. Battersea regen pushed prices up but noise from both Heathrow AND the Battersea Heliport is a real factor  -  use as negotiation leverage. Tooting and Balham are the sweet spots for less noise.'},
+  'Hounslow':{impact:'severe',avg_price:465000,trend:3.2,note:'Directly under Heathrow flight paths. The most noise-affected borough in London - you will hear planes constantly, especially in the western parts around Cranford, Heston and Feltham.',property:'Prices are lower here because of noise. Chiswick (eastern end) is pricier but also quieter. If you can tolerate noise, this is one of the more affordable west London boroughs.'},
+  'Hillingdon':{impact:'severe',avg_price:480000,trend:2.8,note:'Heathrow airport sits inside this borough. The south is severely affected by aircraft noise, but the north (Ruislip, Ickenham, Uxbridge) is surprisingly quiet.',property:'The north is excellent value - leafy suburbs with good schools, far enough from the runways. Avoid anything south of the A4 if noise matters to you.'},
+  'Richmond upon Thames':{impact:'high',avg_price:825000,trend:1.5,note:'A beautiful borough on the Thames, but it sits under several Heathrow arrival and departure paths. The eastern side (Twickenham, Isleworth) gets more noise than the west.',property:'You pay a premium for the parks and river, but use noise as a bargaining chip - many buyers don\'t check flight paths before viewing. Visit on a busy flying day before making an offer.'},
+  'Ealing':{impact:'high',avg_price:540000,trend:4.1,note:'Southern Ealing (Southall, Hanwell) is under Heathrow paths. Northern Ealing and Pitshanger Lane are much quieter and have benefited from the Elizabeth Line.',property:'North Ealing is a sweet spot - quiet skies, Elizabeth Line access, and prices well below neighbouring Chiswick. Southall is affordable but expect regular aircraft noise.'},
+  'Wandsworth':{impact:'moderate',avg_price:680000,trend:2.1,note:'One of the more noise-affected boroughs due to its position under Heathrow\'s final approach during westerly operations (~70% of the time). The London Heliport in Battersea also generates low-altitude helicopter traffic during business hours. The borough also gets some higher-altitude Gatwick and City airport traffic.',property:'Tooting offers the best value. Battersea regen pushed prices up but noise from both Heathrow AND the Battersea Heliport is a real factor - use as negotiation leverage. Tooting and Balham are the sweet spots for less noise.'},
   'Lambeth':{impact:'moderate',avg_price:560000,trend:3.5,note:'Heathrow arrivals pass over at roughly 4,000ft. You\'ll hear them on calm days with windows open, but it\'s not a dominant feature. Brixton and Clapham are in the approach corridor.',property:'Brixton is gentrifying rapidly. Streatham offers family-sized homes at more affordable prices. Noise is a background factor here, not a dealbreaker.'},
   'Lewisham':{impact:'low-moderate',avg_price:445000,trend:4.8,note:'Very little aircraft noise. Some London City traffic at altitude, and Heathrow arrivals are high overhead. Most residents never notice planes.',property:'One of inner London\'s best-kept secrets for buyers. Ladywell, Brockley and Catford all offer good value with excellent transport links and quiet skies.'},
   'Greenwich':{impact:'moderate',avg_price:430000,trend:5.2,note:'Under the London City Airport approach corridor. The steep descent means noise is concentrated in a narrow band near the river. Blackheath and Eltham are quieter.',property:'Woolwich has boomed since the Elizabeth Line opened. Blackheath is premium but quiet. The areas right under the LCY approach are noticeably noisier.'},
-  'Tower Hamlets':{impact:'low-moderate',avg_price:495000,trend:2.0,note:'Some London City traffic audible around Canary Wharf and the Isle of Dogs. Otherwise not significantly affected by aircraft noise.',property:'Canary Wharf has oversupply of new-build flats  -  good for negotiating. Bow and Mile End offer better value and are away from LCY paths.'},
-  'Camden':{impact:'low',avg_price:780000,trend:1.2,note:'Not under any major flight paths. One of the quietest boroughs for aircraft noise in London. You\'re unlikely to notice planes here.',property:'A premium borough  -  you pay for the quiet skies plus the location. Kentish Town and Gospel Oak are the relative value spots. Hampstead is ultra-premium.'},
+  'Tower Hamlets':{impact:'low-moderate',avg_price:495000,trend:2.0,note:'Some London City traffic audible around Canary Wharf and the Isle of Dogs. Otherwise not significantly affected by aircraft noise.',property:'Canary Wharf has oversupply of new-build flats - good for negotiating. Bow and Mile End offer better value and are away from LCY paths.'},
+  'Camden':{impact:'low',avg_price:780000,trend:1.2,note:'Not under any major flight paths. One of the quietest boroughs for aircraft noise in London. You\'re unlikely to notice planes here.',property:'A premium borough - you pay for the quiet skies plus the location. Kentish Town and Gospel Oak are the relative value spots. Hampstead is ultra-premium.'},
   'Islington':{impact:'low',avg_price:720000,trend:1.8,note:'Well away from all major approach corridors. Minimal aircraft noise. A genuinely quiet borough from an aviation perspective.',property:'Desirable and quiet. Holloway Road is the most affordable entry point. Angel and Upper Street are premium. Good schools throughout.'},
   'Hackney':{impact:'low',avg_price:590000,trend:3.0,note:'Not under any significant flight paths. Quiet skies across the borough.',property:'A creative hub that has gentrified significantly. Clapton and Hackney Wick are the next areas seeing growth. Good transport links to the City.'},
   'Barnet':{impact:'low-moderate',avg_price:560000,trend:3.1,note:'Some Luton arrivals pass over at high altitude, but this is barely noticeable at ground level. Most of the borough has quiet skies.',property:'Good suburban living with reliable schools. East Finchley and Friern Barnet offer solid value. Mill Hill is the premium end.'},
-  'Croydon':{impact:'moderate',avg_price:395000,trend:4.5,note:'Under the Gatwick approach corridor and the Heathrow Biggin Hill arrival stack. Noise varies by area  -  south Croydon gets more Gatwick traffic.',property:'The most affordable borough in London. Major regeneration underway. Tramlink gives good connectivity. Best borough for first-time buyers who want space.'},
+  'Croydon':{impact:'moderate',avg_price:395000,trend:4.5,note:'Under the Gatwick approach corridor and the Heathrow Biggin Hill arrival stack. Noise varies by area - south Croydon gets more Gatwick traffic.',property:'The most affordable borough in London. Major regeneration underway. Tramlink gives good connectivity. Best borough for first-time buyers who want space.'},
   'Bromley':{impact:'low',avg_price:480000,trend:3.8,note:'Biggin Hill business airport is nearby but handles very few flights. The rest of the borough has quiet skies.',property:'Excellent schools including grammar schools. Chislehurst is the premium village. Penge and Anerley are the affordable entry points with good rail links.'},
   'Newham':{impact:'moderate-high',avg_price:410000,trend:5.8,note:'London City Airport is located here. The Royal Docks and areas near the airport experience significant noise. Stratford and Forest Gate are much quieter.',property:'Fastest-growing property prices in London, driven by Olympic legacy and Elizabeth Line. Avoid Royal Docks if noise is a concern. Stratford and Forest Gate are the sweet spots.'},
   'Southwark':{impact:'low-moderate',avg_price:530000,trend:2.5,note:'Some Heathrow approach paths pass overhead at altitude, but noise levels are generally acceptable. Not a major aircraft noise concern.',property:'SE1 (Borough, Bermondsey) is premium riverside. Peckham and Camberwell offer great value with vibrant culture. Canada Water regeneration is creating new opportunities.'},
-  'Hammersmith and Fulham':{impact:'moderate-high',avg_price:750000,trend:1.0,note:'Under Heathrow easterly departure paths. Planes climb out at relatively low altitude over Chiswick and Hammersmith. Noisier than you might expect for the price.',property:'Fulham is premium. Shepherd\'s Bush and White City offer relative value with regeneration. Use the noise factor to negotiate  -  many sellers don\'t disclose it.'},
+  'Hammersmith and Fulham':{impact:'moderate-high',avg_price:750000,trend:1.0,note:'Under Heathrow easterly departure paths. Planes climb out at relatively low altitude over Chiswick and Hammersmith. Noisier than you might expect for the price.',property:'Fulham is premium. Shepherd\'s Bush and White City offer relative value with regeneration. Use the noise factor to negotiate - many sellers don\'t disclose it.'},
   'Kensington and Chelsea':{impact:'moderate',avg_price:1350000,trend:0.5,note:'Under some Heathrow paths at medium altitude. You\'ll notice planes in summer with windows open, but noise rarely affects prices here.',property:'London\'s most expensive borough. Prices are driven by prestige, so noise barely registers as a factor. North Kensington is the only relative value area.'},
   'Brent':{impact:'low-moderate',avg_price:490000,trend:4.0,note:'Some Heathrow departure paths at altitude. Wembley occasionally hears planes but it\'s not a significant issue for most residents.',property:'Wembley Park regeneration is transforming the area. Kilburn offers quick access to central London. Queens Park is the premium pocket.'},
   'Haringey':{impact:'low',avg_price:545000,trend:3.5,note:'Well away from all major flight corridors. One of the quieter boroughs for aircraft noise.',property:'Crouch End is a premium car-free village (no tube). Tottenham is seeing major regeneration. Wood Green offers genuine value.'},
@@ -1114,7 +1114,7 @@ const BOROUGH_DATA_RAW={
   'Redbridge':{impact:'low',avg_price:445000,trend:3.9,note:'Away from main flight corridors. The Lambourne arrival stack passes north at high altitude, barely noticeable.',property:'Family-oriented borough. South Woodford is leafy and desirable. Ilford has been boosted by the Elizabeth Line. Wanstead is the premium area.'},
   'Enfield':{impact:'low',avg_price:430000,trend:4.3,note:'Far from all airport flight paths. Consistently quiet skies across the entire borough. One of the best for noise-sensitive buyers.',property:'Affordable north London with lots of green space. Enfield Town has a pleasant centre. Palmers Green has a strong community feel. Excellent value for families.'},
   'Kingston upon Thames':{impact:'low-moderate',avg_price:550000,trend:2.0,note:'Some Heathrow Ockham arrivals pass to the north, but they\'re high and typically not bothersome. Generally quiet.',property:'Has a riverside town feel rather than a London suburb. Good schools. Surbiton is popular with commuters. New Malden offers good value.'},
-  'Sutton':{impact:'low',avg_price:415000,trend:3.5,note:'Between the Heathrow and Gatwick corridors but not directly under either. Quiet skies throughout.',property:'Excellent grammar schools  -  a major draw for families. Carshalton has a village feel. Cheam is popular. One of the most affordable boroughs for the quality of life.'},
+  'Sutton':{impact:'low',avg_price:415000,trend:3.5,note:'Between the Heathrow and Gatwick corridors but not directly under either. Quiet skies throughout.',property:'Excellent grammar schools - a major draw for families. Carshalton has a village feel. Cheam is popular. One of the most affordable boroughs for the quality of life.'},
   'Westminster':{impact:'moderate',avg_price:980000,trend:0.8,note:'Under the Lambourne arrival stack at roughly 3,000\u20134,000ft. You will hear planes, especially from a balcony or terrace. Indoor noise is manageable with good glazing.',property:'Central London premium. Pimlico and Maida Vale offer relative value compared to Mayfair. Noise is a factor but rarely a dealbreaker at these prices.'},
   'City of London':{impact:'low-moderate',avg_price:850000,trend:1.0,note:'Some London City and Heathrow paths at altitude. Background city noise typically masks aircraft.',property:'Very limited residential stock. The Barbican is the main residential community. Golden Lane offers relative value.'},
   'Barking':{impact:'low',avg_price:340000,trend:5.8,note:'Well away from major flight paths. Occasional Stansted or London City traffic at high altitude, barely noticeable.',property:'One of London\'s most affordable boroughs. Barking Riverside is a major regeneration scheme. Good transport links via District Line and c2c. Strong rental yields.'},
@@ -1130,10 +1130,10 @@ const BOROUGH_DATA_RAW={
 // BUYER PERSONAS + SCORING
 // ============================================================
 // Each persona defines weights for 4 scoring factors:
-//   quiet (0-10)  - freedom from aircraft noise
-//   afford (0-10) - affordability vs other boroughs
-//   growth (0-10) - annual price growth rate
-//   live (0-10)   - liveability: schools + low crime + transport
+// quiet (0-10) - freedom from aircraft noise
+// afford (0-10) - affordability vs other boroughs
+// growth (0-10) - annual price growth rate
+// live (0-10) - liveability: schools + low crime + transport
 
 const PERSONAS = {
   balanced: { label:'Balanced', icon:'\u2696', desc:'Equal weight across all factors',
@@ -1146,6 +1146,12 @@ const PERSONAS = {
     weights:{ quiet:0.15, afford:0.40, growth:0.20, live:0.25 }},
   quietlife: { label:'Quiet Life', icon:'\uD83C\uDF3F', desc:'Peace and quiet above all',
     weights:{ quiet:0.50, afford:0.20, growth:0.10, live:0.20 }},
+  renter: { label:'Renter', icon:'\uD83C\uDFE2', desc:'Renting, growth irrelevant',
+    weights:{ quiet:0.30, afford:0.35, growth:0.00, live:0.35 }},
+  commuter: { label:'Commuter', icon:'\uD83D\uDE87', desc:'Transport-led, price-conscious',
+    weights:{ quiet:0.20, afford:0.30, growth:0.15, live:0.35 }},
+  downsizer: { label:'Downsizer', icon:'\uD83C\uDF3E', desc:'Retiree, quiet plus healthcare',
+    weights:{ quiet:0.40, afford:0.15, growth:0.10, live:0.35 }},
 };
 let currentPersona = 'balanced';
 
@@ -1190,10 +1196,10 @@ function calcScores(data, city) {
       ...d,
       trend_pct: '+'+d.trend+'%',
       scores: {
-        quiet:  Math.round(quiet*10)/10,
+        quiet: Math.round(quiet*10)/10,
         afford: Math.round(afford*10)/10,
         growth: Math.round(growth*10)/10,
-        live:   Math.round(live*10)/10,
+        live: Math.round(live*10)/10,
       },
       score: Math.round(total*10)/10,
     };
@@ -1388,7 +1394,7 @@ const BOROUGH_EXTRA = {
   'Harrow':{crime:'low',crimeRate:70,schools:'excellent',schoolNote:'Harrow School (private, historic). Nower Hill High School is popular. Several Outstanding primaries.',flood:'low',floodNote:'Low flood risk throughout. Mostly elevated terrain.',airQuality:'good',aqNote:'Good air quality in residential areas. Main roads through Harrow town centre are worse.',transport:'good',transportNote:'Metropolitan Line (fast to Baker Street). Bakerloo to Harrow & Wealdstone. Good bus network.',healthcare:'good',healthcareNote:'Northwick Park Hospital (A&E). Good GP coverage. Several health centres.'},
 };
 
-// Borough-level road noise classifications (high/moderate/low) — used for borough fill overlay
+// Borough-level road noise classifications (high/moderate/low), used for borough fill overlay
 const BOROUGH_ROAD_NOISE = {
   'Hounslow':'high','Hillingdon':'high','Ealing':'high','Hammersmith and Fulham':'high',
   'Westminster':'high','City of London':'high','Camden':'high','Islington':'high',
@@ -1658,7 +1664,7 @@ function updateDefraTiles() {
        .attr('width', localBR[0] - localTL[0]).attr('height', localBR[1] - localTL[1]);
   }
 
-  // Aircraft noise — only overlay that uses WMS/tiles (detailed contour data)
+  // Aircraft noise, only overlay that uses WMS/tiles (detailed contour data)
   if (isNyc) {
     renderTileGrid('us-aircraft-tiles', US_MAP_SERVICES.aircraft.url, minLat, minLon, maxLat, maxLon);
   } else {
@@ -1711,16 +1717,16 @@ async function handleUsZipSearch(rawZip) {
   // Switch to NYC if not already (matches the favourites flow at line 3299).
   if (currentCity !== 'nyc') await switchCity('nyc');
 
-  // Prefer neighbourhood-level routing when we have an NYC_AREA_MAP entry —
+  // Prefer neighbourhood-level routing when we have an NYC_AREA_MAP entry,
   // gives a precise pin and reuses the area-search code path. Otherwise show
   // the borough view (matches the API's borough-aggregate fallback). The
   // recursive triggerSearch is awaited so the outer call short-circuits
-  // after the inner work completes — avoids racing sidebar updates.
+  // after the inner work completes, avoids racing sidebar updates.
   const areaKey = NYC_ZIP_TO_AREA[zip5];
   if (areaKey) {
     await triggerSearch(areaKey);
   } else {
-    // Reflect the resolved borough in the search input — same pattern as the
+    // Reflect the resolved borough in the search input, same pattern as the
     // autocomplete borough click (line ~2238).
     document.getElementById('search-input').value = borough;
     selectBoroughByName(borough);
@@ -2378,12 +2384,12 @@ async function triggerSearch(query) {
   dd.classList.remove('visible');
   dd.innerHTML = '';
 
-  // 5-digit US ZIP — auto-route to NYC search before any UK lookup happens.
+  // 5-digit US ZIP, auto-route to NYC search before any UK lookup happens.
   // ZIP+4 input (10001-1234) is reduced to first 5 digits, matching the API.
   if (US_ZIP_PATTERN.test(q)) {
     const handled = await handleUsZipSearch(q);
     if (handled) return;
-    // Not a NYC ZIP — fall through to "NOT FOUND" with a US-specific note.
+    // Not a NYC ZIP, fall through to "NOT FOUND" with a US-specific note.
     document.getElementById('sidebar-title').textContent = 'NOT FOUND';
     document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
@@ -2522,7 +2528,7 @@ function renderDefraTiles() {
       .attr('preserveAspectRatio','none').style('pointer-events','none');
   }
 
-  // Road noise overlay — borough-level coloring (visible at all zoom levels) + WMS/tiles detail when zoomed in
+  // Road noise overlay, borough-level coloring (visible at all zoom levels) + WMS/tiles detail when zoomed in
   const roadG = g.append('g').attr('class','layer-defra-road').style('opacity',0.65);
   if (!layers['defra-road']) roadG.style('display','none');
   // Borough-level road noise fill
@@ -2542,7 +2548,7 @@ function renderDefraTiles() {
     .style('fill','#7c3aed').style('font-weight','600').style('letter-spacing','1px')
     .text(currentCity === 'nyc' ? 'DOT ROAD NOISE BY BOROUGH' : 'DEFRA ROAD NOISE BY BOROUGH');
 
-  // Flood risk overlay — borough-level coloring (visible at all zoom levels) + WMS detail when zoomed in
+  // Flood risk overlay, borough-level coloring (visible at all zoom levels) + WMS detail when zoomed in
   const floodG = g.append('g').attr('class','layer-flood').style('opacity',0.55);
   if (!layers.flood) floodG.style('display','none');
   // Borough-level flood risk fill
@@ -2562,7 +2568,7 @@ function renderDefraTiles() {
     .style('fill','#1e3a8a').style('font-weight','600').style('letter-spacing','1px')
     .text(currentCity === 'nyc' ? 'FEMA FLOOD RISK BY BOROUGH' : 'EA FLOOD RISK BY BOROUGH');
 
-  // Air quality overlay — borough-level coloring (visible at all zoom levels) + WMS detail
+  // Air quality overlay, borough-level coloring (visible at all zoom levels) + WMS detail
   const aqG = g.append('g').attr('class','layer-air-quality').style('opacity',0.55);
   if (!layers['air-quality']) aqG.style('display','none');
   // Borough-level air quality fill
@@ -2603,8 +2609,8 @@ async function fetchLiveFlights() {
     const data = await resp.json();
     if (!data.states) return null;
     // Each state: [icao24, callsign, origin_country, time_position, last_contact,
-    //              longitude, latitude, baro_altitude, on_ground, velocity,
-    //              true_track, vertical_rate, sensors, geo_altitude, squawk, spi, position_source]
+    // longitude, latitude, baro_altitude, on_ground, velocity,
+    // true_track, vertical_rate, sensors, geo_altitude, squawk, spi, position_source]
     return data.states.filter(s => s[5] != null && s[6] != null && !s[8]).map(s => ({
       icao: s[0],
       callsign: (s[1]||'').trim(),
@@ -2802,7 +2808,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function startLiveFlights() {
-  if (liveFlightInterval) return; // already running (or paused — both OK)
+  if (liveFlightInterval) return; // already running (or paused, both OK)
   updateLiveFlights();
   // Refresh every 15 seconds (OpenSky updates ~every 10s, rate limit ~10 req/min for anon)
   liveFlightInterval = setInterval(updateLiveFlights, 15000);
@@ -2953,7 +2959,7 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
     <div class="sidebar-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict" style="color:${scoreColor(data.score)}">${data.score}/10  -  ${PERSONAS[currentPersona].label} Buyer Score</div>
+          <div class="summary-verdict" style="color:${scoreColor(data.score)}">${data.score}/10 - ${PERSONAS[currentPersona].label} Buyer Score</div>
           ${getVerdict(data)}
         </div>
         <button class="fav-btn ${isFavourite(data.name)?'saved':''}" onclick="toggleFavourite('${data.name.replace(/'/g,"\\'")}','${data.name.replace(/'/g,"\\'")}','${(data.impact||'unknown').toUpperCase()}',${data.score})" style="margin-left:10px;">
@@ -3373,7 +3379,7 @@ async function analyzeDocument(file, docType) {
 // Opaque device token for the favourites endpoint (audit C3 mitigation).
 // crypto.randomUUID gives 122 bits of entropy and a recognisable shape so
 // the Lambda can reject malformed headers. Existing non-UUID localStorage
-// IDs are regenerated — old favourites become orphaned in DDB but the
+// IDs are regenerated, old favourites become orphaned in DDB but the
 // alternative (accepting any string as a "userId") is the IDOR the audit
 // flagged. Pre-launch, this trade-off is acceptable.
 const _UUID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
@@ -3381,14 +3387,14 @@ function getDeviceToken() {
   let id = localStorage.getItem('flightmap_device_token');
   if (!id || !_UUID_RE.test(id)) {
     id = (crypto.randomUUID && crypto.randomUUID()) ||
-      // Fallback for ancient browsers — 32 hex chars from Math.random;
+      // Fallback for ancient browsers, 32 hex chars from Math.random;
       // weaker entropy but still passes the Lambda's format check.
       Array.from({length:32}, () => Math.floor(Math.random()*16).toString(16)).join('');
     localStorage.setItem('flightmap_device_token', id);
   }
   return id;
 }
-// Backwards-compat alias — there are still call-sites using the old name.
+// Backwards-compat alias, there are still call-sites using the old name.
 function getDeviceId() { return getDeviceToken(); }
 
 let userFavourites = [];
@@ -3448,7 +3454,7 @@ function renderFavouritesList() {
   const nycFavs = userFavourites.filter(f => f.city === 'nyc');
   // Use textContent / dataset, not template-string interpolation, so a
   // localStorage payload with quotes or a script-end-tag pattern can't
-  // break out of the onclick attribute (audit I8 — XSS-prone inline
+  // break out of the onclick attribute (audit I8, XSS-prone inline
   // handlers).
   const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
@@ -3468,7 +3474,7 @@ function renderFavouritesList() {
   };
   el.innerHTML = renderGroup(londonFavs, 'London') + renderGroup(nycFavs, 'New York');
 
-  // Bind handlers via dataset — no string interpolation in markup.
+  // Bind handlers via dataset, no string interpolation in markup.
   el.querySelectorAll('.fav-item').forEach(item => {
     item.addEventListener('click', async () => {
       const pc = item.dataset.favPostcode;
@@ -3765,7 +3771,7 @@ function renderBoroughRanking() {
   const currency = currentCity==='nyc'?'$':'&pound;';
 
   let tableRows = '';
-  // Same escapeHtml + dataset pattern as renderFavourites — keeps user-
+  // Same escapeHtml + dataset pattern as renderFavourites, keeps user-
   // controlled strings out of attribute-context interpolation (audit I8).
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])

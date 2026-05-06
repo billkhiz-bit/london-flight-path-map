@@ -125,7 +125,7 @@ def handler(event, context):
             'disclaimer': 'AI-generated summary. Always read the full document and consult qualified professionals before making property decisions.'
         })
 
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in analyze_document handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

@@ -2,9 +2,9 @@
 Sky Score B2B API.
 
 Endpoints:
-  GET  /v1/score          — single-postcode/borough score
-  POST /v1/score/batch    — bulk lookup (up to 100 queries per call)
-  OPTIONS for both        — browser CORS preflight (open to any origin
+  GET /v1/score, single-postcode/borough score
+  POST /v1/score/batch, bulk lookup (up to 100 queries per call)
+  OPTIONS for both, browser CORS preflight (open to any origin
                             since the GET/POST are API-key gated anyway)
 
 Methodology: see METHODOLOGY.md at the project root. The scoring values and
@@ -47,7 +47,7 @@ def _make_lru(maxsize):
 
     def put(key, value):
         if value is None:
-            return  # Never cache misses / errors
+            return # Never cache misses / errors
         if key in cache:
             cache.move_to_end(key)
         cache[key] = value
@@ -75,67 +75,73 @@ IMPACT_TO_QUIET = {
 }
 
 PERSONAS = {
-    'balanced':  {'quiet': 0.30, 'afford': 0.25, 'growth': 0.20, 'live': 0.25},
-    'family':    {'quiet': 0.20, 'afford': 0.20, 'growth': 0.10, 'live': 0.50},
-    'investor':  {'quiet': 0.10, 'afford': 0.30, 'growth': 0.40, 'live': 0.20},
+    'balanced': {'quiet': 0.30, 'afford': 0.25, 'growth': 0.20, 'live': 0.25},
+    'family': {'quiet': 0.20, 'afford': 0.20, 'growth': 0.10, 'live': 0.50},
+    'investor': {'quiet': 0.10, 'afford': 0.30, 'growth': 0.40, 'live': 0.20},
     'firsttime': {'quiet': 0.15, 'afford': 0.40, 'growth': 0.20, 'live': 0.25},
     'quietlife': {'quiet': 0.50, 'afford': 0.20, 'growth': 0.10, 'live': 0.20},
+    # Renter: no selling event so growth is irrelevant.
+    'renter': {'quiet': 0.30, 'afford': 0.35, 'growth': 0.00, 'live': 0.35},
+    # Commuter / young professional: transport-led, price-sensitive.
+    'commuter': {'quiet': 0.20, 'afford': 0.30, 'growth': 0.15, 'live': 0.35},
+    # Downsizer / retiree / empty-nester: cash buyer, quiet + healthcare.
+    'downsizer': {'quiet': 0.40, 'afford': 0.15, 'growth': 0.10, 'live': 0.35},
 }
 
-# London borough dataset — sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
+# London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
 # Schema: impact (DEFRA Lden band), avgPrice (GBP), trend (% YoY),
 # schools/transport/healthcare (categorical), crimeRate (per 1,000 ONS).
 LONDON_BOROUGHS = {
-    'Hounslow':              {'impact': 'severe',         'avgPrice': 465000,  'trend': 3.2, 'schools': 'good',      'crimeRate': 89,  'transport': 'good',      'healthcare': 'good'},
-    'Hillingdon':            {'impact': 'severe',         'avgPrice': 480000,  'trend': 2.8, 'schools': 'good',      'crimeRate': 72,  'transport': 'good',      'healthcare': 'good'},
-    'Richmond upon Thames':  {'impact': 'high',           'avgPrice': 825000,  'trend': 1.5, 'schools': 'excellent', 'crimeRate': 58,  'transport': 'good',      'healthcare': 'good'},
-    'Ealing':                {'impact': 'high',           'avgPrice': 540000,  'trend': 4.1, 'schools': 'good',      'crimeRate': 88,  'transport': 'excellent', 'healthcare': 'good'},
-    'Wandsworth':            {'impact': 'moderate',       'avgPrice': 680000,  'trend': 2.1, 'schools': 'excellent', 'crimeRate': 82,  'transport': 'excellent', 'healthcare': 'good'},
-    'Lambeth':               {'impact': 'moderate',       'avgPrice': 560000,  'trend': 3.5, 'schools': 'good',      'crimeRate': 115, 'transport': 'excellent', 'healthcare': 'good'},
-    'Lewisham':              {'impact': 'low-moderate',   'avgPrice': 445000,  'trend': 4.8, 'schools': 'good',      'crimeRate': 91,  'transport': 'good',      'healthcare': 'good'},
-    'Greenwich':             {'impact': 'moderate',       'avgPrice': 430000,  'trend': 5.2, 'schools': 'good',      'crimeRate': 93,  'transport': 'good',      'healthcare': 'good'},
-    'Tower Hamlets':         {'impact': 'low-moderate',   'avgPrice': 495000,  'trend': 2.0, 'schools': 'good',      'crimeRate': 120, 'transport': 'excellent', 'healthcare': 'excellent'},
-    'Camden':                {'impact': 'low',            'avgPrice': 780000,  'trend': 1.2, 'schools': 'excellent', 'crimeRate': 130, 'transport': 'excellent', 'healthcare': 'excellent'},
-    'Islington':             {'impact': 'low',            'avgPrice': 720000,  'trend': 1.8, 'schools': 'good',      'crimeRate': 125, 'transport': 'excellent', 'healthcare': 'good'},
-    'Hackney':               {'impact': 'low',            'avgPrice': 590000,  'trend': 3.0, 'schools': 'good',      'crimeRate': 112, 'transport': 'excellent', 'healthcare': 'good'},
-    'Barnet':                {'impact': 'low-moderate',   'avgPrice': 560000,  'trend': 3.1, 'schools': 'excellent', 'crimeRate': 74,  'transport': 'good',      'healthcare': 'good'},
-    'Croydon':               {'impact': 'moderate',       'avgPrice': 395000,  'trend': 4.5, 'schools': 'good',      'crimeRate': 98,  'transport': 'good',      'healthcare': 'good'},
-    'Bromley':               {'impact': 'low',            'avgPrice': 480000,  'trend': 3.8, 'schools': 'excellent', 'crimeRate': 65,  'transport': 'moderate',  'healthcare': 'good'},
-    'Newham':                {'impact': 'moderate-high',  'avgPrice': 410000,  'trend': 5.8, 'schools': 'good',      'crimeRate': 108, 'transport': 'excellent', 'healthcare': 'good'},
-    'Southwark':             {'impact': 'low-moderate',   'avgPrice': 530000,  'trend': 2.5, 'schools': 'good',      'crimeRate': 118, 'transport': 'excellent', 'healthcare': 'excellent'},
-    'Hammersmith and Fulham':{'impact': 'moderate-high',  'avgPrice': 750000,  'trend': 1.0, 'schools': 'excellent', 'crimeRate': 96,  'transport': 'excellent', 'healthcare': 'good'},
-    'Kensington and Chelsea':{'impact': 'moderate',       'avgPrice': 1350000, 'trend': 0.5, 'schools': 'excellent', 'crimeRate': 95,  'transport': 'excellent', 'healthcare': 'excellent'},
-    'Brent':                 {'impact': 'low-moderate',   'avgPrice': 490000,  'trend': 4.0, 'schools': 'good',      'crimeRate': 92,  'transport': 'good',      'healthcare': 'good'},
-    'Haringey':              {'impact': 'low',            'avgPrice': 545000,  'trend': 3.5, 'schools': 'good',      'crimeRate': 99,  'transport': 'good',      'healthcare': 'moderate'},
-    'Waltham Forest':        {'impact': 'low',            'avgPrice': 480000,  'trend': 4.2, 'schools': 'good',      'crimeRate': 88,  'transport': 'good',      'healthcare': 'moderate'},
-    'Merton':                {'impact': 'low-moderate',   'avgPrice': 560000,  'trend': 2.8, 'schools': 'good',      'crimeRate': 70,  'transport': 'good',      'healthcare': 'good'},
-    'Redbridge':             {'impact': 'low',            'avgPrice': 445000,  'trend': 3.9, 'schools': 'excellent', 'crimeRate': 83,  'transport': 'good',      'healthcare': 'good'},
-    'Enfield':               {'impact': 'low',            'avgPrice': 430000,  'trend': 4.3, 'schools': 'good',      'crimeRate': 85,  'transport': 'moderate',  'healthcare': 'moderate'},
-    'Kingston upon Thames':  {'impact': 'low-moderate',   'avgPrice': 550000,  'trend': 2.0, 'schools': 'excellent', 'crimeRate': 62,  'transport': 'good',      'healthcare': 'good'},
-    'Sutton':                {'impact': 'low',            'avgPrice': 415000,  'trend': 3.5, 'schools': 'excellent', 'crimeRate': 60,  'transport': 'moderate',  'healthcare': 'good'},
-    'Westminster':           {'impact': 'moderate',       'avgPrice': 980000,  'trend': 0.8, 'schools': 'good',      'crimeRate': 175, 'transport': 'excellent', 'healthcare': 'excellent'},
-    'City of London':        {'impact': 'low-moderate',   'avgPrice': 850000,  'trend': 1.0, 'schools': 'good',      'crimeRate': 190, 'transport': 'excellent', 'healthcare': 'good'},
-    'Barking and Dagenham':  {'impact': 'low',            'avgPrice': 340000,  'trend': 5.8, 'schools': 'good',      'crimeRate': 105, 'transport': 'good',      'healthcare': 'moderate'},
-    'Havering':              {'impact': 'low',            'avgPrice': 400000,  'trend': 4.0, 'schools': 'good',      'crimeRate': 72,  'transport': 'moderate',  'healthcare': 'good'},
-    'Bexley':                {'impact': 'low',            'avgPrice': 380000,  'trend': 4.5, 'schools': 'good',      'crimeRate': 68,  'transport': 'moderate',  'healthcare': 'good'},
-    'Harrow':                {'impact': 'low',            'avgPrice': 490000,  'trend': 3.2, 'schools': 'excellent', 'crimeRate': 70,  'transport': 'good',      'healthcare': 'good'},
+    'Hounslow': {'impact': 'severe', 'avgPrice': 465000, 'trend': 3.2, 'schools': 'good', 'crimeRate': 89, 'transport': 'good', 'healthcare': 'good'},
+    'Hillingdon': {'impact': 'severe', 'avgPrice': 480000, 'trend': 2.8, 'schools': 'good', 'crimeRate': 72, 'transport': 'good', 'healthcare': 'good'},
+    'Richmond upon Thames': {'impact': 'high', 'avgPrice': 825000, 'trend': 1.5, 'schools': 'excellent', 'crimeRate': 58, 'transport': 'good', 'healthcare': 'good'},
+    'Ealing': {'impact': 'high', 'avgPrice': 540000, 'trend': 4.1, 'schools': 'good', 'crimeRate': 88, 'transport': 'excellent', 'healthcare': 'good'},
+    'Wandsworth': {'impact': 'moderate', 'avgPrice': 680000, 'trend': 2.1, 'schools': 'excellent', 'crimeRate': 82, 'transport': 'excellent', 'healthcare': 'good'},
+    'Lambeth': {'impact': 'moderate', 'avgPrice': 560000, 'trend': 3.5, 'schools': 'good', 'crimeRate': 115, 'transport': 'excellent', 'healthcare': 'good'},
+    'Lewisham': {'impact': 'low-moderate', 'avgPrice': 445000, 'trend': 4.8, 'schools': 'good', 'crimeRate': 91, 'transport': 'good', 'healthcare': 'good'},
+    'Greenwich': {'impact': 'moderate', 'avgPrice': 430000, 'trend': 5.2, 'schools': 'good', 'crimeRate': 93, 'transport': 'good', 'healthcare': 'good'},
+    'Tower Hamlets': {'impact': 'low-moderate', 'avgPrice': 495000, 'trend': 2.0, 'schools': 'good', 'crimeRate': 120, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'Camden': {'impact': 'low', 'avgPrice': 780000, 'trend': 1.2, 'schools': 'excellent', 'crimeRate': 130, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'Islington': {'impact': 'low', 'avgPrice': 720000, 'trend': 1.8, 'schools': 'good', 'crimeRate': 125, 'transport': 'excellent', 'healthcare': 'good'},
+    'Hackney': {'impact': 'low', 'avgPrice': 590000, 'trend': 3.0, 'schools': 'good', 'crimeRate': 112, 'transport': 'excellent', 'healthcare': 'good'},
+    'Barnet': {'impact': 'low-moderate', 'avgPrice': 560000, 'trend': 3.1, 'schools': 'excellent', 'crimeRate': 74, 'transport': 'good', 'healthcare': 'good'},
+    'Croydon': {'impact': 'moderate', 'avgPrice': 395000, 'trend': 4.5, 'schools': 'good', 'crimeRate': 98, 'transport': 'good', 'healthcare': 'good'},
+    'Bromley': {'impact': 'low', 'avgPrice': 480000, 'trend': 3.8, 'schools': 'excellent', 'crimeRate': 65, 'transport': 'moderate', 'healthcare': 'good'},
+    'Newham': {'impact': 'moderate-high', 'avgPrice': 410000, 'trend': 5.8, 'schools': 'good', 'crimeRate': 108, 'transport': 'excellent', 'healthcare': 'good'},
+    'Southwark': {'impact': 'low-moderate', 'avgPrice': 530000, 'trend': 2.5, 'schools': 'good', 'crimeRate': 118, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'Hammersmith and Fulham':{'impact': 'moderate-high', 'avgPrice': 750000, 'trend': 1.0, 'schools': 'excellent', 'crimeRate': 96, 'transport': 'excellent', 'healthcare': 'good'},
+    'Kensington and Chelsea':{'impact': 'moderate', 'avgPrice': 1350000, 'trend': 0.5, 'schools': 'excellent', 'crimeRate': 95, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'Brent': {'impact': 'low-moderate', 'avgPrice': 490000, 'trend': 4.0, 'schools': 'good', 'crimeRate': 92, 'transport': 'good', 'healthcare': 'good'},
+    'Haringey': {'impact': 'low', 'avgPrice': 545000, 'trend': 3.5, 'schools': 'good', 'crimeRate': 99, 'transport': 'good', 'healthcare': 'moderate'},
+    'Waltham Forest': {'impact': 'low', 'avgPrice': 480000, 'trend': 4.2, 'schools': 'good', 'crimeRate': 88, 'transport': 'good', 'healthcare': 'moderate'},
+    'Merton': {'impact': 'low-moderate', 'avgPrice': 560000, 'trend': 2.8, 'schools': 'good', 'crimeRate': 70, 'transport': 'good', 'healthcare': 'good'},
+    'Redbridge': {'impact': 'low', 'avgPrice': 445000, 'trend': 3.9, 'schools': 'excellent', 'crimeRate': 83, 'transport': 'good', 'healthcare': 'good'},
+    'Enfield': {'impact': 'low', 'avgPrice': 430000, 'trend': 4.3, 'schools': 'good', 'crimeRate': 85, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Kingston upon Thames': {'impact': 'low-moderate', 'avgPrice': 550000, 'trend': 2.0, 'schools': 'excellent', 'crimeRate': 62, 'transport': 'good', 'healthcare': 'good'},
+    'Sutton': {'impact': 'low', 'avgPrice': 415000, 'trend': 3.5, 'schools': 'excellent', 'crimeRate': 60, 'transport': 'moderate', 'healthcare': 'good'},
+    'Westminster': {'impact': 'moderate', 'avgPrice': 980000, 'trend': 0.8, 'schools': 'good', 'crimeRate': 175, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'City of London': {'impact': 'low-moderate', 'avgPrice': 850000, 'trend': 1.0, 'schools': 'good', 'crimeRate': 190, 'transport': 'excellent', 'healthcare': 'good'},
+    'Barking and Dagenham': {'impact': 'low', 'avgPrice': 340000, 'trend': 5.8, 'schools': 'good', 'crimeRate': 105, 'transport': 'good', 'healthcare': 'moderate'},
+    'Havering': {'impact': 'low', 'avgPrice': 400000, 'trend': 4.0, 'schools': 'good', 'crimeRate': 72, 'transport': 'moderate', 'healthcare': 'good'},
+    'Bexley': {'impact': 'low', 'avgPrice': 380000, 'trend': 4.5, 'schools': 'good', 'crimeRate': 68, 'transport': 'moderate', 'healthcare': 'good'},
+    'Harrow': {'impact': 'low', 'avgPrice': 490000, 'trend': 3.2, 'schools': 'excellent', 'crimeRate': 70, 'transport': 'good', 'healthcare': 'good'},
 }
 
-# NYC borough dataset — sourced from index.html NYC_BOROUGH_DATA_RAW + NYC_BOROUGH_EXTRA.
+# NYC borough dataset, sourced from index.html NYC_BOROUGH_DATA_RAW + NYC_BOROUGH_EXTRA.
 # avgPrice in USD (not GBP). Crime rates use the same per-1,000 convention but
 # are derived from NYPD CompStat / NYC ONS-equivalent denominators; cross-city
 # comparison should be approached with caution (different methodologies).
 NYC_BOROUGHS = {
-    'Queens':         {'impact': 'severe',       'avgPrice': 620000,  'trend': 4.5, 'schools': 'good',      'crimeRate': 78,  'transport': 'excellent', 'healthcare': 'good'},
-    'Brooklyn':       {'impact': 'high',         'avgPrice': 850000,  'trend': 3.8, 'schools': 'good',      'crimeRate': 82,  'transport': 'excellent', 'healthcare': 'excellent'},
-    'Manhattan':      {'impact': 'moderate',     'avgPrice': 1200000, 'trend': 2.0, 'schools': 'excellent', 'crimeRate': 95,  'transport': 'excellent', 'healthcare': 'excellent'},
-    'Bronx':          {'impact': 'low-moderate', 'avgPrice': 420000,  'trend': 5.5, 'schools': 'good',      'crimeRate': 110, 'transport': 'good',      'healthcare': 'good'},
-    'Staten Island':  {'impact': 'low',          'avgPrice': 550000,  'trend': 3.0, 'schools': 'good',      'crimeRate': 52,  'transport': 'poor',      'healthcare': 'moderate'},
+    'Queens': {'impact': 'severe', 'avgPrice': 620000, 'trend': 4.5, 'schools': 'good', 'crimeRate': 78, 'transport': 'excellent', 'healthcare': 'good'},
+    'Brooklyn': {'impact': 'high', 'avgPrice': 850000, 'trend': 3.8, 'schools': 'good', 'crimeRate': 82, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'Manhattan': {'impact': 'moderate', 'avgPrice': 1200000, 'trend': 2.0, 'schools': 'excellent', 'crimeRate': 95, 'transport': 'excellent', 'healthcare': 'excellent'},
+    'Bronx': {'impact': 'low-moderate', 'avgPrice': 420000, 'trend': 5.5, 'schools': 'good', 'crimeRate': 110, 'transport': 'good', 'healthcare': 'good'},
+    'Staten Island': {'impact': 'low', 'avgPrice': 550000, 'trend': 3.0, 'schools': 'good', 'crimeRate': 52, 'transport': 'poor', 'healthcare': 'moderate'},
 }
 
 CITIES = {
     'london': {'boroughs': LONDON_BOROUGHS, 'currency': 'GBP'},
-    'nyc':    {'boroughs': NYC_BOROUGHS,    'currency': 'USD'},
+    'nyc': {'boroughs': NYC_BOROUGHS, 'currency': 'USD'},
 }
 
 # NYC ZIP-to-borough mapping. ZIPs grouped per borough and flattened into a
@@ -196,55 +202,55 @@ US_ZIP_PATTERN = re.compile(r'^\d{5}(-\d{4})?$')
 # ---------------------------------------------------------------------------
 
 AIRPORTS_LONDON = [
-    {'code': 'LHR', 'name': 'Heathrow',     'lat': 51.4700, 'lon': -0.4543},
-    {'code': 'LGW', 'name': 'Gatwick',      'lat': 51.1537, 'lon': -0.1821},
-    {'code': 'LCY', 'name': 'London City',  'lat': 51.5053, 'lon': 0.0553},
-    {'code': 'STN', 'name': 'Stansted',     'lat': 51.8860, 'lon': 0.2389},
-    {'code': 'LTN', 'name': 'Luton',        'lat': 51.8747, 'lon': -0.3684},
+    {'code': 'LHR', 'name': 'Heathrow', 'lat': 51.4700, 'lon': -0.4543},
+    {'code': 'LGW', 'name': 'Gatwick', 'lat': 51.1537, 'lon': -0.1821},
+    {'code': 'LCY', 'name': 'London City', 'lat': 51.5053, 'lon': 0.0553},
+    {'code': 'STN', 'name': 'Stansted', 'lat': 51.8860, 'lon': 0.2389},
+    {'code': 'LTN', 'name': 'Luton', 'lat': 51.8747, 'lon': -0.3684},
 ]
 
 AIRPORTS_NYC = [
     {'code': 'JFK', 'name': 'John F. Kennedy', 'lat': 40.6413, 'lon': -73.7781},
-    {'code': 'LGA', 'name': 'LaGuardia',       'lat': 40.7769, 'lon': -73.8740},
-    {'code': 'EWR', 'name': 'Newark Liberty',  'lat': 40.6895, 'lon': -74.1745},
-    {'code': 'TEB', 'name': 'Teterboro',       'lat': 40.8501, 'lon': -74.0608},
+    {'code': 'LGA', 'name': 'LaGuardia', 'lat': 40.7769, 'lon': -73.8740},
+    {'code': 'EWR', 'name': 'Newark Liberty', 'lat': 40.6895, 'lon': -74.1745},
+    {'code': 'TEB', 'name': 'Teterboro', 'lat': 40.8501, 'lon': -74.0608},
 ]
 
 # Flight path geometry: list of paths, each with a sequence of (lat, lon)
 # waypoints. Distance to nearest waypoint is used as proxy for distance to
-# the corridor — same approach as the consumer site.
+# the corridor, same approach as the consumer site.
 FLIGHT_PATHS_LONDON = [
-    {'name': 'Lambourne Stack',  'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.65,0.15),(51.62,0.08),(51.59,0.02),(51.565,-0.04),(51.54,-0.10),(51.52,-0.18),(51.505,-0.25),(51.495,-0.32),(51.485,-0.38),(51.4775,-0.428)]},
-    {'name': 'Biggin Stack',     'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.33,0.03),(51.35,-0.02),(51.37,-0.06),(51.39,-0.11),(51.41,-0.16),(51.425,-0.22),(51.44,-0.28),(51.45,-0.34),(51.46,-0.39),(51.4644,-0.428)]},
-    {'name': 'Ockham Stack',     'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.28,-0.45),(51.31,-0.44),(51.34,-0.435),(51.37,-0.435),(51.40,-0.435),(51.42,-0.435),(51.44,-0.435),(51.4644,-0.435)]},
-    {'name': 'Bovingdon Stack',  'airport': 'LHR', 'type': 'arrival',   'freq': 'high',   'coords': [(51.72,-0.55),(51.68,-0.52),(51.64,-0.50),(51.60,-0.49),(51.56,-0.48),(51.53,-0.47),(51.505,-0.46),(51.4775,-0.45)]},
-    {'name': 'Dep West',         'airport': 'LHR', 'type': 'departure', 'freq': 'high',   'coords': [(51.4775,-0.489),(51.48,-0.55),(51.485,-0.62),(51.49,-0.70),(51.495,-0.78)]},
+    {'name': 'Lambourne Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high', 'coords': [(51.65,0.15),(51.62,0.08),(51.59,0.02),(51.565,-0.04),(51.54,-0.10),(51.52,-0.18),(51.505,-0.25),(51.495,-0.32),(51.485,-0.38),(51.4775,-0.428)]},
+    {'name': 'Biggin Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high', 'coords': [(51.33,0.03),(51.35,-0.02),(51.37,-0.06),(51.39,-0.11),(51.41,-0.16),(51.425,-0.22),(51.44,-0.28),(51.45,-0.34),(51.46,-0.39),(51.4644,-0.428)]},
+    {'name': 'Ockham Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high', 'coords': [(51.28,-0.45),(51.31,-0.44),(51.34,-0.435),(51.37,-0.435),(51.40,-0.435),(51.42,-0.435),(51.44,-0.435),(51.4644,-0.435)]},
+    {'name': 'Bovingdon Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high', 'coords': [(51.72,-0.55),(51.68,-0.52),(51.64,-0.50),(51.60,-0.49),(51.56,-0.48),(51.53,-0.47),(51.505,-0.46),(51.4775,-0.45)]},
+    {'name': 'Dep West', 'airport': 'LHR', 'type': 'departure', 'freq': 'high', 'coords': [(51.4775,-0.489),(51.48,-0.55),(51.485,-0.62),(51.49,-0.70),(51.495,-0.78)]},
     {'name': 'Dep SE (Detling)', 'airport': 'LHR', 'type': 'departure', 'freq': 'medium', 'coords': [(51.4775,-0.428),(51.47,-0.35),(51.46,-0.25),(51.445,-0.15),(51.43,-0.05),(51.41,0.05),(51.39,0.15)]},
-    {'name': 'Dep NE (BPK)',     'airport': 'LHR', 'type': 'departure', 'freq': 'medium', 'coords': [(51.4775,-0.428),(51.49,-0.35),(51.51,-0.25),(51.53,-0.15),(51.55,-0.05),(51.57,0.05),(51.59,0.15)]},
-    {'name': 'Approach East',    'airport': 'LCY', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.48,0.20),(51.485,0.17),(51.488,0.14),(51.492,0.11),(51.497,0.09),(51.502,0.07),(51.5053,0.0553)]},
-    {'name': 'Approach West',    'airport': 'LCY', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.52,-0.02),(51.517,-0.005),(51.513,0.01),(51.51,0.025),(51.508,0.04),(51.5053,0.0553)]},
-    {'name': 'Dep East',         'airport': 'LCY', 'type': 'departure', 'freq': 'medium', 'coords': [(51.5053,0.067),(51.505,0.09),(51.503,0.12),(51.498,0.16),(51.49,0.21)]},
-    {'name': 'Approach N',       'airport': 'LGW', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.35,-0.10),(51.32,-0.12),(51.28,-0.14),(51.23,-0.16),(51.19,-0.17),(51.1537,-0.182)]},
-    {'name': 'Approach S',       'airport': 'LTN', 'type': 'arrival',   'freq': 'medium', 'coords': [(51.60,-0.30),(51.65,-0.32),(51.70,-0.34),(51.75,-0.35),(51.80,-0.36),(51.8747,-0.368)]},
+    {'name': 'Dep NE (BPK)', 'airport': 'LHR', 'type': 'departure', 'freq': 'medium', 'coords': [(51.4775,-0.428),(51.49,-0.35),(51.51,-0.25),(51.53,-0.15),(51.55,-0.05),(51.57,0.05),(51.59,0.15)]},
+    {'name': 'Approach East', 'airport': 'LCY', 'type': 'arrival', 'freq': 'medium', 'coords': [(51.48,0.20),(51.485,0.17),(51.488,0.14),(51.492,0.11),(51.497,0.09),(51.502,0.07),(51.5053,0.0553)]},
+    {'name': 'Approach West', 'airport': 'LCY', 'type': 'arrival', 'freq': 'medium', 'coords': [(51.52,-0.02),(51.517,-0.005),(51.513,0.01),(51.51,0.025),(51.508,0.04),(51.5053,0.0553)]},
+    {'name': 'Dep East', 'airport': 'LCY', 'type': 'departure', 'freq': 'medium', 'coords': [(51.5053,0.067),(51.505,0.09),(51.503,0.12),(51.498,0.16),(51.49,0.21)]},
+    {'name': 'Approach N', 'airport': 'LGW', 'type': 'arrival', 'freq': 'medium', 'coords': [(51.35,-0.10),(51.32,-0.12),(51.28,-0.14),(51.23,-0.16),(51.19,-0.17),(51.1537,-0.182)]},
+    {'name': 'Approach S', 'airport': 'LTN', 'type': 'arrival', 'freq': 'medium', 'coords': [(51.60,-0.30),(51.65,-0.32),(51.70,-0.34),(51.75,-0.35),(51.80,-0.36),(51.8747,-0.368)]},
 ]
 
 FLIGHT_PATHS_NYC = [
-    {'name': 'JFK 31L Arrival',          'airport': 'JFK', 'type': 'arrival',   'freq': 'high',   'coords': [(40.60,-73.60),(40.61,-73.64),(40.62,-73.68),(40.63,-73.72),(40.64,-73.76),(40.6413,-73.7781)]},
-    {'name': 'JFK 13R Departure',        'airport': 'JFK', 'type': 'departure', 'freq': 'high',   'coords': [(40.6413,-73.7781),(40.62,-73.76),(40.60,-73.74),(40.58,-73.72),(40.56,-73.70)]},
-    {'name': 'JFK 22L Arrival (ILS)',    'airport': 'JFK', 'type': 'arrival',   'freq': 'medium', 'coords': [(40.70,-73.70),(40.69,-73.72),(40.68,-73.74),(40.66,-73.76),(40.6413,-73.7781)]},
-    {'name': 'LGA 31 Arrival',           'airport': 'LGA', 'type': 'arrival',   'freq': 'high',   'coords': [(40.72,-73.80),(40.73,-73.82),(40.74,-73.84),(40.76,-73.86),(40.7769,-73.8740)]},
-    {'name': 'LGA 4 Departure',          'airport': 'LGA', 'type': 'departure', 'freq': 'high',   'coords': [(40.7769,-73.8740),(40.79,-73.87),(40.81,-73.86),(40.83,-73.85),(40.86,-73.84)]},
-    {'name': 'LGA Expressway Visual 31', 'airport': 'LGA', 'type': 'arrival',   'freq': 'medium', 'coords': [(40.78,-73.95),(40.78,-73.93),(40.78,-73.91),(40.78,-73.89),(40.7769,-73.8740)]},
-    {'name': 'EWR 4R Arrival',           'airport': 'EWR', 'type': 'arrival',   'freq': 'high',   'coords': [(40.62,-74.10),(40.64,-74.12),(40.66,-74.14),(40.68,-74.16),(40.6895,-74.1745)]},
-    {'name': 'EWR 22L Departure',        'airport': 'EWR', 'type': 'departure', 'freq': 'medium', 'coords': [(40.6895,-74.1745),(40.68,-74.18),(40.66,-74.19),(40.64,-74.20),(40.62,-74.22)]},
+    {'name': 'JFK 31L Arrival', 'airport': 'JFK', 'type': 'arrival', 'freq': 'high', 'coords': [(40.60,-73.60),(40.61,-73.64),(40.62,-73.68),(40.63,-73.72),(40.64,-73.76),(40.6413,-73.7781)]},
+    {'name': 'JFK 13R Departure', 'airport': 'JFK', 'type': 'departure', 'freq': 'high', 'coords': [(40.6413,-73.7781),(40.62,-73.76),(40.60,-73.74),(40.58,-73.72),(40.56,-73.70)]},
+    {'name': 'JFK 22L Arrival (ILS)', 'airport': 'JFK', 'type': 'arrival', 'freq': 'medium', 'coords': [(40.70,-73.70),(40.69,-73.72),(40.68,-73.74),(40.66,-73.76),(40.6413,-73.7781)]},
+    {'name': 'LGA 31 Arrival', 'airport': 'LGA', 'type': 'arrival', 'freq': 'high', 'coords': [(40.72,-73.80),(40.73,-73.82),(40.74,-73.84),(40.76,-73.86),(40.7769,-73.8740)]},
+    {'name': 'LGA 4 Departure', 'airport': 'LGA', 'type': 'departure', 'freq': 'high', 'coords': [(40.7769,-73.8740),(40.79,-73.87),(40.81,-73.86),(40.83,-73.85),(40.86,-73.84)]},
+    {'name': 'LGA Expressway Visual 31', 'airport': 'LGA', 'type': 'arrival', 'freq': 'medium', 'coords': [(40.78,-73.95),(40.78,-73.93),(40.78,-73.91),(40.78,-73.89),(40.7769,-73.8740)]},
+    {'name': 'EWR 4R Arrival', 'airport': 'EWR', 'type': 'arrival', 'freq': 'high', 'coords': [(40.62,-74.10),(40.64,-74.12),(40.66,-74.14),(40.68,-74.16),(40.6895,-74.1745)]},
+    {'name': 'EWR 22L Departure', 'airport': 'EWR', 'type': 'departure', 'freq': 'medium', 'coords': [(40.6895,-74.1745),(40.68,-74.18),(40.66,-74.19),(40.64,-74.20),(40.62,-74.22)]},
 ]
 
 CITY_GEOMETRY = {
     'london': {'airports': AIRPORTS_LONDON, 'paths': FLIGHT_PATHS_LONDON, 'major_airport': 'LHR', 'secondary_airport': None},
-    'nyc':    {'airports': AIRPORTS_NYC,    'paths': FLIGHT_PATHS_NYC,    'major_airport': 'JFK', 'secondary_airport': 'LGA'},
+    'nyc': {'airports': AIRPORTS_NYC, 'paths': FLIGHT_PATHS_NYC, 'major_airport': 'JFK', 'secondary_airport': 'LGA'},
 }
 
-# NYC ZIP-to-centroid lookup. Sourced from index.html NYC_AREA_MAP — first
+# NYC ZIP-to-centroid lookup. Sourced from index.html NYC_AREA_MAP, first
 # neighbourhood per ZIP used as a representative centroid. Where multiple
 # neighbourhoods share a ZIP (e.g. 10012 SoHo / NoHo / Nolita), we keep the
 # first encountered and accept ~1km of within-ZIP imprecision.
@@ -296,7 +302,7 @@ NYC_ZIP_CENTROIDS = {
 }
 
 # DynamoDB table for v3.1 DEFRA Lden raster samples. When populated by the
-# offline data-loader script (see scripts/load_defra_raster.py — to add),
+# offline data-loader script (see scripts/load_defra_raster.py, to add),
 # the calc_score path checks this table first for postcode-level Lden values
 # sampled directly from DEFRA's GeoTIFF. If the DynamoDB lookup misses or the
 # table isn't yet populated, falls back to v3.0 Haversine. This means the
@@ -321,7 +327,7 @@ _raster_cache_get, _raster_cache_put = _make_lru(2048)
 
 
 def _lookup_lden_raster(postcode_clean):
-    """v3.1 — Look up DEFRA Lden raster sample for a postcode in DynamoDB.
+    """v3.1, Look up DEFRA Lden raster sample for a postcode in DynamoDB.
 
     Returns the Lden value (in dB) if the table is populated and contains
     this postcode; returns None otherwise. The table is populated by an
@@ -329,7 +335,7 @@ def _lookup_lden_raster(postcode_clean):
     postcode centroid (one-time batch, ~1.7M postcodes, runs overnight).
 
     Negative results (no NOISE_RASTER_TABLE configured, item missing,
-    DDB error) are NOT cached — see _make_lru. Positive results live for
+    DDB error) are NOT cached, see _make_lru. Positive results live for
     the warm-container lifetime (~15 min) up to 2048 entries LRU.
     """
     if not NOISE_RASTER_TABLE or not postcode_clean:
@@ -339,7 +345,7 @@ def _lookup_lden_raster(postcode_clean):
         return cached
 
     try:
-        import boto3  # local import — only needed when raster table configured
+        import boto3 # local import, only needed when raster table configured
         from botocore.exceptions import BotoCoreError, ClientError
     except ImportError:
         return None
@@ -372,11 +378,11 @@ def lden_db_to_quiet(lden):
     documented in METHODOLOGY.md §4.1. Used by v3.1 raster path."""
     if lden is None:
         return None
-    if lden < 55:  return 10.0
-    if lden < 60:  return 7.5
-    if lden < 65:  return 5.0
-    if lden < 70:  return 3.0
-    if lden < 75:  return 1.5
+    if lden < 55: return 10.0
+    if lden < 60: return 7.5
+    if lden < 65: return 5.0
+    if lden < 70: return 3.0
+    if lden < 75: return 1.5
     return 0.0
 
 
@@ -410,8 +416,8 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None):
     nearest_ap_dist = min(d for _, d in airport_dists)
 
     noise_score = 0.0
-    if   nearest_ap_dist < 3:  noise_score += 5
-    elif nearest_ap_dist < 6:  noise_score += 4
+    if nearest_ap_dist < 3: noise_score += 5
+    elif nearest_ap_dist < 6: noise_score += 4
     elif nearest_ap_dist < 10: noise_score += 3
     elif nearest_ap_dist < 15: noise_score += 2
     elif nearest_ap_dist < 20: noise_score += 1
@@ -424,7 +430,7 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None):
             if d < min_path_dist:
                 min_path_dist = d
 
-    if   min_path_dist < 1: noise_score += 4
+    if min_path_dist < 1: noise_score += 4
     elif min_path_dist < 2: noise_score += 3
     elif min_path_dist < 4: noise_score += 2
     elif min_path_dist < 6: noise_score += 1
@@ -460,16 +466,16 @@ SOURCES = [
     'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
 ]
 
-# Per-component data lineage. Auditable provenance for each scoring input —
+# Per-component data lineage. Auditable provenance for each scoring input,
 # B2B audit teams ask "where did this number come from" component-by-component
 # and this surfaces the answer at the response level. The /v1/score endpoint
 # does NOT call OpenSky directly (consumer site does); aviation noise context
 # for the API comes from pre-computed DEFRA borough-aggregate Lden bands.
 SOURCE_BREAKDOWN = {
     'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
-    'afford': 'HM Land Registry House Price Index (HPI) — borough cohort min-max scaling',
-    'growth': 'HM Land Registry House Price Index (HPI) — annualised price trend, cohort-relative',
-    'live': 'ONS + Home Office + DfE + TfL + NHS — composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
+    'afford': 'HM Land Registry House Price Index (HPI), borough cohort min-max scaling',
+    'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
+    'live': 'ONS + Home Office + DfE + TfL + NHS, composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
 }
 
 
@@ -491,9 +497,9 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     """Compute Sky Score for a borough/postcode.
 
     Resolution chain for the quiet component:
-      v3.1 — DEFRA raster sample at postcode centroid (if table populated)
-      v3.0 — Haversine to airports + flight-path geometry (if lat/lon given)
-      v2.x — Borough-aggregate Lden band lookup (always available as fallback)
+      v3.1, DEFRA raster sample at postcode centroid (if table populated)
+      v3.0, Haversine to airports + flight-path geometry (if lat/lon given)
+      v2.x, Borough-aggregate Lden band lookup (always available as fallback)
 
     See METHODOLOGY.md §4.1 (borough), §4.5 (postcode Haversine), §4.6 (raster).
     """
@@ -562,7 +568,7 @@ _postcode_cache_get, _postcode_cache_put = _make_lru(512)
 
 
 def _fetch_postcode(clean):
-    """Fetch from postcodes.io — no caching, no normalisation. Returns
+    """Fetch from postcodes.io, no caching, no normalisation. Returns
     parsed result dict on success, None on transient/permanent failure."""
     if not clean:
         return None
@@ -694,7 +700,7 @@ def resolve_query(query):
 
     location_meta = {'city': city}
     if postcode:
-        # US ZIP auto-detection — 5 digits with optional +4 suffix.
+        # US ZIP auto-detection, 5 digits with optional +4 suffix.
         # If detected and in the NYC map, override city to 'nyc' and use
         # the static lookup (skipping the UK-only postcodes.io call).
         if US_ZIP_PATTERN.match(postcode):
@@ -708,7 +714,7 @@ def resolve_query(query):
                     'borough': borough,
                     'region': 'New York City',
                 }
-                # v3.1 — if we have a centroid for this ZIP, surface lat/lon
+                # v3.1, if we have a centroid for this ZIP, surface lat/lon
                 # so the per-postcode Haversine layer kicks in for NYC too.
                 centroid = NYC_ZIP_CENTROIDS.get(zip5)
                 if centroid:
@@ -721,7 +727,7 @@ def resolve_query(query):
                     'supportedNycBoroughs': sorted(NYC_BOROUGHS.keys()),
                 }, 404
         else:
-            # UK postcode path — postcodes.io resolves to a London borough.
+            # UK postcode path, postcodes.io resolves to a London borough.
             if city != 'london':
                 return {
                     'error': f'Postcode resolution is UK-only for non-NYC ZIPs. For {city} use ?borough=, or pass a 5-digit US ZIP for NYC auto-detection.',
@@ -780,7 +786,7 @@ def resolve_query(query):
         'sources': SOURCES,
         'sourceBreakdown': SOURCE_BREAKDOWN,
     }
-    # Roadmap-visible placeholder components — let prospects see what's planned
+    # Roadmap-visible placeholder components, let prospects see what's planned
     # before they ask. Each entry has a status flag so integrators don't try
     # to consume placeholder data as if it were live.
     body['plannedComponents'] = {
@@ -793,7 +799,7 @@ def resolve_query(query):
 
 
 def handle_options():
-    """CORS preflight response. Open to any origin — the GET/POST are
+    """CORS preflight response. Open to any origin, the GET/POST are
     API-key gated, so origin restriction adds no security."""
     return {
         'statusCode': 200,
@@ -803,7 +809,7 @@ def handle_options():
 
 
 def handle_regions(event):
-    """GET /v1/regions — discovery endpoint listing supported geographies.
+    """GET /v1/regions, discovery endpoint listing supported geographies.
     Used by integrators to know what's queryable without scraping responses."""
     return response(200, {
         'cities': [
@@ -903,7 +909,7 @@ def handle_batch(event):
     with ThreadPoolExecutor(max_workers=BATCH_PARALLELISM) as ex:
         outcomes = list(ex.map(run_one, indexed_queries))
 
-    # Restore original order — ex.map preserves order so we don't strictly
+    # Restore original order, ex.map preserves order so we don't strictly
     # need this, but being explicit makes future refactors safer.
     outcomes.sort(key=lambda kv: kv[0])
 
@@ -943,7 +949,7 @@ def handler(event, context):
         if method == 'POST':
             return handle_batch(event)
         return handle_get(event)
-    except Exception as exc:  # final guard — never let internals leak
+    except Exception as exc: # final guard, never let internals leak
         logger.exception('Unhandled exception in score handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

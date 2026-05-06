@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SKY SCORE — Terrain Intelligence Prototype</title>
+<title>SKY SCORE, Terrain Intelligence Prototype</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
 
@@ -732,13 +732,13 @@
 
   <!-- Left panel -->
   <div class="panel" id="panel-left">
-    <div class="panel-header"><span>AIRPORT INTELLIGENCE — EGLL</span><div class="status-dot"></div></div>
+    <div class="panel-header"><span>AIRPORT INTELLIGENCE, EGLL</span><div class="status-dot"></div></div>
     <div class="row"><span class="label">ICAO / IATA</span><span class="value">EGLL / LHR</span></div>
     <div class="row"><span class="label">Position</span><span class="value cy">51.4700°N 0.4543°W</span></div>
     <div class="row"><span class="label">Elevation</span><span class="value">83 ft AMSL</span></div>
     <div class="divider"></div>
     <div class="row"><span class="label">Flights Today</span><span class="value hl" id="flights-today">1,247</span></div>
-    <div class="row"><span class="label">Peak Hour</span><span class="value" id="peak-hour">06:00–07:00 local</span></div>
+    <div class="row"><span class="label">Peak Hour</span><span class="value" id="peak-hour">06:00-07:00 local</span></div>
     <div class="row"><span class="label">Peak Movements</span><span class="value hl" id="peak-mvts">87</span></div>
     <div class="divider"></div>
     <div class="row"><span class="label">RWY 27L/09R</span><span class="value gn" id="rwy-27l">▮▮▮▮▮▮▮▯▯▯ 74%</span></div>
@@ -789,7 +789,7 @@
     <div class="row"><span class="label">FPS</span><span class="value gn" id="sys-fps">60</span></div>
     <div class="row"><span class="label">Triangles</span><span class="value" id="sys-tris">0</span></div>
     <div class="row"><span class="label">Draw Calls</span><span class="value" id="sys-draws">0</span></div>
-    <div class="row"><span class="label">Phase</span><span class="value" id="sys-cycle">—</span></div>
+    <div class="row"><span class="label">Phase</span><span class="value" id="sys-cycle">, </span></div>
   </div>
 
   <!-- Mini-map -->
@@ -834,7 +834,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 /* ══════════════════════════════════════════════════════════
-   §1  CONFIGURATION
+   §1 CONFIGURATION
    ══════════════════════════════════════════════════════════ */
 
 const TERRAIN = {
@@ -851,48 +851,48 @@ const BLOOM = { strength: 0.55, radius: 0.35, threshold: 0.15 };
 const SCALE = 180; // metres per unit
 
 /* ══════════════════════════════════════════════════════════
-   §2  DATA
+   §2 DATA
    ══════════════════════════════════════════════════════════ */
 
 /*
- * London landmarks — ACCURATE positions calculated from real lat/lng.
+ * London landmarks, ACCURATE positions calculated from real lat/lng.
  * Heathrow = 51.4700°N, 0.4543°W (terrain origin).
  * 1° lat ≈ 617 terrain units, 1° lng ≈ 384 terrain units at this latitude.
  */
 const LANDMARKS = [
-  { name: 'HEATHROW',         x: 0,    z: 0,    type: 'airport' },
-  { name: 'Windsor Castle',   x: -58,  z: -9,   type: 'landmark' }, // 51.484°N 0.604°W
-  { name: 'Staines',          x: -20,  z: 22,   type: 'landmark' }, // 51.434°N 0.507°W
-  { name: 'Richmond',         x: 59,   z: 5,    type: 'landmark' }, // 51.461°N 0.302°W
-  { name: 'Ealing',           x: 57,   z: -27,  type: 'landmark' }, // 51.513°N 0.305°W
-  { name: 'Wembley',          x: 67,   z: -53,  type: 'landmark' }, // 51.556°N 0.280°W
-  { name: 'Hammersmith',      x: 88,   z: -14,  type: 'landmark' }, // 51.493°N 0.225°W
-  { name: 'Camden',           x: 120,  z: -43,  type: 'landmark' }, // 51.539°N 0.143°W
-  { name: 'Westminster',      x: 122,  z: -17,  type: 'landmark' }, // 51.498°N 0.136°W
-  { name: 'City of London',   x: 139,  z: -28,  type: 'landmark' }, // 51.516°N 0.092°W
-  { name: 'Brixton',          x: 130,  z: 5,    type: 'landmark' }, // 51.461°N 0.115°W
-  { name: 'Canary Wharf',     x: 166,  z: -22,  type: 'landmark' }, // 51.505°N 0.024°W
-  { name: 'Stratford',        x: 173,  z: -45,  type: 'landmark' }, // 51.543°N 0.003°W
-  { name: 'Greenwich',        x: 174,  z: -4,   type: 'landmark' }, // 51.477°N 0.001°W
-  { name: 'Croydon',          x: 137,  z: 58,   type: 'landmark' }, // 51.376°N 0.099°W
+  { name: 'HEATHROW', x: 0, z: 0, type: 'airport' },
+  { name: 'Windsor Castle', x: -58, z: -9, type: 'landmark' }, // 51.484°N 0.604°W
+  { name: 'Staines', x: -20, z: 22, type: 'landmark' }, // 51.434°N 0.507°W
+  { name: 'Richmond', x: 59, z: 5, type: 'landmark' }, // 51.461°N 0.302°W
+  { name: 'Ealing', x: 57, z: -27, type: 'landmark' }, // 51.513°N 0.305°W
+  { name: 'Wembley', x: 67, z: -53, type: 'landmark' }, // 51.556°N 0.280°W
+  { name: 'Hammersmith', x: 88, z: -14, type: 'landmark' }, // 51.493°N 0.225°W
+  { name: 'Camden', x: 120, z: -43, type: 'landmark' }, // 51.539°N 0.143°W
+  { name: 'Westminster', x: 122, z: -17, type: 'landmark' }, // 51.498°N 0.136°W
+  { name: 'City of London', x: 139, z: -28, type: 'landmark' }, // 51.516°N 0.092°W
+  { name: 'Brixton', x: 130, z: 5, type: 'landmark' }, // 51.461°N 0.115°W
+  { name: 'Canary Wharf', x: 166, z: -22, type: 'landmark' }, // 51.505°N 0.024°W
+  { name: 'Stratford', x: 173, z: -45, type: 'landmark' }, // 51.543°N 0.003°W
+  { name: 'Greenwich', x: 174, z: -4, type: 'landmark' }, // 51.477°N 0.001°W
+  { name: 'Croydon', x: 137, z: 58, type: 'landmark' }, // 51.376°N 0.099°W
 ];
 
-/* Borough boundaries — adjusted to match corrected geography */
+/* Borough boundaries, adjusted to match corrected geography */
 const BOROUGHS = [
-  { name: 'Hillingdon',    pts: [[-70,-60],[-70,30],[-10,30],[-10,-60]] },
-  { name: 'Hounslow',      pts: [[-10,-20],[-10,30],[55,30],[55,-20]] },
-  { name: 'Richmond',      pts: [[40,-30],[40,15],[75,15],[75,-30]] },
-  { name: 'Ealing',        pts: [[30,-45],[30,-15],[70,-15],[70,-45]] },
-  { name: 'Hammersmith',   pts: [[75,-25],[75,0],[100,0],[100,-25]] },
-  { name: 'Westminster',   pts: [[105,-30],[105,-5],[135,-5],[135,-30]] },
-  { name: 'Camden',        pts: [[105,-55],[105,-30],[135,-30],[135,-55]] },
+  { name: 'Hillingdon', pts: [[-70,-60],[-70,30],[-10,30],[-10,-60]] },
+  { name: 'Hounslow', pts: [[-10,-20],[-10,30],[55,30],[55,-20]] },
+  { name: 'Richmond', pts: [[40,-30],[40,15],[75,15],[75,-30]] },
+  { name: 'Ealing', pts: [[30,-45],[30,-15],[70,-15],[70,-45]] },
+  { name: 'Hammersmith', pts: [[75,-25],[75,0],[100,0],[100,-25]] },
+  { name: 'Westminster', pts: [[105,-30],[105,-5],[135,-5],[135,-30]] },
+  { name: 'Camden', pts: [[105,-55],[105,-30],[135,-30],[135,-55]] },
   { name: 'City of London',pts: [[130,-35],[130,-20],[150,-20],[150,-35]] },
   { name: 'Tower Hamlets', pts: [[150,-40],[150,-10],[180,-10],[180,-40]] },
-  { name: 'Southwark',     pts: [[120,-5],[120,20],[150,20],[150,-5]] },
+  { name: 'Southwark', pts: [[120,-5],[120,20],[150,20],[150,-5]] },
 ];
 
 /*
- * Thames path — accurate S-curve from Staines through central London.
+ * Thames path, accurate S-curve from Staines through central London.
  * Waypoints trace real river bends at key landmarks.
  */
 const THAMES = [
@@ -904,9 +904,9 @@ const THAMES = [
 ];
 
 /*
- * Flight arc data — accurate great-circle bearings from Heathrow (51.47°N, 0.45°W).
+ * Flight arc data, accurate great-circle bearings from Heathrow (51.47°N, 0.45°W).
  * Bearings calculated using initial heading formula:
- *   θ = atan2(sin(Δλ)·cos(φ2), cos(φ1)·sin(φ2) − sin(φ1)·cos(φ2)·cos(Δλ))
+ * θ = atan2(sin(Δλ)·cos(φ2), cos(φ1)·sin(φ2) − sin(φ1)·cos(φ2)·cos(Δλ))
  *
  * Altitudes are typical cruise flight levels for the route distance.
  * Speeds are realistic cruise TAS for each aircraft type.
@@ -914,29 +914,29 @@ const THAMES = [
  */
 const FLIGHTS = [
   /*
-   * DEPARTURES — outbound from Heathrow
+   * DEPARTURES, outbound from Heathrow
    * Bearings: initial great-circle heading from LHR
    * realKm: actual great-circle distance to destination
    */
-  { dest:'Paris CDG',     code:'BA304',  bearing:148, dist:95,  alt:28, speed:450, ac:'A320neo',    col:0x00ffff, type:'DEP', realKm:347 },
-  { dest:'Amsterdam AMS', code:'BA430',  bearing:68,  dist:100, alt:30, speed:460, ac:'A320neo',    col:0x00ffff, type:'DEP', realKm:370 },
-  { dest:'Dublin DUB',    code:'EI155',  bearing:305, dist:92,  alt:26, speed:440, ac:'A320',       col:0x00ffff, type:'DEP', realKm:449 },
-  { dest:'Madrid MAD',    code:'BA460',  bearing:195, dist:120, alt:36, speed:480, ac:'A321neo',    col:0x00ffff, type:'DEP', realKm:1261 },
-  { dest:'New York JFK',  code:'BA117',  bearing:288, dist:135, alt:39, speed:490, ac:'B777-300ER', col:0x00ffff, type:'DEP', realKm:5540 },
+  { dest:'Paris CDG', code:'BA304', bearing:148, dist:95, alt:28, speed:450, ac:'A320neo', col:0x00ffff, type:'DEP', realKm:347 },
+  { dest:'Amsterdam AMS', code:'BA430', bearing:68, dist:100, alt:30, speed:460, ac:'A320neo', col:0x00ffff, type:'DEP', realKm:370 },
+  { dest:'Dublin DUB', code:'EI155', bearing:305, dist:92, alt:26, speed:440, ac:'A320', col:0x00ffff, type:'DEP', realKm:449 },
+  { dest:'Madrid MAD', code:'BA460', bearing:195, dist:120, alt:36, speed:480, ac:'A321neo', col:0x00ffff, type:'DEP', realKm:1261 },
+  { dest:'New York JFK', code:'BA117', bearing:288, dist:135, alt:39, speed:490, ac:'B777-300ER', col:0x00ffff, type:'DEP', realKm:5540 },
 
-  /* ARRIVALS — inbound to Heathrow */
-  { dest:'Frankfurt FRA', code:'LH922',  bearing:95,  dist:110, alt:32, speed:470, ac:'A320neo',    col:0xffb000, type:'ARR', realKm:654 },
-  { dest:'Rome FCO',      code:'AZ201',  bearing:139, dist:125, alt:38, speed:490, ac:'A321neo',    col:0xffb000, type:'ARR', realKm:1435 },
-  { dest:'Lisbon LIS',    code:'TP1355', bearing:207, dist:118, alt:36, speed:470, ac:'A330-900neo', col:0xffb000, type:'ARR', realKm:1586 },
+  /* ARRIVALS, inbound to Heathrow */
+  { dest:'Frankfurt FRA', code:'LH922', bearing:95, dist:110, alt:32, speed:470, ac:'A320neo', col:0xffb000, type:'ARR', realKm:654 },
+  { dest:'Rome FCO', code:'AZ201', bearing:139, dist:125, alt:38, speed:490, ac:'A321neo', col:0xffb000, type:'ARR', realKm:1435 },
+  { dest:'Lisbon LIS', code:'TP1355', bearing:207, dist:118, alt:36, speed:470, ac:'A330-900neo', col:0xffb000, type:'ARR', realKm:1586 },
 
-  /* OVERFLIGHTS — transiting London TMA */
-  { dest:'Edinburgh EDI', code:'BA1452', bearing:336, dist:88,  alt:34, speed:450, ac:'A319',       col:0xff4488, type:'OVR', realKm:534 },
-  { dest:'Oslo OSL',      code:'SK802',  bearing:24,  dist:105, alt:37, speed:470, ac:'B737-800',   col:0xff4488, type:'OVR', realKm:1153 },
+  /* OVERFLIGHTS, transiting London TMA */
+  { dest:'Edinburgh EDI', code:'BA1452', bearing:336, dist:88, alt:34, speed:450, ac:'A319', col:0xff4488, type:'OVR', realKm:534 },
+  { dest:'Oslo OSL', code:'SK802', bearing:24, dist:105, alt:37, speed:470, ac:'B737-800', col:0xff4488, type:'OVR', realKm:1153 },
 ];
 
 /* Noise contour rings (dB level → approximate radius in terrain units) */
 const NOISE_CONTOURS = [
-  { db: 72, radius: 8,  col: 0xff4444 },
+  { db: 72, radius: 8, col: 0xff4444 },
   { db: 66, radius: 18, col: 0xff6633 },
   { db: 63, radius: 30, col: 0xffaa22 },
   { db: 57, radius: 50, col: 0xffdd44 },
@@ -945,13 +945,13 @@ const NOISE_CONTOURS = [
 
 /* Camera preset views */
 const VIEWS = {
-  '1': { pos: [60, 280, 5],     target: [60, 0, -10],  name: 'OVERHEAD' },
-  '2': { pos: [180, 45, 10],    target: [0, 5, 0],     name: 'APPROACH' },
-  '3': { pos: [-50, 18, 130],   target: [80, 0, -15],  name: 'PANORAMIC' },
+  '1': { pos: [60, 280, 5], target: [60, 0, -10], name: 'OVERHEAD' },
+  '2': { pos: [180, 45, 10], target: [0, 5, 0], name: 'APPROACH' },
+  '3': { pos: [-50, 18, 130], target: [80, 0, -15], name: 'PANORAMIC' },
 };
 
 /* ══════════════════════════════════════════════════════════
-   §3  SIMPLEX NOISE
+   §3 SIMPLEX NOISE
    ══════════════════════════════════════════════════════════ */
 
 class SimplexNoise {
@@ -986,16 +986,16 @@ class SimplexNoise {
 }
 
 /* ══════════════════════════════════════════════════════════
-   §4  LOADING HELPERS
+   §4 LOADING HELPERS
    ══════════════════════════════════════════════════════════ */
 
-const $  = id => document.getElementById(id);
+const $ = id => document.getElementById(id);
 const pf = $('progress-fill');
 const ls = $('loading-status');
 function prog(p, m) { pf.style.width = p+'%'; ls.textContent = m; }
 
 /* ══════════════════════════════════════════════════════════
-   §5  RENDERER + SCENE + CAMERA
+   §5 RENDERER + SCENE + CAMERA
    ══════════════════════════════════════════════════════════ */
 
 prog(5, 'CREATING RENDERER');
@@ -1044,7 +1044,7 @@ const bloomPass = new UnrealBloomPass(
 composer.addPass(bloomPass);
 
 /* ══════════════════════════════════════════════════════════
-   §6  TERRAIN GENERATION (with vertex colours)
+   §6 TERRAIN GENERATION (with vertex colours)
    ══════════════════════════════════════════════════════════ */
 
 prog(20, 'GENERATING TERRAIN HEIGHTMAP');
@@ -1084,20 +1084,20 @@ terrainGeo.computeVertexNormals();
 /* Vertex colour gradient by elevation */
 prog(30, 'APPLYING ELEVATION COLOURS');
 
-const colLow  = new THREE.Color(0x0a1628);
-const colMid  = new THREE.Color(0x0e3050);
+const colLow = new THREE.Color(0x0a1628);
+const colMid = new THREE.Color(0x0e3050);
 const colHigh = new THREE.Color(0x1a7090);
 const colPeak = new THREE.Color(0x00ffff);
 
 const colours = new Float32Array(pos.count * 3);
 for (let i = 0; i < pos.count; i++) {
-  const h = pos.getY(i) / maxElev; // 0–1
+  const h = pos.getY(i) / maxElev; // 0-1
   const c = new THREE.Color();
-  if (h < 0.15)      c.lerpColors(colLow, colMid, h / 0.15);
+  if (h < 0.15) c.lerpColors(colLow, colMid, h / 0.15);
   else if (h < 0.45) c.lerpColors(colMid, colHigh, (h - 0.15) / 0.3);
   else if (h < 0.75) c.lerpColors(colHigh, colPeak, (h - 0.45) / 0.3);
-  else                c.lerpColors(colPeak, new THREE.Color(0xffffff), (h - 0.75) / 0.25);
-  colours[i*3]   = c.r;
+  else c.lerpColors(colPeak, new THREE.Color(0xffffff), (h - 0.75) / 0.25);
+  colours[i*3] = c.r;
   colours[i*3+1] = c.g;
   colours[i*3+2] = c.b;
 }
@@ -1123,7 +1123,7 @@ grid.material.opacity = 0.25;
 scene.add(grid);
 
 /* ══════════════════════════════════════════════════════════
-   §7  THAMES RIVER
+   §7 THAMES RIVER
    ══════════════════════════════════════════════════════════ */
 
 prog(35, 'CARVING THE THAMES');
@@ -1150,7 +1150,7 @@ const thamesGlow = new THREE.LineBasicMaterial({ color: 0x3080c0, transparent: t
 scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(thamesSmooth), thamesGlow));
 
 /* ══════════════════════════════════════════════════════════
-   §8  LABELS (CSS2D)
+   §8 LABELS (CSS2D)
    ══════════════════════════════════════════════════════════ */
 
 prog(40, 'PLACING LOCATION MARKERS');
@@ -1187,7 +1187,7 @@ thamesLabel.position.set(50, getTerrainHeight(50, -6) + 2, -6);
 scene.add(thamesLabel);
 
 /* ══════════════════════════════════════════════════════════
-   §9  BOROUGH BOUNDARIES
+   §9 BOROUGH BOUNDARIES
    ══════════════════════════════════════════════════════════ */
 
 prog(45, 'DRAWING BOROUGH BOUNDARIES');
@@ -1217,7 +1217,7 @@ BOROUGHS.forEach(b => {
 scene.add(boroughGroup);
 
 /* ══════════════════════════════════════════════════════════
-   §10  HEATHROW AIRPORT DETAIL
+   §10 HEATHROW AIRPORT DETAIL
    ══════════════════════════════════════════════════════════ */
 
 prog(50, 'BUILDING AIRPORT LAYOUT');
@@ -1228,7 +1228,7 @@ const airportGroup = new THREE.Group();
 const rwyMat = new THREE.LineBasicMaterial({ color: 0xffb000, transparent: true, opacity: 0.6 });
 const rwyDash = new THREE.LineDashedMaterial({ color: 0xffb000, transparent: true, opacity: 0.3, dashSize: 1, gapSize: 0.8 });
 
-/* RWY 27L/09R (northern) — approx 3.9km = 22 units, heading ~270° */
+/* RWY 27L/09R (northern), approx 3.9km = 22 units, heading ~270° */
 function addRunway(z, label1, label2) {
   const pts = [new THREE.Vector3(-11, 0.3, z), new THREE.Vector3(11, 0.3, z)];
   airportGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), rwyMat));
@@ -1302,7 +1302,7 @@ scene.add(new THREE.Line(
 ));
 
 /* ══════════════════════════════════════════════════════════
-   §11  NOISE CONTOUR RINGS
+   §11 NOISE CONTOUR RINGS
    ══════════════════════════════════════════════════════════ */
 
 prog(55, 'PLOTTING NOISE CONTOURS');
@@ -1334,7 +1334,7 @@ NOISE_CONTOURS.forEach(nc => {
 scene.add(contourGroup);
 
 /* ══════════════════════════════════════════════════════════
-   §12  APPROACH / DEPARTURE CORRIDORS
+   §12 APPROACH / DEPARTURE CORRIDORS
    ══════════════════════════════════════════════════════════ */
 
 prog(58, 'RENDERING FLIGHT CORRIDORS');
@@ -1342,9 +1342,9 @@ prog(58, 'RENDERING FLIGHT CORRIDORS');
 function addCorridor(startX, endX, halfWidthNear, halfWidthFar, colour, yOff) {
   const verts = new Float32Array([
     startX, yOff + 0.3, -halfWidthNear,
-    startX, yOff + 0.3,  halfWidthNear,
-    endX,   yOff + 0.3, -halfWidthFar,
-    endX,   yOff + 0.3,  halfWidthFar,
+    startX, yOff + 0.3, halfWidthNear,
+    endX, yOff + 0.3, -halfWidthFar,
+    endX, yOff + 0.3, halfWidthFar,
   ]);
   const idx = [0,1,2, 2,1,3];
   const geo = new THREE.BufferGeometry();
@@ -1385,7 +1385,7 @@ arrLabel.position.set(55, 2, -16); arrLabel.element.style.color = 'rgba(255,176,
 scene.add(arrLabel);
 
 /* ══════════════════════════════════════════════════════════
-   §13  FLIGHT PATHS + ANIMATED TRAILS
+   §13 FLIGHT PATHS + ANIMATED TRAILS
    ══════════════════════════════════════════════════════════ */
 
 prog(65, 'COMPUTING FLIGHT TRAJECTORIES');
@@ -1437,7 +1437,7 @@ FLIGHTS.forEach(f => {
   const baseCol = new THREE.Color(f.col);
   for (let i = 0; i < TRAIL_LEN; i++) {
     const a = 1 - i / TRAIL_LEN;
-    trailCol[i*3]   = baseCol.r * a;
+    trailCol[i*3] = baseCol.r * a;
     trailCol[i*3+1] = baseCol.g * a;
     trailCol[i*3+2] = baseCol.b * a;
   }
@@ -1476,7 +1476,7 @@ FLIGHTS.forEach(f => {
 });
 
 /* ══════════════════════════════════════════════════════════
-   §14  LIVE FLIGHT DATA (OpenSky Network — free, no key)
+   §14 LIVE FLIGHT DATA (OpenSky Network, free, no key)
    ══════════════════════════════════════════════════════════
 
    Fetches real aircraft positions within a bounding box around
@@ -1484,9 +1484,9 @@ FLIGHTS.forEach(f => {
    unreachable (CORS, rate limit, network error).
 
    Aircraft are auto-classified by vertical rate:
-     Climbing  (>2 m/s)  → cyan  (departure)
+     Climbing (>2 m/s) → cyan (departure)
      Descending (<-2 m/s) → amber (arrival)
-     Level                → pink  (transit/cruise)
+     Level → pink (transit/cruise)
 */
 
 const LHR_POS = { lat: 51.4700, lng: -0.4543 };
@@ -1519,9 +1519,9 @@ function geoToTerrain(lat, lng) {
 function altToY(m) { return Math.max(0.5, (m || 0) / 250); }
 
 function classifyByVRate(vRate) {
-  if (vRate > 2)  return { type: 'CLB', label: 'CLIMBING',    col: 0x00ffff };
-  if (vRate < -2) return { type: 'DES', label: 'DESCENDING',  col: 0xffb000 };
-  return              { type: 'CRZ', label: 'CRUISING',    col: 0xff4488 };
+  if (vRate > 2) return { type: 'CLB', label: 'CLIMBING', col: 0x00ffff };
+  if (vRate < -2) return { type: 'DES', label: 'DESCENDING', col: 0xffb000 };
+  return { type: 'CRZ', label: 'CRUISING', col: 0xff4488 };
 }
 
 function distFromHub(pos) {
@@ -1738,7 +1738,7 @@ sweep.position.y = 0.6;
 scene.add(sweep);
 
 /* ══════════════════════════════════════════════════════════
-   §14b  FLIGHT CORRIDOR HEATMAP & TIMELAPSE
+   §14b FLIGHT CORRIDOR HEATMAP & TIMELAPSE
    ══════════════════════════════════════════════════════════
 
    Renders accumulated flight positions as a point cloud,
@@ -1760,21 +1760,21 @@ function gaussian() {
 /* ── Known Heathrow corridors (SIDs & STARs in terrain coords) ── */
 const CORRIDOR_PATHS = [
   /* Departure SIDs (from runway westward/outward) */
-  { name: 'DEP-S MAKIT',   pts: [[0,0],[-10,8],[-25,20],[-45,40],[-65,65],[-90,95],[-120,130]], spread: 5, weight: 1.2 },
-  { name: 'DEP-W CPT',     pts: [[0,0],[-15,2],[-35,4],[-60,5],[-90,8],[-130,10],[-170,12]], spread: 4, weight: 1.0 },
-  { name: 'DEP-N BPK',     pts: [[0,0],[5,-5],[12,-15],[25,-30],[40,-50],[60,-75],[85,-105]], spread: 4, weight: 1.1 },
-  { name: 'DEP-E DET',     pts: [[0,0],[10,-3],[25,-5],[50,-8],[80,-10],[115,-12],[155,-15]], spread: 4, weight: 0.8 },
-  { name: 'DEP-NW WOBUN',  pts: [[0,0],[-8,-5],[-20,-15],[-40,-30],[-65,-50],[-95,-75]], spread: 4, weight: 0.7 },
-  { name: 'DEP-SW SAM',    pts: [[0,0],[-8,5],[-20,15],[-40,35],[-60,55],[-85,80]], spread: 4, weight: 0.6 },
+  { name: 'DEP-S MAKIT', pts: [[0,0],[-10,8],[-25,20],[-45,40],[-65,65],[-90,95],[-120,130]], spread: 5, weight: 1.2 },
+  { name: 'DEP-W CPT', pts: [[0,0],[-15,2],[-35,4],[-60,5],[-90,8],[-130,10],[-170,12]], spread: 4, weight: 1.0 },
+  { name: 'DEP-N BPK', pts: [[0,0],[5,-5],[12,-15],[25,-30],[40,-50],[60,-75],[85,-105]], spread: 4, weight: 1.1 },
+  { name: 'DEP-E DET', pts: [[0,0],[10,-3],[25,-5],[50,-8],[80,-10],[115,-12],[155,-15]], spread: 4, weight: 0.8 },
+  { name: 'DEP-NW WOBUN', pts: [[0,0],[-8,-5],[-20,-15],[-40,-30],[-65,-50],[-95,-75]], spread: 4, weight: 0.7 },
+  { name: 'DEP-SW SAM', pts: [[0,0],[-8,5],[-20,15],[-40,35],[-60,55],[-85,80]], spread: 4, weight: 0.6 },
 
   /* Arrival STARs (from holding stacks inward to runway) */
-  { name: 'ARR-SE BIG',    pts: [[150,35],[130,28],[110,20],[90,12],[70,6],[45,3],[20,1],[0,0]], spread: 3, weight: 1.3 },
-  { name: 'ARR-N BNN',     pts: [[30,-90],[28,-70],[25,-50],[20,-35],[15,-20],[8,-10],[0,0]], spread: 3, weight: 1.2 },
-  { name: 'ARR-SW OCK',    pts: [[40,75],[35,60],[28,45],[20,30],[12,18],[5,8],[0,0]], spread: 3, weight: 1.1 },
-  { name: 'ARR-E LAM',     pts: [[175,-35],[150,-30],[125,-25],[100,-18],[75,-12],[50,-6],[25,-2],[0,0]], spread: 3, weight: 1.0 },
+  { name: 'ARR-SE BIG', pts: [[150,35],[130,28],[110,20],[90,12],[70,6],[45,3],[20,1],[0,0]], spread: 3, weight: 1.3 },
+  { name: 'ARR-N BNN', pts: [[30,-90],[28,-70],[25,-50],[20,-35],[15,-20],[8,-10],[0,0]], spread: 3, weight: 1.2 },
+  { name: 'ARR-SW OCK', pts: [[40,75],[35,60],[28,45],[20,30],[12,18],[5,8],[0,0]], spread: 3, weight: 1.1 },
+  { name: 'ARR-E LAM', pts: [[175,-35],[150,-30],[125,-25],[100,-18],[75,-12],[50,-6],[25,-2],[0,0]], spread: 3, weight: 1.0 },
 
-  /* Final approach (east, very dense — ILS 27L/27R) */
-  { name: 'FINAL-27',      pts: [[160,-1],[130,0],[100,0],[70,0],[40,0],[20,0],[0,0]], spread: 1.5, weight: 2.0 },
+  /* Final approach (east, very dense, ILS 27L/27R) */
+  { name: 'FINAL-27', pts: [[160,-1],[130,0],[100,0],[70,0],[40,0],[20,0],[0,0]], spread: 1.5, weight: 2.0 },
 ];
 
 /* ── Generate synthetic corridor points ──────────── */
@@ -1832,8 +1832,8 @@ function generateCorridorData(totalPoints) {
 
 /* Pre-generate corridor datasets */
 const corridorData = {
-  DAILY:   generateCorridorData(3000),
-  WEEKLY:  generateCorridorData(15000),
+  DAILY: generateCorridorData(3000),
+  WEEKLY: generateCorridorData(15000),
   MONTHLY: generateCorridorData(50000),
 };
 
@@ -1878,9 +1878,9 @@ function showCorridorView(mode) {
     const dist = Math.sqrt(x*x + z*z);
     const t = Math.min(1, dist / 160); // 0=hub, 1=far
     /* Hub = bright white-cyan, far = deeper cyan */
-    colours[i*3]   = 0.3 * (1 - t);           // R (warm tint near hub)
-    colours[i*3+1] = 0.9 + (1 - t) * 0.1;     // G
-    colours[i*3+2] = 1.0;                       // B (always full)
+    colours[i*3] = 0.3 * (1 - t); // R (warm tint near hub)
+    colours[i*3+1] = 0.9 + (1 - t) * 0.1; // G
+    colours[i*3+2] = 1.0; // B (always full)
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colours, 3));
 
@@ -1909,7 +1909,7 @@ function startCorridorTimelapse() {
   if (corridorViewIdx === 0) return; // no timelapse in realtime
   timelapsePlaying = true;
   timelapseProgress = 0;
-  showToast('CORRIDOR TIMELAPSE — BUILDING...');
+  showToast('CORRIDOR TIMELAPSE, BUILDING...');
 }
 
 function updateCorridorTimelapse(dt) {
@@ -1935,7 +1935,7 @@ function accumulateLiveCorridor() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   §15  DAY/NIGHT CYCLE
+   §15 DAY/NIGHT CYCLE
    ══════════════════════════════════════════════════════════ */
 
 /*
@@ -1962,7 +1962,7 @@ function getSunTimes() {
   const halfDayHours = (H * 180 / Math.PI) / 15; // hours from noon
 
   const sunrise = 12 - halfDayHours; // UTC (London ≈ 0° longitude)
-  const sunset  = 12 + halfDayHours;
+  const sunset = 12 + halfDayHours;
 
   return { sunrise, sunset };
 }
@@ -1970,7 +1970,7 @@ function getSunTimes() {
 const sunTimes = getSunTimes();
 
 /*
- * UK local time utilities — uses Intl API so BST/GMT transitions
+ * UK local time utilities, uses Intl API so BST/GMT transitions
  * are handled automatically (last Sunday of March → BST,
  * last Sunday of October → GMT).
  */
@@ -2020,37 +2020,37 @@ function utcDecimalToUkString(utcHours) {
   return h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0');
 }
 
-/* Get current cycle position from real UTC clock (solar time — not affected by BST) */
+/* Get current cycle position from real UTC clock (solar time, not affected by BST) */
 function getGmtCycleTime() {
   const now = new Date();
   const h = now.getUTCHours() + now.getUTCMinutes() / 60 + now.getUTCSeconds() / 3600;
-  return h / 24; // 0–1 where 0 = midnight UTC, 0.5 = noon UTC
+  return h / 24; // 0-1 where 0 = midnight UTC, 0.5 = noon UTC
 }
 
-/* Convert 24h fraction to sunrise/sunset-relative phase (0–1) for colour mixing.
- *  0.00–dawnStart  = deep night
- *  dawnStart–sunrise = dawn (golden hour)
- *  sunrise–sunset  = day
- *  sunset–duskEnd  = dusk (golden hour)
- *  duskEnd–1.00    = deep night
+/* Convert 24h fraction to sunrise/sunset-relative phase (0-1) for colour mixing.
+ * 0.00-dawnStart = deep night
+ * dawnStart-sunrise = dawn (golden hour)
+ * sunrise-sunset = day
+ * sunset-duskEnd = dusk (golden hour)
+ * duskEnd-1.00 = deep night
  */
 const DAWN_DURATION = 0.75; // hours of golden hour before sunrise
 const DUSK_DURATION = 0.75; // hours of golden hour after sunset
 
 /* Background colours for each phase */
-const nightBg     = new THREE.Color(0x030308);
+const nightBg = new THREE.Color(0x030308);
 const dawnEarlyBg = new THREE.Color(0x0c0510); // purple-ish predawn
-const dawnBg      = new THREE.Color(0x1a0a08); // warm amber dawn
-const dayBg       = new THREE.Color(0x060a14); // dark blue-ish day
-const duskBg      = new THREE.Color(0x150808); // warm red-amber dusk
-const duskLateBg  = new THREE.Color(0x0a0510); // purple-ish post-dusk
+const dawnBg = new THREE.Color(0x1a0a08); // warm amber dawn
+const dayBg = new THREE.Color(0x060a14); // dark blue-ish day
+const duskBg = new THREE.Color(0x150808); // warm red-amber dusk
+const duskLateBg = new THREE.Color(0x0a0510); // purple-ish post-dusk
 
 function getCycleColour(gmtFrac) {
   const h = gmtFrac * 24; // current hour
   const sr = sunTimes.sunrise;
   const ss = sunTimes.sunset;
   const dawnStart = sr - DAWN_DURATION;
-  const duskEnd   = ss + DUSK_DURATION;
+  const duskEnd = ss + DUSK_DURATION;
   const c = new THREE.Color();
 
   if (h < dawnStart || h > duskEnd) {
@@ -2060,7 +2060,7 @@ function getCycleColour(gmtFrac) {
     /* Dawn phase */
     const p = (h - dawnStart) / DAWN_DURATION; // 0→1
     if (p < 0.4) c.lerpColors(nightBg, dawnEarlyBg, p / 0.4);
-    else         c.lerpColors(dawnEarlyBg, dawnBg, (p - 0.4) / 0.6);
+    else c.lerpColors(dawnEarlyBg, dawnBg, (p - 0.4) / 0.6);
   } else if (h < sr + 0.5) {
     /* Sunrise → day transition */
     c.lerpColors(dawnBg, dayBg, (h - sr) / 0.5);
@@ -2074,7 +2074,7 @@ function getCycleColour(gmtFrac) {
     /* Dusk phase */
     const p = (h - ss) / DUSK_DURATION; // 0→1
     if (p < 0.6) c.lerpColors(duskBg, duskLateBg, p / 0.6);
-    else         c.lerpColors(duskLateBg, nightBg, (p - 0.6) / 0.4);
+    else c.lerpColors(duskLateBg, nightBg, (p - 0.6) / 0.4);
   }
   return c;
 }
@@ -2126,7 +2126,7 @@ const ambient = new THREE.AmbientLight(0x111122, 0.5);
 scene.add(ambient);
 
 /* ══════════════════════════════════════════════════════════
-   §16  MINI-MAP (2D canvas)
+   §16 MINI-MAP (2D canvas)
    ══════════════════════════════════════════════════════════ */
 
 prog(80, 'INITIALISING RADAR DISPLAY');
@@ -2215,7 +2215,7 @@ function drawMinimap(elapsed) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   §17  CLICK-TO-INSPECT (Raycaster)
+   §17 CLICK-TO-INSPECT (Raycaster)
    ══════════════════════════════════════════════════════════ */
 
 prog(85, 'CALIBRATING FLIGHT TRACKER');
@@ -2277,7 +2277,7 @@ function selectFlight(f) {
     });
   } else {
     /* ── Simulated flight ────────────────────────── */
-    $('sel-title').textContent = f.code + ' — ' + f.dest;
+    $('sel-title').textContent = f.code + ', ' + f.dest;
     $('sel-body').innerHTML = `
       <div class="row"><span class="label">Callsign</span><span class="value" style="color:${colHex}">${f.code}</span></div>
       <div class="row"><span class="label">${f.type === 'ARR' ? 'Origin' : 'Destination'}</span><span class="value">${f.dest}</span></div>
@@ -2314,7 +2314,7 @@ function deselectFlight() {
 $('sel-close').addEventListener('click', deselectFlight);
 
 /* ══════════════════════════════════════════════════════════
-   §18  KEYBOARD SHORTCUTS
+   §18 KEYBOARD SHORTCUTS
    ══════════════════════════════════════════════════════════ */
 
 prog(88, 'BINDING CONTROLS');
@@ -2368,7 +2368,7 @@ window.addEventListener('keydown', (e) => {
       $('hud').classList.toggle('hidden');
       labelRenderer.domElement.style.display = hudVisible ? 'block' : 'none';
       if (!hudVisible) {
-        showToast('SCREENSHOT MODE — PRESS P TO RESTORE');
+        showToast('SCREENSHOT MODE, PRESS P TO RESTORE');
       }
       break;
 
@@ -2399,7 +2399,7 @@ window.addEventListener('keydown', (e) => {
       } else {
         restoreLiveGroup();
         fetchLiveData().then(states => {
-          if (states) { processLiveStates(states); enterLiveMode(); showToast('LIVE MODE — ' + liveCount + ' AIRCRAFT'); }
+          if (states) { processLiveStates(states); enterLiveMode(); showToast('LIVE MODE, ' + liveCount + ' AIRCRAFT'); }
           else showToast('LIVE DATA UNAVAILABLE');
         });
       }
@@ -2432,7 +2432,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 /* ══════════════════════════════════════════════════════════
-   §19  TICKER
+   §19 TICKER
    ══════════════════════════════════════════════════════════ */
 
 prog(90, 'POPULATING DATA FEEDS');
@@ -2447,9 +2447,9 @@ function buildTicker() {
   });
   msgs.push(
     `METAR EGLL 291250Z 27012G18KT 9999 FEW040 12/04 Q1013<span class="sep">◆</span>`,
-    `ATIS CHARLIE — RWY 27L/27R — TL FL70<span class="sep">◆</span>`,
-    `NOISE ABATEMENT: CDA IN EFFECT — MIN ALT 6000FT WITHIN 15NM<span class="sep">◆</span>`,
-    `SKY SCORE TERRAIN INTELLIGENCE v0.2 — PROTOTYPE<span class="sep">◆</span>`,
+    `ATIS CHARLIE, RWY 27L/27R, TL FL70<span class="sep">◆</span>`,
+    `NOISE ABATEMENT: CDA IN EFFECT, MIN ALT 6000FT WITHIN 15NM<span class="sep">◆</span>`,
+    `SKY SCORE TERRAIN INTELLIGENCE v0.2, PROTOTYPE<span class="sep">◆</span>`,
   );
   $('ticker-text').innerHTML = msgs.join('');
 }
@@ -2495,7 +2495,7 @@ setInterval(updateFlightList, 4000);
 /* Keyboard hints stay visible permanently */
 
 /* ══════════════════════════════════════════════════════════
-   §20  ANIMATION LOOP
+   §20 ANIMATION LOOP
    ══════════════════════════════════════════════════════════ */
 
 prog(100, 'SYSTEMS ONLINE');
@@ -2506,7 +2506,7 @@ let frames = 0, lastFps = 0;
 
 function animate() {
   requestAnimationFrame(animate);
-  /* getDelta() MUST be called first — getElapsedTime() resets the internal delta timer */
+  /* getDelta() MUST be called first, getElapsedTime() resets the internal delta timer */
   const dt = clock.getDelta();
   const t = clock.elapsedTime;
   frames++;
@@ -2557,7 +2557,7 @@ function animate() {
         processLiveStates(states);
         if (!liveMode) { enterLiveMode(); restoreLiveGroup(); }
       } else if (liveFetchFails > 3 && liveMode) {
-        /* Lost connection — revert to simulated */
+        /* Lost connection, revert to simulated */
         exitLiveMode();
       }
     });
@@ -2651,7 +2651,7 @@ function animate() {
 animate();
 
 /* ══════════════════════════════════════════════════════════
-   §21  RESIZE
+   §21 RESIZE
    ══════════════════════════════════════════════════════════ */
 
 window.addEventListener('resize', () => {
@@ -2665,7 +2665,7 @@ window.addEventListener('resize', () => {
 });
 
 /* ══════════════════════════════════════════════════════════
-   §22  MOBILE RESPONSIVENESS
+   §22 MOBILE RESPONSIVENESS
    ══════════════════════════════════════════════════════════ */
 
 const MOBILE_BP = 768;
@@ -2676,7 +2676,7 @@ function updateMobileState() {
   const wasMobile = isMobile;
   isMobile = window.innerWidth <= MOBILE_BP;
 
-  /* Switching from desktop to mobile — collapse panels */
+  /* Switching from desktop to mobile, collapse panels */
   if (isMobile && !wasMobile) {
     $('panel-left').classList.remove('mobile-visible');
     $('panel-right').classList.remove('mobile-visible');
@@ -2684,7 +2684,7 @@ function updateMobileState() {
     enableCollapsiblePanels();
   }
 
-  /* Switching from mobile to desktop — restore panels */
+  /* Switching from mobile to desktop, restore panels */
   if (!isMobile && wasMobile) {
     $('panel-left').classList.remove('mobile-visible');
     $('panel-right').classList.remove('mobile-visible');

@@ -86,7 +86,7 @@ def handler(event, context):
 
         return response(200, {'analysis': analysis})
 
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in analyze_image handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

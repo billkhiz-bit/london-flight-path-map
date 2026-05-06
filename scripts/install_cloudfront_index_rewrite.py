@@ -12,12 +12,12 @@ What it does
 5. Updates the distribution and waits for it to deploy.
 
 Idempotency: each step checks current state first, so re-running this
-script is safe — second run is a no-op.
+script is safe, second run is a no-op.
 
 Why this matters
 ================
 Without this rewrite, a request to `https://.../score-demo/` returns
-the S3 REST endpoint's "directory listing not allowed" XML 403 — the
+the S3 REST endpoint's "directory listing not allowed" XML 403, the
 Access Denied page. CloudFront only auto-resolves `index.html` at the
 root, not in subdirectories. The function fixes this for all URLs.
 
@@ -27,7 +27,7 @@ Pre-requisites
 - The flightmap-dev IAM user must have the CloudFront Functions
   permissions in backend/iam-policy.json (Sid: CloudFrontFunctions).
   If you haven't applied the policy update yet, this script will
-  fail with AccessDenied early — apply the policy and re-run.
+  fail with AccessDenied early, apply the policy and re-run.
 
 Usage
 =====
@@ -45,7 +45,7 @@ import time
 
 DISTRIBUTION_ID = 'EGSSPJKLFL33M'
 FUNCTION_NAME = 'sky-score-rewrite-index'
-# CloudFront caps Comment at 64 chars — keep it terse.
+# CloudFront caps Comment at 64 chars, keep it terse.
 FUNCTION_COMMENT = 'Append index.html to subdir URIs (Sky Score)'
 FUNCTION_CODE = """function handler(event) {
     var request = event.request;
@@ -92,7 +92,7 @@ def main():
     )
 
     if not needs_update:
-        print('  Function is already associated; no distribution update needed.')
+        print(' Function is already associated; no distribution update needed.')
         print_summary_and_test()
         return
 
@@ -103,7 +103,7 @@ def main():
         IfMatch=distribution_etag,
         DistributionConfig=distribution_config,
     )
-    print('  Update submitted. Waiting for distribution to redeploy '
+    print(' Update submitted. Waiting for distribution to redeploy '
           '(~3-5 min, polls every 30s) ...')
     wait_for_deployment(cf)
     print_summary_and_test()
@@ -122,11 +122,11 @@ def upsert_function(cf, ClientError):
                                 'Runtime': 'cloudfront-js-2.0'},
                 FunctionCode=FUNCTION_CODE.encode(),
             )
-            print(f'  Created function {FUNCTION_NAME}.')
+            print(f' Created function {FUNCTION_NAME}.')
             return created['ETag']
         raise
 
-    print(f'  Function {FUNCTION_NAME} already exists; '
+    print(f' Function {FUNCTION_NAME} already exists; '
           'updating DEVELOPMENT code in case it has drifted ...')
     updated = cf.update_function(
         Name=FUNCTION_NAME,
@@ -141,13 +141,13 @@ def upsert_function(cf, ClientError):
 def publish_function(cf, etag, ClientError):
     try:
         cf.publish_function(Name=FUNCTION_NAME, IfMatch=etag)
-        print('  Function published to LIVE.')
+        print(' Function published to LIVE.')
     except ClientError as exc:
         # InvalidIfMatchVersion happens when the function is already
-        # published at this code revision — safe to ignore.
+        # published at this code revision, safe to ignore.
         code = exc.response.get('Error', {}).get('Code', '')
         if code == 'InvalidIfMatchVersion':
-            print('  Function already at LIVE for this code revision.')
+            print(' Function already at LIVE for this code revision.')
         else:
             raise
 
@@ -186,7 +186,7 @@ def wait_for_deployment(cf):
         time.sleep(30)
         resp = cf.get_distribution(Id=DISTRIBUTION_ID)
         status = resp['Distribution']['Status']
-        print(f'    distribution status: {status}')
+        print(f' distribution status: {status}')
         if status == 'Deployed':
             return
 
@@ -195,10 +195,10 @@ def print_summary_and_test():
     print('')
     print('Done. CloudFront Function attached to default cache behaviour.')
     print('Test with these URLs (all should now return HTTP 200):')
-    print('  https://d1oe4ftwutjpf.cloudfront.net/score-demo/')
-    print('  https://d1oe4ftwutjpf.cloudfront.net/score-demo')
-    print('  https://d1oe4ftwutjpf.cloudfront.net/prototype/')
-    print('  https://d1oe4ftwutjpf.cloudfront.net/prototype')
+    print(' https://d1oe4ftwutjpf.cloudfront.net/score-demo/')
+    print(' https://d1oe4ftwutjpf.cloudfront.net/score-demo')
+    print(' https://d1oe4ftwutjpf.cloudfront.net/prototype/')
+    print(' https://d1oe4ftwutjpf.cloudfront.net/prototype')
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ import unittest
 # Allow `python -m unittest backend.tests.test_score` from project root.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'lambdas', 'score'))
 
-import app  # noqa: E402  # pylint: disable=wrong-import-position
+import app # noqa: E402 # pylint: disable=wrong-import-position
 
 
 class CrimeToScoreTests(unittest.TestCase):
@@ -54,7 +54,7 @@ class ParseWeightsTests(unittest.TestCase):
         self.assertEqual(result, {'quiet': 0.5, 'afford': 0.2, 'growth': 0.1, 'live': 0.2})
 
     def test_invalid_sum_returns_none(self):
-        # Sum 1.5 — outside tolerance, falls back
+        # Sum 1.5, outside tolerance, falls back
         self.assertIsNone(app.parse_weights('quiet:0.5,afford:0.5,growth:0.3,live:0.2'))
 
     def test_missing_key_returns_none(self):
@@ -64,7 +64,7 @@ class ParseWeightsTests(unittest.TestCase):
         self.assertIsNone(app.parse_weights('quiet:0.3,afford:0.3,growth:0.2,live:0.1,extra:0.1'))
 
     def test_within_tolerance(self):
-        # Sum 1.005 — within 1% tolerance, accepted
+        # Sum 1.005, within 1% tolerance, accepted
         result = app.parse_weights('quiet:0.305,afford:0.25,growth:0.20,live:0.25')
         self.assertIsNotNone(result)
 
@@ -125,8 +125,8 @@ class NycZipDetectionTests(unittest.TestCase):
         self.assertEqual(app.NYC_ZIP_TO_BOROUGH.get('10301'), 'Staten Island')
 
     def test_non_nyc_zip_not_in_lookup(self):
-        self.assertIsNone(app.NYC_ZIP_TO_BOROUGH.get('90210'))  # Beverly Hills
-        self.assertIsNone(app.NYC_ZIP_TO_BOROUGH.get('60601'))  # Chicago
+        self.assertIsNone(app.NYC_ZIP_TO_BOROUGH.get('90210')) # Beverly Hills
+        self.assertIsNone(app.NYC_ZIP_TO_BOROUGH.get('60601')) # Chicago
 
 
 class CalcScoreTests(unittest.TestCase):
@@ -158,6 +158,37 @@ class CalcScoreTests(unittest.TestCase):
         result = app.calc_score('Manhattan', 'nyc', weights)
         self.assertIn('avgPriceUsd', result['context'])
         self.assertNotIn('avgPriceGbp', result['context'])
+
+
+class PersonaCoverageTests(unittest.TestCase):
+    """Every documented persona must produce a valid score and have weights
+    summing to 1.0 within the 1% tolerance enforced at request time."""
+
+    def test_all_personas_sum_to_one(self):
+        for name, weights in app.PERSONAS.items():
+            total = sum(weights.values())
+            self.assertAlmostEqual(total, 1.0, places=2,
+                                   msg=f'{name!r} sums to {total}')
+
+    def test_all_personas_have_four_keys(self):
+        expected = {'quiet', 'afford', 'growth', 'live'}
+        for name, weights in app.PERSONAS.items():
+            self.assertEqual(set(weights.keys()), expected,
+                             msg=f'{name!r} keys: {set(weights.keys())}')
+
+    def test_renter_growth_is_zero(self):
+        # Renters do not realise capital growth.
+        self.assertEqual(app.PERSONAS['renter']['growth'], 0.0)
+
+    def test_each_persona_produces_valid_score(self):
+        for name in app.PERSONAS:
+            result = app.calc_score('Wandsworth', 'london', app.PERSONAS[name])
+            self.assertGreaterEqual(result['score'], 0.0, name)
+            self.assertLessEqual(result['score'], 10.0, name)
+
+    def test_new_personas_present(self):
+        for name in ('renter', 'commuter', 'downsizer'):
+            self.assertIn(name, app.PERSONAS)
 
 
 if __name__ == '__main__':

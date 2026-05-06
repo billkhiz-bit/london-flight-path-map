@@ -10,7 +10,7 @@ CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# New MHCLG service — see https://get-energy-performance-data.communities.gov.uk
+# New MHCLG service, see https://get-energy-performance-data.communities.gov.uk
 # Replaces epc.opendatacommunities.org which retires 2026-05-30.
 EPC_API_BASE = 'https://api.get-energy-performance-data.communities.gov.uk'
 DOMESTIC_SEARCH_PATH = '/api/domestic/search'
@@ -121,7 +121,7 @@ def handler(event, context):
             certs.append({
                 'address': address,
                 'band': band,
-                # Numeric rating is no longer in search responses — synthesise
+                # Numeric rating is no longer in search responses, synthesise
                 # from band midpoint so existing consumer-site UI keeps working.
                 'rating': BAND_MIDPOINT.get(band, 0),
                 # Fields below require a per-certificate fetch via /api/certificate;
@@ -165,7 +165,7 @@ def handler(event, context):
 
         return response(200, body)
 
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in epc handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

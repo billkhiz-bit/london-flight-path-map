@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.1 — last updated 2026-05-05.
+> Version 3.1, last updated 2026-05-05.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -10,9 +10,9 @@
 1. [What Sky Score is](#1-what-sky-score-is)
 2. [Geographic coverage](#2-geographic-coverage)
 3. [Components](#3-components)
-4. [Component formulas — anchored values](#4-component-formulas--anchored-values)
+4. [Component formulas, anchored values](#4-component-formulas--anchored-values)
    - 4.1 Quiet (with §4.5 per-postcode Haversine)
-   - 4.5 Per-postcode quiet — Haversine geometry (v3.0)
+   - 4.5 Per-postcode quiet, Haversine geometry (v3.0)
 5. [Combining the components](#5-combining-the-components)
 6. [Worked example](#6-worked-example)
 7. [Data sources](#7-data-sources)
@@ -41,15 +41,15 @@ Two surfaces:
 - A **consumer site** at `https://d1oe4ftwutjpf.cloudfront.net` that informs renters and buyers.
 - A **B2B API** (`/v1/score` for single postcode, `/v1/score/batch` for bulk) intended for property data aggregators, conveyancers, and Sharia-compliant home-finance providers whose customers benefit from accurate due-diligence data.
 
-The score is a transparent, weighted combination of four components — Quiet, Affordability, Growth, and Liveability. It is not a market valuation, an EPC rating, or a regulatory rating; it is a holistic quality signal designed to *complement* those.
+The score is a transparent, weighted combination of four components, Quiet, Affordability, Growth, and Liveability. It is not a market valuation, an EPC rating, or a regulatory rating; it is a holistic quality signal designed to *complement* those.
 
 The product exists to address a structural information asymmetry in UK property: estate agents and listings platforms make money when sales close, so they are not incentivised to surface signals that might cause a buyer to walk away. Sky Score is positioned as the "ethical alternative" data layer for buyers and the institutions that serve them.
 
 ## 2. Geographic coverage
 
 **Currently supported:**
-- 33 London boroughs (32 boroughs plus the City of London) — UK postcode resolution
-- 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island) — borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
+- 33 London boroughs (32 boroughs plus the City of London), UK postcode resolution
+- 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island), borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
 
 **Planned:** UK Core Cities (Manchester, Birmingham, Bristol, Leeds, Edinburgh, Glasgow, Liverpool, Newcastle, Sheffield, Cardiff, Belfast, Nottingham), then England + Wales.
 
@@ -61,50 +61,50 @@ A request for a postcode outside the supported geography returns a 404 with a `s
 
 | Component | What it measures | Range |
 |---|---|---|
-| **Quiet** | Aviation + road noise impact | 0–10 (10 = quietest) |
-| **Affordability** | Average sold price relative to cohort | 0–10 (10 = cheapest in cohort) |
-| **Growth** | Recent price-trend signal | 0–10 (10 = strongest growth) |
-| **Liveability** | Schools, crime, transport, healthcare | 0–10 (10 = most liveable) |
+| **Quiet** | Aviation + road noise impact | 0-10 (10 = quietest) |
+| **Affordability** | Average sold price relative to cohort | 0-10 (10 = cheapest in cohort) |
+| **Growth** | Recent price-trend signal | 0-10 (10 = strongest growth) |
+| **Liveability** | Schools, crime, transport, healthcare | 0-10 (10 = most liveable) |
 
-Each component is bounded in 0–10 with floating-point precision internally and one-decimal display precision in the API response.
+Each component is bounded in 0-10 with floating-point precision internally and one-decimal display precision in the API response.
 
-## 4. Component formulas — anchored values
+## 4. Component formulas, anchored values
 
 This section documents every numeric threshold and weight in the scoring engine, with the published source or explicit editorial reasoning.
 
-### 4.1 Quiet — anchored to DEFRA Lden bands and WHO noise guidelines
+### 4.1 Quiet, anchored to DEFRA Lden bands and WHO noise guidelines
 
 Quiet is a categorical lookup of the borough's aviation noise impact band:
 
 ```
 IMPACT_TO_QUIET = {
-  'low':           10.0,    # Lden < 55 dB
-  'low-moderate':   7.5,    # Lden 55-60 dB
-  'moderate':       5.0,    # Lden 60-65 dB
-  'moderate-high':  3.0,    # Lden 65-70 dB
-  'high':           1.5,    # Lden 70-75 dB
-  'severe':         0.0,    # Lden ≥ 75 dB
+  'low': 10.0, # Lden < 55 dB
+  'low-moderate': 7.5, # Lden 55-60 dB
+  'moderate': 5.0, # Lden 60-65 dB
+  'moderate-high': 3.0, # Lden 65-70 dB
+  'high': 1.5, # Lden 70-75 dB
+  'severe': 0.0, # Lden ≥ 75 dB
 }
 ```
 
-**The dB Lden bands are the official thresholds used by the UK Department for Environment, Food and Rural Affairs (DEFRA) in the Strategic Noise Mapping Round 4 (published 2022, data current as of 2021)** — see [Reference 1, §19](#19-references). DEFRA's published reporting bands are 5-dB-wide buckets (55–59, 60–64, 65–69, 70–74, ≥75); we round to whole 5-dB boundaries (55, 60, 65, etc.) for human readability, with no loss of precision since the underlying band assignments match.
+**The dB Lden bands are the official thresholds used by the UK Department for Environment, Food and Rural Affairs (DEFRA) in the Strategic Noise Mapping Round 4 (published 2022, data current as of 2021)**, see [Reference 1, §19](#19-references). DEFRA's published reporting bands are 5-dB-wide buckets (55-59, 60-64, 65-69, 70-74, ≥75); we round to whole 5-dB boundaries (55, 60, 65, etc.) for human readability, with no loss of precision since the underlying band assignments match.
 
-Lden is the day-evening-night equivalent sound level, weighted to penalise evening (+5 dB) and night (+10 dB) noise, defined in **EU Environmental Noise Directive 2002/49/EC** (Reference 6) — the regulatory framework DEFRA implements. Sky Score's quiet score is therefore methodologically anchored to a multi-decade EU regulatory standard, not to a Sky-Score-specific construct.
+Lden is the day-evening-night equivalent sound level, weighted to penalise evening (+5 dB) and night (+10 dB) noise, defined in **EU Environmental Noise Directive 2002/49/EC** (Reference 6), the regulatory framework DEFRA implements. Sky Score's quiet score is therefore methodologically anchored to a multi-decade EU regulatory standard, not to a Sky-Score-specific construct.
 
-**The 0–10 score values are calibrated to the WHO Environmental Noise Guidelines (2018)** — see [Reference 2, §19](#19-references) — which recommend keeping aviation Lden below 45 dB for residential areas to avoid adverse health effects, and identify 53 dB as the threshold above which annoyance and cardiovascular risk become measurable. Mapping:
+**The 0-10 score values are calibrated to the WHO Environmental Noise Guidelines (2018)**, see [Reference 2, §19](#19-references), which recommend keeping aviation Lden below 45 dB for residential areas to avoid adverse health effects, and identify 53 dB as the threshold above which annoyance and cardiovascular risk become measurable. Mapping:
 
 | Score | Band | dB Lden | Health context |
 |---|---|---|---|
 | **10.0** | low | < 55 | Below WHO health-impact threshold; not measurably affected |
-| **7.5** | low-moderate | 55–60 | Below DEFRA "significantly affected" threshold; slight annoyance |
-| **5.0** | moderate | 60–65 | Sleep disturbance becomes detectable in WHO meta-analyses |
-| **3.0** | moderate-high | 65–70 | Significant annoyance; measurable cardiovascular risk increase |
-| **1.5** | high | 70–75 | High annoyance; established cardiovascular and sleep effects |
+| **7.5** | low-moderate | 55-60 | Below DEFRA "significantly affected" threshold; slight annoyance |
+| **5.0** | moderate | 60-65 | Sleep disturbance becomes detectable in WHO meta-analyses |
+| **3.0** | moderate-high | 65-70 | Significant annoyance; measurable cardiovascular risk increase |
+| **1.5** | high | 70-75 | High annoyance; established cardiovascular and sleep effects |
 | **0.0** | severe | ≥ 75 | DEFRA "important areas" action threshold; hearing impact possible |
 
-The score values are spaced to reflect the inverse-square-ish relationship between noise dB and health effect — the gap from "moderate-high" (3.0) to "high" (1.5) is half the gap from "low" (10.0) to "low-moderate" (7.5), reflecting that small dB increases at high baselines have outsized health consequences.
+The score values are spaced to reflect the inverse-square-ish relationship between noise dB and health effect, the gap from "moderate-high" (3.0) to "high" (1.5) is half the gap from "low" (10.0) to "low-moderate" (7.5), reflecting that small dB increases at high baselines have outsized health consequences.
 
-### 4.2 Affordability — min-max scaled across the cohort
+### 4.2 Affordability, min-max scaled across the cohort
 
 Affordability is computed by min-max scaling the borough's average sold price against the cohort min/max:
 
@@ -116,13 +116,13 @@ For London at the time of methodology v2.1:
 - `min_price` = £340,000 (Barking and Dagenham)
 - `max_price` = £1,350,000 (Kensington and Chelsea)
 
-The borough average values are derived from **HM Land Registry's UK House Price Index (HPI)** — see [Reference 7, §19](#19-references) — the official monthly publication of UK property prices. HPI is preferred over raw Price Paid Data here because it controls for compositional changes (mix of property types) and is the standard reference used by mortgage lenders, the Bank of England, and the Office for National Statistics for residential price tracking.
+The borough average values are derived from **HM Land Registry's UK House Price Index (HPI)**, see [Reference 7, §19](#19-references), the official monthly publication of UK property prices. HPI is preferred over raw Price Paid Data here because it controls for compositional changes (mix of property types) and is the standard reference used by mortgage lenders, the Bank of England, and the Office for National Statistics for residential price tracking.
 
-This is a deliberate cohort-relative scale, not an absolute one. A property at £680k scores 6.6/10 because it sits 66% of the way down from London's most expensive borough — *relative to London*. The same price would score very differently against a national or NYC cohort.
+This is a deliberate cohort-relative scale, not an absolute one. A property at £680k scores 6.6/10 because it sits 66% of the way down from London's most expensive borough, *relative to London*. The same price would score very differently against a national or NYC cohort.
 
 **Why min-max rather than a different normalisation?** Min-max scaling is the simplest interpretable approach for a bounded relative measure. Alternatives considered: log-scaled (penalises mid-range too aggressively), z-score (negative values are uninterpretable as "10 = cheapest"), percentile (loses absolute differentiation between price clusters). Min-max wins on transparency: any user can verify the formula against the published cohort min/max.
 
-### 4.3 Growth — linear scale capped at cohort max
+### 4.3 Growth, linear scale capped at cohort max
 
 Growth is a linear scale of the borough's recent annualised price trend:
 
@@ -136,7 +136,7 @@ For the London cohort, `max_trend` is approximately 5.8% (Newham, Barking and Da
 
 **A note on backward-looking signals:** the growth component reflects realised historical trends. Past growth does not predict future returns. The component is descriptive context, not a forecast.
 
-### 4.4 Liveability — weighted sub-components
+### 4.4 Liveability, weighted sub-components
 
 Liveability is a weighted combination of four sub-scores:
 
@@ -144,25 +144,25 @@ Liveability is a weighted combination of four sub-scores:
 live = 0.35 × schools + 0.30 × crime + 0.25 × transport + 0.10 × healthcare
 ```
 
-#### Schools (35% of liveability) — anchored to Ofsted distribution
+#### Schools (35% of liveability), anchored to Ofsted distribution
 
 ```
 SCHOOL_SCORE = {
-  'outstanding': 10,    # >50% of schools rated Outstanding by Ofsted
-  'excellent':    9,    # >25% Outstanding + most rest Good
-  'good':         6,    # Most schools rated Good
-  'mixed':        3,    # Significant Requires Improvement / Inadequate presence
+  'outstanding': 10, # >50% of schools rated Outstanding by Ofsted
+  'excellent': 9, # >25% Outstanding + most rest Good
+  'good': 6, # Most schools rated Good
+  'mixed': 3, # Significant Requires Improvement / Inadequate presence
 }
 ```
 
-**Why these thresholds?** Anchored to the live distribution of Ofsted state-funded school inspection grades — see [Reference 3, §19](#19-references), which links to the live Ofsted statistics page so readers can verify against current data. As of late 2024 the distribution is approximately Outstanding 14–16%, Good 70–73%, Requires Improvement 8–12%, Inadequate 2–3%. The exact figures shift annually as schools are re-inspected and Ofsted policy changes (e.g. the removal of Outstanding-exempt status). The Sky Score categorisation translates this distribution into borough-level aggregates:
+**Why these thresholds?** Anchored to the live distribution of Ofsted state-funded school inspection grades, see [Reference 3, §19](#19-references), which links to the live Ofsted statistics page so readers can verify against current data. As of late 2024 the distribution is approximately Outstanding 14-16%, Good 70-73%, Requires Improvement 8-12%, Inadequate 2-3%. The exact figures shift annually as schools are re-inspected and Ofsted policy changes (e.g. the removal of Outstanding-exempt status). The Sky Score categorisation translates this distribution into borough-level aggregates:
 - A borough where the distribution roughly mirrors the national average is rated 'good' (6/10).
 - A borough significantly above the national average for Outstanding+Good is rated 'excellent' (9/10).
 - A borough with notably higher Requires Improvement / Inadequate proportion than the national average is rated 'mixed' (3/10).
 
-**Why is the gap from 'good' to 'mixed' so large (6→3) compared to 'outstanding' to 'excellent' (10→9)?** Because the difference between "borough where most schools are Good" and "borough where some schools are Inadequate" represents a real, well-evidenced educational opportunity gap — the OECD's PISA studies and the UK Education Policy Institute have documented that attending a Good vs Inadequate school has a measurable effect on KS4/GCSE outcomes. The score gap reflects that material difference. Conversely, the difference between 'outstanding' and 'excellent' is a difference of degree at the top of the distribution.
+**Why is the gap from 'good' to 'mixed' so large (6→3) compared to 'outstanding' to 'excellent' (10→9)?** Because the difference between "borough where most schools are Good" and "borough where some schools are Inadequate" represents a real, well-evidenced educational opportunity gap, the OECD's PISA studies and the UK Education Policy Institute have documented that attending a Good vs Inadequate school has a measurable effect on KS4/GCSE outcomes. The score gap reflects that material difference. Conversely, the difference between 'outstanding' and 'excellent' is a difference of degree at the top of the distribution.
 
-#### Crime (30% of liveability) — calibrated to London medians
+#### Crime (30% of liveability), calibrated to London medians
 
 ```
 CRIME_TO_SCORE = max(0, min(10, 10 - (rate - 50) / 15))
@@ -172,54 +172,54 @@ Where `rate` is offences per 1,000 population per year (Home Office police-force
 
 **Calibration:**
 - `rate = 50` → `score = 10` (lowest-crime tier, e.g. Sutton ~60 lightly clipped, Kingston ~62)
-- `rate ≈ 85–90` → `score ≈ 7.5` (London-wide median; represents a "typical urban" baseline)
+- `rate ≈ 85-90` → `score ≈ 7.5` (London-wide median; represents a "typical urban" baseline)
 - `rate = 125` → `score ≈ 5.0` (high-crime borough threshold; Lambeth, Hackney, Newham fall here)
-- `rate = 200` → `score = 0.0` (extreme; only City of London ~190 and Westminster ~175 approach this — both inflated by the daytime-population vs residential-population denominator mismatch)
+- `rate = 200` → `score = 0.0` (extreme; only City of London ~190 and Westminster ~175 approach this, both inflated by the daytime-population vs residential-population denominator mismatch)
 
-**Why these specific anchors?** The London-wide median crime rate is approximately 85–90 per 1,000 residents per year, derived from:
-- **Numerator**: Home Office police-recorded crime by police-force area, published quarterly by ONS as part of *Crime in England and Wales* — see [Reference 4, §19](#19-references)
+**Why these specific anchors?** The London-wide median crime rate is approximately 85-90 per 1,000 residents per year, derived from:
+- **Numerator**: Home Office police-recorded crime by police-force area, published quarterly by ONS as part of *Crime in England and Wales*, see [Reference 4, §19](#19-references)
 - **Denominator**: ONS mid-year residential population estimates (latest available)
 
 Anchoring `score = 10` at `rate = 50` and `score = 7.5` at the London-wide median (rate ~88) creates a natural "average safety" reading for typical London. The slope of −1 per 15 rate units was chosen so that a 50% increase above the median (rate ~130) yields score ≈ 4.7, which crosses the "below average" threshold visible on the dashboard.
 
 **The `min(0, …)` floor and `max(10, …)` ceiling** prevent negative scores at extreme rates and inflated scores at impossibly-low rates (which would indicate data quality issues rather than safety).
 
-**A material caveat:** Home Office police-force-area data has known reporting bias — under-reporting in some communities (particularly where police trust is low) and over-reporting via centralised case logging in others. The City of London's 190/1,000 rate is inflated because it counts all daytime business-district crime against a tiny residential population denominator. We use ONS mid-year estimates as denominator and Home Office police-recorded crime as numerator, which is the standard methodology, but the results should be interpreted as "police-recorded crime rate" not "true crime experience".
+**A material caveat:** Home Office police-force-area data has known reporting bias, under-reporting in some communities (particularly where police trust is low) and over-reporting via centralised case logging in others. The City of London's 190/1,000 rate is inflated because it counts all daytime business-district crime against a tiny residential population denominator. We use ONS mid-year estimates as denominator and Home Office police-recorded crime as numerator, which is the standard methodology, but the results should be interpreted as "police-recorded crime rate" not "true crime experience".
 
-#### Transport (25% of liveability) — categorical access tiers
+#### Transport (25% of liveability), categorical access tiers
 
 ```
 TRANSPORT_SCORE = {
-  'excellent': 10,    # Multiple Tube/Rail lines + Elizabeth Line/DLR within 10 min walk
-  'good':       7,    # Tube or Rail within 10 min walk, multiple bus routes
-  'moderate':   4,    # Bus + occasional rail; 10-20 min to fixed-line transit
-  'poor':       2,    # Bus only or distant rail; car-dependent
+  'excellent': 10, # Multiple Tube/Rail lines + Elizabeth Line/DLR within 10 min walk
+  'good': 7, # Tube or Rail within 10 min walk, multiple bus routes
+  'moderate': 4, # Bus + occasional rail; 10-20 min to fixed-line transit
+  'poor': 2, # Bus only or distant rail; car-dependent
 }
 ```
 
-**Why these tiers?** Transport for London publishes a Public Transport Accessibility Level (PTAL) score from 0 (worst) to 6b (best) — see [Reference 5, §19](#19-references) — combining frequency, walking time, and route count. Sky Score uses a simplified 4-tier mapping that approximates PTAL bands:
-- 'excellent' ≈ PTAL 6a–6b (rare; central boroughs and some Crossrail nodes)
-- 'good' ≈ PTAL 4–5 (most inner London)
-- 'moderate' ≈ PTAL 2–3 (outer London with rail)
-- 'poor' ≈ PTAL 0–1 (some outer boroughs, car-dependent)
+**Why these tiers?** Transport for London publishes a Public Transport Accessibility Level (PTAL) score from 0 (worst) to 6b (best), see [Reference 5, §19](#19-references), combining frequency, walking time, and route count. Sky Score uses a simplified 4-tier mapping that approximates PTAL bands:
+- 'excellent' ≈ PTAL 6a-6b (rare; central boroughs and some Crossrail nodes)
+- 'good' ≈ PTAL 4-5 (most inner London)
+- 'moderate' ≈ PTAL 2-3 (outer London with rail)
+- 'poor' ≈ PTAL 0-1 (some outer boroughs, car-dependent)
 
 The 4-tier reduction sacrifices fine resolution for interpretability. A future version of the methodology may switch to direct PTAL-band scoring once we have postcode-resolution PTAL data integrated.
 
-#### Healthcare (10% of liveability) — categorical access tiers
+#### Healthcare (10% of liveability), categorical access tiers
 
 ```
 HEALTH_SCORE = {
-  'excellent': 10,    # Major teaching hospital + good GP coverage + walk-in centres
-  'good':       7,    # Full A&E + good GP coverage
-  'moderate':   4,    # GP capacity issues, A&E access requires travel
+  'excellent': 10, # Major teaching hospital + good GP coverage + walk-in centres
+  'good': 7, # Full A&E + good GP coverage
+  'moderate': 4, # GP capacity issues, A&E access requires travel
 }
 ```
 
-**Why only 10% of liveability?** Healthcare access varies less across London than schools, crime, or transport. Most boroughs have access to a full A&E within 5 km (the NHS England target). The differentiator is between "excellent" boroughs (Camden, Southwark, Tower Hamlets — with King's, UCH, Royal London) and "moderate" ones (Waltham Forest, Haringey — with Whipps Cross under rebuild and capacity-pressured GPs). Weighting healthcare lower reflects its lower variance and avoids penalising "good" boroughs disproportionately.
+**Why only 10% of liveability?** Healthcare access varies less across London than schools, crime, or transport. Most boroughs have access to a full A&E within 5 km (the NHS England target). The differentiator is between "excellent" boroughs (Camden, Southwark, Tower Hamlets, with King's, UCH, Royal London) and "moderate" ones (Waltham Forest, Haringey, with Whipps Cross under rebuild and capacity-pressured GPs). Weighting healthcare lower reflects its lower variance and avoids penalising "good" boroughs disproportionately.
 
-**Roadmap.** A future v3.0 of the methodology will replace the categorical lookup with direct sampling of Care Quality Commission (CQC) ratings — see [Reference 8, §19](#19-references). CQC ratings use the same 4-tier structure as Ofsted (Outstanding / Good / Requires improvement / Inadequate) and are the official UK regulator's published assessments. This will give per-trust resolution rather than borough-aggregate.
+**Roadmap.** A future v3.0 of the methodology will replace the categorical lookup with direct sampling of Care Quality Commission (CQC) ratings, see [Reference 8, §19](#19-references). CQC ratings use the same 4-tier structure as Ofsted (Outstanding / Good / Requires improvement / Inadequate) and are the official UK regulator's published assessments. This will give per-trust resolution rather than borough-aggregate.
 
-### 4.5 Per-postcode quiet — Haversine geometry (v3.0)
+### 4.5 Per-postcode quiet, Haversine geometry (v3.0)
 
 When the API receives a postcode that resolves to lat/lon (UK postcodes via postcodes.io), the **Quiet** component is computed at *postcode resolution* rather than borough-aggregate, using Haversine distance to airports and flight-path geometry. This is the same algorithm the consumer site has used for 290+ neighbourhoods since launch (`index.html:1118-1247`); v3.0 ports it to the API.
 
@@ -228,17 +228,17 @@ When the API receives a postcode that resolves to lat/lon (UK postcodes via post
 ```
 noise_score = 0
 
-# 1. Airport proximity — distance to nearest major airport in km
+# 1. Airport proximity, distance to nearest major airport in km
 nearest_ap_dist = min(haversine(postcode, airport) for airport in AIRPORTS)
-if   nearest_ap_dist < 3:  noise_score += 5
-elif nearest_ap_dist < 6:  noise_score += 4
+if nearest_ap_dist < 3: noise_score += 5
+elif nearest_ap_dist < 6: noise_score += 4
 elif nearest_ap_dist < 10: noise_score += 3
 elif nearest_ap_dist < 15: noise_score += 2
 elif nearest_ap_dist < 20: noise_score += 1
 
-# 2. Flight-path proximity — distance to nearest waypoint of any path
+# 2. Flight-path proximity, distance to nearest waypoint of any path
 min_path_dist = min(haversine(postcode, waypoint) for path in PATHS for waypoint in path)
-if   min_path_dist < 1: noise_score += 4
+if min_path_dist < 1: noise_score += 4
 elif min_path_dist < 2: noise_score += 3
 elif min_path_dist < 4: noise_score += 2
 elif min_path_dist < 6: noise_score += 1
@@ -275,9 +275,9 @@ This is a material improvement in within-borough accuracy. Some postcodes go up 
 
 **Resolution chain (v3.1).** As of methodology v3.1, the score Lambda checks three resolution tiers in order, using the highest available:
 
-1. **Raster** — direct DEFRA Lden sample at the postcode centroid via DynamoDB lookup (gold standard). When the raster table is populated, this tier wins.
-2. **Postcode (Haversine)** — distance to airports + flight-path geometry (this section, §4.5). Used when raster is unavailable.
-3. **Borough (Lden band)** — borough-aggregate IMPACT_TO_QUIET lookup. Used when neither raster nor postcode lat/lon is available.
+1. **Raster**, direct DEFRA Lden sample at the postcode centroid via DynamoDB lookup (gold standard). When the raster table is populated, this tier wins.
+2. **Postcode (Haversine)**, distance to airports + flight-path geometry (this section, §4.5). Used when raster is unavailable.
+3. **Borough (Lden band)**, borough-aggregate IMPACT_TO_QUIET lookup. Used when neither raster nor postcode lat/lon is available.
 
 The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode' | 'borough'`) so integrators can verify which tier produced the response.
 
@@ -306,7 +306,7 @@ When populated, the v3.1 raster tier replaces Haversine with direct sampling of 
 
 **Forward compatibility:** the Lambda code path checks the raster table first and silently falls back to v3.0 Haversine when the table is empty or missing. This means the API works identically whether or not the raster data has been loaded; loading the raster automatically upgrades quiet scores from `'postcode'` resolution to `'raster'` resolution without any API change.
 
-**Why we're not loading it now:** the data load is a one-shot ops task (~1 hour) that needs to be run from a machine with the GeoTIFF downloaded locally. It's deferred until the validation work in §12 (independent measured-noise validation) catches up — there's no point ramping up to gold-standard precision before validating the existing tier against ground truth.
+**Why we're not loading it now:** the data load is a one-shot ops task (~1 hour) that needs to be run from a machine with the GeoTIFF downloaded locally. It's deferred until the validation work in §12 (independent measured-noise validation) catches up, there's no point ramping up to gold-standard precision before validating the existing tier against ground truth.
 
 #### Liveability sub-weight rationale (35/30/25/10)
 
@@ -326,17 +326,17 @@ The four components are combined with persona weights:
 score = w.quiet × quiet + w.afford × afford + w.growth × growth + w.live × live
 ```
 
-### 5.1 Default persona — balanced
+### 5.1 Default persona, balanced
 
 ```
 balanced = { quiet: 0.30, afford: 0.25, growth: 0.20, live: 0.25 }
 ```
 
 **Why these defaults?**
-- **Quiet 30%** — prominent because Sky Score's distinctive contribution to the property-data landscape is noise awareness; existing tools (Hometrack, Sprift, Rightmove) underweight noise, so we lead with it.
-- **Affordability 25%** — material to most buyers but not dominant.
-- **Growth 20%** — backward-looking, more prescriptive for investors than for owner-occupiers; weighted lower in the default.
-- **Liveability 25%** — composite of multiple factors, each individually important.
+- **Quiet 30%**, prominent because Sky Score's distinctive contribution to the property-data landscape is noise awareness; existing tools (Hometrack, Sprift, Rightmove) underweight noise, so we lead with it.
+- **Affordability 25%**, material to most buyers but not dominant.
+- **Growth 20%**, backward-looking, more prescriptive for investors than for owner-occupiers; weighted lower in the default.
+- **Liveability 25%**, composite of multiple factors, each individually important.
 
 **This is an editorial choice.** It is not derived from a regression against home-buyer outcomes (we don't have that data); it reflects the product team's positioning. Customers with different priors should use a persona preset or `?weights=` override.
 
@@ -352,7 +352,7 @@ The five named personas reflect typical buyer-segment priorities. Each is docume
 | `firsttime` | 0.15 | 0.40 | 0.20 | 0.25 | Affordability dominates first-time-buyer constraints; remaining factors moderately weighted. |
 | `quietlife` | 0.50 | 0.20 | 0.10 | 0.20 | Specialist preset for buyers explicitly prioritising peace; weighted heavily on quiet at the expense of growth. |
 
-**Family persona ratio ~50% on `live` is the largest deviation from balanced** — reflecting that family-segment research consistently shows schools-and-safety as the dominant decision factor. The other personas are smaller deviations that nudge the default in a direction without departing from sensible bounds.
+**Family persona ratio ~50% on `live` is the largest deviation from balanced**, reflecting that family-segment research consistently shows schools-and-safety as the dominant decision factor. The other personas are smaller deviations that nudge the default in a direction without departing from sensible bounds.
 
 ### 5.3 Custom weights
 
@@ -360,13 +360,13 @@ The API accepts `?weights=quiet:W,afford:X,growth:Y,live:Z` where the four value
 
 ### 5.4 Rounding policy
 
-Internal computation uses unrounded floating-point values. Display values in the response are rounded to one decimal place for components and the headline score. Multiplying displayed (rounded) component values by their displayed weights will not exactly reproduce the displayed score — the score is computed from unrounded internals, then rounded once at the end. This is intentional and standard practice; it preserves accuracy and avoids compound rounding error.
+Internal computation uses unrounded floating-point values. Display values in the response are rounded to one decimal place for components and the headline score. Multiplying displayed (rounded) component values by their displayed weights will not exactly reproduce the displayed score, the score is computed from unrounded internals, then rounded once at the end. This is intentional and standard practice; it preserves accuracy and avoids compound rounding error.
 
 ## 6. Worked example
 
 A real end-to-end calculation, using `SW11 1AA` (Battersea, Wandsworth borough).
 
-### Step 1 — Postcode resolution
+### Step 1, Postcode resolution
 
 The API calls `postcodes.io` to translate the postcode into administrative geography:
 
@@ -375,35 +375,35 @@ GET https://api.postcodes.io/postcodes/SW111AA
 → admin_district: "Wandsworth", longitude: -0.1643, latitude: 51.4644
 ```
 
-### Step 2 — Borough data lookup
+### Step 2, Borough data lookup
 
 Wandsworth's structural inputs (from the embedded London dataset; see [§7](#7-data-sources)):
 
 ```
-impact:      'moderate'    # DEFRA Lden 60-65 dB band
-avgPrice:    £680,000
-trend:       2.1%
-schools:     'excellent'   # >25% Outstanding rate per Ofsted
-crimeRate:   82            # police-recorded offences per 1,000 (ONS 2023)
-transport:   'excellent'   # PTAL 6 band — multiple lines, Crossrail
-healthcare:  'good'        # St George's full A&E, good GP coverage
+impact: 'moderate' # DEFRA Lden 60-65 dB band
+avgPrice: £680,000
+trend: 2.1%
+schools: 'excellent' # >25% Outstanding rate per Ofsted
+crimeRate: 82 # police-recorded offences per 1,000 (ONS 2023)
+transport: 'excellent' # PTAL 6 band, multiple lines, Crossrail
+healthcare: 'good' # St George's full A&E, good GP coverage
 ```
 
-### Step 3 — Component calculations
+### Step 3, Component calculations
 
-**Quiet (v3.0 — postcode resolution)** — postcodes.io returned lat/lon (51.4644, -0.1643) for SW11 1AA, so the API uses per-postcode Haversine scoring (§4.5):
+**Quiet (v3.0, postcode resolution)**, postcodes.io returned lat/lon (51.4644, -0.1643) for SW11 1AA, so the API uses per-postcode Haversine scoring (§4.5):
 
 - Nearest airport: LCY at ~16 km → noise_score += 1 (15-20 km band)
 - Major airport (LHR): ~21 km → no bonus (>15 km)
 - Nearest flight-path waypoint: ~6 km → noise_score += 0 (right at the threshold; no bonus added)
 - Total noise_score: 1
-- Quiet = 10 - 1 = 9, clipped to 7.0 in practice (postcode is in a moderate-noise band overall — the Heliport at Battersea adds residual context the airport+path proxy doesn't capture)
+- Quiet = 10 - 1 = 9, clipped to 7.0 in practice (postcode is in a moderate-noise band overall, the Heliport at Battersea adds residual context the airport+path proxy doesn't capture)
 
 For the v3.0 release, the live API returns `quiet: 7.0` for SW11 1AA. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
 
 (The pre-v3.0 borough-aggregate value was `quiet: 5.0`, derived from `IMPACT_TO_QUIET['moderate']`. v3.0 reflects that Battersea is south of major LHR flight paths and away from LCY corridors.)
 
-**Affordability** — across the 33 London boroughs, `min_price` = £340,000, `max_price` = £1,350,000:
+**Affordability**, across the 33 London boroughs, `min_price` = £340,000, `max_price` = £1,350,000:
 ```
 afford = ((1,350,000 − 680,000) / (1,350,000 − 340,000)) × 10
        = (670,000 / 1,010,000) × 10
@@ -411,14 +411,14 @@ afford = ((1,350,000 − 680,000) / (1,350,000 − 340,000)) × 10
        → displayed as 6.6
 ```
 
-**Growth** — across the cohort, `max_trend` = 5.8%:
+**Growth**, across the cohort, `max_trend` = 5.8%:
 ```
 growth = (2.1 / 5.8) × 10
        = 3.6206…
        → displayed as 3.6
 ```
 
-**Liveability** — sub-scores:
+**Liveability**, sub-scores:
 - Schools `excellent` → 9 (Ofsted distribution: >25% Outstanding)
 - Crime rate 82 → `10 − (82 − 50) / 15 = 7.867` (calibrated to London median 88 → 7.5)
 - Transport `excellent` → 10 (PTAL 6)
@@ -431,7 +431,7 @@ live = 9 × 0.35 + 7.867 × 0.30 + 10 × 0.25 + 7 × 0.10
      → displayed as 8.7
 ```
 
-### Step 4 — Score combination (balanced persona, v3.0)
+### Step 4, Score combination (balanced persona, v3.0)
 
 ```
 score = 7.0 × 0.30 + 6.6336 × 0.25 + 3.6206 × 0.20 + 8.71 × 0.25
@@ -440,7 +440,7 @@ score = 7.0 × 0.30 + 6.6336 × 0.25 + 3.6206 × 0.20 + 8.71 × 0.25
       → displayed as 6.7
 ```
 
-### Step 5 — Verification against the live v3.0 API
+### Step 5, Verification against the live v3.0 API
 
 Calling the live API with the same parameters returns:
 
@@ -472,19 +472,19 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 | `family` | 20/20/10/50 | **7.4** | Excellent schools (9) and excellent transport (10) dominate the heavy `live` weight |
 | `investor` | 10/30/40/20 | **5.6** | Penalised by Wandsworth's modest 2.1% trend; growth is weighted 40% |
 | `firsttime` | 15/40/20/25 | **6.2** | Weighted heavy on affordability (6.6) but Wandsworth isn't cheap |
-| `quietlife` | 50/20/10/20 | **6.9** | Heavy on quiet — v3.0 Battersea quiet of 7.0 supports a strong score in this profile |
+| `quietlife` | 50/20/10/20 | **6.9** | Heavy on quiet, v3.0 Battersea quiet of 7.0 supports a strong score in this profile |
 
-(In pre-v3.0 borough-only scoring with quiet=5.0, the `quietlife` persona would have scored 5.9 — the v3.0 per-postcode resolution materially changes results in profiles that emphasise the `quiet` component.)
+(In pre-v3.0 borough-only scoring with quiet=5.0, the `quietlife` persona would have scored 5.9, the v3.0 per-postcode resolution materially changes results in profiles that emphasise the `quiet` component.)
 
 ## 7. Data sources
 
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
 | **DEFRA Strategic Noise Mapping (Round 4, 2022)** | Aviation + road noise contours for England | Open Government Licence v3.0 | 5-yearly (next: 2027) |
-| **OpenSky Network** | Live + historical aircraft positions | OpenSky terms — research/non-commercial on free tier; commercial use requires explicit agreement | Real-time |
+| **OpenSky Network** | Live + historical aircraft positions | OpenSky terms, research/non-commercial on free tier; commercial use requires explicit agreement | Real-time |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **MHCLG Energy Performance Certificates** (new "Get energy performance of buildings data" service from 2026-05-30) | Per-property EPC bands | Open Government Licence v3.0 | Quarterly |
-| **TfL Open Data** | Transport accessibility, station and live line status | TfL Open Data terms — commercial use permitted with attribution | Real-time |
+| **TfL Open Data** | Transport accessibility, station and live line status | TfL Open Data terms, commercial use permitted with attribution | Real-time |
 | **NHS Service Search API** | GP, pharmacy, hospital availability | Provided by NHS Digital under public-sector terms | Real-time |
 | **ONS** | Population estimates, boundary geometry | Open Government Licence v3.0 + OS Open Licence | Annual |
 | **Home Office crime statistics** | Borough-level crime rate (numerator); ONS provides denominator | Open Government Licence v3.0 | Monthly |
@@ -525,7 +525,7 @@ Sky Score **is not** suitable for, and should not be used as:
 - A substitute for a chartered surveyor's report, mortgage survey, or homebuyer's report
 - A guarantee of any particular financial outcome
 - An EPC certificate replacement
-- A flood, contamination, environmental, or legal-risk signal — for these use a dedicated provider (Landmark, Climate X)
+- A flood, contamination, environmental, or legal-risk signal, for these use a dedicated provider (Landmark, Climate X)
 
 Customers integrating Sky Score are expected to surface this suitability statement (or an equivalent) in user-facing UI where the score is displayed.
 
@@ -566,10 +566,10 @@ A B2B audit team will challenge any number that lacks justification. This sectio
 | `IMPACT_TO_QUIET` value scale (10 / 7.5 / 5.0 / 3.0 / 1.5 / 0.0) | The dB Lden bands are DEFRA-anchored; the score values reflect the inverse-square-ish relationship between noise dB and health effect documented in WHO meta-analyses. The non-linear spacing (3 → 1.5 = halving) reflects that small dB increases at high baselines have outsized effects. |
 | `SCHOOL_SCORE` values (10 / 9 / 6 / 3) | Anchored to the Ofsted national distribution (14% Outstanding, 71% Good, 12% RI, 3% Inadequate). The large gap from 'good' (6) to 'mixed' (3) reflects the documented educational-outcome difference between attending Good and Inadequate schools. |
 | `CRIME_TO_SCORE` slope and intercept | Calibrated so that London median crime rate (88/1000) yields score 7.5, and rate=50 (cleanest London tier) yields 10. Slope of −1 per 15 units chosen so a 50% increase above median crosses the "below average" threshold. |
-| `TRANSPORT_SCORE` 4-tier categorisation | Approximates TfL PTAL bands (PTAL 0–6b reduced to 4 tiers) for interpretability. Direct PTAL integration is on the v2.1 roadmap. |
+| `TRANSPORT_SCORE` 4-tier categorisation | Approximates TfL PTAL bands (PTAL 0-6b reduced to 4 tiers) for interpretability. Direct PTAL integration is on the v2.1 roadmap. |
 | `HEALTH_SCORE` 3-tier and 10% liveability weight | Healthcare has lower variance across London (most boroughs within 5 km of full A&E per NHS England target), so finer resolution would over-discriminate. Lower weight reflects lower variance. |
-| Liveability sub-weights 35/30/25/10 | Editorial — informed by Rightmove/Zoopla buyer-priority research showing schools and crime as top-2 factors, transport material in London, healthcare lower-variance. Customers wanting different sub-weights should use `?weights=` at the score-component level. |
-| Default component weights 30/25/20/25 | Editorial — quiet weighted prominently because it is Sky Score's distinctive value (other tools underweight it). Customers wanting different defaults should use a persona preset or `?weights=`. |
+| Liveability sub-weights 35/30/25/10 | Editorial, informed by Rightmove/Zoopla buyer-priority research showing schools and crime as top-2 factors, transport material in London, healthcare lower-variance. Customers wanting different sub-weights should use `?weights=` at the score-component level. |
+| Default component weights 30/25/20/25 | Editorial, quiet weighted prominently because it is Sky Score's distinctive value (other tools underweight it). Customers wanting different defaults should use a persona preset or `?weights=`. |
 | Persona preset weights | Each preset reflects typical-segment priority research (family ↔ schools-dominant; investor ↔ growth-and-affordability-dominant; etc.). Specific values are convention; customers should use `?weights=` for tailored profiles. |
 
 ### What we don't claim
@@ -582,7 +582,7 @@ A B2B audit team will challenge any number that lacks justification. This sectio
 
 ### Methodological alignment with established UK indices
 
-Sky Score's Liveability component covers similar ground to the **English Indices of Deprivation (IMD)** — see [Reference 9, §19](#19-references) — the official UK government composite of seven deprivation domains (Income, Employment, Education, Health, Crime, Barriers to Housing, Living Environment). Sky Score's Liveability uses Education (schools), Crime, and Health-adjacent inputs that are also components of IMD, computed with similar methodologies but at borough rather than LSOA resolution. Customers wanting a finer geographic granularity for socioeconomic context should consult IMD directly; Sky Score is intended as a complementary buyer-facing signal rather than a deprivation index.
+Sky Score's Liveability component covers similar ground to the **English Indices of Deprivation (IMD)**, see [Reference 9, §19](#19-references), the official UK government composite of seven deprivation domains (Income, Employment, Education, Health, Crime, Barriers to Housing, Living Environment). Sky Score's Liveability uses Education (schools), Crime, and Health-adjacent inputs that are also components of IMD, computed with similar methodologies but at borough rather than LSOA resolution. Customers wanting a finer geographic granularity for socioeconomic context should consult IMD directly; Sky Score is intended as a complementary buyer-facing signal rather than a deprivation index.
 
 ## 12. Accuracy and validation
 
@@ -593,13 +593,13 @@ Sky Score's Liveability component covers similar ground to the **English Indices
 - **DEFRA noise impact bands** spot-checked against Round 4 strategic noise mapping rasters at borough centroid points.
 - **Sold price data** sample-validated against the public Land Registry portal.
 - **EPC band aggregates** sample-validated against both the legacy `epc.opendatacommunities.org` portal and the new `get-energy-performance-data.communities.gov.uk` service post-migration.
-- **Worked-example reproducibility** is built into this document — running the calculations by hand on a real postcode response yields matching values within rounding tolerance.
+- **Worked-example reproducibility** is built into this document, running the calculations by hand on a real postcode response yields matching values within rounding tolerance.
 
 ### Validation outstanding (gating items before any contractual accuracy claim)
 
-- **Independent measured-noise validation** — comparing predicted DEFRA Lden bands to ground-truth dB measurements at known properties using a calibrated sound meter, across at least 30 sample sites. *Required before any underwriting integration.*
-- **Panel-of-experts review** — submission of the methodology document to chartered surveyors, RICS valuers, and noise consultants for independent critique.
-- **Outcome correlation study** — comparing Sky Score outputs against medium-term property outcomes (capital growth, void rates, transaction times) to assess predictive validity.
+- **Independent measured-noise validation**, comparing predicted DEFRA Lden bands to ground-truth dB measurements at known properties using a calibrated sound meter, across at least 30 sample sites. *Required before any underwriting integration.*
+- **Panel-of-experts review**, submission of the methodology document to chartered surveyors, RICS valuers, and noise consultants for independent critique.
+- **Outcome correlation study**, comparing Sky Score outputs against medium-term property outcomes (capital growth, void rates, transaction times) to assess predictive validity.
 
 These items are tracked in the public roadmap. Customer contracts will explicitly note the validation tier the methodology has reached at the time of contract execution.
 
@@ -627,7 +627,7 @@ Sky Score's positioning combines noise + livability composite scoring with halal
 ## 15. Personal data and GDPR
 
 - The consumer site does not store personally identifiable data beyond a session cookie. Saved favourites are scoped to a free-text userId; no email, name, or device identifier collected.
-- The B2B API (`/v1/score` and `/v1/score/batch`) does not return per-property data — borough-level scoring keyed by postcode. No personal data exposed.
+- The B2B API (`/v1/score` and `/v1/score/batch`) does not return per-property data, borough-level scoring keyed by postcode. No personal data exposed.
 - Per-property EPC data may include household-identifiable address fields. The consumer site shows aggregated postcode-level summaries by default; per-address detail rendered only when explicitly searched.
 - Future per-UPRN endpoint, if introduced, will require authenticated customers with documented lawful basis (typically UK GDPR Article 6(1)(f) legitimate-interest for due diligence).
 - All data processed in **AWS eu-west-2 (London)** for UK data residency. AWS is the sole sub-processor.
@@ -688,23 +688,23 @@ Methodology and API contract versioned independently:
 
 1. **DEFRA Strategic Noise Mapping**, Round 4 (published 2022, data as at 2021). Methodology and Lden band classification: <https://www.gov.uk/government/collections/strategic-noise-mapping>
 2. **World Health Organization**, *Environmental Noise Guidelines for the European Region* (2018). Health-effect thresholds for transportation noise (aviation, road, rail): <https://www.who.int/europe/publications/i/item/9789289053563>
-3. **Ofsted**, state-funded school inspection grades — management information published quarterly. Live distribution data: <https://www.gov.uk/government/collections/ofsted-publications>
-4. **Office for National Statistics**, *Crime in England and Wales* — quarterly bulletin with police-recorded crime by police-force area (numerator) and ONS mid-year population estimates (denominator): <https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/bulletins/crimeinenglandandwales/latest>
-5. **Transport for London**, *Public Transport Accessibility Levels (PTAL)*. Methodology and 9-band classification (0, 1a, 1b, 2–6a, 6b): <https://tfl.gov.uk/info-for/urban-planning-and-construction/planning-with-webcat/webcat>
-6. **EU Environmental Noise Directive 2002/49/EC** — the regulatory framework that DEFRA implements via the Strategic Noise Mapping rounds. Defines Lden as the day-evening-night equivalent sound level, with weightings used by Sky Score's quiet component: <https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0049>
-7. **HM Land Registry, UK House Price Index (HPI)** — the official monthly UK property price index, used as the source for the Affordability and Growth components: <https://www.gov.uk/government/collections/uk-house-price-index-reports>
+3. **Ofsted**, state-funded school inspection grades, management information published quarterly. Live distribution data: <https://www.gov.uk/government/collections/ofsted-publications>
+4. **Office for National Statistics**, *Crime in England and Wales*, quarterly bulletin with police-recorded crime by police-force area (numerator) and ONS mid-year population estimates (denominator): <https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/bulletins/crimeinenglandandwales/latest>
+5. **Transport for London**, *Public Transport Accessibility Levels (PTAL)*. Methodology and 9-band classification (0, 1a, 1b, 2-6a, 6b): <https://tfl.gov.uk/info-for/urban-planning-and-construction/planning-with-webcat/webcat>
+6. **EU Environmental Noise Directive 2002/49/EC**, the regulatory framework that DEFRA implements via the Strategic Noise Mapping rounds. Defines Lden as the day-evening-night equivalent sound level, with weightings used by Sky Score's quiet component: <https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32002L0049>
+7. **HM Land Registry, UK House Price Index (HPI)**, the official monthly UK property price index, used as the source for the Affordability and Growth components: <https://www.gov.uk/government/collections/uk-house-price-index-reports>
 8. **Care Quality Commission (CQC)**, official healthcare regulator for England. Ratings use the same 4-tier structure as Ofsted (Outstanding / Good / Requires improvement / Inadequate). On the methodology roadmap as the anchor for the Healthcare component in v3.0: <https://www.cqc.org.uk/about-us/transparency-data-information/data-and-statistics>
-9. **English Indices of Deprivation 2019** (and successor 2024) — the official UK government composite covering seven domains: Income, Employment, Education, Health, Crime, Barriers to Housing, Living Environment. Sky Score's Liveability component is methodologically aligned with IMD's Education, Crime, Health, and Living Environment domains: <https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019>
+9. **English Indices of Deprivation 2019** (and successor 2024), the official UK government composite covering seven domains: Income, Employment, Education, Health, Crime, Barriers to Housing, Living Environment. Sky Score's Liveability component is methodologically aligned with IMD's Education, Crime, Health, and Living Environment domains: <https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019>
 10. **UK GDPR / Data Protection Act 2018**, ICO guidance on legitimate-interest assessment for property due diligence: <https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/legitimate-interests/>
 
 ## 20. Changelog
 
-- **2026-05-05 (v3.1)** — **NYC ZIP centroids + DEFRA raster scaffold.** Two enhancements:
+- **2026-05-05 (v3.1)**, **NYC ZIP centroids + DEFRA raster scaffold.** Two enhancements:
   (1) NYC ZIPs now have static centroid lat/lon for ~110 ZIPs (sourced from consumer-site `NYC_AREA_MAP`). NYC postcode queries now use the per-postcode Haversine tier (v3.0 algorithm) instead of borough-aggregate. Within-borough variation now works for NYC: 11201 (DUMBO) → quiet 8.0; 11375 (Forest Hills) → quiet 2.0; etc.
-  (2) DynamoDB table `london-flight-map-noise-raster` deployed with IAM read access from the score Lambda. The Lambda's resolution chain now checks the raster table first; falls back to v3.0 Haversine when empty/missing. New `context.quietResolution` enum extended to `'raster' | 'postcode' | 'borough'`. The data load is a one-shot ops task documented in `scripts/load_defra_raster.py` (downloads DEFRA GeoTIFF + ONS NSPL, samples at postcode centroids, writes to DynamoDB; ~1 hour runtime). The Lambda is forward-compatible — loading raster data automatically upgrades quiet scores without API changes.
+  (2) DynamoDB table `london-flight-map-noise-raster` deployed with IAM read access from the score Lambda. The Lambda's resolution chain now checks the raster table first; falls back to v3.0 Haversine when empty/missing. New `context.quietResolution` enum extended to `'raster' | 'postcode' | 'borough'`. The data load is a one-shot ops task documented in `scripts/load_defra_raster.py` (downloads DEFRA GeoTIFF + ONS NSPL, samples at postcode centroids, writes to DynamoDB; ~1 hour runtime). The Lambda is forward-compatible, loading raster data automatically upgrades quiet scores without API changes.
   No change to scoring formulas; the algorithm is identical to v3.0. Lambda METHODOLOGY_VERSION bumped to 3.1.
-- **2026-05-05 (v3.0)** — **Per-postcode Haversine quiet scoring.** Material change to the Quiet component: when the API receives a UK postcode (resolved to lat/lon via postcodes.io), the Quiet score is now computed at postcode resolution using Haversine distance to airports and flight-path geometry. Same algorithm the consumer site has used for 290+ neighbourhoods since launch; ported to the API. New §4.5 documents the formula, airports tracked (5 London + 4 NYC), and flight-path geometry (12 London corridors + 8 NYC). Worked example in §6 updated: SW11 1AA balanced score moves from 6.1 (borough) to 6.7 (postcode) reflecting that Battersea is south of major LHR corridors. Borough Lden band remains in `context.noiseImpactBand` for transparency but no longer affects the score when postcode lat/lon is available. NYC scoring still uses borough-aggregate (ZIP centroids are a v3.1 enhancement). New `context.quietResolution` field indicates whether the score used `'postcode'` or `'borough'` resolution. v2.1 borough-only scoring remains accessible via `?methodology=2.1` for customers in their 14-day grace period (per §16). Roadmap to v3.1: full DEFRA Strategic Noise Mapping raster sampling at postcode centroid (1 day + overnight batch).
-- **2026-05-05 (v2.1)** — **Stronger source anchoring + benchmark alignment.** Tier-1 audit-protection edits: softened Ofsted distribution percentages (replaced specific 14/71/12/3 with 14–16 / 70–73 / 8–12 / 2–3 ranges) and linked to live Ofsted statistics page; clarified crime-rate denominator (ONS mid-year residential population estimates) and linked to live ONS *Crime in England and Wales* bulletin; replaced specific Climate X £21M figure with "institutional Series A funding"; softened Rightmove 2023 family-buyer survey citation to general "Rightmove, Zoopla, and RICS" reference. Reference URLs verified against current government domains. **New benchmark anchors added**: HM Land Registry House Price Index (HPI) for Affordability/Growth, EU Environmental Noise Directive 2002/49/EC as the regulatory foundation for DEFRA noise mapping, English Indices of Deprivation (IMD) as a methodologically-aligned reference for Liveability, Care Quality Commission (CQC) as the v3.0 roadmap anchor for Healthcare. New §11 paragraph on methodological alignment with established UK indices. NYC ZIP-to-borough resolution shipped (~182 ZIPs); §2 updated. No change to scoring values.
-- **2026-05-05 (v2.0)** — **Iron-clad rewrite.** Every numeric threshold and scoring weight anchored to a published source or explicitly-acknowledged editorial decision. Added: dB Lden band justification with WHO health thresholds, Ofsted distribution anchoring for school scores, ONS crime rate calibration for crime formula, TfL PTAL approximation for transport, references section. Liveability sub-weight rationale documented. Persona preset rationale documented. New §11 "Editorial choices and why they're not arbitrary" enumerates every editorial decision. NYC borough support documented. No change to scoring values themselves.
-- **2026-05-05 (v1.1)** — Added geographic coverage, worked example, suitability section, bias considerations, comparison to alternatives, API contract section. Component formulas explicit. Data refresh policy documented. No change to scoring outputs.
-- **2026-05-05 (v1.0)** — First published methodology document.
+- **2026-05-05 (v3.0)**, **Per-postcode Haversine quiet scoring.** Material change to the Quiet component: when the API receives a UK postcode (resolved to lat/lon via postcodes.io), the Quiet score is now computed at postcode resolution using Haversine distance to airports and flight-path geometry. Same algorithm the consumer site has used for 290+ neighbourhoods since launch; ported to the API. New §4.5 documents the formula, airports tracked (5 London + 4 NYC), and flight-path geometry (12 London corridors + 8 NYC). Worked example in §6 updated: SW11 1AA balanced score moves from 6.1 (borough) to 6.7 (postcode) reflecting that Battersea is south of major LHR corridors. Borough Lden band remains in `context.noiseImpactBand` for transparency but no longer affects the score when postcode lat/lon is available. NYC scoring still uses borough-aggregate (ZIP centroids are a v3.1 enhancement). New `context.quietResolution` field indicates whether the score used `'postcode'` or `'borough'` resolution. v2.1 borough-only scoring remains accessible via `?methodology=2.1` for customers in their 14-day grace period (per §16). Roadmap to v3.1: full DEFRA Strategic Noise Mapping raster sampling at postcode centroid (1 day + overnight batch).
+- **2026-05-05 (v2.1)**, **Stronger source anchoring + benchmark alignment.** Tier-1 audit-protection edits: softened Ofsted distribution percentages (replaced specific 14/71/12/3 with 14-16 / 70-73 / 8-12 / 2-3 ranges) and linked to live Ofsted statistics page; clarified crime-rate denominator (ONS mid-year residential population estimates) and linked to live ONS *Crime in England and Wales* bulletin; replaced specific Climate X £21M figure with "institutional Series A funding"; softened Rightmove 2023 family-buyer survey citation to general "Rightmove, Zoopla, and RICS" reference. Reference URLs verified against current government domains. **New benchmark anchors added**: HM Land Registry House Price Index (HPI) for Affordability/Growth, EU Environmental Noise Directive 2002/49/EC as the regulatory foundation for DEFRA noise mapping, English Indices of Deprivation (IMD) as a methodologically-aligned reference for Liveability, Care Quality Commission (CQC) as the v3.0 roadmap anchor for Healthcare. New §11 paragraph on methodological alignment with established UK indices. NYC ZIP-to-borough resolution shipped (~182 ZIPs); §2 updated. No change to scoring values.
+- **2026-05-05 (v2.0)**, **Iron-clad rewrite.** Every numeric threshold and scoring weight anchored to a published source or explicitly-acknowledged editorial decision. Added: dB Lden band justification with WHO health thresholds, Ofsted distribution anchoring for school scores, ONS crime rate calibration for crime formula, TfL PTAL approximation for transport, references section. Liveability sub-weight rationale documented. Persona preset rationale documented. New §11 "Editorial choices and why they're not arbitrary" enumerates every editorial decision. NYC borough support documented. No change to scoring values themselves.
+- **2026-05-05 (v1.1)**, Added geographic coverage, worked example, suitability section, bias considerations, comparison to alternatives, API contract section. Component formulas explicit. Data refresh policy documented. No change to scoring outputs.
+- **2026-05-05 (v1.0)**, First published methodology document.

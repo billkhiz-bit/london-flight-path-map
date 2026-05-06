@@ -158,7 +158,7 @@ paths:
             values. Ignored if `weights` is provided.
           schema:
             type: string
-            enum: [balanced, family, investor, firsttime, quietlife]
+            enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, downsizer]
             default: balanced
         - name: weights
           in: query
@@ -216,7 +216,7 @@ paths:
       summary: Bulk Sky Score lookup (up to 100 queries per call).
       description: |
         Submits up to 100 score queries in a single API call. Each query is
-        independent — failures do not abort the batch; failed queries return
+        independent, failures do not abort the batch; failed queries return
         an error per item and the batch continues. Suitable for aggregator
         and conveyancing-search workflows that look up many properties at
         once.
@@ -369,7 +369,7 @@ components:
           description: |
             Per-component data lineage. Each property describes the source
             and methodology for that component. The `/v1/score` endpoint
-            does NOT depend on OpenSky Network — aviation noise context is
+            does NOT depend on OpenSky Network, aviation noise context is
             sourced from pre-computed DEFRA borough-aggregate Lden bands.
           properties:
             quiet:
@@ -384,7 +384,7 @@ components:
           type: object
           description: |
             Roadmap-visible placeholders for components that are scoped but
-            not yet shipped. Each entry has a `status` flag — integrators
+            not yet shipped. Each entry has a `status` flag, integrators
             should NOT consume placeholder data as if it were live. The
             shape is stable; live components migrate from this block into
             `components` / `context` when they ship.
@@ -430,7 +430,7 @@ components:
                   type: string
               supportedZipCount:
                 type: integer
-                description: NYC only — number of ZIPs in the static lookup.
+                description: NYC only, number of ZIPs in the static lookup.
         apiVersion:
           type: string
         methodologyVersion:
@@ -494,9 +494,9 @@ components:
           description: |
             Which resolution tier produced the `quiet` score. Resolves
             highest-precision-first:
-              `raster`   — DEFRA Lden raster sample at postcode centroid (v3.1)
-              `postcode` — Haversine to airports + flight-path geometry (v3.0)
-              `borough`  — Borough-aggregate Lden band (v2.x fallback)
+              `raster`, DEFRA Lden raster sample at postcode centroid (v3.1)
+              `postcode`, Haversine to airports + flight-path geometry (v3.0)
+              `borough`, Borough-aggregate Lden band (v2.x fallback)
             Integrators can use this to surface precision metadata to end
             users or filter for higher-precision results.
 

@@ -1,5 +1,5 @@
 """
-Sky Score v3.1 — DEFRA Lden raster sampler.
+Sky Score v3.1, DEFRA Lden raster sampler.
 
 One-time batch script that samples the DEFRA Strategic Noise Mapping
 (Round 4, 2022) Lden raster at every UK postcode centroid and writes the
@@ -7,14 +7,14 @@ results to DynamoDB. Once the table is populated, the score Lambda
 automatically uses raster values for the quiet component (highest
 precision tier in the resolution chain).
 
-PRE-REQUISITES (run once, locally — not in the Lambda environment):
+PRE-REQUISITES (run once, locally, not in the Lambda environment):
 
   pip install rasterio pyproj boto3 tqdm
 
 INPUTS NEEDED:
 
   1. DEFRA Lden GeoTIFF (~500 MB, free, OGL v3.0). Listed under "Strategic
-     noise mapping (England) – round 4 (2022)" on the gov.uk page below;
+     noise mapping (England)-round 4 (2022)" on the gov.uk page below;
      accept the click-through licence and download the Lden GeoTIFF for
      "All sources combined" (or "Aircraft" alone if you want aviation-only):
      https://www.gov.uk/government/collections/strategic-noise-mapping
@@ -23,13 +23,13 @@ INPUTS NEEDED:
   2. ONS National Statistics Postcode Lookup (NSPL). Lat/lon for every UK
      postcode. Free, OGL v3.0:
      https://geoportal.statistics.gov.uk/datasets/ons::nspl-online-latest-by-postcode/
-     Download the CSV (large — ~250 MB after extraction) and save as
+     Download the CSV (large, ~250 MB after extraction) and save as
      `data/nspl.csv`. The script reads the standard columns `pcds`, `lat`,
      `long` (these names have been stable across NSPL editions).
 
   3. AWS credentials with write access to the `london-flight-map-noise-raster`
      table (already covered by the flightmap-dev IAM policy at
-     backend/iam-policy.json — DynamoDB.PutItem on
+     backend/iam-policy.json, DynamoDB.PutItem on
      `arn:aws:dynamodb:eu-west-2:*:table/london-flight-map-*`).
 
 USAGE:
@@ -53,7 +53,7 @@ EXPECTED RUNTIME:
   GeoTIFF read is local (10 ms/sample) so the bottleneck is DDB writes.
   The script is resumable: if interrupted, re-running picks up at the
   last checkpoint (written every 1000 rows). Postcodes are idempotent
-  keys — re-runs overwrite with the same value, never duplicate.
+  keys, re-runs overwrite with the same value, never duplicate.
 
 WHAT IT DOES:
 
@@ -77,7 +77,7 @@ VERIFICATION AFTER LOAD:
   curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=TW6+2GA' \\
     -H 'X-Api-Key: <your-key>' | python -c \\
     "import json,sys;d=json.loads(sys.stdin.read());print(d['context']['quietResolution'])"
-  # Expect: raster   (was: postcode for v3.0 Haversine, borough for v2.x)
+  # Expect: raster (was: postcode for v3.0 Haversine, borough for v2.x)
 """
 
 import argparse
@@ -98,10 +98,10 @@ DEFRA_GEOTIFF_PATH = Path('data/defra_lden_2022.tif')
 NSPL_CSV_PATH = Path('data/nspl.csv')
 TABLE_NAME = 'london-flight-map-noise-raster'
 AWS_REGION = 'eu-west-2'
-BATCH_SIZE = 25  # DynamoDB BatchWriteItem max
+BATCH_SIZE = 25 # DynamoDB BatchWriteItem max
 CHECKPOINT_PATH = Path('.defra_load_checkpoint')
 
-# Lden sanity range — DEFRA values are 30-95 dB; pixels outside this
+# Lden sanity range, DEFRA values are 30-95 dB; pixels outside this
 # range are nodata sentinels (often 0, 255, or large negative numbers
 # depending on the GeoTIFF encoding).
 LDEN_MIN = 30.0
@@ -122,7 +122,7 @@ def parse_args():
     )
     p.add_argument(
         '--dry-run', action='store_true',
-        help='Skip all DynamoDB writes — just sample the raster and print '
+        help='Skip all DynamoDB writes, just sample the raster and print '
              'what would be written. Use with --limit for a fast (~30 s) '
              'end-to-end smoke test that confirms the raster, CRS '
              'transform, and CSV columns are all working.',
@@ -150,10 +150,10 @@ def self_test():
         from pyproj import Transformer
     except ImportError:
         print('Missing dependency: pyproj. Install with:')
-        print('  pip install pyproj')
+        print(' pip install pyproj')
         sys.exit(1)
 
-    # SW1A 1AA — Buckingham Palace area, lat/lon from postcodes.io
+    # SW1A 1AA, Buckingham Palace area, lat/lon from postcodes.io
     sw1a_lat, sw1a_lon = 51.501009, -0.141588
     # Expected BNG coordinates (well-known, ~10 m precision either way)
     expected_x, expected_y = 529090, 179645
@@ -167,17 +167,17 @@ def self_test():
     )
     x, y = transformer.transform(sw1a_lon, sw1a_lat)
 
-    # Allow ±100 m tolerance — well above transform error, well below
+    # Allow ±100 m tolerance, well above transform error, well below
     # any catastrophic axis-swap or units bug.
     dx, dy = abs(x - expected_x), abs(y - expected_y)
     if dx > 100 or dy > 100:
-        print(f'FAIL  CRS transform off by ({dx:.1f} m, {dy:.1f} m)')
-        print(f'      Got      ({x:.1f}, {y:.1f})')
-        print(f'      Expected ({expected_x}, {expected_y})')
+        print(f'FAIL CRS transform off by ({dx:.1f} m, {dy:.1f} m)')
+        print(f' Got ({x:.1f}, {y:.1f})')
+        print(f' Expected ({expected_x}, {expected_y})')
         sys.exit(1)
 
-    print(f'PASS  WGS84 → BNG transform: SW1A 1AA → ({x:.0f}, {y:.0f})')
-    print(f'      (expected ({expected_x}, {expected_y}), within {max(dx,dy):.1f} m)')
+    print(f'PASS WGS84 → BNG transform: SW1A 1AA → ({x:.0f}, {y:.0f})')
+    print(f' (expected ({expected_x}, {expected_y}), within {max(dx,dy):.1f} m)')
     print('Self-test passed. Pyproj + PROJ data are configured correctly.')
 
 
@@ -190,10 +190,10 @@ def run_load(limit, dry_run):
     """
     # Lazy imports so this file is readable without the deps installed
     try:
-        import rasterio  # type: ignore
-        import boto3  # type: ignore
-        from pyproj import Transformer  # type: ignore
-        from tqdm import tqdm  # type: ignore
+        import rasterio # type: ignore
+        import boto3 # type: ignore
+        from pyproj import Transformer # type: ignore
+        from tqdm import tqdm # type: ignore
     except ImportError as exc:
         print(f'Missing dependency: {exc}')
         print('Install with: pip install rasterio pyproj boto3 tqdm')
@@ -227,7 +227,7 @@ def run_load(limit, dry_run):
     # Postcode WGS84 → raster CRS (likely BNG / EPSG:27700)
     transformer = Transformer.from_crs('EPSG:4326', raster_crs, always_xy=True)
 
-    # DynamoDB — instantiate even in dry-run so a missing AWS profile
+    # DynamoDB, instantiate even in dry-run so a missing AWS profile
     # surfaces immediately rather than after a long sample.
     ddb = boto3.client('dynamodb', region_name=AWS_REGION)
     if dry_run:
@@ -241,7 +241,7 @@ def run_load(limit, dry_run):
     written = 0
     skipped = 0
     samples_logged = 0
-    SAMPLE_LOG_LIMIT = 5  # show a few sampled rows so you can eyeball them
+    SAMPLE_LOG_LIMIT = 5 # show a few sampled rows so you can eyeball them
 
     with open(NSPL_CSV_PATH, newline='', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
@@ -281,14 +281,14 @@ def run_load(limit, dry_run):
                 continue
 
             if dry_run and samples_logged < SAMPLE_LOG_LIMIT:
-                print(f'  sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
+                print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
                 samples_logged += 1
 
             batch.append({
                 'PutRequest': {
                     'Item': {
                         'postcode': {'S': pc},
-                        'ldenDb':   {'N': f'{lden:.1f}'},
+                        'ldenDb': {'N': f'{lden:.1f}'},
                     }
                 }
             })
@@ -299,7 +299,7 @@ def run_load(limit, dry_run):
                 written += len(batch)
                 batch.clear()
 
-                # Checkpoint every 1000 rows — only meaningful for full runs
+                # Checkpoint every 1000 rows, only meaningful for full runs
                 if not limit and idx % 1000 == 0:
                     CHECKPOINT_PATH.write_text(str(idx))
 
@@ -309,7 +309,7 @@ def run_load(limit, dry_run):
             ddb.batch_write_item(RequestItems={TABLE_NAME: batch})
         written += len(batch)
 
-    # Clean up checkpoint on success — only on a full uninterrupted run
+    # Clean up checkpoint on success, only on a full uninterrupted run
     if not limit and not dry_run:
         CHECKPOINT_PATH.unlink(missing_ok=True)
 
@@ -318,8 +318,8 @@ def run_load(limit, dry_run):
     print(f'\nDone. {verb}: {written:,} postcodes. Skipped: {skipped:,}.')
     if not dry_run and not limit:
         print('Verify with:')
-        print(f'  AWS_PROFILE=flightmap aws dynamodb describe-table --table-name {TABLE_NAME} \\')
-        print('    --query "Table.ItemCount" --region eu-west-2')
+        print(f' AWS_PROFILE=flightmap aws dynamodb describe-table --table-name {TABLE_NAME} \\')
+        print(' --query "Table.ItemCount" --region eu-west-2')
 
 
 def main():

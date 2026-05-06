@@ -17,7 +17,7 @@ Globals:
     # (chat, multi_agent) are protected by per-stage API Gateway throttling
     # rather than CORS. CORS does not protect against server-side abuse, so
     # the previous CloudFront-only origin restriction was protecting against
-    # browser abuse only — opening it does not materially change the threat
+    # browser abuse only, opening it does not materially change the threat
     # model. Tighten via per-Lambda origin checks if browser-from-other-origin
     # abuse on Bedrock endpoints becomes observed.
     Cors:
@@ -258,7 +258,7 @@ Resources:
             Path: /favourites
             Method: delete
 
-  # --- B2B Score API (/v1/score) — API-key gated ---
+  # --- B2B Score API (/v1/score), API-key gated ---
   ScoreFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -271,7 +271,7 @@ Resources:
           # Score endpoint is the productised B2B surface; allow any origin so
           # third-party integrators can call it. API-key auth gates abuse.
           CORS_ORIGIN: '*'
-          # v3.1 DEFRA raster table — Lambda checks DynamoDB first for postcode
+          # v3.1 DEFRA raster table, Lambda checks DynamoDB first for postcode
           # Lden samples; falls back to v3.0 Haversine if table empty/missing.
           NOISE_RASTER_TABLE: !Ref NoiseRasterTable
       Policies:
@@ -305,7 +305,7 @@ Resources:
 
   # NOTE: this resource is the original (now-rotated) demo key. The key
   # value itself was committed to score-demo/{index,status}.html in
-  # commits 2280148 / 07ad823 — see audit C2 in AUDIT_REPORT.md.
+  # commits 2280148 / 07ad823, see audit C2 in AUDIT_REPORT.md.
   # On 2026-05-06 a new key (id 1zy00lrqs5, name SkyScoreDemoKeyV2) was
   # created out-of-band via the AWS CLI, linked to ScoreFreeUsagePlan,
   # and the score-demo HTML files updated to use it. The original key
@@ -317,7 +317,7 @@ Resources:
     DependsOn: FlightMapApiprodStage
     Properties:
       Name: SkyScoreFreeTierKey
-      Description: Original demo key, rotated 2026-05-06 — kept disabled for audit trail.
+      Description: Original demo key, rotated 2026-05-06, kept disabled for audit trail.
       Enabled: false
       StageKeys:
         - RestApiId: !Ref FlightMapApi
@@ -328,7 +328,7 @@ Resources:
     DependsOn: FlightMapApiprodStage
     Properties:
       UsagePlanName: SkyScoreFreeTier
-      Description: Free tier — 1000 requests/month, 5 req/sec burst.
+      Description: Free tier, 1000 requests/month, 5 req/sec burst.
       ApiStages:
         - ApiId: !Ref FlightMapApi
           Stage: prod
@@ -349,7 +349,7 @@ Resources:
   # --- Self-service signup ---
   # POST /v1/signup creates a new APIGW key, links to ScoreFreeUsagePlan,
   # records the email in SignupsTable. Unauthenticated by design (form
-  # signup) — abuse bounded by API Gateway throttle + idempotency on email.
+  # signup), abuse bounded by API Gateway throttle + idempotency on email.
   # See backend/lambdas/signup/app.py for handler logic.
   SignupFunction:
     Type: AWS::Serverless::Function
@@ -388,7 +388,7 @@ Resources:
                 - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans'
             - Effect: Allow
               Action:
-                # Rollback path — revoke a just-created key when a
+                # Rollback path, revoke a just-created key when a
                 # signup race is detected (DDB ConditionExpression fails
                 # after APIGW key already exists).
                 - apigateway:DELETE
@@ -396,7 +396,7 @@ Resources:
                 - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
       Events:
         SignupPost:
-          # No Auth block — default is no API key required, which is the
+          # No Auth block, default is no API key required, which is the
           # whole point of self-service signup. Abuse mitigated by API
           # Gateway throttle + per-email idempotency in the handler.
           Type: Api
@@ -411,8 +411,8 @@ Resources:
             Path: /v1/signup
             Method: options
 
-  # --- DynamoDB Table — Self-service signup audit log ---
-  # Email is the partition key (one signup per email — duplicate signups
+  # --- DynamoDB Table, Self-service signup audit log ---
+  # Email is the partition key (one signup per email, duplicate signups
   # return 409 since APIGW won't let us re-show the key value after
   # creation). Stores keyId for revocation, createdAt for analytics.
   SignupsTable:
@@ -427,7 +427,7 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  # --- DynamoDB Table — DEFRA noise raster samples (v3.1) ---
+  # --- DynamoDB Table, DEFRA noise raster samples (v3.1) ---
   # Populated by an offline data-loader script that samples the DEFRA
   # GeoTIFF at every UK postcode centroid. The Lambda reads from this table
   # when populated; falls back to v3.0 Haversine when empty/missing.
@@ -436,7 +436,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       # Name matches the london-flight-map-* IAM-policy prefix used by the
-      # flightmap-dev deploy user — see backend/iam-policy.json.
+      # flightmap-dev deploy user, see backend/iam-policy.json.
       TableName: london-flight-map-noise-raster
       AttributeDefinitions:
         - AttributeName: postcode

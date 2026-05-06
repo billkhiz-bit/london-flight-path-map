@@ -8,15 +8,15 @@
 
 ## Vision
 
-Sky Score is the noise + livability layer for UK property data — designed to be honest about hidden harms (aviation noise, road noise, air quality, crime) that listings sites have a financial incentive to hide. Two surfaces: a consumer site that informs renters/buyers, and a B2B API that puts the same data inside the workflows of conveyancers, property data aggregators, and Islamic-finance providers. Aligned with Maqasid al-Shariah (protecting buyers from harm) and explicitly riba-free in customer targeting.
+Sky Score is the noise + livability layer for UK property data, designed to be honest about hidden harms (aviation noise, road noise, air quality, crime) that listings sites have a financial incentive to hide. Two surfaces: a consumer site that informs renters/buyers, and a B2B API that puts the same data inside the workflows of conveyancers, property data aggregators, and Islamic-finance providers. Aligned with Maqasid al-Shariah (protecting buyers from harm) and explicitly riba-free in customer targeting.
 
 ## Current state
 
-- **Consumer site live**: `https://d1oe4ftwutjpf.cloudfront.net` — covers London + NYC, postcode/borough scoring, AI chat, multi-agent reports, image/document analysis, favourites
+- **Consumer site live**: `https://d1oe4ftwutjpf.cloudfront.net`, covers London + NYC, postcode/borough scoring, AI chat, multi-agent reports, image/document analysis, favourites
 - **Backend**: 10 Lambdas behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
-- **Prototype (Sky Score Radar)** live at `/prototype/` — 3D visualisation with live OpenSky aircraft data
+- **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with live OpenSky aircraft data
 - **Recent wins**: Amazon Nova hackathon ($200 AWS credits, blog category), Emergent Ventures application submitted (awaiting response), Red Bull Basement application submitted (awaiting shortlist), Luma event applied
-- **Known issues**: see `AUDIT_REPORT.md` (last audit 10–12 March, **suggest re-running `/audit`**)
+- **Known issues**: see `AUDIT_REPORT.md` (last audit 10-12 March, **suggest re-running `/audit`**)
 
 ## Constraints
 
@@ -31,12 +31,12 @@ These shape every product decision:
 
 ## Three parallel tracks
 
-### Track 1 — Consumer site (`d1oe4ftwutjpf.cloudfront.net`)
+### Track 1, Consumer site (`d1oe4ftwutjpf.cloudfront.net`)
 
 The consumer site is the marketing engine, not the revenue centre. Keep it sharp; don't compete with the paid API.
 
 **Active work**:
-- Down-grade per-property data display to borough-level only (granularity wall — protects API customers)
+- Down-grade per-property data display to borough-level only (granularity wall, protects API customers)
 - Sharpen the "ethical alternative to listings sites" framing in copy
 - Mobile UX pass on borough/postcode flows
 
@@ -44,42 +44,42 @@ The consumer site is the marketing engine, not the revenue centre. Keep it sharp
 - Authentication for favourites endpoint (post-hackathon item from `AUDIT_REPORT.md`)
 - ARIA accessibility pass (post-hackathon item)
 
-### Track 2 — B2B API (`/v1/score`, `/v1/score/batch`)
+### Track 2, B2B API (`/v1/score`, `/v1/score/batch`)
 
 The product. Wraps the scoring engine into a stable, documented, monetisable endpoint for aggregators and Islamic-finance providers.
 
 **Shipped (2026-05-05)**:
-- ✅ `GET /v1/score` — single-postcode (London) or borough (London + NYC) lookup with persona presets and custom weights override
-- ✅ `POST /v1/score/batch` — bulk endpoint, up to 100 queries per call, partial-failure-tolerant (failed items return error per-row)
+- ✅ `GET /v1/score`, single-postcode (London) or borough (London + NYC) lookup with persona presets and custom weights override
+- ✅ `POST /v1/score/batch`, bulk endpoint, up to 100 queries per call, partial-failure-tolerant (failed items return error per-row)
 - ✅ API key auth via API Gateway Usage Plan (1000 req/month free tier, 5/sec burst, 2/sec sustained)
-- ✅ Methodology v2.0 — every threshold and weight anchored to DEFRA Lden bands, WHO noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL; references section
+- ✅ Methodology v2.0, every threshold and weight anchored to DEFRA Lden bands, WHO noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL; references section
 - ✅ OpenAPI 3.0 spec at `/score-demo/openapi.yaml` + interactive Swagger UI at `/score-demo/api-docs.html`
-- ✅ NYC support — borough-name lookup + 5-digit US ZIP auto-detection. ~182 residential ZIPs covered across all 5 boroughs; ~110 of those have per-ZIP centroids that drive the v3.0 Haversine quiet-score path (verified live 2026-05-06: 10001 Manhattan → score 5.0 / postcode-resolution, 11201 Brooklyn → 6.9 / postcode-resolution, 11375 Forest Hills → 6.0 / postcode-resolution). Non-NYC US ZIPs (e.g. 90210) return a structured 404 with the supported borough list.
-- ✅ Per-postcode quiet score — v3.0 Haversine to airports + flight-path geometry, applied to both UK postcodes (postcodes.io centroid) and NYC ZIPs (static centroid lookup). v3.1 raster scaffold present in code (DynamoDB lookup) for once the offline DEFRA loader runs.
+- ✅ NYC support, borough-name lookup + 5-digit US ZIP auto-detection. ~182 residential ZIPs covered across all 5 boroughs; ~110 of those have per-ZIP centroids that drive the v3.0 Haversine quiet-score path (verified live 2026-05-06: 10001 Manhattan → score 5.0 / postcode-resolution, 11201 Brooklyn → 6.9 / postcode-resolution, 11375 Forest Hills → 6.0 / postcode-resolution). Non-NYC US ZIPs (e.g. 90210) return a structured 404 with the supported borough list.
+- ✅ Per-postcode quiet score, v3.0 Haversine to airports + flight-path geometry, applied to both UK postcodes (postcodes.io centroid) and NYC ZIPs (static centroid lookup). v3.1 raster scaffold present in code (DynamoDB lookup) for once the offline DEFRA loader runs.
 - ✅ CORS opened to `*` so third-party browser integrations work; abuse vector unchanged (server-side abuse was always possible regardless)
 - ✅ OGL attribution in every response
 
 **Outstanding**:
-- 🟡 DEFRA Lden raster offline data-load (`scripts/load_defra_raster.py`) — populates the DynamoDB table the v3.1 code path already reads from. Once loaded, quiet-score precision moves from "Haversine proxy" to "DEFRA raster sample at postcode centroid". One-time overnight batch (~1.7M UK postcodes).
-- 🟡 UK Core Cities (Manchester, Birmingham, Bristol, etc.) — geographic expansion, gated on liveability data acquisition
-- 🟡 Pricing tiers beyond free — define when first paying integrator commits
+- 🟡 DEFRA Lden raster offline data-load (`scripts/load_defra_raster.py`), populates the DynamoDB table the v3.1 code path already reads from. Once loaded, quiet-score precision moves from "Haversine proxy" to "DEFRA raster sample at postcode centroid". One-time overnight batch (~1.7M UK postcodes).
+- 🟡 UK Core Cities (Manchester, Birmingham, Bristol, etc.), geographic expansion, gated on liveability data acquisition
+- 🟡 Pricing tiers beyond free, define when first paying integrator commits
 - 🟡 Status page at `status.skyscore.com`
 
-### Track 3 — Competitions & outreach
+### Track 3, Competitions & outreach
 
 **Buildathon (active focus)**: Shared Futures Buildathon London 2026, application deadline 2026-05-15, event 2026-06-07. Awaiting eligibility reply from Foundation. See `BUILDATHON_PLAN.md`.
 
 **Pending applications**:
-- Emergent Ventures / Mercatus (£45k, submitted 2026-04-20, expect response within ~1 week of submission — chase if no reply by 2026-05-12)
+- Emergent Ventures / Mercatus (£45k, submitted 2026-04-20, expect response within ~1 week of submission, chase if no reply by 2026-05-12)
 - Red Bull Basement (submitted 2026-04-12, awaiting shortlist)
 
-**Outreach pipeline** — running from week of 2026-05-12 onward:
+**Outreach pipeline**, running from week of 2026-05-12 onward:
 
 | Tier | Companies | Approach | Cadence |
 |---|---|---|---|
-| 1 — Aggregators | Landmark, TM Group, OneSearch Direct | LinkedIn → cold email; reference Riskview/Plansearch gap | 2/week |
-| 2 — Islamic finance | Al Rayan, StrideUp, Gatehouse, Nester, Yielders | LinkedIn (founder-direct for StrideUp); aligned-values angle | 2/week |
-| 3 — Direct enterprise | Wahed, Manzilanas, B2R operators | Warm intros only | as found |
+| 1, Aggregators | Landmark, TM Group, OneSearch Direct | LinkedIn → cold email; reference Riskview/Plansearch gap | 2/week |
+| 2, Islamic finance | Al Rayan, StrideUp, Gatehouse, Nester, Yielders | LinkedIn (founder-direct for StrideUp); aligned-values angle | 2/week |
+| 3, Direct enterprise | Wahed, Manzilanas, B2R operators | Warm intros only | as found |
 
 Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: contact, date, channel, response, next action.
 
@@ -91,11 +91,11 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 
 | Task | Deadline | Why | Status |
 |---|---|---|---|
-| **EPC API migration** to `get-energy-performance-data.communities.gov.uk` | **2026-05-30** (hard) | Old service shuts down; current `lambdas/epc/app.py` will 404 | **Done 2026-05-05** — deployed and verified live against `prod/epc?postcode=N1+7SX` (returned 72 real certificates, summary, pagination, OGL attribution). Bearer auth via `EpcBearerToken` SAM parameter sourced from `.env`. **Still pending**: token rotation on the dashboard + redeploy (the version in chat history is considered exposed). |
+| **EPC API migration** to `get-energy-performance-data.communities.gov.uk` | **2026-05-30** (hard) | Old service shuts down; current `lambdas/epc/app.py` will 404 | **Done 2026-05-05**, deployed and verified live against `prod/epc?postcode=N1+7SX` (returned 72 real certificates, summary, pagination, OGL attribution). Bearer auth via `EpcBearerToken` SAM parameter sourced from `.env`. **Still pending**: token rotation on the dashboard + redeploy (the version in chat history is considered exposed). |
 | Buildathon application (if eligible) | 2026-05-15 | Competition deadline | Awaiting Foundation reply |
 | `/v1/score` Lambda extraction | 2026-05-22 | Unblocks both API track + buildathon pre-work | **Done 2026-05-05.** Plus on the same day: bulk endpoint (`POST /v1/score/batch`, up to 100 queries), NYC borough support, methodology v2.0 (iron-clad anchoring of every threshold), OpenAPI spec, Swagger UI, CORS opened to `*`. All verified live. Free-tier API key + Usage Plan (1000/month, 5 burst). |
-| OGL attribution on data Lambdas | done | Required for any B2B sale | Done 2026-05-05 — `epc`, `sold_prices`, `transport`, `nhs` now return `sources` array |
-| Methodology document | done | Required for B2B audit / Buildathon judging | Done 2026-05-05 — `METHODOLOGY.md` v1.0 |
+| OGL attribution on data Lambdas | done | Required for any B2B sale | Done 2026-05-05, `epc`, `sold_prices`, `transport`, `nhs` now return `sources` array |
+| Methodology document | done | Required for B2B audit / Buildathon judging | Done 2026-05-05, `METHODOLOGY.md` v1.0 |
 
 ### Outreach
 
@@ -125,7 +125,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | Buildathon fork repo name | `sky-score-halal` | When Foundation confirms eligibility |
 | Whether to drop `multi_agent` Lambda from API surface in favour of leaner score-only | TBD | After first 3 customer conversations |
 | CORS for `/v1/score` from third-party browser origins | **Resolved 2026-05-05**: global CORS opened to `*`. The score endpoints are API-key gated; the Bedrock endpoints are throttled at API Gateway (10 req/s) and CORS does not protect against server-side abuse anyway. | n/a |
-| OpenSky commercial-licensing — replace, negotiate, or decouple | Decouple (consumer only) until first paying integration; negotiate or swap before then | Before any B2B aviation-data integration |
+| OpenSky commercial-licensing, replace, negotiate, or decouple | Decouple (consumer only) until first paying integration; negotiate or swap before then | Before any B2B aviation-data integration |
 | EPC: API-on-demand vs bulk download | API now; bulk download once approaching rate-limit pressure (~50% of 6000-per-5-min quota) | When B2B traffic ramps |
 | NYC ZIP-to-borough resolution | **Resolved 2026-05-05/06**: ~182 residential ZIPs supported via static lookup; ~110 with per-ZIP centroids for Haversine quiet-score. `?postcode=10001` and `?postcode=11201` work alongside UK postcodes. Non-NYC US ZIPs return a structured 404. | n/a |
 
@@ -133,33 +133,33 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 
 ## Cross-references
 
-- `BUILDATHON_PLAN.md` — focused plan for Shared Futures Buildathon
-- `AUDIT_REPORT.md` — code quality snapshot (re-run pending)
-- `CLAUDE.md` — Claude session conventions
-- `README.md` — public-facing project documentation
+- `BUILDATHON_PLAN.md`, focused plan for Shared Futures Buildathon
+- `AUDIT_REPORT.md`, code quality snapshot (re-run pending)
+- `CLAUDE.md`, Claude session conventions
+- `README.md`, public-facing project documentation
 - Memory: `project_api_target_customers.md`, `project_buildathon_focus.md`, `project_competitive_landscape.md`, `feedback_no_riba_customers.md`, `project_siraj_noor.md` (sister project)
 
 ## Design notes for deferred work
 
 Detailed scoping for the two main outstanding items in Track 2. Captured 2026-05-05 so future-self picks up with context.
 
-### ~~NYC ZIP-to-borough resolution~~ — **shipped 2026-05-05/06**
+### ~~NYC ZIP-to-borough resolution~~, **shipped 2026-05-05/06**
 
-Captured original 2–3-hour scope; actual build came in close to estimate plus a v3.1 follow-up that added per-ZIP centroids for the Haversine path. Final shape: 182 residential ZIPs across the five boroughs, ~110 with explicit centroids; ZIPs without centroid fall back to borough-aggregate Lden bands; non-NYC US ZIPs return a structured 404 with the supported borough list. Live-verified against test postcodes 10001, 11201, 11375. See commits `af201fb` (initial detection + tests), `156b622` (v3.1 centroids), and `app.py` lines 105-260 for the data structures.
+Captured original 2-3-hour scope; actual build came in close to estimate plus a v3.1 follow-up that added per-ZIP centroids for the Haversine path. Final shape: 182 residential ZIPs across the five boroughs, ~110 with explicit centroids; ZIPs without centroid fall back to borough-aggregate Lden bands; non-NYC US ZIPs return a structured 404 with the supported borough list. Live-verified against test postcodes 10001, 11201, 11375. See commits `af201fb` (initial detection + tests), `156b622` (v3.1 centroids), and `app.py` lines 105-260 for the data structures.
 
-### Per-postcode noise sampling — vs current borough-level
+### Per-postcode noise sampling, vs current borough-level
 
 > **v3.0 update (2026-05-05)**: Option 2 (Haversine port from consumer site) **shipped**. Per-postcode quiet via airport + flight-path geometry is now live in `/v1/score` for UK postcodes. Methodology v3.0 documents the formula in §4.5. The full DEFRA raster sampling described below is now formally **Option 3 / v3.1**, deferred to a fresh-head longer block when validation work catches up. NYC ZIP centroids (~30 min) are also a v3.1 enhancement.
 
 #### Current limitation (concrete)
 
-The Lambda's quiet component is a single categorical lookup per *borough*, so every postcode in a borough gets the same quiet score. Within-borough variation can be 10–15 dB Lden — a 2–3 component-point error in a 0–10 score.
+The Lambda's quiet component is a single categorical lookup per *borough*, so every postcode in a borough gets the same quiet score. Within-borough variation can be 10-15 dB Lden, a 2-3 component-point error in a 0-10 score.
 
 | Borough | Borough Lden band | Reality at specific postcodes |
 |---|---|---|
 | **Hounslow** | severe (≥75 dB) | TW6 (Heathrow approach): genuinely severe. **TW1 (Twickenham, ~62 dB)**: should score ~5/10. **TW8 (Brentford, ~58 dB)**: should score ~6.5/10. |
-| **Richmond upon Thames** | high (70–75 dB) | West (Hampton, Teddington): 70+ dB. **East (Richmond town centre, Sheen, ~62 dB)**: should score ~5. |
-| **Wandsworth** | moderate (60–65 dB) | Battersea Heliport area: ~68 dB. **Tooting Bec (~55 dB)**: should score ~7.5. |
+| **Richmond upon Thames** | high (70-75 dB) | West (Hampton, Teddington): 70+ dB. **East (Richmond town centre, Sheen, ~62 dB)**: should score ~5. |
+| **Wandsworth** | moderate (60-65 dB) | Battersea Heliport area: ~68 dB. **Tooting Bec (~55 dB)**: should score ~7.5. |
 | **Greenwich** | moderate | London City approach corridor: ~70 dB. **Blackheath (~55 dB)**: should score ~7.5. |
 
 This is the methodology weakness B2B audit teams will challenge first.
@@ -167,8 +167,8 @@ This is the methodology weakness B2B audit teams will challenge first.
 #### Replacement approach
 
 Use the postcode's lat/long (postcodes.io already returns it) to sample two data sources:
-1. **DEFRA Strategic Noise Mapping raster** — sample Lden value at postcode centroid (10m grid resolution)
-2. **Haversine distance to flight paths and airports** — already implemented in the consumer site (`index.html` lines 1118–1247)
+1. **DEFRA Strategic Noise Mapping raster**, sample Lden value at postcode centroid (10m grid resolution)
+2. **Haversine distance to flight paths and airports**, already implemented in the consumer site (`index.html` lines 1118-1247)
 
 Combine into continuous dB-based score:
 ```
@@ -182,31 +182,31 @@ Where `effective_lden = max(raster_lden, flight_path_proximity_lden)`.
 |---|---|---|
 | Within-borough variation | None | Real |
 | Accuracy | ~80% at borough; ±3 points within borough | ~95% (limited by raster resolution) |
-| Defensibility | "DEFRA borough-aggregate" — coarse | "DEFRA raster sampled at postcode centroid + Haversine flight-path proximity" — gold standard |
-| Audit risk | Real — surveyors will challenge | Should pass clean |
+| Defensibility | "DEFRA borough-aggregate", coarse | "DEFRA raster sampled at postcode centroid + Haversine flight-path proximity", gold standard |
+| Audit risk | Real, surveyors will challenge | Should pass clean |
 | Latency per request | <5ms | <20ms (pre-computed in DynamoDB) |
 | Build effort | Done | ~1 day + overnight batch |
 
 #### Build plan
 
-1. **Acquire DEFRA Lden raster** for England round 4 (2022) — 1h, free from data.gov.uk, ~500 MB GeoTIFF
-2. **Pre-compute postcode-centroid samples** — script over ~1.7M UK postcodes, store in DynamoDB. Overnight batch, ~£5 compute.
-3. **Lambda code change** — replace `IMPACT_TO_QUIET[impact]` with DynamoDB read by postcode, fall back to borough-aggregate if missing. ~2h.
-4. **Port flight-path distance scoring** from consumer site Haversine logic — ~2h.
-5. **Methodology update** — §4.1 revision, version bump to 3.0. ~1h.
-6. **Validation** — spot-check 20 postcodes against DEFRA noise contour map. ~1h.
+1. **Acquire DEFRA Lden raster** for England round 4 (2022), 1h, free from data.gov.uk, ~500 MB GeoTIFF
+2. **Pre-compute postcode-centroid samples**, script over ~1.7M UK postcodes, store in DynamoDB. Overnight batch, ~£5 compute.
+3. **Lambda code change**, replace `IMPACT_TO_QUIET[impact]` with DynamoDB read by postcode, fall back to borough-aggregate if missing. ~2h.
+4. **Port flight-path distance scoring** from consumer site Haversine logic, ~2h.
+5. **Methodology update**, §4.1 revision, version bump to 3.0. ~1h.
+6. **Validation**, spot-check 20 postcodes against DEFRA noise contour map. ~1h.
 
 **Effort: ~1 working day + overnight pre-compute.**
 
 #### When to ship
 
-The trigger is **first paying B2B customer asks "do you have postcode-level noise resolution?"** — aggregator-tier customers will ask in their first audit. Until then, borough-level + the documented limitation in methodology §9 is honest and acceptable.
+The trigger is **first paying B2B customer asks "do you have postcode-level noise resolution?"**, aggregator-tier customers will ask in their first audit. Until then, borough-level + the documented limitation in methodology §9 is honest and acceptable.
 
 ### Recommended order for deferred work
 
 | When | What | Why |
 |---|---|---|
-| Next short session (2–3h) | NYC ZIP resolution | Highest leverage per minute spent. Removes a known limitation cheaply. Marketing-ready. |
+| Next short session (2-3h) | NYC ZIP resolution | Highest leverage per minute spent. Removes a known limitation cheaply. Marketing-ready. |
 | Next focused day | Per-postcode noise sampling | Larger accuracy win. Best done with fresh head over a longer block. Closes the audit-defensibility gap. |
 | Before any paying B2B customer | OpenSky commercial-licence resolution (negotiate / replace / decouple) | Unblocks aviation-data integrations |
 | Before public launch | Polish: domain (`skyscore.uk`), homepage CTA for "API access", contact form | Commercial-readiness |
@@ -231,13 +231,13 @@ Sky Score charges for *integration value* (SLA, structured JSON, batch, audit tr
 1. **Target customers don't compete with the consumer site.** Landmark, TM Group, OneSearch (aggregators) want SLA + batch + structured JSON; Al Rayan, StrideUp, Gatehouse (Islamic finance) want underwriting depth; conveyancers want product-bundle integration; B2R operators want site selection. None of these customers' value depends on Sky Score not having a public site.
 2. **Consumer site is the marketing engine.** Every prospect who searches "Sky Score" lands here first. Stripping features means losing inbound pipeline.
 3. **Removing features creates support cost without revenue.** "Why does the consumer site no longer show X?" emails don't convert.
-4. **Real customer feedback should drive feature decisions.** Don't optimise for theoretical objections — wait for actual ones.
+4. **Real customer feedback should drive feature decisions.** Don't optimise for theoretical objections, wait for actual ones.
 
 ### What customers actually pay for (the convenience-tier value list)
 
 | Value | Sky Score has it? |
 |---|---|
-| **SLA** with refund/credit commitments | Not yet — commit one in first contract |
+| **SLA** with refund/credit commitments | Not yet, commit one in first contract |
 | **Per-customer API key + Usage Plan** (billing isolation) | API Gateway supports; hand-issue per customer in Phase 1 |
 | **Bulk endpoint** (`POST /v1/score/batch`) | Shipped |
 | **Structured response** (OpenAPI 3.0 spec) | Shipped |
@@ -249,7 +249,7 @@ Sky Score charges for *integration value* (SLA, structured JSON, batch, audit tr
 | **Data refresh on a schedule** | Documented commitment in §7 |
 | **Dedicated support channel** | Email per contract; future Slack Connect |
 | **Status page + uptime visibility** | Shipped (`/score-demo/status.html`) |
-| **MSA + DPA template** | Use CommonPaper.com or PandaDoc UK template — recommendation, not for me to draft |
+| **MSA + DPA template** | Use CommonPaper.com or PandaDoc UK template, recommendation, not for me to draft |
 | **Future: ISO 27001 / SOC 2** | Multi-year track |
 
 ### Pricing structure (illustrative; firm up after first conversation)
@@ -258,7 +258,7 @@ Sky Score charges for *integration value* (SLA, structured JSON, batch, audit tr
 |---|---|---|---|
 | **Developer** | 5,000 req/month | £49 | Individual integrator, evaluating |
 | **Professional** | 100,000 req/month | £499 | Small platform integrating Sky Score |
-| **Enterprise** | Custom | £2k–£20k+ | Aggregators, large integrators (Landmark-shape) |
+| **Enterprise** | Custom | £2k-£20k+ | Aggregators, large integrators (Landmark-shape) |
 
 ### Revisit triggers
 

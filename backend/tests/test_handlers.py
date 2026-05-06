@@ -8,7 +8,7 @@ Covers the cheap, high-leverage cases each handler should always get right:
 - 413 on oversized bodies (Bedrock endpoints)
 - Validation rules for parsing inputs
 
-Bedrock invocations and external HTTP calls are mocked / skipped — these
+Bedrock invocations and external HTTP calls are mocked / skipped, these
 tests cover request-handling logic, not upstream integrations. The
 upstream integrations are tested via live curl smoke-tests at deploy time.
 
@@ -35,7 +35,7 @@ def _import_lambda(name):
     if 'app' in sys.modules:
         del sys.modules['app']
     try:
-        import app  # noqa: F401  — pylint: disable=import-outside-toplevel
+        import app # noqa: F401, pylint: disable=import-outside-toplevel
         return app
     finally:
         sys.path.pop(0)
@@ -70,7 +70,7 @@ class ScoreHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- Favourites — requires X-Device-Token (audit C3) ----------
+# ---------- Favourites, requires X-Device-Token (audit C3) ----------
 
 class FavouritesHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -95,7 +95,7 @@ class FavouritesHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 401)
 
     def test_uuid_format_accepted(self):
-        # Token validates — but DynamoDB call would happen; mock it.
+        # Token validates, but DynamoDB call would happen; mock it.
         good_token = '550e8400-e29b-41d4-a716-446655440000'
         canonical = self.app.get_device_token(
             {'headers': {'X-Device-Token': good_token}},
@@ -109,7 +109,7 @@ class FavouritesHandlerTests(unittest.TestCase):
         self.assertEqual(canonical, 'a' * 32)
 
 
-# ---------- Signup — POST creates key, idempotent on email ----------
+# ---------- Signup, POST creates key, idempotent on email ----------
 
 class SignupHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -145,7 +145,7 @@ class SignupHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 405)
 
 
-# ---------- NHS — lat/lon validation, fallback shape ----------
+# ---------- NHS, lat/lon validation, fallback shape ----------
 
 class NhsHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -182,7 +182,7 @@ class NhsHandlerTests(unittest.TestCase):
         self.assertEqual(len(out['gp']), 1)
 
 
-# ---------- Sold Prices — postcode validation ----------
+# ---------- Sold Prices, postcode validation ----------
 
 class SoldPricesHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -193,7 +193,7 @@ class SoldPricesHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- Transport — lat/lon validation ----------
+# ---------- Transport, lat/lon validation ----------
 
 class TransportHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -210,7 +210,7 @@ class TransportHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- Chat — body size + validation ----------
+# ---------- Chat, body size + validation ----------
 
 class ChatHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -237,7 +237,7 @@ class ChatHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- Multi-agent — body size + validation ----------
+# ---------- Multi-agent, body size + validation ----------
 
 class MultiAgentHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -258,7 +258,7 @@ class MultiAgentHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- Report — body size ----------
+# ---------- Report, body size ----------
 
 class ReportHandlerTests(unittest.TestCase):
     def setUp(self):
@@ -279,7 +279,7 @@ class ReportHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- EPC — validation ----------
+# ---------- EPC, validation ----------
 
 class EpcHandlerTests(unittest.TestCase):
     def setUp(self):

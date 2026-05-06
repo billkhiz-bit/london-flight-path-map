@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Accessibility', () => {
-  test('WCAG 2.1 AA scan — fail only on critical violations', async ({ page }) => {
+  test('WCAG 2.1 AA scan, fail only on critical violations', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#loading')).toBeHidden({ timeout: 15_000 });
 
@@ -15,13 +15,13 @@ test.describe('Accessibility', () => {
       console.log(`\n--- Accessibility violations: ${results.violations.length} ---\n`);
       for (const violation of results.violations) {
         console.log(`[${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}`);
-        console.log(`  Help: ${violation.helpUrl}`);
-        console.log(`  Affected nodes: ${violation.nodes.length}`);
+        console.log(` Help: ${violation.helpUrl}`);
+        console.log(` Affected nodes: ${violation.nodes.length}`);
         for (const node of violation.nodes.slice(0, 3)) {
-          console.log(`    - ${node.target.join(' > ')}`);
+          console.log(` - ${node.target.join(' > ')}`);
         }
         if (violation.nodes.length > 3) {
-          console.log(`    ... and ${violation.nodes.length - 3} more`);
+          console.log(` ... and ${violation.nodes.length - 3} more`);
         }
         console.log('');
       }
@@ -34,7 +34,7 @@ test.describe('Accessibility', () => {
     expect(
       critical,
       `Found ${critical.length} critical accessibility violation(s):\n` +
-        critical.map(v => `  [CRITICAL] ${v.id}: ${v.description}`).join('\n')
+        critical.map(v => ` [CRITICAL] ${v.id}: ${v.description}`).join('\n')
     ).toHaveLength(0);
   });
 });

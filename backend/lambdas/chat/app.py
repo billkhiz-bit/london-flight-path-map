@@ -13,7 +13,7 @@ bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
 # (e.g. Nova 3) without redeploying code. Defaults match the audit-time
 # state (Nova 2 Lite for simple queries, Nova Pro for complex/multimodal).
 NOVA_LITE_MODEL_ID = os.environ.get('NOVA_LITE_MODEL_ID', 'us.amazon.nova-2-lite-v1:0')
-NOVA_PRO_MODEL_ID  = os.environ.get('NOVA_PRO_MODEL_ID',  'us.amazon.nova-pro-v1:0')
+NOVA_PRO_MODEL_ID = os.environ.get('NOVA_PRO_MODEL_ID', 'us.amazon.nova-pro-v1:0')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -128,7 +128,7 @@ MAX_PROMPT_INJECT_PATTERNS = ('ignore previous', 'ignore prior', 'system prompt'
 
 def _sanitise_context(s):
     """Cap length and strip the closing tag so the user can't break out of
-    the <viewing_context> wrapper. Doesn't try to detect injection — the
+    the <viewing_context> wrapper. Doesn't try to detect injection, the
     system prompt already instructs the model to treat content as data."""
     if not s:
         return ''
@@ -184,7 +184,7 @@ def handler(event, context):
         # Build conversation messages from history. Cap per-message length
         # so a malicious history can't bloat the request.
         messages = []
-        for msg in history[-8:]:  # Keep last 8 messages for context window
+        for msg in history[-8:]: # Keep last 8 messages for context window
             text = (msg.get('text') or '')[:MAX_HISTORY_MSG_LEN]
             role = msg.get('role')
             if role not in ('user', 'assistant'):
@@ -212,7 +212,7 @@ def handler(event, context):
             reply = call_nova(messages, max_tokens=1024)
         return response(200, {'reply': reply, 'model': 'pro' if use_pro else 'lite'})
 
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in chat handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

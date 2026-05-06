@@ -73,7 +73,7 @@ class TestIsComplexQuery:
 
     def test_complex_vs(self):
         assert is_complex_query(
-            "Lewisham vs Greenwich — which is better for investment growth?"
+            "Lewisham vs Greenwich, which is better for investment growth?"
         ) is True
 
     def test_keyword_present_but_too_short(self):

@@ -16,7 +16,7 @@ from conftest import make_api_event
 # Pre-import boto3.dynamodb.conditions so attribute access like
 # ``boto3.dynamodb.conditions.Key(...)`` works inside the handler.
 # ---------------------------------------------------------------------------
-import boto3.dynamodb.conditions  # noqa: E402 — force submodule load
+import boto3.dynamodb.conditions # noqa: E402, force submodule load
 
 _mock_table = MagicMock()
 _mock_dynamodb = MagicMock()

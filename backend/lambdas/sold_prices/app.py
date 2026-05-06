@@ -70,7 +70,7 @@ def handler(event, context):
             'sources': [OGL_ATTRIBUTION],
         })
 
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in sold_prices handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

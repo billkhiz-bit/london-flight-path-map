@@ -20,7 +20,7 @@ That was the moment I knew this needed to exist: a single tool that brings toget
 
 Sky Score is a free, AI-powered property analysis tool that combines **Amazon Nova 2 Lite and Nova Pro** with **10+ live data sources** across two cities to give buyers a complete noise and property picture for any location before they commit.
 
-Aircraft noise is the most common complaint from new homeowners, yet no major property platform shows noise data. In London alone, over 300,000 homes are sold each year, with millions more renting across London and New York. Buyers in these two cities live under some of the busiest airspace in the world — Heathrow handles 480,000+ flights per year, JFK and LaGuardia combined exceed 700,000 — and noise impacts property values by 10-20% in affected areas. Sky Score makes this invisible problem visible, for free, before anyone signs a contract.
+Aircraft noise is the most common complaint from new homeowners, yet no major property platform shows noise data. In London alone, over 300,000 homes are sold each year, with millions more renting across London and New York. Buyers in these two cities live under some of the busiest airspace in the world, Heathrow handles 480,000+ flights per year, JFK and LaGuardia combined exceed 700,000, and noise impacts property values by 10-20% in affected areas. Sky Score makes this invisible problem visible, for free, before anyone signs a contract.
 
 It covers **London** (33 boroughs, 5 airports, 5 heliports, ~143 neighbourhoods) and **New York City** (5 boroughs, 4 airports, ~151 neighbourhoods) - nearly **300 neighbourhoods** with individually computed scores.
 
@@ -140,15 +140,15 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 **Multi-city in one codebase.** London and New York - two of the world's busiest aviation markets with completely different data standards - running from one single-page application with instant city switching. This proves the concept scales globally.
 
-**Five buyer personas that reweight 290+ scores in real-time.** No other property tool lets users switch perspective and instantly see how every neighbourhood re-ranks. A family prioritises schools and safety; an investor prioritises growth; a noise-sensitive buyer prioritises quiet skies. The same data, five completely different rankings — computed client-side with zero latency.
+**Five buyer personas that reweight 290+ scores in real-time.** No other property tool lets users switch perspective and instantly see how every neighbourhood re-ranks. A family prioritises schools and safety; an investor prioritises growth; a noise-sensitive buyer prioritises quiet skies. The same data, five completely different rankings, computed client-side with zero latency.
 
-**Auto-insights on every search.** Every postcode or neighbourhood search automatically triggers a Nova 2 Lite AI summary — no button press, no chat interaction needed. This means every single user gets AI-powered analysis, not just those who open the chatbot. It is the deepest possible integration: AI is woven into the core search experience, not bolted on as a sidebar.
+**Auto-insights on every search.** Every postcode or neighbourhood search automatically triggers a Nova 2 Lite AI summary, no button press, no chat interaction needed. This means every single user gets AI-powered analysis, not just those who open the chatbot. It is the deepest possible integration: AI is woven into the core search experience, not bolted on as a sidebar.
 
-**Production-ready and free.** Deployed live on CloudFront, no sign-up, no paywall. Anyone can use it right now to check any location in London or New York before committing to a property. This is not a prototype — it is a working tool solving a real problem for real buyers today.
+**Production-ready and free.** Deployed live on CloudFront, no sign-up, no paywall. Anyone can use it right now to check any location in London or New York before committing to a property. This is not a prototype, it is a working tool solving a real problem for real buyers today.
 
 **Addressing a genuine market gap.** Rightmove, Zoopla, Zillow, and StreetEasy collectively serve hundreds of millions of property searches per year. None of them show aircraft noise data, flight paths, or noise contours. Sky Score is the only free tool that combines noise intelligence with property data and AI analysis across two of the world's busiest aviation markets. The community impact is direct: buyers who would otherwise discover noise problems after signing a contract can now check any location in seconds.
 
-**~3,870 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk. Building interactive maps with D3 instead of Leaflet or Mapbox required writing custom projection logic, zoom behaviour, and overlay positioning from scratch — but it also meant zero API key dependencies and the ability to overlay WMS, ArcGIS REST, and tile-based government data in ways that standard map libraries do not support.
+**~3,870 lines, zero frameworks.** The entire frontend is vanilla HTML/CSS/JS with D3.js - no React, no build pipeline, no node_modules. It loads fast and has zero dependency risk. Building interactive maps with D3 instead of Leaflet or Mapbox required writing custom projection logic, zoom behaviour, and overlay positioning from scratch, but it also meant zero API key dependencies and the ability to overlay WMS, ArcGIS REST, and tile-based government data in ways that standard map libraries do not support.
 
 ---
 
@@ -164,7 +164,7 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 **Multimodal AI has immediate practical value.** Buyers already take photos of properties and receive EPC certificates. Letting them upload these directly for AI analysis - glazing type assessment for noise, energy efficiency interpretation, survey defect extraction - creates value that text-only AI cannot.
 
-**Free tools create the most impact.** The decision to make Sky Score completely free, with no sign-up, no paywall, and no API keys, means the people who need it most — first-time buyers stretched on budget, renters with no negotiating power — can access the same intelligence that a paid consultant would provide. Removing every barrier to access maximises the community benefit.
+**Free tools create the most impact.** The decision to make Sky Score completely free, with no sign-up, no paywall, and no API keys, means the people who need it most, first-time buyers stretched on budget, renters with no negotiating power, can access the same intelligence that a paid consultant would provide. Removing every barrier to access maximises the community benefit.
 
 ---
 
@@ -201,7 +201,7 @@ For each of 290+ neighbourhoods, the engine calculates noise using Haversine dis
 
 ## Links
 - **Live Demo**: https://d1oe4ftwutjpf.cloudfront.net
-- **Code Repository**: https://github.com/billkhiz-bit/london-flight-path-map (private — access shared with testing@devpost.com and Amazon-Nova-hackathon@amazon.com)
+- **Code Repository**: https://github.com/billkhiz-bit/london-flight-path-map (private, access shared with testing@devpost.com and Amazon-Nova-hackathon@amazon.com)
 - **Video Demo**: 3:10, with voiceover
 - **Blog Post**: Published on AWS Builder Center (builder.aws.com bonus prize)
 

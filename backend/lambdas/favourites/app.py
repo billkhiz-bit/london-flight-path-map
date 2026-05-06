@@ -1,30 +1,30 @@
 """
-Sky Score favourites Lambda — DynamoDB CRUD for saved properties.
+Sky Score favourites Lambda, DynamoDB CRUD for saved properties.
 
 Audit C3 mitigation: opaque device-token auth.
 
 Previously every endpoint accepted a `userId` from the query string or
 body, untrusted. Anyone with a userId could read / write / delete that
-user's favourites (OWASP A01 — IDOR).
+user's favourites (OWASP A01, IDOR).
 
 The new contract:
 - Caller must send `X-Device-Token` header containing a UUID v4.
 - The header is the partition key; userId in query/body is rejected.
-- This isn't auth — anyone who learns a token can use it. But:
+- This isn't auth, anyone who learns a token can use it. But:
   - Tokens are 122-bit random (UUID v4); guessing one is infeasible.
   - Tokens never appear in URLs (no leakage via referer headers,
     server logs, browser history).
-  - Format is validated — garbage / sniffed query strings are rejected.
+  - Format is validated, garbage / sniffed query strings are rejected.
 
 Backwards compat: the old localStorage `flightmap_device_id` payload
 was a non-UUID string, so existing data is orphaned by this change.
-Acceptable in pre-launch — users re-save favourites under their new
+Acceptable in pre-launch, users re-save favourites under their new
 token. The old rows remain in DDB until manually cleaned.
 
 Other audit items addressed in this rewrite:
-- C7 — specific exception types + `logger.exception` final guard.
-- M3 — `datetime.utcnow()` → `datetime.now(timezone.utc).isoformat()`.
-- I16 — proper `decimal.Decimal` JSON encoder for boto3 Decimal types.
+- C7, specific exception types + `logger.exception` final guard.
+- M3, `datetime.utcnow()` → `datetime.now(timezone.utc).isoformat()`.
+- I16, proper `decimal.Decimal` JSON encoder for boto3 Decimal types.
 """
 
 import json
@@ -48,7 +48,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Accept either canonical UUID (8-4-4-4-12 hex, with hyphens) or a bare
-# 32-char hex string. Case-insensitive. UUIDs only — random 32-byte hex
+# 32-char hex string. Case-insensitive. UUIDs only, random 32-byte hex
 # is also accepted in case the frontend uses crypto.getRandomValues
 # directly without UUID formatting.
 _TOKEN_PATTERN = re.compile(
@@ -110,14 +110,14 @@ def handler(event, context):
                 return response(400, {'error': 'Postcode is required'})
 
             item = {
-                'userId':     token,  # partition key is the device token
-                'postcode':   postcode,
-                'borough':    body.get('borough', ''),
+                'userId': token, # partition key is the device token
+                'postcode': postcode,
+                'borough': body.get('borough', ''),
                 'noiseLevel': body.get('noiseLevel', ''),
                 'buyerScore': str(body.get('buyerScore', 0)),
-                'notes':      body.get('notes', ''),
-                'timestamp':  datetime.now(timezone.utc).isoformat(),
-                'city':       body.get('city', 'london'),
+                'notes': body.get('notes', ''),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'city': body.get('city', 'london'),
             }
             table.put_item(Item=item)
             return response(200, {'message': 'Saved', 'item': item})
@@ -139,7 +139,7 @@ def handler(event, context):
     except (BotoCoreError, ClientError) as exc:
         logger.warning('DynamoDB error in favourites: %s', exc)
         return response(503, {'error': 'Storage backend temporarily unavailable.'})
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in favourites handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

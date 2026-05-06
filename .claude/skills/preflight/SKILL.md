@@ -53,7 +53,7 @@ npm run test:e2e 2>&1 | tail -20
 
 ## Output
 ```
-PREFLIGHT — Sky Score
+PREFLIGHT, Sky Score
 ======================
 [PASS/FAIL] ESLint
 [PASS/FAIL] HTML validation

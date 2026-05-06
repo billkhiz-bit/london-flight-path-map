@@ -4,8 +4,8 @@
 
 **Sky Score** is a noise + livability data product for UK and NYC property. Two surfaces:
 
-- **Consumer site** — public, free, no sign-up. Helps renters and buyers see the structural data (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to surface. London + NYC, postcode/ZIP-level for both.
-- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`) — productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 1000 req/month.
+- **Consumer site**, public, free, no sign-up. Helps renters and buyers see the structural data (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to surface. London + NYC, postcode/ZIP-level for both.
+- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 1000 req/month.
 
 Built on Amazon Bedrock (Nova 2 Lite + Nova Pro) for AI chat, multi-agent property reports, and multimodal listing-photo/EPC-document analysis. ~290 individually scored neighbourhoods on the consumer side; 33 London boroughs + 5 NYC boroughs (plus ~182 NYC ZIPs) on the API.
 
@@ -288,26 +288,26 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 
 ```
 Sky Score/
-|-- index.html                     # Frontend SPA (~3,870 lines)
-|-- HACKATHON_SUBMISSION.md        # Devpost submission text
-|-- PROJECT_DOCUMENTATION.md       # This file
-|-- AUDIT_REPORT.md                # Code audit findings
-|-- CLAUDE.md                      # Claude Code project config
-|-- LICENSE                        # MIT License
+|-- index.html # Frontend SPA (~3,870 lines)
+|-- HACKATHON_SUBMISSION.md # Devpost submission text
+|-- PROJECT_DOCUMENTATION.md # This file
+|-- AUDIT_REPORT.md # Code audit findings
+|-- CLAUDE.md # Claude Code project config
+|-- LICENSE # MIT License
 |-- backend/
-    |-- template.yaml              # SAM/CloudFormation template
-    |-- iam-policy.json            # IAM deployment policy (v6)
+    |-- template.yaml # SAM/CloudFormation template
+    |-- iam-policy.json # IAM deployment policy (v6)
     |-- lambdas/
-        |-- chat/app.py            # AI chatbot (Nova 2 Lite + Pro)
-        |-- multi_agent/app.py     # Multi-agent orchestration
-        |-- analyze_image/app.py   # Photo analysis (Nova Pro)
+        |-- chat/app.py # AI chatbot (Nova 2 Lite + Pro)
+        |-- multi_agent/app.py # Multi-agent orchestration
+        |-- analyze_image/app.py # Photo analysis (Nova Pro)
         |-- analyze_document/app.py # Document analysis (Nova Pro)
-        |-- report/app.py          # AI report generation (Nova Pro)
-        |-- favourites/app.py      # DynamoDB favourites CRUD
-        |-- sold_prices/app.py     # Land Registry proxy
-        |-- epc/app.py             # EPC data proxy
-        |-- transport/app.py       # TfL API proxy
-        |-- nhs/app.py             # NHS data
+        |-- report/app.py # AI report generation (Nova Pro)
+        |-- favourites/app.py # DynamoDB favourites CRUD
+        |-- sold_prices/app.py # Land Registry proxy
+        |-- epc/app.py # EPC data proxy
+        |-- transport/app.py # TfL API proxy
+        |-- nhs/app.py # NHS data
 ```
 
 ---
@@ -328,15 +328,15 @@ Sky Score/
 
 ## Product capabilities (current state)
 
-1. **Deep Nova integration** — 6 distinct AI modes (chat, insight, photo analysis, document analysis, report generation, complex reasoning) + multi-agent orchestration across 2 models (Lite + Pro). Intelligent routing keeps simple queries cheap.
-2. **Multimodal** — listing-photo and EPC-document analysis using Nova Pro vision capabilities.
-3. **Multi-agent reports** — Orchestrator + 3 specialist agents (Noise / Market / Liveability) + Synthesiser with parallel `concurrent.futures` execution.
-4. **Productised B2B API** — `/v1/score`, `/v1/score/batch`, `/v1/regions` with API-key auth and a published OpenAPI 3.0 spec. Free tier (1000/month) capped via API Gateway UsagePlan.
-5. **Methodologically defensible** — every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`.
-6. **Multi-city** — London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both via Haversine distance to flight-path geometry.
-7. **DEFRA raster scaffold (v3.1)** — score Lambda checks DynamoDB for sampled Lden values per postcode and falls back to v3.0 Haversine when the table is empty. Loader script in `scripts/load_defra_raster.py` ready to populate the table.
-8. **Live and deployed** — fully serverless on AWS, S3+CloudFront frontend, 11 Lambda functions behind API Gateway.
-9. **Halal-finance-aware** — affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.
+1. **Deep Nova integration**, 6 distinct AI modes (chat, insight, photo analysis, document analysis, report generation, complex reasoning) + multi-agent orchestration across 2 models (Lite + Pro). Intelligent routing keeps simple queries cheap.
+2. **Multimodal**, listing-photo and EPC-document analysis using Nova Pro vision capabilities.
+3. **Multi-agent reports**, Orchestrator + 3 specialist agents (Noise / Market / Liveability) + Synthesiser with parallel `concurrent.futures` execution.
+4. **Productised B2B API**, `/v1/score`, `/v1/score/batch`, `/v1/regions` with API-key auth and a published OpenAPI 3.0 spec. Free tier (1000/month) capped via API Gateway UsagePlan.
+5. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`.
+6. **Multi-city**, London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both via Haversine distance to flight-path geometry.
+7. **DEFRA raster scaffold (v3.1)**, score Lambda checks DynamoDB for sampled Lden values per postcode and falls back to v3.0 Haversine when the table is empty. Loader script in `scripts/load_defra_raster.py` ready to populate the table.
+8. **Live and deployed**, fully serverless on AWS, S3+CloudFront frontend, 11 Lambda functions behind API Gateway.
+9. **Halal-finance-aware**, affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.
 
 ## Origin
 
@@ -347,7 +347,7 @@ Built for the Amazon Nova AI Hackathon (March 2026). Won $200 AWS credits in the
 
 ## Known Limitations
 
-- Consumer site UI: NYC search accepts borough names (e.g. "Manhattan") and neighbourhood names (e.g. "Astoria", "Williamsburg") but not raw 5-digit ZIPs — typing `10001` falls through to postcodes.io and returns "NOT FOUND". The B2B `/v1/score` API *does* accept ZIPs; consumer-site parity is an open product item.
+- Consumer site UI: NYC search accepts borough names (e.g. "Manhattan") and neighbourhood names (e.g. "Astoria", "Williamsburg") but not raw 5-digit ZIPs, typing `10001` falls through to postcodes.io and returns "NOT FOUND". The B2B `/v1/score` API *does* accept ZIPs; consumer-site parity is an open product item.
 - EPC API requires registration for an API key
 - OpenSky Network has rate limits (~10 requests/min for anonymous users)
 - DEFRA WMS tiles can be slow to load on first request

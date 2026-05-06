@@ -1,5 +1,5 @@
 """
-Sky Score NHS Lambda — nearby NHS-relevant services for a given lat/lon.
+Sky Score NHS Lambda, nearby NHS-relevant services for a given lat/lon.
 
 Returns hospitals, pharmacies, GP surgeries (and clinics) within 3 km of a
 property location. Used by the consumer site to surface "what's nearby"
@@ -7,7 +7,7 @@ context on a postcode page.
 
 Data source: OpenStreetMap Overpass API. Free, no key required, decent
 UK coverage of NHS services. NHS Service Search API (api.nhs.uk) was the
-original source but now requires a registered subscription key — the
+original source but now requires a registered subscription key, the
 public 'public' literal that used to work was deactivated. OSM is our
 ongoing replacement; the only edge case is gaps in OSM coverage for
 smaller GP surgeries, which we accept rather than gating signups behind
@@ -15,7 +15,7 @@ an NHS Digital registration.
 
 Fallback: if Overpass is down or rate-limited, return search-page links
 to nhs.uk's official service-search pages. These were broken in the
-previous version (`find-a-doctors/results` 404s — the URL changed) so
+previous version (`find-a-doctors/results` 404s, the URL changed) so
 this rewrite uses the current canonical URLs verified live.
 
 Attribution: OpenStreetMap contributors (ODbL).
@@ -31,7 +31,7 @@ from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 OVERPASS_URL = os.environ.get('OVERPASS_URL', 'https://overpass-api.de/api/interpreter')
-SEARCH_RADIUS_M = 3000  # 3 km — typical "your nearest" range
+SEARCH_RADIUS_M = 3000 # 3 km, typical "your nearest" range
 MAX_RESULTS_PER_TYPE = 5
 
 ATTRIBUTION = (
@@ -39,13 +39,13 @@ ATTRIBUTION = (
     'verified against NHS service-search where available.'
 )
 
-# NHS Service Search canonical URLs — verified live 2026-05-06.
+# NHS Service Search canonical URLs, verified live 2026-05-06.
 # The previous fallback used `find-a-doctors/results?lat=...&lon=...` which
 # returned 404 (NHS removed the lat/lon-prefilled results pages). Users
 # clicking these now land on the real NHS search page and enter their
 # postcode there.
 NHS_SEARCH_PAGES = {
-    'GP':       'https://www.nhs.uk/service-search/find-a-gp',
+    'GP': 'https://www.nhs.uk/service-search/find-a-gp',
     'Pharmacy': 'https://www.nhs.uk/service-search/pharmacy/find-a-pharmacy',
     'Hospital': 'https://www.nhs.uk/nhs-services/hospitals/',
 }
@@ -53,10 +53,10 @@ NHS_SEARCH_PAGES = {
 # OSM amenity tags → service category. `clinic` is folded into GP since
 # both are primary-care surgeries from a renter's perspective.
 AMENITY_TO_CATEGORY = {
-    'hospital':  'hospitals',
-    'pharmacy':  'pharmacies',
-    'doctors':   'gp',
-    'clinic':    'gp',
+    'hospital': 'hospitals',
+    'pharmacy': 'pharmacies',
+    'doctors': 'gp',
+    'clinic': 'gp',
 }
 
 logger = logging.getLogger()
@@ -129,11 +129,11 @@ def normalise_element(el, origin_lat, origin_lon):
     if elat is None or elon is None:
         return None
     return {
-        'name':     name,
-        'address':  format_address(tags),
+        'name': name,
+        'address': format_address(tags),
         'postcode': tags.get('addr:postcode', ''),
-        'phone':    tags.get('phone') or tags.get('contact:phone', ''),
-        'website':  tags.get('website') or tags.get('contact:website', ''),
+        'phone': tags.get('phone') or tags.get('contact:phone', ''),
+        'website': tags.get('website') or tags.get('contact:website', ''),
         'distance': round(haversine(origin_lat, origin_lon, elat, elon)),
     }
 
@@ -160,7 +160,7 @@ def partition_results(elements, lat, lon):
 def fallback_links(service_type):
     """Return a single fallback row pointing at the canonical NHS search
     page when Overpass is unavailable. Used only when the upstream call
-    fails — happy path returns real OSM data."""
+    fails, happy path returns real OSM data."""
     return [{
         'name': f'Search NHS {service_type} services on nhs.uk',
         'website': NHS_SEARCH_PAGES.get(service_type, 'https://www.nhs.uk/'),
@@ -171,14 +171,14 @@ def fallback_links(service_type):
 
 def all_fallback():
     return {
-        'gp':         fallback_links('GP'),
+        'gp': fallback_links('GP'),
         'pharmacies': fallback_links('Pharmacy'),
-        'hospitals':  fallback_links('Hospital'),
+        'hospitals': fallback_links('Hospital'),
     }
 
 
 def handler(event, context):
-    """GET /nhs?lat=...&lon=...  Returns nearby NHS services."""
+    """GET /nhs?lat=...&lon=... Returns nearby NHS services."""
     try:
         params = event.get('queryStringParameters') or {}
         lat_raw = params.get('lat')
@@ -205,7 +205,7 @@ def handler(event, context):
             buckets = all_fallback()
             buckets.update({
                 'location': {'lat': lat, 'lon': lon},
-                'sources':  [ATTRIBUTION],
+                'sources': [ATTRIBUTION],
                 'available': False,
                 'note': 'Live data unavailable; links go to NHS service search.',
             })
@@ -213,15 +213,15 @@ def handler(event, context):
 
         buckets = partition_results(elements, lat, lon)
         return response(200, {
-            'location':  {'lat': lat, 'lon': lon},
-            'gp':         buckets['gp'] or fallback_links('GP'),
+            'location': {'lat': lat, 'lon': lon},
+            'gp': buckets['gp'] or fallback_links('GP'),
             'pharmacies': buckets['pharmacies'] or fallback_links('Pharmacy'),
-            'hospitals':  buckets['hospitals'] or fallback_links('Hospital'),
-            'sources':   [ATTRIBUTION],
+            'hospitals': buckets['hospitals'] or fallback_links('Hospital'),
+            'sources': [ATTRIBUTION],
             'available': True,
         })
 
-    except Exception as exc:  # pragma: no cover  — final guard
+    except Exception as exc: # pragma: no cover, final guard
         logger.exception('Unhandled exception in NHS handler: %s', exc)
         return response(500, {'error': 'Internal server error.'})
 

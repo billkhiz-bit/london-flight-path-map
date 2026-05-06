@@ -9,17 +9,17 @@ records the signup in the signups DynamoDB table for audit, and returns
 the key value ONCE in the response. The form is responsible for making
 the user save the key (one-time view).
 
-This endpoint is unauthenticated by design — friction-free signup is the
+This endpoint is unauthenticated by design, friction-free signup is the
 whole point. Abuse is bounded by:
   - Per-IP API Gateway throttle (configured in template.yaml)
-  - One key per email (idempotent — duplicate signups return a "key
+  - One key per email (idempotent, duplicate signups return a "key
     already issued" error; we cannot re-show the key after creation)
   - The downstream UsagePlan caps each issued key at 1000 req/month
 
 If this becomes a vector, the next layer is reCAPTCHA / hCaptcha on the
 form, then WAF rules. Not worth adding pre-emptively.
 
-Prompt-injection / IDOR risk is nil — the only DB write is keyed by
+Prompt-injection / IDOR risk is nil, the only DB write is keyed by
 email and the only data read out is the SignupTable. No user-supplied
 identifier is reflected in a response.
 """
@@ -45,7 +45,7 @@ KEY_NAME_PREFIX = 'SkyScoreUserKey-'
 
 _usage_plan_id_cache = None
 
-# Pragmatic email regex — RFC 5322 compliance is overkill for a signup
+# Pragmatic email regex, RFC 5322 compliance is overkill for a signup
 # form; this catches the common shape and rejects obvious garbage. The
 # real validation is "did the user copy-paste an email they actually
 # read". We're not sending email so we don't need deliverability.
@@ -93,7 +93,7 @@ def get_existing_signup(email):
     """Return the existing signup row if this email has already signed up.
 
     Uses ConsistentRead=True so a second signup hitting a different Lambda
-    container shortly after the first sees the prior write — eventual
+    container shortly after the first sees the prior write, eventual
     consistency would otherwise let the same email sign up twice during
     the propagation window.
     """
@@ -150,7 +150,7 @@ def create_api_key(email, name):
     key_id = created['id']
     key_value = created['value']
 
-    # Link to the usage plan immediately — without this the key works at
+    # Link to the usage plan immediately, without this the key works at
     # API Gateway auth but gets no quota / throttle assignment.
     apigw.create_usage_plan_key(
         usagePlanId=usage_plan_id,
@@ -166,10 +166,10 @@ def record_signup(email, name, key_id):
     ddb.put_item(
         TableName=SIGNUPS_TABLE,
         Item={
-            'email':       {'S': email},
-            'name':        {'S': name or ''},
-            'keyId':       {'S': key_id},
-            'createdAt':   {'S': datetime.now(timezone.utc).isoformat()},
+            'email': {'S': email},
+            'name': {'S': name or ''},
+            'keyId': {'S': key_id},
+            'createdAt': {'S': datetime.now(timezone.utc).isoformat()},
         },
         # Idempotency: fail if the email already exists. Caller checked
         # above but a race is possible between get_item and put_item.
@@ -201,7 +201,7 @@ def handle_post(event):
         return response(400, {'error': 'Email or name exceeds maximum length.'})
 
     # One key per email. If they already signed up, surface that with a
-    # clear message — we cannot re-show the key (APIGW only returns the
+    # clear message, we cannot re-show the key (APIGW only returns the
     # value at creation time, not on subsequent reads).
     existing = get_existing_signup(email)
     if existing:
@@ -228,7 +228,7 @@ def handle_post(event):
     except ClientError as e:
         code = e.response.get('Error', {}).get('Code', '')
         if code == 'ConditionalCheckFailedException':
-            # Race detected — another in-flight signup wrote first. Revoke
+            # Race detected, another in-flight signup wrote first. Revoke
             # the key we just created (best-effort) and return 409 so the
             # caller learns the email already had a signup.
             print(f'INFO signup race detected for {email}; revoking orphan key {key_id}')
@@ -273,7 +273,7 @@ def handler(event, context):
             return handle_post(event)
         return response(405, {'error': f'Method {method} not allowed.'})
     except Exception as exc:
-        # Top-level guard — never let an unhandled exception escape the
+        # Top-level guard, never let an unhandled exception escape the
         # CORS-headered envelope. Log to CloudWatch for postmortem.
         print(f'ERROR unhandled exception in signup handler: {type(exc).__name__}: {exc}')
         return response(500, {'error': 'Internal server error.'})
