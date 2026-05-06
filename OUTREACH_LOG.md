@@ -206,3 +206,153 @@ Each email is tailored to the recipient. Customise the bracketed sections (`[nam
 - **Send 2** (7 days): one-line check-in. "Hi [Name], any thoughts on the below? Happy to send the API key for your team to evaluate. — Bilal"
 - **Send 3** (14 days, different angle): change the hook. Try an industry observation, a recent event, or a different artefact (Postman link instead of methodology link)
 - **Stop after 3 touches.** Move on. Track in the table above.
+
+---
+
+## Public-launch drafts (consumer-side publicity)
+
+These are the public-facing launch drafts. Different audience, different tone from the B2B drafts above. The B2B drafts are commercial (sell into a workflow); these are civic / community / tech-audience (build awareness, drive consumer-site traffic, validate demand).
+
+**Status:**
+
+| Channel | Target | Status | Send / launch date |
+|---|---|---|---|
+| HACAN East | London City aircraft noise charity | 🟡 draft ready | TBC |
+| HACAN West (Heathrow) | Heathrow aircraft noise charity | 🟡 draft ready | TBC |
+| Twitter/X thread | General public, property buyers | 🟡 draft ready | TBC — pair with HN launch day |
+| Hacker News Show HN | Tech audience, hobbyist devs | 🟡 draft ready | TBC — Tue/Wed morning EST |
+
+### HACAN East — community outreach
+
+> **Subject:** Free postcode-level aircraft noise scoring tool — useful for HACAN East members?
+>
+> Hi [Name],
+>
+> I'm a London-based developer and I've built a free public tool that scores any UK postcode for noise exposure (aircraft, road), livability factors (schools, crime, transport, healthcare) and a few other data points. I'm reaching out because HACAN East has been the most credible voice on London City aircraft noise for years, and your members are exactly the people the tool is built for: people deciding where to rent or buy who want to know what they're walking into before they sign.
+>
+> Some specifics that may matter:
+>
+> - **Open methodology, not a black box.** Every threshold and weight is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, ONS, TfL PTAL). Full document at [methodology link]. Anyone can audit how a score was built.
+> - **Free to use.** No sign-up, no paywall, no advertising. The site itself is public. There's a B2B API behind it that I plan to charge for, but the consumer site stays free.
+> - **OGL-attributed throughout.** All UK government data is sourced under Open Government Licence v3.0 with attribution.
+> - **No commercial agenda toward your membership.** I'm not asking for anything from HACAN East. Just sharing in case you think the tool would be useful for members researching neighbourhoods to move to (or to flag to friends and family who don't know the story behind specific flight paths).
+>
+> Live tool: [https://d1oe4ftwutjpf.cloudfront.net/](https://d1oe4ftwutjpf.cloudfront.net/) — try a postcode you know well; the score should match your intuition.
+>
+> If it's useful for HACAN East to share with members in a newsletter or blog post, I'd be glad to. If not, no follow-up needed — I'd rather not waste your time.
+>
+> Best,
+> Bilal Khizar
+
+### HACAN West (Heathrow) — community outreach
+
+> Same opener as HACAN East, replacing "London City aircraft noise" with "Heathrow aircraft noise" and adding a Heathrow-specific data point:
+>
+> *"Sky Score uses the actual Heathrow flight-path geometry — Lambourne Stack, Biggin Stack, Ockham Stack, etc — when computing per-postcode quiet scores, not just borough-level Lden bands. So the within-Hounslow variation that members already know about (TW1 Twickenham = quiet, TW6 Heathrow village = severe) is reflected in the score."*
+
+### Twitter/X thread — surprising-data launch
+
+7 tweets, posted as a thread. Best paired with HN launch day for maximum convergent traffic.
+
+**Tweet 1 — hook:**
+
+> Listings sites have a structural reason not to tell you about aircraft noise.
+>
+> Within a single London borough, the difference between two postcodes 6 miles apart can be 17 dB — the difference between a peaceful suburb and the inside of a vacuum cleaner.
+>
+> So I built a free public tool. 🧵
+
+**Tweet 2 — the within-borough variation problem:**
+
+> "Hounslow is noisy" is the kind of pub-knowledge that's both true and useless if you're shopping for a flat there.
+>
+> TW1 (Twickenham) clocks ~62 dB Lden.
+> TW6 (Heathrow village) clocks 75+ dB.
+>
+> A renter walks into one of those, signs a tenancy, and finds out at 6am.
+
+**Tweet 3 — Richmond example:**
+
+> Same story in Richmond upon Thames.
+>
+> Hampton + Teddington (west): 70+ dB.
+> Richmond town centre + Sheen (east): ~62 dB.
+>
+> Listings sites show you "Richmond" + a price. They don't show you the postcode-level Lden differential. Sky Score does.
+
+**Tweet 4 — Wandsworth example:**
+
+> Or Wandsworth — usually bracketed as "moderate" (60-65 dB Lden).
+>
+> Battersea Heliport area: ~68 dB.
+> Tooting Bec: ~55 dB.
+>
+> Same borough. Same average price band. Different sleep quality. Different long-term cardiovascular outcome (WHO 2018).
+
+**Tweet 5 — what it actually does:**
+
+> Sky Score takes any UK postcode and returns:
+>
+> - 0–10 quiet score (DEFRA noise + flight-path geometry)
+> - Affordability (cohort price scaling)
+> - Growth (HM Land Registry HPI trend)
+> - Liveability (schools / crime / transport / healthcare)
+>
+> Composite + components. NYC ZIPs work too.
+
+**Tweet 6 — methodology:**
+
+> Every threshold is anchored to a published source.
+>
+> DEFRA Lden bands. WHO night-noise guidelines. Ofsted. ONS crime medians. TfL PTAL. Land Registry HPI.
+>
+> Full methodology at [link]. Anyone can audit how their score was built. No black box.
+
+**Tweet 7 — close:**
+
+> Free, public, no sign-up: [https://d1oe4ftwutjpf.cloudfront.net/](https://d1oe4ftwutjpf.cloudfront.net/)
+>
+> If you're a renter or buyer, try the postcode you live in or are about to move to. If the score doesn't match your gut, tell me — that's how it gets better.
+>
+> /end
+
+### Hacker News — Show HN
+
+> **Title:** Show HN: Sky Score — postcode-level noise + livability scoring for UK and NYC property
+>
+> **Text body:**
+>
+> Hi HN,
+>
+> I built Sky Score because the structural information asymmetry in UK property bothered me. Listings sites earn commission when sales close, so they're not incentivised to surface the things that might cause a buyer to walk away — aircraft noise being the obvious one. So I built the data layer they won't.
+>
+> What it does: take any UK postcode (or NYC ZIP) and return a 0-10 score across four components — Quiet, Affordability, Growth, Liveability — plus the underlying data lineage. Free consumer site, separate B2B API for integrators.
+>
+> A few things that might be technically interesting:
+>
+> - **Per-postcode quiet score.** Most "noise score" tools you've seen use borough-level averages. Within a borough, Lden can vary 10-15 dB. Sky Score uses Haversine distances to actual flight-path geometry (Heathrow stacks, JFK approaches) at the postcode centroid for a much finer signal. v3.1 also reads from a DEFRA raster table when populated.
+> - **Methodology fully published.** Every threshold and weight points back to a public source: DEFRA Lden bands, WHO night-noise guidelines, Ofsted, ONS crime medians, TfL PTAL, Land Registry HPI. The methodology doc has a worked example for SW11 1AA you can reproduce by hand.
+> - **OpenAPI 3.0 + Swagger UI.** Real B2B endpoint with API-key auth. Free tier 1000 req/month. Anyone can poke at the schema.
+> - **Halal-finance-aware affordability model.** No riba assumptions in the affordability calculation, because some target customers (Sharia-compliant home-finance providers) operate without conventional mortgages.
+>
+> Stack: vanilla JS + D3 frontend, AWS Lambda + API Gateway + DynamoDB backend (SAM-deployed), Amazon Bedrock for the AI chat / multi-agent property reports. All inputs OGL v3.0 attributed.
+>
+> Live: [https://d1oe4ftwutjpf.cloudfront.net/](https://d1oe4ftwutjpf.cloudfront.net/)
+> Methodology: [https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md](https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md)
+> API docs: [https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html](https://d1oe4ftwutjpf.cloudfront.net/score-demo/api-docs.html)
+>
+> Happy to answer technical questions. Strongest feedback I'm looking for: anywhere the score doesn't match your intuition, that's a methodology bug I want to know about.
+
+#### Show HN posting checklist
+
+Before posting, do all of these:
+
+- [ ] Tuesday or Wednesday, between **15:00–17:00 UTC** (10am–noon EST). HN front page is most attainable then; weekends/evenings get drowned by stronger threads.
+- [ ] Title under 80 chars. Current draft is 75. ✓
+- [ ] No emojis. No "[Show HN]" tag (HN adds it from the URL). Just "Show HN: ".
+- [ ] First comment from your own account, posted within 5 minutes of submission, expanding on one technical decision (e.g., "I went vanilla JS instead of React because…").
+- [ ] No karma-farming. If it doesn't trend in the first 60 minutes, don't repost — let it die. Reposting burns the only Show HN slot you get.
+- [ ] CloudFront caching is warm before posting (hit the URL from 2-3 different IPs ahead of time so the first wave doesn't all get cold edges).
+- [ ] Status page (`/score-demo/status.html`) reachable; "live" badge truthful.
+- [ ] Twitter thread queued for the same hour to amplify (separate channels, convergent timing).
+- [ ] If front-paged: respond to comments within an hour. HN audience punishes silence.

@@ -70,6 +70,59 @@ paths:
         postcodes.io to a London borough) or a borough name in a supported
         city. Optionally accepts a persona preset or a custom weights
         override.
+
+        ### Code samples
+
+        **curl**
+        ```bash
+        curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=SW11+1AA' \
+          -H 'X-Api-Key: YOUR_KEY'
+        ```
+
+        **Python (stdlib)**
+        ```python
+        from urllib.parse import quote
+        from urllib.request import Request, urlopen
+        import json
+
+        url = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score'
+        req = Request(f'{url}?postcode={quote("SW11 1AA")}',
+                      headers={'X-Api-Key': 'YOUR_KEY'})
+        with urlopen(req, timeout=5) as r:
+            data = json.loads(r.read())
+        print(data['score'], data['components'])
+        ```
+
+        **Python (requests)**
+        ```python
+        import requests
+        r = requests.get(
+            'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score',
+            params={'postcode': 'SW11 1AA', 'persona': 'family'},
+            headers={'X-Api-Key': 'YOUR_KEY'},
+            timeout=5,
+        )
+        r.raise_for_status()
+        print(r.json()['score'])
+        ```
+
+        **Node.js (fetch, 18+)**
+        ```js
+        const url = new URL('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score');
+        url.searchParams.set('postcode', 'SW11 1AA');
+        const r = await fetch(url, { headers: { 'X-Api-Key': 'YOUR_KEY' } });
+        const data = await r.json();
+        console.log(data.score, data.components);
+        ```
+
+        **Browser (fetch)**
+        ```js
+        const r = await fetch(
+          'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=SW11+1AA',
+          { headers: { 'X-Api-Key': 'YOUR_KEY' } },
+        );
+        const { score, components } = await r.json();
+        ```
       parameters:
         - name: postcode
           in: query
@@ -117,6 +170,19 @@ paths:
           schema:
             type: string
             example: "quiet:0.5,afford:0.2,growth:0.1,live:0.2"
+        - name: include
+          in: query
+          description: |
+            Comma-separated list of top-level response fields to keep. Lets
+            integrators reduce response payload to only the fields they
+            consume. Meta fields (`apiVersion`, `methodologyVersion`,
+            `methodologyUrl`, `generatedAt`, `sources`) are always returned
+            regardless of filter. Unknown fields are ignored silently.
+            Recognised fields: `score`, `components`, `context`, `location`,
+            `persona`, `weights`, `sourceBreakdown`, `plannedComponents`.
+          schema:
+            type: string
+            example: "score,components,context"
       responses:
         '200':
           description: Score successfully computed.
@@ -158,6 +224,53 @@ paths:
         **Counting against rate limits.** A batch call counts as 1 API
         request against your monthly quota, regardless of the number of
         queries. The 100-query limit per batch caps the work per request.
+
+        ### Code samples
+
+        **curl**
+        ```bash
+        curl -X POST 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score/batch' \
+          -H 'X-Api-Key: YOUR_KEY' \
+          -H 'Content-Type: application/json' \
+          -d '{"queries":[{"postcode":"SW11 1AA"},{"postcode":"10001","persona":"investor"}]}'
+        ```
+
+        **Python (requests)**
+        ```python
+        import requests
+        r = requests.post(
+            'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score/batch',
+            json={'queries': [
+                {'postcode': 'SW11 1AA'},
+                {'postcode': 'TW3 4DX', 'persona': 'family'},
+                {'borough': 'Hackney', 'city': 'london',
+                 'weights': {'quiet': 0.5, 'afford': 0.2, 'growth': 0.1, 'live': 0.2}},
+            ]},
+            headers={'X-Api-Key': 'YOUR_KEY'},
+            timeout=20,
+        )
+        r.raise_for_status()
+        for row in r.json()['results']:
+            if row['status'] == 200:
+                print(row['location']['borough'], row['score'])
+            else:
+                print(f'queryIndex {row["queryIndex"]}: {row["error"]}')
+        ```
+
+        **Node.js (fetch, 18+)**
+        ```js
+        const r = await fetch(
+          'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score/batch',
+          { method: 'POST',
+            headers: { 'X-Api-Key': 'YOUR_KEY', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ queries: [
+              { postcode: 'SW11 1AA' },
+              { postcode: '10001', persona: 'investor' },
+            ]}),
+          },
+        );
+        const { results } = await r.json();
+        ```
       requestBody:
         required: true
         content:
@@ -234,7 +347,7 @@ components:
           $ref: '#/components/schemas/Weights'
         methodologyVersion:
           type: string
-          example: "2.0"
+          example: "3.1"
         methodologyUrl:
           type: string
           format: uri
@@ -267,6 +380,25 @@ components:
               type: string
             live:
               type: string
+        plannedComponents:
+          type: object
+          description: |
+            Roadmap-visible placeholders for components that are scoped but
+            not yet shipped. Each entry has a `status` flag — integrators
+            should NOT consume placeholder data as if it were live. The
+            shape is stable; live components migrate from this block into
+            `components` / `context` when they ship.
+          additionalProperties:
+            type: object
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [planned, beta]
+              source:
+                type: string
+              eta:
+                type: string
 
     RegionsResponse:
       type: object
@@ -355,7 +487,18 @@ components:
         noiseImpactBand:
           type: string
           enum: [low, low-moderate, moderate, moderate-high, high, severe]
-          description: DEFRA Lden band classification.
+          description: DEFRA Lden band classification (borough-aggregate).
+        quietResolution:
+          type: string
+          enum: [borough, postcode, raster]
+          description: |
+            Which resolution tier produced the `quiet` score. Resolves
+            highest-precision-first:
+              `raster`   — DEFRA Lden raster sample at postcode centroid (v3.1)
+              `postcode` — Haversine to airports + flight-path geometry (v3.0)
+              `borough`  — Borough-aggregate Lden band (v2.x fallback)
+            Integrators can use this to surface precision metadata to end
+            users or filter for higher-precision results.
 
     Location:
       type: object

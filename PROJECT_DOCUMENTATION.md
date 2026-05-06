@@ -2,11 +2,18 @@
 
 ## Project Overview
 
-**Sky Score** is an AI-powered property intelligence tool that helps property buyers in London and New York assess aircraft noise, crime, schools, transport, and more before purchasing. It combines Amazon Nova AI (Lite and Pro) with live government data sources and interactive D3.js mapping across 290+ individually scored neighbourhoods.
+**Sky Score** is a noise + livability data product for UK and NYC property. Two surfaces:
+
+- **Consumer site** — public, free, no sign-up. Helps renters and buyers see the structural data (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to surface. London + NYC, postcode/ZIP-level for both.
+- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`) — productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 1000 req/month.
+
+Built on Amazon Bedrock (Nova 2 Lite + Nova Pro) for AI chat, multi-agent property reports, and multimodal listing-photo/EPC-document analysis. ~290 individually scored neighbourhoods on the consumer side; 33 London boroughs + 5 NYC boroughs (plus ~182 NYC ZIPs) on the API.
 
 **Live URL:** https://d1oe4ftwutjpf.cloudfront.net
+**API:** https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/
+**Methodology:** [METHODOLOGY.md](./METHODOLOGY.md) (v3.1)
 **GitHub:** https://github.com/billkhiz-bit/london-flight-path-map
-**Category:** Amazon Nova AI Hackathon - Freestyle
+**Origin:** Built for the Amazon Nova AI Hackathon (March 2026, won $200 AWS credits, blog category). Productised post-hackathon as a B2B API.
 
 ---
 
@@ -82,7 +89,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 
 ---
 
-## Lambda Functions (10 total)
+## Lambda Functions (11 total)
 
 ### 1. ChatFunction (`/chat` POST)
 - **File:** `backend/lambdas/chat/app.py`
@@ -310,7 +317,7 @@ Sky Score/
 | Service | Monthly Cost (low traffic) |
 |---------|--------------------------|
 | S3 + CloudFront | ~$0.05 (free tier covers most) |
-| Lambda (10 functions) | ~$0.01 (free tier: 1M requests) |
+| Lambda (11 functions) | ~$0.01 (free tier: 1M requests) |
 | API Gateway | ~$0.01 (free tier: 1M calls) |
 | DynamoDB | ~$0.01 (PAY_PER_REQUEST, minimal reads/writes) |
 | Bedrock Nova 2 Lite | ~$0.10 (per 1000 chat messages) |
@@ -319,19 +326,21 @@ Sky Score/
 
 ---
 
-## Hackathon Strengths
+## Product capabilities (current state)
 
-1. **Deep Nova integration** - 6 distinct AI modes (chat, insight, photo analysis, document analysis, report generation, complex reasoning) + multi-agent orchestration across 2 models (Lite + Pro)
-2. **Multimodal AI** - Photo and document analysis using Nova Pro vision capabilities
-3. **Multi-agent orchestration** - Orchestrator + 3 specialist agents + synthesiser with parallel execution
-4. **Intelligent model routing** - Automatically selects Lite vs Pro based on query complexity
-5. **10 AWS services** - Production-grade serverless architecture
-6. **Real-world problem** - Aircraft noise is the #1 complaint from new London homeowners
-7. **Live and deployed** - Not a localhost demo, fully deployed on CloudFront
-8. **10+ live data sources** - Government APIs, not mock data
-9. **Multi-city** - London + New York proves global scalability
-10. **290+ individually scored neighbourhoods** - Not borough averages
-11. **Full stack** - DynamoDB for data persistence, not just a static frontend
+1. **Deep Nova integration** — 6 distinct AI modes (chat, insight, photo analysis, document analysis, report generation, complex reasoning) + multi-agent orchestration across 2 models (Lite + Pro). Intelligent routing keeps simple queries cheap.
+2. **Multimodal** — listing-photo and EPC-document analysis using Nova Pro vision capabilities.
+3. **Multi-agent reports** — Orchestrator + 3 specialist agents (Noise / Market / Liveability) + Synthesiser with parallel `concurrent.futures` execution.
+4. **Productised B2B API** — `/v1/score`, `/v1/score/batch`, `/v1/regions` with API-key auth and a published OpenAPI 3.0 spec. Free tier (1000/month) capped via API Gateway UsagePlan.
+5. **Methodologically defensible** — every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`.
+6. **Multi-city** — London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both via Haversine distance to flight-path geometry.
+7. **DEFRA raster scaffold (v3.1)** — score Lambda checks DynamoDB for sampled Lden values per postcode and falls back to v3.0 Haversine when the table is empty. Loader script in `scripts/load_defra_raster.py` ready to populate the table.
+8. **Live and deployed** — fully serverless on AWS, S3+CloudFront frontend, 11 Lambda functions behind API Gateway.
+9. **Halal-finance-aware** — affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.
+
+## Origin
+
+Built for the Amazon Nova AI Hackathon (March 2026). Won $200 AWS credits in the blog-post category. Productised post-hackathon as a B2B API + free public consumer site. See `ROADMAP.md` for the live tracks and `CHANGELOG.md` for incremental ships.
 12. **Free and accessible** - No sign-up, no paywall
 
 ---

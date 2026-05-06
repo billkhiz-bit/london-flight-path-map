@@ -1,14 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sky Score — UK property quality data · noise, livability, affordability</title>
 
 <!-- OG Meta Tags for social sharing -->
-<meta name="description" content="Sky Score — postcode-level property quality data for UK and NYC. Free site for renters and buyers; B2B API for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology v3.1, live in production.">
-<meta property="og:title" content="Sky Score — UK property quality data API">
-<meta property="og:description" content="Postcode-level noise, livability, affordability scoring for UK and NYC property. Consumer site for buyers; B2B API for integrators. Methodology fully documented and reproducible.">
+<meta name="description" content="Sky Score — postcode-level noise, livability and affordability data for UK and NYC property. Independent of estate agents and listings sites. Free, open methodology.">
+<meta property="og:title" content="Sky Score — independent property quality data">
+<meta property="og:description" content="The noise + livability data UK listings sites have a structural reason not to show. Free postcode-level scoring for UK and NYC. Open methodology, reproducible.">
+<link rel="canonical" href="https://d1oe4ftwutjpf.cloudfront.net/">
+<meta name="theme-color" content="#141414">
+<meta name="robots" content="index,follow">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Sky Score",
+  "url": "https://d1oe4ftwutjpf.cloudfront.net/",
+  "description": "Postcode-level noise, livability and affordability data for UK and NYC property. Independent of estate agents and listings sites.",
+  "applicationCategory": "RealEstateApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+  "creator": { "@type": "Person", "name": "Bilal Khizar" }
+}
+</script>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://d1oe4ftwutjpf.cloudfront.net">
 <meta property="og:image" content="https://d1oe4ftwutjpf.cloudfront.net/preview.png">
@@ -73,8 +89,9 @@
   .layer-toggle{display:flex;align-items:center;gap:6px;font-size:9px;font-family:var(--font-mono);
     text-transform:uppercase;letter-spacing:1px;cursor:pointer;padding:4px 10px;
     background:rgba(250,250,249,0.85);backdrop-filter:blur(8px);border:1px solid var(--dark);
-    transition:all 0.15s;user-select:none;}
+    transition:all 0.15s;user-select:none;color:inherit;text-align:left;}
   .layer-toggle:hover{background:var(--dark);color:var(--white);}
+  .layer-toggle:focus-visible{outline:2px solid var(--orange);outline-offset:1px;}
   .layer-toggle.active{background:var(--dark);color:var(--white);}
   .layer-toggle .indicator{width:6px;height:6px;border-radius:50%;border:1px solid currentColor;transition:background 0.15s;}
   .layer-toggle.active .indicator{background:currentColor;}
@@ -432,7 +449,7 @@
   <main class="map-container" id="map-container">
     <div class="map-title">
       <h1 id="map-title-text">Sky Score</h1>
-      <div class="subtitle" id="map-subtitle">AI-POWERED PROPERTY NOISE INTELLIGENCE</div>
+      <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVABILITY DATA</div>
       <a class="dev-link" href="/score-demo/" target="_blank" rel="noopener" title="Sky Score B2B API — try the live API in a browser demo">DEVELOPERS · API DEMO &#8594;</a>
     </div>
     <div class="city-selector" id="city-selector">
@@ -448,15 +465,15 @@
       <button type="button" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
       <button type="button" id="zoom-reset" title="Reset" aria-label="Reset zoom">&#8634;</button>
     </div>
-    <div class="layer-toggles" id="layer-toggles">
-      <div class="layer-toggle active" data-layer="paths" role="button" tabindex="0" aria-pressed="true"><div class="indicator"></div>FLIGHT PATHS</div>
-      <div class="layer-toggle active" data-layer="defra-aircraft" role="button" tabindex="0" aria-pressed="true"><div class="indicator"></div><span id="label-aircraft">DEFRA AIRCRAFT NOISE</span></div>
-      <div class="layer-toggle" data-layer="defra-road" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-road">DEFRA ROAD NOISE</span></div>
-      <div class="layer-toggle" data-layer="live-flights" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div>LIVE AIRCRAFT</div>
-      <div class="layer-toggle" data-layer="transport" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-transport">TRANSPORT</span></div>
-      <div class="layer-toggle" data-layer="flood" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-flood">FLOOD RISK ZONES</span></div>
-      <div class="layer-toggle" data-layer="air-quality" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div><span id="label-aq">AIR QUALITY</span></div>
-      <div class="layer-toggle" data-layer="labels" role="button" tabindex="0" aria-pressed="false"><div class="indicator"></div>LABELS</div>
+    <div class="layer-toggles" id="layer-toggles" role="group" aria-label="Map layer toggles">
+      <button type="button" class="layer-toggle active" data-layer="paths" aria-pressed="true"><div class="indicator" aria-hidden="true"></div>FLIGHT PATHS</button>
+      <button type="button" class="layer-toggle active" data-layer="defra-aircraft" aria-pressed="true"><div class="indicator" aria-hidden="true"></div><span id="label-aircraft">DEFRA AIRCRAFT NOISE</span></button>
+      <button type="button" class="layer-toggle" data-layer="defra-road" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-road">DEFRA ROAD NOISE</span></button>
+      <button type="button" class="layer-toggle" data-layer="live-flights" aria-pressed="false"><div class="indicator" aria-hidden="true"></div>LIVE AIRCRAFT</button>
+      <button type="button" class="layer-toggle" data-layer="transport" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-transport">TRANSPORT</span></button>
+      <button type="button" class="layer-toggle" data-layer="flood" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-flood">FLOOD RISK ZONES</span></button>
+      <button type="button" class="layer-toggle" data-layer="air-quality" aria-pressed="false"><div class="indicator" aria-hidden="true"></div><span id="label-aq">AIR QUALITY</span></button>
+      <button type="button" class="layer-toggle" data-layer="labels" aria-pressed="false"><div class="indicator" aria-hidden="true"></div>LABELS</button>
     </div>
     <div class="map-legend" id="map-legend">
       <div class="legend-row"><div class="legend-line" style="border-color:var(--orange);"></div><span id="legend-path1">LHR PATHS</span></div>
@@ -487,7 +504,7 @@
         <div class="legend-row"><div class="legend-swatch" style="background:#22c55e;opacity:0.55;"></div><span>GOOD</span></div>
       </div>
     </div>
-    <svg id="map-svg"></svg>
+    <svg id="map-svg" role="application" aria-label="Interactive map of London and New York City boroughs with overlay toggles for noise, transport, flood and air-quality data. Use the search box, layer toggles, or city switcher above to explore."><title>Sky Score borough map</title></svg>
     <div class="site-footer" aria-label="Sky Score links">
       <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">Methodology v3.1</a>
       <span class="sep">·</span>
@@ -3473,11 +3490,11 @@ async function switchCity(city) {
 
   if (city === 'nyc') {
     titleEl.textContent = 'Sky Score';
-    subtitleEl.textContent = 'NEW YORK - AI PROPERTY NOISE INTELLIGENCE';
+    subtitleEl.textContent = 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA';
     searchInput.placeholder = 'Search area, neighbourhood or borough';
   } else {
     titleEl.textContent = 'Sky Score';
-    subtitleEl.textContent = 'LONDON - AI PROPERTY NOISE INTELLIGENCE';
+    subtitleEl.textContent = 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA';
     searchInput.placeholder = 'Search area, neighbourhood or borough';
   }
 
@@ -4004,7 +4021,7 @@ async function init() {
     const baseScale = CITIES[currentCity].scale;
     projection.scale(nw<600?baseScale*0.625:baseScale).translate([nw/2,nh/2]);
     g.selectAll('*').remove();
-    if(currentCity==='nyc'&&nycBoroughFeatures.length)renderNycBoroughs();
+    if(currentCity==='nyc'&&nycBoroughFeatures.length)renderNycBoroughs(nycBoroughFeatures);
     else if(boroughFeatures.length)renderBoroughs();
     renderDefraTiles();renderCityFlightPaths();renderCityAirports();renderTransport();renderLabels();
   });
