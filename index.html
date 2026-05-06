@@ -3370,17 +3370,38 @@ async function analyzeDocument(file, docType) {
 // ============================================================
 // FAVOURITES (DynamoDB)
 // ============================================================
-function getDeviceId() {
-  let id = localStorage.getItem('flightmap_device_id');
-  if (!id) { id = 'dev_' + Math.random().toString(36).slice(2, 14) + Date.now().toString(36); localStorage.setItem('flightmap_device_id', id); }
+// Opaque device token for the favourites endpoint (audit C3 mitigation).
+// crypto.randomUUID gives 122 bits of entropy and a recognisable shape so
+// the Lambda can reject malformed headers. Existing non-UUID localStorage
+// IDs are regenerated — old favourites become orphaned in DDB but the
+// alternative (accepting any string as a "userId") is the IDOR the audit
+// flagged. Pre-launch, this trade-off is acceptable.
+const _UUID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+function getDeviceToken() {
+  let id = localStorage.getItem('flightmap_device_token');
+  if (!id || !_UUID_RE.test(id)) {
+    id = (crypto.randomUUID && crypto.randomUUID()) ||
+      // Fallback for ancient browsers — 32 hex chars from Math.random;
+      // weaker entropy but still passes the Lambda's format check.
+      Array.from({length:32}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    localStorage.setItem('flightmap_device_token', id);
+  }
   return id;
 }
+// Backwards-compat alias — there are still call-sites using the old name.
+function getDeviceId() { return getDeviceToken(); }
 
 let userFavourites = [];
 
+function _favHeaders(extra) {
+  const h = { 'X-Device-Token': getDeviceToken() };
+  if (extra) Object.assign(h, extra);
+  return h;
+}
+
 async function loadFavourites() {
   try {
-    const resp = await fetch(`${API_BASE}/favourites?userId=${getDeviceId()}`);
+    const resp = await fetch(`${API_BASE}/favourites`, { headers: _favHeaders() });
     if (!resp.ok) return;
     const data = await resp.json();
     userFavourites = data.favourites || [];
@@ -3392,11 +3413,8 @@ async function saveFavourite(postcode, borough, noiseLevel, buyerScore) {
   try {
     await fetch(`${API_BASE}/favourites`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        userId: getDeviceId(), postcode, borough, noiseLevel,
-        buyerScore, city: currentCity
-      })
+      headers: _favHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ postcode, borough, noiseLevel, buyerScore, city: currentCity }),
     });
     userFavourites.push({ postcode, borough, noiseLevel, buyerScore: String(buyerScore), city: currentCity });
     renderFavouritesList();
@@ -3407,8 +3425,8 @@ async function removeFavourite(postcode) {
   try {
     await fetch(`${API_BASE}/favourites`, {
       method: 'DELETE',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ userId: getDeviceId(), postcode })
+      headers: _favHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ postcode }),
     });
     userFavourites = userFavourites.filter(f => f.postcode !== postcode);
     renderFavouritesList();

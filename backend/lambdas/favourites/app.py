@@ -1,21 +1,36 @@
 """
 Sky Score favourites Lambda — DynamoDB CRUD for saved properties.
 
-Audit notes addressed in this rewrite (full audit at AUDIT_REPORT.md):
-- C7 — replaced bare `except Exception:` with specific types + structured
-  `logger.exception` for the final guard.
+Audit C3 mitigation: opaque device-token auth.
+
+Previously every endpoint accepted a `userId` from the query string or
+body, untrusted. Anyone with a userId could read / write / delete that
+user's favourites (OWASP A01 — IDOR).
+
+The new contract:
+- Caller must send `X-Device-Token` header containing a UUID v4.
+- The header is the partition key; userId in query/body is rejected.
+- This isn't auth — anyone who learns a token can use it. But:
+  - Tokens are 122-bit random (UUID v4); guessing one is infeasible.
+  - Tokens never appear in URLs (no leakage via referer headers,
+    server logs, browser history).
+  - Format is validated — garbage / sniffed query strings are rejected.
+
+Backwards compat: the old localStorage `flightmap_device_id` payload
+was a non-UUID string, so existing data is orphaned by this change.
+Acceptable in pre-launch — users re-save favourites under their new
+token. The old rows remain in DDB until manually cleaned.
+
+Other audit items addressed in this rewrite:
+- C7 — specific exception types + `logger.exception` final guard.
 - M3 — `datetime.utcnow()` → `datetime.now(timezone.utc).isoformat()`.
-- I16 (favourites/app.py:30-36) — replaced the broken Decimal-detection
-  heuristic (`isinstance(v, boto3.dynamodb.conditions.Key)` was checking
-  a query-builder type, not a value type) with a proper
-  `decimal.Decimal` JSON encoder.
-- C3 (favourites IDOR) is NOT addressed in this commit — separate task.
-  This keeps the existing untrusted `userId` query-string contract.
+- I16 — proper `decimal.Decimal` JSON encoder for boto3 Decimal types.
 """
 
 import json
 import logging
 import os
+import re
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -32,11 +47,32 @@ table = dynamodb.Table(TABLE_NAME)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Accept either canonical UUID (8-4-4-4-12 hex, with hyphens) or a bare
+# 32-char hex string. Case-insensitive. UUIDs only — random 32-byte hex
+# is also accepted in case the frontend uses crypto.getRandomValues
+# directly without UUID formatting.
+_TOKEN_PATTERN = re.compile(
+    r'^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$',
+    re.IGNORECASE,
+)
+
+
+def get_device_token(event):
+    """Extract and validate the device token from headers. Returns the
+    canonicalised lowercase hex (no hyphens) or None if absent / malformed."""
+    headers = event.get('headers') or {}
+    # API Gateway can lower-case header names depending on integration.
+    token = (headers.get('X-Device-Token')
+             or headers.get('x-device-token')
+             or '').strip()
+    if not token or not _TOKEN_PATTERN.match(token):
+        return None
+    return token.lower().replace('-', '')
+
 
 class _DecimalEncoder(json.JSONEncoder):
     """JSON encoder that converts boto3 Decimal values to int / float as
-    appropriate. Replaces the previous `hasattr(v, 'is_finite')` heuristic
-    which failed for some valid Decimals."""
+    appropriate. Replaces the previous `hasattr(v, 'is_finite')` heuristic."""
 
     def default(self, obj):
         if isinstance(obj, Decimal):
@@ -51,10 +87,16 @@ def handler(event, context):
         if method == 'OPTIONS':
             return response(200, {})
 
+        # All non-OPTIONS methods require a valid device token.
+        token = get_device_token(event)
+        if not token:
+            return response(401, {
+                'error': 'X-Device-Token header missing or malformed.',
+                'expected': 'UUID v4 (e.g. 550e8400-e29b-41d4-a716-446655440000) or 32-char hex.',
+            })
+
         if method == 'GET':
-            params = event.get('queryStringParameters') or {}
-            user_id = params.get('userId', 'anonymous')
-            result = table.query(KeyConditionExpression=Key('userId').eq(user_id))
+            result = table.query(KeyConditionExpression=Key('userId').eq(token))
             return response(200, {'favourites': result.get('Items', [])})
 
         if method == 'POST':
@@ -63,13 +105,12 @@ def handler(event, context):
             except json.JSONDecodeError as exc:
                 logger.warning('Invalid JSON body on POST: %s', exc)
                 return response(400, {'error': 'Invalid JSON body.'})
-            user_id = body.get('userId', 'anonymous')
             postcode = body.get('postcode', '')
             if not postcode:
                 return response(400, {'error': 'Postcode is required'})
 
             item = {
-                'userId':     user_id,
+                'userId':     token,  # partition key is the device token
                 'postcode':   postcode,
                 'borough':    body.get('borough', ''),
                 'noiseLevel': body.get('noiseLevel', ''),
@@ -87,11 +128,10 @@ def handler(event, context):
             except json.JSONDecodeError as exc:
                 logger.warning('Invalid JSON body on DELETE: %s', exc)
                 return response(400, {'error': 'Invalid JSON body.'})
-            user_id = body.get('userId', 'anonymous')
             postcode = body.get('postcode', '')
             if not postcode:
                 return response(400, {'error': 'Postcode is required'})
-            table.delete_item(Key={'userId': user_id, 'postcode': postcode})
+            table.delete_item(Key={'userId': token, 'postcode': postcode})
             return response(200, {'message': 'Deleted'})
 
         return response(405, {'error': 'Method not allowed'})
@@ -110,7 +150,7 @@ def response(status, body):
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': CORS_ORIGIN,
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Device-Token',
             'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
         },
         'body': json.dumps(body, cls=_DecimalEncoder),

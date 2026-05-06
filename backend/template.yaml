@@ -22,7 +22,7 @@ Globals:
     # abuse on Bedrock endpoints becomes observed.
     Cors:
       AllowMethods: "'GET,POST,DELETE,OPTIONS'"
-      AllowHeaders: "'Content-Type,Authorization,X-Api-Key'"
+      AllowHeaders: "'Content-Type,Authorization,X-Api-Key,X-Device-Token'"
       AllowOrigin: "'*'"
     Auth:
       DefaultAuthorizer: NONE
