@@ -21,3 +21,8 @@ test-results/
 london_flight_paths.html
 london_flight_paths.py
 test-docs/
+
+# Bulk data inputs for one-off loaders (DEFRA GeoTIFF ~500 MB, NSPL CSV ~250 MB).
+# See scripts/load_defra_raster.py for download URLs and runbook.
+data/
+.defra_load_checkpoint
