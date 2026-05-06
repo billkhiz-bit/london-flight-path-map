@@ -503,6 +503,64 @@ For B2B customers, refresh events are announced in the changelog. Any methodolog
 
 EPC data is fetched on-demand via the live MHCLG service and is therefore always current. Sold price data is fetched on-demand via the Land Registry API.
 
+### Data vintage and refresh strategy
+
+The DEFRA noise data is by far the slowest-refreshing input. This subsection makes the implications explicit for B2B integrators who care about reproducibility and auditability.
+
+**The 5-year DEFRA cycle.** The Environmental Noise Directive obliges Member States (and the UK post-Brexit) to produce strategic noise maps every five years. Round history:
+
+| Round | Year | Methodology |
+|---|---|---|
+| 1 | 2007 | Original |
+| 2 | 2012 | — |
+| 3 | 2017 | — |
+| **4** | **2022** | **CNOSSOS-EU model — current** |
+| 5 | ~2027 (forthcoming) | TBC, may incorporate post-2022 measurement campaigns |
+
+**Within-round stability.** Round 4 stays canonical until ~2027. Within a round, the underlying noise data is treated as static: ~95% of postcodes will have unchanged exposure profiles between rounds because flight paths and motorway alignments don't move year-to-year.
+
+**Edge cases where 5-year data may understate change**:
+- Areas under new infrastructure (HS2 partial open ~2027-2030)
+- Heathrow third runway (consented but not built)
+- Gatwick second runway (planned)
+- Major flight-path re-plats (rare; consultation-driven)
+- New bus / coach corridors
+
+**Other sources, refresh cadence at a glance:**
+
+| Source | Cadence |
+|---|---|
+| HM Land Registry HPI | Monthly |
+| HM Land Registry Price Paid | Monthly |
+| postcodes.io / Royal Mail PAF | Quarterly |
+| ONS denominator data | Annual |
+| Ofsted school ratings | Continuous (per inspection) |
+| TfL Open Data | Real-time |
+| **DEFRA noise mapping** | **5 years** ← slowest |
+| MHCLG EPC | Continuous (per certificate issued) |
+
+**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"3.1"`). On any methodology change — including a new noise-mapping round — this version increments. Integrators can pin to a specific version via `?methodology=X.Y` (where supported) for grace-period reproducibility. When Round 5 data lands the version will jump to `"4.0"`.
+
+**Round 5 transition plan (forecast: late 2027).** When DEFRA publishes Round 5:
+1. New aircraft + road GeoTIFFs are downloaded from the data.gov.uk dataset pages
+2. The offline loader (`scripts/load_defra_raster.py`) is re-run; it overwrites by postcode key, so 1.7M new values cleanly replace the old ones with no migration needed
+3. `METHODOLOGY_VERSION` in the score Lambda bumps from `3.1` → `4.0`
+4. Methodology document updates with the new round reference and any methodology-model changes (e.g. CNOSSOS revision)
+5. B2B customers get the standard 14-day advance notice via email
+6. Old responses remain reproducible by passing the prior `?methodology=` value (until the grace period expires)
+
+The Lambda's quiet-resolution chain (raster → Haversine → borough) means the API silently upgrades to the new data; no client changes needed at the integration layer.
+
+**Practical inputs for the loader (verified URLs, 2026-05-06):**
+
+- DEFRA Aircraft Noise (Round 4): https://www.data.gov.uk/dataset/airport-noise-all-metrics-england-round-4
+- DEFRA Road Noise (Round 4): https://www.data.gov.uk/dataset/38b1444f-47a0-42ca-a358-0d145fcf7d5c/road-noise-all-metrics-england-round-4
+- DEFRA umbrella + methodology: https://www.gov.uk/government/publications/strategic-noise-mapping-2022
+- ONS NSPL catalogue: https://www.data.gov.uk/dataset/national-statistics-postcode-lookup-uk
+- ONS Open Geography Portal: https://www.ons.gov.uk/methodology/geography/geographicalproducts/postcodeproducts
+
+Both DEFRA dataset pages have an interactive "Download data by area of interest and format" tool. Select **all of England**, **GeoTIFF** format, and the **Lden** metric, submit, and download once the export is prepared (typically 5 minutes).
+
 ## 8. Attribution
 
 Live API responses include a `sources` array in the response body. Consumers redistributing Sky Score outputs are expected to preserve attribution.

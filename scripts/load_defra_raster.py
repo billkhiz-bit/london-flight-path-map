@@ -13,19 +13,55 @@ PRE-REQUISITES (run once, locally, not in the Lambda environment):
 
 INPUTS NEEDED:
 
-  1. DEFRA Lden GeoTIFF (~500 MB, free, OGL v3.0). Listed under "Strategic
-     noise mapping (England)-round 4 (2022)" on the gov.uk page below;
-     accept the click-through licence and download the Lden GeoTIFF for
-     "All sources combined" (or "Aircraft" alone if you want aviation-only):
-     https://www.gov.uk/government/collections/strategic-noise-mapping
-     Save as `data/defra_lden_2022.tif` relative to project root.
+  1. DEFRA Lden GeoTIFF (~500 MB, free, OGL v3.0).
+
+     Strategic noise mapping is published as separate Aircraft and Road
+     datasets. For Sky Score's positioning, we recommend the Aircraft
+     dataset (the consumer-site differentiator). To combine road +
+     aircraft noise, see the "Combined exposure" note below.
+
+     a) Aircraft Noise, All Metrics, England Round 4 (2022):
+        https://www.data.gov.uk/dataset/airport-noise-all-metrics-england-round-4
+        Or on the publishing service:
+        https://ckan.publishing.service.gov.uk/dataset/airport-noise-all-metrics-england-round-4
+
+     b) Road Noise, All Metrics, England Round 4 (2022):
+        https://www.data.gov.uk/dataset/38b1444f-47a0-42ca-a358-0d145fcf7d5c/road-noise-all-metrics-england-round-4
+        Or: https://environment.data.gov.uk/dataset/562c9d56-7c2d-4d42-83bb-578d6e97a517
+
+     Both pages have a "Download data by area of interest and format"
+     tool. Select:
+       Area of interest: All of England
+       Format: GeoTIFF
+       Metric: Lden (day-evening-night, the primary indicator)
+     Submit, wait ~5 min for the export, then download.
+     Save as `data/defra_lden_2022.tif`.
+
+     Reference (umbrella page):
+     https://www.gov.uk/government/publications/strategic-noise-mapping-2022
+
+     Methodology explanation:
+     https://www.gov.uk/government/publications/strategic-noise-mapping-2022/explaining-the-2022-noise-maps
+
+     Combined exposure (v2 enhancement, not yet implemented):
+     run the loader twice with both rasters and combine via logarithmic
+     dB sum: combined = 10*log10(10^(road/10) + 10^(aircraft/10)).
+     For v1, pick the single source that matters most for your use case.
 
   2. ONS National Statistics Postcode Lookup (NSPL). Lat/lon for every UK
-     postcode. Free, OGL v3.0:
-     https://geoportal.statistics.gov.uk/datasets/ons::nspl-online-latest-by-postcode/
-     Download the CSV (large, ~250 MB after extraction) and save as
-     `data/nspl.csv`. The script reads the standard columns `pcds`, `lat`,
-     `long` (these names have been stable across NSPL editions).
+     postcode. Free, OGL v3.0. Updated quarterly (Feb / May / Aug / Nov).
+
+     Catalogue page:
+     https://www.data.gov.uk/dataset/national-statistics-postcode-lookup-uk
+
+     ONS landing page:
+     https://www.ons.gov.uk/methodology/geography/geographicalproducts/postcodeproducts
+
+     Direct CSV download (Feb 2026 release, ~250 MB extracted):
+     https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/419355d8a54741f19025ba97e35da55a/csv?layers=0
+
+     Save as `data/nspl.csv`. The script reads the standard columns
+     `pcds`, `lat`, `long` (stable across NSPL editions).
 
   3. AWS credentials with write access to the `london-flight-map-noise-raster`
      table (already covered by the flightmap-dev IAM policy at

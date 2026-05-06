@@ -43,7 +43,7 @@ These are visible to consumer-site visitors but NOT exposed via the B2B API.
 | Source | Licence | Use | Attribution | Status |
 |---|---|---|---|---|
 | **OpenStreetMap** (via Overpass API) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Nearby NHS services in `/nhs` (replaced the deprecated NHS Service Search public key) | "OpenStreetMap contributors (ODbL)" — must include in response + visible attribution on the page | ✅ Commercial use OK; **attribution is mandatory** |
-| **OpenSky Network** (`/api/states/all`) | [OpenSky data terms](https://opensky-network.org/index.php?option=com_content&view=article&id=152&Itemid=164&lang=en) | Live aircraft positions on the consumer-site map | Acknowledgement required; commercial use needs explicit permission | ⚠️ See note below |
+| **OpenSky Network** (`/api/states/all`) | [OpenSky data API + terms](https://opensky-network.org/data/api) | Live aircraft positions on the consumer-site map | Acknowledgement required; commercial use needs explicit permission | ⚠️ See note below |
 | **Office for National Statistics** (NSPL via Geoportal — for the planned DEFRA loader) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler | OGL boilerplate | ✅ Commercial use OK |
 | **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Will be sampled by the offline loader; same source as the live noise mapping | Same OGL boilerplate | ✅ Commercial use OK |
 
