@@ -303,13 +303,22 @@ Resources:
             Auth:
               ApiKeyRequired: true
 
+  # NOTE: this resource is the original (now-rotated) demo key. The key
+  # value itself was committed to score-demo/{index,status}.html in
+  # commits 2280148 / 07ad823 — see audit C2 in AUDIT_REPORT.md.
+  # On 2026-05-06 a new key (id 1zy00lrqs5, name SkyScoreDemoKeyV2) was
+  # created out-of-band via the AWS CLI, linked to ScoreFreeUsagePlan,
+  # and the score-demo HTML files updated to use it. The original key
+  # is left here in disabled state for audit-trail purposes; future
+  # rotations should follow the same pattern (new resource alongside,
+  # disable old, eventually delete).
   ScoreApiKey:
     Type: AWS::ApiGateway::ApiKey
     DependsOn: FlightMapApiprodStage
     Properties:
       Name: SkyScoreFreeTierKey
-      Description: Initial free-tier API key for /v1/score. Rotate via console.
-      Enabled: true
+      Description: Original demo key, rotated 2026-05-06 — kept disabled for audit trail.
+      Enabled: false
       StageKeys:
         - RestApiId: !Ref FlightMapApi
           StageName: prod

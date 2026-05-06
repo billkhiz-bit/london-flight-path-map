@@ -404,10 +404,12 @@
 </footer>
 
 <script>
-  // Free-tier API key. Rotate by deleting + recreating the SkyScoreFreeTierKey
-  // resource via API Gateway console + redeploying. Public-tier limits cap
-  // abuse: 1000 req/month, 5 burst, 2 sustained.
-  const API_KEY = 'T2NpQbYF6P1zdRsmdO4le5WNTa7YoWeA1j0nbk5i';
+  // Public demo key — intentionally embedded in the served HTML for the
+  // "Try the API" form below. Capped at 1000 req/month (the SkyScoreFreeTier
+  // usage plan), shared across all visitors. For production use, sign up
+  // above for your own per-email key. Rotated 2026-05-06 (audit C2)
+  // after the previous key was committed to git history.
+  const API_KEY = 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe';
   const BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score';
 
   const PERSONA_LABELS = {
