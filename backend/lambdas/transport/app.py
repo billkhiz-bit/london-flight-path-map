@@ -1,9 +1,14 @@
 import json
+import logging
 import math
 import os
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # TfL API - free, no key required (key optional for higher rate limits)
 TFL_BASE = 'https://api.tfl.gov.uk'
@@ -45,7 +50,8 @@ def handler(event, context):
             'sources': [ATTRIBUTION],
         })
 
-    except Exception:
+    except Exception as exc:  # pragma: no cover  — final guard
+        logger.exception('Unhandled exception in transport handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
 
@@ -59,7 +65,8 @@ def fetch_nearby_stations(lat, lon):
     try:
         with urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode())
-    except Exception:
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning('TfL StopPoint lookup failed: %s', exc)
         return []
 
     stops = data.get('stopPoints', [])
@@ -95,7 +102,8 @@ def fetch_line_status(line_ids):
     try:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())
-    except Exception:
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning('TfL Line/Status lookup failed: %s', exc)
         return []
 
     results = []

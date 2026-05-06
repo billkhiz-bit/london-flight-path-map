@@ -79,7 +79,7 @@ def parse_body(event):
         import base64
         try:
             raw = base64.b64decode(raw).decode()
-        except Exception:
+        except (ValueError, UnicodeDecodeError):
             return None
     if not raw:
         return None

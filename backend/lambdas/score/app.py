@@ -14,20 +14,57 @@ documented in the methodology changelog.
 """
 
 import json
+import logging
 import math
 import os
 import re
+from collections import OrderedDict
 from datetime import datetime, timezone
-from functools import lru_cache
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
+def _make_lru(maxsize):
+    """OrderedDict-backed LRU cache that does NOT cache None results.
+
+    `functools.lru_cache` caches every return value including None, which
+    means a transient outage of an upstream (postcodes.io, DDB) poisons
+    the cache for the lifetime of the warm container (~15 min on AWS
+    Lambda). This implementation only stores truthy values, so the next
+    request after an outage retries upstream instead of serving None.
+    """
+    cache = OrderedDict()
+
+    def get(key):
+        if key not in cache:
+            return None
+        cache.move_to_end(key)
+        return cache[key]
+
+    def put(key, value):
+        if value is None:
+            return  # Never cache misses / errors
+        if key in cache:
+            cache.move_to_end(key)
+        cache[key] = value
+        while len(cache) > maxsize:
+            cache.popitem(last=False)
+
+    return get, put
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
 METHODOLOGY_VERSION = '3.1'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
+# Parallel workers for /v1/score/batch. Each query is mostly waiting on
+# postcodes.io (network-bound), so ~10 workers gives near-linear speedup
+# on the typical 30-50 postcode batch without saturating any upstream.
+BATCH_PARALLELISM = int(os.environ.get('BATCH_PARALLELISM', '10'))
 
 SCHOOL_SCORE = {'outstanding': 10, 'excellent': 9, 'good': 6, 'mixed': 3}
 TRANSPORT_SCORE = {'excellent': 10, 'good': 7, 'moderate': 4, 'poor': 2}
@@ -280,7 +317,9 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return r * 2 * math.asin(math.sqrt(a))
 
 
-@lru_cache(maxsize=2048)
+_raster_cache_get, _raster_cache_put = _make_lru(2048)
+
+
 def _lookup_lden_raster(postcode_clean):
     """v3.1 — Look up DEFRA Lden raster sample for a postcode in DynamoDB.
 
@@ -289,24 +328,43 @@ def _lookup_lden_raster(postcode_clean):
     offline data-loader script that samples the DEFRA GeoTIFF at every UK
     postcode centroid (one-time batch, ~1.7M postcodes, runs overnight).
 
-    Lambda containers persist ~15 min; an LRU cache hit avoids the DynamoDB
-    round-trip for repeat lookups within that window.
+    Negative results (no NOISE_RASTER_TABLE configured, item missing,
+    DDB error) are NOT cached — see _make_lru. Positive results live for
+    the warm-container lifetime (~15 min) up to 2048 entries LRU.
     """
     if not NOISE_RASTER_TABLE or not postcode_clean:
         return None
+    cached = _raster_cache_get(postcode_clean)
+    if cached is not None:
+        return cached
+
     try:
         import boto3  # local import — only needed when raster table configured
+        from botocore.exceptions import BotoCoreError, ClientError
+    except ImportError:
+        return None
+
+    try:
         ddb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-west-2'))
         result = ddb.get_item(
             TableName=NOISE_RASTER_TABLE,
             Key={'postcode': {'S': postcode_clean}},
             ProjectionExpression='ldenDb',
         )
-        item = result.get('Item') or {}
-        lden = item.get('ldenDb', {}).get('N')
-        return float(lden) if lden else None
-    except Exception:
+    except (BotoCoreError, ClientError) as exc:
+        logger.warning('DDB raster lookup failed for %s: %s', postcode_clean, exc)
         return None
+
+    item = result.get('Item') or {}
+    lden = item.get('ldenDb', {}).get('N')
+    if not lden:
+        return None
+    try:
+        value = float(lden)
+    except (TypeError, ValueError):
+        return None
+    _raster_cache_put(postcode_clean, value)
+    return value
 
 
 def lden_db_to_quiet(lden):
@@ -500,13 +558,12 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     }
 
 
-@lru_cache(maxsize=512)
-def _lookup_postcode_cached(clean):
-    """In-memory LRU cache for postcodes.io lookups within a Lambda container.
-    Containers persist ~15 min on AWS; repeat lookups within that window
-    bypass the upstream call (~100-500ms p95). For higher-volume B2B traffic,
-    a DynamoDB cache layer is on the roadmap — the lru_cache is a low-cost
-    interim. Keyed on the cleaned (no-space, upper-case) postcode."""
+_postcode_cache_get, _postcode_cache_put = _make_lru(512)
+
+
+def _fetch_postcode(clean):
+    """Fetch from postcodes.io — no caching, no normalisation. Returns
+    parsed result dict on success, None on transient/permanent failure."""
     if not clean:
         return None
     url = f'https://api.postcodes.io/postcodes/{quote(clean)}'
@@ -514,7 +571,11 @@ def _lookup_postcode_cached(clean):
     try:
         with urlopen(req, timeout=5) as resp:
             payload = json.loads(resp.read().decode())
-    except (HTTPError, URLError):
+    except (HTTPError, URLError, TimeoutError) as exc:
+        logger.warning('postcodes.io lookup failed for %s: %s', clean, exc)
+        return None
+    except json.JSONDecodeError as exc:
+        logger.warning('postcodes.io returned non-JSON for %s: %s', clean, exc)
         return None
     if payload.get('status') != 200:
         return None
@@ -522,9 +583,20 @@ def _lookup_postcode_cached(clean):
 
 
 def lookup_postcode(postcode):
-    """Resolve UK postcode → admin_district via postcodes.io (free, OGL)."""
+    """Resolve UK postcode → admin_district via postcodes.io (free, OGL).
+
+    Cached per warm container (~15 min). Misses and errors are NOT cached
+    so a transient postcodes.io outage does not poison the cache."""
     clean = postcode.strip().replace(' ', '').upper()
-    return _lookup_postcode_cached(clean) if clean else None
+    if not clean:
+        return None
+    cached = _postcode_cache_get(clean)
+    if cached is not None:
+        return cached
+    result = _fetch_postcode(clean)
+    if result is not None:
+        _postcode_cache_put(clean, result)
+    return result
 
 
 def normalise_borough(name, city):
@@ -779,7 +851,8 @@ def handle_batch(event):
         import base64
         try:
             raw_body = base64.b64decode(raw_body).decode()
-        except Exception:
+        except (ValueError, UnicodeDecodeError) as exc:
+            logger.warning('Invalid base64 body: %s', exc)
             return response(400, {'error': 'Invalid base64-encoded body'})
 
     try:
@@ -811,15 +884,33 @@ def handle_batch(event):
             'limit': MAX_BATCH_SIZE,
         })
 
+    # Parallel resolution. Each `resolve_query` call hits postcodes.io
+    # (network-bound, ~100-500 ms p95). Sequential at MAX_BATCH_SIZE=100
+    # would blow the 10s Lambda timeout above ~30 unique postcodes.
+    # ThreadPoolExecutor with bounded workers gives us request-level
+    # concurrency without overwhelming postcodes.io (which is generous
+    # but unspecified on per-IP limits) or hitting Python GIL pressure.
+    from concurrent.futures import ThreadPoolExecutor
+
+    indexed_queries = list(enumerate(queries))
+
+    def run_one(item):
+        idx, query = item
+        if not isinstance(query, dict):
+            return idx, ({'error': 'Query must be an object.'}, 400)
+        return idx, resolve_query(query)
+
+    with ThreadPoolExecutor(max_workers=BATCH_PARALLELISM) as ex:
+        outcomes = list(ex.map(run_one, indexed_queries))
+
+    # Restore original order — ex.map preserves order so we don't strictly
+    # need this, but being explicit makes future refactors safer.
+    outcomes.sort(key=lambda kv: kv[0])
+
     results = []
     success = 0
     error = 0
-    for idx, query in enumerate(queries):
-        if not isinstance(query, dict):
-            results.append({'queryIndex': idx, 'error': 'Query must be an object.'})
-            error += 1
-            continue
-        body, status = resolve_query(query)
+    for idx, (body, status) in outcomes:
         result = {'queryIndex': idx, 'status': status}
         if status == 200:
             result.update(body)
@@ -852,7 +943,8 @@ def handler(event, context):
         if method == 'POST':
             return handle_batch(event)
         return handle_get(event)
-    except Exception:
+    except Exception as exc:  # final guard — never let internals leak
+        logger.exception('Unhandled exception in score handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
 

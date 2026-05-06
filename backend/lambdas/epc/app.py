@@ -1,10 +1,14 @@
 import json
+import logging
 import os
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # New MHCLG service — see https://get-energy-performance-data.communities.gov.uk
 # Replaces epc.opendatacommunities.org which retires 2026-05-30.
@@ -161,7 +165,8 @@ def handler(event, context):
 
         return response(200, body)
 
-    except Exception:
+    except Exception as exc:  # pragma: no cover  — final guard
+        logger.exception('Unhandled exception in epc handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
 

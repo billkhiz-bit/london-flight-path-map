@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import boto3
@@ -6,6 +7,11 @@ import boto3
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
 bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+NOVA_PRO_MODEL_ID = os.environ.get('NOVA_PRO_MODEL_ID', 'us.amazon.nova-pro-v1:0')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 SYSTEM_PROMPT = """You are a property analysis AI. Analyze property listing photos and provide insights relevant to a buyer.
 
@@ -62,7 +68,7 @@ def handler(event, context):
         }]
 
         result = bedrock.invoke_model(
-            modelId='us.amazon.nova-pro-v1:0',
+            modelId=NOVA_PRO_MODEL_ID,
             contentType='application/json',
             accept='application/json',
             body=json.dumps({
@@ -80,7 +86,8 @@ def handler(event, context):
 
         return response(200, {'analysis': analysis})
 
-    except Exception:
+    except Exception as exc:  # pragma: no cover  — final guard
+        logger.exception('Unhandled exception in analyze_image handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
 

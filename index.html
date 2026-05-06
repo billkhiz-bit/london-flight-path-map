@@ -2785,19 +2785,33 @@ async function updateLiveFlights() {
 }
 
 let liveFlightInterval = null;
+
+// Tab-hidden polling pause. The visibilitychange listener was previously
+// added inside startLiveFlights, accumulating one listener per toggle-on.
+// Toggle 5 times = 5 listeners = 5x setInterval reinstatements when tab
+// regains focus. Bind once at module scope; the handler reads
+// liveFlightInterval at call time so it sees current state.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && liveFlightInterval && liveFlightInterval !== 'paused') {
+    clearInterval(liveFlightInterval);
+    liveFlightInterval = 'paused';
+  } else if (!document.hidden && liveFlightInterval === 'paused') {
+    liveFlightInterval = setInterval(updateLiveFlights, 15000);
+    updateLiveFlights();
+  }
+});
+
 function startLiveFlights() {
-  if (liveFlightInterval) return; // already running
+  if (liveFlightInterval) return; // already running (or paused — both OK)
   updateLiveFlights();
   // Refresh every 15 seconds (OpenSky updates ~every 10s, rate limit ~10 req/min for anon)
   liveFlightInterval = setInterval(updateLiveFlights, 15000);
-  // Pause polling when tab is hidden to save API calls and battery
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.hidden && liveFlightInterval){clearInterval(liveFlightInterval);liveFlightInterval='paused';}
-    else if(!document.hidden && liveFlightInterval==='paused'){liveFlightInterval=setInterval(updateLiveFlights,15000);updateLiveFlights();}
-  });
 }
 function stopLiveFlights() {
-  if (liveFlightInterval) { clearInterval(liveFlightInterval); liveFlightInterval = null; }
+  if (liveFlightInterval && liveFlightInterval !== 'paused') {
+    clearInterval(liveFlightInterval);
+  }
+  liveFlightInterval = null;
   if (liveFlightLayer) { liveFlightLayer.remove(); liveFlightLayer = null; }
   currentFlights = [];
   document.getElementById('live-count').style.display = 'none';
@@ -3414,20 +3428,43 @@ function renderFavouritesList() {
   }
   const londonFavs = userFavourites.filter(f => f.city !== 'nyc');
   const nycFavs = userFavourites.filter(f => f.city === 'nyc');
+  // Use textContent / dataset, not template-string interpolation, so a
+  // localStorage payload with quotes or a script-end-tag pattern can't
+  // break out of the onclick attribute (audit I8 — XSS-prone inline
+  // handlers).
+  const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+  );
   const renderGroup = (favs, label) => {
     if (favs.length === 0) return '';
-    return `<div style="margin-top:8px;margin-bottom:6px;font-size:9px;letter-spacing:1px;color:var(--mid);text-transform:uppercase;font-weight:600;">${label}</div>`
+    return `<div style="margin-top:8px;margin-bottom:6px;font-size:9px;letter-spacing:1px;color:var(--mid);text-transform:uppercase;font-weight:600;">${escapeHtml(label)}</div>`
       + favs.map(f => `
-      <div class="fav-item" onclick="(async()=>{await switchCity('${f.city||'london'}');triggerSearch('${f.postcode.replace(/'/g, "\\'")}')})()">
+      <div class="fav-item" data-fav-postcode="${escapeHtml(f.postcode)}" data-fav-city="${escapeHtml(f.city || 'london')}">
         <div>
-          <div style="font-weight:600;">${f.postcode}</div>
-          <div style="font-size:9px;color:var(--mid);">${f.borough || ''} &middot; Noise: ${f.noiseLevel || 'N/A'} &middot; Score: ${f.buyerScore || 'N/A'}/10</div>
+          <div style="font-weight:600;">${escapeHtml(f.postcode)}</div>
+          <div style="font-size:9px;color:var(--mid);">${escapeHtml(f.borough || '')} &middot; Noise: ${escapeHtml(f.noiseLevel || 'N/A')} &middot; Score: ${escapeHtml(f.buyerScore || 'N/A')}/10</div>
         </div>
-        <span class="fav-remove" onclick="event.stopPropagation();removeFavourite('${f.postcode.replace(/'/g, "\\'")}')">&times;</span>
+        <button type="button" class="fav-remove" data-fav-remove="${escapeHtml(f.postcode)}" aria-label="Remove ${escapeHtml(f.postcode)} from favourites">&times;</button>
       </div>
     `).join('');
   };
   el.innerHTML = renderGroup(londonFavs, 'London') + renderGroup(nycFavs, 'New York');
+
+  // Bind handlers via dataset — no string interpolation in markup.
+  el.querySelectorAll('.fav-item').forEach(item => {
+    item.addEventListener('click', async () => {
+      const pc = item.dataset.favPostcode;
+      const city = item.dataset.favCity || 'london';
+      await switchCity(city);
+      triggerSearch(pc);
+    });
+  });
+  el.querySelectorAll('.fav-remove').forEach(btn => {
+    btn.addEventListener('click', ev => {
+      ev.stopPropagation();
+      removeFavourite(btn.dataset.favRemove);
+    });
+  });
 }
 
 // ============================================================
@@ -3710,16 +3747,20 @@ function renderBoroughRanking() {
   const currency = currentCity==='nyc'?'$':'&pound;';
 
   let tableRows = '';
+  // Same escapeHtml + dataset pattern as renderFavourites — keeps user-
+  // controlled strings out of attribute-context interpolation (audit I8).
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+  );
 
   if (rankingView === 'neighbourhood') {
     // Neighbourhood-level scoring with computed noise, price, crime, transport
     const neighbourhoods = calcNeighbourhoodScores(currentCity);
     neighbourhoods.forEach((n, i) => {
       const priceK = Math.round(n.avg_price / 1000);
-      const escapedName = n.name.replace(/'/g, "\\'");
-      tableRows += `<tr onclick="triggerSearch('${escapedName}')" style="cursor:pointer;">
+      tableRows += `<tr data-rank-name="${esc(n.name)}" data-rank-action="search" style="cursor:pointer;">
         <td>${i + 1}</td>
-        <td>${n.name}<span style="display:block;font-size:9px;color:var(--mid);">${n.borough}</span></td>
+        <td>${esc(n.name)}<span style="display:block;font-size:9px;color:var(--mid);">${esc(n.borough)}</span></td>
         <td class="col-noise">${noiseTag(n.impact)}</td>
         <td class="col-price">${currency}${priceK}K</td>
         <td class="col-score" style="color:${scoreColor(n.score)}">${n.score}</td>
@@ -3730,13 +3771,13 @@ function renderBoroughRanking() {
     const sorted = Object.entries(activeData).sort((a,b) => b[1].score - a[1].score);
     sorted.forEach(([name, data], i) => {
       const priceK = Math.round(data.avg_price / 1000);
-      tableRows += '<tr onclick="selectBoroughByName(\'' + name + '\')">'
-        + '<td>' + (i + 1) + '</td>'
-        + '<td>' + name + '</td>'
-        + '<td class="col-noise">' + noiseTag(data.impact) + '</td>'
-        + '<td class="col-price">' + currency + priceK + 'K</td>'
-        + '<td class="col-score" style="color:' + scoreColor(data.score) + '">' + data.score + '</td>'
-        + '</tr>';
+      tableRows += `<tr data-rank-name="${esc(name)}" data-rank-action="borough" style="cursor:pointer;">
+        <td>${i + 1}</td>
+        <td>${esc(name)}</td>
+        <td class="col-noise">${noiseTag(data.impact)}</td>
+        <td class="col-price">${currency}${priceK}K</td>
+        <td class="col-score" style="color:${scoreColor(data.score)}">${data.score}</td>
+      </tr>`;
     });
   }
 
@@ -3753,6 +3794,18 @@ function renderBoroughRanking() {
     + '</tr></thead><tbody>'
     + tableRows
     + '</tbody></table>';
+
+  // Bind row clicks via dataset, not inline onclick (audit I8).
+  document.querySelectorAll('#borough-ranking tbody tr[data-rank-name]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const name = tr.dataset.rankName;
+      if (tr.dataset.rankAction === 'borough') {
+        selectBoroughByName(name);
+      } else {
+        triggerSearch(name);
+      }
+    });
+  });
 }
 
 function toggleRankingView() {

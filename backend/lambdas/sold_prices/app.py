@@ -1,9 +1,14 @@
 import json
+import logging
 import os
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 OGL_ATTRIBUTION = (
     'Sold prices: HM Land Registry. '
@@ -30,8 +35,21 @@ def handler(event, context):
         )
 
         req = Request(url, headers={'Accept': 'application/json'})
-        with urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
+        try:
+            with urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode())
+        except (HTTPError, URLError, TimeoutError) as exc:
+            logger.warning('Land Registry lookup failed for %s: %s', postcode, exc)
+            return response(503, {
+                'error': 'Sold-prices upstream temporarily unavailable.',
+                'postcode': postcode,
+            })
+        except json.JSONDecodeError as exc:
+            logger.warning('Land Registry returned non-JSON for %s: %s', postcode, exc)
+            return response(502, {
+                'error': 'Sold-prices upstream returned malformed data.',
+                'postcode': postcode,
+            })
 
         items = data.get('result', {}).get('items', [])
 
@@ -52,7 +70,8 @@ def handler(event, context):
             'sources': [OGL_ATTRIBUTION],
         })
 
-    except Exception:
+    except Exception as exc:  # pragma: no cover  — final guard
+        logger.exception('Unhandled exception in sold_prices handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
 
