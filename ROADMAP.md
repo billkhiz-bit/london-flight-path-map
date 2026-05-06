@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-05
+**Last reviewed:** 2026-05-06
 
 ---
 
@@ -60,7 +60,8 @@ The product. Wraps the scoring engine into a stable, documented, monetisable end
 - ✅ OGL attribution in every response
 
 **Outstanding**:
-- 🟡 DEFRA Lden raster offline data-load (`scripts/load_defra_raster.py`), populates the DynamoDB table the v3.1 code path already reads from. Once loaded, quiet-score precision moves from "Haversine proxy" to "DEFRA raster sample at postcode centroid". One-time overnight batch (~1.7M UK postcodes).
+- 🟡 **DEFRA Lden raster offline data-load** (`scripts/load_defra_raster.py`). Code shipped **2026-05-06**: v2 of the loader writes a "below 40 dB" sentinel for in-bbox postcodes outside the noise contour, so quiet suburbs (Twickenham, Wimbledon, Hampstead) correctly score quiet rather than falling through to the noisier Haversine estimate. **Run is paused mid-flight** — the v2 run reached NSPL row ~481k of 1.7M (~28%) before being stopped, so DDB currently has ~54k items (38k from the previous v1 run + ~16k new sentinel writes). Resuming tomorrow: `AWS_PROFILE=flightmap python scripts/load_defra_raster.py`. Checkpoint bug also fixed in the same commit so the resume actually works if interrupted again. Expected runtime to completion: ~25 min from start (full NSPL pass).
+- 🟡 DEFRA full-UK extension (Birmingham, Manchester, Bristol, Leeds, Edinburgh, Glasgow), per-city WCS fetches against the same dataset; ~30-60 min of fetch+load per city. Trigger when first paying integrator asks for a non-London region.
 - 🟡 UK Core Cities (Manchester, Birmingham, Bristol, etc.), geographic expansion, gated on liveability data acquisition
 - 🟡 Pricing tiers beyond free, define when first paying integrator commits
 - 🟡 Status page at `status.skyscore.com`
@@ -147,9 +148,11 @@ Detailed scoping for the two main outstanding items in Track 2. Captured 2026-05
 
 Captured original 2-3-hour scope; actual build came in close to estimate plus a v3.1 follow-up that added per-ZIP centroids for the Haversine path. Final shape: 182 residential ZIPs across the five boroughs, ~110 with explicit centroids; ZIPs without centroid fall back to borough-aggregate Lden bands; non-NYC US ZIPs return a structured 404 with the supported borough list. Live-verified against test postcodes 10001, 11201, 11375. See commits `af201fb` (initial detection + tests), `156b622` (v3.1 centroids), and `app.py` lines 105-260 for the data structures.
 
-### Per-postcode noise sampling, vs current borough-level
+### Per-postcode noise sampling — code shipped 2026-05-06, full run pending
 
-> **v3.0 update (2026-05-05)**: Option 2 (Haversine port from consumer site) **shipped**. Per-postcode quiet via airport + flight-path geometry is now live in `/v1/score` for UK postcodes. Methodology v3.0 documents the formula in §4.5. The full DEFRA raster sampling described below is now formally **Option 3 / v3.1**, deferred to a fresh-head longer block when validation work catches up. NYC ZIP centroids (~30 min) are also a v3.1 enhancement.
+> **v3.0 update (2026-05-05)**: Option 2 (Haversine port from consumer site) shipped. Per-postcode quiet via airport + flight-path geometry live in `/v1/score` for UK postcodes. Methodology v3.0 documents the formula in §4.5. NYC ZIP centroids also v3.1.
+>
+> **v3.1 update (2026-05-06)**: DEFRA raster sampling code shipped. Loader, mosaic, score-Lambda integration all live; ~38k Greater London postcodes already populated from a previous v1 partial run, plus ~16k new v2 sentinel rows added before the run was paused. The score Lambda's resolution chain is: raster → postcode-Haversine → borough fallback. Postcodes inside the bbox but outside the 40 dB contour use a v2 below-threshold sentinel (35.0 dB Lden → quiet=10) so suburban postcodes correctly score quiet from aircraft. Verified live: TW6 2GA (Heathrow village) returns `raster` with Lden 61.7 dB. **Pending**: complete the v2 loader pass (~25 min wall-clock), then re-verify Twickenham/Wimbledon/Hampstead now hit the sentinel path. After that: per-city WCS fetches for the rest of the UK Core Cities (Birmingham, Manchester, etc.) — gated on first paying integrator asking for non-London coverage.
 
 #### Current limitation (concrete)
 

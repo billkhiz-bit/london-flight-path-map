@@ -44,8 +44,8 @@ These are visible to consumer-site visitors but NOT exposed via the B2B API.
 |---|---|---|---|---|
 | **OpenStreetMap** (via Overpass API) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Nearby NHS services in `/nhs` (replaced the deprecated NHS Service Search public key) | "OpenStreetMap contributors (ODbL)" — must include in response + visible attribution on the page | ✅ Commercial use OK; **attribution is mandatory** |
 | **OpenSky Network** (`/api/states/all`) | [OpenSky data API + terms](https://opensky-network.org/data/api) | Live aircraft positions on the consumer-site map | Acknowledgement required; commercial use needs explicit permission | ⚠️ See note below |
-| **Office for National Statistics** (NSPL via Geoportal — for the planned DEFRA loader) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler | OGL boilerplate | ✅ Commercial use OK |
-| **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Will be sampled by the offline loader; same source as the live noise mapping | Same OGL boilerplate | ✅ Commercial use OK |
+| **Office for National Statistics** (NSPL via Geoportal — used by the DEFRA loader) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler | OGL boilerplate | ✅ Commercial use OK |
+| **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Sampled offline by `scripts/load_defra_raster.py`. v2 (with below-threshold sentinel) shipped 2026-05-06; full London loader pass paused mid-flight (~54k of ~250k London postcodes currently in `london-flight-map-noise-raster`); resuming tomorrow. Same source as the live noise mapping. | Same OGL boilerplate | ✅ Commercial use OK |
 
 ### OpenSky note — the only source needing care
 
@@ -143,4 +143,4 @@ If we add any of these later, **check terms first**:
 | 🟢 None | DEFRA + ONS + Land Registry + TfL all OGL v3.0; nothing to do |
 
 This document gets refreshed whenever we add or change a data source.
-Last reviewed: 2026-05-06.
+Last reviewed: 2026-05-06 (DEFRA London loader run + v2 below-threshold sentinel).

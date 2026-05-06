@@ -327,19 +327,44 @@ def run_load(limit, dry_run):
             try:
                 col, row_idx = ~raster_transform * (x, y)
                 col, row_idx = int(col), int(row_idx)
-                if 0 <= row_idx < raster_band.shape[0] and 0 <= col < raster_band.shape[1]:
-                    lden = float(raster_band[row_idx, col])
-                else:
-                    skipped += 1
-                    continue
+                in_bounds = (0 <= row_idx < raster_band.shape[0]
+                             and 0 <= col < raster_band.shape[1])
             except Exception:
+                in_bounds = False
+
+            if not in_bounds:
+                # Outside raster bbox — fall through to v3.0 Haversine
+                # at score-time (no DDB write).
                 skipped += 1
                 continue
 
-            # Skip nodata pixels
-            if lden < LDEN_MIN or lden > LDEN_MAX:
+            raw_lden = float(raster_band[row_idx, col])
+
+            # DEFRA Round 4 noise rasters only publish contours for
+            # >= 40 dB Lden; below that, pixels carry a NoData sentinel
+            # (typically a float-max value ~3.4e38, OR raster.nodata if
+            # set). Detect both and treat as "below threshold = quiet".
+            #
+            # Without this, postcodes inside the bbox but outside any
+            # noise contour fell through to Haversine (which estimates
+            # noise from geometric proximity to airports), wrongly
+            # reporting them as loud. Twickenham was the trigger case:
+            # close to LHR but below DEFRA's contour, yet Haversine
+            # said quiet=1.0 because of geometric distance.
+            nodata = raster.nodata
+            is_nodata = (raw_lden > 1e30) or (
+                nodata is not None and raw_lden == nodata
+            )
+            if is_nodata:
+                # Below 40 dB Lden contour — treat as low-band quiet.
+                # 35.0 dB maps to quiet=10.0 via lden_db_to_quiet (<55 cutoff).
+                lden = 35.0
+            elif raw_lden < LDEN_MIN or raw_lden > LDEN_MAX:
+                # Anomalous value (negative, etc) — skip rather than guess
                 skipped += 1
                 continue
+            else:
+                lden = raw_lden
 
             if dry_run and samples_logged < SAMPLE_LOG_LIMIT:
                 print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
@@ -353,9 +378,13 @@ def run_load(limit, dry_run):
                 written += len(batch)
                 batch.clear()
 
-                # Checkpoint every 1000 rows, only meaningful for full runs
-                if not limit and idx % 1000 == 0:
-                    CHECKPOINT_PATH.write_text(str(idx))
+            # Checkpoint every 1000 NSPL rows, regardless of whether the
+            # batch flushed. Earlier this lived inside the flush branch,
+            # so for huge stretches of out-of-bbox postcodes the batch
+            # never filled, the flush never ran, and no checkpoint was
+            # written before an interrupt. With this we can resume mid-run.
+            if not limit and not dry_run and idx > 0 and idx % 1000 == 0:
+                CHECKPOINT_PATH.write_text(str(idx))
 
     # Flush remainder
     if batch:
