@@ -66,6 +66,45 @@
   .map-title h1{font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;}
   .map-title .subtitle{font-size:10px;font-weight:300;color:var(--mid);margin-top:2px;letter-spacing:1px;}
 
+  /* "How to read this score" tooltip — appears on hover/focus of the
+     summary verdict number. CSS-only show/hide; positioned absolutely
+     so it doesn't reflow the sidebar. */
+  .score-tip{position:absolute;left:24px;right:24px;background:var(--white);border:1px solid var(--dark);
+    padding:14px 18px;font-family:var(--font-sans);font-size:12px;line-height:1.55;color:var(--dark);
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:30;display:none;margin-top:6px;}
+  .score-tip strong{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:1px;
+    text-transform:uppercase;margin-bottom:8px;color:var(--orange);}
+  .score-tip p{margin:0 0 8px;}
+  .score-tip ul{margin:0 0 8px;padding-left:18px;}
+  .score-tip li{margin-bottom:3px;}
+  .score-tip a{color:var(--orange);text-decoration:underline;}
+  .score-explain-trigger:hover ~ .score-tip,
+  .score-explain-trigger:focus ~ .score-tip,
+  .score-explain-trigger:focus-within ~ .score-tip{display:block;}
+  /* Show on tap (touch devices) when trigger is focused */
+  .score-tip:hover{display:block;}
+
+  /* First-time use hint banner. Sits above the map until the user
+     either dismisses it explicitly or interacts with anything (search
+     submit, borough click, layer toggle). localStorage flag prevents
+     re-show on subsequent visits. */
+  .first-hint{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:11;
+    background:rgba(20,20,20,0.92);color:var(--white);padding:10px 16px 10px 14px;border-radius:4px;
+    font-family:var(--font-sans);font-size:13px;display:flex;align-items:center;gap:14px;
+    backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,0.25);
+    animation:hint-in 0.4s ease-out;}
+  .first-hint.dismissed{display:none;}
+  .first-hint .hint-icon{font-size:16px;line-height:1;}
+  .first-hint .hint-text{font-weight:400;letter-spacing:0.2px;}
+  .first-hint button{background:none;border:none;color:var(--white);font-size:18px;cursor:pointer;
+    padding:0 0 0 6px;line-height:1;opacity:0.7;}
+  .first-hint button:hover{opacity:1;}
+  @keyframes hint-in{from{opacity:0;transform:translate(-50%,-8px);}to{opacity:1;transform:translate(-50%,0);}}
+  @media (max-width: 600px){
+    .first-hint{font-size:11px;left:8px;right:8px;transform:none;padding:8px 12px;}
+    @keyframes hint-in{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+  }
+
   /* Subtle B2B footer, small, unobtrusive, sits below the legend.
      Stays visible on mobile (compressed) so the dev-link remains
      reachable; previously hidden < 768 px which broke B2B discovery. */
@@ -222,9 +261,13 @@
   .tab:hover{background:var(--bg);}
   .tab.active{border-bottom-color:var(--dark);font-weight:600;}
 
-  .sidebar::-webkit-scrollbar{width:4px;}
-  .sidebar::-webkit-scrollbar-track{background:transparent;}
-  .sidebar::-webkit-scrollbar-thumb{background:var(--mid);}
+  /* Visible scrollbar so users notice there's more below the fold.
+     4px was effectively invisible; 8px stays unobtrusive but discoverable. */
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-track{background:rgba(20,20,20,0.04);}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--mid);border-radius:4px;}
+  .sidebar::-webkit-scrollbar-thumb:hover{background:var(--dark);}
+  .sidebar{scrollbar-width:thin;scrollbar-color:var(--mid) rgba(20,20,20,0.04);}
 
   /* Disclaimer */
   .disclaimer{padding:12px 24px;background:#141414;color:var(--white);font-family:var(--font-sans);font-size:10px;line-height:1.5;
@@ -488,6 +531,11 @@
       <h1 id="map-title-text">Sky Score</h1>
       <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVABILITY DATA</div>
     </div>
+    <div class="first-hint" id="first-hint" role="status">
+      <span class="hint-icon" aria-hidden="true">&#9678;</span>
+      <span class="hint-text">Type a postcode (e.g. <strong>SW11 1AA</strong>) or click a borough to see its score</span>
+      <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
+    </div>
     <div class="city-selector" id="city-selector">
       <button type="button" class="city-btn active" data-city="london" onclick="switchCity('london')">London</button>
       <button type="button" class="city-btn" data-city="nyc" onclick="switchCity('nyc')">New York</button>
@@ -564,7 +612,7 @@
       <span class="chat-close" id="chat-close">&times;</span>
     </div>
     <div class="chat-messages" id="chat-messages">
-      <div class="chat-msg bot" id="chat-welcome"><div class="chat-bubble">Hi! I can help you compare London boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where's the quietest area with good schools under 500K?"</em></div></div>
+      <div class="chat-msg bot" id="chat-welcome"><div class="chat-bubble"></div></div>
     </div>
     <div class="chat-input-row">
       <button type="button" class="chat-upload-btn" id="chat-upload-btn" title="Upload property photo for AI analysis">
@@ -1189,6 +1237,36 @@ function formatPrice(rawPrice, city) {
   if (rawPrice == null || rawPrice === 0) return 'N/A';
   const symbol = city === 'nyc' ? '$' : '£';
   return symbol + Math.round(rawPrice).toLocaleString('en-GB');
+}
+
+// HTML escape for safe interpolation into HTML and attribute contexts.
+// Used everywhere a user-controlled string lands in innerHTML or a
+// data-* attribute value. Replaces the inline arrow-fn duplicates that
+// used to live inside renderFavourites and renderBoroughRanking.
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+  );
+}
+const escapeHtmlAttr = escapeHtml;
+
+// Tooltip explaining the 0-10 score on hover. The composite mixes
+// absolute and cohort-relative components — surfacing this transparency
+// is part of the methodology-defensibility positioning. Returns the
+// markup; CSS styles it as a popover anchored to .score-explain-trigger.
+function renderScoreTip() {
+  return `<div class="score-tip" id="score-tip" role="tooltip">
+    <strong>How to read this score</strong>
+    <p>The 0-10 number is a weighted summary of four components, each themselves on a 0-10 scale:</p>
+    <ul>
+      <li><strong>Quiet</strong> &mdash; absolute (DEFRA/FAA noise bands).</li>
+      <li><strong>Affordability</strong> &mdash; cohort-relative (cheapest = 10).</li>
+      <li><strong>Growth</strong> &mdash; cohort-relative (fastest growing = 10).</li>
+      <li><strong>Liveability</strong> &mdash; schools 35%, crime 30%, transport 25%, healthcare 10%.</li>
+    </ul>
+    <p>The weights change with the persona you've selected (currently <strong>${escapeHtml(PERSONAS[currentPersona].label)}</strong>). See the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">methodology document</a> for full anchoring.</p>
+  </div>`;
 }
 
 // Compact form for table rows where horizontal space is tight (rankings,
@@ -3001,14 +3079,14 @@ function updateSidebar(data, {switchToAnalysis = true} = {}) {
     <div class="sidebar-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict" style="color:${scoreColor(data.score)}">${data.score}/10 - ${PERSONAS[currentPersona].label} Buyer Score</div>
+          <div class="summary-verdict score-explain-trigger" style="color:${scoreColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip">${data.score}/10 - ${PERSONAS[currentPersona].label} Buyer Score</div>
           ${getVerdict(data)}
         </div>
-        <button class="fav-btn ${isFavourite(data.name)?'saved':''}" onclick="toggleFavourite('${data.name.replace(/'/g,"\\'")}','${data.name.replace(/'/g,"\\'")}','${(data.impact||'unknown').toUpperCase()}',${data.score})" style="margin-left:10px;">
+        <button class="fav-btn ${isFavourite(data.name)?'saved':''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact||'unknown').toUpperCase())}" data-fav-score="${data.score}" style="margin-left:10px;">
           <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(data.name)?'SAVED':'SAVE'}
         </button>
       </div>
-    </div>
+    </div>${renderScoreTip()}
 
     <div class="sidebar-section">
       <h3>SCORE BREAKDOWN <span style="font-weight:400;font-size:10px;color:var(--mid);">${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} PROFILE</span></h3>
@@ -3211,7 +3289,7 @@ function updateSidebarPostcode(analysis, boroughData) {
             <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${analysis.postcode}</div>
             <div style="font-size:10px;color:var(--mid);">${analysis.ward}, ${analysis.borough}</div>
           </div>
-          <button class="fav-btn ${isFavourite(analysis.postcode)?'saved':''}" onclick="toggleFavourite('${analysis.postcode.replace(/'/g,"\\'")}','${analysis.borough.replace(/'/g,"\\'")}','${analysis.noiseEstimate}',${boroughData?(Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4+(boroughData.scores?.afford??5)*0.35+(boroughData.scores?.growth??5)*0.25)*10)/10):'0'})">
+          <button class="fav-btn ${isFavourite(analysis.postcode)?'saved':''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(analysis.noiseEstimate)}" data-fav-score="${boroughData?(Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4+(boroughData.scores?.afford??5)*0.35+(boroughData.scores?.growth??5)*0.25)*10)/10):0}">
             <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode)?'SAVED':'SAVE'}
           </button>
         </div>
@@ -3583,6 +3661,31 @@ function closeReport() { document.getElementById('report-modal').classList.remov
 
 function printReport() {
   const content = document.getElementById('report-content').innerHTML;
+  const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/.test(navigator.userAgent);
+
+  // On mobile, the print dialog is awkward and many browsers don't expose
+  // a "Save as PDF" option. Prefer the Web Share API when available
+  // (lets the user save to Files / Notes / share to email), and fall back
+  // to opening a clean printable page for them to use the browser's
+  // built-in "Save to Files" / "Print to PDF" if they want.
+  if (isMobile && navigator.share) {
+    // Share the plain-text version of the report rather than the print
+    // window. Less polished but actionable.
+    const text = (document.getElementById('report-content').innerText || '').slice(0, 4000);
+    navigator.share({
+      title: 'Sky Score Property Intelligence Report',
+      text: text,
+    }).catch(() => {
+      // User cancelled or share failed — fall through to printable view.
+      openPrintableWindow(content);
+    });
+    return;
+  }
+
+  openPrintableWindow(content, !isMobile);
+}
+
+function openPrintableWindow(content, autoPrint) {
   const win = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html><html><head><title>Property Intelligence Report</title>
     <style>body{font-family:'Inter',Arial,sans-serif;max-width:700px;margin:0 auto;padding:32px;font-size:13px;line-height:1.7;color:#333;}
@@ -3591,7 +3694,11 @@ function printReport() {
     strong{color:#141414;}.report-actions{display:none;}.report-close{display:none;}
     @media print{body{padding:0;}}</style></head><body>${content}</body></html>`);
   win.document.close();
-  setTimeout(() => win.print(), 500);
+  // Use onload instead of setTimeout — race-safe (the audit flagged the
+  // setTimeout pattern at line 3574 as fragile).
+  if (autoPrint) {
+    win.onload = () => win.print();
+  }
 }
 
 // ============================================================
@@ -3629,14 +3736,7 @@ async function switchCity(city) {
 
   // Reset chat for new city
   chatHistory = [];
-  const chatWelcome = document.getElementById('chat-welcome');
-  if (chatWelcome) {
-    if (city === 'nyc') {
-      chatWelcome.querySelector('.chat-bubble').innerHTML = 'Hi! I can help you compare New York boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where\'s the quietest area in NYC with good schools under $600K?"</em>';
-    } else {
-      chatWelcome.querySelector('.chat-bubble').innerHTML = 'Hi! I can help you compare London boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where\'s the quietest area with good schools under 500K?"</em>';
-    }
-  }
+  setChatWelcome(city);
 
   // Update layer toggle labels and legend for city. Plain English (no
   // agency acronyms) — the source of the data is shown in the tooltip
@@ -3778,6 +3878,22 @@ function renderCityAirports() {
       .attr('font-size','7px').attr('font-family','var(--font-mono)')
       .attr('font-weight','500').attr('fill','#F27D26');
   });
+}
+
+// Set the chat welcome bubble's text based on current city. Called on
+// first paint via init() and again whenever switchCity runs, so the
+// London/NYC welcome wording is correct from the moment the page renders
+// (was previously paint-flashing London text on NYC-default loads).
+function setChatWelcome(city) {
+  const el = document.getElementById('chat-welcome');
+  if (!el) return;
+  const bubble = el.querySelector('.chat-bubble');
+  if (!bubble) return;
+  if (city === 'nyc') {
+    bubble.innerHTML = 'Hi! I can help you compare New York boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where\'s the quietest area in NYC with good schools under $600,000?"</em>';
+  } else {
+    bubble.innerHTML = 'Hi! I can help you compare London boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where\'s the quietest area with good schools under £500,000?"</em>';
+  }
 }
 
 function initPersonaSelector() {
@@ -3949,6 +4065,57 @@ async function init() {
 
   document.getElementById('loading').style.display='none';
   document.getElementById('app').style.display='grid';
+
+  // Populate chat welcome before any user interaction. Without this,
+  // the bubble starts empty and only fills in on first city switch.
+  setChatWelcome(currentCity);
+
+  // Delegated click handler for sidebar .fav-btn elements. The buttons
+  // are re-rendered every time updateSidebar / updateSidebarPostcode
+  // run, so per-render handler binding would leak listeners; delegating
+  // off the static #sidebar container avoids that. Replaces the previous
+  // inline onclick="toggleFavourite('${name}'…)" pattern (audit I8).
+  document.getElementById('sidebar').addEventListener('click', (e) => {
+    const btn = e.target.closest('.fav-btn');
+    if (!btn) return;
+    e.preventDefault();
+    // Two cases: borough card uses data-fav-name, postcode card uses
+    // data-fav-postcode + data-fav-borough. Borough name doubles as
+    // postcode in the borough case (legacy behaviour from inline
+    // onclick(name, name, …)).
+    const postcodeKey = btn.dataset.favPostcode || btn.dataset.favName;
+    const boroughName = btn.dataset.favBorough || btn.dataset.favName;
+    if (!postcodeKey) return;
+    toggleFavourite(
+      postcodeKey,
+      boroughName,
+      btn.dataset.favImpact || 'UNKNOWN',
+      Number(btn.dataset.favScore) || 0,
+    );
+  });
+
+  // First-time hint banner. Hidden once the user has dismissed it (saved
+  // to localStorage) OR once they perform any meaningful action (search,
+  // borough click, layer toggle). Re-shows in private windows.
+  const hintEl = document.getElementById('first-hint');
+  if (hintEl) {
+    if (localStorage.getItem('flightmap_hint_seen') === '1') {
+      hintEl.classList.add('dismissed');
+    } else {
+      const dismiss = () => {
+        hintEl.classList.add('dismissed');
+        try { localStorage.setItem('flightmap_hint_seen', '1'); } catch (e) {}
+      };
+      document.getElementById('first-hint-dismiss').addEventListener('click', dismiss);
+      // Auto-dismiss on any of the implicit "I've started using the app"
+      // signals. `once: true` so each listener fires at most once.
+      document.getElementById('search-input').addEventListener('focus', dismiss, { once: true });
+      document.getElementById('layer-toggles').addEventListener('click', dismiss, { once: true });
+      // Auto-dismiss after 30 seconds even if the user doesn't interact —
+      // by that point the banner is just chrome.
+      setTimeout(dismiss, 30_000);
+    }
+  }
 
   const container = document.getElementById('map-container');
   svg = d3.select('#map-svg');
