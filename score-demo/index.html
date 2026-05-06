@@ -303,6 +303,33 @@
     margin-top: 40px;
   }
   footer a { color: var(--amber); text-decoration: none; }
+
+  /* Signup card */
+  .signup-card { border-color: rgba(245, 158, 11, 0.35); }
+  .signup-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+  .signup-row > div { flex: 1; min-width: 180px; }
+  .signup-result {
+    margin-top: 16px; padding: 14px 16px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+    font-family: 'Geist Mono', monospace; font-size: 13px;
+  }
+  .signup-result.success { border-color: var(--green); }
+  .signup-result.error { border-color: var(--red); }
+  .signup-key {
+    display: flex; gap: 8px; align-items: center;
+    background: var(--bg); padding: 10px 12px; border-radius: 4px;
+    border: 1px dashed var(--border); margin: 8px 0;
+    word-break: break-all; font-size: 12px;
+  }
+  .signup-key button {
+    margin: 0; padding: 4px 10px; font-size: 11px;
+    background: var(--amber); color: var(--bg); border: 0; border-radius: 3px;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .signup-warn {
+    color: var(--amber-dim); font-size: 12px; margin-top: 6px;
+    font-family: 'Geist', sans-serif;
+  }
 </style>
 </head>
 <body>
@@ -313,8 +340,28 @@
 </header>
 
 <main>
+  <section class="card signup-card" aria-labelledby="signup-heading">
+    <h2 id="signup-heading">Get your own API key</h2>
+    <p class="tag" style="margin-bottom:12px;">Free tier: 1000 requests / month, 5 burst, 2 sustained. One key per email. Shown once on signup — save it somewhere durable.</p>
+    <form id="signupForm">
+      <div class="signup-row">
+        <div>
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div>
+          <label for="signupName">Name (optional)</label>
+          <input type="text" id="signupName" placeholder="Your name" autocomplete="name">
+        </div>
+        <button type="submit" id="signupBtn">Issue key</button>
+      </div>
+    </form>
+    <div id="signupResult" class="signup-result" style="display:none;" role="status" aria-live="polite"></div>
+  </section>
+
   <section class="card">
     <h2>Try the API</h2>
+    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only — same 1000 req/month limit as the free tier, but shared across all visitors. For production use, sign up for your own key above.</p>
     <form id="form">
       <div>
         <label for="postcode">Postcode</label>
@@ -491,6 +538,72 @@
       ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
     );
   }
+
+  // ----- Self-service API key signup -----
+  // Posts to /v1/signup, displays the issued key (one-time view) with
+  // a copy button. 409 = email already signed up; 400 = bad email.
+  const SIGNUP_URL = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/signup';
+  const signupForm = document.getElementById('signupForm');
+  const signupResult = document.getElementById('signupResult');
+  const signupBtn = document.getElementById('signupBtn');
+
+  signupForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const email = document.getElementById('signupEmail').value.trim();
+    const name  = document.getElementById('signupName').value.trim();
+    if (!email) return;
+
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Issuing...';
+    signupResult.style.display = 'block';
+    signupResult.className = 'signup-result';
+    signupResult.textContent = 'Creating your key...';
+
+    try {
+      const r = await fetch(SIGNUP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      });
+      const data = await r.json();
+
+      if (r.status === 201 && data.apiKey) {
+        signupResult.className = 'signup-result success';
+        signupResult.innerHTML = `
+          <strong>Your API key</strong>
+          <div class="signup-key">
+            <span id="signupKeyVal">${escapeHtml(data.apiKey)}</span>
+            <button type="button" id="signupCopyBtn">Copy</button>
+          </div>
+          <div class="signup-warn">${escapeHtml(data.note || 'Save this key — it cannot be retrieved later.')}</div>
+          <div style="margin-top:8px;font-size:12px;">Limits: ${data.limits.monthlyQuota.toLocaleString()} req/month, ${data.limits.burstLimit} burst, ${data.limits.sustainedRateLimit}/sec sustained.</div>
+        `;
+        document.getElementById('signupCopyBtn').addEventListener('click', () => {
+          navigator.clipboard.writeText(data.apiKey).then(() => {
+            const btn = document.getElementById('signupCopyBtn');
+            btn.textContent = 'Copied';
+            setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+      } else if (r.status === 409) {
+        signupResult.className = 'signup-result error';
+        signupResult.innerHTML = `
+          <strong>Already signed up</strong>
+          <div style="margin-top:6px;font-size:13px;">${escapeHtml(data.error || '')}</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--muted);">${escapeHtml(data.note || '')}</div>
+        `;
+      } else {
+        signupResult.className = 'signup-result error';
+        signupResult.textContent = data.error || `Signup failed (HTTP ${r.status}).`;
+      }
+    } catch (err) {
+      signupResult.className = 'signup-result error';
+      signupResult.textContent = `Network error: ${err.message}`;
+    } finally {
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Issue key';
+    }
+  });
 </script>
 </body>
 </html>

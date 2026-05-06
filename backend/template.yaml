@@ -337,6 +337,87 @@ Resources:
       KeyType: API_KEY
       UsagePlanId: !Ref ScoreFreeUsagePlan
 
+  # --- Self-service signup ---
+  # POST /v1/signup creates a new APIGW key, links to ScoreFreeUsagePlan,
+  # records the email in SignupsTable. Unauthenticated by design (form
+  # signup) — abuse bounded by API Gateway throttle + idempotency on email.
+  # See backend/lambdas/signup/app.py for handler logic.
+  SignupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/signup/
+      Handler: app.handler
+      Timeout: 10
+      MemorySize: 256
+      Environment:
+        Variables:
+          # USAGE_PLAN_NAME is hardcoded to avoid a CloudFormation circular
+          # dependency (SignupFunction → ScoreFreeUsagePlan → FlightMapApi
+          # → SignupFunction). The signup Lambda resolves the plan ID at
+          # runtime via apigateway:GET on /usageplans (cached per warm
+          # container).
+          USAGE_PLAN_NAME: SkyScoreFreeTier
+          SIGNUPS_TABLE: !Ref SignupsTable
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref SignupsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref SignupsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - apigateway:POST
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys'
+                # Wildcard usage-plan ARN to avoid circular dependency on
+                # ScoreFreeUsagePlan.
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
+            - Effect: Allow
+              Action:
+                - apigateway:GET
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans'
+            - Effect: Allow
+              Action:
+                # Rollback path — revoke a just-created key when a
+                # signup race is detected (DDB ConditionExpression fails
+                # after APIGW key already exists).
+                - apigateway:DELETE
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+      Events:
+        SignupPost:
+          # No Auth block — default is no API key required, which is the
+          # whole point of self-service signup. Abuse mitigated by API
+          # Gateway throttle + per-email idempotency in the handler.
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup
+            Method: post
+        SignupOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup
+            Method: options
+
+  # --- DynamoDB Table — Self-service signup audit log ---
+  # Email is the partition key (one signup per email — duplicate signups
+  # return 409 since APIGW won't let us re-show the key value after
+  # creation). Stores keyId for revocation, createdAt for analytics.
+  SignupsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: london-flight-map-signups
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
   # --- DynamoDB Table — DEFRA noise raster samples (v3.1) ---
   # Populated by an offline data-loader script that samples the DEFRA
   # GeoTIFF at every UK postcode centroid. The Lambda reads from this table
