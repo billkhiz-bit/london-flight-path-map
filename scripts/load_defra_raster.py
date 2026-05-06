@@ -217,6 +217,31 @@ def self_test():
     print('Self-test passed. Pyproj + PROJ data are configured correctly.')
 
 
+def _flush_batch(ddb, items):
+    """Write a batch of (postcode, ldenDb) pairs to DynamoDB.
+
+    Originally this used `BatchWriteItem` (25 items per call) for speed,
+    but flightmap-dev's IAM policy only grants `PutItem` / `DeleteItem`
+    on the table — `BatchWriteItem` is a separate IAM action and was
+    denied. Rather than expand IAM, we parallelise per-item PutItems
+    via a ThreadPoolExecutor. ~25 concurrent writes get us throughput
+    comparable to BatchWriteItem within DynamoDB's PAY_PER_REQUEST mode.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _put(item):
+        ddb.put_item(
+            TableName=TABLE_NAME,
+            Item={
+                'postcode': {'S': item['postcode']},
+                'ldenDb':   {'N': item['ldenDb']},
+            },
+        )
+
+    with ThreadPoolExecutor(max_workers=25) as ex:
+        list(ex.map(_put, items))
+
+
 def run_load(limit, dry_run):
     """Sample the raster at NSPL postcode centroids and write to DynamoDB.
 
@@ -320,18 +345,11 @@ def run_load(limit, dry_run):
                 print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
                 samples_logged += 1
 
-            batch.append({
-                'PutRequest': {
-                    'Item': {
-                        'postcode': {'S': pc},
-                        'ldenDb': {'N': f'{lden:.1f}'},
-                    }
-                }
-            })
+            batch.append({'postcode': pc, 'ldenDb': f'{lden:.1f}'})
 
             if len(batch) >= BATCH_SIZE:
                 if not dry_run:
-                    ddb.batch_write_item(RequestItems={TABLE_NAME: batch})
+                    _flush_batch(ddb, batch)
                 written += len(batch)
                 batch.clear()
 
@@ -342,7 +360,7 @@ def run_load(limit, dry_run):
     # Flush remainder
     if batch:
         if not dry_run:
-            ddb.batch_write_item(RequestItems={TABLE_NAME: batch})
+            _flush_batch(ddb, batch)
         written += len(batch)
 
     # Clean up checkpoint on success, only on a full uninterrupted run
