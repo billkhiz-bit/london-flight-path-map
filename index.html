@@ -2094,18 +2094,27 @@ function renderNhsData(containerId, data) {
   }
   const renderGroup = (title, items) => {
     if (!items.length) return '';
-    if (items[0].fallback) return `<p class="info-note"><a href="${items[0].url}" target="_blank" style="color:var(--orange);">Search NHS ${title} services</a></p>`;
+    if (items[0].fallback) {
+      const url = items[0].website || items[0].url || 'https://www.nhs.uk/';
+      return `<p class="info-note"><a href="${url}" target="_blank" rel="noopener" style="color:var(--orange);">${items[0].name || 'Search NHS ' + title + ' services'} &rarr;</a></p>`;
+    }
     return `<h3 style="margin-top:10px;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">${title}</h3>` +
-      items.map(s => `<div class="transport-station">
-        <div>
-          <div class="station-name">${s.name}</div>
-          ${s.address ? `<div class="station-lines"><span class="line-badge">${s.address}</span></div>` : ''}
-        </div>
-        ${s.distance != null ? `<span class="station-dist">${s.distance}m</span>` : ''}
-      </div>`).join('');
+      items.map(s => {
+        const nameNode = s.website
+          ? `<a href="${s.website}" target="_blank" rel="noopener" class="station-name" style="color:inherit;">${s.name}</a>`
+          : `<div class="station-name">${s.name}</div>`;
+        const addrParts = [s.address, s.postcode].filter(Boolean).join(', ');
+        return `<div class="transport-station">
+          <div>
+            ${nameNode}
+            ${addrParts ? `<div class="station-lines"><span class="line-badge">${addrParts}</span></div>` : ''}
+          </div>
+          ${s.distance != null ? `<span class="station-dist">${s.distance}m</span>` : ''}
+        </div>`;
+      }).join('');
   };
   el.innerHTML = renderGroup('GP SURGERIES', gp) + renderGroup('PHARMACIES', pharmacies) + renderGroup('HOSPITALS', hospitals) +
-    '<p class="info-note" style="margin-top:8px;">Source: NHS Service Search API.</p>';
+    '<p class="info-note" style="margin-top:8px;">Source: OpenStreetMap (ODbL); cross-link to nhs.uk service search.</p>';
 }
 
 // ============================================================
