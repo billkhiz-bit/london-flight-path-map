@@ -102,11 +102,16 @@ def _get_access_token():
 
 
 def _fetch_opensky(bbox):
-    """Hit OpenSky and return parsed states + meta. Returns None on
-    transient/permanent failure so the caller can serve a cache hit
-    or a graceful empty response. Last error stashed on the function
-    so the caller can include it in the diagnostic response."""
-    _fetch_opensky.last_error = None
+    """Hit OpenSky and return (payload, error). Exactly one of the two is
+    non-None: payload is the parsed JSON on success, error is a short
+    diagnostic string on any failure so the caller can include it in the
+    response envelope.
+
+    Audit N-Code-6: previously stashed `last_error` on a function attribute
+    for cross-call inspection, which races on warm containers under
+    concurrent invocations and hides errors from the cache-hit path. The
+    explicit tuple return is race-safe and makes the contract obvious.
+    """
     url = f'{OPENSKY_URL}?{urlencode(bbox)}'
     headers = {
         'Accept': 'application/json',
@@ -122,24 +127,23 @@ def _fetch_opensky(bbox):
         # 12s rather than 8 — OpenSky throttles AWS IPs heavily on their
         # anonymous tier. With OAuth2 token, response is typically <1s.
         with urlopen(req, timeout=12) as resp:
-            return json.loads(resp.read().decode())
+            return json.loads(resp.read().decode()), None
     except HTTPError as exc:
-        _fetch_opensky.last_error = f'HTTPError {exc.code}: {exc.reason}'
-        logger.warning('OpenSky HTTP error: %s', _fetch_opensky.last_error)
-        return None
+        err = f'HTTPError {exc.code}: {exc.reason}'
+        logger.warning('OpenSky HTTP error: %s', err)
+        return None, err
     except URLError as exc:
-        _fetch_opensky.last_error = f'URLError: {exc.reason}'
-        logger.warning('OpenSky URL error: %s', _fetch_opensky.last_error)
-        return None
+        err = f'URLError: {exc.reason}'
+        logger.warning('OpenSky URL error: %s', err)
+        return None, err
     except TimeoutError as exc:
-        _fetch_opensky.last_error = f'TimeoutError: {exc}'
-        logger.warning('OpenSky timeout: %s', _fetch_opensky.last_error)
-        return None
+        err = f'TimeoutError: {exc}'
+        logger.warning('OpenSky timeout: %s', err)
+        return None, err
     except json.JSONDecodeError as exc:
-        _fetch_opensky.last_error = f'JSONDecodeError: {exc}'
-        logger.warning('OpenSky returned non-JSON: %s', _fetch_opensky.last_error)
-        return None
-_fetch_opensky.last_error = None
+        err = f'JSONDecodeError: {exc}'
+        logger.warning('OpenSky returned non-JSON: %s', err)
+        return None, err
 
 
 def _normalise_states(raw):
@@ -186,17 +190,19 @@ def handler(event, context):
         if cached and (now - cached[0]) < CACHE_TTL_SEC:
             return _response(200, cached[1])
 
-        raw = _fetch_opensky(CITY_BBOX[city])
+        raw, err = _fetch_opensky(CITY_BBOX[city])
         if raw is None:
-            # Upstream failed — serve last good cache if we have one
+            # Upstream failed — serve last good cache if we have one,
+            # annotated with the fresh-fetch error so debug clients can
+            # see why the cache is being served (audit N-Code-6).
             if cached:
-                return _response(200, {**cached[1], 'stale': True})
+                return _response(200, {**cached[1], 'stale': True, 'upstreamError': err})
             return _response(200, {
                 'flights': [],
                 'count': 0,
                 'available': False,
                 'note': 'Live aircraft data temporarily unavailable.',
-                'upstreamError': _fetch_opensky.last_error,
+                'upstreamError': err,
                 'sources': [ATTRIBUTION],
             })
 

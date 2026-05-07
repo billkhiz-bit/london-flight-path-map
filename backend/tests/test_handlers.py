@@ -290,5 +290,117 @@ class EpcHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
+# ---------- Live flights, OpenSky proxy + caching (audit N-Code-3) ----------
+
+class LiveFlightsHandlerTests(unittest.TestCase):
+    def setUp(self):
+        self.app = _import_lambda('live_flights')
+        # Reset module-level caches between tests so one test's success
+        # doesn't poison the next.
+        self.app._cache.clear()
+        self.app._token_cache['access_token'] = None
+        self.app._token_cache['expires_at'] = 0.0
+
+    def test_unsupported_city_returns_400(self):
+        result = self.app.handler(
+            {'queryStringParameters': {'city': 'tokyo'}}, None,
+        )
+        self.assertEqual(result['statusCode'], 400)
+        body = json.loads(result['body'])
+        self.assertIn('supportedCities', body)
+        self.assertIn('london', body['supportedCities'])
+        self.assertIn('nyc', body['supportedCities'])
+
+    def test_default_city_is_london(self):
+        # No city param → defaults to london; mock the upstream so we don't
+        # actually hit OpenSky during the test run.
+        with patch.object(self.app, '_fetch_opensky',
+                          return_value=({'states': [], 'time': 1700000000}, None)):
+            result = self.app.handler({'queryStringParameters': None}, None)
+        self.assertEqual(result['statusCode'], 200)
+        body = json.loads(result['body'])
+        self.assertEqual(body['city'], 'london')
+
+    def test_normalise_states_drops_ground_and_no_position(self):
+        # OpenSky positional state schema:
+        # 0=icao24 1=callsign 2=country 3=time_pos 4=last_contact
+        # 5=lon 6=lat 7=baro_alt 8=on_ground 9=velocity 10=track 11=vert_rate
+        raw = {'states': [
+            ['abc123', 'BAW123  ', 'GB', 0, 0, -0.45, 51.47,  300, False, 80, 90, 0],
+            ['def456', 'GROUND  ', 'GB', 0, 0, -0.45, 51.47,    0, True,   0, 0, 0],
+            ['ghi789', 'NOPOS   ', 'GB', 0, 0, None,  None,   500, False, 80, 0, 0],
+        ]}
+        out = self.app._normalise_states(raw)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]['icao'], 'abc123')
+        self.assertEqual(out[0]['callsign'], 'BAW123')
+
+    def test_normalise_handles_empty_payload(self):
+        self.assertEqual(self.app._normalise_states(None), [])
+        self.assertEqual(self.app._normalise_states({}), [])
+        self.assertEqual(self.app._normalise_states({'states': None}), [])
+
+    def test_get_access_token_returns_none_without_credentials(self):
+        # Credentials env vars empty by default in test env. Skips the
+        # network call and returns None so caller falls back to anonymous.
+        with patch.object(self.app, 'OPENSKY_CLIENT_ID', ''), \
+             patch.object(self.app, 'OPENSKY_CLIENT_SECRET', ''):
+            self.assertIsNone(self.app._get_access_token())
+
+    def test_token_cache_returns_cached_token_when_fresh(self):
+        # Pre-populate the cache with a token that expires in 30 minutes.
+        self.app._token_cache['access_token'] = 'cached-token-xyz'
+        self.app._token_cache['expires_at'] = 9999999999.0
+        with patch.object(self.app, 'OPENSKY_CLIENT_ID', 'id'), \
+             patch.object(self.app, 'OPENSKY_CLIENT_SECRET', 'secret'), \
+             patch.object(self.app, 'urlopen') as mock_open:
+            self.assertEqual(self.app._get_access_token(), 'cached-token-xyz')
+            mock_open.assert_not_called()  # cache hit, no network
+
+    def test_fetch_failure_no_cache_returns_unavailable(self):
+        # First call, no warm cache, upstream fails → 200 with available=False
+        # plus the upstream error string surfaced to the client (audit N-Code-6).
+        with patch.object(self.app, '_fetch_opensky',
+                          return_value=(None, 'TimeoutError: read timed out')):
+            result = self.app.handler(
+                {'queryStringParameters': {'city': 'london'}}, None,
+            )
+        self.assertEqual(result['statusCode'], 200)
+        body = json.loads(result['body'])
+        self.assertFalse(body['available'])
+        self.assertEqual(body['count'], 0)
+        self.assertEqual(body['upstreamError'], 'TimeoutError: read timed out')
+
+    def test_fetch_failure_with_cache_serves_stale(self):
+        # Cache from a prior good call → upstream fails → serve cached
+        # payload with stale=True and the new fetch's error annotation.
+        good_payload = {'flights': [{'icao': 'abc'}], 'count': 1, 'city': 'london',
+                        'available': True, 'sources': ['…']}
+        self.app._cache['london'] = (1.0, good_payload)  # ancient timestamp
+        with patch.object(self.app, '_fetch_opensky',
+                          return_value=(None, 'HTTPError 503: Service Unavailable')):
+            result = self.app.handler(
+                {'queryStringParameters': {'city': 'london'}}, None,
+            )
+        body = json.loads(result['body'])
+        self.assertEqual(result['statusCode'], 200)
+        self.assertTrue(body['stale'])
+        self.assertEqual(body['count'], 1)
+        self.assertEqual(body['upstreamError'], 'HTTPError 503: Service Unavailable')
+
+    def test_cache_hit_skips_upstream(self):
+        import time as time_mod
+        fresh_payload = {'flights': [], 'count': 0, 'city': 'london',
+                         'available': True, 'sources': ['…']}
+        # Timestamp = now, so well within CACHE_TTL_SEC.
+        self.app._cache['london'] = (time_mod.time(), fresh_payload)
+        with patch.object(self.app, '_fetch_opensky') as mock_fetch:
+            result = self.app.handler(
+                {'queryStringParameters': {'city': 'london'}}, None,
+            )
+            mock_fetch.assert_not_called()
+        self.assertEqual(result['statusCode'], 200)
+
+
 if __name__ == '__main__':
     unittest.main()
