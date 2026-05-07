@@ -228,24 +228,32 @@ def _safe_revoke_orphan_key(key_id):
     even though IAM only allows DELETE on tagged keys, we additionally
     verify by name-prefix that this is a key we created. Catches any
     future code path that might pass an arbitrary keyId by mistake.
+
+    Audit N-Code-7: failures here are logged with a [SIGNUP_ORPHAN_KEY]
+    structured prefix at ERROR level so they're alarm-able via a
+    CloudWatch Logs Insights query like:
+      fields @timestamp, @message
+      | filter @message like /\[SIGNUP_ORPHAN_KEY\]/
+    Each failure represents a leaked APIGW key that erodes the per-account
+    10,000-key quota over time. Set up a CloudWatch metric filter on the
+    above query and alarm on count > 0 over a rolling window.
     """
     try:
         info = apigw.get_api_key(apiKey=key_id, includeValue=False)
     except ClientError as get_err:
-        logger.warning('failed to look up orphan key %s before revoke: %s',
-                       key_id, get_err.response.get('Error', {}).get('Code'))
+        logger.error('[SIGNUP_ORPHAN_KEY] lookup-failed keyId=%s code=%s',
+                     key_id, get_err.response.get('Error', {}).get('Code'))
         return
     key_name = info.get('name', '')
     if not key_name.startswith(KEY_NAME_PREFIX):
-        logger.error('refusing to revoke key %s: name %r does not match '
-                     'SignupLambda prefix; aborting to avoid deleting an '
-                     'unrelated key', key_id, key_name)
+        logger.error('[SIGNUP_ORPHAN_KEY] refusing-non-prefix keyId=%s name=%r',
+                     key_id, key_name)
         return
     try:
         apigw.delete_api_key(apiKey=key_id)
     except ClientError as revoke_err:
-        logger.warning('failed to revoke orphan key %s: %s',
-                       key_id, revoke_err.response.get('Error', {}).get('Code'))
+        logger.error('[SIGNUP_ORPHAN_KEY] revoke-failed keyId=%s code=%s',
+                     key_id, revoke_err.response.get('Error', {}).get('Code'))
 
 
 def handle_post(event):
