@@ -11,7 +11,7 @@
 | # | Original issue | Status | Fix commit / note |
 |---|---|---|---|
 | C1 | NYC `renderNycBoroughs()` resize crash | ✅ Fixed | `3ffd640` |
-| C2 | Demo API key publicly exposed | 🟡 Key rotated, structural exposure remains | `8edd4b0` rotated; key still hardcoded in `score-demo/index.html:412`, `score-demo/status.html:153`. See **N-Sec-3** below for the structural fix |
+| C2 | Demo API key publicly exposed | 🟢 **Accepted with rotation discipline (2026-05-07)** | `8edd4b0` rotated; key still hardcoded in `score-demo/index.html:412`. After review, accepted as bounded risk: blast radius is "attacker DOSes the demo for ≤30 days by burning the 1000 req/month quota". Rotation takes 5 minutes (regenerate key in APIGW console + redeploy `score-demo/index.html`). Building a server-side proxy adds latency + a moving piece for a marketing-surface threat. Re-evaluate if a paying customer ever depends on the demo working. |
 | C3 | Favourites IDOR | 🟡 Mitigated by device-token, downgraded to Important | `eb2aa56` added `X-Device-Token` UUID requirement. Not fully closed: capability-based, not identity-based; anyone learning a token can use it. **N-Sec-2** chains XSS to token theft, re-opening the threat |
 | C4 | Open CORS on Bedrock endpoints | 🟢 Accepted by design | `template.yaml:14-26` documents `*` as intentional for B2B; Lambda env var `CORS_ORIGIN` still locks response headers to CloudFront. Residual risk: **N-Sec-4** (no per-route throttle on Bedrock) |
 | C5 | Prompt injection unmitigated | 🟡 Mitigated at prompt layer only | `e8992bb` added `<viewing_context>` delimiters + `_sanitise_context`. **Output layer not escaped** — see **N-Sec-2** for the chained XSS |
