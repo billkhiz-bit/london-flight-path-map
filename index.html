@@ -1786,11 +1786,15 @@
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
+            <!-- visual fix-LAYER-LABELS: title bumped from 8px var(--mid) to
+                 10px var(--dark) for legibility, and source prefix added so
+                 the legend reads as authoritatively as the aircraft section
+                 above (which already says "DEFRA AIRCRAFT NOISE (dB Lden)"). -->
             <div
-              style="margin: 6px 0 4px; font-size: 8px; color: var(--mid); letter-spacing: 1px"
+              style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600"
               id="legend-road-title"
             >
-              ROAD NOISE
+              DEFRA ROAD NOISE
             </div>
             <div class="legend-row">
               <div class="legend-swatch" style="background: #7c3aed; opacity: 0.65"></div>
@@ -1807,10 +1811,10 @@
           </div>
           <div id="legend-flood-group" style="display: none">
             <div
-              style="margin: 6px 0 4px; font-size: 8px; color: var(--mid); letter-spacing: 1px"
+              style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600"
               id="legend-flood-title"
             >
-              FLOOD RISK
+              EA FLOOD RISK
             </div>
             <div class="legend-row">
               <div class="legend-swatch" style="background: #1e3a8a; opacity: 0.55"></div>
@@ -1826,8 +1830,8 @@
             </div>
           </div>
           <div id="legend-aq-group" style="display: none">
-            <div style="margin: 6px 0 4px; font-size: 8px; color: var(--mid); letter-spacing: 1px" id="legend-aq-title">
-              AIR QUALITY
+            <div style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600" id="legend-aq-title">
+              BOROUGH AIR QUALITY
             </div>
             <div class="legend-row">
               <div class="legend-swatch" style="background: #dc2626; opacity: 0.55"></div>
@@ -5262,16 +5266,16 @@
             .attr('stroke-width', 0.5)
             .style('pointer-events', 'none');
         });
-        roadG
-          .append('text')
-          .attr('x', 10)
-          .attr('y', 20) // 1st caption row (visual fix-8: staggered y-offsets)
-          .style('font-family', 'var(--font-mono)')
-          .style('font-size', '9px')
-          .style('fill', '#7c3aed')
-          .style('font-weight', '600')
-          .style('letter-spacing', '1px')
-          .text(currentCity === 'nyc' ? 'DOT ROAD NOISE BY BOROUGH' : 'DEFRA ROAD NOISE BY BOROUGH');
+        // visual fix-LAYER-LABELS: in-map SVG captions removed (used to be a
+        // 9px purple "DEFRA ROAD NOISE BY BOROUGH" at x=10 y=20, alongside
+        // sibling captions for flood + AQ). Two problems: (1) at default
+        // zoom they overlapped the SKY SCORE map title and the LONDON/NYC
+        // city-selector buttons in the top-left corner; (2) they were
+        // redundant — the bottom-left HTML legend already shows a clear
+        // colour-keyed entry for each toggled layer (legend-{road,flood,
+        // aq}-group, gated on toggle state by the layer click handler).
+        // Removing them gives a cleaner top-left and "made clearer" via
+        // the canonical legend rather than scattered map-internal labels.
 
         // Flood risk overlay, borough-level coloring (visible at all zoom levels) + WMS detail when zoomed in
         const floodG = g.append('g').attr('class', 'layer-flood').style('opacity', 0.55);
@@ -5291,16 +5295,7 @@
             .attr('stroke-width', 0.5)
             .style('pointer-events', 'none');
         });
-        floodG
-          .append('text')
-          .attr('x', 10)
-          .attr('y', 34) // 2nd caption row (visual fix-8: staggered)
-          .style('font-family', 'var(--font-mono)')
-          .style('font-size', '9px')
-          .style('fill', '#1e3a8a')
-          .style('font-weight', '600')
-          .style('letter-spacing', '1px')
-          .text(currentCity === 'nyc' ? 'FEMA FLOOD RISK BY BOROUGH' : 'EA FLOOD RISK BY BOROUGH');
+        // (visual fix-LAYER-LABELS: in-map flood caption removed — see comment above renderDefraTiles roadG.)
 
         // Air quality overlay, borough-level coloring (visible at all zoom levels) + WMS detail
         const aqG = g.append('g').attr('class', 'layer-air-quality').style('opacity', 0.55);
@@ -5320,16 +5315,7 @@
             .attr('stroke-width', 0.5)
             .style('pointer-events', 'none');
         });
-        aqG
-          .append('text')
-          .attr('x', 10)
-          .attr('y', 48) // 3rd caption row (visual fix-8: staggered)
-          .style('font-family', 'var(--font-mono)')
-          .style('font-size', '9px')
-          .style('fill', '#991b1b')
-          .style('font-weight', '600')
-          .style('letter-spacing', '1px')
-          .text(currentCity === 'nyc' ? 'EPA AIR QUALITY BY BOROUGH' : 'AIR QUALITY BY BOROUGH');
+        // (visual fix-LAYER-LABELS: in-map air-quality caption removed — see comment above renderDefraTiles roadG.)
 
         updateDefraTiles();
       }
@@ -6058,9 +6044,13 @@
           document.getElementById('legend-path1').textContent = 'JFK PATHS';
           document.getElementById('legend-path2').textContent = 'LGA PATHS';
           document.getElementById('legend-heli-row').style.display = 'none';
-          document.getElementById('legend-noise-title').textContent = 'BTS NOISE (dB DNL)';
+          document.getElementById('legend-noise-title').textContent = 'BTS AIRCRAFT NOISE (dB DNL)';
           document.getElementById('legend-flood').textContent = 'FEMA FLOOD';
           document.getElementById('legend-aq').textContent = 'POOR AIR';
+          // visual fix-LAYER-LABELS: city-aware legend group titles
+          document.getElementById('legend-road-title').textContent = 'DOT ROAD NOISE';
+          document.getElementById('legend-flood-title').textContent = 'FEMA FLOOD RISK';
+          document.getElementById('legend-aq-title').textContent = 'EPA BOROUGH AIR QUALITY';
           // Auto-enable labels for NYC (no built-in borough labels)
           if (!layers.labels) {
             layers.labels = true;
@@ -6075,9 +6065,13 @@
           document.getElementById('legend-path1').textContent = 'LHR PATHS';
           document.getElementById('legend-path2').textContent = 'LCY PATHS';
           document.getElementById('legend-heli-row').style.display = '';
-          document.getElementById('legend-noise-title').textContent = 'DEFRA NOISE (dB Lden)';
+          document.getElementById('legend-noise-title').textContent = 'DEFRA AIRCRAFT NOISE (dB Lden)';
           document.getElementById('legend-flood').textContent = 'FLOOD ZONE';
           document.getElementById('legend-aq').textContent = 'POOR AIR';
+          // visual fix-LAYER-LABELS: restore London-default group titles
+          document.getElementById('legend-road-title').textContent = 'DEFRA ROAD NOISE';
+          document.getElementById('legend-flood-title').textContent = 'EA FLOOD RISK';
+          document.getElementById('legend-aq-title').textContent = 'BOROUGH AIR QUALITY';
         }
 
         // Re-render map with new city data
