@@ -383,6 +383,10 @@
         font-size: 10px;
         font-family: var(--font-mono);
         z-index: 10;
+        /* visual fix-DEFRA-7: cap width so the in-place explainer text
+           added in fix-DEFRA-6 wraps inside the legend instead of forcing
+           the whole panel to expand across the bottom of the map. */
+        max-width: 260px;
       }
       .legend-row {
         display: flex;
