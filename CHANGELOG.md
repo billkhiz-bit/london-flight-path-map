@@ -6,6 +6,11 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12.6 + 12.7 closure — 2026-05-07 late night (analytics gap + funnel events + UTM convention)
+
+- **12.6:** added missing GoatCounter tracker to `score-demo/index.html` (the API browser demo). CSP allowlist had it, but the script tag was never added — the most B2B-relevant page wasn't being counted.
+- **12.7:** wired 8 funnel events (`api-demo-run/error`, `signup-attempted/issued`, `api-{methodology,licensing,demo,spec}-click`) for B2B conversion measurement. UTM convention documented in `OUTREACH_DRAFTS.md` — per-target slug table for cold-email attribution.
+
 ### Wave 12.5 closure — 2026-05-07 late night (borough label contrast)
 
 User flagged that clicking a borough made its name unreadable (label and fill both #141414). Switched borough labels to dark fill + white stroke halo via `paint-order: stroke` so they read on any background — same trick used for airport/heliport codes earlier.

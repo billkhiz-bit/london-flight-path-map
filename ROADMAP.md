@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-07 (Wave 12.4 close — in-map layer captions removed; legend group titles beefed up with source prefixes; see AUDIT_REPORT.md for per-wave breakdown)
+**Last reviewed:** 2026-05-07 (Wave 12.7 close — GoatCounter B2B funnel events + UTM convention documented in OUTREACH_DRAFTS.md; analytics gap on score-demo fixed; see AUDIT_REPORT.md for per-wave breakdown)
 
 ---
 

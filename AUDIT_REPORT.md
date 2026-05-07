@@ -6,6 +6,23 @@
 
 ---
 
+## Wave 12.6 + 12.7 close — 2026-05-07 late night (analytics gap fix + B2B funnel events + UTM convention)
+
+**Wave 12.6 (analytics gap):** `score-demo/index.html` — the most B2B-relevant page on the site — had GoatCounter in its CSP allowlist but the actual tracker script was never added. Without it, we couldn't tell whether visitors who landed on `/` or `/api/` actually clicked through to try the API. One-line fix; tracker now consistent across `/`, `/api/`, `/score-demo/`, `/prototype/`. Deliberately untracked: `/score-demo/api-docs.html` (Swagger reference) + `/score-demo/status.html` (uptime page — won't-fix-by-design from Wave 12).
+
+**Wave 12.7 (event tracking + UTM):** wired 8 GoatCounter custom events for the B2B conversion funnel:
+- `event/api-demo-run` + `event/api-demo-error` (score-demo API call)
+- `event/signup-attempted` + `event/signup-issued` (signup funnel; the gap = drop-off rate)
+- `event/api-methodology-click` (real diligence signal)
+- `event/api-licensing-click` (procurement signal)
+- `event/api-demo-click` + `event/api-spec-click` (intent to integrate)
+
+All events are guarded by a try/catch + presence-check so analytics never breaks the UI. Helper function pattern: `trackEvent(name)` calls `window.goatcounter.count({path: 'event/' + name, event: true})`.
+
+UTM convention documented in `OUTREACH_DRAFTS.md` with a per-target slug table (landmark / tmgroup / onesearch / strideup / alrayan / etc.). Format: `?utm_source=outreach-{slug}&utm_medium={channel}&utm_campaign={YYYY-MM}`. GoatCounter logs the full referrer URL including query string, so the tags flow through automatically — no setup beyond using the right URL when sending. Visible in the dashboard's Referrers tab.
+
+---
+
 ## Wave 12.5 close — 2026-05-07 late night (borough label contrast fix)
 
 User flagged: clicking a borough made its name unreadable because the label fill (#141414) and the selected-borough fill (#141414) were identical. Previous code tried to swap the label colour at render-time based on `selectedBorough`, but the click handler never re-calls `renderLabels`, so labels stayed dark even after the fill went dark.
