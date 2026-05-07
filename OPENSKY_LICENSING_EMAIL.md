@@ -5,6 +5,22 @@
 **Subject:** Licensing enquiry — Sky Score (UK property data tool)
 **Status:** **SENT 2026-05-07.** Acknowledged by their auto-responder under **Ticket #835285** — they are a volunteer non-profit; reply expected to be slow or absent. Reply to the original thread to add information.
 
+### Auto-reply received (verbatim, 2026-05-07)
+
+> Your request (Ticket#835285) has been received and will be reviewed by our support staff.
+>
+> Note that due to the volume of requests you should not expect a reply from this volunteer non-profit if you
+> a) didn't read the FAQ and the yellow boxes on the website
+> b) are asking for personal or out-of-scope usage (most notably Worldmonitor or similar AI slop dashboards).
+>
+> To provide additional information, please reply to this email.
+>
+> Your OpenSky Network Team
+> https://opensky-network.org
+>
+> P.S. If you're looking for some credit card product also named OpenSky, you're at the entirely wrong place. They don't have an email address, you need to call them.
+
+
 > The auto-reply explicitly warns that they tend not to respond to (a) requests where the asker hasn't read the FAQ / yellow boxes on the website, or (b) personal / out-of-scope use, "most notably Worldmonitor or similar AI slop dashboards". Sky Score is neither, but if a follow-up is needed it's worth restating that we (i) removed the feature this week pending their answer (acting in good faith), (ii) are an independent project not an AI dashboard, and (iii) just need a yes/no on whether the existing free OAuth tier covers our use.
 
 > The FAQ links to <https://opensky-network.org/my-opensky/request-data> for data requests, but per OpenSky's own description that form is for **historical data via their Trino interface, restricted to university researchers, governmental organisations, and aviation authorities**. For commercial entities — including us — the documented path is exactly the one we took: email `contact@opensky-network.org`. So no need to also submit that form; if their reply directs us there they'll mention it.
