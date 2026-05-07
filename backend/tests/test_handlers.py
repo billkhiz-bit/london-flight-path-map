@@ -203,6 +203,42 @@ class SignupHandlerTests(unittest.TestCase):
             self.app._safe_revoke_orphan_key('legitimate-key-id')
             mock_delete.assert_called_once_with(apiKey='legitimate-key-id')
 
+    def test_signup_race_revokes_orphan_and_returns_409(self):
+        # I-N6: a real-world signup race — get_existing_signup returns None
+        # (no prior row), create_api_key succeeds, but record_signup hits
+        # ConditionalCheckFailedException because a concurrent request wrote
+        # first. The handler must (a) revoke the just-created key (b) return
+        # 409 with a clear note, and not leak the key value back to the caller.
+        from botocore.exceptions import ClientError
+        race_err = ClientError(
+            {'Error': {'Code': 'ConditionalCheckFailedException',
+                       'Message': 'attribute_not_exists(email)'}},
+            'PutItem',
+        )
+        # get_api_key/delete_api_key are exercised inside _safe_revoke_orphan_key;
+        # mock both and the apigw.create_api_key path.
+        with patch.object(self.app, 'get_existing_signup', return_value=None), \
+             patch.object(self.app, 'create_api_key',
+                          return_value=('key-id-race', 'sk_secret_value')), \
+             patch.object(self.app.ddb, 'put_item', side_effect=race_err), \
+             patch.object(self.app.apigw, 'get_api_key',
+                          return_value={'name': self.app.KEY_NAME_PREFIX + 'race@example.com'}), \
+             patch.object(self.app.apigw, 'delete_api_key') as mock_delete:
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'race@example.com'}),
+            }, None)
+            # 409 for the loser of the race, with our standard error shape.
+            self.assertEqual(result['statusCode'], 409)
+            payload = json.loads(result['body'])
+            self.assertIn('already signed up', payload['error'])
+            self.assertIn('rolled', payload.get('note', ''))
+            # Crucial: the leaked key was revoked (not left dangling against
+            # the per-account 10,000-key APIGW quota).
+            mock_delete.assert_called_once_with(apiKey='key-id-race')
+            # Crucial: the secret key value is NOT echoed back in the 409.
+            self.assertNotIn('sk_secret_value', result['body'])
+
 
 # ---------- NHS, lat/lon validation, fallback shape ----------
 

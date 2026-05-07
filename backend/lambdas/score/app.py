@@ -475,12 +475,47 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None):
     return quiet
 
 # Aliases for boroughs whose canonical name differs from postcodes.io's
-# admin_district output, or common variants.
+# admin_district output, or common variants. We keep both the bare alias and
+# explicit 'Royal Borough of…' / 'London Borough of…' / 'City of…' prefixed
+# variants because partner address data (Land Registry exports, EPC bulk CSVs,
+# OS AddressBase) uses these inconsistently. M-N2 fix.
 BOROUGH_ALIASES = {
-    'Barking and Dagenham': 'Barking and Dagenham',
+    # Bare-name shorteners
     'Barking': 'Barking and Dagenham',
-    'City of London Corporation': 'City of London',
     'Westminster City': 'Westminster',
+    'City of Westminster': 'Westminster',
+    'City of London Corporation': 'City of London',
+    'Corporation of London': 'City of London',
+    # Ampersand variants (some sources use & instead of "and")
+    'Hammersmith & Fulham': 'Hammersmith and Fulham',
+    'Kensington & Chelsea': 'Kensington and Chelsea',
+    'Barking & Dagenham': 'Barking and Dagenham',
+    # Royal borough prefixed forms (postcodes.io occasionally returns these)
+    'Royal Borough of Kensington and Chelsea': 'Kensington and Chelsea',
+    'Royal Borough of Kingston upon Thames': 'Kingston upon Thames',
+    'Royal Borough of Greenwich': 'Greenwich',
+    'Royal Borough of Kensington & Chelsea': 'Kensington and Chelsea',
+    # London Borough prefixed forms (rare but seen in OS AddressBase)
+    'London Borough of Tower Hamlets': 'Tower Hamlets',
+    'London Borough of Hackney': 'Hackney',
+    'London Borough of Newham': 'Newham',
+    'London Borough of Camden': 'Camden',
+    'London Borough of Islington': 'Islington',
+    'London Borough of Southwark': 'Southwark',
+    'London Borough of Lambeth': 'Lambeth',
+    'London Borough of Wandsworth': 'Wandsworth',
+    'London Borough of Lewisham': 'Lewisham',
+    'London Borough of Hounslow': 'Hounslow',
+    'London Borough of Hillingdon': 'Hillingdon',
+    'London Borough of Ealing': 'Ealing',
+    # Common spelling slips
+    'Richmond Upon Thames': 'Richmond upon Thames',
+    'Kingston Upon Thames': 'Kingston upon Thames',
+    'Walthamforest': 'Waltham Forest',
+    'Towerhamlets': 'Tower Hamlets',
+    # Short forms used by some property portals
+    'K&C': 'Kensington and Chelsea',
+    'H&F': 'Hammersmith and Fulham',
 }
 
 SOURCES = [
