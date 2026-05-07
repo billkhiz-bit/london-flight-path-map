@@ -154,23 +154,12 @@ The `.env` file is gitignored. All three SAM parameters use `NoEcho: true` so va
 
 Related separate project (not in this repo): **LedgerAgent** is a semi-finalist in the AWS 10,000 AIdeas Competition.
 
-## Known Issues (from audit March 10-12, 2026, NOTE: >40 days old, suggest re-running `/audit`)
+## Known Issues
 
-See `AUDIT_REPORT.md` for full details. Remaining items:
-- **Favourites endpoint** has no authentication (post-hackathon)
-- **Accessibility**: zero ARIA attributes (post-hackathon)
+See `AUDIT_REPORT.md` (last full audit 2026-05-06, refreshed 2026-05-07) for the live list. Standing items not yet addressed:
 - **Live aircraft**: OpenSky Network has limited coverage at night and rate limits (~10 req/min anonymous)
+- **Borough metadata duplication** across chat/multi_agent/score Lambdas (I4) — extract to shared module
+- **No DLQ / retry config** on async Lambdas (I6)
+- **Stale `PROJECT_DOCUMENTATION.md`** sections (I14, partial fix in `0c20451`)
 
-### Fixed March 11:
-- Contradictory verdicts ("quiet skies" for noisy areas), `||` vs `??` bug in scoring + verdict rewrite
-- Backend data out of sync with frontend (15 noise mismatches, 4 missing boroughs)
-- CORS blocking DELETE on favourites, saved location click-to-navigate broken
-- Map overlays invisible (road noise too faint, air quality blend mode, flood WMS blank at city zoom)
-- All overlays now zoom-aware with debounced refresh
-
-### Fixed March 12:
-- Air quality overlay invisible, replaced WMS-only with borough-level colored polygons (poor/moderate/good)
-- Save button missing from borough view, added to `updateSidebar()` alongside postcode view
-- Road noise blank at city-wide zoom, added zoom threshold, WMS loads at borough level or closer
-- Updated legend to 3-tier air quality scale
-- Demo script updated with new overlay behavior
+Most of the May-6 critical findings have shipped fixes — see `AUDIT_REPORT.md` for the triage column.

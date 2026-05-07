@@ -16,7 +16,7 @@ Sky Score is the noise + livability layer for UK property data, designed to be h
 - **Backend**: 10 Lambdas behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
 - **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with live OpenSky aircraft data
 - **Recent wins**: Amazon Nova hackathon ($200 AWS credits, blog category), Emergent Ventures application submitted (awaiting response), Red Bull Basement application submitted (awaiting shortlist), Luma event applied
-- **Known issues**: see `AUDIT_REPORT.md` (last audit 10-12 March, **suggest re-running `/audit`**)
+- **Known issues**: see `AUDIT_REPORT.md` (last audit 2026-05-06; refreshed 2026-05-07)
 
 ## Constraints
 
@@ -110,7 +110,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 
 | Task | Deadline | Why |
 |---|---|---|
-| Re-run `/audit` (last one is >40 days old) | this week | Catches drift |
+| Re-run `/audit` | next due ~2026-06-07 | Catches drift; last refresh 2026-05-07 |
 | Methodology doc for the API | 2026-05-29 | Required for serious B2B conversations |
 | Consumer-site granularity-wall pass | 2026-06-15 | Protects API channel before serious sales |
 

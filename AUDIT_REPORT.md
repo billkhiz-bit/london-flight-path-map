@@ -1,119 +1,142 @@
 # Audit Report, Sky Score
-**Date:** 2026-05-06
-**Files scanned:** 11 Python Lambdas, 5 HTML/JS files, 6 markdown docs, OpenAPI spec, SAM template, IAM policy, Playwright + unit tests
-**Audit performed by:** 3 parallel agents (backend, frontend, cross-cutting)
-**Previous audit:** 2026-03-10..12 (56 days ago, superseded by this one)
+**Date:** 2026-05-07
+**Files scanned:** 13 Python Lambdas (2 new since prior baseline: `live_flights`, `signup`), `template.yaml`, `iam-policy.json`, `index.html` (4,334 lines), `score-demo/*`, `prototype/index.html`, `scripts/*.py` (incl. new `download_defra_wcs.py`), `tests/`, `backend/tests/`
+**Audit performed by:** 3 parallel agents (code, security, frontend/a11y) + manual triage of prior baseline against commits since 2026-05-06
+**Previous audit:** 2026-05-06 (39 findings, see triage column below)
 
 ---
 
-## Critical (must fix before publicity push or B2B sales)
+## Triage of 2026-05-06 baseline
 
-| # | Issue | File:Line | Category |
+| # | Original issue | Status | Fix commit / note |
 |---|---|---|---|
-| C1 | **Runtime bug, NYC view crashes on browser resize.** `renderNycBoroughs()` is called with no argument from the resize handler but its signature requires `features`. Calls `.data(undefined)` on D3 selection, throws `Cannot read properties of undefined`. | `index.html:4007` (call site) vs `index.html:3561` (signature) | code |
-| C2 | **API key publicly exposed in served frontend.** Free-tier key `T2NpQ…bk5i` is hardcoded in two static files served via CloudFront and committed to git. Anyone viewing source has the key; the 1000 req/month cap is the only abuse defence. Confirmed in commits `2280148` and `07ad823`. | `score-demo/index.html:363`, `score-demo/status.html:153` | security |
-| C3 | **Favourites endpoint allows total cross-tenant access (IDOR).** `userId` is taken from query/body without auth, any caller can read/write/delete any user's saved properties. OWASP A01. Already in ROADMAP as known post-hackathon item; severity remains critical for any publicity push that drives traffic. | `backend/lambdas/favourites/app.py:22, 41-42, 62-63` | security |
-| C4 | **CORS open to `*` on Bedrock-spending endpoints.** `chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report`, `favourites` should be locked to CloudFront origin, currently any origin can call and burn Bedrock spend. The per-Lambda `CORS_ORIGIN` env var is set but unused (template overrides). | `backend/template.yaml:26` (template default) vs all `backend/lambdas/*/app.py:6-9` (env var dead) | security |
-| C5 | **Prompt injection unmitigated.** User-controlled `viewing_context` and `locationData` are interpolated directly into Bedrock system prompts with no delimiter / instruction to ignore embedded directives. | `backend/lambdas/chat/app.py:148`, `multi_agent/app.py:187`, `report/app.py:79` | security |
-| C6 | **No JSON body size limits on Bedrock endpoints.** `chat`, `multi_agent`, `report` accept arbitrarily large payloads → an attacker can send megabytes of `history`/`context` and burn Bedrock spend per request. No API Gateway request validator on these routes. | `backend/lambdas/chat/app.py:108`, `multi_agent/app.py:178`, `report/app.py:54`; `backend/template.yaml` (no `RequestValidator`) | security |
-| C7 | **Bare `except Exception:` swallows everything with no logging on 10 of 11 Lambdas.** Returns generic 500 without any CloudWatch trail. Production debugging is essentially impossible after the fact. | `backend/lambdas/{chat,multi_agent,analyze_image,analyze_document,report,favourites,score,epc,sold_prices,nhs}/app.py` (multiple lines per file) | code |
-| C8 | **Documentation drift, claimed methodology version doesn't match code.** Live API returns `methodologyVersion: "3.1"` but `README.md:7,97` says "v3.0", `score-demo/openapi.yaml:237` example shows "2.0". Methodology defensibility is the explicit selling point, drift here is the highest-trust-risk doc bug. | `README.md:7,97`, `score-demo/openapi.yaml:237`, vs `backend/lambdas/score/app.py:28` | docs |
-| C9 | **D3 SVG map has no accessible name.** `<svg id="map-svg">` is the primary content and is invisible to screen readers. No `role`, `aria-label`, or `<title>`. The interactive map is unusable for assistive-tech users. | `index.html:490` | a11y |
+| C1 | NYC `renderNycBoroughs()` resize crash | ✅ Fixed | `3ffd640` |
+| C2 | Demo API key publicly exposed | 🟡 Key rotated, structural exposure remains | `8edd4b0` rotated; key still hardcoded in `score-demo/index.html:412`, `score-demo/status.html:153`. See **N-Sec-3** below for the structural fix |
+| C3 | Favourites IDOR | 🟡 Mitigated by device-token, downgraded to Important | `eb2aa56` added `X-Device-Token` UUID requirement. Not fully closed: capability-based, not identity-based; anyone learning a token can use it. **N-Sec-2** chains XSS to token theft, re-opening the threat |
+| C4 | Open CORS on Bedrock endpoints | 🟢 Accepted by design | `template.yaml:14-26` documents `*` as intentional for B2B; Lambda env var `CORS_ORIGIN` still locks response headers to CloudFront. Residual risk: **N-Sec-4** (no per-route throttle on Bedrock) |
+| C5 | Prompt injection unmitigated | 🟡 Mitigated at prompt layer only | `e8992bb` added `<viewing_context>` delimiters + `_sanitise_context`. **Output layer not escaped** — see **N-Sec-2** for the chained XSS |
+| C6 | No body size limits | 🟡 Per-Lambda cap added, no APIGW validator | `e8992bb` added `MAX_BODY_BYTES = 64KiB` in chat/multi_agent/report; analyze_image (1MB), analyze_document (2MB) cap separately |
+| C7 | Bare `except Exception:` no logging | ✅ Fixed | `e8992bb` — every Lambda now `logger.exception` then 500 response |
+| C8 | Methodology version drift | ✅ Fixed | `3ffd640` |
+| C9 | D3 SVG no accessible name | ✅ Fixed | `3ffd640` — `index.html:591` has `role="application"` + comprehensive `aria-label` + `<title>` |
+| I1 | Batch endpoint sequential HTTP | ✅ Fixed | `e8992bb` |
+| I2 | npm audit (4 vulns) | ✅ Fixed | `3ffd640`; live `npm audit` returns 0 vulnerabilities (lockfile inspection by security agent disagreed but my fresh run is authoritative) |
+| I3 | OpenAPI missing fields | 🔴 Still open | |
+| I4 | Borough metadata duplicated | 🔴 Still open | |
+| I5 | No tests for 9 of 11 Lambdas | 🟡 Partial | `eb2aa56` added handler tests; new `live_flights` + `signup` have none — see **N-Code-3** |
+| I6 | No DLQ on async Lambdas | 🔴 Still open | |
+| I7 | `lru_cache` caches errors as None | ✅ Fixed | `e8992bb` |
+| I8 | Inline onclick XSS | 🟡 Mostly fixed | Favourites delegated; static handlers (`closeReport`, `printReport`, `switchTab`, `switchCity`, `toggleMetricDetail`) still inline. **N-Sec-1**, **N-Sec-2** are the live exploitation paths |
+| I9 | visibilitychange listener leak | ✅ Fixed | `e8992bb` |
+| I10 | Touch targets <24×24 | ✅ Fixed | `5e7524d` |
+| I11 | Layer toggles `<div role="button">` | ✅ Fixed | Native `<button>` + `aria-pressed` |
+| I12 | Hardcoded URLs duplicated | 🔴 Still open | |
+| I13 | Bedrock model IDs hardcoded | 🟡 Partial | Env vars added (`os.environ.get('NOVA_*_MODEL_ID', ...)`) but template never overrides — defaults still hardcoded in code |
+| I14 | Stale `PROJECT_DOCUMENTATION.md` | 🟡 Partial | `0c20451` synced NYC; other claims still drifted |
+| I15 | Missing canonical/OG/theme-color | 🟡 Partial | Added to `index.html:9-37`. Still missing on `score-demo/*` and `prototype/index.html` |
+| I16 | Silent postcode lookup failures | 🔴 Still open | |
+| M1-M2, M4-M14 | Polish items | 🔴 Mostly still open | M3 (`datetime.utcnow`) ✅ fixed |
+
+**Net delta:** 9 Critical → 1 still-open + 4 partial-mitigation + 2 design-accepted. 16 Important → 8 still open. 14 Minor → 13 still open.
 
 ---
 
-## Important (fix in next 1-2 weeks)
+## NEW Critical (must-fix before publicity push or B2B sales)
 
 | # | Issue | File:Line | Category |
 |---|---|---|---|
-| I1 | `MAX_BATCH_SIZE = 100` allows ~100 sequential postcodes.io HTTP calls per `/v1/score/batch` request inside a 10s Lambda timeout, guaranteed timeouts above ~30 unique postcodes. | `backend/lambdas/score/app.py:30, 268, 822` | code |
-| I2 | npm audit: 4 vulns (2 high, `flatted` prototype pollution GHSA-rf6f-7fwh-wjgh, `picomatch` ReDoS GHSA-c2c7-rcm5-vvqj; 2 moderate, `brace-expansion` GHSA-f886-m6hf-6m8v, `postcss` XSS GHSA-qx2v-qp2m-jg93). All transitive devDeps; `fixAvailable: true` for each. | `package.json` / `package-lock.json` | security |
-| I3 | OpenAPI spec is missing recent fields. Doesn't document `?include=` query param, `context.quietResolution`, `plannedComponents` block, `?methodology=` grace-period parameter. | `score-demo/openapi.yaml` | docs |
-| I4 | Borough metadata duplicated across 3 Lambdas. Drift inevitable; extract to a shared layer or module. | `backend/lambdas/chat/app.py:11-52`, `multi_agent/app.py:11-52`, `score/app.py:51-97` | code |
-| I5 | No tests for 9 of 11 Lambdas. Only `score` has unit tests. | `backend/tests/` | tests |
-| I6 | No DLQ / `MaximumRetryAttempts` on any Lambda, failed async invocations vanish silently. | `backend/template.yaml` | infra |
-| I7 | `lru_cache` caches errors as `None` forever within a container; postcodes.io outage poisons cache for ~15 min. | `backend/lambdas/score/app.py:283, 503` | code |
-| I8 | XSS-prone inline `onclick="..."` handlers built via string interpolation with only `'` escaping (not `"`, backslashes, `</script>`). | `index.html:3378, 3383, 3677, 2902` | security |
-| I9 | Listener leak: `startLiveFlights()` adds `visibilitychange` listener every toggle. Toggle 5 times, 5 listeners. | `index.html:2751` | code |
-| I10 | Touch targets below WCAG 2.5.8 minimum, `.fav-remove` is ~14×14, `.layer-toggle` ~22 px tall. | `index.html:67, 73, 415-416` | a11y |
-| I11 | Layer toggles are `<div role="button">` not `<button>`. Switch to native button. | `index.html:452-459` | a11y |
-| I12 | Hardcoded API/CloudFront URLs duplicated 3× across files. Drift risk. | `index.html:584`, `score-demo/index.html:364`, `score-demo/status.html:158-188` | code |
-| I13 | Bedrock model IDs hardcoded across 5 Lambdas, should be env vars. | `backend/lambdas/{chat,multi_agent,analyze_image,analyze_document,report}/app.py` | infra |
-| I14 | `PROJECT_DOCUMENTATION.md` severely stale, claims "10 Lambdas", "290+ neighbourhoods", framing project as a hackathon entry. | `PROJECT_DOCUMENTATION.md:5, 50, 85, 309, 322` | docs |
-| I15 | Missing canonical / theme-color / robots meta tags. `score-demo/*` and `prototype/index.html` have no OG tags. | `index.html`, `score-demo/*.html`, `prototype/index.html` | seo |
-| I16 | Postcode lookup failure silent, `null` returned with no user-facing toast. | `index.html:1639, 3331, 3346, 3358` | ux |
+| **N-Sec-1** | **DOM XSS via OSM data, NHS service display.** `s.website`, `s.name`, `s.address`, `s.postcode` from community-edited OSM Overpass results interpolated raw into `innerHTML` and `href`. An attacker can poison an OSM node tag with `javascript:` or `<script>` payloads that execute on every visitor of the affected postcode. | `index.html:2229-2230, 2235` | security |
+| **N-Sec-2** | **DOM XSS in chat-reply renderer, chains with C5.** `formatChatReply()` (line 2310) converts markdown to HTML but never escapes. A successful prompt-injection that emits `<img src=x onerror=…>` runs in the user's session, steals the device token, and turns C3's mitigation back into a favourites takeover. The C5 prompt-layer mitigation is incomplete on its own. | `index.html:3390, 4283, 4311` | security |
+| **N-Code-1** | **Signup IAM grants `apigateway:DELETE` on `arn:.../apikeys/*` (wildcard).** A bug or compromise in the signup Lambda lets it delete any API key in the AWS account, not only keys it created. | `backend/template.yaml:425-427` | security/infra |
+| **N-Code-2** | **Self-service `/v1/signup` has no per-route throttle and no CAPTCHA.** Inherits only the global 10 RPS API throttle shared across all routes. An attacker can pump ~600 keys/min into the AWS account's per-account APIGW key quota (default 10,000), exhausting it and locking out legitimate signups; plus the shared usage plan widens the Bedrock cost surface. | `backend/template.yaml:428-443`, `backend/lambdas/signup/app.py:13-20`, `backend/lambdas/signup/app.py:54-58` (CORS `*`) | security |
+| **N-Front-1** | **Persona regression on B2B demo.** New personas (`renter`/`commuter`/`downsizer`) shipped on `index.html` + `openapi.yaml` in `192ce18` are missing from `score-demo/index.html`. The page B2B prospects land on disagrees with the docs they read first. | `score-demo/index.html:372-378, 415` | UX/credibility |
+| **N-Front-2** | **Em-dash strip script (`192ce18`) corrupted UI placeholders in status page.** Render shows literal `, ` where a placeholder string used to live (Last checked, methodology version, API version). | `score-demo/status.html:127, 136-137` | UX |
 
 ---
 
-## Minor (polish)
+## NEW Important (fix in next 1-2 weeks)
 
 | # | Issue | File:Line | Category |
 |---|---|---|---|
-| M1 | Inconsistent response shape, only 5 of 11 Lambdas include a `sources` array. | `backend/lambdas/{chat,multi_agent,analyze_image,analyze_document,report,favourites}/app.py` | docs |
-| M2 | Inconsistent CORS headers across Lambdas. | `backend/lambdas/*/app.py` | code |
-| M3 | `datetime.utcnow()` deprecated in Python 3.12+. | `backend/lambdas/favourites/app.py:54` | code |
-| M4 | `iam-policy.json` contains `REPLACE_WITH_YOUR_AWS_ACCOUNT_ID` placeholders. | `backend/iam-policy.json:21,76,108,118,149,160` | infra |
-| M5 | 7-9px font sizes trigger WCAG 1.4.4 zoom/reflow concerns. | `index.html:145, 210, 244, 270, 336, 491` | a11y |
-| M6 | Tab elements use `<div role="tab">` not native `<button>`. | `index.html:547-549` | a11y |
-| M7 | `score-demo/index.html` lacks `:focus-visible` outline. | `score-demo/index.html:96-99` | a11y |
-| M8 | Prototype 7-9px cyan-on-black fails AA contrast. | `prototype/index.html:633, 638, 660, 664-665` | a11y |
-| M9 | Meta description in `index.html:9` is 268 chars (Google truncates ~155-160). | `index.html:9` | seo |
-| M10 | `lang` attribute mismatch, `index.html` uses `"en"`, `score-demo/*` use `"en-GB"`. | various | seo |
-| M11 | Score-demo HTML files have no favicon. | `score-demo/*.html` | polish |
-| M12 | `is_complex_query` keyword router has overlapping/loose triggers. | `backend/lambdas/chat/app.py:90-103` | code |
-| M13 | CHANGELOG entries all dated 2026-05-05 (5 versions same day). Benign. | `CHANGELOG.md` | docs |
-| M14 | README architecture diagram says "Lambda × 11" but PROJECT_DOCUMENTATION.md says 10. | `README.md:137`, `PROJECT_DOCUMENTATION.md:85` | docs |
+| **N-Sec-3** | TfL station names, sold-prices addresses, autocomplete `b`/`a`/`pc` values reach `innerHTML` unescaped. Lower exploitability (sources are trusted) but breaks defence-in-depth; autocomplete strings include user-typed text already spliced into `data-value="${b}"` attributes. | `index.html:2123-2128, 2137, 2334-2341, 2451-2462, 3284-3320` | security |
+| **N-Sec-4** | **No per-route throttle on Bedrock endpoints.** Global API throttle (10 RPS / 20 burst) applies to all routes. A single attacker hitting 10 RPS for 1 minute = 600 Bedrock invocations on Nova Pro. Per-route limits should be 1 RPS / 3 burst for `/chat`, `/multi-agent`, `/report`. | `backend/template.yaml:38-42` | security/cost |
+| **N-Sec-5** | Signup email/name interpolated into APIGW `key_name` and `description` with light sanitisation (`@`→`_at_`, `.`→`_`); newlines + control chars reach AWS API. Low impact (AWS validates) but no length cap could leak `ValidationException` internals. | `backend/lambdas/signup/app.py:139-143` | security |
+| **N-Code-3** | **No tests for `live_flights` or `signup` Lambdas.** Reopens I5 with extra surface; signup race-recovery (delete on failed create) is exactly the path that needs a test. | `backend/tests/`, `tests/` | tests |
+| **N-Code-4** | `download_defra_wcs.py` swallows all network errors with bare `except Exception` — same anti-pattern C7 fixed across the Lambdas, reintroduced in the new script. | `scripts/download_defra_wcs.py:242` | code |
+| **N-Code-5** | `signup` uses `print()` for warning/info logs instead of the `logging` module. Inconsistent with the C7-shipped pattern; breaks structured-log search. | `backend/lambdas/signup/app.py:234, 238, 248, 278` | code |
+| **N-Code-6** | `live_flights` mutates `_fetch_opensky.last_error` (function attribute) for cross-call state. Race-prone on warm containers; hides errors from the cache-hit path. | `backend/lambdas/live_flights/app.py:109-199` | code |
+| **N-Code-7** | `signup` race recovery uses best-effort `delete_api_key`; orphaned APIGW keys leak silently if revoke fails. No DLQ or out-of-band reconciliation; AWS-account API-key quota erodes over time. | `backend/lambdas/signup/app.py:236-239` | infra |
+| **N-Front-3** | Report modal + chat panel lack Escape-to-close, focus trap, and focus-on-open. `aria-modal="true"` is set but no Escape handler; tab focus leaks to the page underneath. | `index.html:609, 628-636` | a11y |
+| **N-Front-4** | Modal close buttons are `<span>` not `<button>`. No `tabindex`, no keyboard activation. | `index.html:612, 630` | a11y |
+| **N-Front-5** | Tabs still `<div role="tab">` not `<button>`; missing arrow-key navigation between tabs. (Repeats prior M6; layer toggles got fixed, tabs didn't.) | `index.html:650-652` | a11y |
+| **N-Front-6** | First-hint `role="status"` announces on every page load, then auto-dismisses at 30s with no way to re-trigger. SR users hear it once, can never re-find it. | `index.html:534` | a11y |
+| **N-Front-7** | `title=` is not an accessible name on mobile. `chat-fab` relies on `title` only; needs `aria-label`. | `index.html:608` | a11y |
+| **N-Front-8** | Report `<body>` updates `innerHTML` after a 10-15s Nova call with no `aria-live`. SR users get no progress announcement; content silently appears. | `index.html:3611, 3622, 3624` | a11y |
+| **N-Front-9** | Prototype mobile touch-bar buttons compute to ~22-30 px tall at 480 px viewport (`#mobile-touch-bar button { font-size:8px; padding:7px 8px }`). Below WCAG 2.5.8 24×24 minimum on smallest breakpoint. | `prototype/index.html:715-728` | a11y |
+| **N-Front-10** | Prototype ticker / header `innerHTML` built by string concat. Currently safe (hard-coded METAR/ATIS) but pattern would break if any field came from OpenSky. `selectFlight` uses `esc()`; ticker doesn't. | `prototype/index.html:2454, 2614, 2618` | security/code |
+
+---
+
+## NEW Minor
+
+| # | Issue | File:Line |
+|---|---|---|
+| **N-Code-8** | `_lookup_lden_raster` constructs a fresh `boto3.client('dynamodb')` per call (~50ms cold). Hoist to module scope. | `backend/lambdas/score/app.py:354` |
+| **N-Code-9** | `MAX_PROMPT_INJECT_PATTERNS` defined but never referenced. Either remove or wire into `_sanitise_context`. | `backend/lambdas/chat/app.py:126` |
+| **N-Code-10** | `BOROUGH_ALIASES` only has 4 entries; postcodes.io returns dozens of edge-case `admin_district` strings. Silently falls through to "borough not supported". | `backend/lambdas/score/app.py:454-459` |
+| **N-Sec-6** | `score` Lambda hard-codes `Access-Control-Allow-Origin: '*'` ignoring `CORS_ORIGIN` env var; inconsistent with other Lambdas. Acceptable on B2B endpoint but creates drift. | `backend/lambdas/score/app.py:957-963` |
+| **N-Sec-7** | Orchestrator JSON parsing in `multi_agent` only handles ` ``` ` fences. If the model emits commentary, the IndexError fallback runs all 3 agents — burns 3× Bedrock cost on every malformed reply. | `backend/lambdas/multi_agent/app.py:236-242` |
+| **N-Front-11** | Footer separator `<span class="sep">·</span>` read by SR as "middle dot" between every link. Add `aria-hidden="true"`. | `index.html:108-120` |
+| **N-Front-12** | Footer base font-size 8 px triggers WCAG 1.4.4 reflow concerns (re-flag of M5). | `index.html:111` |
+| **N-Front-13** | Swagger UI loaded from `unpkg.com` with no SRI hash. A compromised CDN response would inject arbitrary JS into the docs page. | `score-demo/api-docs.html:1-68` |
+| **N-Front-14** | Prototype `lang="en"` vs `en-GB` everywhere else (re-flag of M10; survived `192ce18`). | `prototype/index.html:2` |
 
 ---
 
 ## False positives (flagged but not actually issues)
 
-- **NHS Lambda hardcoded `subscription-key: 'public'`**, `'public'` is the literal documented value NHS publishes for the free public tier of `api.nhs.uk/service-search`. Not a leaked secret.
+- **`npm audit` 4 vulnerabilities still present** (security agent N7) — disconfirmed by live `npm audit` run, returns 0 vulnerabilities. The agent inspected the lockfile statically; the vulnerable version ranges no longer match what's installed.
+- **NHS Lambda hardcoded `subscription-key: 'public'`** (carried forward from prior audit) — `'public'` is the literal documented value for the free public tier of `api.nhs.uk/service-search`, not a leaked secret.
 
 ---
 
 ## Summary
 
-| Severity | Count |
-|---|---|
-| Critical | 9 |
-| Important | 16 |
-| Minor | 14 |
-| **Total** | **39** |
+| Severity | New this cycle | Prior items still open | Total active |
+|---|---|---|---|
+| Critical | 6 | 0 (4 partial + 2 design-accepted) | 6 |
+| Important | 15 | 8 | 23 |
+| Minor | 9 | 13 | 22 |
+| **Total** | **30** | **21** | **51** |
 
-By category:
-- Security: 8 (incl. IDOR, prompt injection, hardcoded key, CORS)
-- Code quality: 11
-- Accessibility: 8
-- Documentation: 7
-- Infra (AWS/SAM): 3
-- SEO / metadata: 3
-- UX: 1
-- Tests: 1
+By category (new + carried):
+- Security: 12 (XSS chains, signup IAM/throttle, per-route Bedrock limits, defence-in-depth)
+- A11y: 11 (modal Escape/focus, tabs, screen-reader, touch targets on prototype)
+- Code quality: 9 (logging, races, dead code, stale clients)
+- Docs / drift: 6 (OpenAPI fields, persona drift, doc stale, status placeholders)
+- Infra: 4 (DLQ, signup quota leak, model IDs, throttling)
+- SEO / metadata: 3 (carry-forward)
 
 ---
 
-## Action plan (this session)
+## Recommended action plan (this week)
 
-Each item is a separate commit:
+Each item is a separate commit; ordered by blast-radius / cost-to-fix.
 
-1. **C1** Fix `renderNycBoroughs()` resize bug (1 line)
-2. **C8** Sync README + OpenAPI version refs to v3.1
-3. **C4 / C6** Tighten CORS on Bedrock endpoints + add request body validators
-4. **I2** `npm audit fix`
-5. **I11 / I10** Quick a11y wins, `<button>` semantics, key touch targets
-6. **C9** Add `role="application"` + `aria-label` + `<title>` to map SVG
-7. **I14** Refresh `PROJECT_DOCUMENTATION.md`
-8. **I3** Update OpenAPI to document `?include=`, `quietResolution`, `plannedComponents`
+1. **N-Sec-1, N-Sec-2, N-Sec-3** Wrap every `innerHTML` interpolation in `escapeHtml()` (helper exists at `index.html:1246`); for `href` use `escapeHtmlAttr` and validate scheme is `http(s):` only. Run `formatChatReply` through escape *before* markdown formatting. **One commit, ~1 hour.**
+2. **N-Code-1, N-Code-2** Restrict signup IAM to keys created by this function via tag-based condition; add per-method APIGW throttle (1 RPS / 5 burst) on `/v1/signup` + lock CORS to `https://skyscore.co.uk`; add hCaptcha. **~1 hour.**
+3. **N-Sec-4** Per-route `MethodSettings` for `/chat`, `/multi-agent`, `/report` with `ThrottlingRateLimit: 1`, `ThrottlingBurstLimit: 3`. **~10 min.**
+4. **N-Front-1, N-Front-2** Add 3 `<option>` rows to demo persona dropdown + label entries; replace `, ` placeholders with `Loading…` in status.html. **~10 min.**
+5. **N-Front-3, N-Front-4** Modal Escape handler + focus trap + close-as-button. **~30 min.**
+6. **N-Front-9** Prototype mobile touch-bar `min-height: 44px`. **~5 min.**
 
-Deferred (each ≥ half a day; tracked here as the standing list):
+**Deferred (each ≥ half day):**
 
-- **C3** Favourites auth, needs a real auth scheme
-- **C5** Prompt injection mitigations, needs prompt re-engineering
-- **C7** Bare except sweep + structured logging, touches every Lambda
-- **I1** Batch parallelism, needs `concurrent.futures` or async rewrite
-- **I4** Shared borough module via Lambda layer, infra work
-- **I5** Test coverage for 9 Lambdas, needs unittest scaffolding
-- **I13** Bedrock model IDs to env vars, coordinate with rollover policy
+- **N-Code-7** signup orphan-key reconciliation
+- **N-Code-3** test coverage for live_flights + signup
+- **N-Front-5** tab keyboard nav (arrow keys + roving tabindex)
+- **I3** OpenAPI doc completeness
+- **I4** shared borough Lambda layer
+- **I6** DLQ on async Lambdas
 
-The deferred items above remain in this report as the standing list. Re-run `/audit` quarterly or before major releases.
+Standing items below remain on the backlog. Re-run `/audit` quarterly or before major releases.
