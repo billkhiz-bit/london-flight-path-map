@@ -2572,15 +2572,22 @@ async function fetchLiveFlights() {
   // multiple concurrent visitors don't spam OpenSky's anonymous tier.
   // The Lambda also normalises the positional state arrays into named
   // fields so this client doesn't need to know the OpenSky schema.
+  //
+  // Returns {flights: [...]} on success, {unavailable: true, reason: ...}
+  // when the upstream is down so the caller can surface that to the user
+  // (previously returned null silently, leaving the toggle "on" with
+  // nothing visible — confusing).
   try {
     const resp = await fetch(`${API_BASE}/live-flights?city=${currentCity}`);
-    if (!resp.ok) return null;
+    if (!resp.ok) return {unavailable: true, reason: `HTTP ${resp.status}`};
     const data = await resp.json();
-    if (data.available === false) return null;
-    return data.flights || [];
+    if (data.available === false) {
+      return {unavailable: true, reason: data.upstreamError || 'upstream timeout'};
+    }
+    return {flights: data.flights || []};
   } catch (e) {
     console.warn('Live-flights proxy failed:', e);
-    return null;
+    return {unavailable: true, reason: e.message || 'network error'};
   }
 }
 
@@ -2743,8 +2750,23 @@ function renderLiveFlights(flights) {
 }
 
 async function updateLiveFlights() {
-  const flights = await fetchLiveFlights();
-  renderLiveFlights(flights);
+  const result = await fetchLiveFlights();
+  const liveCountEl = document.getElementById('live-count');
+  const liveCountTextEl = document.getElementById('live-count-text');
+  if (result.unavailable) {
+    // Surface the upstream failure so the user knows the toggle is on
+    // but the data source is down. Shows in the same panel as the count.
+    if (liveFlightLayer) liveFlightLayer.remove();
+    liveFlightLayer = null;
+    currentFlights = [];
+    liveCountEl.style.display = 'flex';
+    liveCountTextEl.textContent = 'LIVE AIRCRAFT, DATA UNAVAILABLE';
+    liveCountTextEl.title = `Reason: ${result.reason}`;
+    return;
+  }
+  // Clear any prior unavailable-state title before normal render.
+  liveCountTextEl.title = '';
+  renderLiveFlights(result.flights);
 }
 
 let liveFlightInterval = null;
