@@ -453,7 +453,13 @@
       <h1 id="map-title-text">Sky Score</h1>
       <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVABILITY DATA</div>
     </div>
-    <div class="first-hint" id="first-hint" role="status">
+    <!-- First-paint hint to teach the search interaction. role="status" was
+         removed (audit N-Front-6): it announced on every page load to
+         screen-reader users, then auto-dismissed at 30s with no way to
+         re-trigger — noisy and unrecoverable. The hint is now visual-only;
+         SR users get the same affordance from the search input's aria-label
+         and the layer toggle group's aria-label. -->
+    <div class="first-hint" id="first-hint">
       <span class="hint-icon" aria-hidden="true">&#9678;</span>
       <span class="hint-text">Type a postcode (e.g. <strong>SW11 1AA</strong>) or click a borough to see its score</span>
       <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
