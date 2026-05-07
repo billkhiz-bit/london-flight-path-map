@@ -11,12 +11,12 @@ Hi,
 
 I'd like to enquire about licensing for using OpenSky's `/api/states/all` endpoint in **Sky Score** (<https://skyscore.co.uk>), a UK property noise + livability data tool.
 
-We had a "live aircraft" toggle on the consumer site and a 3D radar prototype, both backed by a server-side proxy with our OAuth client credentials, bbox-restricted to London or NYC, response cached 12 s per city, OpenSky attribution surfaced in every API response. I removed both surfaces this week after re-reading your terms — they require a written agreement for operational use, including consumer surfaces.
+We had a "live aircraft" toggle on the consumer site and a 3D radar prototype, both backed by a server-side proxy using our OAuth2 client credentials. Each request only asked for aircraft inside a small box around London or NYC (about 78 × 70 km and 56 × 60 km respectively, never the unbounded global feed); responses were cached at our Lambda for 12 seconds per city to keep upstream load minimal; an OpenSky attribution string was surfaced in every API response. I removed both surfaces this week after re-reading your terms — they require a written agreement for operational use, including consumer surfaces.
 
 A few specifics:
 - Independent project, sole developer; consumer site is free, B2B API is the product
 - Traffic: low single-digit concurrent visitors today; growth expected but not forecast
-- Geographic scope: London + NYC bboxes only (~0.5° × 0.5° each)
+- Geographic scope: small windows around London and NYC only — nothing global
 - Already on OAuth2 client credentials per the March 2026 change; happy to surface OpenSky branding visibly on any consumer surface
 
 Could you let me know what licensing options fit our profile? If a community licence covers us, ideal — if a paid agreement is the route, a rough sense of pricing for our traffic level would help me decide whether to pursue now or hold until revenue justifies it.
