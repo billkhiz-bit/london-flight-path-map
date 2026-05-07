@@ -256,9 +256,14 @@
     background:var(--bg);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;}
 
   .tab-bar{display:flex;border-bottom:1px solid var(--bg);}
+  /* Reset native button chrome — these tabs are real <button>s now (audit
+     N-Front-5: a11y + arrow-key keyboard nav) and would otherwise inherit
+     the user-agent stylesheet. */
   .tab{flex:1;padding:10px;text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;
-    cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+    cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;color:inherit;
+    font-family:inherit;transition:all 0.15s;}
   .tab:hover{background:var(--bg);}
+  .tab:focus-visible{outline:2px solid var(--orange);outline-offset:-2px;}
   .tab.active{border-bottom-color:var(--dark);font-weight:600;}
 
   /* Visible scrollbar so users notice there's more below the fold.
@@ -533,9 +538,9 @@
       <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
     </div>
     <nav class="tab-bar" role="tablist" aria-label="Content sections">
-      <div class="tab active" data-tab="analysis" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-analysis" onclick="switchTab('analysis')">ANALYSIS</div>
-      <div class="tab" data-tab="ranking" role="tab" tabindex="0" aria-selected="false" aria-controls="tab-ranking" onclick="switchTab('ranking')">RANKINGS</div>
-      <div class="tab" data-tab="favourites" role="tab" tabindex="0" aria-selected="false" aria-controls="tab-favourites" onclick="switchTab('favourites')">SAVED</div>
+      <button type="button" class="tab active" data-tab="analysis" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-analysis">ANALYSIS</button>
+      <button type="button" class="tab" data-tab="ranking" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-ranking">RANKINGS</button>
+      <button type="button" class="tab" data-tab="favourites" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-favourites">SAVED</button>
     </nav>
     <div id="tab-analysis" role="tabpanel" aria-labelledby="tab-analysis">
       <div id="sidebar-content">
@@ -3573,17 +3578,60 @@ function toggleRankingView() {
   renderBoroughRanking();
 }
 
-function switchTab(tab) {
+function switchTab(tab, {focus = false} = {}) {
+  // Roving tabindex pattern (audit N-Front-5): only the active tab gets
+  // tabindex=0 so Tab moves IN and OUT of the tablist in one keystroke;
+  // arrow keys move between tabs within the list.
   document.querySelectorAll('.tab').forEach(t=>{
     const isActive = t.dataset.tab===tab;
     t.classList.toggle('active', isActive);
     t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    t.setAttribute('tabindex', isActive ? '0' : '-1');
+    if (isActive && focus) t.focus();
   });
   document.getElementById('tab-analysis').style.display = tab==='analysis'?'block':'none';
   document.getElementById('tab-ranking').style.display = tab==='ranking'?'block':'none';
   document.getElementById('tab-favourites').style.display = tab==='favourites'?'block':'none';
   if (tab === 'favourites') loadFavourites();
 }
+
+// Tab-bar click + keyboard handlers (audit N-Front-5). Inline onclick was
+// removed when tabs became real <button>s; events are delegated off the
+// static tab-bar container so per-render binding isn't needed. Arrow keys
+// implement WAI-ARIA tabs pattern with automatic activation (cheap content
+// switch, no confirm step needed).
+(function bindTabBarHandlers() {
+  const TAB_ORDER = ['analysis', 'ranking', 'favourites'];
+  function attach() {
+    const bar = document.querySelector('.tab-bar');
+    if (!bar) return;
+    bar.addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (tab && tab.dataset.tab) switchTab(tab.dataset.tab);
+    });
+    bar.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight'
+          && e.key !== 'Home' && e.key !== 'End') return;
+      e.preventDefault();
+      const current = document.querySelector('.tab.active');
+      const idx = current ? TAB_ORDER.indexOf(current.dataset.tab) : 0;
+      let next;
+      if (e.key === 'ArrowLeft')  next = (idx - 1 + TAB_ORDER.length) % TAB_ORDER.length;
+      else if (e.key === 'ArrowRight') next = (idx + 1) % TAB_ORDER.length;
+      else if (e.key === 'Home')  next = 0;
+      else                        next = TAB_ORDER.length - 1;
+      switchTab(TAB_ORDER[next], {focus: true});
+    });
+  }
+  // Script runs from the bottom of <body>, so DOMContentLoaded may have
+  // already fired by the time we get here. Check readyState before
+  // registering the listener (otherwise we silently miss the event).
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attach);
+  } else {
+    attach();
+  }
+})();
 
 function selectBoroughByName(name) {
   selectedBorough=name;
