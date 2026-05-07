@@ -329,7 +329,11 @@ def run_load(limit, dry_run):
                 col, row_idx = int(col), int(row_idx)
                 in_bounds = (0 <= row_idx < raster_band.shape[0]
                              and 0 <= col < raster_band.shape[1])
-            except Exception:
+            except (ValueError, TypeError, OverflowError):
+                # Specific exceptions only (audit I-F); ~ inversion can
+                # raise ValueError/OverflowError on extreme coords; int()
+                # on NaN raises ValueError. Catching Exception bare would
+                # swallow KeyboardInterrupt and bugs in the call chain.
                 in_bounds = False
 
             if not in_bounds:

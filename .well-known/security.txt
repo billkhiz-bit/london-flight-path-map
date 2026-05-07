@@ -11,4 +11,4 @@ Expires: 2027-05-07T00:00:00.000Z
 Preferred-Languages: en
 Canonical: https://skyscore.co.uk/.well-known/security.txt
 Policy: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md
-Acknowledgments: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/AUDIT_REPORT.md
+# Acknowledgments: (none yet — will list publicly-credited reporters once first valid report arrives)

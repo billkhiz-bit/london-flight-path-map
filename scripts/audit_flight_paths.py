@@ -151,7 +151,11 @@ def main():
                         ldens.append(raw)
                         if raw >= 55.0:
                             n_above_55 += 1
-            except Exception:
+            except (ValueError, TypeError, OverflowError, IndexError):
+                # Audit I-F: specific exceptions only. Skip the sample if
+                # the inverse-transform / int() / array index can't be
+                # computed; bare except would swallow KeyboardInterrupt
+                # and bugs in the call chain.
                 pass
 
         # Total path length (km)

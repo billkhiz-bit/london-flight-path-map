@@ -26,20 +26,10 @@ const endpoints = [
     method: 'GET',
     path: '/favourites',
   },
-  {
-    name: 'chat (POST)',
-    method: 'POST',
-    path: '/chat',
-    body: JSON.stringify({ message: 'Hello', history: [] }),
-    headers: { 'Content-Type': 'application/json' },
-  },
-  {
-    name: 'report (POST)',
-    method: 'POST',
-    path: '/report',
-    body: JSON.stringify({ area: 'Chelsea', borough: 'Kensington and Chelsea' }),
-    headers: { 'Content-Type': 'application/json' },
-  },
+  // /chat and /report POST cases removed 2026-05-07 — the API Gateway
+  // routes were closed in commit 71a731c after the smoke-test caught
+  // them as cost-abuse vectors. Re-add ONLY if the corresponding Events
+  // blocks are restored in template.yaml.
 ];
 
 async function testEndpoint(ep) {

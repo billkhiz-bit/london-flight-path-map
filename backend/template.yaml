@@ -415,6 +415,16 @@ Resources:
                 # Wildcard usage-plan ARN to avoid circular dependency on
                 # ScoreFreeUsagePlan.
                 - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
+              Condition:
+                # Audit I-G follow-up: require the CreatedBy tag at creation
+                # time too, not just at delete. Otherwise a code-path bug that
+                # forgets tags={...} in apigw.create_api_key() would create
+                # untagged keys outside this Lambda's own DELETE scope —
+                # silent quota leak. The aws:RequestTag condition is enforced
+                # by APIGW: a create_api_key call without this exact tag
+                # value will be denied.
+                StringEquals:
+                  'aws:RequestTag/CreatedBy': 'SignupLambda'
             - Effect: Allow
               Action:
                 - apigateway:GET
