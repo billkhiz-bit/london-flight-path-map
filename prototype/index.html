@@ -503,6 +503,9 @@
     font-size: 9px;
     letter-spacing: 1px;
     padding: 8px 10px;
+    /* WCAG 2.5.8 target-size minimum (44px is the Apple/Google guideline). */
+    min-height: 44px;
+    min-width: 44px;
     cursor: pointer;
     white-space: nowrap;
     backdrop-filter: blur(4px);
@@ -2439,11 +2442,16 @@ prog(90, 'POPULATING DATA FEEDS');
 
 function buildTicker() {
   const msgs = [];
+  // Defence-in-depth: FLIGHTS is currently a hardcoded array, but if a future
+  // change wires this to OpenSky live data the unescaped fields would become
+  // an XSS surface. esc() is cheap; lock it down now (audit N-Front-10).
   FLIGHTS.forEach(f => {
-    const act = f.type==='DEP' ? 'DEP RWY 27L → ' + f.dest
-      : f.type==='ARR' ? 'INBOUND FROM ' + f.dest + ' ← APP ILS 27R'
-      : 'TRANSIT FL' + (f.alt*10) + ' ' + f.dest;
-    msgs.push(`<span class="fid">${f.code}</span> ${act}<span class="sep">◆</span>`);
+    const dest = esc(f.dest);
+    const alt = esc(String(f.alt * 10));
+    const act = f.type === 'DEP' ? 'DEP RWY 27L → ' + dest
+      : f.type === 'ARR' ? 'INBOUND FROM ' + dest + ' ← APP ILS 27R'
+      : 'TRANSIT FL' + alt + ' ' + dest;
+    msgs.push(`<span class="fid">${esc(f.code)}</span> ${act}<span class="sep">◆</span>`);
   });
   msgs.push(
     `METAR EGLL 291250Z 27012G18KT 9999 FEW040 12/04 Q1013<span class="sep">◆</span>`,
