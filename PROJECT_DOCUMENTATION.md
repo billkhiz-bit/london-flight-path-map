@@ -5,34 +5,34 @@
 **Sky Score** is a noise + livability data product for UK and NYC property. Two surfaces:
 
 - **Consumer site**, public, free, no sign-up. Helps renters and buyers see the structural data (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to surface. London + NYC, postcode/ZIP-level for both.
-- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 1000 req/month.
+- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 1000 req/month, self-service signup at `/v1/signup`.
 
-Built on Amazon Bedrock (Nova 2 Lite + Nova Pro) for AI chat, multi-agent property reports, and multimodal listing-photo/EPC-document analysis. ~290 individually scored neighbourhoods on the consumer side; 33 London boroughs + 5 NYC boroughs (plus ~182 NYC ZIPs) on the API.
+Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + Haversine fallback) + 5 NYC boroughs (~182 residential ZIPs, ~110 with per-ZIP centroids).
 
 **Live URL:** https://skyscore.co.uk
 **API:** https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/
 **Methodology:** [METHODOLOGY.md](./METHODOLOGY.md) (v3.1)
 **GitHub:** https://github.com/billkhiz-bit/london-flight-path-map
-**Origin:** Built for the Amazon Nova AI Hackathon (March 2026, won $200 AWS credits, blog category). Productised post-hackathon as a B2B API.
+**Origin + pivot:** Built for the Amazon Nova AI Hackathon (March 2026, won $200 AWS credits, blog category). Productised post-hackathon as a B2B API; consumer-side AI features (chat, multi-agent, document analysis, AI report) removed from the UI in May 2026 to align the consumer narrative with the methodology-defensibility positioning of the B2B API. The Bedrock Lambdas remain dormant in `template.yaml` for potential re-introduction as user-triggered constrained features.
 
 ---
 
 ## Architecture
 
-### AWS Services Used (10 services)
+### AWS Services Used
 
 | Service | Purpose | Region |
 |---------|---------|--------|
-| **Amazon Bedrock** | AI engine - Nova 2 Lite (chat) + Nova Pro (reasoning, multimodal) | us-east-1 |
-| **AWS Lambda** | 10 serverless functions (Python 3.11) | eu-west-2 |
-| **Amazon API Gateway** | REST API with CORS | eu-west-2 |
+| **AWS Lambda** | 12 functions (7 active + 5 dormant Bedrock; Python 3.11) | eu-west-2 |
+| **Amazon API Gateway** | REST API with CORS, per-route throttling, Usage Plans | eu-west-2 |
 | **Amazon S3** | Static website hosting | eu-west-2 |
-| **Amazon CloudFront** | Global CDN with HTTPS | Global |
-| **Amazon DynamoDB** | User favourites storage | eu-west-2 |
+| **Amazon CloudFront** | Global CDN with HTTPS, custom domain `skyscore.co.uk` | Global |
+| **Amazon DynamoDB** | Favourites + DEFRA noise raster + signup audit log | eu-west-2 |
 | **AWS SAM/CloudFormation** | Infrastructure as code | eu-west-2 |
-| **AWS IAM** | Least-privilege access control | Global |
-| **Amazon CloudWatch** | Logging and monitoring | eu-west-2 |
-| **AWS STS** | Cross-region model access | us-east-1 |
+| **AWS IAM** | Least-privilege access control (tag-condition scope-down on signup `apigateway:DELETE`) | Global |
+| **Amazon CloudWatch** | Logging and monitoring (`[SIGNUP_ORPHAN_KEY]` structured-log alarm filter) | eu-west-2 |
+| **Amazon Bedrock** | (Dormant) Nova 2 Lite + Nova Pro for the 5 dormant AI Lambdas; not invoked from any active surface | us-east-1 |
+| **AWS STS** | Cross-region model access (used only when dormant Bedrock features are re-enabled) | us-east-1 |
 
 ### Data Sources (10+ live APIs)
 
@@ -54,7 +54,9 @@ Built on Amazon Bedrock (Nova 2 Lite + Nova Pro) for AI chat, multi-agent proper
 
 ---
 
-## Amazon Nova Integration (6 Modes + Multi-Agent)
+## Amazon Nova Integration — DORMANT (May 2026)
+
+**Status: dormant since 2026-05-07.** All consumer-side AI features were removed from the UI as part of the data-first repositioning. The Lambdas below remain in `template.yaml` with their Bedrock IAM permissions intact; Lambda has zero idle cost on on-demand pricing, and re-enabling means uncommenting the relevant frontend block + redeploying. The descriptions below document what these Lambdas *do* when invoked — useful reference for any future re-introduction (e.g. user-triggered "explain in plain English" button, constrained EPC summariser).
 
 ### Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`)
 - **Multi-turn AI chatbot** with conversation history (last 8 messages)
@@ -89,56 +91,78 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 
 ---
 
-## Lambda Functions (11 total)
+## Lambda Functions (12 total: 7 active + 5 dormant)
 
-### 1. ChatFunction (`/chat` POST)
+### Active
+
+#### 1. ScoreFunction (`/v1/score`, `/v1/score/batch`, `/v1/regions` GET/POST)
+- **File:** `backend/lambdas/score/app.py`
+- **Purpose:** B2B scoring engine — main product. Returns `score`, `components`, `context`, `sources`. v3.1 raster-first resolution chain falling back to Haversine then borough.
+- **Auth:** API key gated via APIGW Usage Plan (`SkyScoreFreeTier`: 1000 req/month, 5/sec burst)
+
+#### 2. SignupFunction (`/v1/signup` POST)
+- **File:** `backend/lambdas/signup/app.py`
+- **Purpose:** Self-service API key issuance (one key per email, idempotent on retry, race-recovered on collision)
+- **Hardening (2026-05-07):** Tag-based IAM scope-down on `apigateway:DELETE`; per-route APIGW throttle 1 RPS / 5 burst; CORS allow-list (no wildcard); `[SIGNUP_ORPHAN_KEY]` structured-log alarm filter
+
+#### 3. FavouritesFunction (`/favourites` GET/POST/DELETE)
+- **File:** `backend/lambdas/favourites/app.py`
+- **Purpose:** Save/load/delete favourite locations
+- **Auth:** `X-Device-Token` UUID header (audit C3 mitigation)
+- **Storage:** DynamoDB table `london-flight-map-favourites`
+
+#### 4. EpcFunction (`/epc` GET)
+- **File:** `backend/lambdas/epc/app.py`
+- **Purpose:** MHCLG EPC certificate proxy via the new `get-energy-performance-data.communities.gov.uk` service (post-2026-05-30 migration)
+- **Auth:** Bearer token from `EPC_BEARER_TOKEN` SAM parameter
+
+#### 5. SoldPricesFunction (`/sold-prices` GET)
+- **File:** `backend/lambdas/sold_prices/app.py`
+- **Purpose:** Land Registry Price Paid Data proxy (CORS)
+
+#### 6. TransportFunction (`/transport` GET)
+- **File:** `backend/lambdas/transport/app.py`
+- **Purpose:** TfL nearest stations and live line status
+
+#### 7. NhsFunction (`/nhs` GET)
+- **File:** `backend/lambdas/nhs/app.py`
+- **Purpose:** Nearby NHS services via OSM Overpass (replaced the deprecated NHS Service Search public key)
+
+### Dormant — 2026-05-07
+
+The five Lambdas below ship in `template.yaml` and CloudFormation but are not surfaced in any UI as of May 2026. Their per-Lambda detail is preserved here for reference if any feature is re-introduced.
+
+#### 8. ChatFunction (`/chat` POST) — DORMANT
 - **File:** `backend/lambdas/chat/app.py`
 - **Purpose:** AI chatbot with multi-turn conversation and auto-insights
-- **Models:** Nova 2 Lite (simple) + Nova Pro (complex)
+- **Models:** Nova 2 Lite (simple) + Nova Pro (complex, auto-routed)
 - **Modes:** `chat` (conversation) and `insight` (auto-generation)
 
-### 2. MultiAgentFunction (`/multi-agent` POST)
+#### 9. MultiAgentFunction (`/multi-agent` POST) — DORMANT
 - **File:** `backend/lambdas/multi_agent/app.py`
 - **Purpose:** Multi-agent orchestration for complex queries
 - **Models:** Nova 2 Lite (orchestrator + 3 agents) + Nova Pro (synthesiser)
 - **Timeout:** 90s (runs 4 Bedrock calls in parallel + synthesis)
 
-### 3. AnalyzeImageFunction (`/analyze-image` POST)
+#### 10. AnalyzeImageFunction (`/analyze-image` POST) — DORMANT
 - **File:** `backend/lambdas/analyze_image/app.py`
 - **Purpose:** Multimodal property photo analysis
 - **Model:** Nova Pro (image understanding)
 
-### 4. AnalyzeDocumentFunction (`/analyze-document` POST)
+#### 11. AnalyzeDocumentFunction (`/analyze-document` POST) — DORMANT
 - **File:** `backend/lambdas/analyze_document/app.py`
 - **Purpose:** EPC certificate and survey report analysis
 - **Model:** Nova Pro (document understanding)
 
-### 5. ReportFunction (`/report` POST)
+#### 12. ReportFunction (`/report` POST) — DORMANT
 - **File:** `backend/lambdas/report/app.py`
 - **Purpose:** Comprehensive AI-generated property intelligence reports
 - **Model:** Nova Pro
 - **Timeout:** 90s
 
-### 6. FavouritesFunction (`/favourites` GET/POST/DELETE)
-- **File:** `backend/lambdas/favourites/app.py`
-- **Purpose:** Save/load/delete favourite locations
-- **Storage:** DynamoDB table `london-flight-map-favourites`
+### Removed — 2026-05-07
 
-### 7. SoldPricesFunction (`/sold-prices` GET)
-- **File:** `backend/lambdas/sold_prices/app.py`
-- **Purpose:** Land Registry Price Paid Data proxy (CORS)
-
-### 8. EpcFunction (`/epc` GET)
-- **File:** `backend/lambdas/epc/app.py`
-- **Purpose:** EPC energy ratings from Open Data Communities
-
-### 9. TransportFunction (`/transport` GET)
-- **File:** `backend/lambdas/transport/app.py`
-- **Purpose:** TfL nearest stations and live line status
-
-### 10. NhsFunction (`/nhs` GET)
-- **File:** `backend/lambdas/nhs/app.py`
-- **Purpose:** NHS GP surgery data
+`live_flights` (OpenSky `/api/states/all` proxy for live aircraft positions) was removed end-to-end pending OpenSky's licensing reply (Ticket #835285). Code lives in git history (last working commit `a214ba0`). See `LICENSING.md` "Removed sources" + `OPENSKY_LICENSING_EMAIL.md`.
 
 ---
 
@@ -162,18 +186,18 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 #### Search System
 - **Full postcode** (SW11 1AA) - exact location analysis
 - **Partial postcode/outcode** (TW3, SW1) - area-level analysis via outcodes API
-- **Area/neighbourhood** (Chelsea, Twickenham, Astoria) - 290+ areas mapped to postcodes
+- **Area/neighbourhood** (Chelsea, Twickenham, Astoria) - hundreds of areas mapped to postcodes for the consumer-site search
 - **Borough name** (Hounslow, Queens) - borough-level view
 - **Autocomplete** with debounced API calls and keyboard navigation
 
 #### Postcode-Specific Buyer Value Score (1-10)
-Each of 290+ neighbourhoods gets a unique score computed from four factors:
+Each searchable area gets a score computed from four factors:
 1. **Quiet Skies** - actual geographic distance (Haversine formula) to airports and flight path corridors
 2. **Affordability** - neighbourhood-specific median prices (not borough averages)
 3. **Growth** - annual price trend percentage
 4. **Liveability** - composite of schools (35%), crime safety (30%), transport access (25%), and healthcare (10%)
 
-**Five Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life) dynamically reweight all four factors and instantly re-rank all 290+ neighbourhoods.
+**Eight Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life, Renter, Commuter, Downsizer) dynamically reweight all four factors and instantly re-rank every postcode / borough / neighbourhood.
 
 #### Interactive Map Data Layers (Toggle On/Off)
 | Layer | London Source | NYC Source |
@@ -348,10 +372,9 @@ Built for the Amazon Nova AI Hackathon (March 2026). Won $200 AWS credits in the
 ## Known Limitations
 
 - Consumer site UI: NYC search accepts borough names (e.g. "Manhattan") and neighbourhood names (e.g. "Astoria", "Williamsburg") but not raw 5-digit ZIPs, typing `10001` falls through to postcodes.io and returns "NOT FOUND". The B2B `/v1/score` API *does* accept ZIPs; consumer-site parity is an open product item.
-- EPC API requires registration for an API key
-- OpenSky Network has rate limits (~10 requests/min for anonymous users)
+- EPC API requires registration + bearer token (post-2026-05-30 service migration; see `CLAUDE.md` for token rotation hygiene)
 - DEFRA WMS tiles can be slow to load on first request
 - Property listing links open external sites (no public APIs available)
-- Nova Pro multimodal document analysis may have variable accuracy on handwritten or low-quality scans
-- DynamoDB favourites use device ID (not user authentication) so favourites are device-specific
-- Favourites endpoint has no authentication (any client can access any userId)
+- Favourites endpoint uses an opaque `X-Device-Token` UUID (capability-based, not identity-based; audit C3 mitigation). Anyone learning a token can use it; full identity auth is on the post-launch roadmap.
+- NYC ZIP coverage is residential / general-use only (~182 ZIPs); non-NYC US ZIPs return a structured 404.
+- Live aircraft tracking is currently disabled pending OpenSky licensing — see `LICENSING.md` "Removed sources".
