@@ -31,7 +31,7 @@ import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import boto3
@@ -116,7 +116,7 @@ def handler(event, context):
                 'noiseLevel': body.get('noiseLevel', ''),
                 'buyerScore': str(body.get('buyerScore', 0)),
                 'notes': body.get('notes', ''),
-                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'timestamp': datetime.now(UTC).isoformat(),
                 'city': body.get('city', 'london'),
             }
             table.put_item(Item=item)

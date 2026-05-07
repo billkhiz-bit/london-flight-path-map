@@ -2,8 +2,8 @@ import json
 import logging
 import math
 import os
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 

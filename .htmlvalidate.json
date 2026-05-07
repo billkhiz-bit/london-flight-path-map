@@ -8,6 +8,8 @@
     "no-raw-characters": "off",
     "tel-non-breaking": "off",
     "script-type": "off",
-    "long-title": "off"
+    "long-title": "off",
+    "void-style": "off",
+    "doctype-style": "off"
   }
 }

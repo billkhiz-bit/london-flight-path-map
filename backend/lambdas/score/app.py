@@ -19,10 +19,10 @@ import math
 import os
 import re
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -345,7 +345,7 @@ def _lookup_lden_raster(postcode_clean):
         return cached
 
     try:
-        import boto3 # local import, only needed when raster table configured
+        import boto3  # local import, only needed when raster table configured
         from botocore.exceptions import BotoCoreError, ClientError
     except ImportError:
         return None
@@ -782,7 +782,7 @@ def resolve_query(query):
         'methodologyVersion': METHODOLOGY_VERSION,
         'methodologyUrl': METHODOLOGY_URL,
         'apiVersion': API_VERSION,
-        'generatedAt': datetime.now(timezone.utc).isoformat(),
+        'generatedAt': datetime.now(UTC).isoformat(),
         'sources': SOURCES,
         'sourceBreakdown': SOURCE_BREAKDOWN,
     }
@@ -838,7 +838,7 @@ def handle_regions(event):
         'apiVersion': API_VERSION,
         'methodologyVersion': METHODOLOGY_VERSION,
         'methodologyUrl': METHODOLOGY_URL,
-        'generatedAt': datetime.now(timezone.utc).isoformat(),
+        'generatedAt': datetime.now(UTC).isoformat(),
     })
 
 
@@ -935,7 +935,7 @@ def handle_batch(event):
         'errorCount': error,
         'apiVersion': API_VERSION,
         'methodologyVersion': METHODOLOGY_VERSION,
-        'generatedAt': datetime.now(timezone.utc).isoformat(),
+        'generatedAt': datetime.now(UTC).isoformat(),
         'sources': SOURCES,
         'results': results,
     })

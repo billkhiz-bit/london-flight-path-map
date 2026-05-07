@@ -22,12 +22,12 @@ Attribution: OpenStreetMap contributors (ODbL).
 """
 
 import json
+import logging
 import math
 import os
-import logging
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 OVERPASS_URL = os.environ.get('OVERPASS_URL', 'https://overpass-api.de/api/interpreter')

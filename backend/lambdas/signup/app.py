@@ -222,7 +222,7 @@ def handle_options(event):
 
 
 def _safe_revoke_orphan_key(key_id):
-    """Best-effort delete of a just-created key during a race rollback.
+    r"""Best-effort delete of a just-created key during a race rollback.
 
     Belt-and-braces guard alongside the IAM tag-condition (audit N-Code-1):
     even though IAM only allows DELETE on tagged keys, we additionally
