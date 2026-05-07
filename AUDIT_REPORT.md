@@ -6,6 +6,34 @@
 
 ---
 
+## Wave 7+8+9 close — 2026-05-07 late evening
+
+After the day's main session-close section below, three more focused waves shipped:
+
+**Wave 7 (visual polish):**
+- Visual fix-5 (per-layer indicator colours on `.layer-toggle.active`) → `0d634b1`
+- Visual fix-8 (DEFRA caption stagger 20/34/48 so road/flood/AQ don't overlap) → `0d634b1`
+- Visual fix-9 (airport code halo via `paint-order: stroke`) → `0d634b1`
+
+**Wave 8 (code quality):**
+- M-N2 (BOROUGH_ALIASES expanded: Royal Borough / London Borough / ampersand / common spellings) → `f91935d`
+- I-N6 (signup race-recovery test — proves orphan key revoked, secret value not echoed) → `f91935d`
+
+**Wave 9 (enterprise no-legal):**
+- Enterprise gap #10 (DynamoDB PITR enabled in `template.yaml` for all 3 tables) → this commit; **deploy gated on one-time admin IAM update** (see OPERATIONS.md §3.1)
+- Enterprise gap #14 (pip-audit integration into `/preflight` skill) → this commit
+- `OPERATIONS.md` runbook (closes part of enterprise gap #3 + #10) → this commit
+- `SUBPROCESSORS.md` register (closes enterprise gap #3 sub-processor disclosure) → this commit
+- `SUPPORT.md` (documents `support@` mailbox + status-page subdomain plan, closes part of #16 / #8) → this commit
+
+**Still open after Wave 9:**
+- Enterprise IAM update for PITR — requires root AWS account, blocked until admin can update `FlightMapDeployPolicy` per OPERATIONS.md §3.1.
+- Cloudflare email-routing for `support@skyscore.co.uk` — single console click, deferred to next admin window.
+- `status.skyscore.co.uk` DNS + Better Stack / StatusGator subscription — deferred (~30 min one-time setup).
+- Legal items (DPA, MSA, privacy notice, pen test, SOC 2, insurance) — defer until first paying customer triggers contractual need.
+
+---
+
 ## Session close — 2026-05-07 evening
 
 After the second round of agents (code-quality + security + frontend visual + a11y + enterprise readiness), this section consolidates **everything closed today** with commit SHAs, and lists **everything deferred** with audit IDs and priority. The triage column below this section is the longer-form version against the May-6 baseline.

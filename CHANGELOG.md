@@ -6,6 +6,26 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 7+8+9 closure — 2026-05-07 late evening
+
+Three more focused waves shipped after the main session-close:
+
+**Wave 7 (visual polish, commit `0d634b1`):**
+- Per-layer indicator dot colours on `.layer-toggle.active` (matches the layer's actual map colour — paths/aircraft/road/transport/flood/AQ/labels)
+- DEFRA caption stagger so road/flood/AQ labels don't overlap when multiple borough overlays toggled together
+- Airport-code text gets a white halo via `paint-order: stroke`
+
+**Wave 8 (code quality, commit `f91935d`):**
+- `BOROUGH_ALIASES` expanded from 4 to ~25 entries — covers Royal Borough / London Borough / ampersand / common spelling variants postcodes.io and partner address data return
+- New end-to-end signup race-recovery test — proves the orphan key is revoked and the secret value is not echoed back to the loser of the race
+
+**Wave 9 (enterprise no-legal items, this commit):**
+- `OPERATIONS.md` runbook (production topology, deploys, one-time admin actions, DR, monitoring, debugging, cost profile)
+- `SUBPROCESSORS.md` register (3 sub-processors: AWS, Cloudflare, GoatCounter — explicit "tools we don't use" list for procurement)
+- `SUPPORT.md` (contact channels, response targets, planned `support@` + `status.skyscore.co.uk`)
+- DynamoDB PITR enabled in `template.yaml` for all 3 tables (signups, noise-raster, favourites). **Deploy gated** on one-time IAM policy update at root account — see OPERATIONS.md §3.1.
+- `pip-audit` integrated into `/preflight` skill — PyPI Advisory Database vuln scan per Lambda's `requirements.txt`; CVSS ≥ 7.0 blocks commit
+
 ### Planned (deferred from 2026-05-07 session)
 
 - See [`AUDIT_REPORT.md`](./AUDIT_REPORT.md#deferred--kept-in-mind-for-future-sessions) for the full deferred list with audit IDs, priorities, and time estimates. Top items:

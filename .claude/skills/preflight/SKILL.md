@@ -35,6 +35,30 @@ cd backend && ruff check lambdas/ 2>&1 | tail -20
 - Verify Python lambdas parse without errors
 - Check for hardcoded secrets or credentials
 
+### 4b. Backend Tests
+```bash
+cd backend && python -m pytest 2>&1 | tail -10
+```
+- Must be all green before commit. The signup race-recovery test (I-N6) and the
+  `_safe_revoke_orphan_key` prefix guard (N-Code-1) are non-negotiable: if they
+  break, the API key revocation invariant is broken.
+
+### 4c. Python Dependency Vulnerabilities (pip-audit)
+```bash
+# Run from each lambda dir that has its own requirements.txt.
+# pip-audit hits the PyPI Advisory Database; needs network.
+for req in backend/lambdas/*/requirements.txt; do
+  echo "=== $req ==="
+  pip-audit -r "$req" --strict 2>&1 | tail -10 || true
+done
+```
+- Install once: `pip install pip-audit`
+- `--strict` means any reported vuln is a hard fail. Triage policy: a CVSS
+  >= 7.0 finding blocks the commit; lower-severity findings get logged to
+  `AUDIT_REPORT.md` and addressed in the next session.
+- Note: each Lambda has its own `requirements.txt` because SAM builds them
+  in isolated containers. The deploy bundles only what each function imports.
+
 ### 5. Security
 - Run **security-guidance** plugin on changed files
 - Check for XSS in dynamic HTML rendering
@@ -59,6 +83,8 @@ PREFLIGHT, Sky Score
 [PASS/FAIL] HTML validation
 [PASS/FAIL] Prettier
 [PASS/FAIL] Python lambdas
+[PASS/FAIL] Backend tests (pytest)
+[PASS/FAIL] pip-audit (PyPI vuln scan)
 [PASS/FAIL] Security scan
 [PASS/FAIL] Code review
 [PASS/FAIL] Playwright tests

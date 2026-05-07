@@ -155,6 +155,9 @@
             "Action": [
                 "dynamodb:CreateTable",
                 "dynamodb:DescribeTable",
+                "dynamodb:UpdateTable",
+                "dynamodb:UpdateContinuousBackups",
+                "dynamodb:DescribeContinuousBackups",
                 "dynamodb:PutItem",
                 "dynamodb:GetItem",
                 "dynamodb:DeleteItem",

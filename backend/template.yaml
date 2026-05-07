@@ -383,6 +383,13 @@ Resources:
         - AttributeName: email
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      # Enterprise readiness: 35-day point-in-time recovery for an audit
+      # log that records the only mapping between an issued API key and
+      # the email that requested it. Cost: ~$0.20/GB-month for backup
+      # storage; the table is tiny, so the bill is rounding-error money
+      # and the DR posture is meaningfully better. See OPERATIONS.md.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
   # --- DynamoDB Table, DEFRA noise raster samples (v3.1) ---
   # Populated by an offline data-loader script that samples the DEFRA
@@ -402,6 +409,12 @@ Resources:
         - AttributeName: postcode
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      # PITR enabled. Re-running the loader from the GeoTIFF would also
+      # rebuild this table, but ~6h of compute + bandwidth is real cost,
+      # and PITR roll-back to a known-good window is far cheaper if a
+      # bad loader run corrupts a chunk of the table.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
   # --- DynamoDB Table ---
   FavouritesTable:
@@ -419,6 +432,10 @@ Resources:
         - AttributeName: postcode
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      # PITR enabled. User-generated content (favourites are the only
+      # data they write to us) deserves DR protection.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
 
 Parameters:
   # Each secret has AllowedPattern '^.+$' so an empty / missing override
