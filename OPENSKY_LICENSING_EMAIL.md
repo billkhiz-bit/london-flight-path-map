@@ -19,7 +19,7 @@ A few specifics:
 - Geographic scope: small windows around London and NYC only — nothing global
 - Already on OAuth2 client credentials per the March 2026 change; happy to surface OpenSky branding visibly on any consumer surface
 
-Could you let me know what licensing options fit our profile? If a community licence covers us, ideal — if a paid agreement is the route, a rough sense of pricing for our traffic level would help me decide whether to pursue now or hold until revenue justifies it.
+Could you let me know what licensing options fit our profile? Specifically: does the existing free OAuth tier (4000 credits/day) extend to operational use of the kind described above, or is that tier only for non-operational / hobbyist access? If it does cover us, brilliant — we'd just turn the proxy back on. If a paid agreement is the route, a rough sense of pricing for our traffic level would help me decide whether to pursue now or hold until revenue justifies it.
 
 Thanks,
 Bilal Khizar
