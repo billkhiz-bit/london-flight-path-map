@@ -7,9 +7,11 @@ for "are we allowed to use this commercially" questions.
 
 **TL;DR:** every UK government source is **OGL v3.0** (commercial use OK
 with attribution), TfL is similar, OpenStreetMap is ODbL (similar),
-MHCLG EPC needs attribution + bearer token, OpenSky has commercial
-restrictions but is only on the consumer site, Bedrock is a paid AWS
-service. We're clean for both consumer + B2B with the changes below.
+MHCLG EPC needs attribution + bearer token, Bedrock is a paid AWS
+service (and the consumer-side AI features that used it have been
+removed from the UI; Lambdas remain dormant in `template.yaml`).
+**OpenSky was removed entirely on 2026-05-07** — see "Removed sources"
+below. We're clean for both consumer + B2B.
 
 ---
 
@@ -43,37 +45,16 @@ These are visible to consumer-site visitors but NOT exposed via the B2B API.
 | Source | Licence | Use | Attribution | Status |
 |---|---|---|---|---|
 | **OpenStreetMap** (via Overpass API) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Nearby NHS services in `/nhs` (replaced the deprecated NHS Service Search public key) | "OpenStreetMap contributors (ODbL)" — must include in response + visible attribution on the page | ✅ Commercial use OK; **attribution is mandatory** |
-| **OpenSky Network** (`/api/states/all`) | [OpenSky data API + terms](https://opensky-network.org/data/api) | Live aircraft positions on the consumer-site map | Acknowledgement required; commercial use needs explicit permission | ⚠️ See note below |
 | **Office for National Statistics** (NSPL via Geoportal — used by the DEFRA loader) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler | OGL boilerplate | ✅ Commercial use OK |
-| **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Sampled offline by `scripts/load_defra_raster.py`. v2 (with below-threshold sentinel) shipped 2026-05-06; full London loader pass paused mid-flight (~54k of ~250k London postcodes currently in `london-flight-map-noise-raster`); resuming tomorrow. Same source as the live noise mapping. | Same OGL boilerplate | ✅ Commercial use OK |
+| **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Sampled offline by `scripts/load_defra_raster.py`. v2 (with below-threshold sentinel) shipped 2026-05-06; loader running 2026-05-07 against the full ~2.5M NSPL postcode list. Same source as the live noise mapping. | Same OGL boilerplate | ✅ Commercial use OK |
 
-### OpenSky note — the only source needing care
+---
 
-OpenSky's published terms restrict commercial use of their data unless
-you've registered and (for some uses) agreed bespoke terms with them.
-Their stance:
+## Removed sources
 
-> Data is provided to OpenSky users only for research, education and
-> individual non-commercial use.
-
-For Sky Score:
-
-- **Consumer site live-flights toggle**: arguable as "individual
-  non-commercial use" since the consumer site is free and educational.
-  We ship attribution in the data lineage and link to OpenSky.
-- **B2B API `/v1/score`**: does **NOT** use OpenSky data. The score's
-  Quiet component is computed from DEFRA + Haversine geometry, not from
-  live OpenSky positions. So OpenSky's restrictions don't extend to
-  paid B2B usage.
-
-**Recommended hygiene**:
-
-1. Register a free OpenSky account (we need OAuth2 client credentials
-   anyway — they now block AWS Lambda IPs on the anonymous tier)
-2. Email OpenSky's contact form and disclose that we display live
-   aircraft positions on a free public website with attribution; ask
-   if any commercial-use clarification is needed for our case
-3. Keep OpenSky data out of paying-customer responses (already true)
+| Source | Used for | When removed | Why |
+|---|---|---|---|
+| **OpenSky Network** (`/api/states/all`) | Live aircraft positions on the consumer-site map and the 3D radar prototype's "live mode" | 2026-05-07 (commit `6f6ce7d`) | Re-reading [their terms](https://opensky-network.org/about/terms-of-use) confirmed a written agreement is required for any operational use, including consumer surfaces. Lambda + UI both removed end-to-end pending a licensing reply. Email enquiry sent — see `OPENSKY_LICENSING_EMAIL.md`. Restoring is `git revert 6f6ce7d` + add OpenSky params back to `.env` + redeploy. |
 
 ---
 
@@ -143,4 +124,4 @@ If we add any of these later, **check terms first**:
 | 🟢 None | DEFRA + ONS + Land Registry + TfL all OGL v3.0; nothing to do |
 
 This document gets refreshed whenever we add or change a data source.
-Last reviewed: 2026-05-06 (DEFRA London loader run + v2 below-threshold sentinel).
+Last reviewed: 2026-05-07 (OpenSky removal end-to-end; AI-powered consumer features removed earlier the same day; loader still running against the full NSPL postcode list).
