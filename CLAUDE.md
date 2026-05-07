@@ -24,6 +24,8 @@ Two project-level planning docs live alongside this file. Read them when picking
 
 When a task ships or a decision lands, update the relevant doc rather than relying on chat memory.
 
+After any substantial change (feature shipped/removed, audit item closed, vendor relationship changed), follow the **echo-work discipline** in the global `~/.claude/CLAUDE.md` — propagate to README, ROADMAP, LICENSING, AUDIT_REPORT, OUTREACH_LOG, memory, .env.example, tests, AWS surfaces. Doing it now is 2-3× cheaper than re-deriving the context tomorrow. For Sky Score specifically, the "echo loop" almost always touches: README.md (Lambda counts), ROADMAP.md (open decisions resolved), LICENSING.md (data sources), and `~/.claude/projects/.../memory/MEMORY.md` (cross-session facts).
+
 ## Before conversation ends
 
 When the user says goodbye, thanks you, or indicates they're done, run `git status` to check for uncommitted changes. If there are any, remind the user:
