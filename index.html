@@ -1588,12 +1588,12 @@
           </div>
           <div class="legend-row">
             <div class="legend-line" style="border-color: var(--blue)"></div>
-            <span id="legend-path2">LCY / OTHER</span>
+            <span id="legend-path2">LCY PATHS</span>
           </div>
           <div class="legend-row" id="legend-heli-row">
             <div
               class="legend-dot"
-              style="background: var(--orange); width: 6px; height: 6px; transform: rotate(45deg); border-radius: 0"
+              style="background: #9333ea; width: 6px; height: 6px; transform: rotate(45deg); border-radius: 0"
             ></div>
             <span>HELIPORT</span>
           </div>
@@ -5448,8 +5448,16 @@
             .style('pointer-events', 'none');
         }
 
-        // Road noise overlay, borough-level coloring (visible at all zoom levels) + WMS/tiles detail when zoomed in
-        const roadG = g.append('g').attr('class', 'layer-defra-road').style('opacity', 0.65);
+        // Road noise overlay, borough-level coloring (visible at all zoom levels) + WMS/tiles detail when zoomed in.
+        // Audit visual fix-1: mix-blend-mode multiply + reduced opacity so the
+        // borough fill *tints* the aircraft raster underneath rather than
+        // covering it (purple-on-orange used to produce muddy brown that
+        // read as nothing when both layers were toggled).
+        const roadG = g
+          .append('g')
+          .attr('class', 'layer-defra-road')
+          .style('opacity', 0.4)
+          .style('mix-blend-mode', 'multiply');
         if (!layers['defra-road']) roadG.style('display', 'none');
         // Borough-level road noise fill
         const roadNoiseColors = { high: '#7c3aed', moderate: '#a78bfa', low: '#ddd6fe' };
@@ -6253,7 +6261,7 @@
           document.getElementById('label-flood').textContent = 'Flood risk';
           document.getElementById('label-aq').textContent = 'Air quality';
           document.getElementById('legend-path1').textContent = 'JFK PATHS';
-          document.getElementById('legend-path2').textContent = 'LGA / OTHER';
+          document.getElementById('legend-path2').textContent = 'LGA PATHS';
           document.getElementById('legend-heli-row').style.display = 'none';
           document.getElementById('legend-noise-title').textContent = 'BTS NOISE (dB DNL)';
           document.getElementById('legend-flood').textContent = 'FEMA FLOOD';
@@ -6270,7 +6278,7 @@
           document.getElementById('label-flood').textContent = 'Flood risk';
           document.getElementById('label-aq').textContent = 'Air quality';
           document.getElementById('legend-path1').textContent = 'LHR PATHS';
-          document.getElementById('legend-path2').textContent = 'LCY / OTHER';
+          document.getElementById('legend-path2').textContent = 'LCY PATHS';
           document.getElementById('legend-heli-row').style.display = '';
           document.getElementById('legend-noise-title').textContent = 'DEFRA NOISE (dB Lden)';
           document.getElementById('legend-flood').textContent = 'FLOOD ZONE';
@@ -6350,6 +6358,13 @@
           });
       }
 
+      // Per-airport colour map (no dead-code branches; only LHR + LCY exist
+      // in London FLIGHT_PATHS and JFK + LGA in NYC after the 2026-05-07
+      // trim. Audit visual fix-1.
+      const PATH_COLORS = {
+        LHR: '#F27D26', JFK: '#F27D26',
+        LCY: '#267DF2', LGA: '#267DF2',
+      };
       function renderCityFlightPaths() {
         const paths = getActiveFlightPaths();
         const pg = g.append('g').attr('class', 'layer-paths');
@@ -6361,23 +6376,21 @@
             .x((d) => d[0])
             .y((d) => d[1])
             .curve(d3.curveBasis);
-          const color =
-            fp.airport === 'LHR' || fp.airport === 'JFK'
-              ? '#F27D26'
-              : fp.airport === 'LCY' || fp.airport === 'LGA'
-                ? '#267DF2'
-                : fp.airport === 'LGW' || fp.airport === 'EWR'
-                  ? '#7B1FA2'
-                  : '#26B8F2';
+          const color = PATH_COLORS[fp.airport] || '#26B8F2';
+          // Audit visual fix-3: stroke at 1.5/2.25 px @ 0.7 opacity (was
+          // 1/1.5 px @ 0.5) — visible over hi-DPI basemap + DEFRA raster.
+          // Solid line (no dasharray) reads as "corridor" not "draft".
           pg.append('path')
             .attr('d', line(lineData))
             .attr('fill', 'none')
             .attr('stroke', color)
-            .attr('stroke-width', fp.freq === 'high' ? 1.5 : 1)
-            .attr('stroke-dasharray', '4,4')
-            .attr('opacity', 0.5)
+            .attr('stroke-width', fp.freq === 'high' ? 2.25 : 1.5)
+            .attr('opacity', 0.7)
             .style('pointer-events', 'none');
-          const dot = pg.append('circle').attr('r', 2.5).attr('fill', color).attr('opacity', 0.8);
+          // Audit visual fix-7: halo behind animated dot survives over
+          // bright DEFRA raster swatches that match path colour family.
+          const halo = pg.append('circle').attr('r', 5).attr('fill', color).attr('opacity', 0.25);
+          const dot = pg.append('circle').attr('r', 2.5).attr('fill', color).attr('opacity', 0.9);
           function animateDot() {
             const tmp = pg.append('path').attr('d', line(lineData)).style('display', 'none');
             const node = tmp.node();
@@ -6385,19 +6398,23 @@
             tmp.remove();
             const dur = 4000 + Math.random() * 4000;
             const rev = fp.type === 'departure';
+            const tween = (axis) => () => (t) => {
+              const p = node.getPointAtLength((rev ? 1 - t : t) * len);
+              return p[axis];
+            };
             dot
               .transition()
               .duration(dur)
               .ease(d3.easeLinear)
-              .attrTween('cx', () => (t) => {
-                const p = node.getPointAtLength((rev ? 1 - t : t) * len);
-                return p.x;
-              })
-              .attrTween('cy', () => (t) => {
-                const p = node.getPointAtLength((rev ? 1 - t : t) * len);
-                return p.y;
-              })
+              .attrTween('cx', tween('x'))
+              .attrTween('cy', tween('y'))
               .on('end', animateDot);
+            halo
+              .transition()
+              .duration(dur)
+              .ease(d3.easeLinear)
+              .attrTween('cx', tween('x'))
+              .attrTween('cy', tween('y'));
           }
           animateDot();
         });
@@ -6432,7 +6449,7 @@
             .attr('y', y - 3)
             .attr('width', 6)
             .attr('height', 6)
-            .attr('fill', '#F27D26')
+            .attr('fill', '#9333ea')
             .attr('stroke', '#FAFAF9')
             .attr('stroke-width', 0.5)
             .attr('transform', 'rotate(45,' + x + ',' + y + ')');
@@ -6443,7 +6460,7 @@
             .attr('font-size', '7px')
             .attr('font-family', 'var(--font-mono)')
             .attr('font-weight', '500')
-            .attr('fill', '#F27D26');
+            .attr('fill', '#9333ea');
         });
       }
 
