@@ -60,10 +60,9 @@ FLIGHT_PATHS = [
     {'name': 'Dep East', 'airport': 'LCY', 'type': 'departure', 'freq': 'medium',
      'coordinates': [[0.067, 51.5053], [0.09, 51.505], [0.12, 51.503], [0.16, 51.498],
                      [0.21, 51.49]]},
-    {'name': 'Approach N', 'airport': 'LGW', 'type': 'arrival', 'freq': 'medium',
-     'coordinates': [[-0.10, 51.35], [-0.12, 51.32], [-0.14, 51.28]]},
-    {'name': 'Approach S', 'airport': 'LTN', 'type': 'arrival', 'freq': 'medium',
-     'coordinates': [[-0.30, 51.60], [-0.32, 51.65], [-0.34, 51.70]]},
+    # LGW Approach N + LTN Approach S removed 2026-05-07 after the
+    # audit confirmed they sit at altitudes (FL90+) where DEFRA shows
+    # zero ground noise. Documented in index.html.
 ]
 
 
