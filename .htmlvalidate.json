@@ -10,6 +10,7 @@
     "script-type": "off",
     "long-title": "off",
     "void-style": "off",
-    "doctype-style": "off"
+    "doctype-style": "off",
+    "prefer-native-element": "off"
   }
 }

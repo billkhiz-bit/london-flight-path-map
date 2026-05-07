@@ -440,6 +440,13 @@
       .layer-toggle.active {
         background: var(--dark);
         color: var(--white);
+        /* Audit F-A11y-2 fix: hover and active were visually identical
+           (both = dark fill). Adding a left border on .active creates a
+           non-colour cue (WCAG 1.4.1). The indicator dot below is also
+           filled-when-active vs outline-only-when-inactive (already present;
+           kept) — that's the second non-colour cue. */
+        border-left-width: 4px;
+        padding-left: 7px;
       }
       .layer-toggle .indicator {
         width: 6px;
@@ -769,11 +776,18 @@
         background: #fff;
         font-family: var(--font-sans);
         font-size: 14px;
-        outline: none;
+        /* Audit F-UX-7: removed bare outline:none. Custom :focus-visible
+           below provides a clear keyboard-focus indicator while letting
+           the existing border-color + box-shadow style the mouse-focus
+           state. WCAG 2.4.7. */
         transition:
           border-color 0.15s,
           box-shadow 0.15s;
         color: var(--dark);
+      }
+      .search-box input:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
       }
       .search-box input:focus {
         border-color: var(--orange);
@@ -874,6 +888,28 @@
         border: 1px solid var(--mid);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+
+      /* Audit F-UX-5: skip-to-content link, hidden off-screen until
+         keyboard-focused, then jumps into a clickable position. */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 8px;
+        z-index: 1000;
+        background: var(--dark);
+        color: var(--white);
+        padding: 8px 14px;
+        text-decoration: none;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: top 0.15s;
+      }
+      .skip-link:focus {
+        top: 8px;
+        outline: 2px solid var(--orange);
       }
 
       .loading-screen {
@@ -1446,11 +1482,23 @@
         .layer-toggle {
           padding: 8px 12px;
           font-size: 10px;
-          min-height: 32px;
+          min-height: 44px;
         }
         .map-controls button {
           width: 44px;
           height: 44px;
+        }
+        /* Audit F-UX-6: bump every interactive control to WCAG 2.5.5
+           target-size minimum (44×44, Apple/Google guideline). Was: layer-
+           toggle 32px; persona-btn ~25; fav-btn ~22; city-btn ~22; tab ~30.
+           Mobile only — desktop keeps tighter dimensions for density. */
+        .persona-btn,
+        .fav-btn,
+        .city-btn,
+        .tab,
+        .metric-card,
+        #first-hint button {
+          min-height: 44px;
         }
       }
       @media (max-width: 480px) {
@@ -1484,6 +1532,9 @@
     </style>
   </head>
   <body>
+    <!-- Audit F-UX-5: skip-to-content link. First focusable element on
+         the page; visually-hidden until focused via Tab. WCAG 2.4.1. -->
+    <a href="#search-input" class="skip-link">Skip to search</a>
     <div id="loading" class="loading-screen">
       <span>LOADING GEOSPATIAL DATA...</span>
     </div>
@@ -1509,11 +1560,11 @@
           </span>
           <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
         </div>
-        <div class="city-selector" id="city-selector">
-          <button type="button" class="city-btn active" data-city="london" onclick="switchCity('london')">
+        <div class="city-selector" id="city-selector" role="group" aria-label="Select city">
+          <button type="button" class="city-btn active" aria-pressed="true" data-city="london" onclick="switchCity('london')">
             London
           </button>
-          <button type="button" class="city-btn" data-city="nyc" onclick="switchCity('nyc')">New York</button>
+          <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">New York</button>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
@@ -6303,7 +6354,11 @@
       async function switchCity(city) {
         if (city === currentCity) return;
         currentCity = city;
-        document.querySelectorAll('.city-btn').forEach((b) => b.classList.toggle('active', b.dataset.city === city));
+        document.querySelectorAll('.city-btn').forEach((b) => {
+          const isActive = b.dataset.city === city;
+          b.classList.toggle('active', isActive);
+          b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
 
         const titleEl = document.getElementById('map-title-text');
         const subtitleEl = document.getElementById('map-subtitle');
