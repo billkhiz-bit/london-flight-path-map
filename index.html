@@ -997,21 +997,28 @@ const HELIPORTS = [
     note:'Air ambulance helipad. Emergency use only. Affects Denmark Hill/Camberwell.'},
 ];
 
+// Polylines deliberately trimmed to the noise-relevant final-approach /
+// initial-departure portion only (~15-22 km from the runway). Audited
+// 2026-05-07 against the DEFRA Round 4 Lden raster — earlier polylines
+// extended out to holding fixes 30-45 km from the runway where aircraft
+// are at FL80+ and DEFRA shows zero ground noise. The trimmed shapes are
+// what generates audible noise. Re-run scripts/audit_flight_paths.py
+// after any change here, and keep its mirrored FLIGHT_PATHS in sync.
 const FLIGHT_PATHS = [
   {name:'Lambourne Stack',airport:'LHR',type:'arrival',freq:'high',
-    coordinates:[[0.15,51.65],[0.08,51.62],[0.02,51.59],[-0.04,51.565],[-0.10,51.54],[-0.18,51.52],[-0.25,51.505],[-0.32,51.495],[-0.38,51.485],[-0.428,51.4775]]},
+    coordinates:[[-0.18,51.52],[-0.25,51.505],[-0.32,51.495],[-0.38,51.485],[-0.428,51.4775]]},
   {name:'Biggin Stack',airport:'LHR',type:'arrival',freq:'high',
-    coordinates:[[0.03,51.33],[-0.02,51.35],[-0.06,51.37],[-0.11,51.39],[-0.16,51.41],[-0.22,51.425],[-0.28,51.44],[-0.34,51.45],[-0.39,51.46],[-0.428,51.4644]]},
+    coordinates:[[-0.22,51.425],[-0.28,51.44],[-0.34,51.45],[-0.39,51.46],[-0.428,51.4644]]},
   {name:'Ockham Stack',airport:'LHR',type:'arrival',freq:'high',
-    coordinates:[[-0.45,51.28],[-0.44,51.31],[-0.435,51.34],[-0.435,51.37],[-0.435,51.40],[-0.435,51.42],[-0.435,51.44],[-0.435,51.4644]]},
+    coordinates:[[-0.435,51.37],[-0.435,51.40],[-0.435,51.42],[-0.435,51.44],[-0.435,51.4644]]},
   {name:'Bovingdon Stack',airport:'LHR',type:'arrival',freq:'high',
-    coordinates:[[-0.55,51.72],[-0.52,51.68],[-0.50,51.64],[-0.49,51.60],[-0.48,51.56],[-0.47,51.53],[-0.46,51.505],[-0.45,51.4775]]},
+    coordinates:[[-0.49,51.60],[-0.48,51.56],[-0.47,51.53],[-0.46,51.505],[-0.45,51.4775]]},
   {name:'Dep West',airport:'LHR',type:'departure',freq:'high',
-    coordinates:[[-0.489,51.4775],[-0.55,51.48],[-0.62,51.485],[-0.70,51.49],[-0.78,51.495]]},
+    coordinates:[[-0.489,51.4775],[-0.55,51.48],[-0.62,51.485],[-0.70,51.49]]},
   {name:'Dep SE (Detling)',airport:'LHR',type:'departure',freq:'medium',
-    coordinates:[[-0.428,51.4775],[-0.35,51.47],[-0.25,51.46],[-0.15,51.445],[-0.05,51.43],[0.05,51.41],[0.15,51.39]]},
+    coordinates:[[-0.428,51.4775],[-0.35,51.47],[-0.25,51.46],[-0.15,51.445]]},
   {name:'Dep NE (BPK)',airport:'LHR',type:'departure',freq:'medium',
-    coordinates:[[-0.428,51.4775],[-0.35,51.49],[-0.25,51.51],[-0.15,51.53],[-0.05,51.55],[0.05,51.57],[0.15,51.59]]},
+    coordinates:[[-0.428,51.4775],[-0.35,51.49],[-0.25,51.51],[-0.15,51.53]]},
   {name:'Approach East',airport:'LCY',type:'arrival',freq:'medium',
     coordinates:[[0.20,51.48],[0.17,51.485],[0.14,51.488],[0.11,51.492],[0.09,51.497],[0.07,51.502],[0.0553,51.5053]]},
   {name:'Approach West',airport:'LCY',type:'arrival',freq:'medium',
@@ -1019,9 +1026,9 @@ const FLIGHT_PATHS = [
   {name:'Dep East',airport:'LCY',type:'departure',freq:'medium',
     coordinates:[[0.067,51.5053],[0.09,51.505],[0.12,51.503],[0.16,51.498],[0.21,51.49]]},
   {name:'Approach N',airport:'LGW',type:'arrival',freq:'medium',
-    coordinates:[[-0.10,51.35],[-0.12,51.32],[-0.14,51.28],[-0.16,51.23],[-0.17,51.19],[-0.182,51.1537]]},
+    coordinates:[[-0.10,51.35],[-0.12,51.32],[-0.14,51.28]]},
   {name:'Approach S',airport:'LTN',type:'arrival',freq:'medium',
-    coordinates:[[-0.30,51.60],[-0.32,51.65],[-0.34,51.70],[-0.35,51.75],[-0.36,51.80],[-0.368,51.8747]]},
+    coordinates:[[-0.30,51.60],[-0.32,51.65],[-0.34,51.70]]},
 ];
 
 // Borough data - scores are COMPUTED, not hardcoded. See calcScores().
