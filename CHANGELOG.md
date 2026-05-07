@@ -6,6 +6,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12.5 closure — 2026-05-07 late night (borough label contrast)
+
+User flagged that clicking a borough made its name unreadable (label and fill both #141414). Switched borough labels to dark fill + white stroke halo via `paint-order: stroke` so they read on any background — same trick used for airport/heliport codes earlier.
+
 ### Wave 12.4 closure — 2026-05-07 late night (in-map layer captions removed, legend group titles beefed up)
 
 User flagged the in-map SVG captions (DEFRA ROAD NOISE BY BOROUGH etc.) overlapped the LONDON/NYC city-selector buttons in the top-left. Removed them entirely (the bottom-left HTML legend already handles attribution per toggled layer) and bumped the legend group titles from 8px mid-grey to 10px bold dark with source prefixes (DEFRA ROAD NOISE / EA FLOOD RISK / BOROUGH AIR QUALITY for London; DOT / FEMA / EPA equivalents for NYC).

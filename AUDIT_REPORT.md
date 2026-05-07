@@ -6,6 +6,16 @@
 
 ---
 
+## Wave 12.5 close — 2026-05-07 late night (borough label contrast fix)
+
+User flagged: clicking a borough made its name unreadable because the label fill (#141414) and the selected-borough fill (#141414) were identical. Previous code tried to swap the label colour at render-time based on `selectedBorough`, but the click handler never re-calls `renderLabels`, so labels stayed dark even after the fill went dark.
+
+**Fix:** switched to single dark label colour with a white stroke halo via `paint-order: stroke` (same trick as airport code labels from Wave 7). Labels now read on ANY background colour without needing per-click updates. Opacity bumped 0.6 → 0.9 (halo handles contrast); font-weight 500 → 600.
+
+Pattern reuse: this is now the third time `paint-order: stroke` has saved a contrast issue (airport codes Wave 7, heliport codes Wave 7, borough labels Wave 12.5). Worth remembering as the default contrast trick for SVG text over variable backgrounds.
+
+---
+
 ## Wave 12.4 close — 2026-05-07 late night (in-map layer captions removed, legend group titles beefed up)
 
 User flagged: when toggling road / flood / air-quality layers, the in-map SVG captions ("DEFRA ROAD NOISE BY BOROUGH" etc.) appeared beneath the LONDON/NYC city-selector buttons in the top-left corner. Two-part fix:
