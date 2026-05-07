@@ -1251,6 +1251,17 @@ function escapeHtml(s) {
 }
 const escapeHtmlAttr = escapeHtml;
 
+// URL allow-list for href values built from user/community data (OSM Overpass,
+// chat replies, anything not under our control). Only http(s)/mailto/tel and
+// scheme-less paths pass through; javascript:, data:, vbscript: become '#'.
+function safeUrl(url) {
+  if (!url) return '#';
+  const s = String(url).trim();
+  if (/^(https?:|mailto:|tel:)/i.test(s)) return escapeHtmlAttr(s);
+  if (/^(\/\/|\/)/.test(s)) return escapeHtmlAttr(s);
+  return '#';
+}
+
 // Tooltip explaining the 0-10 score on hover. The composite mixes
 // absolute and cohort-relative components — surfacing this transparency
 // is part of the methodology-defensibility positioning. Returns the
@@ -2117,24 +2128,30 @@ function renderTransportData(containerId, data) {
   }
   let html = '';
   if (data.stations && data.stations.length > 0) {
-    html += data.stations.map(s => `
+    html += data.stations.map(s => {
+      const stationName = escapeHtml((s.name||'').replace(' Underground Station','').replace(' Rail Station',''));
+      const lineBadges = (s.lines||[]).slice(0,5).map(l =>
+        '<span class="line-badge">'+escapeHtml(String(l).replace(/-/g,' '))+'</span>').join('');
+      const dist = Number.isFinite(Number(s.distance)) ? Number(s.distance) : '';
+      return `
       <div class="transport-station">
         <div>
-          <div class="station-name">${s.name.replace(' Underground Station','').replace(' Rail Station','')}</div>
-          <div class="station-lines">${(s.lines||[]).slice(0,5).map(l =>
-            '<span class="line-badge">'+l.replace(/-/g,' ')+'</span>').join('')}</div>
+          <div class="station-name">${stationName}</div>
+          <div class="station-lines">${lineBadges}</div>
         </div>
-        <span class="station-dist">${s.distance}m</span>
-      </div>`).join('');
+        <span class="station-dist">${dist}m</span>
+      </div>`;
+    }).join('');
   }
   if (data.lineStatus && data.lineStatus.length > 0) {
     html += '<h3 style="margin-top:12px;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;">LIVE LINE STATUS</h3>';
     html += data.lineStatus.map(l => {
       const good = l.status === 'Good Service';
+      const reason = l.reason ? '<div style="font-size:9px;color:var(--mid);padding:2px 0 6px;">'+escapeHtml(l.reason)+'</div>' : '';
       return `<div class="line-status">
-        <span>${l.name}</span>
-        <span class="${good?'line-status-good':'line-status-bad'}">${l.status}</span>
-      </div>${l.reason?'<div style="font-size:9px;color:var(--mid);padding:2px 0 6px;">'+l.reason+'</div>':''}`;
+        <span>${escapeHtml(l.name||'')}</span>
+        <span class="${good?'line-status-good':'line-status-bad'}">${escapeHtml(l.status||'')}</span>
+      </div>${reason}`;
     }).join('');
   }
   el.innerHTML = html;
@@ -2221,21 +2238,24 @@ function renderNhsData(containerId, data) {
   const renderGroup = (title, items) => {
     if (!items.length) return '';
     if (items[0].fallback) {
-      const url = items[0].website || items[0].url || 'https://www.nhs.uk/';
-      return `<p class="info-note"><a href="${url}" target="_blank" rel="noopener" style="color:var(--orange);">${items[0].name || 'Search NHS ' + title + ' services'} &rarr;</a></p>`;
+      const url = safeUrl(items[0].website || items[0].url || 'https://www.nhs.uk/');
+      const label = escapeHtml(items[0].name || 'Search NHS ' + title + ' services');
+      return `<p class="info-note"><a href="${url}" target="_blank" rel="noopener" style="color:var(--orange);">${label} &rarr;</a></p>`;
     }
-    return `<h3 style="margin-top:10px;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">${title}</h3>` +
+    return `<h3 style="margin-top:10px;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">${escapeHtml(title)}</h3>` +
       items.map(s => {
+        const safeName = escapeHtml(s.name || '');
         const nameNode = s.website
-          ? `<a href="${s.website}" target="_blank" rel="noopener" class="station-name" style="color:inherit;">${s.name}</a>`
-          : `<div class="station-name">${s.name}</div>`;
-        const addrParts = [s.address, s.postcode].filter(Boolean).join(', ');
+          ? `<a href="${safeUrl(s.website)}" target="_blank" rel="noopener" class="station-name" style="color:inherit;">${safeName}</a>`
+          : `<div class="station-name">${safeName}</div>`;
+        const addrParts = escapeHtml([s.address, s.postcode].filter(Boolean).join(', '));
+        const dist = (s.distance != null && Number.isFinite(Number(s.distance))) ? Number(s.distance) : null;
         return `<div class="transport-station">
           <div>
             ${nameNode}
             ${addrParts ? `<div class="station-lines"><span class="line-badge">${addrParts}</span></div>` : ''}
           </div>
-          ${s.distance != null ? `<span class="station-dist">${s.distance}m</span>` : ''}
+          ${dist != null ? `<span class="station-dist">${dist}m</span>` : ''}
         </div>`;
       }).join('');
   };
@@ -2308,7 +2328,11 @@ async function fetchInsight(locationData) {
 }
 
 function formatChatReply(text) {
-  return text
+  // Escape FIRST, then apply markdown. Otherwise a successful prompt-injection
+  // emitting <img src=x onerror=...> renders as live HTML and steals the
+  // device token (turning C3's mitigation into favourites takeover).
+  if (text == null) return '';
+  return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/### (.*?)(\n|$)/g, '<strong style="font-size:13px;">$1</strong><br>')
     .replace(/## (.*?)(\n|$)/g, '<strong style="font-size:14px;">$1</strong><br>')
@@ -2333,10 +2357,11 @@ function renderSoldPrices(containerId, soldData, postcode) {
   }
   el.innerHTML = soldData.map(s => {
     const price = new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(s.price);
-    const date = s.date ? s.date.substring(0,10) : '';
+    const date = escapeHtml(s.date ? s.date.substring(0,10) : '');
+    const address = escapeHtml((s.address||'').trim());
     return `<div class="sold-row">
       <span class="sold-price">${price}</span>
-      <span class="sold-address">${s.address.trim()}</span>
+      <span class="sold-address">${address}</span>
       <span class="sold-date">${date}</span>
     </div>`;
   }).join('') + '<div class="info-note" style="margin-top:6px;">Source: HM Land Registry Price Paid Data (Open Government Licence).</div>';
@@ -2448,18 +2473,22 @@ function showAutocomplete(results) {
   let html = '';
   let idx = 0;
   boroughMatches.forEach(b => {
-    html += `<div class="autocomplete-item" data-type="borough" data-value="${b}" data-index="${idx}">
-      <span class="ac-postcode">${b}</span><span class="ac-area">Borough</span></div>`;
+    const safeB = escapeHtml(b);
+    html += `<div class="autocomplete-item" data-type="borough" data-value="${escapeHtmlAttr(b)}" data-index="${idx}">
+      <span class="ac-postcode">${safeB}</span><span class="ac-area">Borough</span></div>`;
     idx++;
   });
   areaMatches.forEach(a => {
-    html += `<div class="autocomplete-item" data-type="area" data-value="${a}" data-index="${idx}">
-      <span class="ac-postcode">${a}</span><span class="ac-area">Area &middot; ${typeof activeAreas[a] === 'object' ? activeAreas[a].borough : activeAreas[a].split(' ')[0]}</span></div>`;
+    const safeA = escapeHtml(a);
+    const areaMeta = typeof activeAreas[a] === 'object' ? activeAreas[a].borough : activeAreas[a].split(' ')[0];
+    html += `<div class="autocomplete-item" data-type="area" data-value="${escapeHtmlAttr(a)}" data-index="${idx}">
+      <span class="ac-postcode">${safeA}</span><span class="ac-area">Area &middot; ${escapeHtml(areaMeta)}</span></div>`;
     idx++;
   });
   (results||[]).forEach(pc => {
-    html += `<div class="autocomplete-item" data-type="postcode" data-value="${pc}" data-index="${idx}">
-      <span class="ac-postcode">${pc}</span></div>`;
+    const safePc = escapeHtml(pc);
+    html += `<div class="autocomplete-item" data-type="postcode" data-value="${escapeHtmlAttr(pc)}" data-index="${idx}">
+      <span class="ac-postcode">${safePc}</span></div>`;
     idx++;
   });
   dropdown.innerHTML = html;
@@ -3273,19 +3302,19 @@ function updateSidebarPostcode(analysis, boroughData) {
       <div class="postcode-result">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${analysis.postcode}</div>
-            <div style="font-size:10px;color:var(--mid);">${analysis.ward}, ${analysis.borough}</div>
+            <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${escapeHtml(analysis.postcode)}</div>
+            <div style="font-size:10px;color:var(--mid);">${escapeHtml(analysis.ward)}, ${escapeHtml(analysis.borough)}</div>
           </div>
           <button class="fav-btn ${isFavourite(analysis.postcode)?'saved':''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(analysis.noiseEstimate)}" data-fav-score="${boroughData?(Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4+(boroughData.scores?.afford??5)*0.35+(boroughData.scores?.growth??5)*0.25)*10)/10):0}">
             <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode)?'SAVED':'SAVE'}
           </button>
         </div>
       </div>
-      ${analysis.isOutcode?'<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. '+analysis.postcode+' 1AA.</p>':''}
+      ${analysis.isOutcode?'<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. '+escapeHtml(analysis.postcode)+' 1AA.</p>':''}
     </div>
     <div class="sidebar-section">
       <h3>WHAT YOU NEED TO KNOW ABOUT NOISE HERE</h3>
-      <span class="noise-indicator ${noiseClass}" style="margin-bottom:8px;">${analysis.noiseEstimate} AIRCRAFT NOISE</span>
+      <span class="noise-indicator ${noiseClass}" style="margin-bottom:8px;">${escapeHtml(analysis.noiseEstimate)} AIRCRAFT NOISE</span>
       <div class="noise-bar" style="margin-bottom:12px;"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
       <p class="property-note" style="margin-top:0;">${postcodeNoiseSummary(analysis)}</p>
     </div>
@@ -3294,9 +3323,9 @@ function updateSidebarPostcode(analysis, boroughData) {
       <div class="noise-detail-row"><span class="noise-detail-label">Nearest airport</span>
         <span class="noise-detail-value">${top3[0].name} (${top3[0].dist.toFixed(1)} km)</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Plane altitude</span>
-        <span class="noise-detail-value">${analysis.altEstimate}</span></div>
+        <span class="noise-detail-value">${escapeHtml(analysis.altEstimate)}</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Nearest flight path</span>
-        <span class="noise-detail-value">${analysis.nearestPath?analysis.nearestPath.airport+' '+analysis.nearestPath.name:'None nearby'}</span></div>
+        <span class="noise-detail-value">${analysis.nearestPath?escapeHtml(analysis.nearestPath.airport+' '+analysis.nearestPath.name):'None nearby'}</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Path distance</span>
         <span class="noise-detail-value">${analysis.nearestPathDist.toFixed(1)} km</span></div>
       ${analysis.nearestHeli?'<div class="noise-detail-row"><span class="noise-detail-label">Nearest heliport</span><span class="noise-detail-value">'+analysis.nearestHeli.name.split('(')[0].trim()+' ('+analysis.nearestHeli.dist.toFixed(1)+' km)</span></div>':''}
@@ -3307,17 +3336,17 @@ function updateSidebarPostcode(analysis, boroughData) {
     ${extra?`
     <div class="sidebar-section">
       <h3>CRIME</h3>
-      <span class="rating-badge ${ratingBadgeClass(extra.crime)}">${extra.crime}</span>
+      <span class="rating-badge ${ratingBadgeClass(extra.crime)}">${escapeHtml(extra.crime)}</span>
       <div style="margin-top:8px;">
-        <div class="crime-stat"><div class="crime-stat-value">${extra.crimeRate}</div><div class="crime-stat-label">Per 1,000 residents/yr (${extra.name} borough)</div></div>
+        <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">Per 1,000 residents/yr (${escapeHtml(extra.name)} borough)</div></div>
       </div>
       <p class="info-note" style="margin-top:8px;">${extra.crime==='low'?'This borough has lower crime than the '+(currentCity==='nyc'?'NYC':'London')+' average.':extra.crime==='medium'?'This borough is around the '+(currentCity==='nyc'?'NYC':'London')+' average for crime.':'This borough has above-average crime rates - often driven by nightlife, tourism, or town centre activity.'} ${currentCity==='nyc'?'Based on NYPD CompStat data.':'Based on Met Police published statistics.'}</p>
     </div>`:''}
     ${extra?`
     <div class="sidebar-section">
       <h3>SCHOOLS</h3>
-      <span class="rating-badge ${ratingBadgeClass(extra.schools)}">${extra.schools}</span>
-      <p class="info-note" style="margin-top:6px;">${extra.schoolNote}</p>
+      <span class="rating-badge ${ratingBadgeClass(extra.schools)}">${escapeHtml(extra.schools)}</span>
+      <p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>
     </div>`:''}
     ${currentCity==='london'?`<div class="sidebar-section">
       <h3>NEAREST STATIONS (LIVE TfL DATA)</h3>
@@ -4265,7 +4294,7 @@ async function init() {
     chatInput.value = '';
     const isMultiAgent = shouldUseMultiAgent(msg);
     // Add user message
-    chatMessages.innerHTML += `<div class="chat-msg user"><div class="chat-bubble">${msg.replace(/</g,'&lt;')}</div></div>`;
+    chatMessages.innerHTML += `<div class="chat-msg user"><div class="chat-bubble">${escapeHtml(msg)}</div></div>`;
     chatMessages.innerHTML += `<div class="chat-msg bot" id="chat-typing"><div class="chat-bubble chat-typing">${isMultiAgent ? '<span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#141414;">Multi-Agent Analysis</span><br><span style="font-size:10px;color:#A0A0A0;margin-top:2px;display:inline-block;">\u2708 Noise \u00B7 \u2302 Market \u00B7 \u2605 Livability</span>' : 'Thinking...'}</div></div>`;
     chatMessages.scrollTop = chatMessages.scrollHeight;
     // Call API
