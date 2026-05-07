@@ -1,6 +1,10 @@
 # Sky Score Buildathon Plan
 
-**Status:** Awaiting eligibility reply from Shared Futures Foundation (email sent 2026-05-05). Application deadline 2026-05-15. Event 2026-06-07.
+**Status (2026-05-07):** Awaiting eligibility reply from Shared Futures Foundation (email sent 2026-05-05, 2 days silent). Application deadline **2026-05-15** (8 days). Event 2026-06-07.
+
+**Action this week:**
+- **Chase Foundation by 2026-05-10** if no reply (need ≥5 days to draft + submit application before deadline).
+- Most pre-work below is already done as part of the productisation track — the buildathon-specific work narrows to: separate repo, halal-aware affordability variant, Ummah.com OAuth, demo flow.
 
 ---
 
@@ -38,12 +42,17 @@ Separate repo + deployment from the original Sky Score (mirrors the Siraj → Si
 - **Deployment**: Cloudflare Pages or Replit (Replit is a Buildathon partner, bonus integration signal)
 - **Backend**: shared. New `/v1/score` Lambda extracted from existing scoring logic (also serves the standalone B2B API roadmap)
 
-### Pre-work (before 7 June, only if Foundation confirms eligibility)
+### Pre-work status (2026-05-07)
 
-- Create new GitHub repo
-- Stand up new deployment
-- Extract `/v1/score` to a Lambda from existing frontend logic
-- Clean noise/livability data into Lambda-served JSON
+What's already done as part of the main productisation track (no extra buildathon work needed):
+- ✅ **`/v1/score` Lambda extracted, hardened, deployed** — shipped 2026-05-05; today's session added per-route throttle, IAM tag-conditions on signup, XSS hardening across the consumer site, and 9 unit tests for the live_flights Lambda before that was removed for OpenSky-licensing reasons. Score Lambda has 70/70 backend tests passing (61 currently after live_flights tests removed).
+- ✅ **Noise/livability data cleaned into Lambda-served JSON** — DEFRA Round 4 (2022) Lden raster sampled at every UK postcode centroid, written to DynamoDB. v3.1 raster path is live and resolving most central-London postcodes (~2.3M of ~2.5M NSPL rows loaded as of 2026-05-07).
+- ✅ **Methodology defensibility positioning** strengthened — AI features removed from consumer UI 2026-05-07, narrative is now "deterministic data, not AI summaries". Aligns with Maqasid al-Shariah (no harm from misleading data) which is the *exact* judging panel angle.
+
+What's still buildathon-specific (do once Foundation confirms eligibility):
+- Create new GitHub repo (`sky-score-halal`)
+- Stand up new deployment (Cloudflare Pages or Replit — Replit is a Buildathon partner, bonus integration signal)
+- Halal-aware affordability variant: replace conventional-mortgage assumption with Murabaha / Ijara / Diminishing Musharakah cost calc
 
 ### On-day build (9.5h, 09:30 → 19:00 on 7 June)
 
@@ -80,7 +89,16 @@ Email sent 2026-05-05 to buildathon@sharedfuturesfoundation.org.uk asking whethe
 
 ## Decision queue
 
-1. Foundation eligibility reply, when received, decide framing
-2. If yes: produce 1-page Interchange application by 2026-05-12 (3-day buffer before 2026-05-15 deadline)
-3. Pre-work week of 2026-05-26 (extract `/v1/score`, fork repo, set up deployment)
-4. Event day rehearsal (week of 2026-06-01): walk through 5-min demo
+1. **2026-05-10**: chase Foundation if still no reply (5-day deadline buffer)
+2. **When reply lands**: decide framing (extend Sky Score vs build standalone halal property tool from scratch on the day)
+3. **2026-05-12 hard deadline**: produce 1-page Interchange application (3-day buffer before 2026-05-15 close). Section drafts to write: Problem Clarity (the listings-site information asymmetry + halal-finance gap), Working Product (Sky Score + the halal variant), Ethical Integrity (Maqasid al-Shariah + riba-free targeting + DEFRA-anchored deterministic scoring), Adoption Potential (Al Rayan / StrideUp / Gatehouse / Ummah.com network), Continuation Viability (B2B API monetisation already chosen — see ROADMAP §"Monetisation strategy").
+4. **Week of 2026-05-26**: buildathon-specific pre-work — fork repo, stand up new deployment. (Skip the `/v1/score` extraction step — that's already shipped.)
+5. **Week of 2026-06-01**: rehearse 5-min demo + Q&A.
+
+## Strategic alignment notes (added 2026-05-07)
+
+The data-first pivot done this session strengthens the buildathon angle in concrete ways worth surfacing in the application:
+
+- **Ethical Integrity (25% of judging)**: removing AI summaries on top of deterministic scores eliminates the hallucination risk that would have weakened a Maqasid-al-Shariah pitch (no harm from misleading data). The story is now "every threshold anchored to a published source; no AI vibes layered on top."
+- **Working Product (25%)**: per-postcode quiet via DEFRA raster (v3.1) is gold-standard; the audit script `scripts/audit_flight_paths.py` validates the visualisation against the underlying noise data. Makes the "working" claim defensible under judge questioning.
+- **Continuation Viability (15%)**: monetisation strategy resolved (convenience-tier B2B API); per-Lambda auth + throttling + signup hardening done; OpenAPI spec public. Not a hackathon toy — a productised service.
