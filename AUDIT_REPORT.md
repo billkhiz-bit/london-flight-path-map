@@ -6,6 +6,17 @@
 
 ---
 
+## Wave 12.4 close — 2026-05-07 late night (in-map layer captions removed, legend group titles beefed up)
+
+User flagged: when toggling road / flood / air-quality layers, the in-map SVG captions ("DEFRA ROAD NOISE BY BOROUGH" etc.) appeared beneath the LONDON/NYC city-selector buttons in the top-left corner. Two-part fix:
+
+1. **Removed in-map SVG captions entirely** — they were redundant with the bottom-left HTML legend (which already gates a colour-keyed entry per toggled layer via `legend-{road,flood,aq}-group`). They also overlapped the SKY SCORE title.
+2. **Beefed up legend group titles** for road / flood / AQ — font 8px `var(--mid)` → 10px `var(--dark)` bold, with source prefix: `DEFRA ROAD NOISE` / `EA FLOOD RISK` / `BOROUGH AIR QUALITY` (NYC: `DOT ROAD NOISE` / `FEMA FLOOD RISK` / `EPA BOROUGH AIR QUALITY`). Aircraft title now reads `DEFRA/BTS AIRCRAFT NOISE` for consistency.
+
+Result: cleaner top-left corner, layer attribution lives in the canonical legend at bottom-left where users naturally look.
+
+---
+
 ## Wave 12.1 + 12.2 + 12.3 close — 2026-05-07 late night (self-host DEFRA PNG + widen bbox + in-place explainer + legend max-width)
 
 **Wave 12.3 (visual fix-DEFRA-7):** User flagged "the colour code box extends further and messes up the layout, not responsive anymore" — Wave 12.2's in-place explainer text expanded `.map-legend` (which had no max-width) across the bottom of the desktop map. One-line CSS fix: `max-width: 260px` so the prose wraps inside the legend container instead of stretching it. Mobile already had `display: none` on the legend so was unaffected.

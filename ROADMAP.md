@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-07 (Wave 12.2 close — DEFRA aircraft PNG self-hosted on CloudFront, bbox widened to cover LHR full + LCY + LGW, in-place "what this is" explainer in the legend; see AUDIT_REPORT.md for per-wave breakdown)
+**Last reviewed:** 2026-05-07 (Wave 12.4 close — in-map layer captions removed; legend group titles beefed up with source prefixes; see AUDIT_REPORT.md for per-wave breakdown)
 
 ---
 

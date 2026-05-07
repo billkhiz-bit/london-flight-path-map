@@ -6,6 +6,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12.4 closure — 2026-05-07 late night (in-map layer captions removed, legend group titles beefed up)
+
+User flagged the in-map SVG captions (DEFRA ROAD NOISE BY BOROUGH etc.) overlapped the LONDON/NYC city-selector buttons in the top-left. Removed them entirely (the bottom-left HTML legend already handles attribution per toggled layer) and bumped the legend group titles from 8px mid-grey to 10px bold dark with source prefixes (DEFRA ROAD NOISE / EA FLOOD RISK / BOROUGH AIR QUALITY for London; DOT / FEMA / EPA equivalents for NYC).
+
 ### Wave 12.1 + 12.2 + 12.3 closure — 2026-05-07 late night (self-host DEFRA PNG + widen bbox + explainer + legend layout fix)
 
 **Wave 12.3:** added a one-line `max-width: 260px` to `.map-legend` because the in-place explainer text from 12.2 had stretched the legend container across the bottom of the desktop map. Mobile already hides the legend < 768 px.
