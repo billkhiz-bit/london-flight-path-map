@@ -144,6 +144,65 @@ class SignupHandlerTests(unittest.TestCase):
         result = self.app.handler({'httpMethod': 'GET'}, None)
         self.assertEqual(result['statusCode'], 405)
 
+    def test_cors_origin_echoed_for_allowlisted(self):
+        # Allowed origin should be echoed back (not '*'), per N-Sec-4 lockdown.
+        result = self.app.handler(
+            {'httpMethod': 'OPTIONS',
+             'headers': {'Origin': 'https://skyscore.co.uk'}},
+            None,
+        )
+        self.assertEqual(result['headers']['Access-Control-Allow-Origin'],
+                         'https://skyscore.co.uk')
+
+    def test_cors_origin_canonical_fallback_for_unknown(self):
+        # Hostile / unknown origin should fall back to the canonical site,
+        # NOT echo the requester's origin and NOT use '*'.
+        result = self.app.handler(
+            {'httpMethod': 'OPTIONS',
+             'headers': {'Origin': 'https://evil.example.com'}},
+            None,
+        )
+        self.assertEqual(result['headers']['Access-Control-Allow-Origin'],
+                         'https://skyscore.co.uk')
+        self.assertNotEqual(result['headers']['Access-Control-Allow-Origin'], '*')
+
+    def test_cors_origin_canonical_fallback_when_no_origin(self):
+        # No Origin header at all (server-to-server, curl, etc.) → canonical.
+        result = self.app.handler({'httpMethod': 'OPTIONS', 'headers': {}}, None)
+        self.assertEqual(result['headers']['Access-Control-Allow-Origin'],
+                         'https://skyscore.co.uk')
+
+    def test_cors_origin_lowercase_header_also_works(self):
+        # API Gateway can deliver headers as either 'Origin' or 'origin'
+        # depending on stage / proxy; both must be honoured.
+        result = self.app.handler(
+            {'httpMethod': 'OPTIONS',
+             'headers': {'origin': 'https://www.skyscore.co.uk'}},
+            None,
+        )
+        self.assertEqual(result['headers']['Access-Control-Allow-Origin'],
+                         'https://www.skyscore.co.uk')
+
+    def test_safe_revoke_orphan_key_refuses_non_prefix(self):
+        # Belt-and-braces guard alongside the IAM tag-condition (N-Code-1):
+        # if get_api_key returns a key whose name doesn't start with
+        # KEY_NAME_PREFIX, _safe_revoke_orphan_key must NOT call delete_api_key.
+        # Mocked since unit tests don't touch live AWS.
+        with patch.object(self.app.apigw, 'get_api_key',
+                          return_value={'name': 'NotOurPrefix-attacker-controlled'}), \
+             patch.object(self.app.apigw, 'delete_api_key') as mock_delete:
+            self.app._safe_revoke_orphan_key('some-key-id')
+            mock_delete.assert_not_called()  # the prefix guard fired
+
+    def test_safe_revoke_orphan_key_proceeds_for_own_prefix(self):
+        # Conversely: a key whose name starts with KEY_NAME_PREFIX is
+        # eligible for delete (plus the IAM tag-condition would also apply).
+        with patch.object(self.app.apigw, 'get_api_key',
+                          return_value={'name': self.app.KEY_NAME_PREFIX + 'user_at_example_com'}), \
+             patch.object(self.app.apigw, 'delete_api_key') as mock_delete:
+            self.app._safe_revoke_orphan_key('legitimate-key-id')
+            mock_delete.assert_called_once_with(apiKey='legitimate-key-id')
+
 
 # ---------- NHS, lat/lon validation, fallback shape ----------
 
