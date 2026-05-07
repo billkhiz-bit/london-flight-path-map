@@ -51,9 +51,9 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   /* On iOS Safari, 100vh includes the URL bar so content is clipped at the
-     bottom (chat-fab, layer toggles). 100dvh is the dynamic viewport that
-     accounts for the URL bar; height fallback chain ensures older browsers
-     still get a viewport-height layout. */
+     bottom (layer toggles). 100dvh is the dynamic viewport that accounts
+     for the URL bar; height fallback chain ensures older browsers still
+     get a viewport-height layout. */
   body{background:var(--bg);color:var(--dark);font-family:var(--font-mono);overflow:hidden;height:100vh;height:100dvh;width:100vw;}
   .app{display:grid;grid-template-columns:1fr 400px;height:100vh;height:100dvh;width:100vw;}
 
@@ -366,47 +366,6 @@
   .sold-address{flex:1;margin-right:8px;color:#555;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .sold-date{color:var(--mid);font-size:9px;min-width:60px;text-align:right;}
 
-  /* AI Chatbot */
-  #ai-insight-section{background:linear-gradient(135deg,rgba(242,125,38,0.04),rgba(38,125,242,0.04));border-left:3px solid var(--orange);}
-  #ai-insight-content{font-family:var(--font-sans);font-size:12px;line-height:1.6;color:#333;}
-  /* The chat FAB pulses for the first ~12s only — long enough to draw the
-     eye on first paint, short enough to stop being visual noise after the
-     user has had a chance to notice it. JS removes the .pulsing class
-     after the first interaction OR after 12 seconds. */
-  .chat-fab{position:fixed;bottom:24px;right:24px;z-index:200;height:44px;border-radius:22px;padding:0 18px 0 14px;
-    background:linear-gradient(135deg,var(--orange),#e06a20);color:var(--white);border:none;font-size:13px;font-weight:700;
-    font-family:var(--font-mono);letter-spacing:1px;cursor:pointer;
-    display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(242,125,38,0.4);
-    transition:transform 0.2s,box-shadow 0.2s;}
-  .chat-fab.pulsing{animation:fab-pulse 3s ease-in-out 4;}  /* 4 cycles ≈ 12 s */
-  .chat-fab:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(242,125,38,0.6);}
-  .chat-fab svg{width:20px;height:20px;fill:currentColor;}
-  @keyframes fab-pulse{0%,100%{box-shadow:0 4px 16px rgba(242,125,38,0.4);}50%{box-shadow:0 4px 24px rgba(242,125,38,0.7);}}
-  .chat-panel{position:fixed;bottom:80px;right:24px;z-index:200;width:380px;max-height:500px;
-    background:var(--white);border:1px solid var(--dark);display:none;flex-direction:column;
-    box-shadow:0 8px 32px rgba(0,0,0,0.2);}
-  .chat-panel.open{display:flex;}
-  .chat-header{padding:12px 16px;background:var(--dark);color:var(--white);font-family:var(--font-mono);
-    font-size:10px;letter-spacing:2px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;}
-  .chat-close{cursor:pointer;font-size:14px;opacity:0.7;transition:opacity 0.15s;}
-  .chat-close:hover{opacity:1;}
-  .chat-messages{flex:1;overflow-y:auto;padding:16px;min-height:200px;max-height:340px;}
-  .chat-msg{margin-bottom:12px;font-family:var(--font-sans);font-size:12px;line-height:1.6;}
-  .chat-msg.user{text-align:right;}
-  .chat-msg.user .chat-bubble{background:var(--dark);color:var(--white);display:inline-block;
-    padding:8px 12px;max-width:85%;text-align:left;}
-  .chat-msg.bot .chat-bubble{background:var(--bg);display:inline-block;padding:8px 12px;max-width:85%;}
-  .chat-msg.bot .chat-bubble strong{color:var(--dark);}
-  .chat-input-row{display:flex;border-top:1px solid var(--bg);padding:8px;}
-  .chat-input-row input{flex:1;padding:8px 12px;border:1px solid var(--light);background:transparent;
-    font-family:var(--font-mono);font-size:11px;outline:none;}
-  .chat-input-row input:focus{border-color:var(--orange);}
-  .chat-input-row button{padding:8px 16px;background:var(--dark);color:var(--white);border:none;
-    font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-    transition:background 0.15s;}
-  .chat-input-row button:hover{background:var(--orange);}
-  .chat-typing{font-size:10px;color:var(--mid);font-style:italic;padding:4px 0;}
-
   /* Transport live data */
   .transport-station{display:flex;justify-content:space-between;align-items:center;padding:6px 0;
     border-bottom:1px solid var(--bg);font-size:10px;}
@@ -437,20 +396,6 @@
   .city-btn:hover{background:var(--dark);color:var(--white);}
   .city-btn.active{background:var(--dark);color:var(--white);}
 
-  /* Upload button in chat */
-  .chat-upload-btn{width:44px;height:44px;background:transparent;border:1px solid var(--light);
-    cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
-  .chat-upload-btn:hover{border-color:var(--orange);background:rgba(242,125,38,0.05);}
-  .chat-upload-btn svg{width:30px;height:30px;fill:var(--mid);}
-  .chat-upload-btn:hover svg{fill:var(--orange);}
-
-  /* Upload area */
-  .upload-area{padding:12px;background:var(--bg);border:2px dashed var(--light);text-align:center;
-    cursor:pointer;transition:all 0.2s;margin:8px 0;}
-  .upload-area:hover{border-color:var(--orange);background:rgba(242,125,38,0.03);}
-  .upload-area-label{font-size:10px;color:var(--mid);text-transform:uppercase;letter-spacing:1px;}
-  .upload-preview{max-width:100%;max-height:120px;margin-top:8px;border:1px solid var(--light);}
-
   /* Favourite button */
   .fav-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-family:var(--font-mono);
     font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:1px solid var(--light);
@@ -458,33 +403,6 @@
   .fav-btn:hover{border-color:var(--orange);color:var(--orange);}
   .fav-btn.saved{border-color:var(--orange);color:var(--orange);background:rgba(242,125,38,0.05);}
   .fav-btn svg{width:14px;height:14px;fill:currentColor;}
-
-  /* Report button */
-  .report-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;
-    font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;
-    cursor:pointer;border:1px solid var(--dark);background:var(--dark);color:var(--white);
-    transition:all 0.15s;}
-  .report-btn:hover{background:var(--orange);border-color:var(--orange);}
-
-  /* Report modal */
-  .report-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:rgba(0,0,0,0.6);
-    display:none;align-items:center;justify-content:center;}
-  .report-modal.open{display:flex;}
-  .report-content{background:var(--white);width:90%;max-width:700px;max-height:85vh;overflow-y:auto;
-    padding:32px;font-family:var(--font-sans);font-size:13px;line-height:1.7;position:relative;}
-  .report-content h2{font-family:var(--font-mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;
-    margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bg);}
-  .report-content h2:first-child{margin-top:0;}
-  .report-close{position:absolute;top:12px;right:16px;cursor:pointer;font-size:18px;color:var(--mid);
-    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-    border:1px solid var(--bg);transition:all 0.15s;}
-  .report-close:hover{background:var(--dark);color:var(--white);border-color:var(--dark);}
-  .report-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--bg);}
-  .report-actions button{flex:1;padding:10px;font-family:var(--font-mono);font-size:10px;
-    letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:1px solid var(--dark);
-    transition:all 0.15s;}
-  .report-print{background:var(--dark);color:var(--white);}
-  .report-print:hover{background:var(--orange);border-color:var(--orange);}
 
   /* Favourites panel */
   .fav-panel{display:none;padding:16px 24px;border-bottom:1px solid var(--bg);}
@@ -500,7 +418,6 @@
   @media(max-width:900px){
     .app{grid-template-columns:1fr;grid-template-rows:55vh 45vh;}
     .sidebar{border-left:none;border-top:1px solid var(--dark);}
-    .chat-panel{width:calc(100vw - 48px);right:24px;}
     /* Phone-friendly tap targets on layer toggles */
     .layer-toggle{padding:8px 12px;font-size:10px;min-height:32px;}
     .map-controls button{width:44px;height:44px;}
@@ -603,37 +520,6 @@
       <span title="Open Government Licence v3.0">OGL v3.0</span>
     </div>
   </main>
-
-  <!-- AI Chatbot -->
-  <button type="button" class="chat-fab pulsing" id="chat-fab" title="Ask AI about any area"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="10" r="1.2"/><circle cx="16" cy="10" r="1.2"/></svg>ASK AI</button>
-  <div class="chat-panel" id="chat-panel" role="dialog" aria-label="AI Property Advisor">
-    <div class="chat-header">
-      <span>AI PROPERTY ADVISOR</span>
-      <span class="chat-close" id="chat-close">&times;</span>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-      <div class="chat-msg bot" id="chat-welcome"><div class="chat-bubble"></div></div>
-    </div>
-    <div class="chat-input-row">
-      <button type="button" class="chat-upload-btn" id="chat-upload-btn" title="Upload property photo for AI analysis">
-        <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-      </button>
-      <input type="text" id="chat-input" placeholder="Ask about any area..." aria-label="Ask AI about any area">
-      <button type="button" id="chat-send">ASK</button>
-    </div>
-    <input type="file" id="chat-image-input" accept="image/*" style="display:none">
-  </div>
-
-  <!-- Report Modal -->
-  <div class="report-modal" id="report-modal" role="dialog" aria-modal="true" aria-label="Property Intelligence Report">
-    <div class="report-content" id="report-content">
-      <span class="report-close" onclick="closeReport()">&times;</span>
-      <div id="report-body"><span class="crime-loading">Generating report with Amazon Nova Pro...</span></div>
-      <div class="report-actions">
-        <button type="button" class="report-print" onclick="printReport()">Print / Save as PDF</button>
-      </div>
-    </div>
-  </div>
 
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -2263,82 +2149,6 @@ function renderNhsData(containerId, data) {
     '<p class="info-note" style="margin-top:8px;">Source: OpenStreetMap (ODbL); cross-link to nhs.uk service search.</p>';
 }
 
-// ============================================================
-// AI CHATBOT (via AWS Bedrock - Amazon Nova)
-// ============================================================
-// Chat conversation history and context
-let chatHistory = [];
-let currentViewingContext = '';
-
-const MULTI_AGENT_KEYWORDS = [
-  'compare', 'recommend', 'best', 'worst', 'rank', 'vs', 'versus',
-  'better than', 'safer than', 'which borough', 'where should',
-  'top 5', 'top 3', 'top 10', 'family with', 'commute to',
-  'budget of', 'under 400', 'under 500', 'under 600', 'under 700',
-  'should i buy', 'should i move', 'investment', 'first time buyer',
-  'quietest area', 'safest area', 'best area', 'best neighbourhood'
-];
-
-function shouldUseMultiAgent(message) {
-  const lower = message.toLowerCase();
-  const matches = MULTI_AGENT_KEYWORDS.filter(kw => lower.includes(kw));
-  return matches.length >= 1 && message.length > 30;
-}
-
-async function sendChatMessage(message) {
-  try {
-    const useMultiAgent = shouldUseMultiAgent(message);
-    const endpoint = useMultiAgent ? 'multi-agent' : 'chat';
-    const payload = useMultiAgent
-      ? { message, context: currentViewingContext }
-      : { message, history: chatHistory, context: currentViewingContext };
-
-    const resp = await fetch(`${API_BASE}/${endpoint}`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const reply = data.reply || data.error || 'No response received.';
-    // Store in history
-    chatHistory.push({role: 'user', text: message});
-    chatHistory.push({role: 'assistant', text: reply});
-    // Keep history manageable
-    if (chatHistory.length > 16) chatHistory = chatHistory.slice(-16);
-    return { reply, model: data.model || 'lite', agents: data.agents_used || [] };
-  } catch(e) {
-    return { reply: 'Sorry, the AI advisor is temporarily unavailable. Please try again.', model: 'error', agents: [] };
-  }
-}
-
-async function fetchInsight(locationData) {
-  try {
-    const resp = await fetch(`${API_BASE}/chat`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({mode: 'insight', locationData})
-    });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    return data.reply || null;
-  } catch(e) {
-    return null;
-  }
-}
-
-function formatChatReply(text) {
-  // Escape FIRST, then apply markdown. Otherwise a successful prompt-injection
-  // emitting <img src=x onerror=...> renders as live HTML and steals the
-  // device token (turning C3's mitigation into favourites takeover).
-  if (text == null) return '';
-  return escapeHtml(text)
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/### (.*?)(\n|$)/g, '<strong style="font-size:13px;">$1</strong><br>')
-    .replace(/## (.*?)(\n|$)/g, '<strong style="font-size:14px;">$1</strong><br>')
-    .replace(/\n/g, '<br>');
-}
-
 function renderSoldPrices(containerId, soldData, postcode) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -3079,8 +2889,6 @@ function scoreColor(v) { return v>=7?'#26F27D':v>=4?'#F2B826':'#F27D26'; }
 function updateSidebar(data, {switchToAnalysis = true} = {}) {
   document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
   if (switchToAnalysis) switchTab('analysis');
-  // Update viewing context for chatbot
-  currentViewingContext = `${data.name} borough (${currentCity === 'nyc' ? 'New York City' : 'London'}) - noise: ${data.impact}, avg price: ${formatPrice(data.avg_price, currentCity)}, score: ${data.score}/10`;
 
   const priceFull = formatPrice(data.avg_price, currentCity);
   const noiseClass = data.impact==='severe'||data.impact==='high'||data.impact==='moderate-high'?'noise-high':
@@ -3268,35 +3076,7 @@ function updateSidebarPostcode(analysis, boroughData) {
       </div>`;
   }
 
-  // Update viewing context for context-aware chatbot
-  currentViewingContext = `${analysis.postcode} in ${analysis.borough} (${currentCity === 'nyc' ? 'New York City' : 'London'}) - noise: ${analysis.noiseEstimate}, nearest airport: ${analysis.airportDists[0].name} (${analysis.airportDists[0].dist.toFixed(1)}km)`;
-
-  // Set report data for AI report generation
-  const reportExtra = getExtraData(analysis.borough);
-  currentReportData = {
-    location: analysis.postcode,
-    borough: analysis.borough,
-    noise: analysis.noiseEstimate,
-    noise_score: analysis.noiseScore,
-    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford??5)*0.35 + (boroughData.scores?.growth??5)*0.25)*10)/10) : 'N/A',
-    airport: analysis.airportDists[0].name,
-    airport_dist: analysis.airportDists[0].dist.toFixed(1),
-    path_dist: analysis.nearestPathDist.toFixed(1),
-    avg_price: boroughData ? formatPrice(boroughData.avg_price, currentCity) : 'N/A',
-    growth: boroughData ? boroughData.trend_pct : 'N/A',
-    crime: reportExtra?.crime || 'unknown',
-    crime_rate: reportExtra?.crimeRate || 'N/A',
-    schools: reportExtra?.schools || 'unknown',
-    transport: reportExtra?.transport || 'unknown',
-    flood: reportExtra?.flood || 'unknown',
-    air_quality: reportExtra?.airQuality || 'unknown',
-  };
-
   document.getElementById('sidebar-content').innerHTML = `
-    <div class="sidebar-section" id="ai-insight-section">
-      <h3>AI INSIGHT <span style="font-size:8px;color:var(--mid);letter-spacing:1px;">POWERED BY AMAZON NOVA</span></h3>
-      <div id="ai-insight-content"><span class="crime-loading">Analysing this location...</span></div>
-    </div>
     <div class="sidebar-section">
       <h3>LOCATION</h3>
       <div class="postcode-result">
@@ -3366,29 +3146,6 @@ function updateSidebarPostcode(analysis, boroughData) {
     ${buildOptionalSections(extra, 'pc')}
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
     <div class="sidebar-section">
-      <h3>AI DOCUMENT ANALYSIS <span style="font-size:8px;color:var(--mid);letter-spacing:1px;">NOVA PRO</span></h3>
-      <p class="info-note" style="margin-top:0;margin-bottom:8px;">Upload an EPC certificate or survey report for AI-powered analysis:</p>
-      <div style="display:flex;gap:6px;">
-        <label class="upload-area" style="flex:1;padding:8px;">
-          <input type="file" accept="image/*,.pdf" style="display:none" onchange="handleDocUpload(this.files[0],'epc')" />
-          <div class="upload-area-label">Upload EPC</div>
-        </label>
-        <label class="upload-area" style="flex:1;padding:8px;">
-          <input type="file" accept="image/*,.pdf" style="display:none" onchange="handleDocUpload(this.files[0],'survey')" />
-          <div class="upload-area-label">Upload Survey</div>
-        </label>
-      </div>
-      <div id="doc-analysis-result"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <button class="report-btn" onclick="generateReport()">
-        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
-        GENERATE AI REPORT (NOVA PRO)
-      </button>
-    </div>
-
-    <div class="sidebar-section">
       <h3>YOUR NEXT STEPS</h3>
       <p class="property-note" style="margin-top:0;">
         <strong>1. Check noise overlay</strong> - zoom into the map to see official ${currentCity==='nyc'?'FAA/BTS':'government'} noise contours at your location.<br><br>
@@ -3399,28 +3156,6 @@ function updateSidebarPostcode(analysis, boroughData) {
         <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
       </p>
     </div>`;
-
-  // Fetch AI insight from Nova
-  fetchInsight({
-    city: currentCity === 'nyc' ? 'New York City' : 'London',
-    location: analysis.postcode,
-    borough: analysis.borough,
-    noise: analysis.noiseEstimate,
-    noise_score: analysis.noiseScore,
-    score: boroughData ? (Math.round((Math.max(0,Math.min(10,10-analysis.noiseScore))*0.4 + (boroughData.scores?.afford??5)*0.35 + (boroughData.scores?.growth??5)*0.25)*10)/10) : 'N/A',
-    airport: analysis.airportDists[0].name,
-    airport_dist: analysis.airportDists[0].dist.toFixed(1),
-    path_dist: analysis.nearestPathDist.toFixed(1),
-    crime: extra?.crime || 'unknown',
-    schools: extra?.schools || 'unknown'
-  }).then(insight => {
-    const el = document.getElementById('ai-insight-content');
-    if (el && insight) {
-      el.innerHTML = `<p class="property-note" style="margin-top:0;">${formatChatReply(insight)}</p>`;
-    } else if (el) {
-      el.innerHTML = '<p class="info-note">AI insight unavailable.</p>';
-    }
-  });
 
   // Fetch transport/EPC/sold data (London only - these APIs are UK-specific)
   if (currentCity === 'london') {
@@ -3444,69 +3179,6 @@ function updateSidebarPostcode(analysis, boroughData) {
       if (soldEl) soldEl.innerHTML = '<p class="info-note">Enter a full postcode for sold prices.</p>';
     }
   }
-}
-
-// ============================================================
-// IMAGE UPLOAD & ANALYSIS (Nova Pro Multimodal)
-// ============================================================
-async function analyzePropertyImage(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      // Resize image to max 1024px width to keep payload small
-      const img = new Image();
-      img.onload = async function() {
-        const canvas = document.createElement('canvas');
-        const maxW = 1024;
-        let w = img.width, h = img.height;
-        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-        try {
-          const resp = await fetch(`${API_BASE}/analyze-image`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ image: base64, format: 'jpeg', type: 'listing' })
-          });
-          if (!resp.ok) throw new Error('HTTP ' + resp.status);
-          const data = await resp.json();
-          resolve(data.analysis || 'Unable to analyze image.');
-        } catch(err) {
-          resolve('Image analysis is temporarily unavailable. Please try again later.');
-        }
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// ============================================================
-// DOCUMENT UPLOAD & ANALYSIS (Nova Pro)
-// ============================================================
-async function analyzeDocument(file, docType) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      const base64 = e.target.result.split(',')[1];
-      const format = file.type === 'application/pdf' ? 'pdf' : 'jpeg';
-      try {
-        const resp = await fetch(`${API_BASE}/analyze-document`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ document: base64, format, type: docType })
-        });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        resolve(data.analysis || 'Unable to analyze document.');
-      } catch(err) {
-        resolve('Document analysis is temporarily unavailable.');
-      }
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 // ============================================================
@@ -3628,96 +3300,6 @@ function renderFavouritesList() {
 }
 
 // ============================================================
-// REPORT GENERATION (Nova Pro)
-// ============================================================
-let currentReportData = null;
-
-async function generateReport() {
-  if (!currentReportData) return;
-  const modal = document.getElementById('report-modal');
-  const body = document.getElementById('report-body');
-  modal.classList.add('open');
-  body.innerHTML = '<span class="crime-loading">Generating comprehensive report with Amazon Nova Pro... This may take a few seconds.</span>';
-
-  try {
-    const resp = await fetch(`${API_BASE}/report`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ locationData: currentReportData })
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const reportHtml = formatReportHtml(data.report, currentReportData);
-    body.innerHTML = reportHtml;
-  } catch(e) {
-    body.innerHTML = '<p class="info-note">Report generation failed. Please try again.</p>';
-  }
-}
-
-function formatReportHtml(reportText, locData) {
-  let html = `<div style="text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--dark);">
-    <h1 style="font-family:var(--font-mono);font-size:14px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;">PROPERTY INTELLIGENCE REPORT</h1>
-    <div style="font-size:11px;color:var(--mid);">${locData.location || 'Location'} - ${locData.borough || ''}</div>
-    <div style="font-size:9px;color:var(--mid);margin-top:4px;">Generated ${new Date().toLocaleDateString('en-GB')} by Amazon Nova Pro AI</div>
-  </div>`;
-  html += reportText
-    .replace(/## (.*?)(\n|$)/g, '<h2>$1</h2>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/- (.*?)(\n|$)/g, '<div style="padding-left:16px;margin:2px 0;">- $1</div>')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
-  html += `<div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--bg);font-size:9px;color:var(--mid);text-align:center;">
-    <strong>Disclaimer:</strong> This report is AI-generated guidance, not professional property advice. Always conduct independent due diligence.<br>
-    Powered by Amazon Nova Pro - Sky Score
-  </div>`;
-  return html;
-}
-
-function closeReport() { document.getElementById('report-modal').classList.remove('open'); }
-
-function printReport() {
-  const content = document.getElementById('report-content').innerHTML;
-  const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/.test(navigator.userAgent);
-
-  // On mobile, the print dialog is awkward and many browsers don't expose
-  // a "Save as PDF" option. Prefer the Web Share API when available
-  // (lets the user save to Files / Notes / share to email), and fall back
-  // to opening a clean printable page for them to use the browser's
-  // built-in "Save to Files" / "Print to PDF" if they want.
-  if (isMobile && navigator.share) {
-    // Share the plain-text version of the report rather than the print
-    // window. Less polished but actionable.
-    const text = (document.getElementById('report-content').innerText || '').slice(0, 4000);
-    navigator.share({
-      title: 'Sky Score Property Intelligence Report',
-      text: text,
-    }).catch(() => {
-      // User cancelled or share failed — fall through to printable view.
-      openPrintableWindow(content);
-    });
-    return;
-  }
-
-  openPrintableWindow(content, !isMobile);
-}
-
-function openPrintableWindow(content, autoPrint) {
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>Property Intelligence Report</title>
-    <style>body{font-family:'Inter',Arial,sans-serif;max-width:700px;margin:0 auto;padding:32px;font-size:13px;line-height:1.7;color:#333;}
-    h1{font-size:14px;letter-spacing:3px;text-transform:uppercase;}
-    h2{font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid #ddd;}
-    strong{color:#141414;}.report-actions{display:none;}.report-close{display:none;}
-    @media print{body{padding:0;}}</style></head><body>${content}</body></html>`);
-  win.document.close();
-  // Use onload instead of setTimeout — race-safe (the audit flagged the
-  // setTimeout pattern at line 3574 as fragile).
-  if (autoPrint) {
-    win.onload = () => win.print();
-  }
-}
-
-// ============================================================
 // CITY SWITCHING (London <-> NYC)
 // ============================================================
 function getActiveAirports() { return currentCity === 'nyc' ? NYC_AIRPORTS : AIRPORTS; }
@@ -3749,10 +3331,6 @@ async function switchCity(city) {
     subtitleEl.textContent = 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA';
     searchInput.placeholder = 'Search area, neighbourhood or borough';
   }
-
-  // Reset chat for new city
-  chatHistory = [];
-  setChatWelcome(city);
 
   // Update layer toggle labels and legend for city. Plain English (no
   // agency acronyms) — the source of the data is shown in the tooltip
@@ -3894,22 +3472,6 @@ function renderCityAirports() {
       .attr('font-size','7px').attr('font-family','var(--font-mono)')
       .attr('font-weight','500').attr('fill','#F27D26');
   });
-}
-
-// Set the chat welcome bubble's text based on current city. Called on
-// first paint via init() and again whenever switchCity runs, so the
-// London/NYC welcome wording is correct from the moment the page renders
-// (was previously paint-flashing London text on NYC-default loads).
-function setChatWelcome(city) {
-  const el = document.getElementById('chat-welcome');
-  if (!el) return;
-  const bubble = el.querySelector('.chat-bubble');
-  if (!bubble) return;
-  if (city === 'nyc') {
-    bubble.innerHTML = 'Hi! I can help you compare New York boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where\'s the quietest area in NYC with good schools under $600,000?"</em>';
-  } else {
-    bubble.innerHTML = 'Hi! I can help you compare London boroughs, find quiet areas, or answer questions about noise, crime, schools and transport. Try asking:<br><br><em>"Where\'s the quietest area with good schools under £500,000?"</em>';
-  }
 }
 
 function initPersonaSelector() {
@@ -4058,22 +3620,6 @@ function toggleFavourite(postcode, borough, noiseLevel, buyerScore) {
 }
 
 // ============================================================
-// DOCUMENT UPLOAD HANDLER
-// ============================================================
-async function handleDocUpload(file, docType) {
-  if (!file) return;
-  const el = document.getElementById('doc-analysis-result');
-  if (!el) return;
-  el.innerHTML = '<span class="crime-loading">Analyzing ' + (docType === 'epc' ? 'EPC certificate' : 'survey report') + ' with Nova Pro AI...</span>';
-  const analysis = await analyzeDocument(file, docType);
-  el.innerHTML = `<div style="margin-top:8px;padding:12px;background:var(--bg);border-left:3px solid var(--orange);">
-    <div style="font-size:9px;color:var(--mid);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">AI ${docType.toUpperCase()} ANALYSIS (NOVA PRO)</div>
-    <div style="font-size:12px;line-height:1.6;font-family:var(--font-sans);">${formatChatReply(analysis)}</div>
-    <div class="info-note" style="margin-top:8px;font-size:9px;">AI-generated summary. Always read the full document and consult qualified professionals.</div>
-  </div>`;
-}
-
-// ============================================================
 // INIT
 // ============================================================
 async function init() {
@@ -4081,10 +3627,6 @@ async function init() {
 
   document.getElementById('loading').style.display='none';
   document.getElementById('app').style.display='grid';
-
-  // Populate chat welcome before any user interaction. Without this,
-  // the bubble starts empty and only fills in on first city switch.
-  setChatWelcome(currentCity);
 
   // Delegated click handler for sidebar .fav-btn elements. The buttons
   // are re-rendered every time updateSidebar / updateSidebarPostcode
@@ -4265,80 +3807,6 @@ async function init() {
     if (!e.target.closest('.flight-popup') && !e.target.closest('.live-aircraft')) {
       closeFlightPopup();
     }
-  });
-
-  // AI Chatbot
-  const chatFab = document.getElementById('chat-fab');
-  const chatPanel = document.getElementById('chat-panel');
-  const chatClose = document.getElementById('chat-close');
-  const chatInput = document.getElementById('chat-input');
-  const chatSend = document.getElementById('chat-send');
-  const chatMessages = document.getElementById('chat-messages');
-
-  chatFab.addEventListener('click', () => {
-    chatFab.classList.remove('pulsing');  // stop drawing the eye once user has noticed
-    chatPanel.classList.toggle('open');
-    if (chatPanel.classList.contains('open')) {
-      chatInput.focus();
-      // Update placeholder based on what user is viewing
-      if (currentViewingContext) {
-        chatInput.placeholder = 'Ask about ' + currentViewingContext.split(' - ')[0] + ' or any area...';
-      }
-    }
-  });
-  chatClose.addEventListener('click', () => chatPanel.classList.remove('open'));
-
-  async function handleChatSend() {
-    const msg = chatInput.value.trim();
-    if (!msg) return;
-    chatInput.value = '';
-    const isMultiAgent = shouldUseMultiAgent(msg);
-    // Add user message
-    chatMessages.innerHTML += `<div class="chat-msg user"><div class="chat-bubble">${escapeHtml(msg)}</div></div>`;
-    chatMessages.innerHTML += `<div class="chat-msg bot" id="chat-typing"><div class="chat-bubble chat-typing">${isMultiAgent ? '<span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#141414;">Multi-Agent Analysis</span><br><span style="font-size:10px;color:#A0A0A0;margin-top:2px;display:inline-block;">\u2708 Noise \u00B7 \u2302 Market \u00B7 \u2605 Livability</span>' : 'Thinking...'}</div></div>`;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    // Call API
-    const result = await sendChatMessage(msg);
-    const typingEl = document.getElementById('chat-typing');
-    if (typingEl) typingEl.remove();
-    // Build agent badges if multi-agent was used
-    let agentBadges = '';
-    if (result.agents && result.agents.length > 0) {
-      const agentLabels = {'NOISE_ANALYST':'Noise Analyst','PROPERTY_RESEARCHER':'Property Researcher','NEIGHBOURHOOD_SCORER':'Neighbourhood Scorer'};
-      const agentIcons = {'NOISE_ANALYST':'\u2708','PROPERTY_RESEARCHER':'\u2302','NEIGHBOURHOOD_SCORER':'\u2605'};
-      const badges = result.agents.map(a => `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;"><span style="font-size:11px;">${agentIcons[a]||''}</span><span style="font-size:10px;color:#141414;font-weight:600;">${agentLabels[a]||a}</span><span style="font-size:9px;color:#A0A0A0;">&#10003;</span></div>`).join('');
-      agentBadges = `<div style="margin-bottom:10px;padding:8px 10px;background:#D9D8D5;border-radius:6px;border-left:3px solid #141414;"><div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#141414;margin-bottom:4px;">Multi-Agent Analysis</div>${badges}</div>`;
-    }
-    chatMessages.innerHTML += `<div class="chat-msg bot"><div class="chat-bubble">${agentBadges}${formatChatReply(result.reply)}</div></div>`;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  chatSend.addEventListener('click', handleChatSend);
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleChatSend();
-  });
-
-  // Image upload in chat
-  const chatUploadBtn = document.getElementById('chat-upload-btn');
-  const chatImageInput = document.getElementById('chat-image-input');
-  chatUploadBtn.addEventListener('click', () => chatImageInput.click());
-  chatImageInput.addEventListener('change', async function() {
-    const file = this.files[0];
-    if (!file) return;
-    this.value = '';
-    // Show preview in chat
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      chatMessages.innerHTML += `<div class="chat-msg user"><div class="chat-bubble"><img src="${e.target.result}" style="max-width:100%;max-height:150px;border-radius:4px;" /><br><span style="font-size:10px;color:rgba(255,255,255,0.7);">Analyzing property photo...</span></div></div>`;
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    reader.readAsDataURL(file);
-    chatMessages.innerHTML += '<div class="chat-msg bot" id="chat-typing"><div class="chat-bubble chat-typing">Analyzing image with Nova Pro...</div></div>';
-    const analysis = await analyzePropertyImage(file);
-    const typingEl = document.getElementById('chat-typing');
-    if (typingEl) typingEl.remove();
-    chatMessages.innerHTML += `<div class="chat-msg bot"><div class="chat-bubble"><strong>AI Property Photo Analysis</strong> (Nova Pro)<br><br>${formatChatReply(analysis)}</div></div>`;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
   // Load favourites
