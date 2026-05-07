@@ -7,6 +7,8 @@
 
 > The auto-reply explicitly warns that they tend not to respond to (a) requests where the asker hasn't read the FAQ / yellow boxes on the website, or (b) personal / out-of-scope use, "most notably Worldmonitor or similar AI slop dashboards". Sky Score is neither, but if a follow-up is needed it's worth restating that we (i) removed the feature this week pending their answer (acting in good faith), (ii) are an independent project not an AI dashboard, and (iii) just need a yes/no on whether the existing free OAuth tier covers our use.
 
+> The FAQ links to <https://opensky-network.org/my-opensky/request-data> for data requests, but per OpenSky's own description that form is for **historical data via their Trino interface, restricted to university researchers, governmental organisations, and aviation authorities**. For commercial entities — including us — the documented path is exactly the one we took: email `contact@opensky-network.org`. So no need to also submit that form; if their reply directs us there they'll mention it.
+
 ---
 
 Hi,
