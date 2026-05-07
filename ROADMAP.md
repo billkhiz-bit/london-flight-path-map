@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-07 (Wave 12 close — DEFRA visibility recovery + a11y polish + I-N5 + SEO basics; HSTS now live via CloudFront SecurityHeadersPolicy; see AUDIT_REPORT.md "Wave 12 close" for the per-wave breakdown)
+**Last reviewed:** 2026-05-07 (Wave 12.2 close — DEFRA aircraft PNG self-hosted on CloudFront, bbox widened to cover LHR full + LCY + LGW, in-place "what this is" explainer in the legend; see AUDIT_REPORT.md for per-wave breakdown)
 
 ---
 

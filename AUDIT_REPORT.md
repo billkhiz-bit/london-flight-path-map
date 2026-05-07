@@ -6,6 +6,28 @@
 
 ---
 
+## Wave 12.1 + 12.2 + 12.3 close — 2026-05-07 late night (self-host DEFRA PNG + widen bbox + in-place explainer + legend max-width)
+
+**Wave 12.3 (visual fix-DEFRA-7):** User flagged "the colour code box extends further and messes up the layout, not responsive anymore" — Wave 12.2's in-place explainer text expanded `.map-legend` (which had no max-width) across the bottom of the desktop map. One-line CSS fix: `max-width: 260px` so the prose wraps inside the legend container instead of stretching it. Mobile already had `display: none` on the legend so was unaffected.
+
+
+
+After Wave 12 made the contours visible, user reported (a) renders with a lag, (b) noise cuts off at edges, and (c) asked whether the visual is real data. All three addressed:
+
+**Wave 12.1 — Self-host DEFRA aircraft PNG (visual fix-DEFRA-5):** Measured DEFRA's GeoServer at **8.9 seconds** to render the WMS PNG on demand. Cached the PNG to `data/aircraft-noise-london-lden.png`, served from CloudFront edge (~86 ms cached). ~100× faster. Also added `<link rel="preload" as="image">` so the browser starts the fetch during HTML parse instead of waiting for JS. New `scripts/refresh_aircraft_noise.sh` documents the regeneration procedure for when DEFRA publishes Round 5 (expected 2027).
+
+**Wave 12.2 — Widen bbox + in-place explainer (visual fix-DEFRA-6):** Bbox widened from (-0.55, 0.35, 51.25, 51.72) to (-0.85, 0.40, 51.10, 51.78):
+- Old box clipped the western half of LHR's butterfly contour
+- Old box missed LGW (Gatwick) entirely (its contour reaches Croydon/Sutton/Bromley)
+- LCY eastern approach also now cleanly inside
+- Stansted + Luton remain excluded (their Lden ≥55 dB contours don't reach inhabited Greater London)
+
+PNG regenerated at 4096×2228 px (~21 m/px ground resolution). Added explainer in the legend itself: "DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and LGW — modelled from a year of actual flight tracks, not a live feed. Used by councils for planning decisions."
+
+**Costs:** PNG self-hosting adds ~37 KB to S3 storage (rounding-error money) and routes the bandwidth through our CloudFront. Trade-off: PNG is now stale until manually refreshed via `scripts/refresh_aircraft_noise.sh`. DEFRA noise mapping rounds run on a 5-year cadence (Round 4 2022, Round 5 expected 2027), so refresh frequency is "roughly never". Acceptable.
+
+---
+
 ## Wave 12 close — 2026-05-07 late evening (DEFRA visibility recovery + Wave 12 polish + SEO)
 
 **DEFRA visibility recovery (visual fix-DEFRA-2 / -3 / -4):** User reported "I don't see aircraft noise anymore" after the fix-DEFRA-1 single-fetch refactor. Root cause: at 2048 px source covering ~50 km, contour edges blurred when downscaled to viewport, AND opacity 0.6 compounded the PNG's own ~80% alpha to make bands invisible. Three combined fixes:

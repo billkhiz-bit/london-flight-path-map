@@ -6,6 +6,18 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12.1 + 12.2 + 12.3 closure — 2026-05-07 late night (self-host DEFRA PNG + widen bbox + explainer + legend layout fix)
+
+**Wave 12.3:** added a one-line `max-width: 260px` to `.map-legend` because the in-place explainer text from 12.2 had stretched the legend container across the bottom of the desktop map. Mobile already hides the legend < 768 px.
+
+
+
+User reported the contours render with a lag, cut off at edges, and asked whether the visual is real data. All three addressed:
+
+**Wave 12.1 — Self-host the DEFRA WMS PNG.** Measured DEFRA's GeoServer at 8.9 s to render the request. Cached the PNG to `/data/aircraft-noise-london-lden.png`, served from CloudFront edge (86 ms cached, ~100× faster). Added `<link rel="preload" as="image">` so the fetch starts during HTML parse. New `scripts/refresh_aircraft_noise.sh` for the next DEFRA publication round (~2027).
+
+**Wave 12.2 — Widen bbox + in-place explainer.** Bbox now -0.85..0.40 lon, 51.10..51.78 lat — covers the full LHR butterfly contour, LCY approach, and LGW (was missing). Stansted + Luton still excluded (don't reach inhabited Greater London). New PNG at 4096×2228 (~21 m/px). Legend now reads "DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and LGW — modelled from a year of actual flight tracks, not a live feed."
+
 ### Wave 12 closure — 2026-05-07 late evening (DEFRA visibility recovery + a11y + I-N5 + SEO)
 
 **DEFRA visibility recovery:** user reported "I don't see aircraft noise anymore" after the Wave 10 single-fetch refactor. Three combined fixes:

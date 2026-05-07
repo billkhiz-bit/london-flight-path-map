@@ -21,7 +21,7 @@ These appear in the `sources` array of every `/v1/score` response.
 
 | Source | Licence | Use | Attribution | Status |
 |---|---|---|---|---|
-| **DEFRA Strategic Noise Mapping** (Round 4, 2022) | [OGL v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) | Quiet score (Lden bands per borough; raster sample at postcode centroid in v3.1) | "Contains public sector information licensed under the Open Government Licence v3.0" | ✅ Commercial use OK |
+| **DEFRA Strategic Noise Mapping** (Round 4, 2022) | [OGL v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) | (a) Quiet score (Lden bands per borough; raster sample at postcode centroid in v3.1). (b) Consumer-site overlay PNG cached on our origin (refreshed via `scripts/refresh_aircraft_noise.sh` when DEFRA publishes a new round, ~5-year cadence). | "Contains public sector information licensed under the Open Government Licence v3.0" | ✅ Commercial use OK |
 | **HM Land Registry House Price Index (HPI)** | OGL v3.0 | Affordability + Growth scores (cohort-relative price + trend) | Same OGL boilerplate | ✅ Commercial use OK |
 | **HM Land Registry Price Paid Data** | OGL v3.0 | Recent sold-price comparables (`/sold_prices`) | Same OGL boilerplate | ✅ Commercial use OK |
 | **MHCLG Energy Performance of Buildings Register** (`/epc`) | OGL v3.0 + bearer-token T&Cs | EPC band lookup per address | "EPC data: MHCLG, Open Government Licence v3.0" + comply with new bearer-token terms | ✅ Commercial use OK with token rotation hygiene |

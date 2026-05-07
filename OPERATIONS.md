@@ -157,7 +157,38 @@ a moving piece to maintain.
 See `AWS_BILLING_ALARM_SETUP.md` (must be created in `us-east-1`, requires
 billing-data alarm permissions).
 
-### 3.5 — Token Rotation
+### 3.5 — Refresh DEFRA Aircraft Noise PNG (every ~5 years)
+
+**Why:** The aircraft-noise overlay on the consumer map is served from
+`/data/aircraft-noise-london-lden.png`, a one-shot capture of DEFRA's
+WMS render at the bbox covering LHR + LCY + LGW. We self-host because
+DEFRA's GeoServer takes ~8-9 seconds to render this size of request.
+
+DEFRA publishes new strategic noise maps approximately every 5 years
+under the EU Environmental Noise Directive (UK still complies post-Brexit):
+
+| Round | Data year | WMS layer suffix | Status |
+|---|---|---|---|
+| Round 3 | 2017 | `…round-3` | Superseded |
+| Round 4 | 2022 | `…round-4` | **Current** (used today) |
+| Round 5 | 2027 (expected) | `…round-5` | Future |
+
+**Steps when Round 5 lands:**
+
+1. Update the WMS URL in `index.html` (`DEFRA_WMS.aircraft.all.url`) and
+   in `scripts/refresh_aircraft_noise.sh` (`WMS_URL` const) to point at
+   the new round's endpoint.
+2. Run `bash scripts/refresh_aircraft_noise.sh`. This fetches the PNG
+   at the bbox/resolution that match `LONDON_AIRCRAFT_BBOX` +
+   `AIRCRAFT_RASTER_PX` in `index.html`.
+3. Visually inspect `data/aircraft-noise-london-lden.png` in any image
+   viewer to confirm the contours haven't suddenly shifted (LHR moved,
+   new airport added, etc.).
+4. Deploy + invalidate (the script prints the exact commands).
+5. Commit the new PNG + reference the round version in the commit message.
+6. Update `METHODOLOGY.md` §11 with the new data year.
+
+### 3.6 — Token Rotation
 
 When `EPC_BEARER_TOKEN` has touched a chat log / scrollback / unencrypted
 storage:
