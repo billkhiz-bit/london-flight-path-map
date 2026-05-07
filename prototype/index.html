@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Content Security Policy (Report-Only). Three.js + addons via cdn.jsdelivr.net.
+     OpenSky-related corsproxy.io / api.allorigins.win deliberately omitted — the
+     dormant fetchLiveData function would fire CSP violations if anyone re-enabled
+     the live mode without also restoring the licensing path. Defence-in-depth. -->
+<meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <title>SKY SCORE, Terrain Intelligence Prototype</title>
 <meta name="description" content="Sky Score Radar — 3D terrain visualisation of London airspace with live aircraft tracking, noise contours, and borough boundaries.">
 <link rel="canonical" href="https://skyscore.co.uk/prototype/">

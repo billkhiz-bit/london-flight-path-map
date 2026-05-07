@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Content Security Policy (Report-Only — switch to enforcing once the user has browsed the site
+         with DevTools console open and confirmed no violations fire on a normal session). Blocks
+         frame-ancestors (no clickjacking), restricts external script/style/font/connect origins
+         to known good ones (CDN compromise mitigation), forbids base-uri / form-action redirects.
+         'unsafe-inline' on script-src is required because the entire app is inline JS; the bounded
+         attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
+    <meta
+      http-equiv="Content-Security-Policy-Report-Only"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://epc.opendatacommunities.org https://landregistry.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <title>Sky Score, UK property quality data · noise, livability, affordability</title>
 
     <!-- OG Meta Tags for social sharing -->

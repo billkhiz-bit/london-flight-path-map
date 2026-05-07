@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- Content Security Policy (Report-Only). Swagger UI loads from unpkg.com.
+     Connects to API Gateway (live demo) + skyscore.co.uk (the spec file itself
+     hosted there). -->
+<meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; font-src 'self' data:; img-src 'self' data:; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://skyscore.co.uk; frame-ancestors 'none'; base-uri 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <title>Sky Score API, Reference Documentation</title>
 <meta name="description" content="OpenAPI 3.0 reference for the Sky Score B2B property data API. Endpoints, schemas, examples.">
 <link rel="canonical" href="https://skyscore.co.uk/score-demo/api-docs.html">

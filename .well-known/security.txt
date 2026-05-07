@@ -1,0 +1,14 @@
+# Sky Score security contact (RFC 9116)
+#
+# If you've found a security issue (XSS, IDOR, IAM gap, secret leak,
+# data-source licensing concern, abuse vector — anything you'd want
+# to disclose privately) please reach out at the contact below.
+# Independent project, sole developer; reply timeline best-effort
+# but typically within a working day.
+
+Contact: mailto:billkhiz@gmail.com
+Expires: 2027-05-07T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://skyscore.co.uk/.well-known/security.txt
+Policy: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md
+Acknowledgments: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/AUDIT_REPORT.md

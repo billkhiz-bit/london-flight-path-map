@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- Content Security Policy (Report-Only). Status page only pings the API Gateway. -->
+<meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; frame-ancestors 'none'; base-uri 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <title>Sky Score API, Status</title>
 <meta name="description" content="Live status of the Sky Score API endpoints.">
 <link rel="canonical" href="https://skyscore.co.uk/score-demo/status.html">
