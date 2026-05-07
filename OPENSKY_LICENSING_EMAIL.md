@@ -3,7 +3,9 @@
 **To:** `contact@opensky-network.org`
 **From:** `billkhiz@gmail.com`
 **Subject:** Licensing enquiry — Sky Score (UK property data tool)
-**Status:** Draft, ready to send.
+**Status:** **SENT 2026-05-07.** Acknowledged by their auto-responder under **Ticket #835285** — they are a volunteer non-profit; reply expected to be slow or absent. Reply to the original thread to add information.
+
+> The auto-reply explicitly warns that they tend not to respond to (a) requests where the asker hasn't read the FAQ / yellow boxes on the website, or (b) personal / out-of-scope use, "most notably Worldmonitor or similar AI slop dashboards". Sky Score is neither, but if a follow-up is needed it's worth restating that we (i) removed the feature this week pending their answer (acting in good faith), (ii) are an independent project not an AI dashboard, and (iii) just need a yes/no on whether the existing free OAuth tier covers our use.
 
 ---
 

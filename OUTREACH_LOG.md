@@ -51,6 +51,16 @@ B2R operators, conveyancers, surveyors, public bodies. Approach: warm intros onl
 
 ---
 
+## Vendor / data licensing
+
+Not customer outreach — enquiries to data providers about licensing terms. Track here so we don't lose ticket numbers or forget to chase.
+
+| Date | Contact | Company | Topic | Channel | Status | Notes / Next action |
+|---|---|---|---|---|---|---|
+| 2026-05-07 | `contact@opensky-network.org` | OpenSky Network | Licensing for live aircraft positions on consumer surface | Email (Ticket #835285) | 🟡 Awaiting reply | Auto-responder received same day. Volunteer non-profit, slow / possibly silent. Chase if no human reply by 2026-06-04 (4 weeks). Draft + ticket info in `OPENSKY_LICENSING_EMAIL.md`. Live-flights feature already removed in commit `6f6ce7d` pending reply. |
+
+---
+
 ## Warm-intro requests
 
 LinkedIn 1st/2nd-degree connections at target companies. Higher-leverage than any cold email.
