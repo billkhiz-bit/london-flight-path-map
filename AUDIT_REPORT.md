@@ -6,6 +6,31 @@
 
 ---
 
+## Wave 11 close — 2026-05-07 late evening (CloudFront security headers live + F-Perf-10 inline data extraction)
+
+**CloudFront response-headers policy applied to distribution `EGSSPJKLFL33M`** via the AWS-managed `SecurityHeadersPolicy` (id `67f7725c-6f97-4210-82d7-5512b31e9d03`). Verified live with `curl -sI https://skyscore.co.uk`:
+
+```
+Strict-Transport-Security: max-age=31536000
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-XSS-Protection: 1; mode=block
+```
+
+This closes M-B (HSTS) outright at the 1-year value. The 2-year preload-eligible value would require a custom response-headers policy (root account perms — `cloudfront:CreateResponseHeadersPolicy` not in `flightmap-dev`'s allowlist). M-C (Permissions-Policy) is still deferred — also requires custom policy creation.
+
+**F-Perf-10 (LCP):** `BOROUGH_EXTRA` (~503 lines) + `NYC_BOROUGH_EXTRA` (~85 lines) extracted from `index.html` to `/data/borough-extra.json`. Net effect:
+
+- `index.html` shrunk from 7,178 lines / 309 KB to 6,593 lines / 275 KB (-585 lines, -34 KB / -11%)
+- JSON is fetched in parallel with the geojson load and lazy-hydrates `BOROUGH_EXTRA` + `NYC_BOROUGH_EXTRA` (initially `{}`)
+- After hydration, `recalcAllScores()` runs and any visible sidebar / ranking refreshes from default-5 scores to real data
+- Trade-off: if a user clicks a borough in the first ~50-200ms before the fetch lands, they momentarily see default scores. In practice this is invisible because the geojson load is the slower of the two.
+
+Cache headers: `Cache-Control: public, max-age=86400` on the JSON so subsequent visits hit the CDN directly. The data only changes when borough metadata is updated, which is roughly never.
+
+---
+
 ## Wave 10 close — 2026-05-07 late evening (DEFRA + a11y + reduced motion + CloudFront docs)
 
 **DEFRA noise visual fix (visual fix-DEFRA-1):**

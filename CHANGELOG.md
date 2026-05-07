@@ -6,6 +6,24 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 11 closure — 2026-05-07 late evening (CloudFront security headers + F-Perf-10)
+
+**HSTS + 4 other security headers now live** on `https://skyscore.co.uk` via AWS-managed CloudFront `SecurityHeadersPolicy`. Verified by curl:
+```
+Strict-Transport-Security: max-age=31536000
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-XSS-Protection: 1; mode=block
+```
+M-B closed at 1-year HSTS. Permissions-Policy + 2-year preload-eligible HSTS still need a custom CloudFront policy (root-account perms).
+
+**F-Perf-10:** `BOROUGH_EXTRA` (503 lines, London) + `NYC_BOROUGH_EXTRA` (85 lines) extracted from `index.html` to `/data/borough-extra.json`. Lazy-fetched in parallel with geojson load; sidebar rescore on hydration.
+
+- index.html: 7,178 → 6,593 lines, 309 KB → 275 KB (-11%)
+- JSON: 28.7 KB, served with 24-hour browser cache
+- Initial paint no longer waits for borough-metadata parse; LCP improvement scales with parser-blocked time on slower devices.
+
 ### Wave 10 closure — 2026-05-07 late evening (DEFRA fix + a11y + reduced motion + ops docs)
 
 User flagged the DEFRA noise overlay looked "all over the place" — root cause was per-pan WMS re-fetch causing the contour bands to "swim" as each new viewport rendered slightly differently. Fixed by pre-fetching once at a fixed Greater-London bbox (2048 px) and positioning the raster in g-coordinates so D3's zoom transform scales it natively.

@@ -24,5 +24,10 @@ test-docs/
 
 # Bulk data inputs for one-off loaders (DEFRA GeoTIFF ~500 MB, NSPL CSV ~250 MB).
 # See scripts/load_defra_raster.py for download URLs and runbook.
-data/
+# Use data/* (not data/) so the un-ignore below for borough-extra.json
+# actually wins; `data/` ignores the dir itself, defeating the negation.
+data/*
+# F-Perf-10: small borough-metadata JSON IS checked in (extracted from
+# index.html for lazy-loading). Everything else under data/ stays ignored.
+!data/borough-extra.json
 .defra_load_checkpoint
