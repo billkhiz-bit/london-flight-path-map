@@ -1608,31 +1608,36 @@
             ></div>
             <span>HELIPORT</span>
           </div>
-          <div
-            style="margin: 6px 0 4px; font-size: 8px; color: var(--mid); letter-spacing: 1px"
-            id="legend-noise-title"
-          >
-            DEFRA NOISE (dB Lden)
-          </div>
-          <div class="legend-row">
-            <div class="legend-swatch" style="background: rgba(0, 77, 168, 0.5)"></div>
-            <span>55-59 dB</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-swatch" style="background: rgba(26, 242, 125, 0.5)"></div>
-            <span>60-64 dB</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-swatch" style="background: rgba(242, 184, 38, 0.5)"></div>
-            <span>65-69 dB</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-swatch" style="background: rgba(242, 125, 38, 0.5)"></div>
-            <span>70-74 dB</span>
-          </div>
-          <div class="legend-row">
-            <div class="legend-swatch" style="background: rgba(242, 38, 38, 0.5)"></div>
-            <span>75+ dB</span>
+          <div id="legend-aircraft-group">
+            <div
+              style="margin: 6px 0 4px; font-size: 8px; color: var(--mid); letter-spacing: 1px"
+              id="legend-noise-title"
+            >
+              DEFRA AIRCRAFT NOISE (dB Lden)
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background: rgba(0, 77, 168, 0.5)"></div>
+              <span>55-59 dB</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background: rgba(26, 242, 125, 0.5)"></div>
+              <span>60-64 dB</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background: rgba(242, 184, 38, 0.5)"></div>
+              <span>65-69 dB <em style="color: var(--mid); font-style: normal; font-size: 7px;">↓ WHO sleep</em></span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background: rgba(242, 125, 38, 0.5)"></div>
+              <span>70-74 dB</span>
+            </div>
+            <div class="legend-row">
+              <div class="legend-swatch" style="background: rgba(242, 38, 38, 0.5)"></div>
+              <span>75+ dB</span>
+            </div>
+            <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4;">
+              Year-averaged exposure (day + evening + night). Click any postcode for the exact value at that spot.
+            </div>
           </div>
           <div id="legend-road-group" style="display: none">
             <div
@@ -6809,6 +6814,12 @@
           .scaleExtent([0.5, 8])
           .on('zoom', (event) => {
             g.attr('transform', event.transform);
+            // Zoom-aware aircraft-noise opacity: sharper contour edges as
+            // user zooms in (the WMS returns finer detail at higher zoom;
+            // sharpening it visually helps interpretation at street level).
+            const k = event.transform.k;
+            const aircraftOp = k <= 1.5 ? 0.55 : k <= 4 ? 0.7 : 0.85;
+            g.select('.layer-defra-aircraft').style('opacity', aircraftOp);
             // Debounced refresh of WMS tiles at new zoom/position for better resolution
             clearTimeout(zoomTileTimer);
             zoomTileTimer = setTimeout(() => {
@@ -6872,8 +6883,11 @@
             };
             const sel = g.select(map[layer]);
             if (sel.node()) sel.style('display', layers[layer] ? null : 'none');
-            // Show/hide legend colour scale for the toggled layer
+            // Show/hide legend colour scale for the toggled layer (audit
+            // visual fix-6: aircraft-noise legend was always visible
+            // regardless of toggle state — gate it like the others).
             const legendMap = {
+              'defra-aircraft': 'legend-aircraft-group',
               'defra-road': 'legend-road-group',
               flood: 'legend-flood-group',
               'air-quality': 'legend-aq-group',
