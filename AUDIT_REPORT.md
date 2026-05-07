@@ -6,6 +6,26 @@
 
 ---
 
+## Wave 10 close — 2026-05-07 late evening (DEFRA + a11y + reduced motion + CloudFront docs)
+
+**DEFRA noise visual fix (visual fix-DEFRA-1):**
+- Pre-fetch the London aircraft raster ONCE at a fixed Greater-London bbox at 2048 px width.
+- Position in g-coordinates via `projection()`; D3's zoom transform handles all subsequent scaling — no per-pan refetch.
+- Eliminates the "swimming contour bands" the user flagged ("DEFRA all over the place").
+- NYC slippy-tile path (XYZ) preserved unchanged — it genuinely needs per-pan refresh.
+- Cache invalidated on city switch + window resize.
+
+**A11y:**
+- F-A11y-4 (real bug found): tab panels' `aria-labelledby` self-referenced (`tab-analysis` panel pointed to id `tab-analysis`). Fix: gave each tab button an explicit `id="tab-btn-X"` and updated all 3 panels' `aria-labelledby` to point at the buttons.
+- F-UX-11: `prefers-reduced-motion: reduce` global guard added to all 5 HTML pages (index, prototype, score-demo/index, score-demo/status, api/index). Animations + transitions clamped to 0.001ms.
+
+**Ops docs (CloudFront response-headers + CSP report-uri runbook):**
+- `OPERATIONS.md` §3.2: HSTS + Permissions-Policy + Referrer-Policy via CloudFront response-headers policy (one-time admin setup, ~30 min).
+- `OPERATIONS.md` §3.3: CSP report-uri via report-uri.com free tier OR custom Lambda (admin choice; ~5 min vs ~30 min).
+- M-B (HSTS), M-C (Permissions-Policy), I-A (CSP report-uri) → moved from "deferred" to "documented as one-time admin tasks" — no further code-side work needed; just admin clicks.
+
+---
+
 ## Wave 7+8+9 close — 2026-05-07 late evening
 
 After the day's main session-close section below, three more focused waves shipped:

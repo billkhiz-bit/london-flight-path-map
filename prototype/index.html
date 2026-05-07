@@ -690,6 +690,18 @@
 
     .corner { display: none; }
   }
+  /* F-UX-11: respect OS-level "reduce motion" preference (WCAG 2.3.3 AAA).
+     Prototype is animation-heavy (orbit-controls auto-rotate, day/night
+     cycle, contour glow, ticker scroll). Reduced-motion users get a
+     calmer scene; the data is still legible without the orbit. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 </head>
 <body>

@@ -6,6 +6,15 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 10 closure — 2026-05-07 late evening (DEFRA fix + a11y + reduced motion + ops docs)
+
+User flagged the DEFRA noise overlay looked "all over the place" — root cause was per-pan WMS re-fetch causing the contour bands to "swim" as each new viewport rendered slightly differently. Fixed by pre-fetching once at a fixed Greater-London bbox (2048 px) and positioning the raster in g-coordinates so D3's zoom transform scales it natively.
+
+Also closed:
+- **F-A11y-4 (real bug):** tab panels had `aria-labelledby` self-referencing their own ids — gave each tab button `id="tab-btn-X"` and pointed panels at the buttons.
+- **F-UX-11:** `prefers-reduced-motion: reduce` global guard added to all 5 HTML pages.
+- **OPERATIONS.md §3.2 + §3.3:** documented HSTS/Permissions-Policy CloudFront setup + CSP report-uri runbook (M-B, M-C, I-A — moved from deferred to one-time admin tasks).
+
 ### Wave 7+8+9 closure — 2026-05-07 late evening
 
 Three more focused waves shipped after the main session-close:

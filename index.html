@@ -282,6 +282,25 @@
         }
       }
 
+      /* F-UX-11: honour prefers-reduced-motion. Vestibular-disorder users
+         and anyone who's flipped the OS-level "reduce motion" switch get a
+         calmer experience: animations + transitions reduced to a single
+         frame. Per WCAG 2.3.3 (AAA) and the WAI-ARIA Authoring Practices
+         "Motion-actuation considerations" guidance.
+         Rationale for !important: the rule must beat the layer-toggle /
+         hover transitions written across the file (~50 selectors) without
+         needing a ::matches() selector for each. */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
       /* Subtle B2B footer, small, unobtrusive, sits below the legend.
      Stays visible on mobile (compressed) so the dev-link remains
      reachable; previously hidden < 768 px which broke B2B discovery. */
@@ -1848,6 +1867,7 @@
         <nav class="tab-bar" role="tablist" aria-label="Content sections">
           <button
             type="button"
+            id="tab-btn-analysis"
             class="tab active"
             data-tab="analysis"
             role="tab"
@@ -1859,6 +1879,7 @@
           </button>
           <button
             type="button"
+            id="tab-btn-ranking"
             class="tab"
             data-tab="ranking"
             role="tab"
@@ -1870,6 +1891,7 @@
           </button>
           <button
             type="button"
+            id="tab-btn-favourites"
             class="tab"
             data-tab="favourites"
             role="tab"
@@ -1880,7 +1902,10 @@
             SAVED
           </button>
         </nav>
-        <div id="tab-analysis" role="tabpanel" aria-labelledby="tab-analysis">
+        <!-- F-A11y-4 fix: tabpanel aria-labelledby must point to the tab
+             *button*, not the panel itself. Earlier the panel referenced its
+             own id, which is a self-reference that screen readers ignore. -->
+        <div id="tab-analysis" role="tabpanel" aria-labelledby="tab-btn-analysis">
           <div id="sidebar-content">
             <div class="empty-state">
               <div class="icon">&#9678;</div>
@@ -1891,7 +1916,7 @@
             </div>
           </div>
         </div>
-        <div id="tab-ranking" role="tabpanel" aria-labelledby="tab-ranking" style="display: none">
+        <div id="tab-ranking" role="tabpanel" aria-labelledby="tab-btn-ranking" style="display: none">
           <div class="sidebar-section">
             <h3>I AM A...</h3>
             <div class="persona-bar" id="persona-bar"></div>
@@ -1900,7 +1925,7 @@
             <div id="borough-ranking"></div>
           </div>
         </div>
-        <div id="tab-favourites" role="tabpanel" aria-labelledby="tab-favourites" style="display: none">
+        <div id="tab-favourites" role="tabpanel" aria-labelledby="tab-btn-favourites" style="display: none">
           <div class="sidebar-section">
             <h3>SAVED LOCATIONS</h3>
             <div id="favourites-list">
@@ -4371,6 +4396,25 @@
       ];
 
       // DEFRA WMS endpoints (official UK government data, Open Government Licence)
+      // visual fix-DEFRA-1: pre-fetch the London aircraft raster ONCE at a
+      // fixed Greater-London bbox at high resolution, then position it in
+      // g-coordinates so D3's zoom transform scales it natively. Eliminates
+      // the "swimming contour bands" that came from re-requesting the WMS
+      // on every pan/zoom (each request rendered slightly differently and
+      // the image flickered as it swapped). Trade-off: at maximum zoom (k=8)
+      // the raster softens because we're scaling a 2048-px image; acceptable
+      // because (a) the contour data IS bucketed in 5-dB bands so sub-pixel
+      // detail is meaningless, (b) the legend warning already tells users
+      // to zoom *out* for the macro picture, not in.
+      const LONDON_AIRCRAFT_BBOX = {
+        minLon: -0.55,
+        maxLon: 0.35,
+        minLat: 51.25,
+        maxLat: 51.72,
+      };
+      const AIRCRAFT_RASTER_PX = 2048;
+      let aircraftRasterLoadedFor = null; // 'london' | 'nyc' | null — cleared on city switch
+
       const DEFRA_WMS = {
         aircraft: {
           heathrow: {
@@ -4629,12 +4673,42 @@
 
         // Aircraft noise, only overlay that uses WMS/tiles (detailed contour data)
         if (isNyc) {
+          // NYC still uses XYZ slippy tiles, which DO need re-rendering on
+          // pan/zoom for new tiles to load at the current viewport.
           renderTileGrid('us-aircraft-tiles', US_MAP_SERVICES.aircraft.url, minLat, minLon, maxLat, maxLon);
         } else {
-          setImg(
-            'defra-aircraft-img',
-            getWmsTileUrl(DEFRA_WMS.aircraft.all.url, DEFRA_WMS.aircraft.all.layer, bbox, w, h)
-          );
+          // London: idempotent — only fetch on first show / after city
+          // switch / after window resize. Per-pan calls hit this guard
+          // and return immediately. visual fix-DEFRA-1.
+          if (aircraftRasterLoadedFor !== 'london') {
+            const lb = LONDON_AIRCRAFT_BBOX;
+            const wmsBbox = `${lb.minLat},${lb.minLon},${lb.maxLat},${lb.maxLon}`;
+            const aspect = (lb.maxLon - lb.minLon) / (lb.maxLat - lb.minLat);
+            const widthPx = AIRCRAFT_RASTER_PX;
+            const heightPx = Math.round(widthPx / aspect);
+            const url = getWmsTileUrl(
+              DEFRA_WMS.aircraft.all.url,
+              DEFRA_WMS.aircraft.all.layer,
+              wmsBbox,
+              widthPx,
+              heightPx
+            );
+            // Position in g-local coordinates by projecting the bbox corners.
+            // The SVG zoom transform handles all subsequent pan/zoom natively
+            // — no further WMS requests are made.
+            const tl = projection([lb.minLon, lb.maxLat]); // top-left
+            const br = projection([lb.maxLon, lb.minLat]); // bottom-right
+            if (tl && br) {
+              d3.select('#defra-aircraft-img')
+                .attr('xlink:href', url)
+                .attr('href', url)
+                .attr('x', tl[0])
+                .attr('y', tl[1])
+                .attr('width', br[0] - tl[0])
+                .attr('height', br[1] - tl[1]);
+              aircraftRasterLoadedFor = 'london';
+            }
+          }
         }
         // Road noise, flood risk, and air quality use borough-level fills only (no WMS/ArcGIS rasters)
       }
@@ -6386,6 +6460,9 @@
       async function switchCity(city) {
         if (city === currentCity) return;
         currentCity = city;
+        // Invalidate the aircraft raster cache so updateDefraTiles refetches
+        // for the new city's bbox + projection. visual fix-DEFRA-1.
+        aircraftRasterLoadedFor = null;
         document.querySelectorAll('.city-btn').forEach((b) => {
           const isActive = b.dataset.city === city;
           b.classList.toggle('active', isActive);
@@ -6910,17 +6987,23 @@
           .scaleExtent([0.5, 8])
           .on('zoom', (event) => {
             g.attr('transform', event.transform);
-            // Zoom-aware aircraft-noise opacity: sharper contour edges as
-            // user zooms in (the WMS returns finer detail at higher zoom;
-            // sharpening it visually helps interpretation at street level).
+            // Zoom-aware aircraft-noise opacity: less translucent as the
+            // user zooms in so contour edges read more clearly at street
+            // level (the data itself is bucketed in 5-dB bands so visual
+            // density is the only knob we have to play with).
             const k = event.transform.k;
             const aircraftOp = k <= 1.5 ? 0.55 : k <= 4 ? 0.7 : 0.85;
             g.select('.layer-defra-aircraft').style('opacity', aircraftOp);
-            // Debounced refresh of WMS tiles at new zoom/position for better resolution
-            clearTimeout(zoomTileTimer);
-            zoomTileTimer = setTimeout(() => {
-              updateDefraTiles();
-            }, 200);
+            // visual fix-DEFRA-1: ONLY NYC needs per-pan tile refresh
+            // (slippy XYZ tiles need new tiles loaded for the new viewport).
+            // London is a single pre-fetched raster positioned in g-coords
+            // — D3's transform handles all pan/zoom natively, no refetch.
+            if (currentCity === 'nyc') {
+              clearTimeout(zoomTileTimer);
+              zoomTileTimer = setTimeout(() => {
+                updateDefraTiles();
+              }, 200);
+            }
           });
         svg.call(zoom);
 
@@ -7075,6 +7158,9 @@
           const baseScale = CITIES[currentCity].scale;
           projection.scale(nw < 600 ? baseScale * 0.625 : baseScale).translate([nw / 2, nh / 2]);
           g.selectAll('*').remove();
+          // Projection translate has changed → previously cached g-coords for
+          // the aircraft raster are now wrong. Force a re-position next call.
+          aircraftRasterLoadedFor = null;
           if (currentCity === 'nyc' && nycBoroughFeatures.length) renderNycBoroughs(nycBoroughFeatures);
           else if (boroughFeatures.length) renderBoroughs();
           renderDefraTiles();

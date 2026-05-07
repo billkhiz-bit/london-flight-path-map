@@ -96,12 +96,68 @@ AWS_PROFILE=flightmap aws dynamodb describe-continuous-backups \
 ```
 Look for `"PointInTimeRecoveryStatus": "ENABLED"`.
 
-### 3.2 — Billing Alarm
+### 3.2 — CloudFront Response-Headers Policy (HSTS + Permissions-Policy)
+
+**Why:** `Strict-Transport-Security` and `Permissions-Policy` cannot be set
+via `<meta>` tags — browsers ignore them when not delivered as real HTTP
+headers. CloudFront's "response-headers policy" feature adds them at the
+edge without changing origin S3 objects.
+
+**Steps:**
+
+1. CloudFront console → Policies → Response headers policies → Create.
+2. Name: `SkyScoreSecurityHeaders`.
+3. Strict-Transport-Security: `max-age=63072000; includeSubDomains; preload`
+   (2 years, the value that gets you eligible for the
+   [HSTS preload list](https://hstspreload.org/)).
+4. X-Content-Type-Options: `nosniff` (also already in `<meta>` — belt &
+   braces; the header version takes precedence).
+5. Referrer-Policy: `strict-origin-when-cross-origin`.
+6. Custom header — Permissions-Policy:
+   `geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()`
+   (we use none of these — explicit deny stops third-party libraries from
+   silently asking for them).
+7. Attach the policy to the `EGSSPJKLFL33M` distribution's default cache
+   behaviour. CloudFront will invalidate and serve new headers within
+   ~5 minutes.
+
+**Verification:**
+```bash
+curl -sI https://skyscore.co.uk | grep -iE 'strict-transport|permissions-policy|referrer|content-type-options'
+```
+
+If you ever want to apply for HSTS preload: only do that *after* the
+header has been live for 6+ months without issue and you're certain
+every subdomain (incl. future `status.skyscore.co.uk`, `api.skyscore.co.uk`)
+will always be HTTPS-only.
+
+### 3.3 — CSP Report-URI Endpoint
+
+**Why:** Today CSP is enforcing across all 5 HTML pages but violations
+log only to the user's browser DevTools console — invisible to us.
+Adding a `report-uri` directive routes violation reports to a collector.
+
+**Cheapest path:** [report-uri.com](https://report-uri.com) free tier
+(10k reports/month, sufficient for our scale). Sign up, copy the unique
+endpoint URL, then update CSP on each HTML page:
+
+```html
+<meta http-equiv="Content-Security-Policy" content="…existing rules…; report-uri https://YOUR-ID.report-uri.com/r/d/csp/enforce;">
+```
+
+Each of the 5 HTML files needs the same `report-uri` token added. Re-deploy
+to S3 + invalidate. Reports start flowing within minutes.
+
+**Alternative path:** A tiny Lambda + API Gateway endpoint that accepts
+the JSON POST and dumps it to CloudWatch Logs. ~30 min build, but adds
+a moving piece to maintain.
+
+### 3.4 — Billing Alarm
 
 See `AWS_BILLING_ALARM_SETUP.md` (must be created in `us-east-1`, requires
 billing-data alarm permissions).
 
-### 3.3 — Token Rotation
+### 3.5 — Token Rotation
 
 When `EPC_BEARER_TOKEN` has touched a chat log / scrollback / unencrypted
 storage:
