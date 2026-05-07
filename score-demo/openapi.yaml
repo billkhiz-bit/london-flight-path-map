@@ -23,7 +23,7 @@ info:
     5 NYC boroughs by borough-name lookup or 5-digit US ZIP auto-detection
     (~182 residential ZIPs covered; ~110 with per-ZIP centroid for finer
     quiet-score resolution).
-  version: "1.0"
+  version: "1.1"
   contact:
     name: Sky Score
     url: https://skyscore.co.uk/
@@ -43,6 +43,96 @@ tags:
     description: Single-postcode and bulk property scoring.
 
 paths:
+  /v1/signup:
+    post:
+      tags: [Onboarding]
+      security: []
+      summary: Self-service API key issuance.
+      description: |
+        Create a new free-tier API key. Unauthenticated by design (this is
+        the entry point — the form on `/score-demo/index.html` POSTs here).
+        One key per email; subsequent calls with the same email return 409
+        with the original `createdAt`. Per-route APIGW throttle of 1 RPS /
+        5 burst gates abuse; CORS is allow-listed to `https://skyscore.co.uk`
+        and the legacy CloudFront URL only.
+
+        The returned `apiKey` is shown ONCE — store it immediately. There is
+        no "re-issue" endpoint; lost keys require contacting support.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  maxLength: 254
+                  example: you@example.com
+                name:
+                  type: string
+                  maxLength: 200
+                  description: Optional display name; appears in the APIGW key description for support tracking.
+                  example: Optional Display Name
+      responses:
+        '201':
+          description: Key created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [apiKey, keyId, usagePlan, limits, note, docs]
+                properties:
+                  apiKey:
+                    type: string
+                    description: The key value. Pass as `X-Api-Key` on `/v1/score*`.
+                    example: 'YOUR-NEW-API-KEY-VALUE-SHOWN-ONCE'
+                  keyId:
+                    type: string
+                  usagePlan:
+                    type: string
+                    example: 'SkyScoreFreeTier'
+                  limits:
+                    type: object
+                    properties:
+                      monthlyQuota:
+                        type: integer
+                        example: 1000
+                      burstLimit:
+                        type: integer
+                        example: 5
+                      sustainedRateLimit:
+                        type: integer
+                        example: 2
+                  note:
+                    type: string
+                    description: Reminder that the key is shown once.
+                  docs:
+                    type: string
+                    example: 'https://skyscore.co.uk/score-demo/api-docs.html'
+        '400':
+          description: Invalid email or oversized fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email has already signed up. Includes `createdAt` of the original signup.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Per-route throttle exceeded (1 RPS / 5 burst).
+        '503':
+          description: APIGW key creation upstream failure (rare; per-account quota).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /v1/regions:
     get:
       tags: [Score]
@@ -183,6 +273,20 @@ paths:
           schema:
             type: string
             example: "score,components,context"
+        - name: methodology
+          in: query
+          description: |
+            Pin the response to a specific methodology version for
+            reproducibility during integration / change-grace-period.
+            When omitted, the latest methodology applies. Documented in
+            METHODOLOGY.md §16 (API contract and stability) — prior
+            methodology versions remain accessible for 14 days after a
+            new version's release. Best-effort: if the requested version
+            is not retained, the latest is used and `methodologyVersion`
+            in the response indicates which version actually applied.
+          schema:
+            type: string
+            example: "3.1"
       responses:
         '200':
           description: Score successfully computed.
