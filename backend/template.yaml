@@ -40,6 +40,15 @@ Resources:
           ResourcePath: '/*'
           ThrottlingRateLimit: 10
           ThrottlingBurstLimit: 20
+        # Per-method override on /v1/signup (audit N-Code-2). The
+        # global 10 RPS would let an attacker pump ~600 keys/min into
+        # the AWS-account API-key quota (default 10,000) before the
+        # quota errors start. 1 RPS / 5 burst is generous for human
+        # signups but gates abuse to ~60/min.
+        - HttpMethod: POST
+          ResourcePath: /v1/signup
+          ThrottlingRateLimit: 1
+          ThrottlingBurstLimit: 5
 
   # --- AI Chatbot (Amazon Nova) ---
   ChatFunction:
@@ -419,17 +428,35 @@ Resources:
                 - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans'
             - Effect: Allow
               Action:
+                # Pre-DELETE lookup, the Lambda verifies the key's name
+                # starts with the SignupLambda prefix before deleting.
+                # Scoped via the same tag-condition as DELETE for symmetry.
+                - apigateway:GET
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+              Condition:
+                StringEquals:
+                  'aws:ResourceTag/CreatedBy': 'SignupLambda'
+            - Effect: Allow
+              Action:
                 # Rollback path, revoke a just-created key when a
                 # signup race is detected (DDB ConditionExpression fails
-                # after APIGW key already exists).
+                # after APIGW key already exists). Scoped via tag-based
+                # condition to keys this Lambda created (audit N-Code-1):
+                # the wildcard /apikeys/* alone would let a compromised
+                # signup Lambda delete any API key in the account.
                 - apigateway:DELETE
               Resource:
                 - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+              Condition:
+                StringEquals:
+                  'aws:ResourceTag/CreatedBy': 'SignupLambda'
       Events:
         SignupPost:
           # No Auth block, default is no API key required, which is the
-          # whole point of self-service signup. Abuse mitigated by API
-          # Gateway throttle + per-email idempotency in the handler.
+          # whole point of self-service signup. Abuse mitigated by per-route
+          # APIGW throttle (1 RPS / 5 burst, see MethodSettings above) +
+          # per-email idempotency in the handler.
           Type: Api
           Properties:
             RestApiId: !Ref FlightMapApi
