@@ -1140,9 +1140,20 @@
         border: 1px solid transparent;
         transition: all 0.15s;
         position: relative;
+        /* Reset native button chrome — these are real <button>s now (audit
+           F-A11y-3) so keyboard activation + screen-reader semantics work.
+           Without these resets they'd inherit user-agent button styling. */
+        font-family: inherit;
+        font-size: inherit;
+        color: inherit;
+        width: 100%;
       }
       .metric-card:hover {
         border-color: var(--dark);
+      }
+      .metric-card:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: -2px;
       }
       .metric-card.expanded {
         border-color: var(--dark);
@@ -1729,10 +1740,22 @@
               placeholder="Search a postcode, area or borough"
               autocomplete="off"
               aria-label="Search a postcode, area or borough"
+              aria-describedby="search-hint"
+              role="combobox"
+              aria-expanded="false"
+              aria-controls="autocomplete-dropdown"
+              aria-autocomplete="list"
+              inputmode="search"
+              enterkeyhint="search"
             />
-            <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
+            <div
+              class="autocomplete-dropdown"
+              id="autocomplete-dropdown"
+              role="listbox"
+              aria-label="Search suggestions"
+            ></div>
           </div>
-          <div class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
+          <div id="search-hint" class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
         </div>
         <nav class="tab-bar" role="tablist" aria-label="Content sections">
           <button
@@ -4776,26 +4799,27 @@
         const id = sectionId || 'opt-' + Math.random().toString(36).slice(2, 8);
         return `
     <div class="sidebar-section">
-      <h3>ADDITIONAL INSIGHTS <span class="optional-badge">CLICK TO EXPAND</span></h3>
+      <h3>ADDITIONAL INSIGHTS</h3>
+      <p class="info-note" style="margin-top:0;margin-bottom:8px;">Click any card to expand details.</p>
       <div class="metric-cards" style="grid-template-columns:1fr 1fr;">
-        <div class="metric-card" onclick="toggleMetricDetail('${id}-flood')">
+        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-flood" onclick="toggleMetricDetail('${id}-flood')">
           <div class="metric-card-label">Flood Risk</div>
           <div class="metric-card-value" style="color:${metricColor(extra.flood)}">${extra.flood}</div>
-        </div>
-        <div class="metric-card" onclick="toggleMetricDetail('${id}-aq')">
+        </button>
+        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-aq" onclick="toggleMetricDetail('${id}-aq')">
           <div class="metric-card-label">Air Quality</div>
           <div class="metric-card-value" style="color:${metricColor(extra.airQuality)}">${extra.airQuality}</div>
-        </div>
-        <div class="metric-card" onclick="toggleMetricDetail('${id}-transport')">
+        </button>
+        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-transport" onclick="toggleMetricDetail('${id}-transport')">
           <div class="metric-card-label">Transport</div>
           <div class="metric-card-value" style="color:${metricColor(extra.transport === 'excellent' || extra.transport === 'good' ? 'good' : 'moderate')}">${extra.transport}</div>
-        </div>
+        </button>
         ${
           extra.healthcare
-            ? `<div class="metric-card" onclick="toggleMetricDetail('${id}-nhs')">
+            ? `<button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-nhs" onclick="toggleMetricDetail('${id}-nhs')">
           <div class="metric-card-label">Healthcare</div>
           <div class="metric-card-value" style="color:${metricColor(extra.healthcare === 'excellent' || extra.healthcare === 'good' ? 'good' : 'moderate')}">${extra.healthcare}</div>
-        </div>`
+        </button>`
             : ''
         }
       </div>
@@ -4830,16 +4854,22 @@
         const el = document.getElementById(id);
         if (!el) return;
         const wasVisible = el.classList.contains('visible');
-        // Close all siblings
+        // Close all siblings + reset their aria-expanded
         el.parentElement.querySelectorAll('.metric-detail').forEach((d) => d.classList.remove('visible'));
-        el.parentElement.querySelectorAll('.metric-card').forEach((c) => c.classList.remove('expanded'));
+        el.parentElement.querySelectorAll('.metric-card').forEach((c) => {
+          c.classList.remove('expanded');
+          c.setAttribute('aria-expanded', 'false');
+        });
         if (!wasVisible) {
           el.classList.add('visible');
-          // Highlight the card
+          // Highlight the card + set aria-expanded=true on the matching card
           const cards = el.parentElement.querySelectorAll('.metric-card');
           const details = el.parentElement.querySelectorAll('.metric-detail');
           const idx = Array.from(details).indexOf(el);
-          if (cards[idx]) cards[idx].classList.add('expanded');
+          if (cards[idx]) {
+            cards[idx].classList.add('expanded');
+            cards[idx].setAttribute('aria-expanded', 'true');
+          }
         }
       }
 
@@ -5169,10 +5199,27 @@
         }
       }
 
+      // Audit F-A11y-1 helper: close dropdown + reset combobox ARIA state
+      // (aria-expanded=false, clear aria-activedescendant). Used everywhere
+      // the dropdown dismisses so screen readers stay in sync.
+      function closeAcDropdown() {
+        const dd = document.getElementById('autocomplete-dropdown');
+        const inp = document.getElementById('search-input');
+        if (dd) {
+          dd.classList.remove('visible');
+        }
+        if (inp) {
+          inp.setAttribute('aria-expanded', 'false');
+          inp.removeAttribute('aria-activedescendant');
+        }
+      }
+
       function showAutocomplete(results) {
         const dropdown = document.getElementById('autocomplete-dropdown');
+        const input = document.getElementById('search-input');
         acHighlightIndex = -1;
-        const inputVal = document.getElementById('search-input').value.toLowerCase().trim();
+        input.removeAttribute('aria-activedescendant');
+        const inputVal = input.value.toLowerCase().trim();
 
         // Check for borough name matches (city-aware)
         const activeBoroughs = currentCity === 'nyc' ? getActiveBoroughData() : BOROUGH_DATA;
@@ -5191,40 +5238,46 @@
           dropdown.classList.remove('visible');
           dropdown.innerHTML = '';
           acResults = [];
+          input.setAttribute('aria-expanded', 'false');
           return;
         }
         acResults = results || [];
 
+        // Each item gets role="option" + a stable id so the input's
+        // aria-activedescendant can point to the highlighted one
+        // (audit F-A11y-1 — combobox pattern). screen readers announce
+        // both the suggestion count and which is currently selected.
         let html = '';
         let idx = 0;
         boroughMatches.forEach((b) => {
           const safeB = escapeHtml(b);
-          html += `<div class="autocomplete-item" data-type="borough" data-value="${escapeHtmlAttr(b)}" data-index="${idx}">
+          html += `<div class="autocomplete-item" id="ac-item-${idx}" role="option" aria-selected="false" data-type="borough" data-value="${escapeHtmlAttr(b)}" data-index="${idx}">
       <span class="ac-postcode">${safeB}</span><span class="ac-area">Borough</span></div>`;
           idx++;
         });
         areaMatches.forEach((a) => {
           const safeA = escapeHtml(a);
           const areaMeta = typeof activeAreas[a] === 'object' ? activeAreas[a].borough : activeAreas[a].split(' ')[0];
-          html += `<div class="autocomplete-item" data-type="area" data-value="${escapeHtmlAttr(a)}" data-index="${idx}">
+          html += `<div class="autocomplete-item" id="ac-item-${idx}" role="option" aria-selected="false" data-type="area" data-value="${escapeHtmlAttr(a)}" data-index="${idx}">
       <span class="ac-postcode">${safeA}</span><span class="ac-area">Area &middot; ${escapeHtml(areaMeta)}</span></div>`;
           idx++;
         });
         (results || []).forEach((pc) => {
           const safePc = escapeHtml(pc);
-          html += `<div class="autocomplete-item" data-type="postcode" data-value="${escapeHtmlAttr(pc)}" data-index="${idx}">
+          html += `<div class="autocomplete-item" id="ac-item-${idx}" role="option" aria-selected="false" data-type="postcode" data-value="${escapeHtmlAttr(pc)}" data-index="${idx}">
       <span class="ac-postcode">${safePc}</span></div>`;
           idx++;
         });
         dropdown.innerHTML = html;
         dropdown.classList.add('visible');
+        input.setAttribute('aria-expanded', 'true');
 
         // Click handlers
         dropdown.querySelectorAll('.autocomplete-item').forEach((item) => {
           item.addEventListener('click', () => {
             const val = item.dataset.value;
             document.getElementById('search-input').value = val;
-            dropdown.classList.remove('visible');
+            closeAcDropdown();
             if (item.dataset.type === 'borough') {
               const match = matchBorough(val);
               if (match) selectBoroughByName(match.name);
@@ -5239,11 +5292,21 @@
 
       function highlightAcItem(index) {
         const dropdown = document.getElementById('autocomplete-dropdown');
+        const input = document.getElementById('search-input');
         const items = dropdown.querySelectorAll('.autocomplete-item');
-        items.forEach((i) => i.classList.remove('highlighted'));
+        items.forEach((i) => {
+          i.classList.remove('highlighted');
+          i.setAttribute('aria-selected', 'false');
+        });
         if (index >= 0 && index < items.length) {
           items[index].classList.add('highlighted');
+          items[index].setAttribute('aria-selected', 'true');
           items[index].scrollIntoView({ block: 'nearest' });
+          // ARIA combobox pattern: aria-activedescendant tells screen
+          // readers which option is "focused" without moving DOM focus.
+          input.setAttribute('aria-activedescendant', items[index].id);
+        } else {
+          input.removeAttribute('aria-activedescendant');
         }
       }
 
@@ -6839,7 +6902,7 @@
           const val = input.value.trim();
           clearTimeout(acDebounceTimer);
           if (val.length < 2) {
-            dropdown.classList.remove('visible');
+            closeAcDropdown();
             dropdown.innerHTML = '';
             return;
           }
@@ -6864,7 +6927,7 @@
             acHighlightIndex = Math.max(acHighlightIndex - 1, -1);
             highlightAcItem(acHighlightIndex);
           } else if (e.key === 'Enter') {
-            dropdown.classList.remove('visible');
+            closeAcDropdown();
             if (acHighlightIndex >= 0 && items[acHighlightIndex]) {
               const val = items[acHighlightIndex].dataset.value;
               const type = items[acHighlightIndex].dataset.type;
@@ -6881,14 +6944,14 @@
               triggerSearch(input.value);
             }
           } else if (e.key === 'Escape') {
-            dropdown.classList.remove('visible');
+            closeAcDropdown();
           }
         });
 
         // Close dropdown on outside click
         document.addEventListener('click', (e) => {
           if (!e.target.closest('.search-wrapper')) {
-            dropdown.classList.remove('visible');
+            closeAcDropdown();
           }
         });
 
