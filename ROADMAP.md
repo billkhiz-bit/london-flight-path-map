@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-06
+**Last reviewed:** 2026-05-07
 
 ---
 
@@ -12,8 +12,8 @@ Sky Score is the noise + livability layer for UK property data, designed to be h
 
 ## Current state
 
-- **Consumer site live**: `https://skyscore.co.uk`, covers London + NYC, postcode/borough scoring, AI chat, multi-agent reports, image/document analysis, favourites
-- **Backend**: 10 Lambdas behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
+- **Consumer site live**: `https://skyscore.co.uk`, covers London + NYC, postcode/borough scoring, favourites, NHS/transport/EPC/sold-prices data lookups
+- **Backend**: 8 active Lambdas + 5 dormant (the consumer-side Bedrock features built for the original hackathon) behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
 - **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with live OpenSky aircraft data
 - **Recent wins**: Amazon Nova hackathon ($200 AWS credits, blog category), Emergent Ventures application submitted (awaiting response), Red Bull Basement application submitted (awaiting shortlist), Luma event applied
 - **Known issues**: see `AUDIT_REPORT.md` (last audit 2026-05-06; refreshed 2026-05-07)
@@ -124,7 +124,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | API pricing model | Per-query, tiered | When first prospect asks |
 | Score response shape (opinionated / components / both) | **Resolved 2026-05-05**: both. `/v1/score` returns `score` + `components` + `context`. Optional `?weights=` lets customers override defaults. | n/a |
 | Buildathon fork repo name | `sky-score-halal` | When Foundation confirms eligibility |
-| Whether to drop `multi_agent` Lambda from API surface in favour of leaner score-only | TBD | After first 3 customer conversations |
+| Whether to delete the 5 dormant Bedrock Lambdas (chat, multi_agent, analyze_image, analyze_document, report) entirely vs. keep template entries | **Resolved 2026-05-07**: keep dormant in template; Lambda has zero idle cost on on-demand pricing, and re-introducing any feature later as a user-triggered constrained variant is just unhiding the UI block. Re-evaluate if Bedrock pricing model changes. | n/a |
 | CORS for `/v1/score` from third-party browser origins | **Resolved 2026-05-05**: global CORS opened to `*`. The score endpoints are API-key gated; the Bedrock endpoints are throttled at API Gateway (10 req/s) and CORS does not protect against server-side abuse anyway. | n/a |
 | OpenSky commercial-licensing, replace, negotiate, or decouple | Decouple (consumer only) until first paying integration; negotiate or swap before then | Before any B2B aviation-data integration |
 | EPC: API-on-demand vs bulk download | API now; bulk download once approaching rate-limit pressure (~50% of 6000-per-5-min quota) | When B2B traffic ramps |
@@ -277,8 +277,9 @@ Until those triggers fire: keep all consumer features. Charge for integration va
 - ❌ Remove per-postcode / per-neighbourhood scoring from consumer site
 - ❌ Add a consumer signup wall pre-emptively
 - ❌ Hide methodology behind a paywall (transparency wins B2B trust)
-- ❌ Remove AI features (Bedrock cost is small; consumer engagement is real)
 - ❌ Split consumer site into "free borough / paid postcode" tiers
+
+**Updated 2026-05-07**: AI features (chat, multi-agent, image/document analysis, AI report) were removed from the consumer UI. Reasoning: methodology defensibility is the B2B story, and AI summaries on top of deterministic scoring add variance that B2B audit teams will challenge first ("not fully accurate" is structural, not tunable). The 5 Bedrock Lambdas remain dormant in `template.yaml` for potential re-introduction as user-triggered constrained features (e.g. "explain in plain English" button) once consumer feedback warrants it. Bedrock-cost saving was a secondary win (~$80-115/mo at modest traffic).
 
 These are theoretical optimisations against problems that don't exist yet.
 

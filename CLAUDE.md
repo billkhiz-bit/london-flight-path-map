@@ -50,7 +50,7 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-Sky Score, a full-stack property noise & livability scoring tool for NYC/London, built for the Amazon Nova AI Hackathon. Single-page frontend (`index.html`) backed by 10 AWS Lambda functions orchestrated via SAM.
+Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) backed by 8 active AWS Lambda functions orchestrated via SAM (5 further Bedrock Lambdas remain dormant in the template for potential re-introduction).
 
 ## Branding
 
@@ -105,15 +105,18 @@ The `.env` file is gitignored. All three SAM parameters use `NoEcho: true` so va
 ## Architecture
 
 - **Frontend**: Single `index.html` (~3,750 lines), vanilla JS, D3.js maps, all UI logic inline
-- **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 10 Lambdas + API Gateway + DynamoDB
-- **Lambda functions** (all in `backend/lambdas/<name>/app.py`):
-  - `chat`, Nova 2 Lite for simple queries, Nova Pro for complex reasoning (auto-routed)
-  - `multi_agent`, Orchestrator + 3 specialist agents (Noise/Market/Livability) + Synthesiser
-  - `analyze_image`, Nova Pro multimodal for property listing photos
-  - `analyze_document`, Nova Pro multimodal for EPC certs, surveys
-  - `report`, Nova Pro 7-section property reports
-  - `favourites`, DynamoDB CRUD for saved properties
-  - `transport`, `epc`, `sold_prices`, `nhs`, external data API proxies
+- **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 13 Lambdas (8 active + 5 dormant) + API Gateway + DynamoDB
+- **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
+  - `score`, B2B scoring engine, API-key gated (`/v1/score`, `/v1/score/batch`, `/v1/regions`)
+  - `signup`, self-service API-key issuance
+  - `favourites`, DynamoDB CRUD with `X-Device-Token` auth
+  - `epc`, MHCLG EPC certificate proxy (bearer-token auth via `EPC_BEARER_TOKEN`)
+  - `sold_prices`, HM Land Registry Price Paid Data proxy
+  - `transport`, TfL Open Data station + line-status
+  - `nhs`, NHS Service Search via OSM Overpass
+  - `live_flights`, OpenSky-backed live aircraft for the prototype
+- **Dormant Lambdas** (in `template.yaml` but not surfaced in the UI as of May 2026; kept for potential re-introduction):
+  - `chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report` — all Bedrock Nova Pro/Lite. Lambda has zero idle cost on on-demand pricing; re-enabling means unhiding the UI block, not redeploying.
 
 ## Prototype (Sky Score Radar)
 
@@ -134,14 +137,13 @@ The `.env` file is gitignored. All three SAM parameters use `NoEcho: true` so va
 - **CloudFront**: `https://d1oe4ftwutjpf.cloudfront.net` (distribution EGSSPJKLFL33M)
 - **S3 bucket**: `london-flight-map-frontend` (eu-west-2)
 - **DynamoDB table**: `london-flight-map-favourites`
-- **Bedrock models**: `us.amazon.nova-2-lite-v1:0` (simple) + `us.amazon.nova-pro-v1:0` (complex/multimodal)
+- **Bedrock models** (used only by dormant Lambdas): `us.amazon.nova-2-lite-v1:0` (simple) + `us.amazon.nova-pro-v1:0` (complex/multimodal)
 - **IAM**: `flightmap-dev` user, `FlightMapDeployPolicy`
 - **Region**: eu-west-2 (London)
 
 ## Key Conventions
 
 - All Lambda handlers follow the same pattern: `def lambda_handler(event, context)` with CORS headers
-- Chat routing logic: keyword detection in `chat/app.py` determines Lite vs Pro model
 - Frontend communicates with backend via fetch to API Gateway endpoints
 - SAM stack name: `london-flight-map`
 

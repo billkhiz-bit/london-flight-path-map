@@ -134,30 +134,28 @@ Single-region AWS, fully serverless, deployed via SAM:
 ```
 CloudFront ── S3 (frontend, prototype, score-demo, OpenAPI spec)
                 │
-API Gateway ── Lambda × 11 ── Bedrock (Nova 2 Lite, Nova Pro, for consumer-side AI)
-                            ── DynamoDB (consumer favourites)
-                            ── External APIs (postcodes.io, MHCLG EPC, Land Registry,
-                                              TfL Open Data, NHS, OpenSky)
+API Gateway ── Lambda × 8 active ── DynamoDB (favourites + DEFRA noise raster)
+                                 ── External APIs (postcodes.io, MHCLG EPC,
+                                                   Land Registry, TfL, NHS, OpenSky)
 ```
 
 | Lambda | Path | Purpose |
 |---|---|---|
 | `score` | `/v1/score`, `/v1/score/batch`, `/v1/regions` | B2B scoring, API-key gated |
-| `chat` | `/chat` | Conversational advisor (Nova 2 Lite + Nova Pro auto-routed) |
-| `multi_agent` | `/multi-agent` | Orchestrator + specialist agents + synthesiser |
-| `analyze_image` / `analyze_document` | `/analyze-image`, `/analyze-document` | Multimodal analysis (Nova Pro) |
-| `report` | `/report` | 7-section property report generation |
-| `favourites` | `/favourites` | Consumer saved-property storage |
+| `signup` | `/v1/signup` | Self-service API-key issuance |
+| `favourites` | `/favourites` | Consumer saved-property storage (`X-Device-Token` auth) |
 | `epc` | `/epc` | EPC certificate proxy (MHCLG `Get energy performance of buildings data`) |
 | `sold_prices` | `/sold-prices` | Land Registry Price Paid Data proxy |
 | `transport` | `/transport` | TfL Open Data station + line-status |
 | `nhs` | `/nhs` | NHS Service Search |
+| `live_flights` | `/live-flights` | OpenSky-backed live aircraft for the prototype |
+
+Five further Lambdas (`chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report`) ship in `template.yaml` but are not surfaced in the UI. They were the consumer-side Bedrock features built for the original hackathon and are kept dormant in the template for potential re-introduction as user-triggered, constrained features. Lambda has zero idle cost on on-demand pricing.
 
 ## Tech stack
 
 - **Frontend**: single-file HTML + D3.js v7, no build step
 - **B2B Backend**: Python 3.11 Lambdas with embedded scoring data, `lru_cache`-backed postcode lookups
-- **Consumer AI**: Amazon Bedrock (Nova 2 Lite for routing/chat, Nova Pro for reasoning + multimodal)
 - **Data residency**: AWS `eu-west-2` (London) for UK GDPR alignment
 - **API documentation**: OpenAPI 3.0 spec served from CloudFront, rendered via Swagger UI
 
@@ -169,7 +167,7 @@ API Gateway ── Lambda × 11 ── Bedrock (Nova 2 Lite, Nova Pro, for consu
 ├── prototype/ # Sky Score Radar, 3D Three.js prototype
 ├── score-demo/ # B2B API browser demo + Swagger UI + OpenAPI spec
 ├── backend/
-│ ├── template.yaml # SAM stack: 11 Lambdas, API Gateway, DynamoDB, Usage Plan
+│ ├── template.yaml # SAM stack: 13 Lambdas (8 active + 5 dormant), API Gateway, DynamoDB, Usage Plan
 │ ├── lambdas/ # One folder per Lambda
 │ └── tests/ # Unit tests for the score Lambda
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source
@@ -212,4 +210,4 @@ For licensing, integration, or partnership enquiries, contact via the [live site
 
 The data the API returns is built on UK and US open data, MHCLG, DEFRA, HM Land Registry, ONS, Home Office, Department for Education, TfL, NHS Digital. Contains public sector information licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 
-The original consumer site was built for the [Amazon Nova AI Hackathon](https://devpost.com/), March 2026, where it received a build credit award. The B2B API and productisation work began May 2026.
+The original consumer site was built for the Amazon Nova AI Hackathon, March 2026, where it received a build credit award. The B2B API and productisation work began May 2026; the consumer-side AI features built for the hackathon were retired from the UI in May 2026 to align the consumer surface with the methodology-defensibility positioning of the B2B API. The Lambdas remain in the SAM template for potential future re-introduction.
