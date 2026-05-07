@@ -218,9 +218,9 @@ def fetch_and_mosaic(wcs_url, coverage_id, bbox, output_path, requests, rasterio
 
     print(f'Done. {output} is {output.stat().st_size // 1024 // 1024} MB.')
     print('Next step:')
-    print(f'  AWS_PROFILE=flightmap python scripts/load_defra_raster.py --self-test')
-    print(f'  AWS_PROFILE=flightmap python scripts/load_defra_raster.py --limit 100 --dry-run')
-    print(f'  AWS_PROFILE=flightmap python scripts/load_defra_raster.py')
+    print('  AWS_PROFILE=flightmap python scripts/load_defra_raster.py --self-test')
+    print('  AWS_PROFILE=flightmap python scripts/load_defra_raster.py --limit 100 --dry-run')
+    print('  AWS_PROFILE=flightmap python scripts/load_defra_raster.py')
 
 
 def fetch_tile(wcs_url, coverage_id, bbox, output_path, requests):
@@ -239,8 +239,12 @@ def fetch_tile(wcs_url, coverage_id, bbox, output_path, requests):
     }
     try:
         r = requests.get(wcs_url, params=params, timeout=TIMEOUT_S)
-    except Exception as exc:
-        print(f'(network error: {exc})', end=' ')
+    except requests.RequestException as exc:
+        # Catch only network-layer failures (Timeout, ConnectionError,
+        # SSLError, etc.); audit N-Code-4 flagged the prior bare except
+        # which would also swallow KeyboardInterrupt + bugs in the call
+        # chain. requests.RequestException is the documented base class.
+        print(f'(network error: {type(exc).__name__}: {exc})', end=' ')
         return False
 
     if r.status_code != 200:
