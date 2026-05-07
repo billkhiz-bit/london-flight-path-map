@@ -1775,7 +1775,10 @@
               <span>75+ dB</span>
             </div>
             <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4;">
-              Year-averaged exposure (day + evening + night). Click any postcode for the exact value at that spot.
+              <strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, 2022 data),
+              the long-term average aircraft noise around LHR, LCY and LGW —
+              modelled from a year of actual flight tracks, not a live feed.
+              Used by councils for planning decisions. Click any postcode for the exact dB at that spot.
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
@@ -3915,11 +3918,20 @@
       // because (a) the contour data IS bucketed in 5-dB bands so sub-pixel
       // detail is meaningless, (b) the legend warning already tells users
       // to zoom *out* for the macro picture, not in.
+      // visual fix-DEFRA-6: widened from (-0.55, 0.35, 51.25, 51.72) which
+      // clipped the western half of LHR's butterfly contour and missed
+      // Gatwick entirely. New bbox covers the full noise footprint of all
+      // four London airports that affect inhabited Greater London:
+      //   LHR (51.47, -0.45) — Heathrow, full east+west approach corridors
+      //   LCY (51.51, +0.05) — London City, eastern approach
+      //   LGW (51.15, -0.18) — Gatwick, affects Croydon/Sutton/Bromley
+      //   (Stansted/Luton still excluded — their contours don't reach
+      //    inhabited London at the Lden 55+ dB threshold.)
       const LONDON_AIRCRAFT_BBOX = {
-        minLon: -0.55,
-        maxLon: 0.35,
-        minLat: 51.25,
-        maxLat: 51.72,
+        minLon: -0.85,
+        maxLon: 0.40,
+        minLat: 51.10,
+        maxLat: 51.78,
       };
       // 4096 px (visual fix-DEFRA-2): user reported the contour bands were
       // "barely visible" after the fix-DEFRA-1 single-fetch refactor. Root

@@ -21,9 +21,9 @@ set -euo pipefail
 
 WMS_URL="https://environment.data.gov.uk/spatialdata/airport-noise-all-metrics-england-round-4/wms"
 LAYER="Airport_Noise_ALL_Lden"
-BBOX="51.25,-0.55,51.72,0.35"   # minLat,minLon,maxLat,maxLon (WMS 1.3.0 + EPSG:4326 axis order)
+BBOX="51.10,-0.85,51.78,0.40"   # minLat,minLon,maxLat,maxLon (WMS 1.3.0 + EPSG:4326 axis order)
 WIDTH="4096"
-HEIGHT="2139"                    # = round(WIDTH / aspect), aspect = (0.35 - -0.55) / (51.72 - 51.25) = 1.915
+HEIGHT="2228"                    # = round(WIDTH / aspect), aspect = (0.40 - -0.85) / (51.78 - 51.10) = 1.838
 
 OUT="data/aircraft-noise-london-lden.png"
 
