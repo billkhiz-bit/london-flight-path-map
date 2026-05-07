@@ -49,6 +49,21 @@ Resources:
           ResourcePath: /v1/signup
           ThrottlingRateLimit: 1
           ThrottlingBurstLimit: 5
+        # Per-method override on /v1/score (audit I-D). Per-key Usage
+        # Plan caps cost (free tier 1k req/mo), but a single key spamming
+        # at the global ceiling can starve other tenants. 5 RPS / 10 burst
+        # per route is generous for any normal client and gates the
+        # noisy-neighbour case. Same on /v1/score/batch — each batch call
+        # is itself ≤100 queries so the effective per-tenant ceiling is
+        # ~500 sub-queries/sec.
+        - HttpMethod: GET
+          ResourcePath: /v1/score
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+        - HttpMethod: POST
+          ResourcePath: /v1/score/batch
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
 
   # --- Bedrock Lambdas REMOVED 2026-05-07 ---
   # ChatFunction, MultiAgentFunction, AnalyzeImageFunction,
