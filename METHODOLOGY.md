@@ -481,7 +481,6 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
 | **DEFRA Strategic Noise Mapping (Round 4, 2022)** | Aviation + road noise contours for England | Open Government Licence v3.0 | 5-yearly (next: 2027) |
-| **OpenSky Network** | Live + historical aircraft positions | OpenSky terms, research/non-commercial on free tier; commercial use requires explicit agreement | Real-time |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **MHCLG Energy Performance Certificates** (new "Get energy performance of buildings data" service from 2026-05-30) | Per-property EPC bands | Open Government Licence v3.0 | Quarterly |
 | **TfL Open Data** | Transport accessibility, station and live line status | TfL Open Data terms, commercial use permitted with attribution | Real-time |
@@ -663,10 +662,10 @@ These items are tracked in the public roadmap. Customer contracts will explicitl
 
 ## 13. Limitations
 
-- **OpenSky aircraft tracking** is on the research/non-commercial free tier on the consumer site. The B2B API does **not** call OpenSky directly; aviation context for the API is sourced from the static DEFRA noise band that has been pre-computed for each borough. A commercial aviation source (FlightAware Firehose, Flightradar24 Business, or ADS-B Exchange paid tier) will be integrated before any paying customer needs live aviation data.
-- **Borough-level granularity** is the highest resolution for several inputs. Per-postcode noise sampling using DEFRA raster + Haversine flight-path distance is on the v2.1 roadmap.
+- **Live aircraft tracking removed (2026-05-07).** The consumer site previously displayed live OpenSky positions on its map and 3D radar prototype. Re-reading OpenSky's terms confirmed a written agreement is required for any operational use including consumer surfaces; the feature has been removed end-to-end (Lambda + UI) pending a licensing reply (OpenSky Ticket #835285). The B2B API was never affected — `/v1/score` aviation context comes from DEFRA, not from live aircraft. If a paying integrator needs live aviation data before OpenSky's reply lands, alternatives under consideration are AviationStack (free tier 1000 req/month, commercial-friendly licensing), FlightAware AeroAPI, and self-hosted ADS-B receiver feeds.
+- **Per-postcode noise resolution shipped (v3.0 + v3.1).** Per-postcode quiet via Haversine to airports + flight-path geometry shipped 2026-05-05 (v3.0). DEFRA raster sampling at postcode centroid shipped scaffolded 2026-05-05 (v3.1) and ran against the full ~2.5M NSPL postcode list 2026-05-07. Borough-level fallback retained for postcodes outside the raster bbox (Scotland, NI, edge cases).
 - **Price trend signal** is a simple linear trend; it does not capture cyclical effects or local development announcements.
-- **NYC support** is borough-name-only; ZIP-to-borough resolution is on the roadmap.
+- **NYC support shipped (2026-05-05/06).** ~182 residential ZIPs supported via static lookup, ~110 with per-ZIP centroids for the v3.0 Haversine quiet path. Non-NYC US ZIPs return a structured 404.
 - **EPC service migration** is complete (2026-05-05) but the new service exposes a narrower per-search response than the legacy service; numeric ratings are synthesised from band midpoints.
 - **Sky Score is not regulated** under the Estate Agents Act 1979 or the Property Misdescriptions Act 1991. Customers integrating into regulated workflows are responsible for their own FCA, PRA, and ICO compliance.
 
@@ -757,6 +756,7 @@ Methodology and API contract versioned independently:
 
 ## 20. Changelog
 
+- **2026-05-07 (v3.1, no version bump)**, **Consumer-side data integrity sweep — no scoring formula changes.** Two material changes worth noting in this doc despite the scoring engine being unchanged: (1) Live OpenSky aircraft tracking removed end-to-end from the consumer site and prototype pending a written licensing agreement with OpenSky (their terms require one for any operational use, including consumer surfaces). The B2B API was never affected — `/v1/score` aviation context comes from DEFRA Round 4, not OpenSky. (2) `FLIGHT_PATHS` polylines used by the consumer-site visualisation and the v3.0 Haversine fallback have been trimmed to the noise-relevant final-approach / initial-departure portions only (~10-22 km from runway), audited against the DEFRA Lden raster via `scripts/audit_flight_paths.py`. Score values are unchanged for postcodes resolved via raster (v3.1 happy path); Haversine-fallback postcodes (outside the DEFRA bbox) may see modest changes where they were within range of the trimmed-off long-distance segments. METHODOLOGY_VERSION not bumped because the algorithm is identical and no anchors moved.
 - **2026-05-05 (v3.1)**, **NYC ZIP centroids + DEFRA raster scaffold.** Two enhancements:
   (1) NYC ZIPs now have static centroid lat/lon for ~110 ZIPs (sourced from consumer-site `NYC_AREA_MAP`). NYC postcode queries now use the per-postcode Haversine tier (v3.0 algorithm) instead of borough-aggregate. Within-borough variation now works for NYC: 11201 (DUMBO) → quiet 8.0; 11375 (Forest Hills) → quiet 2.0; etc.
   (2) DynamoDB table `london-flight-map-noise-raster` deployed with IAM read access from the score Lambda. The Lambda's resolution chain now checks the raster table first; falls back to v3.0 Haversine when empty/missing. New `context.quietResolution` enum extended to `'raster' | 'postcode' | 'borough'`. The data load is a one-shot ops task documented in `scripts/load_defra_raster.py` (downloads DEFRA GeoTIFF + ONS NSPL, samples at postcode centroids, writes to DynamoDB; ~1 hour runtime). The Lambda is forward-compatible, loading raster data automatically upgrades quiet scores without API changes.
