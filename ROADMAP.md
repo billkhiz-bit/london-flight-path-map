@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-07
+**Last reviewed:** 2026-05-07 (end-of-session — see AUDIT_REPORT.md "Session close" for full deferred list)
 
 ---
 
@@ -113,6 +113,17 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | Re-run `/audit` | next due ~2026-06-07 | Catches drift; last refresh 2026-05-07 |
 | Methodology doc for the API | 2026-05-29 | Required for serious B2B conversations |
 | Consumer-site granularity-wall pass | 2026-06-15 | Protects API channel before serious sales |
+
+### Deferred from 2026-05-07 session — full list in [`AUDIT_REPORT.md`](./AUDIT_REPORT.md#deferred--kept-in-mind-for-future-sessions)
+
+Brief summary; pick one or two next session:
+
+- **Security residual** (~10-30 min each): CSP `report-uri`, CSP `img-src` tightening, per-route throttle on `/v1/score`, signup CAPTCHA, HSTS / Permissions-Policy via CloudFront response-headers policy.
+- **Visual polish** (~5-15 min each): layer-toggle indicator colours per layer, aircraft-noise legend gating, DEFRA caption stacking, airport text plates.
+- **A11y carry-forward** (~10-30 min each): layer toggle hover/active visual differentiation (Critical), heading hierarchy fix (Critical), skip-to-content, touch targets <44px on consumer site, `:focus-visible` fallback, search-results count for SR users, `prefers-reduced-motion`.
+- **Code quality** (~10-60 min each): API base URL extraction (4 files duplicated), `BOROUGH_ALIASES` expansion, Swagger UI SRI hash, signup race-recovery test.
+- **Enterprise readiness** (legal effort): DPA template (CommonPaper, 2-3 hr legal review), MSA + SLA + termination + data return (1-day legal), privacy notice + sub-processor list + retention policy (half-day each), DynamoDB PITR + RTO/RPO doc (1-click + ~1 hour), `pip-audit` integration, `support@skyscore.co.uk` mailbox + 1-business-day SLA, status page subdomain.
+- **Performance** (~1 hour): extract inline data (`BOROUGH_DATA`, `AREA_MAP`) from index.html (6.9k lines) to JSON files fetched after first paint, improves LCP.
 
 ---
 

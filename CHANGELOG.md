@@ -6,6 +6,27 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Planned (deferred from 2026-05-07 session)
+
+- See [`AUDIT_REPORT.md`](./AUDIT_REPORT.md#deferred--kept-in-mind-for-future-sessions) for the full deferred list with audit IDs, priorities, and time estimates. Top items:
+  - Layer-toggle hover vs active visual differentiation (a11y critical)
+  - Heading hierarchy fix in injected sidebar HTML (a11y critical)
+  - Touch targets <44px on consumer site (`.layer-toggle` 32px; `.persona-btn` ~25px; `.fav-btn` ~22px)
+  - Skip-to-content link
+  - CSP `report-uri` endpoint + `img-src` tightening
+  - Per-route throttle on `/v1/score` to prevent one tenant starving others
+  - hCaptcha on `/v1/signup`
+  - HSTS + `Permissions-Policy` via CloudFront response-headers policy
+  - DPA + MSA templates (CommonPaper) — needs legal review
+  - Privacy notice + sub-processor list + retention policy (`/privacy`, `SUBPROCESSORS.md`, `OPERATIONS.md`)
+  - DynamoDB PITR + documented RTO/RPO
+  - Status page on `status.skyscore.co.uk` subdomain
+  - `pip-audit` integration into `/preflight`
+  - Extract inline `BOROUGH_DATA` / `AREA_MAP` from index.html (6.9k lines) to JSON for LCP improvement
+  - DEFRA Lden raster data load completion (in flight 2026-05-07; loader at NSPL row ~2.3M of ~2.5M)
+
+### Original [Unreleased] planned items
+
 ### Planned
 - DEFRA Lden raster data load completion (in flight 2026-05-07; loader at NSPL row ~2.1M of ~2.5M)
 - Independent measured-noise validation (gating contractual accuracy claims)
@@ -21,9 +42,13 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 - Pricing tier structure firmed up post first prospect conversation
 - Live aircraft feature re-introduction once OpenSky licensing reply lands (Ticket #835285) or an alternative provider (AviationStack / FlightAware) is selected
 
-## [Consumer rebrand + security hardening] 2026-05-07
+## [Consumer rebrand + security + audit-driven hardening] 2026-05-07
 
-Single big day: removed all AI features from the consumer site, removed the OpenSky-backed live-aircraft feature pending licensing, hardened the signup endpoint, fixed several DOM-XSS surfaces, trimmed flight-path polylines to noise-relevant portions, refreshed every relevant doc. Net: 32 commits, 3 backend deploys, 5 frontend deploys.
+The longest-running session in the project's history. Two parts:
+1. **Morning/afternoon (32 commits, 3 backend deploys, 5 frontend deploys):** removed all AI features from the consumer site, removed OpenSky-backed live-aircraft pending licensing, hardened the signup endpoint, fixed DOM-XSS surfaces, trimmed flight-path polylines to noise-relevant portions, refreshed every relevant doc.
+2. **Evening (13 further commits, 4 more backend deploys, 6 more frontend deploys):** ran two rounds of 3-5 parallel audit agents (code, security, frontend visual + a11y, enterprise readiness), closed the highest-leverage agent findings, deployed CSP enforcing on all 5 HTML pages, added `/.well-known/security.txt`, `SECURITY.md` security one-pager, `/api` landing page, `OUTREACH_DRAFTS.md`, `AVIATIONSTACK_SPIKE.md`, `AWS_BILLING_ALARM_SETUP.md`. Then deleted the 5 dormant Bedrock Lambda directories entirely + their IAM grants.
+
+Total: ~45 commits, 7 backend deploys, 11 frontend deploys.
 
 ### Added
 - **XSS hardening sweep** across the consumer site (commit `2405122`). New `safeUrl()` allow-list for href values from community data; `formatChatReply` (since removed) escapes before markdown to break the OSM → chat injection chain; every API-derived `innerHTML` interpolation in NHS / TfL / sold-prices / autocomplete / borough-postcode renderers wrapped in `escapeHtml`. Closes audit N-Sec-1, N-Sec-2, N-Sec-3.
@@ -63,6 +88,26 @@ Single big day: removed all AI features from the consumer site, removed the Open
 - **OpenSky → remove and ask** (option 3 of three considered: contact for licence, replace with paid alternative, or remove). Chase scheduled for 2026-06-04 (4 weeks).
 - **Repo migration**: canonical clone now at `C:\Users\bilal\projects\london-flight-path-map`; legacy OneDrive clone retired pending DEFRA-loader completion. OneDrive `.git` corruption risk per global CLAUDE.md.
 - **Echo-work discipline** added to global `~/.claude/CLAUDE.md`: after substantive change, propagate to README / ROADMAP / LICENSING / METHODOLOGY / AUDIT_REPORT / OUTREACH_LOG / memory / `.env.example` / tests / AWS surfaces in the same session while context is hot.
+- **Demo API key exposure (audit C2)** accepted with rotation discipline rather than building a server-side proxy. Blast radius bounded by 1000 req/month quota; rotation = 5 minutes. Re-evaluate if a paying customer ever depends on the demo working specifically.
+- **Dormant Bedrock Lambda directories deleted entirely (2026-05-07 evening)**: revised the prior "keep dormant" decision after the smoke-test caught the routes were still publicly invokable. "Uncomment Events block to re-enable" wasn't materially easier than "git revert + sam deploy", and 5 Lambdas with intact `bedrock:InvokeModel` grants were attack surface for any future SAM template typo. Restoration recipe: git revert this commit + the 2026-05-05 AI-removal commit (commit `69905ee`).
+
+### Evening additions (post-CHANGELOG-write commits)
+
+- **Two rounds of 3-5 parallel audit agents** (code, security, frontend visual + a11y, enterprise readiness). Findings merged in commits `dab713d` (post-audit security fixes), `6bad8ce` (Wave 1: code quality), `a830acb` (Wave 2: visual polish), `b6c7806` (Wave 3: SECURITY.md), `54191df` (Wave 4: a11y criticals).
+- **CSP enforcing** on all 5 HTML pages (commit `967f9d1`); was Report-Only earlier in the day. Then `unsafe-eval` dropped (commit `dab713d`) — codebase has no `eval`/`new Function`, so it was free attack-surface widening.
+- **`SECURITY.md` security one-pager** (commit `b6c7806`) closes enterprise gap #4 — pre-empts the SOC 2 question by listing controls actually in place + an honest "what we don't have" table.
+- **`/api` landing page** at `https://skyscore.co.uk/api/` (commit `88b56a4`) closes enterprise gap #19 (B2B prospects had no buy-path discovery surface). Hero CTA → demo / reference / methodology, "Built for" target-audience cards, indicative pricing tiers, 5-step "Get started" path.
+- **`OUTREACH_DRAFTS.md`** (commit `2024147`) — warm-intro DM template + Tier 1 / 2 cold-email templates with per-target tweaks for Landmark / TM Group / OneSearch Direct / Al Rayan / StrideUp / Gatehouse / Nester / Yielders. Subject-line A/B options.
+- **`AVIATIONSTACK_SPIKE.md`** (commit `2024147`) — fallback live-aircraft provider reference; ~3-hour swap if OpenSky says no.
+- **`AWS_BILLING_ALARM_SETUP.md`** (commit `445c59d`) — one-time admin runbook for $20 USD billing alarm; would have caught today's "AI Lambda routes left open" defect within hours.
+- **6 new signup tests** (commit `2024147`): CORS allow-list (echoed origin / hostile origin / no-origin / lowercase header) + `_safe_revoke_orphan_key` prefix guard (refuses non-prefix names; deletes legitimate prefix). Backend tests 61 → 67 then back to 60 after dormant-Lambda test classes deleted.
+- **Visual polish on map**: road overlay `mix-blend-mode: multiply` so it tints aircraft raster instead of covering it; legend "LCY/OTHER" → "LCY PATHS"; flight-path strokes 1/1.5px @ 0.5 → 1.5/2.25px @ 0.7; heliport colour orange → violet (was identical to LHR orange); animated dot halo for visibility over noise rasters.
+- **Search input** now implements the WAI-ARIA combobox pattern (`role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete`, `aria-activedescendant`); each `.autocomplete-item` is a `role="option"` with stable id + `aria-selected`; new `closeAcDropdown()` helper centralises 5 dismiss paths so screen readers stay in sync.
+- **ADDITIONAL INSIGHTS metric cards** converted from `<div onclick>` to native `<button>` with `aria-expanded` / `aria-controls`; toggle handler synchronises the ARIA state.
+- **Dropped 5 dormant Bedrock Lambda directories + their IAM grants** (commit `6bad8ce`). Net ~800 LOC removed from backend; 5 fewer execution roles with `bedrock:InvokeModel` permissions.
+- **`live_flights` Lambda removed** earlier in the day (commit `6f6ce7d`); the `liveLicensed=false` gate in `prototype/index.html` strengthened to `throw` on flag flip with a message pointing to `OPENSKY_LICENSING_EMAIL.md` (commit `6bad8ce`).
+- **Enterprise audit doc gap fix**: METHODOLOGY §15 said "AWS is the sole sub-processor" but LICENSING.md listed Cloudflare. Reconciled (commit `6bad8ce`).
+- **OpenSky licensing enquiry sent** to `contact@opensky-network.org` — Ticket #835285 acknowledged via auto-reply; chase 2026-06-04.
 
 ## [3.1], 2026-05-05
 

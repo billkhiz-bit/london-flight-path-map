@@ -1,8 +1,157 @@
 # Audit Report, Sky Score
-**Date:** 2026-05-07
-**Files scanned:** 13 Python Lambdas (2 new since prior baseline: `live_flights`, `signup`), `template.yaml`, `iam-policy.json`, `index.html` (4,334 lines), `score-demo/*`, `prototype/index.html`, `scripts/*.py` (incl. new `download_defra_wcs.py`), `tests/`, `backend/tests/`
-**Audit performed by:** 3 parallel agents (code, security, frontend/a11y) + manual triage of prior baseline against commits since 2026-05-06
+**Date:** 2026-05-07 (refreshed end-of-session)
+**Files scanned:** 8 active Python Lambdas (5 dormant Bedrock Lambdas + live_flights deleted today), `template.yaml`, `iam-policy.json`, `index.html`, `score-demo/*`, `prototype/index.html`, `scripts/*.py`, `tests/`, `backend/tests/`
+**Audit performed by:** Two rounds of 3-5 parallel agents (code, security, frontend visual + a11y, enterprise readiness) + manual triage. Final round merged into the "Session close" section below.
 **Previous audit:** 2026-05-06 (39 findings, see triage column below)
+
+---
+
+## Session close — 2026-05-07 evening
+
+After the second round of agents (code-quality + security + frontend visual + a11y + enterprise readiness), this section consolidates **everything closed today** with commit SHAs, and lists **everything deferred** with audit IDs and priority. The triage column below this section is the longer-form version against the May-6 baseline.
+
+### Closed today (with commit SHAs)
+
+**Critical (security / cost):**
+- N-Sec-1, N-Sec-2, N-Sec-3 (XSS chains via OSM, chat-reply, defence-in-depth) → `2405122`
+- N-Code-1 (signup `apigateway:DELETE` wildcard) → `a214ba0`; tightened with `aws:RequestTag` on POST in `dab713d`
+- N-Code-2 (no per-route throttle on /v1/signup) → `a214ba0`
+- 5 dormant AI Lambda routes publicly invokable (smoke-test finding "P") → routes closed `71a731c`, Lambdas + IAM grants deleted entirely `6bad8ce`
+- C-A (CSP `unsafe-eval` introduced earlier in session) → `dab713d`
+- C-N1 (smoke test posting to closed routes) → `dab713d`
+- I-G (signup `apigateway:POST` no `aws:RequestTag` condition) → `dab713d`
+
+**Critical (UX / B2B-credibility):**
+- N-Front-1 (B2B demo persona drift) → `a2b5695`
+- N-Front-2 (corrupted status placeholders from dash strip) → `a2b5695`
+- Visual fix-1 (road overlay paints over aircraft raster) → `a830acb` (mix-blend-mode + reduced opacity)
+- Visual fix-2 (legend "LCY/OTHER" misleading after path trim) → `a830acb`
+- F-A11y-1 (search input missing combobox semantics) → `54191df`
+- F-A11y-3 (metric cards `<div onclick>`) → `54191df`
+
+**Important (already deployed):**
+- N-Sec-4 (CORS lockdown on signup) → `a214ba0`
+- N-Code-3 partial (live_flights + signup tests) → `5418d73` + `2024147`
+- N-Code-5 (signup `print()` → logger) → `a214ba0`
+- N-Code-6 (live_flights state pattern) → `5418d73` (+ Lambda removed entirely in `6f6ce7d`)
+- N-Code-7 (orphan-key alerting) → `56b0e03`
+- N-Front-5 (tabs → buttons + arrow keys + roving tabindex) → `847935c`
+- N-Front-6 (first-hint role=status auto-announce) → `f7de68e`
+- N-Front-9 (prototype touch targets) → `2e77bda`
+- N-Front-10 (prototype ticker XSS defence) → `2e77bda`
+- N-Code-4 (DEFRA WCS bare except) → `f97cd8c`
+- I2 (npm audit) → already clean
+- I3 (OpenAPI completeness: /v1/signup + ?methodology=) → `29ab46f`
+- I14 (PROJECT_DOCUMENTATION.md staleness) → `a24add0`
+- I15 (canonical/OG/theme-color on score-demo + prototype) → `bc4d426`
+- I-N1 (delete dormant Lambda dirs + their IAM grants) → `6bad8ce`
+- I-N2 (prototype dead live-flights JS — strengthened gate to throw on flag flip) → `6bad8ce`
+- I-N4 (score CORS env-var consistency) → `6bad8ce`
+- I-F (DEFRA loader + audit script bare except) → `dab713d`
+- M-N1 (boto3 client per call hoisted) → `6bad8ce`
+- Visual fix-3 (flight-path strokes too faint) → `a830acb`
+- Visual fix-4 (heliport orange = LHR orange) → `a830acb`
+- Visual fix-7 (animated dot halo) → `a830acb`
+
+**Critical (accepted with rationale):**
+- C2 (demo API key in served HTML) → accepted with rotation discipline `d43dddf`
+- C4 (CORS `*` on remaining endpoints) → accepted by design (B2B integrators need it; API-key gated)
+
+**Defence-in-depth deployed (no specific audit ID, all preventive):**
+- CSP enforcing on all 5 HTML pages → `967f9d1`
+- `X-Content-Type-Options: nosniff` + `Referrer-Policy: strict-origin-when-cross-origin` on all 5 pages → `445c59d`
+- `/.well-known/security.txt` (RFC 9116) → `445c59d`
+- `AWS_BILLING_ALARM_SETUP.md` runbook → `445c59d`
+- `AllowedPattern '^.+$'` on every NoEcho secret → `aaf192f`
+- `OPENSKY_LICENSING_EMAIL.md` enquiry sent (Ticket #835285) → `a306a7b` + `9bf5482`
+- `SECURITY.md` security one-pager (closes enterprise gap #4) → `b6c7806`
+- `/api` landing page (closes enterprise gap #19) → `88b56a4`
+- `OUTREACH_DRAFTS.md` (Tier 1/2 cold templates + warm-intro DM) → `2024147`
+- `AVIATIONSTACK_SPIKE.md` (live-aircraft fallback if OpenSky says no) → `2024147`
+
+### Deferred — kept in mind for future sessions
+
+These didn't block today's session and are tracked here so they aren't lost. Each is a focused 15-60 min commit (or longer for the enterprise items requiring legal review).
+
+#### Security (residual)
+
+| ID | Item | Priority | Effort |
+|---|---|---|---|
+| I-A | CSP `report-uri` (no endpoint configured; violations log to DevTools only) | Medium | ~30 min (Lambda or `report-uri.com` SaaS) |
+| I-B | CSP `img-src https:` too permissive on index.html — tighten to specific WMS hosts | Medium | ~10 min |
+| I-D | No per-route throttle on `/v1/score` or `/v1/score/batch` (per-key usage plan caps cost; per-route would prevent one tenant starving others) | Medium | ~5 min in `template.yaml` |
+| I-E | Favourites `X-Device-Token` is capability-only (not identity-based) — known limitation; tokens never expire / no rotation | Low until PII expands | Bigger redesign |
+| I-H | No CAPTCHA on `/v1/signup` (1 RPS / 5 burst gates abuse but ~60 keys/min still possible) | Low-medium | ~30 min (hCaptcha free tier) |
+| M-B | No `Strict-Transport-Security` header (needs CloudFront response-headers policy, can't be set via `<meta>`) | Low | ~15 min in CloudFront console |
+| M-C | No `Permissions-Policy` header (same constraint as HSTS) | Low | ~10 min |
+| M-D | CSP `connect-src` includes whole `raw.githubusercontent.com` host — pin specific commit + SRI for the geojson load | Low | ~5 min |
+| M-E | Status-page CSP omits Goatcounter (intentional? or oversight?) | Trivial | ~3 min |
+
+#### Frontend visual + design (carried)
+
+| ID | Item | Priority | Effort |
+|---|---|---|---|
+| Visual fix-5 | Layer-toggle pills don't show layer's colour when active | Important | ~10 min CSS |
+| Visual fix-6 | Aircraft-noise legend always visible regardless of toggle | Important | ~10 min in toggle handler |
+| Visual fix-8 | DEFRA caption labels stack at same x/y on toggle | Polish | ~5 min |
+| Visual fix-9 | Airport code text needs white text-stroke / plate over labels layer | Polish | ~5 min |
+
+#### Frontend a11y + UX (carried)
+
+| ID | Item | Priority | Effort |
+|---|---|---|---|
+| F-A11y-2 | Layer toggle hover and active states visually identical (colour-only differentiation) | Critical (WCAG 1.4.1) | ~15 min CSS |
+| F-A11y-4 | Heading hierarchy skips levels in injected sidebar HTML (h2 → h3 with no h2 between) | Critical | ~30 min |
+| F-UX-5 | No skip-to-content link | Important (WCAG 2.4.1) | ~10 min |
+| F-UX-6 | Touch targets <44px on consumer site (`.layer-toggle` 32px; `.persona-btn` ~25; `.fav-btn` ~22; `.city-btn` ~22; `.tab` ~30) | Important (WCAG 2.5.5) | ~15 min CSS |
+| F-UX-7 | Search `outline:none` without `:focus-visible` fallback | Important (keyboard a11y) | ~5 min |
+| F-UX-8 | Search dropdown not announced to SR users — no `aria-live` count | Important | ~10 min |
+| F-UX-9 | `score-explain-trigger` tooltip has no Esc dismiss + overflows on small viewports | Important (WCAG 1.4.13) | ~20 min |
+| F-Perf-10 | `index.html` 6.9k lines / inline data — extract `BOROUGH_DATA`, `AREA_MAP`, `NYC_*` to JSON files fetched after first paint | Important (LCP) | ~1 hour |
+| F-UX-11 | `prefers-reduced-motion` not honoured anywhere | Minor | ~10 min |
+| F-UX-12 | City-selector buttons have no `aria-pressed` (same anti-pattern as N-Front-1) | Minor | ~5 min |
+| F-UX-13 | "Change profile" inline button styled as link — confusing for SR users | Minor | ~5 min |
+| F-UX-15 | Search hint not associated to input via `aria-describedby` (now FIXED in `54191df`) | — | done |
+
+#### Code quality (carried)
+
+| ID | Item | Priority | Effort |
+|---|---|---|---|
+| I-N5 | API base URL duplicated in 4 files (`index.html`, `score-demo/{index,api-docs,status}.html`, `tests/api.test.mjs`) | Medium | ~15 min (build step or constant) |
+| I-N6 | Signup race-recovery test (the `_safe_revoke_orphan_key` path with mocked `get_api_key` / `delete_api_key`) | Medium | ~20 min |
+| I4 | Borough metadata Lambda layer (carry-forward from May-6) | Medium-high | ~half day |
+| I6 | DLQ on async Lambdas (no async Lambdas exist now — likely moot) | Low | re-check on next async addition |
+| I12 | Hardcoded URL drift across 3-4 files | Medium | partly addressed via skyscore.co.uk migration |
+| M-N2 | `BOROUGH_ALIASES` only 4 entries — postcodes.io returns dozens of edge-case admin_district strings | Medium | ~10 min |
+| M-N5 | Swagger UI loaded from unpkg.com with no SRI hash | Low | ~5 min |
+
+#### Enterprise readiness (carried — needs legal review)
+
+| Gap # | Item | Effort |
+|---|---|---|
+| 1 | DPA template (CommonPaper) | 2-3 hr legal review |
+| 2 | MSA + SLA + termination + data return clauses (CommonPaper SaaS MSA) | 1-day legal effort |
+| 3 | Privacy notice + sub-processor list + retention policy (`/privacy`, `SUBPROCESSORS.md`, `OPERATIONS.md`) | half-day each |
+| 5 | Independent penetration test | ~£3-5k for 3-day external test; defer until first £499+/mo customer |
+| 6 | SOC 2 / ISO 27001 attestations | 6-12 months, ~£8-15k/yr Drata or Vanta; defer until contractually required |
+| 8 | Status page on `status.skyscore.co.uk` subdomain | ~30 min DNS + S3 redirect |
+| 10 | DynamoDB Point-in-Time Recovery + documented RTO/RPO in `OPERATIONS.md` | ~1 hour (PITR is a 1-click) |
+| 12 | Termination + data return clause in MSA | bundle with #2 |
+| 14 | `pip-audit` integration into `/preflight` + Swagger UI SRI pin | ~15 min |
+| 15 | Professional indemnity / cyber liability insurance | Hiscox / Markel quote when first contract requires |
+| 16 | Customer support response-time commitments (`support@skyscore.co.uk` mailbox + 1-business-day SLA) | ~30 min + DNS |
+| 17 | Multi-region failover / customer-isolated environments | defer until Enterprise tier customer |
+
+#### Decisions (still open)
+
+| Decision | Default | Resolve when |
+|---|---|---|
+| OpenSky reply | Awaiting Ticket #835285; chase 2026-06-04 | Reply lands or 4 weeks pass |
+| Whether to delete the 5 deleted Bedrock Lambda dirs from git history | No (git history is the recovery path) | n/a — keep |
+| Buildathon eligibility | Awaiting Foundation reply (sent 2026-05-05); chase 2026-05-10 | Reply lands |
+| Pricing tier specifics | Indicative on `/api` landing page | First prospect conversation |
+
+---
 
 ---
 
