@@ -5358,6 +5358,17 @@
           if (!data) return;
           const c = pathGenerator.centroid(f);
           if (!c || isNaN(c[0])) return;
+          // visual fix-LABEL-CONTRAST: borough name labels were unreadable
+          // when their borough was clicked (label fill #141414 + selected
+          // borough fill #141414 = same colour). Previous code tried to
+          // re-colour the label per selected state at render-time, but the
+          // click handler doesn't re-call renderLabels, so the label stayed
+          // dark even after the fill went dark.
+          //
+          // Switched to a single label colour with a white stroke halo via
+          // paint-order: stroke (same trick as airport codes) — labels now
+          // read on ANY background colour without needing per-click updates.
+          // Bumped opacity 0.6 → 0.9 since the halo gives us the contrast.
           lg.append('text')
             .attr('x', c[0])
             .attr('y', c[1])
@@ -5365,9 +5376,12 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', currentCity === 'nyc' ? '8px' : '6px')
             .attr('font-family', 'var(--font-mono)')
-            .attr('font-weight', '500')
-            .attr('fill', data.name === selectedBorough ? '#FAFAF9' : '#141414')
-            .attr('opacity', 0.6)
+            .attr('font-weight', '600')
+            .attr('fill', '#141414')
+            .attr('stroke', '#FAFAF9')
+            .attr('stroke-width', 2.5)
+            .attr('paint-order', 'stroke')
+            .attr('opacity', 0.9)
             .style('pointer-events', 'none');
         });
       }
