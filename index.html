@@ -458,6 +458,38 @@
       .layer-toggle.active .indicator {
         background: currentColor;
       }
+      /* Visual fix-5: when active, each toggle's indicator dot reflects the
+         layer's actual map colour (a third non-colour cue: a *recognisable*
+         colour that matches what the user sees on the map). The .active
+         state's text is white so we override both border and background. */
+      .layer-toggle[data-layer='paths'].active .indicator {
+        background: var(--orange);
+        border-color: var(--orange);
+      }
+      .layer-toggle[data-layer='defra-aircraft'].active .indicator {
+        background: #ff6a3d; /* mid-band of the orange aircraft scale */
+        border-color: #ff6a3d;
+      }
+      .layer-toggle[data-layer='defra-road'].active .indicator {
+        background: #7c3aed;
+        border-color: #7c3aed;
+      }
+      .layer-toggle[data-layer='transport'].active .indicator {
+        background: #0d4ea2; /* TfL roundel blue */
+        border-color: #0d4ea2;
+      }
+      .layer-toggle[data-layer='flood'].active .indicator {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+      .layer-toggle[data-layer='air-quality'].active .indicator {
+        background: #dc2626;
+        border-color: #dc2626;
+      }
+      .layer-toggle[data-layer='labels'].active .indicator {
+        background: #fafaf9;
+        border-color: #fafaf9;
+      }
 
       /* Postcode pin */
       .postcode-pin {
@@ -5596,7 +5628,7 @@
         roadG
           .append('text')
           .attr('x', 10)
-          .attr('y', 20)
+          .attr('y', 20) // 1st caption row (visual fix-8: staggered y-offsets)
           .style('font-family', 'var(--font-mono)')
           .style('font-size', '9px')
           .style('fill', '#7c3aed')
@@ -5625,7 +5657,7 @@
         floodG
           .append('text')
           .attr('x', 10)
-          .attr('y', 20)
+          .attr('y', 34) // 2nd caption row (visual fix-8: staggered)
           .style('font-family', 'var(--font-mono)')
           .style('font-size', '9px')
           .style('fill', '#1e3a8a')
@@ -5654,7 +5686,7 @@
         aqG
           .append('text')
           .attr('x', 10)
-          .attr('y', 20)
+          .attr('y', 48) // 3rd caption row (visual fix-8: staggered)
           .style('font-family', 'var(--font-mono)')
           .style('font-size', '9px')
           .style('fill', '#991b1b')
@@ -6556,6 +6588,9 @@
             .attr('fill', '#141414')
             .attr('stroke', '#FAFAF9')
             .attr('stroke-width', 1);
+          // Visual fix-9: paint-order stroke + white halo so the code stays
+          // readable when the labels layer is on top of dark borough fills or
+          // overlapping noise tints.
           ag.append('text')
             .attr('x', x + 7)
             .attr('y', y + 3.5)
@@ -6563,7 +6598,10 @@
             .attr('font-size', '9px')
             .attr('font-family', 'var(--font-mono)')
             .attr('font-weight', '600')
-            .attr('fill', '#141414');
+            .attr('fill', '#141414')
+            .attr('stroke', '#FAFAF9')
+            .attr('stroke-width', 3)
+            .attr('paint-order', 'stroke');
         });
         helis.forEach((hp) => {
           const [x, y] = projection(hp.coords);
@@ -6583,7 +6621,10 @@
             .attr('font-size', '7px')
             .attr('font-family', 'var(--font-mono)')
             .attr('font-weight', '500')
-            .attr('fill', '#9333ea');
+            .attr('fill', '#9333ea')
+            .attr('stroke', '#FAFAF9')
+            .attr('stroke-width', 2.5)
+            .attr('paint-order', 'stroke');
         });
       }
 
