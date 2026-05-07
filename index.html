@@ -72,6 +72,12 @@
     ></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- visual fix-DEFRA-5: preload the aircraft noise raster so the browser
+         starts the fetch during HTML parse, in parallel with JS download +
+         eval. By the time renderDefraTiles runs, the PNG is already in the
+         HTTP cache. Combined with self-hosting on CloudFront, the visible
+         "lag" between map paint and contour appearance drops near zero. -->
+    <link rel="preload" as="image" href="/data/aircraft-noise-london-lden.png" />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
@@ -4193,17 +4199,16 @@
           // and return immediately. visual fix-DEFRA-1.
           if (aircraftRasterLoadedFor !== 'london') {
             const lb = LONDON_AIRCRAFT_BBOX;
-            const wmsBbox = `${lb.minLat},${lb.minLon},${lb.maxLat},${lb.maxLon}`;
-            const aspect = (lb.maxLon - lb.minLon) / (lb.maxLat - lb.minLat);
-            const widthPx = AIRCRAFT_RASTER_PX;
-            const heightPx = Math.round(widthPx / aspect);
-            const url = getWmsTileUrl(
-              DEFRA_WMS.aircraft.all.url,
-              DEFRA_WMS.aircraft.all.layer,
-              wmsBbox,
-              widthPx,
-              heightPx
-            );
+            // visual fix-DEFRA-5: PNG is now self-hosted on our CloudFront
+            // edge instead of fetched from DEFRA's GeoServer on every load.
+            // Cuts the visible lag from ~500-1000 ms (WMS render + UK→edge
+            // round trip) to ~30-100 ms (CloudFront cache hit).
+            // The source PNG was generated once via a curl against the
+            // DEFRA WMS at the LONDON_AIRCRAFT_BBOX coords; refresh by
+            // re-running scripts/refresh_aircraft_noise.sh whenever DEFRA
+            // publishes a new noise mapping round (currently Round 4 / 2022;
+            // Round 5 expected 2027).
+            const url = '/data/aircraft-noise-london-lden.png';
             // Position in g-local coordinates by projecting the bbox corners.
             // The SVG zoom transform handles all subsequent pan/zoom natively
             // — no further WMS requests are made.

@@ -30,4 +30,8 @@ data/*
 # F-Perf-10: small borough-metadata JSON IS checked in (extracted from
 # index.html for lazy-loading). Everything else under data/ stays ignored.
 !data/borough-extra.json
+# visual fix-DEFRA-5: aircraft noise PNG cached on our origin, served from
+# CloudFront edge. Refreshes via scripts/refresh_aircraft_noise.sh whenever
+# DEFRA publishes a new Round of strategic noise mapping.
+!data/aircraft-noise-london-lden.png
 .defra_load_checkpoint
