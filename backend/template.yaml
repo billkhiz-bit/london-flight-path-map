@@ -67,13 +67,19 @@ Resources:
               Resource:
                 - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
                 - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      Events:
-        ChatPost:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FlightMapApi
-            Path: /chat
-            Method: post
+      # API route REMOVED 2026-05-07 (smoke-test finding P): the AI-removal
+      # commit 69905ee took the chat panel out of the consumer site, but
+      # the public /chat route was left active and accepting Bedrock-billing
+      # POSTs from anyone. Removing the API route keeps the Lambda + IAM
+      # intact (zero idle cost) but closes the abuse vector. To re-enable,
+      # restore the Events block below.
+      # Events:
+      #   ChatPost:
+      #     Type: Api
+      #     Properties:
+      #       RestApiId: !Ref FlightMapApi
+      #       Path: /chat
+      #       Method: post
 
   # --- Multi-Agent Orchestrator (Nova Lite + Pro) ---
   MultiAgentFunction:
@@ -92,13 +98,17 @@ Resources:
               Resource:
                 - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
                 - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      Events:
-        MultiAgentPost:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FlightMapApi
-            Path: /multi-agent
-            Method: post
+      # API route REMOVED 2026-05-07 — see ChatFunction note above. This
+      # one mattered most: each invocation runs 4 Bedrock calls (orchestrator
+      # + 3 agents + synthesiser), so an attacker hitting 10 RPS would burn
+      # ~$2,500/day in Nova Pro charges. Now closed.
+      # Events:
+      #   MultiAgentPost:
+      #     Type: Api
+      #     Properties:
+      #       RestApiId: !Ref FlightMapApi
+      #       Path: /multi-agent
+      #       Method: post
 
   # --- Land Registry Sold Prices (CORS proxy) ---
   SoldPricesFunction:
@@ -187,13 +197,14 @@ Resources:
               Resource:
                 - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
                 - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      Events:
-        AnalyzeImagePost:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FlightMapApi
-            Path: /analyze-image
-            Method: post
+      # API route REMOVED 2026-05-07 — see ChatFunction note above.
+      # Events:
+      #   AnalyzeImagePost:
+      #     Type: Api
+      #     Properties:
+      #       RestApiId: !Ref FlightMapApi
+      #       Path: /analyze-image
+      #       Method: post
 
   # --- Document Analysis (EPC/Survey via Nova Pro) ---
   AnalyzeDocumentFunction:
@@ -212,13 +223,14 @@ Resources:
               Resource:
                 - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
                 - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      Events:
-        AnalyzeDocumentPost:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FlightMapApi
-            Path: /analyze-document
-            Method: post
+      # API route REMOVED 2026-05-07 — see ChatFunction note above.
+      # Events:
+      #   AnalyzeDocumentPost:
+      #     Type: Api
+      #     Properties:
+      #       RestApiId: !Ref FlightMapApi
+      #       Path: /analyze-document
+      #       Method: post
 
   # --- AI Report Generation (Nova Pro) ---
   ReportFunction:
@@ -237,13 +249,16 @@ Resources:
               Resource:
                 - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
                 - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      Events:
-        ReportPost:
-          Type: Api
-          Properties:
-            RestApiId: !Ref FlightMapApi
-            Path: /report
-            Method: post
+      # API route REMOVED 2026-05-07 — see ChatFunction note above.
+      # 90s timeout + Nova Pro = highest single-call Bedrock cost; keeping
+      # this anonymous-reachable was the largest cost-abuse exposure.
+      # Events:
+      #   ReportPost:
+      #     Type: Api
+      #     Properties:
+      #       RestApiId: !Ref FlightMapApi
+      #       Path: /report
+      #       Method: post
 
   # --- Favourites (DynamoDB) ---
   FavouritesFunction:
