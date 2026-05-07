@@ -14,7 +14,7 @@ Sky Score is the noise + livability layer for UK property data, designed to be h
 
 - **Consumer site live**: `https://skyscore.co.uk`, covers London + NYC, postcode/borough scoring, favourites, NHS/transport/EPC/sold-prices data lookups
 - **Backend**: 8 active Lambdas + 5 dormant (the consumer-side Bedrock features built for the original hackathon) behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`
-- **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with live OpenSky aircraft data
+- **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with simulated flight tracks (live OpenSky data removed 2026-05-07 pending licensing — see open decisions table)
 - **Recent wins**: Amazon Nova hackathon ($200 AWS credits, blog category), Emergent Ventures application submitted (awaiting response), Red Bull Basement application submitted (awaiting shortlist), Luma event applied
 - **Known issues**: see `AUDIT_REPORT.md` (last audit 2026-05-06; refreshed 2026-05-07)
 
@@ -126,7 +126,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | Buildathon fork repo name | `sky-score-halal` | When Foundation confirms eligibility |
 | Whether to delete the 5 dormant Bedrock Lambdas (chat, multi_agent, analyze_image, analyze_document, report) entirely vs. keep template entries | **Resolved 2026-05-07**: keep dormant in template; Lambda has zero idle cost on on-demand pricing, and re-introducing any feature later as a user-triggered constrained variant is just unhiding the UI block. Re-evaluate if Bedrock pricing model changes. | n/a |
 | CORS for `/v1/score` from third-party browser origins | **Resolved 2026-05-05**: global CORS opened to `*`. The score endpoints are API-key gated; the Bedrock endpoints are throttled at API Gateway (10 req/s) and CORS does not protect against server-side abuse anyway. | n/a |
-| OpenSky commercial-licensing, replace, negotiate, or decouple | Decouple (consumer only) until first paying integration; negotiate or swap before then | Before any B2B aviation-data integration |
+| OpenSky commercial-licensing, replace, negotiate, or decouple | **Resolved 2026-05-07**: removed live_flights Lambda + UI from consumer site and prototype after research showed OpenSky's terms require a written agreement for any operational use, including consumer surfaces. Email sent to contact@opensky-network.org enquiring about licensing options. Lambda code lives in git (commit `a214ba0`); restore once a licence lands or after evaluating alternatives (AviationStack, FlightAware AeroAPI, self-hosted ADS-B). | n/a |
 | EPC: API-on-demand vs bulk download | API now; bulk download once approaching rate-limit pressure (~50% of 6000-per-5-min quota) | When B2B traffic ramps |
 | NYC ZIP-to-borough resolution | **Resolved 2026-05-05/06**: ~182 residential ZIPs supported via static lookup; ~110 with per-ZIP centroids for Haversine quiet-score. `?postcode=10001` and `?postcode=11201` work alongside UK postcodes. Non-NYC US ZIPs return a structured 404. | n/a |
 
@@ -211,7 +211,7 @@ The trigger is **first paying B2B customer asks "do you have postcode-level nois
 |---|---|---|
 | Next short session (2-3h) | NYC ZIP resolution | Highest leverage per minute spent. Removes a known limitation cheaply. Marketing-ready. |
 | Next focused day | Per-postcode noise sampling | Larger accuracy win. Best done with fresh head over a longer block. Closes the audit-defensibility gap. |
-| Before any paying B2B customer | OpenSky commercial-licence resolution (negotiate / replace / decouple) | Unblocks aviation-data integrations |
+| When OpenSky reply lands (or after 4 weeks no reply) | OpenSky licence decision (use, replace with paid alternative, or skip the feature) | Unblocks live-aircraft re-introduction |
 | Before public launch | Polish: domain (`skyscore.uk`), homepage CTA for "API access", contact form | Commercial-readiness |
 
 ## Monetisation strategy (decided 2026-05-05)

@@ -134,9 +134,9 @@ Single-region AWS, fully serverless, deployed via SAM:
 ```
 CloudFront ── S3 (frontend, prototype, score-demo, OpenAPI spec)
                 │
-API Gateway ── Lambda × 8 active ── DynamoDB (favourites + DEFRA noise raster)
+API Gateway ── Lambda × 7 active ── DynamoDB (favourites + DEFRA noise raster)
                                  ── External APIs (postcodes.io, MHCLG EPC,
-                                                   Land Registry, TfL, NHS, OpenSky)
+                                                   Land Registry, TfL, NHS)
 ```
 
 | Lambda | Path | Purpose |
@@ -148,9 +148,10 @@ API Gateway ── Lambda × 8 active ── DynamoDB (favourites + DEFRA noise 
 | `sold_prices` | `/sold-prices` | Land Registry Price Paid Data proxy |
 | `transport` | `/transport` | TfL Open Data station + line-status |
 | `nhs` | `/nhs` | NHS Service Search |
-| `live_flights` | `/live-flights` | OpenSky-backed live aircraft for the prototype |
 
 Five further Lambdas (`chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report`) ship in `template.yaml` but are not surfaced in the UI. They were the consumer-side Bedrock features built for the original hackathon and are kept dormant in the template for potential re-introduction as user-triggered, constrained features. Lambda has zero idle cost on on-demand pricing.
+
+The `live_flights` Lambda (OpenSky-backed live aircraft proxy) was deployed earlier but removed in May 2026 pending OpenSky's licensing terms — restored from git history once a written agreement is in place. The radar prototype's live mode is gated behind a `liveLicensed` flag; flip to `true` and restore the Lambda to re-enable.
 
 ## Tech stack
 
@@ -167,7 +168,7 @@ Five further Lambdas (`chat`, `multi_agent`, `analyze_image`, `analyze_document`
 ├── prototype/ # Sky Score Radar, 3D Three.js prototype
 ├── score-demo/ # B2B API browser demo + Swagger UI + OpenAPI spec
 ├── backend/
-│ ├── template.yaml # SAM stack: 13 Lambdas (8 active + 5 dormant), API Gateway, DynamoDB, Usage Plan
+│ ├── template.yaml # SAM stack: 12 Lambdas (7 active + 5 dormant), API Gateway, DynamoDB, Usage Plan
 │ ├── lambdas/ # One folder per Lambda
 │ └── tests/ # Unit tests for the score Lambda
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source

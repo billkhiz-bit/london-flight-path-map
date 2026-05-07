@@ -247,10 +247,6 @@
   .flight-item:last-child{border-bottom:none;}
   .path-type{font-size:9px;padding:2px 6px;border:1px solid var(--mid);text-transform:uppercase;letter-spacing:0.5px;}
 
-  .live-count{position:absolute;top:104px;left:32px;z-index:10;display:flex;align-items:center;gap:6px;
-    font-size:10px;letter-spacing:1px;text-transform:uppercase;}
-  .live-dot{width:6px;height:6px;background:var(--orange);border-radius:50%;animation:pulse 2s infinite;}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
 
   .loading-screen{display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;
     background:var(--bg);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;}
@@ -309,25 +305,6 @@
 
   /* Info note */
   .info-note{font-family:var(--font-sans);font-size:11px;line-height:1.5;color:#555;margin-top:6px;}
-
-  /* Flight detail popup */
-  .flight-popup{position:absolute;z-index:100;background:var(--white);border:1px solid var(--dark);
-    padding:14px 16px;font-family:var(--font-mono);font-size:10px;min-width:240px;
-    box-shadow:0 4px 16px rgba(0,0,0,0.15);pointer-events:auto;}
-  .flight-popup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-  .flight-popup-callsign{font-size:16px;font-weight:700;letter-spacing:1px;}
-  .flight-popup-close{cursor:pointer;font-size:14px;color:var(--mid);padding:2px 6px;
-    border:1px solid var(--bg);transition:all 0.15s;}
-  .flight-popup-close:hover{background:var(--dark);color:var(--white);border-color:var(--dark);}
-  .flight-popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .flight-popup-stat{display:flex;flex-direction:column;}
-  .flight-popup-val{font-size:14px;font-weight:600;}
-  .flight-popup-label{font-size:7px;color:var(--mid);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
-  .flight-popup-status{display:inline-block;padding:2px 8px;font-size:8px;font-weight:600;
-    letter-spacing:1px;text-transform:uppercase;border:1px solid;margin-top:8px;}
-  .flight-popup-links{display:flex;flex-direction:column;gap:4px;margin-top:10px;border-top:1px solid var(--bg);padding-top:10px;}
-  .flight-popup-link{font-size:9px;color:var(--orange);text-decoration:none;text-transform:uppercase;letter-spacing:0.5px;}
-  .flight-popup-link:hover{text-decoration:underline;}
 
   /* Autocomplete dropdown */
   .search-wrapper{position:relative;}
@@ -468,10 +445,6 @@
       <button type="button" class="city-btn active" data-city="london" onclick="switchCity('london')">London</button>
       <button type="button" class="city-btn" data-city="nyc" onclick="switchCity('nyc')">New York</button>
     </div>
-    <div class="live-count" id="live-count" style="display:none;">
-      <div class="live-dot"></div>
-      <span id="live-count-text"></span>
-    </div>
     <div class="map-controls">
       <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
       <button type="button" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
@@ -481,7 +454,6 @@
       <button type="button" class="layer-toggle active" data-layer="paths" aria-pressed="true" title="Show typical flight paths over the city"><div class="indicator" aria-hidden="true"></div>Flight paths</button>
       <button type="button" class="layer-toggle active" data-layer="defra-aircraft" aria-pressed="true" title="Aircraft noise contours from official DEFRA strategic noise mapping"><div class="indicator" aria-hidden="true"></div><span id="label-aircraft">Aircraft noise</span></button>
       <button type="button" class="layer-toggle" data-layer="defra-road" aria-pressed="false" title="Road traffic noise contours from official DEFRA strategic noise mapping"><div class="indicator" aria-hidden="true"></div><span id="label-road">Road noise</span></button>
-      <button type="button" class="layer-toggle" data-layer="live-flights" aria-pressed="false" title="Live aircraft positions overhead, updated every 15 seconds"><div class="indicator" aria-hidden="true"></div>Live aircraft</button>
       <button type="button" class="layer-toggle" data-layer="transport" aria-pressed="false" title="Tube and rail stations within range"><div class="indicator" aria-hidden="true"></div><span id="label-transport">Transport</span></button>
       <button type="button" class="layer-toggle" data-layer="flood" aria-pressed="false" title="Environment Agency flood-risk zones"><div class="indicator" aria-hidden="true"></div><span id="label-flood">Flood risk</span></button>
       <button type="button" class="layer-toggle" data-layer="air-quality" aria-pressed="false" title="Air quality across boroughs"><div class="indicator" aria-hidden="true"></div><span id="label-aq">Air quality</span></button>
@@ -1542,7 +1514,7 @@ let selectedBorough = null;
 let boroughFeatures = [];
 let nycBoroughFeatures = [];
 let projection, pathGenerator, svg, g, zoom;
-let layers = { paths:true, 'defra-aircraft':true, 'defra-road':false, 'live-flights':false, transport:false, flood:false, 'air-quality':false, labels:false };
+let layers = { paths:true, 'defra-aircraft':true, 'defra-road':false, transport:false, flood:false, 'air-quality':false, labels:false };
 
 // ============================================================
 // GEOJSON LOAD
@@ -2561,248 +2533,6 @@ function renderDefraTiles() {
   updateDefraTiles();
 }
 
-// ============================================================
-// LIVE FLIGHTS (OpenSky Network API - real aircraft positions)
-// ============================================================
-let liveFlightLayer = null;
-
-async function fetchLiveFlights() {
-  // OpenSky locks browser CORS to their own origin, so we proxy through
-  // /live-flights on our API Gateway. Lambda caches per-city for ~12s so
-  // multiple concurrent visitors don't spam OpenSky's anonymous tier.
-  // The Lambda also normalises the positional state arrays into named
-  // fields so this client doesn't need to know the OpenSky schema.
-  //
-  // Returns {flights: [...]} on success, {unavailable: true, reason: ...}
-  // when the upstream is down so the caller can surface that to the user
-  // (previously returned null silently, leaving the toggle "on" with
-  // nothing visible — confusing).
-  try {
-    const resp = await fetch(`${API_BASE}/live-flights?city=${currentCity}`);
-    if (!resp.ok) return {unavailable: true, reason: `HTTP ${resp.status}`};
-    const data = await resp.json();
-    if (data.available === false) {
-      return {unavailable: true, reason: data.upstreamError || 'upstream timeout'};
-    }
-    return {flights: data.flights || []};
-  } catch (e) {
-    console.warn('Live-flights proxy failed:', e);
-    return {unavailable: true, reason: e.message || 'network error'};
-  }
-}
-
-let currentFlights = [];
-let selectedFlight = null;
-
-function closeFlightPopup() {
-  const existing = document.querySelector('.flight-popup');
-  if (existing) existing.remove();
-  selectedFlight = null;
-}
-
-function showFlightPopup(f, screenX, screenY) {
-  closeFlightPopup();
-  selectedFlight = f.icao;
-
-  const container = document.getElementById('map-container');
-  const rect = container.getBoundingClientRect();
-
-  // Determine status
-  let status = 'En route';
-  let statusColor = 'var(--blue)';
-  if (f.vertRate < -2) { status = 'Descending'; statusColor = 'var(--orange)'; }
-  else if (f.vertRate > 2) { status = 'Climbing'; statusColor = 'var(--green)'; }
-
-  // Nearest airport
-  let nearestAirport = 'N/A';
-  let nearestDist = Infinity;
-  getActiveAirports().forEach(ap => {
-    const d = distanceTo(f.lat, f.lon, ap.coords[1], ap.coords[0]);
-    if (d < nearestDist) { nearestDist = d; nearestAirport = ap.name; }
-  });
-
-  const popup = document.createElement('div');
-  popup.className = 'flight-popup';
-
-  // Position - try to keep on screen
-  let left = screenX - rect.left + 15;
-  let top = screenY - rect.top - 20;
-  if (left + 260 > rect.width) left = left - 280;
-  if (top + 200 > rect.height) top = top - 180;
-  if (left < 0) left = 10;
-  if (top < 0) top = 10;
-
-  popup.style.left = left + 'px';
-  popup.style.top = top + 'px';
-
-  popup.innerHTML = `
-    <div class="flight-popup-header">
-      <span class="flight-popup-callsign">${f.callsign || f.icao.toUpperCase()}</span>
-      <span class="flight-popup-close" onclick="closeFlightPopup()">&#10005;</span>
-    </div>
-    <div class="flight-popup-grid">
-      <div class="flight-popup-stat">
-        <span class="flight-popup-val">${f.altitude ? f.altitude.toLocaleString() + ' ft' : 'N/A'}</span>
-        <span class="flight-popup-label">Altitude</span>
-      </div>
-      <div class="flight-popup-stat">
-        <span class="flight-popup-val">${f.speed ? f.speed + ' kts' : 'N/A'}</span>
-        <span class="flight-popup-label">Ground Speed</span>
-      </div>
-      <div class="flight-popup-stat">
-        <span class="flight-popup-val">${f.track ? Math.round(f.track) + '\u00B0' : 'N/A'}</span>
-        <span class="flight-popup-label">Heading</span>
-      </div>
-      <div class="flight-popup-stat">
-        <span class="flight-popup-val">${f.vertRate ? (f.vertRate > 0 ? '+' : '') + Math.round(f.vertRate*196.85) + ' ft/min' : '0 ft/min'}</span>
-        <span class="flight-popup-label">Vertical Rate</span>
-      </div>
-      <div class="flight-popup-stat">
-        <span class="flight-popup-val">${nearestAirport}</span>
-        <span class="flight-popup-label">Nearest Airport (${nearestDist.toFixed(1)} km)</span>
-      </div>
-      <div class="flight-popup-stat">
-        <span class="flight-popup-val">${f.icao.toUpperCase()}</span>
-        <span class="flight-popup-label">ICAO24 Transponder</span>
-      </div>
-    </div>
-    <span class="flight-popup-status" style="color:${statusColor};border-color:${statusColor};">${status}</span>
-    <div class="flight-popup-links">
-      ${f.callsign ? `<a class="flight-popup-link" href="https://www.flightradar24.com/${f.callsign}" target="_blank" rel="noopener">Track on Flightradar24 &#8599;</a>` : ''}
-      ${f.callsign ? `<a class="flight-popup-link" href="https://flightaware.com/live/flight/${f.callsign}" target="_blank" rel="noopener">Track on FlightAware &#8599;</a>` : ''}
-      <a class="flight-popup-link" href="https://opensky-network.org/aircraft-profile?icao24=${f.icao}" target="_blank" rel="noopener">Aircraft Profile (OpenSky) &#8599;</a>
-    </div>
-  `;
-
-  container.appendChild(popup);
-}
-
-function renderLiveFlights(flights) {
-  // Remove old layer
-  if (liveFlightLayer) liveFlightLayer.remove();
-  liveFlightLayer = g.append('g').attr('class','layer-live-flights');
-  currentFlights = flights || [];
-
-  if (!flights || flights.length === 0) {
-    document.getElementById('live-count').style.display = 'none';
-    return;
-  }
-
-  // Show count
-  document.getElementById('live-count').style.display = 'flex';
-  document.getElementById('live-count-text').textContent = flights.length + ' LIVE AIRCRAFT';
-
-  flights.forEach(f => {
-    const [x,y] = projection([f.lon, f.lat]);
-    if (isNaN(x) || isNaN(y)) return;
-
-    // Determine colour by nearest airport
-    let color = '#F27D26';
-    if (currentCity === 'nyc') {
-      const dJFK = distanceTo(f.lat, f.lon, 40.6413, -73.7781);
-      const dLGA = distanceTo(f.lat, f.lon, 40.7769, -73.8740);
-      const dEWR = distanceTo(f.lat, f.lon, 40.6895, -74.1745);
-      if (dLGA < dJFK && dLGA < dEWR) color = '#267DF2';
-      else if (dEWR < dJFK) color = '#7B1FA2';
-    } else {
-      const dLHR = distanceTo(f.lat, f.lon, 51.47, -0.4543);
-      const dLCY = distanceTo(f.lat, f.lon, 51.5053, 0.0553);
-      const dLGW = distanceTo(f.lat, f.lon, 51.1537, -0.1821);
-      if (dLCY < dLHR && dLCY < dLGW) color = '#267DF2';
-      else if (dLGW < dLHR) color = '#7B1FA2';
-    }
-
-    // Glowing dot
-    const fg = liveFlightLayer.append('g').attr('class','live-aircraft').style('cursor','pointer');
-
-    // Outer glow
-    fg.append('circle').attr('cx',x).attr('cy',y).attr('r',5)
-      .attr('fill',color).attr('opacity',0.15);
-
-    // Main dot
-    fg.append('circle').attr('cx',x).attr('cy',y).attr('r',3)
-      .attr('fill',color).attr('opacity',0.9)
-      .attr('stroke','#FAFAF9').attr('stroke-width',0.5);
-
-    // Direction indicator - small line showing heading
-    if (f.track != null) {
-      const angle = (f.track - 90) * Math.PI / 180;
-      const len = 7;
-      fg.append('line')
-        .attr('x1',x).attr('y1',y)
-        .attr('x2',x + Math.cos(angle)*len).attr('y2',y + Math.sin(angle)*len)
-        .attr('stroke',color).attr('stroke-width',1.5).attr('opacity',0.6);
-    }
-
-    // Click handler for details
-    fg.on('click', function(event) {
-      event.stopPropagation();
-      showFlightPopup(f, event.clientX, event.clientY);
-    });
-
-    // Highlight selected
-    if (selectedFlight === f.icao) {
-      fg.append('circle').attr('cx',x).attr('cy',y).attr('r',8)
-        .attr('fill','none').attr('stroke',color).attr('stroke-width',1.5)
-        .attr('stroke-dasharray','2,2').attr('opacity',0.6);
-    }
-  });
-}
-
-async function updateLiveFlights() {
-  const result = await fetchLiveFlights();
-  const liveCountEl = document.getElementById('live-count');
-  const liveCountTextEl = document.getElementById('live-count-text');
-  if (result.unavailable) {
-    // Surface the upstream failure so the user knows the toggle is on
-    // but the data source is down. Shows in the same panel as the count.
-    if (liveFlightLayer) liveFlightLayer.remove();
-    liveFlightLayer = null;
-    currentFlights = [];
-    liveCountEl.style.display = 'flex';
-    liveCountTextEl.textContent = 'LIVE AIRCRAFT, DATA UNAVAILABLE';
-    liveCountTextEl.title = `Reason: ${result.reason}`;
-    return;
-  }
-  // Clear any prior unavailable-state title before normal render.
-  liveCountTextEl.title = '';
-  renderLiveFlights(result.flights);
-}
-
-let liveFlightInterval = null;
-
-// Tab-hidden polling pause. The visibilitychange listener was previously
-// added inside startLiveFlights, accumulating one listener per toggle-on.
-// Toggle 5 times = 5 listeners = 5x setInterval reinstatements when tab
-// regains focus. Bind once at module scope; the handler reads
-// liveFlightInterval at call time so it sees current state.
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && liveFlightInterval && liveFlightInterval !== 'paused') {
-    clearInterval(liveFlightInterval);
-    liveFlightInterval = 'paused';
-  } else if (!document.hidden && liveFlightInterval === 'paused') {
-    liveFlightInterval = setInterval(updateLiveFlights, 15000);
-    updateLiveFlights();
-  }
-});
-
-function startLiveFlights() {
-  if (liveFlightInterval) return; // already running (or paused, both OK)
-  updateLiveFlights();
-  // Refresh every 15 seconds (OpenSky updates ~every 10s, rate limit ~10 req/min for anon)
-  liveFlightInterval = setInterval(updateLiveFlights, 15000);
-}
-function stopLiveFlights() {
-  if (liveFlightInterval && liveFlightInterval !== 'paused') {
-    clearInterval(liveFlightInterval);
-  }
-  liveFlightInterval = null;
-  if (liveFlightLayer) { liveFlightLayer.remove(); liveFlightLayer = null; }
-  currentFlights = [];
-  document.getElementById('live-count').style.display = 'none';
-  closeFlightPopup();
-}
-
 function renderTransport() {
   const tg = g.append('g').attr('class','layer-transport');
   if (!layers.transport) tg.style('display','none');
@@ -3341,13 +3071,6 @@ function getActiveBoroughData() { return currentCity === 'nyc' ? NYC_BOROUGH_DAT
 
 async function switchCity(city) {
   if (city === currentCity) return;
-  // Stop live flight polling before switching to prevent API leak
-  if (liveFlightInterval) stopLiveFlights();
-  if (layers['live-flights']) {
-    layers['live-flights'] = false;
-    const lfToggle = document.querySelector('[data-layer="live-flights"]');
-    if (lfToggle) lfToggle.classList.remove('active');
-  }
   currentCity = city;
   document.querySelectorAll('.city-btn').forEach(b => b.classList.toggle('active', b.dataset.city === city));
 
@@ -3800,12 +3523,6 @@ async function init() {
       layers[layer]=!layers[layer];
       el.classList.toggle('active');
       el.setAttribute('aria-pressed', layers[layer] ? 'true' : 'false');
-      // Handle live flights toggle specially
-      if (layer === 'live-flights') {
-        if (layers[layer]) startLiveFlights();
-        else stopLiveFlights();
-        return;
-      }
       const map={'paths':'.layer-paths','defra-aircraft':'.layer-defra-aircraft',
         'defra-road':'.layer-defra-road','transport':'.layer-transport','labels':'.layer-labels',
         'flood':'.layer-flood','air-quality':'.layer-air-quality'};
@@ -3875,13 +3592,10 @@ async function init() {
     }
   });
 
-  // Close dropdown and flight popup on outside click
+  // Close dropdown on outside click
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-wrapper')) {
       dropdown.classList.remove('visible');
-    }
-    if (!e.target.closest('.flight-popup') && !e.target.closest('.live-aircraft')) {
-      closeFlightPopup();
     }
   });
 

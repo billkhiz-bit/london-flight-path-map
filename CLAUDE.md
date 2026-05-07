@@ -50,7 +50,7 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) backed by 8 active AWS Lambda functions orchestrated via SAM (5 further Bedrock Lambdas remain dormant in the template for potential re-introduction).
+Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) backed by 7 active AWS Lambda functions orchestrated via SAM (5 Bedrock Lambdas remain dormant in the template; `live_flights` was removed in May 2026 pending OpenSky licensing).
 
 ## Branding
 
@@ -86,26 +86,22 @@ set -a && source ../.env && set +a && \
   cd backend && rm -rf .aws-sam && \
   AWS_PROFILE=flightmap sam build && \
   AWS_PROFILE=flightmap sam deploy --parameter-overrides \
-    EpcBearerToken="$EPC_BEARER_TOKEN" \
-    OpenSkyClientId="$OPENSKY_CLIENT_ID" \
-    OpenSkyClientSecret="$OPENSKY_CLIENT_SECRET"
+    EpcBearerToken="$EPC_BEARER_TOKEN"
 ```
 
 **Local env setup**: copy `.env.example` to `.env` and fill in:
 - `EPC_BEARER_TOKEN` — from the My account page on `get-energy-performance-data.communities.gov.uk`
-- `OPENSKY_CLIENT_ID` + `OPENSKY_CLIENT_SECRET` — from the My Account > API page on `opensky-network.org` (free signup; required because OpenSky blocks anonymous access from AWS Lambda IPs as of 2025)
 
-The `.env` file is gitignored. All three SAM parameters use `NoEcho: true` so values don't appear in CloudFormation events.
+The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the value doesn't appear in CloudFormation events. AllowedPattern `^.+$` on the parameter blocks deploys with empty / missing tokens.
 
 **Token rotation**:
 - EPC: regenerate from the My account page on `get-energy-performance-data.communities.gov.uk` whenever the token has touched a chat log, terminal scrollback, or any unencrypted persistence
-- OpenSky: regenerate via opensky-network.org > My Account > API
-- Update `.env` and redeploy after either rotation
+- Update `.env` and redeploy after rotation
 
 ## Architecture
 
 - **Frontend**: Single `index.html` (~3,750 lines), vanilla JS, D3.js maps, all UI logic inline
-- **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 13 Lambdas (8 active + 5 dormant) + API Gateway + DynamoDB
+- **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 12 Lambdas (7 active + 5 dormant) + API Gateway + DynamoDB
 - **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
   - `score`, B2B scoring engine, API-key gated (`/v1/score`, `/v1/score/batch`, `/v1/regions`)
   - `signup`, self-service API-key issuance
@@ -114,19 +110,18 @@ The `.env` file is gitignored. All three SAM parameters use `NoEcho: true` so va
   - `sold_prices`, HM Land Registry Price Paid Data proxy
   - `transport`, TfL Open Data station + line-status
   - `nhs`, NHS Service Search via OSM Overpass
-  - `live_flights`, OpenSky-backed live aircraft for the prototype
 - **Dormant Lambdas** (in `template.yaml` but not surfaced in the UI as of May 2026; kept for potential re-introduction):
   - `chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report` — all Bedrock Nova Pro/Lite. Lambda has zero idle cost on on-demand pricing; re-enabling means unhiding the UI block, not redeploying.
+- **Removed**: `live_flights` (OpenSky proxy) — terminated in May 2026 pending OpenSky's required written licensing agreement for operational use. Lambda code lives in git (last working commit: `a214ba0`); restore + add OpenSky params back to template + flip the prototype's `liveLicensed` flag to revive.
 
 ## Prototype (Sky Score Radar)
 
 - **Location**: `prototype/index.html`, standalone HTML, no dependencies on main app
 - **Live URL**: `https://d1oe4ftwutjpf.cloudfront.net/prototype/index.html`
 - **Stack**: Three.js (CDN), CSS2DRenderer for labels, UnrealBloomPass for bloom
-- **Features**: 3D wireframe terrain, live flight tracking (OpenSky Network), day/night cycle (real GMT/BST), noise contour rings, borough boundaries, corridor heatmap/timelapse
-- **Controls**: `R` Reset, `1-3` Camera presets, `P` Screenshot, `N` Time-lapse, `C` Contours, `B` Boroughs, `L` Live/Sim toggle, `V` Corridor view (Daily/Weekly/Monthly), `T` Timelapse replay, `H` Heatmap toggle
+- **Features**: 3D wireframe terrain, day/night cycle (real GMT/BST), noise contour rings, borough boundaries, corridor heatmap/timelapse, simulated flight tracks (live OpenSky data removed pending licensing — see Active Lambdas note above)
+- **Controls**: `R` Reset, `1-3` Camera presets, `P` Screenshot, `N` Time-lapse, `C` Contours, `B` Boroughs, `V` Corridor view (Daily/Weekly/Monthly), `T` Timelapse replay, `H` Heatmap toggle
 - **Mobile**: Fully responsive, touch button bar replaces keyboard shortcuts, collapsible panels via ☰ menu, breakpoints at 768px and 480px. OrbitControls supports pinch/drag natively.
-- **Live Data**: OpenSky Network API via CORS proxy (free, no key). Falls back to simulated flights if unavailable.
 - **Analytics**: GoatCounter (same `cubitt33` tracker as main site), prototype visits appear as `/prototype/index.html`
 - **Naming**: Use "Sky Score Radar" for the prototype, "Sky Score" for the main app
 - **Deploy**: `AWS_PROFILE=flightmap aws s3 cp prototype/index.html s3://london-flight-map-frontend/prototype/index.html --content-type "text/html" --region eu-west-2`
@@ -159,7 +154,6 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 ## Known Issues
 
 See `AUDIT_REPORT.md` (last full audit 2026-05-06, refreshed 2026-05-07) for the live list. Standing items not yet addressed:
-- **Live aircraft**: OpenSky Network has limited coverage at night and rate limits (~10 req/min anonymous)
 - **Borough metadata duplication** across chat/multi_agent/score Lambdas (I4) — extract to shared module
 - **No DLQ / retry config** on async Lambdas (I6)
 - **Stale `PROJECT_DOCUMENTATION.md`** sections (I14, partial fix in `0c20451`)
