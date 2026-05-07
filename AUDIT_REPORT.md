@@ -6,6 +6,36 @@
 
 ---
 
+## Wave 12 close — 2026-05-07 late evening (DEFRA visibility recovery + Wave 12 polish + SEO)
+
+**DEFRA visibility recovery (visual fix-DEFRA-2 / -3 / -4):** User reported "I don't see aircraft noise anymore" after the fix-DEFRA-1 single-fetch refactor. Root cause: at 2048 px source covering ~50 km, contour edges blurred when downscaled to viewport, AND opacity 0.6 compounded the PNG's own ~80% alpha to make bands invisible. Three combined fixes:
+- Bumped raster source from 2048 px → 4096 px (~12.5 m/px ground resolution; PNG ~37 KB)
+- Opacity 0.6 → 1.0 (let the PNG's own alpha do the work, no double-dimming)
+- CSS `filter: saturate(1.6) brightness(0.92)` + `mix-blend-mode: multiply` to make contours pop against the basemap
+
+**Audit residual closures (deferred → done):**
+- M-E (status-page CSP omits Goatcounter) — investigated, intentional. Documented in inline comment that status page deliberately doesn't track ("we don't want analytics on the 'is the API up' surface"). Audit item closed as won't-fix-by-design.
+- F-UX-8 (search dropdown not announced to SR users) — added `aria-live` status region (#autocomplete-status, role=status, .sr-only) updated in showAutocomplete + closeAcDropdown. Announces suggestion count with arrow-key hint.
+- F-UX-9 (score-explain tooltip Esc dismiss + small-viewport overflow) — added `.score-tip-dismissed` class triggered by document-level keydown(Esc); `focusout` clears it for re-tab. Mobile (<= 600 px) gets `max-width: calc(100vw - 48px)` on the tip.
+- I-N5 (API base URL drift across 4 files) — consolidated `BASE` + `SIGNUP_URL` → single `API_BASE` constant in score-demo/{index,status}.html. Added `/preflight` check that grep-counts hosts across all HTML/JS files; fails if more than one distinct host found.
+
+**SEO basics (no audit ID — proactive):**
+- `/robots.txt` — Allow: / for general crawlers; explicit Disallow: /data/ for bandwidth. AI training crawlers (GPTBot, anthropic-ai, ClaudeBot, CCBot) restricted from /data/ + /api/ pending licensing conversation.
+- `/sitemap.xml` — 6 URLs (consumer site + /api + score-demo/{index,api-docs,status} + prototype) with priorities 1.0 → 0.5.
+- `/api/` JSON-LD: Schema.org SoftwareApplication markup for Google Rich Results + LLM-driven discovery surfaces. Includes pricing tier + featureList + publisher Organization.
+
+**Deferred (genuinely admin-only after Wave 12):**
+- `cloudfront:CreateResponseHeadersPolicy` for Permissions-Policy + 2-year HSTS preload-eligible
+- DDB PITR (root account IAM update)
+- Cloudflare email-routing for `support@skyscore.co.uk`
+- Status page on `status.skyscore.co.uk` (DNS + Better Stack)
+- CSP report-uri token (sign up at report-uri.com)
+- F-A11y-4 (heading hierarchy) — already addressed in Wave 10
+- F-Perf-10 (inline data extraction) — already addressed in Wave 11
+- Legal items: DPA, MSA, privacy notice, pen test, SOC 2, insurance — defer until first paying customer triggers contractual need
+
+---
+
 ## Wave 11 close — 2026-05-07 late evening (CloudFront security headers live + F-Perf-10 inline data extraction)
 
 **CloudFront response-headers policy applied to distribution `EGSSPJKLFL33M`** via the AWS-managed `SecurityHeadersPolicy` (id `67f7725c-6f97-4210-82d7-5512b31e9d03`). Verified live with `curl -sI https://skyscore.co.uk`:

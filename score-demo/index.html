@@ -440,7 +440,11 @@
   // above for your own per-email key. Rotated 2026-05-06 (audit C2)
   // after the previous key was committed to git history.
   const API_KEY = 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe';
-  const BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score';
+  // I-N5: single source of truth for the API base. Keep in sync with
+  // index.html#L1988, score-demo/status.html, tests/api.test.mjs and
+  // the CSP connect-src directive above. /preflight grep-checks drift.
+  const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+  const BASE = API_BASE + '/v1/score';
 
   const PERSONA_LABELS = {
     balanced: 'Balanced',
@@ -577,7 +581,7 @@
   // ----- Self-service API key signup -----
   // Posts to /v1/signup, displays the issued key (one-time view) with
   // a copy button. 409 = email already signed up; 400 = bad email.
-  const SIGNUP_URL = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/signup';
+  const SIGNUP_URL = API_BASE + '/v1/signup';
   const signupForm = document.getElementById('signupForm');
   const signupResult = document.getElementById('signupResult');
   const signupBtn = document.getElementById('signupBtn');

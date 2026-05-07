@@ -6,6 +6,24 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12 closure — 2026-05-07 late evening (DEFRA visibility recovery + a11y + I-N5 + SEO)
+
+**DEFRA visibility recovery:** user reported "I don't see aircraft noise anymore" after the Wave 10 single-fetch refactor. Three combined fixes:
+- Raster source 2048 → 4096 px (~12.5 m/px ground resolution)
+- Opacity 0.6 → 1.0 (PNG alpha already handles translucency)
+- CSS `filter: saturate(1.6) brightness(0.92)` + `mix-blend-mode: multiply`
+
+**Audit residual closures:**
+- F-UX-8: `aria-live` status region announces autocomplete suggestion count to SR users
+- F-UX-9: Esc dismisses the score-explain tooltip; mobile gets max-width to prevent overflow
+- I-N5: API_BASE consolidated within each file; `/preflight` grep-checks for drift
+- M-E: status-page CSP intentionally omits Goatcounter (no analytics on uptime page) — documented as won't-fix-by-design
+
+**SEO basics:**
+- `/robots.txt`: general crawlers allowed; AI training crawlers (GPTBot, anthropic-ai, ClaudeBot, CCBot) restricted from /data/ + /api/
+- `/sitemap.xml`: 6 URLs covering consumer site, /api, score-demo, prototype
+- `/api/` JSON-LD: Schema.org SoftwareApplication for Google Rich Results + LLM-driven discovery
+
 ### Wave 11 closure — 2026-05-07 late evening (CloudFront security headers + F-Perf-10)
 
 **HSTS + 4 other security headers now live** on `https://skyscore.co.uk` via AWS-managed CloudFront `SecurityHeadersPolicy`. Verified by curl:

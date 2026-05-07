@@ -149,9 +149,7 @@ API Gateway ── Lambda × 7 active ── DynamoDB (favourites + DEFRA noise 
 | `transport` | `/transport` | TfL Open Data station + line-status |
 | `nhs` | `/nhs` | NHS Service Search |
 
-Five further Lambdas (`chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report`) ship in `template.yaml` but are not surfaced in the UI. They were the consumer-side Bedrock features built for the original hackathon and are kept dormant in the template for potential re-introduction as user-triggered, constrained features. Lambda has zero idle cost on on-demand pricing.
-
-The `live_flights` Lambda (OpenSky-backed live aircraft proxy) was deployed earlier but removed in May 2026 pending OpenSky's licensing terms — restored from git history once a written agreement is in place. The radar prototype's live mode is gated behind a `liveLicensed` flag; flip to `true` and restore the Lambda to re-enable.
+**Removed surfaces (kept in git history):** Five Bedrock Lambdas (`chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report`) and the OpenSky-backed `live_flights` Lambda were deployed earlier but removed end-to-end in May 2026 — Bedrock to align the consumer surface with the methodology-defensibility positioning of the B2B API, OpenSky pending a written commercial-use agreement. Restoration: `git revert` of commits `69905ee` + `71a731c` + `6bad8ce` for AI features; restore `live_flights/` + flip prototype's `liveLicensed` flag for live aircraft. See `LICENSING.md` for the OpenSky context.
 
 ## Tech stack
 
@@ -168,7 +166,7 @@ The `live_flights` Lambda (OpenSky-backed live aircraft proxy) was deployed earl
 ├── prototype/ # Sky Score Radar, 3D Three.js prototype
 ├── score-demo/ # B2B API browser demo + Swagger UI + OpenAPI spec
 ├── backend/
-│ ├── template.yaml # SAM stack: 12 Lambdas (7 active + 5 dormant), API Gateway, DynamoDB, Usage Plan
+│ ├── template.yaml # SAM stack: 7 Lambdas, API Gateway (per-route throttle), 3× DynamoDB (PITR-ready), Usage Plan
 │ ├── lambdas/ # One folder per Lambda
 │ └── tests/ # Unit tests for the score Lambda
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source

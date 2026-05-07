@@ -24,6 +24,45 @@
 <meta name="twitter:title" content="Sky Score API · property data">
 <meta name="twitter:description" content="UK property noise + livability data API for aggregators, conveyancers, and Sharia-compliant home-finance providers.">
 
+<!-- JSON-LD: helps both Google Rich Results and LLM-driven discovery
+     surfaces understand what Sky Score is. Schema.org/SoftwareApplication
+     is the closest fit for a B2B API. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sky Score API",
+  "applicationCategory": "DeveloperApplication",
+  "applicationSubCategory": "Property Data API",
+  "operatingSystem": "Cloud",
+  "url": "https://skyscore.co.uk/api/",
+  "description": "B2B property data API providing 0-10 noise, affordability, growth, and liveability scores per UK postcode or NYC ZIP. Anchored on DEFRA, Ofsted, ONS, and HM Land Registry open data.",
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Free tier",
+      "price": "0",
+      "priceCurrency": "GBP",
+      "description": "1,000 requests / month, all endpoints"
+    }
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sky Score",
+    "url": "https://skyscore.co.uk/",
+    "email": "billkhiz@gmail.com"
+  },
+  "featureList": [
+    "0-10 quiet score (DEFRA Lden noise)",
+    "0-10 affordability (HM Land Registry)",
+    "0-10 growth (price-trend annualised)",
+    "0-10 liveability (schools/crime/transport/health composite)",
+    "OpenAPI 3.0 spec",
+    "GDPR-compliant UK data residency (eu-west-2)"
+  ]
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">

@@ -204,6 +204,20 @@
       .score-tip:hover {
         display: block;
       }
+      /* F-UX-9: Esc dismiss support — once dismissed, the tip stays hidden
+         even if the trigger keeps focus, until focus moves elsewhere and
+         the .score-tip-dismissed class is removed by the keydown handler. */
+      .score-explain-trigger.score-tip-dismissed ~ .score-tip {
+        display: none !important;
+      }
+      /* F-UX-9: small-viewport overflow fix — on narrow sidebars (<= 320px)
+         the tip used to overflow the sidebar's right edge. Constrain via
+         max-width on the side columns. */
+      @media (max-width: 600px) {
+        .score-tip {
+          max-width: calc(100vw - 48px);
+        }
+      }
 
       /* First-time use hint banner. Sits above the map until the user
      either dismisses it explicitly or interacts with anything (search
@@ -961,6 +975,23 @@
       .skip-link:focus {
         top: 8px;
         outline: 2px solid var(--orange);
+      }
+
+      /* F-UX-8: visually-hidden but accessible to screen readers. Used for
+         the autocomplete-status live region. The clip + clip-path combo
+         works in every browser; just `display: none` would HIDE the live
+         region from SRs entirely. */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
       }
 
       .loading-screen {
@@ -1861,6 +1892,13 @@
               role="listbox"
               aria-label="Search suggestions"
             ></div>
+            <!-- F-UX-8: aria-live region announces the suggestion count to
+                 screen readers as the user types, since they can't visually
+                 see the dropdown grow. role="status" implies aria-live=polite
+                 (does not interrupt) and aria-atomic=true (re-reads whole
+                 message each update). The .sr-only class hides it visually
+                 but keeps it accessible to assistive tech. -->
+            <div id="autocomplete-status" class="sr-only" role="status" aria-atomic="true"></div>
           </div>
           <div id="search-hint" class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
         </div>
@@ -3877,7 +3915,15 @@
         minLat: 51.25,
         maxLat: 51.72,
       };
-      const AIRCRAFT_RASTER_PX = 2048;
+      // 4096 px (visual fix-DEFRA-2): user reported the contour bands were
+      // "barely visible" after the fix-DEFRA-1 single-fetch refactor. Root
+      // cause: at 2048 px source covering ~50 km wide, each pixel was ~25 m
+      // on the ground; when downscaled into the ~750 px SVG viewport at
+      // initial zoom, the contour edges blurred into the basemap. Doubling
+      // to 4096 (= ~12.5 m/px source) gives the WMS server room to render
+      // crisp contour edges that survive downsampling. Trade-off: PNG grows
+      // from ~14 KB to ~50 KB; cached 24h, so paid once per visitor.
+      const AIRCRAFT_RASTER_PX = 4096;
       let aircraftRasterLoadedFor = null; // 'london' | 'nyc' | null — cleared on city switch
 
       const DEFRA_WMS = {
@@ -4839,6 +4885,11 @@
           inp.setAttribute('aria-expanded', 'false');
           inp.removeAttribute('aria-activedescendant');
         }
+        // F-UX-8: clear the SR live region so the next dropdown change
+        // is announced cleanly (avoids the "5 results 5 results" loop
+        // some browsers do when the live region content stays the same).
+        const status = document.getElementById('autocomplete-status');
+        if (status) status.textContent = '';
       }
 
       function showAutocomplete(results) {
@@ -4861,6 +4912,16 @@
           .slice(0, 5);
 
         const hasAny = boroughMatches.length > 0 || areaMatches.length > 0 || (results && results.length > 0);
+        // F-UX-8: announce the suggestion count to screen readers via the
+        // aria-live status region. Updated even on "no results" so SR users
+        // get feedback that their typing produced no matches.
+        const status = document.getElementById('autocomplete-status');
+        const total = boroughMatches.length + areaMatches.length + (results ? results.length : 0);
+        if (status) {
+          status.textContent = total === 0
+            ? 'No suggestions for "' + inputVal + '". Press Enter to search anyway.'
+            : total + ' suggestion' + (total === 1 ? '' : 's') + ' available. Use arrow keys to navigate, Enter to select.';
+        }
         if (!hasAny) {
           dropdown.classList.remove('visible');
           dropdown.innerHTML = '';
@@ -5126,7 +5187,23 @@
 
       function renderDefraTiles() {
         // Aircraft noise overlay
-        const aircraftG = g.append('g').attr('class', 'layer-defra-aircraft').style('opacity', 0.6);
+        // visual fix-DEFRA-2 / -3 / -4: the DEFRA WMS PNG renders with
+        // soft pastel colours and built-in alpha, which look "barely
+        // there" against our light-grey basemap (user feedback: "I don't
+        // see aircraft noise anymore" after the fix-DEFRA-1 refactor).
+        // Three combined fixes:
+        //   1. Opacity 1.0 (was 0.6) — don't double-dim the PNG's own alpha
+        //   2. CSS filter saturate(1.6) brightness(0.92) — boosts contour
+        //      band saturation and slightly darkens light pixels for more
+        //      contrast against the basemap
+        //   3. mix-blend-mode: multiply on the layer — colours composite
+        //      against the basemap rather than just sitting on top
+        const aircraftG = g
+          .append('g')
+          .attr('class', 'layer-defra-aircraft')
+          .style('opacity', 1)
+          .style('filter', 'saturate(1.6) brightness(0.92)')
+          .style('mix-blend-mode', 'multiply');
         if (!layers['defra-aircraft']) aircraftG.style('display', 'none');
         if (currentCity === 'nyc') {
           aircraftG.attr('id', 'us-aircraft-tiles');
@@ -6464,7 +6541,11 @@
             // level (the data itself is bucketed in 5-dB bands so visual
             // density is the only knob we have to play with).
             const k = event.transform.k;
-            const aircraftOp = k <= 1.5 ? 0.55 : k <= 4 ? 0.7 : 0.85;
+            // visual fix-DEFRA-3: opacity floor at 1.0; the WMS PNG's own
+            // alpha channel handles translucency. Used to multiply by 0.55
+            // here, which compounded with the PNG's alpha and made bands
+            // invisible.
+            const aircraftOp = 1;
             g.select('.layer-defra-aircraft').style('opacity', aircraftOp);
             // visual fix-DEFRA-1: ONLY NYC needs per-pan tile refresh
             // (slippy XYZ tiles need new tiles loaded for the new viewport).
@@ -6617,6 +6698,26 @@
         document.addEventListener('click', (e) => {
           if (!e.target.closest('.search-wrapper')) {
             closeAcDropdown();
+          }
+        });
+
+        // F-UX-9: Esc dismisses the score-explain tooltip when its trigger
+        // has focus. Adds .score-tip-dismissed which suppresses the tip via
+        // CSS. Cleared when the trigger loses focus, so re-tabbing shows it
+        // again — matches the behaviour users expect from native popovers.
+        document.addEventListener('keydown', (e) => {
+          if (e.key !== 'Escape') return;
+          const trig = document.activeElement;
+          if (trig && trig.classList && trig.classList.contains('score-explain-trigger')) {
+            trig.classList.add('score-tip-dismissed');
+            // Don't actually blur — that would lose the user's keyboard
+            // position. They can Tab away normally.
+            e.preventDefault();
+          }
+        });
+        document.addEventListener('focusout', (e) => {
+          if (e.target && e.target.classList && e.target.classList.contains('score-explain-trigger')) {
+            e.target.classList.remove('score-tip-dismissed');
           }
         });
 

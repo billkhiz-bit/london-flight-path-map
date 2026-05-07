@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-07 (Wave 7+8+9 close — visual polish + code quality + enterprise no-legal items shipped; see AUDIT_REPORT.md "Wave 7+8+9 close" for closed/deferred breakdown)
+**Last reviewed:** 2026-05-07 (Wave 12 close — DEFRA visibility recovery + a11y polish + I-N5 + SEO basics; HSTS now live via CloudFront SecurityHeadersPolicy; see AUDIT_REPORT.md "Wave 12 close" for the per-wave breakdown)
 
 ---
 

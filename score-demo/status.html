@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- Content Security Policy (enforcing — see comment in index.html for the rationale). Status page only pings the API Gateway. -->
+<!-- M-E: Goatcounter analytics deliberately omitted from this page's CSP
+     because the status page itself doesn't load the tracker. We don't
+     want analytics on the "is the API up" surface — it adds noise to
+     real failure investigations. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; frame-ancestors 'none'; base-uri 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -171,29 +175,34 @@
   // Same key as score-demo/index.html, shares the SkyScoreFreeTier usage
   // plan (1000 req/month). Rotated 2026-05-06 (audit C2).
   const API_KEY = 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe';
+  // I-N5: single source of truth for the API base. Keep this in sync with
+  // index.html#L1988 + tests/api.test.mjs#L1 + score-demo/index.html
+  // (all defined as API_BASE) + the CSP connect-src directive above. The
+  // /preflight skill's grep check (added 2026-05-07) flags drift.
+  const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
 
   const ENDPOINTS = [
     {
       name: 'GET /v1/regions',
-      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/regions',
+      url: API_BASE + '/v1/regions',
       method: 'GET',
       headers: { 'X-Api-Key': API_KEY },
     },
     {
       name: 'GET /v1/score (London)',
-      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=N1+7SX',
+      url: API_BASE + '/v1/score?postcode=N1+7SX',
       method: 'GET',
       headers: { 'X-Api-Key': API_KEY },
     },
     {
       name: 'GET /v1/score (NYC)',
-      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=10001',
+      url: API_BASE + '/v1/score?postcode=10001',
       method: 'GET',
       headers: { 'X-Api-Key': API_KEY },
     },
     {
       name: 'POST /v1/score/batch',
-      url: 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score/batch',
+      url: API_BASE + '/v1/score/batch',
       method: 'POST',
       headers: { 'X-Api-Key': API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ queries: [{ postcode: 'SW11 1AA' }] }),
