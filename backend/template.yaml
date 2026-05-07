@@ -50,65 +50,21 @@ Resources:
           ThrottlingRateLimit: 1
           ThrottlingBurstLimit: 5
 
-  # --- AI Chatbot (Amazon Nova) ---
-  ChatFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/chat/
-      Handler: app.handler
-      Timeout: 60
-      MemorySize: 512
-      Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
-                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      # API route REMOVED 2026-05-07 (smoke-test finding P): the AI-removal
-      # commit 69905ee took the chat panel out of the consumer site, but
-      # the public /chat route was left active and accepting Bedrock-billing
-      # POSTs from anyone. Removing the API route keeps the Lambda + IAM
-      # intact (zero idle cost) but closes the abuse vector. To re-enable,
-      # restore the Events block below.
-      # Events:
-      #   ChatPost:
-      #     Type: Api
-      #     Properties:
-      #       RestApiId: !Ref FlightMapApi
-      #       Path: /chat
-      #       Method: post
-
-  # --- Multi-Agent Orchestrator (Nova Lite + Pro) ---
-  MultiAgentFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/multi_agent/
-      Handler: app.handler
-      Timeout: 90
-      MemorySize: 512
-      Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
-                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      # API route REMOVED 2026-05-07 — see ChatFunction note above. This
-      # one mattered most: each invocation runs 4 Bedrock calls (orchestrator
-      # + 3 agents + synthesiser), so an attacker hitting 10 RPS would burn
-      # ~$2,500/day in Nova Pro charges. Now closed.
-      # Events:
-      #   MultiAgentPost:
-      #     Type: Api
-      #     Properties:
-      #       RestApiId: !Ref FlightMapApi
-      #       Path: /multi-agent
-      #       Method: post
+  # --- Bedrock Lambdas REMOVED 2026-05-07 ---
+  # ChatFunction, MultiAgentFunction, AnalyzeImageFunction,
+  # AnalyzeDocumentFunction, ReportFunction were all dormant in this
+  # template after the 2026-05-07 frontend removal of the AI features.
+  # Smoke-test then revealed their API routes were still publicly invokable
+  # (closed in commit 71a731c). The follow-up code-quality audit pointed
+  # out that "dormant" Lambdas with intact bedrock:InvokeModel grants are
+  # still attack surface — any future SAM template typo re-attaching the
+  # Events block would re-open them.
+  #
+  # Decision (2026-05-07): delete the Lambdas + their IAM grants
+  # entirely. Restoration recipe is "git revert" of the deletion commit
+  # plus the original AI-removal commit (69905ee). Lambda source remains
+  # in git history at last-working commit 5418d73 (live_flights pattern)
+  # and 8edd4b0 (the AI-features Lambdas).
 
   # --- Land Registry Sold Prices (CORS proxy) ---
   SoldPricesFunction:
@@ -180,85 +136,9 @@ Resources:
   # OpenSkyClientId / OpenSkyClientSecret parameters once a licence is
   # in place. Frontend was also disabled in the same change.
 
-  # --- Property Photo Analysis (Nova Pro Multimodal) ---
-  AnalyzeImageFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/analyze_image/
-      Handler: app.handler
-      Timeout: 60
-      MemorySize: 512
-      Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
-                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      # API route REMOVED 2026-05-07 — see ChatFunction note above.
-      # Events:
-      #   AnalyzeImagePost:
-      #     Type: Api
-      #     Properties:
-      #       RestApiId: !Ref FlightMapApi
-      #       Path: /analyze-image
-      #       Method: post
-
-  # --- Document Analysis (EPC/Survey via Nova Pro) ---
-  AnalyzeDocumentFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/analyze_document/
-      Handler: app.handler
-      Timeout: 60
-      MemorySize: 512
-      Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
-                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      # API route REMOVED 2026-05-07 — see ChatFunction note above.
-      # Events:
-      #   AnalyzeDocumentPost:
-      #     Type: Api
-      #     Properties:
-      #       RestApiId: !Ref FlightMapApi
-      #       Path: /analyze-document
-      #       Method: post
-
-  # --- AI Report Generation (Nova Pro) ---
-  ReportFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/report/
-      Handler: app.handler
-      Timeout: 90
-      MemorySize: 512
-      Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
-                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
-      # API route REMOVED 2026-05-07 — see ChatFunction note above.
-      # 90s timeout + Nova Pro = highest single-call Bedrock cost; keeping
-      # this anonymous-reachable was the largest cost-abuse exposure.
-      # Events:
-      #   ReportPost:
-      #     Type: Api
-      #     Properties:
-      #       RestApiId: !Ref FlightMapApi
-      #       Path: /report
-      #       Method: post
+  # AnalyzeImage / AnalyzeDocument / Report functions removed in the
+  # same deletion as Chat / MultiAgent above. See note at the top of
+  # the Resources block.
 
   # --- Favourites (DynamoDB) ---
   FavouritesFunction:

@@ -325,6 +325,29 @@ def haversine_km(lat1, lon1, lat2, lon2):
 
 _raster_cache_get, _raster_cache_put = _make_lru(2048)
 
+# Module-level DynamoDB client for the raster lookup. Hoisted out of
+# _lookup_lden_raster (audit M-N1): boto3.client construction is ~50ms
+# per call on cold start; with the LRU above it would only re-fire on
+# cache misses, but those are exactly the slowest path. Lazy-imported
+# so this module loads cleanly in test environments without boto3.
+_DDB_CLIENT = None
+_DDB_IMPORT_FAILED = False
+
+
+def _get_ddb_client():
+    global _DDB_CLIENT, _DDB_IMPORT_FAILED
+    if _DDB_IMPORT_FAILED:
+        return None
+    if _DDB_CLIENT is not None:
+        return _DDB_CLIENT
+    try:
+        import boto3  # noqa: F401
+    except ImportError:
+        _DDB_IMPORT_FAILED = True
+        return None
+    _DDB_CLIENT = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-west-2'))
+    return _DDB_CLIENT
+
 
 def _lookup_lden_raster(postcode_clean):
     """v3.1, Look up DEFRA Lden raster sample for a postcode in DynamoDB.
@@ -344,14 +367,16 @@ def _lookup_lden_raster(postcode_clean):
     if cached is not None:
         return cached
 
+    ddb = _get_ddb_client()
+    if ddb is None:
+        return None
+
     try:
-        import boto3  # local import, only needed when raster table configured
         from botocore.exceptions import BotoCoreError, ClientError
     except ImportError:
         return None
 
     try:
-        ddb = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-west-2'))
         result = ddb.get_item(
             TableName=NOISE_RASTER_TABLE,
             Key={'postcode': {'S': postcode_clean}},
@@ -956,7 +981,7 @@ def handler(event, context):
 
 def cors_headers():
     return {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': CORS_ORIGIN,
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key',
         'Access-Control-Max-Age': '86400',

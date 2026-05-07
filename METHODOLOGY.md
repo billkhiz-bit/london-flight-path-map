@@ -687,7 +687,7 @@ Sky Score's positioning combines noise + livability composite scoring with halal
 - The B2B API (`/v1/score` and `/v1/score/batch`) does not return per-property data, borough-level scoring keyed by postcode. No personal data exposed.
 - Per-property EPC data may include household-identifiable address fields. The consumer site shows aggregated postcode-level summaries by default; per-address detail rendered only when explicitly searched.
 - Future per-UPRN endpoint, if introduced, will require authenticated customers with documented lawful basis (typically UK GDPR Article 6(1)(f) legitimate-interest for due diligence).
-- All data processed in **AWS eu-west-2 (London)** for UK data residency. AWS is the sole sub-processor.
+- All data processed in **AWS eu-west-2 (London)** for UK data residency. **AWS is the sole sub-processor of customer data.** Cloudflare provides DNS and domain registration services (no access to API requests, responses, or customer data); GoatCounter handles consumer-site analytics on the marketing surface only (no API traffic) and stores no PII.
 - A Data Processing Agreement (DPA) is signed with B2B customers handling personal data through the API.
 
 ## 16. API contract and stability

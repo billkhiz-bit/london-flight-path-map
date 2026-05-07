@@ -269,73 +269,11 @@ class TransportHandlerTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
 
 
-# ---------- Chat, body size + validation ----------
-
-class ChatHandlerTests(unittest.TestCase):
-    def setUp(self):
-        self.app = _import_lambda('chat')
-
-    def test_oversized_body_returns_413(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST',
-             'body': '{"message":"' + 'x' * 70_000 + '"}'},
-            None,
-        )
-        self.assertEqual(result['statusCode'], 413)
-
-    def test_invalid_json_returns_400(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST', 'body': 'not-json'}, None,
-        )
-        self.assertEqual(result['statusCode'], 400)
-
-    def test_no_message_returns_400(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST', 'body': '{}'}, None,
-        )
-        self.assertEqual(result['statusCode'], 400)
-
-
-# ---------- Multi-agent, body size + validation ----------
-
-class MultiAgentHandlerTests(unittest.TestCase):
-    def setUp(self):
-        self.app = _import_lambda('multi_agent')
-
-    def test_oversized_body_returns_413(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST',
-             'body': '{"message":"' + 'x' * 70_000 + '"}'},
-            None,
-        )
-        self.assertEqual(result['statusCode'], 413)
-
-    def test_invalid_json_returns_400(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST', 'body': 'not-json'}, None,
-        )
-        self.assertEqual(result['statusCode'], 400)
-
-
-# ---------- Report, body size ----------
-
-class ReportHandlerTests(unittest.TestCase):
-    def setUp(self):
-        self.app = _import_lambda('report')
-
-    def test_oversized_body_returns_413(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST',
-             'body': '{"locationData":{"x":"' + 'x' * 70_000 + '"}}'},
-            None,
-        )
-        self.assertEqual(result['statusCode'], 413)
-
-    def test_invalid_json_returns_400(self):
-        result = self.app.handler(
-            {'httpMethod': 'POST', 'body': 'not-json'}, None,
-        )
-        self.assertEqual(result['statusCode'], 400)
+# ChatHandlerTests / MultiAgentHandlerTests / ReportHandlerTests removed
+# 2026-05-07 along with their Lambda directories. All five Bedrock-backed
+# Lambdas (chat, multi_agent, analyze_image, analyze_document, report)
+# were deleted; restoring is a `git revert` away. See LICENSING.md
+# "Removed sources" / CHANGELOG for context.
 
 
 # ---------- EPC, validation ----------

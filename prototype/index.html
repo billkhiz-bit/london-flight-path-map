@@ -1747,12 +1747,28 @@ function restoreLiveGroup() { liveGroup.visible = true; }
    OpenSky's terms (https://opensky-network.org/about/terms-of-use)
    require a written agreement for any operational use, including a
    live consumer surface. The fetchLiveData / processLiveStates /
-   enterLiveMode functions are kept above for trivial re-enablement
-   once a licence is in place — just restore the call below. The
-   animation loop's recurring fetchLiveData call has also been gated
-   behind liveLicensed; keyboard L-key gives a "feature disabled" toast.
+   enterLiveMode functions are kept above for revival once a licence
+   is in place.
+
+   *Strong* gate: do NOT just flip liveLicensed to true. Re-enabling
+   live mode requires (1) OpenSky reply (Ticket #835285), (2) restoring
+   OpenSky env vars + the live_flights Lambda, (3) updating the CSP
+   `connect-src` on this page, and (4) updating LICENSING.md "Removed
+   sources" → "Active sources". The throw below makes a partial
+   re-enable fail loudly on the first page load instead of silently
+   pinging OpenSky from production. See OPENSKY_LICENSING_EMAIL.md.
+
+   Audit I-N2 (2026-05-07 follow-up): a future contributor flipping
+   liveLicensed without doing the rest of the steps is the documented
+   risk this guard exists to surface.
 */
 const liveLicensed = false;
+if (liveLicensed) {
+  throw new Error(
+    'Sky Score Radar: live mode is disabled pending OpenSky licensing. ' +
+    'See OPENSKY_LICENSING_EMAIL.md before flipping the liveLicensed flag.'
+  );
+}
 
 /* ── Radar sweep disc ────────────────────────────── */
 const sweep = new THREE.Mesh(
