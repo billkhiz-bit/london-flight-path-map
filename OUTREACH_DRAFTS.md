@@ -110,6 +110,55 @@ Avoid subject lines that look automated: anything with "[Company]" placeholder l
 
 ---
 
+## UTM convention (so you can see in analytics who clicked)
+
+Every link to `https://skyscore.co.uk/api/` (or any other Sky Score URL) sent in cold email or DM **must** carry a UTM tag identifying the recipient. GoatCounter logs the full referrer URL including query string, so the tag flows through automatically — no extra setup needed beyond using the right URL when you send.
+
+**Format:** `https://skyscore.co.uk/api/?utm_source=outreach-{slug}&utm_medium={channel}&utm_campaign={month}`
+
+- `slug` — short lower-case company / contact identifier. Examples below.
+- `channel` — `email` / `linkedin-dm` / `warm-intro` / `event-followup`
+- `campaign` — `2026-05` / `2026-06` etc. (year-month). Lets you slice GoatCounter by campaign.
+
+**Per-target slugs (use these consistently — analytics gets noisy if you spell the same target two ways):**
+
+| Target | Slug |
+|---|---|
+| Landmark Information Group | `landmark` |
+| TM Group | `tmgroup` |
+| OneSearch Direct | `onesearch` |
+| Geodesys | `geodesys` |
+| Searches UK | `searchesuk` |
+| Al Rayan Bank | `alrayan` |
+| StrideUp | `strideup` |
+| Gatehouse Bank | `gatehouse` |
+| Nester | `nester` |
+| Yielders | `yielders` |
+| (Generic warm intro from a known contact) | `intro-{contact-firstname}` |
+
+**Examples:**
+
+```
+https://skyscore.co.uk/api/?utm_source=outreach-landmark&utm_medium=email&utm_campaign=2026-05
+https://skyscore.co.uk/api/?utm_source=outreach-strideup&utm_medium=linkedin-dm&utm_campaign=2026-05
+https://skyscore.co.uk/api/?utm_source=intro-david&utm_medium=warm-intro&utm_campaign=2026-05
+```
+
+**Where to look in GoatCounter:** dashboard → *Referrers* tab. Sort by visits, filter by `outreach-` prefix to isolate cold-email traffic. Click any row to see the full URL (campaign + medium).
+
+**Funnel events (auto-fire on click):** `api-methodology-click` (real diligence), `api-demo-click` (intent to try), `api-spec-click` (intent to integrate), `signup-attempted`, `signup-issued`. Visible under *Pages* with the `event/` prefix.
+
+**Quick-paste snippet for a Tier 1 email link:**
+
+```
+the spec + live methodology is here:
+https://skyscore.co.uk/api/?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM}
+```
+
+Replace `{SLUG}` and `{YYYY-MM}` per the table + current month.
+
+---
+
 ## After sending — log it
 
 Add a row to the relevant tier table in `OUTREACH_LOG.md`:

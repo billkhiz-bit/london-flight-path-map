@@ -325,5 +325,30 @@
 </footer>
 
 <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<!-- Wave 12.7: B2B funnel events. Methodology clicks signal real diligence
+     (someone reading the maths vs just kicking tyres). Demo/spec clicks
+     signal someone wanting to actually try / integrate. UTM parameters
+     in incoming traffic (?utm_source=outreach-landmark) flow through to
+     the GoatCounter referrer log automatically — see OUTREACH_DRAFTS.md
+     for the per-prospect convention. -->
+<script>
+  function trackEvent(name) {
+    try {
+      if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({ path: 'event/' + name, title: name, event: true });
+      }
+    } catch (_) { /* never break the UI for analytics */ }
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a');
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    if (href.includes('METHODOLOGY.md')) trackEvent('api-methodology-click');
+    else if (href.includes('LICENSING.md')) trackEvent('api-licensing-click');
+    else if (href === '/score-demo/' || href.startsWith('/score-demo/?')) trackEvent('api-demo-click');
+    else if (href.includes('api-docs.html')) trackEvent('api-spec-click');
+  });
+</script>
 </body>
 </html>

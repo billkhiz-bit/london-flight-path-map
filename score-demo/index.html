@@ -440,6 +440,20 @@
   // above for your own per-email key. Rotated 2026-05-06 (audit C2)
   // after the previous key was committed to git history.
   const API_KEY = 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe';
+
+  // Wave 12.7: GoatCounter event tracking. Fires once per discrete user
+  // action, bucketed under /event/<name>. Used for B2B funnel insight
+  // (page-views alone can't tell us "did anyone actually try the API").
+  // Safe-guarded: if Goatcounter hasn't loaded yet (script is async), the
+  // call is a silent no-op rather than throwing. See OUTREACH_DRAFTS.md
+  // for the matching UTM-parameter convention used in cold emails.
+  function trackEvent(name) {
+    try {
+      if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({ path: 'event/' + name, title: name, event: true });
+      }
+    } catch (_) { /* never break the UI for analytics */ }
+  }
   // I-N5: single source of truth for the API base. Keep in sync with
   // index.html#L1988, score-demo/status.html, tests/api.test.mjs and
   // the CSP connect-src directive above. /preflight grep-checks drift.
@@ -497,8 +511,10 @@
       const data = await r.json();
       if (!r.ok) {
         renderError(data.error || `Request failed (${r.status})`, data);
+        trackEvent('api-demo-error');
       } else {
         render(data, elapsed);
+        trackEvent('api-demo-run');
       }
     } catch (err) {
       renderError('Network error: ' + err.message);
@@ -591,6 +607,9 @@
     const email = document.getElementById('signupEmail').value.trim();
     const name = document.getElementById('signupName').value.trim();
     if (!email) return;
+    // Track INTENT, not just success — we want to know how many people
+    // try to sign up vs how many actually receive a key (409 etc.).
+    trackEvent('signup-attempted');
 
     signupBtn.disabled = true;
     signupBtn.textContent = 'Issuing...';
@@ -607,6 +626,7 @@
       const data = await r.json();
 
       if (r.status === 201 && data.apiKey) {
+        trackEvent('signup-issued'); // funnel = signup-attempted - signup-issued = drop-offs
         signupResult.className = 'signup-result success';
         signupResult.innerHTML = `
           <strong>Your API key</strong>
