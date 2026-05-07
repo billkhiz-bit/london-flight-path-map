@@ -522,19 +522,30 @@ Resources:
       BillingMode: PAY_PER_REQUEST
 
 Parameters:
+  # Each secret has AllowedPattern '^.+$' so an empty / missing override
+  # fails CloudFormation parameter validation BEFORE the changeset runs.
+  # Without this, an empty string silently propagates to the Lambda env
+  # and the only sign of trouble is upstream timeouts in production
+  # (this is exactly how the May 2026 OpenSky live-flights outage was
+  # masked for weeks). SAM still preserves previously-set non-empty
+  # values when the parameter is omitted from --parameter-overrides,
+  # so narrow deploys keep working.
   EpcBearerToken:
     Type: String
-    Default: ''
+    AllowedPattern: '^.+$'
+    ConstraintDescription: 'EpcBearerToken must be non-empty. Get from get-energy-performance-data.communities.gov.uk My account, then pass via --parameter-overrides "EpcBearerToken=$EPC_BEARER_TOKEN".'
     NoEcho: true
     Description: Bearer token from get-energy-performance-data.communities.gov.uk (sign in via GOV.UK One Login, copy from the My account page). Pass at deploy time, never commit.
   OpenSkyClientId:
     Type: String
-    Default: ''
+    AllowedPattern: '^.+$'
+    ConstraintDescription: 'OpenSkyClientId must be non-empty. Sign up at opensky-network.org > My Account > API and pass via --parameter-overrides "OpenSkyClientId=$OPENSKY_CLIENT_ID".'
     NoEcho: true
-    Description: OpenSky Network OAuth2 client_id for the live-flights proxy. Sign up free at opensky-network.org, then go to My Account > API. Empty value = anonymous (will time out from AWS Lambda IPs).
+    Description: OpenSky Network OAuth2 client_id for the live-flights proxy. Sign up free at opensky-network.org, then go to My Account > API.
   OpenSkyClientSecret:
     Type: String
-    Default: ''
+    AllowedPattern: '^.+$'
+    ConstraintDescription: 'OpenSkyClientSecret must be non-empty. Pair with OpenSkyClientId.'
     NoEcho: true
     Description: OpenSky Network OAuth2 client_secret. Pair with OpenSkyClientId. Pass at deploy time, never commit.
 
