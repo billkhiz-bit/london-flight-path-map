@@ -43,6 +43,22 @@ cd backend && python -m pytest 2>&1 | tail -10
   `_safe_revoke_orphan_key` prefix guard (N-Code-1) are non-negotiable: if they
   break, the API key revocation invariant is broken.
 
+### 4d. API URL drift check (I-N5)
+```bash
+# All HTML/JS files must reference the same API Gateway host. If a Lambda
+# is redeployed and APIGW issues a new id, every file referencing the old
+# host will silently break — this catches the drift before commit.
+HOSTS=$(grep -hoE 'https?://[a-z0-9]+\.execute-api\.eu-west-2\.amazonaws\.com' \
+  index.html score-demo/*.html api/*.html tests/*.mjs 2>/dev/null | sort -u | wc -l)
+if [ "$HOSTS" -ne 1 ]; then
+  echo "FAIL: API base URL drift across files. Found $HOSTS distinct hosts."
+  grep -nE 'https?://[a-z0-9]+\.execute-api\.eu-west-2\.amazonaws\.com' \
+    index.html score-demo/*.html api/*.html tests/*.mjs | head -10
+  exit 1
+fi
+echo "PASS: All API URL refs use the same host."
+```
+
 ### 4c. Python Dependency Vulnerabilities (pip-audit)
 ```bash
 # Run from each lambda dir that has its own requirements.txt.
