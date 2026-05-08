@@ -77,7 +77,7 @@ PNG regenerated at 4096×2228 px (~21 m/px ground resolution). Added explainer i
 - M-E (status-page CSP omits Goatcounter) — investigated, intentional. Documented in inline comment that status page deliberately doesn't track ("we don't want analytics on the 'is the API up' surface"). Audit item closed as won't-fix-by-design.
 - F-UX-8 (search dropdown not announced to SR users) — added `aria-live` status region (#autocomplete-status, role=status, .sr-only) updated in showAutocomplete + closeAcDropdown. Announces suggestion count with arrow-key hint.
 - F-UX-9 (score-explain tooltip Esc dismiss + small-viewport overflow) — added `.score-tip-dismissed` class triggered by document-level keydown(Esc); `focusout` clears it for re-tab. Mobile (<= 600 px) gets `max-width: calc(100vw - 48px)` on the tip.
-- I-N5 (API base URL drift across 4 files) — consolidated `BASE` + `SIGNUP_URL` → single `API_BASE` constant in score-demo/{index,status}.html. Added `/preflight` check that grep-counts hosts across all HTML/JS files; fails if more than one distinct host found.
+- I-N5 (API base URL drift across 4 files) — closed in two halves. **Wave 12.7/12.8 (defensive):** consolidated `BASE` + `SIGNUP_URL` → single `API_BASE` constant in score-demo/{index,status}.html, then added `/preflight` step 4d that grep-counts hosts across all HTML/JS files and fails if more than one distinct host found. **Wave 12.9 (offensive):** extracted the URL to `js/api-base.js` (single browser-side source of truth, loaded via `<script src=>` by index.html, score-demo/index.html, score-demo/status.html). `tests/api.test.mjs` keeps a duplicate constant because Node has no `window`; the drift check guarantees alignment.
 
 **SEO basics (no audit ID — proactive):**
 - `/robots.txt` — Allow: / for general crawlers; explicit Disallow: /data/ for bandwidth. AI training crawlers (GPTBot, anthropic-ai, ClaudeBot, CCBot) restricted from /data/ + /api/ pending licensing conversation.
@@ -280,7 +280,7 @@ These didn't block today's session and are tracked here so they aren't lost. Eac
 
 | ID | Item | Priority | Effort |
 |---|---|---|---|
-| I-N5 | API base URL duplicated in 4 files (`index.html`, `score-demo/{index,api-docs,status}.html`, `tests/api.test.mjs`) | Medium | ~15 min (build step or constant) |
+| ~~I-N5~~ | ~~API base URL duplicated in 4 files~~ — **DONE in Wave 12.9.** Extracted to `js/api-base.js` (browser-side single source); `tests/api.test.mjs` keeps a duplicate (Node runtime), guarded by `/preflight` 4d drift check. | — | done |
 | I-N6 | Signup race-recovery test (the `_safe_revoke_orphan_key` path with mocked `get_api_key` / `delete_api_key`) | Medium | ~20 min |
 | I4 | Borough metadata Lambda layer (carry-forward from May-6) | Medium-high | ~half day |
 | I6 | DLQ on async Lambdas (no async Lambdas exist now — likely moot) | Low | re-check on next async addition |

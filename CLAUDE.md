@@ -79,6 +79,12 @@ Always use "Sky Score" in all public-facing files and UI text.
 ## Build & Deploy
 
 ```bash
+# Shared API base URL constant (loaded by index.html, score-demo/index.html,
+# score-demo/status.html). Deploy alongside any frontend change that depends
+# on it; the file rarely changes (only on APIGW id rotation), so most deploys
+# can skip this line. Wave 12.9 / I-N5 offensive half.
+AWS_PROFILE=flightmap aws s3 cp js/api-base.js s3://london-flight-map-frontend/js/api-base.js --content-type "application/javascript" --region eu-west-2
+
 # Frontend, upload to S3 then invalidate CloudFront
 AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"

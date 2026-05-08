@@ -6,6 +6,15 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12.8 + 12.9 — 2026-05-08 (I-N5 closure: API URL drift defence + extraction)
+
+Two-half close on the long-running I-N5 audit item (API base URL duplicated across files).
+
+- **12.8 (defensive half):** added step 4d to `/preflight` — greps every HTML/JS/test file for `execute-api` hosts and fails the build if more than one distinct host appears. Catches drift at commit time before it ships, regardless of why the URLs diverged (manual edit, partial deploy, stale clone).
+- **12.9 (offensive half):** extracted the URL to `js/api-base.js` — a 1-line classic script that sets `window.API_BASE`. The 3 browser pages (`index.html`, `score-demo/index.html`, `score-demo/status.html`) now load it via `<script src>` and pull the value from `window.API_BASE`. The 4 hardcoded constants collapsed to 2 (one in the shared script, one in `tests/api.test.mjs` which can't read `window`); the test duplicate stays guarded by the 12.8 drift check. Deploy commands in `CLAUDE.md` updated; `js/api-base.js` joins the S3 frontend bundle.
+
+Net: rotating the API host now requires editing 2 files instead of 4, and the drift check is a hard guarantee they stay aligned. The prior "keep in sync with X, Y, Z" comments are now redundant and were trimmed.
+
 ### Wave 12.6 + 12.7 closure — 2026-05-07 late night (analytics gap + funnel events + UTM convention)
 
 - **12.6:** added missing GoatCounter tracker to `score-demo/index.html` (the API browser demo). CSP allowlist had it, but the script tag was never added — the most B2B-relevant page wasn't being counted.

@@ -1,3 +1,8 @@
+// I-N5: the browser pages pull API_BASE from /js/api-base.js (window global).
+// This test runs in Node where window does not exist, so the value is
+// duplicated here. The /preflight drift check (step 4d) grep-asserts that
+// every API URL reference in the repo resolves to one host, so any drift
+// between this constant and js/api-base.js fails preflight.
 const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
 
 const endpoints = [

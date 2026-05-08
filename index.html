@@ -1998,11 +1998,13 @@
       </aside>
     </div>
 
+    <script src="js/api-base.js"></script>
     <script>
       // ============================================================
       // CONSTANTS & DATA
       // ============================================================
-      const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+      // I-N5: API_BASE pulled from js/api-base.js (single source of truth).
+      const API_BASE = window.API_BASE;
 
       // London areas/neighbourhoods mapped to representative postcodes
       const AREA_MAP = {

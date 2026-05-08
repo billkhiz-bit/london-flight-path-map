@@ -169,17 +169,17 @@
   Sky Score &middot; <a href="https://skyscore.co.uk/">Main site</a> &middot; <a href="./api-docs.html">API reference</a>
 </footer>
 
+<script src="../js/api-base.js"></script>
 <script>
   // Public read-only checks. The score endpoint requires an API key, so we
   // show a sample-response check by hitting it with the public demo key.
   // Same key as score-demo/index.html, shares the SkyScoreFreeTier usage
   // plan (1000 req/month). Rotated 2026-05-06 (audit C2).
   const API_KEY = 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe';
-  // I-N5: single source of truth for the API base. Keep this in sync with
-  // index.html#L1988 + tests/api.test.mjs#L1 + score-demo/index.html
-  // (all defined as API_BASE) + the CSP connect-src directive above. The
-  // /preflight skill's grep check (added 2026-05-07) flags drift.
-  const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+  // I-N5: API_BASE pulled from ../js/api-base.js (single source of truth).
+  // Tests duplicate the value in tests/api.test.mjs (Node has no window);
+  // the /preflight drift check (step 4d) grep-asserts they stay aligned.
+  const API_BASE = window.API_BASE;
 
   const ENDPOINTS = [
     {

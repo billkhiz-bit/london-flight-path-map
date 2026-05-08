@@ -121,7 +121,7 @@ Brief summary; pick one or two next session:
 - **Security residual** (~10-30 min each): CSP `report-uri`, CSP `img-src` tightening, per-route throttle on `/v1/score`, signup CAPTCHA, HSTS / Permissions-Policy via CloudFront response-headers policy.
 - **Visual polish** (~5-15 min each): layer-toggle indicator colours per layer, aircraft-noise legend gating, DEFRA caption stacking, airport text plates.
 - **A11y carry-forward** (~10-30 min each): layer toggle hover/active visual differentiation (Critical), heading hierarchy fix (Critical), skip-to-content, touch targets <44px on consumer site, `:focus-visible` fallback, search-results count for SR users, `prefers-reduced-motion`.
-- **Code quality** (~10-60 min each): API base URL extraction (4 files duplicated), `BOROUGH_ALIASES` expansion, Swagger UI SRI hash, signup race-recovery test.
+- **Code quality** (~10-60 min each): ~~API base URL extraction (4 files duplicated)~~ — done in Wave 12.9 (`js/api-base.js` shared by 3 browser pages; tests/api.test.mjs duplicates intentionally with /preflight 4d drift check guarding alignment). `BOROUGH_ALIASES` expansion, Swagger UI SRI hash, signup race-recovery test.
 - **Enterprise readiness** (legal effort): DPA template (CommonPaper, 2-3 hr legal review), MSA + SLA + termination + data return (1-day legal), privacy notice + sub-processor list + retention policy (half-day each), DynamoDB PITR + RTO/RPO doc (1-click + ~1 hour), `pip-audit` integration, `support@skyscore.co.uk` mailbox + 1-business-day SLA, status page subdomain.
 - **Performance** (~1 hour): extract inline data (`BOROUGH_DATA`, `AREA_MAP`) from index.html (6.9k lines) to JSON files fetched after first paint, improves LCP.
 

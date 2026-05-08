@@ -433,6 +433,7 @@
   Sky Score &middot; <a href="https://skyscore.co.uk/">Main site</a> &middot; <a href="https://skyscore.co.uk/prototype/index.html">Sky Score Radar</a> &middot; OGL v3.0 attribution
 </footer>
 
+<script src="../js/api-base.js"></script>
 <script>
   // Public demo key, intentionally embedded in the served HTML for the
   // "Try the API" form below. Capped at 1000 req/month (the SkyScoreFreeTier
@@ -454,10 +455,8 @@
       }
     } catch (_) { /* never break the UI for analytics */ }
   }
-  // I-N5: single source of truth for the API base. Keep in sync with
-  // index.html#L1988, score-demo/status.html, tests/api.test.mjs and
-  // the CSP connect-src directive above. /preflight grep-checks drift.
-  const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+  // I-N5: API_BASE pulled from ../js/api-base.js (single source of truth).
+  const API_BASE = window.API_BASE;
   const BASE = API_BASE + '/v1/score';
 
   const PERSONA_LABELS = {
