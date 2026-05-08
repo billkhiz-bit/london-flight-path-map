@@ -68,26 +68,24 @@ Blocking: ESLint errors, html-validate errors, failing pytest.
 These cannot be performed by `flightmap-dev` because they touch IAM, billing,
 or backup configuration that the deploy user is intentionally locked out of.
 
-### 3.1 — Enable DynamoDB Point-in-Time Recovery (PITR)
+### 3.1 — Enable DynamoDB Point-in-Time Recovery (PITR) — **DONE 2026-05-08**
+
+**Status:** ENABLED on all three tables (`london-flight-map-favourites`,
+`london-flight-map-signups`, `london-flight-map-noise-raster`) via the
+Wave 12.10 deploy after `dynamodb:UpdateContinuousBackups` +
+`DescribeContinuousBackups` were granted to `flightmap-dev` via inline
+policy `flightmap-dev-pitr-grant`. The first attempt on 2026-05-07 rolled
+back because the IAM grant hadn't landed; the May-8 attempt succeeded
+once the policy was in place.
 
 **Why:** 35-day continuous backups for the three production tables. Cost is
 rounding-error money for the table sizes we run; recovery posture is
 meaningfully better.
 
-**Steps:**
-
-1. Sign in to the AWS console as the root account (or an IAM admin with
-   `iam:PutUserPolicy` on `flightmap-dev`).
-2. Update the `FlightMapDeployPolicy` (attached to user `flightmap-dev`) so
-   the `DynamoDB` statement includes:
-   - `dynamodb:UpdateContinuousBackups`
-   - `dynamodb:DescribeContinuousBackups`
-   - `dynamodb:UpdateTable`
-   The full updated policy lives in `backend/iam-policy.json`. Copy/paste
-   that file's `DynamoDB` Sid block over the existing one.
-3. Re-run the standard backend deploy (Section 2). The next CloudFormation
-   changeset will enable PITR on `london-flight-map-signups`,
-   `london-flight-map-noise-raster`, and `london-flight-map-favourites`.
+**If PITR ever needs re-enabling on a future table** (e.g. a new
+DynamoDB resource added to `template.yaml`), the IAM grant covers all
+`london-flight-map-*` tables via wildcard, so no further admin action is
+required as long as the new table follows the naming convention.
 
 **Verification:**
 ```bash

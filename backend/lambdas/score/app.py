@@ -84,8 +84,8 @@ PERSONAS = {
     'renter': {'quiet': 0.30, 'afford': 0.35, 'growth': 0.00, 'live': 0.35},
     # Commuter / young professional: transport-led, price-sensitive.
     'commuter': {'quiet': 0.20, 'afford': 0.30, 'growth': 0.15, 'live': 0.35},
-    # Downsizer / retiree / empty-nester: cash buyer, quiet + healthcare.
-    'downsizer': {'quiet': 0.40, 'afford': 0.15, 'growth': 0.10, 'live': 0.35},
+    # Later-life buyer: cash buyer prioritising quiet + healthcare access.
+    'laterlife': {'quiet': 0.40, 'afford': 0.15, 'growth': 0.10, 'live': 0.35},
 }
 
 # London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.

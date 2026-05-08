@@ -197,7 +197,7 @@ Each searchable area gets a score computed from four factors:
 3. **Growth** - annual price trend percentage
 4. **Liveability** - composite of schools (35%), crime safety (30%), transport access (25%), and healthcare (10%)
 
-**Eight Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life, Renter, Commuter, Downsizer) dynamically reweight all four factors and instantly re-rank every postcode / borough / neighbourhood.
+**Eight Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life, Renter, Commuter, Later Life) dynamically reweight all four factors and instantly re-rank every postcode / borough / neighbourhood.
 
 #### Interactive Map Data Layers (Toggle On/Off)
 | Layer | London Source | NYC Source |

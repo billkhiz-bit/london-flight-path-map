@@ -187,8 +187,14 @@ class PersonaCoverageTests(unittest.TestCase):
             self.assertLessEqual(result['score'], 10.0, name)
 
     def test_new_personas_present(self):
-        for name in ('renter', 'commuter', 'downsizer'):
+        for name in ('renter', 'commuter', 'laterlife'):
             self.assertIn(name, app.PERSONAS)
+
+    def test_legacy_persona_keys_removed(self):
+        # Wave 12.10: 'downsizer' renamed to 'laterlife'. The old key must
+        # not silently come back; if it does, two persona keys map to the
+        # same weights and clients get unpredictable behaviour.
+        self.assertNotIn('downsizer', app.PERSONAS)
 
 
 if __name__ == '__main__':

@@ -248,7 +248,7 @@ paths:
             values. Ignored if `weights` is provided.
           schema:
             type: string
-            enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, downsizer]
+            enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, laterlife]
             default: balanced
         - name: weights
           in: query

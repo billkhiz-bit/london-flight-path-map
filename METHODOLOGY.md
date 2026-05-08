@@ -344,7 +344,7 @@ balanced = { quiet: 0.30, afford: 0.25, growth: 0.20, live: 0.25 }
 
 ### 5.2 Persona presets
 
-The five named personas reflect typical buyer-segment priorities. Each is documented openly so customers can decide whether the preset matches their use case:
+The eight named personas reflect typical buyer-segment priorities. Each is documented openly so customers can decide whether the preset matches their use case:
 
 | Persona | quiet | afford | growth | live | Rationale |
 |---|---|---|---|---|---|
@@ -353,6 +353,9 @@ The five named personas reflect typical buyer-segment priorities. Each is docume
 | `investor` | 0.10 | 0.30 | 0.40 | 0.20 | Capital growth potential and entry price are primary; quality factors discount-driven not lifestyle-driven. |
 | `firsttime` | 0.15 | 0.40 | 0.20 | 0.25 | Affordability dominates first-time-buyer constraints; remaining factors moderately weighted. |
 | `quietlife` | 0.50 | 0.20 | 0.10 | 0.20 | Specialist preset for buyers explicitly prioritising peace; weighted heavily on quiet at the expense of growth. |
+| `renter` | 0.30 | 0.35 | 0.00 | 0.35 | No selling event so growth is irrelevant; affordability and liveability share weight with quiet. |
+| `commuter` | 0.20 | 0.30 | 0.15 | 0.35 | Transport-led, price-sensitive; liveability captures schools/transport/healthcare composite. |
+| `laterlife` | 0.40 | 0.15 | 0.10 | 0.35 | Cash buyer prioritising peace and healthcare access; growth de-emphasised. (Renamed from `downsizer` in Wave 12.10.) |
 
 **Family persona ratio ~50% on `live` is the largest deviation from balanced**, reflecting that family-segment research consistently shows schools-and-safety as the dominant decision factor. The other personas are smaller deviations that nudge the default in a direction without departing from sensible bounds.
 

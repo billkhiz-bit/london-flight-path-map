@@ -6,6 +6,16 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### Wave 12.10 — 2026-05-08 (persona rename: `downsizer` → `laterlife`)
+
+**Breaking API change.** The `persona` enum value `downsizer` is removed; the equivalent persona is now `laterlife` with identical weights (quiet 0.40 / afford 0.15 / growth 0.10 / live 0.35). User-facing label changes from "Downsizer" to "Later life".
+
+**Why:** the term "downsizer" reads as faintly diminishing of older buyers when the persona is really about prioritising quiet and healthcare access, not about reducing one's life. "Later life" is the framing used in BBC/healthcare/policy contexts and matches the persona's actual function.
+
+**Customer impact:** zero paying B2B customers at time of change, so the breaking shape is acceptable without a `/v2` path bump. Anyone passing `?persona=downsizer` will now receive a normal "invalid persona" 400 response. The free-tier demo key holders (one active, ~75 calls historical) will not have hit this code path.
+
+**Files touched:** `backend/lambdas/score/app.py` (key + comment), `backend/tests/test_score.py` (fixture + new regression test asserting `downsizer` is gone), `index.html` (persona definition + label), `score-demo/index.html` (dropdown + label map), `score-demo/openapi.yaml` (enum), `METHODOLOGY.md` (persona table — also expanded from 5 to the actual 8 entries; the table had drifted away from `app.py` in an earlier wave), `PROJECT_DOCUMENTATION.md` (persona list).
+
 ### Wave 12.8 + 12.9 — 2026-05-08 (I-N5 closure: API URL drift defence + extraction)
 
 Two-half close on the long-running I-N5 audit item (API base URL duplicated across files).
