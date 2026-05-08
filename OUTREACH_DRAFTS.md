@@ -159,6 +159,61 @@ Replace `{SLUG}` and `{YYYY-MM}` per the table + current month.
 
 ---
 
+## Organic social — Twitter / X
+
+For broadcast launches, not 1:1 outreach. Two-tweet thread targeting two distinct audiences (renters/buyers in the lead post, builders/devs in the reply). Each tweet's UTM lets GoatCounter split clicks per audience.
+
+### Tweet 1 — consumer hook (the lead post)
+
+Sharper-hook version. Lead with the missing-information problem before naming the product:
+
+> Property listings tell you bedrooms and price. They don't tell you flight noise, air quality, or flood risk.
+>
+> Sky Score does. UK or NYC postcode → all of it, from open gov data.
+>
+> Free, no signup. Built for the Nova hackathon, kept going.
+>
+> https://skyscore.co.uk/?utm_source=twitter&utm_medium=organic&utm_campaign=2026-05
+
+**Char count:** ~263 (under 280, Twitter shortens URLs to 23 chars regardless of length). Hashtags omitted — builder-voice on X reads stronger without them.
+
+#### Alternative — conversational variant
+
+If the listings-vs-Sky-Score parallel feels too neat, this version leads with a more lived-in pain point (digging through forums to find out about noise):
+
+> You can find a flat's bedrooms and price in 5 seconds. Knowing whether you'll wake up to plane noise or live next to flood risk takes hours of digging.
+>
+> Sky Score does it instantly. UK or NYC postcode, free, open gov data only.
+>
+> https://skyscore.co.uk/?utm_source=twitter&utm_medium=organic&utm_campaign=2026-05
+
+Same UTM. Drops the hackathon origin — punchier but loses the credibility signal.
+
+### Tweet 2 — API hook (reply to tweet 1)
+
+> If you build with property data: there's a free /v1/score API too.
+>
+> GET ?postcode=N1+7SX → score + components + methodology in the JSON. POST /v1/score/batch for up to 100 in one call.
+>
+> 1000 reqs/month free, no card.
+>
+> https://skyscore.co.uk/api/?utm_source=twitter&utm_medium=organic&utm_campaign=2026-05
+
+**Char count:** ~240. The "no card" line is the unblock — most "free tier" tweets fail because devs assume there's a credit-card paywall behind the signup.
+
+### Practical notes
+
+- **Attach a screenshot to tweet 1.** Image-tweets get materially more reach than text-only on X. Capture the consumer site showing a score for a recognisable London or NYC postcode (e.g. `N1 7SX`, `SW11 1AA`, `10001`) so people can visually verify the claim before clicking. The Wave 12.10 deploy is fully live, so the screenshot reflects current production.
+- **Best posting time:** UK afternoon (~3-5pm GMT). Catches both UK property crowd and US dev Twitter coming online. Tuesday-Thursday strongest.
+- **Hashtags:** skip. `#buildinpublic` is the only plausibly useful one but cheapens the tone.
+- **UTM convention:** matches the email outreach format (`utm_source` differs by channel, `utm_campaign={YYYY-MM}`). GoatCounter funnel events from Wave 12.7 will report these clicks.
+
+### After posting — log it
+
+Add a row to the appropriate section in `OUTREACH_LOG.md` (consider adding an "Organic / social" tier table if one doesn't exist yet). Include the tweet URL so you can come back to engagement metrics, and the funnel events that fired.
+
+---
+
 ## After sending — log it
 
 Add a row to the relevant tier table in `OUTREACH_LOG.md`:
