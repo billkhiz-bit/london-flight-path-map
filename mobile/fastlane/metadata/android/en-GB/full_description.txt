@@ -1,0 +1,30 @@
+Sky Score is the property data tool listings sites have a structural reason not to show you. Search any UK postcode, area, or borough — or tap your current location — and get an honest, independent score on the four things that actually shape life in a property: how quiet the skies are, how affordable it is, whether prices are growing, and how livable the area is overall.
+
+WHY USE SKY SCORE
+
+Estate agents and listings sites earn from completed transactions. Showing you that a flat is on a Heathrow descent path doesn't help close the deal, so they don't show it. Sky Score is built outside that incentive. The data is public — DEFRA Strategic Noise Maps, HM Land Registry Price Paid Data, EPC certificates, NHS/TfL — and our job is to combine it into a postcode-level score you can trust.
+
+WHAT YOU GET
+
+• Score from 1–10 based on quiet skies, affordability, growth and liveability
+• Personalised by buyer profile (family, first-time buyer, later-life downsizer, etc.)
+• Aircraft noise overlay from DEFRA's Strategic Noise Map (Round 4, 2022 data)
+• Road noise, flood risk, air quality, transport, and labels as toggleable layers
+• Tap any postcode for the precise dB at that spot
+• 'Score where I am' button uses your phone's GPS for instant feedback on your current location
+
+INDEPENDENT, OPEN, REPRODUCIBLE
+
+We don't sell ads, push leads, or tilt scores toward sponsors. The methodology is published openly and the underlying data sources are cited at every step. If you doubt a score, you can read exactly how it was computed.
+
+UK COVERAGE
+
+Greater London plus expanding national coverage. Heathrow, Gatwick, London City, Stansted, Luton, and minor aerodromes. New York metro is included as a comparison surface.
+
+PRIVACY
+
+We don't track you across the web, build advertising profiles, or sell your data. Your location, when you use the 'Score where I am' button, is sent to api.postcodes.io to find the nearest postcode, then discarded. See our privacy policy for the full breakdown.
+
+DATA SOURCES
+
+DEFRA · Office for National Statistics · HM Land Registry · Department for Energy Security and Net Zero · Ministry of Housing, Communities & Local Government · Transport for London · NHS · Open Government Licence v3.0

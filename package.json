@@ -16,7 +16,11 @@
     "test:api": "node tests/api.test.mjs",
     "lighthouse": "lighthouse https://d1oe4ftwutjpf.cloudfront.net --output=html --output-path=./reports/lighthouse.html --chrome-flags=\"--headless\"",
     "audit": "npm run lint && npm run lint:html && npm audit",
-    "audit:security": "npm audit && eslint index.html && ruff check backend/lambdas/"
+    "audit:security": "npm audit && eslint index.html && ruff check backend/lambdas/",
+    "build:android": "cd mobile && npm run sync && npm run build:assets && cd android && ./gradlew bundleRelease",
+    "upload:android": "cd mobile && bundle exec fastlane android deploy_internal",
+    "trigger:ios": "git push origin master",
+    "submit:ios": "cd mobile && bundle exec fastlane ios submit_for_review"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.0",

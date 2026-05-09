@@ -1,0 +1,16 @@
+# fastlane Appfile — identifies the Sky Score apps for both stores.
+#
+# These values are NOT secrets and are safe to commit. Secrets (API keys,
+# JSON service account credentials) live in env vars per the Fastfile.
+
+# Android (Play Console)
+package_name("uk.co.skyscore.app")
+json_key_file(ENV["PLAY_CONSOLE_JSON_KEY"]) if ENV["PLAY_CONSOLE_JSON_KEY"]
+
+# iOS (App Store Connect)
+app_identifier("uk.co.skyscore.app")
+# apple_id, team_id and itc_team_id are auto-derived from the App Store
+# Connect API key configured in Fastfile's before_all block, so we don't
+# need to hard-code them here. Override with env vars if needed:
+# apple_id(ENV["FASTLANE_APPLE_ID"]) if ENV["FASTLANE_APPLE_ID"]
+# team_id(ENV["FASTLANE_TEAM_ID"]) if ENV["FASTLANE_TEAM_ID"]
