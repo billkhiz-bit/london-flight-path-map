@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://epc.opendatacommunities.org https://landregistry.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://epc.opendatacommunities.org https://landregistry.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -64,6 +64,23 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;</text></svg>"
     />
+
+    <!-- PWA: web app manifest. Browsers read this to learn the app's name,
+         icons, theme colour, and installable behaviour. start_url and scope
+         are set to "/" so the prototype and any future routes are part of
+         the same installed app, anticipating the radar merge planned later. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- iOS Add-to-Home-Screen support. Safari does not read the
+         manifest's icons or theme; these meta tags are what it uses to
+         render the installed-app shortcut and standalone shell. The SVG
+         touch icon works on iOS 16+; older iOS falls back to a page
+         screenshot (degrades gracefully). status-bar-style "default"
+         keeps the status bar light (matches our --bg theme). -->
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Sky Score" />
 
     <script
       src="https://d3js.org/d3.v7.min.js"
@@ -132,6 +149,16 @@
       .map-container svg {
         width: 100%;
         height: 100%;
+      }
+      /* Audit F-A11Y-6: at narrow viewports, suppress heliport-code labels
+         (e.g. ELS, DEN, BHL, KING). They cluster at the map edges, where
+         the projection compresses them so the 3-letter codes look like
+         random clipped fragments to a casual viewer. The dots stay so the
+         heliports are still visible; the labels return on wider screens. */
+      @media (max-width: 600px) {
+        .heliport-label {
+          display: none;
+        }
       }
       .borough {
         cursor: pointer;
@@ -366,9 +393,16 @@
           bottom: auto;
           top: auto;
           position: static;
-          padding: 8px 16px;
+          padding: 10px 16px;
           background: rgba(20, 20, 20, 0.04);
           justify-content: center;
+          /* Audit F-A11Y-1: bump 8px → 11px on phones; 8px is below the
+             comfortable-reading threshold at typical phone viewing distance
+             (~30 cm), and combined with letter-spacing 1px and --mid colour
+             made the footer effectively unreadable on small screens. Desktop
+             retains 8px for density. */
+          font-size: 11px;
+          letter-spacing: 0.6px;
         }
       }
 
@@ -387,6 +421,42 @@
            added in fix-DEFRA-6 wraps inside the legend instead of forcing
            the whole panel to expand across the bottom of the map. */
         max-width: 260px;
+      }
+      /* Audit F-A11Y-3: legend disclosure button. Hidden on desktop (legend
+         always shows); on small phones it becomes the only thing visible
+         until tapped, with the general-sibling selector handling the
+         expand/collapse via aria-expanded. */
+      .legend-toggle {
+        display: none;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--dark);
+        cursor: pointer;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        min-height: 32px;
+      }
+      .legend-toggle::after {
+        content: '▾';
+        font-size: 16px;
+        line-height: 1;
+        transition: transform 0.15s ease;
+      }
+      .legend-toggle[aria-expanded='false']::after {
+        transform: rotate(-90deg);
+      }
+      .legend-toggle:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
       }
       .legend-row {
         display: flex;
@@ -453,6 +523,12 @@
         flex-direction: column;
         gap: 3px;
         z-index: 10;
+      }
+      /* Audit F-A11Y-5: hamburger trigger for the layer-toggles popover.
+         Hidden on desktop; mobile-block below makes it visible and turns
+         the layer-toggles list into a popover anchored above it. */
+      .layers-trigger {
+        display: none;
       }
       .layer-toggle {
         display: flex;
@@ -671,6 +747,137 @@
         color: var(--mid);
         line-height: 1.6;
         font-family: var(--font-sans);
+      }
+      /* Audit F-A11Y-8: quick-search chips. Centred row of tappable
+         starting points so the sheet's empty state is functional, not
+         just instructional. Each chip meets the 36px tap-target size
+         comfortably; on phones the parent media query bumps to 44px. */
+      .quicksearch {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+        align-items: center;
+      }
+      .quicksearch-label {
+        font-size: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--mid);
+        font-family: var(--font-mono);
+      }
+      .quicksearch-chip {
+        padding: 7px 12px;
+        background: var(--white);
+        border: 1px solid var(--dark);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        color: var(--dark);
+        min-height: 36px;
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      .quicksearch-chip:hover {
+        background: var(--dark);
+        color: var(--white);
+      }
+      .quicksearch-chip:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+      @media (max-width: 900px) {
+        .quicksearch-chip {
+          min-height: 44px;
+        }
+      }
+
+      /* Audit F-A11Y-9: PWA install prompt. Hidden by default; shown by
+         JS when beforeinstallprompt fires (Chrome/Edge/Android) or when
+         iOS Safari is detected outside standalone mode. Sits between
+         search and tabs so updateSidebar() rebuilds don't blow it away. */
+      .install-prompt {
+        padding: 10px 24px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-bottom: 1px solid var(--bg);
+      }
+      .install-chip {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        background: var(--dark);
+        color: var(--white);
+        border: none;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        min-height: 40px;
+      }
+      .install-chip:hover {
+        background: var(--orange);
+      }
+      .install-chip:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+      .install-chip span {
+        font-size: 14px;
+        line-height: 1;
+      }
+      .ios-install-hint {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(20, 20, 20, 0.06);
+        font-family: var(--font-sans);
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--dark);
+        border-radius: 4px;
+      }
+      .ios-install-hint strong {
+        font-weight: 600;
+      }
+      .ios-install-icon {
+        font-size: 14px;
+        color: var(--orange);
+        flex-shrink: 0;
+      }
+      .ios-install-text {
+        flex: 1;
+      }
+      .ios-install-dismiss {
+        background: none;
+        border: none;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--mid);
+        padding: 0;
+        margin-left: 4px;
+        min-height: 32px;
+        min-width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .ios-install-dismiss:hover {
+        color: var(--dark);
+      }
+      .ios-install-dismiss:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
       }
 
       /* Persona selector */
@@ -1561,14 +1768,84 @@
         color: var(--orange);
       }
 
+      /* Audit F-A11Y-4: bottom-sheet sidebar on phones. Replaces the
+         55/45 vertical split with an overlay sheet so the map gets the
+         full viewport and the sidebar appears on demand. Two states:
+         peek (handle only, ~96px showing) and open (88dvh). */
+      .sheet-handle {
+        display: none; /* desktop hides it; sheet-mode CSS below shows it */
+      }
       @media (max-width: 900px) {
         .app {
           grid-template-columns: 1fr;
-          grid-template-rows: 55vh 45vh;
+          grid-template-rows: 1fr;
         }
         .sidebar {
-          border-left: none;
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          top: auto;
+          height: 88dvh;
+          max-height: 88dvh;
+          border: none;
           border-top: 1px solid var(--dark);
+          background: var(--bg);
+          box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+          z-index: 50;
+          /* Peek shows handle + sidebar-header + search-box (~220px); the
+             rest is translated below the viewport. The taller peek means
+             users can search without first tapping the handle, so the
+             sheet is functional even in its collapsed state. .sheet-open
+             removes the translate to show the full panel. */
+          transform: translateY(calc(100% - 220px));
+          transition: transform 0.3s ease;
+          overflow: hidden;
+          will-change: transform;
+        }
+        .sidebar.sheet-open {
+          transform: translateY(0);
+          overflow: auto;
+        }
+        .sheet-handle {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          min-height: 44px;
+          border: none;
+          /* Tinted background so the handle reads as a distinct strip,
+             not as part of the sidebar header below it. */
+          background: rgba(20, 20, 20, 0.06);
+          cursor: pointer;
+          padding: 10px 0 8px;
+          flex-shrink: 0;
+        }
+        .sheet-handle::before {
+          content: '';
+          display: block;
+          width: 48px;
+          height: 5px;
+          border-radius: 3px;
+          background: var(--dark);
+          opacity: 0.85;
+          transition: opacity 0.15s ease;
+        }
+        .sheet-handle:hover::before,
+        .sheet-handle:focus-visible::before {
+          opacity: 1;
+        }
+        .sheet-handle:focus-visible {
+          outline: 2px solid var(--orange);
+          outline-offset: -2px;
+        }
+        /* Sheet (peek state) covers ~220px at the bottom. Push the bottom-
+           anchored map chrome above it so legend and layer toggles remain
+           tappable. .site-footer is position:static below 768px and is
+           unaffected by `bottom`. */
+        .layer-toggles,
+        .map-legend {
+          bottom: 232px;
         }
         /* Phone-friendly tap targets on layer toggles */
         .layer-toggle {
@@ -1596,29 +1873,135 @@
       @media (max-width: 480px) {
         /* Compress UI on small phones. Keep the default control positions
        (map-controls top-right, layer-toggles bottom-right, legend
-       bottom-left) so they don't collide; just shrink chrome. */
+       bottom-left) so they don't collide; just shrink chrome.
+       Audit F-A11Y-1: subtitle/dev-link bumped from 8px → 10px for
+       legibility at phone viewing distance. */
         .map-title {
           padding: 12px 16px;
         }
         .map-title h1 {
           font-size: 18px;
         }
+        /* Audit F-A11Y-7: hide the subtitle at ≤480px to free ~25px of
+           vertical space. display:none removes it from screen readers
+           too, which is intentional here — the H1 "Sky Score" already
+           identifies the page, and the subtitle is decorative chrome. */
         .map-title .subtitle {
-          font-size: 8px;
+          display: none;
         }
         .map-title .dev-link {
-          font-size: 8px;
+          font-size: 10px;
         }
+        /* Audit F-A11Y-3: was display:none which removed the legend from
+           the a11y tree and blanked the colour key on phones. Now: legend
+           shows as a collapsible chip; tap "Legend" to expand.
+           At ≤480px the chip lives top-left (below the title) so it doesn't
+           collide with the bottom sheet or the layer-toggles strip. */
         .map-legend {
-          display: none;
+          padding: 8px 14px;
+          max-width: 200px;
+          font-size: 11px;
+          /* Mirrors the layers-trigger position on the right — both
+             cluster just above the sheet peek so all map-affordance
+             chrome lives in the same band. Visual treatment matches
+             .layers-trigger: dark pill with light text. */
+          bottom: 232px;
+          left: 8px;
+          background: rgba(20, 20, 20, 0.92);
+          color: var(--white);
+          border: none;
+          border-radius: 4px;
+          min-height: 36px;
+          backdrop-filter: blur(6px);
+          /* Reset the desktop border-color rule for legend rows so they
+             read against the dark background when expanded. */
+        }
+        .map-legend .legend-toggle {
+          color: var(--white);
+        }
+        .map-legend .legend-row span,
+        .map-legend #legend-aircraft-group div,
+        .map-legend #legend-road-group div,
+        .map-legend #legend-flood-group div {
+          color: var(--white);
+        }
+        .legend-toggle {
+          display: flex;
+        }
+        /* When collapsed, hide every sibling of the toggle (i.e. all the
+           legend rows and group sections). Inline display:block/none on
+           groups still applies once expanded. */
+        .legend-toggle[aria-expanded='false'] ~ * {
+          display: none !important;
         }
         .map-controls {
           top: 8px;
           right: 8px;
         }
-        .layer-toggles {
-          bottom: 8px;
+        /* Audit F-A11Y-5: layers-trigger as a single button at bottom-
+           right of the map area, just above the sheet peek. Tapping it
+           flips aria-expanded, which the general-sibling rule below uses
+           to reveal the .layer-toggles popover. Replaces the horizontal
+           scroll strip — that strip clipped toggles past the visible
+           edge with no scroll affordance, so hidden controls were
+           effectively invisible. */
+        .layers-trigger {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          position: absolute;
+          bottom: 232px;
           right: 8px;
+          z-index: 11;
+          padding: 8px 14px;
+          background: rgba(20, 20, 20, 0.92);
+          color: var(--white);
+          border: none;
+          border-radius: 4px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          cursor: pointer;
+          min-height: 36px;
+          backdrop-filter: blur(6px);
+        }
+        .layers-trigger:focus-visible {
+          outline: 2px solid var(--orange);
+          outline-offset: 2px;
+        }
+        .layers-trigger span {
+          font-size: 14px;
+          line-height: 1;
+        }
+        /* Layer-toggles is now a popover hidden by default. Sibling rule
+           reveals it when the trigger is expanded. The popover anchors
+           above the trigger and stacks the toggles vertically — every
+           toggle is reachable, no horizontal scroll needed. */
+        .layer-toggles {
+          display: none;
+        }
+        .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
+          display: flex;
+          flex-direction: column;
+          position: absolute;
+          bottom: 280px;
+          right: 8px;
+          left: auto;
+          top: auto;
+          background: rgba(250, 250, 249, 0.95);
+          border: 1px solid var(--dark);
+          padding: 6px;
+          gap: 4px;
+          z-index: 11;
+          max-height: 50vh;
+          overflow-y: auto;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        }
+        .layers-trigger[aria-expanded='true'] ~ #layer-toggles .layer-toggle {
+          font-size: 10px;
+          padding: 8px 12px;
+          letter-spacing: 0.8px;
         }
       }
     </style>
@@ -1653,16 +2036,55 @@
           <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
         </div>
         <div class="city-selector" id="city-selector" role="group" aria-label="Select city">
-          <button type="button" class="city-btn active" aria-pressed="true" data-city="london" onclick="switchCity('london')">
+          <button
+            type="button"
+            class="city-btn active"
+            aria-pressed="true"
+            data-city="london"
+            onclick="switchCity('london')"
+          >
             London
           </button>
-          <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">New York</button>
+          <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">
+            New York
+          </button>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
           <button type="button" id="zoom-out" title="Zoom out" aria-label="Zoom out">&minus;</button>
           <button type="button" id="zoom-reset" title="Reset" aria-label="Reset zoom">&#8634;</button>
+          <!-- Native-only "Score where I am" button. Hidden on web/PWA;
+               shown when Capacitor is detected. Uses device GPS via the
+               @capacitor/geolocation plugin, reverse-geocodes via
+               api.postcodes.io, and triggers the existing search flow.
+               This is the App Store Section 4.2 minimum-functionality
+               feature (uses native hardware for lasting value). -->
+          <button
+            type="button"
+            id="locate-me"
+            class="native-only"
+            title="Score my current location"
+            aria-label="Score my current location using GPS"
+            hidden
+          >
+            &#9678;
+          </button>
         </div>
+        <!-- Audit F-A11Y-5: layers-trigger replaces the always-visible
+             layer-toggles strip on phones with a single disclosure button.
+             The trigger flips aria-expanded; the CSS general-sibling rule
+             reveals the layer-toggles panel only when expanded. Desktop
+             ignores the trigger and shows the toggles inline as before. -->
+        <button
+          type="button"
+          class="layers-trigger"
+          id="layers-trigger"
+          aria-controls="layer-toggles"
+          aria-expanded="false"
+        >
+          <span aria-hidden="true">&#8801;</span>
+          Layers
+        </button>
         <div class="layer-toggles" id="layer-toggles" role="group" aria-label="Map layer toggles">
           <button
             type="button"
@@ -1736,6 +2158,21 @@
           </button>
         </div>
         <div class="map-legend" id="map-legend">
+          <!-- Audit F-A11Y-3: legend used to be display:none below 480px,
+               which both blanked it for sighted phone users (the map's
+               colour bands lose meaning) and removed it from the a11y tree.
+               Now collapsed-by-default on mobile via the toggle below; the
+               general-sibling selector hides every following row when
+               aria-expanded="false". Desktop ignores .legend-toggle. -->
+          <button
+            type="button"
+            class="legend-toggle"
+            id="legend-toggle"
+            aria-expanded="false"
+            aria-controls="map-legend"
+          >
+            <span>Legend</span>
+          </button>
           <div class="legend-row">
             <div class="legend-line" style="border-color: var(--orange)"></div>
             <span id="legend-path1">LHR PATHS</span>
@@ -1768,7 +2205,10 @@
             </div>
             <div class="legend-row">
               <div class="legend-swatch" style="background: rgba(242, 184, 38, 0.5)"></div>
-              <span>65-69 dB <em style="color: var(--mid); font-style: normal; font-size: 7px;">↓ WHO sleep</em></span>
+              <span>
+                65-69 dB
+                <em style="color: var(--mid); font-style: normal; font-size: 7px">↓ WHO sleep</em>
+              </span>
             </div>
             <div class="legend-row">
               <div class="legend-swatch" style="background: rgba(242, 125, 38, 0.5)"></div>
@@ -1778,11 +2218,11 @@
               <div class="legend-swatch" style="background: rgba(242, 38, 38, 0.5)"></div>
               <span>75+ dB</span>
             </div>
-            <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4;">
-              <strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, 2022 data),
-              the long-term average aircraft noise around LHR, LCY and LGW —
-              modelled from a year of actual flight tracks, not a live feed.
-              Used by councils for planning decisions. Click any postcode for the exact dB at that spot.
+            <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4">
+              <strong>What this is:</strong>
+              DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and
+              LGW — modelled from a year of actual flight tracks, not a live feed. Used by councils for planning
+              decisions. Click any postcode for the exact dB at that spot.
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
@@ -1830,7 +2270,10 @@
             </div>
           </div>
           <div id="legend-aq-group" style="display: none">
-            <div style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600" id="legend-aq-title">
+            <div
+              style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600"
+              id="legend-aq-title"
+            >
               BOROUGH AIR QUALITY
             </div>
             <div class="legend-row">
@@ -1884,6 +2327,17 @@
       </main>
 
       <aside class="sidebar" id="sidebar">
+        <!-- Audit F-A11Y-4: drag/tap handle for the bottom-sheet. Hidden on
+             desktop (≥900px). aria-controls + aria-expanded turn it into a
+             proper disclosure widget for screen readers. -->
+        <button
+          type="button"
+          class="sheet-handle"
+          id="sheet-handle"
+          aria-label="Toggle property panel"
+          aria-controls="sidebar"
+          aria-expanded="false"
+        ></button>
         <div class="sidebar-header">
           <h2 id="sidebar-title">PROPERTY INTELLIGENCE</h2>
         </div>
@@ -1918,6 +2372,37 @@
             <div id="autocomplete-status" class="sr-only" role="status" aria-atomic="true"></div>
           </div>
           <div id="search-hint" class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
+        </div>
+        <!-- PWA install affordance. Sits between search and tabs so it's
+             persistent across updateSidebar() rebuilds (which only swap
+             #sidebar-content). The install-chip is shown to users whose
+             browser fires beforeinstallprompt (Chrome / Edge / Android);
+             the ios-install-hint is shown to iOS Safari users (no
+             beforeinstallprompt support). Both stay hidden in standalone
+             mode and after dismissal. -->
+        <div class="install-prompt" id="install-prompt" hidden>
+          <button type="button" class="install-chip" id="install-chip" hidden>
+            <span aria-hidden="true">&#x21E9;</span>
+            Install Sky Score
+          </button>
+          <div class="ios-install-hint" id="ios-install-hint" hidden>
+            <span class="ios-install-icon" aria-hidden="true">&#x2191;</span>
+            <span class="ios-install-text">
+              Tap
+              <strong>Share</strong>
+              &rarr;
+              <strong>Add to Home Screen</strong>
+              to install
+            </span>
+            <button
+              type="button"
+              class="ios-install-dismiss"
+              id="ios-install-dismiss"
+              aria-label="Dismiss install hint"
+            >
+              &times;
+            </button>
+          </div>
         </div>
         <nav class="tab-bar" role="tablist" aria-label="Content sections">
           <button
@@ -1968,6 +2453,17 @@
                 Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to
                 get noise analysis, property insights and a value score.
               </p>
+              <!-- Audit F-A11Y-8: quick-search chips so the empty state
+                   gives users a one-tap starting point. Buttons (not links)
+                   so they're keyboard-activatable; data-quicksearch holds
+                   the value passed to triggerSearch on click. -->
+              <div class="quicksearch" role="group" aria-label="Quick search examples">
+                <span class="quicksearch-label">Try:</span>
+                <button type="button" class="quicksearch-chip" data-quicksearch="SW11 1AA">SW11 1AA</button>
+                <button type="button" class="quicksearch-chip" data-quicksearch="Wandsworth">Wandsworth</button>
+                <button type="button" class="quicksearch-chip" data-quicksearch="Camden">Camden</button>
+                <button type="button" class="quicksearch-chip" data-quicksearch="Hounslow">Hounslow</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2000,6 +2496,163 @@
 
     <script src="js/api-base.js"></script>
     <script>
+      // PWA: register the service worker. Runs after window load so it
+      // never blocks the initial map paint. Service workers only register
+      // over HTTPS or http://localhost — file:// is silently no-op, which
+      // is fine for local layout testing. The catch is intentional: if
+      // registration fails we don't want to break the rest of the app.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.warn('[Sky Score] SW registration failed:', err);
+          });
+        });
+      }
+
+      // Capacitor native bridge. window.Capacitor only exists when the
+      // app is running inside the iOS or Android native WebView; on web
+      // and PWA installs it's undefined and these features stay dormant.
+      // The same index.html serves all three contexts — feature detect,
+      // don't fork.
+      (function setupNativeFeatures() {
+        const cap = window.Capacitor;
+        if (!cap || typeof cap.isNativePlatform !== 'function' || !cap.isNativePlatform()) return;
+
+        // Reveal native-only UI.
+        document.querySelectorAll('.native-only').forEach((el) => {
+          el.hidden = false;
+        });
+
+        // Geolocation: tap the locate button → device GPS → reverse-
+        // geocode to UK postcode → trigger the existing search flow.
+        // High-accuracy mode requested (we want the postcode the user
+        // is *in*, not the borough centre); 10s timeout because GPS
+        // cold-starts can take a few seconds on mobile.
+        const locateBtn = document.getElementById('locate-me');
+        if (locateBtn) {
+          locateBtn.addEventListener('click', async () => {
+            const original = locateBtn.textContent;
+            locateBtn.textContent = '…';
+            locateBtn.disabled = true;
+            try {
+              const { Geolocation } = cap.Plugins;
+              const pos = await Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 10000,
+              });
+              const { latitude, longitude } = pos.coords;
+              const r = await fetch(`https://api.postcodes.io/postcodes?lon=${longitude}&lat=${latitude}&limit=1`);
+              const data = await r.json();
+              const pc = data && data.result && data.result[0] && data.result[0].postcode;
+              if (pc) {
+                const inp = document.getElementById('search-input');
+                if (inp) inp.value = pc;
+                if (typeof triggerSearch === 'function') triggerSearch(pc);
+              } else {
+                console.warn('[Sky Score] No UK postcode at this location');
+              }
+            } catch (e) {
+              console.error('[Sky Score] Locate-me failed:', e);
+            } finally {
+              locateBtn.textContent = original;
+              locateBtn.disabled = false;
+            }
+          });
+        }
+
+        // Native share. Exposed as window.shareScore so updateSidebar()
+        // can call it from a Share button in the result panel. Falls
+        // back to no-op silently if the plugin isn't loaded.
+        window.shareScore = async function (data) {
+          try {
+            const { Share } = cap.Plugins;
+            await Share.share({
+              title: 'Sky Score',
+              text: `${data.name}: ${data.score}/10 — ${data.persona || 'Buyer'} score on Sky Score`,
+              url: 'https://skyscore.co.uk/',
+              dialogTitle: 'Share this score',
+            });
+          } catch (e) {
+            console.warn('[Sky Score] Share cancelled or failed:', e);
+          }
+        };
+      })();
+
+      // PWA install UX. Two paths because Chrome/Edge/Android fire
+      // beforeinstallprompt while iOS Safari deliberately does not —
+      // iOS users have to use Share → Add to Home Screen manually, so
+      // they get a one-time hint instead of a one-tap chip.
+      (function setupInstallUX() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone =
+          window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        let deferredPrompt = null;
+
+        function show(el) {
+          if (el) el.hidden = false;
+          const wrap = document.getElementById('install-prompt');
+          if (wrap) wrap.hidden = false;
+        }
+        function hideAll() {
+          ['install-chip', 'ios-install-hint', 'install-prompt'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.hidden = true;
+          });
+        }
+
+        if (isStandalone) return; // already installed — nothing to show
+
+        if (isIOS) {
+          // Safari iOS: no beforeinstallprompt API. Show the share-sheet
+          // hint unless the user has dismissed it before.
+          if (!localStorage.getItem('ios-install-dismissed')) {
+            document.addEventListener('DOMContentLoaded', () => {
+              show(document.getElementById('ios-install-hint'));
+            });
+          }
+        } else {
+          // Chrome / Edge / Android: capture the prompt event and surface
+          // a custom chip. Calling prompt() is only valid once per event
+          // instance — after the user makes their choice we drop the ref.
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            show(document.getElementById('install-chip'));
+          });
+        }
+
+        document.addEventListener('click', async (ev) => {
+          if (ev.target.closest('#install-chip')) {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            // Await the user choice but ignore the outcome — we hide the
+            // chip either way; the appinstalled event handles success.
+            await deferredPrompt.userChoice.catch(() => {});
+            deferredPrompt = null;
+            const chip = document.getElementById('install-chip');
+            if (chip) chip.hidden = true;
+            // Keep the ios hint visible if it was shown (it won't be on
+            // non-iOS, so this branch is harmless on Chrome).
+            const hint = document.getElementById('ios-install-hint');
+            if (!hint || hint.hidden) {
+              const wrap = document.getElementById('install-prompt');
+              if (wrap) wrap.hidden = true;
+            }
+          } else if (ev.target.closest('#ios-install-dismiss')) {
+            localStorage.setItem('ios-install-dismissed', '1');
+            const hint = document.getElementById('ios-install-hint');
+            if (hint) hint.hidden = true;
+            const chip = document.getElementById('install-chip');
+            if (!chip || chip.hidden) {
+              const wrap = document.getElementById('install-prompt');
+              if (wrap) wrap.hidden = true;
+            }
+          }
+        });
+
+        window.addEventListener('appinstalled', hideAll);
+      })();
+
       // ============================================================
       // CONSTANTS & DATA
       // ============================================================
@@ -3671,15 +4324,20 @@
           // replaced with real ones. These functions check their own
           // preconditions (selectedBorough may be null, etc.).
           if (typeof renderBoroughRanking === 'function') {
-            try { renderBoroughRanking(); } catch (e) { /* not yet ready */ }
+            try {
+              renderBoroughRanking();
+            } catch (e) {
+              /* not yet ready */
+            }
           }
           if (typeof selectedBorough !== 'undefined' && selectedBorough) {
-            const data = (typeof getActiveBoroughData === 'function')
-              ? getActiveBoroughData()[selectedBorough]
-              : null;
+            const data = typeof getActiveBoroughData === 'function' ? getActiveBoroughData()[selectedBorough] : null;
             if (data && typeof updateSidebar === 'function') {
-              try { updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false }); }
-              catch (e) { /* sidebar not in analysis mode */ }
+              try {
+                updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false });
+              } catch (e) {
+                /* sidebar not in analysis mode */
+              }
             }
           }
         } catch (err) {
@@ -3939,8 +4597,8 @@
       //    inhabited London at the Lden 55+ dB threshold.)
       const LONDON_AIRCRAFT_BBOX = {
         minLon: -0.85,
-        maxLon: 0.40,
-        minLat: 51.10,
+        maxLon: 0.4,
+        minLat: 51.1,
         maxLat: 51.78,
       };
       // 4096 px (visual fix-DEFRA-2): user reported the contour bands were
@@ -4945,9 +5603,13 @@
         const status = document.getElementById('autocomplete-status');
         const total = boroughMatches.length + areaMatches.length + (results ? results.length : 0);
         if (status) {
-          status.textContent = total === 0
-            ? 'No suggestions for "' + inputVal + '". Press Enter to search anyway.'
-            : total + ' suggestion' + (total === 1 ? '' : 's') + ' available. Use arrow keys to navigate, Enter to select.';
+          status.textContent =
+            total === 0
+              ? 'No suggestions for "' + inputVal + '". Press Enter to search anyway.'
+              : total +
+                ' suggestion' +
+                (total === 1 ? '' : 's') +
+                ' available. Use arrow keys to navigate, Enter to select.';
         }
         if (!hasAny) {
           dropdown.classList.remove('visible');
@@ -5533,10 +6195,24 @@
       function scoreColor(v) {
         return v >= 7 ? '#26F27D' : v >= 4 ? '#F2B826' : '#F27D26';
       }
+      // Audit F-A11Y-2 (WCAG 1.4.1): pair every score colour with a redundant
+      // non-colour signal — a glyph for colour-blind sighted users, plus an
+      // adjective used for both visible label and screen-reader aria-label.
+      // Glyph chosen to be visually distinct in monochrome (filled vs hollow
+      // vs down-arrow) rather than three same-shape variants.
+      function scoreLabel(v) {
+        if (v >= 7) return { glyph: '▲', word: 'Strong' }; // ▲
+        if (v >= 4) return { glyph: '●', word: 'Mixed' }; // ●
+        return { glyph: '▼', word: 'Weak' }; // ▼
+      }
 
       function updateSidebar(data, { switchToAnalysis = true } = {}) {
         document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
         if (switchToAnalysis) switchTab('analysis');
+        // Audit F-A11Y-4 hook: a result has just landed. On phones the
+        // sheet starts in 'peek' so the map stays visible — TODO below
+        // decides whether to auto-open it now or leave the user to tap up.
+        revealSheetIfMobile();
 
         const priceFull = formatPrice(data.avg_price, currentCity);
         const noiseClass =
@@ -5560,7 +6236,7 @@
     <div class="sidebar-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict score-explain-trigger" style="color:${scoreColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip">${data.score}/10 - ${PERSONAS[currentPersona].label} Buyer Score</div>
+          <div class="summary-verdict score-explain-trigger" style="color:${scoreColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 — ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
           ${getVerdict(data)}
         </div>
         <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}" style="margin-left:10px;">
@@ -5664,9 +6340,19 @@
         return `This area has <strong>low aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away${d > 5 ? ' and flight paths are ' + d.toFixed(1) + 'km away' : ''}. Aircraft noise is unlikely to be a significant factor here.`;
       }
 
+      // Audit F-A11Y-4: bottom-sheet reveal policy. Called whenever a
+      // result lands in the sidebar. Auto-open chosen for discoverability —
+      // the alternative was peek-only or once-per-session; auto-open won
+      // because the alternatives risked users not noticing their result.
+      function revealSheetIfMobile() {
+        if (window.innerWidth > 900) return;
+        if (window.setSheetState) window.setSheetState('open');
+      }
+
       function updateSidebarPostcode(analysis, boroughData) {
         document.getElementById('sidebar-title').textContent = analysis.postcode;
         switchTab('analysis');
+        revealSheetIfMobile();
 
         const noiseClass =
           analysis.noiseEstimate === 'High'
@@ -5720,7 +6406,7 @@
       <div class="sidebar-section">
         <h3>${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} SCORE - THIS LOCATION</h3>
         <div class="summary-card">
-          <div class="summary-verdict" style="color:${scoreColor(pcScore)}">${pcScore}/10 - ${PERSONAS[currentPersona].label} Buyer Score</div>
+          <div class="summary-verdict" style="color:${scoreColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 — ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
           ${pcVerdict}
         </div>
         <div class="score-breakdown" style="margin-top:14px;">
@@ -6167,8 +6853,10 @@
       // in London FLIGHT_PATHS and JFK + LGA in NYC after the 2026-05-07
       // trim. Audit visual fix-1.
       const PATH_COLORS = {
-        LHR: '#F27D26', JFK: '#F27D26',
-        LCY: '#267DF2', LGA: '#267DF2',
+        LHR: '#F27D26',
+        JFK: '#F27D26',
+        LCY: '#267DF2',
+        LGA: '#267DF2',
       };
       function renderCityFlightPaths() {
         const paths = getActiveFlightPaths();
@@ -6214,12 +6902,7 @@
               .attrTween('cx', tween('x'))
               .attrTween('cy', tween('y'))
               .on('end', animateDot);
-            halo
-              .transition()
-              .duration(dur)
-              .ease(d3.easeLinear)
-              .attrTween('cx', tween('x'))
-              .attrTween('cy', tween('y'));
+            halo.transition().duration(dur).ease(d3.easeLinear).attrTween('cx', tween('x')).attrTween('cy', tween('y'));
           }
           animateDot();
         });
@@ -6265,6 +6948,7 @@
             .attr('stroke-width', 0.5)
             .attr('transform', 'rotate(45,' + x + ',' + y + ')');
           ag.append('text')
+            .attr('class', 'heliport-label')
             .attr('x', x + 6)
             .attr('y', y + 3)
             .text(hp.code)
@@ -6339,7 +7023,7 @@
         <td>${esc(n.name)}<span style="display:block;font-size:9px;color:var(--mid);">${esc(n.borough)}</span></td>
         <td class="col-noise">${noiseTag(n.impact)}</td>
         <td class="col-price">${formatPriceCompact(n.avg_price, currentCity)}</td>
-        <td class="col-score" style="color:${scoreColor(n.score)}">${n.score}</td>
+        <td class="col-score" style="color:${scoreColor(n.score)}" aria-label="${scoreLabel(n.score).word} score: ${n.score} out of 10"><span aria-hidden="true">${scoreLabel(n.score).glyph}</span> ${n.score}</td>
       </tr>`;
           });
         } else {
@@ -6351,7 +7035,7 @@
         <td>${esc(name)}</td>
         <td class="col-noise">${noiseTag(data.impact)}</td>
         <td class="col-price">${formatPriceCompact(data.avg_price, currentCity)}</td>
-        <td class="col-score" style="color:${scoreColor(data.score)}">${data.score}</td>
+        <td class="col-score" style="color:${scoreColor(data.score)}" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}</td>
       </tr>`;
           });
         }
@@ -6627,6 +7311,83 @@
         document
           .getElementById('zoom-reset')
           .addEventListener('click', () => svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity));
+
+        // Audit F-A11Y-3: legend collapse/expand on phones. The CSS general-
+        // sibling rule does the visual hiding; this just flips aria-expanded
+        // on tap or Enter/Space (button default).
+        const legendToggle = document.getElementById('legend-toggle');
+        if (legendToggle) {
+          legendToggle.addEventListener('click', () => {
+            const expanded = legendToggle.getAttribute('aria-expanded') === 'true';
+            legendToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+          });
+        }
+
+        // Audit F-A11Y-8: quick-search chips inside the empty-state.
+        // Delegated listener on document because the empty-state markup
+        // gets rebuilt by updateSidebar() on borough click; rebinding per
+        // render would leak handlers. data-quicksearch carries the term
+        // passed to triggerSearch (the same fn the autocomplete uses).
+        document.addEventListener('click', (ev) => {
+          const chip = ev.target.closest('.quicksearch-chip');
+          if (!chip) return;
+          const val = chip.dataset.quicksearch;
+          if (!val) return;
+          const input = document.getElementById('search-input');
+          if (input) input.value = val;
+          if (typeof triggerSearch === 'function') triggerSearch(val);
+        });
+
+        // Audit F-A11Y-5: layers-trigger flips aria-expanded which the
+        // CSS sibling rule reads to show/hide the popover. Tapping any
+        // toggle inside the popover doesn't auto-close it (multi-select
+        // expected), but tapping outside the popover does.
+        const layersTrigger = document.getElementById('layers-trigger');
+        const layerTogglesPanel = document.getElementById('layer-toggles');
+        if (layersTrigger) {
+          layersTrigger.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const open = layersTrigger.getAttribute('aria-expanded') === 'true';
+            layersTrigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+          });
+          // Close popover when tapping anywhere outside it.
+          document.addEventListener('click', (ev) => {
+            if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
+            if (layerTogglesPanel.contains(ev.target)) return;
+            if (layersTrigger.contains(ev.target)) return;
+            layersTrigger.setAttribute('aria-expanded', 'false');
+          });
+        }
+
+        // Audit F-A11Y-4: bottom-sheet sidebar on phones. .sheet-open class
+        // controls the open/peek visual state; aria-expanded on the handle
+        // mirrors it for assistive tech. Exposed as window.setSheetState so
+        // updateSidebar() etc. can request the sheet open after a result.
+        const sheetHandle = document.getElementById('sheet-handle');
+        const sheetEl = document.getElementById('sidebar');
+        window.setSheetState = function (state) {
+          // state: 'open' | 'peek'
+          if (!sheetEl || !sheetHandle) return;
+          const open = state === 'open';
+          sheetEl.classList.toggle('sheet-open', open);
+          sheetHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+        if (sheetHandle) {
+          sheetHandle.addEventListener('click', () => {
+            const open = sheetEl.classList.contains('sheet-open');
+            window.setSheetState(open ? 'peek' : 'open');
+          });
+          // On phones the sheet starts open so the sidebar is fully usable
+          // on initial load. User can tap the handle to collapse to peek
+          // (search box stays visible at peek height). Above 900px the
+          // sheet is irrelevant — desktop sidebar is a static column.
+          if (window.innerWidth <= 900) {
+            window.setSheetState('open');
+          }
+        }
+        // TODO (you): decide when to auto-open the sheet on result load.
+        // See updateSidebar() — search result and borough click both call it.
+        // The hook point is below in updateSidebar; expand based on viewport.
 
         // Layer toggles
         document.querySelectorAll('.layer-toggle').forEach((el) => {
