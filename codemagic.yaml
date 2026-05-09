@@ -1,0 +1,130 @@
+# Codemagic CI/CD config for Sky Score native builds.
+#
+# Two workflows:
+#   - ios-workflow:     builds an .ipa for App Store / TestFlight
+#   - android-workflow: builds an .aab for Google Play
+#
+# Both run from the `mobile/` subdirectory. Web assets are assembled
+# from the parent web app via `npm run build:web`, then `npx cap sync`
+# pushes them into the native projects.
+#
+# Secrets live in Codemagic's dashboard, NOT in this file:
+#   - Apple ID + App-Specific Password (for App Store Connect)
+#   - Google Play Service Account JSON (for Play Console upload)
+#   - Android keystore (uploaded once, referenced by name below)
+#   - Apple signing certs + provisioning profiles (managed by codemagic)
+#
+# Reference: https://docs.codemagic.io/yaml-quick-start/building-an-ionic-capacitor-app/
+
+workflows:
+  # ---- iOS ---------------------------------------------------------
+  ios-workflow:
+    name: Sky Score iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: codemagic_asc # set up in Codemagic UI: Teams → Integrations
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uk.co.skyscore.app
+      vars:
+        BUNDLE_ID: "uk.co.skyscore.app"
+        XCODE_WORKSPACE: "mobile/ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+      node: 20.x
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Install npm deps
+        script: |
+          cd mobile
+          npm ci
+      - name: Assemble web bundle
+        script: |
+          cd mobile
+          npm run build:web
+      - name: Add iOS platform (regenerated each build)
+        script: |
+          cd mobile
+          npx cap add ios || true
+          npx cap sync ios
+      - name: Pod install
+        script: |
+          cd mobile/ios/App
+          pod install
+      - name: Set bundle id + version
+        script: |
+          cd mobile/ios/App
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.$BUILD_NUMBER" App/Info.plist
+      - name: Build .ipa
+        script: |
+          cd mobile
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      # Auto-upload to TestFlight on every successful build. Disable
+      # this section if you'd rather upload manually for the first run.
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  # ---- Android -----------------------------------------------------
+  android-workflow:
+    name: Sky Score Android
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      android_signing:
+        - sky_score_keystore # uploaded once via Codemagic UI: Teams → Code signing identities
+      groups:
+        - google_play_credentials # contains GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      vars:
+        PACKAGE_NAME: "uk.co.skyscore.app"
+      node: 20.x
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $HOME/.gradle/caches
+    scripts:
+      - name: Install npm deps
+        script: |
+          cd mobile
+          npm ci
+      - name: Assemble web bundle
+        script: |
+          cd mobile
+          npm run build:web
+      - name: Sync Android
+        script: |
+          cd mobile
+          npx cap sync android
+      - name: Set version code
+        script: |
+          cd mobile/android
+          # Codemagic exposes BUILD_NUMBER monotonically; use it as
+          # versionCode so each Play Store upload is strictly newer.
+          sed -i.bak "s/versionCode .*/versionCode $BUILD_NUMBER/" app/build.gradle
+          sed -i.bak "s/versionName .*/versionName \"1.0.$BUILD_NUMBER\"/" app/build.gradle
+      - name: Build AAB
+        script: |
+          cd mobile/android
+          ./gradlew bundleRelease
+    artifacts:
+      - mobile/android/app/build/outputs/bundle/release/*.aab
+      - mobile/android/app/build/outputs/apk/release/*.apk
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: false
