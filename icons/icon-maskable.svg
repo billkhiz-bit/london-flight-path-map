@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sky Score maskable icon. Same airplane mark as icon.svg but the
+  meaningful content (the airplane) is constrained to the inner 80%
+  safe zone, with the dark background bleeding to the edges. Android
+  launchers crop the outer 20% to apply circular / squircle / teardrop
+  shapes — without this variant the airplane would get clipped on
+  shape-aggressive launchers (Pixel, OnePlus, Samsung One UI default).
+  Spec: https://web.dev/maskable-icon/
+-->
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sky Score">
+  <rect width="512" height="512" fill="#141414"/>
+  <!-- Airplane scaled down so it sits inside the 80% safe zone (centre 410px). -->
+  <g transform="translate(150 150) scale(8.83)" fill="#F27D26">
+    <path d="M21,16v-2l-8-5V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/>
+  </g>
+</svg>

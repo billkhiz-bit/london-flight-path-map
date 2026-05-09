@@ -1,0 +1,28 @@
+{
+  "name": "Sky Score",
+  "short_name": "Sky Score",
+  "description": "Postcode-level noise, livability and affordability data for UK and NYC property. Independent of estate agents and listings sites.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e4e3e0",
+  "theme_color": "#fafaf9",
+  "lang": "en-GB",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "navigation"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
