@@ -61,6 +61,46 @@ code if a Lambda's `requirements.txt` hasn't changed but the source has.
 **Pre-flight before deploy**: `/preflight` (linting, security scan, tests).
 Blocking: ESLint errors, html-validate errors, failing pytest.
 
+**PWA assets** (one-off after Wave 13.1; rerun on icon/manifest changes):
+```bash
+# Manifest, MIME type matters — some browsers reject application/json
+AWS_PROFILE=flightmap aws s3 cp manifest.webmanifest \
+  s3://london-flight-map-frontend/manifest.webmanifest \
+  --content-type "application/manifest+json" --region eu-west-2
+
+# Icons (recursive)
+AWS_PROFILE=flightmap aws s3 cp icons/ \
+  s3://london-flight-map-frontend/icons/ \
+  --recursive --content-type "image/svg+xml" --region eu-west-2
+
+# Service worker — CRITICAL: must be no-cache, otherwise SW updates
+# never propagate (CloudFront caches the SW itself, then never refreshes)
+AWS_PROFILE=flightmap aws s3 cp sw.js \
+  s3://london-flight-map-frontend/sw.js \
+  --content-type "application/javascript" \
+  --cache-control "no-cache, no-store, must-revalidate" \
+  --region eu-west-2
+
+# Privacy policy page (referenced by store listings + native app)
+AWS_PROFILE=flightmap aws s3 cp privacy.html \
+  s3://london-flight-map-frontend/privacy \
+  --content-type "text/html" --region eu-west-2
+
+# Deep-link files — DO NOT deploy until placeholders are replaced with
+# real values (Apple Team ID, Android keystore SHA-256). See mobile/DEEP_LINKING.md.
+AWS_PROFILE=flightmap aws s3 cp .well-known/apple-app-site-association \
+  s3://london-flight-map-frontend/.well-known/apple-app-site-association \
+  --content-type "application/json" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp .well-known/assetlinks.json \
+  s3://london-flight-map-frontend/.well-known/assetlinks.json \
+  --content-type "application/json" --region eu-west-2
+```
+
+**Native iOS / Android binaries** (Wave 13.2+):
+- Web changes propagate to native apps **only** when a Codemagic build is triggered + reviewed by Apple/Google. Plan binary releases every 2-4 weeks.
+- Full pre-release runbook: `mobile/RELEASE_CHECKLIST.md` (9 steps including version bump, asset regen, smoke test, store promotion).
+- Codemagic auto-publishes to TestFlight (iOS) + Play Console internal track (Android); manual promotion to public release via the respective consoles.
+
 ---
 
 ## 3. One-Time Admin Actions (require root / IAM admin)
