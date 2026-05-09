@@ -274,7 +274,7 @@ Sky Score has three install paths sharing the same `index.html`:
 
 1. **Web** at <https://skyscore.co.uk/> (no install)
 2. **PWA** via web manifest + service worker (Add to Home Screen on any modern browser)
-3. **Native iOS / Android** via Capacitor wrapper at `mobile/`, built by Codemagic in cloud Mac (iOS) + Linux (Android) instances, distributed via App Store + Play Store
+3. **Native iOS / Android** via Capacitor wrapper at `mobile/`. iOS built by Codemagic in cloud Mac (no local Mac available); Android built locally via Android Studio + gradle on Windows. Distributed via App Store + Play Store. Mirrors the Noor app's proven workflow.
 
 ### Native-only features
 
