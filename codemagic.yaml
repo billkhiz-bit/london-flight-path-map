@@ -1,23 +1,22 @@
-# Codemagic CI/CD config for Sky Score native builds.
+# Codemagic CI/CD config for Sky Score iOS builds.
 #
-# Two workflows:
-#   - ios-workflow:     builds an .ipa for App Store / TestFlight
-#   - android-workflow: builds an .aab for Google Play
+# iOS only. Android is built locally via Android Studio (or `gradlew
+# bundleRelease` on the command line) — see mobile/ANDROID_BUILD.md.
+# Mirroring the workflow used for the Noor app: cloud Mac is essential
+# for iOS because there's no local Mac, but Android builds fine on
+# Windows so cloud-Linux time would be pure overhead.
 #
-# Both run from the `mobile/` subdirectory. Web assets are assembled
+# Build runs from the `mobile/` subdirectory. Web assets are assembled
 # from the parent web app via `npm run build:web`, then `npx cap sync`
-# pushes them into the native projects.
+# pushes them into the native iOS project.
 #
 # Secrets live in Codemagic's dashboard, NOT in this file:
-#   - Apple ID + App-Specific Password (for App Store Connect)
-#   - Google Play Service Account JSON (for Play Console upload)
-#   - Android keystore (uploaded once, referenced by name below)
-#   - Apple signing certs + provisioning profiles (managed by codemagic)
+#   - App Store Connect API key (.p8 + Key ID + Issuer ID)
+#   - Apple signing certs + provisioning profiles (managed by Codemagic)
 #
 # Reference: https://docs.codemagic.io/yaml-quick-start/building-an-ionic-capacitor-app/
 
 workflows:
-  # ---- iOS ---------------------------------------------------------
   ios-workflow:
     name: Sky Score iOS
     instance_type: mac_mini_m2
@@ -82,57 +81,3 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-
-  # ---- Android -----------------------------------------------------
-  android-workflow:
-    name: Sky Score Android
-    instance_type: linux_x2
-    max_build_duration: 60
-    environment:
-      android_signing:
-        - sky_score_keystore # uploaded once via Codemagic UI: Teams → Code signing identities
-      groups:
-        - google_play_credentials # contains GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-      vars:
-        PACKAGE_NAME: "uk.co.skyscore.app"
-      node: 20.x
-    cache:
-      cache_paths:
-        - $HOME/.npm
-        - $HOME/.gradle/caches
-    scripts:
-      - name: Install npm deps
-        script: |
-          cd mobile
-          npm ci
-      - name: Assemble web bundle
-        script: |
-          cd mobile
-          npm run build:web
-      - name: Generate icons + splash from SVG sources
-        script: |
-          cd mobile
-          npm run build:assets
-      - name: Sync Android
-        script: |
-          cd mobile
-          npx cap sync android
-      - name: Set version code
-        script: |
-          cd mobile/android
-          # Codemagic exposes BUILD_NUMBER monotonically; use it as
-          # versionCode so each Play Store upload is strictly newer.
-          sed -i.bak "s/versionCode .*/versionCode $BUILD_NUMBER/" app/build.gradle
-          sed -i.bak "s/versionName .*/versionName \"1.0.$BUILD_NUMBER\"/" app/build.gradle
-      - name: Build AAB
-        script: |
-          cd mobile/android
-          ./gradlew bundleRelease
-    artifacts:
-      - mobile/android/app/build/outputs/bundle/release/*.aab
-      - mobile/android/app/build/outputs/apk/release/*.apk
-    publishing:
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
-        submit_as_draft: false

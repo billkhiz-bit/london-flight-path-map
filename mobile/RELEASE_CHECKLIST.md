@@ -19,15 +19,15 @@ If web and native differ, the App Store user gets a different experience from th
 - [ ] Decide the new semantic version (e.g. 1.0.4 → 1.0.5 for a small change, 1.0.4 → 1.1.0 for a feature, 1.0.4 → 2.0.0 for a breaking change)
 - [ ] `mobile/capacitor.config.ts` — no version field, this is set per platform below
 
-For **Android**:
-- [ ] `mobile/android/app/build.gradle` — bump `versionCode` (integer, must monotonically increase) AND `versionName` (semver string)
-- [ ] OR rely on Codemagic's `BUILD_NUMBER` (auto-incremented) — the yaml currently does this via `sed`
+For **Android (local Android Studio build, see `ANDROID_BUILD.md`)**:
+- [ ] `mobile/android/app/build.gradle` — bump `versionCode` (integer, must strictly increase) AND `versionName` (semver string)
+- [ ] You must do this manually for each release; no automation
 
-For **iOS**:
+For **iOS (Codemagic cloud build)**:
 - [ ] Codemagic auto-bumps `CFBundleVersion` from `BUILD_NUMBER`; `CFBundleShortVersionString` is `"1.0.$BUILD_NUMBER"` (defined in `codemagic.yaml`)
 - [ ] If you want a different version scheme (e.g. semantic), edit the yaml's "Set bundle id + version" step
 
-The single most common Play Console rejection is **versionCode not strictly increasing**. The yaml prevents this by using `BUILD_NUMBER` but it's worth eyeballing the Codemagic build log to confirm.
+The single most common Play Console rejection is **versionCode not strictly increasing**. Eyeball the gradle file before each Android release.
 
 ---
 
@@ -55,28 +55,38 @@ The single most common Play Console rejection is **versionCode not strictly incr
 
 ---
 
-## 6. Codemagic build trigger
+## 6. Build triggers
+
+### iOS (Codemagic)
 
 - [ ] Push changes to GitHub (`git push origin master`)
-- [ ] Codemagic detects the push and either auto-builds or shows up in "Recent builds" awaiting trigger
-- [ ] Click `android-workflow` → **Start new build** → master branch → wait ~10 min
-- [ ] Build succeeded — `.aab` artefact downloadable from the build page
-- [ ] Click `ios-workflow` → **Start new build** → master branch → wait ~12 min
-- [ ] Build succeeded — `.ipa` artefact downloadable
+- [ ] In Codemagic UI, click `ios-workflow` → **Start new build** → master branch → wait ~12 min
+- [ ] Build succeeded — `.ipa` artefact downloadable; auto-uploaded to TestFlight
 
-If a build fails, the most useful place to look is the **Codemagic build log** under the failing step. Common failures:
-- Apple signing: missing or expired provisioning profile → re-run the App Store Connect integration in Codemagic settings
-- Android keystore mismatch: Play Console rejects with "signature mismatch" → the keystore Codemagic uses must match the original keystore from the very first upload (cannot be changed)
-- Web bundle missing files: `mobile/scripts/copy-web.mjs` exited with a `MISSING` warning → check the parent web app structure
+If iOS fails, look in the Codemagic log:
+- Apple signing: missing or expired provisioning profile → re-run the App Store Connect integration in Codemagic Teams → Integrations
+- Web bundle missing files: `copy-web.mjs` exited with a `MISSING` warning → fix the parent web app, push again
+- Pod install errors: `xcode: latest` may have rolled to a new version that broke a plugin → pin `xcode: 16.x` in `codemagic.yaml`
+
+### Android (local Android Studio, see `ANDROID_BUILD.md`)
+
+- [ ] `cd mobile && npm run sync && npm run build:assets`
+- [ ] Open `mobile/android/` in Android Studio (or use `./gradlew bundleRelease` for CLI)
+- [ ] Bump `app/build.gradle` versionCode + versionName
+- [ ] Build → Generate Signed Bundle / APK → AAB → release variant → output `app-release.aab`
+- [ ] Upload AAB to Play Console manually (Production / Internal testing track)
+
+If Android fails:
+- "versionCode X already exists" → bump versionCode, retry
+- "signature does not match the existing one" → using a different keystore than the original; only the FIRST keystore can ever sign this app. Recover from your safe copy
+- Gradle sync failure → File → Invalidate Caches and Restart in Android Studio
 
 ---
 
 ## 7. Post-build smoke test
 
-After Codemagic uploads to TestFlight (iOS) and Play Console internal track (Android):
-
-- [ ] **TestFlight**: install the new build on your iPhone — verify the locate-me button works, the bottom sheet renders, the score loads
-- [ ] **Play Console internal track**: opt your test device into the internal track at <https://play.google.com/apps/internaltest> with your test account, install, repeat the same checks
+- [ ] **TestFlight (iOS)**: install the new build on your iPhone — verify the locate-me button works, the bottom sheet renders, the score loads
+- [ ] **Play Console internal track (Android)**: after upload, opt your test device into the internal track at <https://play.google.com/apps/internaltest> with your test account, install, repeat the same checks
 
 Don't promote to public release until the smoke test passes on at least one real device per platform.
 

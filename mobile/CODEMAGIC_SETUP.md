@@ -1,8 +1,8 @@
-# Codemagic setup for Sky Score
+# Codemagic setup for Sky Score (iOS only)
 
-The `codemagic.yaml` at the repo root defines two workflows (`ios-workflow`, `android-workflow`). This guide covers the **dashboard tasks** — the secrets and integrations Codemagic needs that can't live in the yaml file.
+The `codemagic.yaml` at the repo root defines a single workflow (`ios-workflow`). Codemagic only handles iOS for Sky Score, mirroring the Noor pattern: cloud Mac is essential because there's no local Mac, but Android builds locally on Windows via Android Studio (see [`ANDROID_BUILD.md`](./ANDROID_BUILD.md)).
 
-Do these once; subsequent builds just push code and tap "Start new build" in the Codemagic UI.
+This guide covers the **dashboard tasks** — the secrets and integrations Codemagic needs that can't live in the yaml file. Do these once; subsequent iOS builds just push code and tap "Start new build" in the Codemagic UI.
 
 ---
 
@@ -10,11 +10,11 @@ Do these once; subsequent builds just push code and tap "Start new build" in the
 
 1. Sign in at [codemagic.io](https://codemagic.io)
 2. **Add application** → choose GitHub → pick `billkhiz-bit/london-flight-path-map`
-3. Codemagic auto-detects `codemagic.yaml` at root. You should see both `ios-workflow` and `android-workflow` listed in the left sidebar.
+3. Codemagic auto-detects `codemagic.yaml` at root. You should see `ios-workflow` listed in the left sidebar.
 
 ---
 
-## 2. iOS: App Store Connect integration
+## 2. App Store Connect integration
 
 This lets Codemagic auto-sign builds and upload to TestFlight.
 
@@ -24,74 +24,46 @@ This lets Codemagic auto-sign builds and upload to TestFlight.
 4. Name the integration `codemagic_asc` (matches the yaml's `integrations: app_store_connect: codemagic_asc`)
 5. Select your team
 
-After this, the iOS workflow's `ios_signing` block will automatically fetch certs and provisioning profiles for `uk.co.skyscore.app`. Codemagic creates them if they don't exist yet.
+After this, the iOS workflow's `ios_signing` block automatically fetches certs and provisioning profiles for `uk.co.skyscore.app`. Codemagic creates them if they don't exist yet.
 
 ---
 
-## 3. Android: keystore + Play Console service account
-
-### 3a. Generate the Android keystore (one-off, on this machine)
-
-```bash
-keytool -genkey -v -keystore sky-score-release.jks \
-  -keyalg RSA -keysize 2048 -validity 10000 -alias sky-score
-```
-
-You'll be prompted for a keystore password, key password, and identity info. **Save these — you'll need them in step 3b and you cannot regenerate them later** (Play Store binds the app identity to this keystore for the lifetime of the listing).
-
-### 3b. Upload to Codemagic
-
-1. Dashboard → **Teams** → **Code signing identities** → **Android keystores** → **Add keystore**
-2. Reference name: `sky_score_keystore` (matches yaml's `android_signing: - sky_score_keystore`)
-3. Upload `sky-score-release.jks`, paste keystore password, key password, key alias `sky-score`
-
-### 3c. Google Play service account
-
-This lets Codemagic upload AABs to the Play Console.
-
-1. Play Console → **Setup** → **API access** → **Create new service account** (sends you to Google Cloud)
-2. Google Cloud → IAM → Service accounts → create with Project Editor + Service Account User roles
-3. Generate JSON key, download
-4. Back in Play Console → grant the service account access (Releases tab → All apps → Account permissions)
-5. Codemagic dashboard → **Teams** → **Environment variables** → **Add group** named `google_play_credentials`
-6. Add variable `GCLOUD_SERVICE_ACCOUNT_CREDENTIALS`, paste the JSON contents, mark as **Secure**
-
----
-
-## 4. First build
-
-1. In Codemagic dashboard, click `android-workflow` → **Start new build** → master branch
-2. Watch the log. First build takes ~10 min.
-3. Output: an `.aab` artifact downloadable from the build page, automatically uploaded to Play Console internal track if `publishing.google_play` succeeded.
-4. Same for `ios-workflow` — output is `.ipa`, uploaded to TestFlight.
-
----
-
-## 4b. Asset generation (icons + splash)
+## 3. Asset generation (icons + splash)
 
 The icon and splash sources live as SVGs at `mobile/assets/`:
 - `logo.svg` (full-bleed icon, 1024×1024)
-- `icon-foreground.svg` + `icon-background.svg` (Android adaptive icon)
+- `icon-foreground.svg` + `icon-background.svg` (Android adaptive icon — used for the local Android build)
 - `splash.svg` + `splash-dark.svg` (light + dark splash, 2732×2732)
 
-These are passed to `@capacitor/assets`, which generates 130+ platform-specific PNG variants (every Android density, every iOS size, PWA icons, light + dark splash for landscape and portrait). Run via:
+These are passed to `@capacitor/assets`, which generates 130+ platform-specific PNG variants (every iOS size, Android density variants, PWA icons, light + dark splash for landscape and portrait). The `ios-workflow` runs this as a build step automatically; locally:
 
 ```bash
 cd mobile
 npm run build:assets   # generates icons + splash for all platforms
 ```
 
-The output lands inside the `ios/` and `android/` native projects. Codemagic regenerates the assets on each cloud build (added as a build step in `codemagic.yaml`); you only need to run this locally if you want to preview Android icons before pushing.
-
 To **change the icon design**, edit the SVGs in `mobile/assets/` and rerun `npm run build:assets`. Keep the inner safe zone (60% of canvas) for the airplane silhouette so Android's adaptive shape masks don't clip it.
-
-For full store listings (App Store + Play Store assets like screenshots and feature graphics), see `STORE_LISTINGS.md` — those are still manual since they need actual app screenshots.
 
 ---
 
-## 5. App Store / Play Store listings
+## 4. First iOS build
 
-Codemagic publishes the binaries; you still need to fill out the **store listings** manually:
+1. In Codemagic dashboard, click `ios-workflow` → **Start new build** → master branch
+2. Watch the log. First build takes ~12 min.
+3. Output: an `.ipa` artefact downloadable from the build page, automatically uploaded to TestFlight if the App Store Connect integration succeeded.
+4. From TestFlight, install on your iPhone for smoke testing before submitting for App Store review.
+
+---
+
+## 5. Android (separate workflow, local)
+
+Android does NOT use Codemagic. See [`ANDROID_BUILD.md`](./ANDROID_BUILD.md) for the Android Studio + gradle process. Quick summary: open `mobile/android/` in Android Studio, Build → Generate Signed Bundle / APK → AAB → upload to Play Console manually.
+
+---
+
+## 6. App Store / Play Store listings
+
+Codemagic publishes the iOS binary; you still need to fill out the **store listings** manually. Ready-to-paste copy lives in [`STORE_LISTINGS.md`](./STORE_LISTINGS.md).
 
 **App Store Connect** ([appstoreconnect.apple.com](https://appstoreconnect.apple.com)):
 - App name: `Sky Score`
@@ -99,7 +71,7 @@ Codemagic publishes the binaries; you still need to fill out the **store listing
 - Category: Productivity / Reference
 - Description, keywords, support URL (skyscore.co.uk)
 - Screenshots: 6.7" iPhone (1290×2796), 6.5" iPhone (1242×2688), 12.9" iPad (2048×2732)
-- Privacy policy URL (required)
+- Privacy policy URL (required) — `https://skyscore.co.uk/privacy`
 - Age rating questionnaire
 
 **Play Console** ([play.google.com/console](https://play.google.com/console)):
@@ -115,7 +87,7 @@ Codemagic publishes the binaries; you still need to fill out the **store listing
 
 ---
 
-## 6. Apple Section 4.2 — surviving the review
+## 7. Apple Section 4.2 — surviving the review
 
 Apple frequently rejects apps that look like web wrappers. Sky Score's defence:
 
@@ -125,16 +97,20 @@ Mention this verbatim in the App Review notes field. Add a screenshot showing th
 
 If rejected: tighten the explanation, add additional native features (background notifications, native share), resubmit. Most apps clear review on the second attempt.
 
+Full review notes (paste into App Store Connect → App Review → Notes): [`APPLE_REVIEW_NOTES.md`](./APPLE_REVIEW_NOTES.md).
+
 ---
 
-## 7. Update cycle (after first ship)
+## 8. Update cycle (after first ship)
 
 For minor web changes (CSS, JS, copy):
 1. Edit `index.html`, deploy to S3 + CloudFront *as before* — that ships the PWA / web changes
-2. To ship the change to native users too: trigger a Codemagic build for the affected platform
-3. Codemagic uploads to TestFlight + Play Console internal track
+2. To ship the change to native users too:
+   - **iOS**: trigger a Codemagic build for `ios-workflow`
+   - **Android**: rebuild locally per `ANDROID_BUILD.md`, upload AAB to Play Console
+3. iOS auto-uploads to TestFlight; Android upload is manual
 4. Promote to production via App Store Connect / Play Console
 
-For native config changes (new plugin, app id, signing): edit `mobile/capacitor.config.ts` or `codemagic.yaml`, commit, trigger build.
+For native config changes (new plugin, app id, signing): edit `mobile/capacitor.config.ts` or `codemagic.yaml`, commit, trigger build (iOS) or rebuild locally (Android).
 
 The native shell is essentially a thin wrapper — most updates are web-only and don't need a binary release. Plan to release a binary every 2–4 weeks at most to keep both stores fresh; more often than that is rarely worth the review-cycle cost.
