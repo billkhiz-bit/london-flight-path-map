@@ -2,6 +2,15 @@
 
 Two-platform fastlane setup. Read this before running any `fastlane` or `make` target that touches the App Store / Play Console.
 
+**Verification status** (2026-05-09):
+- ✅ Ruby 3.3 + bundler installed (Windows, via `winget install RubyInstallerTeam.RubyWithDevKit.3.3`)
+- ✅ `bundle install` completed; `mobile/Gemfile.lock` committed
+- ✅ `bundle exec fastlane lanes` parses cleanly; all 8 lanes recognised
+- ✅ UTF-8 locale env vars (`LANG`, `LC_ALL`) set permanently — fastlane runs without warnings
+- ⏳ Pending: secrets configured (ASC API key, Play Console JSON), first store-listing entries, first run of any lane
+
+When you reach a green check on each item below, mark them here so future sessions know what state we're in.
+
 ---
 
 ## Setup (one-off, per machine)
