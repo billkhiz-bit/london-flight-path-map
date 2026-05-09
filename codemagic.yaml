@@ -48,6 +48,10 @@ workflows:
         script: |
           cd mobile
           npm run build:web
+      - name: Generate icons + splash from SVG sources
+        script: |
+          cd mobile
+          npm run build:assets
       - name: Add iOS platform (regenerated each build)
         script: |
           cd mobile
@@ -105,6 +109,10 @@ workflows:
         script: |
           cd mobile
           npm run build:web
+      - name: Generate icons + splash from SVG sources
+        script: |
+          cd mobile
+          npm run build:assets
       - name: Sync Android
         script: |
           cd mobile
