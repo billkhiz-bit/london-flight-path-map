@@ -1,0 +1,156 @@
+# Sky Score fastlane configuration.
+#
+# Two platforms: android (local AAB → Play Console) and ios (App Store
+# Connect submission of the build Codemagic uploaded to TestFlight).
+#
+# Set up once (per machine):
+#   1. Install Ruby (Windows: winget install RubyInstallerTeam.RubyWithDevKit.3.3)
+#   2. cd mobile && bundle install
+#   3. Set the secrets — see Appfile + the env-var checklist below
+#   4. fastlane <platform> <lane>  OR via Makefile: make android-upload / make ios-submit
+#
+# Required env vars (or .env file at repo root, loaded by your shell):
+#
+#   ANDROID:
+#     PLAY_CONSOLE_JSON_KEY       Path to the Google Play Console service account JSON
+#                                 Created at Play Console → Setup → API access
+#     ANDROID_AAB_PATH            Optional override for the AAB location
+#                                 Default: ../mobile/android/app/build/outputs/bundle/release/app-release.aab
+#
+#   IOS:
+#     ASC_KEY_ID                  App Store Connect API Key ID (10-char alphanumeric)
+#     ASC_ISSUER_ID               App Store Connect Issuer ID (UUID)
+#     ASC_KEY_FILE_PATH           Path to the .p8 private key file
+#                                 Get all three at appstoreconnect.apple.com → Users and Access → Keys
+
+default_platform(:android)
+
+# ============================================================================
+# Android
+# ============================================================================
+platform :android do
+  desc "Upload AAB to Play Console internal testing track"
+  lane :deploy_internal do
+    upload_to_play_store(
+      package_name: "uk.co.skyscore.app",
+      json_key: ENV["PLAY_CONSOLE_JSON_KEY"],
+      aab: ENV["ANDROID_AAB_PATH"] || "android/app/build/outputs/bundle/release/app-release.aab",
+      track: "internal",
+      release_status: "completed",
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: true,        # Screenshots uploaded separately
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Upload AAB to Play Console closed alpha testing"
+  lane :deploy_alpha do
+    upload_to_play_store(
+      package_name: "uk.co.skyscore.app",
+      json_key: ENV["PLAY_CONSOLE_JSON_KEY"],
+      aab: ENV["ANDROID_AAB_PATH"] || "android/app/build/outputs/bundle/release/app-release.aab",
+      track: "alpha",
+      release_status: "completed",
+      skip_upload_apk: true
+    )
+  end
+
+  desc "Upload AAB to Play Console production track (full release)"
+  lane :deploy_production do
+    upload_to_play_store(
+      package_name: "uk.co.skyscore.app",
+      json_key: ENV["PLAY_CONSOLE_JSON_KEY"],
+      aab: ENV["ANDROID_AAB_PATH"] || "android/app/build/outputs/bundle/release/app-release.aab",
+      track: "production",
+      release_status: "completed",
+      rollout: "0.05",                 # Start at 5% staged rollout
+      skip_upload_apk: true
+    )
+  end
+
+  desc "Promote internal-track build to production"
+  lane :promote_to_production do
+    upload_to_play_store(
+      package_name: "uk.co.skyscore.app",
+      json_key: ENV["PLAY_CONSOLE_JSON_KEY"],
+      track: "internal",
+      track_promote_to: "production",
+      release_status: "completed",
+      rollout: "0.05",
+      skip_upload_apk: true,
+      skip_upload_aab: true
+    )
+  end
+
+  desc "Push listing metadata only (no binary upload)"
+  lane :metadata_only do
+    upload_to_play_store(
+      package_name: "uk.co.skyscore.app",
+      json_key: ENV["PLAY_CONSOLE_JSON_KEY"],
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: false
+    )
+  end
+end
+
+# ============================================================================
+# iOS
+# ============================================================================
+#
+# Note: Codemagic builds the .ipa and uploads to TestFlight automatically
+# (configured in codemagic.yaml's `submit_to_testflight: true`). The
+# fastlane lanes below operate on the *already-uploaded* TestFlight
+# build — they handle App Store Connect metadata + submission for review.
+#
+platform :ios do
+  before_all do
+    app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: ENV["ASC_KEY_FILE_PATH"]
+    )
+  end
+
+  desc "Submit the latest TestFlight build for App Store review"
+  lane :submit_for_review do
+    deliver(
+      app_identifier: "uk.co.skyscore.app",
+      submit_for_review: true,
+      automatic_release: false,         # User chooses release date in App Store Connect
+      force: true,                      # Skip the HTML preview confirmation prompt
+      skip_screenshots: true,           # Screenshots managed manually first time
+      skip_metadata: false,
+      skip_binary_upload: true,         # Codemagic already uploaded the binary
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false,
+        export_compliance_is_exempt: true
+      }
+    )
+  end
+
+  desc "Push listing metadata only (description, keywords, etc.)"
+  lane :metadata_only do
+    deliver(
+      app_identifier: "uk.co.skyscore.app",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      force: true
+    )
+  end
+
+  desc "Upload screenshots to App Store Connect"
+  lane :screenshots_only do
+    deliver(
+      app_identifier: "uk.co.skyscore.app",
+      skip_binary_upload: true,
+      skip_metadata: true,
+      submit_for_review: false,
+      force: true
+    )
+  end
+end

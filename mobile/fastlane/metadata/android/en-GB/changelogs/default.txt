@@ -1,0 +1,6 @@
+First release of Sky Score for Android. Features:
+• Live noise + livability scores for any UK postcode
+• Tap-to-score map with aircraft, road, and air-quality overlays
+• Personalised buyer profiles (family, first-time, later-life, etc.)
+• Use your current location to score where you are right now
+• Independent, open methodology — no listings-site tilt
