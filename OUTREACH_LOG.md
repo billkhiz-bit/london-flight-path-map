@@ -88,6 +88,9 @@ LinkedIn 1st/2nd-degree connections at target companies. Higher-leverage than an
 - Status page: `https://skyscore.co.uk/score-demo/status.html`
 - Methodology: `https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md`
 - Public repo: `https://github.com/billkhiz-bit/london-flight-path-map`
+- Privacy policy (live page for store-listing forms): `https://skyscore.co.uk/privacy`
+- iOS app: TBD — pending Codemagic build + App Store review (Wave 13, in-flight 2026-05-09)
+- Android app: TBD — pending Codemagic build + Play Console internal-track upload
 
 ---
 
