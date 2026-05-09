@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.uk.co.skyscore.app"],
+        "components": [
+          {
+            "/": "/*",
+            "comment": "Match every path on skyscore.co.uk and route to the app when installed; falls back to the web site when the app is not installed."
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.uk.co.skyscore.app"]
+  }
+}
