@@ -18,6 +18,10 @@ Sole-developer, independent project. Reply timeline best-effort but typically wi
 
 ## Controls in place
 
+### Scope of this document
+
+Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.uk), PWA (browser-installable), and native iOS / Android (Capacitor wrap, Codemagic-built, App Store + Play Store distribution). The controls below apply to all three unless flagged otherwise. The native wrap adds two surfaces with their own security stories: the `capacitor://` (iOS) / `https://localhost` (Android) WebView origin is locked down by the same CSP as the web origin; the Codemagic build pipeline accesses source code only (no user data). Full sub-processor list including Apple App Store + Google Play in [`SUBPROCESSORS.md`](./SUBPROCESSORS.md).
+
 ### Access control + least-privilege
 
 - **Per-Lambda IAM policies** (no shared catch-all role). Each Lambda gets only the permissions it needs; the SAM template at [`backend/template.yaml`](./backend/template.yaml) enumerates them inline.

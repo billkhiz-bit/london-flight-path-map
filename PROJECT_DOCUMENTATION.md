@@ -169,11 +169,12 @@ The five Lambdas below ship in `template.yaml` and CloudFormation but are not su
 ## Frontend Architecture
 
 ### Single-Page Application
-- **File:** `index.html` (~3,870 lines)
+- **File:** `index.html` (~7,200 lines as of Wave 13.4 — file growth tracked in CHANGELOG)
 - **Framework:** None (vanilla JavaScript)
 - **Mapping:** D3.js v7 with SVG-based interactive rendering
-- **Build step:** None required
+- **Build step:** None required for the web target; the native target uses `mobile/scripts/copy-web.mjs` to assemble a `www/` bundle but doesn't bundle or transpile
 - **Styling:** Custom CSS with CSS variables for theming
+- **Three install paths from one codebase**: web, PWA, native iOS/Android (see "Mobile / Native Apps" section below)
 
 ### Key Frontend Features
 
@@ -266,6 +267,51 @@ Four overlay rendering engines handle different government data standards:
 - Favourites Lambda: DynamoDB CRUD on `london-flight-map-favourites` table only
 
 ---
+
+## Mobile / Native Apps (Wave 13)
+
+Sky Score has three install paths sharing the same `index.html`:
+
+1. **Web** at <https://skyscore.co.uk/> (no install)
+2. **PWA** via web manifest + service worker (Add to Home Screen on any modern browser)
+3. **Native iOS / Android** via Capacitor wrapper at `mobile/`, built by Codemagic in cloud Mac (iOS) + Linux (Android) instances, distributed via App Store + Play Store
+
+### Native-only features
+
+Feature-detected via `window.Capacitor.isNativePlatform()`:
+- **"Score where I am"** button — uses native GPS via `@capacitor/geolocation`, reverse-geocodes via api.postcodes.io, triggers existing search flow. This is the App Store Section 4.2 "Minimum Functionality" defence.
+- **Native share sheet** via `@capacitor/share` (exposed as `window.shareScore` for the result panel)
+- **Native splash + status bar** styled to match the app's light theme
+
+### Layout
+
+```
+mobile/
+  capacitor.config.ts           # appId uk.co.skyscore.app, splash + status bar
+  package.json                  # isolated; @capacitor/* + 5 plugins
+  scripts/copy-web.mjs          # assembles mobile/www/ from parent web app
+  assets/                       # 5 SVG sources (logo, foreground, background, splash, splash-dark)
+  CODEMAGIC_SETUP.md            # one-off dashboard config walkthrough
+  STORE_LISTINGS.md             # paste-ready App Store + Play Store copy
+  APPLE_REVIEW_NOTES.md         # Section 4.2 review notes
+  PRIVACY_POLICY.md             # GDPR-compliant, mirrors privacy.html
+  RELEASE_CHECKLIST.md          # 9-step pre-release runbook
+  DEEP_LINKING.md               # iOS Universal Links + Android App Links setup
+  LAUNCH_BLOG_POST.md           # announcement post draft + social excerpts
+
+codemagic.yaml                  # at repo root; ios-workflow + android-workflow
+.well-known/                    # apple-app-site-association + assetlinks.json (deep-link stubs)
+manifest.webmanifest            # PWA manifest
+sw.js                           # service worker (network-first shell, cache-first static)
+icons/                          # PWA icons (full-bleed + maskable SVGs)
+privacy.html                    # hosted at /privacy for store-listing forms
+```
+
+### Update cadence
+
+- **Web** changes (CSS, JS, copy): deploy to S3 + CloudFront, instant
+- **Native binaries**: trigger Codemagic build → store review (~2-3 days Apple, ~1 day Google). Plan binary releases every 2-4 weeks; more often than that isn't worth the review-cycle cost
+- The `mobile/` Capacitor wrapper consumes the same `index.html` the web app serves — no separate codebase
 
 ## Deployment
 
