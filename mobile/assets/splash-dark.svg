@@ -1,19 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Dark-mode splash. Capacitor-assets generates a separate dark-variant
-  splash that the OS shows when the device is in dark mode, so the
-  initial "white flash" doesn't blast the user's eyes at night.
+  Dark-mode splash. Capacitor-assets generates a dark-variant splash
+  the OS shows when the device is in dark mode, so the initial flash
+  doesn't blast the user's eyes at night.
 -->
 <svg width="2732" height="2732" viewBox="0 0 2732 2732" xmlns="http://www.w3.org/2000/svg">
   <rect width="2732" height="2732" fill="#141414"/>
   <g transform="translate(1166 1166) scale(16.667)" fill="#F27D26">
     <path d="M21,16v-2l-8-5V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/>
   </g>
-  <text x="1366" y="1900"
-        font-family="'JetBrains Mono', 'Inter', monospace"
-        font-size="56"
-        font-weight="600"
-        letter-spacing="6"
-        text-anchor="middle"
-        fill="#fafaf9">SKY SCORE</text>
+  <text x="1366" y="1900" font-family="'JetBrains Mono', 'Inter', monospace" font-size="56" font-weight="600" letter-spacing="6" text-anchor="middle" fill="#fafaf9">SKY SCORE</text>
 </svg>

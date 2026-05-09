@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Android adaptive icon FOREGROUND. Transparent background, airplane
-  centred and constrained to the inner 60% of canvas — Android's launcher
-  shape masks crop the outer 33% so the airplane must sit safely inside.
-
-  Pairs with icon-background.svg via capacitor-assets to produce the
-  full Android adaptive icon set (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi,
-  round, monochrome themed icon for Android 13+).
+  centred and constrained to the inner 60 percent of canvas so the
+  launcher shape masks crop the outer 33 percent without clipping it.
+  Pairs with icon-background.svg via capacitor-assets.
 -->
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <g transform="translate(304 304) scale(17.333)" fill="#F27D26">

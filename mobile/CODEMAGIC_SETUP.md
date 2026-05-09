@@ -67,6 +67,28 @@ This lets Codemagic upload AABs to the Play Console.
 
 ---
 
+## 4b. Asset generation (icons + splash)
+
+The icon and splash sources live as SVGs at `mobile/assets/`:
+- `logo.svg` (full-bleed icon, 1024×1024)
+- `icon-foreground.svg` + `icon-background.svg` (Android adaptive icon)
+- `splash.svg` + `splash-dark.svg` (light + dark splash, 2732×2732)
+
+These are passed to `@capacitor/assets`, which generates 130+ platform-specific PNG variants (every Android density, every iOS size, PWA icons, light + dark splash for landscape and portrait). Run via:
+
+```bash
+cd mobile
+npm run build:assets   # generates icons + splash for all platforms
+```
+
+The output lands inside the `ios/` and `android/` native projects. Codemagic regenerates the assets on each cloud build (added as a build step in `codemagic.yaml`); you only need to run this locally if you want to preview Android icons before pushing.
+
+To **change the icon design**, edit the SVGs in `mobile/assets/` and rerun `npm run build:assets`. Keep the inner safe zone (60% of canvas) for the airplane silhouette so Android's adaptive shape masks don't clip it.
+
+For full store listings (App Store + Play Store assets like screenshots and feature graphics), see `STORE_LISTINGS.md` — those are still manual since they need actual app screenshots.
+
+---
+
 ## 5. App Store / Play Store listings
 
 Codemagic publishes the binaries; you still need to fill out the **store listings** manually:
