@@ -4,7 +4,7 @@ This page lists every third party that processes customer data on Sky Score's
 behalf. Provided to satisfy enterprise procurement / DPA requirements
 ("section 28(2) GDPR sub-processor disclosure").
 
-**Last updated:** 2026-05-07
+**Last updated:** 2026-05-09
 **Maintained by:** billkhiz@gmail.com (sole controller)
 
 ---
@@ -29,6 +29,10 @@ and to support revocation).
 | 1 | **Amazon Web Services Inc.** (AWS) | Sole compute, storage, CDN and DNS-record-set host. Runs Lambda, API Gateway, DynamoDB, S3, CloudFront. | All API requests in transit; signup email at rest; user favourites at rest. | eu-west-2 (London) for compute/state; CloudFront edge POPs globally for static assets only. | UK GDPR Art. 28(3) DPA via the [AWS Service Terms](https://aws.amazon.com/service-terms/) and [AWS DPA](https://aws.amazon.com/compliance/gdpr-center/). |
 | 2 | **Cloudflare, Inc.** | Domain registration and authoritative DNS for `skyscore.co.uk`. Does **not** proxy API traffic; CNAME points directly to CloudFront. | DNS query metadata only (no payload, no headers). | US-headquartered; DNS resolved from anycast network. | UK SCCs / Data Processing Addendum on Cloudflare's Business plan. |
 | 3 | **GoatCounter** (offshootbv) | Consumer-site analytics on the marketing pages only. Self-hosted alternative chosen specifically to avoid sending data to Google. **Not** loaded on `/score-demo/` or any API surface. | Page-view counts, referrer, anonymised IP truncation. No cookies, no PII. | EU (Netherlands). | Operator processes pseudonymous analytics under legitimate-interests basis; no contract necessary as no personal data is processed. |
+| 4 | **api.postcodes.io** (Ideal Postcodes) | UK postcode lookup from lat/lon coordinates. Used only by the native iOS/Android app's "Score where I am" feature; web app does not call this endpoint. | Lat/lon (transient — never stored on Sky Score's side). | UK. | Service operates under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/); no contract required for this transient lookup. |
+| 5 | **Codemagic** (Nevercode Ltd.) | CI/CD service that builds Sky Score's iOS and Android binaries in cloud Mac/Linux instances and pushes to TestFlight + Play Console internal track. **Does not process user data** — only project source code and build artefacts. | Source code, signing certs, App Store / Play Store credentials. | EU (Estonia). | Standard sub-processor agreement; no user data flows through Codemagic. |
+| 6 | **Apple Inc.** (App Store) | Distribution of the iOS app binary; receives crash reports if the user opts in via iOS Settings. | Standard App Store telemetry; bundle distribution. | Global (Apple Inc., US-headquartered with regional data centres). | [Apple Developer Programme Licence Agreement](https://developer.apple.com/legal/) and [Apple Privacy Policy](https://www.apple.com/legal/privacy/). |
+| 7 | **Google LLC** (Google Play) | Distribution of the Android app binary (.aab); receives anonymous app install / vitals telemetry. | Standard Play Store telemetry; bundle distribution. | Global (Google LLC, US-headquartered with regional data centres). | [Google Play Developer Distribution Agreement](https://play.google.com/about/developer-distribution-agreement.html); standard sub-processor terms via Google Play Data Processing and Security Terms. |
 
 That's the entire list. Sky Score uses no third-party email provider, no
 billing processor (free tier / direct billing only), no customer support
@@ -93,3 +97,4 @@ single-tenant deployment in another region is feasible.
 | Date | Change |
 |---|---|
 | 2026-05-07 | Initial register published as part of Wave 9 enterprise readiness. |
+| 2026-05-09 | Added api.postcodes.io (#4), Codemagic (#5), Apple App Store (#6), Google Play (#7) for the native iOS/Android build path (Wave 13.2). |

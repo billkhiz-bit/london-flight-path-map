@@ -35,6 +35,20 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | `/v1/score` endpoint | <https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score> |
 | Methodology | [METHODOLOGY.md](./METHODOLOGY.md), the document that closes B2B audits |
 
+## Install
+
+Sky Score runs as a website, an installable PWA, and a native iOS / Android app — same code, three install paths.
+
+| Platform | How |
+|---|---|
+| Browser | Visit <https://skyscore.co.uk/> — no install needed |
+| Desktop / Android Chrome | Click the install icon in the address bar, or "Install Sky Score" button inside the app |
+| iOS Safari (16+) | Tap **Share → Add to Home Screen** |
+| iOS App Store | TBD (in submission) |
+| Google Play Store | TBD (in submission) |
+
+The native iOS and Android apps add a "Score where I am" button that uses your phone's GPS for instant scoring of your current location. See [`mobile/`](./mobile/) for the Capacitor + Codemagic build setup.
+
 ## Why Sky Score exists
 
 UK property listings sites make money when transactions close. A listing that flags risks, aircraft noise, road noise, poor schools, is a bug in their funnel, not a feature. The data that materially affects whether a property is right for a buyer is systematically absent from the buyer-facing UI.

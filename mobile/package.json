@@ -5,6 +5,8 @@
   "description": "Capacitor wrapper for Sky Score — bundles the web app as native iOS + Android apps via Codemagic.",
   "scripts": {
     "build:web": "node scripts/copy-web.mjs",
+    "render:assets": "node scripts/render-assets.mjs",
+    "build:assets": "npm run render:assets && npx capacitor-assets generate --assetPath assets",
     "sync": "npm run build:web && npx cap sync",
     "android": "npm run sync && npx cap open android",
     "ios": "npm run sync && npx cap open ios",
@@ -23,6 +25,8 @@
     "@capacitor/status-bar": "^7.0.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "playwright": "^1.42.0",
     "typescript": "^6.0.3"
   }
 }
