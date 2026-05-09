@@ -21,7 +21,7 @@ iOS is the exception that needs cloud CI (Codemagic) because there's no local Ma
 
 ## Build the AAB (each release)
 
-### Option A: Android Studio GUI (recommended for first release)
+### Option A: Android Studio GUI (recommended — matches the Noor workflow)
 
 1. **Sync the web bundle into Android**:
    ```bash
@@ -62,9 +62,9 @@ iOS is the exception that needs cloud CI (Codemagic) because there's no local Ma
    - Fill in the release notes
    - Click **Save** → **Review release** → **Start rollout**
 
-### Option B: Gradle CLI (faster for repeat builds)
+### Option B: Gradle CLI (only if you outgrow the GUI flow)
 
-Once the keystore is set up and you're past the first build, the CLI path is faster:
+Most users stick with the Android Studio GUI long-term — the wizard is fast enough once you've done it twice. Switch to the CLI only if you find yourself rebuilding several times per week and want to script it. To switch:
 
 1. **Configure signing once** in `mobile/android/app/build.gradle` (or via `~/.gradle/gradle.properties` if you prefer not to put creds in the repo):
    ```groovy
