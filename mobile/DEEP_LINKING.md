@@ -13,29 +13,30 @@ Both files must be served from `https://skyscore.co.uk/.well-known/` over HTTPS 
 
 ---
 
-## Apple — what to fill in
+## Apple — resolved 2026-05-10 (Wave 13.8.6)
 
-Open `.well-known/apple-app-site-association` and replace `TEAMID` with your Apple Developer Team ID.
+✅ **Done.** Team ID `L3UXT79KFZ` was retrieved via the ASC API (Spaceship `BundleId#seed_id` field) and the file was deployed to S3 at `.well-known/apple-app-site-association` with `Content-Type: application/json`. Live at <https://skyscore.co.uk/.well-known/apple-app-site-association>.
 
-**Where to find your Team ID**:
-1. Go to [developer.apple.com/account](https://developer.apple.com/account)
-2. Top-right, click **Membership Details**
-3. The 10-character alphanumeric "Team ID" is what to paste
+If the file ever needs regenerating:
 
-After replacing, the file should look like (Team ID example only):
-
-```json
-{
-  "applinks": {
-    "details": [
-      {
-        "appIDs": ["A1B2C3D4E5.uk.co.skyscore.app"],
-        "components": [{"/": "/*"}]
-      }
-    ]
-  }
-}
+```bash
+# Retrieve Team ID from ASC API (requires .env loaded with iOS creds):
+cd mobile && bundle exec ruby -e "
+require 'spaceship'
+Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+  key_id: ENV['ASC_KEY_ID'], issuer_id: ENV['ASC_ISSUER_ID'], filepath: ENV['ASC_KEY_FILE_PATH']
+)
+puts Spaceship::ConnectAPI::BundleId.all(filter: { identifier: 'uk.co.skyscore.app' }).first.seed_id
+"
+# Deploy:
+AWS_PROFILE=flightmap aws s3 cp .well-known/apple-app-site-association s3://london-flight-map-frontend/.well-known/apple-app-site-association --content-type "application/json" --region eu-west-2
+MSYS_NO_PATHCONV=1 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/.well-known/*"
 ```
+
+For reference, "Team ID" is also visible at:
+1. [developer.apple.com/account](https://developer.apple.com/account)
+2. Top-right → **Membership Details**
+3. The 10-character alphanumeric "Team ID"
 
 ---
 

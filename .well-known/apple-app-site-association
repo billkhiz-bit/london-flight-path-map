@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.uk.co.skyscore.app"],
+        "appIDs": ["L3UXT79KFZ.uk.co.skyscore.app"],
         "components": [
           {
             "/": "/*",
@@ -13,6 +13,6 @@
     ]
   },
   "webcredentials": {
-    "apps": ["TEAMID.uk.co.skyscore.app"]
+    "apps": ["L3UXT79KFZ.uk.co.skyscore.app"]
   }
 }
