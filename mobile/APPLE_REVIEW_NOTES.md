@@ -2,17 +2,25 @@
 
 ## What this file is
 
-The exact text to paste into App Store Connect → App Review → "Notes for the Reviewer" before each submission. The single most important piece of copy in the whole submission process — Apple reviewers spend ~2 minutes per app, and proactively answering their objections moves you from a likely rejection to a likely first-pass approval.
+Documentation and rejection-counter-arguments for App Store reviewer interactions. The single most important piece of copy in the whole submission process — Apple reviewers spend ~2 minutes per app, and proactively answering their objections moves you from a likely rejection to a likely first-pass approval.
 
 ---
 
-## Where to paste
+## Canonical text lives in fastlane metadata
 
-App Store Connect → My Apps → Sky Score → App Review → **Notes** field (visible only to Apple, never to users).
+As of Wave 13.8.5, the verbatim review-notes text lives at:
+
+```
+mobile/fastlane/metadata/ios/review_information/notes.txt
+```
+
+That file is auto-pushed to App Store Connect by `bundle exec fastlane ios metadata_only` and `submit_for_review`. You no longer need to copy-paste manually before submission.
+
+To update the text: edit `notes.txt`, then run `bundle exec fastlane ios metadata_only` from `mobile/`. The rejection-counter-argument section below remains here as Markdown documentation because it's never sent to Apple — it's runbook content for *you* when reading a rejection email.
 
 ---
 
-## Copy (paste verbatim)
+## Copy (mirror of the auto-pushed file, kept for context)
 
 ```
 Hi Apple Review Team,

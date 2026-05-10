@@ -99,8 +99,8 @@ Don't promote to public release until the smoke test passes on at least one real
 - [ ] Production rollout: start at 1–5% staged rollout, watch crash rates for 24h, scale up
 
 **iOS (App Store Connect):**
-- [ ] TestFlight build → Submit for App Store review
-- [ ] Review notes paste from `APPLE_REVIEW_NOTES.md`
+- [ ] TestFlight build → Submit for App Store review (via `bundle exec fastlane ios submit_for_review` from `mobile/` — pushes metadata + notes + submits in one step)
+- [ ] Review notes are auto-pushed from `mobile/fastlane/metadata/ios/review_information/notes.txt` — no manual paste needed (as of Wave 13.8.5)
 - [ ] Wait 24–72h for Apple review
 - [ ] If approved: schedule release (immediately or on a date)
 - [ ] If rejected: re-read the rejection reason, prep counter-argument from `APPLE_REVIEW_NOTES.md` "If Apple rejects" section, resubmit
