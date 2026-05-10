@@ -87,19 +87,19 @@ workflows:
         script: |
           keychain initialize
           # Generate a fresh RSA private key on the build VM. The Codemagic
-          # CLI tool requires --certificate-key-path so it can either match
-          # an existing Distribution cert on Apple's side OR (with --create)
-          # mint a new one bound to this private key. Without this, signing
-          # fails with "Cannot save Signing Certificates without certificate
-          # private key" + "Did not find any certificates from specified
-          # locations" (which is what bit us on the first script-stage build).
+          # CLI tool's --certificate-key flag accepts either a PEM string OR
+          # a path with the @<path> prefix. Without this, signing fails with
+          # "Cannot save Signing Certificates without certificate private key".
+          # keychain add-certificates takes NO flag — it auto-discovers .p12
+          # files from the standard search paths that fetch-signing-files
+          # populates (~/Library/MobileDevice/Certificates/*.p12 etc.).
           openssl genrsa -out /tmp/cert_private_key.pem 2048
           app-store-connect fetch-signing-files \
             --type IOS_APP_STORE \
             --create \
-            --certificate-key-path /tmp/cert_private_key.pem \
+            --certificate-key=@/tmp/cert_private_key.pem \
             "$BUNDLE_ID"
-          keychain add-certificates --certificate-key-path /tmp/cert_private_key.pem
+          keychain add-certificates
       - name: Build .ipa
         script: |
           cd mobile
