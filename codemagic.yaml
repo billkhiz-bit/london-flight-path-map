@@ -23,13 +23,18 @@ workflows:
     max_build_duration: 60
     # Signing + publishing both read from explicit env vars, not the
     # Apple Developer Portal name-lookup. Set these as Codemagic env vars
-    # (App Settings → Environment Variables, group e.g. "asc"):
+    # (App Settings → Environment Variables, group "asc"):
     #   APP_STORE_CONNECT_PRIVATE_KEY   <-- contents of AuthKey_J746LSWAPG.p8
     #   APP_STORE_CONNECT_KEY_IDENTIFIER = J746LSWAPG
     #   APP_STORE_CONNECT_ISSUER_ID     = cb584bcf-6819-4307-a264-665ed289d43e
-    # Mark them all as "Secure" except KEY_IDENTIFIER/ISSUER_ID which are
-    # not secrets (the .p8 contents IS the secret).
+    # The .p8 content is secret, the IDs are not. The `groups: [asc]`
+    # import below is what actually exposes them to the build — without
+    # it, the variables exist in the dashboard but the workflow can't see
+    # them, and Codemagic silently falls back to the Developer Portal pool
+    # for signing (where Noor's key may get picked over Sky Score's).
     environment:
+      groups:
+        - asc
       ios_signing:
         distribution_type: app_store
         bundle_identifier: uk.co.skyscore.app
