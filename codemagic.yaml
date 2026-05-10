@@ -21,8 +21,14 @@ workflows:
     name: Sky Score iOS
     instance_type: mac_mini_m2
     max_build_duration: 60
-    integrations:
-      app_store_connect: codemagic_asc # set up in Codemagic UI: Teams → Integrations
+    # No `integrations:` block — this is a Personal Account on Codemagic,
+    # which uses the Apple Developer Portal *key pool* (Personal Account
+    # Settings → Integrations → Apple Developer Portal). Both the Noor key
+    # and the Sky Score Fastlane key live in that pool; Codemagic auto-
+    # picks the one that can see uk.co.skyscore.app's profile.
+    # Team Accounts would use `integrations: app_store_connect: <name>`
+    # to reference a named integration, but Personal Accounts don't have
+    # named integrations — only Developer Portal keys.
     environment:
       ios_signing:
         distribution_type: app_store
