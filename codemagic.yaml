@@ -65,6 +65,14 @@ workflows:
           cd mobile/ios/App
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.$BUILD_NUMBER" App/Info.plist
+      - name: Fetch signing files via ASC API (creates cert + profile on demand)
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files \
+            --type IOS_APP_STORE \
+            --create \
+            "$BUNDLE_ID"
+          keychain add-certificates
       - name: Build .ipa
         script: |
           cd mobile
