@@ -134,6 +134,7 @@ platform :ios do
       skip_screenshots: true,           # Screenshots managed manually first time
       skip_metadata: false,
       skip_binary_upload: true,         # Codemagic already uploaded the binary
+      precheck_include_in_app_purchases: false,
       submission_information: {
         add_id_info_uses_idfa: false,
         export_compliance_uses_encryption: false,
@@ -150,7 +151,11 @@ platform :ios do
       skip_binary_upload: true,
       skip_screenshots: true,
       submit_for_review: false,
-      force: true
+      force: true,
+      # precheck IAP scan requires interactive Apple ID login, not API key.
+      # Sky Score has no in-app purchases, so the scan is irrelevant — skip it
+      # to stop the post-upload precheck step from erroring out the lane.
+      precheck_include_in_app_purchases: false
     )
   end
 
