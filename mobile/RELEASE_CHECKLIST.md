@@ -60,6 +60,7 @@ The single most common Play Console rejection is **versionCode not strictly incr
 ### iOS (Codemagic)
 
 - [ ] Push changes to GitHub (`git push origin master`)
+- [ ] Confirm Codemagic app's Environment Variables panel has the **`asc` group** with `APP_STORE_CONNECT_PRIVATE_KEY` (Secure, .p8 contents), `APP_STORE_CONNECT_KEY_IDENTIFIER`, `APP_STORE_CONNECT_ISSUER_ID` — these are mandatory; build fails immediately without them. See `mobile/CODEMAGIC_SETUP.md` § 3.
 - [ ] In Codemagic UI, click `ios-workflow` → **Start new build** → master branch → wait ~12 min
 - [ ] Build succeeded — `.ipa` artefact downloadable; auto-uploaded to TestFlight
 

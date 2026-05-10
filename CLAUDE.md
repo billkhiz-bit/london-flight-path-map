@@ -105,6 +105,8 @@ set -a && source ../.env && set +a && \
 
 **Local env setup**: copy `.env.example` to `.env` and fill in:
 - `EPC_BEARER_TOKEN` — from the My account page on `get-energy-performance-data.communities.gov.uk`
+- `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_KEY_FILE_PATH` — for fastlane (see `mobile/CODEMAGIC_SETUP.md`)
+- `FASTLANE_SKIP_DOCS=1` — non-optional, stops fastlane overwriting `mobile/fastlane/README.md`
 
 The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the value doesn't appear in CloudFormation events. AllowedPattern `^.+$` on the parameter blocks deploys with empty / missing tokens.
 

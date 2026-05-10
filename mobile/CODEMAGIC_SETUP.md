@@ -2,115 +2,188 @@
 
 The `codemagic.yaml` at the repo root defines a single workflow (`ios-workflow`). Codemagic only handles iOS for Sky Score, mirroring the Noor pattern: cloud Mac is essential because there's no local Mac, but Android builds locally on Windows via Android Studio (see [`ANDROID_BUILD.md`](./ANDROID_BUILD.md)).
 
-This guide covers the **dashboard tasks** — the secrets and integrations Codemagic needs that can't live in the yaml file. Do these once; subsequent iOS builds just push code and tap "Start new build" in the Codemagic UI.
+This guide reflects the **actual working configuration as of Wave 13.8.14** (2026-05-10). The path here is the result of 12 iterations of debugging Codemagic's Personal Account signing model — read the gotchas section before reproducing on another app.
+
+---
+
+## Account type: Personal vs Team
+
+**Personal Account** (what Sky Score uses):
+- Single Apple Developer Portal "key pool" — multiple API keys stored together
+- No named integrations; the `integrations.app_store_connect: <name>` yaml pattern doesn't resolve
+- Pre-flight signing auto-picks from the pool with logic we can't observe or override
+- **Use the env-var-based signing pattern in this doc**
+
+**Team Account** (different setup, not covered here):
+- Per-integration named credentials in Team Settings → Integrations
+- Use the `integrations.app_store_connect: codemagic_asc` pattern with a matching named integration
+
+If you have a Team Account, our yaml will need different wiring than what's documented below.
 
 ---
 
 ## 1. Connect the repo
 
-1. Sign in at [codemagic.io](https://codemagic.io)
-2. **Add application** → choose GitHub → pick `billkhiz-bit/london-flight-path-map`
-3. Codemagic auto-detects `codemagic.yaml` at root. You should see `ios-workflow` listed in the left sidebar.
+1. Sign in at [codemagic.io](https://codemagic.io) using GitHub OAuth (same identity that owns `london-flight-path-map`)
+2. **Apps** → **Add application** → **GitHub** → pick `billkhiz-bit/london-flight-path-map`
+3. Project type: **Ionic** (Capacitor inherits Ionic's build pattern)
+4. Codemagic auto-detects `codemagic.yaml` at root → finishes the wizard
+
+You should see `Sky Score iOS` (the `name:` from the yaml) on your apps dashboard.
 
 ---
 
-## 2. App Store Connect integration
+## 2. Apple Developer Portal — add the Sky Score Fastlane key to the pool
 
-This lets Codemagic auto-sign builds and upload to TestFlight.
+Sky Score uses a **separate API key from Noor's** to avoid scope conflicts. Generate it once in App Store Connect, then add to Codemagic.
 
-1. Codemagic dashboard → **Teams** → **Integrations** → **App Store Connect**
-2. **Generate API key** in App Store Connect → Users and Access → Keys → `+` (Codemagic walks you through it)
-3. Upload the `.p8` private key to Codemagic, paste the Key ID and Issuer ID
-4. Name the integration `codemagic_asc` (matches the yaml's `integrations: app_store_connect: codemagic_asc`)
-5. Select your team
+### Generate the API key (one-off, at App Store Connect)
 
-After this, the iOS workflow's `ios_signing` block automatically fetches certs and provisioning profiles for `uk.co.skyscore.app`. Codemagic creates them if they don't exist yet.
+1. [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → **Users and Access** → **Integrations** → **App Store Connect API**
+2. Click **Generate API Key** (blue `+`)
+3. Name: `Sky Score Fastlane` (or whatever — it's just for your reference)
+4. Access role: **App Manager**
+5. **Download the `.p8` file IMMEDIATELY** — Apple shows the download button only once. Save it to `C:\Users\bilal\OneDrive\Desktop\SkyScore\Secrets\AuthKey_<KeyID>.p8`
+6. Note down the **Key ID** (10 chars, also embedded in the .p8 filename) and **Issuer ID** (UUID at the top of the page)
+
+### Add the key to Codemagic's Developer Portal pool
+
+1. Codemagic → **Personal Account Settings** → **Integrations**
+2. Find **Apple Developer Portal** → **Manage keys** → **Add another key**
+3. Fill in:
+   - **Name**: `Sky Score Fastlane` (matches what you named it in ASC)
+   - **Issuer ID**: from step above
+   - **Key ID**: from step above
+   - **API Key (.p8)**: upload the file from your Secrets folder
+
+Green dot = authenticated. Don't delete the existing Noor key — it can coexist with Sky Score's.
 
 ---
 
-## 3. Asset generation (icons + splash)
+## 3. App-level environment variables (THIS IS THE CRITICAL STEP)
+
+Sky Score's signing bypasses Codemagic's pre-flight signing and uses explicit credentials passed via env vars. **Without these set, the build fails immediately at the signing step with "No matching profiles found".**
+
+Codemagic dashboard → your **london-flight-path-map** app → **Environment variables** tab. Add three variables, all in a group called `asc`:
+
+| Variable | Value | Secure? | Notes |
+|---|---|---|---|
+| `APP_STORE_CONNECT_PRIVATE_KEY` | full contents of the `.p8` file (paste PEM text including `-----BEGIN`/`-----END` lines) | ✅ Yes | This IS the secret |
+| `APP_STORE_CONNECT_KEY_IDENTIFIER` | the 10-char Key ID (e.g. `J746LSWAPG`) | No | Public identifier |
+| `APP_STORE_CONNECT_ISSUER_ID` | the UUID from the ASC API page | No | Public identifier, one per account |
+
+**Group name must be `asc`** — the yaml has `environment.groups: [asc]` which imports vars from this group. Variables in other groups (or no group) won't reach the build.
+
+> 💡 The exact same env-var names are read by:
+> - `app-store-connect fetch-signing-files` (signing setup script)
+> - `app-store-connect publish` (TestFlight upload)
+> - All other Codemagic CLI tools that need ASC API auth
+>
+> No flags or paths need editing — the CLI tools auto-detect these env vars.
+
+---
+
+## 4. Apple-side prerequisites
+
+Before any build, these must exist on Apple's side:
+
+| Item | Where | Notes |
+|---|---|---|
+| **Bundle ID** `uk.co.skyscore.app` | developer.apple.com → Identifiers | App IDs → App → Explicit → uncheck all capabilities |
+| **App record** "Sky Score" | App Store Connect → My Apps → + → New App | Link to the Bundle ID above |
+| **App Review Information saved** | App Store Connect → 1.0 Prepare for Submission | Required at least ONCE before fastlane lanes work (see fastlane gotchas memory) |
+| **Distribution profile** | developer.apple.com → Profiles | `Sky Score App Store` — manually created once, the build script reuses |
+
+The `app-store-connect fetch-signing-files --create` script step will auto-create the profile if missing, but having it pre-created makes the first build smoother.
+
+---
+
+## 5. First iOS build
+
+1. Codemagic dashboard → **Sky Score iOS** app → blue **Start new build** button
+2. Modal: **Build branch** → master → ⬛ Enable SSH/VNC unchecked → **Start new build**
+3. Wait ~12 minutes. The 9 build stages:
+   1. Preparing build machine (boots Mac mini M2)
+   2. Install npm deps (`npm ci`)
+   3. Assemble web bundle
+   4. Generate icons + splash
+   5. Add iOS platform (`cap add ios && cap sync ios`)
+   6. Pod install
+   7. Set bundle id + version
+   8. Fetch signing files via ASC API (`openssl genrsa` + `app-store-connect fetch-signing-files --create --certificate-key-path`)
+   9. Build .ipa (`xcode-project build-ipa`)
+   10. Publishing to App Store Connect (auto-upload to TestFlight)
+
+4. Output: `.ipa` artefact downloadable from the build page, automatically uploaded to TestFlight if publishing succeeds
+5. From TestFlight, install on your iPhone for smoke testing before submitting for App Store review
+
+---
+
+## 6. Known gotchas (from the 12-iteration debug session)
+
+These are documented in detail in `~/.claude/projects/.../memory/feedback_fastlane_gotchas.md` and `feedback_codemagic_node_wildcard.md`. Short version:
+
+1. **`node: 20.x` syntax fails** — Codemagic's `n` version manager rejects `.x` wildcards. Use bare major: `node: 20`.
+2. **`integrations.app_store_connect: <name>` doesn't work on Personal Accounts** — there are no named integrations. Use env vars instead (the pattern in this doc).
+3. **`environment.ios_signing` block triggers pre-flight signing** that uses the Developer Portal pool with opaque selection logic. For multi-key pools (e.g. Noor + Sky Score keys both present), pre-flight may pick the wrong key. Removing the `ios_signing` block disables pre-flight; scripts do signing manually with explicit env-var credentials.
+4. **`fetch-signing-files` needs `--certificate-key-path`** — without it, the CLI tool can't save signing certificates ("Cannot save Signing Certificates without certificate private key"). Generate a fresh RSA key with `openssl genrsa` and pass via this flag.
+5. **Each build creates a new Distribution cert** under the current setup — Apple's team has a 2-cert limit, so after ~2 builds we'll hit the cap. Future optimisation: persist the private key as a Codemagic env var (`CERT_PRIVATE_KEY`) so subsequent builds reuse the same cert.
+6. **`environment.groups: [asc]` must be in the yaml** — variables set in the dashboard's Environment Variables panel are invisible to the build unless the group is explicitly imported.
+
+---
+
+## 7. Asset generation (icons + splash)
 
 The icon and splash sources live as SVGs at `mobile/assets/`:
 - `logo.svg` (full-bleed icon, 1024×1024)
 - `icon-foreground.svg` + `icon-background.svg` (Android adaptive icon — used for the local Android build)
 - `splash.svg` + `splash-dark.svg` (light + dark splash, 2732×2732)
 
-These are passed to `@capacitor/assets`, which generates 130+ platform-specific PNG variants (every iOS size, Android density variants, PWA icons, light + dark splash for landscape and portrait). The `ios-workflow` runs this as a build step automatically; locally:
+These are passed to `@capacitor/assets`, which generates 130+ platform-specific PNG variants. The `ios-workflow` runs this as a build step automatically; locally:
 
 ```bash
 cd mobile
-npm run build:assets   # generates icons + splash for all platforms
+npm run build:assets
 ```
 
 To **change the icon design**, edit the SVGs in `mobile/assets/` and rerun `npm run build:assets`. Keep the inner safe zone (60% of canvas) for the airplane silhouette so Android's adaptive shape masks don't clip it.
 
 ---
 
-## 4. First iOS build
-
-1. In Codemagic dashboard, click `ios-workflow` → **Start new build** → master branch
-2. Watch the log. First build takes ~12 min.
-3. Output: an `.ipa` artefact downloadable from the build page, automatically uploaded to TestFlight if the App Store Connect integration succeeded.
-4. From TestFlight, install on your iPhone for smoke testing before submitting for App Store review.
-
----
-
-## 5. Android (separate workflow, local)
+## 8. Android (separate workflow, local)
 
 Android does NOT use Codemagic. See [`ANDROID_BUILD.md`](./ANDROID_BUILD.md) for the Android Studio + gradle process. Quick summary: open `mobile/android/` in Android Studio, Build → Generate Signed Bundle / APK → AAB → upload to Play Console manually.
 
 ---
 
-## 6. App Store / Play Store listings
+## 9. App Store / Play Store listings
 
-Codemagic publishes the iOS binary; you still need to fill out the **store listings** manually. Ready-to-paste copy lives in [`STORE_LISTINGS.md`](./STORE_LISTINGS.md).
+Codemagic publishes the iOS binary; you still need to fill out the **store listings**. As of Wave 13.8.5, **all listing metadata is auto-pushed via fastlane** from text files in `mobile/fastlane/metadata/ios/en-GB/`:
 
-**App Store Connect** ([appstoreconnect.apple.com](https://appstoreconnect.apple.com)):
-- App name: `Sky Score`
-- Bundle ID: `uk.co.skyscore.app` (must match the yaml)
-- Category: Productivity / Reference
-- Description, keywords, support URL (skyscore.co.uk)
-- Screenshots: 6.7" iPhone (1290×2796), 6.5" iPhone (1242×2688), 12.9" iPad (2048×2732)
-- Privacy policy URL (required) — `https://skyscore.co.uk/privacy`
-- Age rating questionnaire
+```bash
+cd mobile
+bundle exec fastlane ios metadata_only
+```
 
-**Play Console** ([play.google.com/console](https://play.google.com/console)):
-- App name: `Sky Score`
-- Package name: `uk.co.skyscore.app` (must match)
-- Category: Tools or House & Home
-- Short + full description
-- Screenshots: phone (16:9 or 9:16 minimum 320px), tablet (optional)
-- Feature graphic 1024×500
-- Content rating questionnaire
-- Target audience + content
-- Data safety form
+This pushes description, keywords, support URL, marketing URL, privacy URL, copyright, promotional text, subtitle, app name, and App Review notes. **Don't edit these in App Store Connect's web UI** — they'll drift from git. Edit the `.txt` files in the repo and re-run the lane.
+
+The only thing left to upload manually is **screenshots** (5 PNGs per device size, taken on an iPhone via TestFlight install).
 
 ---
 
-## 7. Apple Section 4.2 — surviving the review
+## 10. Apple Section 4.2 — surviving the review
 
-Apple frequently rejects apps that look like web wrappers. Sky Score's defence:
-
-> **"Score where I am right now"** — uses native GPS via @capacitor/geolocation to identify the user's current postcode and return a noise/livability score. This is a meaningful use of device hardware that browsers (Safari) cannot replicate as cleanly, and provides ongoing value to users who walk between locations.
-
-Mention this verbatim in the App Review notes field. Add a screenshot showing the locate-me button being tapped → results appearing.
-
-If rejected: tighten the explanation, add additional native features (background notifications, native share), resubmit. Most apps clear review on the second attempt.
-
-Full review notes (paste into App Store Connect → App Review → Notes): [`APPLE_REVIEW_NOTES.md`](./APPLE_REVIEW_NOTES.md).
+The "Score where I am" GPS button is Sky Score's defence against Apple's Section 4.2 Minimum Functionality rejection. The full review notes are auto-pushed to ASC by the fastlane `metadata_only` lane (from `mobile/fastlane/metadata/ios/review_information/notes.txt`). Rejection counter-argument scripts live in `APPLE_REVIEW_NOTES.md`.
 
 ---
 
-## 8. Update cycle (after first ship)
+## 11. Update cycle (after first ship)
 
 For minor web changes (CSS, JS, copy):
-1. Edit `index.html`, deploy to S3 + CloudFront *as before* — that ships the PWA / web changes
-2. To ship the change to native users too:
-   - **iOS**: trigger a Codemagic build for `ios-workflow`
-   - **Android**: rebuild locally per `ANDROID_BUILD.md`, upload AAB to Play Console
-3. iOS auto-uploads to TestFlight; Android upload is manual
-4. Promote to production via App Store Connect / Play Console
+1. Edit `index.html`, deploy to S3 + CloudFront — that ships the web + PWA changes
+2. To ship the change to native iOS users: trigger a Codemagic build for `ios-workflow`
+3. Codemagic auto-uploads to TestFlight; promote to production via App Store Connect → submit for review
 
-For native config changes (new plugin, app id, signing): edit `mobile/capacitor.config.ts` or `codemagic.yaml`, commit, trigger build (iOS) or rebuild locally (Android).
+For native config changes (new plugin, capability, signing): edit `mobile/capacitor.config.ts` or `codemagic.yaml`, commit, trigger Codemagic build.
 
 The native shell is essentially a thin wrapper — most updates are web-only and don't need a binary release. Plan to release a binary every 2–4 weeks at most to keep both stores fresh; more often than that is rarely worth the review-cycle cost.
