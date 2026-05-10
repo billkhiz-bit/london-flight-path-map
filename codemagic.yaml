@@ -21,14 +21,14 @@ workflows:
     name: Sky Score iOS
     instance_type: mac_mini_m2
     max_build_duration: 60
-    # On Personal Accounts, this references a key label inside the Apple
-    # Developer Portal integration (Personal Account Settings → Integrations
-    # → Apple Developer Portal → Manage keys). The Sky Score Fastlane key
-    # (Key ID J746LSWAPG, broad app-scope) sees uk.co.skyscore.app profiles;
-    # the older Noor App Store Connect key (Key ID 8T952L8VRP) does not.
-    # If you rename the key in Codemagic, update this line to match.
-    integrations:
-      app_store_connect: Sky Score Fastlane
+    # Signing + publishing both read from explicit env vars, not the
+    # Apple Developer Portal name-lookup. Set these as Codemagic env vars
+    # (App Settings → Environment Variables, group e.g. "asc"):
+    #   APP_STORE_CONNECT_PRIVATE_KEY   <-- contents of AuthKey_J746LSWAPG.p8
+    #   APP_STORE_CONNECT_KEY_IDENTIFIER = J746LSWAPG
+    #   APP_STORE_CONNECT_ISSUER_ID     = cb584bcf-6819-4307-a264-665ed289d43e
+    # Mark them all as "Secure" except KEY_IDENTIFIER/ISSUER_ID which are
+    # not secrets (the .p8 contents IS the secret).
     environment:
       ios_signing:
         distribution_type: app_store
@@ -92,6 +92,10 @@ workflows:
     publishing:
       # Auto-upload to TestFlight on every successful build. Disable
       # this section if you'd rather upload manually for the first run.
+      # Reads credentials from Codemagic env vars set in the App's
+      # Environment Variables panel (see comment in `environment:` block).
       app_store_connect:
-        auth: integration
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
