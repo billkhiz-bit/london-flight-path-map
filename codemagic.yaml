@@ -46,7 +46,10 @@ workflows:
         BUNDLE_ID: "uk.co.skyscore.app"
         XCODE_WORKSPACE: "mobile/ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
-      node: 20.x
+      # Node version: use a specific major.minor (e.g. 20) or full version.
+      # Codemagic's `n` version manager rejects the `.x` wildcard format
+      # ("Unable to install Node version 20.x"). Use bare major number.
+      node: 20
       xcode: latest
       cocoapods: default
     cache:
