@@ -35,9 +35,13 @@ workflows:
     environment:
       groups:
         - asc
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: uk.co.skyscore.app
+      # ios_signing block removed deliberately — Codemagic's pre-flight
+      # signing runs before our scripts and uses the Apple Developer Portal
+      # pool with selection logic we can't see. Without ios_signing, no
+      # pre-flight runs, and signing is handled entirely by our explicit
+      # script steps below (keychain initialize, app-store-connect
+      # fetch-signing-files, keychain add-certificates) using the
+      # $APP_STORE_CONNECT_* env vars from the imported `asc` group.
       vars:
         BUNDLE_ID: "uk.co.skyscore.app"
         XCODE_WORKSPACE: "mobile/ios/App/App.xcworkspace"
