@@ -114,10 +114,20 @@ platform :ios do
     )
   end
 
+  # iOS metadata + screenshots live under fastlane/metadata/ios/ and
+  # fastlane/metadata/screenshots/ios/ to mirror the parallel android/
+  # layout. deliver's default expects locale dirs directly under
+  # ./fastlane/metadata, so every iOS lane must explicitly point at the
+  # ios/ subdirectory.
+  IOS_METADATA_PATH = "./fastlane/metadata/ios"
+  IOS_SCREENSHOTS_PATH = "./fastlane/screenshots/ios"
+
   desc "Submit the latest TestFlight build for App Store review"
   lane :submit_for_review do
     deliver(
       app_identifier: "uk.co.skyscore.app",
+      metadata_path: IOS_METADATA_PATH,
+      screenshots_path: IOS_SCREENSHOTS_PATH,
       submit_for_review: true,
       automatic_release: false,         # User chooses release date in App Store Connect
       force: true,                      # Skip the HTML preview confirmation prompt
@@ -136,6 +146,7 @@ platform :ios do
   lane :metadata_only do
     deliver(
       app_identifier: "uk.co.skyscore.app",
+      metadata_path: IOS_METADATA_PATH,
       skip_binary_upload: true,
       skip_screenshots: true,
       submit_for_review: false,
@@ -147,6 +158,7 @@ platform :ios do
   lane :screenshots_only do
     deliver(
       app_identifier: "uk.co.skyscore.app",
+      screenshots_path: IOS_SCREENSHOTS_PATH,
       skip_binary_upload: true,
       skip_metadata: true,
       submit_for_review: false,
