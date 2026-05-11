@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-07 (Wave 12.7 close — GoatCounter B2B funnel events + UTM convention documented in OUTREACH_DRAFTS.md; analytics gap on score-demo fixed; see AUDIT_REPORT.md for per-wave breakdown)
+**Last reviewed:** 2026-05-11 (Wave 13.11 close — Sky Score iOS v1.0 submitted to App Review; build 12 in TestFlight; Playwright screenshot generator at `tests/screenshots.mjs`; first-submission gotchas captured across 3 layers (global skill + memory + repo). Awaiting Apple verdict 24-72h.)
 
 ---
 
@@ -112,6 +112,10 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 |---|---|---|
 | Re-run `/audit` | next due ~2026-06-07 | Catches drift; last refresh 2026-05-07 |
 | Methodology doc for the API | 2026-05-29 | Required for serious B2B conversations |
+| **`support@`/`hello@`/`bilal@skyscore.co.uk` email setup** | **2026-05-12** | `support@skyscore.co.uk` already in App Review notes — Apple may email during v1.0 review (24-72h window starting 2026-05-11). Cloudflare Email Routing (free) → Gmail. ~25 min. Full steps in `memory/project_email_setup_todo.md` |
+| **v1.1 native release** (iOS + Android) | **post-Apple-approval** | Bundle two pinned redesigns: (1) layer-toggle UX (legend cramps map on mobile, ~32% viewport) (2) app icon (current airplane motif too narrow for the data-tool positioning). See `memory/project_mobile_ux_redesign_v1_1.md` for both. Regen via `cd mobile && npm run build:assets`. |
+| **Codemagic cert persistence** | **before build 13** | Apple's 2-cert-per-Personal-Account limit hit during v1.0 ship (build 11 failed, build 12 succeeded after revocation). Generate cert private key once, store base64-encoded as Codemagic env var. Otherwise next signed build hits the wall. Pattern documented in `memory/feedback_codemagic_personal_account_signing.md` ("Future iteration to plan for"). |
+| **Play Store / Android side** | **after iOS approval** | Build AAB locally via Android Studio per `mobile/ANDROID_BUILD.md`. Same `index.html`; reuse v1.0 metadata + screenshots. Avoid splitting attention until iOS approval lands. |
 | Consumer-site granularity-wall pass | 2026-06-15 | Protects API channel before serious sales |
 
 ### Deferred from 2026-05-07 session — full list in [`AUDIT_REPORT.md`](./AUDIT_REPORT.md#deferred--kept-in-mind-for-future-sessions)
