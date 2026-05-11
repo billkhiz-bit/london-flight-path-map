@@ -83,6 +83,17 @@ workflows:
           cd mobile/ios/App
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.$BUILD_NUMBER" App/Info.plist
+      - name: Limit to iPhone-only (avoids iPad screenshot requirement at submission)
+        script: |
+          # Capacitor 7 generates a Universal target (TARGETED_DEVICE_FAMILY = "1,2")
+          # which makes App Store Connect demand both iPhone AND iPad screenshots at
+          # submission. Sky Score is a phone-first GPS app — limiting to iPhone halves
+          # the screenshot burden for v1. Can be relaxed later by deleting this step
+          # and re-uploading with iPad screenshots in place.
+          cd mobile/ios/App
+          sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2"/TARGETED_DEVICE_FAMILY = "1"/g' App.xcodeproj/project.pbxproj
+          echo "TARGETED_DEVICE_FAMILY values after edit:"
+          grep TARGETED_DEVICE_FAMILY App.xcodeproj/project.pbxproj || true
       - name: Inject location purpose strings (ITMS-90683)
         script: |
           # @capacitor/geolocation links CLLocationManager symbols that reference
