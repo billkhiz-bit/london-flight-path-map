@@ -83,6 +83,22 @@ workflows:
           cd mobile/ios/App
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" App/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.$BUILD_NUMBER" App/Info.plist
+      - name: Inject location purpose strings (ITMS-90683)
+        script: |
+          # @capacitor/geolocation links CLLocationManager symbols that reference
+          # both when-in-use and always-authorisation APIs, so Apple's static
+          # analysis demands purpose strings for BOTH keys even though Sky Score
+          # only ever calls requestWhenInUseAuthorization. Apple's ITMS-90683
+          # warning will block App Store submission (TestFlight still works).
+          # Add: PlistBuddy -c "Add" fails if the key already exists; "Set" fails
+          # if it doesn't. We Delete-then-Add to make this idempotent across the
+          # regenerated iOS project on each build.
+          cd mobile/ios/App
+          PLIST=App/Info.plist
+          /usr/libexec/PlistBuddy -c "Delete :NSLocationWhenInUseUsageDescription" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string Sky Score uses your location to show noise, flight-path, and livability data for the area you are currently in. Your location is only read when you tap Score where I am and is never stored or shared." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :NSLocationAlwaysAndWhenInUseUsageDescription" "$PLIST" || true
+          /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string Sky Score only accesses your location while you are actively using the app and never in the background. Your location is only read when you tap Score where I am and is never stored or shared." "$PLIST"
       - name: Fetch signing files via ASC API (creates cert + profile on demand)
         script: |
           keychain initialize
