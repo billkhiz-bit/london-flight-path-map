@@ -163,6 +163,12 @@ platform :ios do
   lane :screenshots_only do
     deliver(
       app_identifier: "uk.co.skyscore.app",
+      # `metadata_path` must be set even when `skip_metadata: true`, because
+      # deliver still scans the directory to validate locale subdirectories.
+      # Without this, it defaults to ./fastlane/metadata which contains an
+      # `ios/` subdir that isn't a valid locale name → "Unsupported directory
+      # name(s) for screenshots/metadata".
+      metadata_path: IOS_METADATA_PATH,
       screenshots_path: IOS_SCREENSHOTS_PATH,
       skip_binary_upload: true,
       skip_metadata: true,

@@ -4,6 +4,27 @@ Run through this every time you trigger a Codemagic build that's intended for Ap
 
 ---
 
+## 0. First submission only — App Store Connect dashboard prerequisites
+
+**Skip this section if Sky Score is already approved on the App Store** (i.e. v1.0 is live and you're shipping v1.x). This list is for the first submission *only*; updates inherit most of these.
+
+The first submission for a new App Store app requires a cluster of dashboard fields that fastlane's `deliver` cannot push. Hitting `submit_for_review` before these are set produces a 25+ line error stream. Complete these BEFORE running fastlane:
+
+- [ ] **TestFlight test info** at `<https://appstoreconnect.apple.com/apps/{id}/testflight/test-info>` — Feedback Email + Beta App Review contact (name, phone, email). Otherwise Codemagic's auto-submit-to-TestFlight-external step fails noisily on every build.
+- [ ] **App Information**: Primary Category = `Utilities` or `Reference` (Reference is the better fit for Sky Score — data lookup tool); Content Rights Information = "Does not contain, show, or access third-party content".
+- [ ] **Age Rating**: click through the 22-question questionnaire → answer **None** / **No** to all (Sky Score has no objectionable content). Result: **4+**.
+- [ ] **Pricing and Availability**: pick **GBP 0 (Free)** → tick all territories → Confirm.
+- [ ] **App Privacy** — two-step process:
+  1. Click **Edit** → "Do you collect data?" → **Yes** → add data types:
+     - **Precise Location** (Sky Score uses `enableHighAccuracy: true` per `index.html:2540`) → Not linked to user → Not for tracking → App Functionality only
+     - **Product Interaction** (GoatCounter analytics) → Not linked to user → Not for tracking → Analytics only
+  2. Click **Publish** at the top of the page. Greyed out until ALL data type entries have all 3 follow-ups answered.
+- [ ] **MRDP (Model Reporting Rules for Digital Platforms)** at `<https://appstoreconnect.apple.com/business>` or via Agreements, Tax, and Banking — this form bundles the Personal Service Declaration that the submission error nominally complains about. For Sky Score: "Personal service?" = **No**; entity type = Individual / Sole Trader; tax country = UK; TIN = your 10-digit UTR; VAT = No. Required even for free apps with zero revenue.
+
+**Why this isn't in the main checklist:** these fields are persistent across versions, so once they're set you never touch them again. But on submission #1 they all conspire to block.
+
+---
+
 ## 1. Web parity check (does the bundled web match the live site?)
 
 - [ ] Latest changes pushed to S3 + CloudFront and live at <https://skyscore.co.uk/>
