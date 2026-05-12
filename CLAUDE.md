@@ -26,6 +26,8 @@ When a task ships or a decision lands, update the relevant doc rather than relyi
 
 After any substantial change (feature shipped/removed, audit item closed, vendor relationship changed), follow the **echo-work discipline** in the global `~/.claude/CLAUDE.md` — propagate to README, ROADMAP, LICENSING, AUDIT_REPORT, OUTREACH_LOG, memory, .env.example, tests, AWS surfaces. Doing it now is 2-3× cheaper than re-deriving the context tomorrow. For Sky Score specifically, the "echo loop" almost always touches: README.md (Lambda counts), ROADMAP.md (open decisions resolved), LICENSING.md (data sources), and `~/.claude/projects/.../memory/MEMORY.md` (cross-session facts).
 
+**Cross-project echo**: substantial Sky Score waves (release submitted, big pivot landed, competition outcome confirmed, new submission added/dropped) also belong in the 90-day builder roadmap at `C:\Users\bilal\OneDrive\Desktop\90_DAY_ROADMAP.md` under the "Daily Progress Log" section. Keep that file strategic — competitions, pivots, deadlines, headline wins — not wave-level commit detail. The 90-day file is opened via the `90-Day Roadmap.bat` shortcut in `OneDrive\Desktop\Claude Projects\` to seed cross-session context across all Bill's projects, so Sky Score wave logs going there means future Claude sessions on Noor / LedgerAgent / Siraj see Sky Score's state too.
+
 ## Before conversation ends
 
 When the user says goodbye, thanks you, or indicates they're done, run `git status` to check for uncommitted changes. If there are any, remind the user:
