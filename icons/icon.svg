@@ -1,15 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Sky Score app icon (full-bleed).
-  Dark background + orange airplane silhouette using the same #F27D26
-  accent colour the app uses for highlights / score indicators. Rounded
-  corners at ~19% match iOS/Android icon-shape conventions; Android then
-  applies its own shape mask (circle / squircle) on top — that's what the
-  maskable variant in icon-maskable.svg is for.
+  Sky Score PWA app icon (full-bleed, 512x512).
+  Mirrors mobile/assets/logo.svg at half resolution so the web install
+  prompt and "Add to Home Screen" path show the same icon as the native
+  iOS / Android binaries. Updated 2026-05-14 after Apple's 2.3.8
+  rejection of the previous Material-Icons placeholder glyph.
+
+  See also: icons/icon-maskable.svg for Android launchers that apply
+  shape masks (Pixel, OnePlus, Samsung One UI default).
 -->
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sky Score">
-  <rect width="512" height="512" rx="96" ry="96" fill="#141414"/>
-  <g transform="translate(96 96) scale(13.333)" fill="#F27D26">
-    <path d="M21,16v-2l-8-5V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/>
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="42%" r="68%">
+      <stop offset="0%" stop-color="#1c2944"/>
+      <stop offset="55%" stop-color="#101a2e"/>
+      <stop offset="100%" stop-color="#070b16"/>
+    </radialGradient>
+    <radialGradient id="pulseGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F27D26" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#F27D26" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#F27D26" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="discGrad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#FFA458"/>
+      <stop offset="60%" stop-color="#F27D26"/>
+      <stop offset="100%" stop-color="#C95E12"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bgGrad)"/>
+
+  <circle cx="256" cy="256" r="140" fill="url(#pulseGlow)"/>
+
+  <g fill="none" stroke="#F27D26" stroke-linecap="round">
+    <circle cx="256" cy="256" r="190" stroke-width="1.5" stroke-opacity="0.22"/>
+    <circle cx="256" cy="256" r="150" stroke-width="1.75" stroke-opacity="0.36"/>
+    <circle cx="256" cy="256" r="110" stroke-width="2" stroke-opacity="0.55"/>
+  </g>
+
+  <g stroke="#F27D26" stroke-width="3.5" stroke-opacity="0.55" stroke-linecap="round">
+    <line x1="256" y1="50" x2="256" y2="74"/>
+    <line x1="462" y1="256" x2="438" y2="256"/>
+    <line x1="256" y1="462" x2="256" y2="438"/>
+    <line x1="50" y1="256" x2="74" y2="256"/>
+  </g>
+
+  <circle cx="256" cy="256" r="70" fill="url(#discGrad)"/>
+
+  <g transform="translate(256 256) rotate(-22)" fill="#FFFFFF">
+    <path d="M 0,-46 L 4,-17 L 43,2 L 6,4 L 10,29 L 3,34 L 0,37 L -3,34 L -10,29 L -6,4 L -43,2 L -4,-17 Z"/>
+    <circle cx="0" cy="0" r="2.5" fill="#1c2944"/>
   </g>
 </svg>

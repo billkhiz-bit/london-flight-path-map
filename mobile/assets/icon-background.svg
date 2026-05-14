@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Android adaptive icon BACKGROUND. Solid dark fill. Pairs with
-  icon-foreground.svg; Android composes them and applies its launcher
-  shape mask.
+  Android adaptive icon BACKGROUND. Pairs with icon-foreground.svg via
+  capacitor-assets; Android composes them and applies its launcher
+  shape mask. Uses the same deep-navy radial gradient as the master
+  logo so the foreground rings sit on a sky-at-night ground regardless
+  of the launcher mask shape.
 -->
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1024" height="1024" fill="#141414"/>
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="42%" r="68%">
+      <stop offset="0%" stop-color="#1c2944"/>
+      <stop offset="55%" stop-color="#101a2e"/>
+      <stop offset="100%" stop-color="#070b16"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
 </svg>

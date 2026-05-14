@@ -1,12 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Android adaptive icon FOREGROUND. Transparent background, airplane
-  centred and constrained to the inner 60 percent of canvas so the
-  launcher shape masks crop the outer 33 percent without clipping it.
-  Pairs with icon-background.svg via capacitor-assets.
+  Android adaptive icon FOREGROUND. Transparent background; the launcher
+  composes this on top of icon-background.svg and applies its shape mask
+  (circle, squircle, teardrop, etc.) cropping the outer ~33% of canvas.
+
+  All meaningful content (rings, disc, plane) is constrained to the
+  inner safe zone (radius ~340 from centre 512). The master logo's outer
+  ring at r=380 and cardinal ticks would get clipped on aggressive
+  launcher masks, so they're omitted here. The remaining two rings +
+  pulse glow + central disc + plane carry the same radar reading.
 -->
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <g transform="translate(304 304) scale(17.333)" fill="#F27D26">
-    <path d="M21,16v-2l-8-5V3.5C13,2.67 12.33,2 11.5,2C10.67,2 10,2.67 10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/>
+  <defs>
+    <radialGradient id="pulseGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F27D26" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#F27D26" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#F27D26" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="discGrad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#FFA458"/>
+      <stop offset="60%" stop-color="#F27D26"/>
+      <stop offset="100%" stop-color="#C95E12"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="512" cy="512" r="260" fill="url(#pulseGlow)"/>
+
+  <g fill="none" stroke="#F27D26" stroke-linecap="round">
+    <circle cx="512" cy="512" r="320" stroke-width="4" stroke-opacity="0.32"/>
+    <circle cx="512" cy="512" r="230" stroke-width="4.5" stroke-opacity="0.55"/>
+  </g>
+
+  <circle cx="512" cy="512" r="135" fill="url(#discGrad)"/>
+
+  <g transform="translate(512 512) rotate(-22)" fill="#FFFFFF">
+    <path d="M 0,-88 L 8,-32 L 82,4 L 12,8 L 19,55 L 6,65 L 0,71 L -6,65 L -19,55 L -12,8 L -82,4 L -8,-32 Z"/>
+    <circle cx="0" cy="0" r="5" fill="#1c2944"/>
   </g>
 </svg>
