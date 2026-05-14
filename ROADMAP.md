@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-11 (Wave 13.11 close — Sky Score iOS v1.0 submitted to App Review; build 12 in TestFlight; Playwright screenshot generator at `tests/screenshots.mjs`; first-submission gotchas captured across 3 layers (global skill + memory + repo). Awaiting Apple verdict 24-72h.)
+**Last reviewed:** 2026-05-14 (Wave 13.14 close — Apple **rejected** v1.0/build 12 on 2026-05-12 under guideline 2.3.8 (placeholder app icon). Diagnosis: previous icon was the unmodified Material Icons "flight" glyph on a flat dark square — recognisably template. Redesigned to concentric noise contours (radar/data read) + top-down white aircraft on a glowing orange disc, on a deep navy radial gradient. New SVG sources pushed (commit `5495eb8`); Codemagic ios-workflow building a fresh TestFlight binary. Resubmit via App Store Connect dashboard once build processes (~15 min). Memory `feedback_first_appstore_submission_gotchas.md` extended so future apps don't ship template icons.)
 
 ---
 
