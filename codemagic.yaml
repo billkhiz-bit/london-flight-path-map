@@ -65,15 +65,27 @@ workflows:
         script: |
           cd mobile
           npm run build:web
-      - name: Generate icons + splash from SVG sources
-        script: |
-          cd mobile
-          npm run build:assets
       - name: Add iOS platform (regenerated each build)
         script: |
           cd mobile
           npx cap add ios || true
           npx cap sync ios
+      - name: Generate icons + splash from SVG sources
+        # Must run AFTER `cap add ios` — capacitor-assets only writes to
+        # platform directories that already exist on disk. Running this
+        # step before `cap add ios` (the original ordering, in place
+        # through build 13) silently skipped iOS icon generation, so the
+        # iOS build shipped with the Capacitor 7 default cyan-X
+        # placeholder icon. This ordering bug was the actual cause of
+        # Apple's 2.3.8 "placeholder icons" rejection on 2026-05-12, not
+        # the design of logo.svg as initially assumed. Build 14+ should
+        # ship the correct radar-rings design generated from
+        # mobile/assets/logo.svg.
+        script: |
+          cd mobile
+          npm run build:assets
+          # Sanity log: confirm iOS icon set was actually written.
+          ls -la ios/App/App/Assets.xcassets/AppIcon.appiconset/ | head -20
       - name: Pod install
         script: |
           cd mobile/ios/App
