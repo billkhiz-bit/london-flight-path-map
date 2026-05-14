@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-14 (Wave 13.14 close — Apple **rejected** v1.0/build 12 on 2026-05-12 under guideline 2.3.8 (placeholder app icon). Diagnosis: previous icon was the unmodified Material Icons "flight" glyph on a flat dark square — recognisably template. Redesigned to concentric noise contours (radar/data read) + top-down white aircraft on a glowing orange disc, on a deep navy radial gradient. New SVG sources pushed (commit `5495eb8`); Codemagic ios-workflow building a fresh TestFlight binary. Resubmit via App Store Connect dashboard once build processes (~15 min). Memory `feedback_first_appstore_submission_gotchas.md` extended so future apps don't ship template icons.)
+**Last reviewed:** 2026-05-14 EOD (Wave 13.16 close — icon ship still in flight. Apple rejected v1.0/build 12 on 2026-05-12 under 2.3.8. Five build attempts (13–16) all shipped the Capacitor cyan-X placeholder despite the radar redesign because **capacitor-assets on Codemagic's macOS silently fails to load complex SVG icons** (sharp/libvips can't parse our radial gradients). Wave 13.16 (commit `3e58d08`) pre-rasterises the four icon SVGs to 1024×1024 PNGs locally and commits them; capacitor-assets v3 prefers PNG over SVG when both exist, routing around the macOS SVG-loader. **Build 17 pending** — pickup point in `HANDOFF_2026_05_14_icon_ship.md` at the repo root. Cert situation: at 2/2 Distribution certs (Apple Personal Account cap), build 17 will likely fail at signing unless one cert is revoked first; revocation procedure in HANDOFF.)
 
 ---
 
