@@ -93,9 +93,8 @@ If iOS fails, look in the Codemagic log:
 ### Android (local Android Studio, see `ANDROID_BUILD.md`)
 
 - [ ] `cd mobile && npm run sync && npm run build:assets`
-- [ ] Open `mobile/android/` in Android Studio (or use `./gradlew bundleRelease` for CLI)
 - [ ] Bump `app/build.gradle` versionCode + versionName
-- [ ] Build → Generate Signed Bundle / APK → AAB → release variant → output `app-release.aab`
+- [ ] Build the AAB. **Option A (GUI):** Open `mobile/android/` in Android Studio → Build → Generate Signed Bundle / APK → AAB → release variant → output `app-release.aab`. Wizard prompts for keystore + password. **Option B (CLI, since Wave 13.19):** export `SKY_SCORE_KEYSTORE_PATH` + `SKY_SCORE_KEYSTORE_PASSWORD` env vars, then run `npm run build:android` from repo root (which wraps `./gradlew bundleRelease`; the `signingConfigs.release` block in `build.gradle` picks up the env vars). Output: `mobile/android/app/build/outputs/bundle/release/app-release.aab`.
 - [ ] Upload AAB to Play Console manually (Production / Internal testing track)
 
 If Android fails:
