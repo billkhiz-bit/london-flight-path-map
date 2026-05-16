@@ -84,14 +84,31 @@ async function run() {
     timezoneId: 'Europe/London',
   });
   const page = await context.newPage();
-  // After DOM parse: reveal `.native-only` elements that the page hid for
-  // web (clearing the `hidden` attribute matches the runtime reveal at
-  // index.html:2522). If the live site still lacks the locate-me button
-  // entirely (i.e. the latest index.html hasn't been deployed), synthesize
-  // one — the screenshot needs to show what real iOS users will see,
-  // independent of the web deploy cadence.
+  // (1) Hide PWA install prompts (#install-prompt + #ios-install-hint).
+  //     The live site shows these to web visitors so they install as a PWA;
+  //     the native iOS app hides them via navigator.standalone === true in
+  //     WKWebView. For App Store screenshots we must match the native view —
+  //     showing "Add to Home Screen" in an iOS app screenshot would confuse
+  //     a reviewer (Apple already shipped v1.0 with these visible; this is
+  //     defensive for future v1.x re-screenshots).
+  // (2) Reveal `.native-only` elements (matches runtime reveal at
+  //     index.html:2522 when Capacitor is detected).
+  // (3) Synthesize a locate-me button if the live site lacks it.
   await page.addInitScript(() => {
+    const ensureScreenshotCss = () => {
+      if (document.head && !document.getElementById('screenshot-style')) {
+        const style = document.createElement('style');
+        style.id = 'screenshot-style';
+        style.textContent = `
+          #install-prompt, #ios-install-hint,
+          .install-prompt, .ios-install-hint { display: none !important; }
+        `;
+        document.head.appendChild(style);
+      }
+    };
+    ensureScreenshotCss();
     window.addEventListener('DOMContentLoaded', () => {
+      ensureScreenshotCss();
       document.querySelectorAll('.native-only').forEach((el) => {
         el.hidden = false;
         el.removeAttribute('hidden');

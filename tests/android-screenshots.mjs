@@ -75,12 +75,33 @@ async function run() {
   });
   const page = await context.newPage();
 
-  // Reveal `.native-only` elements (matches the runtime reveal at
-  // index.html:2522 when Capacitor is detected). If the live site lacks
-  // the locate-me button (web deploy not yet caught up), inject one so
-  // the Play Store screenshot matches what Android users will see.
+  // (1) Hide the PWA install prompts (#install-prompt + #ios-install-hint).
+  //     The live site shows these to web visitors so they install as a
+  //     PWA; the native Android app hides them at runtime because
+  //     navigator.standalone-like checks pass in Capacitor's WebView.
+  //     For Play Store screenshots we must match the native app's view —
+  //     showing "Add to Home Screen" in an Android app screenshot would
+  //     confuse a Play reviewer.
+  // (2) Reveal `.native-only` elements (matches the runtime reveal at
+  //     index.html:2522 when Capacitor is detected).
+  // (3) If the live site lacks the locate-me button (web deploy not yet
+  //     caught up), inject one so the screenshot matches what real
+  //     Android users will see.
   await page.addInitScript(() => {
+    const ensureScreenshotCss = () => {
+      if (document.head && !document.getElementById('android-screenshot-style')) {
+        const style = document.createElement('style');
+        style.id = 'android-screenshot-style';
+        style.textContent = `
+          #install-prompt, #ios-install-hint,
+          .install-prompt, .ios-install-hint { display: none !important; }
+        `;
+        document.head.appendChild(style);
+      }
+    };
+    ensureScreenshotCss();
     window.addEventListener('DOMContentLoaded', () => {
+      ensureScreenshotCss();
       document.querySelectorAll('.native-only').forEach((el) => {
         el.hidden = false;
         el.removeAttribute('hidden');

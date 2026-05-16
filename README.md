@@ -45,7 +45,7 @@ Sky Score runs as a website, an installable PWA, and a native iOS / Android app 
 | Desktop / Android Chrome | Click the install icon in the address bar, or "Install Sky Score" button inside the app |
 | iOS Safari (16+) | Tap **Share → Add to Home Screen** |
 | iOS App Store | v1.0.1 submitted 2026-05-16 — awaiting Apple review (24–72h) |
-| Google Play Store | TBD (in submission) |
+| Google Play Store | AAB built + screenshots + feature graphic ready 2026-05-16 — pending Play Console upload |
 
 The native iOS and Android apps add a "Score where I am" button that uses your phone's GPS for instant scoring of your current location. See [`mobile/`](./mobile/) for the Capacitor + Codemagic build setup.
 

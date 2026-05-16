@@ -1,5 +1,7 @@
 # Android build (local, via Android Studio)
 
+> **Current state (Wave 13.19, 2026-05-16):** keystore generated at `~/.keystores/sky-score-release.jks` (alias `sky-score`, upload-key SHA-256 `A5:53:4A:8F:91:54:37:D6:2E:6C:72:D7:AE:F6:1B:66:B3:4D:1D:84:E1:13:8C:1A:51:8C:6C:B6:52:22:50:AB`). `mobile/android/app/build.gradle` has env-var-driven `signingConfigs.release` wired in. First signed AAB built and verified (`mobile/android/app/build/outputs/bundle/release/app-release.aab`, 3.6 MB). Screenshots + feature graphic auto-rendered via `tests/android-screenshots.mjs` and `tests/android-feature-graphic.mjs`. **Pending: Play Console upload (manual, Internal → Production).** See `ROADMAP.md` for the post-Apple Play next steps. Keystore password lives in Bill's password manager; the `~/.keystores/sky-score-credentials.txt` plaintext file was deleted post-retrieval.
+
 Sky Score's Android binary is built **locally on your Windows machine**, not via Codemagic. The pattern is the same one used for Noor: open the Capacitor-generated `mobile/android/` project in Android Studio, generate a signed AAB through the IDE wizard, upload the AAB to Play Console manually.
 
 iOS is the exception that needs cloud CI (Codemagic) because there's no local Mac. Android doesn't need it — gradle runs fine on Windows and the local feedback loop is faster than waiting for a cloud build.
