@@ -1,5 +1,7 @@
 # HANDOFF: App Icon Resubmission — 2026-05-14 EOD
 
+> **Partially superseded by Wave 13.17 (commit `4c0355a`, 2026-05-16).** The §"Apple cert situation" section below is now archival — `CERT_PRIVATE_KEY` env-var persistence eliminated the 2-cert ceiling permanently. The cert revoke-and-retry steps no longer apply; the next Codemagic build creates a single durable cert from the persisted key and every subsequent build reuses it. Icon-verification steps (§"What to do FIRST when you return" items 2–4) still apply unchanged. See `mobile/CODEMAGIC_SETUP.md` section 3 + `ROADMAP.md` "Last reviewed" for the new state.
+
 > **Pickup point** for next session. Started 2026-05-14, paused mid-flight while waiting on Codemagic build 17. Delete this file once Sky Score v1.0.x is approved by Apple.
 
 ## Where you are right now
