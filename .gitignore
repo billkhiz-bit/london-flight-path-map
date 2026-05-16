@@ -12,6 +12,9 @@ __pycache__/
 *.pem
 *.p12
 *.b64
+*.jks
+*.keystore
+mobile/android/keystore.properties
 .DS_Store
 Thumbs.db
 desktop.ini
