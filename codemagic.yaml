@@ -125,26 +125,33 @@ workflows:
       - name: Fetch signing files via ASC API (reuses persisted cert)
         script: |
           keychain initialize
-          # Decode the persisted RSA private key from $CERT_PRIVATE_KEY
-          # (base64, lives in Codemagic env-var group 'asc', marked Secure).
-          # Same key across every build, so fetch-signing-files reuses the
-          # matching Distribution cert instead of creating a new one — routes
-          # around Apple Personal Account's 2-cert ceiling that bit us
-          # repeatedly in Wave 13.x (build 17 would have been the 3rd
-          # orphaned cert, hitting the cap).
+          # Write the persisted RSA private key from $CERT_PRIVATE_KEY (raw
+          # multi-line PEM, lives in Codemagic env-var group 'asc', marked
+          # Secure). Same key across every build, so fetch-signing-files
+          # reuses the matching Distribution cert instead of creating a new
+          # one — routes around Apple Personal Account's 2-cert ceiling.
+          #
+          # Wave 13.17 tried base64-encoding the key into the env var; the
+          # transfer path (Git Bash clip.exe → Codemagic textarea) corrupted
+          # some bytes silently and the build failed at the openssl rsa -check
+          # guard. Wave 13.18 switched to raw PEM — same format Codemagic
+          # already handles successfully for $APP_STORE_CONNECT_PRIVATE_KEY,
+          # no encoding round-trip, fewer moving parts.
           #
           # Rotation / first-time setup procedure:
           #   1. Generate locally:  openssl genrsa -out cert_private_key.pem 2048
-          #   2. Base64-encode (Git Bash):  base64 -w0 cert_private_key.pem
-          #      OR (PowerShell):
-          #        [Convert]::ToBase64String([IO.File]::ReadAllBytes(
-          #          "cert_private_key.pem"))
-          #   3. Codemagic dashboard → App Settings → Environment Variables
-          #      → 'asc' group → set CERT_PRIVATE_KEY = base64 output (Secure)
-          #   4. Revoke orphaned certs at
+          #   2. Open the .pem in Notepad (or any plain-text editor)
+          #   3. Select all (Ctrl+A), copy (Ctrl+C)
+          #   4. Codemagic dashboard → App Settings → Environment Variables
+          #      → 'asc' group → set CERT_PRIVATE_KEY = paste (Secure).
+          #      Include the -----BEGIN/-----END markers (modern openssl 3.x
+          #      emits "PRIVATE KEY" PKCS#8 wrapper; older "RSA PRIVATE KEY"
+          #      PKCS#1 is also accepted). Newlines between lines are
+          #      preserved by Codemagic's textarea.
+          #   5. Revoke orphaned certs at
           #      developer.apple.com/account/resources/certificates/list
           #      so the first persisted-key build has a free slot
-          #   5. Delete the local .pem — the env var is now the persistence
+          #   6. Delete the local .pem — the env var is now the persistence
           #
           # Codemagic CLI's --certificate-key uses the @file:<path> reference
           # syntax (not @<path>, which fails with "Provided value ... is not
@@ -153,10 +160,12 @@ workflows:
             echo "ERROR: CERT_PRIVATE_KEY env var missing — see block comment above for setup."
             exit 1
           fi
-          echo "$CERT_PRIVATE_KEY" | base64 --decode > /tmp/cert_private_key.pem
+          printf '%s\n' "$CERT_PRIVATE_KEY" > /tmp/cert_private_key.pem
           if ! openssl rsa -in /tmp/cert_private_key.pem -noout -check 2>/dev/null; then
-            echo "ERROR: CERT_PRIVATE_KEY did not decode to a valid RSA private key."
-            echo "Check the base64 encoding (no line-wrap issues; re-encode with 'base64 -w0')."
+            echo "ERROR: CERT_PRIVATE_KEY did not parse as a valid RSA private key."
+            echo "Hint: paste raw PEM including the -----BEGIN/-----END markers ('PRIVATE KEY' for"
+            echo "openssl 3.x PKCS#8, or 'RSA PRIVATE KEY' for legacy PKCS#1), with newlines preserved"
+            echo "between lines (Notepad copy-all-paste is reliable on Windows)."
             exit 1
           fi
           app-store-connect fetch-signing-files \
