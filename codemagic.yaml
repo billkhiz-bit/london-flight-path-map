@@ -122,20 +122,43 @@ workflows:
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string Sky Score uses your location to show noise, flight-path, and livability data for the area you are currently in. Your location is only read when you tap Score where I am and is never stored or shared." "$PLIST"
           /usr/libexec/PlistBuddy -c "Delete :NSLocationAlwaysAndWhenInUseUsageDescription" "$PLIST" || true
           /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string Sky Score only accesses your location while you are actively using the app and never in the background. Your location is only read when you tap Score where I am and is never stored or shared." "$PLIST"
-      - name: Fetch signing files via ASC API (creates cert + profile on demand)
+      - name: Fetch signing files via ASC API (reuses persisted cert)
         script: |
           keychain initialize
-          # Generate a fresh RSA private key on the build VM. The Codemagic
-          # CLI tool's --certificate-key flag accepts either a PEM string OR
-          # a path with the @<path> prefix. Without this, signing fails with
-          # "Cannot save Signing Certificates without certificate private key".
-          # keychain add-certificates takes NO flag — it auto-discovers .p12
-          # files from the standard search paths that fetch-signing-files
-          # populates (~/Library/MobileDevice/Certificates/*.p12 etc.).
-          openssl genrsa -out /tmp/cert_private_key.pem 2048
+          # Decode the persisted RSA private key from $CERT_PRIVATE_KEY
+          # (base64, lives in Codemagic env-var group 'asc', marked Secure).
+          # Same key across every build, so fetch-signing-files reuses the
+          # matching Distribution cert instead of creating a new one — routes
+          # around Apple Personal Account's 2-cert ceiling that bit us
+          # repeatedly in Wave 13.x (build 17 would have been the 3rd
+          # orphaned cert, hitting the cap).
+          #
+          # Rotation / first-time setup procedure:
+          #   1. Generate locally:  openssl genrsa -out cert_private_key.pem 2048
+          #   2. Base64-encode (Git Bash):  base64 -w0 cert_private_key.pem
+          #      OR (PowerShell):
+          #        [Convert]::ToBase64String([IO.File]::ReadAllBytes(
+          #          "cert_private_key.pem"))
+          #   3. Codemagic dashboard → App Settings → Environment Variables
+          #      → 'asc' group → set CERT_PRIVATE_KEY = base64 output (Secure)
+          #   4. Revoke orphaned certs at
+          #      developer.apple.com/account/resources/certificates/list
+          #      so the first persisted-key build has a free slot
+          #   5. Delete the local .pem — the env var is now the persistence
+          #
           # Codemagic CLI's --certificate-key uses the @file:<path> reference
           # syntax (not @<path>, which fails with "Provided value ... is not
           # valid"). Other accepted forms: literal PEM value, or @env:VAR.
+          if [ -z "$CERT_PRIVATE_KEY" ]; then
+            echo "ERROR: CERT_PRIVATE_KEY env var missing — see block comment above for setup."
+            exit 1
+          fi
+          echo "$CERT_PRIVATE_KEY" | base64 --decode > /tmp/cert_private_key.pem
+          if ! openssl rsa -in /tmp/cert_private_key.pem -noout -check 2>/dev/null; then
+            echo "ERROR: CERT_PRIVATE_KEY did not decode to a valid RSA private key."
+            echo "Check the base64 encoding (no line-wrap issues; re-encode with 'base64 -w0')."
+            exit 1
+          fi
           app-store-connect fetch-signing-files \
             --type IOS_APP_STORE \
             --create \

@@ -64,15 +64,36 @@ Green dot = authenticated. Don't delete the existing Noor key — it can coexist
 
 Sky Score's signing bypasses Codemagic's pre-flight signing and uses explicit credentials passed via env vars. **Without these set, the build fails immediately at the signing step with "No matching profiles found".**
 
-Codemagic dashboard → your **london-flight-path-map** app → **Environment variables** tab. Add three variables, all in a group called `asc`:
+Codemagic dashboard → your **london-flight-path-map** app → **Environment variables** tab. Add four variables, all in a group called `asc`:
 
 | Variable | Value | Secure? | Notes |
 |---|---|---|---|
-| `APP_STORE_CONNECT_PRIVATE_KEY` | full contents of the `.p8` file (paste PEM text including `-----BEGIN`/`-----END` lines) | ✅ Yes | This IS the secret |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | full contents of the `.p8` file (paste PEM text including `-----BEGIN`/`-----END` lines) | ✅ Yes | This IS the ASC API secret |
 | `APP_STORE_CONNECT_KEY_IDENTIFIER` | the 10-char Key ID (e.g. `J746LSWAPG`) | No | Public identifier |
 | `APP_STORE_CONNECT_ISSUER_ID` | the UUID from the ASC API page | No | Public identifier, one per account |
+| `CERT_PRIVATE_KEY` | base64-encoded RSA private key (see below for how to generate) | ✅ Yes | Persists the Distribution cert across builds — without this, every build creates a new cert and hits Apple's 2-cert Personal Account cap |
 
 **Group name must be `asc`** — the yaml has `environment.groups: [asc]` which imports vars from this group. Variables in other groups (or no group) won't reach the build.
+
+### Generating `CERT_PRIVATE_KEY` (one-off, then never again)
+
+The codemagic.yaml's "Fetch signing files via ASC API" step decodes this env var on every build and passes it to `app-store-connect fetch-signing-files`. ASC sees the same public key every time, so it matches the existing Distribution cert and reuses it instead of creating a new one.
+
+```bash
+# 1. Generate a 2048-bit RSA private key (anywhere off-repo — e.g. your Desktop)
+openssl genrsa -out cert_private_key.pem 2048
+
+# 2a. Base64-encode (Git Bash on Windows, or any Linux/macOS shell)
+base64 -w0 cert_private_key.pem
+
+# 2b. OR (PowerShell on Windows)
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("cert_private_key.pem"))
+
+# 3. Copy the output, paste into Codemagic dashboard's CERT_PRIVATE_KEY (Secure).
+# 4. Delete the local .pem — the env var IS the persistence now.
+```
+
+**Before the first build with this key**, revoke any orphaned Distribution certs at [developer.apple.com/account/resources/certificates/list](https://developer.apple.com/account/resources/certificates/list) so there's a free slot for the new persisted cert. (Personal Accounts cap at 2 Distribution certs.) After this first build, every subsequent build reuses the same cert — no more cap problems.
 
 > 💡 The exact same env-var names are read by:
 > - `app-store-connect fetch-signing-files` (signing setup script)
@@ -110,7 +131,7 @@ The `app-store-connect fetch-signing-files --create` script step will auto-creat
    5. Add iOS platform (`cap add ios && cap sync ios`)
    6. Pod install
    7. Set bundle id + version
-   8. Fetch signing files via ASC API (`openssl genrsa` + `app-store-connect fetch-signing-files --create --certificate-key-path`)
+   8. Fetch signing files via ASC API (decodes `$CERT_PRIVATE_KEY` → `app-store-connect fetch-signing-files --create --certificate-key=@file:`)
    9. Build .ipa (`xcode-project build-ipa`)
    10. Publishing to App Store Connect (auto-upload to TestFlight)
 
@@ -126,8 +147,8 @@ These are documented in detail in `~/.claude/projects/.../memory/feedback_fastla
 1. **`node: 20.x` syntax fails** — Codemagic's `n` version manager rejects `.x` wildcards. Use bare major: `node: 20`.
 2. **`integrations.app_store_connect: <name>` doesn't work on Personal Accounts** — there are no named integrations. Use env vars instead (the pattern in this doc).
 3. **`environment.ios_signing` block triggers pre-flight signing** that uses the Developer Portal pool with opaque selection logic. For multi-key pools (e.g. Noor + Sky Score keys both present), pre-flight may pick the wrong key. Removing the `ios_signing` block disables pre-flight; scripts do signing manually with explicit env-var credentials.
-4. **`fetch-signing-files` needs `--certificate-key-path`** — without it, the CLI tool can't save signing certificates ("Cannot save Signing Certificates without certificate private key"). Generate a fresh RSA key with `openssl genrsa` and pass via this flag.
-5. **Each build creates a new Distribution cert** under the current setup — Apple's team has a 2-cert limit, so after ~2 builds we'll hit the cap. Future optimisation: persist the private key as a Codemagic env var (`CERT_PRIVATE_KEY`) so subsequent builds reuse the same cert.
+4. **`fetch-signing-files` needs the cert private key passed via `--certificate-key=@file:<path>`** — without it, the CLI tool can't save signing certificates ("Cannot save Signing Certificates without certificate private key"). Note the `@file:` prefix is required; plain `@<path>` fails as "Provided value not valid". (Earlier waves tried `--certificate-key-path`, which the live CLI rejects.)
+5. **(Resolved — Wave 13.17.)** Earlier waves generated a fresh RSA key per build with `openssl genrsa`, so every build created a new Distribution cert and Apple's Personal Account 2-cert ceiling capped builds after ~2 runs. Now the cert private key is persisted as the `CERT_PRIVATE_KEY` Codemagic env var (see section 3) and decoded fresh on every build VM — same public key every time, so `fetch-signing-files` matches and reuses the existing cert instead of creating a new one.
 6. **`environment.groups: [asc]` must be in the yaml** — variables set in the dashboard's Environment Variables panel are invisible to the build unless the group is explicitly imported.
 
 ---

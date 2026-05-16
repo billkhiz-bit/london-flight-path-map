@@ -6,6 +6,12 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Cert material — never commit even by accident. The Codemagic CERT_PRIVATE_KEY
+# env var is the persistence path; local .pem files are transient.
+*.pem
+*.p12
+*.b64
 .DS_Store
 Thumbs.db
 desktop.ini
