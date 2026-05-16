@@ -156,8 +156,19 @@ workflows:
           # Codemagic CLI's --certificate-key uses the @file:<path> reference
           # syntax (not @<path>, which fails with "Provided value ... is not
           # valid"). Other accepted forms: literal PEM value, or @env:VAR.
+          # Length diagnostic — prints metadata only, never the value itself.
+          # Codemagic masks Secure env-var *contents* in logs but not derivations
+          # like length. A 0 here means the dashboard save didn't persist (a
+          # known UI quirk on Edit-in-place for Secure vars — delete-and-recreate
+          # is more reliable). A small but non-zero value means partial paste.
+          # A typical 2048-bit RSA PEM is ~1700 chars across ~28 lines.
+          echo "CERT_PRIVATE_KEY metadata: length=${#CERT_PRIVATE_KEY} chars, lines=$(printf '%s' "$CERT_PRIVATE_KEY" | grep -c '' 2>/dev/null || echo '?')"
           if [ -z "$CERT_PRIVATE_KEY" ]; then
             echo "ERROR: CERT_PRIVATE_KEY env var missing — see block comment above for setup."
+            echo "Most common cause: Codemagic dashboard 'Edit' on a Secure var didn't"
+            echo "persist the new value (it shows masked stars but doesn't preload the"
+            echo "existing value). Fix: DELETE the variable entirely and CREATE a fresh"
+            echo "entry with the PEM pasted in, Secure ticked, then Save."
             exit 1
           fi
           printf '%s\n' "$CERT_PRIVATE_KEY" > /tmp/cert_private_key.pem
