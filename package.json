@@ -20,7 +20,10 @@
     "build:android": "cd mobile && npm run sync && npm run build:assets && cd android && ./gradlew bundleRelease",
     "upload:android": "cd mobile && bundle exec fastlane android deploy_internal",
     "trigger:ios": "git push origin master",
-    "submit:ios": "cd mobile && bundle exec fastlane ios submit_for_review"
+    "submit:ios": "cd mobile && bundle exec fastlane ios submit_for_review",
+    "screenshots:ios": "node tests/screenshots.mjs",
+    "screenshots:android": "node tests/android-screenshots.mjs",
+    "feature-graphic:android": "node tests/android-feature-graphic.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.0",
