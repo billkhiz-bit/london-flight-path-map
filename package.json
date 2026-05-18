@@ -23,7 +23,8 @@
     "submit:ios": "cd mobile && bundle exec fastlane ios submit_for_review",
     "screenshots:ios": "node tests/screenshots.mjs",
     "screenshots:android": "node tests/android-screenshots.mjs",
-    "feature-graphic:android": "node tests/android-feature-graphic.mjs"
+    "feature-graphic:android": "node tests/android-feature-graphic.mjs",
+    "verify:ipad": "node tests/ipad-verify.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.0",

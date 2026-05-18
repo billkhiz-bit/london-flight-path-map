@@ -18,6 +18,10 @@ mobile/android/keystore.properties
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local layout-verification screenshots from tests/ipad-verify.mjs.
+# Regenerated on demand; not part of any shipped artefact.
+mobile/.preview/
 *.log
 .vscode/
 .idea/

@@ -2004,6 +2004,138 @@
           letter-spacing: 0.8px;
         }
       }
+
+      /* ------------------------------------------------------------------
+         iPad landscape + small tablets (901-1366px wide).
+         ------------------------------------------------------------------
+         Apple App Store review on iPad Air 11-inch (M3), iPadOS 26.5, on
+         2026-05-18 cited Guideline 4.0 (Design): "user interface were
+         crowded, laid out, or displayed in a way that made it difficult
+         to use" on iPad. Submission ID 0eb16cc3-ad7f-4eea-a0e8-6953abad3a3a,
+         build 1.0 (19).
+
+         At iPad landscape (1180w x 820h) the existing >900px desktop
+         layout applies: 1fr|400px adjacent split, layer toggles at desktop
+         density (9px font, 4x10 padding, ~32px tap height). That density
+         is fine for mouse, cramped for touch.
+
+         This band:
+           - Sidebar narrower (400 -> 340) so the map gets more canvas
+           - Layer-toggle bar: bigger type + tap targets (touch-friendly)
+           - Map controls and chrome scaled for touch use
+           - Adjacent layout preserved (the rejection was density, not pattern)
+
+         Width-only (no `pointer: coarse`) so a touchscreen laptop or
+         simulator/mouse review mode still gets the relaxed sizing.
+         A ~1280-1366px laptop is also caught; the soft direction
+         (less dense, larger tap targets) is not a regression.
+      */
+      @media (min-width: 901px) and (max-width: 1366px) {
+        .app {
+          grid-template-columns: 1fr 340px;
+        }
+        .sidebar-header {
+          padding: 20px 20px 14px;
+        }
+
+        /* Layer toggles: touch-sized at iPad widths. Was 9px / 4-10 /
+           ~32px tap; now 11px / 8-14 / 40px min. The vertical stack
+           stays at bottom-right but with more breathing room. */
+        .layer-toggles {
+          bottom: 28px;
+          right: 28px;
+          gap: 5px;
+        }
+        .layer-toggle {
+          font-size: 11px;
+          padding: 8px 14px;
+          min-height: 40px;
+          letter-spacing: 0.8px;
+        }
+
+        /* Map controls: between the desktop 32px and mobile 44px size. */
+        .map-controls {
+          top: 16px;
+          right: 16px;
+          gap: 6px;
+        }
+        .map-controls button {
+          width: 42px;
+          height: 42px;
+          font-size: 16px;
+        }
+
+        /* Legend: a touch larger so colour-rows are scannable on a tablet
+           at typical viewing distance (~35cm). */
+        .map-legend {
+          font-size: 11px;
+          padding: 10px 14px;
+        }
+
+        /* Footer kept at bottom but with more inset and slightly larger
+           type (9px instead of 8px) to clear the layer-toggle band. */
+        .site-footer {
+          bottom: 12px;
+          left: 28px;
+          right: 28px;
+          font-size: 9px;
+          letter-spacing: 0.6px;
+        }
+
+        /* City selector: was 9px font / 4-12 padding. Bump for touch. */
+        .city-selector {
+          top: 64px;
+          left: 28px;
+        }
+        .city-btn {
+          font-size: 10px;
+          padding: 8px 14px;
+          min-height: 40px;
+        }
+
+        /* Persona, favourite, tab buttons: bump to 40px tap height. */
+        .persona-btn,
+        .fav-btn,
+        .tab,
+        .metric-card {
+          min-height: 40px;
+        }
+
+        /* Map title: a touch more breathing room from the top-left edge. */
+        .map-title {
+          top: 20px;
+          left: 28px;
+        }
+      }
+
+      /* ------------------------------------------------------------------
+         iPad portrait + 7-8" tablets (640-900px wide).
+         ------------------------------------------------------------------
+         Already falls into the <=900px bottom-sheet band above. On phones
+         the 220px peek is appropriate (sheet covers ~30% of an ~720px-tall
+         canvas). On iPad portrait (820w x 1180h) a 220px peek covers only
+         ~19% of the viewport, so the user sees less default content than
+         the canvas allows.
+
+         Tablet-portrait override: bump peek to 260px (~22% of iPad
+         portrait) so the search box + persona picker are visible without
+         tapping the handle. Push the layer-toggles / legend / trigger
+         up to clear the new peek height. */
+      @media (min-width: 640px) and (max-width: 900px) {
+        .sidebar {
+          transform: translateY(calc(100% - 260px));
+        }
+        .layer-toggles,
+        .map-legend {
+          bottom: 272px;
+        }
+        .layers-trigger {
+          bottom: 272px;
+        }
+        .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
+          bottom: 320px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -7377,11 +7509,16 @@
             const open = sheetEl.classList.contains('sheet-open');
             window.setSheetState(open ? 'peek' : 'open');
           });
-          // On phones the sheet starts open so the sidebar is fully usable
-          // on initial load. User can tap the handle to collapse to peek
-          // (search box stays visible at peek height). Above 900px the
+          // On phones (<=640px) the sheet starts open so the sidebar is
+          // fully usable on initial load. User can tap the handle to
+          // collapse to peek (search box stays visible at peek height).
+          // At iPad portrait (640-900px) the sheet starts in peek state
+          // so the map is visible behind it on first load — auto-opening
+          // hid the map entirely on iPad, which Apple's reviewer cited
+          // under Guideline 4.0 (Design) on 2026-05-18. revealSheetIfMobile()
+          // still auto-opens after a search result lands. Above 900px the
           // sheet is irrelevant — desktop sidebar is a static column.
-          if (window.innerWidth <= 900) {
+          if (window.innerWidth <= 640) {
             window.setSheetState('open');
           }
         }
