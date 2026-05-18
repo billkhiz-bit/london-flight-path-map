@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-16 EOD (Wave 13.19 — **iOS v1.0.1 submitted to Apple + Android pipeline established in same session**.
+**Last reviewed:** 2026-05-18 (Wave 13.20 — **Apple rejected iOS build 19 on iPad layout (Guideline 4.0), fix shipped same-day**; iOS awaiting rebuild + resubmit. Android AAB now stale relative to master, needs rebuild before Play upload. Previous review Wave 13.19 — **iOS v1.0.1 submitted to Apple + Android pipeline established in same session**.
 
 iOS side: Build 19 is the first successful build under the persisted-cert pipeline (orange radar icon, signed by persistent Distribution cert public-key SHA256 `c680ad18...805934`). Attached to v1.0.1 in ASC, submitted for review. The arc from 13.16 → 13.18.1 took three failed builds: 13.17 base64-in-env-var (corrupted in clip.exe→textarea transit), 13.18 raw PEM (dashboard Edit on a Secure var didn't persist the value due to a Codemagic UI quirk), 13.18.1 added length-diagnostic + delete-and-recreate. Eight distinct failure modes resolved.
 
@@ -117,7 +117,7 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | Re-run `/audit` | next due ~2026-06-07 | Catches drift; last refresh 2026-05-07 |
 | Methodology doc for the API | 2026-05-29 | Required for serious B2B conversations |
 | **`support@`/`hello@`/`bilal@skyscore.co.uk` email setup** | **2026-05-12** | `support@skyscore.co.uk` already in App Review notes — Apple may email during v1.0 review (24-72h window starting 2026-05-11). Cloudflare Email Routing (free) → Gmail. ~25 min. Full steps in `memory/project_email_setup_todo.md` |
-| **v1.1 native release** (iOS + Android) | **post-Apple-approval** | Bundle two pinned redesigns: (1) layer-toggle UX (legend cramps map on mobile, ~32% viewport) (2) app icon (current airplane motif too narrow for the data-tool positioning). See `memory/project_mobile_ux_redesign_v1_1.md` for both. Regen via `cd mobile && npm run build:assets`. |
+| **v1.1 native release** (iOS + Android) | **post-Apple-approval** | iPad widths addressed in Wave 13.20 (2026-05-18). Still open for v1.1: (1) iPhone-width layer-toggle UX (legend cramps map on mobile, ~32% of 414px viewport) (2) app icon redesign deferred until conversion data is available (current orange-radar shipping in v1.0.1+). See `memory/project_mobile_ux_redesign_v1_1.md`. |
 | **Codemagic cert persistence** | **before build 13** | Apple's 2-cert-per-Personal-Account limit hit during v1.0 ship (build 11 failed, build 12 succeeded after revocation). Generate cert private key once, store base64-encoded as Codemagic env var. Otherwise next signed build hits the wall. Pattern documented in `memory/feedback_codemagic_personal_account_signing.md` ("Future iteration to plan for"). |
 | **Play Store / Android side** | **after iOS approval** | Build AAB locally via Android Studio per `mobile/ANDROID_BUILD.md`. Same `index.html`; reuse v1.0 metadata + screenshots. Avoid splitting attention until iOS approval lands. |
 | Consumer-site granularity-wall pass | 2026-06-15 | Protects API channel before serious sales |

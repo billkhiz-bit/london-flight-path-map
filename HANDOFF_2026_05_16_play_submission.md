@@ -2,6 +2,8 @@
 
 > **Pickup point** for the next session. Created end-of-day 2026-05-16 once the full Android pipeline (keystore → signed AAB → screenshots → feature graphic) was built locally + committed. Bill pauses here before opening Play Console. Delete this file once Sky Score Android v1.0 is live on Play Store.
 
+> **UPDATE 2026-05-18 — Apple rejected iOS build 19, fix shipped:** Apple flagged Guideline 4.0 (Design) on iPad Air 11" M3 — UI "crowded" on iPad. Wave 13.20 (commit `64cea5b`, pushed) adds iPad-landscape + iPad-portrait CSS breakpoints, narrows sidebar at iPad widths, and stops the bottom sheet from auto-opening on iPad portrait (it was hiding the map on first paint). iOS still needs a fresh Codemagic build (build 20+) and a resubmission reply to Apple. **Android can proceed independently** — but consider rebuilding the AAB locally first so the Play upload contains the same iPad fix (otherwise Android tablet users see the same cramping that Apple flagged on iPad). See "Android side" notes below; the AAB at `mobile/android/app/build/outputs/bundle/release/app-release.aab` is now stale relative to master.
+
 ## Where you are right now
 
 Today's session shipped two parallel arcs:
