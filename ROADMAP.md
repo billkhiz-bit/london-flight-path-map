@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For the focused buildathon plan see `BUILDATHON_PLAN.md`. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks.
 
-**Last reviewed:** 2026-05-18 (Wave 13.20 — **Apple rejected iOS build 19 on iPad layout (Guideline 4.0), fix shipped same-day**; iOS awaiting rebuild + resubmit. Android AAB now stale relative to master, needs rebuild before Play upload. Previous review Wave 13.19 — **iOS v1.0.1 submitted to Apple + Android pipeline established in same session**.
+**Last reviewed:** 2026-05-18 EOD (Wave 13.20 — **Apple rejected iOS build 19 on iPad layout (Guideline 4.0), Wave 13.20 fix shipped + build 20 resubmitted same day**. iOS now in Apple re-review queue. Android AAB still stale relative to master — rebuild before Play upload. Previous review Wave 13.19 — **iOS v1.0.1 submitted to Apple + Android pipeline established in same session**.
 
 iOS side: Build 19 is the first successful build under the persisted-cert pipeline (orange radar icon, signed by persistent Distribution cert public-key SHA256 `c680ad18...805934`). Attached to v1.0.1 in ASC, submitted for review. The arc from 13.16 → 13.18.1 took three failed builds: 13.17 base64-in-env-var (corrupted in clip.exe→textarea transit), 13.18 raw PEM (dashboard Edit on a Secure var didn't persist the value due to a Codemagic UI quirk), 13.18.1 added length-diagnostic + delete-and-recreate. Eight distinct failure modes resolved.
 
