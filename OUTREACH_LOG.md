@@ -18,9 +18,15 @@
 
 One deal puts Sky Score into thousands of conveyancing searches. Long sales cycles (3-9 months). Approach: LinkedIn → cold email; reference Riskview / Plansearch noise gap.
 
+**Target priority (by fit, 2026-05-21):** 1) Landmark, 2) Groundsure, 3) Dye & Durham/FCI/SearchFlow, 4) TM Group — all "license Sky Score as a wholesale layer they resell into searches". Climate X = complementary partner, not a sale. Halal home-finance (Tier 2) = uniquely-aligned but a *consume-not-resell* sale (smaller). Sprift/Hometrack = competitor-leaning, deprioritise. See [[project_b2b_outreach_state]].
+
 | Date | Contact | Company | Role | Channel | Status | Notes / Next action |
 |---|---|---|---|---|---|---|
-| 2026-05-21 | TBC (Data Partnerships / Head of Product) | Landmark Information Group | Data Partnerships | Enquiry form `landmark.co.uk/contact` (LinkedIn preferred for a named contact) | 🟡 Draft ready | Draft below (Riskview noise-gap angle). No public email — DMGT-owned. **Next:** find a named Data Partnerships / Product contact on LinkedIn, send via DM; use the contact form only as fallback. |
+| 2026-05-21 | **Mike Holden, Divisional Director** (named) | Landmark Information Group | Data Partnerships | **In person: Bold Legal Group Conf, 17 Jun** (he's a panellist) · LinkedIn · form fallback | 🟡 Draft ready | Best route is in-person at Bold Legal soirée 17 Jun, or LinkedIn-connect referencing it. Draft below (Riskview noise-gap, licensing pitch). No public email. |
+| 2026-05-21 | TBC (Data Partnerships / Product) | Groundsure | Data Partnerships | Form · 01273 257755 · LinkedIn for named contact | 🟡 To draft | Cleanest product fit — env-search authority already shipping a ClimateIndex product; noise slots into report suite. |
+| 2026-05-21 | TBC (BD / Insight & Data team) | Dye & Durham / FCI / SearchFlow | Data Partnerships | `FCI-Admin@dyedurham.com` (alias) · `dyedurham.co.uk/contact` · LinkedIn | 🟡 To draft | Biggest distribution (SearchFlow = #1 conveyancing search, 1M+/yr). FCI = their env-reports arm. |
+| 2026-05-21 | TBC (Data Partnerships) | TM Group | Data Partnerships | Form (`helpdesk@` weak) · LinkedIn | 🟡 Draft ready | Draft below. Conveyancing search leader. |
+| 2026-05-21 | Lukky Ahmed (CEO) / Kamil Kluza (COO) | Climate X | Founder / Product | `enquiries@climate-x.com` · LinkedIn founder-direct | 🟡 Draft ready | Draft below. **Partner, not sale** — complementary (flood/climate vs noise). |
 
 ---
 
@@ -67,6 +73,20 @@ LinkedIn 1st/2nd-degree connections at target companies. Higher-leverage than an
 
 | Date | Asked | Their connection | Target | Status |
 |---|---|---|---|---|
+
+---
+
+## Events (in-person outreach)
+
+In-person beats cold email/form — an event is the "named-person" channel in its strongest form. UK conveyancing/geospatial events cluster the Tier 1 targets. Confirmed 2026:
+
+| Event | Date | Venue | Why / who's there | Action |
+|---|---|---|---|---|
+| **Bold Legal Group Conveyancing Conference & Soirée** | **Wed 17 Jun 2026** | Regent's University, London | ⭐ **Landmark confirmed** — Mike Holden (Divisional Director) on a panel. Exhibition + evening soirée (informal networking). Groundsure/TM/FCI orbit this. | Verify ticket price/availability; LinkedIn-connect Mike Holden referencing it. **Best in-person route to Tier 1.** |
+| **GEO Business 2026** | **3–4 Jun 2026** | ExCeL London | **FREE.** 6,100+ attendees, 110+ exhibitors (OS, Esri; Landmark/Sprift typically present). Location-data focus. | Confirm Bill's 3–4 Jun geospatial application = this; attend. |
+| UKREiiF | 19–21 May 2026 | Leeds (Royal Armouries) | 16k+ real-estate/investment/infra + PropTech Hub (Climate X-type crowd). | **Missed for 2026** (ended 21 May). Plan for 2027 (Leeds confirmed). |
+
+Recurring conveyancing circuit (search providers exhibit through the year, track for autumn): Modern Law Conveyancing Conference, Society of Licensed Conveyancers conference, Conveyancing Foundation events, Today's Conveyancer events.
 
 ---
 
