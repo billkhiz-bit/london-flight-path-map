@@ -74,7 +74,7 @@ Recommend option 1 (delete) because it aligns with the new "iPad is a real targe
 
 ### 6. Email setup TODO (deferred from 2026-05-12)
 
-Per `memory/project_email_setup_todo.md`: Cloudflare Email Routing → Gmail for `support@`/`hello@`/`bilal@skyscore.co.uk`. ~25 min. Apple may email during review (build 20 cycle is a re-up of the review email thread). Still worth doing whenever there's a clear hour.
+Per `memory/project_email_setup_todo.md`: Cloudflare Email Routing → Gmail for `support@`/`info@`/`bilalkhizar@skyscore.co.uk`. **DONE 2026-05-21** — all three live and tested.
 
 ### 7. Water quality data idea
 

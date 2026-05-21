@@ -1,5 +1,7 @@
 # Sky Score — Native Release Checklist
 
+> **Status:** iOS v1.0 is **LIVE** on the App Store since 2026-05-20 (build 20, Wave 13.20 iPad fix) — apps.apple.com/gb/app/sky-score/id6768118116. So Section 0 (first-submission ASC prerequisites) is now **skip-able for iOS** — future iOS releases are updates that inherit those fields. Android is **not yet shipped**; its first Play Console upload still has its own one-time setup.
+
 Run through this every time you trigger a Codemagic build that's intended for App Store / Play Store. About 10 minutes; catches the version-bump and config mistakes that cause Apple to reject or Play Console to refuse the upload.
 
 ---
