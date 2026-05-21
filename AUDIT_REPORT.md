@@ -6,6 +6,54 @@
 
 ---
 
+## 2026-05-21 website audit (post App Store launch)
+
+**Scope:** the live website + frontend — deploy parity (live vs source), security headers, `index.html`, `score-demo/*`, all 7 active Lambdas, `template.yaml`, `npm audit`. Two parallel agents (frontend/a11y + security) read live source, plus a deployment-parity sweep against `https://skyscore.co.uk`.
+
+**Headline:** healthy. No Critical or new High-severity issues. The May-7 remediation waves genuinely landed (verified in source, not trusted from the triage column). The one real bug fixed this session was infrastructure, not code: the PWA was non-installable because its assets were never deployed.
+
+### Critical
+| # | Issue | File:Line | Category | Status |
+|---|-------|-----------|----------|--------|
+| C-0521-1 | PWA assets (`manifest.webmanifest`, `sw.js`, `icons/*`) returned 403 on the live origin — never in the deploy runbook, so the PWA was non-installable since Wave 13.1 and the install button silently no-op'd. | S3 origin / `CLAUDE.md` deploy block | Infra | **FIXED 2026-05-21** — uploaded all four + Wave 13.20 `index.html`, invalidated CloudFront, patched the runbook. Parity sweep now shows every local asset 200. |
+
+### Important
+| # | Issue | File:Line | Category |
+|---|-------|-----------|----------|
+| I-0521-1 | `saveFavourite` / `removeFavourite` never check `resp.ok` — optimistically mutate `userFavourites` and re-render even on 4xx/5xx, so the UI shows a favourite as "SAVED" the backend rejected (silent failure, real user impact). | `index.html:6741-6767` | Code / silent-failure |
+| I-0521-2 | `score-demo` `render()` assumes a perfect response shape (`d.components[key]`, `d.location.borough`, `d.score.toFixed`…); a partial 200 throws a `TypeError` surfaced as a misleading "Network error". | `score-demo/index.html:525-567` | Error handling |
+| I-0521-3 | `score-demo` signup success assumes `data.limits.monthlyQuota` present; missing object throws *after* the one-time API key was shown, losing it. | `score-demo/index.html:637` | Error handling |
+| I-0521-4 | `navigator.clipboard.writeText(...)` has no `.catch()` — silent unhandled rejection + dead "Copy" button in insecure contexts / on permission denial. | `score-demo/index.html:640` | Error handling |
+| I-0521-5 | Map resize handler does a full D3 teardown+rebuild on every `resize` tick (no debounce) → layout thrashing on mobile URL-bar show/hide + orientation change. | `index.html:7657-7673` | Performance |
+| I-0521-6 | Demo API key hardcoded in served HTML (known C2, risk-accepted; bounded to 1000 req/mo demo quota). Still a live scrape exposure. | `score-demo/index.html:443`, `score-demo/status.html:178` | Secret exposure (accepted) |
+
+### Minor
+| # | Issue | File:Line | Category |
+|---|-------|-----------|----------|
+| M-0521-1 | First-party curated note fields interpolated into `innerHTML` without `escapeHtml` — not exploitable (OGL data, not user input) but the one path bypassing the otherwise-universal escaping discipline. | `index.html:5318,5323,5328,5335,6448`; `score-demo/status.html:276-277` | Defence-in-depth |
+| M-0521-2 | Stale `connect-src` entry `https://epc.opendatacommunities.org` in CSP — EPC moved server-side to MHCLG; browser never calls it directly. Over-permissive, not a hole. | `index.html:15` | CSP tidy |
+| M-0521-3 | `lookupPostcode` calls `resp.json()` without `resp.ok` check (works because postcodes.io returns JSON on 404; inside try/catch so degrades safely). | `index.html:5051-5052` | Consistency |
+| M-0521-4 | Response **headers** lack `Permissions-Policy`; HSTS lacks `includeSubDomains`/`preload`; CSP is delivered via `<meta>` not header. All hardening, not holes. | CloudFront response headers | Hardening |
+| M-0521-5 | Residual inline `onclick` handlers (static values only, no XSS vector) inconsistent with the delegated-listener pattern adopted in audit I8. | `index.html:2176,2180,5295-5309,6382,7182` | Consistency |
+
+### Verified-good (don't re-investigate)
+- **Deploy parity:** every local asset `index.html` references now returns 200 live; all entry points (`/`, `/privacy`, `/score-demo/*`, `/prototype/`, `/.well-known/apple-app-site-association`, `robots.txt`, `sitemap.xml`) 200.
+- **`npm audit`: 0 vulnerabilities.**
+- **XSS:** all API/community strings route through `escapeHtml`/`escapeHtmlAttr`/`safeUrl` (scheme-restricted); the Bedrock chat XSS vector is gone (feature removed).
+- **API security:** all 3 B2B routes API-key gated + per-route throttling; CORS locked to the CloudFront origin for favourites/epc/sold_prices/nhs (score `*` by design, key-gated); inputs `quote()`-encoded; no stack-trace leakage; no hardcoded secrets (EPC env-only).
+- **Security headers present:** HSTS (1yr), X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy.
+- **A11y/responsive:** combobox ARIA, roving-tabindex tablist, `aria-pressed` toggles, icon-button labels, skip-link, `prefers-reduced-motion`, `100dvh` iOS fix, iPad-portrait peek (the Guideline 4.0 fix) all confirmed solid.
+
+### Process lesson
+The prior report (line ~26 below) claimed *"PWA install path verified end-to-end… manifest reachable… SW registers"* via `tests/pwa-check.mjs`. That test ran against a **local** build, never the deployed origin — which is precisely why the 403s went unseen. **Smoke tests for deployed behaviour must hit the live URL, not localhost.** Recommend pointing `pwa-check.mjs` (or a CI step) at `https://skyscore.co.uk` so a missing-asset regression fails loudly.
+
+### Summary
+- Critical: 1 (fixed this session)
+- Important: 6 (1 real silent-failure bug + 3 demo-page error-handling + 1 perf + 1 accepted)
+- Minor: 5 (defence-in-depth / hardening / consistency)
+
+---
+
 ## Wave 13 close — 2026-05-09 (mobile UX overhaul + PWA + native iOS/Android pipeline)
 
 Mobile-first responsive refactor and PWA + native infrastructure shipped together. Eight new audit findings (F-A11Y-1..8) introduced and resolved within the same wave; five new mobile-related preflight gates pass clean.
