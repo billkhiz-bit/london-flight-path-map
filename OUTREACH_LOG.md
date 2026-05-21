@@ -20,7 +20,7 @@ One deal puts Sky Score into thousands of conveyancing searches. Long sales cycl
 
 | Date | Contact | Company | Role | Channel | Status | Notes / Next action |
 |---|---|---|---|---|---|---|
-| _none yet_ | | | | | | |
+| 2026-05-21 | TBC (Data Partnerships / Head of Product) | Landmark Information Group | Data Partnerships | Enquiry form `landmark.co.uk/contact` (LinkedIn preferred for a named contact) | 🟡 Draft ready | Draft below (Riskview noise-gap angle). No public email — DMGT-owned. **Next:** find a named Data Partnerships / Product contact on LinkedIn, send via DM; use the contact form only as fallback. |
 
 ---
 
@@ -147,20 +147,26 @@ Each email is tailored to the recipient. Customise the bracketed sections (`[nam
 
 ### Landmark Information Group, Data Partnerships / Head of Product
 
-> **Subject:** Per-postcode noise and livability layer, fits Riskview pattern
+_Final draft, 2026-05-21. Channel: LinkedIn DM to a named contact preferred; `landmark.co.uk/contact` form as fallback. Replace `[Name]` (or use "Hi Landmark team," on the form)._
+
+> **Subject:** A noise + livability layer for Riskview
 >
 > Hi [Name],
 >
-> I noticed Landmark's Riskview includes flood, contamination, energy, and environmental risk data, but no integrated noise or composite livability layer. Has there been a deliberate decision to leave that to specialist providers, or is it on a future roadmap?
+> Riskview already pulls together flood, ground stability, energy and environmental risk — but there's no integrated **noise** or composite **livability** layer in the pack. Is that a deliberate split (left to specialists), or a gap on the roadmap?
 >
-> Sky Score is a noise + livability data API positioned exactly there. Per-postcode resolution (DEFRA noise + Haversine flight-path geometry today, full DEFRA raster tier scaffolded), composite 0-10 score with components, OGL-licensed, methodology fully published.
+> I've built **Sky Score**, a postcode-level noise + livability data API positioned exactly there: aircraft + road noise (DEFRA Lden + flight-path geometry) plus a 0–10 composite with component breakdowns — all OGL-licensed, with the methodology published in full so it's citable inside a search report. It's live now (a free consumer app on the App Store and a documented B2B API), so for Landmark this is an integration, not a build.
 >
-> Live: [browser demo] · [methodology] · [Swagger UI]. Sample response for SW11 1AA: <https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=SW11+1AA> (with key, happy to share).
+> A couple of links rather than a deck:
+> - Browser demo, no signup — https://skyscore.co.uk/score-demo/index.html
+> - Methodology — https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md
+> - OpenAPI / Swagger — https://skyscore.co.uk/score-demo/api-docs.html
 >
-> Would 20 minutes be useful to explore whether this complements Riskview or sits parallel?
+> Would 20 minutes be useful to compare notes on where the noise/livability gap sits for Landmark's conveyancing data? Happy to share an API key so your team can run a postcode they know well (say SW11 1AA) against their own intuition.
 >
 > Best,
-> Bilal
+> Bilal Khizar
+> Sky Score · bilalkhizar@skyscore.co.uk · https://skyscore.co.uk
 
 ### TM Group, Data Partnerships
 
