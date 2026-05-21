@@ -2714,7 +2714,12 @@
       // iOS users have to use Share → Add to Home Screen manually, so
       // they get a one-time hint instead of a one-tap chip.
       (function setupInstallUX() {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        // Modern iPadOS Safari reports its UA as "Macintosh", so the
+        // /iPad|iPhone|iPod/ test alone misses most iPads. Catch them via
+        // MacIntel + multi-touch — Macs have no touchscreen, so
+        // maxTouchPoints > 1 on a "Mac" means it's really an iPad.
+        const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) || isIPadOS) && !window.MSStream;
         const isStandalone =
           window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         let deferredPrompt = null;
