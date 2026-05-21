@@ -6738,31 +6738,46 @@
         }
       }
 
+      // Return true only when the backend confirmed the write. Callers use the
+      // result to keep the button + local state truthful — never assume success
+      // (audit I-0521-1: the UI used to show "SAVED" even on a 4xx/5xx).
       async function saveFavourite(postcode, borough, noiseLevel, buyerScore) {
         try {
-          await fetch(`${API_BASE}/favourites`, {
+          const resp = await fetch(`${API_BASE}/favourites`, {
             method: 'POST',
             headers: _favHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ postcode, borough, noiseLevel, buyerScore, city: currentCity }),
           });
+          if (!resp.ok) {
+            console.warn('Save favourite failed: HTTP', resp.status);
+            return false;
+          }
           userFavourites.push({ postcode, borough, noiseLevel, buyerScore: String(buyerScore), city: currentCity });
           renderFavouritesList();
+          return true;
         } catch (e) {
           console.warn('Save favourite failed:', e);
+          return false;
         }
       }
 
       async function removeFavourite(postcode) {
         try {
-          await fetch(`${API_BASE}/favourites`, {
+          const resp = await fetch(`${API_BASE}/favourites`, {
             method: 'DELETE',
             headers: _favHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ postcode }),
           });
+          if (!resp.ok) {
+            console.warn('Remove favourite failed: HTTP', resp.status);
+            return false;
+          }
           userFavourites = userFavourites.filter((f) => f.postcode !== postcode);
           renderFavouritesList();
+          return true;
         } catch (e) {
           console.warn('Remove favourite failed:', e);
+          return false;
         }
       }
 
@@ -7283,19 +7298,25 @@
       // ============================================================
       // FAVOURITE TOGGLE
       // ============================================================
-      function toggleFavourite(postcode, borough, noiseLevel, buyerScore) {
-        if (isFavourite(postcode)) {
-          removeFavourite(postcode);
-        } else {
-          saveFavourite(postcode, borough, noiseLevel, buyerScore);
-        }
-        // Update button visually
+      async function toggleFavourite(postcode, borough, noiseLevel, buyerScore) {
         const btn = document.querySelector('.fav-btn');
-        if (btn) {
-          btn.classList.toggle('saved');
-          btn.innerHTML = btn.classList.contains('saved')
-            ? '<svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>SAVED'
-            : '<svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>SAVE';
+        const SVG = '<svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
+        const setBtn = (saved, label) => {
+          if (!btn) return;
+          btn.classList.toggle('saved', saved);
+          btn.innerHTML = SVG + label;
+        };
+        const wasFav = isFavourite(postcode);
+        // Optimistic flip for instant feedback…
+        setBtn(!wasFav, wasFav ? 'SAVE' : 'SAVED');
+        // …then await the real result and roll back if the backend rejected it
+        // (audit I-0521-1: stop showing "SAVED" for writes that never landed).
+        const ok = wasFav
+          ? await removeFavourite(postcode)
+          : await saveFavourite(postcode, borough, noiseLevel, buyerScore);
+        if (!ok) {
+          setBtn(wasFav, 'FAILED');
+          setTimeout(() => setBtn(wasFav, wasFav ? 'SAVED' : 'SAVE'), 1500);
         }
       }
 

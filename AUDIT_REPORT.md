@@ -20,7 +20,7 @@
 ### Important
 | # | Issue | File:Line | Category |
 |---|-------|-----------|----------|
-| I-0521-1 | `saveFavourite` / `removeFavourite` never check `resp.ok` — optimistically mutate `userFavourites` and re-render even on 4xx/5xx, so the UI shows a favourite as "SAVED" the backend rejected (silent failure, real user impact). | `index.html:6741-6767` | Code / silent-failure |
+| I-0521-1 | `saveFavourite` / `removeFavourite` never check `resp.ok` — optimistically mutate `userFavourites` and re-render even on 4xx/5xx, so the UI shows a favourite as "SAVED" the backend rejected (silent failure, real user impact). | `index.html:6741-6767` | Code / silent-failure | **FIXED 2026-05-21** — both now return a success boolean and only mutate state on `resp.ok`; `toggleFavourite` awaits the result and rolls the button back (flashes "FAILED") if the write didn't land. |
 | I-0521-2 | `score-demo` `render()` assumes a perfect response shape (`d.components[key]`, `d.location.borough`, `d.score.toFixed`…); a partial 200 throws a `TypeError` surfaced as a misleading "Network error". | `score-demo/index.html:525-567` | Error handling |
 | I-0521-3 | `score-demo` signup success assumes `data.limits.monthlyQuota` present; missing object throws *after* the one-time API key was shown, losing it. | `score-demo/index.html:637` | Error handling |
 | I-0521-4 | `navigator.clipboard.writeText(...)` has no `.catch()` — silent unhandled rejection + dead "Copy" button in insecure contexts / on permission denial. | `score-demo/index.html:640` | Error handling |
