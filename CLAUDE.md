@@ -91,6 +91,17 @@ AWS_PROFILE=flightmap aws s3 cp js/api-base.js s3://london-flight-map-frontend/j
 AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
 
+# PWA assets — REQUIRED for the install prompt + offline SW to work. These are
+# NOT covered by the index.html line above; they were missing from the live
+# origin until 2026-05-21 (every asset 403'd → no manifest → install button
+# silently dead). Re-deploy whenever manifest.webmanifest, sw.js, or the icons
+# change (rare). Content-types matter: a wrong manifest type fails Chrome's
+# installability check.
+AWS_PROFILE=flightmap aws s3 cp manifest.webmanifest s3://london-flight-map-frontend/manifest.webmanifest --content-type "application/manifest+json" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp sw.js s3://london-flight-map-frontend/sw.js --content-type "application/javascript" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp icons/icon.svg s3://london-flight-map-frontend/icons/icon.svg --content-type "image/svg+xml" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp icons/icon-maskable.svg s3://london-flight-map-frontend/icons/icon-maskable.svg --content-type "image/svg+xml" --region eu-west-2
+
 # Score demo (B2B API tester), same pattern as prototype
 AWS_PROFILE=flightmap aws s3 cp score-demo/index.html s3://london-flight-map-frontend/score-demo/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/score-demo/*"
