@@ -147,22 +147,24 @@ Each email is tailored to the recipient. Customise the bracketed sections (`[nam
 
 ### Landmark Information Group, Data Partnerships / Head of Product
 
-_Final draft, 2026-05-21. Channel: LinkedIn DM to a named contact preferred; `landmark.co.uk/contact` form as fallback. Replace `[Name]` (or use "Hi Landmark team," on the form)._
+_Final draft, 2026-05-21 (commercial / licensing version — explicit partnership ask). Channel: LinkedIn DM to a named contact preferred; `landmark.co.uk/contact` form as fallback. Replace `[Name]` (or use "Hi Landmark team," on the form)._
 
-> **Subject:** A noise + livability layer for Riskview
+> **Subject:** Licensing a noise + livability data layer for Riskview
 >
 > Hi [Name],
 >
-> Riskview already pulls together flood, ground stability, energy and environmental risk — but there's no integrated **noise** or composite **livability** layer in the pack. Is that a deliberate split (left to specialists), or a gap on the roadmap?
+> Riskview pulls together flood, ground stability, energy and environmental risk — but there's no integrated **noise** or composite **livability** layer. I'd like to talk about Landmark adding one, supplied by us rather than built in-house.
 >
-> I've built **Sky Score**, a postcode-level noise + livability data API positioned exactly there: aircraft + road noise (DEFRA Lden + flight-path geometry) plus a 0–10 composite with component breakdowns — all OGL-licensed, with the methodology published in full so it's citable inside a search report. It's live now (a free consumer app on the App Store and a documented B2B API), so for Landmark this is an integration, not a build.
+> I've built **Sky Score**, a postcode-level noise + livability API: aircraft + road noise (DEFRA Lden + flight-path geometry) plus a 0–10 composite with component breakdowns — OGL-licensed, with the methodology published in full so it's citable inside a search report. It's live today: a consumer app on the App Store and a documented B2B API.
 >
-> A couple of links rather than a deck:
+> **The proposition for Landmark:** license Sky Score as a wholesale data layer and resell it inside Riskview / your conveyancing searches — on per-search pricing or a revenue share, whichever fits your model. You get a new search add-on without the build, and we own the data sourcing, refresh and methodology. It's an integration, not a build.
+>
+> Easy to evaluate before any call:
 > - Browser demo, no signup — https://skyscore.co.uk/score-demo/index.html
 > - Methodology — https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md
 > - OpenAPI / Swagger — https://skyscore.co.uk/score-demo/api-docs.html
 >
-> Would 20 minutes be useful to compare notes on where the noise/livability gap sits for Landmark's conveyancing data? Happy to share an API key so your team can run a postcode they know well (say SW11 1AA) against their own intuition.
+> Could we set up a short call to scope what a commercial partnership would look like? I'm happy to walk your team through the pricing models and the integration effort, and to issue an API key so you can test live postcodes you know well.
 >
 > Best,
 > Bilal Khizar
