@@ -2519,10 +2519,9 @@
           </button>
           <div class="ios-install-hint" id="ios-install-hint" hidden>
             <span class="ios-install-text">
-              To install: in
-              <strong>Safari</strong>, tap the
+              To install: open the
               <strong>Share</strong>
-              icon in the toolbar, then
+              menu, then
               <strong>Add to Home Screen</strong>
             </span>
             <button
@@ -2739,35 +2738,34 @@
         if (isStandalone) return; // already installed — nothing to show
 
         if (isIOS) {
-          // Safari iOS: no beforeinstallprompt API. Show the share-sheet
-          // hint unless the user has dismissed it before. On iOS only Safari
-          // can "Add to Home Screen" — Chrome (CriOS), Firefox (FxiOS), Edge
-          // (EdgiOS), the Google app (GSA) and in-app webviews (which lack a
-          // "Version/" token) can't install a standalone PWA, so tell those
-          // users to open in Safari first rather than "tap Share".
-          // Name the browser the user is actually in. Chrome/Edge/Firefox/
-          // Opera expose a UA token; Brave mimics Safari's UA and gives no
-          // navigator.brave on iOS WebKit, so it's indistinguishable from
-          // Safari — both share a browser-neutral instruction (which works in
-          // either). The Google app (GSA) and other in-app webviews lack a
-          // "Version/" token and have no Add-to-Home-Screen at all → Safari.
+          // Name the browser the user is actually in, falling back to a
+          // browser-neutral instruction. Caveats that drive the logic:
+          //   - On iPad, Chrome/Edge/Brave send DESKTOP-style UAs (Chrome/…,
+          //     Edg/…) with no CriOS/EdgiOS and no "Version/" token, so we
+          //     match those tokens too — not just the iPhone CriOS/EdgiOS ones.
+          //   - Order matters: Edge & Opera UAs also contain "Chrome".
+          //   - Brave deliberately mimics Safari (no navigator.brave on iOS
+          //     WebKit) so it can't be named — it lands in the neutral branch.
+          //   - Only KNOWN in-app webviews (Facebook/Instagram/etc.) truly
+          //     can't Add-to-Home-Screen, so only they are told to open in a
+          //     real browser. We no longer treat "missing Version/ token" as
+          //     a webview — that wrongly swept iPad Chrome/Edge into it.
           const ua = navigator.userAgent;
-          let browser = null; // detectable non-Safari browser name
-          let canInstall = true; // false = in-app webview with no install path
-          if (/CriOS/.test(ua)) browser = 'Chrome';
-          else if (/EdgiOS/.test(ua)) browser = 'Edge';
-          else if (/FxiOS/.test(ua)) browser = 'Firefox';
-          else if (/OPiOS|OPT\//.test(ua)) browser = 'Opera';
-          else if (/GSA/.test(ua) || !/Version\/[\d.]+.*Safari/.test(ua)) canInstall = false;
+          const isInApp = /FBAN|FBAV|Instagram|Line\/|Twitter|LinkedInApp|GSA\//.test(ua);
+          let browser = null;
+          if (/EdgiOS|EdgA?\//.test(ua)) browser = 'Edge';
+          else if (/OPiOS|OPR\/|OPT\//.test(ua)) browser = 'Opera';
+          else if (/FxiOS|Firefox\//.test(ua)) browser = 'Firefox';
+          else if (/CriOS|Chrome\//.test(ua)) browser = 'Chrome';
           let msg;
-          if (!canInstall) {
+          if (isInApp) {
             msg =
-              'To install: open this page in <strong>Safari</strong>, then tap <strong>Share</strong> &rarr; <strong>Add to Home Screen</strong>';
+              'To install: open this page in your browser (e.g. <strong>Safari</strong>), then use <strong>Share</strong> &rarr; <strong>Add to Home Screen</strong>';
           } else if (browser) {
-            msg = `To install: in <strong>${browser}</strong>, tap the <strong>Share</strong> icon (or <strong>&#8943;</strong> menu), then <strong>Add to Home Screen</strong>`;
+            msg = `To install: in <strong>${browser}</strong>, open the <strong>Share</strong> or <strong>&#8943;</strong> menu, then <strong>Add to Home Screen</strong>`;
           } else {
             msg =
-              'To install: tap the <strong>Share</strong> icon in the toolbar, then <strong>Add to Home Screen</strong>';
+              'To install: open the <strong>Share</strong> menu (or your browser&rsquo;s <strong>&#8943;</strong> menu), then <strong>Add to Home Screen</strong>';
           }
           if (!localStorage.getItem('ios-install-dismissed')) {
             document.addEventListener('DOMContentLoaded', () => {
