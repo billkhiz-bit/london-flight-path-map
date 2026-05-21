@@ -2745,17 +2745,34 @@
           // (EdgiOS), the Google app (GSA) and in-app webviews (which lack a
           // "Version/" token) can't install a standalone PWA, so tell those
           // users to open in Safari first rather than "tap Share".
+          // Name the browser the user is actually in. Chrome/Edge/Firefox/
+          // Opera expose a UA token; Brave mimics Safari's UA and gives no
+          // navigator.brave on iOS WebKit, so it's indistinguishable from
+          // Safari — both share a browser-neutral instruction (which works in
+          // either). The Google app (GSA) and other in-app webviews lack a
+          // "Version/" token and have no Add-to-Home-Screen at all → Safari.
           const ua = navigator.userAgent;
-          const isRealSafari =
-            /Version\/[\d.]+.*Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
+          let browser = null; // detectable non-Safari browser name
+          let canInstall = true; // false = in-app webview with no install path
+          if (/CriOS/.test(ua)) browser = 'Chrome';
+          else if (/EdgiOS/.test(ua)) browser = 'Edge';
+          else if (/FxiOS/.test(ua)) browser = 'Firefox';
+          else if (/OPiOS|OPT\//.test(ua)) browser = 'Opera';
+          else if (/GSA/.test(ua) || !/Version\/[\d.]+.*Safari/.test(ua)) canInstall = false;
+          let msg;
+          if (!canInstall) {
+            msg =
+              'To install: open this page in <strong>Safari</strong>, then tap <strong>Share</strong> &rarr; <strong>Add to Home Screen</strong>';
+          } else if (browser) {
+            msg = `To install: in <strong>${browser}</strong>, tap the <strong>Share</strong> icon (or <strong>&#8943;</strong> menu), then <strong>Add to Home Screen</strong>`;
+          } else {
+            msg =
+              'To install: tap the <strong>Share</strong> icon in the toolbar, then <strong>Add to Home Screen</strong>';
+          }
           if (!localStorage.getItem('ios-install-dismissed')) {
             document.addEventListener('DOMContentLoaded', () => {
               const textEl = document.querySelector('#ios-install-hint .ios-install-text');
-              if (textEl) {
-                textEl.innerHTML = isRealSafari
-                  ? 'To install: tap the <strong>Share</strong> icon in the toolbar, then <strong>Add to Home Screen</strong>'
-                  : 'To install: open this page in <strong>Safari</strong>, then tap <strong>Share</strong> &rarr; <strong>Add to Home Screen</strong>';
-              }
+              if (textEl) textEl.innerHTML = msg;
               show(document.getElementById('ios-install-hint'));
             });
           }
