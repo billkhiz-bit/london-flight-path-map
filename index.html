@@ -2740,9 +2740,22 @@
 
         if (isIOS) {
           // Safari iOS: no beforeinstallprompt API. Show the share-sheet
-          // hint unless the user has dismissed it before.
+          // hint unless the user has dismissed it before. On iOS only Safari
+          // can "Add to Home Screen" — Chrome (CriOS), Firefox (FxiOS), Edge
+          // (EdgiOS), the Google app (GSA) and in-app webviews (which lack a
+          // "Version/" token) can't install a standalone PWA, so tell those
+          // users to open in Safari first rather than "tap Share".
+          const ua = navigator.userAgent;
+          const isRealSafari =
+            /Version\/[\d.]+.*Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua);
           if (!localStorage.getItem('ios-install-dismissed')) {
             document.addEventListener('DOMContentLoaded', () => {
+              const textEl = document.querySelector('#ios-install-hint .ios-install-text');
+              if (textEl) {
+                textEl.innerHTML = isRealSafari
+                  ? 'To install: tap the <strong>Share</strong> icon in the toolbar, then <strong>Add to Home Screen</strong>'
+                  : 'To install: open this page in <strong>Safari</strong>, then tap <strong>Share</strong> &rarr; <strong>Add to Home Screen</strong>';
+              }
               show(document.getElementById('ios-install-hint'));
             });
           }
