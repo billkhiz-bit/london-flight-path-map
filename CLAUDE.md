@@ -129,7 +129,7 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
 
 ## Architecture
 
-- **Frontend**: Single `index.html` (~3,750 lines), vanilla JS, D3.js maps, all UI logic inline
+- **Frontend**: Single `index.html` (~3,960 lines), vanilla JS, D3.js maps, all UI logic inline. **Mobile (≤900px) uses the Option A redesign (2026-05-22)**: a fixed bottom nav (`#mobile-nav`) toggles four full-screen views via `.app[data-mview]` (`setMobileView()`), reusing the desktop `switchTab()` panels. Inactive views are hidden with `visibility` (not `display:none`) so the D3 map keeps a non-zero `clientWidth`. Desktop (≥901px) keeps the two-column grid. See `MOBILE_REDESIGN_PLAN.md`.
 - **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 12 Lambdas (7 active + 5 dormant) + API Gateway + DynamoDB
 - **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
   - `score`, B2B scoring engine, API-key gated (`/v1/score`, `/v1/score/batch`, `/v1/regions`)
@@ -225,8 +225,8 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Store Releases
 
-- **iOS — LIVE.** Sky Score v1.0 is public on the GB App Store as of 2026-05-20: <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`). Approved build 20 carries the Wave 13.20 iPad Guideline 4.0 layout fix, closing the rejection arc that ran 2026-05-12 → 2026-05-20. Verify "live" anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"` → `resultCount:1`.
-- **Android — pending.** AAB stale relative to master; rebuild via `npm run build:android` to carry the iPad fix, then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md`.
+- **iOS — LIVE (v1.0); mobile redesign queued for next submission.** Sky Score v1.0 is public on the GB App Store as of 2026-05-20: <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`). Approved build 20 carries the Wave 13.20 iPad Guideline 4.0 layout fix, closing the rejection arc that ran 2026-05-12 → 2026-05-20. Verify "live" anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"` → `resultCount:1`. **Next version = the 2026-05-22 Option A mobile redesign** (committed `78aea08`+`a0e518b`, live on web): push → Codemagic ios-workflow Start build → ASC submit. "What's New" already in `mobile/fastlane/metadata/ios/en-GB/release_notes.txt`.
+- **Android — pending.** AAB stale relative to master; rebuild via `npm run build:android` (now fixed for Windows — uses `gradlew.bat`; needs `JAVA_HOME` = Android Studio JBR + `SKY_SCORE_KEYSTORE_PATH`/`SKY_SCORE_KEYSTORE_PASSWORD` env vars, password in Bitwarden) to carry the iPad fix + mobile redesign, then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md`.
 
 ## Known Issues
 

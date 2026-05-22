@@ -57,13 +57,20 @@ the nav. This fixes the home-indicator overlap noted during diagnosis.
 ## Build order (incremental, each step verifiable)
 
 1. ✅ Gate PWA install prompt out of native + make `[hidden]` authoritative.
-2. Bottom-nav markup + `setMobileView()` controller + nav wiring.
-3. `@media (max-width:900px)` CSS: nav bar, full-screen views, safe-area.
-4. Hook `revealSheetIfMobile()` → `setMobileView('search')` on result.
-5. Verify via Playwright at iPhone viewport (native sim) across all four views;
-   confirm zero overflow, nav reachable, safe-area respected.
-6. Desktop regression check at ≥1024px (2-column layout unchanged).
-7. Move to canonical clone, `/preflight`, deploy web, rebuild iOS, resubmit.
+2. ✅ Bottom-nav markup + `setMobileView()` controller + nav wiring.
+3. ✅ `@media (max-width:900px)` CSS: nav bar, full-screen views, safe-area.
+4. ✅ Hook `revealSheetIfMobile()` → `setMobileView('search')` on result.
+5. ✅ Verify via Playwright at iPhone viewport (native sim) across all four views;
+   zero overflow, nav reachable, install prompt gone in-app.
+6. ✅ Desktop regression check at 1440px (2-column grid + nav hidden — unchanged).
+7. ✅ Committed to canonical clone (`78aea08`+`a0e518b`), `/preflight` clean,
+   deployed to web/CloudFront, **verified live at 360/390/414px**.
+8. ⏳ **User-only, remaining:** `git push` → Codemagic ios-workflow Start build →
+   ASC submit ("What's New" in iOS `release_notes.txt`); Android `npm run
+   build:android` (needs `JAVA_HOME` + keystore env vars) → Play flow.
+
+**Status (2026-05-22): code complete, committed, live on web. Native store
+submission pending the user-only push/build/submit steps above.**
 
 ## Verification
 
