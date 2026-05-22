@@ -2,7 +2,7 @@
 <html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Content Security Policy (enforcing — switched from Report-Only on 2026-05-07 after the survey of external resources matched all known fetches; revert if anything
          breaks live and re-add '-Report-Only' to the http-equiv). Blocks
@@ -118,6 +118,16 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+      }
+      /* Make the `hidden` attribute authoritative. Components like
+         .install-prompt, .install-chip, .ios-install-hint and .native-only
+         set an explicit `display`, which by the cascade overrides the UA
+         `[hidden] { display:none }` rule — so toggling `.hidden` in JS had no
+         visual effect: the PWA install prompt rendered for every user
+         (including inside the native app), and native-only controls could
+         leak onto the web. This makes `[hidden]` win everywhere. */
+      [hidden] {
+        display: none !important;
       }
       /* On iOS Safari, 100vh includes the URL bar so content is clipped at the
      bottom (layer toggles). 100dvh is the dynamic viewport that accounts
@@ -2136,6 +2146,126 @@
           bottom: 320px;
         }
       }
+
+      /* ============================================================
+         MOBILE REDESIGN — Option A: bottom tab bar, search-first.
+         Scoped to <=900px. Replaces the old bottom-sheet model with
+         four full-screen views toggled by a fixed bottom nav. Desktop
+         (>=901px) is untouched: the nav is hidden and the two-column
+         grid + in-sidebar tabs remain. See MOBILE_REDESIGN_PLAN.md.
+         ============================================================ */
+      .mobile-nav {
+        display: none;
+      }
+      @media (max-width: 900px) {
+        .mobile-nav {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 60;
+          display: flex;
+          background: var(--white, #ffffff);
+          border-top: 1px solid var(--dark);
+          box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+          /* Reserve the home-indicator / gesture-bar safe area so the
+             buttons are never hidden behind it (the bug from diagnosis). */
+          padding-bottom: env(safe-area-inset-bottom);
+          height: calc(56px + env(safe-area-inset-bottom));
+        }
+        .mobile-nav-btn {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+          border: none;
+          background: none;
+          font-family: var(--font-mono);
+          font-size: 10px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          color: var(--dark);
+          opacity: 0.5;
+          cursor: pointer;
+          min-height: 56px;
+          transition: opacity 0.15s ease;
+        }
+        .mobile-nav-btn .mobile-nav-icon {
+          font-size: 19px;
+          line-height: 1;
+        }
+        .mobile-nav-btn.active {
+          opacity: 1;
+          color: var(--orange);
+          font-weight: 600;
+        }
+        .mobile-nav-btn:focus-visible {
+          outline: 2px solid var(--orange);
+          outline-offset: -3px;
+        }
+
+        /* The two top-level views (map + sidebar) each fill the screen above
+           the nav. Only one is visible at a time; the other is hidden with
+           `visibility` (NOT display:none) so #map-container keeps a non-zero
+           clientWidth and the D3 projection never initialises at 0x0. */
+        .app > #map-container,
+        .app > .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: calc(56px + env(safe-area-inset-bottom));
+          width: auto;
+          height: auto;
+          max-height: none;
+          margin: 0;
+          transform: none !important;
+          border: none;
+          box-shadow: none;
+        }
+        .app > #map-container {
+          overflow: hidden;
+          visibility: hidden;
+          z-index: 1;
+        }
+        .app > .sidebar {
+          overflow: auto;
+          -webkit-overflow-scrolling: touch;
+          visibility: visible;
+          z-index: 2;
+          padding-top: env(safe-area-inset-top);
+        }
+        .app[data-mview='map'] > #map-container {
+          visibility: visible;
+          z-index: 2;
+        }
+        .app[data-mview='map'] > .sidebar {
+          visibility: hidden;
+          z-index: 1;
+        }
+
+        /* Sheet artefacts and the now-redundant in-sidebar tab bar are gone;
+           the bottom nav owns Search/Rankings/Saved switching. */
+        .sheet-handle {
+          display: none !important;
+        }
+        .sidebar > .tab-bar {
+          display: none;
+        }
+
+        /* Map chrome must clear the bottom nav (these were tuned to the old
+           220px sheet peek). Only relevant while the map view is foremost. */
+        .app[data-mview='map'] .layer-toggles,
+        .app[data-mview='map'] .map-legend,
+        .app[data-mview='map'] .layers-trigger {
+          bottom: calc(56px + env(safe-area-inset-bottom) + 14px);
+        }
+        .app[data-mview='map'] .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
+          bottom: calc(56px + env(safe-area-inset-bottom) + 62px);
+        }
+      }
     </style>
   </head>
   <body>
@@ -2622,6 +2752,30 @@
           decision.
         </div>
       </aside>
+
+      <!-- Mobile bottom navigation (Option A). Visible only ≤900px; the
+           desktop two-column layout never shows it. Each button sets
+           .app[data-mview] which CSS uses to swap between full-screen views,
+           reusing the existing switchTab() panels. role=navigation + a labelled
+           button per destination; aria-current marks the active view. -->
+      <nav class="mobile-nav" id="mobile-nav" aria-label="Main">
+        <button type="button" class="mobile-nav-btn active" data-mview="search" aria-current="page">
+          <span class="mobile-nav-icon" aria-hidden="true">&#128269;</span>
+          <span class="mobile-nav-label">Search</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mview="map" aria-current="false">
+          <span class="mobile-nav-icon" aria-hidden="true">&#128506;</span>
+          <span class="mobile-nav-label">Map</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mview="ranking" aria-current="false">
+          <span class="mobile-nav-icon" aria-hidden="true">&#128202;</span>
+          <span class="mobile-nav-label">Rankings</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mview="saved" aria-current="false">
+          <span class="mobile-nav-icon" aria-hidden="true">&#9733;</span>
+          <span class="mobile-nav-label">Saved</span>
+        </button>
+      </nav>
     </div>
 
     <script src="js/api-base.js"></script>
@@ -2713,6 +2867,15 @@
       // iOS users have to use Share → Add to Home Screen manually, so
       // they get a one-time hint instead of a one-tap chip.
       (function setupInstallUX() {
+        // Inside the native iOS/Android wrapper there is nothing to install —
+        // the app already IS installed. Bail before any PWA install chip or
+        // "Add to Home Screen" hint can render. setupNativeFeatures() reveals
+        // the native-only additions; this guard suppresses the PWA-only
+        // prompts that would otherwise leak into the Capacitor WebView
+        // (its UA is iOS but display-mode is not "standalone").
+        const cap = window.Capacitor;
+        if (cap && typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) return;
+
         // Modern iPadOS Safari reports its UA as "Macintosh", so the
         // /iPad|iPhone|iPod/ test alone misses most iPads. Catch them via
         // MacIntel + multi-touch — Macs have no touchscreen, so
@@ -6510,7 +6673,11 @@
       // because the alternatives risked users not noticing their result.
       function revealSheetIfMobile() {
         if (window.innerWidth > 900) return;
-        if (window.setSheetState) window.setSheetState('open');
+        // Option A: a result just landed — bring the user to the Search view
+        // so they see it (the result renders in the Analysis panel). Falls
+        // back to the legacy sheet for any pre-nav state.
+        if (window.setMobileView) window.setMobileView('search');
+        else if (window.setSheetState) window.setSheetState('open');
       }
 
       function updateSidebarPostcode(analysis, boroughData) {
@@ -7725,6 +7892,45 @@
           renderLabels();
         });
       }
+
+      // Mobile bottom-nav controller (Option A). Drives full-screen view
+      // switching at <=900px via .app[data-mview]; reuses switchTab() for the
+      // Search/Rankings/Saved panels. Inert above 900px (desktop keeps its
+      // two-column layout and in-sidebar tabs). See MOBILE_REDESIGN_PLAN.md.
+      (function setupMobileNav() {
+        const app = document.querySelector('.app');
+        const nav = document.getElementById('mobile-nav');
+        if (!app || !nav) return;
+        const TAB_FOR = { search: 'analysis', ranking: 'ranking', saved: 'favourites' };
+
+        window.setMobileView = function (view) {
+          if (!TAB_FOR[view] && view !== 'map') return;
+          app.dataset.mview = view;
+          nav.querySelectorAll('.mobile-nav-btn').forEach((b) => {
+            const on = b.dataset.mview === view;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-current', on ? 'page' : 'false');
+          });
+          if (TAB_FOR[view]) {
+            switchTab(TAB_FOR[view]);
+            const sb = document.getElementById('sidebar');
+            if (sb) sb.scrollTop = 0;
+          } else {
+            // Map view: the container kept its size while hidden (visibility,
+            // not display), but recompute the projection now it's foremost so
+            // orientation/keyboard changes since load are picked up.
+            window.dispatchEvent(new Event('resize'));
+          }
+        };
+
+        nav.addEventListener('click', (e) => {
+          const btn = e.target.closest('.mobile-nav-btn');
+          if (btn && btn.dataset.mview) window.setMobileView(btn.dataset.mview);
+        });
+
+        // Search-first: phones/tablets open on the Search view.
+        if (window.innerWidth <= 900) window.setMobileView('search');
+      })();
 
       init();
     </script>
