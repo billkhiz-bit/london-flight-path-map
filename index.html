@@ -2148,13 +2148,18 @@
       }
 
       /* ============================================================
-         MOBILE REDESIGN — Option A: bottom tab bar, search-first.
-         Scoped to <=900px. Replaces the old bottom-sheet model with
-         four full-screen views toggled by a fixed bottom nav. Desktop
-         (>=901px) is untouched: the nav is hidden and the two-column
-         grid + in-sidebar tabs remain. See MOBILE_REDESIGN_PLAN.md.
+         MOBILE REDESIGN — Option A v2: 3-tab bottom nav with the map
+         + search merged into one tab. Scoped to <=900px. Search view
+         shows the map full-screen with a floating search bar overlay;
+         a result card slides up over the map when one lands. Rankings
+         and Saved remain full-screen sidebar panels.
          ============================================================ */
       .mobile-nav {
+        display: none;
+      }
+      /* Result-card close button is mobile-search-only — hidden by
+         default; the mobile media query reveals it inside the search view. */
+      .result-close {
         display: none;
       }
       @media (max-width: 900px) {
@@ -2168,8 +2173,6 @@
           background: var(--white, #ffffff);
           border-top: 1px solid var(--dark);
           box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
-          /* Reserve the home-indicator / gesture-bar safe area so the
-             buttons are never hidden behind it (the bug from diagnosis). */
           padding-bottom: env(safe-area-inset-bottom);
           height: calc(56px + env(safe-area-inset-bottom));
         }
@@ -2206,10 +2209,9 @@
           outline-offset: -3px;
         }
 
-        /* The two top-level views (map + sidebar) each fill the screen above
-           the nav. Only one is visible at a time; the other is hidden with
-           `visibility` (NOT display:none) so #map-container keeps a non-zero
-           clientWidth and the D3 projection never initialises at 0x0. */
+        /* Both panes fill the screen above the nav. Visibility (not
+           display) is used so #map-container retains a non-zero
+           clientWidth — D3 reads this at init time. */
         .app > #map-container,
         .app > .sidebar {
           position: fixed;
@@ -2237,17 +2239,118 @@
           z-index: 2;
           padding-top: env(safe-area-inset-top);
         }
-        .app[data-mview='map'] > #map-container {
+
+        /* === SEARCH VIEW (default): map foregrounded, sidebar as overlay ===
+           Map shows full-screen behind a transparent sidebar; the search
+           box pins to the top as a floating card; the empty-state guidance
+           is hidden (the map IS the guidance); when a result lands it
+           renders as a card sliding up over the map. */
+        .app[data-mview='search'] > #map-container {
+          visibility: visible;
+          z-index: 1;
+        }
+        .app[data-mview='search'] > .sidebar {
           visibility: visible;
           z-index: 2;
+          background: transparent;
+          pointer-events: none;
+          padding-top: env(safe-area-inset-top);
         }
-        .app[data-mview='map'] > .sidebar {
+        /* Re-enable interaction on the children — only the sidebar's empty
+           backdrop areas should pass clicks through to the map below. */
+        .app[data-mview='search'] > .sidebar > * {
+          pointer-events: auto;
+        }
+        .app[data-mview='search'] .sidebar-header,
+        .app[data-mview='search'] .install-prompt,
+        .app[data-mview='search'] .disclaimer,
+        .app[data-mview='search'] .empty-state,
+        /* The first-time hint ("type a postcode or click a borough") is
+           redundant on mobile search view — the floating search card
+           shows the same guidance, and the hint banner overlaps it. */
+        .app[data-mview='search'] .first-hint {
+          display: none;
+        }
+        /* Floating search card pinned to the top of the screen */
+        .app[data-mview='search'] .search-box {
+          position: sticky;
+          top: 8px;
+          margin: 8px;
+          padding: 10px 12px;
+          background: var(--white, #ffffff);
+          border: 1px solid var(--dark);
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+          z-index: 3;
+        }
+        .app[data-mview='search'] .search-box .search-hint {
+          font-size: 11px;
+          margin-top: 4px;
+          opacity: 0.7;
+        }
+        /* When there IS a result the sidebar-content is populated. Style
+           it as a card floating over the map with its own backdrop, with
+           a close button in the top-right corner. */
+        .app[data-mview='search'] #tab-analysis {
+          margin: 8px;
+          background: var(--cream, #ebe8e1);
+          border: 1px solid var(--dark);
+          border-radius: 12px;
+          padding: 12px;
+          padding-top: 36px;
+          box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+          position: relative;
+        }
+        .app[data-mview='search'] .result-close {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 36px;
+          height: 36px;
+          border: none;
+          background: transparent;
+          font-size: 26px;
+          line-height: 1;
+          font-family: var(--font-mono);
+          color: var(--dark);
+          cursor: pointer;
+          z-index: 2;
+        }
+        .app[data-mview='search'] .result-close:focus-visible {
+          outline: 2px solid var(--orange);
+          outline-offset: -2px;
+          border-radius: 4px;
+        }
+        /* Hide the close button when the empty-state is showing
+           (nothing to close). */
+        .app[data-mview='search'] #tab-analysis:has(.empty-state) .result-close {
+          display: none;
+        }
+        /* If the analysis tab still only holds the empty-state (no result),
+           hide its entire wrapper so the map is fully visible. !important
+           is needed because switchTab() sets inline style.display='block'
+           on the active tab, which beats this selector by specificity. */
+        .app[data-mview='search'] #tab-analysis:has(.empty-state) {
+          display: none !important;
+        }
+
+        /* === RANKING / SAVED views: opaque sidebar, map hidden === */
+        .app[data-mview='ranking'] > #map-container,
+        .app[data-mview='saved'] > #map-container {
           visibility: hidden;
           z-index: 1;
         }
+        .app[data-mview='ranking'] > .sidebar,
+        .app[data-mview='saved'] > .sidebar {
+          visibility: visible;
+          z-index: 2;
+          background: var(--cream, #ebe8e1);
+        }
 
-        /* Sheet artefacts and the now-redundant in-sidebar tab bar are gone;
-           the bottom nav owns Search/Rankings/Saved switching. */
+        /* Sheet artefacts and in-sidebar tab bar are owned by the bottom nav now. */
         .sheet-handle {
           display: none !important;
         }
@@ -2255,15 +2358,84 @@
           display: none;
         }
 
-        /* Map chrome must clear the bottom nav (these were tuned to the old
-           220px sheet peek). Only relevant while the map view is foremost. */
-        .app[data-mview='map'] .layer-toggles,
-        .app[data-mview='map'] .map-legend,
-        .app[data-mview='map'] .layers-trigger {
+        /* Map chrome must clear the bottom nav (the search view is the
+           only place the map is foreground now). */
+        .app[data-mview='search'] .layer-toggles,
+        .app[data-mview='search'] .map-legend,
+        .app[data-mview='search'] .layers-trigger {
           bottom: calc(56px + env(safe-area-inset-bottom) + 14px);
         }
-        .app[data-mview='map'] .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
+        .app[data-mview='search'] .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
           bottom: calc(56px + env(safe-area-inset-bottom) + 62px);
+        }
+
+        /* CLEAN MOBILE CHROME — search view only.
+           City switcher becomes a tiny inline chip in the top-right
+           corner of the screen (aligned with the search card). Zoom
+           +/-/reset buttons are hidden — touchscreens have pinch-zoom
+           and double-tap natively. The locate button (#locate-me, the
+           App Store 4.2 GPS feature) survives as a floating circular
+           button at the bottom-right, above the layer chips.
+           The map-title (large "SKY SCORE" mark) is hidden — the brand
+           is already in the PWA chrome / tab nav. */
+        .app[data-mview='search'] .map-title {
+          display: none;
+        }
+
+        /* City switcher: compact horizontal chip in the top-right.
+           Positioned fixed so it aligns with the floating search card. */
+        .app[data-mview='search'] .city-selector {
+          position: fixed;
+          top: calc(env(safe-area-inset-top) + 16px);
+          right: 14px;
+          left: auto;
+          z-index: 4;
+          gap: 0;
+        }
+        .app[data-mview='search'] .city-btn {
+          font-size: 8px;
+          letter-spacing: 0.5px;
+          padding: 4px 7px;
+          min-height: 22px;
+          border-radius: 0;
+        }
+        .app[data-mview='search'] .city-btn:first-child {
+          border-radius: 6px 0 0 6px;
+        }
+        .app[data-mview='search'] .city-btn:last-child {
+          border-radius: 0 6px 6px 0;
+          border-left: none;
+        }
+        /* Make the search card leave room for the city chip on the right.
+           Both buttons ("LONDON" + "NEW YORK") together need ~110px;
+           less than that and the chip slides under the search card. */
+        .app[data-mview='search'] .search-box {
+          margin-right: 118px;
+        }
+
+        /* Hide desktop zoom controls on mobile (pinch/double-tap covers it).
+           Keep only the locate button, repositioned as a floating FAB. */
+        .app[data-mview='search'] .map-controls {
+          top: auto;
+          right: 14px;
+          bottom: calc(56px + env(safe-area-inset-bottom) + 72px);
+          z-index: 11;
+          flex-direction: column;
+          gap: 0;
+        }
+        .app[data-mview='search'] .map-controls > #zoom-in,
+        .app[data-mview='search'] .map-controls > #zoom-out,
+        .app[data-mview='search'] .map-controls > #zoom-reset {
+          display: none;
+        }
+        .app[data-mview='search'] #locate-me {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: var(--white, #ffffff);
+          border: 1px solid var(--dark);
+          font-size: 20px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
         }
       }
     </style>
@@ -2706,6 +2878,13 @@
              *button*, not the panel itself. Earlier the panel referenced its
              own id, which is a self-reference that screen readers ignore. -->
         <div id="tab-analysis" role="tabpanel" aria-labelledby="tab-btn-analysis">
+          <!-- Mobile-only close button on the result card. Hidden on desktop
+               (CSS) and when the empty-state is showing (no result to close).
+               Clears #sidebar-content back to the empty-state and returns
+               the user to a clean map view. -->
+          <button type="button" id="result-close" class="result-close" aria-label="Close result and return to map">
+            &times;
+          </button>
           <div id="sidebar-content">
             <div class="empty-state">
               <div class="icon">&#9678;</div>
@@ -2762,10 +2941,6 @@
         <button type="button" class="mobile-nav-btn active" data-mview="search" aria-current="page">
           <span class="mobile-nav-icon" aria-hidden="true">&#128269;</span>
           <span class="mobile-nav-label">Search</span>
-        </button>
-        <button type="button" class="mobile-nav-btn" data-mview="map" aria-current="false">
-          <span class="mobile-nav-icon" aria-hidden="true">&#128506;</span>
-          <span class="mobile-nav-label">Map</span>
         </button>
         <button type="button" class="mobile-nav-btn" data-mview="ranking" aria-current="false">
           <span class="mobile-nav-icon" aria-hidden="true">&#128202;</span>
@@ -7903,30 +8078,55 @@
         if (!app || !nav) return;
         const TAB_FOR = { search: 'analysis', ranking: 'ranking', saved: 'favourites' };
 
+        // Snapshot the initial empty-state DOM so the close button can
+        // restore it after a result has been rendered. Captured at boot
+        // as a cloned node (NOT an HTML string) so the restore path uses
+        // safe DOM cloning instead of innerHTML — no XSS surface even if
+        // the template later gains dynamic content.
+        const sidebarContent = document.getElementById('sidebar-content');
+        const emptyStateNode =
+          sidebarContent && sidebarContent.firstElementChild ? sidebarContent.firstElementChild.cloneNode(true) : null;
+
         window.setMobileView = function (view) {
-          if (!TAB_FOR[view] && view !== 'map') return;
+          if (!TAB_FOR[view]) return;
           app.dataset.mview = view;
           nav.querySelectorAll('.mobile-nav-btn').forEach((b) => {
             const on = b.dataset.mview === view;
             b.classList.toggle('active', on);
             b.setAttribute('aria-current', on ? 'page' : 'false');
           });
-          if (TAB_FOR[view]) {
-            switchTab(TAB_FOR[view]);
-            const sb = document.getElementById('sidebar');
-            if (sb) sb.scrollTop = 0;
-          } else {
-            // Map view: the container kept its size while hidden (visibility,
-            // not display), but recompute the projection now it's foremost so
-            // orientation/keyboard changes since load are picked up.
-            window.dispatchEvent(new Event('resize'));
-          }
+          switchTab(TAB_FOR[view]);
+          const sb = document.getElementById('sidebar');
+          if (sb) sb.scrollTop = 0;
+          // Search view brings the map to the foreground — nudge D3 to
+          // recompute the projection in case orientation or the keyboard
+          // changed the viewport since load.
+          if (view === 'search') window.dispatchEvent(new Event('resize'));
         };
 
         nav.addEventListener('click', (e) => {
           const btn = e.target.closest('.mobile-nav-btn');
           if (btn && btn.dataset.mview) window.setMobileView(btn.dataset.mview);
         });
+
+        // Close-result button: restores the empty-state so the user
+        // returns to a clean map. The :has(.empty-state) CSS rule then
+        // re-hides the analysis-card wrapper automatically.
+        const closeBtn = document.getElementById('result-close');
+        if (closeBtn && sidebarContent && emptyStateNode) {
+          closeBtn.addEventListener('click', () => {
+            // replaceChildren + cloneNode keeps the restore on safe DOM
+            // APIs (no innerHTML/parsed strings). The clone is taken from
+            // the boot-time snapshot so future calls still have a pristine
+            // template to copy from.
+            sidebarContent.replaceChildren(emptyStateNode.cloneNode(true));
+            sidebarContent.querySelectorAll('.quicksearch-chip').forEach((chip) => {
+              chip.addEventListener('click', () => triggerSearch(chip.dataset.quicksearch));
+            });
+            const input = document.getElementById('search-input');
+            if (input) input.value = '';
+          });
+        }
 
         // Search-first: phones/tablets open on the Search view.
         if (window.innerWidth <= 900) window.setMobileView('search');

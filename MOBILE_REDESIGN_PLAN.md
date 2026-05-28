@@ -84,3 +84,63 @@ prove no regression.
 - Reworking the Analysis result card visual hierarchy (separate pass).
 - NYC parity polish.
 - Native gestures beyond the map's existing pinch/drag.
+
+---
+
+## v2 iteration — 2026-05-28 (map background + 3 tabs)
+
+User feedback after living with v1 for six days: "the search tab is too blank
+on first load; the product's identity is the map, but new users don't see it
+until they tap a second tab". Resolved by collapsing Search and Map into a
+single tab.
+
+### Changes
+
+- **Bottom nav: 4 tabs → 3 tabs.** Map tab removed; merged into Search.
+  New users land on the map immediately with a clear search affordance overlaid.
+- **Search view = map background + search overlay.** Map is z-index 1 visible;
+  sidebar is z-index 2 transparent with `pointer-events:none` (children
+  `pointer-events:auto` so the search card and any result card remain
+  interactive). Empty-state is hidden via `:has(.empty-state)` so the
+  first-load experience is just map + floating search bar.
+- **Floating search card.** Search input + hint pinned to top as a rounded
+  card with shadow. `margin-right:118px` reserved so the city chip never
+  gets covered.
+- **City switcher → compact chip top-right.** Repositioned `.city-selector`
+  to `position:fixed; top: safe-area+16px; right:14px`; small monospace
+  pills so London/NYC switching stays accessible without competing with
+  the search bar.
+- **Map chrome cleanup.** Desktop zoom buttons (`+`/`-`/`reset`) hidden on
+  mobile (pinch + double-tap are native); only `#locate-me` (App Store 4.2
+  GPS feature) survives, restyled as a circular FAB above the layer chips.
+  `.first-hint` and `.map-title` hidden — the floating search card already
+  carries that guidance and brand identity sits in PWA chrome.
+- **Result close button.** New `#result-close` (`×`) in the top-right of
+  the result card. Click handler restores the boot-time empty-state via
+  `cloneNode(true)` + `replaceChildren()` (no `innerHTML` — security
+  guidance flagged the string-snapshot pattern). Hidden on desktop and
+  when there's nothing to close (`:has(.empty-state) .result-close`).
+
+### Specificity gotchas captured
+
+1. `switchTab()` sets `style.display='block'` inline on the active tab.
+   External CSS `display:none` lost to this — fixed with `!important` on
+   the empty-state hide rule.
+2. Base `.result-close { display:none }` plus mobile-search rule that only
+   set `position:absolute` left the button hidden. CSS `position` doesn't
+   affect computed `display`; the mobile rule had to explicitly set
+   `display:flex`.
+
+### Verification (v2)
+
+`tests/native-sim-render.mjs` updated to assert 3 tabs (not 4), map visible
+in search view + hidden in ranking/saved, and search box visible across
+states. End-to-end close-button flow tested separately (ad-hoc script):
+empty → fake result rendered → close click → empty-state restored with
+all 4 quick-search chips re-bound.
+
+### Out of scope (still)
+
+- NYC parity polish.
+- Reworking `switchTab()` to use class toggling instead of inline styles
+  (would let us drop the `!important` — but it's a wider refactor).

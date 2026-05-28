@@ -23,7 +23,7 @@ async function mobile() {
   });
   console.log('mobile-nav visible:', navVisible);
 
-  for (const view of ['search', 'map', 'ranking', 'saved']) {
+  for (const view of ['search', 'ranking', 'saved']) {
     await page.evaluate((v) => window.setMobileView(v), view);
     await page.waitForTimeout(800);
     const m = await page.evaluate(() => ({
@@ -35,7 +35,18 @@ async function mobile() {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 && getComputedStyle(el).display !== 'none';
       })(),
+      mapVisible: (() => {
+        const m = document.getElementById('map-container');
+        return m ? getComputedStyle(m).visibility === 'visible' : null;
+      })(),
+      searchBoxVisible: (() => {
+        const i = document.getElementById('search-input');
+        if (!i) return false;
+        const r = i.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      })(),
       activeNav: [...document.querySelectorAll('.mobile-nav-btn.active')].map((b) => b.dataset.mview),
+      navCount: document.querySelectorAll('.mobile-nav-btn').length,
     }));
     console.log(`view=${view}:`, JSON.stringify(m));
     await page.screenshot({ path: `tests/mview-${view}.png` });
