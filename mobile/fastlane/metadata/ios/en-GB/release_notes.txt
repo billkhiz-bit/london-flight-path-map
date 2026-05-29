@@ -1,7 +1,7 @@
-A redesigned mobile experience.
+A redesigned mobile experience, built for one hand.
 
-• New bottom navigation — jump straight between Search, Map, Rankings and Saved.
-• Search-first home screen: look up any postcode, area or borough the moment you open the app.
-• The map now has its own full-screen view for smoother panning and zooming.
-• A cleaner layout that fits every iPhone edge-to-edge, with proper spacing around the home indicator.
+• New bottom navigation — switch instantly between Search, Rankings and Saved.
+• Map-first home: the map fills the screen with a floating search bar on top, so you can explore or look up any postcode the moment you open the app.
+• Tap a place to see its full score card slide up over the map; tap × to close it and keep exploring.
+• A cleaner, edge-to-edge layout that fits every iPhone, with proper spacing around the home indicator.
 • Assorted fixes and polish.

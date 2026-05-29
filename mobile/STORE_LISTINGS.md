@@ -105,6 +105,21 @@ First release of Sky Score for iOS. Features:
 • Independent, open methodology — no listings-site tilt
 ```
 
+### What's New — v1.1 (mobile redesign, native apps only)
+
+> The bottom-nav mobile redesign ships in the native iOS/Android apps only; the
+> website stays on the classic layout (web/native split, 2026-05-29). Keep this
+> in step with `fastlane/metadata/ios/en-GB/release_notes.txt` and the Android
+> `changelogs/default.txt`.
+
+```
+A redesigned mobile experience, built for one hand.
+• New bottom navigation — switch instantly between Search, Rankings and Saved.
+• Map-first home: the map fills the screen with a floating search bar on top.
+• Tap a place to see its score card slide up over the map; tap × to close it.
+• A cleaner, edge-to-edge layout that fits every iPhone.
+```
+
 ---
 
 ## Google Play Console
