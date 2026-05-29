@@ -194,9 +194,15 @@ overflow); desktop 1440px → two-column grid. `tests/live-mobile-verify.mjs`
 re-pointed to assert the live web serves the classic layout (a post-deploy
 gate). Both verified locally on 2026-05-29.
 
-### Remaining
+### Status (2026-05-29)
 
-- Deploy reverted `index.html` to CloudFront (`/*` invalidation) so live web
-  shows the classic layout.
-- Next native build (iOS Codemagic / Android `build:android`) copies this same
-  `index.html` and ships the redesign — no extra step needed.
+- ✅ Deployed reverted `index.html` to CloudFront + verified the live web serves
+  the classic layout (360 / 390 / 414, post-deploy gate green).
+- ✅ Committed (`3945226`) + store-copy fix (`4af9bc5`); pushed to origin; both
+  clones synced.
+- ✅ **iOS `1.0.21` (build 21)** built via Codemagic from `4af9bc5` (iPhone-only)
+  and **submitted for App Store review on 2026-05-29** (Waiting for Review).
+  Screenshots regenerated at 1242×2688 (`store-screenshots/`); "What's New" =
+  the 3-tab redesign copy.
+- ⏳ Android native build (`npm run build:android`) + Play submission still
+  pending — copies the same `index.html`, ships the redesign automatically.

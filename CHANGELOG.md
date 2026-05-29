@@ -6,6 +6,21 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-05-29 — Web/native split + iOS 1.0.21 submitted for review
+
+- **Web/native split** (`3945226`): the mobile bottom-nav redesign is now
+  native-app only, gated behind an `is-native` class on `<html>` (added by
+  `setupNativeFeatures()` only inside Capacitor). The website (desktop + mobile
+  browser + PWA) reverted to the classic bottom-sheet layout; the iOS/Android
+  apps keep the redesign. Deployed to CloudFront + verified. See
+  `MOBILE_REDESIGN_PLAN.md` v3.
+- **Store copy** (`4af9bc5`): iOS "What's New" + Android changelog reworded from
+  the v1 four-tab nav (Search/Map/Rankings/Saved) to the v2 three-tab,
+  map-as-background design (Search/Rankings/Saved).
+- **iOS `1.0.21` (build 21)** submitted for App Store review (2026-05-29) —
+  native redesign, iPhone-only, built via Codemagic from `4af9bc5`. Screenshots
+  at 1242×2688. Waiting for Review.
+
 ### Wave 13.1 → 13.5 — 2026-05-09 (mobile UX + PWA + native iOS/Android pipeline)
 
 Five-part wave that takes Sky Score from "web-only" to "PWA + native iOS + native Android pipeline". 46 files / ~8,700 lines added across five focused commits.
