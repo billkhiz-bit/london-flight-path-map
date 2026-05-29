@@ -2163,7 +2163,15 @@
         display: none;
       }
       @media (max-width: 900px) {
-        .mobile-nav {
+        /* The mobile redesign (bottom nav + map-as-background) is NATIVE-APP
+           ONLY. Every redesign base rule below is scoped to .is-native, a
+           class added to <html> only inside the Capacitor app (see
+           setupNativeFeatures). On web/PWA the class is absent, these rules
+           never match, and the site keeps its classic bottom-sheet layout.
+           NB: written as ".is-native .app > …" (class only) — prefixing with
+           "html.is-native" would add element-specificity and out-rank the
+           [data-mview] view rules, breaking the native map swap. */
+        .is-native .mobile-nav {
           position: fixed;
           left: 0;
           right: 0;
@@ -2212,8 +2220,8 @@
         /* Both panes fill the screen above the nav. Visibility (not
            display) is used so #map-container retains a non-zero
            clientWidth — D3 reads this at init time. */
-        .app > #map-container,
-        .app > .sidebar {
+        .is-native .app > #map-container,
+        .is-native .app > .sidebar {
           position: fixed;
           top: 0;
           left: 0;
@@ -2227,12 +2235,12 @@
           border: none;
           box-shadow: none;
         }
-        .app > #map-container {
+        .is-native .app > #map-container {
           overflow: hidden;
           visibility: hidden;
           z-index: 1;
         }
-        .app > .sidebar {
+        .is-native .app > .sidebar {
           overflow: auto;
           -webkit-overflow-scrolling: touch;
           visibility: visible;
@@ -2350,11 +2358,13 @@
           background: var(--cream, #ebe8e1);
         }
 
-        /* Sheet artefacts and in-sidebar tab bar are owned by the bottom nav now. */
-        .sheet-handle {
+        /* Sheet artefacts + in-sidebar tab bar belong to the bottom nav —
+           native app only. On web these stay visible so the classic
+           bottom-sheet layout keeps its drag handle and in-panel tabs. */
+        .is-native .sheet-handle {
           display: none !important;
         }
-        .sidebar > .tab-bar {
+        .is-native .sidebar > .tab-bar {
           display: none;
         }
 
@@ -2976,6 +2986,15 @@
       (function setupNativeFeatures() {
         const cap = window.Capacitor;
         if (!cap || typeof cap.isNativePlatform !== 'function' || !cap.isNativePlatform()) return;
+
+        // Mark the document root so the mobile redesign (bottom nav +
+        // map-as-background, all scoped to @media (max-width: 900px))
+        // activates ONLY inside the native iOS/Android app. On web and PWA
+        // window.Capacitor is undefined, this class is never added, and the
+        // .is-native-prefixed redesign rules never match — so the website
+        // keeps its classic bottom-sheet mobile layout. Web and native are
+        // deliberately separate now. See MOBILE_REDESIGN_PLAN.md.
+        document.documentElement.classList.add('is-native');
 
         // Reveal native-only UI.
         document.querySelectorAll('.native-only').forEach((el) => {
@@ -6848,10 +6867,11 @@
       // because the alternatives risked users not noticing their result.
       function revealSheetIfMobile() {
         if (window.innerWidth > 900) return;
-        // Option A: a result just landed — bring the user to the Search view
-        // so they see it (the result renders in the Analysis panel). Falls
-        // back to the legacy sheet for any pre-nav state.
-        if (window.setMobileView) window.setMobileView('search');
+        // A result just landed. Native app: switch to the redesign's Search
+        // view so the result shows over the map. Web/PWA: open the classic
+        // bottom sheet instead — the two mobile experiences are separate now.
+        const native = document.documentElement.classList.contains('is-native');
+        if (native && window.setMobileView) window.setMobileView('search');
         else if (window.setSheetState) window.setSheetState('open');
       }
 
@@ -8088,6 +8108,11 @@
           sidebarContent && sidebarContent.firstElementChild ? sidebarContent.firstElementChild.cloneNode(true) : null;
 
         window.setMobileView = function (view) {
+          // Native-only: this is the sole writer of data-mview. On web the
+          // is-native class is absent, so bail before touching the attribute —
+          // that keeps every @media redesign rule dormant and leaves the
+          // classic bottom-sheet layout in charge.
+          if (!document.documentElement.classList.contains('is-native')) return;
           if (!TAB_FOR[view]) return;
           app.dataset.mview = view;
           nav.querySelectorAll('.mobile-nav-btn').forEach((b) => {
@@ -8128,7 +8153,9 @@
           });
         }
 
-        // Search-first: phones/tablets open on the Search view.
+        // Search-first (native app only): phones/tablets open on the Search
+        // view. setMobileView() is guarded above, so on web this call no-ops
+        // and the classic bottom-sheet layout loads instead.
         if (window.innerWidth <= 900) window.setMobileView('search');
       })();
 

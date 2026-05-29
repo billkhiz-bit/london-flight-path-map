@@ -129,7 +129,7 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
 
 ## Architecture
 
-- **Frontend**: Single `index.html` (~3,960 lines), vanilla JS, D3.js maps, all UI logic inline. **Mobile (≤900px) uses the Option A redesign (2026-05-22)**: a fixed bottom nav (`#mobile-nav`) toggles four full-screen views via `.app[data-mview]` (`setMobileView()`), reusing the desktop `switchTab()` panels. Inactive views are hidden with `visibility` (not `display:none`) so the D3 map keeps a non-zero `clientWidth`. Desktop (≥901px) keeps the two-column grid. See `MOBILE_REDESIGN_PLAN.md`.
+- **Frontend**: Single `index.html` (~3,960 lines), vanilla JS, D3.js maps, all UI logic inline. **The mobile bottom-nav redesign is NATIVE-APP ONLY as of 2026-05-29** (web/native split): the redesign (`#mobile-nav` + `.app[data-mview]` 3-tab views via `setMobileView()`, map-as-background) is gated behind an `is-native` class that `setupNativeFeatures()` adds to `<html>` only inside the Capacitor app. **The website — desktop, mobile browser, and PWA — serves the classic bottom-sheet layout** (`.sheet-handle` + `setSheetState()`); the iOS/Android apps get the redesign. The redesign's base CSS rules are `.is-native`-prefixed and `setMobileView()` (sole writer of `data-mview`) bails unless `is-native`. Desktop (≥901px) keeps the two-column grid regardless. See `MOBILE_REDESIGN_PLAN.md` (v3 section).
 - **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 12 Lambdas (7 active + 5 dormant) + API Gateway + DynamoDB
 - **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
   - `score`, B2B scoring engine, API-key gated (`/v1/score`, `/v1/score/batch`, `/v1/regions`)

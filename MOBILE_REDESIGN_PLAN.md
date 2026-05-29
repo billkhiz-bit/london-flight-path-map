@@ -5,6 +5,13 @@
 > Same `index.html` serves web desktop, web mobile, PWA, and native — so all
 > changes are **scoped to `@media (max-width: 900px)`** and must not alter the
 > desktop two-column layout.
+>
+> **Update (v3, 2026-05-29): web and native now diverge.** The redesign below
+> is **native-app only** — gated behind an `is-native` class on `<html>` that
+> `setupNativeFeatures()` adds only inside the Capacitor app. The **website
+> (desktop + mobile browser + PWA) serves the classic bottom-sheet layout**;
+> the iOS/Android apps keep this redesign. See "v3 — web/native split" at the
+> end of this doc.
 
 ## Decision
 
@@ -144,3 +151,52 @@ all 4 quick-search chips re-bound.
 - NYC parity polish.
 - Reworking `switchTab()` to use class toggling instead of inline styles
   (would let us drop the `!important` — but it's a wider refactor).
+
+---
+
+## v3 — 2026-05-29 (web/native split: redesign is native-app only)
+
+User decision: keep the live **website** on its classic (pre-redesign) mobile
+layout, and reserve the bottom-nav redesign for the **native iOS / Android
+apps**. Rationale: the redesign never shipped to either store (the live App
+Store build still runs the classic layout), so rather than push a half-deployed
+experiment to the web, the two surfaces are deliberately separated. One file,
+no fork.
+
+### Mechanism (the single switch)
+
+`setupNativeFeatures()` runs only when `window.Capacitor.isNativePlatform()` is
+true; it adds `is-native` to `<html>`. That one class gates both layers:
+
+- **CSS** — every redesign *base* rule in the `@media (max-width: 900px)` block
+  is prefixed with `.is-native` (`.is-native .mobile-nav`, `.is-native .app >
+  #map-container`, `.is-native .app > .sidebar`, `.is-native .sheet-handle`,
+  `.is-native .sidebar > .tab-bar`). The `[data-mview]` *view* rules are left
+  unprefixed because they can only match when `data-mview` is set — and JS only
+  sets it on native (below). Written as `.is-native …` (class only);
+  `html.is-native …` would add element-specificity and out-rank the
+  `[data-mview]` rules, breaking the native map swap.
+- **JS** — `setMobileView()` (the sole writer of `data-mview`) bails unless
+  `is-native`; `revealSheetIfMobile()` branches: native →
+  `setMobileView('search')`, web → the classic `setSheetState('open')`.
+
+Because v1+v2 were almost purely additive (they removed only the viewport-meta
+line and one `setSheetState('open')` call), the classic bottom-sheet CSS + JS
+are still fully present and simply take back over on web once the redesign
+rules are gated off.
+
+### Verification
+
+`tests/native-sim-render.mjs` now renders three contexts and asserts the split:
+native sim (shim) → redesign (3-tab nav, map swap); **web mobile (no shim) →
+classic layout** (no nav, `data-mview` unset, sheet handle present, zero
+overflow); desktop 1440px → two-column grid. `tests/live-mobile-verify.mjs`
+re-pointed to assert the live web serves the classic layout (a post-deploy
+gate). Both verified locally on 2026-05-29.
+
+### Remaining
+
+- Deploy reverted `index.html` to CloudFront (`/*` invalidation) so live web
+  shows the classic layout.
+- Next native build (iOS Codemagic / Android `build:android`) copies this same
+  `index.html` and ships the redesign — no extra step needed.
