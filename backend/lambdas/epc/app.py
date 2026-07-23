@@ -38,50 +38,65 @@ def handler(event, context):
 
         bearer_token = os.environ.get('EPC_BEARER_TOKEN', '')
         if not bearer_token:
-            return response(200, {
-                'postcode': postcode,
-                'available': False,
-                'message': 'EPC bearer token not configured.',
-                'sources': [OGL_ATTRIBUTION],
-            })
+            return response(
+                200,
+                {
+                    'postcode': postcode,
+                    'available': False,
+                    'message': 'EPC bearer token not configured.',
+                    'sources': [OGL_ATTRIBUTION],
+                },
+            )
 
         # API expects '+' for space (per docs example: ?postcode=LS1+4AP).
         clean = postcode.strip().upper().replace(' ', '+')
         url = f'{EPC_API_BASE}{DOMESTIC_SEARCH_PATH}?postcode={quote(clean, safe="+")}&page=50'
 
-        req = Request(url, headers={
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {bearer_token}',
-        })
+        req = Request(
+            url,
+            headers={
+                'Accept': 'application/json',
+                'Authorization': f'Bearer {bearer_token}',
+            },
+        )
 
         try:
             with urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode())
         except HTTPError as exc:
             if exc.code == 401:
-                return response(200, {
-                    'postcode': postcode,
-                    'available': False,
-                    'message': 'EPC bearer token is invalid or expired.',
-                    'sources': [OGL_ATTRIBUTION],
-                })
+                return response(
+                    200,
+                    {
+                        'postcode': postcode,
+                        'available': False,
+                        'message': 'EPC bearer token is invalid or expired.',
+                        'sources': [OGL_ATTRIBUTION],
+                    },
+                )
             if exc.code == 404:
                 # Per docs: 404 means no certificates match, not endpoint missing.
-                return response(200, {
-                    'postcode': postcode,
-                    'available': True,
-                    'count': 0,
-                    'certificates': [],
-                    'summary': None,
-                    'sources': [OGL_ATTRIBUTION],
-                })
+                return response(
+                    200,
+                    {
+                        'postcode': postcode,
+                        'available': True,
+                        'count': 0,
+                        'certificates': [],
+                        'summary': None,
+                        'sources': [OGL_ATTRIBUTION],
+                    },
+                )
             if exc.code == 429:
-                return response(429, {
-                    'postcode': postcode,
-                    'available': False,
-                    'message': 'EPC API rate limit exceeded. Try again shortly.',
-                    'sources': [OGL_ATTRIBUTION],
-                })
+                return response(
+                    429,
+                    {
+                        'postcode': postcode,
+                        'available': False,
+                        'message': 'EPC API rate limit exceeded. Try again shortly.',
+                        'sources': [OGL_ATTRIBUTION],
+                    },
+                )
             return response(502, {'error': f'EPC upstream error ({exc.code})'})
         except URLError:
             return response(504, {'error': 'EPC upstream unreachable'})
@@ -89,14 +104,17 @@ def handler(event, context):
         rows = extract_rows(data)
 
         if not rows:
-            return response(200, {
-                'postcode': postcode,
-                'available': True,
-                'count': 0,
-                'certificates': [],
-                'summary': None,
-                'sources': [OGL_ATTRIBUTION],
-            })
+            return response(
+                200,
+                {
+                    'postcode': postcode,
+                    'available': True,
+                    'count': 0,
+                    'certificates': [],
+                    'summary': None,
+                    'sources': [OGL_ATTRIBUTION],
+                },
+            )
 
         bands = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'F': 0, 'G': 0}
         synthesised_ratings = []
@@ -104,13 +122,17 @@ def handler(event, context):
 
         for row in rows:
             # New API: currentEnergyEfficiencyBand. Legacy fallback retained.
-            band = pick(
-                row,
-                'currentEnergyEfficiencyBand',
-                'currentEnergyRating',
-                'current-energy-rating',
-                '',
-            ).strip().upper()
+            band = (
+                pick(
+                    row,
+                    'currentEnergyEfficiencyBand',
+                    'currentEnergyRating',
+                    'current-energy-rating',
+                    '',
+                )
+                .strip()
+                .upper()
+            )
 
             if band in bands:
                 bands[band] += 1
@@ -118,33 +140,31 @@ def handler(event, context):
 
             address = pick(row, 'addressLine1', 'address1', 'address', '').strip()
 
-            certs.append({
-                'address': address,
-                'band': band,
-                # Numeric rating is no longer in search responses, synthesise
-                # from band midpoint so existing consumer-site UI keeps working.
-                'rating': BAND_MIDPOINT.get(band, 0),
-                # Fields below require a per-certificate fetch via /api/certificate;
-                # left empty in the search response.
-                'type': '',
-                'date': pick(
-                    row,
-                    'registrationDate',
-                    'lodgementDate',
-                    'lodgement-date',
-                    '',
-                ).strip(),
-                'floorArea': '',
-                'heatingCost': '',
-                'hotWaterCost': '',
-                'lightingCost': '',
-            })
+            certs.append(
+                {
+                    'address': address,
+                    'band': band,
+                    # Numeric rating is no longer in search responses, synthesise
+                    # from band midpoint so existing consumer-site UI keeps working.
+                    'rating': BAND_MIDPOINT.get(band, 0),
+                    # Fields below require a per-certificate fetch via /api/certificate;
+                    # left empty in the search response.
+                    'type': '',
+                    'date': pick(
+                        row,
+                        'registrationDate',
+                        'lodgementDate',
+                        'lodgement-date',
+                        '',
+                    ).strip(),
+                    'floorArea': '',
+                    'heatingCost': '',
+                    'hotWaterCost': '',
+                    'lightingCost': '',
+                }
+            )
 
-        avg_rating = (
-            round(sum(synthesised_ratings) / len(synthesised_ratings))
-            if synthesised_ratings
-            else 0
-        )
+        avg_rating = round(sum(synthesised_ratings) / len(synthesised_ratings)) if synthesised_ratings else 0
 
         body = {
             'postcode': postcode,
@@ -165,7 +185,7 @@ def handler(event, context):
 
         return response(200, body)
 
-    except Exception as exc: # pragma: no cover, final guard
+    except Exception as exc:  # pragma: no cover, final guard
         logger.exception('Unhandled exception in epc handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
@@ -197,12 +217,18 @@ def pick(row, *keys_with_default):
 
 
 def rating_to_band(rating):
-    if rating >= 92: return 'A'
-    if rating >= 81: return 'B'
-    if rating >= 69: return 'C'
-    if rating >= 55: return 'D'
-    if rating >= 39: return 'E'
-    if rating >= 21: return 'F'
+    if rating >= 92:
+        return 'A'
+    if rating >= 81:
+        return 'B'
+    if rating >= 69:
+        return 'C'
+    if rating >= 55:
+        return 'D'
+    if rating >= 39:
+        return 'E'
+    if rating >= 21:
+        return 'F'
     return 'G'
 
 
@@ -213,7 +239,7 @@ def response(status, body):
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET,OPTIONS'
+            'Access-Control-Allow-Methods': 'GET,OPTIONS',
         },
-        'body': json.dumps(body)
+        'body': json.dumps(body),
     }

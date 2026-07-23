@@ -11,8 +11,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 OGL_ATTRIBUTION = (
-    'Sold prices: HM Land Registry. '
-    'Contains public sector information licensed under the Open Government Licence v3.0.'
+    'Sold prices: HM Land Registry. Contains public sector information licensed under the Open Government Licence v3.0.'
 )
 
 
@@ -40,37 +39,50 @@ def handler(event, context):
                 data = json.loads(resp.read().decode())
         except (HTTPError, URLError, TimeoutError) as exc:
             logger.warning('Land Registry lookup failed for %s: %s', postcode, exc)
-            return response(503, {
-                'error': 'Sold-prices upstream temporarily unavailable.',
-                'postcode': postcode,
-            })
+            return response(
+                503,
+                {
+                    'error': 'Sold-prices upstream temporarily unavailable.',
+                    'postcode': postcode,
+                },
+            )
         except json.JSONDecodeError as exc:
             logger.warning('Land Registry returned non-JSON for %s: %s', postcode, exc)
-            return response(502, {
-                'error': 'Sold-prices upstream returned malformed data.',
-                'postcode': postcode,
-            })
+            return response(
+                502,
+                {
+                    'error': 'Sold-prices upstream returned malformed data.',
+                    'postcode': postcode,
+                },
+            )
 
         items = data.get('result', {}).get('items', [])
 
         results = []
         for item in items:
-            results.append({
-                'price': item.get('pricePaid', 0),
-                'date': item.get('transactionDate', ''),
-                'address': item.get('propertyAddress', {}).get('paon', ''),
-                'street': item.get('propertyAddress', {}).get('street', ''),
-                'type': item.get('propertyType', {}).get('prefLabel', [''])[0] if isinstance(item.get('propertyType', {}).get('prefLabel'), list) else item.get('propertyType', {}).get('prefLabel', ''),
-                'newBuild': item.get('newBuild', False),
-            })
+            results.append(
+                {
+                    'price': item.get('pricePaid', 0),
+                    'date': item.get('transactionDate', ''),
+                    'address': item.get('propertyAddress', {}).get('paon', ''),
+                    'street': item.get('propertyAddress', {}).get('street', ''),
+                    'type': item.get('propertyType', {}).get('prefLabel', [''])[0]
+                    if isinstance(item.get('propertyType', {}).get('prefLabel'), list)
+                    else item.get('propertyType', {}).get('prefLabel', ''),
+                    'newBuild': item.get('newBuild', False),
+                }
+            )
 
-        return response(200, {
-            'postcode': postcode,
-            'transactions': results,
-            'sources': [OGL_ATTRIBUTION],
-        })
+        return response(
+            200,
+            {
+                'postcode': postcode,
+                'transactions': results,
+                'sources': [OGL_ATTRIBUTION],
+            },
+        )
 
-    except Exception as exc: # pragma: no cover, final guard
+    except Exception as exc:  # pragma: no cover, final guard
         logger.exception('Unhandled exception in sold_prices handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
@@ -82,7 +94,7 @@ def response(status, body):
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET,OPTIONS'
+            'Access-Control-Allow-Methods': 'GET,OPTIONS',
         },
-        'body': json.dumps(body)
+        'body': json.dumps(body),
     }

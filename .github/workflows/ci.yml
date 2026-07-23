@@ -39,7 +39,14 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install pytest pytest-mock boto3
+      # Gate on the maintained suite (backend/tests — the same one
+      # /preflight runs). The root tests/ Python suite is the March-era
+      # legacy suite: it had been failing CI at collection since May
+      # (test_chat imported the removed chat Lambda) and 21 of its tests
+      # assert pre-migration handler behaviour. Triage tracked in
+      # ROADMAP.md; re-add here once refreshed.
       - run: python -m pytest tests/ -v --tb=short
+        working-directory: backend
         env:
           AWS_DEFAULT_REGION: eu-west-2
 

@@ -31,12 +31,11 @@ from urllib.request import Request, urlopen
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 OVERPASS_URL = os.environ.get('OVERPASS_URL', 'https://overpass-api.de/api/interpreter')
-SEARCH_RADIUS_M = 3000 # 3 km, typical "your nearest" range
+SEARCH_RADIUS_M = 3000  # 3 km, typical "your nearest" range
 MAX_RESULTS_PER_TYPE = 5
 
 ATTRIBUTION = (
-    'NHS service locations: OpenStreetMap contributors (ODbL); '
-    'verified against NHS service-search where available.'
+    'NHS service locations: OpenStreetMap contributors (ODbL); verified against NHS service-search where available.'
 )
 
 # NHS Service Search canonical URLs, verified live 2026-05-06.
@@ -68,9 +67,9 @@ def haversine(lat1, lon1, lat2, lon2):
     r = 6_371_000
     p = math.pi / 180
     a = (
-        0.5 - math.cos((lat2 - lat1) * p) / 2
-        + math.cos(lat1 * p) * math.cos(lat2 * p)
-        * (1 - math.cos((lon2 - lon1) * p)) / 2
+        0.5
+        - math.cos((lat2 - lat1) * p) / 2
+        + math.cos(lat1 * p) * math.cos(lat2 * p) * (1 - math.cos((lon2 - lon1) * p)) / 2
     )
     return r * 2 * math.asin(math.sqrt(a))
 
@@ -89,10 +88,14 @@ def query_overpass(lat, lon):
         f'out center;'
     )
     body = f'data={quote(query)}'.encode()
-    req = Request(OVERPASS_URL, data=body, headers={
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'sky-score/1.0 (https://d1oe4ftwutjpf.cloudfront.net)',
-    })
+    req = Request(
+        OVERPASS_URL,
+        data=body,
+        headers={
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'sky-score/1.0 (https://d1oe4ftwutjpf.cloudfront.net)',
+        },
+    )
     with urlopen(req, timeout=12) as resp:
         return json.loads(resp.read().decode()).get('elements', [])
 
@@ -161,12 +164,14 @@ def fallback_links(service_type):
     """Return a single fallback row pointing at the canonical NHS search
     page when Overpass is unavailable. Used only when the upstream call
     fails, happy path returns real OSM data."""
-    return [{
-        'name': f'Search NHS {service_type} services on nhs.uk',
-        'website': NHS_SEARCH_PAGES.get(service_type, 'https://www.nhs.uk/'),
-        'distance': None,
-        'fallback': True,
-    }]
+    return [
+        {
+            'name': f'Search NHS {service_type} services on nhs.uk',
+            'website': NHS_SEARCH_PAGES.get(service_type, 'https://www.nhs.uk/'),
+            'distance': None,
+            'fallback': True,
+        }
+    ]
 
 
 def all_fallback():
@@ -200,28 +205,35 @@ def handler(event, context):
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
             logger.warning(
                 'Overpass unavailable, using fallback links. lat=%s lon=%s err=%s',
-                lat, lon, exc,
+                lat,
+                lon,
+                exc,
             )
             buckets = all_fallback()
-            buckets.update({
-                'location': {'lat': lat, 'lon': lon},
-                'sources': [ATTRIBUTION],
-                'available': False,
-                'note': 'Live data unavailable; links go to NHS service search.',
-            })
+            buckets.update(
+                {
+                    'location': {'lat': lat, 'lon': lon},
+                    'sources': [ATTRIBUTION],
+                    'available': False,
+                    'note': 'Live data unavailable; links go to NHS service search.',
+                }
+            )
             return response(200, buckets)
 
         buckets = partition_results(elements, lat, lon)
-        return response(200, {
-            'location': {'lat': lat, 'lon': lon},
-            'gp': buckets['gp'] or fallback_links('GP'),
-            'pharmacies': buckets['pharmacies'] or fallback_links('Pharmacy'),
-            'hospitals': buckets['hospitals'] or fallback_links('Hospital'),
-            'sources': [ATTRIBUTION],
-            'available': True,
-        })
+        return response(
+            200,
+            {
+                'location': {'lat': lat, 'lon': lon},
+                'gp': buckets['gp'] or fallback_links('GP'),
+                'pharmacies': buckets['pharmacies'] or fallback_links('Pharmacy'),
+                'hospitals': buckets['hospitals'] or fallback_links('Hospital'),
+                'sources': [ATTRIBUTION],
+                'available': True,
+            },
+        )
 
-    except Exception as exc: # pragma: no cover, final guard
+    except Exception as exc:  # pragma: no cover, final guard
         logger.exception('Unhandled exception in NHS handler: %s', exc)
         return response(500, {'error': 'Internal server error.'})
 

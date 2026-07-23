@@ -43,14 +43,17 @@ def handler(event, context):
                 line_ids.add(line)
         line_status = fetch_line_status(list(line_ids)[:10]) if line_ids else []
 
-        return response(200, {
-            'stations': stations,
-            'lineStatus': line_status,
-            'location': {'lat': lat, 'lon': lon},
-            'sources': [ATTRIBUTION],
-        })
+        return response(
+            200,
+            {
+                'stations': stations,
+                'lineStatus': line_status,
+                'location': {'lat': lat, 'lon': lon},
+                'sources': [ATTRIBUTION],
+            },
+        )
 
-    except Exception as exc: # pragma: no cover, final guard
+    except Exception as exc:  # pragma: no cover, final guard
         logger.exception('Unhandled exception in transport handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 
@@ -58,10 +61,7 @@ def handler(event, context):
 def fetch_nearby_stations(lat, lon):
     url = f'{TFL_BASE}/StopPoint?lat={lat}&lon={lon}&stopTypes=NaptanMetroStation,NaptanRailStation&radius=1500'
 
-    req = Request(url, headers={
-        'Accept': 'application/json',
-        'User-Agent': 'SkyScore/1.0'
-    })
+    req = Request(url, headers={'Accept': 'application/json', 'User-Agent': 'SkyScore/1.0'})
     try:
         with urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode())
@@ -78,14 +78,16 @@ def fetch_nearby_stations(lat, lon):
         for lp in stop.get('lineModeGroups', []):
             lines.extend(lp.get('lineIdentifier', []))
 
-        results.append({
-            'name': stop.get('commonName', ''),
-            'distance': round(dist),
-            'modes': [lp.get('modeName', '') for lp in stop.get('lineModeGroups', [])],
-            'lines': lines,
-            'lat': stop.get('lat'),
-            'lon': stop.get('lon')
-        })
+        results.append(
+            {
+                'name': stop.get('commonName', ''),
+                'distance': round(dist),
+                'modes': [lp.get('modeName', '') for lp in stop.get('lineModeGroups', [])],
+                'lines': lines,
+                'lat': stop.get('lat'),
+                'lon': stop.get('lon'),
+            }
+        )
 
     results.sort(key=lambda x: x['distance'])
     return results[:5]
@@ -109,13 +111,17 @@ def fetch_line_status(line_ids):
     results = []
     for line in data:
         statuses = line.get('lineStatuses', [{}])
-        results.append({
-            'name': line.get('name', ''),
-            'id': line.get('id', ''),
-            'mode': line.get('modeName', ''),
-            'status': statuses[0].get('statusSeverityDescription', 'Unknown') if statuses else 'Unknown',
-            'reason': statuses[0].get('reason', '') if statuses and statuses[0].get('statusSeverityDescription') != 'Good Service' else ''
-        })
+        results.append(
+            {
+                'name': line.get('name', ''),
+                'id': line.get('id', ''),
+                'mode': line.get('modeName', ''),
+                'status': statuses[0].get('statusSeverityDescription', 'Unknown') if statuses else 'Unknown',
+                'reason': statuses[0].get('reason', '')
+                if statuses and statuses[0].get('statusSeverityDescription') != 'Good Service'
+                else '',
+            }
+        )
 
     return results
 
@@ -123,7 +129,11 @@ def fetch_line_status(line_ids):
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371000
     p = math.pi / 180
-    a = 0.5 - math.cos((lat2-lat1)*p)/2 + math.cos(lat1*p)*math.cos(lat2*p)*(1-math.cos((lon2-lon1)*p))/2
+    a = (
+        0.5
+        - math.cos((lat2 - lat1) * p) / 2
+        + math.cos(lat1 * p) * math.cos(lat2 * p) * (1 - math.cos((lon2 - lon1) * p)) / 2
+    )
     return R * 2 * math.asin(math.sqrt(a))
 
 
@@ -134,7 +144,7 @@ def response(status, body):
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': CORS_ORIGIN,
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'GET,OPTIONS'
+            'Access-Control-Allow-Methods': 'GET,OPTIONS',
         },
-        'body': json.dumps(body)
+        'body': json.dumps(body),
     }
