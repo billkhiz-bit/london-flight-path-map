@@ -368,16 +368,16 @@ Resources:
             Path: /v1/signup
             Method: options
 
-  # Explicit log group so signup logs EXPIRE. Without RetentionInDays the
-  # auto-created group keeps logs forever, which would quietly outlive the
-  # privacy policy's delete-on-request promise for anything that ever
-  # reached a log line (the handler now logs keyIds, never raw emails —
-  # this is defence in depth on top of that).
-  SignupFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${SignupFunction}
-      RetentionInDays: 30
+  # NOTE on signup log retention: the log group /aws/lambda/<SignupFunction>
+  # was auto-created by Lambda in May 2026, so CloudFormation cannot own it
+  # (AWS::Logs::LogGroup fails with AlreadyExists — attempted + rolled back
+  # 2026-07-23). Retention is set to 30 days OUT-OF-BAND instead:
+  #   aws logs put-retention-policy \
+  #     --log-group-name /aws/lambda/<SignupFunction physical name> \
+  #     --retention-in-days 30
+  # Re-run that command if the function is ever recreated under a new name.
+  # Rationale: signup logs must expire — the privacy policy promises
+  # delete-on-request, and the handler now logs keyIds, never raw emails.
 
   # --- DynamoDB Table, Self-service signup audit log ---
   # Email is the partition key (one signup per email, duplicate signups

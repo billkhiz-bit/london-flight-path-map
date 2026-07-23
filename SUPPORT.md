@@ -34,7 +34,9 @@ The live status page is at <https://skyscore.co.uk/score-demo/status.html>
 1. The consumer site itself — `https://skyscore.co.uk`. If the home page
    is up, CloudFront and S3 are healthy.
 2. The API liveness probe — `curl https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/regions`
-   should return a small JSON list of supported regions.
+   with an `X-Api-Key` header (the `/v1/*` endpoints are key-gated; any
+   free-tier key works). Key-less alternative:
+   `curl "https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/epc?postcode=N1+7SX"`.
 3. AWS health dashboard for `eu-west-2` (London) — that's the only region
    we run in. <https://health.aws.amazon.com/health/status>
 
