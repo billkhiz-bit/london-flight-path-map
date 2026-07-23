@@ -16,6 +16,8 @@ When context fills up, always preserve:
 
 If a future session lands you back in `OneDrive\Desktop\london-flight-path-map`, exit and `cd` to the projects/ path before doing anything destructive. If the OneDrive clone has come back from the dead (e.g. someone restored from a backup), prefer running on the projects/ clone and `git pull` to catch up rather than working in OneDrive.
 
+**2026-07-19 update:** the `Claude Projects\Sky Score.bat` launcher was found still pointing at the OneDrive clone and has been repointed to the projects/ path. Both stale Desktop copies (`london-flight-path-map` and `London Flight Path Map`) were verified fully contained in this clone's history and are scheduled for deletion. Their unique March-era artefacts (original `london_flight_paths.py`/`.html` prototype, March `samconfig.toml`, old `.claude/commands`) are preserved in `archive/prototype-2026-03/` here. The 4 fastlane ASC vars (`ASC_ISSUER_ID`/`ASC_KEY_ID`/`ASC_KEY_FILE_PATH`/`FASTLANE_SKIP_DOCS`) existed only in the OneDrive clone's `.env` — merge into this clone's `.env` before relying on fastlane locally.
+
 ## Rolling planning docs
 
 Two project-level planning docs live alongside this file. Read them when picking up work between sessions:
@@ -225,7 +227,7 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Store Releases
 
-- **iOS — v1.0 LIVE; v1.0.21 (mobile redesign) SUBMITTED for App Store review 2026-05-29.** Sky Score v1.0 is public on the GB App Store: <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`; approved build 20 carries the Wave 13.20 iPad Guideline 4.0 fix). **Build 21 / version `1.0.21`** — the native-only mobile redesign (web/native split; built via Codemagic from commit `4af9bc5`, iPhone-only to sidestep iPad review) — was **submitted to App Store review on 2026-05-29** and is Waiting for Review. Screenshots uploaded at 1242×2688 (`store-screenshots/`); "What's New" in `mobile/fastlane/metadata/ios/en-GB/release_notes.txt` (3-tab redesign copy). Verify live anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"` → `resultCount:1` (shows 1.0 until 1.0.21 is approved + released).
+- **iOS — v1.0.21 (mobile redesign) LIVE on the GB App Store.** <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`). Build 21 / version `1.0.21` — the native-only mobile redesign (web/native split; built via Codemagic from commit `4af9bc5`, iPhone-only to sidestep iPad review) — was submitted 2026-05-29 and subsequently approved; the public listing showed v1.0.21 (updated 1 Jun 2026, 1 rating at 5.0) per the 2026-07-19 store-listing audit. Screenshots at 1242×2688 (`store-screenshots/`); "What's New" in `mobile/fastlane/metadata/ios/en-GB/release_notes.txt`. Verify live anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"`. **The site does not yet link the listing — App Store footer link is in the post-call trust-fix bundle (ROADMAP.md, 2026-07-19 review).**
 - **Android — pending.** AAB stale relative to master; rebuild via `npm run build:android` (now fixed for Windows — uses `gradlew.bat`; needs `JAVA_HOME` = Android Studio JBR + `SKY_SCORE_KEYSTORE_PATH`/`SKY_SCORE_KEYSTORE_PASSWORD` env vars, password in Bitwarden) to carry the iPad fix + mobile redesign, then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md`.
 
 ## Known Issues

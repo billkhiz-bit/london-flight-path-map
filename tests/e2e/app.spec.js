@@ -24,10 +24,12 @@ test.describe('Core loading', () => {
     await expect(page.locator('#map-title-text')).toHaveText('Sky Score');
   });
 
-  test('all 8 layer toggle buttons exist', async ({ page }) => {
+  test('all 7 layer toggle buttons exist', async ({ page }) => {
+    // 7 since May 2026: the "live flights" toggle was removed with the
+    // live_flights Lambda (OpenSky licensing) — see ROADMAP open decisions.
     await expect(page.locator('#loading')).toBeHidden({ timeout: 15_000 });
     const toggles = page.locator('.layer-toggle');
-    await expect(toggles).toHaveCount(8);
+    await expect(toggles).toHaveCount(7);
   });
 
   test('search input is visible', async ({ page }) => {
