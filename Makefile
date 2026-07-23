@@ -79,11 +79,16 @@ web-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp index.html \
 		s3://$(S3_BUCKET)/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
+	# NB: the CloudFront function sky-score-rewrite-index rewrites
+	# extensionless paths to <path>/index.html, so these MUST land at
+	# <name>/index.html keys. A flat "privacy" key is never served (the
+	# pre-2026-07-23 version of this target uploaded there — dead object,
+	# live /privacy was actually serving a manually-uploaded copy).
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp privacy.html \
-		s3://$(S3_BUCKET)/privacy \
+		s3://$(S3_BUCKET)/privacy/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp pricing.html \
-		s3://$(S3_BUCKET)/pricing \
+		s3://$(S3_BUCKET)/pricing/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*'
