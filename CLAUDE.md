@@ -62,7 +62,7 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) backed by 7 active AWS Lambda functions orchestrated via SAM (5 Bedrock Lambdas remain dormant in the template; `live_flights` was removed in May 2026 pending OpenSky licensing).
+Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) plus B2B funnel pages (`/api/`, `/pricing`, `/privacy`) backed by the 7 active AWS Lambda functions orchestrated via SAM (the 5 dormant Bedrock Lambdas live in git history only; `live_flights` was removed in May 2026 pending OpenSky licensing).
 
 ## Branding
 
@@ -92,6 +92,12 @@ AWS_PROFILE=flightmap aws s3 cp js/api-base.js s3://london-flight-map-frontend/j
 # Frontend, upload to S3 then invalidate CloudFront
 AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
+
+# Pricing + privacy pages — MUST target <name>/index.html keys (the
+# sky-score-rewrite-index CloudFront function rewrites extensionless
+# paths to <path>/index.html; a flat "pricing" key is never served).
+AWS_PROFILE=flightmap aws s3 cp pricing.html s3://london-flight-map-frontend/pricing/index.html --content-type "text/html" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp privacy.html s3://london-flight-map-frontend/privacy/index.html --content-type "text/html" --region eu-west-2
 
 # PWA assets — REQUIRED for the install prompt + offline SW to work. These are
 # NOT covered by the index.html line above; they were missing from the live
@@ -132,7 +138,8 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
 ## Architecture
 
 - **Frontend**: Single `index.html` (~3,960 lines), vanilla JS, D3.js maps, all UI logic inline. **The mobile bottom-nav redesign is NATIVE-APP ONLY as of 2026-05-29** (web/native split): the redesign (`#mobile-nav` + `.app[data-mview]` 3-tab views via `setMobileView()`, map-as-background) is gated behind an `is-native` class that `setupNativeFeatures()` adds to `<html>` only inside the Capacitor app. **The website — desktop, mobile browser, and PWA — serves the classic bottom-sheet layout** (`.sheet-handle` + `setSheetState()`); the iOS/Android apps get the redesign. The redesign's base CSS rules are `.is-native`-prefixed and `setMobileView()` (sole writer of `data-mview`) bails unless `is-native`. Desktop (≥901px) keeps the two-column grid regardless. See `MOBILE_REDESIGN_PLAN.md` (v3 section).
-- **Backend**: `backend/template.yaml`, SAM/CloudFormation defining 12 Lambdas (7 active + 5 dormant) + API Gateway + DynamoDB
+- **Backend**: `backend/template.yaml`, SAM/CloudFormation defining the 7 active Lambdas + API Gateway + DynamoDB. (Corrected 2026-07-23: earlier docs said "12 Lambdas (7 active + 5 dormant)" but the template contains only the 7 — the dormant Bedrock five live in git history, not the template.)
+- **B2B funnel pages** (deployed alongside `index.html`): `/api/` landing (`api/index.html`), `/pricing` (`pricing.html`, added 2026-07-23: 90-day £2,500 pilot + Free/£499 Professional/Enterprise tiers + founder block), `/privacy` (`privacy.html`). **S3 key gotcha:** the `sky-score-rewrite-index` CloudFront function rewrites extensionless paths to `<path>/index.html`, so privacy/pricing MUST be uploaded to `privacy/index.html` and `pricing/index.html` keys (`make web-deploy` does this correctly since 2026-07-23; a flat `privacy` key is a dead object).
 - **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
   - `score`, B2B scoring engine, API-key gated (`/v1/score`, `/v1/score/batch`, `/v1/regions`)
   - `signup`, self-service API-key issuance
@@ -141,8 +148,8 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
   - `sold_prices`, HM Land Registry Price Paid Data proxy
   - `transport`, TfL Open Data station + line-status
   - `nhs`, NHS Service Search via OSM Overpass
-- **Dormant Lambdas** (in `template.yaml` but not surfaced in the UI as of May 2026; kept for potential re-introduction):
-  - `chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report` — all Bedrock Nova Pro/Lite. Lambda has zero idle cost on on-demand pricing; re-enabling means unhiding the UI block, not redeploying.
+- **Dormant Lambdas** (NOT in `template.yaml` — verified 2026-07-23, the template holds only the 7 active functions):
+  - `chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report` — all Bedrock Nova Pro/Lite. Code + template entries live in git history only; re-introduction means restoring both from history and redeploying, then unhiding the UI block.
 - **Removed**: `live_flights` (OpenSky proxy) — terminated in May 2026 pending OpenSky's required written licensing agreement for operational use. Lambda code lives in git (last working commit: `a214ba0`); restore + add OpenSky params back to template + flip the prototype's `liveLicensed` flag to revive.
 
 ## Prototype (Sky Score Radar)
@@ -206,7 +213,8 @@ iOS native project is regenerated by Codemagic's `ios-workflow` on each cloud bu
 - **CloudFront**: `https://d1oe4ftwutjpf.cloudfront.net` (distribution EGSSPJKLFL33M)
 - **S3 bucket**: `london-flight-map-frontend` (eu-west-2)
 - **DynamoDB table**: `london-flight-map-favourites`
-- **Bedrock models** (used only by dormant Lambdas): `us.amazon.nova-2-lite-v1:0` (simple) + `us.amazon.nova-pro-v1:0` (complex/multimodal)
+- **Bedrock models** (only relevant if the dormant Bedrock Lambdas are ever restored from git history): `us.amazon.nova-2-lite-v1:0` (simple) + `us.amazon.nova-pro-v1:0` (complex/multimodal)
+- **API custom domain**: `api.skyscore.co.uk` — APIGW edge custom domain (created 2026-07-23, cert = the us-east-1 wildcard, base-path mapping → `prod`). Serves once Cloudflare has `CNAME api → d1pr4crjutz9z8.cloudfront.net` (DNS only / grey cloud). The raw execute-api URL keeps working regardless.
 - **IAM**: `flightmap-dev` user, `FlightMapDeployPolicy`
 - **Region**: eu-west-2 (London)
 
@@ -227,7 +235,7 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Store Releases
 
-- **iOS — v1.0.21 (mobile redesign) LIVE on the GB App Store.** <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`). Build 21 / version `1.0.21` — the native-only mobile redesign (web/native split; built via Codemagic from commit `4af9bc5`, iPhone-only to sidestep iPad review) — was submitted 2026-05-29 and subsequently approved; the public listing showed v1.0.21 (updated 1 Jun 2026, 1 rating at 5.0) per the 2026-07-19 store-listing audit. Screenshots at 1242×2688 (`store-screenshots/`); "What's New" in `mobile/fastlane/metadata/ios/en-GB/release_notes.txt`. Verify live anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"`. **The site does not yet link the listing — App Store footer link is in the post-call trust-fix bundle (ROADMAP.md, 2026-07-19 review).**
+- **iOS — v1.0.21 (mobile redesign) LIVE on the GB App Store.** <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`). Build 21 / version `1.0.21` — the native-only mobile redesign (web/native split; built via Codemagic from commit `4af9bc5`, iPhone-only to sidestep iPad review) — was submitted 2026-05-29 and subsequently approved; the public listing showed v1.0.21 (updated 1 Jun 2026, 1 rating at 5.0) per the 2026-07-19 store-listing audit. Screenshots at 1242×2688 (`store-screenshots/`); "What's New" in `mobile/fastlane/metadata/ios/en-GB/release_notes.txt`. Verify live anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"`. **The site footer links the listing since 2026-07-23** (trust-fix bundle, `appstore-footer-click` GoatCounter event).
 - **Android — pending.** AAB stale relative to master; rebuild via `npm run build:android` (now fixed for Windows — uses `gradlew.bat`; needs `JAVA_HOME` = Android Studio JBR + `SKY_SCORE_KEYSTORE_PATH`/`SKY_SCORE_KEYSTORE_PASSWORD` env vars, password in Bitwarden) to carry the iPad fix + mobile redesign, then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md`.
 
 ## Known Issues

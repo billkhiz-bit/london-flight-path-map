@@ -28,7 +28,10 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | What | URL |
 |---|---|
 | Consumer site | <https://skyscore.co.uk/> |
+| Pricing (B2B API tiers + 90-day pilot) | <https://skyscore.co.uk/pricing> |
+| Privacy policy | <https://skyscore.co.uk/privacy> |
 | Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
+| API landing page | <https://skyscore.co.uk/api/> |
 | API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
 | API reference (Swagger UI) | <https://skyscore.co.uk/score-demo/api-docs.html> |
 | OpenAPI 3.0 spec | <https://skyscore.co.uk/score-demo/openapi.yaml> |
