@@ -368,6 +368,17 @@ Resources:
             Path: /v1/signup
             Method: options
 
+  # Explicit log group so signup logs EXPIRE. Without RetentionInDays the
+  # auto-created group keeps logs forever, which would quietly outlive the
+  # privacy policy's delete-on-request promise for anything that ever
+  # reached a log line (the handler now logs keyIds, never raw emails —
+  # this is defence in depth on top of that).
+  SignupFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SignupFunction}
+      RetentionInDays: 30
+
   # --- DynamoDB Table, Self-service signup audit log ---
   # Email is the partition key (one signup per email, duplicate signups
   # return 409 since APIGW won't let us re-show the key value after

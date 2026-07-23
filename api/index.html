@@ -6,7 +6,7 @@
 
 <!-- Content Security Policy (enforcing — see comment in /index.html for the rationale).
      /api landing is a static B2B funnel page; only fonts + analytics, no fetches. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -50,7 +50,7 @@
     "@type": "Organization",
     "name": "Sky Score",
     "url": "https://skyscore.co.uk/",
-    "email": "billkhiz@gmail.com"
+    "email": "support@skyscore.co.uk"
   },
   "featureList": [
     "0-10 quiet score (DEFRA Lden noise)",
@@ -278,6 +278,13 @@
 
   <section>
     <h2>Pricing</h2>
+    <div class="pricing-cell featured" style="margin-bottom:12px;">
+      <div class="tier">90-day paid pilot</div>
+      <div class="price">£2,500<span class="unit"> + VAT · one success metric · written evidence report</span></div>
+      <div class="quota">Fixed scope, fixed fee: metric agreed at kickoff, mid-point review at day 45, written evidence report at day 90. Credited in full against your first-year licence if you continue.</div>
+      <a class="btn btn-primary" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot" style="font-size:12px;padding:8px 14px;">Start a pilot conversation</a>
+      <a class="btn btn-secondary" data-event="pricing-detail-click" href="/pricing" style="font-size:12px;padding:8px 14px;margin-left:8px;">Full pricing</a>
+    </div>
     <div class="pricing-row">
       <div class="pricing-cell">
         <div class="tier">Developer</div>
@@ -285,17 +292,17 @@
         <div class="quota">Self-service signup. Same data, lower limits.</div>
         <a class="btn btn-secondary" href="/score-demo/index.html#signup" style="font-size:12px;padding:8px 14px;">Get a free key</a>
       </div>
-      <div class="pricing-cell featured">
-        <div class="tier">Professional</div>
-        <div class="price">Indicative<span class="unit"> · 100k req/mo</span></div>
+      <div class="pricing-cell">
+        <div class="tier">Professional · Launching</div>
+        <div class="price">£49<span class="unit"> /mo · 100k req/mo</span></div>
         <div class="quota">Suitable for one platform integrating Sky Score.</div>
-        <a class="btn btn-primary" href="mailto:billkhiz@gmail.com?subject=Sky%20Score%20Professional%20tier%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
+        <a class="btn btn-secondary" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
       </div>
       <div class="pricing-cell">
-        <div class="tier">Enterprise</div>
-        <div class="price">Custom<span class="unit"> · MSA + SLA</span></div>
+        <div class="tier">Enterprise licence</div>
+        <div class="price">POA<span class="unit"> · annual · MSA + SLA</span></div>
         <div class="quota">Aggregators, large integrators. SLA, audit log, support contract.</div>
-        <a class="btn btn-secondary" href="mailto:billkhiz@gmail.com?subject=Sky%20Score%20Enterprise%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
+        <a class="btn btn-secondary" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
       </div>
     </div>
     <p style="margin-top:12px;font-size:13px;color:var(--muted);">Pricing firms up post-first-prospect-conversation. Convenience-tier model: integration value (SLA, structured JSON, batch, audit trail, methodology pinning), not data exclusivity. The consumer site keeps every feature.</p>
@@ -308,14 +315,21 @@
       <li>If the output is useful, sign up for a free API key on the same page.</li>
       <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" style="color:var(--amber);">methodology</a> — every threshold anchored, every assumption written down.</li>
       <li>Open the <a href="/score-demo/api-docs.html" style="color:var(--amber);">OpenAPI 3.0 reference</a> and integrate.</li>
-      <li>If you need a paid tier, MSA, or have integration questions: <a href="mailto:billkhiz@gmail.com?subject=Sky%20Score%20API%20integration" style="color:var(--amber);">billkhiz@gmail.com</a>.</li>
+      <li>If you need a paid tier, MSA, or have integration questions: <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration" style="color:var(--amber);">support@skyscore.co.uk</a>.</li>
     </ol>
+  </section>
+
+  <section>
+    <h2>Who is behind it</h2>
+    <p style="color:var(--muted);"><strong style="color:var(--text);">Bilal Khizar</strong>, finance professional turned AI builder. Built and operated solo: <a href="https://skyscore.co.uk/" style="color:var(--amber);">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" style="color:var(--amber);" rel="noopener">Sky Score iOS app</a>, this API, and an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" style="color:var(--amber);">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk" style="color:var(--amber);">support@skyscore.co.uk</a>.</p>
   </section>
 
 </main>
 
 <footer>
   <a href="https://skyscore.co.uk/">Consumer site</a> ·
+  <a href="/pricing">Pricing</a> ·
+  <a href="/privacy">Privacy</a> ·
   <a href="/score-demo/index.html">Demo</a> ·
   <a href="/score-demo/api-docs.html">API reference</a> ·
   <a href="/score-demo/status.html">Status</a> ·
@@ -343,6 +357,7 @@
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a');
     if (!a) return;
+    if (a.hasAttribute('data-event')) { trackEvent(a.getAttribute('data-event')); return; }
     var href = a.getAttribute('href') || '';
     if (href.includes('METHODOLOGY.md')) trackEvent('api-methodology-click');
     else if (href.includes('LICENSING.md')) trackEvent('api-licensing-click');

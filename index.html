@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://epc.opendatacommunities.org https://landregistry.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://epc.opendatacommunities.org https://landregistry.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -2665,8 +2665,9 @@
             <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4">
               <strong>What this is:</strong>
               DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and
-              LGW — modelled from a year of actual flight tracks, not a live feed. Used by councils for planning
-              decisions. Click any postcode for the exact dB at that spot.
+              LGW — modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
+              strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions.
+              Click any postcode for the exact dB at that spot.
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
@@ -2752,6 +2753,8 @@
             For Developers
           </a>
           <span class="sep">·</span>
+          <a href="/pricing" data-event="pricing-footer-click" title="Sky Score B2B pricing and paid pilot">Pricing</a>
+          <span class="sep">·</span>
           <a
             href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md"
             target="_blank"
@@ -2764,7 +2767,21 @@
           <span class="sep">·</span>
           <a href="/score-demo/status.html" target="_blank" rel="noopener">Status</a>
           <span class="sep">·</span>
+          <a
+            href="https://apps.apple.com/gb/app/sky-score/id6768118116"
+            data-event="appstore-footer-click"
+            target="_blank"
+            rel="noopener"
+            title="Sky Score on the App Store (iOS)"
+          >
+            App Store
+          </a>
+          <span class="sep">·</span>
           <a href="https://github.com/billkhiz-bit/london-flight-path-map" target="_blank" rel="noopener">GitHub</a>
+          <span class="sep">·</span>
+          <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
+          <span class="sep">·</span>
+          <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
           <span title="Open Government Licence v3.0">OGL v3.0</span>
         </footer>
@@ -5705,12 +5722,12 @@
       <div class="metric-detail" id="${id}-flood">
         <span class="rating-badge ${ratingBadgeClass(extra.flood)}">${extra.flood} RISK</span>
         <p class="info-note">${extra.floodNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">TOGGLE "FLOOD RISK ZONES" ON MAP ${currentCity === 'nyc' ? 'FOR FEMA DATA' : 'FOR EA DATA'}</div>
+        <div class="defra-badge" style="margin-top:8px;">TOGGLE "FLOOD RISK ZONES" ON MAP · BOROUGH-LEVEL RATING (CURATED)</div>
       </div>
       <div class="metric-detail" id="${id}-aq">
         <span class="rating-badge ${ratingBadgeClass(extra.airQuality)}">${extra.airQuality}</span>
         <p class="info-note">${extra.aqNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">TOGGLE "AIR QUALITY" ON MAP ${currentCity === 'nyc' ? 'FOR EPA DATA' : 'FOR DEFRA DATA'}</div>
+        <div class="defra-badge" style="margin-top:8px;">TOGGLE "AIR QUALITY" ON MAP · BOROUGH-LEVEL RATING (CURATED)</div>
       </div>
       <div class="metric-detail" id="${id}-transport">
         <span class="rating-badge ${ratingBadgeClass(extra.transport === 'excellent' ? 'low' : extra.transport === 'good' ? 'medium' : 'high')}">${extra.transport}</span>
@@ -8157,6 +8174,25 @@
         // view. setMobileView() is guarded above, so on web this call no-ops
         // and the classic bottom-sheet layout loads instead.
         if (window.innerWidth <= 900) window.setMobileView('search');
+      })();
+
+      // B2B funnel events, same convention as /api/index.html (Wave 12.7):
+      // events bucket under /event/<name> in GoatCounter. Footer CTAs carry
+      // data-event attributes; one delegated listener covers them all.
+      (function () {
+        function trackEvent(name) {
+          try {
+            if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+              window.goatcounter.count({ path: 'event/' + name, title: name, event: true });
+            }
+          } catch (_) {
+            /* never break the UI for analytics */
+          }
+        }
+        document.addEventListener('click', (e) => {
+          const a = e.target.closest && e.target.closest('a[data-event]');
+          if (a) trackEvent(a.getAttribute('data-event'));
+        });
       })();
 
       init();

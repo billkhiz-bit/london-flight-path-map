@@ -98,6 +98,7 @@ ddb = boto3.client('dynamodb', region_name=AWS_REGION)
 
 # --- Helpers ------------------------------------------------------------
 
+
 def response(status, body, event=None):
     return {
         'statusCode': status,
@@ -111,6 +112,7 @@ def parse_body(event):
     raw = event.get('body') or ''
     if event.get('isBase64Encoded'):
         import base64
+
         try:
             raw = base64.b64decode(raw).decode()
         except (ValueError, UnicodeDecodeError):
@@ -217,6 +219,7 @@ def record_signup(email, name, key_id):
 
 # --- Handler ------------------------------------------------------------
 
+
 def handle_options(event):
     return {'statusCode': 200, 'headers': cors_headers(event), 'body': ''}
 
@@ -241,19 +244,22 @@ def _safe_revoke_orphan_key(key_id):
     try:
         info = apigw.get_api_key(apiKey=key_id, includeValue=False)
     except ClientError as get_err:
-        logger.error('[SIGNUP_ORPHAN_KEY] lookup-failed keyId=%s code=%s',
-                     key_id, get_err.response.get('Error', {}).get('Code'))
+        logger.error(
+            '[SIGNUP_ORPHAN_KEY] lookup-failed keyId=%s code=%s', key_id, get_err.response.get('Error', {}).get('Code')
+        )
         return
     key_name = info.get('name', '')
     if not key_name.startswith(KEY_NAME_PREFIX):
-        logger.error('[SIGNUP_ORPHAN_KEY] refusing-non-prefix keyId=%s name=%r',
-                     key_id, key_name)
+        logger.error('[SIGNUP_ORPHAN_KEY] refusing-non-prefix keyId=%s name=%r', key_id, key_name)
         return
     try:
         apigw.delete_api_key(apiKey=key_id)
     except ClientError as revoke_err:
-        logger.error('[SIGNUP_ORPHAN_KEY] revoke-failed keyId=%s code=%s',
-                     key_id, revoke_err.response.get('Error', {}).get('Code'))
+        logger.error(
+            '[SIGNUP_ORPHAN_KEY] revoke-failed keyId=%s code=%s',
+            key_id,
+            revoke_err.response.get('Error', {}).get('Code'),
+        )
 
 
 def handle_post(event):
@@ -265,10 +271,14 @@ def handle_post(event):
     name = (body.get('name') or '').strip()
 
     if not email or not EMAIL_PATTERN.match(email):
-        return response(400, {
-            'error': 'Provide a valid email address.',
-            'example': {'email': 'you@example.com', 'name': 'optional'},
-        }, event)
+        return response(
+            400,
+            {
+                'error': 'Provide a valid email address.',
+                'example': {'email': 'you@example.com', 'name': 'optional'},
+            },
+            event,
+        )
 
     if len(email) > 254 or len(name) > 200:
         return response(400, {'error': 'Email or name exceeds maximum length.'}, event)
@@ -278,23 +288,33 @@ def handle_post(event):
     # value at creation time, not on subsequent reads).
     existing = get_existing_signup(email)
     if existing:
-        return response(409, {
-            'error': 'This email has already signed up.',
-            'note': ('A new key cannot be re-issued via this endpoint. '
-                     'Contact support to revoke and re-issue if the original '
-                     'key has been lost.'),
-            'createdAt': existing.get('createdAt', {}).get('S'),
-        }, event)
+        return response(
+            409,
+            {
+                'error': 'This email has already signed up.',
+                'note': (
+                    'A new key cannot be re-issued via this endpoint. '
+                    'Contact support to revoke and re-issue if the original '
+                    'key has been lost.'
+                ),
+                'createdAt': existing.get('createdAt', {}).get('S'),
+            },
+            event,
+        )
 
     try:
         key_id, key_value = create_api_key(email, name)
     except ClientError as e:
         # Most common failure: limit on number of API keys per account.
         # Surface the specific code so we can debug from logs.
-        return response(503, {
-            'error': 'Could not create API key. Please try again later.',
-            'code': e.response.get('Error', {}).get('Code', 'Unknown'),
-        }, event)
+        return response(
+            503,
+            {
+                'error': 'Could not create API key. Please try again later.',
+                'code': e.response.get('Error', {}).get('Code', 'Unknown'),
+            },
+            event,
+        )
 
     try:
         record_signup(email, name, key_id)
@@ -302,35 +322,49 @@ def handle_post(event):
         code = e.response.get('Error', {}).get('Code', '')
         if code == 'ConditionalCheckFailedException':
             # Race detected, another in-flight signup wrote first. Revoke
-            # the key we just created and return 409.
-            logger.info('signup race detected for %s; revoking orphan key %s',
-                        email, key_id)
+            # the key we just created and return 409. Log the keyId only:
+            # raw emails must stay out of CloudWatch (the privacy policy
+            # promises deletion on request, and log copies would outlive it).
+            logger.info('signup race detected; revoking orphan key %s', key_id)
             _safe_revoke_orphan_key(key_id)
-            return response(409, {
-                'error': 'This email has already signed up.',
-                'note': ('Concurrent signup races are detected and rolled '
-                         'back. Try again or contact support if you need '
-                         'a re-issue.'),
-            }, event)
+            return response(
+                409,
+                {
+                    'error': 'This email has already signed up.',
+                    'note': (
+                        'Concurrent signup races are detected and rolled '
+                        'back. Try again or contact support if you need '
+                        'a re-issue.'
+                    ),
+                },
+                event,
+            )
         # Other DDB errors: still return 201 (the key works regardless)
-        # but log server-side so we can find the orphaned audit row.
-        logger.warning('signup created in APIGW but DDB write failed: '
-                       'email=%s keyId=%s code=%s', email, key_id, code)
+        # but log server-side so we can find the orphaned audit row. The
+        # keyId is enough to recover the email from APIGW key metadata;
+        # never log the raw address itself.
+        logger.warning('signup created in APIGW but DDB write failed: keyId=%s code=%s', key_id, code)
 
-    return response(201, {
-        'apiKey': key_value,
-        'keyId': key_id,
-        'usagePlan': 'SkyScoreFreeTier',
-        'limits': {
-            'monthlyQuota': 1000,
-            'burstLimit': 5,
-            'sustainedRateLimit': 2,
+    return response(
+        201,
+        {
+            'apiKey': key_value,
+            'keyId': key_id,
+            'usagePlan': 'SkyScoreFreeTier',
+            'limits': {
+                'monthlyQuota': 1000,
+                'burstLimit': 5,
+                'sustainedRateLimit': 2,
+            },
+            'note': (
+                'Save this key now. It is shown ONCE and cannot be '
+                'retrieved after this response. Pass it as the X-Api-Key '
+                'header on /v1/score requests.'
+            ),
+            'docs': 'https://skyscore.co.uk/score-demo/api-docs.html',
         },
-        'note': ('Save this key now. It is shown ONCE and cannot be '
-                 'retrieved after this response. Pass it as the X-Api-Key '
-                 'header on /v1/score requests.'),
-        'docs': 'https://skyscore.co.uk/score-demo/api-docs.html',
-    }, event)
+        event,
+    )
 
 
 def handler(event, context):

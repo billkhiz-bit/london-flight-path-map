@@ -157,12 +157,13 @@
       <header>
         <a href="/">&larr; Sky Score</a>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-05-09 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-07-23 · Effective: 2026-05-09</p>
       </header>
 
       <div class="tldr">
         <p><strong>TL;DR</strong></p>
-        <p>We don't collect personal data, accounts, or tracking IDs.</p>
+        <p>Browsing and scoring collect no personal data, accounts, or tracking IDs.</p>
+        <p>The one exception: if you request a free API key, we store the email address you give us to issue and manage that key.</p>
         <p>We don't sell anything to anyone.</p>
         <p>Your location stays on your device unless you tap "Score where I am" — then it's used once to find your postcode and discarded.</p>
         <p>Anonymous analytics (no cookies, no profiles) tell us roughly how many people use the app.</p>
@@ -179,8 +180,20 @@
 
       <h3>2a. Data you actively give us</h3>
       <p>
-        <strong>None.</strong> Sky Score does not require an account, email address, name, phone number, or any other identifying
-        information. There are no sign-up forms, payment forms, or surveys.
+        <strong>Browsing and scoring: none.</strong> Using the Sky Score website or apps does not require an account, email address,
+        name, phone number, or any other identifying information. There are no payment forms or surveys.
+      </p>
+      <p>
+        <strong>API key signup (optional):</strong> if you request a free API key on the
+        <a href="/score-demo/index.html">developer demo page</a>, we collect the email address you enter (and a display name if you
+        choose to give one). We use it solely to issue your key, enforce the one-key-per-email limit, contact you about your key if
+        we ever need to (for example abuse or deprecation notices), and revoke the key on request. Lawful basis: performance of a
+        contract (UK GDPR Article 6(1)(b)), you are asking us to issue and operate the key, with our legitimate interest in
+        preventing abuse (Article 6(1)(f)) for the rate-limit and one-key-per-email checks. The address is stored in our AWS account
+        in <code>eu-west-2</code> (London), in the signup register (DynamoDB) and in the API key's own metadata; it is never sold
+        or shared for marketing, and is kept for as long as the key remains active.
+        Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> to delete it; we revoke the key and remove the
+        record within 30 days.
       </p>
 
       <h3>2b. Data the app uses temporarily, on your device only</h3>
@@ -293,8 +306,8 @@
 
       <h2>7. Children</h2>
       <p>
-        Sky Score has no minimum age requirement and does not knowingly collect data from anyone, including children. The app is rated 4+
-        on App Store and PEGI 3 / Everyone on Play Store.
+        Sky Score has no minimum age requirement and does not knowingly collect data from anyone, including children. The iOS app is
+        rated 4+ on the App Store.
       </p>
 
       <h2>8. Cookies (web only)</h2>
