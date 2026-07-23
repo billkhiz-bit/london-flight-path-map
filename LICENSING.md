@@ -47,6 +47,7 @@ These are visible to consumer-site visitors but NOT exposed via the B2B API.
 | **OpenStreetMap** (via Overpass API) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Nearby NHS services in `/nhs` (replaced the deprecated NHS Service Search public key) | "OpenStreetMap contributors (ODbL)" — must include in response + visible attribution on the page | ✅ Commercial use OK; **attribution is mandatory** |
 | **Office for National Statistics** (NSPL via Geoportal — used by the DEFRA loader) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler | OGL boilerplate | ✅ Commercial use OK |
 | **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Sampled offline by `scripts/load_defra_raster.py`. v2 (with below-threshold sentinel) shipped 2026-05-06; loader running 2026-05-07 against the full ~2.5M NSPL postcode list. Same source as the live noise mapping. | Same OGL boilerplate | ✅ Commercial use OK |
+| **Curated borough classifications** (`data/borough-extra.json`) | Own editorial work (informed by public sources) | Borough-level air-quality, flood-risk, schools, crime, transport and healthcare ratings + prose notes shown in the detail panel; also drive the air-quality and flood map fills (the map layers colour boroughs from this file, not from live DEFRA/EA/EPA/FEMA services) | UI badges label these "borough-level rating (curated)" since 2026-07-23 | ✅ No third-party licence involved; must never be presented as official agency data |
 
 ---
 

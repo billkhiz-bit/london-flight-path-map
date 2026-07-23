@@ -8,11 +8,14 @@ How to reach Sky Score and where to check service health.
 
 | Reason | Where to send it |
 |---|---|
-| Security vulnerability disclosure | `billkhiz@gmail.com` (also listed in `/.well-known/security.txt`) |
-| API support, billing, account issues | `billkhiz@gmail.com` (target alias `support@skyscore.co.uk` — see "Planned" below) |
-| GDPR data-subject access request (SAR) | `billkhiz@gmail.com` with subject line beginning `[GDPR SAR]` |
+| Security vulnerability disclosure | `support@skyscore.co.uk` (also listed in `/.well-known/security.txt`) |
+| API support, billing, account issues | `support@skyscore.co.uk` |
+| GDPR data-subject access request (SAR) | `support@skyscore.co.uk` with subject line beginning `[GDPR SAR]` |
 | Bug report (non-security) | GitHub issue at <https://github.com/billkhiz-bit/london-flight-path-map/issues> |
-| Press / partnership | `billkhiz@gmail.com` |
+| Press / partnership / pilots | `support@skyscore.co.uk` |
+
+`support@skyscore.co.uk` has been live since 2026-05-21 (Cloudflare Email
+Routing on the `skyscore.co.uk` zone; see `EMAIL_SETUP.md`).
 
 Response targets (best-effort, single-founder operation):
 
@@ -25,7 +28,8 @@ Response targets (best-effort, single-founder operation):
 
 ## Service status
 
-There is **no public status page yet**. Until one exists, watch:
+The live status page is at <https://skyscore.co.uk/score-demo/status.html>
+(endpoint-by-endpoint probes, browser-side). Additional checks:
 
 1. The consumer site itself — `https://skyscore.co.uk`. If the home page
    is up, CloudFront and S3 are healthy.
@@ -38,11 +42,10 @@ There is **no public status page yet**. Until one exists, watch:
 
 ## Planned (Wave 9 deferred)
 
-- **`support@skyscore.co.uk` mailbox.** Currently `billkhiz@gmail.com`
-  receives all mail. Action: configure forwarding alias on the Cloudflare
-  email-routing service for the `skyscore.co.uk` zone. ~5 min one-time
-  admin task at the Cloudflare dashboard; no DNS change needed beyond
-  ensuring MX records are pointed at Cloudflare email-routing.
+- ~~**`support@skyscore.co.uk` mailbox.**~~ **Done 2026-05-21** via
+  Cloudflare Email Routing (`support@`, `info@`, `bilalkhizar@` all
+  forward; outbound "Send mail as" configured in Gmail). See
+  `EMAIL_SETUP.md` for the full setup + DKIM caveat.
 - **`status.skyscore.co.uk` subdomain.** Recommended stack: a free
   StatusGator / Better Stack page CNAMEd to `status.skyscore.co.uk`. The
   page would surface (a) home-page check (b) `/v1/regions` API probe
@@ -56,4 +59,5 @@ Both are tracked in `AUDIT_REPORT.md` under Wave-9 deferred items.
 
 | Date | Change |
 |---|---|
+| 2026-07-23 | Contact addresses switched to `support@skyscore.co.uk` (live since 2026-05-21); status-page pointer updated to `/score-demo/status.html`. |
 | 2026-05-07 | Initial SUPPORT.md created as part of Wave 9 enterprise readiness. |
