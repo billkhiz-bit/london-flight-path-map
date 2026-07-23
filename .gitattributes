@@ -1,0 +1,2 @@
+# Vendored third-party assets: keep bytes exactly as downloaded
+score-demo/vendor/* -text

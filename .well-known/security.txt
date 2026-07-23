@@ -6,7 +6,7 @@
 # Independent project, sole developer; reply timeline best-effort
 # but typically within a working day.
 
-Contact: mailto:billkhiz@gmail.com
+Contact: mailto:support@skyscore.co.uk
 Expires: 2027-05-07T00:00:00.000Z
 Preferred-Languages: en
 Canonical: https://skyscore.co.uk/.well-known/security.txt

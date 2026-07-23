@@ -62,9 +62,7 @@ def get_device_token(event):
     canonicalised lowercase hex (no hyphens) or None if absent / malformed."""
     headers = event.get('headers') or {}
     # API Gateway can lower-case header names depending on integration.
-    token = (headers.get('X-Device-Token')
-             or headers.get('x-device-token')
-             or '').strip()
+    token = (headers.get('X-Device-Token') or headers.get('x-device-token') or '').strip()
     if not token or not _TOKEN_PATTERN.match(token):
         return None
     return token.lower().replace('-', '')
@@ -90,10 +88,13 @@ def handler(event, context):
         # All non-OPTIONS methods require a valid device token.
         token = get_device_token(event)
         if not token:
-            return response(401, {
-                'error': 'X-Device-Token header missing or malformed.',
-                'expected': 'UUID v4 (e.g. 550e8400-e29b-41d4-a716-446655440000) or 32-char hex.',
-            })
+            return response(
+                401,
+                {
+                    'error': 'X-Device-Token header missing or malformed.',
+                    'expected': 'UUID v4 (e.g. 550e8400-e29b-41d4-a716-446655440000) or 32-char hex.',
+                },
+            )
 
         if method == 'GET':
             result = table.query(KeyConditionExpression=Key('userId').eq(token))
@@ -110,7 +111,7 @@ def handler(event, context):
                 return response(400, {'error': 'Postcode is required'})
 
             item = {
-                'userId': token, # partition key is the device token
+                'userId': token,  # partition key is the device token
                 'postcode': postcode,
                 'borough': body.get('borough', ''),
                 'noiseLevel': body.get('noiseLevel', ''),
@@ -139,7 +140,7 @@ def handler(event, context):
     except (BotoCoreError, ClientError) as exc:
         logger.warning('DynamoDB error in favourites: %s', exc)
         return response(503, {'error': 'Storage backend temporarily unavailable.'})
-    except Exception as exc: # pragma: no cover, final guard
+    except Exception as exc:  # pragma: no cover, final guard
         logger.exception('Unhandled exception in favourites handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
 

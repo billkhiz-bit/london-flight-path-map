@@ -7,7 +7,7 @@ Disallow: /data/
 # AI training crawlers — case-by-case. We're happy for our public methodology
 # and API docs to be cited; we're not happy for borough metadata to be
 # trained on without attribution. If you're an AI vendor and want to use
-# our data in training, contact billkhiz@gmail.com first.
+# our data in training, contact support@skyscore.co.uk first.
 User-agent: GPTBot
 Disallow: /data/
 Disallow: /api/

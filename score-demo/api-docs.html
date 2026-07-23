@@ -4,10 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Content Security Policy (enforcing — see comment in index.html for the rationale). Swagger UI loads from unpkg.com.
+<!-- Content Security Policy (enforcing — see comment in index.html for the rationale).
+     Swagger UI is self-hosted from ./vendor/ since 2026-07-23: the previous
+     unpkg.com load was a single point of failure (any CDN byte drift against
+     the pinned SRI hashes silently blanked the whole page — unpkg regenerated
+     the 5.17.14 files on 8-9 Jul 2026). GoatCounter added the same day so
+     reference-doc visits and failures are visible in analytics.
      Connects to API Gateway (live demo) + skyscore.co.uk (the spec file itself
      hosted there). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; font-src 'self' data:; img-src 'self' data:; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://skyscore.co.uk; frame-ancestors 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://skyscore.co.uk https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -21,7 +26,7 @@
 <meta property="og:title" content="Sky Score API · Reference">
 <meta property="og:description" content="OpenAPI 3.0 reference for the Sky Score B2B property data API.">
 <meta property="og:site_name" content="Sky Score">
-<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" integrity="sha384-wxLW6kwyHktdDGr6Pv1zgm/VGJh99lfUbzSn6HNHBENZlCN7W602k9VkGdxuFvPn" crossorigin="anonymous">
+<link rel="stylesheet" href="./vendor/swagger-ui.css">
 <style>
   body { margin: 0; background: #06070d; }
   .topbar {
@@ -61,8 +66,11 @@
 
 <div id="swagger-ui"></div>
 
-<script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" integrity="sha384-wmyclcVGX/WhUkdkATwhaK1X1JtiNrr2EoYJ+diV3vj4v6OC5yCeSu+yW13SYJep" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js" integrity="sha384-2YH8WDRaj7V2OqU/trsmzSagmk/E2SutiCsGkdgoQwC9pNUJV1u/141DHB6jgs8t" crossorigin="anonymous"></script>
+<!-- Self-hosted Swagger UI 5.17.14 (see CSP comment above). SHA-384 of each
+     vendored file verified against the previously pinned SRI hashes at
+     download time; same-origin makes integrity attributes redundant. -->
+<script src="./vendor/swagger-ui-bundle.js"></script>
+<script src="./vendor/swagger-ui-standalone-preset.js"></script>
 <script>
   window.onload = () => {
     SwaggerUIBundle({
@@ -80,6 +88,8 @@
     });
   };
 </script>
+
+<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
 </body>
 </html>
