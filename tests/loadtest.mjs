@@ -15,6 +15,9 @@
 // Run against temporary keys on temporary usage plans (create + delete via
 // aws apigateway; see AUDIT_REPORT.md 2026-07-24 addenda for the pattern).
 // Never soak the public demo key — it shares the free-tier monthly quota.
+// GOTCHA: a freshly-created key 403s for ~20s while APIGW propagates —
+// probe with curl until a 200 comes back BEFORE starting a capture, or the
+// CSV opens with a block of Forbidden rows.
 import { appendFileSync, readFileSync } from 'node:fs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';

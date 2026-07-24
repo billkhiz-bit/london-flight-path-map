@@ -6,6 +6,25 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-24 (night) — Trends feature SHIPPED: ?compare=previous + /v1/changes + /changes page
+
+- **`?compare=previous` on `/v1/score`**: any location rescored against the
+  previous quarterly vintage under the current formula — `previousScore`,
+  `scoreChange`, price movement. Works per-postcode (raster path included);
+  NYC honestly reports zero change. In the `include` filter set.
+- **`GET /v1/changes`** (public, keyless): all 33 boroughs'
+  quarter-over-quarter movement, sorted by magnitude, with summary. This
+  vintage: 6 risers, 25 fallers, 18 moved >0.5; largest fall Barking and
+  Dagenham (9.0 → 7.4).
+- **`/changes` page** ("What changed this quarter") renders it live, honesty
+  note included; linked from both site footers. OpenAPI documents both.
+  Deployed end-to-end and verified live.
+- **Load harness** (`tests/loadtest.mjs`) gained per-request CSV persistence
+  (`CSVFILE`) — demonstrated with a 1,736-request clean capture, every
+  request a row (timestamp, status, latency). Gotcha for future runs: a
+  freshly-created API key can 403 for ~20s while APIGW propagates — probe
+  until 200 before starting a capture.
+
 ### 2026-07-24 (later) — Backend deployed · Methodology v3.2 (quarterly refresh + growth clamp) · 100k soak
 
 - **Backend deployed** (user-directed): the CORS critical fix, 28s batch
