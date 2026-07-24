@@ -8,8 +8,9 @@ for "are we allowed to use this commercially" questions.
 **TL;DR:** every UK government source is **OGL v3.0** (commercial use OK
 with attribution), TfL is similar, OpenStreetMap is ODbL (similar),
 MHCLG EPC needs attribution + bearer token, Bedrock is a paid AWS
-service (and the consumer-side AI features that used it have been
-removed from the UI; Lambdas remain dormant in `template.yaml`).
+service (and the consumer-side AI features that used it were removed
+end-to-end; their Lambda code + template entries live in git history
+only, verified 2026-07-23).
 **OpenSky was removed entirely on 2026-05-07** — see "Removed sources"
 below. We're clean for both consumer + B2B.
 
