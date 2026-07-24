@@ -98,8 +98,12 @@ def handler(event, context):
                     },
                 )
             return response(502, {'error': f'EPC upstream error ({exc.code})'})
-        except URLError:
+        except (URLError, TimeoutError):
+            # TimeoutError covers socket read timeouts that escape URLError
+            # wrapping (A-0724-M9) — previously these fell to the 500 guard.
             return response(504, {'error': 'EPC upstream unreachable'})
+        except json.JSONDecodeError:
+            return response(502, {'error': 'EPC upstream returned invalid data'})
 
         rows = extract_rows(data)
 

@@ -15,7 +15,7 @@
 // The activate handler clears any cache that doesn't match the current
 // version names, so old shells get garbage-collected.
 
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.1';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -37,8 +37,6 @@ const NEVER_CACHE_ORIGINS = [
   'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com',
   'https://api.postcodes.io',
   'https://environment.data.gov.uk',
-  'https://epc.opendatacommunities.org',
-  'https://landregistry.data.gov.uk',
 ];
 
 // Cross-origin assets where stale-while-revalidate is appropriate.
@@ -109,10 +107,12 @@ self.addEventListener('fetch', (event) => {
 async function networkFirst(req) {
   try {
     const fresh = await fetch(req);
-    const cache = await caches.open(SHELL_CACHE);
-    // Update the cached shell so the offline fallback stays current
-    // with the latest deploy whenever the user is online.
-    cache.put(req, fresh.clone());
+    // Only cache successful responses — a CloudFront/S3 error page must
+    // never overwrite the last-good offline shell (A-0724-I1).
+    if (fresh.ok) {
+      const cache = await caches.open(SHELL_CACHE);
+      cache.put(req, fresh.clone());
+    }
     return fresh;
   } catch {
     const cached = await caches.match(req);

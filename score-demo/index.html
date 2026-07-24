@@ -541,6 +541,15 @@
         </div>`;
     };
 
+    // The API names the price field by currency (avgPriceGbp for London,
+    // avgPriceUsd for NYC) — render whichever is present (A-0724-I3).
+    const priceCell =
+      d.context.avgPriceUsd != null ? `$${(d.context.avgPriceUsd / 1000).toFixed(0)}K`
+      : d.context.avgPriceGbp != null ? `£${(d.context.avgPriceGbp / 1000).toFixed(0)}K`
+      : '—';
+    const trend = d.context.priceTrendPct;
+    const trendCell = trend != null ? `${trend >= 0 ? '+' : ''}${trend.toFixed(1)}%` : '—';
+
     result.innerHTML = `
       <div class="borough-row">
         <span class="borough">${escapeHtml(d.location.borough || 'Unknown')}</span>
@@ -559,11 +568,11 @@
       <div class="context">
         <div class="context-cell">
           <div class="name">Avg price</div>
-          <div class="val">£${(d.context.avgPriceGbp / 1000).toFixed(0)}K</div>
+          <div class="val">${priceCell}</div>
         </div>
         <div class="context-cell">
           <div class="name">Trend</div>
-          <div class="val">+${d.context.priceTrendPct.toFixed(1)}%</div>
+          <div class="val">${trendCell}</div>
         </div>
         <div class="context-cell">
           <div class="name">Noise band</div>
@@ -574,7 +583,7 @@
         Methodology v${d.methodologyVersion} &middot;
         API v${d.apiVersion} &middot;
         ${elapsed} ms &middot;
-        <a href="${d.methodologyUrl}" target="_blank" rel="noopener">Methodology</a>
+        <a href="${escapeHtml(d.methodologyUrl || '')}" target="_blank" rel="noopener">Methodology</a>
       </div>
       <details>
         <summary>Raw JSON response</summary>

@@ -12,6 +12,15 @@
 
 **Session close-outs (same day, before the audit ran):** I4 closed (resolved by removal), I6 closed (moot — no async Lambdas), I14 closed (PROJECT_DOCUMENTATION.md fully refreshed), and the 21 stale legacy tests rewritten to current handler contracts (83 root + 62 backend tests green, both suites now gate CI).
 
+### Same-day fix wave (2026-07-24, evening) — 18 findings closed
+
+**Fixed in source AND covered by tests where applicable (152 tests green post-wave):**
+
+- **Frontend (deployed to CloudFront):** I1 (sw.js `fresh.ok` guard), I2 (status.html: 5-min visibility-aware cadence, redundant re-fetch dropped — keyed calls fall from ~300/hr to ≤48/hr visible-only), I3 (score-demo renders `avgPriceUsd`/`avgPriceGbp` by presence; negative trends no longer render "+-"), I6 (in-sheet `.sheet-footer` shown ≤900px on web, overlay footer hidden there; native app excluded via `.is-native`; verified across 390/1440/native-sim), I7 (`#result-status` live region announces results + both not-found paths), I8 (persona buttons: `type` + `aria-pressed`, synced on change), I9 (privacy.html text orange → `#a04d00`, ~4.7:1), I10 (rankings toggle `--light` → `--dark`), M1 (dead EPC/landregistry hosts out of index.html CSP + sw.js; retired-service signup link replaced with an honest unavailable note), M2 (privacy.html strict CSP — the page is script-free), M3 (status.html CSP + skyscore.co.uk), M4 (sw VERSION → v1.0.1), M5 (methodologyUrl escaped).
+- **Backend (source-only — deploys with the pending EPC-token/CORS `sam deploy`):** I4 (ScoreFunction timeout 10s → 28s), I5 (transport returns `available:false` on TfL failure; frontend renders "temporarily unavailable" instead of "No stations found"), M8 (transport 400s on non-numeric lat/lon), M9 (epc catches `TimeoutError`/`JSONDecodeError` → 504/502), M11 (weights must each be within [0,1]).
+
+**Still open from this audit:** I11 (tooltip methodology link keyboard access), M6 (Math.random token fallback), M7 (GoatCounter SRI/self-host), M10 (LRU thread-safety), M12 (favourites schema validation), M13 (helper duplication), M14 (test docstring), M15-M18, and the entire Unverified list.
+
 ### Critical — verified manually against production
 
 | # | Issue | File:Line | Status |
@@ -70,15 +79,12 @@
 
 **Minor:** postcode interpolated into postcodes.io URL path with `/` unescaped (`score/app.py:1374`) · non-string batch query values crash `resolve_query` → whole batch 500s (`score/app.py:1491`) · signup 409 leaks email-enumeration signal incl. `createdAt` (`signup/app.py:291`) · enabled orphan API key leaks if `create_usage_plan_key` fails post-creation (`signup/app.py:195`) · deploy-user IAM: region-wide APIGW write + leftover Bedrock grant (`iam-policy.json:79`) · batch counts 100 queries as 1 request against the 1000/month quota (`template.yaml:264`) · dead WMS/ArcGIS URL builders since the raster refactor (`index.html:5153`) · vestigial dead code: `_boroughExtraHydrated`, `getDeviceId` alias, unused zoom var (`index.html:7128`) · `escapeHtml` duplicated twice despite the global helper's comment (`index.html:7213`) · quicksearch chips double-bound after result-close → double search (`index.html:8166`) · score-demo example buttons clickable mid-request → out-of-order renders (`score-demo/index.html:490`) · borough-extra hydration can replace an open postcode result (`index.html:4871`) · duplicate `.search-hint` rule reverts the 11px a11y bump to 9px (`index.html:1118`).
 
-### Priority fix order (next work session)
+### Priority fix order (updated after the same-day fix wave)
 
-1. **Deploy the A-0724-C1 CORS fix** (source-fixed; rides the EPC-token `sam deploy` — *user action*)
-2. **A-0724-I1 + M4**: one-line `fresh.ok` guard in sw.js + VERSION bump, deploy sw.js (~10 min)
-3. **A-0724-I2**: status.html — pause on `document.hidden` + 5-10 min interval + drop the redundant re-fetch (~20 min)
-4. **A-0724-I6**: expose the footer links on mobile web (funnel + legal reachability) (~30 min)
-5. **A-0724-I3/I4/I5**: score-demo NYC render, batch timeout headroom, transport error honesty (~half day)
-6. A11y batch I7-I11 + M15-M17 (~half day)
-7. Re-verify the Unverified list once the spend limit resets
+1. **Deploy the A-0724-C1 CORS fix + backend fixes I4/I5/M8/M9/M11** (all source-fixed; ride the EPC-token `sam deploy` — *user action*) ← the only blocking step
+2. ~~I1+M4 (sw.js), I2 (status.html), I6 (footer), I3 (NYC render), I7-I10 a11y~~ — **DONE + deployed 2026-07-24**
+3. Remaining a11y: I11 (tooltip keyboard access), M15-M17
+4. Re-verify the Unverified list once the spend limit resets; then triage M6/M7/M10/M12/M13
 
 ---
 

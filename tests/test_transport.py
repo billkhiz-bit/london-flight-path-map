@@ -4,6 +4,7 @@ import io
 import json
 import os
 import sys
+from urllib.error import URLError
 
 # ---------------------------------------------------------------------------
 # Import the transport Lambda via our loader (avoids module name collisions)
@@ -66,6 +67,13 @@ class TestHandlerValidation:
         event = make_api_event("GET", query_params=None)
         result = handler(event, None)
         assert result["statusCode"] == 400
+
+    def test_non_numeric_lat_lon_returns_400(self):
+        event = make_api_event("GET", query_params={"lat": "abc", "lon": "-0.1"})
+        result = handler(event, None)
+        assert result["statusCode"] == 400
+        body = json.loads(result["body"])
+        assert "must be numbers" in body["error"]
 
     def test_cors_headers_on_error(self):
         event = make_api_event("GET", query_params={})
@@ -134,6 +142,22 @@ class TestHandlerSuccess:
         assert "stations" in body
         assert "lineStatus" in body
         assert "location" in body
+        assert body["available"] is True
+
+    def test_upstream_failure_returns_available_false(self, monkeypatch):
+        """TfL being unreachable must be distinguishable from 'no stations
+        nearby' — the frontend renders the two differently (A-0724-I5)."""
+
+        def _raise(req, timeout=15):
+            raise URLError("TfL down")
+
+        monkeypatch.setattr(app, "urlopen", _raise)
+        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        result = handler(event, None)
+        assert result["statusCode"] == 200
+        body = json.loads(result["body"])
+        assert body["available"] is False
+        assert body["stations"] == []
 
     def test_stations_list_populated(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", self._mock_urlopen)

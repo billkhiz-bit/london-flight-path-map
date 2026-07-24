@@ -1441,6 +1441,10 @@ def parse_weights(raw):
         result = {k: float(v) for k, v in result.items()}
     except (ValueError, TypeError):
         return None
+    # Each weight must be a sane fraction on its own — a sum-only check
+    # accepted pathological inputs like {quiet: -1, afford: 2} (A-0724-M11).
+    if any(not (0.0 <= v <= 1.0) for v in result.values()):
+        return None
     total = sum(result.values())
     if not (0.99 <= total <= 1.01):
         return None

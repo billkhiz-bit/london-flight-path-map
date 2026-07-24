@@ -28,13 +28,31 @@ def handler(event, context):
         if not lat or not lon:
             return response(400, {'error': 'lat and lon parameters are required'})
 
-        lat, lon = float(lat), float(lon)
+        try:
+            lat, lon = float(lat), float(lon)
+        except (TypeError, ValueError):
+            return response(400, {'error': 'lat and lon must be numbers'})
 
         if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
             return response(400, {'error': 'lat/lon out of range'})
 
-        # 1. Find nearest stations (tube, rail, DLR) within 1km
+        # 1. Find nearest stations (tube, rail, DLR) within 1km.
+        # None means TfL was unreachable — distinct from "no stations nearby"
+        # so the frontend never renders an outage as confident emptiness
+        # (A-0724-I5).
         stations = fetch_nearby_stations(lat, lon)
+        if stations is None:
+            return response(
+                200,
+                {
+                    'stations': [],
+                    'lineStatus': [],
+                    'location': {'lat': lat, 'lon': lon},
+                    'available': False,
+                    'note': 'Live transport data temporarily unavailable.',
+                    'sources': [ATTRIBUTION],
+                },
+            )
 
         # 2. Get live line statuses for relevant lines
         line_ids = set()
@@ -49,6 +67,7 @@ def handler(event, context):
                 'stations': stations,
                 'lineStatus': line_status,
                 'location': {'lat': lat, 'lon': lon},
+                'available': True,
                 'sources': [ATTRIBUTION],
             },
         )
@@ -59,6 +78,8 @@ def handler(event, context):
 
 
 def fetch_nearby_stations(lat, lon):
+    """Returns a list of nearby stations, or None when TfL is unreachable
+    (callers must treat None as an upstream outage, not an empty area)."""
     url = f'{TFL_BASE}/StopPoint?lat={lat}&lon={lon}&stopTypes=NaptanMetroStation,NaptanRailStation&radius=1500'
 
     req = Request(url, headers={'Accept': 'application/json', 'User-Agent': 'SkyScore/1.0'})
@@ -67,7 +88,7 @@ def fetch_nearby_stations(lat, lon):
             data = json.loads(resp.read().decode())
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning('TfL StopPoint lookup failed: %s', exc)
-        return []
+        return None
 
     stops = data.get('stopPoints', [])
     results = []

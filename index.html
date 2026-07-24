@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://epc.opendatacommunities.org https://landregistry.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -398,21 +398,48 @@
       .site-footer .for-devs:hover {
         color: var(--dark);
       }
-      @media (max-width: 768px) {
+      /* A-0724-I6: the in-sheet footer replaces the map-overlay footer on
+         small screens (the overlay copy sat under the bottom sheet or in
+         unreachable static flow). Desktop keeps the overlay; native app
+         (.is-native) shows neither — it has its own nav. */
+      .sheet-footer {
+        display: none;
+      }
+      @media (max-width: 900px) {
         .site-footer {
-          bottom: auto;
-          top: auto;
-          position: static;
-          padding: 10px 16px;
-          background: rgba(20, 20, 20, 0.04);
-          justify-content: center;
-          /* Audit F-A11Y-1: bump 8px → 11px on phones; 8px is below the
-             comfortable-reading threshold at typical phone viewing distance
-             (~30 cm), and combined with letter-spacing 1px and --mid colour
-             made the footer effectively unreadable on small screens. Desktop
-             retains 8px for density. */
+          display: none;
+        }
+        .sheet-footer {
+          display: block;
+          padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+          border-top: 1px solid rgba(20, 20, 20, 0.08);
+          font-family: var(--font-mono);
           font-size: 11px;
           letter-spacing: 0.6px;
+          text-transform: uppercase;
+          color: var(--mid);
+          text-align: center;
+        }
+        .sheet-footer a {
+          color: var(--mid);
+          text-decoration: none;
+          /* Inline links in a text row: padding (not min-height) keeps the
+             tap target near 24px without breaking the line box. */
+          padding: 6px 2px;
+          display: inline-block;
+        }
+        .sheet-footer a:hover,
+        .sheet-footer a:focus-visible {
+          color: var(--dark);
+        }
+        .sheet-footer .for-devs {
+          color: var(--orange);
+        }
+        .sheet-footer .sep {
+          color: rgba(99, 99, 99, 0.5);
+        }
+        .is-native .sheet-footer {
+          display: none;
         }
       }
 
@@ -2831,6 +2858,10 @@
                  message each update). The .sr-only class hides it visually
                  but keeps it accessible to assistive tech. -->
             <div id="autocomplete-status" class="sr-only" role="status" aria-atomic="true"></div>
+            <!-- A-0724-I7: announces search outcomes (result loaded / not
+                 found) to screen readers. Sighted users see the sidebar
+                 repaint; SR users previously got silence (WCAG 4.1.3). -->
+            <div id="result-status" class="sr-only" role="status" aria-atomic="true"></div>
           </div>
           <div id="search-hint" class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
         </div>
@@ -2957,6 +2988,38 @@
           solicitor for environmental searches, and visit properties at different times before making any purchase
           decision.
         </div>
+        <!-- A-0724-I6: on phones/tablets the map-overlay .site-footer sits
+             beneath the bottom sheet (769-900px) or in unreachable static
+             flow (<=768px), so Pricing / Privacy / For Developers / App
+             Store never surfaced on mobile web. This in-sheet copy shows
+             <=900px on web only; the native app is excluded (.is-native)
+             because it carries its own navigation. -->
+        <footer class="sheet-footer" aria-label="Sky Score links">
+          <a class="for-devs" href="/score-demo/index.html" target="_blank" rel="noopener">For Developers</a>
+          <span class="sep">·</span>
+          <a href="/pricing" data-event="pricing-footer-click">Pricing</a>
+          <span class="sep">·</span>
+          <a
+            href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md"
+            target="_blank"
+            rel="noopener"
+          >
+            Methodology
+          </a>
+          <span class="sep">·</span>
+          <a
+            href="https://apps.apple.com/gb/app/sky-score/id6768118116"
+            data-event="appstore-footer-click"
+            target="_blank"
+            rel="noopener"
+          >
+            App Store
+          </a>
+          <span class="sep">·</span>
+          <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
+          <span class="sep">·</span>
+          <a href="/privacy">Privacy</a>
+        </footer>
       </aside>
 
       <!-- Mobile bottom navigation (Option A). Visible only ≤900px; the
@@ -5807,6 +5870,12 @@
       function renderTransportData(containerId, data) {
         const el = document.getElementById(containerId);
         if (!el || !data) return;
+        // A-0724-I5: available === false means TfL was unreachable — say so,
+        // rather than presenting an outage as confident emptiness.
+        if (data.available === false) {
+          el.innerHTML = '<p class="info-note">Live transport data is temporarily unavailable. Try again shortly.</p>';
+          return;
+        }
         if ((!data.stations || data.stations.length === 0) && (!data.lineStatus || data.lineStatus.length === 0)) {
           el.innerHTML = '<p class="info-note">No stations found within 1.5km.</p>';
           return;
@@ -5872,7 +5941,7 @@
         if (!el || !data) return;
         if (!data.available) {
           el.innerHTML =
-            '<p class="info-note">EPC data requires API key configuration. Register free at <a href="https://epc.opendatacommunities.org" target="_blank" style="color:var(--orange);">epc.opendatacommunities.org</a></p>';
+            '<p class="info-note">EPC data is temporarily unavailable. Certificates are published by MHCLG under the Open Government Licence.</p>';
           return;
         }
         if (data.count === 0) {
@@ -6243,6 +6312,7 @@
           if (handled) return;
           // Not a NYC ZIP, fall through to "NOT FOUND" with a US-specific note.
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
+          announceResult('No results. Sky Score covers NYC ZIP codes and UK postcodes only.');
           document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
         <p>Sky Score covers NYC ZIPs only at present (Manhattan, Brooklyn, Queens, Bronx, Staten Island). For UK postcodes try e.g. SW11 1AA.</p>
@@ -6320,6 +6390,7 @@
         const result = await lookupPostcode(q);
         if (!result) {
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
+          announceResult('No results found for that search.');
           document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
         <p>${currentCity === 'nyc' ? 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.' : 'Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.'}</p>
@@ -6744,8 +6815,14 @@
         return { glyph: '▼', word: 'Weak' }; // ▼
       }
 
+      function announceResult(message) {
+        const region = document.getElementById('result-status');
+        if (region) region.textContent = message;
+      }
+
       function updateSidebar(data, { switchToAnalysis = true } = {}) {
         document.getElementById('sidebar-title').textContent = data.name.toUpperCase();
+        announceResult('Results loaded for ' + data.name + '.');
         if (switchToAnalysis) switchTab('analysis');
         // Audit F-A11Y-4 hook: a result has just landed. On phones the
         // sheet starts in 'peek' so the map stays visible — TODO below
@@ -7525,7 +7602,7 @@
         bar.innerHTML = Object.entries(PERSONAS)
           .map(
             ([key, p]) =>
-              `<button class="persona-btn${key === currentPersona ? ' active' : ''}" data-persona="${key}">${p.icon} ${p.label}</button>`
+              `<button type="button" class="persona-btn${key === currentPersona ? ' active' : ''}" aria-pressed="${key === currentPersona}" data-persona="${key}">${p.icon} ${p.label}</button>`
           )
           .join('');
         document.getElementById('persona-desc').textContent = PERSONAS[currentPersona].desc;
@@ -7533,9 +7610,11 @@
           const btn = e.target.closest('.persona-btn');
           if (!btn) return;
           currentPersona = btn.dataset.persona;
-          bar
-            .querySelectorAll('.persona-btn')
-            .forEach((b) => b.classList.toggle('active', b.dataset.persona === currentPersona));
+          bar.querySelectorAll('.persona-btn').forEach((b) => {
+            const on = b.dataset.persona === currentPersona;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-pressed', String(on));
+          });
           document.getElementById('persona-desc').textContent = PERSONAS[currentPersona].desc;
           recalcAllScores();
           renderBoroughRanking();
@@ -7605,7 +7684,7 @@
           '<p class="property-note" style="margin:0;font-size:11px;flex:1;">' +
           `Ranked by <strong>${PERSONAS[currentPersona].label} Buyer Score</strong>: quiet skies (${Math.round(w.quiet * 100)}%) + affordability (${Math.round(w.afford * 100)}%) + growth (${Math.round(w.growth * 100)}%) + liveability (${Math.round(w.live * 100)}%).` +
           '</p></div>' +
-          `<div style="margin-bottom:10px;"><button onclick="toggleRankingView()" style="background:none;border:1px solid var(--mid);color:var(--light);font-size:9px;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;">${toggleLabel}</button></div>` +
+          `<div style="margin-bottom:10px;"><button type="button" onclick="toggleRankingView()" style="background:none;border:1px solid var(--mid);color:var(--dark);font-size:9px;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;">${toggleLabel}</button></div>` +
           '<table class="rank-table"><thead><tr>' +
           '<th>#</th><th>' +
           areaLabel +

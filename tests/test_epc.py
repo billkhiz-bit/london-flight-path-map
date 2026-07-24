@@ -194,3 +194,26 @@ class TestHandlerSuccess:
         result = handler(event, None)
         for key, val in CORS_HEADERS.items():
             assert result["headers"][key] == val
+
+    def test_upstream_timeout_returns_504(self, monkeypatch):
+        """Socket read timeouts must map to 504, not the 500 guard (A-0724-M9)."""
+
+        def _timeout(req, timeout=10):
+            raise TimeoutError("read timed out")
+
+        monkeypatch.setattr(app, "urlopen", _timeout)
+        event = make_api_event("GET", query_params={"postcode": "SE1 7PB"})
+        result = handler(event, None)
+        assert result["statusCode"] == 504
+
+    def test_invalid_json_returns_502(self, monkeypatch):
+        def _garbage(req, timeout=10):
+            resp = io.BytesIO(b"<html>not json</html>")
+            resp.__enter__ = lambda s: s
+            resp.__exit__ = lambda s, *a: None
+            return resp
+
+        monkeypatch.setattr(app, "urlopen", _garbage)
+        event = make_api_event("GET", query_params={"postcode": "SE1 7PB"})
+        result = handler(event, None)
+        assert result["statusCode"] == 502

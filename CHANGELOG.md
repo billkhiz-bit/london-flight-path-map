@@ -27,6 +27,15 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 - **Outreach**: pilot-first email variants added to `OUTREACH_DRAFTS.md`;
   LOI template + one-pager maintained off-repo (Desktop) — the Haatch
   commercial-proof pack is complete.
+- **Same-day fix wave — 18 audit findings closed** (evening): sw.js cache
+  poisoning + VERSION bump, status.html quota discipline (5-min
+  visibility-aware checks), score-demo NYC currency render, in-sheet mobile
+  footer (funnel/legal links finally reachable ≤900px on web), result
+  announcements + persona `aria-pressed` + two contrast fixes, privacy.html
+  strict CSP, dead CSP hosts removed. Backend (source-only, rides the pending
+  `sam deploy`): transport honesty on TfL outages + 400 on bad input, epc
+  timeout/JSON handling, batch timeout headroom, weight bounds. 152 tests
+  green; e2e 16/16; layout harness clean on web/native/desktop.
 
 ### 2026-05-29 — Web/native split + iOS 1.0.21 submitted for review
 

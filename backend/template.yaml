@@ -203,7 +203,11 @@ Resources:
       CodeUri: lambdas/score/
       Handler: app.handler
       MemorySize: 256
-      Timeout: 10
+      # 28s, not 10s: a worst-case /v1/score/batch (100 queries, cold caches)
+      # could exceed 10s and lose the whole batch with no partial results
+      # (A-0724-I4). API Gateway cuts integrations at 29s, so 28s is the
+      # practical ceiling; single-score calls are unaffected (~100ms).
+      Timeout: 28
       Environment:
         Variables:
           # Score endpoint is the productised B2B surface; allow any origin so

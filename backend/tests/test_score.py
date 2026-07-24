@@ -75,6 +75,19 @@ class ParseWeightsTests(unittest.TestCase):
     def test_malformed_returns_none(self):
         self.assertIsNone(app.parse_weights('not-a-weight-spec'))
 
+    def test_negative_weight_returns_none(self):
+        # Sums to 1.0 but individual weights outside [0, 1] are pathological
+        # (A-0724-M11) — must be rejected, not scored.
+        self.assertIsNone(app.parse_weights('quiet:-1,afford:2,growth:0,live:0'))
+
+    def test_weight_above_one_returns_none(self):
+        self.assertIsNone(app.parse_weights('quiet:1.5,afford:-0.2,growth:-0.2,live:-0.1'))
+
+    def test_full_single_weight_accepted(self):
+        # Boundary: a single component at exactly 1.0 is legitimate.
+        result = app.parse_weights('quiet:1,afford:0,growth:0,live:0')
+        self.assertEqual(result, {'quiet': 1.0, 'afford': 0.0, 'growth': 0.0, 'live': 0.0})
+
 
 class NormaliseBoroughTests(unittest.TestCase):
     def test_canonical_london(self):
