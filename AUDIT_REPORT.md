@@ -75,7 +75,7 @@ Method: temporary usage plan (100 rps / 200 burst / 200k quota) + key, ~63k requ
 | A-0724-M4 | `js/api-base.js` is pinned in the SW shell cache with a never-bumped VERSION — an API base rotation never reaches installed PWAs. | `sw.js:31` |
 | A-0724-M5 | score-demo renders API-response fields unescaped (methodologyUrl into href, persona/limits into HTML). | `score-demo/index.html:577` |
 | A-0724-M6 | Device-token fallback path uses `Math.random` to mint a security capability token. | `index.html:7122` |
-| A-0724-M7 | GoatCounter `count.js` from gc.zgo.at on 5 pages, no SRI, not self-hosted (same class as the fixed Swagger SPOF). | all pages |
+| A-0724-M7 | GoatCounter `count.js` from gc.zgo.at with no SRI, not self-hosted (same class as the fixed Swagger SPOF). Scope grew to 6 pages when `/changes` shipped 2026-07-24 (kept consistent rather than half-fixed — SRI on a mutable CDN file breaks silently; the real fix is self-hosting, fleet-wide). | all pages |
 | A-0724-M8 | Transport 500s (not 400) on non-numeric lat/lon — unguarded `float()`. | `transport/app.py:31` |
 | A-0724-M9 | EPC handler misses `TimeoutError`/`JSONDecodeError` — upstream flakiness becomes a 500 instead of the graceful fallback. | `epc/app.py:101` |
 | A-0724-M10 | Score LRU caches aren't thread-safe under the batch ThreadPoolExecutor — rare KeyError can 500 an entire batch. | `score/app.py:44` |

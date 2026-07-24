@@ -90,8 +90,11 @@ web-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp pricing.html \
 		s3://$(S3_BUCKET)/pricing/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp changes.html \
+		s3://$(S3_BUCKET)/changes/index.html \
+		--content-type "text/html" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
-		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*'
+		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*'
 
 .PHONY: pwa-deploy
 pwa-deploy:

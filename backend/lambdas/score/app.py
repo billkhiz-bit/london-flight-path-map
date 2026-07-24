@@ -93,6 +93,100 @@ PERSONAS = {
     'laterlife': {'quiet': 0.40, 'afford': 0.15, 'growth': 0.10, 'live': 0.35},
 }
 
+# ---------------------------------------------------------------------------
+# Vintage tracking (trends feature, 2026-07-24). Each quarterly refresh
+# keeps the superseded price/trend values here so the API can answer
+# "what changed?" (?compare=previous on /v1/score, and GET /v1/changes).
+# Only price + trend move between quarterly vintages; schools / crime /
+# transport / healthcare refresh annually and noise five-yearly, so the
+# previous dataset is the current one overlaid with these two fields.
+# ---------------------------------------------------------------------------
+SNAPSHOT_VINTAGE = '2026-Q2'  # May 2026 UK HPI, applied 2026-07-24
+PREVIOUS_VINTAGE = '2026-Q1'
+SNAPSHOT_REFRESHED_AT = '2026-07-24'
+# One-off caveat for this quarter's comparison: v3.2 also clamped the
+# growth formula, so previous scores are recomputed under the CURRENT
+# formula to isolate data movement from formula change.
+COMPARISON_NOTE = (
+    'previousScore is recomputed under the current methodology (v3.2), so scoreChange '
+    'isolates data movement between vintages, not formula changes.'
+)
+
+LONDON_PREVIOUS_PT = {
+    'Barking and Dagenham': {'avgPrice': 340000, 'trend': 5.8},
+    'Barnet': {'avgPrice': 560000, 'trend': 3.1},
+    'Bexley': {'avgPrice': 380000, 'trend': 4.5},
+    'Brent': {'avgPrice': 490000, 'trend': 4.0},
+    'Bromley': {'avgPrice': 480000, 'trend': 3.8},
+    'Camden': {'avgPrice': 780000, 'trend': 1.2},
+    'City of London': {'avgPrice': 850000, 'trend': 1.0},
+    'Croydon': {'avgPrice': 395000, 'trend': 4.5},
+    'Ealing': {'avgPrice': 540000, 'trend': 4.1},
+    'Enfield': {'avgPrice': 430000, 'trend': 4.3},
+    'Greenwich': {'avgPrice': 430000, 'trend': 5.2},
+    'Hackney': {'avgPrice': 590000, 'trend': 3.0},
+    'Hammersmith and Fulham': {'avgPrice': 750000, 'trend': 1.0},
+    'Haringey': {'avgPrice': 545000, 'trend': 3.5},
+    'Harrow': {'avgPrice': 490000, 'trend': 3.2},
+    'Havering': {'avgPrice': 400000, 'trend': 4.0},
+    'Hillingdon': {'avgPrice': 480000, 'trend': 2.8},
+    'Hounslow': {'avgPrice': 465000, 'trend': 3.2},
+    'Islington': {'avgPrice': 720000, 'trend': 1.8},
+    'Kensington and Chelsea': {'avgPrice': 1350000, 'trend': 0.5},
+    'Kingston upon Thames': {'avgPrice': 550000, 'trend': 2.0},
+    'Lambeth': {'avgPrice': 560000, 'trend': 3.5},
+    'Lewisham': {'avgPrice': 445000, 'trend': 4.8},
+    'Merton': {'avgPrice': 560000, 'trend': 2.8},
+    'Newham': {'avgPrice': 410000, 'trend': 5.8},
+    'Redbridge': {'avgPrice': 445000, 'trend': 3.9},
+    'Richmond upon Thames': {'avgPrice': 825000, 'trend': 1.5},
+    'Southwark': {'avgPrice': 530000, 'trend': 2.5},
+    'Sutton': {'avgPrice': 415000, 'trend': 3.5},
+    'Tower Hamlets': {'avgPrice': 495000, 'trend': 2.0},
+    'Waltham Forest': {'avgPrice': 480000, 'trend': 4.2},
+    'Wandsworth': {'avgPrice': 680000, 'trend': 2.1},
+    'Westminster': {'avgPrice': 980000, 'trend': 0.8},
+}
+
+
+def previous_dataset(city):
+    """The borough dataset as of PREVIOUS_VINTAGE: current data overlaid
+    with the superseded price/trend pairs. NYC had no quarterly refresh
+    between vintages, so its previous dataset equals the current one
+    (comparisons honestly report zero change)."""
+    current = CITIES[city]['boroughs']
+    if city != 'london':
+        return current
+    merged = {}
+    for name, bd in current.items():
+        prev = LONDON_PREVIOUS_PT.get(name)
+        merged[name] = {**bd, **prev} if prev else dict(bd)
+    return merged
+
+
+def build_comparison(current, previous, city):
+    """Assemble the ?compare=previous response block from two calc_score
+    results computed under identical formula + weights."""
+    currency = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
+    cur_price = current['context'].get(currency)
+    prev_price = previous['context'].get(currency)
+    price_change = (
+        round((cur_price - prev_price) / prev_price * 100, 1)
+        if cur_price is not None and prev_price not in (None, 0)
+        else None
+    )
+    return {
+        'currentVintage': SNAPSHOT_VINTAGE,
+        'previousVintage': PREVIOUS_VINTAGE,
+        'previousScore': previous['score'],
+        'scoreChange': round(current['score'] - previous['score'], 1),
+        'previousComponents': previous['components'],
+        f'previous{currency[0].upper()}{currency[1:]}': prev_price,
+        'priceChangePct': price_change,
+        'previousTrendPct': previous['context'].get('priceTrendPct'),
+        'note': COMPARISON_NOTE,
+    }
+
 # London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
 # Schema: impact (DEFRA Lden band), avgPrice (GBP), trend (% YoY),
 # schools/transport/healthcare (categorical), crimeRate (per 1,000 ONS).
@@ -1297,7 +1391,7 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
-def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=None):
+def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=None, boroughs_override=None):
     """Compute Sky Score for a borough/postcode.
 
     Resolution chain for the quiet component:
@@ -1305,9 +1399,14 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
       v3.0, Haversine to airports + flight-path geometry (if lat/lon given)
       v2.x, Borough-aggregate Lden band lookup (always available as fallback)
 
+    boroughs_override swaps the price/trend dataset (used by the trends
+    feature to score against a previous vintage); cohort bounds are taken
+    from the override so affordability/growth stay internally consistent.
+    Noise inputs are vintage-independent (DEFRA refreshes five-yearly).
+
     See METHODOLOGY.md §4.1 (borough), §4.5 (postcode Haversine), §4.6 (raster).
     """
-    boroughs = CITIES[city]['boroughs']
+    boroughs = boroughs_override if boroughs_override is not None else CITIES[city]['boroughs']
     bd = boroughs[borough_name]
 
     borough_quiet = IMPACT_TO_QUIET.get(bd['impact'], 5.0)
@@ -1460,6 +1559,7 @@ def parse_weights(raw):
 RESPONSE_FIELDS = {
     'score',
     'components',
+    'comparison',
     'context',
     'location',
     'persona',
@@ -1595,8 +1695,17 @@ def resolve_query(query):
     pc_clean = (location_meta.get('postcode') or postcode or '').strip().upper().replace(' ', '')
     score_data = calc_score(borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean)
 
+    comparison = None
+    if (query.get('compare') or '').strip().lower() == 'previous':
+        prev_data = calc_score(
+            borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean,
+            boroughs_override=previous_dataset(city),
+        )
+        comparison = build_comparison(score_data, prev_data, city)
+
     body = {
         **score_data,
+        **({'comparison': comparison} if comparison is not None else {}),
         'location': location_meta,
         'persona': persona_label,
         'weights': weights,
@@ -1682,10 +1791,65 @@ def handle_regions(event):
     )
 
 
+def handle_changes(event):
+    """GET /v1/changes — quarter-over-quarter movement for every London
+    borough under balanced weights. Public (no API key), like /v1/regions:
+    the underlying tables are already public via the consumer site, and
+    this is the shareable 'what moved this quarter' surface."""
+    bal = PERSONAS['balanced']
+    prev_set = previous_dataset('london')
+    changes = []
+    for name in CITIES['london']['boroughs']:
+        cur = calc_score(name, 'london', bal)
+        prev = calc_score(name, 'london', bal, boroughs_override=prev_set)
+        changes.append({
+            'borough': name,
+            'score': cur['score'],
+            'previousScore': prev['score'],
+            'scoreChange': round(cur['score'] - prev['score'], 1),
+            'avgPriceGbp': cur['context']['avgPriceGbp'],
+            'previousAvgPriceGbp': prev['context']['avgPriceGbp'],
+            'priceChangePct': round(
+                (cur['context']['avgPriceGbp'] - prev['context']['avgPriceGbp'])
+                / prev['context']['avgPriceGbp'] * 100, 1,
+            ),
+            'trendPct': cur['context']['priceTrendPct'],
+            'previousTrendPct': prev['context']['priceTrendPct'],
+        })
+    changes.sort(key=lambda c: abs(c['scoreChange']), reverse=True)
+    moved = [c for c in changes if abs(c['scoreChange']) > 0.5]
+    risers = [c for c in changes if c['scoreChange'] > 0]
+    fallers = [c for c in changes if c['scoreChange'] < 0]
+    return response(200, {
+        'city': 'london',
+        'persona': 'balanced',
+        'currentVintage': SNAPSHOT_VINTAGE,
+        'previousVintage': PREVIOUS_VINTAGE,
+        'refreshedAt': SNAPSHOT_REFRESHED_AT,
+        'note': COMPARISON_NOTE,
+        'summary': {
+            'boroughs': len(changes),
+            'movedOverHalfPoint': len(moved),
+            'risers': len(risers),
+            'fallers': len(fallers),
+            'largestRise': max(changes, key=lambda c: c['scoreChange'])['borough'],
+            'largestFall': min(changes, key=lambda c: c['scoreChange'])['borough'],
+        },
+        'changes': changes,
+        'methodologyVersion': METHODOLOGY_VERSION,
+        'methodologyUrl': METHODOLOGY_URL,
+        'apiVersion': API_VERSION,
+        'generatedAt': datetime.now(UTC).isoformat(),
+        'sources': SOURCES,
+    })
+
+
 def handle_get(event):
     path = (event.get('path') or '').rstrip('/')
     if path.endswith('/regions'):
         return handle_regions(event)
+    if path.endswith('/changes'):
+        return handle_changes(event)
     params = event.get('queryStringParameters') or {}
     body, status = resolve_query(params)
     return response(status, body)

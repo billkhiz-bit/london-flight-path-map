@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- Content Security Policy (enforcing — same family as /pricing). This page
+     makes ONE fetch: the public /v1/changes endpoint (no API key). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<title>Sky Score · What changed this quarter</title>
+<meta name="description" content="Quarter-over-quarter movement in Sky Score's London borough scores: which boroughs rose, which fell, and what the official price data did. Updated with each quarterly refresh.">
+<link rel="canonical" href="https://skyscore.co.uk/changes">
+<meta name="theme-color" content="#06070d">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://skyscore.co.uk/changes">
+<meta property="og:title" content="Sky Score · What changed this quarter">
+<meta property="og:description" content="Which London boroughs rose, which fell, and what the official price data did — most property sites bury falling markets; we headline them.">
+<meta property="og:site_name" content="Sky Score">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06070d;
+    --panel: #0d0f1a;
+    --border: #1f2333;
+    --text: #e8e8ee;
+    --muted: #8b8fa3;
+    --amber: #f59e0b;
+    --rise: #34d399;
+    --fall: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(245,158,11,0.08), transparent 40%),
+      radial-gradient(circle at 90% 30%, rgba(226,88,34,0.06), transparent 50%);
+  }
+  header, main, footer { max-width: 960px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  header { padding-top: 48px; padding-bottom: 8px; }
+  .crumb { font-family: 'Geist Mono', monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+  .crumb a { color: var(--muted); text-decoration: none; }
+  .crumb a:hover, .crumb a:focus-visible { color: var(--amber); }
+  h1 { font-size: 36px; font-weight: 700; margin: 12px 0 8px; letter-spacing: -0.5px; }
+  .tagline { color: var(--muted); font-size: 16px; margin: 0; max-width: 680px; }
+  .vintage { font-family: 'Geist Mono', monospace; font-size: 13px; color: var(--amber); margin-top: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 6px; }
+  .chip {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 16px; font-family: 'Geist Mono', monospace; font-size: 13px;
+  }
+  .chip strong { display: block; font-size: 20px; font-weight: 500; color: var(--text); }
+  .chip span { color: var(--muted); }
+  .note {
+    background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--amber);
+    border-radius: 8px; padding: 14px 18px; font-size: 14px; color: var(--muted); margin: 20px 0;
+  }
+  .table-wrap { overflow-x: auto; margin: 10px 0 30px; border: 1px solid var(--border); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th {
+    font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted); background: var(--panel);
+    position: sticky; top: 0;
+  }
+  td.num, th.num { text-align: right; font-family: 'Geist Mono', monospace; }
+  tr:last-child td { border-bottom: none; }
+  .delta-rise { color: var(--rise); }
+  .delta-fall { color: var(--fall); }
+  .delta-flat { color: var(--muted); }
+  .muted { color: var(--muted); }
+  .status { font-family: 'Geist Mono', monospace; color: var(--muted); padding: 30px 0; }
+  footer {
+    padding-top: 10px; padding-bottom: 48px; color: var(--muted); font-size: 13px;
+  }
+  footer a { color: var(--amber); }
+  @media (max-width: 620px) {
+    h1 { font-size: 28px; }
+    .chip strong { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="crumb"><a href="/">Sky Score</a> / changes</p>
+  <h1>What changed this quarter</h1>
+  <p class="tagline">Quarter-over-quarter movement in London borough scores, driven by the official UK House Price Index. Most property sites bury falling markets; we headline them — the point of Sky Score is the data listings sites won't show you.</p>
+  <p class="vintage" id="vintage-line">Loading vintages…</p>
+</header>
+
+<main>
+  <div class="chips" id="summary-chips" hidden></div>
+  <div class="note" id="method-note" hidden></div>
+  <p class="status" id="status" role="status">Loading the latest movement data…</p>
+  <div class="table-wrap" id="table-wrap" hidden>
+    <table aria-describedby="vintage-line">
+      <thead>
+        <tr>
+          <th>Borough</th>
+          <th class="num">Score then</th>
+          <th class="num">Score now</th>
+          <th class="num">Change</th>
+          <th class="num">Price then</th>
+          <th class="num">Price now</th>
+          <th class="num">Price ±%</th>
+          <th class="num">12-mo trend</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  Scores use the balanced persona under the published methodology. Data: HM Land Registry UK House Price Index (OGL v3.0) and the sources listed in the
+  <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" data-event="changes-methodology-click" target="_blank" rel="noopener">methodology</a>.
+  Integrators: the same data is on the API as <code>GET /v1/changes</code> (no key needed) and per-location via <code>?compare=previous</code> —
+  see <a href="/api/" data-event="changes-api-click">the developer page</a> or <a href="/pricing" data-event="changes-pricing-click">pricing</a>.
+</footer>
+
+<script>
+  const API_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  const gbp = n => '£' + Math.round(n / 1000) + 'k';
+  const signed = (n, suffix) => (n > 0 ? '+' : '') + n + (suffix || '');
+  const deltaClass = n => (n > 0 ? 'delta-rise' : n < 0 ? 'delta-fall' : 'delta-flat');
+  const deltaGlyph = n => (n > 0 ? '▲ ' : n < 0 ? '▼ ' : '· ');
+
+  async function load() {
+    const status = document.getElementById('status');
+    try {
+      const r = await fetch(API_BASE + '/v1/changes');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+
+      document.getElementById('vintage-line').textContent =
+        d.previousVintage + ' → ' + d.currentVintage + ' · refreshed ' + d.refreshedAt + ' · methodology v' + d.methodologyVersion;
+
+      const s = d.summary;
+      const chips = [
+        [s.movedOverHalfPoint, 'boroughs moved >0.5'],
+        [s.risers, 'rose'],
+        [s.fallers, 'fell'],
+        [esc(s.largestFall), 'largest fall'],
+        [esc(s.largestRise), 'largest rise'],
+      ];
+      const chipsEl = document.getElementById('summary-chips');
+      chipsEl.innerHTML = chips.map(([v, label]) => '<div class="chip"><strong>' + v + '</strong><span>' + label + '</span></div>').join('');
+      chipsEl.hidden = false;
+
+      const noteEl = document.getElementById('method-note');
+      noteEl.textContent = 'Honesty note: ' + d.note + ' This quarter the refresh also coincided with the v3.2 formula clamp, so treat the direction as reliable and the exact magnitudes as first-of-series; from next quarter the comparison is clean like-for-like.';
+      noteEl.hidden = false;
+
+      document.getElementById('rows').innerHTML = d.changes.map(c => (
+        '<tr>' +
+        '<td>' + esc(c.borough) + '</td>' +
+        '<td class="num muted">' + c.previousScore.toFixed(1) + '</td>' +
+        '<td class="num">' + c.score.toFixed(1) + '</td>' +
+        '<td class="num ' + deltaClass(c.scoreChange) + '">' + deltaGlyph(c.scoreChange) + signed(c.scoreChange) + '</td>' +
+        '<td class="num muted">' + gbp(c.previousAvgPriceGbp) + '</td>' +
+        '<td class="num">' + gbp(c.avgPriceGbp) + '</td>' +
+        '<td class="num ' + deltaClass(c.priceChangePct) + '">' + signed(c.priceChangePct, '%') + '</td>' +
+        '<td class="num ' + deltaClass(c.trendPct) + '">' + signed(c.trendPct, '%') + '</td>' +
+        '</tr>'
+      )).join('');
+      document.getElementById('table-wrap').hidden = false;
+      status.textContent = d.changes.length + ' boroughs · sorted by size of score change.';
+    } catch (err) {
+      status.textContent = 'Could not load the movement data (' + esc(err.message) + '). The API may be briefly unavailable — refresh to retry.';
+    }
+  }
+  load();
+</script>
+<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+
+</body>
+</html>

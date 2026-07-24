@@ -268,6 +268,16 @@ Resources:
             Method: get
             Auth:
               ApiKeyRequired: true
+        ChangesGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            # Public by design (no key): quarter-over-quarter borough
+            # movement is already public via the consumer site, and this
+            # endpoint feeds the shareable /changes page. Stage-level
+            # throttling still applies.
+            Path: /v1/changes
+            Method: get
 
   # NOTE: this resource is the original (now-rotated) demo key. The key
   # value itself was committed to score-demo/{index,status}.html in

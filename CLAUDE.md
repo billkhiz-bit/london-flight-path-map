@@ -93,11 +93,12 @@ AWS_PROFILE=flightmap aws s3 cp js/api-base.js s3://london-flight-map-frontend/j
 AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
 
-# Pricing + privacy pages — MUST target <name>/index.html keys (the
+# Pricing + privacy + changes pages — MUST target <name>/index.html keys (the
 # sky-score-rewrite-index CloudFront function rewrites extensionless
 # paths to <path>/index.html; a flat "pricing" key is never served).
 AWS_PROFILE=flightmap aws s3 cp pricing.html s3://london-flight-map-frontend/pricing/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws s3 cp privacy.html s3://london-flight-map-frontend/privacy/index.html --content-type "text/html" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp changes.html s3://london-flight-map-frontend/changes/index.html --content-type "text/html" --region eu-west-2
 
 # PWA assets — REQUIRED for the install prompt + offline SW to work. These are
 # NOT covered by the index.html line above; they were missing from the live

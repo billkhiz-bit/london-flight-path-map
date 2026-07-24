@@ -11,6 +11,7 @@ Adding tests here is cheap insurance against regressions when the score
 Lambda evolves (bulk endpoint, future per-postcode noise sampling, etc.).
 """
 
+import json
 import os
 import sys
 import unittest
@@ -18,7 +19,7 @@ import unittest
 # Allow `python -m unittest backend.tests.test_score` from project root.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'lambdas', 'score'))
 
-import app # noqa: E402 # pylint: disable=wrong-import-position
+import app  # noqa: E402 # pylint: disable=wrong-import-position
 
 
 class CrimeToScoreTests(unittest.TestCase):
@@ -87,6 +88,69 @@ class ParseWeightsTests(unittest.TestCase):
         # Boundary: a single component at exactly 1.0 is legitimate.
         result = app.parse_weights('quiet:1,afford:0,growth:0,live:0')
         self.assertEqual(result, {'quiet': 1.0, 'afford': 0.0, 'growth': 0.0, 'live': 0.0})
+
+
+class TrendsFeatureTests(unittest.TestCase):
+    """?compare=previous on /v1/score + GET /v1/changes (2026-07-24).
+
+    All offline: borough-name queries skip postcodes.io entirely."""
+
+    def test_compare_previous_london_borough(self):
+        body, status = app.resolve_query({'borough': 'Wandsworth', 'compare': 'previous'})
+        self.assertEqual(status, 200)
+        comp = body['comparison']
+        self.assertEqual(comp['previousVintage'], '2026-Q1')
+        self.assertEqual(comp['currentVintage'], '2026-Q2')
+        self.assertEqual(comp['previousAvgPriceGbp'], 680000)
+        self.assertEqual(body['context']['avgPriceGbp'], 660000)
+        self.assertEqual(comp['scoreChange'], round(body['score'] - comp['previousScore'], 1))
+        # Wandsworth's growth signal died between vintages — the score
+        # change must be negative under identical (v3.2) formula rules.
+        self.assertLess(comp['scoreChange'], 0)
+
+    def test_compare_absent_without_param(self):
+        body, status = app.resolve_query({'borough': 'Wandsworth'})
+        self.assertEqual(status, 200)
+        self.assertNotIn('comparison', body)
+
+    def test_compare_nyc_reports_zero_change(self):
+        # NYC had no quarterly refresh between vintages: previous == current
+        # and the comparison must honestly say nothing moved.
+        body, status = app.resolve_query({'borough': 'Manhattan', 'city': 'nyc', 'compare': 'previous'})
+        self.assertEqual(status, 200)
+        self.assertEqual(body['comparison']['scoreChange'], 0.0)
+        self.assertIn('previousAvgPriceUsd', body['comparison'])
+
+    def test_include_filter_can_select_comparison(self):
+        body, status = app.resolve_query(
+            {'borough': 'Camden', 'compare': 'previous', 'include': 'score,comparison'}
+        )
+        self.assertEqual(status, 200)
+        self.assertIn('comparison', body)
+        self.assertIn('score', body)
+        self.assertNotIn('components', body)
+
+    def test_changes_endpoint_shape(self):
+        resp = app.handle_changes({})
+        self.assertEqual(resp['statusCode'], 200)
+        body = json.loads(resp['body'])
+        self.assertEqual(body['summary']['boroughs'], 33)
+        self.assertEqual(body['currentVintage'], '2026-Q2')
+        changes = body['changes']
+        self.assertEqual(len(changes), 33)
+        deltas = [abs(c['scoreChange']) for c in changes]
+        self.assertEqual(deltas, sorted(deltas, reverse=True))
+        for key in ('borough', 'score', 'previousScore', 'scoreChange', 'priceChangePct', 'trendPct'):
+            self.assertIn(key, changes[0])
+        self.assertEqual(
+            body['summary']['risers'] + body['summary']['fallers'],
+            len([c for c in changes if c['scoreChange'] != 0]),
+        )
+
+    def test_changes_routed_from_handler(self):
+        resp = app.handler({'httpMethod': 'GET', 'path': '/v1/changes'}, None)
+        self.assertEqual(resp['statusCode'], 200)
+        self.assertIn('changes', json.loads(resp['body']))
 
 
 class NormaliseBoroughTests(unittest.TestCase):

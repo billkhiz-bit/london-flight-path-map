@@ -151,6 +151,32 @@ paths:
         '403':
           description: API key missing or invalid.
 
+  /v1/changes:
+    get:
+      tags: [Score]
+      summary: Quarter-over-quarter borough score movement (no API key).
+      description: |
+        Public endpoint (no key required): every London borough's score under
+        the balanced persona, current vs previous quarterly data vintage,
+        sorted by size of score change, with a summary (risers, fallers,
+        largest movers). This powers the public page at
+        `https://skyscore.co.uk/changes`. Updated with each quarterly
+        refresh; `note` documents any methodology caveat for the period.
+      security: []
+      responses:
+        '200':
+          description: Movement table + summary for the current vintage pair.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: |
+                  `summary` (counts + largest movers), `changes[]` (per
+                  borough: score, previousScore, scoreChange, avgPriceGbp,
+                  previousAvgPriceGbp, priceChangePct, trendPct,
+                  previousTrendPct), vintage identifiers, and the standard
+                  meta fields (methodologyVersion, sources, generatedAt).
+
   /v1/score:
     get:
       tags: [Score]
@@ -268,11 +294,26 @@ paths:
             consume. Meta fields (`apiVersion`, `methodologyVersion`,
             `methodologyUrl`, `generatedAt`, `sources`) are always returned
             regardless of filter. Unknown fields are ignored silently.
-            Recognised fields: `score`, `components`, `context`, `location`,
-            `persona`, `weights`, `sourceBreakdown`, `plannedComponents`.
+            Recognised fields: `score`, `components`, `comparison`, `context`,
+            `location`, `persona`, `weights`, `sourceBreakdown`,
+            `plannedComponents`.
           schema:
             type: string
             example: "score,components,context"
+        - name: compare
+          in: query
+          description: |
+            Set to `previous` to add a `comparison` block: the same location
+            scored against the previous quarterly data vintage under the
+            current methodology, with `previousScore`, `scoreChange`,
+            `previousComponents` and price movement. Vintages are identified
+            by quarter (e.g. `2026-Q1` → `2026-Q2`). Where a city had no
+            refresh between vintages the comparison honestly reports zero
+            change.
+          schema:
+            type: string
+            enum: [previous]
+            example: previous
         - name: methodology
           in: query
           description: |
