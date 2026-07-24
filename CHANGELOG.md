@@ -6,6 +6,22 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-24 (later) — Backend deployed · Methodology v3.2 (quarterly refresh + growth clamp) · 100k soak
+
+- **Backend deployed** (user-directed): the CORS critical fix, 28s batch
+  timeout, 50-rps stage throttle, and backend fix wave are LIVE. Verified:
+  `Access-Control-Allow-Origin: *` from the skyscore.co.uk origin — the
+  consumer data panels work again after ~2 months silently broken.
+- **Methodology v3.2**: quarterly refresh check (per the published policy)
+  found 28/33 boroughs ≥3% adrift from the 2026-Q1 snapshot; all 33
+  borough prices/trends refreshed to May 2026 UK HPI in both engines. The
+  refresh exposed an unclamped growth formula (negative trends → sub-zero
+  scores); v3.2 clamps growth to 0–10. 18 borough scores move >0.5
+  (balanced weights); no paying customers, changelog is the notice record.
+  Public surfaces (footer, api sample, OpenAPI examples) bumped to 3.2.
+- **100k-request production soak** run against the newly-raised limits with
+  a temporary key (results in the stress-test workbook + AUDIT_REPORT).
+
 ### 2026-07-24 — Legacy test rewrite + full audit (1 live critical) + pilot outreach pack
 
 - **Root `tests/` rewritten** to current handler contracts after 21 tests went

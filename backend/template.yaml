@@ -66,6 +66,22 @@ Resources:
           ResourcePath: /v1/signup
           ThrottlingRateLimit: 1
           ThrottlingBurstLimit: 5
+        # /v1/score + /v1/score/batch MUST be declared here (2026-07-24
+        # 100k soak): console-set overrides of 5 rps / 10 burst were live
+        # on both product routes and invisible to this template — CFN
+        # merges but never removes stage method settings it does not
+        # declare, so the API's two revenue endpoints were silently capped
+        # at 5 req/s for ALL customers combined. Declaring them makes the
+        # template authoritative. Per-customer fairness still comes from
+        # usage-plan throttles; these are the per-route ceilings.
+        - HttpMethod: GET
+          ResourcePath: /v1/score
+          ThrottlingRateLimit: 40
+          ThrottlingBurstLimit: 80
+        - HttpMethod: POST
+          ResourcePath: /v1/score/batch
+          ThrottlingRateLimit: 10
+          ThrottlingBurstLimit: 20
         # Per-method override on /v1/score (audit I-D). Per-key Usage
         # Plan caps cost (free tier 1k req/mo), but a single key spamming
         # at the global ceiling can starve other tenants. 5 RPS / 10 burst

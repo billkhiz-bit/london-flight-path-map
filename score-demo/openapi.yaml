@@ -286,7 +286,7 @@ paths:
             in the response indicates which version actually applied.
           schema:
             type: string
-            example: "3.1"
+            example: "3.2"
       responses:
         '200':
           description: Score successfully computed.
@@ -451,7 +451,7 @@ components:
           $ref: '#/components/schemas/Weights'
         methodologyVersion:
           type: string
-          example: "3.1"
+          example: "3.2"
         methodologyUrl:
           type: string
           format: uri

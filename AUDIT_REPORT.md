@@ -30,6 +30,19 @@ Method: temporary usage plan (100 rps / 200 burst / 200k quota) + key, ~63k requ
 - **Healthy numbers**: single-score latency under sustained paced load p50 56ms / p99 83ms / max 189ms, 263/263 success; warm batch (100 queries) ~1.1-2.3s with zero row errors; one cold start observed at 3.3s.
 - **M10 (LRU thread-safety) did not reproduce** under 5-way concurrent batch load — stays open as a lead, not upgraded.
 
+### Load-test addendum II (2026-07-24 evening — 100k soak, true root cause, fixes verified live)
+
+**Deploys this evening (user-directed):** the pending `sam deploy` ran twice — first shipping A-0724-C1 (CORS, verified live: `Access-Control-Allow-Origin: *` from the skyscore.co.uk origin — the consumer data panels work again), the 28s batch timeout, the 50-rps stage throttle and the backend fix wave; second shipping methodology v3.2 (quarterly HPI refresh + growth clamp) and per-method throttle declarations. **The EPC token itself is still the old one — rotation remains with Bill** (update `.env`, redeploy).
+
+**The 100k soak (118,501 requests over 50 min) exposed the REAL root cause of the 5-req/s ceiling, correcting I12's diagnosis:** the stage carried **console-set per-method throttle overrides — `/v1/score GET` and `/v1/score/batch POST` at 5 rps / 10 burst — present in no template.** CloudFormation merges but never removes stage method settings it doesn't declare, so the product's two revenue endpoints were invisibly capped at 5 req/s for all customers combined, and the earlier stage-wide raise (10→50) changed nothing. Fix: both routes are now DECLARED in `template.yaml` (score 40/80, batch 10/20) so the template is authoritative; the batch route needed a direct `update-stage` patch after CFN skipped it.
+
+**Post-fix verification (all live production):**
+- Throughput: **39.4 successful req/s** sustained (8× the old ceiling; now plan-limited as designed), p99 194ms.
+- The killer case re-run: 15 × 100-query batches at concurrency 5 → **15/15 success, zero row errors**, cold rounds 2-3s, warm ~1.2s (this afternoon: 9/15 lost at the 10s timeout).
+- Free-tier guardrail: 25 rapid demo-key requests → 10 × 200 (burst 5 + 2/s refill, exactly per plan) + 15 clean 429s. Per-plan fairness enforced.
+- v3.2 live: `methodologyVersion: 3.2`, refreshed prices serving, growth clamped (no sub-zero scores).
+- Soak footnote: 45 transient 403s (0.04%) observed mid-soak — consistent with APIGW deployment propagation; not reproduced afterwards.
+
 ### Critical — verified manually against production
 
 | # | Issue | File:Line | Status |
