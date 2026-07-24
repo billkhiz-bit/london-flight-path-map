@@ -59,7 +59,7 @@ def _make_lru(maxsize):
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '3.1'
+METHODOLOGY_VERSION = '3.2'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -99,8 +99,8 @@ PERSONAS = {
 LONDON_BOROUGHS = {
     'Hounslow': {
         'impact': 'severe',
-        'avgPrice': 465000,
-        'trend': 3.2,
+        'avgPrice': 501000,
+        'trend': -1.1,
         'schools': 'good',
         'crimeRate': 89,
         'transport': 'good',
@@ -108,8 +108,8 @@ LONDON_BOROUGHS = {
     },
     'Hillingdon': {
         'impact': 'severe',
-        'avgPrice': 480000,
-        'trend': 2.8,
+        'avgPrice': 468000,
+        'trend': 0.6,
         'schools': 'good',
         'crimeRate': 72,
         'transport': 'good',
@@ -117,8 +117,8 @@ LONDON_BOROUGHS = {
     },
     'Richmond upon Thames': {
         'impact': 'high',
-        'avgPrice': 825000,
-        'trend': 1.5,
+        'avgPrice': 789000,
+        'trend': -1.3,
         'schools': 'excellent',
         'crimeRate': 58,
         'transport': 'good',
@@ -126,8 +126,8 @@ LONDON_BOROUGHS = {
     },
     'Ealing': {
         'impact': 'high',
-        'avgPrice': 540000,
-        'trend': 4.1,
+        'avgPrice': 569000,
+        'trend': -0.3,
         'schools': 'good',
         'crimeRate': 88,
         'transport': 'excellent',
@@ -135,8 +135,8 @@ LONDON_BOROUGHS = {
     },
     'Wandsworth': {
         'impact': 'moderate',
-        'avgPrice': 680000,
-        'trend': 2.1,
+        'avgPrice': 660000,
+        'trend': -4.2,
         'schools': 'excellent',
         'crimeRate': 82,
         'transport': 'excellent',
@@ -144,8 +144,8 @@ LONDON_BOROUGHS = {
     },
     'Lambeth': {
         'impact': 'moderate',
-        'avgPrice': 560000,
-        'trend': 3.5,
+        'avgPrice': 545000,
+        'trend': -0.2,
         'schools': 'good',
         'crimeRate': 115,
         'transport': 'excellent',
@@ -153,7 +153,7 @@ LONDON_BOROUGHS = {
     },
     'Lewisham': {
         'impact': 'low-moderate',
-        'avgPrice': 445000,
+        'avgPrice': 497000,
         'trend': 4.8,
         'schools': 'good',
         'crimeRate': 91,
@@ -162,8 +162,8 @@ LONDON_BOROUGHS = {
     },
     'Greenwich': {
         'impact': 'moderate',
-        'avgPrice': 430000,
-        'trend': 5.2,
+        'avgPrice': 463000,
+        'trend': 2.3,
         'schools': 'good',
         'crimeRate': 93,
         'transport': 'good',
@@ -171,8 +171,8 @@ LONDON_BOROUGHS = {
     },
     'Tower Hamlets': {
         'impact': 'low-moderate',
-        'avgPrice': 495000,
-        'trend': 2.0,
+        'avgPrice': 444000,
+        'trend': -11.0,
         'schools': 'good',
         'crimeRate': 120,
         'transport': 'excellent',
@@ -180,8 +180,8 @@ LONDON_BOROUGHS = {
     },
     'Camden': {
         'impact': 'low',
-        'avgPrice': 780000,
-        'trend': 1.2,
+        'avgPrice': 806000,
+        'trend': -3.9,
         'schools': 'excellent',
         'crimeRate': 130,
         'transport': 'excellent',
@@ -189,8 +189,8 @@ LONDON_BOROUGHS = {
     },
     'Islington': {
         'impact': 'low',
-        'avgPrice': 720000,
-        'trend': 1.8,
+        'avgPrice': 670000,
+        'trend': -4.4,
         'schools': 'good',
         'crimeRate': 125,
         'transport': 'excellent',
@@ -198,8 +198,8 @@ LONDON_BOROUGHS = {
     },
     'Hackney': {
         'impact': 'low',
-        'avgPrice': 590000,
-        'trend': 3.0,
+        'avgPrice': 608000,
+        'trend': 2.8,
         'schools': 'good',
         'crimeRate': 112,
         'transport': 'excellent',
@@ -207,8 +207,8 @@ LONDON_BOROUGHS = {
     },
     'Barnet': {
         'impact': 'low-moderate',
-        'avgPrice': 560000,
-        'trend': 3.1,
+        'avgPrice': 591000,
+        'trend': -2.4,
         'schools': 'excellent',
         'crimeRate': 74,
         'transport': 'good',
@@ -216,8 +216,8 @@ LONDON_BOROUGHS = {
     },
     'Croydon': {
         'impact': 'moderate',
-        'avgPrice': 395000,
-        'trend': 4.5,
+        'avgPrice': 397000,
+        'trend': 1.6,
         'schools': 'good',
         'crimeRate': 98,
         'transport': 'good',
@@ -225,8 +225,8 @@ LONDON_BOROUGHS = {
     },
     'Bromley': {
         'impact': 'low',
-        'avgPrice': 480000,
-        'trend': 3.8,
+        'avgPrice': 525000,
+        'trend': 1.5,
         'schools': 'excellent',
         'crimeRate': 65,
         'transport': 'moderate',
@@ -234,8 +234,8 @@ LONDON_BOROUGHS = {
     },
     'Newham': {
         'impact': 'moderate-high',
-        'avgPrice': 410000,
-        'trend': 5.8,
+        'avgPrice': 405000,
+        'trend': 1.2,
         'schools': 'good',
         'crimeRate': 108,
         'transport': 'excellent',
@@ -243,8 +243,8 @@ LONDON_BOROUGHS = {
     },
     'Southwark': {
         'impact': 'low-moderate',
-        'avgPrice': 530000,
-        'trend': 2.5,
+        'avgPrice': 579000,
+        'trend': 3.8,
         'schools': 'good',
         'crimeRate': 118,
         'transport': 'excellent',
@@ -252,8 +252,8 @@ LONDON_BOROUGHS = {
     },
     'Hammersmith and Fulham': {
         'impact': 'moderate-high',
-        'avgPrice': 750000,
-        'trend': 1.0,
+        'avgPrice': 729000,
+        'trend': -9.2,
         'schools': 'excellent',
         'crimeRate': 96,
         'transport': 'excellent',
@@ -261,8 +261,8 @@ LONDON_BOROUGHS = {
     },
     'Kensington and Chelsea': {
         'impact': 'moderate',
-        'avgPrice': 1350000,
-        'trend': 0.5,
+        'avgPrice': 1256000,
+        'trend': -9.5,
         'schools': 'excellent',
         'crimeRate': 95,
         'transport': 'excellent',
@@ -270,8 +270,8 @@ LONDON_BOROUGHS = {
     },
     'Brent': {
         'impact': 'low-moderate',
-        'avgPrice': 490000,
-        'trend': 4.0,
+        'avgPrice': 549000,
+        'trend': -1.5,
         'schools': 'good',
         'crimeRate': 92,
         'transport': 'good',
@@ -279,8 +279,8 @@ LONDON_BOROUGHS = {
     },
     'Haringey': {
         'impact': 'low',
-        'avgPrice': 545000,
-        'trend': 3.5,
+        'avgPrice': 634000,
+        'trend': 4.8,
         'schools': 'good',
         'crimeRate': 99,
         'transport': 'good',
@@ -288,8 +288,8 @@ LONDON_BOROUGHS = {
     },
     'Waltham Forest': {
         'impact': 'low',
-        'avgPrice': 480000,
-        'trend': 4.2,
+        'avgPrice': 524000,
+        'trend': 5.0,
         'schools': 'good',
         'crimeRate': 88,
         'transport': 'good',
@@ -297,8 +297,8 @@ LONDON_BOROUGHS = {
     },
     'Merton': {
         'impact': 'low-moderate',
-        'avgPrice': 560000,
-        'trend': 2.8,
+        'avgPrice': 597000,
+        'trend': 0.5,
         'schools': 'good',
         'crimeRate': 70,
         'transport': 'good',
@@ -306,8 +306,8 @@ LONDON_BOROUGHS = {
     },
     'Redbridge': {
         'impact': 'low',
-        'avgPrice': 445000,
-        'trend': 3.9,
+        'avgPrice': 496000,
+        'trend': 4.0,
         'schools': 'excellent',
         'crimeRate': 83,
         'transport': 'good',
@@ -315,8 +315,8 @@ LONDON_BOROUGHS = {
     },
     'Enfield': {
         'impact': 'low',
-        'avgPrice': 430000,
-        'trend': 4.3,
+        'avgPrice': 469000,
+        'trend': 1.0,
         'schools': 'good',
         'crimeRate': 85,
         'transport': 'moderate',
@@ -324,8 +324,8 @@ LONDON_BOROUGHS = {
     },
     'Kingston upon Thames': {
         'impact': 'low-moderate',
-        'avgPrice': 550000,
-        'trend': 2.0,
+        'avgPrice': 582000,
+        'trend': 1.3,
         'schools': 'excellent',
         'crimeRate': 62,
         'transport': 'good',
@@ -333,8 +333,8 @@ LONDON_BOROUGHS = {
     },
     'Sutton': {
         'impact': 'low',
-        'avgPrice': 415000,
-        'trend': 3.5,
+        'avgPrice': 445000,
+        'trend': 2.3,
         'schools': 'excellent',
         'crimeRate': 60,
         'transport': 'moderate',
@@ -342,8 +342,8 @@ LONDON_BOROUGHS = {
     },
     'Westminster': {
         'impact': 'moderate',
-        'avgPrice': 980000,
-        'trend': 0.8,
+        'avgPrice': 836000,
+        'trend': -20.8,
         'schools': 'good',
         'crimeRate': 175,
         'transport': 'excellent',
@@ -351,8 +351,8 @@ LONDON_BOROUGHS = {
     },
     'City of London': {
         'impact': 'low-moderate',
-        'avgPrice': 850000,
-        'trend': 1.0,
+        'avgPrice': 627000,
+        'trend': -28.2,
         'schools': 'good',
         'crimeRate': 190,
         'transport': 'excellent',
@@ -360,8 +360,8 @@ LONDON_BOROUGHS = {
     },
     'Barking and Dagenham': {
         'impact': 'low',
-        'avgPrice': 340000,
-        'trend': 5.8,
+        'avgPrice': 361000,
+        'trend': 0.9,
         'schools': 'good',
         'crimeRate': 105,
         'transport': 'good',
@@ -369,8 +369,8 @@ LONDON_BOROUGHS = {
     },
     'Havering': {
         'impact': 'low',
-        'avgPrice': 400000,
-        'trend': 4.0,
+        'avgPrice': 453000,
+        'trend': 3.3,
         'schools': 'good',
         'crimeRate': 72,
         'transport': 'moderate',
@@ -378,8 +378,8 @@ LONDON_BOROUGHS = {
     },
     'Bexley': {
         'impact': 'low',
-        'avgPrice': 380000,
-        'trend': 4.5,
+        'avgPrice': 409000,
+        'trend': 2.7,
         'schools': 'good',
         'crimeRate': 68,
         'transport': 'moderate',
@@ -387,8 +387,8 @@ LONDON_BOROUGHS = {
     },
     'Harrow': {
         'impact': 'low',
-        'avgPrice': 490000,
-        'trend': 3.2,
+        'avgPrice': 530000,
+        'trend': 2.3,
         'schools': 'excellent',
         'crimeRate': 70,
         'transport': 'good',
@@ -1337,8 +1337,14 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
         afford = ((max_price - bd['avgPrice']) / (max_price - min_price)) * 10
 
     trends = [b['trend'] for b in boroughs.values()]
-    max_trend = max(trends) or 1.0
-    growth = (bd['trend'] / max_trend) * 10
+    max_trend = max(trends)
+    # Methodology v3.2: growth is clamped to the 0-10 scale. Negative trends
+    # floor at 0 ("no positive momentum") rather than going negative — the
+    # 2026-Q2 refresh introduced falling boroughs, which the original
+    # rising-market formula never had to handle. If the entire cohort is
+    # falling (max_trend <= 0) there is no relative-momentum signal at all.
+    growth = (bd['trend'] / max_trend) * 10 if max_trend > 0 else 0.0
+    growth = max(0.0, min(10.0, growth))
 
     live = get_live_score(bd)
 

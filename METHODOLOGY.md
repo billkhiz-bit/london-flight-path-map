@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.1, last updated 2026-07-23.
+> Version 3.2, last updated 2026-07-24.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -120,19 +120,22 @@ For London at the time of methodology v2.1:
 
 The borough average values are derived from **HM Land Registry's UK House Price Index (HPI)**, see [Reference 7, §19](#19-references), the official monthly publication of UK property prices. HPI is preferred over raw Price Paid Data here because it controls for compositional changes (mix of property types) and is the standard reference used by mortgage lenders, the Bank of England, and the Office for National Statistics for residential price tracking.
 
-This is a deliberate cohort-relative scale, not an absolute one. A property at £680k scores 6.6/10 because it sits 66% of the way down from London's most expensive borough, *relative to London*. The same price would score very differently against a national or NYC cohort.
+This is a deliberate cohort-relative scale, not an absolute one. A property at £660k (Wandsworth's 2026-Q2 average) scores 6.7/10 because it sits two-thirds of the way down from London's most expensive borough, *relative to London*. The same price would score very differently against a national or NYC cohort.
 
 **Why min-max rather than a different normalisation?** Min-max scaling is the simplest interpretable approach for a bounded relative measure. Alternatives considered: log-scaled (penalises mid-range too aggressively), z-score (negative values are uninterpretable as "10 = cheapest"), percentile (loses absolute differentiation between price clusters). Min-max wins on transparency: any user can verify the formula against the published cohort min/max.
 
-### 4.3 Growth, linear scale capped at cohort max
+### 4.3 Growth, linear scale clamped to 0–10
 
-Growth is a linear scale of the borough's recent annualised price trend:
+Growth is a linear scale of the borough's recent annualised price trend, clamped to the component scale:
 
 ```
-growth = (trend / max_trend) × 10
+growth = clamp((trend / max_trend) × 10, 0, 10)    where max_trend > 0
+growth = 0                                          where max_trend ≤ 0
 ```
 
-For the London cohort, `max_trend` is approximately 5.8% (Newham, Barking and Dagenham, both reflecting Olympic legacy / Crossrail effects).
+Negative trends floor at 0 — "no positive momentum" — rather than producing sub-zero components (v3.2; the original rising-market formula predated any falling borough in the cohort, and this document's own argument against z-score normalisation applies: negative component values are uninterpretable on a 0–10 scale). If the entire cohort is falling there is no relative-momentum signal, so every borough scores 0 on growth.
+
+For the London cohort as of the 2026-Q2 snapshot, `max_trend` is approximately 4.8% (Lewisham); fourteen boroughs carry negative 12-month trends.
 
 **Why not absolute thresholds?** UK property markets are cyclical; absolute growth thresholds would need re-calibration every market cycle. Cohort-relative scaling captures *relative momentum within the cohort*, which is more durable as a signal.
 
@@ -497,7 +500,7 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 
 ### Data refresh policy
 
-The API uses an **embedded snapshot** of structural inputs (price band averages, crime rates, school quality categorisations) for the supported boroughs, dated **2026-Q1**. Refresh policy:
+The API uses an **embedded snapshot** of structural inputs (price band averages, crime rates, school quality categorisations) for the supported boroughs. Price and trend data: **2026-Q2** (May 2026 UK HPI, applied 2026-07-24 after the quarterly check found 28 of 33 boroughs deviating ≥3%). School, crime, transport, healthcare classifications: 2026-Q1, next due at the annual refresh. Refresh policy:
 
 - **Annual full refresh** of school, crime, transport, healthcare classifications, aligned with ONS data publication
 - **Quarterly partial refresh** of price and trend data when material movement (≥3% change in cohort min/max) is observed
@@ -763,6 +766,7 @@ Methodology and API contract versioned independently:
 
 ## 20. Changelog
 
+- **2026-07-24 (v3.2)**, **Quarterly price refresh + growth clamp.** (1) *Data:* all 33 London borough `avgPrice`/`trend` values refreshed to the May 2026 UK House Price Index after the quarterly check found 28 boroughs deviating ≥3% from the 2026-Q1 snapshot (largest: Haringey +16.3%, City of London −26.2%; fourteen boroughs now carry negative 12-month trends — the snapshot predated the market turn). (2) *Formula:* the growth component is now clamped to 0–10 (§4.3). The original rising-market formula produced sub-zero components — and in three boroughs sub-zero total scores — once negative trends entered the cohort, violating the documented 0–10 scale. Negative trend now floors at growth = 0. (3) *Effect:* under default balanced weights, 24 borough scores move by more than 0.5 — overwhelmingly downward, dominated by the growth signal turning. Per the notice policy this qualifies for 14-day advance customer notice; the API has no paying customers as at this date, so the change ships with this changelog entry as the record. (4) London affordability cohort bounds moved (max now ~£1.256M Kensington and Chelsea; min ~£361k Barking and Dagenham).
 - **2026-07-23 (v3.1, no version bump)**, **Data-vintage note + consumer-surface honesty pass — no scoring changes.** (1) §7 now records explicitly that DEFRA Round 4 (2022) remains the latest official strategic noise mapping round as of July 2026, mirrored by a note in the consumer site's aircraft-noise legend. (2) The consumer site's detail-panel source badges for the air-quality and flood layers were corrected from "DEFRA DATA"/"EA DATA"/"EPA DATA"/"FEMA DATA" to "borough-level rating (curated)": those two map layers colour boroughs from a curated borough-level classification (`data/borough-extra.json`), not from live DEFRA/EA/EPA/FEMA rasters. The aircraft-noise layer's DEFRA attribution is unaffected (that layer genuinely renders the Round 4 Lden raster). API scoring inputs and formulas are unchanged.
 - **2026-05-07 (v3.1, no version bump)**, **Consumer-side data integrity sweep — no scoring formula changes.** Two material changes worth noting in this doc despite the scoring engine being unchanged: (1) Live OpenSky aircraft tracking removed end-to-end from the consumer site and prototype pending a written licensing agreement with OpenSky (their terms require one for any operational use, including consumer surfaces). The B2B API was never affected — `/v1/score` aviation context comes from DEFRA Round 4, not OpenSky. (2) `FLIGHT_PATHS` polylines used by the consumer-site visualisation and the v3.0 Haversine fallback have been trimmed to the noise-relevant final-approach / initial-departure portions only (~10-22 km from runway), audited against the DEFRA Lden raster via `scripts/audit_flight_paths.py`. Score values are unchanged for postcodes resolved via raster (v3.1 happy path); Haversine-fallback postcodes (outside the DEFRA bbox) may see modest changes where they were within range of the trimmed-off long-distance segments. METHODOLOGY_VERSION not bumped because the algorithm is identical and no anchors moved.
 - **2026-05-05 (v3.1)**, **NYC ZIP centroids + DEFRA raster scaffold.** Two enhancements:

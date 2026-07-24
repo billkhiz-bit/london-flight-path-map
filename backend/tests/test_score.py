@@ -150,15 +150,30 @@ class CalcScoreTests(unittest.TestCase):
     """
 
     def test_wandsworth_balanced(self):
+        # Pinned to the 2026-Q2 (May 2026 UK HPI) snapshot + methodology
+        # v3.2 growth clamp. Wandsworth's trend is negative this vintage,
+        # so growth floors at 0.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.1)
+        self.assertEqual(result['score'], 5.3)
         self.assertEqual(result['components']['quiet'], 5.0)
-        self.assertEqual(result['components']['afford'], 6.6)
-        self.assertEqual(result['components']['growth'], 3.6)
+        self.assertEqual(result['components']['afford'], 6.7)
+        self.assertEqual(result['components']['growth'], 0.0)
         self.assertEqual(result['components']['live'], 8.7)
-        self.assertEqual(result['context']['avgPriceGbp'], 680000)
+        self.assertEqual(result['context']['avgPriceGbp'], 660000)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
+
+    def test_growth_clamped_to_scale(self):
+        """Methodology v3.2: no component or total score may leave the 0-10
+        scale, however negative a borough's trend is (the 2026-Q2 refresh
+        introduced falling boroughs; the pre-clamp formula went sub-zero)."""
+        for persona in app.PERSONAS.values():
+            for borough in app.LONDON_BOROUGHS:
+                result = app.calc_score(borough, 'london', persona)
+                self.assertGreaterEqual(result['components']['growth'], 0.0, borough)
+                self.assertLessEqual(result['components']['growth'], 10.0, borough)
+                self.assertGreaterEqual(result['score'], 0.0, borough)
+                self.assertLessEqual(result['score'], 10.0, borough)
 
     def test_hounslow_severe_noise(self):
         # Hounslow is 'severe' Lden band → quiet should be 0.0 regardless of persona
