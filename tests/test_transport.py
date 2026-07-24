@@ -5,8 +5,6 @@ import json
 import os
 import sys
 
-import pytest
-
 # ---------------------------------------------------------------------------
 # Import the transport Lambda via our loader (avoids module name collisions)
 # ---------------------------------------------------------------------------

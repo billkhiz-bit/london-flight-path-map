@@ -9,7 +9,16 @@ Globals:
     MemorySize: 256
     Environment:
       Variables:
-        CORS_ORIGIN: 'https://d1oe4ftwutjpf.cloudfront.net'
+        # '*' — NOT the CloudFront URL. The site's canonical origin has been
+        # https://skyscore.co.uk since May 2026; pinning this to the legacy
+        # CloudFront domain made browsers on the canonical origin (and the
+        # native app's WebView origin) silently block every consumer data
+        # panel (epc, sold-prices, transport, nhs, favourites) — found by the
+        # 2026-07-24 audit (A-0724-C1). These are public read proxies plus a
+        # device-token-capability write endpoint; CORS never gated server-side
+        # abuse (see the Api-level comment below), and signup keeps its own
+        # stricter origin allow-list in code.
+        CORS_ORIGIN: '*'
   Api:
     # CORS opened to any origin so third-party browser integrations can call
     # the public B2B endpoints (/v1/score and /v1/score/batch) directly.

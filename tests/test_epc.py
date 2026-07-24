@@ -77,11 +77,10 @@ class TestHandlerValidation:
         for key, val in CORS_HEADERS.items():
             assert result["headers"][key] == val
 
-    def test_missing_api_key_returns_not_configured(self, monkeypatch):
-        """When EPC_API_KEY / EPC_API_EMAIL are absent the handler returns
-        a 200 with available=False rather than hitting the API."""
-        monkeypatch.delenv("EPC_API_KEY", raising=False)
-        monkeypatch.delenv("EPC_API_EMAIL", raising=False)
+    def test_missing_bearer_token_returns_not_configured(self, monkeypatch):
+        """When EPC_BEARER_TOKEN is absent the handler returns a 200 with
+        available=False rather than hitting the API."""
+        monkeypatch.delenv("EPC_BEARER_TOKEN", raising=False)
         event = make_api_event("GET", query_params={"postcode": "SE1 7PB"})
         result = handler(event, None)
         assert result["statusCode"] == 200
@@ -93,18 +92,34 @@ class TestHandlerValidation:
 # ---------------------------------------------------------------------------
 # Success path (mocked)
 # ---------------------------------------------------------------------------
-CSV_RESPONSE = (
-    "address1,current-energy-rating,current-energy-efficiency,property-type,"
-    "lodgement-date,total-floor-area,heating-cost-current,hot-water-cost-current,"
-    "lighting-cost-current\n"
-    "Flat 1,B,82,Flat,2023-01-15,55,400,100,80\n"
-    "Flat 2,C,70,Flat,2022-06-20,60,500,120,90\n"
-    "House 3,D,58,House,2021-11-01,110,900,200,150\n"
-)
+# Response shape of the MHCLG service (api.get-energy-performance-data.
+# communities.gov.uk). Search rows carry only the band letter — the handler
+# synthesises numeric ratings from band midpoints (B=86, C=75, D=62).
+JSON_RESPONSE = json.dumps(
+    {
+        "rows": [
+            {
+                "addressLine1": "Flat 1",
+                "currentEnergyEfficiencyBand": "B",
+                "registrationDate": "2023-01-15",
+            },
+            {
+                "addressLine1": "Flat 2",
+                "currentEnergyEfficiencyBand": "C",
+                "registrationDate": "2022-06-20",
+            },
+            {
+                "addressLine1": "House 3",
+                "currentEnergyEfficiencyBand": "D",
+                "registrationDate": "2021-11-01",
+            },
+        ]
+    }
+).encode()
 
 
 def _mock_urlopen(req, timeout=10):
-    resp = io.BytesIO(CSV_RESPONSE.encode())
+    resp = io.BytesIO(JSON_RESPONSE)
     resp.__enter__ = lambda s: s
     resp.__exit__ = lambda s, *a: None
     return resp
@@ -113,8 +128,7 @@ def _mock_urlopen(req, timeout=10):
 class TestHandlerSuccess:
     @pytest.fixture(autouse=True)
     def set_env(self, monkeypatch):
-        monkeypatch.setenv("EPC_API_KEY", "test-key")
-        monkeypatch.setenv("EPC_API_EMAIL", "test@example.com")
+        monkeypatch.setenv("EPC_BEARER_TOKEN", "test-token")
 
     def test_success_response_structure(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", _mock_urlopen)
@@ -132,24 +146,25 @@ class TestHandlerSuccess:
         event = make_api_event("GET", query_params={"postcode": "SE1 7PB"})
         body = json.loads(handler(event, None)["body"])
         summary = body["summary"]
-        # Average of 82, 70, 58 = 70 -> band C
-        assert summary["averageRating"] == 70
+        # Band midpoints 86 (B), 75 (C), 62 (D) average to 74.3 -> 74 -> band C
+        assert summary["averageRating"] == 74
         assert summary["averageBand"] == "C"
-        assert "bandDistribution" in summary
+        assert summary["bandDistribution"]["B"] == 1
+        assert summary["bandDistribution"]["C"] == 1
+        assert summary["bandDistribution"]["D"] == 1
 
     def test_certificates_limited_to_10(self, monkeypatch):
-        # Build CSV with 15 rows
-        header = (
-            "address1,current-energy-rating,current-energy-efficiency,"
-            "property-type,lodgement-date,total-floor-area,"
-            "heating-cost-current,hot-water-cost-current,lighting-cost-current\n"
-        )
-        rows = "".join(
-            f"Flat {i},C,70,Flat,2023-01-01,50,400,100,80\n" for i in range(15)
-        )
+        rows = [
+            {
+                "addressLine1": f"Flat {i}",
+                "currentEnergyEfficiencyBand": "C",
+                "registrationDate": "2023-01-01",
+            }
+            for i in range(15)
+        ]
 
         def _big_urlopen(req, timeout=10):
-            resp = io.BytesIO((header + rows).encode())
+            resp = io.BytesIO(json.dumps({"rows": rows}).encode())
             resp.__enter__ = lambda s: s
             resp.__exit__ = lambda s, *a: None
             return resp
@@ -157,11 +172,12 @@ class TestHandlerSuccess:
         monkeypatch.setattr(app, "urlopen", _big_urlopen)
         event = make_api_event("GET", query_params={"postcode": "SE1 7PB"})
         body = json.loads(handler(event, None)["body"])
+        assert body["count"] == 15
         assert len(body["certificates"]) <= 10
 
-    def test_empty_csv_response(self, monkeypatch):
+    def test_empty_rows_response(self, monkeypatch):
         def _empty(req, timeout=10):
-            resp = io.BytesIO(b"")
+            resp = io.BytesIO(json.dumps({"rows": []}).encode())
             resp.__enter__ = lambda s: s
             resp.__exit__ = lambda s, *a: None
             return resp

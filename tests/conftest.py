@@ -33,13 +33,13 @@ def load_lambda(name, module_alias=None):
 # ---------------------------------------------------------------------------
 # Helper: build an API Gateway-style event dict
 # ---------------------------------------------------------------------------
-def make_api_event(method="GET", body=None, query_params=None):
+def make_api_event(method="GET", body=None, query_params=None, headers=None):
     """Return a minimal API-Gateway proxy event."""
     event = {
         "httpMethod": method,
         "queryStringParameters": query_params,
         "body": json.dumps(body) if body is not None else None,
-        "headers": {},
+        "headers": headers or {},
         "pathParameters": {},
         "requestContext": {},
     }

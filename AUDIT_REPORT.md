@@ -1,8 +1,84 @@
 # Audit Report, Sky Score
-**Date:** 2026-05-07 (refreshed end-of-session)
-**Files scanned:** 8 active Python Lambdas (5 dormant Bedrock Lambdas + live_flights deleted today), `template.yaml`, `iam-policy.json`, `index.html`, `score-demo/*`, `prototype/index.html`, `scripts/*.py`, `tests/`, `backend/tests/`
-**Audit performed by:** Two rounds of 3-5 parallel agents (code, security, frontend visual + a11y, enterprise readiness) + manual triage. Final round merged into the "Session close" section below.
-**Previous audit:** 2026-05-06 (39 findings, see triage column below)
+**Date:** 2026-07-24 (full audit)
+**Files scanned:** 7 active Python Lambdas, `template.yaml`, `iam-policy.json`, `index.html` (8.2k lines), `js/api-base.js`, `sw.js`, `score-demo/*`, `api/index.html`, `pricing.html`, `privacy.html`, `tests/`, `backend/tests/`, `.github/workflows/`, live-site parity vs skyscore.co.uk
+**Audit performed by:** 6 parallel dimension agents (security backend/frontend, code backend/frontend, a11y/design, deps + live parity) with per-finding adversarial verification. Verification was cut short by the account's monthly spend limit — see the 2026-07-24 section for what that means.
+**Previous audits:** 2026-05-21 (website, post-launch), 2026-05-07, 2026-05-06 (39-finding baseline; triage table below)
+
+---
+
+## 2026-07-24 full audit
+
+**Method + caveat:** 6 dimension finders ran to completion; each finding then went to an adversarial verifier. 40 of 66 agents completed before the account hit its **monthly spend limit**, which killed the remaining verifiers (all of security-backend's, most of code-frontend's, two of a11y's). Findings whose verifier ran and confirmed are in the *Confirmed* tables (34 confirmed, 0 refuted — unusually, every verified finding survived). Findings whose verifier never ran were recovered from the finder journals and listed under *Unverified* — treat them as credible leads, not established facts. The one critical was **verified manually in this session against the live API** before being written down.
+
+**Session close-outs (same day, before the audit ran):** I4 closed (resolved by removal), I6 closed (moot — no async Lambdas), I14 closed (PROJECT_DOCUMENTATION.md fully refreshed), and the 21 stale legacy tests rewritten to current handler contracts (83 root + 62 backend tests green, both suites now gate CI).
+
+### Critical — verified manually against production
+
+| # | Issue | File:Line | Status |
+|---|-------|-----------|--------|
+| A-0724-C1 | **`CORS_ORIGIN` pinned to the legacy CloudFront URL breaks all five consumer data panels on the canonical domain.** `Globals.Function.Environment` sets `CORS_ORIGIN: 'https://d1oe4ftwutjpf.cloudfront.net'`; epc, favourites, nhs, sold_prices and transport echo it as `Access-Control-Allow-Origin`. The site has been canonical on `https://skyscore.co.uk` since May 2026 and `js/api-base.js` (verified live) calls the raw execute-api URL cross-origin — so browsers on skyscore.co.uk block every response (preflights pass because APIGW's MOCK OPTIONS returns `*`; the Lambda GET/POST responses then fail the origin check). Verified live 2026-07-24: `curl -H "Origin: https://skyscore.co.uk" .../prod/transport` → `Access-Control-Allow-Origin: https://d1oe4ftwutjpf.cloudfront.net`. Every affected panel degrades to its fallback/empty state ("No stations found…", EPC unavailable, favourites silently fail), which is why ~2 months passed unnoticed — testing happened on the CloudFront URL. The native app's WebView origin is likewise not the CloudFront domain. score (`'*'` override) and signup (own allow-list incl. skyscore.co.uk) were unaffected — which is precisely why the B2B demo kept working while the consumer site quietly lost its data panels. | `backend/template.yaml:12` | **Source-FIXED 2026-07-24** (Globals `CORS_ORIGIN: '*'`, matching the Api-level CORS declaration and the score override; signup keeps its stricter in-code allow-list). **DEPLOY PENDING — ride the same `sam deploy` as the EPC token rotation.** |
+
+### Important — confirmed by adversarial verification
+
+| # | Issue | File:Line | Category |
+|---|-------|-----------|----------|
+| A-0724-I1 | `sw.js` `networkFirst` caches responses without a `fresh.ok` check (unlike its own `cacheFirst`/`staleWhileRevalidate`) — a single CloudFront/S3 error page overwrites the last-good offline shell for that URL; every offline launch then serves the error page until a later good online load. Realistic here: this repo's own history includes PWA assets 403'ing for weeks. | `sw.js:115` | Cache poisoning |
+| A-0724-I2 | `status.html` auto-refreshes every 60s, firing ~5 API-key'd calls/min on the shared demo key (4 endpoint checks + a redundant score re-fetch). The key's usage plan is 1,000 req/**month** — one tab left open ~3.3h exhausts it, 429-ing the public demo AND the status page for everyone until month reset; the status page then falsely shows 4/6 endpoints "down". Distinct from accepted C2 — rotation doesn't fix self-inflicted quota burn. | `score-demo/status.html:286` | Availability |
+| A-0724-I3 | score-demo renders `£NaNK` for NYC results — currency/field contract drift between the score response shape and the demo's render(). | `score-demo/index.html:562` | Contract drift |
+| A-0724-I4 | `/v1/score/batch` worst-case runtime exceeds the ScoreFunction's 10s timeout — the whole batch dies with no partial results, defeating the endpoint's documented partial-failure tolerance. | `backend/lambdas/score/app.py:68` | Reliability |
+| A-0724-I5 | Transport Lambda swallows TfL upstream failures and returns an empty station list; the frontend then asserts "No stations found within 1.5km" — an outage renders as confident wrong data. | `backend/lambdas/transport/app.py:68` | Silent failure |
+| A-0724-I6 | The site footer (Pricing, Privacy, For Developers, App Store link) is unreachable at every viewport ≤900px — the mobile web layout never exposes it, cutting mobile users off from the B2B funnel + legal pages the trust-fix bundle shipped. | `index.html:405` | A11y / funnel |
+| A-0724-I7 | Search results and errors are never announced to screen readers (no live region on the result panel) — WCAG 4.1.3. | `index.html:6748` | A11y |
+| A-0724-I8 | Persona picker buttons expose no pressed/selected state (no `aria-pressed`, no `type`) — SR users can't tell which persona is active. | `index.html:7528` | A11y |
+| A-0724-I9 | privacy.html headings/links render orange at 2.11:1 contrast (WCAG AA needs 4.5:1). | `privacy.html:102` | A11y |
+| A-0724-I10 | Rankings "Show boroughs/neighbourhoods" toggle is nearly invisible: `#c8c7c4` on white = 1.62:1. | `index.html:7608` | A11y |
+| A-0724-I11 | The methodology link inside the score tooltip is keyboard-unreachable (tooltip hides when focus leaves the trigger). | `index.html:4768` | A11y |
+
+### Minor — confirmed by adversarial verification
+
+| # | Issue | File:Line |
+|---|-------|-----------|
+| A-0724-M1 | Stale `epc.opendatacommunities.org` **and** `landregistry.data.gov.uk` in CSP connect-src (all calls proxy via Lambda now) + same dead hosts in `sw.js:40-41` `NEVER_CACHE_ORIGINS` + a live user-facing signup link still points at the retired EPC service (`index.html:5875`). Found independently by 4 of 6 dimensions; M-0521-2 was never actually fixed. | `index.html:15`, `sw.js:40` |
+| A-0724-M2 | privacy.html is the only page with no CSP meta (no frame-ancestors/script-src). | `privacy.html:6` |
+| A-0724-M3 | status.html CSP connect-src omits `https://skyscore.co.uk` — two checks falsely report "down" when browsed on the canonical domain. | `score-demo/status.html:12` |
+| A-0724-M4 | `js/api-base.js` is pinned in the SW shell cache with a never-bumped VERSION — an API base rotation never reaches installed PWAs. | `sw.js:31` |
+| A-0724-M5 | score-demo renders API-response fields unescaped (methodologyUrl into href, persona/limits into HTML). | `score-demo/index.html:577` |
+| A-0724-M6 | Device-token fallback path uses `Math.random` to mint a security capability token. | `index.html:7122` |
+| A-0724-M7 | GoatCounter `count.js` from gc.zgo.at on 5 pages, no SRI, not self-hosted (same class as the fixed Swagger SPOF). | all pages |
+| A-0724-M8 | Transport 500s (not 400) on non-numeric lat/lon — unguarded `float()`. | `transport/app.py:31` |
+| A-0724-M9 | EPC handler misses `TimeoutError`/`JSONDecodeError` — upstream flakiness becomes a 500 instead of the graceful fallback. | `epc/app.py:101` |
+| A-0724-M10 | Score LRU caches aren't thread-safe under the batch ThreadPoolExecutor — rare KeyError can 500 an entire batch. | `score/app.py:44` |
+| A-0724-M11 | `parse_weights` accepts negative / >1 component weights as long as the sum is ~1. | `score/app.py:1444` |
+| A-0724-M12 | Favourites POST forwards unvalidated body values into DynamoDB — type errors surface as 503. | `favourites/app.py:113` |
+| A-0724-M13 | Triplicate `haversine` and 7× duplicated `response()`/CORS helper across Lambdas. | `score/app.py:1045` |
+| A-0724-M14 | `backend/tests/test_handlers.py` docstring still describes 9 Lambdas + Bedrock 413 checks; `MagicMock` imported unused. | `backend/tests/test_handlers.py:1` |
+| A-0724-M15 | score-demo API response region has no ARIA live region (the signup result does — inconsistent). | `score-demo/index.html:432` |
+| A-0724-M16 | Favourites items + ranking table rows are click-only (not keyboard-operable). | `index.html:7240` |
+| A-0724-M17 | Inputs at 14px trigger iOS Safari auto-zoom on focus. | `index.html:1070` |
+| A-0724-M18 | npm audit: 3 high advisories, all dev-only transitive deps, fix available. | `package.json` |
+
+### Status changes verified this audit
+
+- **F-UX-11 (`prefers-reduced-motion`) — FIXED** on all four animating pages. ✅
+- **N-Front-3/4 (modal focus trap + Escape) — OBSOLETE**: the modals no longer exist; close both. ✅
+- **M-0521-2 (stale EPC CSP host) — NOT fixed** and wider than recorded → folded into A-0724-M1. 🔴
+- **I-0521-5 (resize debounce) — NOT fixed** per the code-frontend finder (verifier didn't run) → listed under Unverified. 🔴
+
+### Unverified findings (verifiers killed by the spend limit — credible leads, re-verify before acting)
+
+**Important:** `/epc` route is an unauthenticated open proxy for the bearer-token MHCLG upstream (quota theft) (`epc/app.py:39`) · favourites POST stores schema-free, size-unbounded items under an unauthenticated device token (`favourites/app.py:113`) · infinite D3 transitions keep running on detached nodes after resize/city-switch (`index.html:7462`) · I-0521-5 resize debounce never landed — full D3 teardown per resize tick (`index.html:8089`) · search flow has no request sequencing — stale responses render another postcode's data (`index.html:7083`) · `switchCity` re-entrancy duplicates map layers / draws NYC boroughs on the London projection (`index.html:7354`) · SW cache-first + never-bumped VERSION strands installed PWAs on stale `js/api-base.js` (`sw.js:128`) · score verdict colours fail contrast badly on light theme (1.16–2.11:1) (`index.html:6734`).
+
+**Minor:** postcode interpolated into postcodes.io URL path with `/` unescaped (`score/app.py:1374`) · non-string batch query values crash `resolve_query` → whole batch 500s (`score/app.py:1491`) · signup 409 leaks email-enumeration signal incl. `createdAt` (`signup/app.py:291`) · enabled orphan API key leaks if `create_usage_plan_key` fails post-creation (`signup/app.py:195`) · deploy-user IAM: region-wide APIGW write + leftover Bedrock grant (`iam-policy.json:79`) · batch counts 100 queries as 1 request against the 1000/month quota (`template.yaml:264`) · dead WMS/ArcGIS URL builders since the raster refactor (`index.html:5153`) · vestigial dead code: `_boroughExtraHydrated`, `getDeviceId` alias, unused zoom var (`index.html:7128`) · `escapeHtml` duplicated twice despite the global helper's comment (`index.html:7213`) · quicksearch chips double-bound after result-close → double search (`index.html:8166`) · score-demo example buttons clickable mid-request → out-of-order renders (`score-demo/index.html:490`) · borough-extra hydration can replace an open postcode result (`index.html:4871`) · duplicate `.search-hint` rule reverts the 11px a11y bump to 9px (`index.html:1118`).
+
+### Priority fix order (next work session)
+
+1. **Deploy the A-0724-C1 CORS fix** (source-fixed; rides the EPC-token `sam deploy` — *user action*)
+2. **A-0724-I1 + M4**: one-line `fresh.ok` guard in sw.js + VERSION bump, deploy sw.js (~10 min)
+3. **A-0724-I2**: status.html — pause on `document.hidden` + 5-10 min interval + drop the redundant re-fetch (~20 min)
+4. **A-0724-I6**: expose the footer links on mobile web (funnel + legal reachability) (~30 min)
+5. **A-0724-I3/I4/I5**: score-demo NYC render, batch timeout headroom, transport error honesty (~half day)
+6. A11y batch I7-I11 + M15-M17 (~half day)
+7. Re-verify the Unverified list once the spend limit resets
 
 ---
 
@@ -359,8 +435,8 @@ These didn't block today's session and are tracked here so they aren't lost. Eac
 |---|---|---|---|
 | ~~I-N5~~ | ~~API base URL duplicated in 4 files~~ — **DONE in Wave 12.9.** Extracted to `js/api-base.js` (browser-side single source); `tests/api.test.mjs` keeps a duplicate (Node runtime), guarded by `/preflight` 4d drift check. | — | done |
 | I-N6 | Signup race-recovery test (the `_safe_revoke_orphan_key` path with mocked `get_api_key` / `delete_api_key`) | Medium | ~20 min |
-| I4 | Borough metadata Lambda layer (carry-forward from May-6) | Medium-high | ~half day |
-| I6 | DLQ on async Lambdas (no async Lambdas exist now — likely moot) | Low | re-check on next async addition |
+| ~~I4~~ | ~~Borough metadata Lambda layer~~ — **CLOSED 2026-07-24**: resolved by removal. The duplication was across chat/multi_agent/score; the first two left the working tree with the May pivot, leaving `score/app.py` as the single holder. A shared layer for one consumer is overhead. Re-open if a second Lambda ever needs borough metadata. | — | done |
+| ~~I6~~ | ~~DLQ on async Lambdas~~ — **CLOSED 2026-07-24 as moot**: all 7 functions carry only `Type: Api` (synchronous proxy) events; zero async invocation paths exist, so DLQ/retry config has nothing to attach to. Re-open on the first async event source. | — | done |
 | I12 | Hardcoded URL drift across 3-4 files | Medium | partly addressed via skyscore.co.uk migration |
 | M-N2 | `BOROUGH_ALIASES` only 4 entries — postcodes.io returns dozens of edge-case admin_district strings | Medium | ~10 min |
 | M-N5 | Swagger UI loaded from unpkg.com with no SRI hash | Low | ~5 min |
@@ -411,9 +487,9 @@ These didn't block today's session and are tracked here so they aren't lost. Eac
 | I1 | Batch endpoint sequential HTTP | ✅ Fixed | `e8992bb` |
 | I2 | npm audit (4 vulns) | ✅ Fixed | `3ffd640`; live `npm audit` returns 0 vulnerabilities (lockfile inspection by security agent disagreed but my fresh run is authoritative) |
 | I3 | OpenAPI missing fields | 🔴 Still open | |
-| I4 | Borough metadata duplicated | 🔴 Still open | |
+| I4 | Borough metadata duplicated | ✅ Closed 2026-07-24 | Resolved by removal — chat/multi_agent left the tree in May; `score/app.py` is the single remaining holder |
 | I5 | No tests for 9 of 11 Lambdas | 🟡 Partial | `eb2aa56` added handler tests; new `live_flights` + `signup` have none — see **N-Code-3** |
-| I6 | No DLQ on async Lambdas | 🔴 Still open | |
+| I6 | No DLQ on async Lambdas | ✅ Closed 2026-07-24 (moot) | No async invocation paths exist — all 7 functions are APIGW-synchronous. Re-open on first async event source |
 | I7 | `lru_cache` caches errors as None | ✅ Fixed | `e8992bb` |
 | I8 | Inline onclick XSS | 🟡 Mostly fixed | Favourites delegated; static handlers (`closeReport`, `printReport`, `switchTab`, `switchCity`, `toggleMetricDetail`) still inline. **N-Sec-1**, **N-Sec-2** are the live exploitation paths |
 | I9 | visibilitychange listener leak | ✅ Fixed | `e8992bb` |
@@ -421,7 +497,7 @@ These didn't block today's session and are tracked here so they aren't lost. Eac
 | I11 | Layer toggles `<div role="button">` | ✅ Fixed | Native `<button>` + `aria-pressed` |
 | I12 | Hardcoded URLs duplicated | 🔴 Still open | |
 | I13 | Bedrock model IDs hardcoded | 🟡 Partial | Env vars added (`os.environ.get('NOVA_*_MODEL_ID', ...)`) but template never overrides — defaults still hardcoded in code |
-| I14 | Stale `PROJECT_DOCUMENTATION.md` | 🟡 Partial | `0c20451` synced NYC; other claims still drifted |
+| I14 | Stale `PROJECT_DOCUMENTATION.md` | ✅ Closed 2026-07-24 | Full refresh: 7-Lambda truth, real endpoint table (/v1/* was missing entirely), 3-table DynamoDB schema, 8.2k-line count, removed-AI sections marked historical, cost table de-Bedrocked |
 | I15 | Missing canonical/OG/theme-color | 🟡 Partial | Added to `index.html:9-37`. Still missing on `score-demo/*` and `prototype/index.html` |
 | I16 | Silent postcode lookup failures | 🔴 Still open | |
 | M1-M2, M4-M14 | Polish items | 🔴 Mostly still open | M3 (`datetime.utcnow`) ✅ fixed |
@@ -525,7 +601,7 @@ Each item is a separate commit; ordered by blast-radius / cost-to-fix.
 - **N-Code-3** test coverage for live_flights + signup
 - **N-Front-5** tab keyboard nav (arrow keys + roving tabindex)
 - **I3** OpenAPI doc completeness
-- **I4** shared borough Lambda layer
-- **I6** DLQ on async Lambdas
+- ~~**I4** shared borough Lambda layer~~ (closed 2026-07-24 — resolved by removal)
+- ~~**I6** DLQ on async Lambdas~~ (closed 2026-07-24 — moot, no async Lambdas)
 
 Standing items below remain on the backlog. Re-run `/audit` quarterly or before major releases.

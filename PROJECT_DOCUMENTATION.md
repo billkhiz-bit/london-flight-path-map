@@ -1,5 +1,7 @@
 # Sky Score - Complete Project Documentation
 
+_Last full refresh: 2026-07-24 (audit item I14)._
+
 ## Project Overview
 
 **Sky Score** is a noise + livability data product for UK and NYC property. Two surfaces:
@@ -13,7 +15,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 **API:** https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/
 **Methodology:** [METHODOLOGY.md](./METHODOLOGY.md) (v3.1)
 **GitHub:** https://github.com/billkhiz-bit/london-flight-path-map
-**Origin + pivot:** Built for the Amazon Nova AI Hackathon (March 2026, won $200 AWS credits, blog category). Productised post-hackathon as a B2B API; consumer-side AI features (chat, multi-agent, document analysis, AI report) removed from the UI in May 2026 to align the consumer narrative with the methodology-defensibility positioning of the B2B API. The Bedrock Lambdas remain dormant in `template.yaml` for potential re-introduction as user-triggered constrained features.
+**Origin + pivot:** Built for the Amazon Nova AI Hackathon (March 2026, won $200 AWS credits, blog category). Productised post-hackathon as a B2B API; consumer-side AI features (chat, multi-agent, document analysis, AI report) removed from the UI in May 2026 to align the consumer narrative with the methodology-defensibility positioning of the B2B API. The Bedrock Lambda code and template entries now live in git history only (verified 2026-07-23: `template.yaml` holds just the 7 active functions); re-introduction means restoring both from history.
 
 ---
 
@@ -23,7 +25,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 
 | Service | Purpose | Region |
 |---------|---------|--------|
-| **AWS Lambda** | 12 functions (7 active + 5 dormant Bedrock; Python 3.11) | eu-west-2 |
+| **AWS Lambda** | 7 functions (Python 3.11); the 5 former Bedrock AI Lambdas live in git history only | eu-west-2 |
 | **Amazon API Gateway** | REST API with CORS, per-route throttling, Usage Plans | eu-west-2 |
 | **Amazon S3** | Static website hosting | eu-west-2 |
 | **Amazon CloudFront** | Global CDN with HTTPS, custom domain `skyscore.co.uk` | Global |
@@ -31,8 +33,8 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 | **AWS SAM/CloudFormation** | Infrastructure as code | eu-west-2 |
 | **AWS IAM** | Least-privilege access control (tag-condition scope-down on signup `apigateway:DELETE`) | Global |
 | **Amazon CloudWatch** | Logging and monitoring (`[SIGNUP_ORPHAN_KEY]` structured-log alarm filter) | eu-west-2 |
-| **Amazon Bedrock** | (Dormant) Nova 2 Lite + Nova Pro for the 5 dormant AI Lambdas; not invoked from any active surface | us-east-1 |
-| **AWS STS** | Cross-region model access (used only when dormant Bedrock features are re-enabled) | us-east-1 |
+| **Amazon Bedrock** | (Historical) Nova 2 Lite + Nova Pro for the 5 removed AI Lambdas; nothing in the deployed stack invokes Bedrock | us-east-1 |
+| **AWS STS** | (Historical) Cross-region model access; only relevant if the Bedrock Lambdas are restored from git history | us-east-1 |
 
 ### Data Sources (10+ live APIs)
 
@@ -40,7 +42,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 1. **DEFRA Strategic Noise Maps** - Official UK government aircraft and road noise contours (WMS)
 2. **Met Police Crime Statistics** - Curated borough-level crime rates
 3. **TfL Unified API** - Live nearest stations, line status, distances
-4. **EPC Open Data Communities** - Energy Performance Certificates by postcode
+4. **MHCLG EPC service** - Energy Performance Certificates by postcode (`get-energy-performance-data.communities.gov.uk`; replaced Open Data Communities, retired 2026-05-30)
 5. **HM Land Registry** - Price Paid Data for sold property prices
 6. **NHS/Healthcare Data** - GP surgery and hospital information
 7. **Postcodes.io** - Geolocation, autocomplete, outcode lookup
@@ -56,7 +58,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 
 ## Amazon Nova Integration — DORMANT (May 2026)
 
-**Status: dormant since 2026-05-07.** All consumer-side AI features were removed from the UI as part of the data-first repositioning. The Lambdas below remain in `template.yaml` with their Bedrock IAM permissions intact; Lambda has zero idle cost on on-demand pricing, and re-enabling means uncommenting the relevant frontend block + redeploying. The descriptions below document what these Lambdas *do* when invoked — useful reference for any future re-introduction (e.g. user-triggered "explain in plain English" button, constrained EPC summariser).
+**Status: dormant since 2026-05-07; removed from the working tree since.** All consumer-side AI features were removed from the UI as part of the data-first repositioning, and the Lambda code + `template.yaml` entries were subsequently removed too — both live in git history only (verified 2026-07-23). Re-enabling means restoring code and template entries from history, redeploying, and unhiding the frontend block. The descriptions below document what these Lambdas *do* when invoked — useful reference for any future re-introduction (e.g. user-triggered "explain in plain English" button, constrained EPC summariser).
 
 ### Nova 2 Lite (`us.amazon.nova-2-lite-v1:0`)
 - **Multi-turn AI chatbot** with conversation history (last 8 messages)
@@ -91,7 +93,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 
 ---
 
-## Lambda Functions (12 total: 7 active + 5 dormant)
+## Lambda Functions (7 active)
 
 ### Active
 
@@ -128,9 +130,9 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 - **File:** `backend/lambdas/nhs/app.py`
 - **Purpose:** Nearby NHS services via OSM Overpass (replaced the deprecated NHS Service Search public key)
 
-### Dormant — 2026-05-07
+### Dormant (git history only) — 2026-05-07
 
-The five Lambdas below ship in `template.yaml` and CloudFormation but are not surfaced in any UI as of May 2026. Their per-Lambda detail is preserved here for reference if any feature is re-introduced.
+The five Lambdas below were removed from `template.yaml` and the working tree; code and template entries live in git history only (verified 2026-07-23). Their per-Lambda detail is preserved here for reference if any feature is re-introduced; numbering continues from the active list for historical continuity.
 
 #### 8. ChatFunction (`/chat` POST) — DORMANT
 - **File:** `backend/lambdas/chat/app.py`
@@ -169,7 +171,7 @@ The five Lambdas below ship in `template.yaml` and CloudFormation but are not su
 ## Frontend Architecture
 
 ### Single-Page Application
-- **File:** `index.html` (~7,200 lines as of Wave 13.4 — file growth tracked in CHANGELOG)
+- **File:** `index.html` (~8,200 lines as of 2026-07-24)
 - **Framework:** None (vanilla JavaScript)
 - **Mapping:** D3.js v7 with SVG-based interactive rendering
 - **Build step:** None required for the web target; the native target uses `mobile/scripts/copy-web.mjs` to assemble a `www/` bundle but doesn't bundle or transpile
@@ -216,7 +218,8 @@ Four overlay rendering engines handle different government data standards:
 3. **Tile grid rendering** - for BTS aviation/road noise (computing slippy map tile coordinates)
 4. **Borough SVG overlay** - flood risk and air quality rendered as colour-coded borough polygons, visible at all zoom levels
 
-#### AI Features (Frontend)
+#### AI Features (Frontend) — removed from the UI May 2026
+The blocks below were removed in the data-first repositioning; descriptions preserved as re-introduction reference:
 - **Chat FAB button** - "ASK AI" pill button with pulsing glow
 - **Multi-turn chat panel** - conversation history, context awareness
 - **Photo upload** - camera button in chat for property photo analysis
@@ -251,6 +254,16 @@ Four overlay rendering engines handle different government data standards:
 
 - **Billing:** PAY_PER_REQUEST (no provisioned capacity)
 - **Region:** eu-west-2
+
+### Table: `london-flight-map-signups`
+
+Self-service signup audit log. Partition key `email` (one signup per email; duplicates return 409). Stores `keyId` for revocation and `createdAt` for analytics — the handler logs keyIds, never raw emails. PITR enabled (35 days): this table holds the only mapping between an issued API key and the requesting email.
+
+### Table: `london-flight-map-noise-raster`
+
+DEFRA Lden raster samples, partition key `postcode`. Populated offline by `scripts/load_defra_raster.py` (samples the DEFRA GeoTIFF at every UK postcode centroid); the score Lambda reads it when populated and falls back to Haversine when empty. PITR enabled — a loader re-run costs ~6h of compute, roll-back is cheaper.
+
+All three tables: PAY_PER_REQUEST billing, eu-west-2.
 
 ---
 
@@ -299,7 +312,7 @@ mobile/
   DEEP_LINKING.md               # iOS Universal Links + Android App Links setup
   LAUNCH_BLOG_POST.md           # announcement post draft + social excerpts
 
-codemagic.yaml                  # at repo root; ios-workflow + android-workflow
+codemagic.yaml                  # at repo root; ios-workflow only (Android is built locally)
 .well-known/                    # apple-app-site-association + assetlinks.json (deep-link stubs)
 manifest.webmanifest            # PWA manifest
 sw.js                           # service worker (network-first shell, cache-first static)
@@ -339,18 +352,21 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 
 **Base URL:** `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod`
 
+An `api.skyscore.co.uk` custom domain was configured on the AWS side 2026-07-23; it serves once the Cloudflare `CNAME api` record lands. The raw execute-api URL keeps working regardless.
+
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/chat` | POST | AI chatbot (Lite + Pro routing) |
-| `/multi-agent` | POST | Multi-agent orchestration (complex queries) |
-| `/analyze-image` | POST | Property photo analysis (Pro multimodal) |
-| `/analyze-document` | POST | EPC/survey analysis (Pro multimodal) |
-| `/report` | POST | AI report generation (Pro) |
-| `/favourites` | GET/POST/DELETE | Save/load/delete favourites (DynamoDB) |
+| `/v1/score` | GET | B2B single score lookup (API-key gated) |
+| `/v1/score/batch` | POST | B2B bulk scoring, up to 100 queries per call (API-key gated) |
+| `/v1/regions` | GET | Coverage metadata for the B2B API |
+| `/v1/signup` | POST | Self-service API-key issuance (throttled 1 RPS) |
+| `/favourites` | GET/POST/DELETE | Save/load/delete favourites (X-Device-Token auth) |
 | `/sold-prices` | GET | Land Registry sold prices |
-| `/epc` | GET | EPC energy ratings |
-| `/transport` | GET | TfL nearest stations |
-| `/nhs` | GET | NHS GP surgeries |
+| `/epc` | GET | EPC energy ratings (MHCLG) |
+| `/transport` | GET | TfL nearest stations + line status |
+| `/nhs` | GET | Nearby NHS services (OSM Overpass) |
+
+The former AI endpoints (`/chat`, `/multi-agent`, `/analyze-image`, `/analyze-document`, `/report`) were removed with the dormant Bedrock Lambdas and live in git history only.
 
 ---
 
@@ -358,26 +374,31 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 
 ```
 Sky Score/
-|-- index.html # Frontend SPA (~3,870 lines)
+|-- index.html # Frontend SPA (~8,200 lines)
+|-- pricing.html # /pricing — pilot + tier ladder (added 2026-07-23)
+|-- privacy.html # /privacy — privacy policy
+|-- api/index.html # /api/ — B2B landing page
+|-- score-demo/ # B2B API tester + OpenAPI spec + Swagger UI
+|-- prototype/index.html # Sky Score Radar (Three.js 3D visualisation)
 |-- HACKATHON_SUBMISSION.md # Devpost submission text
 |-- PROJECT_DOCUMENTATION.md # This file
 |-- AUDIT_REPORT.md # Code audit findings
 |-- CLAUDE.md # Claude Code project config
 |-- LICENSE # MIT License
 |-- backend/
-    |-- template.yaml # SAM/CloudFormation template
+    |-- template.yaml # SAM/CloudFormation template (7 functions, 3 tables)
     |-- iam-policy.json # IAM deployment policy (v6)
+    |-- tests/ # Maintained suite (handlers + score engine)
     |-- lambdas/
-        |-- chat/app.py # AI chatbot (Nova 2 Lite + Pro)
-        |-- multi_agent/app.py # Multi-agent orchestration
-        |-- analyze_image/app.py # Photo analysis (Nova Pro)
-        |-- analyze_document/app.py # Document analysis (Nova Pro)
-        |-- report/app.py # AI report generation (Nova Pro)
-        |-- favourites/app.py # DynamoDB favourites CRUD
+        |-- score/app.py # B2B scoring engine (/v1/score, /v1/score/batch, /v1/regions)
+        |-- signup/app.py # Self-service API-key issuance (/v1/signup)
+        |-- favourites/app.py # DynamoDB favourites CRUD (X-Device-Token)
         |-- sold_prices/app.py # Land Registry proxy
-        |-- epc/app.py # EPC data proxy
+        |-- epc/app.py # MHCLG EPC proxy
         |-- transport/app.py # TfL API proxy
-        |-- nhs/app.py # NHS data
+        |-- nhs/app.py # NHS services via OSM Overpass
+|-- tests/ # Per-Lambda handler suites (rewritten 2026-07-24)
+|-- mobile/ # Capacitor native wrapper (see Mobile section)
 ```
 
 ---
@@ -387,31 +408,30 @@ Sky Score/
 | Service | Monthly Cost (low traffic) |
 |---------|--------------------------|
 | S3 + CloudFront | ~$0.05 (free tier covers most) |
-| Lambda (11 functions) | ~$0.01 (free tier: 1M requests) |
+| Lambda (7 functions) | ~$0.01 (free tier: 1M requests) |
 | API Gateway | ~$0.01 (free tier: 1M calls) |
-| DynamoDB | ~$0.01 (PAY_PER_REQUEST, minimal reads/writes) |
-| Bedrock Nova 2 Lite | ~$0.10 (per 1000 chat messages) |
-| Bedrock Nova Pro | ~$0.50 (per 100 complex queries/reports) |
+| DynamoDB (3 tables) | ~$0.01 (PAY_PER_REQUEST, minimal reads/writes; + ~$0.20/GB-month PITR backup on tiny tables) |
+| Bedrock | $0.00 (no active surface invokes Bedrock) |
 | **Total** | **< $1/month at low traffic** |
 
 ---
 
 ## Product capabilities (current state)
 
-1. **Deep Nova integration**, 6 distinct AI modes (chat, insight, photo analysis, document analysis, report generation, complex reasoning) + multi-agent orchestration across 2 models (Lite + Pro). Intelligent routing keeps simple queries cheap.
-2. **Multimodal**, listing-photo and EPC-document analysis using Nova Pro vision capabilities.
-3. **Multi-agent reports**, Orchestrator + 3 specialist agents (Noise / Market / Liveability) + Synthesiser with parallel `concurrent.futures` execution.
-4. **Productised B2B API**, `/v1/score`, `/v1/score/batch`, `/v1/regions` with API-key auth and a published OpenAPI 3.0 spec. Free tier (1000/month) capped via API Gateway UsagePlan.
-5. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`.
-6. **Multi-city**, London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both via Haversine distance to flight-path geometry.
-7. **DEFRA raster scaffold (v3.1)**, score Lambda checks DynamoDB for sampled Lden values per postcode and falls back to v3.0 Haversine when the table is empty. Loader script in `scripts/load_defra_raster.py` ready to populate the table.
-8. **Live and deployed**, fully serverless on AWS, S3+CloudFront frontend, 11 Lambda functions behind API Gateway.
-9. **Halal-finance-aware**, affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.
+1. **Productised B2B API**, `/v1/score`, `/v1/score/batch`, `/v1/regions` with API-key auth and a published OpenAPI 3.0 spec (self-hosted Swagger UI). Free tier (1000/month) capped via API Gateway UsagePlan; self-service signup at `/v1/signup`.
+2. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`.
+3. **Multi-city**, London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both.
+4. **DEFRA raster resolution (v3.1)**, score Lambda samples DynamoDB Lden values per postcode, falling back to Haversine then borough averages. Loader in `scripts/load_defra_raster.py`.
+5. **Live and deployed**, fully serverless on AWS: S3 + CloudFront frontend, 7 Lambda functions behind API Gateway, 3 DynamoDB tables.
+6. **Halal-finance-aware**, affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.
+7. **Free, accessible consumer site**, no sign-up, no paywall — the marketing engine for the API.
+8. **Three install paths**, web, PWA, and native iOS (App Store v1.0.21 live) / Android (pending) from a single `index.html`.
+
+(The removed Nova AI capabilities — chat, multimodal analysis, multi-agent reports — are documented under "Amazon Nova Integration — DORMANT" above.)
 
 ## Origin
 
 Built for the Amazon Nova AI Hackathon (March 2026). Won $200 AWS credits in the blog-post category. Productised post-hackathon as a B2B API + free public consumer site. See `ROADMAP.md` for the live tracks and `CHANGELOG.md` for incremental ships.
-12. **Free and accessible** - No sign-up, no paywall
 
 ---
 

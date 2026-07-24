@@ -137,7 +137,7 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
 
 ## Architecture
 
-- **Frontend**: Single `index.html` (~3,960 lines), vanilla JS, D3.js maps, all UI logic inline. **The mobile bottom-nav redesign is NATIVE-APP ONLY as of 2026-05-29** (web/native split): the redesign (`#mobile-nav` + `.app[data-mview]` 3-tab views via `setMobileView()`, map-as-background) is gated behind an `is-native` class that `setupNativeFeatures()` adds to `<html>` only inside the Capacitor app. **The website — desktop, mobile browser, and PWA — serves the classic bottom-sheet layout** (`.sheet-handle` + `setSheetState()`); the iOS/Android apps get the redesign. The redesign's base CSS rules are `.is-native`-prefixed and `setMobileView()` (sole writer of `data-mview`) bails unless `is-native`. Desktop (≥901px) keeps the two-column grid regardless. See `MOBILE_REDESIGN_PLAN.md` (v3 section).
+- **Frontend**: Single `index.html` (~8,200 lines as of 2026-07-24), vanilla JS, D3.js maps, all UI logic inline. **The mobile bottom-nav redesign is NATIVE-APP ONLY as of 2026-05-29** (web/native split): the redesign (`#mobile-nav` + `.app[data-mview]` 3-tab views via `setMobileView()`, map-as-background) is gated behind an `is-native` class that `setupNativeFeatures()` adds to `<html>` only inside the Capacitor app. **The website — desktop, mobile browser, and PWA — serves the classic bottom-sheet layout** (`.sheet-handle` + `setSheetState()`); the iOS/Android apps get the redesign. The redesign's base CSS rules are `.is-native`-prefixed and `setMobileView()` (sole writer of `data-mview`) bails unless `is-native`. Desktop (≥901px) keeps the two-column grid regardless. See `MOBILE_REDESIGN_PLAN.md` (v3 section).
 - **Backend**: `backend/template.yaml`, SAM/CloudFormation defining the 7 active Lambdas + API Gateway + DynamoDB. (Corrected 2026-07-23: earlier docs said "12 Lambdas (7 active + 5 dormant)" but the template contains only the 7 — the dormant Bedrock five live in git history, not the template.)
 - **B2B funnel pages** (deployed alongside `index.html`): `/api/` landing (`api/index.html`), `/pricing` (`pricing.html`, added 2026-07-23: 90-day £2,500 pilot + Free/£499 Professional/Enterprise tiers + founder block), `/privacy` (`privacy.html`). **S3 key gotcha:** the `sky-score-rewrite-index` CloudFront function rewrites extensionless paths to `<path>/index.html`, so privacy/pricing MUST be uploaded to `privacy/index.html` and `pricing/index.html` keys (`make web-deploy` does this correctly since 2026-07-23; a flat `privacy` key is a dead object).
 - **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
@@ -240,9 +240,6 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
-See `AUDIT_REPORT.md` (last full audit 2026-05-06, refreshed 2026-05-07) for the live list. Standing items not yet addressed:
-- **Borough metadata duplication** across chat/multi_agent/score Lambdas (I4) — extract to shared module
-- **No DLQ / retry config** on async Lambdas (I6)
-- **Stale `PROJECT_DOCUMENTATION.md`** sections (I14, partial fix in `0c20451`)
+See `AUDIT_REPORT.md` (last full audit 2026-07-24) for the live list. The long-standing trio closed 2026-07-24: I4 (borough metadata duplication — resolved by removal, `score/app.py` is the single holder), I6 (DLQ on async Lambdas — moot, all 7 functions are APIGW-synchronous), I14 (`PROJECT_DOCUMENTATION.md` — fully refreshed).
 
 Most of the May-6 critical findings have shipped fixes — see `AUDIT_REPORT.md` for the triage column.

@@ -5,8 +5,6 @@ import json
 import os
 import sys
 
-import pytest
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from conftest import load_lambda, make_api_event
 

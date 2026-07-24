@@ -4,8 +4,7 @@ import io
 import json
 import os
 import sys
-
-import pytest
+from urllib.error import URLError
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from conftest import load_lambda, make_api_event
@@ -76,34 +75,50 @@ class TestHandlerValidation:
 # ---------------------------------------------------------------------------
 # Success path (mocked)
 # ---------------------------------------------------------------------------
-NHS_API_RESPONSE = json.dumps({
-    "value": [
-        {
-            "OrganisationName": "City Medical Centre",
-            "Address1": "10 High Street",
-            "Postcode": "SE1 7PB",
-            "Phone": "020 7123 4567",
-            "Latitude": 51.5055,
-            "Longitude": -0.0862,
-            "AcceptingPatients": True,
-            "URL": "https://nhs.uk/gp/city-medical",
-        },
-        {
-            "OrganisationName": "Bridge Surgery",
-            "Address1": "5 Bridge Road",
-            "Postcode": "SE1 9AA",
-            "Phone": "020 7765 4321",
-            "Latitude": 51.5040,
-            "Longitude": -0.0900,
-            "AcceptingPatients": False,
-            "URL": "https://nhs.uk/gp/bridge-surgery",
-        },
-    ]
-}).encode()
+# OSM Overpass response shape (the handler's data source since the NHS
+# Service Search API was retired behind a subscription key). Ways and
+# relations carry coordinates under "center"; nodes carry lat/lon directly.
+OVERPASS_RESPONSE = json.dumps(
+    {
+        "elements": [
+            {
+                "type": "node",
+                "id": 1,
+                "lat": 51.5055,
+                "lon": -0.0862,
+                "tags": {
+                    "amenity": "doctors",
+                    "name": "City Medical Centre",
+                    "addr:housenumber": "10",
+                    "addr:street": "High Street",
+                    "addr:postcode": "SE1 7PB",
+                    "phone": "020 7123 4567",
+                },
+            },
+            {
+                "type": "way",
+                "id": 2,
+                "center": {"lat": 51.5040, "lon": -0.0900},
+                "tags": {
+                    "amenity": "pharmacy",
+                    "name": "Bridge Pharmacy",
+                    "addr:postcode": "SE1 9AA",
+                },
+            },
+            {
+                "type": "node",
+                "id": 3,
+                "lat": 51.5100,
+                "lon": -0.0950,
+                "tags": {"amenity": "hospital", "name": "Riverside Hospital"},
+            },
+        ]
+    }
+).encode()
 
 
-def _mock_urlopen(req, timeout=10):
-    resp = io.BytesIO(NHS_API_RESPONSE)
+def _mock_urlopen(req, timeout=12):
+    resp = io.BytesIO(OVERPASS_RESPONSE)
     resp.__enter__ = lambda s: s
     resp.__exit__ = lambda s, *a: None
     return resp
@@ -128,10 +143,18 @@ class TestHandlerSuccess:
         gps = body["gp"]
         assert len(gps) >= 1
         gp = gps[0]
-        assert "name" in gp
-        assert "distance" in gp
-        assert "postcode" in gp
-        assert "phone" in gp
+        assert gp["name"] == "City Medical Centre"
+        assert gp["postcode"] == "SE1 7PB"
+        assert gp["phone"] == "020 7123 4567"
+        assert isinstance(gp["distance"], int)
+
+    def test_way_elements_use_center_coords(self, monkeypatch):
+        monkeypatch.setattr(app, "urlopen", _mock_urlopen)
+        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        body = json.loads(handler(event, None)["body"])
+        pharmacies = body["pharmacies"]
+        assert pharmacies[0]["name"] == "Bridge Pharmacy"
+        assert isinstance(pharmacies[0]["distance"], int)
 
     def test_cors_headers_on_success(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", _mock_urlopen)
@@ -141,15 +164,18 @@ class TestHandlerSuccess:
             assert result["headers"][key] == val
 
     def test_fallback_on_api_error(self, monkeypatch):
-        """When urlopen raises, the handler should use the fallback."""
+        """When Overpass is unreachable the handler returns nhs.uk search
+        links instead of failing. The handler deliberately catches only
+        network/parse errors (URLError et al), not bare Exception."""
 
-        def _raise(req, timeout=10):
-            raise Exception("API down")
+        def _raise(req, timeout=12):
+            raise URLError("API down")
 
         monkeypatch.setattr(app, "urlopen", _raise)
         event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
         result = handler(event, None)
         assert result["statusCode"] == 200
         body = json.loads(result["body"])
+        assert body["available"] is False
         # Fallback returns a list with a single item that has fallback=True
         assert body["gp"][0]["fallback"] is True

@@ -39,14 +39,16 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install pytest pytest-mock boto3
-      # Gate on the maintained suite (backend/tests — the same one
-      # /preflight runs). The root tests/ Python suite is the March-era
-      # legacy suite: it had been failing CI at collection since May
-      # (test_chat imported the removed chat Lambda) and 21 of its tests
-      # assert pre-migration handler behaviour. Triage tracked in
-      # ROADMAP.md; re-add here once refreshed.
+      # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend
+        env:
+          AWS_DEFAULT_REGION: eu-west-2
+      # Root tests/ — per-Lambda handler suites (epc, favourites, nhs,
+      # sold_prices, transport). Rewritten 2026-07-24 to the current
+      # handler contracts (MHCLG EPC JSON API, X-Device-Token auth,
+      # OSM Overpass) after the March-era originals went stale.
+      - run: python -m pytest tests/ -v --tb=short
         env:
           AWS_DEFAULT_REGION: eu-west-2
 

@@ -6,6 +6,28 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-24 — Legacy test rewrite + full audit (1 live critical) + pilot outreach pack
+
+- **Root `tests/` rewritten** to current handler contracts after 21 tests went
+  stale against the May migrations: epc (MHCLG JSON API + `EPC_BEARER_TOKEN`),
+  favourites (`X-Device-Token` auth — the old suite asserted the removed
+  IDOR-era `userId` contract), nhs (OSM Overpass). 83 root + 62 backend tests
+  green; **CI now gates both suites** (`ci.yml`).
+- **Audit items I4, I6, I14 closed** — I4 resolved by removal, I6 moot (no
+  async Lambdas), I14 via a full `PROJECT_DOCUMENTATION.md` refresh (7-Lambda
+  truth, real `/v1/*` endpoint table, 3-table DynamoDB schema, historical
+  markers on the removed AI features).
+- **Full audit** (6 dimensions, adversarially verified) → `AUDIT_REPORT.md`
+  §2026-07-24. Headline: **A-0724-C1 (critical, verified live)** —
+  `CORS_ORIGIN` pinned to the legacy CloudFront URL silently broke all five
+  consumer data panels on skyscore.co.uk. **Source-fixed in `template.yaml`;
+  deploys with the pending EPC-token `sam deploy`.** Plus 34 confirmed
+  findings and 25 unverified leads (verification cut short by the account's
+  monthly spend limit).
+- **Outreach**: pilot-first email variants added to `OUTREACH_DRAFTS.md`;
+  LOI template + one-pager maintained off-repo (Desktop) — the Haatch
+  commercial-proof pack is complete.
+
 ### 2026-05-29 — Web/native split + iOS 1.0.21 submitted for review
 
 - **Web/native split** (`3945226`): the mobile bottom-nav redesign is now

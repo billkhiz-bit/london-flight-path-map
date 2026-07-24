@@ -185,12 +185,12 @@ API Gateway ── Lambda × 7 active ── DynamoDB (favourites + DEFRA noise 
 ├── backend/
 │ ├── template.yaml # SAM stack: 7 Lambdas, API Gateway (per-route throttle), 3× DynamoDB (PITR-ready), Usage Plan
 │ ├── lambdas/ # One folder per Lambda
-│ └── tests/ # Unit tests for the score Lambda
+│ └── tests/ # Unit tests: score engine + handler suite
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source
 ├── ROADMAP.md # Rolling project plan with design notes for deferred work
 ├── BUILDATHON_PLAN.md # Shared Futures Buildathon (June 2026) plan
 ├── OUTREACH_LOG.md # B2B outreach pipeline tracker
-└── tests/ # Playwright E2E for the consumer site
+└── tests/ # Playwright E2E + per-Lambda pytest suites (rewritten 2026-07-24)
 ```
 
 ## Local development
@@ -226,4 +226,4 @@ For licensing, integration, or partnership enquiries, contact via the [live site
 
 The data the API returns is built on UK and US open data, MHCLG, DEFRA, HM Land Registry, ONS, Home Office, Department for Education, TfL, NHS Digital. Contains public sector information licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 
-The original consumer site was built for the Amazon Nova AI Hackathon, March 2026, where it received a build credit award. The B2B API and productisation work began May 2026; the consumer-side AI features built for the hackathon were retired from the UI in May 2026 to align the consumer surface with the methodology-defensibility positioning of the B2B API. The Lambdas remain in the SAM template for potential future re-introduction.
+The original consumer site was built for the Amazon Nova AI Hackathon, March 2026, where it received a build credit award. The B2B API and productisation work began May 2026; the consumer-side AI features built for the hackathon were retired from the UI in May 2026 to align the consumer surface with the methodology-defensibility positioning of the B2B API. Their Lambda code and template entries live in git history for potential future re-introduction.

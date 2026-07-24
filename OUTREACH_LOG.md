@@ -2,7 +2,7 @@
 
 > Track every B2B contact, channel, response, and next action across the outreach pipeline. Update on every reply, every send, and every conversation. Future-self uses this to remember where each conversation stands.
 
-**Outreach pipeline reference:** see [`ROADMAP.md`](./ROADMAP.md) §"Outreach pipeline" for tier definitions and approach principles. Cold-email templates are in the chat history of the productisation session (2026-05-05); recreate per-target.
+**Outreach pipeline reference:** see [`ROADMAP.md`](./ROADMAP.md) §"Outreach pipeline" for tier definitions and approach principles. Cold-email templates live in [`OUTREACH_DRAFTS.md`](./OUTREACH_DRAFTS.md) — use the **pilot-first variants (2026-07-24)** ahead of the May-era soft-ask ones. The pilot one-pager + LOI template live on the Desktop (outside this public repo).
 
 **Status legend:**
 - 🟢 Active conversation

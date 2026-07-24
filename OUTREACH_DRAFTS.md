@@ -7,6 +7,62 @@ Templates for the outreach pipeline in `ROADMAP.md` §"Outreach pipeline". Adapt
 - 2 cold emails per week using the templates below — starting week of **2026-05-12**.
 - Chase Emergent Ventures if no reply by **2026-05-12** (form promised "within ~1 week").
 
+**⚠ Send gate (2026-07-24):** no cold email goes out from the skyscore.co.uk domain until Migadu/DKIM is set up (ROADMAP open item) — unauthenticated domain mail lands in spam and burns the target. LinkedIn DMs and warm intros are not gated.
+
+---
+
+## Pilot-first variants (2026-07-24) — USE THESE FIRST
+
+Post-Haatch reframe: the ask is no longer "a 20-minute call to discuss" — it is the **90-day £2,500 pilot** (live at [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing)), with the call as the scoping step. A signed pilot or LOI plus outcome evidence is the current commercial-proof goal; the LOI template lives at `Desktop/SKY_SCORE_LOI_TEMPLATE.md` (kept out of this public repo), alongside `Desktop/SKY_SCORE_PILOT_ONE_PAGER.md`.
+
+### Tier 1 — aggregators, pilot-first
+
+**Subject:** A 90-day noise-data pilot for [Company]'s reports
+
+> Hi [first name],
+>
+> I run **Sky Score** (skyscore.co.uk) — an environmental and livability data API for UK property: aircraft and road noise, air quality, schools, crime, transport, each anchored to published government sources (DEFRA, Ofsted, ONS) with an open, versioned methodology.
+>
+> [Company]'s [reports / search products] cover flood, planning and environmental risk — but no defensible noise layer, the gap the DMCC material-information rules make expensive to ignore.
+>
+> Rather than a long procurement conversation, I run a fixed-scope 90-day pilot: **£2,500 + VAT**, one success metric agreed at day 0, review at day 45, written evidence report at day 90 — and the fee is credited in full against a licence if you continue. Terms: [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+>
+> Worth a 20-minute call to scope the metric?
+>
+> Bilal Khizar
+> support@skyscore.co.uk · skyscore.co.uk
+
+### Tier 2 — Islamic finance, pilot-first
+
+**Subject:** A measured pilot: property-harm data for [Company] customers
+
+> As-salamu alaykum [first name],
+>
+> I'm Bilal Khizar, founder of **Sky Score** (skyscore.co.uk) — a UK property data API surfacing the structural harms listings sites are incentivised to hide: aircraft and road noise, air quality, crime, school quality. Protecting buyers from hidden harm is the point — the Maqasid alignment (Hifz al-Mal, Hifz an-Nasl) is why the customer focus is halal-finance providers, not conventional lenders.
+>
+> Every score is deterministic and anchored to published DEFRA / Ofsted / ONS thresholds — no AI layer, methodology fully public for Sharia-board or audit scrutiny.
+>
+> The concrete proposal: a **90-day pilot, £2,500 + VAT**, one metric your team already cares about (e.g. environmental-harm flags per postcode vs manual review), agreed at day 0, written evidence report at day 90, fee credited against a licence if you continue. Terms: [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+>
+> Would a 20-minute scoping call be worthwhile?
+>
+> JazakAllahu khairan,
+> Bilal Khizar
+> support@skyscore.co.uk · skyscore.co.uk
+
+### LinkedIn DM — pilot-first (short)
+
+> Hi [first name] — I run Sky Score (skyscore.co.uk), a noise + livability data API for UK property, methodology anchored to DEFRA/Ofsted/ONS and fully published.
+>
+> I'm running fixed-scope 90-day pilots (£2,500, one agreed metric, written evidence report at day 90, fee credited against a licence). Given [Company]'s [product], is that worth a 20-minute scoping call?
+
+### If they bite — the close sequence
+
+1. Scoping call → agree the **one metric** (day-0 definition, from the one-pager's examples).
+2. Send the one-pager PDF + LOI (`Desktop/SKY_SCORE_LOI_TEMPLATE.md` → PDF) same day.
+3. Signed LOI → log in `OUTREACH_LOG.md` (🟢), tell Haatch thread.
+4. Kickoff invoice (entity gate: incorporate first — see one-pager internal notes).
+
 ---
 
 ## Warm-intro ask (LinkedIn DM)
