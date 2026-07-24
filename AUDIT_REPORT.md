@@ -21,6 +21,15 @@
 
 **Still open from this audit:** I11 (tooltip methodology link keyboard access), M6 (Math.random token fallback), M7 (GoatCounter SRI/self-host), M10 (LRU thread-safety), M12 (favourites schema validation), M13 (helper duplication), M14 (test docstring), M15-M18, and the entire Unverified list.
 
+### Load-test addendum (2026-07-24, ~19:00 UTC — production, temp key, cleaned up after)
+
+Method: temporary usage plan (100 rps / 200 burst / 200k quota) + key, ~63k requests against `/v1/score` + 40 × 100-query `/v1/score/batch` calls, then plan + key deleted (verified: only SkyScoreFreeTier remains).
+
+- **A-0724-I4 CONFIRMED LIVE**: at 5 concurrent 100-query batches, warm instances answer in ~1.3-1.6s but every **cold** instance hits the deployed 10s Lambda timeout → APIGW 502, whole batch lost (9 of 15 calls in the concurrent phase, all at ~10.2s). Worse, timed-out instances recycle and re-cold-start, so they *keep* failing round after round. The 28s timeout fix already in source resolves this — **deploy it**.
+- **NEW — A-0724-I12 (important): stage-wide throttle caps the whole API at ~5-6 successful req/s.** `MethodSettings` 10 rps / 20 burst is shared across ALL clients, overriding any usage-plan allowance (measured: a key on a 100-rps plan still got ~5.5 req/s of 200s; everything else 429'd). Fine for today's traffic; incompatible with the Professional promise the moment one integration bursts or two customers overlap. **Source-fixed same day: raised to 50/100** (per-plan throttles keep per-customer fairness; signup keeps its 1-rps override) — rides the pending `sam deploy`.
+- **Healthy numbers**: single-score latency under sustained paced load p50 56ms / p99 83ms / max 189ms, 263/263 success; warm batch (100 queries) ~1.1-2.3s with zero row errors; one cold start observed at 3.3s.
+- **M10 (LRU thread-safety) did not reproduce** under 5-way concurrent batch load — stays open as a lead, not upgraded.
+
 ### Critical — verified manually against production
 
 | # | Issue | File:Line | Status |

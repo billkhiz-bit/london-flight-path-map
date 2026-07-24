@@ -47,8 +47,16 @@ Resources:
       MethodSettings:
         - HttpMethod: '*'
           ResourcePath: '/*'
-          ThrottlingRateLimit: 10
-          ThrottlingBurstLimit: 20
+          # 50/100, raised from 10/20 (2026-07-24 load test): the stage-wide
+          # throttle is shared across ALL clients and capped every key at
+          # ~5-6 successful req/s regardless of its usage plan — a single
+          # bursty Professional integration (or two customers at once) would
+          # 429 constantly. Per-customer fairness comes from usage-plan
+          # throttles (free tier: 5 burst / 2 sustained), not this ceiling;
+          # this is the whole-API circuit breaker. Signup keeps its own
+          # 1 RPS override below.
+          ThrottlingRateLimit: 50
+          ThrottlingBurstLimit: 100
         # Per-method override on /v1/signup (audit N-Code-2). The
         # global 10 RPS would let an attacker pump ~600 keys/min into
         # the AWS-account API-key quota (default 10,000) before the

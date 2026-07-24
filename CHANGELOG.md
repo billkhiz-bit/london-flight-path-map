@@ -27,6 +27,16 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 - **Outreach**: pilot-first email variants added to `OUTREACH_DRAFTS.md`;
   LOI template + one-pager maintained off-repo (Desktop) — the Haatch
   commercial-proof pack is complete.
+- **Production load test (~63k requests, temp key, cleaned up):** single-score
+  p50 56ms / p99 83ms at sustained load; **confirmed I4 live** (cold instances
+  lose whole 100-query batches to the 10s timeout under concurrency — the 28s
+  source fix is validated and waiting on deploy); **new finding A-0724-I12** —
+  the stage-wide 10 rps throttle capped every key at ~5-6 req/s regardless of
+  usage plan; raised to 50/100 in source (rides the same deploy). LRU race
+  (M10) did not reproduce.
+- **Pricing page:** pilot card now says the premium over 3× Professional buys
+  the evidence (metric design, day-45/90 reviews, founder support), not the
+  API calls. Deployed.
 - **Same-day fix wave — 18 audit findings closed** (evening): sw.js cache
   poisoning + VERSION bump, status.html quota discipline (5-min
   visibility-aware checks), score-demo NYC currency render, in-sheet mobile
