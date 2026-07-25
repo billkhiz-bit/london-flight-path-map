@@ -140,7 +140,7 @@ The score is fully reproducible, see [the worked example](./METHODOLOGY.md#6-wor
 
 ## Coverage
 
-- **London**: 33 boroughs by postcode (postcodes.io resolution)
+- **London**: 33 boroughs by postcode (local ONS NSPL table, postcodes.io fallback)
 - **NYC**: 5 boroughs by ZIP (~182 residential ZIPs supported), or by borough name
 - **Planned**: UK Core Cities (Manchester, Birmingham, Bristol, Leeds, etc.), then England + Wales
 
@@ -151,8 +151,9 @@ Single-region AWS, fully serverless, deployed via SAM:
 ```
 CloudFront ── S3 (frontend, prototype, score-demo, OpenAPI spec)
                 │
-API Gateway ── Lambda × 7 active ── DynamoDB (favourites + DEFRA noise raster)
-                                 ── External APIs (postcodes.io, MHCLG EPC,
+API Gateway ── Lambda × 7 active ── DynamoDB (favourites, signups, DEFRA
+                                 │              noise raster, ONS NSPL postcodes)
+                                 ── External APIs (postcodes.io fallback, MHCLG EPC,
                                                    Land Registry, TfL, NHS)
 ```
 
@@ -183,7 +184,7 @@ API Gateway ── Lambda × 7 active ── DynamoDB (favourites + DEFRA noise 
 ├── prototype/ # Sky Score Radar, 3D Three.js prototype
 ├── score-demo/ # B2B API browser demo + Swagger UI + OpenAPI spec
 ├── backend/
-│ ├── template.yaml # SAM stack: 7 Lambdas, API Gateway (per-route throttle), 3× DynamoDB (PITR-ready), Usage Plan
+│ ├── template.yaml # SAM stack: 7 Lambdas, API Gateway (per-route throttle), 4× DynamoDB (PITR-ready), Usage Plan
 │ ├── lambdas/ # One folder per Lambda
 │ └── tests/ # Unit tests: score engine + handler suite
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source

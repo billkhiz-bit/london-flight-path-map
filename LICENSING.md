@@ -26,7 +26,8 @@ These appear in the `sources` array of every `/v1/score` response.
 | **HM Land Registry House Price Index (HPI)** | OGL v3.0 | Affordability + Growth scores (cohort-relative price + trend) | Same OGL boilerplate | ✅ Commercial use OK |
 | **HM Land Registry Price Paid Data** | OGL v3.0 | Recent sold-price comparables (`/sold_prices`) | Same OGL boilerplate | ✅ Commercial use OK |
 | **MHCLG Energy Performance of Buildings Register** (`/epc`) | OGL v3.0 + bearer-token T&Cs | EPC band lookup per address | "EPC data: MHCLG, Open Government Licence v3.0" + comply with new bearer-token terms | ✅ Commercial use OK with token rotation hygiene |
-| **postcodes.io** (api.postcodes.io) | OGL v3.0 (data) + MIT (the service) | Postcode → admin_district resolution | "Postcode resolution: postcodes.io (Open Government Licence v3.0)" | ✅ Commercial use OK |
+| **ONS National Statistics Postcode Lookup (NSPL)** — *live resolver since 2026-07-25* | OGL v3.0 | **Primary** postcode → borough + lat/lon resolution, served from our own DynamoDB table (`london-flight-map-postcodes`, loaded by `scripts/load_nspl.py`). Also still the input to the DEFRA raster sampler — see the offline table below. | "Postcode resolution: ONS National Statistics Postcode Lookup (Open Government Licence v3.0), with postcodes.io (Open Government Licence v3.0) as fallback" — emitted only once the local tier has actually served a lookup, so the credit is never claimed while the table is empty | ✅ Commercial use OK |
+| **postcodes.io** (api.postcodes.io) | OGL v3.0 (data) + MIT (the service) | Postcode → admin_district resolution. **Demoted to fallback 2026-07-25**: used when the local NSPL table misses, is unloaded, or errors. The move was made partly for licence hygiene — routing a customer's 100k-address backfill through a free community service is not fair use, whatever the data licence permits. | "Postcode resolution: postcodes.io (Open Government Licence v3.0)" — still the sole credit whenever the local tier has not served | ✅ Commercial use OK |
 | **ONS** (population, crime denominators, deprivation) | OGL v3.0 | Liveability composite + crime score normalisation | OGL boilerplate | ✅ Commercial use OK |
 | **Department for Education** (Ofsted school ratings) | OGL v3.0 | Liveability "schools" sub-score | OGL boilerplate | ✅ Commercial use OK |
 | **Home Office** (recorded crime statistics) | OGL v3.0 | Liveability "crime" sub-score | OGL boilerplate | ✅ Commercial use OK |
@@ -46,7 +47,7 @@ These are visible to consumer-site visitors but NOT exposed via the B2B API.
 | Source | Licence | Use | Attribution | Status |
 |---|---|---|---|---|
 | **OpenStreetMap** (via Overpass API) | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/) | Nearby NHS services in `/nhs` (replaced the deprecated NHS Service Search public key) | "OpenStreetMap contributors (ODbL)" — must include in response + visible attribution on the page | ✅ Commercial use OK; **attribution is mandatory** |
-| **Office for National Statistics** (NSPL via Geoportal — used by the DEFRA loader) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler | OGL boilerplate | ✅ Commercial use OK |
+| **Office for National Statistics** (NSPL via Geoportal — offline uses) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler, **and** the source loaded by `scripts/load_nspl.py` into the live resolver table (see the primary table above). The same on-disk `data/nspl.csv` now feeds both. | OGL boilerplate | ✅ Commercial use OK |
 | **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Sampled offline by `scripts/load_defra_raster.py`. v2 (with below-threshold sentinel) shipped 2026-05-06; loader running 2026-05-07 against the full ~2.5M NSPL postcode list. Same source as the live noise mapping. | Same OGL boilerplate | ✅ Commercial use OK |
 | **Curated borough classifications** (`data/borough-extra.json`) | Own editorial work (informed by public sources) | Borough-level air-quality, flood-risk, schools, crime, transport and healthcare ratings + prose notes shown in the detail panel; also drive the air-quality and flood map fills (the map layers colour boroughs from this file, not from live DEFRA/EA/EPA/FEMA services) | UI badges label these "borough-level rating (curated)" since 2026-07-23 | ✅ No third-party licence involved; must never be presented as official agency data |
 
@@ -100,7 +101,9 @@ code path in the API that returns data without the source array.
 
 - 📌 **OpenSky** — only consumer-site, low-risk, but worth a courtesy email to confirm "free public site with attribution + OAuth2 free tier" is OK with them
 - 📌 **MHCLG EPC bearer token** — rotate periodically (the production token shouldn't appear in chat logs, terminal scrollback, or any unencrypted persistence per CLAUDE.md note)
-- 📌 **NSPL CSV** — once downloaded for the DEFRA loader, treat as OGL v3.0 data. The DynamoDB table populated from it is also OGL-derived; if we ever export raw NSPL we must keep attribution
+- 📌 **NSPL — now a live serving source, not just an offline input (changed 2026-07-25).** The `london-flight-map-postcodes` table is OGL-derived, and `/v1/score` responses carry NSPL-derived `location.postcode`, `latitude`, `longitude` and `borough` directly. OGL v3.0 permits this commercially; the obligation is attribution, which the response `sources` array now carries. Two consequences worth holding:
+  - **The planned Enterprise "score your whole city" CSV is a bulk export of NSPL-derived data.** That is allowed under OGL, but the attribution must travel *with the file* — a licence notice in the CSV header or an accompanying README, not merely in the API response the customer never sees. Decide the exact form before the first pilot deliverable ships.
+  - We still must not redistribute the raw NSPL dataset itself, as distinct from scores derived from it.
 
 ---
 
@@ -126,4 +129,4 @@ If we add any of these later, **check terms first**:
 | 🟢 None | DEFRA + ONS + Land Registry + TfL all OGL v3.0; nothing to do |
 
 This document gets refreshed whenever we add or change a data source.
-Last reviewed: 2026-05-07 (OpenSky removal end-to-end; AI-powered consumer features removed earlier the same day; loader still running against the full NSPL postcode list).
+Last reviewed: 2026-07-25 (**ONS NSPL promoted from an offline input to a primary live serving source**, postcodes.io demoted to fallback; response attribution is now conditional on the local tier having actually served, so ONS is never credited while the table is empty. Flagged: the Enterprise city-scale CSV will be a bulk export of NSPL-derived data — allowed under OGL, but the attribution must travel with the file, and that form needs deciding before the first pilot deliverable). — Previous review 2026-05-07 (OpenSky removal end-to-end; AI-powered consumer features removed earlier the same day; loader still running against the full NSPL postcode list).

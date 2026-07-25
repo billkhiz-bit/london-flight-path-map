@@ -263,7 +263,13 @@ Self-service signup audit log. Partition key `email` (one signup per email; dupl
 
 DEFRA Lden raster samples, partition key `postcode`. Populated offline by `scripts/load_defra_raster.py` (samples the DEFRA GeoTIFF at every UK postcode centroid); the score Lambda reads it when populated and falls back to Haversine when empty. PITR enabled — a loader re-run costs ~6h of compute, roll-back is cheaper.
 
-All three tables: PAY_PER_REQUEST billing, eu-west-2.
+### Table: `london-flight-map-postcodes`
+
+ONS NSPL postcode index, partition key `postcode` (spaces stripped, uppercased — the same key format as the noise-raster table, so one normalisation serves both). Populated offline by `scripts/load_nspl.py` from `data/nspl.csv` (2,699,393 positioned rows; ~40 min, ~£1.50 of write units, ~£0.18/month storage with PITR). Attributes: `lat`/`lon` centroid, `lad` (ONS district code, every row), `b` (canonical borough name, only on the 33 London districts), `rgn` (England-only), `dt` (presence = terminated), `q` (positional quality, omitted when building-level). Absence is meaningful, so the common case is the cheapest item.
+
+The score Lambda reads it first and falls back to postcodes.io on a miss, an unloaded table or an error — so behaviour is identical to before until data lands, then upgrades silently with no second deploy.
+
+All four tables: PAY_PER_REQUEST billing, eu-west-2.
 
 ---
 
@@ -422,7 +428,7 @@ Sky Score/
 2. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO night-noise guidelines, Ofsted distribution, ONS crime medians, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`.
 3. **Multi-city**, London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both.
 4. **DEFRA raster resolution (v3.1)**, score Lambda samples DynamoDB Lden values per postcode, falling back to Haversine then borough averages. Loader in `scripts/load_defra_raster.py`.
-5. **Live and deployed**, fully serverless on AWS: S3 + CloudFront frontend, 7 Lambda functions behind API Gateway, 3 DynamoDB tables.
+5. **Live and deployed**, fully serverless on AWS: S3 + CloudFront frontend, 7 Lambda functions behind API Gateway, 4 DynamoDB tables.
 6. **Halal-finance-aware**, affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.
 7. **Free, accessible consumer site**, no sign-up, no paywall — the marketing engine for the API.
 8. **Three install paths**, web, PWA, and native iOS (App Store v1.0.21 live) / Android (pending) from a single `index.html`.
