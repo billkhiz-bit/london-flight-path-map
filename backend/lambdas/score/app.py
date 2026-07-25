@@ -1317,11 +1317,16 @@ def _lookup_lden_raster(postcode_clean):
 
     ddb = _get_ddb_client()
     if ddb is None:
+        # Same consequence as a failed GetItem — the raster tier drops and the
+        # returned score silently changes — so it carries the same alarmable
+        # prefix. _get_ddb_client has already logged the specific cause.
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=no-ddb-client', postcode_clean)
         return None
 
     try:
         from botocore.exceptions import BotoCoreError, ClientError
     except ImportError:
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=botocore-import-failed', postcode_clean)
         return None
 
     try:
@@ -1375,7 +1380,10 @@ def lden_db_to_quiet(lden):
     return 0.0
 
 
-def calc_postcode_quiet(lat, lon, city, postcode_clean=None):
+_RASTER_UNKNOWN = object()
+
+
+def calc_postcode_quiet(lat, lon, city, postcode_clean=None, raster_lden=_RASTER_UNKNOWN):
     """Per-postcode quiet score (0-10).
 
     Resolution chain (highest to lowest precision):
@@ -1387,8 +1395,19 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None):
     geometry data. The caller (calc_score) uses the borough-aggregate as
     final fallback when this returns None.
     """
-    # v3.1 first: direct raster sample if available
-    raster_lden = _lookup_lden_raster(postcode_clean) if postcode_clean else None
+    # v3.1 first: direct raster sample if available.
+    #
+    # A caller that has ALREADY resolved the raster passes it in — calc_score
+    # does exactly that. Without it this re-queries DynamoDB for a postcode
+    # the caller just looked up, and because _make_lru deliberately never
+    # caches a negative, a miss genuinely hits the network twice. That
+    # doubling is not a tidiness point: on a DynamoDB stall it is what pushes
+    # a ?compare=previous request (which runs calc_score twice) past the 28s
+    # Lambda timeout into a 502 — see the wall-clock note on
+    # _DDB_TIMEOUT_CONFIG. Passing None explicitly means "already checked,
+    # it missed"; the sentinel means "not checked yet".
+    if raster_lden is _RASTER_UNKNOWN:
+        raster_lden = _lookup_lden_raster(postcode_clean) if postcode_clean else None
     if raster_lden is not None:
         return lden_db_to_quiet(raster_lden)
 
@@ -1583,7 +1602,9 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             quiet = lden_db_to_quiet(raster_lden)
             quiet_source = 'raster'
         else:
-            postcode_quiet = calc_postcode_quiet(lat, lon, city, postcode_clean)
+            # raster_lden is None here by construction — hand it over so
+            # calc_postcode_quiet does not repeat the GetItem we just made.
+            postcode_quiet = calc_postcode_quiet(lat, lon, city, postcode_clean, raster_lden=raster_lden)
             if postcode_quiet is not None:
                 quiet = postcode_quiet
                 quiet_source = 'postcode'
@@ -1877,7 +1898,17 @@ def parse_include(raw):
     fields are ignored silently. Always-included meta fields stay regardless."""
     if not raw:
         return None
-    requested = {p.strip() for p in raw.split(',') if p.strip()}
+    # A GET query string forces the comma-separated form, but a batch POST
+    # body expresses a list parameter as a JSON array — so `raw` may be a
+    # list, or anything else. Never call .split on it unguarded: before this,
+    # {"include": ["score"]} raised AttributeError, which the per-query batch
+    # guard then turned into an opaque 500 for that one query.
+    if isinstance(raw, (list, tuple, set)):
+        requested = {str(p).strip() for p in raw if str(p).strip()}
+    elif isinstance(raw, str):
+        requested = {p.strip() for p in raw.split(',') if p.strip()}
+    else:
+        return None
     if not requested:
         return None
     return requested & RESPONSE_FIELDS
@@ -2091,7 +2122,7 @@ def resolve_query(query):
     score_data = calc_score(borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean)
 
     comparison = None
-    if (query.get('compare') or '').strip().lower() == 'previous':
+    if parse_str_param(query.get('compare')).lower() == 'previous':
         prev_data = calc_score(
             borough,
             city,
@@ -2167,8 +2198,14 @@ def handle_regions(event):
                     'country': 'United Kingdom',
                     'currency': 'GBP',
                     'postcodeFormat': 'UK postcode (e.g. SW11 1AA)',
+                    # Keyed on what has actually SERVED, exactly as
+                    # build_sources is — not on POSTCODE_TABLE being set.
+                    # Keying it on config let /v1/regions claim ONS NSPL while
+                    # every /v1/score response in the same window credited
+                    # postcodes.io: two endpoints of one API contradicting
+                    # each other on machine-readable provenance.
                     'postcodeResolver': 'ONS NSPL local table, postcodes.io fallback'
-                    if POSTCODE_TABLE
+                    if _LOCAL_POSTCODE_SERVED
                     else 'postcodes.io',
                     'boroughCount': len(LONDON_BOROUGHS),
                     'boroughs': sorted(LONDON_BOROUGHS.keys()),

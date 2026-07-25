@@ -1085,5 +1085,96 @@ class LruConcurrencyTests(unittest.TestCase):
         self.assertEqual(get('c'), 3)
 
 
+class IndependentReviewRegressionTests(unittest.TestCase):
+    """Regressions found by independent review of the 2026-07-25 fixes.
+
+    Every case here is something a previous pass believed it had fixed. The
+    signup outage ran for two and a half months because the suite asserted
+    only that things fail correctly, never that they work — so each of these
+    asserts the working behaviour, not the error path.
+    """
+
+    def setUp(self):
+        self._served = app._LOCAL_POSTCODE_SERVED
+        self._table = app.POSTCODE_TABLE
+        self._raster = app.NOISE_RASTER_TABLE
+        self._client = app._DDB_CLIENT
+
+    def tearDown(self):
+        app._LOCAL_POSTCODE_SERVED = self._served
+        app.POSTCODE_TABLE = self._table
+        app.NOISE_RASTER_TABLE = self._raster
+        app._DDB_CLIENT = self._client
+
+    def _count_raster_getitems(self, query):
+        """Run a query against a stub DDB and count raster GetItem calls."""
+        calls = []
+
+        class _Stub:
+            def get_item(self, **kw):
+                calls.append(kw['TableName'])
+                return {}
+
+        app._DDB_CLIENT = _Stub()
+        app.NOISE_RASTER_TABLE = 'london-flight-map-noise-raster'
+        with patch.object(app, '_raster_cache_get', lambda k: None):
+            app.resolve_query(dict(query))
+        return len([c for c in calls if 'raster' in c])
+
+    def test_raster_lookup_is_not_repeated_within_one_score(self):
+        # calc_score resolves the raster, then calls calc_postcode_quiet,
+        # which used to resolve it AGAIN for the same postcode. _make_lru
+        # never caches a negative, so a miss really did hit DynamoDB twice.
+        # On a stall that doubling is what pushed a ?compare=previous request
+        # past the 28s Lambda timeout into a 502.
+        self.assertEqual(self._count_raster_getitems({'postcode': 'SW11 1AA'}), 1)
+
+    def test_compare_previous_does_not_quadruple_raster_lookups(self):
+        # ?compare=previous runs calc_score twice, so the duplication above
+        # cost four GetItems per request rather than two.
+        self.assertEqual(
+            self._count_raster_getitems({'postcode': 'SW11 1AA', 'compare': 'previous'}), 2
+        )
+
+    def test_json_native_parameter_types_do_not_error(self):
+        # A GET query string is always strings, but a batch POST body carries
+        # native JSON types. Each of these raised AttributeError, which the
+        # per-query batch guard then turned into an opaque 500 for that query.
+        for label, query in [
+            ('include as a JSON array', {'postcode': 'SW11 1AA', 'include': ['score', 'components']}),
+            ('include as a number', {'postcode': 'SW11 1AA', 'include': 5}),
+            ('compare as a JSON boolean', {'postcode': 'SW11 1AA', 'compare': True}),
+            ('compare as a JSON array', {'postcode': 'SW11 1AA', 'compare': ['previous']}),
+        ]:
+            with self.subTest(label):
+                _body, status = app.resolve_query(dict(query))
+                self.assertEqual(status, 200)
+
+    def test_include_as_json_array_actually_filters(self):
+        # Not just "does not raise" — it must behave like the comma string.
+        body, status = app.resolve_query(
+            {'postcode': 'SW11 1AA', 'include': ['score']}
+        )
+        self.assertEqual(status, 200)
+        self.assertIn('score', body)
+        self.assertNotIn('components', body)
+
+    def test_regions_and_sources_agree_on_provenance(self):
+        # Keying postcodeResolver on POSTCODE_TABLE (config) while
+        # build_sources keyed on actual service let two endpoints of the same
+        # API contradict each other for the whole ~40-minute load window.
+        app.POSTCODE_TABLE = 'london-flight-map-postcodes'
+        event = {'requestContext': {'http': {'method': 'GET'}}, 'rawPath': '/v1/regions', 'headers': {}}
+
+        for served in (False, True):
+            with self.subTest(served=served):
+                app._LOCAL_POSTCODE_SERVED = served
+                raw = app.handle_regions(event)['body']
+                credits_ons_in_sources = 'ONS' in app.build_sources()[2]
+                claims_nspl_in_regions = 'NSPL' in raw
+                self.assertEqual(claims_nspl_in_regions, credits_ons_in_sources)
+                self.assertEqual(credits_ons_in_sources, served)
+
+
 if __name__ == '__main__':
     unittest.main()
