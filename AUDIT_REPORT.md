@@ -10,7 +10,7 @@
 
 **Method + caveat:** 6 dimension finders ran to completion; each finding then went to an adversarial verifier. 40 of 66 agents completed before the account hit its **monthly spend limit**, which killed the remaining verifiers (all of security-backend's, most of code-frontend's, two of a11y's). Findings whose verifier ran and confirmed are in the *Confirmed* tables (34 confirmed, 0 refuted — unusually, every verified finding survived). Findings whose verifier never ran were recovered from the finder journals and listed under *Unverified* — treat them as credible leads, not established facts. The one critical was **verified manually in this session against the live API** before being written down.
 
-**Session close-outs (same day, before the audit ran):** I4 closed (resolved by removal), I6 closed (moot — no async Lambdas), I14 closed (PROJECT_DOCUMENTATION.md fully refreshed), and the 21 stale legacy tests rewritten to current handler contracts (83 root + 62 backend tests green, both suites now gate CI).
+**Session close-outs (same day, before the audit ran):** I4 closed (resolved by removal), I6 closed (moot — no async Lambdas), I14 closed (PROJECT_DOCUMENTATION.md fully refreshed), and the 21 stale legacy tests rewritten to current handler contracts (83 root + 62 backend tests green at the time, both suites now gate CI). *Current split as of the NSPL local-postcode-resolution build: 108 root + 91 backend = 199.*
 
 ### Same-day fix wave (2026-07-24, evening) — 18 findings closed
 
@@ -95,7 +95,17 @@ Method: temporary usage plan (100 rps / 200 burst / 200k quota) + key, ~63k requ
 - **M-0521-2 (stale EPC CSP host) — NOT fixed** and wider than recorded → folded into A-0724-M1. 🔴
 - **I-0521-5 (resize debounce) — NOT fixed** per the code-frontend finder (verifier didn't run) → listed under Unverified. 🔴
 
-### Unverified findings (verifiers killed by the spend limit — credible leads, re-verify before acting)
+### Re-verification of the Unverified list (2026-07-25) — 18 of 19 confirmed
+
+Run once the spend limit reset, with the verifiers explicitly instructed to be adversarial and to default to *refuted*. They still confirmed almost everything: **13 confirmed, 5 partially real, 1 fully refuted.** **Zero** of the 19 overlapped with the 2026-07-24 fix wave, so none were already closed.
+
+The useful pattern: **the finders got the mechanism right and the consequence wrong on nearly every lead they over-reported.** Every "partially real" verdict is a case where the defect exists exactly as described but the claimed harm dissolved under test — the favourites "crash" is a clean 503, the `escapeHtml` duplicates are byte-identical rather than an XSS gap, the orphan API key is a dead credential rather than an auth bypass, the score-demo race renders a fully self-labelling card. Five of the nineteen cited line numbers had already drifted. One lead was materially **under**-rated: "orphan key leak" was actually a dead signup funnel.
+
+**Fixed same day (2026-07-25), riding the pending deploy:** the signup IAM split, a `GET /epc` per-method throttle (3/6 — the route is unauthenticated by design and must stay so), favourites input validation, and `createdAt` dropped from the signup 409. Also caught during that work and fixed: duplicate `MethodSettings` declarations that would have reverted `GET /v1/score` from 40 rps to 5 rps on the next deploy.
+
+**Still open, ranked:** search-flow request sequencing (live-reproduced showing SW11's EPC and sold-price data under a TW3 heading — wrong data on screen, terminal state, never self-corrects); the sw.js/`api-base.js` PWA stranding above; `switchCity` re-entrancy; verdict colour contrast at 1.16:1; infinite D3 transitions on detached nodes; the undebounced resize handler (I-0521-5); the duplicate `.search-hint` rule; plus the free-tier metering question. Full triage with failure scenarios and fix sketches was produced in-session.
+
+### Unverified findings — original list (verifiers killed by the spend limit; superseded by the re-verification above)
 
 **Important:** `/epc` route is an unauthenticated open proxy for the bearer-token MHCLG upstream (quota theft) (`epc/app.py:39`) · favourites POST stores schema-free, size-unbounded items under an unauthenticated device token (`favourites/app.py:113`) · infinite D3 transitions keep running on detached nodes after resize/city-switch (`index.html:7462`) · I-0521-5 resize debounce never landed — full D3 teardown per resize tick (`index.html:8089`) · search flow has no request sequencing — stale responses render another postcode's data (`index.html:7083`) · `switchCity` re-entrancy duplicates map layers / draws NYC boroughs on the London projection (`index.html:7354`) · SW cache-first + never-bumped VERSION strands installed PWAs on stale `js/api-base.js` (`sw.js:128`) · score verdict colours fail contrast badly on light theme (1.16–2.11:1) (`index.html:6734`).
 
@@ -104,7 +114,7 @@ Method: temporary usage plan (100 rps / 200 burst / 200k quota) + key, ~63k requ
 ### Priority fix order (updated after the same-day fix wave)
 
 1. **Deploy the A-0724-C1 CORS fix + backend fixes I4/I5/M8/M9/M11** (all source-fixed; ride the EPC-token `sam deploy` — *user action*) ← the only blocking step
-2. ~~I1+M4 (sw.js), I2 (status.html), I6 (footer), I3 (NYC render), I7-I10 a11y~~ — **DONE + deployed 2026-07-24**
+2. ~~I1 (sw.js offline-shell), I2 (status.html), I6 (footer), I3 (NYC render), I7-I10 a11y~~ — **DONE + deployed 2026-07-24**. **Correction (2026-07-25): M4 was NOT fixed** and was wrongly struck through here. The sw.js work closed I1 only; the cache-first coupling that strands installed PWAs on a stale `js/api-base.js` is still open — see the re-verification section below. It must land **before** the `api.skyscore.co.uk` CNAME swap, because afterwards is too late for anyone already installed.
 3. Remaining a11y: I11 (tooltip keyboard access), M15-M17
 4. Re-verify the Unverified list once the spend limit resets; then triage M6/M7/M10/M12/M13
 

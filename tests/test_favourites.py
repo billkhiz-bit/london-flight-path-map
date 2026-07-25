@@ -231,6 +231,87 @@ class TestPostFavourite:
 
 
 # ---------------------------------------------------------------------------
+# POST body validation (validate_favourite)
+#
+# Bounds junk-item accrual: DynamoDB only rejects at 400 KB per item, so
+# before these rules a caller could store ~400 KB per write, which
+# PointInTimeRecovery then kept for 35 days beyond deletion. Every
+# rejection must land as a 400 *before* put_item, not as a DynamoDB
+# ValidationException surfacing later as a 503.
+# ---------------------------------------------------------------------------
+class TestPostValidation:
+    @pytest.mark.parametrize(
+        "bad_postcode",
+        [12345, ["SE1 7PB"], {"value": "SE1 7PB"}, True],
+        ids=["int", "list", "dict", "bool"],
+    )
+    def test_non_string_postcode_returns_400(self, bad_postcode):
+        """postcode is the DynamoDB sort key and is written through
+        unconverted, so a non-string would reach put_item and come back as
+        a 503. Reject it at the boundary instead."""
+        event = make_api_event("POST", body={"postcode": bad_postcode}, headers=TOKEN_HEADER)
+        result = handler(event, None)
+        assert result["statusCode"] == 400
+        assert "must be a string" in json.loads(result["body"])["error"]
+        assert not _mock_table.put_item.called
+
+    def test_oversized_notes_returns_400(self):
+        event = make_api_event(
+            "POST",
+            body={"postcode": "SE1 7PB", "notes": "x" * (app.MAX_NOTES_LEN + 1)},
+            headers=TOKEN_HEADER,
+        )
+        result = handler(event, None)
+        assert result["statusCode"] == 400
+        assert "notes exceeds the maximum length" in json.loads(result["body"])["error"]
+        assert not _mock_table.put_item.called
+
+    def test_notes_at_the_cap_still_saves(self):
+        """The caps reject rather than truncate, so the boundary itself
+        must stay valid — a user writing exactly MAX_NOTES_LEN characters
+        of their own notes is not abuse."""
+        _mock_table.put_item.return_value = {}
+        event = make_api_event(
+            "POST",
+            body={
+                "postcode": "SE1 7PB",
+                "borough": "Southwark",
+                "noiseLevel": "low-moderate",
+                "buyerScore": 7.5,
+                "notes": "x" * app.MAX_NOTES_LEN,
+                "city": "london",
+            },
+            headers=TOKEN_HEADER,
+        )
+        result = handler(event, None)
+        assert result["statusCode"] == 200
+        assert json.loads(result["body"])["message"] == "Saved"
+        _mock_table.put_item.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "location",
+        [
+            "SW11 1AA",              # full UK postcode
+            "TW3",                   # outcode fallback
+            "10001",                 # NYC ZIP
+            "10001-1234",            # ZIP+4
+            "Shepherd's Bush (W12 8LJ)",
+            "Astoria (11102)",
+            "Kensington and Chelsea",  # borough SAVE button, most common path
+        ],
+    )
+    def test_real_location_shapes_still_save(self, location):
+        """`postcode` is a location KEY, not strictly a postcode — the
+        frontend writes all seven of these shapes into it. A stricter
+        regex would 400 the borough SAVE button, so pin the shapes."""
+        _mock_table.put_item.return_value = {}
+        event = make_api_event("POST", body={"postcode": location}, headers=TOKEN_HEADER)
+        result = handler(event, None)
+        assert result["statusCode"] == 200
+        assert _mock_table.put_item.call_args.kwargs["Item"]["postcode"] == location
+
+
+# ---------------------------------------------------------------------------
 # DELETE
 # ---------------------------------------------------------------------------
 class TestDeleteFavourite:

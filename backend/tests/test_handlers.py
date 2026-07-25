@@ -7,6 +7,7 @@ Covers the cheap, high-leverage cases each handler should always get right:
 - 200 on the OPTIONS preflight
 - 413 on oversized bodies (Bedrock endpoints)
 - Validation rules for parsing inputs
+- 201 on the signup happy path (added 2026-07-25, see SignupHandlerTests)
 
 Bedrock invocations and external HTTP calls are mocked / skipped, these
 tests cover request-handling logic, not upstream integrations. The
@@ -238,6 +239,153 @@ class SignupHandlerTests(unittest.TestCase):
             mock_delete.assert_called_once_with(apiKey='key-id-race')
             # Crucial: the secret key value is NOT echoed back in the 409.
             self.assertNotIn('sk_secret_value', result['body'])
+
+    # ----- The create path itself (added 2026-07-25) -----
+    #
+    # Every signup test above this line exercises an ERROR branch. Nothing
+    # asserted that a well-formed signup actually produced a key, so when
+    # the SignupFunction IAM policy stopped permitting CreateUsagePlanKey
+    # in dab713d (2026-05-07), the whole self-service B2B funnel returned
+    # 503 to every visitor for two and a half months and the suite stayed
+    # green throughout. The three tests below pin the create path: the
+    # 201 shape, the rollback when the usage-plan link fails, and what the
+    # duplicate-email 409 is allowed to disclose.
+    #
+    # Caveat worth keeping in mind: boto3 is mocked here, so these cannot
+    # detect an IAM denial by themselves. What they lock in is that
+    # create_usage_plan_key is called at all, with the resolved plan and
+    # the new key, and that a failure of that call can never be mistaken
+    # for success. The IAM half needs a post-deploy smoke test.
+
+    def _usage_plan_paginator(self):
+        """A get_paginator stand-in yielding one page holding the free-tier
+        plan, so resolve_usage_plan_id() runs for real rather than being
+        stubbed out — the resolved id is then asserted on the link call."""
+        paginator = MagicMock()
+        paginator.paginate.return_value = [
+            {'items': [
+                {'id': 'plan-other', 'name': 'SomeOtherPlan'},
+                {'id': 'plan-free-tier', 'name': self.app.USAGE_PLAN_NAME},
+            ]},
+        ]
+        return paginator
+
+    def test_post_valid_email_returns_201_with_key_and_writes_audit_row(self):
+        # THE test whose absence let the outage run: a well-formed signup
+        # must create a key, link it to the free-tier usage plan, write the
+        # audit row, and return 201 with the key value shown once.
+        with patch.object(self.app, '_usage_plan_id_cache', None), \
+             patch.object(self.app.apigw, 'get_paginator',
+                          return_value=self._usage_plan_paginator()), \
+             patch.object(self.app.apigw, 'create_api_key',
+                          return_value={'id': 'key-new', 'value': 'sk_live_value'}) as mock_create, \
+             patch.object(self.app.apigw, 'create_usage_plan_key') as mock_link, \
+             patch.object(self.app.ddb, 'get_item', return_value={}), \
+             patch.object(self.app.ddb, 'put_item') as mock_put:
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'New.User@Example.com', 'name': 'New User'}),
+            }, None)
+
+        self.assertEqual(result['statusCode'], 201)
+        payload = json.loads(result['body'])
+        # The key value is returned exactly once, here — APIGW will not
+        # re-show it, so a 201 that omits it is unrecoverable for the user.
+        self.assertEqual(payload['apiKey'], 'sk_live_value')
+        self.assertEqual(payload['keyId'], 'key-new')
+        self.assertEqual(payload['usagePlan'], 'SkyScoreFreeTier')
+
+        # Key is enabled and carries the CreatedBy tag the IAM DELETE
+        # condition matches on (audit N-Code-1) — drop the tag and this
+        # Lambda loses the ability to revoke its own orphans.
+        self.assertTrue(mock_create.call_args.kwargs['enabled'])
+        self.assertEqual(mock_create.call_args.kwargs['tags'],
+                         {self.app.KEY_TAG_KEY: self.app.KEY_TAG_VALUE})
+
+        # The usage-plan link is the step that was failing in production.
+        # Without it the key authenticates but has no quota, so /v1/score
+        # rejects it with InvalidKeyParameter.
+        mock_link.assert_called_once_with(
+            usagePlanId='plan-free-tier', keyId='key-new', keyType='API_KEY',
+        )
+
+        # Audit row written under the lower-cased email, with the keyId
+        # needed to trace a key back to its owner for support revokes.
+        mock_put.assert_called_once()
+        self.assertEqual(mock_put.call_args.kwargs['TableName'], self.app.SIGNUPS_TABLE)
+        item = mock_put.call_args.kwargs['Item']
+        self.assertEqual(item['email']['S'], 'new.user@example.com')
+        self.assertEqual(item['keyId']['S'], 'key-new')
+
+    def test_usage_plan_link_failure_revokes_orphan_and_returns_503(self):
+        # The exact production failure: CreateUsagePlanKey denied by IAM
+        # after CreateApiKey has already minted an ENABLED key. The caller
+        # must get a 503 (never a 201 for an unusable key) and the orphan
+        # must be revoked rather than left against the per-account
+        # 10,000-key APIGW quota.
+        from botocore.exceptions import ClientError
+        denied = ClientError(
+            {'Error': {'Code': 'AccessDeniedException',
+                       'Message': 'not authorized to perform: apigateway:POST'}},
+            'CreateUsagePlanKey',
+        )
+        with patch.object(self.app, '_usage_plan_id_cache', None), \
+             patch.object(self.app.apigw, 'get_paginator',
+                          return_value=self._usage_plan_paginator()), \
+             patch.object(self.app.apigw, 'create_api_key',
+                          return_value={'id': 'key-orphan', 'value': 'sk_never_usable'}), \
+             patch.object(self.app.apigw, 'create_usage_plan_key', side_effect=denied), \
+             patch.object(self.app.apigw, 'get_api_key',
+                          return_value={'name': self.app.KEY_NAME_PREFIX + 'orphan_at_example_com'}), \
+             patch.object(self.app.apigw, 'delete_api_key') as mock_delete, \
+             patch.object(self.app.ddb, 'get_item', return_value={}), \
+             patch.object(self.app.ddb, 'put_item') as mock_put:
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'orphan@example.com'}),
+            }, None)
+
+        self.assertEqual(result['statusCode'], 503)
+        payload = json.loads(result['body'])
+        # The upstream code is surfaced so this is diagnosable from the
+        # response alone — that is how the outage was finally identified.
+        self.assertEqual(payload['code'], 'AccessDeniedException')
+        # Rollback fired: no orphan key survives the failed signup.
+        mock_delete.assert_called_once_with(apiKey='key-orphan')
+        # No audit row for a signup that never completed, otherwise the
+        # user is locked out by their own failed attempt (409 forever).
+        mock_put.assert_not_called()
+        # The unusable key value must not leak to the caller.
+        self.assertNotIn('sk_never_usable', result['body'])
+
+    def test_duplicate_email_409_does_not_disclose_created_at(self):
+        # /v1/signup is unauthenticated by design, so the duplicate-email
+        # 409 must not become an oracle: anyone who guesses an address
+        # would otherwise learn when its owner registered. createdAt stays
+        # on the DynamoDB row for support, out of the response body.
+        existing = {
+            'email': {'S': 'dupe@example.com'},
+            'keyId': {'S': 'key-original'},
+            'createdAt': {'S': '2026-05-08T09:15:00+00:00'},
+        }
+        with patch.object(self.app.ddb, 'get_item', return_value={'Item': existing}), \
+             patch.object(self.app.apigw, 'create_api_key') as mock_create:
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'dupe@example.com'}),
+            }, None)
+
+        self.assertEqual(result['statusCode'], 409)
+        payload = json.loads(result['body'])
+        self.assertEqual(set(payload), {'error', 'note'})
+        # Belt and braces: neither the timestamp nor the original keyId
+        # appears anywhere in the raw body, whatever key it were nested under.
+        self.assertNotIn('createdAt', result['body'])
+        self.assertNotIn('2026-05-08', result['body'])
+        self.assertNotIn('key-original', result['body'])
+        # No second key minted for an address that already has one — that
+        # would burn the per-account quota on every duplicate submit.
+        mock_create.assert_not_called()
 
 
 # ---------- NHS, lat/lon validation, fallback shape ----------

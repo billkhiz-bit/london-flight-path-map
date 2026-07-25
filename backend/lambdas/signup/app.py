@@ -11,7 +11,11 @@ the user save the key (one-time view).
 
 This endpoint is unauthenticated by design, friction-free signup is the
 whole point. Abuse is bounded by:
-  - Per-IP API Gateway throttle (configured in template.yaml)
+  - API Gateway per-route throttle, 1 RPS / 5 burst (template.yaml).
+    NOTE this is a stage-wide bucket shared by ALL callers, not per-IP —
+    it bounds total signup volume, so it does not stop one determined
+    client from consuming the whole allowance. Per-IP limiting would
+    need WAF (see below).
   - One key per email (idempotent, duplicate signups return a "key
     already issued" error; we cannot re-show the key after creation)
   - The downstream UsagePlan caps each issued key at 1000 req/month
@@ -138,6 +142,11 @@ def get_existing_signup(email):
             TableName=SIGNUPS_TABLE,
             Key={'email': {'S': email}},
             ConsistentRead=True,
+            # createdAt stays projected even though the 409 no longer returns
+            # it: get_item omits Item entirely when none of the projected
+            # attributes exist, so projecting both keeps the "has this email
+            # signed up?" check true for any row shape. Narrowing this to
+            # keyId alone would risk a second key for a row missing keyId.
             ProjectionExpression='createdAt, keyId',
         )
     except ClientError:
@@ -192,11 +201,26 @@ def create_api_key(email, name):
 
     # Link to the usage plan immediately, without this the key works at
     # API Gateway auth but gets no quota / throttle assignment.
-    apigw.create_usage_plan_key(
-        usagePlanId=usage_plan_id,
-        keyId=key_id,
-        keyType='API_KEY',
-    )
+    try:
+        apigw.create_usage_plan_key(
+            usagePlanId=usage_plan_id,
+            keyId=key_id,
+            keyType='API_KEY',
+        )
+    except Exception:
+        # The key above already exists and is ENABLED. Without this rollback
+        # the exception unwinds to handle_post, which discards key_id and
+        # returns 503, leaving the key in the account forever. Not an auth
+        # bypass (an unattached key fails the usage-plan check with
+        # InvalidKeyParameter and gets a 403) but every leak erodes the
+        # per-account 10,000-key quota. Catch Exception rather than just
+        # ClientError: a ParamValidationError or a connection failure leaks
+        # the key just as permanently. Re-raise so the caller still sees the
+        # original error; _safe_revoke_orphan_key swallows ClientErrors of
+        # its own so the rollback does not mask it.
+        logger.info('usage-plan link failed; revoking orphan key %s', key_id)
+        _safe_revoke_orphan_key(key_id)
+        raise
 
     return key_id, key_value
 
@@ -241,12 +265,15 @@ def _safe_revoke_orphan_key(key_id):
     10,000-key quota over time. Set up a CloudWatch metric filter on the
     above query and alarm on count > 0 over a rolling window.
     """
+    # Catch Exception, not just ClientError. Both call sites invoke this
+    # helper from inside an `except` block and then re-raise the ORIGINAL
+    # error; a non-ClientError escaping from here (a botocore
+    # EndpointConnectionError, say) would replace that original error and
+    # downgrade handle_post's deliberate 503 to a bare 500.
     try:
         info = apigw.get_api_key(apiKey=key_id, includeValue=False)
-    except ClientError as get_err:
-        logger.error(
-            '[SIGNUP_ORPHAN_KEY] lookup-failed keyId=%s code=%s', key_id, get_err.response.get('Error', {}).get('Code')
-        )
+    except Exception as get_err:
+        logger.error('[SIGNUP_ORPHAN_KEY] lookup-failed keyId=%s err=%r', key_id, get_err)
         return
     key_name = info.get('name', '')
     if not key_name.startswith(KEY_NAME_PREFIX):
@@ -254,12 +281,10 @@ def _safe_revoke_orphan_key(key_id):
         return
     try:
         apigw.delete_api_key(apiKey=key_id)
-    except ClientError as revoke_err:
-        logger.error(
-            '[SIGNUP_ORPHAN_KEY] revoke-failed keyId=%s code=%s',
-            key_id,
-            revoke_err.response.get('Error', {}).get('Code'),
-        )
+    except Exception as revoke_err:
+        # Same reasoning as the lookup above: never let a rollback failure
+        # displace the original error the caller is about to re-raise.
+        logger.error('[SIGNUP_ORPHAN_KEY] revoke-failed keyId=%s err=%r', key_id, revoke_err)
 
 
 def handle_post(event):
@@ -286,6 +311,9 @@ def handle_post(event):
     # One key per email. If they already signed up, surface that with a
     # clear message, we cannot re-show the key (APIGW only returns the
     # value at creation time, not on subsequent reads).
+    # createdAt is deliberately withheld from this body: /v1/signup is
+    # unauthenticated, so anyone who guesses an address would otherwise
+    # learn when its owner registered. It stays on the row for support.
     existing = get_existing_signup(email)
     if existing:
         return response(
@@ -297,7 +325,6 @@ def handle_post(event):
                     'Contact support to revoke and re-issue if the original '
                     'key has been lost.'
                 ),
-                'createdAt': existing.get('createdAt', {}).get('S'),
             },
             event,
         )

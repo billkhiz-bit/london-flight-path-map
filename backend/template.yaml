@@ -66,6 +66,32 @@ Resources:
           ResourcePath: /v1/signup
           ThrottlingRateLimit: 1
           ThrottlingBurstLimit: 5
+        # Per-method override on /epc. This route is intentionally
+        # unauthenticated — the consumer site calls it from the browser with
+        # no API key, so ApiKeyRequired here would go straight to a dark EPC
+        # panel on skyscore.co.uk. Do NOT "fix" the open proxy that way.
+        # Throttling is the control instead.
+        #
+        # 3 RPS / 6 burst. The Lambda makes exactly one upstream MHCLG call
+        # per request with no memoisation, and Bill's bearer token is capped
+        # at 6,000 requests / 5 min (= 20 RPS). 3 RPS sustained is 900 per
+        # 5 min, ~15% of that quota, leaving headroom for genuine spikes and
+        # for any other consumer of the same token; 6 burst absorbs a visitor
+        # doing back-to-back postcode lookups without 429ing a real user.
+        # Without this the route inherited the 50 RPS '*/*' ceiling, so an
+        # anonymous flood could (a) exhaust the MHCLG quota and blank the EPC
+        # panel for real visitors, and (b) starve GET /v1/score through the
+        # shared stage bucket — the exact failure the 2026-07-24 soak showed.
+        #
+        # Declared here in source deliberately (same lesson as the score
+        # routes below): CloudFormation MERGES stage method settings but
+        # never removes ones it does not declare, so a console-set override
+        # on this route would be invisible to this template and would survive
+        # every deploy. This entry makes the template authoritative for /epc.
+        - HttpMethod: GET
+          ResourcePath: /epc
+          ThrottlingRateLimit: 3
+          ThrottlingBurstLimit: 6
         # /v1/score + /v1/score/batch MUST be declared here (2026-07-24
         # 100k soak): console-set overrides of 5 rps / 10 burst were live
         # on both product routes and invisible to this template — CFN
@@ -74,6 +100,29 @@ Resources:
         # at 5 req/s for ALL customers combined. Declaring them makes the
         # template authoritative. Per-customer fairness still comes from
         # usage-plan throttles; these are the per-route ceilings.
+        #
+        # DO NOT add a second entry for either route below this block
+        # (2026-07-25). Until today this list declared each of these two
+        # routes TWICE — the 40/80 and 10/20 pair here, and an older
+        # "audit I-D" pair at 5/10 further down. CloudFormation renders
+        # MethodSettings into ORDERED UpdateStage patch operations, so the
+        # later entry wins: the template's effective desired state was
+        # still 5/10, identical to the pre-soak deployment, which is why
+        # CFN emitted no patch on the 2026-07-24 21:41Z update and the
+        # live 40/80 on GET /v1/score existed only as console drift from
+        # the "fixed live" step of that session. The next deploy to touch
+        # this property — adding /epc above was exactly that — would have
+        # re-emitted the collection and silently reverted the primary paid
+        # route to 5 rps for all tenants combined, reintroducing the very
+        # outage the soak was run to find. The duplicate pair is deleted;
+        # these values are now the single declared source of truth.
+        #
+        # The deleted block's rationale (audit I-D) is preserved here
+        # because the concern is still valid: per-key usage-plan caps
+        # bound cost, but one key spamming at the global ceiling can
+        # starve other tenants, so a per-route ceiling gates the
+        # noisy-neighbour case. 40/80 and 10/20 serve that purpose at the
+        # headroom the soak proved is needed; 5/10 did not.
         - HttpMethod: GET
           ResourcePath: /v1/score
           ThrottlingRateLimit: 40
@@ -82,21 +131,6 @@ Resources:
           ResourcePath: /v1/score/batch
           ThrottlingRateLimit: 10
           ThrottlingBurstLimit: 20
-        # Per-method override on /v1/score (audit I-D). Per-key Usage
-        # Plan caps cost (free tier 1k req/mo), but a single key spamming
-        # at the global ceiling can starve other tenants. 5 RPS / 10 burst
-        # per route is generous for any normal client and gates the
-        # noisy-neighbour case. Same on /v1/score/batch — each batch call
-        # is itself ≤100 queries so the effective per-tenant ceiling is
-        # ~500 sub-queries/sec.
-        - HttpMethod: GET
-          ResourcePath: /v1/score
-          ThrottlingRateLimit: 5
-          ThrottlingBurstLimit: 10
-        - HttpMethod: POST
-          ResourcePath: /v1/score/batch
-          ThrottlingRateLimit: 5
-          ThrottlingBurstLimit: 10
 
   # --- Bedrock Lambdas REMOVED 2026-05-07 ---
   # ChatFunction, MultiAgentFunction, AnalyzeImageFunction,
@@ -240,9 +274,20 @@ Resources:
           # v3.1 DEFRA raster table, Lambda checks DynamoDB first for postcode
           # Lden samples; falls back to v3.0 Haversine if table empty/missing.
           NOISE_RASTER_TABLE: !Ref NoiseRasterTable
+          # ONS NSPL postcode index. lookup_postcode resolves UK postcodes
+          # from this table first (~5ms) and falls back to postcodes.io over
+          # the network when the table is unset, empty, or does not hold the
+          # postcode. Unset is a silent no-op: the API behaves exactly as it
+          # did before this table existed.
+          POSTCODE_TABLE: !Ref PostcodeTable
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref NoiseRasterTable
+        # Read-only, never DynamoDBCrudPolicy: the Lambda must never write
+        # this table. Only the offline loader (scripts/load_nspl.py) writes,
+        # using the operator's own credentials rather than this role.
+        - DynamoDBReadPolicy:
+            TableName: !Ref PostcodeTable
       Events:
         ScoreGet:
           Type: Api
@@ -349,14 +394,13 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref SignupsTable
         - Statement:
+            # CreateApiKey. Tag-conditioned — see below for why this
+            # statement covers /apikeys ONLY.
             - Effect: Allow
               Action:
                 - apigateway:POST
               Resource:
                 - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys'
-                # Wildcard usage-plan ARN to avoid circular dependency on
-                # ScoreFreeUsagePlan.
-                - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
               Condition:
                 # Audit I-G follow-up: require the CreatedBy tag at creation
                 # time too, not just at delete. Otherwise a code-path bug that
@@ -367,6 +411,45 @@ Resources:
                 # value will be denied.
                 StringEquals:
                   'aws:RequestTag/CreatedBy': 'SignupLambda'
+            # CreateUsagePlanKey. DELIBERATELY NOT tag-conditioned. Do NOT
+            # fold this back into the statement above in a future hardening
+            # pass — that merge is what broke the funnel the first time.
+            #
+            # Why the condition cannot apply here: a UsagePlanKey is not a
+            # taggable API Gateway resource. The CreateUsagePlanKey request
+            # shape is {usagePlanId, keyId, keyType} with no tags member at
+            # all (confirm with `aws apigateway create-usage-plan-key
+            # --generate-cli-skeleton`). aws:RequestTag/CreatedBy is
+            # therefore absent from the request context, StringEquals cannot
+            # match an absent key, and the call falls through to an implicit
+            # deny.
+            #
+            # That is exactly what happened between the I-G hardening
+            # (dab713d, 2026-05-07) and 2026-07-25: the merged statement made
+            # every self-service signup create an enabled key, fail to attach
+            # it to the usage plan, and return 503 AccessDeniedException —
+            # the whole B2B funnel dead, an orphaned enabled key left behind
+            # on each attempt. A security control that silently disabled the
+            # feature it was protecting.
+            #
+            # StringEqualsIfExists would also unblock the call, but only by
+            # keeping the two resources merged — and IfExists on /apikeys
+            # would silently re-open the hole I-G closed, because a
+            # create_api_key call that forgot tags={...} has no
+            # aws:RequestTag key either and would pass the same way. Two
+            # statements with one condition is the only shape that keeps both
+            # properties.
+            #
+            # Residual scope: this grants "attach any key to any usage plan
+            # in the account". keyId is not part of the CreateUsagePlanKey
+            # resource ARN, so IAM cannot narrow it further; the wildcard on
+            # the usage-plan id is separately required to avoid a circular
+            # dependency on ScoreFreeUsagePlan.
+            - Effect: Allow
+              Action:
+                - apigateway:POST
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
             - Effect: Allow
               Action:
                 - apigateway:GET
@@ -471,6 +554,44 @@ Resources:
       # rebuild this table, but ~6h of compute + bandwidth is real cost,
       # and PITR roll-back to a known-good window is far cheaper if a
       # bad loader run corrupts a chunk of the table.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # --- DynamoDB Table, ONS NSPL postcode index ---
+  # postcode -> LAD + lat/lon for every positioned UK postcode (~2.70M rows,
+  # ONS NSPL, Open Government Licence v3.0). Populated offline by
+  # scripts/load_nspl.py. Two consumers: (1) the score Lambda resolves UK
+  # postcodes locally in milliseconds, demoting postcodes.io to a fallback —
+  # a customer backfilling 100k distinct postcodes no longer hammers a free
+  # community service; (2) the offline city-scale bulk scorer reads the same
+  # table for the Enterprise "score your whole city" CSV.
+  # Same PK format as NoiseRasterTable (uppercase, spaces removed) so the two
+  # tables share a key space and can be joined or merged without a re-key.
+  PostcodeTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      # Name matches the london-flight-map-* IAM-policy prefix used by the
+      # flightmap-dev deploy user, see backend/iam-policy.json.
+      TableName: london-flight-map-postcodes
+      AttributeDefinitions:
+        - AttributeName: postcode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: postcode
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # PITR enabled. Re-running the loader from data/nspl.csv rebuilds this
+      # table, but that is ~30-60 min and ~£1.50 of write units; PITR
+      # roll-back to a known-good window is cheaper and far faster if a bad
+      # loader run corrupts a chunk of the table.
+      # Cost basis: 2,699,393 loadable rows x 1 WRU (every item is far under
+      # 1 KB) x USD 0.7065 per million WRU = USD 1.91 ~= GBP 1.51 at USD 1
+      # ~= GBP 0.79. eu-west-2 on-demand rates as published 2026-07-25;
+      # re-check at the next quarterly reload. The earlier ~£3 figure here
+      # quoted DynamoDB's pre-November-2024 write price, which was exactly
+      # double the current one — a stale quote is a 2x error. Full workings,
+      # including storage and PITR at ~GBP 0.18/month, are in the COST
+      # section of scripts/load_nspl.py.
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
 

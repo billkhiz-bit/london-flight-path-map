@@ -5935,20 +5935,32 @@
       // EPC ENERGY DATA (via AWS Lambda)
       // ============================================================
       async function fetchEpcData(postcode) {
+        // Always resolve to an object, never null. Returning null used to
+        // make renderEpcData early-return, which left the "Loading from EPC
+        // register..." placeholder on screen permanently — a worse outcome
+        // than an error message, because it reads as "still working".
         try {
           const resp = await fetch(`${API_BASE}/epc?postcode=${encodeURIComponent(postcode)}`);
-          if (!resp.ok) return null;
+          if (!resp.ok) return { available: false };
           return await resp.json();
         } catch (e) {
+          // A throttled request usually lands HERE rather than in the
+          // !resp.ok branch: API Gateway generates its own 429 without an
+          // Access-Control-Allow-Origin header, so the browser blocks the
+          // response and fetch rejects. That also means the status code is
+          // not readable client-side, so we cannot say "rate limited"
+          // specifically. Declaring GatewayResponses in template.yaml would
+          // restore CORS on APIGW-generated errors and let us tell the user
+          // exactly what happened.
           console.warn('EPC API failed:', e);
-          return null;
+          return { available: false };
         }
       }
 
       function renderEpcData(containerId, data) {
         const el = document.getElementById(containerId);
-        if (!el || !data) return;
-        if (!data.available) {
+        if (!el) return;
+        if (!data || !data.available) {
           el.innerHTML =
             '<p class="info-note">EPC data is temporarily unavailable. Certificates are published by MHCLG under the Open Government Licence.</p>';
           return;
