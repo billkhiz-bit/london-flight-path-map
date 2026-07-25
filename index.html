@@ -1135,17 +1135,19 @@
         background-size: contain;
         pointer-events: none;
       }
+      /* ONE rule only. f1abcad bumped the hint 9px → 11px (it was reading as a
+         section label) by adding a second .search-hint block ABOVE the
+         original instead of editing it — same specificity, so the older 9px
+         rule kept winning and the accessibility bump never rendered on the
+         website. The native app was unaffected: it overrides to 11px via
+         .app[data-mview='search'] .search-box .search-hint. Merged here:
+         11px from the bump, font-family from the rule it was meant to
+         replace. Do not add a second .search-hint block — edit this one. */
       .search-hint {
         font-size: 11px;
         color: var(--mid);
         margin-top: 6px;
         letter-spacing: 0.3px;
-      }
-
-      .search-hint {
-        font-size: 9px;
-        color: var(--mid);
-        margin-top: 6px;
         font-family: var(--font-sans);
       }
 
@@ -5310,6 +5312,63 @@
         labels: false,
       };
 
+      // Generation counter for the flight-path dot animations. Each dot loop
+      // reschedules itself from its own transition-end handler, so removing
+      // the node it drives does not stop it — the transition keeps ticking on
+      // a detached element forever, calling getPointAtLength ~60×/sec, and
+      // every teardown (city switch, resize) starts a fresh set on top. Ten
+      // resizes = ten immortal loops, and an Android soft keyboard opening
+      // counts as a resize. renderCityFlightPaths() bumps this; a loop whose
+      // generation is stale returns instead of scheduling its next leg.
+      let flightAnimGen = 0;
+
+      // ------------------------------------------------------------
+      // REQUEST SEQUENCING
+      // ------------------------------------------------------------
+      // Searches and city switches both await network round-trips, so a slow
+      // first request can resolve after a fast second one and paint stale data
+      // under the newer heading — a terminal state, with no error and no
+      // loading indicator to give it away. Every search claims a token before
+      // its first await and hands that token to everything that paints later.
+      // The token travels with the request rather than being read back off a
+      // module-level "current postcode", which is itself overwritten long
+      // before the late response lands.
+      let searchSeq = 0;
+      let searchAbort = null;
+      let citySeq = 0;
+
+      // Invalidate any in-flight search without starting a new one. Aborting
+      // saves the bandwidth; the sequence bump is what actually guarantees a
+      // superseded response can never render, since an already-resolved fetch
+      // is long past the point where abort does anything.
+      function cancelSearch() {
+        if (searchAbort) {
+          searchAbort.abort();
+          searchAbort = null;
+        }
+        searchSeq++;
+      }
+
+      // Claim the sequence for a new search. The returned object travels with
+      // the request: `.signal` for the fetches, `.token` for the guards.
+      function beginSearch() {
+        cancelSearch();
+        searchAbort = new AbortController();
+        return { token: searchSeq, signal: searchAbort.signal };
+      }
+
+      // True only while `search` is still the newest search. Anything that
+      // paints after an await must check this first.
+      function isCurrentSearch(search) {
+        return !!search && search.token === searchSeq;
+      }
+
+      // An aborted fetch means "you were superseded", not "the API failed" —
+      // don't log it as one.
+      function isAbortError(e) {
+        return !!e && e.name === 'AbortError';
+      }
+
       // ============================================================
       // GEOJSON LOAD
       // ============================================================
@@ -5522,17 +5581,21 @@
       // ============================================================
       // POSTCODE LOOKUP (postcodes.io API)
       // ============================================================
-      async function lookupPostcode(postcode) {
+      // `signal` comes from beginSearch(). It matters most on the outcode
+      // fallback below: an outcode costs two round-trips where a full postcode
+      // costs one, so without it an outcode→postcode sequence reliably lands
+      // the older result last.
+      async function lookupPostcode(postcode, signal) {
         const clean = postcode.replace(/\s+/g, '').toUpperCase();
         try {
           // Try full postcode first
-          const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
+          const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`, { signal });
           const data = await resp.json();
           if (data.status === 200 && data.result) {
             return data.result;
           }
           // Fall back to outcode (partial postcode like TW3, SW1, E1)
-          const outResp = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
+          const outResp = await fetch(`https://api.postcodes.io/outcodes/${clean}`, { signal });
           const outData = await outResp.json();
           if (outData.status === 200 && outData.result) {
             const r = outData.result;
@@ -5547,7 +5610,7 @@
           }
           return null;
         } catch (e) {
-          console.error('Postcode lookup failed:', e);
+          if (!isAbortError(e)) console.error('Postcode lookup failed:', e);
           return null;
         }
       }
@@ -5844,9 +5907,9 @@
       // ============================================================
       // PROPERTY LISTINGS (Land Registry + external links)
       // ============================================================
-      async function fetchSoldPrices(postcode) {
+      async function fetchSoldPrices(postcode, signal) {
         try {
-          const resp = await fetch(`${API_BASE}/sold-prices?postcode=${encodeURIComponent(postcode)}`);
+          const resp = await fetch(`${API_BASE}/sold-prices?postcode=${encodeURIComponent(postcode)}`, { signal });
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           const data = await resp.json();
           if (!data.transactions || data.transactions.length === 0) return null;
@@ -5857,6 +5920,7 @@
             type: t.type || '',
           }));
         } catch (e) {
+          if (isAbortError(e)) return null;
           console.warn('Sold prices API failed:', e);
           return 'cors-blocked';
         }
@@ -5865,13 +5929,13 @@
       // ============================================================
       // TfL TRANSPORT DATA (via AWS Lambda)
       // ============================================================
-      async function fetchTransportData(lat, lon) {
+      async function fetchTransportData(lat, lon, signal) {
         try {
-          const resp = await fetch(`${API_BASE}/transport?lat=${lat}&lon=${lon}`);
+          const resp = await fetch(`${API_BASE}/transport?lat=${lat}&lon=${lon}`, { signal });
           if (!resp.ok) return null;
           return await resp.json();
         } catch (e) {
-          console.warn('Transport API failed:', e);
+          if (!isAbortError(e)) console.warn('Transport API failed:', e);
           return null;
         }
       }
@@ -5934,16 +5998,19 @@
       // ============================================================
       // EPC ENERGY DATA (via AWS Lambda)
       // ============================================================
-      async function fetchEpcData(postcode) {
+      async function fetchEpcData(postcode, signal) {
         // Always resolve to an object, never null. Returning null used to
         // make renderEpcData early-return, which left the "Loading from EPC
         // register..." placeholder on screen permanently — a worse outcome
         // than an error message, because it reads as "still working".
         try {
-          const resp = await fetch(`${API_BASE}/epc?postcode=${encodeURIComponent(postcode)}`);
+          const resp = await fetch(`${API_BASE}/epc?postcode=${encodeURIComponent(postcode)}`, { signal });
           if (!resp.ok) return { available: false };
           return await resp.json();
         } catch (e) {
+          // Superseded by a newer search — the caller's token guard drops this
+          // response anyway, so don't report it as an API failure.
+          if (isAbortError(e)) return { available: false };
           // A throttled request usually lands HERE rather than in the
           // !resp.ok branch: API Gateway generates its own 429 without an
           // Access-Control-Allow-Origin header, so the browser blocks the
@@ -6014,13 +6081,13 @@
       // ============================================================
       // NHS HEALTHCARE DATA (via AWS Lambda)
       // ============================================================
-      async function fetchNhsData(lat, lon) {
+      async function fetchNhsData(lat, lon, signal) {
         try {
-          const resp = await fetch(`${API_BASE}/nhs?lat=${lat}&lon=${lon}`);
+          const resp = await fetch(`${API_BASE}/nhs?lat=${lat}&lon=${lon}`, { signal });
           if (!resp.ok) return null;
           return await resp.json();
         } catch (e) {
-          console.warn('NHS API failed:', e);
+          if (!isAbortError(e)) console.warn('NHS API failed:', e);
           return null;
         }
       }
@@ -6321,6 +6388,11 @@
         // Parse saved-item format "AreaName (Postcode)" back to just the area name
         const savedMatch = q.match(/^(.+?)\s*\(([^)]+)\)$/);
         if (savedMatch) q = savedMatch[1].trim();
+        // Claim the search sequence before the first await, and carry it to
+        // everything that paints below. Without it a slower earlier search
+        // lands its pin, map flight, EPC panel and sold prices under this
+        // search's heading, and nothing ever corrects it.
+        const search = beginSearch();
         // Hide autocomplete dropdown
         const dd = document.getElementById('autocomplete-dropdown');
         dd.classList.remove('visible');
@@ -6331,6 +6403,7 @@
         if (US_ZIP_PATTERN.test(q)) {
           const handled = await handleUsZipSearch(q);
           if (handled) return;
+          if (!isCurrentSearch(search)) return;
           // Not a NYC ZIP, fall through to "NOT FOUND" with a US-specific note.
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
           announceResult('No results. Sky Score covers NYC ZIP codes and UK postcodes only.');
@@ -6371,8 +6444,9 @@
               lsoa: nycArea.borough + ' ' + nycArea.zip,
             };
           } else {
-            areaResult = await lookupPostcode(activeAreaMap[areaKey]);
+            areaResult = await lookupPostcode(activeAreaMap[areaKey], search.signal);
           }
+          if (!isCurrentSearch(search)) return;
           if (areaResult) {
             areaResult.postcode = areaKey + ' (' + areaResult.postcode + ')';
             const analysis = analysePostcode(areaResult);
@@ -6401,14 +6475,15 @@
               .transition()
               .duration(800)
               .call(zoom.transform, d3.zoomIdentity.translate(cw - px * 2, ch - py * 2).scale(2));
-            updateSidebarPostcode(analysis, borData);
+            updateSidebarPostcode(analysis, borData, search);
             return;
           }
         }
 
         // Postcode
         document.getElementById('sidebar-title').textContent = 'SEARCHING...';
-        const result = await lookupPostcode(q);
+        const result = await lookupPostcode(q, search.signal);
+        if (!isCurrentSearch(search)) return;
         if (!result) {
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
           announceResult('No results found for that search.');
@@ -6449,7 +6524,7 @@
           .duration(800)
           .call(zoom.transform, d3.zoomIdentity.translate(cw - px * 2, ch - py * 2).scale(2));
 
-        updateSidebarPostcode(analysis, boroughData);
+        updateSidebarPostcode(analysis, boroughData, search);
       }
 
       // ============================================================
@@ -6822,8 +6897,25 @@
         return `<strong>Think carefully.</strong> This area scores low because of ${q < 3 ? 'significant aircraft noise' : 'very high prices'}${q < 3 && a < 3 ? ' combined with high prices' : ''}. Only buy here if you have specific reasons.`;
       }
 
+      // Score-bar and map fills. Bright by design and NOT safe as text — see
+      // scoreTextColor below before reaching for this one.
       function scoreColor(v) {
         return v >= 7 ? '#26F27D' : v >= 4 ? '#F2B826' : '#F27D26';
+      }
+      // WCAG 1.4.3 (AA, 4.5:1): the same three bands in ink dark enough to
+      // read as text. Painting the headline verdict in scoreColor put every
+      // possible score below the floor on --bg (#e4e3e0) — green 1.16:1,
+      // amber 1.40:1, orange 2.11:1 — and .summary-verdict is 14px/600, so it
+      // is never "large text" and does not get the relaxed 3:1 bar either.
+      // Measured ratios for these three, on --bg / on --white (#fafaf9, the
+      // desktop sidebar): green 5.17 / 6.35, amber 4.62 / 5.67,
+      // orange 4.60 / 5.65. Orange reuses the #a04d00 that audit fix I9 put
+      // into privacy.html rather than inventing a second dark orange; green
+      // is a darker cousin of the --green token (#0a7a3e, only 4.23:1).
+      // Bar fills stay on scoreColor — a fill carries no text, so 1.4.3 does
+      // not apply to it and the bright palette is the point.
+      function scoreTextColor(v) {
+        return v >= 7 ? '#076b36' : v >= 4 ? '#8a5a00' : '#a04d00';
       }
       // Audit F-A11Y-2 (WCAG 1.4.1): pair every score colour with a redundant
       // non-colour signal — a glyph for colour-blind sighted users, plus an
@@ -6872,7 +6964,7 @@
     <div class="sidebar-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict score-explain-trigger" style="color:${scoreColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 — ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
+          <div class="summary-verdict score-explain-trigger" style="color:${scoreTextColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 — ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
           ${getVerdict(data)}
         </div>
         <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}" style="margin-left:10px;">
@@ -6990,7 +7082,14 @@
         else if (window.setSheetState) window.setSheetState('open');
       }
 
-      function updateSidebarPostcode(analysis, boroughData) {
+      // `search` is the token from beginSearch(), and the hydration callbacks
+      // below check it rather than a module-level postcode string — the string
+      // is already the new search's by the time a late response lands, which
+      // is exactly how SW11's EPC counts and sold prices ended up rendered
+      // under a TW3 heading. The fallback keeps a future call site that omits
+      // the token working; it simply inherits the current sequence.
+      function updateSidebarPostcode(analysis, boroughData, search) {
+        const req = search || { token: searchSeq };
         document.getElementById('sidebar-title').textContent = analysis.postcode;
         switchTab('analysis');
         revealSheetIfMobile();
@@ -7047,7 +7146,7 @@
       <div class="sidebar-section">
         <h3>${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} SCORE - THIS LOCATION</h3>
         <div class="summary-card">
-          <div class="summary-verdict" style="color:${scoreColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 — ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
+          <div class="summary-verdict" style="color:${scoreTextColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 — ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
           ${pcVerdict}
         </div>
         <div class="score-breakdown" style="margin-top:14px;">
@@ -7178,17 +7277,24 @@
 
         // Fetch transport/EPC/sold data (London only - these APIs are UK-specific)
         if (currentCity === 'london') {
-          fetchTransportData(analysis.lat, analysis.lon).then((data) => {
+          // These four panels carry no postcode label, so a stale response is
+          // invisible to the reader — every callback re-checks the token.
+          const signal = req.signal;
+          fetchTransportData(analysis.lat, analysis.lon, signal).then((data) => {
+            if (!isCurrentSearch(req)) return;
             renderTransportData('postcode-transport-data', data);
           });
-          fetchNhsData(analysis.lat, analysis.lon).then((data) => {
+          fetchNhsData(analysis.lat, analysis.lon, signal).then((data) => {
+            if (!isCurrentSearch(req)) return;
             renderNhsData('postcode-nhs-data', data);
           });
           if (!analysis.isOutcode) {
-            fetchSoldPrices(analysis.postcode).then((soldData) => {
+            fetchSoldPrices(analysis.postcode, signal).then((soldData) => {
+              if (!isCurrentSearch(req)) return;
               renderSoldPrices('sold-prices-data', soldData, analysis.postcode);
             });
-            fetchEpcData(analysis.postcode).then((data) => {
+            fetchEpcData(analysis.postcode, signal).then((data) => {
+              if (!isCurrentSearch(req)) return;
               renderEpcData('postcode-epc-data', data);
             });
           } else {
@@ -7366,6 +7472,19 @@
 
       async function switchCity(city) {
         if (city === currentCity) return;
+        // The `city === currentCity` guard only stops a repeat click on the
+        // SAME city, and currentCity is mutated before the NYC GeoJSON await
+        // below — so London→NYC→London during that fetch used to let the
+        // superseded switch finish its render on top of the current one:
+        // doubled paths, boroughs and labels, two #defra-aircraft-img nodes,
+        // and layer toggles that then silently stopped working (g.select()
+        // only hides the first match). Take a token here and abandon the
+        // render past the await if a newer switch has won.
+        const token = ++citySeq;
+        // A switch clears the sidebar, so an in-flight search must not paint
+        // its result over the new city's empty state.
+        cancelSearch();
+        const searchAtStart = searchSeq;
         currentCity = city;
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
@@ -7441,21 +7560,31 @@
           .center(cityData.center)
           .scale(w < 600 ? cityData.scale * 0.625 : cityData.scale)
           .translate([w / 2, h / 2]);
-        g.selectAll('*').remove();
+        // interrupt() before remove(): d3 transitions outlive detachment, and
+        // remove() alone leaves the flight-path dot loops running. The
+        // flightAnimGen check in animateDot() is what actually ends them; this
+        // stops the current leg immediately rather than at its next end event,
+        // and covers any future transition added under g.
+        g.selectAll('*').interrupt().remove();
         selectedBorough = null;
 
         if (city === 'london') {
           if (boroughFeatures.length) renderBoroughs();
         } else {
-          // For NYC, load GeoJSON dynamically
+          // For NYC, load GeoJSON dynamically — then keep it. The borough
+          // outlines never change, so re-fetching cross-origin on every
+          // switch only widened the race window above.
           try {
-            const nycGeo = await d3.json(
-              'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson'
-            );
-            if (nycGeo && nycGeo.features) {
-              nycBoroughFeatures = nycGeo.features;
-              renderNycBoroughs(nycGeo.features);
+            if (!nycBoroughFeatures.length) {
+              const nycGeo = await d3.json(
+                'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson'
+              );
+              // A newer switch landed while this was in flight — abandon the
+              // render rather than layering it over the current city.
+              if (token !== citySeq) return;
+              if (nycGeo && nycGeo.features) nycBoroughFeatures = nycGeo.features;
             }
+            if (nycBoroughFeatures.length) renderNycBoroughs(nycBoroughFeatures);
           } catch (e) {
             console.warn('NYC GeoJSON failed:', e);
           }
@@ -7468,10 +7597,15 @@
         renderLabels();
         renderBoroughRanking();
 
-        // Reset sidebar
-        document.getElementById('sidebar-content').innerHTML = `<div class="empty-state"><div class="icon">&#9678;</div>
+        // Reset sidebar — unless a search has started since this switch began
+        // (handleUsZipSearch kicks one off mid-switch), in which case wiping
+        // it here would throw away the newer, correct result.
+        if (searchSeq === searchAtStart) {
+          document.getElementById('sidebar-content').innerHTML =
+            `<div class="empty-state"><div class="icon">&#9678;</div>
     <p>${city === 'nyc' ? 'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.' : 'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.'}</p></div>`;
-        document.getElementById('sidebar-title').textContent = 'PROPERTY INTELLIGENCE';
+          document.getElementById('sidebar-title').textContent = 'PROPERTY INTELLIGENCE';
+        }
       }
 
       function renderNycBoroughs(features) {
@@ -7515,6 +7649,9 @@
         LGA: '#267DF2',
       };
       function renderCityFlightPaths() {
+        // Claim a generation. Anything the previous render left running is now
+        // stale and will stop at the end of its current leg.
+        const gen = ++flightAnimGen;
         const paths = getActiveFlightPaths();
         const pg = g.append('g').attr('class', 'layer-paths');
         if (!layers.paths) pg.style('display', 'none');
@@ -7541,6 +7678,11 @@
           const halo = pg.append('circle').attr('r', 5).attr('fill', color).attr('opacity', 0.25);
           const dot = pg.append('circle').attr('r', 2.5).attr('fill', color).attr('opacity', 0.9);
           function animateDot() {
+            // Sole exit from the loop. Reached both on the first call after a
+            // teardown and via the .on('end') below, so a superseded set of
+            // dots stops rescheduling itself rather than ticking forever on
+            // nodes that are no longer in the document.
+            if (gen !== flightAnimGen) return;
             const tmp = pg.append('path').attr('d', line(lineData)).style('display', 'none');
             const node = tmp.node();
             const len = node.getTotalLength();
@@ -7681,7 +7823,7 @@
         <td>${esc(n.name)}<span style="display:block;font-size:9px;color:var(--mid);">${esc(n.borough)}</span></td>
         <td class="col-noise">${noiseTag(n.impact)}</td>
         <td class="col-price">${formatPriceCompact(n.avg_price, currentCity)}</td>
-        <td class="col-score" style="color:${scoreColor(n.score)}" aria-label="${scoreLabel(n.score).word} score: ${n.score} out of 10"><span aria-hidden="true">${scoreLabel(n.score).glyph}</span> ${n.score}</td>
+        <td class="col-score" style="color:${scoreTextColor(n.score)}" aria-label="${scoreLabel(n.score).word} score: ${n.score} out of 10"><span aria-hidden="true">${scoreLabel(n.score).glyph}</span> ${n.score}</td>
       </tr>`;
           });
         } else {
@@ -7693,7 +7835,7 @@
         <td>${esc(name)}</td>
         <td class="col-noise">${noiseTag(data.impact)}</td>
         <td class="col-price">${formatPriceCompact(data.avg_price, currentCity)}</td>
-        <td class="col-score" style="color:${scoreColor(data.score)}" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}</td>
+        <td class="col-score" style="color:${scoreTextColor(data.score)}" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}</td>
       </tr>`;
           });
         }
@@ -8186,12 +8328,13 @@
         loadFavourites();
 
         // Resize
-        window.addEventListener('resize', () => {
+        function redrawForViewport() {
           const nw = container.clientWidth;
           const nh = container.clientHeight;
           const baseScale = CITIES[currentCity].scale;
           projection.scale(nw < 600 ? baseScale * 0.625 : baseScale).translate([nw / 2, nh / 2]);
-          g.selectAll('*').remove();
+          // interrupt() before remove() — see the matching call in switchCity.
+          g.selectAll('*').interrupt().remove();
           // Projection translate has changed → previously cached g-coords for
           // the aircraft raster are now wrong. Force a re-position next call.
           aircraftRasterLoadedFor = null;
@@ -8202,6 +8345,22 @@
           renderCityAirports();
           renderTransport();
           renderLabels();
+        }
+        // Audit I-0521-5: redrawForViewport() tears down and rebuilds every
+        // layer — boroughs, DEFRA tiles, flight paths, airports, transport,
+        // labels — at a measured 14-17 ms of synchronous main-thread work on
+        // desktop and 45-70 ms on a mid-range phone. Chrome fires resize at up
+        // to 60 Hz while a window is being dragged, so running it per event
+        // spent the whole frame budget before layout or paint. Trailing-edge
+        // debounce: redraw once the viewport has settled. 160 ms is under the
+        // ~200 ms at which a redraw stops feeling like part of the drag, and
+        // long enough to collapse a drag or an orientation change into one
+        // pass. No leading call — the intermediate sizes are never the size
+        // the user wants to look at.
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(redrawForViewport, 160);
         });
       }
 
@@ -8262,9 +8421,10 @@
             // the boot-time snapshot so future calls still have a pristine
             // template to copy from.
             sidebarContent.replaceChildren(emptyStateNode.cloneNode(true));
-            sidebarContent.querySelectorAll('.quicksearch-chip').forEach((chip) => {
-              chip.addEventListener('click', () => triggerSearch(chip.dataset.quicksearch));
-            });
+            // No chip binding here on purpose: the delegated document listener
+            // (audit F-A11Y-8) already covers every .quicksearch-chip, cloned
+            // ones included. Re-binding on each close stacked a second handler
+            // on the same chip, so one tap fired two searches.
             const input = document.getElementById('search-input');
             if (input) input.value = '';
           });

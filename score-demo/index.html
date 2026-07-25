@@ -478,6 +478,23 @@
   const form = document.getElementById('form');
   const result = document.getElementById('result');
   const submitBtn = document.getElementById('submitBtn');
+  const exampleBtns = document.querySelectorAll('.examples button');
+
+  // Monotonic request token. Every fetchScore call claims the next value and
+  // only the holder of the current one may touch the result card or release
+  // the controls, so a slow response can't render over a newer one's result.
+  let requestSeq = 0;
+
+  // The example buttons fire requests too, so they share the submit button's
+  // in-flight lock. Previously only submitBtn was disabled: clicking an
+  // example mid-request started a second concurrent call, and the first
+  // call's finally block then re-enabled submit while that second was still
+  // open, allowing a third. Symptoms were a form/result desync and needless
+  // burn of the shared demo key's 1000 req/month quota.
+  function setBusy(busy) {
+    submitBtn.disabled = busy;
+    exampleBtns.forEach(btn => { btn.disabled = busy; });
+  }
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -487,7 +504,7 @@
     );
   });
 
-  document.querySelectorAll('.examples button').forEach(btn => {
+  exampleBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       document.getElementById('postcode').value = btn.dataset.pc;
       document.getElementById('persona').value = btn.dataset.pers;
@@ -500,7 +517,8 @@
       renderError('Please enter a postcode.');
       return;
     }
-    submitBtn.disabled = true;
+    const seq = ++requestSeq;
+    setBusy(true);
     result.innerHTML = '<div class="loading">Calling /v1/score</div>';
 
     try {
@@ -512,6 +530,10 @@
       const r = await fetch(url, { headers: { 'X-Api-Key': API_KEY } });
       const elapsed = Math.round(performance.now() - t0);
       const data = await r.json();
+      // Superseded: a newer request owns the card, so drop this response
+      // rather than showing a result the form no longer describes. The
+      // funnel events go with it, they only count outcomes a visitor saw.
+      if (seq !== requestSeq) return;
       if (!r.ok) {
         renderError(data.error || `Request failed (${r.status})`, data);
         trackEvent('api-demo-error');
@@ -520,9 +542,12 @@
         trackEvent('api-demo-run');
       }
     } catch (err) {
+      if (seq !== requestSeq) return;
       renderError('Network error: ' + err.message);
     } finally {
-      submitBtn.disabled = false;
+      // Only the newest request may unlock the form, otherwise an early
+      // finisher hands the controls back while its successor is in flight.
+      if (seq === requestSeq) setBusy(false);
     }
   }
 

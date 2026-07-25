@@ -3,8 +3,13 @@
 // Strategy is deliberately mixed by request type, not one-size-fits-all:
 //   - Shell HTML: network-first, fall back to cache. Users see fresh
 //     deploys when online but the app still launches offline.
-//   - Same-origin static (icons, manifest, /js/, /data/ tiles): cache-
-//     first. They rarely change and shipping them from cache is faster.
+//   - Same-origin /js/: network-first, fall back to cache. These URLs are
+//     versionless but their *contents* change between deploys — js/api-base.js
+//     holds the API host — so cache-first pinned installed PWAs to whichever
+//     host was current at install time, dislodgeable only by a byte change to
+//     this file (A-0724-M4).
+//   - Same-origin static (icons, manifest, /data/ tiles): cache-first.
+//     They rarely change and shipping them from cache is faster.
 //   - API origins (Lambdas, postcodes.io): NEVER cache — data freshness
 //     matters more than offline support, and stale scores would be
 //     misleading.
@@ -14,21 +19,31 @@
 // Bump VERSION to force a cache-busting refresh on next activation.
 // The activate handler clears any cache that doesn't match the current
 // version names, so old shells get garbage-collected.
+//
+// The cache-first assets still have the stale-forever property /js/ used to
+// have: nothing dislodges a precached copy until this file's bytes change.
+// manifest.webmanifest and icons/ are rare-changing and cosmetic, so they
+// stay cache-first — but bump VERSION in the same commit whenever either
+// changes, or installed PWAs keep the old ones indefinitely.
 
-const VERSION = 'v1.0.1';
+const VERSION = 'v1.0.2';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
 // Pre-cached on install. Just enough for the shell to render offline.
 // We deliberately keep this small — the heavier prototype assets are
 // lazy-cached on first visit (see fetch handler).
+//
+// /js/api-base.js is deliberately NOT here. Precaching it froze the API host
+// at install time for every installed PWA, and neither a CloudFront
+// invalidation nor a re-upload of the file could shift it — only a byte
+// change to this worker. It is served network-first instead (A-0724-M4).
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/icons/icon.svg',
   '/icons/icon-maskable.svg',
-  '/js/api-base.js',
 ];
 
 // Origins where we always go to the network — caching scores or
@@ -89,6 +104,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Same-origin /js/: network-first. Versionless URLs with mutable contents
+  // (see header note), so the freshest copy must win whenever there is a
+  // network; the cache is the offline fallback only.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/js/')) {
+    event.respondWith(networkFirstAsset(req));
+    return;
+  }
+
   // Same-origin static assets: cache-first.
   if (url.origin === self.location.origin) {
     event.respondWith(cacheFirst(req));
@@ -122,6 +145,34 @@ async function networkFirst(req) {
     const fallback = await caches.match('/index.html');
     if (fallback) return fallback;
     return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+// Network-first for versionless same-origin assets. Differs from
+// networkFirst() in two ways: it writes to RUNTIME_CACHE rather than the
+// offline shell, and it never falls back to /index.html — handing an HTML
+// body to a <script src> fails louder and weirder than a 504.
+async function networkFirstAsset(req) {
+  try {
+    // A plain fetch() inside a SW still reads the HTTP cache, so a CloudFront
+    // or browser TTL would quietly re-create the staleness this strategy
+    // exists to remove. 'no-cache' forces a revalidation; 304s still satisfy
+    // it, so the extra round-trip stays cheap.
+    const fresh = await fetch(req, { cache: 'no-cache' });
+    if (fresh.ok) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      cache.put(req, fresh.clone());
+      return fresh;
+    }
+    // A 403/404 mid-deploy (this repo's PWA assets 403'd for weeks once)
+    // must not win over a known-good cached copy — the read-side twin of
+    // the A-0724-I1 write guard.
+    const cached = await caches.match(req);
+    return cached || fresh;
+  } catch {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    return new Response('', { status: 504, statusText: 'Offline' });
   }
 }
 

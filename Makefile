@@ -44,7 +44,7 @@ help:
 	@echo "Sky Score Makefile — common targets:"
 	@echo ""
 	@echo "  Web / PWA"
-	@echo "    web-deploy          Upload index.html + privacy.html + invalidate CloudFront"
+	@echo "    web-deploy          Upload js/api-base.js + index/privacy/pricing/changes + invalidate"
 	@echo "    pwa-deploy          Upload manifest, sw.js, icons (PWA assets)"
 	@echo "    deeplinks-deploy    Upload .well-known/apple-app-site-association + assetlinks.json"
 	@echo "    web-deploy-all      Run web-deploy + pwa-deploy + deeplinks-deploy"
@@ -76,6 +76,16 @@ help:
 
 .PHONY: web-deploy
 web-deploy:
+	# js/api-base.js is the shared API base URL (window.API_BASE) that
+	# index.html and both score-demo pages load. It had no make target until
+	# 2026-07-25 — editable but never actually deployed, which matters most
+	# for the pending api.skyscore.co.uk switchover. Uploaded first so a
+	# fresh index.html never reads a stale base. no-cache keeps browsers
+	# revalidating; sw.js serves it network-first for the same reason.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/api-base.js \
+		s3://$(S3_BUCKET)/js/api-base.js \
+		--content-type "application/javascript" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp index.html \
 		s3://$(S3_BUCKET)/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
@@ -94,7 +104,7 @@ web-deploy:
 		s3://$(S3_BUCKET)/changes/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
-		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*'
+		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/js/*'
 
 .PHONY: pwa-deploy
 pwa-deploy:
