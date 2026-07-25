@@ -6,6 +6,34 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-25 — Test coverage for the local ONS NSPL postcode-resolution tier
+
+- **`backend/tests/test_score.py` gained `PostcodeTableTests`** (19 tests) over
+  the new local tier: the forward-compatibility guarantee (with
+  `POSTCODE_TABLE` unset, no boto3 client is even constructed), the
+  postcodes.io-shaped return contract, the DDB key format matching what
+  `scripts/load_nspl.py` writes, deferral on every failure path (miss, unusable
+  centroid, `ClientError`, terminated-without-opt-in), the non-London
+  `admin_district = None` case and its byte-identical 404, the
+  `?includeTerminated=true` response keys, the unchanged six-key `location`
+  shape on live postcodes, and the two cache-leak guards (neither negative nor
+  terminated results may be cached).
+- **`tests/test_load_nspl.py` is new** (21 tests) over the loader's pure
+  `_row_to_item` and its borough map — including the assertion that
+  `LONDON_LAD_TO_BOROUGH`'s 33 names are byte-identical to the score Lambda's
+  `LONDON_BOROUGHS` keys and each survives `normalise_borough` unchanged. A
+  single typo there would 404 an entire borough with no postcodes.io rescue,
+  because a local hit never falls back.
+- **Loader fix found by those tests**: `_row_to_item` coerced coordinates under
+  `except (KeyError, ValueError)`, but `csv.DictReader` yields `None` for a
+  short row's trailing fields and `float(None)` raises `TypeError` — which
+  would have escaped the row loop (deliberately bare-`except`-free per audit
+  I-F) and killed a 40-minute run. Now `(KeyError, TypeError, ValueError)`,
+  matching the Lambda's mirror-image guard.
+- All fixtures are real rows from the on-disk ONS NSPL 2026-02 edition. No
+  network, no AWS, no moto, no new dependencies. **199 tests green**
+  (108 root + 91 backend), up from 159.
+
 ### 2026-07-24 (night) — Trends feature SHIPPED: ?compare=previous + /v1/changes + /changes page
 
 - **`?compare=previous` on `/v1/score`**: any location rescored against the
@@ -47,7 +75,8 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   stale against the May migrations: epc (MHCLG JSON API + `EPC_BEARER_TOKEN`),
   favourites (`X-Device-Token` auth — the old suite asserted the removed
   IDOR-era `userId` contract), nhs (OSM Overpass). 83 root + 62 backend tests
-  green; **CI now gates both suites** (`ci.yml`).
+  green at the time; **CI now gates both suites** (`ci.yml`). (Current split:
+  108 root + 91 backend = 199 — see the NSPL entry above.)
 - **Audit items I4, I6, I14 closed** — I4 resolved by removal, I6 moot (no
   async Lambdas), I14 via a full `PROJECT_DOCUMENTATION.md` refresh (7-Lambda
   truth, real `/v1/*` endpoint table, 3-table DynamoDB schema, historical

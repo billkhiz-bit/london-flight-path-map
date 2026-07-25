@@ -18,6 +18,7 @@ import logging
 import math
 import os
 import re
+import threading
 from collections import OrderedDict
 from datetime import UTC, datetime
 from urllib.error import HTTPError, URLError
@@ -36,23 +37,38 @@ def _make_lru(maxsize):
     the cache for the lifetime of the warm container (~15 min on AWS
     Lambda). This implementation only stores truthy values, so the next
     request after an outage retries upstream instead of serving None.
+
+    Both accessors hold one lock (audit L6). `get` previously tested
+    membership and then called move_to_end as separate bytecode sequences,
+    so a concurrent `put` that evicted the LRU tail in between raised
+    KeyError on the very key `get` had just found. /v1/score/batch runs
+    BATCH_PARALLELISM threads over these shared caches, and the NSPL
+    feature makes a sustained 100k-postcode backfill the expected
+    workload — which keeps the cache permanently full and evicting on
+    nearly every miss, i.e. holds that window open. The escaping KeyError
+    turned 100 resolvable queries into one 500. The lock is held only for
+    a few OrderedDict operations, so contention is negligible next to the
+    DynamoDB and postcodes.io calls it guards.
     """
     cache = OrderedDict()
+    lock = threading.Lock()
 
     def get(key):
-        if key not in cache:
-            return None
-        cache.move_to_end(key)
-        return cache[key]
+        with lock:
+            if key not in cache:
+                return None
+            cache.move_to_end(key)
+            return cache[key]
 
     def put(key, value):
         if value is None:
             return  # Never cache misses / errors
-        if key in cache:
-            cache.move_to_end(key)
-        cache[key] = value
-        while len(cache) > maxsize:
-            cache.popitem(last=False)
+        with lock:
+            if key in cache:
+                cache.move_to_end(key)
+            cache[key] = value
+            while len(cache) > maxsize:
+                cache.popitem(last=False)
 
     return get, put
 
@@ -186,6 +202,7 @@ def build_comparison(current, previous, city):
         'previousTrendPct': previous['context'].get('priceTrendPct'),
         'note': COMPARISON_NOTE,
     }
+
 
 # London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
 # Schema: impact (DEFRA Lden band), avgPrice (GBP), trend (% YoY),
@@ -1135,6 +1152,26 @@ NYC_ZIP_CENTROIDS = {
 # raster data loaded, and silently upgrades when the data lands.
 NOISE_RASTER_TABLE = os.environ.get('NOISE_RASTER_TABLE', '')
 
+# DynamoDB table for the ONS NSPL postcode index (postcode -> LAD + lat/lon,
+# Open Government Licence v3.0). Populated offline by scripts/load_nspl.py.
+# When present, lookup_postcode resolves UK postcodes from this table in a
+# few milliseconds instead of calling postcodes.io over the network — which
+# matters because postcodes.io is a free community service and a customer
+# backfilling 100k distinct postcodes is not fair use of it. postcodes.io
+# remains the fallback for anything the table cannot answer: postcodes
+# introduced after this table's NSPL vintage, rows the loader excluded, and
+# terminated postcodes when the caller has not opted in.
+# Forward-compatible, same contract as NOISE_RASTER_TABLE: an unset env var
+# or a missing item is a silent no-op and the postcodes.io path serves the
+# request exactly as it did before this table existed.
+POSTCODE_TABLE = os.environ.get('POSTCODE_TABLE', '')
+
+# Set the first time the local NSPL tier actually answers a lookup in this
+# container. Drives the `sources` attribution — see _postcode_source_line.
+# Plain module global, no lock: worst case under the batch worker pool is
+# two threads writing True concurrently, which is idempotent.
+_LOCAL_POSTCODE_SERVED = False
+
 
 def haversine_km(lat1, lon1, lat2, lon2):
     """Great-circle distance between two (lat, lon) points in kilometres.
@@ -1151,27 +1188,112 @@ def haversine_km(lat1, lon1, lat2, lon2):
 
 _raster_cache_get, _raster_cache_put = _make_lru(2048)
 
-# Module-level DynamoDB client for the raster lookup. Hoisted out of
-# _lookup_lden_raster (audit M-N1): boto3.client construction is ~50ms
-# per call on cold start; with the LRU above it would only re-fire on
-# cache misses, but those are exactly the slowest path. Lazy-imported
-# so this module loads cleanly in test environments without boto3.
+# Module-level DynamoDB client, shared by the raster lookup and the NSPL
+# postcode lookup. Hoisted out of _lookup_lden_raster (audit M-N1):
+# boto3.client construction is ~50ms per call on cold start; with the LRU
+# above it would only re-fire on cache misses, but those are exactly the
+# slowest path. Lazy-imported so this module loads cleanly in test
+# environments without boto3.
 _DDB_CLIENT = None
 _DDB_IMPORT_FAILED = False
+# Serialises construction (audit L2). /v1/score/batch launches
+# BATCH_PARALLELISM workers that now all reach _get_ddb_client() on a cold
+# container with no preceding I/O to stagger them — the NSPL lookup is the
+# first thing each worker does, unlike the raster lookup which sat behind a
+# ~200ms postcodes.io round trip. boto3's module-level default session is
+# documented as not thread-safe, so building the client under a lock (with
+# a double-check so the warm path stays lock-free) is the cheap fix.
+_DDB_CLIENT_LOCK = threading.Lock()
+
+# Explicit timeouts (audit L3). botocore defaults are 60s connect and 60s
+# read, inside a function whose Lambda Timeout is 28s (backend/template.yaml).
+# A DynamoDB stall or a throttle storm — expected while a fresh
+# PAY_PER_REQUEST table ramps under the loader's write workers — would
+# therefore block past the function timeout, so API Gateway returns 502 and
+# the `except (BotoCoreError, ClientError)` degrade-to-None never runs. That
+# breaks the whole feature's promise that a DDB failure quietly defers to
+# postcodes.io, and for a batch it fails all 100 queries at once.
+#
+# 1s connect / 2s read are generous for same-region DynamoDB (single-digit
+# ms p99); total_max_attempts=2 (initial + one retry) is stated as a total so
+# the bound is unambiguous across botocore retry modes. Worst case is
+# 2 x (1 + 2) = 6s plus a sub-second backoff, comfortably inside 28s even
+# stacked with the 5s postcodes.io fallback that follows a DDB failure.
+#
+# Shared with the pre-existing raster path, deliberately: that path makes the
+# same degrade-to-None promise, so a bounded failure is strictly better for
+# it too — it fails fast to the Haversine tier instead of hanging the request.
+#
+# WHY ONLY 2 ATTEMPTS, when botocore's DynamoDB default is 10. This is a
+# deliberate reduction and it is the binding constraint, so do not raise it
+# without redoing this arithmetic. The two DDB lookups are SEQUENTIAL on a
+# UK postcode request — postcode resolution first, then the raster sample —
+# and a postcode failure is followed by the 5s postcodes.io fallback. Worst
+# case at 2 attempts, with botocore standard-mode backoff:
+#     postcode  2 x (1s connect + 2s read) + ~2s backoff  =  ~8s
+#     raster    2 x (1s connect + 2s read) + ~2s backoff  =  ~8s
+#     postcodes.io fallback                               =   5s
+#                                                          -----
+#                                                          ~21s   (limit 28s)
+# A third attempt on the raster leg alone adds 3s of timeout plus up to 4s
+# of backoff and takes the stack to ~28s — i.e. straight into the Lambda
+# timeout, which turns a graceful degrade into a 502 for the whole request
+# (or, on /v1/score/batch, for all 100 queries). Fewer, faster attempts is
+# genuinely the safer trade here.
+#
+# The residual risk that buys is real and is handled elsewhere rather than
+# by retrying harder: a throttle that outlives 2 attempts drops the raster
+# tier and silently changes the score. That path now emits a structured
+# [SCORE_RASTER_DEGRADED] warning (see _lookup_lden_raster) precisely so the
+# degradation is alarm-able instead of invisible. If those alarms ever fire
+# in volume, the fix is a SECOND client for the raster leg with its own
+# larger attempt budget — not a bigger shared budget, which would blow the
+# stacked wall clock above.
+_DDB_TIMEOUT_CONFIG = {
+    'connect_timeout': 1,
+    'read_timeout': 2,
+    'retries': {'total_max_attempts': 2, 'mode': 'standard'},
+}
 
 
 def _get_ddb_client():
+    """Return the shared DynamoDB client, or None if it cannot be built.
+
+    Never raises: callers treat None as "no table available" and fall back.
+    """
     global _DDB_CLIENT, _DDB_IMPORT_FAILED
     if _DDB_IMPORT_FAILED:
         return None
     if _DDB_CLIENT is not None:
         return _DDB_CLIENT
-    try:
-        import boto3  # noqa: F401
-    except ImportError:
-        _DDB_IMPORT_FAILED = True
-        return None
-    _DDB_CLIENT = boto3.client('dynamodb', region_name=os.environ.get('AWS_REGION', 'eu-west-2'))
+    with _DDB_CLIENT_LOCK:
+        # Re-check under the lock, every waiting worker arrives here having
+        # already lost the fast-path check above.
+        if _DDB_IMPORT_FAILED:
+            return None
+        if _DDB_CLIENT is not None:
+            return _DDB_CLIENT
+        try:
+            import boto3
+            from botocore.config import Config
+        except ImportError:
+            _DDB_IMPORT_FAILED = True
+            return None
+        try:
+            _DDB_CLIENT = boto3.client(
+                'dynamodb',
+                region_name=os.environ.get('AWS_REGION', 'eu-west-2'),
+                config=Config(**_DDB_TIMEOUT_CONFIG),
+            )
+        except Exception as exc:  # noqa: BLE001 — construction must not escape
+            # NoRegionError, a malformed endpoint override, a broken shared
+            # config file: all raise here, outside any botocore except clause
+            # the lookup functions have. Not latched like the ImportError
+            # above, so a transient environment problem can recover on the
+            # next request rather than disabling both tables for the life of
+            # the container.
+            logger.warning('DynamoDB client construction failed: %s', exc)
+            return None
     return _DDB_CLIENT
 
 
@@ -1209,7 +1331,18 @@ def _lookup_lden_raster(postcode_clean):
             ProjectionExpression='ldenDb',
         )
     except (BotoCoreError, ClientError) as exc:
-        logger.warning('DDB raster lookup failed for %s: %s', postcode_clean, exc)
+        # [SCORE_RASTER_DEGRADED] is a structured, alarm-able prefix, in the
+        # same style as signup's [SIGNUP_ORPHAN_KEY]. It matters more than a
+        # plain warning reads: when this fires the request still returns
+        # HTTP 200, but calc_score falls through to the Haversine tier and
+        # the response carries a DIFFERENT NUMERIC SCORE with
+        # context.quietResolution flipped from 'raster' to 'postcode'. A
+        # silently wrong number is the worst failure this API can produce,
+        # so it must be visible in logs even though the caller sees success.
+        # Alarm on it:
+        #   fields @timestamp, @message
+        #   | filter @message like /\[SCORE_RASTER_DEGRADED\]/
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
         return None
 
     item = result.get('Item') or {}
@@ -1356,13 +1489,44 @@ BOROUGH_ALIASES = {
     'H&F': 'Hammersmith and Fulham',
 }
 
-SOURCES = [
-    'EPC data: MHCLG, Open Government Licence v3.0',
-    'Sold prices: HM Land Registry, Open Government Licence v3.0',
-    'Postcode resolution: postcodes.io (Open Government Licence v3.0)',
-    'Borough metadata: ONS, Home Office, Department for Education (Open Government Licence v3.0)',
-    'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
-]
+
+def _postcode_source_line(local_served):
+    """Attribution for the postcode-resolution tier.
+
+    Keyed on whether the local NSPL tier has actually SERVED a lookup in
+    this container — deliberately not on POSTCODE_TABLE being set.
+
+    `sam deploy` wires the env var and creates the table in a single change
+    set, so for the whole window between deploying and finishing the ~40
+    minute load the table exists, the var is set, and every lookup is still
+    answered by postcodes.io. Crediting ONS on configuration alone would put
+    a false provenance claim in the machine-readable `sources` array that a
+    B2B customer audits — and being straight about provenance is the thing
+    this product sells. Credit what actually answered.
+    """
+    if local_served:
+        return (
+            'Postcode resolution: ONS National Statistics Postcode Lookup (Open Government '
+            'Licence v3.0), with postcodes.io (Open Government Licence v3.0) as fallback'
+        )
+    return 'Postcode resolution: postcodes.io (Open Government Licence v3.0)'
+
+
+def build_sources():
+    """The response `sources` array, built per request.
+
+    Deliberately a function, not the import-time constant it replaced: the
+    postcode line depends on runtime state (see _postcode_source_line), and
+    a constant snapshot taken at cold start would keep claiming postcodes.io
+    for the life of a container that had since started resolving locally.
+    """
+    return [
+        'EPC data: MHCLG, Open Government Licence v3.0',
+        'Sold prices: HM Land Registry, Open Government Licence v3.0',
+        _postcode_source_line(_LOCAL_POSTCODE_SERVED),
+        'Borough metadata: ONS, Home Office, Department for Education (Open Government Licence v3.0)',
+        'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
+    ]
 
 # Per-component data lineage. Auditable provenance for each scoring input,
 # B2B audit teams ask "where did this number come from" component-by-component
@@ -1470,6 +1634,117 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
 
 _postcode_cache_get, _postcode_cache_put = _make_lru(512)
 
+# Third return state for _lookup_postcode_local, distinct from both a result
+# dict and None (audit L4). None means "unknown, ask postcodes.io"; this
+# means "the NSPL table positively knows this postcode is terminated and the
+# caller did not opt in". postcodes.io 404s every terminated postcode, so the
+# fallback call is a guaranteed miss: it burns a 5s urlopen timeout budget
+# per query, is never cached, and repeats on every request. 904,453 of the
+# 2,699,393 loaded rows (33.5%) carry a termination date, so on a
+# terminated-heavy backfill the feature would remove none of the postcodes.io
+# load it exists to remove, and 10 workers x up to 5s x 10 waves would blow
+# the 28s function timeout for the whole batch.
+#
+# Module-private on purpose: lookup_postcode converts it back to None before
+# returning, so it never reaches resolve_query, the LRU, or a response body.
+POSTCODE_TERMINATED = object()
+
+
+def _lookup_postcode_local(clean, include_terminated=False):
+    """Resolve a UK postcode from the local ONS NSPL table in DynamoDB.
+
+    Returns one of three things:
+      * a dict shaped like the postcodes.io `result` object — the keys
+        resolve_query consumes (postcode, admin_district, latitude,
+        longitude, region) plus `_`-prefixed private metadata;
+      * POSTCODE_TERMINATED, when the row exists but is terminated and the
+        caller did not opt in — a definitive "postcodes.io cannot serve this
+        either", so the caller should skip the fallback entirely;
+      * None, to defer to the postcodes.io fallback.
+
+    Returns None (defer, never 404) when the table is not configured, the
+    item is missing, or the centroid is unusable. Nothing here raises: every
+    botocore and parse failure degrades to None so the network fallback still
+    serves the request. Callers must treat None as "unknown", not "not found".
+    """
+    if not POSTCODE_TABLE or not clean:
+        return None
+
+    ddb = _get_ddb_client()
+    if ddb is None:
+        return None
+
+    try:
+        from botocore.exceptions import BotoCoreError, ClientError
+    except ImportError:
+        return None
+
+    try:
+        # No ProjectionExpression, deliberately. The item is ~60 bytes, far
+        # below the 4 KB read-unit boundary, so projection saves nothing —
+        # and a reserved-word ValidationException would be caught as a
+        # ClientError below and swallowed to None, silently disabling the
+        # table forever while the API kept working via the fallback. That is
+        # the one failure mode the forward-compatible design makes invisible.
+        result = ddb.get_item(TableName=POSTCODE_TABLE, Key={'postcode': {'S': clean}})
+    except (BotoCoreError, ClientError) as exc:
+        logger.warning('DDB postcode lookup failed for %s: %s', clean, exc)
+        return None
+
+    item = result.get('Item') or {}
+    if not item:
+        return None
+
+    try:
+        latitude = float(item['lat']['N'])
+        longitude = float(item['lon']['N'])
+    except (KeyError, TypeError, ValueError):
+        # A row without a usable centroid is worse than no row at all: it
+        # would resolve the borough but silently downgrade the quiet score
+        # to the borough-aggregate band. Defer to postcodes.io instead.
+        return None
+
+    doterm = item.get('dt', {}).get('S')
+    if doterm and not include_terminated:
+        # Not None: we positively know postcodes.io cannot serve this, so the
+        # caller short-circuits to its not-found path instead of paying for a
+        # guaranteed-404 round trip. See POSTCODE_TERMINATED above.
+        return POSTCODE_TERMINATED
+
+    try:
+        grid_ind = int(item['q']['N'])
+    except (KeyError, TypeError, ValueError):
+        grid_ind = 1  # attribute omitted == building-level precision
+
+    # We are about to return a real local hit, so ONS NSPL has genuinely
+    # served a lookup in this container and may now be credited in the
+    # `sources` array. Set only on this path — a miss, a terminated row or
+    # any error leaves it alone, because none of those were answered locally.
+    global _LOCAL_POSTCODE_SERVED
+    _LOCAL_POSTCODE_SERVED = True
+
+    return {
+        # Canonical spaced form, derived rather than stored. The inward code
+        # is always the final three characters — verified across all
+        # 2,723,596 rows of the loaded NSPL edition with zero exceptions, and
+        # re-checked on every loader run (scripts/load_nspl.py warns loudly
+        # if a future edition ever breaks it).
+        'postcode': f'{clean[:-3]} {clean[-3:]}' if len(clean) > 3 else clean,
+        # None for any UK postcode outside the 33 London boroughs. This is
+        # intentional: normalise_borough(None) -> None -> the existing
+        # "Borough not currently supported in london." 404, byte-identical
+        # to what postcodes.io produces today for e.g. a Manchester postcode.
+        'admin_district': item.get('b', {}).get('S'),
+        'latitude': latitude,
+        'longitude': longitude,
+        'region': item.get('rgn', {}).get('S'),
+        '_ladCode': item.get('lad', {}).get('S'),
+        '_terminated': bool(doterm),
+        '_dotermMonth': f'{doterm[:4]}-{doterm[4:6]}' if doterm and len(doterm) >= 6 else None,
+        '_gridInd': grid_ind,
+        '_resolver': 'nspl',
+    }
+
 
 def _fetch_postcode(clean):
     """Fetch from postcodes.io, no caching, no normalisation. Returns
@@ -1492,19 +1767,41 @@ def _fetch_postcode(clean):
     return payload.get('result')
 
 
-def lookup_postcode(postcode):
-    """Resolve UK postcode → admin_district via postcodes.io (free, OGL).
+def lookup_postcode(postcode, include_terminated=False):
+    """Resolve a UK postcode to a postcodes.io-shaped result dict.
 
-    Cached per warm container (~15 min). Misses and errors are NOT cached
-    so a transient postcodes.io outage does not poison the cache."""
+    Tier 1: the local ONS NSPL table in DynamoDB (POSTCODE_TABLE), ~5ms.
+    Tier 2: postcodes.io over the network, ~100-500ms p95.
+
+    Tier 1 returns None for anything it cannot answer confidently, so
+    behaviour is identical to the pre-table implementation whenever the
+    table is unset, empty, or partially loaded — a table miss is never a
+    404, it is a deferral.
+
+    Tier 1 can also answer POSTCODE_TERMINATED, meaning "known terminated,
+    caller did not opt in". That is converted to None here — same 404, same
+    body as before — but without the guaranteed-miss postcodes.io call that
+    a bare None would trigger. The sentinel never escapes this function.
+
+    Cached per warm container (~15 min) in one LRU shared by both tiers,
+    since they return the same shape. Misses and errors are NOT cached (see
+    _make_lru), so a transient DDB or postcodes.io outage does not poison
+    the cache. Terminated rows are not cached either: the cache key is the
+    postcode alone, so caching one would leak an opt-in result to a later
+    caller that did not opt in.
+    """
     clean = postcode.strip().replace(' ', '').upper()
     if not clean:
         return None
     cached = _postcode_cache_get(clean)
     if cached is not None:
         return cached
-    result = _fetch_postcode(clean)
-    if result is not None:
+    result = _lookup_postcode_local(clean, include_terminated=include_terminated)
+    if result is POSTCODE_TERMINATED:
+        return None
+    if result is None:
+        result = _fetch_postcode(clean)
+    if result is not None and not result.get('_terminated'):
         _postcode_cache_put(clean, result)
     return result
 
@@ -1596,14 +1893,87 @@ def filter_response(body, include):
     return {k: v for k, v in body.items() if k in keep}
 
 
+TRUTHY_FLAGS = frozenset({'1', 'true', 'yes', 'y', 'on'})
+
+
+def parse_bool_flag(raw):
+    """Coerce a boolean-ish query value to True/False, from any JSON type.
+
+    A single query dict reaches resolve_query from two very different
+    places: API Gateway's query-string map, where every value is a string
+    ('true', '1'), and a JSON POST body, where a boolean-named parameter
+    is naturally written as a JSON boolean (true) or 0/1. Both must work.
+
+    Liberal in what it accepts, and it never calls a string method on an
+    unvalidated value: an unexpected type (dict, list, None) is simply
+    falsey rather than an AttributeError. That matters because this runs
+    per query inside /v1/score/batch, where a raised exception used to
+    escape the worker and 500 the whole 100-query batch (audit L1).
+    """
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, str):
+        return raw.strip().lower() in TRUTHY_FLAGS
+    if isinstance(raw, (int, float)):
+        return raw != 0
+    return False
+
+
+def parse_str_param(raw, default=''):
+    """Coerce a text query value to a stripped string, from any JSON type.
+
+    The text sibling of parse_bool_flag, and it exists for the same reason.
+    A GET query string always delivers strings, but a batch POST body can
+    deliver a number — and this API documents exactly that case: "pass a
+    5-digit US ZIP for NYC auto-detection". So {"postcode": 10001} is a
+    DOCUMENTED input, not a malformed one, and it must score identically to
+    {"postcode": "10001"}.
+
+    Falsey input returns `default`, matching the `(x or default).strip()`
+    idiom this replaces, so empty and missing values behave exactly as
+    before. Anything else that is not a string or a number — a dict, a
+    list, True — also returns the default, which leaves the caller's
+    existing "Provide either postcode or borough" guard to answer with a
+    clean per-query 400 rather than raising.
+
+    Never calls a string method on an unvalidated value. Before the audit
+    L1 per-query guard, a raise here 500'd the whole 100-query batch; after
+    it, the same raise silently degraded that one query to an opaque
+    internal error. Neither is an acceptable answer for input the published
+    contract says is valid.
+    """
+    if not raw:
+        return default
+    if isinstance(raw, str):
+        return raw.strip()
+    # bool is a subclass of int, so it must be tested first — 'True' is
+    # never a meaningful postcode, borough, city or persona.
+    if isinstance(raw, bool):
+        return default
+    if isinstance(raw, int):
+        return str(raw)
+    if isinstance(raw, float):
+        # 10001.0 -> '10001'. Anything genuinely fractional is not a
+        # postcode, ZIP, borough or persona, so it falls to the default.
+        return str(int(raw)) if raw.is_integer() else default
+    return default
+
+
 def resolve_query(query):
     """Run a single score query. Returns the response body or an error dict."""
-    postcode = (query.get('postcode') or '').strip()
-    borough_input = (query.get('borough') or '').strip()
-    city = (query.get('city') or 'london').strip().lower()
-    persona = (query.get('persona') or 'balanced').strip().lower()
+    postcode = parse_str_param(query.get('postcode'))
+    borough_input = parse_str_param(query.get('borough'))
+    city = parse_str_param(query.get('city'), 'london').lower()
+    persona = parse_str_param(query.get('persona'), 'balanced').lower()
     weights_override = parse_weights(query.get('weights'))
     include = parse_include(query.get('include'))
+    # Opt-in to terminated (retired) postcodes, which only the local NSPL
+    # tier can serve — postcodes.io 404s them. Off by default, so a
+    # terminated row stays a local miss and the response is unchanged.
+    # Coerced via parse_bool_flag, not `.strip()`, because a JSON POST body
+    # carries this as a native boolean while a GET query string carries it
+    # as 'true'/'1'. Both are valid; neither may raise.
+    include_terminated = parse_bool_flag(query.get('includeTerminated'))
 
     if city not in CITIES:
         return {
@@ -1646,13 +2016,25 @@ def resolve_query(query):
                     'supportedNycBoroughs': sorted(NYC_BOROUGHS.keys()),
                 }, 404
         else:
-            # UK postcode path, postcodes.io resolves to a London borough.
+            # UK postcode path, the local NSPL table then postcodes.io
+            # resolve to a London borough.
             if city != 'london':
                 return {
                     'error': f'Postcode resolution is UK-only for non-NYC ZIPs. For {city} use ?borough=, or pass a 5-digit US ZIP for NYC auto-detection.',
                 }, 400
-            pc = lookup_postcode(postcode)
+            pc = lookup_postcode(postcode, include_terminated=include_terminated)
             if not pc:
+                # Wording deliberately unchanged (audit L5). This string is a
+                # public API surface — it is what score-demo/openapi.yaml
+                # documents for 404 — and the whole NSPL feature is built on
+                # the promise that an unset POSTCODE_TABLE leaves behaviour
+                # byte-identical. Changing it would break that promise
+                # unconditionally, before the table even exists. It also stays
+                # factually true once the table is live: a 404 means the NSPL
+                # tier deferred and postcodes.io then missed, and postcodes.io
+                # 404s terminated postcodes too, so the short-circuited
+                # known-terminated case is covered by the same sentence.
+                # Revisit only alongside score-demo/openapi.yaml.
                 return {
                     'error': f'Postcode not recognised by postcodes.io: {postcode}',
                 }, 404
@@ -1666,6 +2048,19 @@ def resolve_query(query):
                     'region': pc.get('region'),
                 }
             )
+            if pc.get('_terminated'):
+                # Only reachable via ?includeTerminated=true. Every postcode
+                # that returns 200 without the flag is live, so no existing
+                # response shape changes — these keys appear only on
+                # newly-servable queries.
+                location_meta['postcodeStatus'] = 'terminated'
+                location_meta['postcodeTerminatedDate'] = pc.get('_dotermMonth')
+                if pc.get('_gridInd') in (5, 6, 8):
+                    # 36.9% of terminated London postcodes carry an imputed,
+                    # sector-mean or pre-Gridlink centroid (vs 0.3% of live
+                    # ones), which can sit far enough out to cross a noise
+                    # contour band.
+                    location_meta['positionQuality'] = 'approximate'
     else:
         borough = normalise_borough(borough_input, city)
         location_meta['borough'] = borough
@@ -1698,7 +2093,12 @@ def resolve_query(query):
     comparison = None
     if (query.get('compare') or '').strip().lower() == 'previous':
         prev_data = calc_score(
-            borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean,
+            borough,
+            city,
+            weights,
+            lat=lat,
+            lon=lon,
+            postcode_clean=pc_clean,
             boroughs_override=previous_dataset(city),
         )
         comparison = build_comparison(score_data, prev_data, city)
@@ -1713,7 +2113,7 @@ def resolve_query(query):
         'methodologyUrl': METHODOLOGY_URL,
         'apiVersion': API_VERSION,
         'generatedAt': datetime.now(UTC).isoformat(),
-        'sources': SOURCES,
+        'sources': build_sources(),
         'sourceBreakdown': SOURCE_BREAKDOWN,
     }
     # Roadmap-visible placeholder components, let prospects see what's planned
@@ -1767,7 +2167,9 @@ def handle_regions(event):
                     'country': 'United Kingdom',
                     'currency': 'GBP',
                     'postcodeFormat': 'UK postcode (e.g. SW11 1AA)',
-                    'postcodeResolver': 'postcodes.io',
+                    'postcodeResolver': 'ONS NSPL local table, postcodes.io fallback'
+                    if POSTCODE_TABLE
+                    else 'postcodes.io',
                     'boroughCount': len(LONDON_BOROUGHS),
                     'boroughs': sorted(LONDON_BOROUGHS.keys()),
                 },
@@ -1802,46 +2204,53 @@ def handle_changes(event):
     for name in CITIES['london']['boroughs']:
         cur = calc_score(name, 'london', bal)
         prev = calc_score(name, 'london', bal, boroughs_override=prev_set)
-        changes.append({
-            'borough': name,
-            'score': cur['score'],
-            'previousScore': prev['score'],
-            'scoreChange': round(cur['score'] - prev['score'], 1),
-            'avgPriceGbp': cur['context']['avgPriceGbp'],
-            'previousAvgPriceGbp': prev['context']['avgPriceGbp'],
-            'priceChangePct': round(
-                (cur['context']['avgPriceGbp'] - prev['context']['avgPriceGbp'])
-                / prev['context']['avgPriceGbp'] * 100, 1,
-            ),
-            'trendPct': cur['context']['priceTrendPct'],
-            'previousTrendPct': prev['context']['priceTrendPct'],
-        })
+        changes.append(
+            {
+                'borough': name,
+                'score': cur['score'],
+                'previousScore': prev['score'],
+                'scoreChange': round(cur['score'] - prev['score'], 1),
+                'avgPriceGbp': cur['context']['avgPriceGbp'],
+                'previousAvgPriceGbp': prev['context']['avgPriceGbp'],
+                'priceChangePct': round(
+                    (cur['context']['avgPriceGbp'] - prev['context']['avgPriceGbp'])
+                    / prev['context']['avgPriceGbp']
+                    * 100,
+                    1,
+                ),
+                'trendPct': cur['context']['priceTrendPct'],
+                'previousTrendPct': prev['context']['priceTrendPct'],
+            }
+        )
     changes.sort(key=lambda c: abs(c['scoreChange']), reverse=True)
     moved = [c for c in changes if abs(c['scoreChange']) > 0.5]
     risers = [c for c in changes if c['scoreChange'] > 0]
     fallers = [c for c in changes if c['scoreChange'] < 0]
-    return response(200, {
-        'city': 'london',
-        'persona': 'balanced',
-        'currentVintage': SNAPSHOT_VINTAGE,
-        'previousVintage': PREVIOUS_VINTAGE,
-        'refreshedAt': SNAPSHOT_REFRESHED_AT,
-        'note': COMPARISON_NOTE,
-        'summary': {
-            'boroughs': len(changes),
-            'movedOverHalfPoint': len(moved),
-            'risers': len(risers),
-            'fallers': len(fallers),
-            'largestRise': max(changes, key=lambda c: c['scoreChange'])['borough'],
-            'largestFall': min(changes, key=lambda c: c['scoreChange'])['borough'],
+    return response(
+        200,
+        {
+            'city': 'london',
+            'persona': 'balanced',
+            'currentVintage': SNAPSHOT_VINTAGE,
+            'previousVintage': PREVIOUS_VINTAGE,
+            'refreshedAt': SNAPSHOT_REFRESHED_AT,
+            'note': COMPARISON_NOTE,
+            'summary': {
+                'boroughs': len(changes),
+                'movedOverHalfPoint': len(moved),
+                'risers': len(risers),
+                'fallers': len(fallers),
+                'largestRise': max(changes, key=lambda c: c['scoreChange'])['borough'],
+                'largestFall': min(changes, key=lambda c: c['scoreChange'])['borough'],
+            },
+            'changes': changes,
+            'methodologyVersion': METHODOLOGY_VERSION,
+            'methodologyUrl': METHODOLOGY_URL,
+            'apiVersion': API_VERSION,
+            'generatedAt': datetime.now(UTC).isoformat(),
+            'sources': build_sources(),
         },
-        'changes': changes,
-        'methodologyVersion': METHODOLOGY_VERSION,
-        'methodologyUrl': METHODOLOGY_URL,
-        'apiVersion': API_VERSION,
-        'generatedAt': datetime.now(UTC).isoformat(),
-        'sources': SOURCES,
-    })
+    )
 
 
 def handle_get(event):
@@ -1918,7 +2327,18 @@ def handle_batch(event):
         idx, query = item
         if not isinstance(query, dict):
             return idx, ({'error': 'Query must be an object.'}, 400)
-        return idx, resolve_query(query)
+        try:
+            return idx, resolve_query(query)
+        except Exception as exc:  # noqa: BLE001 — per-query blast radius containment
+            # The batch contract (score-demo/openapi.yaml) promises "failures
+            # do not abort the batch". Without this guard any exception from
+            # one query escapes ex.map(), unwinds handle_batch, and the
+            # handler's catch-all 500s all 100 queries — 99 of which were
+            # perfectly resolvable (audit L1). Report this query's slot as a
+            # per-item error in the shape the loop below already consumes and
+            # let its siblings through.
+            logger.exception('Batch query %s failed: %s', idx, exc)
+            return idx, ({'error': 'Internal server error'}, 500)
 
     with ThreadPoolExecutor(max_workers=BATCH_PARALLELISM) as ex:
         outcomes = list(ex.map(run_one, indexed_queries))
@@ -1952,7 +2372,7 @@ def handle_batch(event):
             'apiVersion': API_VERSION,
             'methodologyVersion': METHODOLOGY_VERSION,
             'generatedAt': datetime.now(UTC).isoformat(),
-            'sources': SOURCES,
+            'sources': build_sources(),
             'results': results,
         },
     )

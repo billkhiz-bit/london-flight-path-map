@@ -14,7 +14,10 @@ Lambda evolves (bulk endpoint, future per-postcode noise sampling, etc.).
 import json
 import os
 import sys
+import threading
+import time
 import unittest
+from unittest.mock import MagicMock, patch
 
 # Allow `python -m unittest backend.tests.test_score` from project root.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'lambdas', 'score'))
@@ -287,6 +290,799 @@ class PersonaCoverageTests(unittest.TestCase):
         # not silently come back; if it does, two persona keys map to the
         # same weights and clients get unpredictable behaviour.
         self.assertNotIn('downsizer', app.PERSONAS)
+
+
+# ---------------------------------------------------------------------------
+# ONS NSPL local postcode-resolution fixtures.
+#
+# Every one of these is a REAL row from the 2026-02 NSPL edition
+# (data/nspl.csv), mapped through scripts/load_nspl.py's item shape and kept
+# in DynamoDB low-level JSON so the stub returns byte-identical structures to
+# a live GetItem response. Optional attributes are omitted exactly as the
+# loader omits them, because absence is meaningful: no `b` means "not one of
+# the 33 London boroughs", no `dt` means "live", no `q` means "building-level".
+# ---------------------------------------------------------------------------
+_NSPL_SW11_1AA = {
+    'postcode': {'S': 'SW111AA'},
+    'lat': {'N': '51.464444'},
+    'lon': {'N': '-0.164298'},
+    'lad': {'S': 'E09000032'},
+    'b': {'S': 'Wandsworth'},
+    'rgn': {'S': 'London'},
+}
+
+# Boundary fixture: E1 6AN is City of London, NOT Tower Hamlets.
+_NSPL_E1_6AN = {
+    'postcode': {'S': 'E16AN'},
+    'lat': {'N': '51.518887'},
+    'lon': {'N': '-0.078479'},
+    'lad': {'S': 'E09000001'},
+    'b': {'S': 'City of London'},
+    'rgn': {'S': 'London'},
+}
+
+# The sentinel trap: a legitimate negative-near-zero longitude. Postcodes sit
+# on both sides of the Greenwich meridian, so longitude 0 is real data.
+_NSPL_SE10_9NF = {
+    'postcode': {'S': 'SE109NF'},
+    'lat': {'N': '51.480285'},
+    'lon': {'N': '-0.006020'},
+    'lad': {'S': 'E09000011'},
+    'b': {'S': 'Greenwich'},
+    'rgn': {'S': 'London'},
+}
+
+# Terminated (doterm 198412) AND coarse-positioned (gridind 8, pre-Gridlink).
+_NSPL_BR1_1HB = {
+    'postcode': {'S': 'BR11HB'},
+    'lat': {'N': '51.404506'},
+    'lon': {'N': '0.014262'},
+    'lad': {'S': 'E09000006'},
+    'b': {'S': 'Bromley'},
+    'rgn': {'S': 'London'},
+    'dt': {'S': '198412'},
+    'q': {'N': '8'},
+}
+
+# Non-London England. No `b` attribute, which is what keeps the existing
+# "Borough not currently supported" 404 firing unchanged.
+_NSPL_M1_1AE = {
+    'postcode': {'S': 'M11AE'},
+    'lat': {'N': '53.483487'},
+    'lon': {'N': '-2.231182'},
+    'lad': {'S': 'E08000003'},
+    'rgn': {'S': 'North West'},
+}
+
+
+class _LocalTierFixture:
+    """setUp + DynamoDB stubbing shared by every test that exercises the
+    local NSPL tier. A plain mixin, not a TestCase, so it is never collected
+    as a test class in its own right."""
+
+    def setUp(self):
+        # 1. The postcode LRU is a module-level closure pair now serving BOTH
+        #    tiers, so a positive result leaks into later tests: they pass in
+        #    isolation and fail in a different order. Rebuild it per test.
+        self._saved_cache = (app._postcode_cache_get, app._postcode_cache_put)
+        app._postcode_cache_get, app._postcode_cache_put = app._make_lru(512)
+        # 2. POSTCODE_TABLE is read ONCE at module import, so setting the
+        #    environment variable cannot work. Set the attribute instead.
+        #    Tests that need it unset override this to '' themselves.
+        self._saved_table = app.POSTCODE_TABLE
+        app.POSTCODE_TABLE = 'london-flight-map-postcodes'
+        self.ddb_factory = None
+        # 3. Restore both however the test exits.
+        self.addCleanup(self._restore_module_state)
+
+    def _restore_module_state(self):
+        app._postcode_cache_get, app._postcode_cache_put = self._saved_cache
+        app.POSTCODE_TABLE = self._saved_table
+
+    def _stub_ddb(self, item):
+        """Patch the shared DynamoDB client factory with a stub whose
+        get_item returns *item*, or a table miss when *item* is None.
+
+        Returns the client mock so tests can assert on the calls it
+        received; the factory mock itself is on self.ddb_factory."""
+        ddb = MagicMock()
+        ddb.get_item.return_value = {'Item': item} if item is not None else {}
+        patcher = patch.object(app, '_get_ddb_client', return_value=ddb)
+        self.ddb_factory = patcher.start()
+        self.addCleanup(patcher.stop)
+        return ddb
+
+    def _stub_ddb_rows(self, rows):
+        """As _stub_ddb, but backed by a {clean postcode: item} table so a
+        batch of mixed queries resolves each key to its own row. Anything
+        not in *rows* is a table miss."""
+        ddb = MagicMock()
+
+        def _get_item(**kwargs):
+            key = kwargs['Key']['postcode']['S']
+            item = rows.get(key)
+            return {'Item': item} if item is not None else {}
+
+        ddb.get_item.side_effect = _get_item
+        patcher = patch.object(app, '_get_ddb_client', return_value=ddb)
+        self.ddb_factory = patcher.start()
+        self.addCleanup(patcher.stop)
+        return ddb
+
+    @staticmethod
+    def _no_network():
+        """Patch _fetch_postcode to fail loudly. Every test in these classes
+        is meant to be served entirely by the local tier; a postcodes.io call
+        is a defect, not a slow test."""
+        def _boom(clean):
+            raise AssertionError(f'postcodes.io was called for {clean!r}')
+
+        return patch.object(app, '_fetch_postcode', _boom)
+
+
+class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
+    """The local NSPL tier must be a drop-in for postcodes.io: same dict
+    shape, None for anything it cannot answer confidently, and a silent
+    no-op when POSTCODE_TABLE is unset so the API behaves identically
+    before and after the data lands."""
+
+    def test_table_unset_returns_none_without_building_a_client(self):
+        # The forward-compatibility guarantee. With no table wired — the
+        # default in every test environment, and true until the deploy
+        # happens — the new code must not even reach for a boto3 client.
+        app.POSTCODE_TABLE = ''
+        self._stub_ddb(_NSPL_SW11_1AA)
+        self.assertIsNone(app._lookup_postcode_local('SW111AA'))
+        self.ddb_factory.assert_not_called()
+
+    def test_local_hit_returns_postcodes_io_shape(self):
+        self._stub_ddb(_NSPL_SW11_1AA)
+        result = app._lookup_postcode_local('SW111AA')
+        self.assertEqual(result['postcode'], 'SW11 1AA')
+        self.assertEqual(result['admin_district'], 'Wandsworth')
+        self.assertEqual(result['latitude'], 51.464444)
+        self.assertEqual(result['longitude'], -0.164298)
+        self.assertEqual(result['region'], 'London')
+        # Numbers, not the DynamoDB strings they arrived as: resolve_query
+        # feeds these straight into the Haversine flight-path layer.
+        self.assertIsInstance(result['latitude'], float)
+        self.assertIsInstance(result['longitude'], float)
+
+    def test_local_hit_does_not_call_postcodes_io(self):
+        # The whole point of the build. Lowercase input with a space also
+        # exercises the shared key normalisation on the way through.
+        ddb = self._stub_ddb(_NSPL_SW11_1AA)
+
+        def _boom(clean):
+            raise AssertionError(f'postcodes.io was called for {clean!r}')
+
+        with patch.object(app, '_fetch_postcode', _boom):
+            result = app.lookup_postcode('sw11 1aa')
+        self.assertEqual(result['postcode'], 'SW11 1AA')
+        self.assertEqual(result['admin_district'], 'Wandsworth')
+        # Exactly TableName + Key and nothing else. A ProjectionExpression
+        # here would raise ValidationException on a reserved word, which is
+        # a ClientError, which the resolver swallows to None — the table
+        # would appear to work while silently never being used.
+        ddb.get_item.assert_called_once_with(
+            TableName='london-flight-map-postcodes',
+            Key={'postcode': {'S': 'SW111AA'}},
+        )
+
+    def test_ddb_key_format_matches_the_loader(self):
+        # `.strip().replace(' ', '').upper()` — byte-identical to the key
+        # scripts/load_nspl.py writes and to london-flight-map-noise-raster.
+        # Diverging silently misses every single row.
+        ddb = self._stub_ddb(_NSPL_SW11_1AA)
+        for raw in ('SW11 1AA', 'sw111aa', '  sw11 1aa  ', 'Sw11 1Aa'):
+            # Fresh LRU per spelling, or the second lookup is a cache hit
+            # and never reaches DynamoDB at all.
+            app._postcode_cache_get, app._postcode_cache_put = app._make_lru(512)
+            ddb.get_item.reset_mock()
+            app.lookup_postcode(raw)
+            self.assertEqual(
+                ddb.get_item.call_args.kwargs['Key'],
+                {'postcode': {'S': 'SW111AA'}},
+                msg=f'input {raw!r} produced the wrong DDB key',
+            )
+
+    def test_table_miss_falls_back_to_postcodes_io(self):
+        # A miss must NEVER become a 404 — postcodes.io is demoted, not
+        # removed, and it still answers postcodes newer than this vintage.
+        self._stub_ddb(None)
+        sentinel = {'postcode': 'SW11 1AA', 'admin_district': 'Wandsworth'}
+        with patch.object(app, '_fetch_postcode', return_value=sentinel) as fetch:
+            result = app.lookup_postcode('SW11 1AA')
+        self.assertIs(result, sentinel)
+        fetch.assert_called_once_with('SW111AA')
+
+    def test_ddb_client_error_falls_back(self):
+        from botocore.exceptions import ClientError
+        ddb = self._stub_ddb(None)
+        ddb.get_item.side_effect = ClientError(
+            {'Error': {'Code': 'ProvisionedThroughputExceededException', 'Message': 'x'}},
+            'GetItem',
+        )
+        sentinel = {'postcode': 'SW11 1AA', 'admin_district': 'Wandsworth'}
+        # Nothing may escape: _lookup_postcode_local runs inside a 10-worker
+        # pool over batches of up to 100, and one exception 500s the lot.
+        with patch.object(app, '_fetch_postcode', return_value=sentinel):
+            result = app.lookup_postcode('SW11 1AA')
+        self.assertIs(result, sentinel)
+
+    def test_unusable_centroid_defers_to_fallback(self):
+        # Never a partial dict: a borough without a centroid would resolve
+        # the query but silently downgrade the quiet score from the
+        # per-postcode Haversine layer to the borough-aggregate band.
+        broken = {k: v for k, v in _NSPL_SW11_1AA.items() if k != 'lat'}
+        self._stub_ddb(broken)
+        self.assertIsNone(app._lookup_postcode_local('SW111AA'))
+
+    def test_negative_near_zero_longitude_survives(self):
+        # SE10 9NF is -0.006020. Any truthiness or `== 0` test anywhere in
+        # the chain would corrupt Greenwich.
+        self._stub_ddb(_NSPL_SE10_9NF)
+        result = app._lookup_postcode_local('SE109NF')
+        self.assertEqual(result['longitude'], -0.00602)
+        self.assertEqual(result['admin_district'], 'Greenwich')
+
+    def test_terminated_row_hidden_by_default(self):
+        # Tri-state since audit L4. The local tier answers POSTCODE_TERMINATED
+        # rather than None, because "terminated" is a DEFINITIVE answer:
+        # postcodes.io 404s these too, so the fallback round trip is a
+        # guaranteed miss. lookup_postcode converts the sentinel back to None,
+        # so the caller still gets exactly the 404 it got before — one HTTP
+        # call, one 5s timeout risk and one worker-second cheaper.
+        self._stub_ddb(_NSPL_BR1_1HB)
+        self.assertIs(app._lookup_postcode_local('BR11HB'), app.POSTCODE_TERMINATED)
+        with patch.object(app, '_fetch_postcode') as fetch:
+            # `assertIsNone`, not merely falsey: the sentinel is truthy, so a
+            # leak would sail past an `assertFalse` and reach resolve_query.
+            self.assertIsNone(app.lookup_postcode('BR1 1HB'))
+        fetch.assert_not_called()
+
+    def test_terminated_short_circuit_still_404s_after_one_getitem(self):
+        # The saving must be invisible from outside: same status, same body,
+        # and the one GetItem that told us the answer is the only round trip.
+        ddb = self._stub_ddb(_NSPL_BR1_1HB)
+        with self._no_network():
+            body, status = app.resolve_query({'postcode': 'BR1 1HB'})
+        self.assertEqual(status, 404)
+        self.assertEqual(body['error'], 'Postcode not recognised by postcodes.io: BR1 1HB')
+        self.assertEqual(ddb.get_item.call_count, 1)
+
+    def test_terminated_row_served_when_opted_in(self):
+        self._stub_ddb(_NSPL_BR1_1HB)
+        result = app._lookup_postcode_local('BR11HB', include_terminated=True)
+        self.assertIs(result['_terminated'], True)
+        self.assertEqual(result['_dotermMonth'], '1984-12')
+        self.assertEqual(result['_gridInd'], 8)
+        self.assertEqual(result['admin_district'], 'Bromley')
+
+    def test_terminated_result_is_not_cached(self):
+        # The cache key is the postcode alone, so caching an opt-in result
+        # would leak it to a later caller that did not opt in. The follow-up
+        # call must re-run the local tier — which answers POSTCODE_TERMINATED
+        # a second time — rather than serving the cached opt-in dict.
+        self._stub_ddb(_NSPL_BR1_1HB)
+        opted_in = app.lookup_postcode('BR1 1HB', include_terminated=True)
+        self.assertIs(opted_in['_terminated'], True)
+        with patch.object(app, '_fetch_postcode') as fetch:
+            self.assertIsNone(app.lookup_postcode('BR1 1HB'))
+        # And the sentinel path takes the fallback off the table entirely
+        # (audit L4), so the no-leak guarantee no longer depends on
+        # postcodes.io happening to 404 the same postcode.
+        fetch.assert_not_called()
+
+    def test_negative_result_is_not_cached(self):
+        self._stub_ddb(None)
+        with patch.object(app, '_fetch_postcode', return_value=None):
+            self.assertIsNone(app.lookup_postcode('SW11 1AA'))
+        # A cached None would re-serve the miss for the whole ~15-minute
+        # warm-container lifetime, turning a transient DDB throttle or a
+        # postcodes.io blip into a sticky 404.
+        sentinel = {'postcode': 'SW11 1AA', 'admin_district': 'Wandsworth'}
+        with patch.object(app, '_fetch_postcode', return_value=sentinel):
+            self.assertIs(app.lookup_postcode('SW11 1AA'), sentinel)
+
+    def test_non_london_row_returns_dict_with_null_admin_district(self):
+        # The subtle trap. Returning None here would treat "no borough" as a
+        # local miss and send every non-London UK postcode back to
+        # postcodes.io — restoring the fair-use problem for most of a
+        # national back-book.
+        self._stub_ddb(_NSPL_M1_1AE)
+        with patch.object(app, '_fetch_postcode') as fetch:
+            result = app.lookup_postcode('M1 1AE')
+        self.assertIsNotNone(result)
+        self.assertIsNone(result['admin_district'])
+        self.assertEqual(result['postcode'], 'M1 1AE')
+        self.assertEqual(result['region'], 'North West')
+        self.assertEqual(result['_ladCode'], 'E08000003')
+        fetch.assert_not_called()
+
+    def test_boundary_borough_name_indexes_the_dataset(self):
+        # E1 6AN is City of London, NOT Tower Hamlets. The `b` string the
+        # loader writes must be the exact canonical LONDON_BOROUGHS key:
+        # normalise_borough is a case-sensitive dict membership test and
+        # calc_score then indexes boroughs[name] directly, so a stray '&' or
+        # a 'City of London Corporation' would 404 the entire borough — and
+        # a local hit never falls back, so postcodes.io cannot rescue it.
+        self._stub_ddb(_NSPL_E1_6AN)
+        body, status = app.resolve_query({'postcode': 'E1 6AN'})
+        self.assertEqual(status, 200)
+        self.assertEqual(body['location']['borough'], 'City of London')
+
+    def test_resolve_query_404_unchanged_for_non_london(self):
+        # postcodes.io returns admin_district='Manchester' -> normalise ->
+        # None; the local table returns admin_district=None -> normalise ->
+        # None. Same 404, same attemptedBorough, byte-identical body.
+        self._stub_ddb(_NSPL_M1_1AE)
+        body, status = app.resolve_query({'postcode': 'M1 1AE'})
+        self.assertEqual(status, 404)
+        self.assertEqual(body['error'], 'Borough not currently supported in london.')
+        self.assertIsNone(body['attemptedBorough'])
+
+    def test_resolve_query_surfaces_terminated_status(self):
+        self._stub_ddb(_NSPL_BR1_1HB)
+        body, status = app.resolve_query(
+            {'postcode': 'BR1 1HB', 'includeTerminated': 'true'}
+        )
+        self.assertEqual(status, 200)
+        location = body['location']
+        self.assertEqual(location['borough'], 'Bromley')
+        self.assertEqual(location['postcodeStatus'], 'terminated')
+        self.assertEqual(location['postcodeTerminatedDate'], '1984-12')
+        # gridind 8 is pre-Gridlink, which can sit far enough out to cross a
+        # noise contour band. Saying so is the honest thing to do.
+        self.assertEqual(location['positionQuality'], 'approximate')
+
+    def test_live_response_location_keys_unchanged(self):
+        # Regression guard on the published OpenAPI Location schema: every
+        # request that returns 200 today must keep exactly its six keys.
+        self._stub_ddb(_NSPL_SW11_1AA)
+        body, status = app.resolve_query({'postcode': 'SW11 1AA'})
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            set(body['location']),
+            {'city', 'postcode', 'borough', 'longitude', 'latitude', 'region'},
+        )
+
+    def test_source_line_switches_on_actual_local_service(self):
+        self.assertEqual(
+            app._postcode_source_line(False),
+            'Postcode resolution: postcodes.io (Open Government Licence v3.0)',
+        )
+        served = app._postcode_source_line(True)
+        self.assertIn('ONS National Statistics Postcode Lookup', served)
+        self.assertIn('fallback', served)
+
+    def test_sources_credits_ons_only_once_local_has_served(self):
+        # The honesty guarantee: `sam deploy` sets POSTCODE_TABLE and creates
+        # the table in one change set, so there is a ~40-minute window while
+        # the loader runs where the table exists but every lookup still goes
+        # to postcodes.io. Crediting ONS during that window would be a false
+        # provenance claim in the array B2B customers audit.
+        original = app._LOCAL_POSTCODE_SERVED
+        try:
+            app._LOCAL_POSTCODE_SERVED = False
+            self.assertIn('postcodes.io', app.build_sources()[2])
+            self.assertNotIn('ONS National Statistics', app.build_sources()[2])
+
+            app._LOCAL_POSTCODE_SERVED = True
+            self.assertIn('ONS National Statistics', app.build_sources()[2])
+        finally:
+            app._LOCAL_POSTCODE_SERVED = original
+
+    def test_spaced_form_derivation(self):
+        # `pcds` is derived, not stored: the inward code is always the final
+        # three characters, verified across all 2,723,596 rows of the loaded
+        # edition. This mirrors scripts/load_nspl.py's own invariant check so
+        # the two implementations can never drift apart.
+        ddb = self._stub_ddb(None)
+        for clean, spaced in (
+            ('E16AN', 'E1 6AN'),
+            ('SW1A1AA', 'SW1A 1AA'),
+            ('SE109NF', 'SE10 9NF'),
+            ('TW62GA', 'TW6 2GA'),
+        ):
+            ddb.get_item.return_value = {
+                'Item': {
+                    'postcode': {'S': clean},
+                    'lat': {'N': '51.500000'},
+                    'lon': {'N': '-0.100000'},
+                    'lad': {'S': 'E09000033'},
+                }
+            }
+            result = app._lookup_postcode_local(clean)
+            self.assertEqual(result['postcode'], spaced, msg=f'key {clean!r}')
+
+    def test_404_wording_is_the_shipped_string(self):
+        # Audit L5 was resolved by RESTORING the pre-NSPL wording rather than
+        # making it table-aware. This string is a public API surface — it is
+        # what score-demo/openapi.yaml documents for 404 — and the feature's
+        # whole forward-compatibility promise is that an unset POSTCODE_TABLE
+        # leaves behaviour byte-identical. Rewording it is a breaking change
+        # and must ship together with the OpenAPI description, so pin both.
+        self._stub_ddb(None)
+        with patch.object(app, '_fetch_postcode', return_value=None):
+            body, status = app.resolve_query({'postcode': 'ZZ99 9ZZ'})
+        self.assertEqual(status, 404)
+        self.assertEqual(body['error'], 'Postcode not recognised by postcodes.io: ZZ99 9ZZ')
+
+        spec = os.path.join(
+            os.path.dirname(__file__), '..', '..', 'score-demo', 'openapi.yaml',
+        )
+        with open(spec, encoding='utf-8') as fh:
+            self.assertIn('Postcode not recognised by postcodes.io', fh.read())
+
+
+class ParseBoolFlagTests(unittest.TestCase):
+    """audit L1a — `includeTerminated` arrives as a string from API Gateway's
+    query-string map and as a native JSON type from a POST body. The shipped
+    code did `(query.get('includeTerminated') or '').strip()`, so a JSON
+    `true` raised AttributeError inside a batch worker and 500'd all 100
+    queries. parse_bool_flag must therefore coerce every JSON type and never
+    call a string method on an unvalidated value."""
+
+    def test_native_booleans_pass_through(self):
+        # isinstance(raw, bool) is checked FIRST on purpose: bool subclasses
+        # int, so an int-first implementation would still be correct here but
+        # for the wrong reason, and would silently change if the int branch
+        # ever grew a range check.
+        self.assertIs(app.parse_bool_flag(True), True)
+        self.assertIs(app.parse_bool_flag(False), False)
+
+    def test_string_forms_from_the_query_string(self):
+        for raw in ('1', 'true', 'TRUE', ' True ', 'yes', 'Y', 'on'):
+            self.assertTrue(app.parse_bool_flag(raw), msg=repr(raw))
+        for raw in ('0', 'false', 'no', 'off', '', '   ', 'maybe'):
+            self.assertFalse(app.parse_bool_flag(raw), msg=repr(raw))
+
+    def test_numeric_forms(self):
+        self.assertTrue(app.parse_bool_flag(1))
+        self.assertTrue(app.parse_bool_flag(2))
+        self.assertTrue(app.parse_bool_flag(1.5))
+        self.assertFalse(app.parse_bool_flag(0))
+        self.assertFalse(app.parse_bool_flag(0.0))
+
+    def test_hostile_types_are_falsey_and_never_raise(self):
+        # The actual crash class. A caller can put anything in a JSON body,
+        # and every one of these used to reach `.strip()`.
+        for raw in (None, {}, {'nested': 1}, [], ['true'], object()):
+            self.assertFalse(app.parse_bool_flag(raw), msg=repr(raw))
+
+    def test_truthy_flags_are_lower_case(self):
+        # parse_bool_flag lower-cases before the membership test, so an
+        # upper-case entry in the set would be permanently unreachable.
+        self.assertEqual(app.TRUTHY_FLAGS, {f.lower() for f in app.TRUTHY_FLAGS})
+
+
+class BatchIsolationTests(_LocalTierFixture, unittest.TestCase):
+    """audit L1 — /v1/score/batch promises, in score-demo/openapi.yaml, that
+    "failures do not abort the batch". Both halves of L1 broke that promise
+    in the same way: one bad query took down its 99 siblings and the caller
+    got a bare 500 with no indication of which query was at fault."""
+
+    def _post(self, queries):
+        return app.handler(
+            {'httpMethod': 'POST', 'body': json.dumps({'queries': queries})}, None,
+        )
+
+    def test_json_native_boolean_flag_does_not_500_the_batch(self):
+        # THE regression. Before parse_bool_flag this exact body returned
+        # statusCode 500 / {"error": "Internal server error"} with an
+        # AttributeError ('bool' object has no attribute 'strip') escaping
+        # run_one, through ex.map, into the handler's catch-all.
+        self._stub_ddb_rows({'BR11HB': _NSPL_BR1_1HB, 'SW111AA': _NSPL_SW11_1AA})
+        queries = [{'postcode': 'BR1 1HB', 'includeTerminated': True}]
+        queries += [{'postcode': 'SW11 1AA'} for _ in range(99)]
+
+        with self._no_network():
+            resp = self._post(queries)
+
+        self.assertEqual(resp['statusCode'], 200)
+        body = json.loads(resp['body'])
+        self.assertEqual(body['totalQueries'], 100)
+        self.assertEqual(body['successCount'], 100)
+        self.assertEqual(body['errorCount'], 0)
+        # The flag was not merely tolerated, it was honoured.
+        self.assertEqual(body['results'][0]['location']['postcodeStatus'], 'terminated')
+        self.assertEqual(body['results'][0]['location']['postcodeTerminatedDate'], '1984-12')
+        # ...and the 99 siblings that did NOT opt in are unaffected by it.
+        self.assertTrue(all(r['status'] == 200 for r in body['results'][1:]))
+        self.assertNotIn('postcodeStatus', body['results'][1]['location'])
+
+    def test_integer_and_hostile_flag_types_also_survive(self):
+        # Integer 1 failed identically to `true` before the fix; a dict is the
+        # shape a fuzzing client sends and must simply read as False.
+        self._stub_ddb_rows({'BR11HB': _NSPL_BR1_1HB, 'SW111AA': _NSPL_SW11_1AA})
+        queries = [
+            {'postcode': 'BR1 1HB', 'includeTerminated': 1},
+            {'postcode': 'SW11 1AA', 'includeTerminated': {'nested': True}},
+            {'postcode': 'SW11 1AA', 'includeTerminated': ['true']},
+            {'postcode': 'SW11 1AA', 'includeTerminated': None},
+        ]
+        with self._no_network():
+            resp = self._post(queries)
+
+        self.assertEqual(resp['statusCode'], 200)
+        body = json.loads(resp['body'])
+        self.assertEqual(body['successCount'], 4)
+        self.assertEqual(body['results'][0]['location']['postcodeStatus'], 'terminated')
+
+    def test_one_exploding_query_does_not_abort_its_siblings(self):
+        # audit L1b. resolve_query has several parameters that still do
+        # `(query.get(x) or '').strip()` (compare, city, persona, postcode,
+        # borough), so a JSON POST body of {"city": 123} still raises today.
+        # That is deliberately left as pre-existing behaviour — but the blast
+        # radius must be one slot, not the whole batch. Simulated here with a
+        # synthetic raise so the test does not encode which parameter happens
+        # to be brittle this week.
+        self._stub_ddb_rows({'SW111AA': _NSPL_SW11_1AA})
+        real_parse_weights = app.parse_weights
+
+        def exploding_parse_weights(raw):
+            if raw == 'synthetic-boom':
+                raise RuntimeError('synthetic per-query failure')
+            return real_parse_weights(raw)
+
+        queries = [{'postcode': 'SW11 1AA', 'weights': 'synthetic-boom'}]
+        queries += [{'postcode': 'SW11 1AA'} for _ in range(99)]
+
+        with self._no_network(), \
+             patch.object(app, 'parse_weights', exploding_parse_weights), \
+             self.assertLogs(app.logger, level='ERROR') as logs:
+            resp = self._post(queries)
+
+        self.assertEqual(resp['statusCode'], 200)
+        body = json.loads(resp['body'])
+        self.assertEqual(body['successCount'], 99)
+        self.assertEqual(body['errorCount'], 1)
+        # Exactly the per-item shape the result-assembly loop already emits
+        # for a 400 or a 404, so no client needs to learn a new envelope.
+        self.assertEqual(
+            body['results'][0],
+            {'queryIndex': 0, 'status': 500, 'error': 'Internal server error'},
+        )
+        # The failure is diagnosable from CloudWatch...
+        self.assertTrue(any('synthetic' in line for line in logs.output))
+        # ...and from nowhere else. No traceback, no exception message, no
+        # internal detail reaches the caller.
+        self.assertNotIn('synthetic', resp['body'])
+        self.assertNotIn('RuntimeError', resp['body'])
+
+    def test_non_dict_query_is_a_per_item_400(self):
+        # The pre-existing guard, pinned so the new try/except around
+        # resolve_query cannot quietly turn a clear 400 into a vague 500.
+        self._stub_ddb_rows({'SW111AA': _NSPL_SW11_1AA})
+        with self._no_network():
+            resp = self._post([{'postcode': 'SW11 1AA'}, 'not-an-object', None])
+
+        self.assertEqual(resp['statusCode'], 200)
+        body = json.loads(resp['body'])
+        self.assertEqual(body['successCount'], 1)
+        self.assertEqual(body['errorCount'], 2)
+        self.assertEqual(body['results'][1]['status'], 400)
+        self.assertEqual(body['results'][1]['error'], 'Query must be an object.')
+
+    def test_results_stay_in_submission_order(self):
+        # Callers zip results back onto their own input rows by position, so
+        # the per-query error path must not reorder anything.
+        self._stub_ddb_rows({'SW111AA': _NSPL_SW11_1AA})
+        queries = [{'postcode': 'SW11 1AA'} for _ in range(20)]
+        queries[7] = {'city': 'atlantis', 'borough': 'Wandsworth'}
+        with self._no_network():
+            resp = self._post(queries)
+
+        body = json.loads(resp['body'])
+        self.assertEqual([r['queryIndex'] for r in body['results']], list(range(20)))
+        self.assertEqual(body['results'][7]['status'], 400)
+
+
+class DdbClientTests(unittest.TestCase):
+    """audit L2 + L3 — the shared DynamoDB client factory.
+
+    These deliberately do NOT patch _get_ddb_client: it is the function under
+    test. Every other DynamoDB test in this file stubs it out, which is what
+    let both defects sit in a fully-covered file — a construction failure
+    escaping _lookup_postcode_local's documented never-raises contract, and a
+    60s/60s botocore default inside a 28s Lambda."""
+
+    def setUp(self):
+        self._saved_client = (app._DDB_CLIENT, app._DDB_IMPORT_FAILED)
+        app._DDB_CLIENT = None
+        app._DDB_IMPORT_FAILED = False
+        self._saved_cache = (app._postcode_cache_get, app._postcode_cache_put)
+        app._postcode_cache_get, app._postcode_cache_put = app._make_lru(512)
+        self._saved_raster_cache = (app._raster_cache_get, app._raster_cache_put)
+        app._raster_cache_get, app._raster_cache_put = app._make_lru(2048)
+        self._saved_tables = (app.POSTCODE_TABLE, app.NOISE_RASTER_TABLE)
+        app.POSTCODE_TABLE = 'london-flight-map-postcodes'
+        app.NOISE_RASTER_TABLE = 'london-flight-map-noise-raster'
+        self.addCleanup(self._restore_module_state)
+
+    def _restore_module_state(self):
+        app._DDB_CLIENT, app._DDB_IMPORT_FAILED = self._saved_client
+        app._postcode_cache_get, app._postcode_cache_put = self._saved_cache
+        app._raster_cache_get, app._raster_cache_put = self._saved_raster_cache
+        app.POSTCODE_TABLE, app.NOISE_RASTER_TABLE = self._saved_tables
+
+    @staticmethod
+    def _patch_boto3_client(**kwargs):
+        """Patch boto3.client itself — the call _get_ddb_client makes — rather
+        than the factory around it."""
+        import boto3
+
+        return patch.object(boto3, 'client', **kwargs)
+
+    def test_construction_failure_returns_none_instead_of_raising(self):
+        # NoRegionError, a malformed endpoint override and a broken shared
+        # config file all raise HERE, outside every `except (BotoCoreError,
+        # ClientError)` the two lookup functions have.
+        with self._patch_boto3_client(side_effect=RuntimeError('NoRegionError')):
+            self.assertIsNone(app._get_ddb_client())
+            self.assertIsNone(app._lookup_postcode_local('SW111AA'))
+            self.assertIsNone(app._lookup_lden_raster('SW111AA'))
+
+    def test_construction_failure_degrades_to_postcodes_io(self):
+        # The behaviour that matters to a caller: the NSPL tier going dark
+        # must be indistinguishable from a table miss.
+        sentinel = {'postcode': 'SW11 1AA', 'admin_district': 'Wandsworth'}
+        with self._patch_boto3_client(side_effect=RuntimeError('NoRegionError')), \
+             patch.object(app, '_fetch_postcode', return_value=sentinel) as fetch:
+            result = app.lookup_postcode('SW11 1AA')
+        self.assertIs(result, sentinel)
+        fetch.assert_called_once_with('SW111AA')
+
+    def test_construction_failure_is_not_latched(self):
+        # Deliberately unlike the ImportError, which IS latched. Construction
+        # failures are usually environmental and often transient; latching one
+        # would silently disable both DynamoDB tables for the whole ~15-minute
+        # warm-container lifetime, which is exactly the failure this feature's
+        # forward-compatible design makes hardest to notice.
+        with self._patch_boto3_client(side_effect=RuntimeError('transient')):
+            self.assertIsNone(app._get_ddb_client())
+        self.assertFalse(app._DDB_IMPORT_FAILED)
+        self.assertIsNone(app._DDB_CLIENT)
+
+        recovered = MagicMock(name='ddb')
+        with self._patch_boto3_client(return_value=recovered):
+            self.assertIs(app._get_ddb_client(), recovered)
+
+    def test_client_carries_bounded_timeouts(self):
+        # audit L3. botocore defaults to 60s connect and 60s read; the
+        # function's Timeout is 28s (backend/template.yaml), so a DynamoDB
+        # stall used to blow the function timeout and return 502 instead of
+        # quietly deferring to postcodes.io.
+        captured = {}
+
+        def _capture(service, **kwargs):
+            captured['service'] = service
+            captured.update(kwargs)
+            return MagicMock(name='ddb')
+
+        with self._patch_boto3_client(side_effect=_capture):
+            self.assertIsNotNone(app._get_ddb_client())
+
+        self.assertEqual(captured['service'], 'dynamodb')
+        config = captured['config']
+        self.assertEqual(config.connect_timeout, 1)
+        self.assertEqual(config.read_timeout, 2)
+        # total_max_attempts is a TOTAL (initial + retries), unlike
+        # max_attempts which is the retry count — so this bound reads the same
+        # whichever botocore retry mode is in force.
+        attempts = config.retries['total_max_attempts']
+        self.assertEqual(attempts, 2)
+        # The arithmetic the comment in app.py claims: worst case must leave
+        # room for the 5s postcodes.io fallback that follows a DDB failure.
+        worst_case = attempts * (config.connect_timeout + config.read_timeout)
+        self.assertLess(worst_case + 5, 28, 'DDB retry budget no longer fits the 28s timeout')
+
+    def test_concurrent_cold_start_builds_exactly_one_client(self):
+        # /v1/score/batch launches BATCH_PARALLELISM workers that now all
+        # reach _get_ddb_client() on a cold container with no preceding I/O to
+        # stagger them — the NSPL lookup is the first thing each worker does,
+        # unlike the raster lookup which sat behind a ~200ms postcodes.io round
+        # trip. boto3's module-level default session is documented as not
+        # thread-safe. The sleep widens the window the double-checked lock
+        # closes; without the lock this builds BATCH_PARALLELISM clients.
+        built = []
+        barrier = threading.Barrier(app.BATCH_PARALLELISM)
+
+        def _slow_client(service, **kwargs):
+            built.append(service)
+            time.sleep(0.02)
+            return MagicMock(name='ddb')
+
+        clients = []
+
+        def _worker():
+            barrier.wait()
+            clients.append(app._get_ddb_client())
+
+        with self._patch_boto3_client(side_effect=_slow_client):
+            threads = [threading.Thread(target=_worker) for _ in range(app.BATCH_PARALLELISM)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+        self.assertEqual(len(built), 1)
+        self.assertEqual(len(clients), app.BATCH_PARALLELISM)
+        self.assertEqual(len({id(c) for c in clients}), 1)
+
+    def test_warm_path_reuses_the_cached_client(self):
+        first = MagicMock(name='ddb')
+        with self._patch_boto3_client(return_value=first):
+            self.assertIs(app._get_ddb_client(), first)
+        # boto3.client is un-patched now, so a second construction would build
+        # a real client and this identity check would fail.
+        self.assertIs(app._get_ddb_client(), first)
+
+    def test_table_unset_still_short_circuits_before_any_client(self):
+        # The forward-compatibility guarantee, re-asserted against the real
+        # factory: POSTCODE_TABLE is unset in production today.
+        app.POSTCODE_TABLE = ''
+        with self._patch_boto3_client(side_effect=AssertionError('client built')):
+            self.assertIsNone(app._lookup_postcode_local('SW111AA'))
+
+
+class LruConcurrencyTests(unittest.TestCase):
+    """audit L6 — _make_lru's get() tested membership and then called
+    move_to_end as separate bytecode sequences, so a concurrent put() whose
+    popitem evicted the LRU tail in between raised KeyError on the very key
+    get() had just found. /v1/score/batch runs BATCH_PARALLELISM threads over
+    these shared caches, and the escaping KeyError turned 100 resolvable
+    queries into one 500."""
+
+    def test_get_and_put_are_safe_under_concurrent_access(self):
+        # maxsize 8 against 8 threads keeps the cache permanently full and
+        # evicting on nearly every put — the state a sustained 100k-postcode
+        # backfill puts the real 512-entry cache into, and the state that
+        # holds the race window open.
+        get, put = app._make_lru(8)
+        errors = []
+        deadline = time.monotonic() + 0.4
+
+        def _hammer(tid):
+            i = 0
+            try:
+                while time.monotonic() < deadline:
+                    put(f'{tid}-{i}', {'v': i})   # unique key, forces eviction
+                    put('hot', {'v': i})          # shared key, forces move_to_end
+                    get('hot')                    # the call that used to raise
+                    get(f'{tid}-{i}')
+                    i += 1
+            except Exception as exc:  # noqa: BLE001 — recording the race IS the test
+                errors.append(f'{tid}: {exc!r}')
+
+        threads = [threading.Thread(target=_hammer, args=(t,)) for t in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(errors, [], f'LRU raced under concurrent access: {errors[:3]}')
+
+    def test_none_is_still_never_cached(self):
+        # The do-not-cache-None semantics must survive the locking change: a
+        # cached None would re-serve a transient DDB throttle or a
+        # postcodes.io blip as a sticky 404 for the warm-container lifetime.
+        get, put = app._make_lru(4)
+        put('k', None)
+        self.assertIsNone(get('k'))
+        put('k', {'v': 1})
+        self.assertEqual(get('k'), {'v': 1})
+
+    def test_eviction_is_still_least_recently_used(self):
+        get, put = app._make_lru(2)
+        put('a', 1)
+        put('b', 2)
+        get('a')      # 'a' is now the most recently used
+        put('c', 3)   # so 'b' is the one evicted
+        self.assertEqual(get('a'), 1)
+        self.assertIsNone(get('b'))
+        self.assertEqual(get('c'), 3)
 
 
 if __name__ == '__main__':

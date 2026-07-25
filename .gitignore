@@ -54,3 +54,7 @@ data/*
 # DEFRA publishes a new Round of strategic noise mapping.
 !data/aircraft-noise-london-lden.png
 .defra_load_checkpoint
+# Loader resume state (plus its .tmp sibling from the atomic write). Committing
+# one is actively dangerous: this repo syncs only via git, so another device
+# would silently resume a load it never ran and then stamp __META__ for it.
+.nspl_load_checkpoint*
