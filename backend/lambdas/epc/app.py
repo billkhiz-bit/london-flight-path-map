@@ -64,7 +64,29 @@ def handler(event, context):
             with urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode())
         except HTTPError as exc:
-            if exc.code == 401:
+            # 403, not 401, is what MHCLG actually returns for a rejected
+            # bearer token — verified 2026-07-26 against the live service with
+            # a deliberately invalid token (a valid token on a postcode with no
+            # certificates returns 404, so the two are cleanly distinguishable).
+            # This branch was 401-only from the 2026-05-30 migration until then,
+            # i.e. unreachable: a real expiry fell through to the generic 502
+            # below and broke the whole property page instead of quietly hiding
+            # the EPC panel, which is the entire point of degrading here.
+            #
+            # Logged at ERROR because the graceful body is indistinguishable
+            # from "no data" to a caller. An expired token that degrades
+            # silently is how the signup funnel stayed dead for 2.5 months;
+            # this at least leaves a signal in CloudWatch for whoever can read
+            # it. Response shape is deliberately unchanged — the user-facing
+            # contract stays graceful, only the operator signal is added.
+            if exc.code in (401, 403):
+                logger.error(
+                    'EPC bearer token rejected by MHCLG (HTTP %s) — rotate '
+                    'EPC_BEARER_TOKEN from the My account page on '
+                    'get-energy-performance-data.communities.gov.uk and '
+                    'redeploy. EPC panel is degraded until then.',
+                    exc.code,
+                )
                 return response(
                     200,
                     {

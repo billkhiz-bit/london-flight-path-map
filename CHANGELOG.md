@@ -33,6 +33,22 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   first run — 2.7M rows is hours of loading to rebuild. All four tables updated
   in place, no replacement, no data disturbed (signups 1, favourites 14,
   noise-raster 423,481 all intact).
+- **EPC auth-failure handling fixed and deployed.** `lambdas/epc/app.py` now
+  treats `403` — what MHCLG actually returns for a rejected bearer token,
+  verified against the live service with a control request — the same as `401`,
+  so a token expiry degrades to `available: false` and quietly hides the EPC
+  panel instead of falling through to a generic `502` that breaks the whole
+  property page. `401` is retained alongside it; the upstream contract is not
+  ours to assume. The rejection is now also logged at ERROR with rotation
+  instructions: the graceful body is indistinguishable from "no data" to a
+  caller, and a silently-degrading auth failure is exactly how the signup
+  funnel stayed dead for two and a half months. Response shape deliberately
+  unchanged — the user-facing contract stays graceful, only the operator
+  signal is new. Three tests added (`401`/`403` both degrade, `500` still
+  surfaces as `502` so the branch can't swallow unrelated failures, `404`
+  still means "no certificates"); 125 backend tests green. Verified live
+  post-deploy: `N1 7SX` returns 76 certificates with a summary, `SW1A1AA`
+  returns `available: true, count: 0`.
 - **NSPL loader started.** Self-test green (BOM, 36-column header, 33-borough
   map, spaced-postcode invariant, sentinel rule), dry-run item shape verified,
   5,000-row real-write smoke test wrote 4,999 (1 unpositioned, correctly
@@ -58,12 +74,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   (`/epc` GET 3/6 new, `/v1/score/batch` 5/10 → 10/20, `/v1/score` GET 40/80 now
   declared in source rather than surviving as console drift); CORS and the
   2026-07-24/25 fix waves are live. No resource replacements.
-- **Known issue found, not fixed**: `lambdas/epc/app.py:62` branches on HTTP
-  `401` to return the graceful "token invalid or expired" body, but MHCLG
-  returns **`403`** for a rejected bearer token (confirmed against the live
-  service). That branch is unreachable; an expired token will fall through to
-  the generic `502` and break the property page instead of quietly hiding the
-  EPC panel.
+- **Known issue found here, fixed later the same day** (see the entry above):
+  `lambdas/epc/app.py` branched on HTTP `401` to return the graceful "token
+  invalid or expired" body, but MHCLG returns **`403`** for a rejected bearer
+  token. That branch was unreachable.
 
 ### 2026-07-25 — Test coverage for the local ONS NSPL postcode-resolution tier
 

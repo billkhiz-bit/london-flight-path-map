@@ -470,6 +470,47 @@ class EpcHandlerTests(unittest.TestCase):
         result = self.app.handler({'queryStringParameters': None}, None)
         self.assertEqual(result['statusCode'], 400)
 
+    def _invoke_with_upstream_status(self, status):
+        """Drive the handler with a token set and a chosen upstream HTTP error."""
+        from urllib.error import HTTPError  # noqa: PLC0415
+
+        err = HTTPError('https://example.invalid', status, 'err', {}, None)
+        with patch.dict(os.environ, {'EPC_BEARER_TOKEN': 'test-token'}), \
+             patch.object(self.app, 'urlopen', side_effect=err):
+            return self.app.handler(
+                {'queryStringParameters': {'postcode': 'SW1A 1AA'}}, None
+            )
+
+    def test_rejected_token_degrades_gracefully(self):
+        """MHCLG answers 403 — not 401 — for a rejected bearer token.
+
+        Verified against the live service 2026-07-26. Both must degrade to a
+        200 with available=False so the EPC panel hides quietly; falling
+        through to the generic 502 breaks the whole property page, which is
+        precisely what this branch exists to prevent. 401 is kept alongside
+        403 because the upstream contract is not ours to assume.
+        """
+        for status in (401, 403):
+            with self.subTest(status=status):
+                result = self._invoke_with_upstream_status(status)
+                self.assertEqual(result['statusCode'], 200)
+                body = json.loads(result['body'])
+                self.assertFalse(body['available'])
+                self.assertIn('token', body['message'].lower())
+
+    def test_other_upstream_errors_still_surface_as_502(self):
+        """The graceful branch must not swallow unrelated upstream failures."""
+        result = self._invoke_with_upstream_status(500)
+        self.assertEqual(result['statusCode'], 502)
+
+    def test_upstream_404_means_no_certificates_not_an_error(self):
+        """404 is 'no certificates match' per the MHCLG docs, not a failure."""
+        result = self._invoke_with_upstream_status(404)
+        self.assertEqual(result['statusCode'], 200)
+        body = json.loads(result['body'])
+        self.assertTrue(body['available'])
+        self.assertEqual(body['count'], 0)
+
 
 if __name__ == '__main__':
     unittest.main()
