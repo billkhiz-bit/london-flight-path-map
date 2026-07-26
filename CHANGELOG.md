@@ -6,6 +6,39 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-26 (later) — Frontend batch deployed; DynamoDB tables made unloseable
+
+- **Frontend batch is live.** `index.html`, `sw.js`, `js/api-base.js` and
+  `score-demo/index.html` had all drifted from S3 — the 2026-07-25 commit was
+  committed but never deployed, so the search-flow race (one postcode's EPC and
+  sold-price data rendered under a *different* postcode's heading, a terminal
+  state that never self-corrects) was live on skyscore.co.uk the whole time.
+  Deployed with a 9-path CloudFront invalidation. Post-deploy gates: live web
+  serves the CLASSIC layout at 360/390/414 with zero horizontal overflow
+  (web/native split intact), live `index.html`/`sw.js` hash byte-identical to
+  local, all 8 surfaces 200 with correct content-types, live API suite 5/5.
+- **Ordering note for the `api.skyscore.co.uk` switchover.** The `sw.js`
+  cache-first fix is now live, but service workers only update on navigation,
+  so installed PWAs adopt it on their next visit. `js/api-base.js` still points
+  at the raw execute-api URL, which keeps working regardless. Correct sequence:
+  **sw.js live (done) → set the Cloudflare CNAME → only then repoint
+  `api-base.js`.** Repointing early is what strands installed PWAs.
+- **`DeletionPolicy: Retain` + `UpdateReplacePolicy: Retain` on all four
+  DynamoDB tables.** This closes two interacting risks at once. `flightmap-dev`
+  has no `dynamodb:DeleteTable` grant, so any rollback needing to delete a
+  table would be *denied*, wedging the stack in `UPDATE_ROLLBACK_FAILED` with
+  no self-recovery path; and the data itself was unprotected. `Retain` means
+  CFN never attempts the delete, so the missing grant can never bite and the
+  rows survive either way. Applied deliberately **before** the NSPL loader's
+  first run — 2.7M rows is hours of loading to rebuild. All four tables updated
+  in place, no replacement, no data disturbed (signups 1, favourites 14,
+  noise-raster 423,481 all intact).
+- **NSPL loader started.** Self-test green (BOM, 36-column header, 33-borough
+  map, spaced-postcode invariant, sentinel rule), dry-run item shape verified,
+  5,000-row real-write smoke test wrote 4,999 (1 unpositioned, correctly
+  skipped). Full run in progress. Note `ItemCount` on a DynamoDB table refreshes
+  only every ~6 hours — verify loads with `get-item`, not `describe-table`.
+
 ### 2026-07-26 — Backend deployed; signup funnel actually fixed (second IAM fault)
 
 - **`POST /v1/signup` returns 201 again**, verified live. The funnel had been

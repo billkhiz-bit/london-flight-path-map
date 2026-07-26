@@ -544,6 +544,10 @@ Resources:
   # creation). Stores keyId for revocation, createdAt for analytics.
   SignupsTable:
     Type: AWS::DynamoDB::Table
+    # See PostcodeTable for the rationale — customer signup records are the
+    # least replaceable data in the stack.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: london-flight-map-signups
       AttributeDefinitions:
@@ -568,6 +572,10 @@ Resources:
   # See scripts/load_defra_raster.py for the loader runbook.
   NoiseRasterTable:
     Type: AWS::DynamoDB::Table
+    # See PostcodeTable — 423,481 DEFRA raster rows, hours of offline loading
+    # to rebuild from the GeoTIFF.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       # Name matches the london-flight-map-* IAM-policy prefix used by the
       # flightmap-dev deploy user, see backend/iam-policy.json.
@@ -598,6 +606,15 @@ Resources:
   # tables share a key space and can be joined or merged without a re-key.
   PostcodeTable:
     Type: AWS::DynamoDB::Table
+    # Retain protects ~2.7M loaded rows AND keeps the stack recoverable.
+    # `flightmap-dev` has no dynamodb:DeleteTable grant, so a rollback that
+    # needs to delete a table is DENIED — wedging the stack in
+    # UPDATE_ROLLBACK_FAILED, which this deploy user cannot self-recover from.
+    # Retain makes CFN never attempt the delete, so the missing grant can
+    # never bite and the data survives regardless. Applied to all four tables
+    # 2026-07-26, before the NSPL loader's first run.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       # Name matches the london-flight-map-* IAM-policy prefix used by the
       # flightmap-dev deploy user, see backend/iam-policy.json.
@@ -627,6 +644,10 @@ Resources:
   # --- DynamoDB Table ---
   FavouritesTable:
     Type: AWS::DynamoDB::Table
+    # See PostcodeTable — user-saved properties, keyed to device tokens that
+    # cannot be reissued, so a lost table is unrecoverable for those users.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: london-flight-map-favourites
       AttributeDefinitions:
