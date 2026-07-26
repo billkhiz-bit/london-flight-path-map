@@ -147,8 +147,9 @@ WHAT IT LOADS AND WHAT IT SKIPS:
 
 EXPECTED RUNTIME, COST AND RESUMABILITY:
 
-  MEASURED 2026-07-26 (first real full run): ~130 rows/s sustained at the
-  default 64 workers, so 2,699,393 rows takes ~6-7 HOURS. Plan around that.
+  MEASURED 2026-07-26 (first real full run, start to finish): 2,699,393 rows
+  in 5.80 HOURS wall-clock, ~129 rows/s sustained at the default 64 workers.
+  Plan around ~6 hours.
 
   The estimate this paragraph used to carry — ~1,300/s and ~35 minutes — was
   roughly 10x optimistic and should not be trusted again. It extrapolated

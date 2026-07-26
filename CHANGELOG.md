@@ -49,11 +49,38 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   still means "no certificates"); 125 backend tests green. Verified live
   post-deploy: `N1 7SX` returns 76 certificates with a summary, `SW1A1AA`
   returns `available: true, count: 0`.
-- **NSPL loader started.** Self-test green (BOM, 36-column header, 33-borough
-  map, spaced-postcode invariant, sentinel rule), dry-run item shape verified,
-  5,000-row real-write smoke test wrote 4,999 (1 unpositioned, correctly
-  skipped). Full run in progress. Note `ItemCount` on a DynamoDB table refreshes
-  only every ~6 hours — verify loads with `get-item`, not `describe-table`.
+- **NSPL load COMPLETE** — the local postcode tier is live. Self-test green
+  (BOM, 36-column header, 33-borough map, spaced-postcode invariant, sentinel
+  rule), dry-run item shape verified, 5,000-row smoke test wrote 4,999
+  (1 unpositioned, correctly skipped), then the full run:
+
+  | | |
+  |---|---|
+  | Written | **2,699,393** postcodes |
+  | Skipped | 24,203 (unpositioned / no geography / Channel Islands + IoM) |
+  | Terminated (tagged `dt`) | 904,453 |
+  | London (tagged `b`) | **332,308** |
+  | Spaced-form mismatches | **0** |
+  | Wall-clock | **5.80 hours** at ~129 rows/s |
+  | Vintage | **2026-02** (see the roll note below) |
+
+  `__META__` provenance item written: vintage, row counts, OGL v3.0 source and
+  load policy, so the table self-documents which edition it holds.
+- **Load verified by spot-check, not by `ItemCount`** (which refreshes only
+  every ~6 hours and read 0 throughout). Ten `get-item` probes all correct,
+  including the two boundary cases the loader itself nominates: `SW11 1AA` →
+  Wandsworth, `E1 6AN` → **City of London** (the borough-boundary check),
+  `BR1 1HB` → Bromley with `dt=198412, q=8` as predicted. Controls confirm
+  non-London rows carry **no** `b` attribute (`M1 1AA` → Manchester LAD only,
+  `EH1 1YZ` → Edinburgh), which is what keeps the existing "borough not
+  supported" 404 byte-identical.
+- **Vintage debt, tracked:** this is the **February 2026** NSPL edition, loaded
+  on 26 July — verified from the data (`max(dointr) = 202601`), not from the
+  hardcoded `NSPL_VINTAGE` constant. May 2026 already existed and August is due
+  within weeks. Harmless by design: post-Feb postcodes simply miss and fall
+  back to postcodes.io, so the tier is degraded-but-never-wrong. **Roll to the
+  August edition when it ships**, and grant `dynamodb:BatchWriteItem` first —
+  that is the ~25× speedup, not more workers.
 
 ### 2026-07-26 — Backend deployed; signup funnel actually fixed (second IAM fault)
 
