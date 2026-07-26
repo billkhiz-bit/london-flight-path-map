@@ -54,7 +54,8 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 
 ### Operational visibility
 
-- **CloudWatch logs** on every Lambda invocation; default 90-day retention. Structured `[SIGNUP_ORPHAN_KEY]` prefix on the orphan-key path for metric filter / alarm setup.
+- **CloudWatch logs** on every Lambda invocation. Structured `[SIGNUP_ORPHAN_KEY]` prefix on the orphan-key path for metric filter / alarm setup.
+- **Log retention is currently unlimited — corrected 2026-07-26.** This section previously claimed "default 90-day retention"; that was wrong. Log groups created implicitly by Lambda have **no** retention policy, and all 13 groups in this account (7 active + 6 orphaned from removed functions) read `retentionInDays: none`, i.e. *Never Expire*. **Open remediation**, tracked in `ROADMAP.md`: set 30-day retention on the active groups and delete the 6 orphans. The deploy user lacks `logs:PutRetentionPolicy`, so this is a console action. Note the signup Lambda logged raw email addresses until 2026-07-23, so those entries persist in the `SignupFunction` group until retention is applied.
 - **Public status page** at <https://skyscore.co.uk/score-demo/status.html> ping-checks all live endpoints every 60s.
 - **Self-performed audits** quarterly via the 3-agent + manual process documented in [`AUDIT_REPORT.md`](./AUDIT_REPORT.md). External penetration test deferred until first paying enterprise customer.
 - **Billing alarm setup runbook** in [`AWS_BILLING_ALARM_SETUP.md`](./AWS_BILLING_ALARM_SETUP.md). Threshold $20 USD; would have caught today's "AI Lambda routes left open" defect within hours.
@@ -64,7 +65,7 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 - **AWS** is the sole sub-processor of customer data (eu-west-2). See [`LICENSING.md`](./LICENSING.md) for full data-source licensing.
 - **Cloudflare** provides DNS and domain-registration only (no access to API requests, responses, or customer data).
 - **GoatCounter** provides consumer-site analytics on the marketing surface only (no API traffic, no PII, EU-hosted).
-- All non-trivial dependencies tracked in `package.json` / per-Lambda `requirements.txt`. `npm audit` is part of the [`/preflight`](./.claude/skills/preflight/SKILL.md) check before every commit.
+- **The Lambdas have no third-party Python dependencies at all** — every handler imports only the standard library plus the `boto3`/`botocore` provided by the AWS runtime. There are no per-Lambda `requirements.txt` files (an earlier version of this line claimed there were), so the backend has no PyPI supply-chain surface to audit. Frontend/tooling dependencies are tracked in `package.json` and `npm audit` runs as part of the [`/preflight`](./.claude/skills/preflight/SKILL.md) check before every commit.
 
 ### Code + change discipline
 

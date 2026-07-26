@@ -73,7 +73,7 @@ USAGE (a four-rung escalation ladder, climb it in order):
   #    credentials. ~10 seconds. Leaves the checkpoint untouched.
   AWS_PROFILE=flightmap python scripts/load_nspl.py --limit 5000
 
-  # 4. The full run. ~30-60 minutes, resumable, ~GBP 1.50 one-off.
+  # 4. The full run. ~6-7 HOURS (measured 2026-07-26), resumable, ~GBP 1.50.
   AWS_PROFILE=flightmap python scripts/load_nspl.py
 
 WHAT IT LOADS AND WHAT IT SKIPS:
@@ -147,10 +147,27 @@ WHAT IT LOADS AND WHAT IT SKIPS:
 
 EXPECTED RUNTIME, COST AND RESUMABILITY:
 
-  The DEFRA loader observed ~500 writes/s at 25 workers. At the default 64
-  workers expect ~1,300/s, so 2,699,393 rows in ~35 minutes. Budget 30-60
-  minutes; a brand-new PAY_PER_REQUEST table ramps its capacity rather
-  than starting at full throughput, so the first few minutes are slower.
+  MEASURED 2026-07-26 (first real full run): ~130 rows/s sustained at the
+  default 64 workers, so 2,699,393 rows takes ~6-7 HOURS. Plan around that.
+
+  The estimate this paragraph used to carry — ~1,300/s and ~35 minutes — was
+  roughly 10x optimistic and should not be trusted again. It extrapolated
+  linearly from the DEFRA loader's ~500 writes/s at 25 workers, which assumed
+  both that throughput scales with worker count and that per-item PutItem
+  matches BatchWriteItem throughput (see the note above _flush_batch). Neither
+  held. The run is CPU-bound on the CLIENT, not throttled by DynamoDB: 2.7M
+  individual HTTPS requests each pay TLS plus SigV4 signing, and the process
+  burns far more CPU than an I/O-bound job should. Raising --workers will not
+  fix this and may make it worse.
+
+  THE REAL FIX FOR THE NEXT QUARTERLY ROLL is one line of IAM: grant
+  dynamodb:BatchWriteItem on london-flight-map-* in backend/iam-policy.json,
+  then switch _flush_batch to BatchWriteItem (25 items per signed request,
+  ~25x fewer round trips). The current per-item design exists ONLY because
+  that action is not granted, not because it is preferable.
+
+  A brand-new PAY_PER_REQUEST table also ramps its capacity rather than
+  starting at full throughput, so the first few minutes are slower still.
 
   Throttling is handled by boto3 adaptive retry (max_attempts 10), which
   adds client-side rate limiting when DynamoDB pushes back, so the run
@@ -638,7 +655,11 @@ def _flush_batch(ddb, items, workers):
     """Write a buffered batch of already-mapped items to DynamoDB.
 
     Parallel per-item PutItem, never BatchWriteItem and never the boto3
-    resource-level batch_writer(). flightmap-dev's IAM policy grants PutItem /
+    resource-level batch_writer(). MEASURED 2026-07-26: this reaches only
+    ~130 rows/s, NOT the "comparable to BatchWriteItem" claimed below — the
+    run is client-CPU-bound on 2.7M separate TLS + SigV4 handshakes. Granting
+    dynamodb:BatchWriteItem and switching to it is the single highest-value
+    change to this script. flightmap-dev's IAM policy grants PutItem /
     GetItem / DeleteItem / Query / Scan / UpdateItem on `london-flight-map-*`;
     BatchWriteItem is a separate IAM action and is not granted. Expanding IAM
     is not the fix, and the loader deliberately does not need it: a
@@ -735,7 +756,7 @@ def _read_checkpoint():
     # index was recorded WITHOUT regard to whether the write buffer had been
     # flushed: it can sit up to BATCH_SIZE-1 items ahead of what actually
     # reached DynamoDB. Resuming from it is what left silent holes in the first
-    # place, so it is not honoured. Re-scanning from row 0 costs ~35 minutes and
+    # place, so it is not honoured. Re-scanning from row 0 costs ~6-7 hours and
     # ~GBP 1.50 of idempotent re-writes; a hole costs a wrong answer that
     # nothing detects.
     #

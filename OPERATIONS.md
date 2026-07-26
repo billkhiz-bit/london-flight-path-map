@@ -248,13 +248,23 @@ issues a new one and silently expires the old one.
 | Lambda code breaks | <5 min | 0 | `git revert` last commit, re-deploy backend |
 | Frontend regression | <2 min | 0 | `git checkout HEAD~1 index.html`, S3 cp + invalidate |
 | DDB row corruption | <30 min | <5 min | PITR restore to point-in-time (after Section 3.1 enabled) |
-| Stack drift / accidental delete | <1 hour | 0 | `sam deploy` from current `master` re-creates everything |
+| Stack drift / accidental delete | <1 hour | 0 | `sam deploy` from current `master` re-creates everything **except the DynamoDB tables, which are now `Retain`** — see below |
+| Failed update wedges the stack | see note | 0 | **Mitigated 2026-07-26.** `flightmap-dev` has no `dynamodb:DeleteTable` and no `cloudformation:ContinueUpdateRollback`, so a rollback needing to delete a table would be denied and strand the stack in `UPDATE_ROLLBACK_FAILED` with no self-recovery. All four tables now carry `DeletionPolicy: Retain` + `UpdateReplacePolicy: Retain`, so CFN never attempts the delete |
 | AWS region outage | manual | unknown | No multi-region failover; eu-west-2 is single point |
-| Secret leaked | <30 min | n/a | Rotate per Section 3.3, audit CloudWatch for misuse |
+| Secret leaked | <30 min | n/a | Rotate per **Section 3.6 (Token Rotation)**. Note the deploy user cannot read CloudWatch or CloudTrail, so misuse auditing must be done from the console |
 
-The DDB tables hold (a) signup audit log and (b) DEFRA noise samples and
-(c) user favourites. (b) is reproducible from the source GeoTIFF in ~6 hours;
-(a) and (c) are only recoverable from PITR or backup.
+**The four DynamoDB tables and how recoverable each is:**
+
+| Table | Contents | Recoverable? |
+|---|---|---|
+| `london-flight-map-signups` | Customer signup audit log + API keyIds | **PITR/backup only** — irreplaceable, these are real customers |
+| `london-flight-map-favourites` | User-saved properties, keyed to device tokens | **PITR/backup only** — device tokens cannot be reissued |
+| `london-flight-map-noise-raster` | 423,481 DEFRA Lden samples | Rebuildable from the source GeoTIFF, ~6 hours |
+| `london-flight-map-postcodes` | ~2.7M ONS NSPL rows | Rebuildable from `data/nspl.csv`, **~6-7 hours measured** (not the ~40 min some docs claim) |
+
+All four are `Retain`, so a stack-level failure will not destroy them. That
+protects the two irreplaceable tables and saves ~13 hours of reload on the
+other two.
 
 ---
 
@@ -277,26 +287,60 @@ The DDB tables hold (a) signup audit log and (b) DEFRA noise samples and
 - No latency / error-rate SLO tracking.
 - No external uptime checker (`status.skyscore.co.uk` subdomain
   recommended; not yet provisioned).
-- No DLQ on async Lambdas (audit item I6).
+- ~~No DLQ on async Lambdas (audit item I6).~~ **Closed 2026-07-24 as moot** —
+  all 7 Lambdas are APIGW-synchronous, so there is no async invocation for a
+  DLQ to catch.
+- **No log read for the deploy user** (added 2026-07-26). This is the most
+  consequential gap in this list: it makes `/aws-debug` inoperable and turns
+  routine incident triage into inference. See Section 6.
 
 ---
 
 ## 6. Common Debugging Recipes
 
+> **⚠ READ FIRST — `flightmap-dev` cannot read logs.** Verified 2026-07-26:
+> `logs:FilterLogEvents`, `logs:GetLogEvents`, `logs:DescribeLogStreams`,
+> `cloudtrail:LookupEvents`, `iam:GetRolePolicy`, `lambda:ListFunctions` and
+> `cloudformation:DescribeStackResource` are **all denied** for the deploy
+> user. Only `logs:DescribeLogGroups` (names only) works. **The `/aws-debug`
+> skill therefore cannot function on this account**, and steps 1-3 below used
+> to be the recipe but are not runnable as written. Use the AWS **console**
+> (which authenticates as the root/admin identity) or grant the deploy user
+> log read — see `AUDIT_REPORT.md`, open item.
+>
+> Git Bash also mangles the leading slash in `/aws/lambda/...` arguments;
+> prefix any such command with `export MSYS_NO_PATHCONV=1` or it fails with a
+> misleading regex-validation error.
+
 **API returning 5xx unexpectedly:**
-1. CloudWatch Logs for the Lambda (region eu-west-2).
-2. `AWS_PROFILE=flightmap aws logs tail /aws/lambda/<FunctionName> --follow --region eu-west-2`
-3. Run `/aws-debug` skill for project-specific Lambda + APIGW recipes.
+1. Console → CloudWatch Logs for the Lambda (region eu-west-2). From the CLI
+   you can at least resolve the log-group name:
+   `export MSYS_NO_PATHCONV=1; AWS_PROFILE=flightmap aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/london-flight-map" --region eu-west-2`
+2. **When logs are unavailable, diagnose by side-effect elimination instead.**
+   Identify the state a handler commits *between* its external calls, then
+   query that state to bracket where it stopped. This is how the 2026-07-26
+   signup `AccessDenied` was located without a single log line: a failed
+   signup left no API key and no orphaned key, which places the denial before
+   key creation and rules out the downstream call entirely.
 
 **API returning 403 unexpectedly:**
-- Per-route APIGW throttle — `score` is 5 RPS / 10 burst, `signup` is
-  1 RPS / 5 burst. A burst test will trip these.
+- Per-route APIGW throttle. Current declared values (`template.yaml`
+  `MethodSettings`, updated 2026-07-26): stage-wide `*/*` **50 RPS / 100
+  burst**, `GET /v1/score` **40/80**, `POST /v1/score/batch` **10/20**,
+  `POST /v1/signup` **1/5**, `GET /epc` **3/6**. A burst test will trip these.
+  Read the live values with
+  `aws apigateway get-stage --rest-api-id 2gjfdzg20c --stage-name prod --query 'methodSettings'`
+  — and note that `MethodSettings` is **last-wins** on duplicates, so never
+  add a second declaration above an old one.
 - Missing/expired API key on `/v1/score*` paths.
 
 **CORS errors in browser:**
-- Verify origin is on the allow-list in the relevant Lambda's
-  `_origin_for_request` (`signup/app.py`, `score/app.py`).
-- Wildcards are deliberately not used; allow-list lives in code.
+- `Globals.Function.Environment.CORS_ORIGIN` is `'*'` since 2026-07-24 (audit
+  A-0724-C1: it had been pinned to the legacy CloudFront URL, silently
+  breaking all five consumer data panels on skyscore.co.uk for ~2 months).
+- `signup` is the exception and keeps its own stricter in-code allow-list in
+  `_origin_for_request`; `score` overrides to `'*'`. Check the specific
+  Lambda before assuming which rule applies.
 
 **CloudFront serving stale content:**
 - Always invalidate after S3 upload: `--paths '/*'`.

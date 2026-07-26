@@ -104,7 +104,7 @@ deploy.**
 ```bash
 python scripts/load_nspl.py --self-test          # ~1s, no AWS calls
 python scripts/load_nspl.py --dry-run --limit 100 # ~2s, proves credentials + mapping
-AWS_PROFILE=flightmap python scripts/load_nspl.py # ~40 min, ~£1.50, resumable
+AWS_PROFILE=flightmap python scripts/load_nspl.py # ~6-7 HOURS (measured), ~£1.50, resumable
 ```
 
 ---

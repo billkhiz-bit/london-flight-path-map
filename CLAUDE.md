@@ -53,7 +53,7 @@ Available commands:
   /project:deploy-all Deploy everything
   /preflight Pre-commit quality checks (lint, security, a11y)
   /careful Enable production safety mode (blocks destructive AWS commands)
-  /aws-debug Debug Lambda/API Gateway issues
+  /aws-debug Debug Lambda/API Gateway issues (LIMITED — no log read on this account, see Quality & Plugins)
   /project:test-apis Test all API endpoints
   /project:review Summarise recent changes
 
@@ -74,7 +74,7 @@ Always use "Sky Score" in all public-facing files and UI text.
 
 - Run `/preflight` before every commit, checks ESLint, HTML validation, Prettier, Python lambdas, security, and Playwright tests
 - Run `/careful` before touching live AWS resources, blocks destructive commands
-- Use `/aws-debug` when Lambda errors or API Gateway 5xx issues occur
+- ~~Use `/aws-debug` when Lambda errors or API Gateway 5xx issues occur~~ **`/aws-debug` does NOT work on this account** (verified 2026-07-26): `flightmap-dev` is denied `logs:FilterLogEvents`, `logs:GetLogEvents`, `logs:DescribeLogStreams`, `cloudtrail:LookupEvents`, `iam:GetRolePolicy`, `lambda:ListFunctions` and `cloudformation:DescribeStackResource`. Only `logs:DescribeLogGroups` (names) works, and the `default` profile's token is invalid. Until a console-side grant lands, debug Lambda faults from the **console** or by **side-effect elimination** — see `OPERATIONS.md` §6. Prefix any `/aws/lambda/...` CLI argument with `export MSYS_NO_PATHCONV=1` or Git Bash mangles it.
 - Use **context7** to look up D3.js, AWS SDK, or SAM docs before using unfamiliar APIs
 - Use **security-guidance** when editing Lambda functions or API Gateway config
 - Use **code-review** on all changed files before committing
