@@ -103,6 +103,8 @@ The useful pattern: **the finders got the mechanism right and the consequence wr
 
 **Fixed same day (2026-07-25), riding the pending deploy:** the signup IAM split, a `GET /epc` per-method throttle (3/6 — the route is unauthenticated by design and must stay so), favourites input validation, and `createdAt` dropped from the signup 409. Also caught during that work and fixed: duplicate `MethodSettings` declarations that would have reverted `GET /v1/score` from 40 rps to 5 rps on the next deploy.
 
+**All of the above DEPLOYED 2026-07-26**, and the signup lead needed a second fix on top: the 25 Jul IAM split was correct but addressed only the *downstream* fault, so the funnel still 503'd after the first deploy. Root cause of the first fault was a missing `arn:aws:apigateway:*::/tags/*` grant — see I-G below. Live `POST /v1/signup` now returns 201. **Diagnostic note worth reusing:** CloudWatch was unreadable (`flightmap-dev` has no `logs:*` read, no `cloudtrail:LookupEvents`, no `iam:` read — so `/aws-debug` cannot function on this account), and the failing call was instead identified by side-effect elimination — a failed signup left no API key and no orphan, which places the denial *before* key creation and rules out `CreateUsagePlanKey`. **New open item: grant CloudWatch Logs read to `flightmap-dev`** (console action; it cannot grant this to itself).
+
 **Still open, ranked:** search-flow request sequencing (live-reproduced showing SW11's EPC and sold-price data under a TW3 heading — wrong data on screen, terminal state, never self-corrects); the sw.js/`api-base.js` PWA stranding above; `switchCity` re-entrancy; verdict colour contrast at 1.16:1; infinite D3 transitions on detached nodes; the undebounced resize handler (I-0521-5); the duplicate `.search-hint` rule; plus the free-tier metering question. Full triage with failure scenarios and fix sketches was produced in-session.
 
 ### Unverified findings — original list (verifiers killed by the spend limit; superseded by the re-verification above)
@@ -373,7 +375,7 @@ After the second round of agents (code-quality + security + frontend visual + a1
 - 5 dormant AI Lambda routes publicly invokable (smoke-test finding "P") → routes closed `71a731c`, Lambdas + IAM grants deleted entirely `6bad8ce`
 - C-A (CSP `unsafe-eval` introduced earlier in session) → `dab713d`
 - C-N1 (smoke test posting to closed routes) → `dab713d`
-- I-G (signup `apigateway:POST` no `aws:RequestTag` condition) → `dab713d`
+- I-G (signup `apigateway:POST` no `aws:RequestTag` condition) → `dab713d` — **but this hardening broke the signup funnel for 2.5 months and took two fixes to undo.** `dab713d` added the tag *and* the condition but never the tagging **permission**: in API Gateway tags live at a separate resource path (`/tags/{arn}`), so `create_api_key(tags={...})` needs a grant on `arn:aws:apigateway:*::/tags/*`. `878b09d` (2026-07-25) fixed the second, downstream fault (`CreateUsagePlanKey` under an unsatisfiable condition); the `/tags/*` grant on 2026-07-26 fixed the first and restored live 201s. **Lesson for future tag-condition hardening: granting the condition is not the same as granting the tagging.**
 
 **Critical (UX / B2B-credibility):**
 - N-Front-1 (B2B demo persona drift) → `a2b5695`

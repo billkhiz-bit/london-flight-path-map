@@ -6,6 +6,32 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-26 — Backend deployed; signup funnel actually fixed (second IAM fault)
+
+- **`POST /v1/signup` returns 201 again**, verified live. The funnel had been
+  503'ing for every visitor since 2026-05-07. The 2026-07-25 statement split was
+  correct but incomplete — there were **two stacked IAM faults**, and it fixed
+  only the second one. The first: API Gateway treats tags as a **separate
+  resource path** (`/tags/{arn}`; TagResource is `PUT /tags/{arn}`), so
+  `create_api_key(tags={...})` requires a grant on
+  `arn:aws:apigateway:*::/tags/*` that the audit I-G hardening never added.
+  Denial therefore happened at `CreateApiKey`, before any key existed.
+- **`backend/template.yaml`**: `SignupFunctionRole` gains `apigateway:PUT` +
+  `apigateway:POST` on `arn:aws:apigateway:${AWS::Region}::/tags/*`, **keeping**
+  the `aws:RequestTag/CreatedBy` condition — dropping it would let the Lambda
+  tag any API Gateway resource in the account, a wider hole than I-G closed.
+- **Deployed**: NSPL `PostcodeTable` created (ACTIVE, empty — the loader can run
+  at any time, the score Lambda is forward-compatible); stage throttles applied
+  (`/epc` GET 3/6 new, `/v1/score/batch` 5/10 → 10/20, `/v1/score` GET 40/80 now
+  declared in source rather than surviving as console drift); CORS and the
+  2026-07-24/25 fix waves are live. No resource replacements.
+- **Known issue found, not fixed**: `lambdas/epc/app.py:62` branches on HTTP
+  `401` to return the graceful "token invalid or expired" body, but MHCLG
+  returns **`403`** for a rejected bearer token (confirmed against the live
+  service). That branch is unreachable; an expired token will fall through to
+  the generic `502` and break the property page instead of quietly hiding the
+  EPC panel.
+
 ### 2026-07-25 — Test coverage for the local ONS NSPL postcode-resolution tier
 
 - **`backend/tests/test_score.py` gained `PostcodeTableTests`** (19 tests) over

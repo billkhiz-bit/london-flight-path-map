@@ -411,6 +411,35 @@ Resources:
                 # value will be denied.
                 StringEquals:
                   'aws:RequestTag/CreatedBy': 'SignupLambda'
+            # Tagging permission for the create-with-tags call above.
+            #
+            # In API Gateway, tags are a SEPARATE resource path (/tags/{arn}),
+            # not an attribute of the resource being tagged — TagResource is
+            # PUT /tags/{arn}. AWS's own tag-based-access-control example
+            # carries a standalone statement for arn:aws:apigateway:*::/tags/*
+            # alongside the resource statements, for exactly this reason.
+            #
+            # The I-G hardening (dab713d, 2026-05-07) added tags={...} to
+            # apigw.create_api_key() and the aws:RequestTag condition above,
+            # but never granted the tagging path — so every self-service
+            # signup was denied at CreateApiKey, before a key was ever made.
+            # The 2026-07-25 statement split fixed the SECOND failure
+            # (CreateUsagePlanKey) while this, the first one, stayed live.
+            # Diagnosed 2026-07-26 by elimination: failed signups leave no
+            # API key and no orphan, so the denial precedes key creation.
+            #
+            # Condition retained deliberately: dropping it would let this
+            # Lambda write arbitrary tags onto any API Gateway resource in
+            # the account, re-opening a wider hole than I-G ever closed.
+            - Effect: Allow
+              Action:
+                - apigateway:PUT
+                - apigateway:POST
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/tags/*'
+              Condition:
+                StringEquals:
+                  'aws:RequestTag/CreatedBy': 'SignupLambda'
             # CreateUsagePlanKey. DELIBERATELY NOT tag-conditioned. Do NOT
             # fold this back into the statement above in a future hardening
             # pass — that merge is what broke the funnel the first time.

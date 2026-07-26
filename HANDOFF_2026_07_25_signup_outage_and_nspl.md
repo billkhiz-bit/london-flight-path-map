@@ -1,7 +1,20 @@
 # Handoff — 2026-07-25: signup outage, audit re-verification, NSPL postcode independence
 
-**State:** two commits local and unpushed (`878b09d`, `ebd6abf`), working tree clean, preflight green
-(0 ESLint errors, HTML/Prettier/ruff clean, 257 tests, API-URL drift PASS). **Nothing deployed.**
+> **SUPERSEDED 2026-07-26 — deployed, and the headline diagnosis below is incomplete.**
+> The backend is now live and `POST /v1/signup` returns **201**, verified. But §1's cause is only *half*
+> the story: there were **two stacked IAM faults**, and `878b09d` fixed only the downstream one, so the
+> funnel was still 503'ing after the first deploy. The *first* blocker was a missing tagging grant —
+> API Gateway keeps tags at a separate resource path (`/tags/{arn}`), so `create_api_key(tags={...})`
+> needs `arn:aws:apigateway:*::/tags/*`, which `dab713d` never added. `CreateApiKey` was therefore denied
+> before any key existed, which also means §1's claim that "step 1 worked" is wrong — it had never once
+> succeeded in production. Fixed by a second deploy the same day. See `CHANGELOG.md` 2026-07-26 and the
+> `project-signup-funnel-outage` memory for the corrected account.
+>
+> One correction to §1's method: `iam:GetRolePolicy` is **not** granted to `flightmap-dev` (nor is any
+> `logs:*` read or `cloudtrail:LookupEvents`), so the deployed role policy cannot in fact be read that way.
+
+**State (as written 2026-07-25):** two commits local and unpushed (`878b09d`, `ebd6abf`), working tree clean,
+preflight green (0 ESLint errors, HTML/Prettier/ruff clean, 257 tests, API-URL drift PASS). **Nothing deployed.**
 
 A frontend batch was in flight when this was written — see §6.
 
