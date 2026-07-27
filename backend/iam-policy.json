@@ -129,7 +129,9 @@
                 "cloudfront:TagResource",
                 "cloudfront:CreateOriginAccessControl",
                 "cloudfront:GetOriginAccessControl",
-                "cloudfront:CreateInvalidation"
+                "cloudfront:CreateInvalidation",
+                "cloudfront:GetInvalidation",
+                "cloudfront:ListInvalidations"
             ],
             "Resource": "*"
         },

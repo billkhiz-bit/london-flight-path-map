@@ -68,9 +68,22 @@ upstream defect; patching the bundle would be overwritten on upgrade.
 Excluded **by rule name, on that page only**, so every other rule stays
 enforced there. **Re-check on the next Swagger UI upgrade.**
 
-**Status: SOURCE ONLY.** Verified 0 critical/serious against a local server.
-The live site still carries A-0727-2a through 2d until a `web-deploy`, and the
-e2e gate correctly reports those pages as failing until then.
+**Status: DEPLOYED and verified live, 2026-07-27 (user-authorised).** A-0727-2a
+through 2d are closed on production. Verified three ways rather than assumed:
+the deployed HTML carries each fix, **8/8 axe scans pass against live**, and the
+full preflight is green including e2e.
+
+**A regression caught only by screenshot, not by axe.** The first fix used a
+bare `#swagger-ui small { background-color: #3b4151 }`, which also matched the
+`<small>` Swagger uses for tag-section descriptions — painting a full-width dark
+bar across the "Score" header and hiding its text. **axe reported zero
+violations with that bar in place**, because a dark bar on a dark bar has
+excellent contrast. Scoped to `.info small` and re-verified visually in three
+states (collapsed, expanded with Try-it-out, status page).
+
+**Lesson for any visual change signed off by automated a11y tooling: contrast
+checkers score the legibility of what is there, not whether the layout still
+makes sense.**
 
 ---
 

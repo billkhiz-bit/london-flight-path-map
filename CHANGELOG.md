@@ -8,9 +8,23 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### 2026-07-27 (latest) — Accessibility: scan the whole funnel, not just the homepage
 
-**Source-only. Not yet deployed** — the three `score-demo` pages on live
-CloudFront still carry these defects until a `web-deploy`, and the e2e gate
-correctly reports them as failing until then.
+**Deployed and verified live** (user-authorised): the deployed HTML carries each
+fix, **8/8 axe scans pass against production**, and the full preflight is green
+including e2e.
+
+- **`cloudfront:GetInvalidation` + `ListInvalidations` added to
+  `backend/iam-policy.json`** (still to be applied). Found during this deploy:
+  `flightmap-dev` can *create* an invalidation but not read its status, so
+  `aws cloudfront wait invalidation-completed` fails and a deploy cannot
+  self-verify. Every other CloudFront resource already had a `Get` beside its
+  `Create`; invalidations were the lone exception.
+
+- **A regression only a screenshot caught.** The first Swagger fix used a bare
+  `#swagger-ui small`, which also matched the `<small>` used for tag-section
+  descriptions — painting a dark bar over the "Score" header and hiding its
+  text. **axe reported zero violations**, because a dark bar on a dark bar has
+  excellent contrast. Contrast tooling scores the legibility of what is there,
+  not whether the layout survived.
 
 - **The axe scan covered `/` and nothing else.** That page had already had
   three a11y waves run over it, so the suite reported a clean sweep while the
