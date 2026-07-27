@@ -83,9 +83,37 @@ Not "data sources" but listed for completeness.
 | Consumer site | Footer link: "Methodology v3.1" → links to the methodology document which lists every source with full attribution + licence |
 | Methodology document (`METHODOLOGY.md`) | Section 11 enumerates every source + licence reference |
 | `/v1/regions` discovery endpoint | Includes `methodologyVersion` + `methodologyUrl` so integrators can audit licensing |
+| **Bulk scoring export** (`scripts/score_bulk.py`) | **Two places, deliberately.** A `sources` column on **every** row naming the sources and OGL v3.0, plus a companion `<output>.sources.txt` carrying the full attribution, the OGL link, and the ONS/OS/Royal Mail copyright notices |
 
 Attribution requirements are **structurally satisfied** — there is no
 code path in the API that returns data without the source array.
+
+### Derived exports — the obligation travels
+
+The bulk scoring CSV is a **derived work**: every row carries an ONS NSPL
+centroid and a DEFRA-derived quiet score. OGL v3.0 attribution therefore
+survives into it, and shipping the file bare would put the *customer* in
+breach as well as us.
+
+It is attributed in two places on purpose. The companion file holds the full
+notices, but a customer will inevitably email the CSV on its own — so the
+per-row `sources` column is the copy that cannot be separated from the data.
+
+Both are generated from the API's own `build_sources()`, so the export and the
+live responses cannot drift apart; and the companion file is written **after**
+the run, because `build_sources()` only credits ONS once the local NSPL tier
+has genuinely served a lookup. A file that claimed ONS provenance for a run
+that had actually fallen back to postcodes.io would be a false claim in a
+customer-facing document.
+
+Pinned by `tests/test_score_bulk.py::TestAttribution` rather than left to a
+code comment.
+
+**Gap found and closed 2026-07-27.** The export shipped initially with **no
+attribution at all** — despite `scripts/load_nspl.py`'s own docstring warning
+that "the attribution obligation SURVIVES INTO ANY DERIVED EXPORT. The
+Enterprise 'score your whole city' CSV is such an export." The warning was
+written before the exporter existed and was not consulted when it was built.
 
 ---
 

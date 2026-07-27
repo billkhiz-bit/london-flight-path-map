@@ -230,7 +230,15 @@ OUTPUT_COLUMNS = [
     'position_quality',
     'methodology_version',
     'note',
+    'sources',
 ]
+
+# Compact per-row attribution. The full text goes in the companion file (see
+# write_sources_file); this is the pointer that cannot be separated from the
+# data, because OGL v3.0 attribution has to travel WITH the derived work and a
+# customer will inevitably email the CSV on its own.
+SOURCES_SUFFIX = '.sources.txt'
+SOURCES_CELL = 'ONS NSPL, DEFRA, HM Land Registry, MHCLG (OGL v3.0) - see {file}'
 
 
 def classify_outcome(postcode, body, status):
@@ -329,7 +337,58 @@ def classify_outcome(postcode, body, status):
     return row
 
 
-def score_book(app, rows, writer, write_lock, workers, progress=True):
+def write_sources_file(app, output_path):
+    """Write the OGL v3.0 attribution that must travel with the exported CSV.
+
+    NOT optional, and not a nicety. scripts/load_nspl.py spells the obligation
+    out: "The attribution obligation SURVIVES INTO ANY DERIVED EXPORT. The
+    Enterprise 'score your whole city' CSV is such an export." Every row here
+    carries an ONS NSPL centroid and a DEFRA-derived quiet score, so the file
+    we hand a customer is a derived work under OGL v3.0 and OS/Royal Mail
+    copyright. Shipping it bare would put the customer in breach as well as us.
+
+    Generated from the SAME `app.build_sources()` the live API puts in every
+    response, so the two cannot drift — and called AFTER the run, so it
+    reflects what was actually used: `build_sources()` only credits ONS once
+    the local NSPL tier has genuinely served a lookup, never merely because
+    the table is configured.
+    """
+    path = str(output_path) + SOURCES_SUFFIX
+    lines = [
+        'Sky Score — bulk scoring export',
+        '=' * 60,
+        '',
+        f'Generated from: {output_path}',
+        f'Methodology version: {app.METHODOLOGY_VERSION}',
+        '',
+        'DATA SOURCES AND ATTRIBUTION',
+        '',
+    ]
+    lines += [f'  - {line}' for line in app.build_sources()]
+    lines += [
+        '',
+        'LICENCE',
+        '',
+        '  Contains public sector information licensed under the Open',
+        '  Government Licence v3.0.',
+        '  https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/',
+        '',
+        '  ONS National Statistics Postcode Lookup contains OS data',
+        '  (c) Crown copyright and database right; Royal Mail data',
+        '  (c) Royal Mail copyright and database right; National Statistics',
+        '  data (c) Crown copyright and database right.',
+        '',
+        '  THIS FILE MUST ACCOMPANY THE CSV. The attribution obligation',
+        '  survives into derived works, so the scores may not be',
+        '  redistributed without it.',
+        '',
+    ]
+    with open(path, 'w', encoding='utf-8') as handle:
+        handle.write('\n'.join(lines))
+    return path
+
+
+def score_book(app, rows, writer, write_lock, workers, progress=True, sources_cell=''):
     """Score every row and stream results to the CSV as they complete.
 
     Streaming rather than collecting: a 100k book is a long run, and an
@@ -353,6 +412,8 @@ def score_book(app, rows, writer, write_lock, workers, progress=True):
             body, status = {'error': f'{type(exc).__name__}: {exc}'}, 500
 
         output_row = classify_outcome(postcode, body, status)
+        if output_row is not None:
+            output_row['sources'] = sources_cell
         if output_row is not None and passthrough:
             # Their columns are added AFTER ours, and collisions were already
             # renamed in read_postcodes, so a customer column can never
@@ -437,16 +498,22 @@ def main():
     fieldnames = OUTPUT_COLUMNS + passthrough_columns
     write_lock = threading.Lock()
 
+    sources_cell = SOURCES_CELL.format(
+        file=Path(args.output).name + SOURCES_SUFFIX if args.output else 'the accompanying licence file'
+    )
+
     if args.dry_run:
         import io
         sink = io.StringIO()
         writer = csv.DictWriter(sink, fieldnames=fieldnames, extrasaction='ignore')
-        counters = score_book(app, rows, writer, write_lock, args.workers)
+        counters = score_book(app, rows, writer, write_lock, args.workers,
+                              sources_cell=sources_cell)
     else:
         with open(args.output, 'w', newline='', encoding='utf-8') as handle:
             writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction='ignore')
             writer.writeheader()
-            counters = score_book(app, rows, writer, write_lock, args.workers)
+            counters = score_book(app, rows, writer, write_lock, args.workers,
+                                  sources_cell=sources_cell)
 
     total = counters['scored'] + counters['failed'] + counters['omitted']
     print()
@@ -457,6 +524,13 @@ def main():
         print(f'  omitted:  {counters["omitted"]:,}')
     if not args.dry_run:
         print(f'  output:   {args.output}')
+        # Written last, so build_sources() reflects what the run actually used
+        # rather than what was configured — the same honesty rule the API's
+        # `sources` array follows.
+        sources_path = write_sources_file(app, args.output)
+        print(f'  sources:  {sources_path}')
+        print()
+        print('OGL v3.0 attribution: the .sources.txt file MUST be sent with the CSV.')
 
     # The local tier is credited only once it has actually served a lookup,
     # never merely because the table is configured — the same honesty rule

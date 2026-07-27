@@ -22,6 +22,8 @@ import io
 import os
 import sys
 import threading
+import types
+from pathlib import Path
 
 import pytest
 
@@ -157,6 +159,77 @@ class TestClassifyOutcome:
         (extrasaction='ignore'), so a typo here empties a column with no error."""
         row = score_bulk.classify_outcome('SW11 1AA', SCORED_BODY, 200)
         assert set(row) <= set(score_bulk.OUTPUT_COLUMNS)
+
+
+class TestAttribution:
+    """OGL v3.0 compliance. scripts/load_nspl.py states the obligation:
+    "The attribution obligation SURVIVES INTO ANY DERIVED EXPORT. The
+    Enterprise 'score your whole city' CSV is such an export."
+
+    Every row carries an ONS NSPL centroid and a DEFRA-derived quiet score, so
+    the file handed to a customer is a derived work. Shipping it bare would put
+    the customer in breach as well as us — which is why this is tested rather
+    than trusted to a code comment.
+    """
+
+    def test_sources_is_a_declared_column(self):
+        assert 'sources' in score_bulk.OUTPUT_COLUMNS
+
+    def test_the_cell_names_the_licence_and_points_at_the_file(self):
+        cell = score_bulk.SOURCES_CELL.format(file='book.csv.sources.txt')
+        assert 'OGL v3.0' in cell
+        assert 'ONS' in cell
+        assert 'book.csv.sources.txt' in cell
+
+    def test_every_row_carries_attribution_including_unscored_ones(self):
+        """An unscored row still consumed an NSPL lookup, and a customer
+        filtering to failures must not end up with an unattributed file."""
+        app = _FakeApp({'SW11 1AA': (SCORED_BODY, 200)})
+        rows = [(1, 'SW11 1AA', {}), (2, 'BR1 1HB', {})]
+        sink = io.StringIO()
+        writer = csv.DictWriter(sink, fieldnames=score_bulk.OUTPUT_COLUMNS,
+                                extrasaction='ignore')
+        writer.writeheader()
+        score_bulk.score_book(app, rows, writer, threading.Lock(), workers=2,
+                              progress=False, sources_cell='ONS etc (OGL v3.0)')
+        sink.seek(0)
+        out = list(csv.DictReader(sink))
+        assert len(out) == 2
+        assert all(r['sources'] == 'ONS etc (OGL v3.0)' for r in out), (
+            'a row without attribution is a licence breach, not a cosmetic gap'
+        )
+
+    def test_companion_file_carries_the_full_obligation(self, tmp_path):
+        app = types.SimpleNamespace(
+            METHODOLOGY_VERSION='3.2',
+            build_sources=lambda: [
+                'Postcode resolution: ONS National Statistics Postcode Lookup '
+                '(Open Government Licence v3.0)',
+            ],
+        )
+        target = tmp_path / 'book.csv'
+        path = score_bulk.write_sources_file(app, target)
+
+        assert path.endswith(score_bulk.SOURCES_SUFFIX)
+        text = Path(path).read_text(encoding='utf-8')
+        # The four things OGL v3.0 and the ONS sub-licences actually require.
+        assert 'Open Government Licence v3.0' in text
+        assert 'nationalarchives.gov.uk/doc/open-government-licence' in text
+        assert 'Royal Mail' in text          # NSPL carries Royal Mail database right
+        assert 'Crown copyright' in text
+        # And the instruction that makes it survive being emailed on.
+        assert 'MUST ACCOMPANY THE CSV' in text
+
+    def test_companion_file_reflects_the_run_not_the_config(self):
+        """build_sources() only credits ONS once the local tier has actually
+        served a lookup. Writing the file from that function — after the run —
+        is what keeps the export from making a false provenance claim."""
+        import inspect
+        src = inspect.getsource(score_bulk.write_sources_file)
+        assert 'build_sources()' in src, (
+            'the companion file must be generated from the API\'s own source '
+            'list, not from a hardcoded copy that can drift'
+        )
 
 
 class TestReadPostcodes:

@@ -6,7 +6,36 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-07-27 (latest) — Accessibility: scan the whole funnel, not just the homepage
+### 2026-07-27 (latest) — Bulk export was missing its OGL attribution
+
+- **The bulk scoring CSV shipped with no attribution at all.** It is a derived
+  work — every row carries an ONS NSPL centroid and a DEFRA-derived quiet score
+  — so OGL v3.0 attribution survives into it, and handing a customer a bare
+  file would put **them** in breach as well as us.
+
+  `scripts/load_nspl.py`'s own docstring had warned about exactly this: *"The
+  attribution obligation SURVIVES INTO ANY DERIVED EXPORT. The Enterprise
+  'score your whole city' CSV is such an export."* The warning predated the
+  exporter and was not consulted when it was built.
+
+- **Now attributed in two places, deliberately.** A `sources` column on every
+  row — the copy that cannot be separated when a customer emails the CSV on its
+  own — plus a companion `<output>.sources.txt` carrying the full notices, the
+  OGL link, and the ONS/OS/Royal Mail copyright.
+
+- **Both generated from the API's own `build_sources()`**, so the export and
+  the live `sources` array cannot drift; and the companion file is written
+  **after** the run, because `build_sources()` only credits ONS once the local
+  NSPL tier has genuinely served a lookup. A file claiming ONS provenance for a
+  run that had fallen back to postcodes.io would be a false claim in a
+  customer-facing document.
+
+- **5 tests** (`TestAttribution`) pin it, including that *unscored* rows carry
+  attribution too — a customer filtering to failures must not end up with an
+  unattributed file. Root suite 167 → **172**. `LICENSING.md` gains a "Derived
+  exports" section and a row in the attribution-surfacing table.
+
+### 2026-07-27 — Accessibility: scan the whole funnel, not just the homepage
 
 **Deployed and verified live** (user-authorised): the deployed HTML carries each
 fix, **8/8 axe scans pass against production**, and the full preflight is green
