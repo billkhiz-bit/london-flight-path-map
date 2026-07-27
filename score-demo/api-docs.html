@@ -65,9 +65,15 @@
 
   /* The version badge is light text on Swagger's mid-grey #7d8492 (~2.4:1).
      Darkening the BACKGROUND rather than the text keeps it reading as a
-     badge; white on #3b4151 is ~9.7:1. */
-  #swagger-ui small { background-color: #3b4151; }
-  #swagger-ui small pre.version { color: #ffffff; }
+     badge; white on #3b4151 is ~9.7:1.
+
+     SCOPED TO `.info small`, deliberately. A bare `#swagger-ui small` also
+     matches the <small> Swagger uses for tag-section descriptions, which
+     painted a full-width dark bar across the "Score" section header and hid
+     its text. Caught by screenshotting the page — axe was perfectly happy
+     with it, because a dark bar on a dark bar has excellent contrast. */
+  #swagger-ui .info small { background-color: #3b4151; }
+  #swagger-ui .info small pre.version { color: #ffffff; }
 
   /* Links rendered from the OpenAPI description markdown come out as
      Swagger's #4990e2, ~3.1:1 on white against a 4.5:1 requirement. #1d4ed8
