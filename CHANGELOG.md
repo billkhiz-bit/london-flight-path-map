@@ -6,6 +6,50 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-27 (latest) — `/preflight` stops lying
+
+The gate lied in **both directions in a single session**, which is how a
+2.5-month outage hides behind a green suite. Rewritten as a real, runnable
+script with real exit codes: `scripts/preflight.sh`, wired to `make preflight`,
+`npm run preflight` and the `/preflight` skill so all three run the same checks.
+
+- **False green.** `make preflight` reported success while running *nothing*:
+  `make` is not on PATH in Git Bash here, and every check in the old skill was
+  piped to `tail` — a pipeline exits with the status of its **last** stage, so
+  no failure could ever surface. Nothing in the new script pipes a check whose
+  exit code matters, and it is verified to exit 1 on an injected defect.
+
+- **False red.** Playwright reported 14 failures that were all spurious; it
+  runs against the *live* CloudFront site and the uncapped worker pool produced
+  timeouts indistinguishable from assertion failures. Pinned to `--workers=2`
+  (measured: 14 failed / 2 passed at default, 16 passed at 2).
+
+- **A silent gap: the root test suite was never in the gate.** Only
+  `backend/tests` ran, so all **167** root tests — the NSPL loader, the bulk
+  scorer, the handler contracts — were unguarded before every commit to date.
+  Now blocking. ruff coverage likewise widened from `backend/lambdas` to
+  `scripts/` and `tests/`, which fixed 6 pre-existing findings.
+
+- **A no-op reading as a green tick.** The `pip-audit` step looped over
+  `backend/lambdas/*/requirements.txt`, which matches nothing (no Lambda has
+  one), and swallowed the result with `|| true`. Removed.
+
+- **Prettier is now advisory, and says so.** Every HTML/JS file in the repo
+  deviates; bringing `index.html` into line is a **19,205-line diff on an
+  8,462-line deployed file**. That is a decision to review, not a pre-commit
+  chore — and a permanently red gate is an ignored gate.
+
+- **The API-URL drift check is a real file**, `scripts/check_api_url_drift.sh`,
+  rather than a fenced block in a markdown document that only ever ran inside a
+  model's head.
+
+- **`SECURITY.md` corrected.** It claimed "`npm audit` clean (0 vulnerabilities,
+  verified 2026-05-07)"; the dev tree now carries 4 high-severity advisories.
+  The accurate statement is stronger: `dependencies` is **empty** and the site
+  has no build step, so nothing from `node_modules` ships, and
+  `npm audit --omit=dev` reports **0**. The 4 highs are lint tooling on
+  developer machines only.
+
 ### 2026-07-27 (later) — Offline city-scale bulk scorer
 
 - **`scripts/score_bulk.py` is new** — the Enterprise "score your whole book /

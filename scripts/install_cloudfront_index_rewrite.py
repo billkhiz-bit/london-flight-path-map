@@ -39,7 +39,6 @@ Run-time
 calls).
 """
 
-import json
 import sys
 import time
 

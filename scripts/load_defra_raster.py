@@ -251,10 +251,10 @@ def run_load(limit, dry_run):
     """
     # Lazy imports so this file is readable without the deps installed
     try:
-        import rasterio # type: ignore
-        import boto3 # type: ignore
-        from pyproj import Transformer # type: ignore
-        from tqdm import tqdm # type: ignore
+        import boto3  # type: ignore
+        import rasterio  # type: ignore
+        from pyproj import Transformer  # type: ignore
+        from tqdm import tqdm  # type: ignore
     except ImportError as exc:
         print(f'Missing dependency: {exc}')
         print('Install with: pip install rasterio pyproj boto3 tqdm')

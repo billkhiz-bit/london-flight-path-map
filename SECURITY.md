@@ -50,7 +50,7 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 - **Bedrock cost-abuse prevention**: the Bedrock-using Lambdas (chat, multi_agent, analyze_image, analyze_document, report) and their API Gateway routes were removed entirely on 2026-05-07 after a smoke test discovered they were anonymously invokable. Restoration is a `git revert` away if AI features come back as user-triggered constrained variants.
 - **Live aircraft feature removed** pending OpenSky Network licensing (Ticket #835285 with OpenSky open since 2026-05-07).
 - **`AllowedPattern '^.+$'`** on every `NoEcho` SAM parameter (currently `EpcBearerToken`); empty / missing token at deploy time fails CloudFormation parameter validation before the changeset runs. Audit ID: I-A-equivalent.
-- **`npm audit` clean** (0 vulnerabilities, verified 2026-05-07).
+- **Zero third-party code ships to the browser from npm.** `package.json` has an *empty* `dependencies` block — every npm package is a `devDependency` (ESLint, Prettier, stylelint, html-validate, Playwright), and the site is a single hand-written `index.html` with no build step, so nothing from `node_modules` reaches production. Verified 2026-07-27: `npm audit --omit=dev` reports **0 vulnerabilities**, while the full dev tree reports 4 high-severity advisories in the linting toolchain (`postcss`, `js-yaml`, `fast-uri`). Those affect developer machines only and are reported as advisory by `/preflight`. An earlier version of this line claimed a flat "`npm audit` clean (0 vulnerabilities)", which stopped being true as the dev tree aged.
 
 ### Operational visibility
 

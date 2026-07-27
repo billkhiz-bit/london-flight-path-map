@@ -50,7 +50,11 @@ def main():
 
     try:
         import boto3
-        from botocore.exceptions import ClientError
+
+        # Imported for the availability check only: a botocore too old to
+        # expose ClientError should fail here, with the pip hint, rather than
+        # part-way through a live CloudFront update.
+        from botocore.exceptions import ClientError  # noqa: F401
     except ImportError:
         print('Missing boto3. pip install boto3')
         sys.exit(1)

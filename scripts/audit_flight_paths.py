@@ -252,7 +252,7 @@ def main():
         f.write('\n## Methodology notes\n\n')
         f.write('- **Sampling:** 50 points evenly spaced along the polyline by great-circle distance.\n')
         f.write('- **CRS:** WGS84 → EPSG:27700 (British National Grid) via pyproj.\n')
-        f.write(f'- **NoData / below-threshold pixels:** treated as 35 dB (DEFRA only publishes '
+        f.write('- **NoData / below-threshold pixels:** treated as 35 dB (DEFRA only publishes '
                 'contours ≥40 dB Lden; below-threshold = quiet by construction).\n')
         f.write('- **Bbox:** DEFRA Round 4 covers England only. Paths stretching into Scotland / '
                 'NI / out to sea will show low % in bbox.\n')

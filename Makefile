@@ -233,16 +233,15 @@ score-book:
 # Quality
 # ---------------------------------------------------------------------------
 
+# Delegates to scripts/preflight.sh so `make preflight`, `npm run preflight`
+# and the /preflight skill all run the SAME checks and report the SAME exit
+# code. The previous inline version drifted from the skill, omitted the root
+# test suite entirely, and blocked on Prettier — which every file in the repo
+# fails. `make` is also not installed on every dev machine here, so the shell
+# script is the canonical entry point and this is a convenience wrapper.
 .PHONY: preflight
 preflight:
-	npm run lint
-	npm run lint:html
-	npm run format:check
-	cd backend && python -m ruff check lambdas/ && python -m pytest -q
-	@HOSTS=$$(grep -hoE 'https?://[a-z0-9]+\.execute-api\.eu-west-2\.amazonaws\.com' \
-		index.html score-demo/*.html api/*.html tests/*.mjs 2>/dev/null | sort -u | wc -l); \
-	if [ "$$HOSTS" -eq 1 ]; then echo "PASS: API URL drift check"; \
-	else echo "FAIL: $$HOSTS distinct API hosts"; exit 1; fi
+	sh scripts/preflight.sh
 
 .PHONY: test-pwa
 test-pwa:

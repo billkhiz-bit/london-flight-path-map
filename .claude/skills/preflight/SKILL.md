@@ -1,111 +1,85 @@
 ---
 name: preflight
-description: Run all quality checks before committing Sky Score code. Covers frontend JS/HTML, Python backend lambdas, Playwright tests, ESLint, and AWS SAM template.
+description: Run all quality checks before committing Sky Score code. Covers frontend JS/HTML, Python backend + root test suites, ESLint, ruff, API-URL drift, and Playwright.
 allowed-tools: Bash, Read, Grep, Glob, Agent
-argument-hint: "[--fix to auto-fix issues]"
+argument-hint: "[--fix to auto-fix] [--skip-e2e to skip Playwright]"
 ---
 
 # Sky Score Preflight
 
-Run before every commit. This project is a dual-stack app: vanilla JS frontend (`index.html`), Python Lambda backend, AWS SAM infrastructure.
+Run before every commit.
 
-## Checks (run in order)
+## The one command
 
-### 1. ESLint
 ```bash
-npm run lint 2>&1 | tail -20
-```
-- If `--fix` passed, run `npm run lint:fix` instead
-
-### 2. HTML Validation
-```bash
-npm run lint:html 2>&1 | tail -20
+sh scripts/preflight.sh
 ```
 
-### 3. Prettier Format Check
-```bash
-npm run format:check 2>&1 | tail -10
-```
-- If `--fix` passed, run `npm run format` instead
+Pass `$ARGUMENTS` straight through (`--fix`, `--skip-e2e`).
 
-### 4. Python Lambda Checks
-```bash
-cd backend && ruff check lambdas/ 2>&1 | tail -20
-```
-- Verify Python lambdas parse without errors
-- Check for hardcoded secrets or credentials
+**Do not re-implement the checks here.** They live in `scripts/preflight.sh`
+so that `make preflight`, `npm run preflight` and this skill all run the same
+things and report the same exit code. A checklist in a markdown file drifts
+from the script and cannot itself be executed or tested; this one did.
 
-### 4b. Backend Tests
-```bash
-cd backend && python -m pytest 2>&1 | tail -10
-```
-- Must be all green before commit. The signup race-recovery test (I-N6) and the
-  `_safe_revoke_orphan_key` prefix guard (N-Code-1) are non-negotiable: if they
-  break, the API key revocation invariant is broken.
+**Read the exit code, not the output.** The script prints a `RESULT: PASS` /
+`RESULT: FAIL` line and exits 0 or 1 accordingly. Do not pipe it to `tail`,
+`head` or anything else when you care whether it passed — a shell pipeline
+exits with the status of its LAST stage, so `preflight | tail` is always 0.
 
-### 4d. API URL drift check (I-N5)
-```bash
-# All HTML/JS files must reference the same API Gateway host. If a Lambda
-# is redeployed and APIGW issues a new id, every file referencing the old
-# host will silently break — this catches the drift before commit.
-HOSTS=$(grep -hoE 'https?://[a-z0-9]+\.execute-api\.eu-west-2\.amazonaws\.com' \
-  index.html score-demo/*.html api/*.html tests/*.mjs 2>/dev/null | sort -u | wc -l)
-if [ "$HOSTS" -ne 1 ]; then
-  echo "FAIL: API base URL drift across files. Found $HOSTS distinct hosts."
-  grep -nE 'https?://[a-z0-9]+\.execute-api\.eu-west-2\.amazonaws\.com' \
-    index.html score-demo/*.html api/*.html tests/*.mjs | head -10
-  exit 1
-fi
-echo "PASS: All API URL refs use the same host."
-```
+## History, so this is not undone by accident
 
-### 4c. Python Dependency Vulnerabilities (pip-audit)
-```bash
-# Run from each lambda dir that has its own requirements.txt.
-# pip-audit hits the PyPI Advisory Database; needs network.
-for req in backend/lambdas/*/requirements.txt; do
-  echo "=== $req ==="
-  pip-audit -r "$req" --strict 2>&1 | tail -10 || true
-done
-```
-- Install once: `pip install pip-audit`
-- `--strict` means any reported vuln is a hard fail. Triage policy: a CVSS
-  >= 7.0 finding blocks the commit; lower-severity findings get logged to
-  `AUDIT_REPORT.md` and addressed in the next session.
-- Note: each Lambda has its own `requirements.txt` because SAM builds them
-  in isolated containers. The deploy bundles only what each function imports.
+Rewritten 2026-07-27 after the gate lied in both directions in a single
+session:
 
-### 5. Security
-- Run **security-guidance** plugin on changed files
-- Check for XSS in dynamic HTML rendering
-- Verify API keys are loaded from environment, not hardcoded
-- Check SAM template for overly permissive IAM policies
+- **False green.** `make preflight` reported success while running nothing
+  at all: `make` is not on PATH in Git Bash on this machine, and every check
+  in the old skill was piped to `tail`, so no failure could ever surface.
+- **False red.** The Playwright suite reported 14 failures that were all
+  spurious — it runs against the *live* CloudFront site and the uncapped
+  worker pool produced timeouts indistinguishable from assertion failures.
+  Measured: 14 failed / 2 passed at the default, 16 passed at `--workers=2`.
+- **A silent gap.** The root suite (`tests/`, 167 tests covering the NSPL
+  loader, the bulk scorer and the handler contracts) was never in the gate at
+  all. Only `backend/tests` ran.
+- **A no-op reading as a tick.** The `pip-audit` step looped over
+  `backend/lambdas/*/requirements.txt`, which matches nothing — no Lambda has
+  one, every handler is stdlib plus the runtime's boto3 — and swallowed the
+  result with `|| true`.
 
-### 6. Code Review
-- Run **code-review** plugin on changed files
-- Check for accessibility issues in HTML
+## What blocks, and what does not
 
-### 7. Playwright Tests (if available)
-```bash
-npm run test:e2e 2>&1 | tail -20
-```
-- Only run if Playwright is installed and tests exist
+**Blocking** (any failure exits 1): ESLint · html-validate · ruff over
+`backend/lambdas` *and* `scripts/` + `tests/` · pytest backend · pytest root ·
+API base-URL drift · Playwright at `--workers=2`.
 
-## Output
-```
-PREFLIGHT, Sky Score
-======================
-[PASS/FAIL] ESLint
-[PASS/FAIL] HTML validation
-[PASS/FAIL] Prettier
-[PASS/FAIL] Python lambdas
-[PASS/FAIL] Backend tests (pytest)
-[PASS/FAIL] pip-audit (PyPI vuln scan)
-[PASS/FAIL] Security scan
-[PASS/FAIL] Code review
-[PASS/FAIL] Playwright tests
+**Advisory** (reported, never blocking):
 
-Issues: n found, n fixed
-```
+- **Prettier.** Every HTML/JS file in the repo deviates. Bringing `index.html`
+  into line is a 19,205-line diff on an 8,462-line deployed file. That is a
+  decision to review deliberately, not a chore for a pre-commit hook, and
+  blocking on it would make the gate permanently red — which is precisely how
+  a gate gets ignored.
+- **`npm audit`.** `dependencies` is empty and the site has no build step, so
+  nothing from `node_modules` ships. `npm audit --omit=dev` is 0; the dev tree
+  carries 4 high-severity advisories in the lint toolchain.
 
-If `--fix` is passed, auto-fix what's possible. Otherwise report only.
+If you change what blocks, change `scripts/preflight.sh` — not this file.
+
+## After the script passes
+
+The script covers everything mechanical. These still need judgement, so run
+them on the **changed files** when the diff warrants it:
+
+1. **security-guidance** plugin — always for `backend/lambdas/**`,
+   `template.yaml`, or anything touching auth, IAM or user input.
+2. **code-review** plugin — on the changed files.
+3. **frontend-design** plugin — when `index.html` or a funnel page changed.
+
+## Non-negotiable tests
+
+If either of these breaks, the API-key revocation invariant is broken and the
+commit does not go out regardless of what else is green:
+
+- the signup race-recovery test (I-N6)
+- the `_safe_revoke_orphan_key` prefix guard (N-Code-1)

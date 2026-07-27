@@ -263,7 +263,7 @@ import os
 import random
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Force UTF-8 stdout so the arrows / pound signs / borough names in our help
@@ -393,8 +393,8 @@ def _positive_limit(value):
     """
     try:
         rows = int(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f'{value!r} is not an integer')
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f'{value!r} is not an integer') from exc
     if rows < 1:
         raise argparse.ArgumentTypeError(
             f'must be 1 or more (got {rows}); omit --limit entirely for the full run')
@@ -973,7 +973,7 @@ def _write_meta(ddb, written, skipped, mismatches, counts_complete):
     item = {
         'postcode': {'S': META_KEY},
         'vintage': {'S': NSPL_VINTAGE},
-        'loadedAt': {'S': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')},
+        'loadedAt': {'S': datetime.now(UTC).strftime('%Y-%m-%dT%H:%M:%SZ')},
         'rowsWritten': {'N': str(written)},
         'rowsSkipped': {'N': str(skipped)},
         'policy': {'S': 'UK-wide; gridind=9 excluded; terminated loaded and tagged via dt'},
