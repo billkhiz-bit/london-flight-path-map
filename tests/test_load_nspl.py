@@ -277,21 +277,74 @@ class _FakeDdb:
     """A DynamoDB stand-in backed by a plain dict, so a killed run and its
     resume can share one `table` exactly as they share one real table.
 
-    `kill_after` makes the Nth PutItem and every put after it raise
-    KeyboardInterrupt — a faithful mid-flush Ctrl-C, and the same shape as
-    _flush_batch's ex.map() re-raising a PutItem failure.
+    `kill_after` makes the Nth item write — and every write after it — raise
+    KeyboardInterrupt: a faithful mid-flush Ctrl-C, and the same shape as
+    _flush_batch's ex.map() re-raising a chunk failure. The counter advances
+    per ITEM on both write paths, so an interrupt lands mid-chunk on the
+    BatchWriteItem path exactly as it landed mid-batch on the PutItem one and
+    the checkpoint-invariant tests keep their original meaning.
+
+    `unprocessed_rounds` makes the first N BatchWriteItem calls return their
+    last item in UnprocessedItems instead of storing it, modelling DynamoDB's
+    partial success. That case is an HTTP 200, so nothing raises and only the
+    loader's own retry loop can recover it.
+
+    `deny` / `invalid` make batch_write_item raise the ClientError the loader
+    is expected to absorb by falling back to per-item PutItem.
     """
 
-    def __init__(self, table=None, kill_after=None):
+    def __init__(self, table=None, kill_after=None, unprocessed_rounds=0,
+                 deny=False, invalid=False):
         self.table = {} if table is None else table
         self.kill_after = kill_after
+        self.unprocessed_rounds = unprocessed_rounds
+        self.deny = deny
+        self.invalid = invalid
         self.puts = 0
+        self.batch_calls = 0
+        # Imported here, not at module scope, for the same reason boto3 is
+        # (see the fixture below): collection must not require the AWS SDK.
+        from botocore.exceptions import ClientError
+        self._client_error = ClientError
+        self.exceptions = types.SimpleNamespace(ClientError=ClientError)
 
-    def put_item(self, TableName, Item):  # noqa: N803 — botocore's own casing
+    def _store(self, item):
         self.puts += 1
         if self.kill_after is not None and self.puts >= self.kill_after:
             raise KeyboardInterrupt('simulated Ctrl-C mid-flush')
-        self.table[Item['postcode']['S']] = Item
+        self.table[item['postcode']['S']] = item
+
+    def put_item(self, TableName, Item):  # noqa: N803 — botocore's own casing
+        self._store(Item)
+
+    def batch_write_item(self, RequestItems):  # noqa: N803 — botocore's own casing
+        self.batch_calls += 1
+        if self.deny:
+            raise self._client_error(
+                {'Error': {'Code': 'AccessDeniedException', 'Message': 'not authorised'}},
+                'BatchWriteItem',
+            )
+        if self.invalid:
+            raise self._client_error(
+                {'Error': {'Code': 'ValidationException',
+                           'Message': 'duplicate key in request'}},
+                'BatchWriteItem',
+            )
+
+        requests = RequestItems[load_nspl.TABLE_NAME]
+        held = []
+        if self.unprocessed_rounds > 0 and requests:
+            # Hold back the last item even when it is the ONLY item, so a
+            # rounds count above BWI_MAX_ATTEMPTS models DynamoDB refusing
+            # indefinitely. Skipping the single-item case would let every
+            # retry succeed and the exhaustion path would be untestable.
+            self.unprocessed_rounds -= 1
+            requests, held = requests[:-1], requests[-1:]
+
+        for request in requests:
+            self._store(request['PutRequest']['Item'])
+
+        return {'UnprocessedItems': {load_nspl.TABLE_NAME: held} if held else {}}
 
     def get_item(self, TableName, Key):  # noqa: N803 — botocore's own casing
         item = self.table.get(Key['postcode']['S'])
@@ -300,6 +353,20 @@ class _FakeDdb:
     @property
     def postcodes(self):
         return {k for k in self.table if k != load_nspl.META_KEY}
+
+
+@pytest.fixture(autouse=True)
+def _reset_batch_write_latch():
+    """Clear the module-level AccessDenied latch between tests.
+
+    _BATCH_WRITE_DENIED is sticky by design — one denial should not re-probe
+    108,000 times in a real run — but that stickiness would otherwise leak out
+    of the fallback tests and silently route every later test down the PutItem
+    path, hiding a broken BatchWriteItem implementation behind green tests.
+    """
+    load_nspl._BATCH_WRITE_DENIED = False
+    yield
+    load_nspl._BATCH_WRITE_DENIED = False
 
 
 @pytest.fixture
@@ -488,6 +555,88 @@ class TestCheckpointInvariant:
         loader_env['run'](_FakeDdb(table))
         expected = {k for k in _expected_key_by_row(rows) if k is not None}
         assert expected <= set(table)
+
+
+class TestBatchWritePath:
+    """2026-07-27. The write path moved from per-item PutItem to BatchWriteItem
+    (~25x fewer signed round trips) to make the quarterly vintage roll a
+    ~15-minute job instead of the measured 5.80 hours.
+
+    Every test here guards a way the swap can lose rows while still reporting
+    success, which is the only interesting risk: the loader's `written` counter
+    credits a whole batch once _flush_batch returns without raising.
+    """
+
+    @pytest.fixture
+    def _no_sleep(self, monkeypatch):
+        """Collapse the retry backoff. Real delays double from 50ms and the
+        retry tests would otherwise spend seconds asleep."""
+        monkeypatch.setattr(load_nspl.time, 'sleep', lambda _: None)
+
+    def test_uses_batch_write_item_by_default(self, loader_env):
+        rows = _synthetic_rows(40)
+        _write_csv(loader_env['csv'], rows)
+        ddb = _FakeDdb()
+        loader_env['run'](ddb)
+
+        assert ddb.batch_calls > 0, 'still on the per-item path'
+        expected = {k for k in _expected_key_by_row(rows) if k is not None}
+        assert ddb.postcodes == expected
+
+    def test_unprocessed_items_are_retried_not_dropped(self, loader_env, _no_sleep):
+        """The one that matters. UnprocessedItems arrives on an HTTP 200, so
+        nothing raises and boto3's adaptive retry never sees it — only the
+        loader's own loop can recover those rows. Dropping them would leave a
+        short table that every counter and the __META__ record call complete.
+        """
+        rows = _synthetic_rows(40)
+        _write_csv(loader_env['csv'], rows)
+        ddb = _FakeDdb(unprocessed_rounds=3)
+        loader_env['run'](ddb)
+
+        expected = {k for k in _expected_key_by_row(rows) if k is not None}
+        assert ddb.postcodes == expected, 'rows held back in UnprocessedItems were lost'
+
+    def test_persistent_unprocessed_items_raise_rather_than_undercount(self, _no_sleep):
+        """Exhausting the retries must be fatal. Returning quietly would let
+        run_load add the batch to `written` and checkpoint past rows that never
+        landed — unrecoverable, because a resume starts after them."""
+        ddb = _FakeDdb(unprocessed_rounds=load_nspl.BWI_MAX_ATTEMPTS + 5)
+        items = [load_nspl._row_to_item(row) for row in _synthetic_rows(10)]
+
+        with pytest.raises(RuntimeError, match='still unprocessed'):
+            load_nspl._flush_batch(ddb, [i for i in items if i is not None], workers=1)
+
+    def test_access_denied_falls_back_to_put_item_and_latches(self, loader_env):
+        """The grant may not have landed yet. The loader must still complete on
+        the old path, and must stop re-probing after the first refusal."""
+        rows = _synthetic_rows(40)
+        _write_csv(loader_env['csv'], rows)
+        ddb = _FakeDdb(deny=True)
+        loader_env['run'](ddb)
+
+        expected = {k for k in _expected_key_by_row(rows) if k is not None}
+        assert ddb.postcodes == expected, 'fallback did not complete the load'
+        assert ddb.batch_calls == 1, (
+            f'probed BatchWriteItem {ddb.batch_calls} times; the latch should '
+            f'have stopped it after the first AccessDenied'
+        )
+        assert load_nspl._BATCH_WRITE_DENIED is True
+
+    def test_validation_error_falls_back_without_latching(self, loader_env):
+        """A duplicate key inside one 25-item window fails the WHOLE request,
+        where PutItem would simply overwrite (last row wins — the semantics
+        every earlier load had). That is per-chunk bad luck, not a missing
+        permission, so it must not latch the whole run onto the slow path."""
+        rows = _synthetic_rows(40)
+        _write_csv(loader_env['csv'], rows)
+        ddb = _FakeDdb(invalid=True)
+        loader_env['run'](ddb)
+
+        expected = {k for k in _expected_key_by_row(rows) if k is not None}
+        assert ddb.postcodes == expected
+        assert ddb.batch_calls > 1, 'a ValidationException should not latch'
+        assert load_nspl._BATCH_WRITE_DENIED is False
 
 
 class TestMetaGuards:

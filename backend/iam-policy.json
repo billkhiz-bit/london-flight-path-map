@@ -159,6 +159,7 @@
                 "dynamodb:UpdateContinuousBackups",
                 "dynamodb:DescribeContinuousBackups",
                 "dynamodb:PutItem",
+                "dynamodb:BatchWriteItem",
                 "dynamodb:GetItem",
                 "dynamodb:DeleteItem",
                 "dynamodb:Query",
@@ -178,6 +179,18 @@
                 "logs:DescribeLogGroups"
             ],
             "Resource": "arn:aws:logs:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:*"
+        },
+        {
+            "Sid": "CloudWatchLogsOperateOwnGroups",
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogStreams",
+                "logs:FilterLogEvents",
+                "logs:GetLogEvents",
+                "logs:PutRetentionPolicy",
+                "logs:DeleteLogGroup"
+            ],
+            "Resource": "arn:aws:logs:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:log-group:/aws/lambda/london-flight-map-*"
         }
     ]
 }

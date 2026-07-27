@@ -23,8 +23,8 @@ PRE-REQUISITES (run once, locally, never in the Lambda environment):
 
   AWS credentials with write access to `london-flight-map-postcodes`.
   Already covered by the flightmap-dev IAM policy at
-  backend/iam-policy.json, which grants DynamoDB PutItem / GetItem /
-  DeleteItem / Query / Scan / UpdateItem on
+  backend/iam-policy.json, which grants DynamoDB PutItem / BatchWriteItem /
+  GetItem / DeleteItem / Query / Scan / UpdateItem on
   `arn:aws:dynamodb:eu-west-2:*:table/london-flight-map-*`. The
   `london-flight-map-` prefix is load-bearing, not cosmetic: every ARN in
   that policy is scoped to the wildcard, so a table named anything else is
@@ -149,23 +149,29 @@ EXPECTED RUNTIME, COST AND RESUMABILITY:
 
   MEASURED 2026-07-26 (first real full run, start to finish): 2,699,393 rows
   in 5.80 HOURS wall-clock, ~129 rows/s sustained at the default 64 workers.
-  Plan around ~6 hours.
+  That run used per-item PutItem, and the run was CPU-bound on the CLIENT, not
+  throttled by DynamoDB: 2.7M individual HTTPS requests each pay TLS plus SigV4
+  signing. Raising --workers did not fix that and could make it worse.
 
   The estimate this paragraph used to carry — ~1,300/s and ~35 minutes — was
   roughly 10x optimistic and should not be trusted again. It extrapolated
   linearly from the DEFRA loader's ~500 writes/s at 25 workers, which assumed
   both that throughput scales with worker count and that per-item PutItem
-  matches BatchWriteItem throughput (see the note above _flush_batch). Neither
-  held. The run is CPU-bound on the CLIENT, not throttled by DynamoDB: 2.7M
-  individual HTTPS requests each pay TLS plus SigV4 signing, and the process
-  burns far more CPU than an I/O-bound job should. Raising --workers will not
-  fix this and may make it worse.
+  matches BatchWriteItem throughput. Neither held.
 
-  THE REAL FIX FOR THE NEXT QUARTERLY ROLL is one line of IAM: grant
-  dynamodb:BatchWriteItem on london-flight-map-* in backend/iam-policy.json,
-  then switch _flush_batch to BatchWriteItem (25 items per signed request,
-  ~25x fewer round trips). The current per-item design exists ONLY because
-  that action is not granted, not because it is preferable.
+  CHANGED 2026-07-27: _flush_batch now uses BatchWriteItem, 25 items per
+  signed request, which removes ~96% of the round trips the measurement above
+  was bound by. THE NEXT FULL LOAD IS THEREFORE UNMEASURED. Expect well under
+  an hour, but treat any figure quoted here as a projection until a real run
+  replaces it — this docstring has already been wrong by 10x once, in the
+  optimistic direction, for exactly this reason.
+
+  That speedup needs dynamodb:BatchWriteItem, which is present in
+  backend/iam-policy.json but must actually be applied to the flightmap-dev
+  user before it takes effect. Until it is, the loader detects the denial on
+  its first chunk and completes on the old per-item path at the old ~129
+  rows/s, so it is safe to run either side of the IAM change. A run that took
+  ~6 hours is the signal the grant has not landed.
 
   A brand-new PAY_PER_REQUEST table also ramps its capacity rather than
   starting at full throughput, so the first few minutes are slower still.
@@ -211,8 +217,8 @@ EXPECTED RUNTIME, COST AND RESUMABILITY:
   against. It is written atomically (temp file + os.replace) and ONLY at
   an instant when the write buffer is empty, so it can never name a row
   whose item has not already reached DynamoDB. Rows processed after the
-  last checkpoint are re-done on resume, which is harmless: PutItem with
-  the same key is a full idempotent overwrite. A from-scratch re-run is
+  last checkpoint are re-done on resume, which is harmless: a write with
+  the same key is a full idempotent overwrite on either write path. A from-scratch re-run is
   equally safe, just slower. There is no partial-item state to reconcile
   and no delete pass; a re-run against an existing table converges to the
   same contents.
@@ -254,7 +260,9 @@ import argparse
 import csv
 import json
 import os
+import random
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -272,6 +280,8 @@ TABLE_NAME = 'london-flight-map-postcodes'
 AWS_REGION = 'eu-west-2'
 BATCH_SIZE = 500  # rows buffered before a parallel flush
 WRITE_WORKERS = 64  # default concurrency; --workers overrides
+BWI_MAX_ITEMS = 25  # BatchWriteItem's hard per-request cap; not tunable
+BWI_MAX_ATTEMPTS = 10  # UnprocessedItems retries before a chunk is declared failed
 CHECKPOINT_PATH = Path('.nspl_load_checkpoint')
 CHECKPOINT_EVERY = 1000
 NSPL_VINTAGE = '2026-02'
@@ -429,7 +439,7 @@ def parse_args():
     )
     p.add_argument(
         '--workers', type=int, default=WRITE_WORKERS, metavar='N',
-        help=f'Concurrent PutItem workers per flush (default {WRITE_WORKERS}). '
+        help=f'Concurrent write workers per flush (default {WRITE_WORKERS}). '
              'Raising it past ~64 rarely helps because a new PAY_PER_REQUEST '
              'table ramps its capacity gradually. LOWER it (try 16) if the run '
              'is dominated by throttling retries; adaptive retry will keep the '
@@ -652,24 +662,20 @@ def _row_to_item(row):
     return item
 
 
-def _flush_batch(ddb, items, workers):
-    """Write a buffered batch of already-mapped items to DynamoDB.
+# Latched True the first time BatchWriteItem is refused for want of the IAM
+# grant, so a run without it pays the probe once rather than once per chunk.
+# Module-level rather than threaded through run_load because the fallback is a
+# property of the credentials, not of any single batch.
+_BATCH_WRITE_DENIED = False
 
-    Parallel per-item PutItem, never BatchWriteItem and never the boto3
-    resource-level batch_writer(). MEASURED 2026-07-26: this reaches only
-    ~130 rows/s, NOT the "comparable to BatchWriteItem" claimed below — the
-    run is client-CPU-bound on 2.7M separate TLS + SigV4 handshakes. Granting
-    dynamodb:BatchWriteItem and switching to it is the single highest-value
-    change to this script. flightmap-dev's IAM policy grants PutItem /
-    GetItem / DeleteItem / Query / Scan / UpdateItem on `london-flight-map-*`;
-    BatchWriteItem is a separate IAM action and is not granted. Expanding IAM
-    is not the fix, and the loader deliberately does not need it: a
-    ThreadPoolExecutor of per-item PutItems reaches throughput comparable to
-    BatchWriteItem under PAY_PER_REQUEST.
 
-    Throttling is absorbed by the client's adaptive retry configuration (see
-    run_load), which rate-limits client-side on a ProvisionedThroughputExceeded
-    response rather than failing the batch and forcing a checkpoint resume.
+def _put_items_individually(ddb, items, workers):
+    """Parallel per-item PutItem. The pre-2026-07-27 write path, now a fallback.
+
+    MEASURED 2026-07-26 over the full 2.7M-row load: ~129 rows/s sustained at
+    64 workers, 5.80 hours end to end. The run is client-CPU-bound on 2.7M
+    separate TLS handshakes and SigV4 signatures, not throttled by DynamoDB,
+    which is why raising --workers does not help and may hurt.
     """
     from concurrent.futures import ThreadPoolExecutor
 
@@ -678,6 +684,102 @@ def _flush_batch(ddb, items, workers):
 
     with ThreadPoolExecutor(max_workers=workers) as ex:
         list(ex.map(_put, items))
+
+
+def _write_chunk(ddb, chunk, workers):
+    """Write at most BWI_MAX_ITEMS items in one BatchWriteItem request.
+
+    THE RETRY LOOP IS LOAD-BEARING, NOT DEFENSIVE. BatchWriteItem signals
+    partial failure as an HTTP 200 carrying a non-empty UnprocessedItems map,
+    never as an exception, so boto3's adaptive retry (configured in run_load)
+    cannot see it — that layer only reacts to error responses. Ignoring the
+    map would drop rows on the floor while run_load's `written` counter still
+    credited them, producing a load that reports success and is quietly short.
+    That is the same class of fault as the checkpoint-ahead-of-writes bug
+    fixed on 2026-07-25, and it is why this cannot be a one-line swap of
+    put_item for batch_write_item.
+
+    Falls back to per-item PutItem, for this chunk only, on:
+
+      AccessDeniedException — the dynamodb:BatchWriteItem grant has not landed
+        yet. Latches _BATCH_WRITE_DENIED so the rest of the run skips straight
+        to the old path instead of re-probing 108,000 times.
+      ValidationException — most plausibly two rows sharing a postcode inside
+        one 25-item window. BatchWriteItem rejects the WHOLE request for a
+        duplicate key; PutItem simply overwrites, which is the behaviour every
+        earlier load had and the semantics the table wants (last row wins).
+    """
+    global _BATCH_WRITE_DENIED
+
+    request = [{'PutRequest': {'Item': item}} for item in chunk]
+    delay = 0.05
+
+    for _ in range(BWI_MAX_ATTEMPTS):
+        try:
+            response = ddb.batch_write_item(RequestItems={TABLE_NAME: request})
+        except ddb.exceptions.ClientError as exc:
+            code = exc.response.get('Error', {}).get('Code', '')
+            if code == 'AccessDeniedException':
+                _BATCH_WRITE_DENIED = True
+                _put_items_individually(ddb, chunk, workers)
+                return
+            if code == 'ValidationException':
+                _put_items_individually(ddb, chunk, workers)
+                return
+            raise
+
+        unprocessed = (response.get('UnprocessedItems') or {}).get(TABLE_NAME) or []
+        if not unprocessed:
+            return
+
+        # Retry only what DynamoDB actually declined, never the whole chunk:
+        # re-sending accepted items would double the write cost and, on the
+        # last attempt, mask how much is really outstanding.
+        request = unprocessed
+        # Jitter, or 64 threads back off in lockstep and resynchronise into the
+        # same retry spike. Scheduling noise, never a security decision.
+        time.sleep(delay + random.uniform(0, delay))  # noqa: S311
+        delay = min(delay * 2, 5.0)
+
+    # Deliberately fatal. run_load's caller treats an exception here as a
+    # failed flush, and the checkpoint rule (`not batch`) guarantees the last
+    # checkpoint sits at or behind the last completed write, so a resume
+    # re-does bounded work rather than skipping the shortfall.
+    raise RuntimeError(
+        f'{len(request)} item(s) still unprocessed after {BWI_MAX_ATTEMPTS} '
+        f'BatchWriteItem attempts. DynamoDB is refusing writes faster than '
+        f'the backoff can absorb; lower --workers and resume from the checkpoint.'
+    )
+
+
+def _flush_batch(ddb, items, workers):
+    """Write a buffered batch of already-mapped items to DynamoDB.
+
+    Chunks into BatchWriteItem-sized requests and issues them in parallel,
+    which is ~25x fewer signed round trips than the per-item path it replaced
+    (2026-07-27). Under PAY_PER_REQUEST the per-item design was never
+    preferable — it existed only because dynamodb:BatchWriteItem was not
+    granted to flightmap-dev. It degrades to that path automatically when the
+    grant is still missing, so this script is safe to run either side of the
+    IAM change; see _write_chunk.
+
+    Throttling is absorbed by the client's adaptive retry configuration (see
+    run_load) for error responses, and by _write_chunk's own backoff for the
+    partial-success case adaptive retry cannot observe.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    if _BATCH_WRITE_DENIED:
+        _put_items_individually(ddb, items, workers)
+        return
+
+    chunks = [items[i:i + BWI_MAX_ITEMS] for i in range(0, len(items), BWI_MAX_ITEMS)]
+
+    # Cap concurrency at the chunk count so a 500-row batch does not spin up 64
+    # threads for 20 units of work. ex.map re-raises the first failure, which is
+    # the behaviour the checkpoint rule above depends on.
+    with ThreadPoolExecutor(max_workers=min(workers, len(chunks))) as ex:
+        list(ex.map(lambda chunk: _write_chunk(ddb, chunk, workers), chunks))
 
 
 # Resume state for a from-scratch run. `row` is the last row FULLY ACCOUNTED
