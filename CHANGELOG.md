@@ -6,6 +6,56 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-27 — NSPL loader moved to BatchWriteItem; batch-metering decision documented
+
+- **`scripts/load_nspl.py` now writes with `BatchWriteItem`** (25 items per
+  signed request) instead of one `PutItem` per row. The measured 5.80-hour full
+  load was client-CPU-bound on 2.7M separate TLS handshakes and SigV4
+  signatures, not throttled by DynamoDB; this removes ~96% of those round trips.
+  The per-item design only ever existed because the IAM action was not granted.
+
+  **The next full load is unmeasured.** Expect well under an hour, but no figure
+  is quoted here until a real run produces one — this docstring was already
+  wrong by 10× once, in the optimistic direction, for exactly this reason.
+
+- **The `UnprocessedItems` retry loop is load-bearing, not defensive.**
+  `BatchWriteItem` reports partial failure as an HTTP **200 with a non-empty
+  `UnprocessedItems` map**, never as an exception, so boto3's adaptive retry
+  cannot observe it. Dropping that map would lose rows while `run_load` still
+  credited them to `written` and checkpointed past them — unrecoverable, since a
+  resume starts *after* rows that never landed. Same class of silent shortfall
+  as the checkpoint-ahead-of-writes bug fixed on 2026-07-25. Exhausting the
+  retries is therefore deliberately fatal rather than quiet.
+
+- **Degrades automatically when the grant is missing.** On `AccessDeniedException`
+  the loader latches back to the per-item path and completes at the old speed, so
+  it is safe to run either side of the IAM change. **A roll that still takes ~6
+  hours is the signal the grant never landed.** A `ValidationException` (most
+  plausibly a duplicate postcode inside one 25-item window, which fails the whole
+  request where `PutItem` would simply overwrite) falls back for that chunk only,
+  without latching.
+
+- **5 new tests** in `tests/test_load_nspl.py::TestBatchWritePath`, all covering
+  ways the swap could lose rows *while still reporting success*. Root suite
+  140 → **145**; backend **125** (+8 subtests). The `_FakeDdb` double now models
+  `batch_write_item`, partial success, and both fallback exceptions.
+
+- **`backend/iam-policy.json`** gains `dynamodb:BatchWriteItem` and a new
+  `CloudWatchLogsOperateOwnGroups` statement (`DescribeLogStreams`,
+  `FilterLogEvents`, `GetLogEvents`, `PutRetentionPolicy`, `DeleteLogGroup`)
+  scoped to `/aws/lambda/london-flight-map-*`. Between them these would make
+  `/aws-debug` function and retire the console-only retention remediation.
+  **The file is not the live policy — it still has to be applied.**
+
+- **`BATCH_METERING_DECISION.md` added.** Documents the open decision blocking
+  the Professional launch, read from source rather than memory: quota 1,000/month
+  × `MAX_BATCH_SIZE` 100 = **100,000 free scores/month**. Newly noted: the quota
+  is monthly but the throttle is per second, so a single free key drains the
+  whole allowance in **~8.5 minutes** — a burst, not a drip, and the billing
+  alarm is not positioned to catch it. Five options, with the recommendation that
+  the blocker is not building metering but deciding what the free tier may be
+  worth. **Decision still open; nothing implemented.**
+
 ### 2026-07-26 (later) — Frontend batch deployed; DynamoDB tables made unloseable
 
 - **Frontend batch is live.** `index.html`, `sw.js`, `js/api-base.js` and

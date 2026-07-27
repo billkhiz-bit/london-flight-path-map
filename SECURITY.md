@@ -69,7 +69,7 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 
 ### Code + change discipline
 
-- **Pre-commit `/preflight`** runs ESLint, Prettier, html-validate, ruff (Python), and the unittest suite (60 tests). Blocking on any new error.
+- **Pre-commit `/preflight`** runs ESLint, Prettier, html-validate, ruff (Python), and the Python test suite (270 tests across backend and root, verified 2026-07-27). Blocking on any new error.
 - **Commit hygiene**: per-feature atomic commits, full SHA citations in CHANGELOG, audit-finding IDs referenced inline.
 - **Public CHANGELOG** at [`CHANGELOG.md`](./CHANGELOG.md) with the security-relevant items grouped by release.
 

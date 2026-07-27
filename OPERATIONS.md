@@ -260,7 +260,7 @@ issues a new one and silently expires the old one.
 | `london-flight-map-signups` | Customer signup audit log + API keyIds | **PITR/backup only** — irreplaceable, these are real customers |
 | `london-flight-map-favourites` | User-saved properties, keyed to device tokens | **PITR/backup only** — device tokens cannot be reissued |
 | `london-flight-map-noise-raster` | 423,481 DEFRA Lden samples | Rebuildable from the source GeoTIFF, ~6 hours |
-| `london-flight-map-postcodes` | ~2.7M ONS NSPL rows | Rebuildable from `data/nspl.csv`, **~6-7 hours measured** (not the ~40 min some docs claim) |
+| `london-flight-map-postcodes` | ~2.7M ONS NSPL rows | Rebuildable from `data/nspl.csv`. **5.80 h measured** on the per-item path; since 2026-07-27 the loader uses `BatchWriteItem` and should be far faster — **but only once `dynamodb:BatchWriteItem` is applied to the live `flightmap-dev` policy** (it is in `backend/iam-policy.json`, not yet applied). It falls back automatically, so **a ~6 h run means the grant never landed**. Next full load is unmeasured; do not quote a figure until one produces it. |
 
 All four are `Retain`, so a stack-level failure will not destroy them. That
 protects the two irreplaceable tables and saves ~13 hours of reload on the
