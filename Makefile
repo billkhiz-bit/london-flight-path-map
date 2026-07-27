@@ -14,6 +14,7 @@
 #   make android-upload    Upload AAB to Play Console internal track
 #   make ios-trigger       git push (Codemagic auto-builds on push)
 #   make ios-submit        fastlane deliver — submit latest TestFlight build for App Store review
+#   make score-book        Score a book of addresses offline to CSV (no API quota)
 #   make preflight         Run quality checks
 #
 # Requires (install once per machine):
@@ -208,6 +209,25 @@ android-upload:
 android-promote:
 	@echo "Promoting internal-track build to production..."
 	cd mobile && bundle exec fastlane android promote_to_production
+
+# ---------------------------------------------------------------------------
+# Bulk scoring
+# ---------------------------------------------------------------------------
+
+# Score a whole book of addresses offline, reusing the live scoring engine.
+# Consumes no API quota and needs no API key — it calls resolve_query()
+# directly, one layer below HTTP. Reads DynamoDB, so it needs the flightmap
+# profile, but it never writes anything.
+#
+#   make score-book IN=book.csv OUT=scored.csv
+#   make score-book IN=book.csv OUT=scored.csv ARGS="--persona family"
+#
+# See scripts/score_bulk.py for input formats and the --include-terminated flag.
+.PHONY: score-book
+score-book:
+	@test -n "$(IN)" || (echo "Usage: make score-book IN=book.csv OUT=scored.csv"; exit 1)
+	@test -n "$(OUT)" || (echo "Usage: make score-book IN=book.csv OUT=scored.csv"; exit 1)
+	AWS_PROFILE=flightmap python scripts/score_bulk.py --input "$(IN)" --output "$(OUT)" $(ARGS)
 
 # ---------------------------------------------------------------------------
 # Quality

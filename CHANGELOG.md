@@ -6,6 +6,58 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-07-27 (later) — Offline city-scale bulk scorer
+
+- **`scripts/score_bulk.py` is new** — the Enterprise "score your whole book /
+  whole city" deliverable and the pilot demo artefact, unblocked by the NSPL
+  table finishing its load on 2026-07-26. Takes a CSV or postcode list, emits a
+  scored CSV. `make score-book IN=book.csv OUT=scored.csv`.
+
+- **Zero methodology drift by construction.** It does not reimplement scoring:
+  it imports the score Lambda and calls **`resolve_query()`**, the exact
+  function the live API calls one layer below HTTP. Every threshold, weight,
+  persona, borough alias, NYC ZIP mapping and terminated-postcode rule is
+  therefore shared with production structurally rather than by discipline —
+  reimplementing would have reopened the class of problem audit I4 closed.
+
+- **Why offline rather than an endpoint:** `/v1/score/batch` caps at 100
+  queries inside a 28s Lambda timeout, so a 100,000-address book is 1,000 calls
+  — the entire monthly free-tier quota. Offline the same work costs ~£0.02 of
+  DynamoDB reads and no quota at all.
+
+- **Every input row appears in the output** (decision, Bill, 2026-07-27), with
+  a machine-readable `status` and a plain-English `note` for anything unscored.
+  A silently short CSV looks complete and is not — the same failure shape as
+  the `UnprocessedItems` trap, but worse here because the reader is a customer
+  who cannot distinguish a deliberate exclusion from a bug.
+
+- **The `not_found` note suggests a retired postcode; it never asserts one.**
+  A 404 for a terminated postcode is byte-identical to one that never existed
+  (deliberate public API surface, audit L5), so the cause is not observable
+  from the response. The note points at `--include-terminated` instead.
+
+- **Customer columns are carried through**, so the output reconciles row-for-row
+  against their input rather than needing a join on postcode — which is lossy
+  exactly where property books are densest, since a block of flats shares one
+  postcode. A column colliding with ours is renamed `src_*` so it can never
+  overwrite a computed value.
+
+- **Import order is load-bearing and handled.** `score/app.py` reads
+  `POSTCODE_TABLE` / `NOISE_RASTER_TABLE` at *module* level, so the script sets
+  them before importing. Getting this wrong routes an entire run through
+  postcodes.io — the free community service the NSPL table exists to stop
+  depending on — while still appearing to work.
+
+- **22 tests** (`tests/test_score_bulk.py`), all offline, covering the customer
+  contract rather than the scoring: every row survives, one exploding row does
+  not kill a 100k run, passthrough cannot overwrite computed columns, Excel BOM
+  headers still parse. Root suite 145 → **167**.
+
+- **Known follow-up:** lookups are per-item `GetItem`, so this inherits the
+  client-CPU bound the NSPL loader measured. A `BatchGetItem` prefetch is the
+  same ~25× win it was there, but it would mean interpreting NSPL rows outside
+  `_lookup_postcode_local`. Deliberately deferred until a real book is measured.
+
 ### 2026-07-27 — NSPL loader moved to BatchWriteItem; batch-metering decision documented
 
 - **`scripts/load_nspl.py` now writes with `BatchWriteItem`** (25 items per

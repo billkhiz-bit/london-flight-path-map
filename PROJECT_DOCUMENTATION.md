@@ -273,6 +273,32 @@ All four tables: PAY_PER_REQUEST billing, eu-west-2.
 
 ---
 
+## Offline bulk scoring (`scripts/score_bulk.py`)
+
+The Enterprise "score your whole book / whole city" deliverable, and the pilot demo artefact — run a customer's portfolio for them before the conversation rather than handing them an API. Added 2026-07-27, unblocked by the NSPL table completing its load the day before.
+
+```bash
+make score-book IN=book.csv OUT=scored.csv
+make score-book IN=book.csv OUT=scored.csv ARGS="--persona family --include-terminated"
+python scripts/score_bulk.py --input book.csv --dry-run --limit 20
+```
+
+**It owns no scoring logic.** It imports `backend/lambdas/score/app.py` and calls `resolve_query()` — the same function the live API calls, one layer below HTTP. Every threshold, weight, persona, borough alias, NYC ZIP mapping and terminated-postcode rule is therefore shared with production *by construction*. Reimplementing the engine here would reopen the duplicate-source-of-truth problem audit I4 closed.
+
+**Why offline rather than an endpoint.** `/v1/score/batch` caps at 100 queries inside a 28-second Lambda timeout, so a 100,000-address book is 1,000 calls — the entire monthly free-tier quota. Offline the same work is ~£0.02 of DynamoDB reads and consumes no quota and no API key.
+
+**Input** is a CSV with a postcode column (`postcode`/`post_code`/`postal_code`/`pc`/`zip`/`zipcode`, case-insensitive; UTF-8 BOM tolerated, since books come out of Excel) or a plain text file with one postcode per line. Every other column in the customer's file is carried through to the output, so results reconcile row-for-row instead of needing a join on postcode — lossy exactly where books are densest, because a block of flats shares one. A customer column whose name collides with an output column is renamed `src_*` and can never overwrite a computed value.
+
+**Output** is written incrementally, so an interrupted run leaves a usable partial CSV. **Every input row appears**, with a `status` (`scored`, `not_found`, `outside_supported_boroughs`, `unsupported_zip`, `invalid_query`, `error`) and a plain-English `note` for anything unscored. Silently dropping failures would produce a CSV that looks complete and is not — the same failure shape as the loader's `UnprocessedItems` trap, but worse, because the reader is a customer who cannot tell a deliberate exclusion from a bug.
+
+The `not_found` note *suggests* a retired postcode and points at `--include-terminated`; it never asserts one. A 404 for a terminated postcode is byte-identical to one that never existed (a deliberate public API surface, audit L5), so the cause is not observable from the response.
+
+**Two operational notes.** The script sets `POSTCODE_TABLE` / `NOISE_RASTER_TABLE` *before* importing the Lambda, because `app.py` reads them at module level — set them afterwards and every lookup silently falls through to postcodes.io for the whole run. And lookups are per-item `GetItem`, so throughput inherits the client-CPU bound the NSPL loader measured; a `BatchGetItem` prefetch is the known ~25× win, deferred until a real book is measured.
+
+Tests: `tests/test_score_bulk.py`, 22 offline tests covering the customer contract rather than the scoring.
+
+---
+
 ## IAM Security
 
 ### Deployment User: `flightmap-dev`
