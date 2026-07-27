@@ -53,10 +53,19 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   not kill a 100k run, passthrough cannot overwrite computed columns, Excel BOM
   headers still parse. Root suite 145 → **167**.
 
-- **Known follow-up:** lookups are per-item `GetItem`, so this inherits the
-  client-CPU bound the NSPL loader measured. A `BatchGetItem` prefetch is the
-  same ~25× win it was there, but it would mean interpreting NSPL rows outside
-  `_lookup_postcode_local`. Deliberately deferred until a real book is measured.
+- **Measured the same day, on a 5,484-postcode book spanning all 33 boroughs**
+  (28-core machine, **100% score rate**): 86.7 rows/s at 4 workers, 371.1 at 16,
+  **500.2 at 32**, and **360.6 at 64** — throughput *peaks at 32 and falls at 64*,
+  the same client-CPU bound (TLS + SigV4) the NSPL loader hit. Default raised
+  16 → 32. `--workers` is not a speed knob above that.
+
+- **That settles the `BatchGetItem` follow-up: not worth building.** It had been
+  earmarked as the same ~25× win it was for the loader. Reads turn out to be far
+  cheaper than the loader's writes — a 100,000-address book extrapolates to ~3–4
+  minutes — so there is no user-visible problem left to solve, and it would cost
+  a second interpretation of NSPL rows outside `_lookup_postcode_local`. Measuring
+  beat reasoning by analogy. (The 100k figure is an extrapolation; the largest
+  real run to date is 5,484 rows.)
 
 ### 2026-07-27 — NSPL loader moved to BatchWriteItem; batch-metering decision documented
 

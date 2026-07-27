@@ -293,7 +293,20 @@ python scripts/score_bulk.py --input book.csv --dry-run --limit 20
 
 The `not_found` note *suggests* a retired postcode and points at `--include-terminated`; it never asserts one. A 404 for a terminated postcode is byte-identical to one that never existed (a deliberate public API surface, audit L5), so the cause is not observable from the response.
 
-**Two operational notes.** The script sets `POSTCODE_TABLE` / `NOISE_RASTER_TABLE` *before* importing the Lambda, because `app.py` reads them at module level — set them afterwards and every lookup silently falls through to postcodes.io for the whole run. And lookups are per-item `GetItem`, so throughput inherits the client-CPU bound the NSPL loader measured; a `BatchGetItem` prefetch is the known ~25× win, deferred until a real book is measured.
+**Operational note.** The script sets `POSTCODE_TABLE` / `NOISE_RASTER_TABLE` *before* importing the Lambda, because `app.py` reads them at module level — set them afterwards and every lookup silently falls through to postcodes.io for the whole run.
+
+**Throughput, measured 2026-07-27** on a 5,484-postcode book sampled across all 33 boroughs (28-core machine, 100% score rate):
+
+| Workers | Rows/s |
+|---|---|
+| 4 | 86.7 |
+| 16 | 371.1 |
+| **32 (default)** | **500.2** |
+| 64 | 360.6 |
+
+Throughput **peaks at 32 workers and falls at 64** — the same client-CPU bound (TLS + SigV4 signing) the NSPL loader hit. `--workers` is not a speed knob above ~32. Figures are machine-dependent; re-measure elsewhere before quoting them. A 100,000-address book extrapolates to ~3–4 minutes, though the largest real run to date is 5,484 rows.
+
+That measurement **settled the `BatchGetItem` question: not worth building.** It was earmarked as the same ~25× win it was for the loader, but reads are far cheaper than the loader's writes, so there is no user-visible problem left to solve — and it would cost a second interpretation of NSPL rows outside `_lookup_postcode_local`.
 
 Tests: `tests/test_score_bulk.py`, 22 offline tests covering the customer contract rather than the scoring.
 

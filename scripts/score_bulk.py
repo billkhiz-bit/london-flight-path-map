@@ -38,19 +38,36 @@ IMPORT ORDER IS LOAD-BEARING:
   why _load_score_app() sets the environment itself rather than trusting
   the caller's shell.
 
-PERFORMANCE:
+PERFORMANCE, MEASURED 2026-07-27:
 
   Each query costs up to two DynamoDB GetItems (postcode, then noise
-  raster). Both are per-item calls, so this inherits the lesson the NSPL
-  loader measured on 2026-07-26: at scale the bottleneck is CLIENT CPU on
-  TLS + SigV4, not DynamoDB. Expect the same order of throughput, and note
-  that raising --workers past a point makes it worse rather than better.
+  raster), both per-item calls. Measured on a 5,484-postcode book sampled
+  across all 33 London boroughs, on a 28-core machine:
 
-  A BatchGetItem prefetch (100 keys per signed request) is the known ~25x
-  win, exactly as it was for the loader — but it would mean re-parsing NSPL
-  rows outside _lookup_postcode_local, i.e. a second interpretation of the
-  same data. Correctness before speed for v1: measure a real book first,
-  and only pay that complexity if the measurement demands it.
+    workers=4    86.7 rows/s
+    workers=16  371.1 rows/s
+    workers=32  500.2 rows/s   <- peak, hence the default
+    workers=64  360.6 rows/s   <- worse, not better
+
+  That inversion past 32 is the same client-CPU bound the NSPL loader hit:
+  beyond a point the threads contend over TLS and SigV4 signing rather than
+  waiting on DynamoDB. RAISING --workers IS NOT A SPEED KNOB above ~32 and
+  will cost you throughput. The figures are machine-dependent; re-measure
+  on a different box before quoting them.
+
+  Throughput also climbs with book size as start-up cost amortises: the
+  same 16 workers gave 127 rows/s over 250 rows and 371 over 5,484.
+
+  A 100,000-address book therefore extrapolates to roughly 3-4 minutes.
+  That is an EXTRAPOLATION, not a measurement — the largest real run to
+  date is 5,484 rows.
+
+  SETTLED BY THAT MEASUREMENT: a BatchGetItem prefetch was earmarked as the
+  same ~25x win it was for the loader. It is not worth building. Reads are
+  far cheaper than the loader's writes, so there is no user-visible problem
+  left to solve, and it would cost a second interpretation of NSPL rows
+  outside _lookup_postcode_local. Revisit only if a book arrives that is
+  orders of magnitude larger than 100k.
 
 COST, at eu-west-2 on-demand rates checked 2026-07-25 (USD 0.1413 per
 million read request units, USD 1 ~= GBP 0.79):
@@ -90,7 +107,7 @@ if hasattr(sys.stderr, 'reconfigure'):
 POSTCODE_TABLE = 'london-flight-map-postcodes'
 NOISE_RASTER_TABLE = 'london-flight-map-noise-raster'
 AWS_REGION = 'eu-west-2'
-SCORE_WORKERS = 16
+SCORE_WORKERS = 32  # measured peak 2026-07-27; 64 is SLOWER, see the docstring
 PROGRESS_EVERY = 500
 
 # Column names accepted for the postcode field, lowercased for comparison.
@@ -383,8 +400,9 @@ def main():
     parser.add_argument('--include-terminated', action='store_true',
                         help='Score retired postcodes that only the local NSPL tier can serve.')
     parser.add_argument('--workers', type=int, default=SCORE_WORKERS,
-                        help=f'Concurrent scoring workers (default {SCORE_WORKERS}). '
-                             f'Raising this past the client CPU limit slows the run down.')
+                        help=f'Concurrent scoring workers (default {SCORE_WORKERS}, the '
+                             f'measured peak). Higher is SLOWER: 64 workers measured '
+                             f'360 rows/s against 500 at 32.')
     parser.add_argument('--limit', type=int, metavar='N',
                         help='Score only the first N rows. For smoke tests.')
     parser.add_argument('--dry-run', action='store_true',
