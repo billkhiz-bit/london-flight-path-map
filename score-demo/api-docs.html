@@ -47,9 +47,47 @@
     color: #8b8fa3;
     margin: 4px 0 0;
   }
-  .topbar a { color: #f59e0b; text-decoration: none; }
+  .topbar a { color: #f59e0b; text-decoration: underline; }
   .topbar a:hover { text-decoration: underline; }
   #swagger-ui { background: #fff; min-height: calc(100vh - 80px); }
+
+  /* WCAG 1.4.3, fixed 2026-07-27. Swagger UI's own stylesheet ships several
+     colours that fall below 4.5:1. Overridden here rather than in the
+     vendored CSS so a Swagger upgrade cannot quietly revert the fix.
+     Measured with getComputedStyle against the rendered widget rather than
+     read off the stylesheet, because several of these are set on ancestors.
+
+     Greys on white — the endpoint URL and base URL. #3b4151 is Swagger's own
+     darkest body colour, so this matches the widget rather than introducing
+     a new hue. */
+  #swagger-ui .url,
+  #swagger-ui .info .base-url { color: #3b4151; }
+
+  /* The version badge is light text on Swagger's mid-grey #7d8492 (~2.4:1).
+     Darkening the BACKGROUND rather than the text keeps it reading as a
+     badge; white on #3b4151 is ~9.7:1. */
+  #swagger-ui small { background-color: #3b4151; }
+  #swagger-ui small pre.version { color: #ffffff; }
+
+  /* Links rendered from the OpenAPI description markdown come out as
+     Swagger's #4990e2, ~3.1:1 on white against a 4.5:1 requirement. #1d4ed8
+     is ~6.3:1 and stays recognisably a link colour. */
+  #swagger-ui .info a,
+  #swagger-ui .renderedMarkdown a,
+  #swagger-ui .info__license a { color: #1d4ed8; }
+
+  /* Swagger's HTTP-method badges are white text on pastel fills — GET #61affe
+     (~2.2:1) and POST #49cc90 (~1.9:1), well under 4.5:1. Darkening the FILL
+     preserves the colour-coding that makes the widget scannable (blue = GET,
+     green = POST) while bringing white text above 4.5:1, which restyling the
+     text could not do. Same treatment for the Try-it-out / Execute buttons. */
+  #swagger-ui .opblock-get .opblock-summary-method { background: #1d4ed8; }
+  #swagger-ui .opblock-post .opblock-summary-method { background: #0f7b4f; }
+  #swagger-ui .opblock-put .opblock-summary-method { background: #9a5b00; }
+  #swagger-ui .opblock-delete .opblock-summary-method { background: #b91c1c; }
+  #swagger-ui .opblock-patch .opblock-summary-method { background: #0f6f6f; }
+  #swagger-ui .btn.execute { background: #0f7b4f; border-color: #0f7b4f; }
+  #swagger-ui .btn > span { color: #3b4151; }
 </style>
 </head>
 <body>
@@ -85,8 +123,36 @@
       tryItOutEnabled: true,
       filter: false,
       docExpansion: 'list',
+      onComplete: labelSwaggerControls,
     });
   };
+
+  // WCAG 4.1.2, fixed 2026-07-27. Swagger UI renders its server-selection
+  // <select id="servers"> with no label and no aria-label, which axe reports
+  // as a CRITICAL `select-name` violation: a screen reader announces it only
+  // as "combo box", with no indication of what it selects.
+  //
+  // Patched after render rather than by editing the vendored bundle, so the
+  // next Swagger UI upgrade does not silently drop the fix — a modified
+  // vendor file would be overwritten, whereas this runs against whatever
+  // markup the new version produces (and no-ops harmlessly if the element
+  // is renamed).
+  //
+  // onComplete fires after the spec is parsed and the UI is painted. The
+  // MutationObserver covers the servers block being re-rendered later, which
+  // Swagger does when the spec defines multiple servers.
+  function labelSwaggerControls() {
+    const label = () => {
+      document
+        .querySelectorAll('#swagger-ui select:not([aria-label]):not([id="filter"])')
+        .forEach((el) => el.setAttribute('aria-label', 'Select API server'));
+    };
+    label();
+    const root = document.getElementById('swagger-ui');
+    if (root && window.MutationObserver) {
+      new MutationObserver(label).observe(root, { childList: true, subtree: true });
+    }
+  }
 </script>
 
 <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

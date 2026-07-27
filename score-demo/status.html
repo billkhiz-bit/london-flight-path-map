@@ -48,7 +48,27 @@
   h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.5px; }
   h1 .accent { color: var(--amber); }
   .tag { color: var(--muted); font-size: 14px; margin: 0; }
-  .tag a { color: var(--amber); text-decoration: none; }
+
+  /* WCAG 1.4.1 + 1.4.3, fixed 2026-07-27 after the axe scan was extended
+     beyond the homepage for the first time. Two real defects here:
+
+       1. Links inside a text block were distinguished from the surrounding
+          copy by COLOUR ALONE (amber #f59e0b on muted #8b8fa3 = 1.49:1,
+          against a 3:1 requirement) with the underline only on :hover. A
+          hover state is not available to touch or keyboard users, so the
+          underline has to be permanent.
+
+       2. This page had NO global `a` rule at all, so the two footer links
+          fell through to the browser default #0000ee on a #06070d
+          background: 2.14:1 against a 4.5:1 requirement. Effectively
+          invisible, and it had been live since the page shipped.
+
+     The global rule below fixes both at once; keep it above the specific
+     rules so they can still override colour without losing the underline. */
+  a { color: var(--amber); text-decoration: underline; }
+  a:hover { text-decoration: underline; }
+
+  .tag a { color: var(--amber); text-decoration: underline; }
   main { max-width: 800px; margin: 0 auto; padding: 0 24px 64px; }
   .overall {
     background: var(--panel);
@@ -112,7 +132,7 @@
     line-height: 1.7;
   }
   .meta strong { color: var(--text); font-weight: 500; }
-  .meta a { color: var(--amber); text-decoration: none; }
+  .meta a { color: var(--amber); text-decoration: underline; }
   footer {
     text-align: center;
     color: var(--muted);
