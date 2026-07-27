@@ -1,8 +1,76 @@
 # Audit Report, Sky Score
-**Date:** 2026-07-24 (full audit)
+**Date:** 2026-07-27 (targeted — two gates that could not fail) · 2026-07-24 (full audit)
 **Files scanned:** 7 active Python Lambdas, `template.yaml`, `iam-policy.json`, `index.html` (8.2k lines), `js/api-base.js`, `sw.js`, `score-demo/*`, `api/index.html`, `pricing.html`, `privacy.html`, `tests/`, `backend/tests/`, `.github/workflows/`, live-site parity vs skyscore.co.uk
 **Audit performed by:** 6 parallel dimension agents (security backend/frontend, code backend/frontend, a11y/design, deps + live parity) with per-finding adversarial verification. Verification was cut short by the account's monthly spend limit — see the 2026-07-24 section for what that means.
 **Previous audits:** 2026-05-21 (website, post-launch), 2026-05-07, 2026-05-06 (39-finding baseline; triage table below)
+
+---
+
+## 2026-07-27 — two gates that could not fail
+
+Not a scheduled audit. Both findings came from asking what an existing green
+check would **fail to catch**, rather than from reading the check itself.
+
+### A-0727-1 — `/preflight` reported success while running nothing (Critical, fixed)
+
+`make preflight` exited 0 on a machine where `make` is not installed. Every
+check in the skill was piped to `tail`, and a shell pipeline exits with the
+status of its **last** stage, so no failure in any check could ever surface.
+
+Three further defects in the same gate:
+
+| ID | Finding | Impact |
+|---|---|---|
+| A-0727-1a | **The root test suite was never in the gate.** Only `backend/tests` ran, so all **167** root tests — the NSPL loader, the bulk scorer, the handler contracts — were unguarded before every commit to date. | Critical |
+| A-0727-1b | `pip-audit` looped over `backend/lambdas/*/requirements.txt`, which matches nothing (no Lambda has one), and swallowed the result with `\|\| true` — a no-op rendering as a green tick. | Important |
+| A-0727-1c | Playwright ran uncapped against the **live** site, producing 14 spurious failures (14 failed / 2 passed vs 16 passed at `--workers=2`). A gate that cries wolf gets ignored. | Important |
+
+**Fixed:** `scripts/preflight.sh`, a real script with real exit codes, wired
+to `make preflight`, `npm run preflight` and the skill so the three cannot
+drift apart. **Verified to exit 1 on an injected defect** rather than assumed
+to. ruff widened to `scripts/` + `tests/` (6 pre-existing findings fixed).
+Prettier demoted to advisory *and labelled as such* — every file in the repo
+deviates and reformatting `index.html` is a 19,205-line diff on an 8,462-line
+deployed file.
+
+**Related doc correction:** `SECURITY.md` claimed "`npm audit` clean (0
+vulnerabilities)". The dev tree carries 4 high-severity advisories. The
+accurate statement is stronger: `dependencies` is empty and there is no build
+step, so nothing from `node_modules` ships and `npm audit --omit=dev` is **0**.
+
+### A-0727-2 — the a11y scan covered one page in eight (Important, fixed in source)
+
+The axe check ran against `/` only — a page that had already had three a11y
+waves over it — and failed on `critical` impact only. Two independently
+defensible narrowings multiplied into a check that could not fail: the B2B
+funnel was never scanned, and **every defect found below is `serious`**, so
+even scanning it would have passed under the old threshold.
+
+Extended to all 8 public pages at critical + serious. `/`, `/pricing`,
+`/privacy`, `/api/` and `/changes` were already clean.
+
+| ID | Page | Finding | Impact |
+|---|---|---|---|
+| A-0727-2a | `score-demo/status.html` | **No global `a` rule at all** — both footer links fell through to browser-default `#0000ee` on `#06070d`: **2.14:1** vs 4.5:1. Effectively invisible, live since the page shipped. | Serious (WCAG 1.4.3) |
+| A-0727-2b | all three `score-demo` pages | Links distinguished from surrounding copy by **colour alone** (1.49:1 vs 3:1), underlined only on `:hover` — unavailable to touch and keyboard users. | Serious (WCAG 1.4.1) |
+| A-0727-2c | `score-demo/api-docs.html` | Swagger UI's server `<select>` **had no accessible name** — announced as "combo box" with no indication of purpose. | **Critical** (WCAG 4.1.2) |
+| A-0727-2d | `score-demo/api-docs.html` | Swagger method badges white on pastel fills (~2:1), version badge dark-on-grey, description links `#4990e2` on white (3.1:1). | Serious (WCAG 1.4.3) |
+
+All fixed in source. The Swagger defects were fixed **from the page** (a
+`<style>` block plus an `onComplete` hook), never by editing the vendored
+bundle, so the next upgrade cannot silently revert them; badge **fills** were
+darkened rather than text recoloured, preserving the blue-GET / green-POST
+coding that makes the widget scannable.
+
+**Accepted, not fixed:** `nested-interactive` on `api-docs.html` — Swagger
+renders each operation summary as a `<button>` containing a `<button>`. An
+upstream defect; patching the bundle would be overwritten on upgrade.
+Excluded **by rule name, on that page only**, so every other rule stays
+enforced there. **Re-check on the next Swagger UI upgrade.**
+
+**Status: SOURCE ONLY.** Verified 0 critical/serious against a local server.
+The live site still carries A-0727-2a through 2d until a `web-deploy`, and the
+e2e gate correctly reports those pages as failing until then.
 
 ---
 

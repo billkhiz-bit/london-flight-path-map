@@ -6,7 +6,50 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-07-27 (latest) — `/preflight` stops lying
+### 2026-07-27 (latest) — Accessibility: scan the whole funnel, not just the homepage
+
+**Source-only. Not yet deployed** — the three `score-demo` pages on live
+CloudFront still carry these defects until a `web-deploy`, and the e2e gate
+correctly reports them as failing until then.
+
+- **The axe scan covered `/` and nothing else.** That page had already had
+  three a11y waves run over it, so the suite reported a clean sweep while the
+  B2B funnel — the pages shown to investors and pilot prospects — had **never
+  been scanned**. Now covers all **8** public pages. `/pricing`, `/privacy`,
+  `/api/`, `/changes` and `/` were already clean; the three `score-demo`
+  pages were not.
+
+- **Threshold raised from `critical`-only to `critical` + `serious`.** Every
+  defect below is `serious` — under the old threshold, scanning those pages
+  would *still* have passed them.
+
+- **`status.html` had no global `a` rule at all**, so both footer links fell
+  through to the browser default `#0000ee` on a `#06070d` background —
+  **2.14:1** against a 4.5:1 requirement. Effectively invisible, live since
+  the page shipped.
+
+- **Links distinguished by colour alone** on all three pages (1.49:1 where
+  3:1 is required), underlined only on `:hover` — no use to touch or keyboard
+  users. Underline is now permanent.
+
+- **Swagger UI's server `<select>` had no accessible name** — axe rates this
+  **critical**; a screen reader announced it only as "combo box". Also fixed:
+  method badges (white on pastel, ~2:1), the version badge, and description
+  links (`#4990e2` on white, 3.1:1). All fixed from the page's own `<style>`
+  and an `onComplete` hook rather than by editing the vendored bundle, so a
+  Swagger upgrade cannot silently revert them. Badge **fills** were darkened
+  rather than text recoloured, preserving the blue-GET / green-POST coding.
+
+- **`nested-interactive` left failing and excluded by name, on that page
+  only.** Swagger renders each operation summary as a `<button>` containing a
+  `<button>` — an upstream defect; patching the bundle would be overwritten on
+  upgrade. Scoping the exclusion to one rule on one page keeps every other
+  rule enforced there. Re-check on the next Swagger upgrade.
+
+- Verified 0 critical/serious on all three pages against a local server,
+  since the suite's `baseURL` is live CloudFront.
+
+### 2026-07-27 — `/preflight` stops lying
 
 The gate lied in **both directions in a single session**, which is how a
 2.5-month outage hides behind a green suite. Rewritten as a real, runnable

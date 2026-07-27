@@ -72,7 +72,10 @@ Always use "Sky Score" in all public-facing files and UI text.
 
 ## Quality & Plugins
 
-- Run `/preflight` before every commit, checks ESLint, HTML validation, Prettier, Python lambdas, security, and Playwright tests
+- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint, html-validate, ruff over `backend/lambdas` + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, Playwright at `--workers=2`. Advisory: Prettier, npm audit.
+  - **Read the exit code, never pipe it.** `preflight | tail` is always 0 — a pipeline exits with its LAST stage's status. That is exactly how `make preflight` reported success on 2026-07-27 while running nothing at all (`make` is not on PATH in Git Bash here).
+  - `--skip-e2e` skips Playwright, which hits the live site. `--fix` auto-fixes what is auto-fixable.
+  - Rewritten 2026-07-27 after the gate produced a false green, a false red, and silently omitted the 167-test root suite. Change what blocks in `scripts/preflight.sh`, **not** in the skill file.
 - Run `/careful` before touching live AWS resources, blocks destructive commands
 - ~~Use `/aws-debug` when Lambda errors or API Gateway 5xx issues occur~~ **`/aws-debug` does NOT work on this account** (verified 2026-07-26): `flightmap-dev` is denied `logs:FilterLogEvents`, `logs:GetLogEvents`, `logs:DescribeLogStreams`, `cloudtrail:LookupEvents`, `iam:GetRolePolicy`, `lambda:ListFunctions` and `cloudformation:DescribeStackResource`. Only `logs:DescribeLogGroups` (names) works, and the `default` profile's token is invalid. Until a console-side grant lands, debug Lambda faults from the **console** or by **side-effect elimination** — see `OPERATIONS.md` §6. Prefix any `/aws/lambda/...` CLI argument with `export MSYS_NO_PATHCONV=1` or Git Bash mangles it.
 - Use **context7** to look up D3.js, AWS SDK, or SAM docs before using unfamiliar APIs
