@@ -28,10 +28,33 @@ pages advertising less than the plan granted.
 **Not done, deliberately:** option A. The recommendation stands — build per-score metering when
 a paying customer's usage makes it worth operating, not before.
 
-**Still open, surfaced by doing this:** the Professional tier is quoted at 100,000 requests a
-month and the same multiplier applies to it, making its real ceiling 10,000,000 scores. That is
-not a giveaway problem because those customers pay, but it does bear on where the Enterprise
-floor sits. Not changed here — repricing Professional was outside this decision.
+**Professional: DECIDED 2026-07-29, implementation still to do.** Keep 100,000 requests/month,
+publish a **1,000,000 scores/month** ceiling beside it — the free-tier move repeated, because the
+unit is the problem in both cases. Cutting Professional's requests to 10,000 was rejected: it caps
+scores correctly but charges £499 for 10,000 single-address lookups, and a portal doing per-search
+lookups is the likelier first customer than a batch-only one. Building option A now was also
+rejected as premature, though note the trigger below is closer than it was.
+
+**The unenforced half, stated plainly:** API Gateway meters requests, so nothing technically stops
+a Professional key from taking all 10,000,000. The published ceiling is a contractual commitment,
+not a control. It stops the price list lying; it does not stop the extraction. That gap closes
+only when option A ships, and **Professional's first paying customer is precisely the trigger
+condition this document deferred option A against** — so expect to build it then, not later.
+
+**Surfaces still to change** (none done as of 2026-07-29): `pricing.html`, `api/index.html`,
+`score-demo/openapi.yaml`, and the `signup` Lambda's response, which already returns
+`batchMultiplier` + `monthlyScoreCeiling` for the free tier and needs the Professional equivalent.
+All four need a deploy.
+
+**Why it mattered:** the ×100 made Professional's real entitlement 10,000,000 scores for £499 —
+around every home in London three times a month, and drainable in under 3 hours of sustained calls
+at the batch route's 10 rps / 20 burst. That undercut both the £12,000/yr Enterprise floor (£1,000
+a month for less volume than the £499 tier already gave away) and the £2,500 pilot, which
+"includes everything in Professional" and therefore implied 30,000,000 scores across its 90 days.
+
+**The £499 price itself is unchanged** — repricing Professional was outside this decision, and the
+ceiling change removes most of the reason to revisit it. Enterprise and pilot pricing likewise
+stand; what changes is that Professional no longer silently out-delivers them on volume.
 
 ---
 
