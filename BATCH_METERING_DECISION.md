@@ -10,6 +10,15 @@ those numbers that cannot read the plan at runtime — `backend/lambdas/signup/a
 `batchMultiplier` and `monthlyScoreCeiling`, so the ceiling is a field a customer reads rather
 than an arithmetic exercise they perform and then feel entitled to.
 
+**A consequence the original analysis missed:** the shared public demo key on
+`/score-demo` was linked to the *same* `ScoreFreeUsagePlan`, so cutting the free tier would have
+capped the public "Try the API" form at 100 requests shared across every visitor. The usage plan
+had two unrelated consumers and §3 reasoned about only one of them. Fixed by giving the demo key
+its own `ScoreDemoUsagePlan` at 2,000 req/month — §3's objection to per-endpoint plans (two keys
+per customer) does not apply to a single key on our own page. **The relink is a manual post-deploy
+step**, because the key was created out-of-band in 2026-05 and CloudFormation does not manage it:
+runbook in `OPERATIONS.md` §2.
+
 **Not done, deliberately:** option A. The recommendation stands — build per-score metering when
 a paying customer's usage makes it worth operating, not before. **Requires a `sam deploy` to
 take effect**; the quota is enforced by API Gateway, so until that runs the live free tier is

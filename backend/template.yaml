@@ -383,6 +383,36 @@ Resources:
       KeyType: API_KEY
       UsagePlanId: !Ref ScoreFreeUsagePlan
 
+  # Separate plan for the ONE shared demo key embedded in score-demo/*.html,
+  # added 2026-07-29. Until now that key sat on ScoreFreeUsagePlan, so cutting
+  # the free tier to 100 req/month would have capped the whole public "Try the
+  # API" form at 100 requests shared across every visitor — a marketing page
+  # that 429s for the rest of the month, with no alarm to say it had happened.
+  #
+  # BATCH_METERING_DECISION.md §3 rejects per-endpoint plans because they force
+  # two API keys on every customer. That objection does not apply here: this is
+  # one key, on our own page, issued to nobody. The demo form only ever makes
+  # single /v1/score calls, so for this key requests genuinely equal scores and
+  # a request quota is the honest unit.
+  #
+  # Deliberately NOT a place to be stingy — this key's job is to let a prospect
+  # see a real score before they give up an email address.
+  ScoreDemoUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: FlightMapApiprodStage
+    Properties:
+      UsagePlanName: SkyScoreDemoTier
+      Description: Shared public demo key on /score-demo, 2000 requests/month.
+      ApiStages:
+        - ApiId: !Ref FlightMapApi
+          Stage: prod
+      Quota:
+        Limit: 2000
+        Period: MONTH
+      Throttle:
+        BurstLimit: 5
+        RateLimit: 2
+
   # --- Self-service signup ---
   # POST /v1/signup creates a new APIGW key, links to ScoreFreeUsagePlan,
   # records the email in SignupsTable. Unauthenticated by design (form

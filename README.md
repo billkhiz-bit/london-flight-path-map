@@ -71,7 +71,7 @@ Three endpoints, all API-key gated, all returning JSON.
 | `POST` | `/v1/score/batch` | Bulk lookup, up to 100 queries per call |
 | `GET` | `/v1/regions` | Discovery, list supported cities, boroughs, postcode formats |
 
-Free tier: 1,000 requests/month, 5/sec burst, 2/sec sustained. Paid tiers introduced when the first paying integrator commits.
+Free tier: 100 requests/month, 5/sec burst, 1/sec sustained — and because a batch request carries up to 100 addresses for one request, that is a ceiling of 10,000 scores/month. Paid tiers introduced when the first paying integrator commits.
 
 ## Quick-start
 

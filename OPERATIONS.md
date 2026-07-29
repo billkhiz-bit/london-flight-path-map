@@ -96,6 +96,51 @@ AWS_PROFILE=flightmap aws s3 cp .well-known/assetlinks.json \
   --content-type "application/json" --region eu-west-2
 ```
 
+### PENDING one-off: move the demo key onto its own usage plan
+
+**Status 2026-07-29: not yet done. Required on the next `sam deploy`, in the
+same session as that deploy.** Not an admin action — `flightmap-dev` holds
+`apigateway:POST` and `apigateway:DELETE`, so this is runnable from here.
+
+The free tier dropped to 100 req/month on 2026-07-29. The shared public demo
+key (`SkyScoreDemoKeyV2`, id `1zy00lrqs5`, embedded in `score-demo/*.html`) is
+linked to `ScoreFreeUsagePlan`, so **until it is relinked, the public "Try the
+API" form shares that 100 across every visitor to the page** and will 429 for
+the rest of the month once drained. The deploy creates `ScoreDemoUsagePlan`
+(2,000/month) but **cannot move the key** — the key was created out-of-band in
+2026-05, so CloudFormation does not manage it.
+
+**Unlink before linking.** API Gateway refuses to associate a key with two
+usage plans that share the same API stage, and both plans here are on
+`FlightMapApi`/`prod`. Doing it the other way round fails at the link step.
+
+```bash
+# 1. Get both plan ids
+AWS_PROFILE=flightmap aws apigateway get-usage-plans --region eu-west-2 \
+  --query "items[?name=='SkyScoreFreeTier'||name=='SkyScoreDemoTier'].[name,id]" \
+  --output table
+
+# 2. Unlink the demo key from the free plan
+AWS_PROFILE=flightmap aws apigateway delete-usage-plan-key --region eu-west-2 \
+  --usage-plan-id <FREE_PLAN_ID> --key-id 1zy00lrqs5
+
+# 3. Link it to the demo plan
+AWS_PROFILE=flightmap aws apigateway create-usage-plan-key --region eu-west-2 \
+  --usage-plan-id <DEMO_PLAN_ID> --key-id 1zy00lrqs5 --key-type API_KEY
+```
+
+Between steps 2 and 3 the demo key belongs to no plan and `/v1/score` will
+reject it — seconds, but do not stop halfway, and do not run this while
+demoing to anyone.
+
+**Verify from the API, not the console:** the demo key should appear under
+`SkyScoreDemoTier` and be absent from `SkyScoreFreeTier`.
+
+```bash
+AWS_PROFILE=flightmap aws apigateway get-usage-plan-keys --region eu-west-2 \
+  --usage-plan-id <DEMO_PLAN_ID> --query 'items[].[id,name]' --output table
+```
+
 **Native iOS / Android binaries** (Wave 13.2+):
 - Web changes propagate to native apps **only** when a Codemagic build is triggered + reviewed by Apple/Google. Plan binary releases every 2-4 weeks.
 - Full pre-release runbook: `mobile/RELEASE_CHECKLIST.md` (9 steps including version bump, asset regen, smoke test, store promotion).

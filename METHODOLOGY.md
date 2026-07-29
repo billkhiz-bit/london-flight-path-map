@@ -730,9 +730,12 @@ A status page at `status.skyscore.com` is planned for general-availability launc
 ### Rate limits and quotas
 
 The free-tier `SkyScoreFreeTierKey`:
-- 1,000 requests per month
+- 100 requests per month (lowered from 1,000 on 2026-07-29)
 - 5 requests per second burst
-- 2 requests per second sustained
+- 1 request per second sustained
+- **10,000 scores per month**, the figure that actually matters: the quota
+  meters *requests*, and a `/v1/score/batch` request carries up to 100
+  queries while still costing one request
 
 Paid tiers introduced when first paying integrator commits.
 

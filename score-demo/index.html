@@ -369,7 +369,7 @@
 <main>
   <section class="card signup-card" id="signup" aria-labelledby="signup-heading">
     <h2 id="signup-heading">Get your own API key</h2>
-    <p class="tag" style="margin-bottom:12px;">Free tier: 1000 requests / month, 5 burst, 2 sustained. One key per email. Shown once on signup, save it somewhere durable.</p>
+    <p class="tag" style="margin-bottom:12px;">Free tier: 100 requests / month, 5 burst, 1 sustained. A batch request carries up to 100 addresses and counts as one request, so the ceiling is 10,000 scores / month. One key per email. Shown once on signup, save it somewhere durable.</p>
     <form id="signupForm">
       <div class="signup-row">
         <div>
@@ -392,7 +392,7 @@
 
   <section class="card">
     <h2>Try the API</h2>
-    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only, same 1000 req/month limit as the free tier, but shared across all visitors. For production use, sign up for your own key above.</p>
+    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only, same 100 req/month limit as the free tier, but shared across all visitors. For production use, sign up for your own key above.</p>
     <form id="form">
       <div>
         <label for="postcode">Postcode</label>
@@ -440,7 +440,7 @@
 <script src="../js/api-base.js"></script>
 <script>
   // Public demo key, intentionally embedded in the served HTML for the
-  // "Try the API" form below. Capped at 1000 req/month (the SkyScoreFreeTier
+  // "Try the API" form below. Capped at 100 req/month (the SkyScoreFreeTier
   // usage plan), shared across all visitors. For production use, sign up
   // above for your own per-email key. Rotated 2026-05-06 (audit C2)
   // after the previous key was committed to git history.
@@ -490,7 +490,7 @@
   // example mid-request started a second concurrent call, and the first
   // call's finally block then re-enabled submit while that second was still
   // open, allowing a third. Symptoms were a form/result desync and needless
-  // burn of the shared demo key's 1000 req/month quota.
+  // burn of the shared demo key's 100 req/month quota.
   function setBusy(busy) {
     submitBtn.disabled = busy;
     exampleBtns.forEach(btn => { btn.disabled = busy; });
