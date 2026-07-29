@@ -52,7 +52,7 @@ Resources:
           # ~5-6 successful req/s regardless of its usage plan — a single
           # bursty Professional integration (or two customers at once) would
           # 429 constantly. Per-customer fairness comes from usage-plan
-          # throttles (free tier: 5 burst / 2 sustained), not this ceiling;
+          # throttles (free tier: 5 burst / 1 sustained), not this ceiling;
           # this is the whole-API circuit breaker. Signup keeps its own
           # 1 RPS override below.
           ThrottlingRateLimit: 50
@@ -349,16 +349,32 @@ Resources:
     DependsOn: FlightMapApiprodStage
     Properties:
       UsagePlanName: SkyScoreFreeTier
-      Description: Free tier, 1000 requests/month, 5 req/sec burst.
+      Description: Free tier, 100 requests/month, 5 req/sec burst.
+      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. Four places mirror
+      # these numbers and none of them can read the plan at runtime:
+      # backend/lambdas/signup/app.py (the signup response), pricing.html,
+      # api/index.html and score-demo/openapi.yaml. Change them together.
+      #
+      # Quota meters REQUESTS; the product sells SCORES, and /v1/score/batch
+      # carries up to MAX_BATCH_SIZE (100) queries per request. So the real
+      # free ceiling is Limit x 100 scores/month, not Limit. Lowered 1000 -> 100
+      # on 2026-07-29 (10,000 scores, was 100,000) because the old ceiling gave
+      # away the entire volume proposition of the £499 Professional tier for
+      # free, in under nine minutes. Reasoning and rejected options:
+      # BATCH_METERING_DECISION.md.
       ApiStages:
         - ApiId: !Ref FlightMapApi
           Stage: prod
       Quota:
-        Limit: 1000
+        Limit: 100
         Period: MONTH
+      # RateLimit 2 -> 1 alongside the quota cut. It does not change the monthly
+      # total, it doubles the time to drain it (500s -> 1000s), so the drain
+      # reads as sustained use rather than a burst that is over before any
+      # monthly-window alarm could notice.
       Throttle:
         BurstLimit: 5
-        RateLimit: 2
+        RateLimit: 1
 
   ScoreFreeUsagePlanKey:
     Type: AWS::ApiGateway::UsagePlanKey

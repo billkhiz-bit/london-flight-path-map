@@ -18,7 +18,9 @@ whole point. Abuse is bounded by:
     need WAF (see below).
   - One key per email (idempotent, duplicate signups return a "key
     already issued" error; we cannot re-show the key after creation)
-  - The downstream UsagePlan caps each issued key at 1000 req/month
+  - The downstream UsagePlan caps each issued key at 100 req/month,
+    which is 10,000 scores/month because a /v1/score/batch request
+    carries up to 100 queries and still counts as one request
 
 If this becomes a vector, the next layer is reCAPTCHA / hCaptcha on the
 form, then WAF rules. Not worth adding pre-emptively.
@@ -378,10 +380,18 @@ def handle_post(event):
             'apiKey': key_value,
             'keyId': key_id,
             'usagePlan': 'SkyScoreFreeTier',
+            # Mirrors ScoreFreeUsagePlan in backend/template.yaml, which is the
+            # source of truth. Hardcoded rather than read from the plan: fetching
+            # it would need apigateway:GetUsagePlan and a second API call on the
+            # signup path, to report numbers that change roughly never. Update
+            # both together. batchMultiplier is stated explicitly because the
+            # quota meters requests while the product sells scores.
             'limits': {
-                'monthlyQuota': 1000,
+                'monthlyQuota': 100,
                 'burstLimit': 5,
-                'sustainedRateLimit': 2,
+                'sustainedRateLimit': 1,
+                'batchMultiplier': 100,
+                'monthlyScoreCeiling': 10000,
             },
             'note': (
                 'Save this key now. It is shown ONCE and cannot be '

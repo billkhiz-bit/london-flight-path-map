@@ -11,7 +11,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <title>Sky Score API · UK property noise + livability data for B2B integrators</title>
-<meta name="description" content="Sky Score is a B2B property data API: 0-10 noise, affordability, growth, liveability scores per UK postcode or NYC ZIP. Methodology fully published. Free 1000 req/month tier; paid tiers above.">
+<meta name="description" content="Sky Score is a B2B property data API: 0-10 noise, affordability, growth, liveability scores per UK postcode or NYC ZIP. Methodology fully published. Free 100 req/month tier; paid tiers above.">
 <link rel="canonical" href="https://skyscore.co.uk/api/">
 <meta name="theme-color" content="#06070d">
 <meta name="robots" content="index,follow">
@@ -43,7 +43,7 @@
       "name": "Free tier",
       "price": "0",
       "priceCurrency": "GBP",
-      "description": "1,000 requests / month, all endpoints"
+      "description": "100 requests / month, all endpoints; up to 10,000 scores via batch"
     }
   ],
   "publisher": {
@@ -207,7 +207,7 @@
 
 <header>
   <h1>Sky Score <span class="accent">API</span></h1>
-  <p class="tagline">UK property noise + livability data, anchored to DEFRA, Ofsted, and ONS. One JSON call per postcode. Free 1000 req/month tier; self-service signup.</p>
+  <p class="tagline">UK property noise + livability data, anchored to DEFRA, Ofsted, and ONS. One JSON call per postcode. Free 100 req/month tier; self-service signup.</p>
 </header>
 
 <main>
@@ -288,8 +288,8 @@
     <div class="pricing-row">
       <div class="pricing-cell">
         <div class="tier">Developer</div>
-        <div class="price">Free<span class="unit"> · 1,000 req/mo</span></div>
-        <div class="quota">Self-service signup. Same data, lower limits.</div>
+        <div class="price">Free<span class="unit"> · 100 req/mo</span></div>
+        <div class="quota">Self-service signup. Same data, lower limits. A batch request counts as one request and carries up to 100 addresses, so the ceiling is 10,000 scores a month.</div>
         <a class="btn btn-secondary" href="/score-demo/index.html#signup" style="font-size:12px;padding:8px 14px;">Get a free key</a>
       </div>
       <div class="pricing-cell">

@@ -1,6 +1,28 @@
-# Batch metering — the open decision blocking the Professional launch
+# Batch metering — the decision that blocked the Professional launch
 
-**Written 2026-07-27. Decision owner: Bill. Nothing here has been implemented.**
+**Written 2026-07-27. Decided and implemented 2026-07-29: option B, at `Limit: 100`
+(a 10,000 score/month ceiling), with `RateLimit` dropped 2 → 1 as suggested in §4.2.**
+
+**What shipped:** `backend/template.yaml` (`ScoreFreeUsagePlan`), plus the five mirrors of
+those numbers that cannot read the plan at runtime — `backend/lambdas/signup/app.py` (whose
+201 response was still advertising 1000), `pricing.html`, `api/index.html` and
+`score-demo/openapi.yaml`. The signup response and the OpenAPI schema now also return
+`batchMultiplier` and `monthlyScoreCeiling`, so the ceiling is a field a customer reads rather
+than an arithmetic exercise they perform and then feel entitled to.
+
+**Not done, deliberately:** option A. The recommendation stands — build per-score metering when
+a paying customer's usage makes it worth operating, not before. **Requires a `sam deploy` to
+take effect**; the quota is enforced by API Gateway, so until that runs the live free tier is
+still 1000.
+
+**Still open, surfaced by doing this:** the Professional tier is quoted at 100,000 requests a
+month and the same multiplier applies to it, making its real ceiling 10,000,000 scores. That is
+not a giveaway problem because those customers pay, but it does bear on where the Enterprise
+floor sits. Not changed here — repricing Professional was outside this decision.
+
+---
+
+*Original 2026-07-27 text follows, unedited.*
 
 Every figure below was read from source on 2026-07-27, not from memory:
 `backend/template.yaml` (`ScoreFreeUsagePlan`) and `backend/lambdas/score/app.py`

@@ -512,5 +512,91 @@ class EpcHandlerTests(unittest.TestCase):
         self.assertEqual(body['count'], 0)
 
 
+class FreeTierQuotaDriftTests(unittest.TestCase):
+    """The free-tier numbers exist in five places and only one is enforced.
+
+    API Gateway enforces `ScoreFreeUsagePlan` in template.yaml. The signup
+    Lambda's 201 response, pricing.html, api/index.html and openapi.yaml only
+    *describe* it, and none can read the plan at runtime. Before 2026-07-29 the
+    Lambda had drifted to advertising 1000 req/month against a plan being cut
+    to 100 — a customer-facing lie that every existing test passed straight
+    through, because nothing asserted the numbers at all.
+
+    These tests fail loudly rather than skipping when the template cannot be
+    read. A drift gate that quietly skips is the failure mode from the 27 Jul
+    audit: green because it ran nothing.
+    """
+
+    TEMPLATE = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'template.yaml'))
+
+    @classmethod
+    def setUpClass(cls):
+        # Read the plan block textually rather than with a YAML parser: the
+        # template is full of CFN intrinsics (!Ref, !GetAtt) that safe_load
+        # rejects, and adding a custom loader is more machinery than a
+        # three-integer assertion needs.
+        with open(cls.TEMPLATE, encoding='utf-8') as handle:
+            text = handle.read()
+        start = text.index('  ScoreFreeUsagePlan:')
+        end = text.index('  ScoreFreeUsagePlanKey:', start)
+        cls.plan = text[start:end]
+
+    def _plan_int(self, field):
+        import re # pylint: disable=import-outside-toplevel
+        match = re.search(rf'^\s*{field}:\s*(\d+)\s*$', self.plan, re.MULTILINE)
+        self.assertIsNotNone(
+            match, f'{field} not found in ScoreFreeUsagePlan — the block was '
+                   'renamed or restructured, so this gate is no longer '
+                   'checking anything. Fix the test, do not delete it.')
+        return int(match.group(1))
+
+    def _signup_limits(self):
+        app = _import_lambda('signup')
+        with patch.object(app, '_usage_plan_id_cache', None), \
+             patch.object(app.apigw, 'get_paginator') as mock_pag, \
+             patch.object(app.apigw, 'create_api_key',
+                          return_value={'id': 'k', 'value': 'v'}), \
+             patch.object(app.apigw, 'create_usage_plan_key'), \
+             patch.object(app.ddb, 'get_item', return_value={}), \
+             patch.object(app.ddb, 'put_item'):
+            paginator = MagicMock()
+            paginator.paginate.return_value = [
+                {'items': [{'id': 'plan-free-tier', 'name': 'SkyScoreFreeTier'}]}]
+            mock_pag.return_value = paginator
+            result = app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'drift@example.com'}),
+            }, None)
+        self.assertEqual(result['statusCode'], 201)
+        return json.loads(result['body'])['limits']
+
+    def test_signup_response_matches_the_enforced_usage_plan(self):
+        limits = self._signup_limits()
+        self.assertEqual(limits['monthlyQuota'], self._plan_int('Limit'))
+        self.assertEqual(limits['sustainedRateLimit'], self._plan_int('RateLimit'))
+        self.assertEqual(limits['burstLimit'], self._plan_int('BurstLimit'))
+
+    def test_batch_multiplier_matches_the_score_lambda(self):
+        # The multiplier is what turns a request quota into a score ceiling.
+        # If MAX_BATCH_SIZE moves and this field does not, the advertised
+        # ceiling silently becomes wrong in the customer's favour.
+        limits = self._signup_limits()
+        self.assertEqual(limits['batchMultiplier'],
+                         _import_lambda('score').MAX_BATCH_SIZE)
+
+    def test_score_ceiling_is_the_product_of_the_two(self):
+        limits = self._signup_limits()
+        self.assertEqual(limits['monthlyScoreCeiling'],
+                         limits['monthlyQuota'] * limits['batchMultiplier'])
+
+    def test_gate_can_actually_fail(self):
+        # Proves the template read works and is not silently returning a
+        # default. Per the 27 Jul lesson: assert the gate can go red.
+        self.assertGreater(self._plan_int('Limit'), 0)
+        with self.assertRaises(AssertionError):
+            self._plan_int('NoSuchField')
+
+
 if __name__ == '__main__':
     unittest.main()

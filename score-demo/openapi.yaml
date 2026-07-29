@@ -9,9 +9,10 @@ info:
     transport, healthcare).
 
     **Authentication.** All endpoints require an API key passed in the
-    `X-Api-Key` header. Free tier provides 1000 requests/month, 5/sec burst,
-    2/sec sustained. Contact via the [consumer site](https://skyscore.co.uk/)
-    for a key.
+    `X-Api-Key` header. Free tier provides 100 requests/month, 5/sec burst,
+    1/sec sustained. A `/v1/score/batch` request counts as one request and
+    carries up to 100 queries, so the free ceiling is 10,000 scores/month.
+    Contact via the [consumer site](https://skyscore.co.uk/) for a key.
 
     **Methodology.** Every numeric threshold and weight is anchored to a
     published source or explicit editorial decision in the
@@ -99,13 +100,25 @@ paths:
                     properties:
                       monthlyQuota:
                         type: integer
-                        example: 1000
+                        description: Requests per month, not scores. See batchMultiplier.
+                        example: 100
                       burstLimit:
                         type: integer
                         example: 5
                       sustainedRateLimit:
                         type: integer
-                        example: 2
+                        example: 1
+                      batchMultiplier:
+                        type: integer
+                        description: >-
+                          Maximum queries in one /v1/score/batch request. A batch
+                          request costs one unit of monthlyQuota regardless of how
+                          many queries it carries.
+                        example: 100
+                      monthlyScoreCeiling:
+                        type: integer
+                        description: monthlyQuota x batchMultiplier, the real ceiling.
+                        example: 10000
                   note:
                     type: string
                     description: Reminder that the key is shown once.
@@ -503,8 +516,9 @@ components:
       in: header
       name: X-Api-Key
       description: |
-        API key issued via the SkyScoreFreeTierKey usage plan (1000 req/month,
-        5/sec burst, 2/sec sustained on the free tier). Contact for paid
+        API key issued via the SkyScoreFreeTierKey usage plan (100 req/month,
+        5/sec burst, 1/sec sustained on the free tier, and up to 10,000
+        scores/month once the batch multiplier is counted). Contact for paid
         tiers.
 
   schemas:
