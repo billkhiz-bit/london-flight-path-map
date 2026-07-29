@@ -11,7 +11,170 @@ Templates for the outreach pipeline in `ROADMAP.md` §"Outreach pipeline". Adapt
 
 ---
 
-## Pilot-first variants (2026-07-24) — USE THESE FIRST
+## Scored-sample variants (2026-07-28) — USE THESE FOR FIRST CONTACT
+
+The bulk exporter shipped 2026-07-27: an address book in, a scored CSV out. Measured at 5,484
+addresses across all 33 London boroughs, 100% scored, ~500 rows/sec, so a 100,000-address
+portfolio is ~3.5 minutes.
+
+That changes the ask. It is no longer "a 20-minute call to scope a pilot" but **an attachment
+they did not ask for, already scored**, with the pilot as the next step if it lands. The
+prospect does nothing to see the artefact. The 24 Jul pilot-first variants below stay valid for
+follow-ups and for anyone already past first contact.
+
+**Deliberate omissions in these variants:**
+
+- **No free-tier mention.** One free key plus the batch endpoint is worth ~100,000 scores/month
+  while the metering decision from 25 Jul is open. The attachment is the trial.
+- **No em dashes** (drafting-style rule). The 24 Jul drafts below do not follow this.
+- **No portal or competitor characterisation.** "Noise sits outside that stack today" is the
+  ceiling — the 17 Jul deck audit had to neutralise motive language twice.
+- **Licence floor (£12,000/yr) stays verbal.** Never printed.
+
+The warm-thread variant (named individuals) is kept off this public repo, alongside the LOI
+template, at `Desktop/SKY_SCORE_OUTREACH_2026-07-28.md`.
+
+### Before sending: generate the sample
+
+1. Pull the postcode list for the target area from the local ONS NSPL table (loaded 26 Jul).
+2. Run it through the bulk exporter.
+3. **Confirm the Open Government Licence attribution is in the CSV header.** The exporter
+   shipped without it and it was caught 27 Jul before anyone saw it. Missing attribution puts
+   the recipient in breach as well as us, on the exact artefact meant to build trust.
+4. Confirm the methodology version is in the header too.
+5. Name the file for the recipient, not for us: `wandsworth-scored-2026-07.csv`.
+
+| Audience | Sample to attach |
+|---|---|
+| Tier 1 aggregators | One borough, ideally one they have a product presence in |
+| Tier 2 Islamic finance | One borough, or ask them to pick |
+| Estate and buying agents | Their actual patch |
+
+### Tier 1 — aggregators, scored sample
+
+**Subject:** Noise and air quality for every postcode in [borough], attached
+
+> Hi [first name],
+>
+> I run Sky Score (skyscore.co.uk), an environmental and livability data API for UK property.
+> Aircraft and road noise, air quality, schools, crime and transport, each anchored to published
+> government sources with an open, versioned methodology.
+>
+> Attached is every residential postcode in [borough], scored. [N] rows, all components, source
+> and methodology version in the header. Nothing to sign up for and nothing to integrate. It is
+> just the output.
+>
+> I am sending it because [Company]'s [RiskView / PlainSearch / search reports] already cover
+> flood, planning and environmental risk, and noise sits outside that stack today. The DMCC
+> material information rules are what make that gap expensive rather than merely untidy.
+>
+> If the output looks useful, what I would propose is a fixed scope 90 day pilot. £2,500 plus
+> VAT, one success metric agreed before any integration work starts, a review at day 45 and a
+> written evidence report at day 90. The fee is credited in full against a licence if you
+> continue, and the report is yours either way. Terms:
+> [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+>
+> If you would rather see it on your own patch first, send me a list of postcodes and I will
+> score those instead. No customer names or personal data needed, just the postcodes.
+>
+> Bilal Khizar
+> Sky Score
+> skyscore.co.uk
+
+**Per-target line to swap into paragraph three:**
+
+- **Landmark:** "your RiskView API already ingests planning and environmental layers, and noise
+  sits outside that stack today"
+- **TM Group:** "PlainSearch covers structural risk thoroughly, and experiential risk, noise and
+  school catchment and transport access, sits outside it"
+- **OneSearch Direct:** lead instead on time to integration, hours rather than weeks, and note
+  the OGL attribution already ships with the data
+
+### Tier 2 — Islamic finance, scored sample
+
+**Subject:** Property environmental data for [Company], a scored sample
+
+> As-salamu alaykum [first name],
+>
+> I am Bilal Khizar, a finance professional turned AI builder, and I run Sky Score
+> (skyscore.co.uk): an environmental and livability data API for UK property. Aircraft and road
+> noise, air quality, schools, crime and transport, every threshold anchored to published DEFRA,
+> Ofsted and ONS sources.
+>
+> Attached is every residential postcode in [area], scored, so you can look at the output before
+> deciding whether it is worth a conversation at all. [N] rows, methodology version in the header.
+>
+> Two things that may matter to [Company] specifically. Every score is deterministic and
+> traceable to a published source, with no AI layer anywhere in it, so it holds up to Sharia
+> board or audit scrutiny. And the purpose of the data is to protect a buyer from harm they
+> could not otherwise have seen before committing, which sits naturally with Hifz al-Mal and
+> Hifz an-Nasl.
+>
+> If it is useful, the concrete proposal is a 90 day pilot at £2,500 plus VAT. One metric your
+> team already cares about, agreed at day 0, a review at day 45, a written evidence report at
+> day 90, and the fee credited against a licence if you continue. Terms:
+> [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+>
+> Happy to score a list of your own postcodes first if that is a better test. No customer names
+> or personal data needed.
+>
+> JazakAllahu khairan,
+> Bilal Khizar
+> skyscore.co.uk
+
+### Estate and buying agents, scored sample
+
+Smallest cheque, fastest yes. A £1,500 first close still clears the commercial-proof gate and
+the signed LOI is worth more than the £1,000 delta. Floor is £1,500, never lower: a free pilot
+is not commercial proof.
+
+**Subject:** Every postcode in [patch], scored
+
+> Hi [first name],
+>
+> I have attached every residential postcode in [patch], scored for noise, air quality, schools,
+> crime and transport. [N] rows, all of it from published government data, methodology public.
+>
+> I run Sky Score (skyscore.co.uk). I am sending it unprompted because [Company] works [patch],
+> and the DMCC material information rules now make leaving this kind of thing out of a listing
+> automatically unfair, with the CMA able to fine for it directly. Most of the data already
+> exists. It just is not in one place per property.
+>
+> If it would be useful in your listings or your client reports, I run a 90 day pilot at £2,500
+> plus VAT. One success metric agreed before we start, a review at day 45, a written evidence
+> report at day 90, and the fee credited against a licence if you carry on. Terms:
+> [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+>
+> If you would rather I scored your current instructions instead, send me the postcodes and I
+> will turn it round the same day.
+>
+> Bilal Khizar
+> skyscore.co.uk
+
+### LinkedIn DM — scored sample (no attachment possible on first contact)
+
+> Hi [first name], I run Sky Score (skyscore.co.uk), an environmental and livability data API
+> for UK property, built on published government sources with an open methodology.
+>
+> I have just finished bulk scoring, so I can take a list of postcodes and send back a scored
+> CSV the same day. No customer names or personal data needed.
+>
+> Would a scored sample of [Company]'s patch be useful? Happy to send one over, no obligation
+> attached.
+
+### Send checklist
+
+- [ ] Sample generated, OGL attribution and methodology version confirmed in the CSV header
+- [ ] Sending from Gmail or LinkedIn, **not** the skyscore.co.uk domain (Migadu/DKIM still open)
+- [ ] Reply-To header set to support@skyscore.co.uk
+- [ ] `{SLUG}` replaced per the table below, campaign set to the current `{YYYY-MM}`
+- [ ] No em dashes survived the edit
+- [ ] Attachment named for the recipient, not for us
+- [ ] Row added to `OUTREACH_LOG.md`, status 🟡, chase date set at seven days
+
+---
+
+## Pilot-first variants (2026-07-24) — follow-ups and anyone past first contact
 
 Post-Haatch reframe: the ask is no longer "a 20-minute call to discuss" — it is the **90-day £2,500 pilot** (live at [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing)), with the call as the scoping step. A signed pilot or LOI plus outcome evidence is the current commercial-proof goal; the LOI template lives at `Desktop/SKY_SCORE_LOI_TEMPLATE.md` (kept out of this public repo), alongside `Desktop/SKY_SCORE_PILOT_ONE_PAGER.md`.
 
