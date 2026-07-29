@@ -96,19 +96,25 @@ AWS_PROFILE=flightmap aws s3 cp .well-known/assetlinks.json \
   --content-type "application/json" --region eu-west-2
 ```
 
-### PENDING one-off: move the demo key onto its own usage plan
+### DONE one-off: demo key moved onto its own usage plan
 
-**Status 2026-07-29: not yet done. Required on the next `sam deploy`, in the
-same session as that deploy.** Not an admin action — `flightmap-dev` holds
-`apigateway:POST` and `apigateway:DELETE`, so this is runnable from here.
+**Status 2026-07-29: done and verified from the API, in the same session as the
+`sam deploy` that cut the free tier.** Kept here as the runbook for any future
+key that CloudFormation does not manage — the same unlink-then-link dance
+applies. Not an admin action: `flightmap-dev` holds `apigateway:POST` and
+`apigateway:DELETE`, so it ran from this machine.
+
+Live plan ids as deployed: `SkyScoreFreeTier` = `sjtyz8` (100 req/month),
+`SkyScoreDemoTier` = `x88go8` (2,000 req/month).
 
 The free tier dropped to 100 req/month on 2026-07-29. The shared public demo
-key (`SkyScoreDemoKeyV2`, id `1zy00lrqs5`, embedded in `score-demo/*.html`) is
-linked to `ScoreFreeUsagePlan`, so **until it is relinked, the public "Try the
-API" form shares that 100 across every visitor to the page** and will 429 for
-the rest of the month once drained. The deploy creates `ScoreDemoUsagePlan`
-(2,000/month) but **cannot move the key** — the key was created out-of-band in
-2026-05, so CloudFormation does not manage it.
+key (`SkyScoreDemoKeyV2`, id `1zy00lrqs5`, embedded in `score-demo/*.html`) was
+linked to `ScoreFreeUsagePlan`, so between the deploy and the relink the public
+"Try the API" form shared that 100 across every visitor to the page. The quota
+is per *key*, not per plan — the problem was that one key is shared by the whole
+internet, not that the plan pools its keys. The deploy created
+`ScoreDemoUsagePlan` (2,000/month) but **could not move the key** — the key was
+created out-of-band in 2026-05, so CloudFormation does not manage it.
 
 **Unlink before linking.** API Gateway refuses to associate a key with two
 usage plans that share the same API stage, and both plans here are on
@@ -120,25 +126,39 @@ AWS_PROFILE=flightmap aws apigateway get-usage-plans --region eu-west-2 \
   --query "items[?name=='SkyScoreFreeTier'||name=='SkyScoreDemoTier'].[name,id]" \
   --output table
 
-# 2. Unlink the demo key from the free plan
+# 2 + 3 in ONE shell invocation, chained on && so nothing can land between them.
 AWS_PROFILE=flightmap aws apigateway delete-usage-plan-key --region eu-west-2 \
-  --usage-plan-id <FREE_PLAN_ID> --key-id 1zy00lrqs5
-
-# 3. Link it to the demo plan
+  --usage-plan-id sjtyz8 --key-id 1zy00lrqs5 && \
 AWS_PROFILE=flightmap aws apigateway create-usage-plan-key --region eu-west-2 \
-  --usage-plan-id <DEMO_PLAN_ID> --key-id 1zy00lrqs5 --key-type API_KEY
+  --usage-plan-id x88go8 --key-id 1zy00lrqs5 --key-type API_KEY
 ```
 
-Between steps 2 and 3 the demo key belongs to no plan and `/v1/score` will
-reject it — seconds, but do not stop halfway, and do not run this while
-demoing to anyone.
+Between the two the demo key belongs to no plan and `/v1/score` will reject it
+— seconds, but do not stop halfway, and do not run this while demoing to
+anyone. Chain them in a single shell command rather than running them as two
+separate steps, so a pause between them is impossible.
 
-**Verify from the API, not the console:** the demo key should appear under
-`SkyScoreDemoTier` and be absent from `SkyScoreFreeTier`.
+**Verify from the API, not the console** — two structural checks and one
+functional one. Structure: the demo key appears under `SkyScoreDemoTier` and is
+absent from `SkyScoreFreeTier`.
 
 ```bash
 AWS_PROFILE=flightmap aws apigateway get-usage-plan-keys --region eu-west-2 \
-  --usage-plan-id <DEMO_PLAN_ID> --query 'items[].[id,name]' --output table
+  --usage-plan-id x88go8 --query 'items[].[id,name]' --output table
+AWS_PROFILE=flightmap aws apigateway get-usage-plan-keys --region eu-west-2 \
+  --usage-plan-id sjtyz8 --query 'items[].[id,name]' --output table
+```
+
+Function: score something with the embedded key and expect 200. **`/v1/score`
+is a GET with query params**, not a POST with a JSON body — a POST returns
+`403 {"message":"Missing Authentication Token"}`, which is API Gateway's
+unmatched-route error and reads exactly like a rejected key. Do not diagnose a
+relink from it.
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=SW1A%201AA&persona=balanced" \
+  -H "X-Api-Key: <demo key from score-demo/index.html>"
 ```
 
 **Native iOS / Android binaries** (Wave 13.2+):

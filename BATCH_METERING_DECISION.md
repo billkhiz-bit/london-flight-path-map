@@ -15,14 +15,18 @@ than an arithmetic exercise they perform and then feel entitled to.
 capped the public "Try the API" form at 100 requests shared across every visitor. The usage plan
 had two unrelated consumers and §3 reasoned about only one of them. Fixed by giving the demo key
 its own `ScoreDemoUsagePlan` at 2,000 req/month — §3's objection to per-endpoint plans (two keys
-per customer) does not apply to a single key on our own page. **The relink is a manual post-deploy
-step**, because the key was created out-of-band in 2026-05 and CloudFormation does not manage it:
+per customer) does not apply to a single key on our own page. The relink was a manual post-deploy
+step, because the key was created out-of-band in 2026-05 and CloudFormation does not manage it:
 runbook in `OPERATIONS.md` §2.
 
+**Shipped 2026-07-29.** `sam deploy` cut `SkyScoreFreeTier` (`sjtyz8`) to 100 req/month and
+created `SkyScoreDemoTier` (`x88go8`) at 2,000; the demo key was relinked in the same session and
+verified from the API, structurally and with a live 200 from `/v1/score`. The nine copy surfaces
+went out to CloudFront ahead of the backend, so the only drift window was the harmless direction —
+pages advertising less than the plan granted.
+
 **Not done, deliberately:** option A. The recommendation stands — build per-score metering when
-a paying customer's usage makes it worth operating, not before. **Requires a `sam deploy` to
-take effect**; the quota is enforced by API Gateway, so until that runs the live free tier is
-still 1000.
+a paying customer's usage makes it worth operating, not before.
 
 **Still open, surfaced by doing this:** the Professional tier is quoted at 100,000 requests a
 month and the same multiplier applies to it, making its real ceiling 10,000,000 scores. That is
