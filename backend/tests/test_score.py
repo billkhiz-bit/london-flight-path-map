@@ -155,6 +155,84 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertEqual(resp['statusCode'], 200)
         self.assertIn('changes', json.loads(resp['body']))
 
+    def test_attribution_contributions_reconcile_to_score_change(self):
+        """The whole value of the attribution is that the parts add up.
+
+        Contributions come from the published 1dp components, so they reconcile
+        to within rounding rather than exactly — but the gap must stay small and
+        must equal the roundingResidual the API reports, or the explanation is
+        quietly wrong.
+        """
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            total = round(sum(f['contribution'] for f in c['attribution']), 2)
+            self.assertAlmostEqual(total, c['attributionSum'], places=2, msg=c['borough'])
+            self.assertAlmostEqual(
+                c['roundingResidual'], round(c['scoreChange'] - total, 2), places=2, msg=c['borough']
+            )
+            # Rounding of four 1dp components can only drift so far; anything
+            # larger means a factor is missing from the decomposition.
+            self.assertLess(abs(c['roundingResidual']), 0.2, msg=f"{c['borough']} residual too large")
+
+    def test_attribution_only_cites_factors_that_moved(self):
+        # Only price and trend move between quarterly vintages, so noise and
+        # liveability must never appear as drivers.
+        body = json.loads(app.handle_changes({})['body'])
+        cited = {f['factor'] for c in body['changes'] for f in c['attribution']}
+        self.assertTrue(cited.issubset({'afford', 'growth'}), cited)
+        for c in body['changes']:
+            for f in c['attribution']:
+                self.assertNotEqual(f['change'], 0, f"{c['borough']} cites an unmoved factor")
+                self.assertAlmostEqual(
+                    f['contribution'], round((f['after'] - f['before']) * f['weight'], 2), places=2
+                )
+
+    def test_attribution_sorted_by_influence(self):
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            sizes = [abs(f['contribution']) for f in c['attribution']]
+            self.assertEqual(sizes, sorted(sizes, reverse=True), msg=c['borough'])
+
+    def test_explanation_names_the_direction_and_the_driver(self):
+        body = json.loads(app.handle_changes({})['body'])
+        by_name = {c['borough']: c for c in body['changes']}
+        # Ealing's trend went +4.1% -> -0.3%, crossing into negative, so the
+        # explanation must say the score fell, name growth, and disclose that
+        # growth is now floored.
+        ealing = by_name['Ealing']
+        self.assertLess(ealing['scoreChange'], 0)
+        self.assertIn('fell', ealing['explanation'])
+        self.assertIn('Growth', ealing['explanation'])
+        self.assertIn('floors growth at 0', ealing['explanation'])
+        # Newham's price fell, so affordability improved — the explanation must
+        # not describe every component as moving the same way as the score.
+        newham = by_name['Newham']
+        self.assertIn('Affordability rose', newham['explanation'])
+
+    def test_changes_publishes_weights_so_attribution_is_checkable(self):
+        body = json.loads(app.handle_changes({})['body'])
+        self.assertEqual(body['weights'], app.PERSONAS['balanced'])
+        self.assertIn('attributionNote', body)
+
+    def test_explanation_survives_json_round_trip(self):
+        # The explanation is the first place a currency symbol enters a JSON
+        # string field. json.dumps escapes it, so the wire format stays ASCII
+        # and must decode back to the real character.
+        raw = app.handle_changes({})['body']
+        self.assertTrue(raw.isascii())
+        decoded = json.loads(raw)
+        with_symbol = [c for c in decoded['changes'] if '£' in c['explanation']]
+        self.assertTrue(with_symbol, 'expected at least one explanation to quote a price')
+
+    def test_compare_previous_includes_attribution(self):
+        body, status = app.resolve_query({'borough': 'Ealing', 'compare': 'previous'})
+        self.assertEqual(status, 200)
+        comp = body['comparison']
+        self.assertIn('attribution', comp)
+        self.assertIn('explanation', comp)
+        total = round(sum(f['contribution'] for f in comp['attribution']), 2)
+        self.assertLess(abs(comp['scoreChange'] - total), 0.2)
+
 
 class NormaliseBoroughTests(unittest.TestCase):
     def test_canonical_london(self):

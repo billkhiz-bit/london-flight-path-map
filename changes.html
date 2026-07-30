@@ -54,7 +54,8 @@
   .crumb a:hover, .crumb a:focus-visible { color: var(--amber); }
   h1 { font-size: 36px; font-weight: 700; margin: 12px 0 8px; letter-spacing: -0.5px; }
   .tagline { color: var(--muted); font-size: 16px; margin: 0; max-width: 680px; }
-  .vintage { font-family: 'Geist Mono', monospace; font-size: 13px; color: var(--amber); margin-top: 10px; }
+  .period { font-size: 15px; color: var(--text); margin: 14px 0 0; font-weight: 500; }
+  .vintage { font-family: 'Geist Mono', monospace; font-size: 13px; color: var(--amber); margin-top: 6px; }
   .chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 6px; }
   .chip {
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -81,6 +82,48 @@
   .delta-flat { color: var(--muted); }
   .muted { color: var(--muted); }
   .status { font-family: 'Geist Mono', monospace; color: var(--muted); padding: 30px 0; }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* "Why did it move?" disclosure. The score is a weighted sum, so a change
+     decomposes exactly into per-factor contributions — this is where that
+     arithmetic is shown rather than asserted. */
+  .why-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--muted); font-family: 'Geist Mono', monospace; font-size: 11px;
+    letter-spacing: 0.5px; text-transform: uppercase; padding: 5px 10px;
+    cursor: pointer; min-height: 30px; white-space: nowrap;
+  }
+  .why-btn:hover { color: var(--amber); border-color: var(--amber); }
+  .why-btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .why-btn[aria-expanded='true'] { color: var(--amber); border-color: var(--amber); }
+  .why-row > td { background: rgba(255, 255, 255, 0.02); padding: 0 14px 18px; }
+  .why-inner { padding-top: 4px; }
+  .why-prose { font-size: 13.5px; color: var(--text); margin: 6px 0 14px; max-width: 78ch; }
+  .why-factors { display: grid; gap: 8px; margin: 0 0 10px; }
+  .why-factor {
+    display: grid; grid-template-columns: 130px 1fr 88px; gap: 12px; align-items: center;
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+  }
+  .why-factor-label { color: var(--muted); }
+  .why-bar-track {
+    position: relative; height: 8px; background: var(--border); border-radius: 4px;
+  }
+  /* Bars grow from the centre so a rise and a fall are visually opposite. */
+  .why-bar-mid { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: 0.5; }
+  .why-bar-fill { position: absolute; top: 0; height: 8px; border-radius: 4px; }
+  .why-bar-fill.rise { background: var(--rise); left: 50%; }
+  .why-bar-fill.fall { background: var(--fall); right: 50%; }
+  .why-factor-num { text-align: right; }
+  .why-sum {
+    font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--muted);
+    border-top: 1px dashed var(--border); padding-top: 8px;
+  }
+  @media (max-width: 620px) {
+    .why-factor { grid-template-columns: 96px 1fr 76px; font-size: 11px; }
+  }
   footer {
     padding-top: 10px; padding-bottom: 48px; color: var(--muted); font-size: 13px;
   }
@@ -96,7 +139,8 @@
 <header>
   <p class="crumb"><a href="/">Sky Score</a> / changes</p>
   <h1>What changed this quarter</h1>
-  <p class="tagline">Quarter-over-quarter movement in London borough scores, driven by the official UK House Price Index. Most property sites bury falling markets; we headline them — the point of Sky Score is the data listings sites won't show you.</p>
+  <p class="tagline">Quarter-over-quarter movement in London borough scores, driven by the official UK House Price Index. Most property sites bury falling markets; we headline them — the point of Sky Score is the data listings sites won't show you. Every row can tell you <em>why</em> it moved.</p>
+  <p class="period" id="period-line"></p>
   <p class="vintage" id="vintage-line">Loading vintages…</p>
 </header>
 
@@ -109,13 +153,14 @@
       <thead>
         <tr>
           <th>Borough</th>
-          <th class="num">Score then</th>
-          <th class="num">Score now</th>
+          <th class="num" id="th-score-then">Score then</th>
+          <th class="num" id="th-score-now">Score now</th>
           <th class="num">Change</th>
-          <th class="num">Price then</th>
-          <th class="num">Price now</th>
+          <th class="num" id="th-price-then">Price then</th>
+          <th class="num" id="th-price-now">Price now</th>
           <th class="num">Price ±%</th>
           <th class="num">12-mo trend</th>
+          <th><span class="visually-hidden">Explanation</span></th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -142,6 +187,81 @@
   const deltaClass = n => (n > 0 ? 'delta-rise' : n < 0 ? 'delta-fall' : 'delta-flat');
   const deltaGlyph = n => (n > 0 ? '▲ ' : n < 0 ? '▼ ' : '· ');
 
+  // The API sends vintages as '2026-Q2'. Reading order matters for a human:
+  // the quarter first, then the year, and the year is never dropped — a
+  // visitor two years from now needs to know which quarter this page describes.
+  function vintageLabel(v) {
+    const m = /^(\d{4})-(Q[1-4])$/.exec(String(v || ''));
+    return m ? m[2] + ' ' + m[1] : String(v || '');
+  }
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+  // '2026-07-24' -> '24 July 2026'. Parsed by hand rather than via Date() so
+  // the displayed day cannot shift by one in a negative-offset timezone.
+  function longDate(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    if (!m) return String(iso || '');
+    return Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] + ' ' + m[1];
+  }
+
+  function whyButton(c, i) {
+    if (!c.attribution || !c.attribution.length) return '';
+    return '<button type="button" class="why-btn" data-why="' + i + '" aria-expanded="false" ' +
+      'aria-controls="why-' + i + '">Why <span aria-hidden="true">▾</span>' +
+      '<span class="visually-hidden"> did ' + esc(c.borough) + ' change?</span></button>';
+  }
+
+  // One bar per factor, scaled against the largest contribution on this row so
+  // the dominant driver is obvious at a glance. Bars grow out from a centre
+  // line, so a rise and a fall point opposite ways.
+  function factorBar(f, scale) {
+    const width = scale > 0 ? Math.min(50, (Math.abs(f.contribution) / scale) * 50) : 0;
+    const dir = f.contribution > 0 ? 'rise' : 'fall';
+    return '<div class="why-factor">' +
+      '<span class="why-factor-label">' + esc(f.label) + '</span>' +
+      '<span class="why-bar-track"><span class="why-bar-mid"></span>' +
+      '<span class="why-bar-fill ' + dir + '" style="width:' + width.toFixed(1) + '%"></span></span>' +
+      '<span class="why-factor-num ' + deltaClass(f.contribution) + '">' +
+      signed(f.contribution.toFixed(2)) + '</span>' +
+      '</div>';
+  }
+
+  function whyRow(c, i) {
+    if (!c.attribution || !c.attribution.length) return '';
+    const scale = Math.max.apply(null, c.attribution.map(f => Math.abs(f.contribution)));
+    const bars = c.attribution.map(f => factorBar(f, scale)).join('');
+    const detail = c.attribution.map(f =>
+      esc(f.label) + ' ' + f.before.toFixed(1) + ' → ' + f.after.toFixed(1) +
+      ' (' + signed(f.change) + ') × ' + Math.round(f.weight * 100) + '% weight = ' +
+      signed(f.contribution.toFixed(2))
+    ).join(' · ');
+    let sum = 'Contributions total ' + signed(c.attributionSum.toFixed(2)) +
+      ' against a published change of ' + signed(c.scoreChange.toFixed(1));
+    sum += Math.abs(c.roundingResidual) >= 0.05
+      ? '; the ' + Math.abs(c.roundingResidual).toFixed(2) + ' difference is rounding in the per-factor values.'
+      : '.';
+    return '<tr class="why-row" id="why-' + i + '" hidden><td colspan="9"><div class="why-inner">' +
+      '<p class="why-prose">' + esc(c.explanation) + '</p>' +
+      '<div class="why-factors">' + bars + '</div>' +
+      '<p class="why-sum">' + esc(detail) + '<br>' + esc(sum) + '</p>' +
+      '</div></td></tr>';
+  }
+
+  // Delegated so it survives the innerHTML render and needs no inline handler
+  // (the CSP allows 'unsafe-inline' for scripts, but not relying on it is
+  // cheaper than justifying it).
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest ? ev.target.closest('.why-btn') : null;
+    if (!btn) return;
+    const row = document.getElementById('why-' + btn.dataset.why);
+    if (!row) return;
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    row.hidden = open;
+  });
+
   async function load() {
     const status = document.getElementById('status');
     try {
@@ -149,8 +269,25 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
 
+      const nowLabel = vintageLabel(d.currentVintage);
+      const thenLabel = vintageLabel(d.previousVintage);
+
       document.getElementById('vintage-line').textContent =
-        d.previousVintage + ' → ' + d.currentVintage + ' · refreshed ' + d.refreshedAt + ' · methodology v' + d.methodologyVersion;
+        thenLabel + ' → ' + nowLabel + ' · refreshed ' + longDate(d.refreshedAt) + ' · methodology v' + d.methodologyVersion;
+
+      // Name the period in the heading and the tab title too. Both are set
+      // from the API rather than hardcoded, so they cannot drift out of date
+      // when the vintage rolls.
+      document.getElementById('period-line').textContent =
+        'Comparing ' + nowLabel + ' with ' + thenLabel + '.';
+      document.title = 'Sky Score · What changed in ' + nowLabel;
+
+      // Self-describing columns: "Score Q1 2026" beats "Score then", and it
+      // means a screenshot of this table still says which quarters it covers.
+      document.getElementById('th-score-then').textContent = 'Score ' + thenLabel;
+      document.getElementById('th-score-now').textContent = 'Score ' + nowLabel;
+      document.getElementById('th-price-then').textContent = 'Price ' + thenLabel;
+      document.getElementById('th-price-now').textContent = 'Price ' + nowLabel;
 
       const s = d.summary;
       const chips = [
@@ -168,7 +305,7 @@
       noteEl.textContent = 'Honesty note: ' + d.note + ' This quarter the refresh also coincided with the v3.2 formula clamp, so treat the direction as reliable and the exact magnitudes as first-of-series; from next quarter the comparison is clean like-for-like.';
       noteEl.hidden = false;
 
-      document.getElementById('rows').innerHTML = d.changes.map(c => (
+      document.getElementById('rows').innerHTML = d.changes.map((c, i) => (
         '<tr>' +
         '<td>' + esc(c.borough) + '</td>' +
         '<td class="num muted">' + c.previousScore.toFixed(1) + '</td>' +
@@ -178,10 +315,12 @@
         '<td class="num">' + gbp(c.avgPriceGbp) + '</td>' +
         '<td class="num ' + deltaClass(c.priceChangePct) + '">' + signed(c.priceChangePct, '%') + '</td>' +
         '<td class="num ' + deltaClass(c.trendPct) + '">' + signed(c.trendPct, '%') + '</td>' +
-        '</tr>'
+        '<td>' + whyButton(c, i) + '</td>' +
+        '</tr>' +
+        whyRow(c, i)
       )).join('');
       document.getElementById('table-wrap').hidden = false;
-      status.textContent = d.changes.length + ' boroughs · sorted by size of score change.';
+      status.textContent = d.changes.length + ' boroughs · sorted by size of score change · select "why" on any row for the breakdown.';
     } catch (err) {
       status.textContent = 'Could not load the movement data (' + esc(err.message) + '). The API may be briefly unavailable — refresh to retry.';
     }

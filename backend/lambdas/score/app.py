@@ -201,7 +201,134 @@ def build_comparison(current, previous, city):
         'priceChangePct': price_change,
         'previousTrendPct': previous['context'].get('priceTrendPct'),
         'note': COMPARISON_NOTE,
+        'attribution': build_attribution(current, previous, PERSONAS['balanced']),
+        'explanation': describe_change(current, previous, city, PERSONAS['balanced']),
     }
+
+
+COMPONENT_LABELS = {
+    'quiet': 'Quiet Skies',
+    'afford': 'Affordability',
+    'growth': 'Growth',
+    'live': 'Liveability',
+}
+
+
+def build_attribution(current, previous, weights):
+    """Decompose a score change into per-factor contributions.
+
+    The score is a weighted sum, so `delta_score == sum(w_i * delta_component_i)`
+    exactly. That identity is what makes this an explanation rather than a
+    narrative: the parts must add up to the whole, and a caller can check it.
+
+    Contributions are derived from the same 1dp component values the API
+    publishes, so the arithmetic a client can see reproduces these numbers
+    exactly. The cost is that they reconcile against the published score only
+    to within rounding, which `roundingResidual` reports rather than hides.
+    """
+    cur_c = current['components']
+    prev_c = previous['components']
+    factors = []
+    for key, weight in weights.items():
+        before = prev_c.get(key)
+        after = cur_c.get(key)
+        if before is None or after is None:
+            continue
+        change = round(after - before, 1)
+        contribution = round((after - before) * weight, 2)
+        if change == 0 and contribution == 0:
+            continue
+        factors.append(
+            {
+                'factor': key,
+                'label': COMPONENT_LABELS.get(key, key),
+                'before': before,
+                'after': after,
+                'change': change,
+                'weight': weight,
+                'contribution': contribution,
+            }
+        )
+    # Biggest mover first: the first entry is the answer to "why did it move?".
+    factors.sort(key=lambda f: abs(f['contribution']), reverse=True)
+    return factors
+
+
+def _price_of(result, city):
+    field = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
+    return result['context'].get(field)
+
+
+def describe_change(current, previous, city, weights):
+    """A plain-English account of why a score moved, built from the numbers.
+
+    Deterministic and derived — no model in the loop. Every clause is traceable
+    to a component delta or a published input, which is the point: a lender
+    asking "why" gets an auditable sentence, not a generated one.
+    """
+    factors = build_attribution(current, previous, weights)
+    score_change = round(current['score'] - previous['score'], 1)
+    symbol = '£' if CITIES[city]['currency'] != 'USD' else '$'
+
+    if not factors:
+        return (
+            'No component moved between these vintages, so the score is unchanged. '
+            'Prices and trends for this area were not revised in this refresh.'
+        )
+
+    if score_change > 0:
+        head = f'Score rose {abs(score_change)} point{"" if abs(score_change) == 1 else "s"}.'
+    elif score_change < 0:
+        head = f'Score fell {abs(score_change)} point{"" if abs(score_change) == 1 else "s"}.'
+    else:
+        head = 'Score is unchanged overall, but the factors underneath it moved and offset each other.'
+
+    cur_price = _price_of(current, city)
+    prev_price = _price_of(previous, city)
+    cur_trend = current['context'].get('priceTrendPct')
+    prev_trend = previous['context'].get('priceTrendPct')
+    price_moved = cur_price is not None and prev_price not in (None, 0) and cur_price != prev_price
+
+    clauses = []
+    for f in factors:
+        direction = 'rose' if f['change'] > 0 else 'fell'
+        magnitude = abs(f['change'])
+        contribution = f['contribution']
+        signed_contribution = f'{contribution:+.2f}'
+        base = f'{f["label"]} {direction} {magnitude} ({signed_contribution} of the total, at {int(f["weight"] * 100)}% weight)'
+
+        if f['factor'] == 'afford':
+            if price_moved:
+                pct = round((cur_price - prev_price) / prev_price * 100, 1)
+                verb = 'rose' if pct > 0 else 'fell'
+                base += f' as the average price {verb} {abs(pct)}% to {symbol}{cur_price:,.0f}'
+            else:
+                # Affordability is normalised across the whole city, so a
+                # borough can move on this factor without its own price
+                # changing at all. Saying so is the honest version.
+                base += (
+                    ' even though this area\'s own price did not change — affordability is measured '
+                    'relative to the cheapest and dearest area, and those moved'
+                )
+        elif f['factor'] == 'growth' and cur_trend is not None and prev_trend is not None:
+            base += f' as the 12-month trend went from {prev_trend:+}% to {cur_trend:+}%'
+            if cur_trend < 0:
+                base += ' (a negative trend floors growth at 0, so a further fall would not move the score)'
+        elif f['factor'] in ('quiet', 'live'):
+            base += ' following a refresh of the underlying inputs'
+
+        clauses.append(base)
+
+    explained = round(sum(f['contribution'] for f in factors), 2)
+    residual = round(score_change - explained, 2)
+    tail = ''
+    if abs(residual) >= 0.05:
+        tail = (
+            f' The parts sum to {explained:+.2f} against a published change of {score_change:+.1f}; '
+            'the difference is rounding in the per-factor values.'
+        )
+
+    return head + ' ' + '; '.join(clauses) + '.' + tail
 
 
 # London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
@@ -2232,15 +2359,26 @@ def handle_regions(event):
 
 def handle_changes(event):
     """GET /v1/changes — quarter-over-quarter movement for every London
-    borough under balanced weights. Public (no API key), like /v1/regions:
-    the underlying tables are already public via the consumer site, and
-    this is the shareable 'what moved this quarter' surface."""
+    borough under balanced weights.
+
+    Public (no API key): the underlying tables are already public via the
+    consumer site, and this is the shareable 'what moved this quarter'
+    surface. Note this is the ONLY key-free route on this function —
+    /v1/regions carries `ApiKeyRequired: true` in template.yaml despite an
+    earlier version of this docstring citing it as a fellow public endpoint.
+
+    Each borough carries an `attribution` breakdown and a derived
+    `explanation`, so "why did this move?" is answerable from the response
+    without a second call."""
     bal = PERSONAS['balanced']
     prev_set = previous_dataset('london')
     changes = []
     for name in CITIES['london']['boroughs']:
         cur = calc_score(name, 'london', bal)
         prev = calc_score(name, 'london', bal, boroughs_override=prev_set)
+        attribution = build_attribution(cur, prev, bal)
+        attribution_sum = round(sum(f['contribution'] for f in attribution), 2)
+        score_change = round(cur['score'] - prev['score'], 1)
         changes.append(
             {
                 'borough': name,
@@ -2257,6 +2395,20 @@ def handle_changes(event):
                 ),
                 'trendPct': cur['context']['priceTrendPct'],
                 'previousTrendPct': prev['context']['priceTrendPct'],
+                'components': cur['components'],
+                'previousComponents': prev['components'],
+                # Why the score moved, decomposed. Contributions sum to
+                # scoreChange (to rounding), so a reader can check the claim
+                # rather than take it.
+                'attribution': attribution,
+                # Stated rather than left for the reader to discover: the
+                # contributions are built from published 1dp components, so
+                # they reconcile against scoreChange only to within rounding.
+                # Publishing both numbers makes the gap auditable instead of
+                # looking like an arithmetic error.
+                'attributionSum': attribution_sum,
+                'roundingResidual': round(score_change - attribution_sum, 2),
+                'explanation': describe_change(cur, prev, 'london', bal),
             }
         )
     changes.sort(key=lambda c: abs(c['scoreChange']), reverse=True)
@@ -2272,6 +2424,16 @@ def handle_changes(event):
             'previousVintage': PREVIOUS_VINTAGE,
             'refreshedAt': SNAPSHOT_REFRESHED_AT,
             'note': COMPARISON_NOTE,
+            # Published so a caller can reproduce every `attribution`
+            # contribution as weight x component change, and verify the parts
+            # sum to scoreChange.
+            'weights': bal,
+            'attributionNote': (
+                'Each attribution contribution is the factor weight multiplied by the change in that '
+                'factor, so contributions sum to scoreChange to within rounding of the 1dp component '
+                'values. Only price and trend move between quarterly vintages, so Affordability and '
+                'Growth are the only factors that can appear.'
+            ),
             'summary': {
                 'boroughs': len(changes),
                 'movedOverHalfPoint': len(moved),
