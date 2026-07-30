@@ -26,7 +26,7 @@
 // stay cache-first — but bump VERSION in the same commit whenever either
 // changes, or installed PWAs keep the old ones indefinitely.
 
-const VERSION = 'v1.0.2';
+const VERSION = 'v1.0.3';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -38,12 +38,23 @@ const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 // at install time for every installed PWA, and neither a CloudFront
 // invalidation nor a re-upload of the file could shift it — only a byte
 // change to this worker. It is served network-first instead (A-0724-M4).
+// d3 and the borough boundaries ARE precached, unlike api-base.js, because
+// both are content-stable: d3 is version-pinned in its filename, and the
+// boundary file only changes when the LAD vintage rolls (regenerate with
+// scripts/build_london_boroughs.py and bump VERSION in the same commit).
+// Both were third-party requests until 2026-07-30; the boundaries in
+// particular were a 19.2 MB fetch from raw.githubusercontent.com that
+// init() awaited before revealing the app, so a slow network held first
+// paint indefinitely. Precaching them is what makes an offline launch
+// actually render a map rather than an empty shell.
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/icons/icon.svg',
   '/icons/icon-maskable.svg',
+  '/js/vendor/d3.v7.min.js',
+  '/data/london-boroughs.json',
 ];
 
 // Origins where we always go to the network — caching scores or

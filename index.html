@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://d3js.org https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -82,10 +82,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Sky Score" />
 
+    <!-- Self-hosted since 2026-07-30. This was https://d3js.org/d3.v7.min.js;
+         the vendored copy is byte-identical (its SHA-384 matches the integrity
+         hash that was already pinned here, which is why the attribute is kept
+         — it documents provenance and still verifies same-origin). Serving it
+         ourselves removes a third-party script from the critical path and lets
+         the service worker precache it for a genuine offline launch. -->
     <script
-      src="https://d3js.org/d3.v7.min.js"
+      src="/js/vendor/d3.v7.min.js"
       integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
-      crossorigin="anonymous"
     ></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -784,6 +789,29 @@
         color: var(--mid);
         line-height: 1.6;
         font-family: var(--font-sans);
+      }
+      /* Retry affordance on the connection-failure empty state. 44px min
+         height keeps it at the same tap-target size as the search chips
+         below (F-A11Y-8). */
+      .retry-btn {
+        margin-top: 16px;
+        min-height: 44px;
+        padding: 0 20px;
+        border: 1px solid var(--dark);
+        background: var(--dark);
+        color: #fff;
+        font-family: var(--font-sans);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .retry-btn:hover {
+        opacity: 0.85;
+      }
+      .retry-btn:focus-visible {
+        outline: 2px solid var(--dark);
+        outline-offset: 2px;
       }
       /* Audit F-A11Y-8: quick-search chips. Centred row of tappable
          starting points so the sheet's empty state is functional, not
@@ -5369,13 +5397,93 @@
         return !!e && e.name === 'AbortError';
       }
 
+      // AbortSignal.timeout() rejects with TimeoutError, which is a *real*
+      // failure the user should hear about — unlike AbortError, which only
+      // means a newer search took over. Keeping them apart is the whole point
+      // of using timeout() rather than a manual abort() on a setTimeout.
+      function isTimeoutError(e) {
+        return !!e && e.name === 'TimeoutError';
+      }
+
+      // How long a search waits before giving up. The postcode lookup gates
+      // everything — no coordinates means no map move, no score, no panels —
+      // so it fails fastest. The enrichment panels are additive, so they get
+      // longer before we stop waiting on them.
+      const SEARCH_TIMEOUT_MS = 5000;
+      const PANEL_TIMEOUT_MS = 8000;
+
+      // Compose the supersede signal from beginSearch() with a wall-clock
+      // deadline. Without this, `searchAbort` only ever fires when a *newer*
+      // search starts, so a single search on a stalled network waits on the
+      // browser's own default timeout — tens of seconds to minutes, during
+      // which the UI shows nothing but a spinner.
+      //
+      // AbortSignal.any/timeout are Baseline 2024; if either is missing we
+      // degrade to the old supersede-only behaviour rather than break search.
+      function withDeadline(base, ms) {
+        if (typeof AbortSignal === 'undefined') return base;
+        if (typeof AbortSignal.any !== 'function' || typeof AbortSignal.timeout !== 'function') {
+          return base;
+        }
+        const deadline = AbortSignal.timeout(ms);
+        return base ? AbortSignal.any([base, deadline]) : deadline;
+      }
+
+      function searchSignal(search, ms) {
+        return withDeadline(search && search.signal, ms);
+      }
+
+      // Paint a reachability failure — distinct from "we looked and it isn't
+      // there". `query` is echoed back so the user can see we kept their input,
+      // and is escaped because it comes straight off a text field.
+      function renderSearchFailure(failure, query) {
+        const safeQuery = escapeHtml(String(query || ''));
+        const timedOut = failure === 'timeout';
+        document.getElementById('sidebar-title').textContent = 'CONNECTION ISSUE';
+        announceResult(
+          timedOut
+            ? 'The lookup took too long to respond. Check your connection and try again.'
+            : 'Could not reach the lookup service. Check your connection and try again.'
+        );
+        document.getElementById('sidebar-content').innerHTML = `
+      <div class="empty-state">
+        <p>${
+          timedOut
+            ? `The lookup for <strong>${safeQuery}</strong> took more than ${Math.round(SEARCH_TIMEOUT_MS / 1000)} seconds to respond.`
+            : `We couldn't reach the lookup service to find <strong>${safeQuery}</strong>.`
+        }</p>
+        <p>This is a connection problem, not a bad search — the postcode may well be fine.</p>
+        <button type="button" id="search-retry-btn" class="retry-btn" aria-label="Retry the search for ${safeQuery}">
+          Try again
+        </button>
+      </div>`;
+        // Bound as a listener rather than an inline onclick on purpose: the
+        // query would otherwise have to survive both HTML-attribute and JS
+        // string-literal escaping to be interpolated safely, and a closure
+        // needs neither.
+        const retry = document.getElementById('search-retry-btn');
+        if (retry) retry.addEventListener('click', () => triggerSearch(query));
+      }
+
       // ============================================================
       // GEOJSON LOAD
       // ============================================================
+      // `init()` awaits this before it reveals #app, so whatever this function
+      // waits on gates first paint. Until 2026-07-30 that was a 19.2 MB
+      // third-party download of all 380 GB local authority districts, of which
+      // ~347 were discarded below — on a slow or congested network the app sat
+      // on its loading spinner indefinitely. The first URL is now a 123 KB
+      // same-origin trim containing exactly the 33 London boroughs, built by
+      // scripts/build_london_boroughs.py and precached by the service worker.
+      //
+      // The remote file stays as a fallback for the case where our own asset
+      // is missing mid-deploy. A third URL
+      // (charlesroper/OSGB36-London-Boroughs) was removed: it had been
+      // returning 404, so it was never really a fallback at all.
       async function loadGeoJson() {
         const urls = [
+          '/data/london-boroughs.json',
           'https://raw.githubusercontent.com/martinjc/UK-GeoJSON/master/json/administrative/gb/lad.json',
-          'https://raw.githubusercontent.com/charlesroper/OSGB36-London-Boroughs/master/london_boroughs.json',
         ];
         for (const url of urls) {
           try {
@@ -5383,14 +5491,12 @@
             if (data && data.features) {
               const londonNames = Object.keys(BOROUGH_DATA);
               let features = data.features;
+              // The local file is already trimmed (33 < 40), so this only runs
+              // on the remote fallback.
               if (features.length > 40) {
                 const filtered = features.filter((f) => {
                   const name = getName(f);
-                  return londonNames.some(
-                    (ln) =>
-                      name &&
-                      (name.toLowerCase().includes(ln.toLowerCase()) || ln.toLowerCase().includes(name.toLowerCase()))
-                  );
+                  return name && londonNames.some((ln) => boroughNameMatches(ln, name));
                 });
                 if (filtered.length >= 15) features = filtered;
               }
@@ -5401,6 +5507,27 @@
           }
         }
         return null;
+      }
+
+      // Does `ladName` from the boundary file name the borough `key`?
+      //
+      // A bare substring test — which this used to be — accepts Brentwood in
+      // Essex, because the borough key "Brent" is a prefix of it. Brentwood was
+      // being drawn as a London borough and, sitting ~30 km north-east of the
+      // rest, was also handed to the projection when fitting the map's extent.
+      //
+      // Equality alone would not do either: the key is "Barking" while the LAD
+      // name is "Barking and Dagenham". So a prefix only counts when the next
+      // character is a space — "Barking and…" passes, "Brentwood" does not.
+      // Mirrors _boundary_match() in scripts/build_london_boroughs.py; keep the
+      // two in step.
+      function boroughNameMatches(key, ladName) {
+        const a = String(key).toLowerCase().trim();
+        const b = String(ladName).toLowerCase().trim();
+        if (a === b) return true;
+        const prefixAtBoundary = (short, long) =>
+          long.startsWith(short) && (long.length === short.length || long[short.length] === ' ');
+        return prefixAtBoundary(a, b) || prefixAtBoundary(b, a);
       }
 
       function getName(f) {
@@ -5585,14 +5712,23 @@
       // fallback below: an outcode costs two round-trips where a full postcode
       // costs one, so without it an outcode→postcode sequence reliably lands
       // the older result last.
-      async function lookupPostcode(postcode, signal) {
+      // Returns `{ result, failure }`, never a bare record. `result` is the
+      // postcode/outcode data or null; `failure` is null when the lookup
+      // genuinely found nothing, otherwise 'timeout' | 'network' | 'superseded'.
+      //
+      // The split exists because the caller used to render "NOT FOUND — Area or
+      // borough not found" for every falsy return, so a stalled network told the
+      // user their perfectly valid postcode did not exist. A wrong diagnosis is
+      // worse than a vague one: it sends them off to re-type a correct query.
+      async function lookupPostcode(postcode, search) {
         const clean = postcode.replace(/\s+/g, '').toUpperCase();
+        const signal = searchSignal(search, SEARCH_TIMEOUT_MS);
         try {
           // Try full postcode first
           const resp = await fetch(`https://api.postcodes.io/postcodes/${clean}`, { signal });
           const data = await resp.json();
           if (data.status === 200 && data.result) {
-            return data.result;
+            return { result: data.result, failure: null };
           }
           // Fall back to outcode (partial postcode like TW3, SW1, E1)
           const outResp = await fetch(`https://api.postcodes.io/outcodes/${clean}`, { signal });
@@ -5600,18 +5736,28 @@
           if (outData.status === 200 && outData.result) {
             const r = outData.result;
             return {
-              postcode: r.outcode,
-              latitude: r.latitude,
-              longitude: r.longitude,
-              admin_district: r.admin_district?.[0] || 'Unknown',
-              admin_ward: r.admin_ward?.[0] || r.outcode + ' area',
-              _isOutcode: true,
+              result: {
+                postcode: r.outcode,
+                latitude: r.latitude,
+                longitude: r.longitude,
+                admin_district: r.admin_district?.[0] || 'Unknown',
+                admin_ward: r.admin_ward?.[0] || r.outcode + ' area',
+                _isOutcode: true,
+              },
+              failure: null,
             };
           }
-          return null;
+          // Both endpoints answered and neither knew the place. This is the
+          // only genuine "not found".
+          return { result: null, failure: null };
         } catch (e) {
-          if (!isAbortError(e)) console.error('Postcode lookup failed:', e);
-          return null;
+          if (isAbortError(e)) return { result: null, failure: 'superseded' };
+          if (isTimeoutError(e)) {
+            console.warn('Postcode lookup timed out after', SEARCH_TIMEOUT_MS, 'ms');
+            return { result: null, failure: 'timeout' };
+          }
+          console.error('Postcode lookup failed:', e);
+          return { result: null, failure: 'network' };
         }
       }
 
@@ -5909,7 +6055,7 @@
       // ============================================================
       async function fetchSoldPrices(postcode, signal) {
         try {
-          const resp = await fetch(`${API_BASE}/sold-prices?postcode=${encodeURIComponent(postcode)}`, { signal });
+          const resp = await fetch(`${API_BASE}/sold-prices?postcode=${encodeURIComponent(postcode)}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           const data = await resp.json();
           if (!data.transactions || data.transactions.length === 0) return null;
@@ -5931,7 +6077,7 @@
       // ============================================================
       async function fetchTransportData(lat, lon, signal) {
         try {
-          const resp = await fetch(`${API_BASE}/transport?lat=${lat}&lon=${lon}`, { signal });
+          const resp = await fetch(`${API_BASE}/transport?lat=${lat}&lon=${lon}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
           if (!resp.ok) return null;
           return await resp.json();
         } catch (e) {
@@ -6004,7 +6150,7 @@
         // register..." placeholder on screen permanently — a worse outcome
         // than an error message, because it reads as "still working".
         try {
-          const resp = await fetch(`${API_BASE}/epc?postcode=${encodeURIComponent(postcode)}`, { signal });
+          const resp = await fetch(`${API_BASE}/epc?postcode=${encodeURIComponent(postcode)}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
           if (!resp.ok) return { available: false };
           return await resp.json();
         } catch (e) {
@@ -6083,7 +6229,7 @@
       // ============================================================
       async function fetchNhsData(lat, lon, signal) {
         try {
-          const resp = await fetch(`${API_BASE}/nhs?lat=${lat}&lon=${lon}`, { signal });
+          const resp = await fetch(`${API_BASE}/nhs?lat=${lat}&lon=${lon}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
           if (!resp.ok) return null;
           return await resp.json();
         } catch (e) {
@@ -6444,7 +6590,7 @@
               lsoa: nycArea.borough + ' ' + nycArea.zip,
             };
           } else {
-            areaResult = await lookupPostcode(activeAreaMap[areaKey], search.signal);
+            areaResult = (await lookupPostcode(activeAreaMap[areaKey], search)).result;
           }
           if (!isCurrentSearch(search)) return;
           if (areaResult) {
@@ -6482,8 +6628,15 @@
 
         // Postcode
         document.getElementById('sidebar-title').textContent = 'SEARCHING...';
-        const result = await lookupPostcode(q, search.signal);
+        const { result, failure } = await lookupPostcode(q, search);
         if (!isCurrentSearch(search)) return;
+        // A superseded search must paint nothing at all — a newer one owns the
+        // sidebar now.
+        if (failure === 'superseded') return;
+        if (failure) {
+          renderSearchFailure(failure, q);
+          return;
+        }
         if (!result) {
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
           announceResult('No results found for that search.');
