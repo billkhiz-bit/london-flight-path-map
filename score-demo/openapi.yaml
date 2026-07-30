@@ -189,6 +189,22 @@ paths:
         explicitly — treat a residual under 0.2 as normal rounding, not an
         error. Only price and trend move between quarterly vintages, so
         `afford` and `growth` are the only factors that can appear.
+
+        **Two factors are relative, which explains large swings.** Growth is
+        scored against the strongest-growing borough and affordability against
+        the cheapest and dearest, so a modest change in an input can move a
+        score a long way — and an area that IS the benchmark scores the maximum
+        by definition, leaving it nowhere to go but down. `why.drivers[]`
+        therefore carries `workings`: the actual sum with the reference point
+        named, e.g. `+0.9% ÷ +5.0% (Waltham Forest, the strongest) × 10 = 1.8`.
+        Use `why.caveats[]` for limits worth surfacing to an end user — most
+        importantly that a negative trend floors growth at 0, so a slight dip
+        and a steep fall are indistinguishable on that factor.
+
+        `marketContext` gives the city-wide picture (mean trend then/now, count
+        of falling areas then/now, and the growth benchmark then/now). Read it
+        before interpreting any single row: when most areas move together, the
+        cause is the market rather than a reassessment of one area.
       security: []
       responses:
         '200':
@@ -203,11 +219,19 @@ paths:
                   previousAvgPriceGbp, priceChangePct, trendPct,
                   previousTrendPct, components, previousComponents,
                   attribution[], attributionSum, roundingResidual,
-                  explanation), `weights`, `attributionNote`, vintage
-                  identifiers, and the standard meta fields
-                  (methodologyVersion, sources, generatedAt).
+                  explanation, why), `weights`, `marketContext`,
+                  `attributionNote`, vintage identifiers, and the standard
+                  meta fields (methodologyVersion, sources, generatedAt).
                   Each `attribution[]` entry has: factor, label, before,
                   after, change, weight, contribution.
+                  `why` has: headline, drivers[], caveats[], summary — where
+                  each driver carries factor, label, before, after, change,
+                  contribution, what, because, workings, weightNote.
+                  `explanation` is the flattened form of `why.summary` and is
+                  self-contained (it includes the workings and caveats).
+                  `marketContext` has: areas, meanTrendPct,
+                  previousMeanTrendPct, fallingAreas, previousFallingAreas,
+                  benchmarks, previousBenchmarks, summary.
 
   /v1/score:
     get:
