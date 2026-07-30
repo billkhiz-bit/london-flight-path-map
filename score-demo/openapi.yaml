@@ -175,6 +175,20 @@ paths:
         largest movers). This powers the public page at
         `https://skyscore.co.uk/changes`. Updated with each quarterly
         refresh; `note` documents any methodology caveat for the period.
+
+        Every borough also carries **why** it moved. The score is a weighted
+        sum, so a change decomposes exactly: `scoreChange` equals the sum of
+        `weight x componentChange` over the factors. `attribution[]` gives
+        that decomposition and `explanation` renders it as a sentence. The
+        top-level `weights` object is published so you can reproduce each
+        contribution yourself.
+
+        Because contributions are derived from the published 1dp component
+        values, they reconcile with `scoreChange` to within rounding rather
+        than exactly. `attributionSum` and `roundingResidual` state that gap
+        explicitly — treat a residual under 0.2 as normal rounding, not an
+        error. Only price and trend move between quarterly vintages, so
+        `afford` and `growth` are the only factors that can appear.
       security: []
       responses:
         '200':
@@ -187,8 +201,13 @@ paths:
                   `summary` (counts + largest movers), `changes[]` (per
                   borough: score, previousScore, scoreChange, avgPriceGbp,
                   previousAvgPriceGbp, priceChangePct, trendPct,
-                  previousTrendPct), vintage identifiers, and the standard
-                  meta fields (methodologyVersion, sources, generatedAt).
+                  previousTrendPct, components, previousComponents,
+                  attribution[], attributionSum, roundingResidual,
+                  explanation), `weights`, `attributionNote`, vintage
+                  identifiers, and the standard meta fields
+                  (methodologyVersion, sources, generatedAt).
+                  Each `attribution[]` entry has: factor, label, before,
+                  after, change, weight, contribution.
 
   /v1/score:
     get:
