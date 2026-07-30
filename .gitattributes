@@ -1,2 +1,8 @@
 # Vendored third-party assets: keep bytes exactly as downloaded
 score-demo/vendor/* -text
+# js/vendor/d3.v7.min.js is pinned with an SRI integrity hash in index.html.
+# Any line-ending translation changes its bytes, the hash stops matching, and
+# the browser refuses to execute it — d3 vanishes and the app cannot render.
+# This is not cosmetic: without -text, a fresh clone on Windows produces a
+# working tree that deploys a broken site.
+js/vendor/* -text
