@@ -202,7 +202,22 @@ def build_comparison(current, previous, city):
         'previousTrendPct': previous['context'].get('priceTrendPct'),
         'note': COMPARISON_NOTE,
         'attribution': build_attribution(current, previous, PERSONAS['balanced']),
-        'explanation': describe_change(current, previous, city, PERSONAS['balanced']),
+        'explanation': describe_change(
+            current,
+            previous,
+            city,
+            PERSONAS['balanced'],
+            cur_bm=benchmarks(CITIES[city]['boroughs']),
+            prev_bm=benchmarks(previous_dataset(city)),
+        ),
+        'why': build_why(
+            current,
+            previous,
+            city,
+            PERSONAS['balanced'],
+            cur_bm=benchmarks(CITIES[city]['boroughs']),
+            prev_bm=benchmarks(previous_dataset(city)),
+        ),
     }
 
 
@@ -259,29 +274,110 @@ def _price_of(result, city):
     return result['context'].get(field)
 
 
-def describe_change(current, previous, city, weights):
-    """A plain-English account of why a score moved, built from the numbers.
+def _money(value, city):
+    """Compact currency for prose: 569000 -> '£569k'."""
+    symbol = '$' if CITIES[city]['currency'] == 'USD' else '£'
+    if value is None:
+        return 'n/a'
+    return f'{symbol}{round(value / 1000):,}k'
 
-    Deterministic and derived — no model in the loop. Every clause is traceable
-    to a component delta or a published input, which is the point: a lender
-    asking "why" gets an auditable sentence, not a generated one.
+
+def benchmarks(boroughs):
+    """The yardsticks the relative components are measured against.
+
+    Two of the four factors are *relative*, not absolute: growth is scored
+    against the strongest-growing area and affordability against the cheapest
+    and dearest. Naming those reference points is what turns "growth fell 8.2"
+    from an assertion into something a reader can check — and it explains the
+    amplification, since an area that IS the benchmark scores the maximum by
+    definition, so it has nowhere to go but down.
+    """
+    trends = {name: bd['trend'] for name, bd in boroughs.items()}
+    prices = {name: bd['avgPrice'] for name, bd in boroughs.items()}
+    max_trend = max(trends.values())
+    top = sorted(n for n, t in trends.items() if t == max_trend)
+    dearest = max(prices, key=lambda n: prices[n])
+    cheapest = min(prices, key=lambda n: prices[n])
+    return {
+        'strongestGrowthArea': top[0],
+        'strongestGrowthAreas': top,
+        'strongestGrowthTrendPct': max_trend,
+        'dearestArea': dearest,
+        'dearestAvgPrice': prices[dearest],
+        'cheapestArea': cheapest,
+        'cheapestAvgPrice': prices[cheapest],
+    }
+
+
+def market_context(current_boroughs, previous_boroughs):
+    """City-wide movement, so an individual change is readable in context.
+
+    The single most useful sentence about this vintage pair is not about any one
+    borough: the mean trend fell from +3.2% to -1.6% and the number of areas with
+    falling prices went from 0 to 14. Without that, 25 boroughs dropping looks
+    like a scoring fault rather than the market it is describing.
+    """
+    cur = [bd['trend'] for bd in current_boroughs.values()]
+    prev = [bd['trend'] for bd in previous_boroughs.values()]
+    cur_bm = benchmarks(current_boroughs)
+    prev_bm = benchmarks(previous_boroughs)
+    return {
+        'areas': len(cur),
+        'meanTrendPct': round(sum(cur) / len(cur), 2),
+        'previousMeanTrendPct': round(sum(prev) / len(prev), 2),
+        'fallingAreas': sum(1 for t in cur if t < 0),
+        'previousFallingAreas': sum(1 for t in prev if t < 0),
+        'benchmarks': cur_bm,
+        'previousBenchmarks': prev_bm,
+        'summary': (
+            f'Across the {len(cur)} London boroughs the average 12-month price trend moved from '
+            f'{round(sum(prev) / len(prev), 1):+}% to {round(sum(cur) / len(cur), 1):+}%, and the number with '
+            f'falling prices went from {sum(1 for t in prev if t < 0)} to {sum(1 for t in cur if t < 0)}. '
+            f'Growth is scored relative to the strongest borough, which changed from '
+            f'{prev_bm["strongestGrowthArea"]} ({prev_bm["strongestGrowthTrendPct"]:+}%) to '
+            f'{cur_bm["strongestGrowthArea"]} ({cur_bm["strongestGrowthTrendPct"]:+}%). '
+            'Most scores fell because the market fell, not because any one borough was reassessed.'
+        ),
+    }
+
+
+def build_why(current, previous, city, weights, name=None, cur_bm=None, prev_bm=None):
+    """A structured account of why a score moved: headline, drivers, caveats.
+
+    Deterministic and derived — no model in the loop. Every field traces to a
+    component delta or a published input, which is the point: a reader asking
+    "why" gets arithmetic they can redo, not a generated story.
+
+    Structured rather than one long sentence because the earlier prose version
+    answered "what moved" but not "why that was so big". A 4.9-point cooling in
+    Barking's trend moved its growth score by 8.2, and nothing explained the
+    amplification. Each driver now carries `workings` — the actual sum, with the
+    benchmark named — so the leap is visible instead of surprising.
     """
     factors = build_attribution(current, previous, weights)
     score_change = round(current['score'] - previous['score'], 1)
-    symbol = '£' if CITIES[city]['currency'] != 'USD' else '$'
 
     if not factors:
-        return (
-            'No component moved between these vintages, so the score is unchanged. '
-            'Prices and trends for this area were not revised in this refresh.'
-        )
+        return {
+            'headline': 'Score unchanged.',
+            'drivers': [],
+            'caveats': [],
+            'summary': (
+                'No component moved between these vintages, so the score is unchanged. '
+                'Prices and trends for this area were not revised in this refresh.'
+            ),
+        }
 
+    magnitude = abs(score_change)
+    plural = '' if magnitude == 1 else 's'
     if score_change > 0:
-        head = f'Score rose {abs(score_change)} point{"" if abs(score_change) == 1 else "s"}.'
+        headline = f'Score rose {magnitude} point{plural}, from {previous["score"]} to {current["score"]}.'
     elif score_change < 0:
-        head = f'Score fell {abs(score_change)} point{"" if abs(score_change) == 1 else "s"}.'
+        headline = f'Score fell {magnitude} point{plural}, from {previous["score"]} to {current["score"]}.'
     else:
-        head = 'Score is unchanged overall, but the factors underneath it moved and offset each other.'
+        headline = (
+            f'Score held at {current["score"]}, but the factors underneath it moved and cancelled out.'
+        )
 
     cur_price = _price_of(current, city)
     prev_price = _price_of(previous, city)
@@ -289,46 +385,104 @@ def describe_change(current, previous, city, weights):
     prev_trend = previous['context'].get('priceTrendPct')
     price_moved = cur_price is not None and prev_price not in (None, 0) and cur_price != prev_price
 
-    clauses = []
-    for f in factors:
-        direction = 'rose' if f['change'] > 0 else 'fell'
-        magnitude = abs(f['change'])
-        contribution = f['contribution']
-        signed_contribution = f'{contribution:+.2f}'
-        base = f'{f["label"]} {direction} {magnitude} ({signed_contribution} of the total, at {int(f["weight"] * 100)}% weight)'
+    # Name the place in the driver text itself. A post-hoc string replace on the
+    # flattened summary left the structured drivers — the fields the page
+    # actually renders — still saying "This area".
+    subject = name or 'This area'
+    subject_lower = name or 'this area'
 
-        if f['factor'] == 'afford':
+    drivers = []
+    caveats = []
+    for f in factors:
+        verb = 'rose' if f['change'] > 0 else 'fell'
+        pct_weight = int(round(f['weight'] * 100))
+        driver = {
+            'factor': f['factor'],
+            'label': f['label'],
+            'before': f['before'],
+            'after': f['after'],
+            'change': f['change'],
+            'contribution': f['contribution'],
+            'what': f'{f["label"]} {verb} from {f["before"]} to {f["after"]} (a change of {f["change"]:+}).',
+            'weightNote': (
+                f'{f["label"]} is {pct_weight}% of the balanced score, so {f["change"]:+} there moves the '
+                f'headline by {f["contribution"]:+.2f}.'
+            ),
+            'because': '',
+            'workings': '',
+        }
+
+        if f['factor'] == 'growth' and cur_trend is not None and prev_trend is not None:
+            driver['because'] = (
+                f'The 12-month price trend went from {prev_trend:+}% to {cur_trend:+}%. Growth is scored '
+                'relative to the strongest-growing borough, not on an absolute scale.'
+            )
+            if prev_bm and prev_trend >= prev_bm['strongestGrowthTrendPct']:
+                # Being the benchmark is a ceiling, not a margin — this is the
+                # single biggest reason a fall can look extreme.
+                driver['because'] += (
+                    f' Last vintage {subject_lower} WAS the strongest ({prev_trend:+}%), so it scored the '
+                    'maximum 10 by definition — it had nowhere to move but down.'
+                )
+            if cur_trend < 0:
+                driver['workings'] = f'{cur_trend:+}% is negative, so growth is floored at 0.'
+                caveats.append(
+                    'Any negative trend scores 0 on growth, so a slight dip and a steep fall are '
+                    'indistinguishable on this factor.'
+                )
+            elif cur_bm and cur_bm['strongestGrowthTrendPct'] > 0:
+                driver['workings'] = (
+                    f'{cur_trend:+}% ÷ {cur_bm["strongestGrowthTrendPct"]:+}% '
+                    f'({cur_bm["strongestGrowthArea"]}, the strongest) × 10 = {f["after"]}'
+                )
+        elif f['factor'] == 'afford':
             if price_moved:
                 pct = round((cur_price - prev_price) / prev_price * 100, 1)
-                verb = 'rose' if pct > 0 else 'fell'
-                base += f' as the average price {verb} {abs(pct)}% to {symbol}{cur_price:,.0f}'
-            else:
-                # Affordability is normalised across the whole city, so a
-                # borough can move on this factor without its own price
-                # changing at all. Saying so is the honest version.
-                base += (
-                    ' even though this area\'s own price did not change — affordability is measured '
-                    'relative to the cheapest and dearest area, and those moved'
+                moved = 'rose' if pct > 0 else 'fell'
+                driver['because'] = (
+                    f'The average price {moved} {abs(pct)}% to {_money(cur_price, city)}. Affordability is '
+                    'scored relative to the cheapest and dearest borough.'
                 )
-        elif f['factor'] == 'growth' and cur_trend is not None and prev_trend is not None:
-            base += f' as the 12-month trend went from {prev_trend:+}% to {cur_trend:+}%'
-            if cur_trend < 0:
-                base += ' (a negative trend floors growth at 0, so a further fall would not move the score)'
+            else:
+                driver['because'] = (
+                    f"{subject}'s own price did not change. Affordability is measured relative to the "
+                    'cheapest and dearest borough, and those moved — so the yardstick shifted, not the area.'
+                )
+            if cur_bm:
+                driver['workings'] = (
+                    f'({_money(cur_bm["dearestAvgPrice"], city)} − {_money(cur_price, city)}) ÷ '
+                    f'({_money(cur_bm["dearestAvgPrice"], city)} − {_money(cur_bm["cheapestAvgPrice"], city)}) '
+                    f'× 10 = {f["after"]}  [dearest {cur_bm["dearestArea"]}, cheapest {cur_bm["cheapestArea"]}]'
+                )
         elif f['factor'] in ('quiet', 'live'):
-            base += ' following a refresh of the underlying inputs'
+            driver['because'] = 'The underlying inputs for this factor were refreshed in this vintage.'
 
-        clauses.append(base)
+        drivers.append(driver)
 
     explained = round(sum(f['contribution'] for f in factors), 2)
     residual = round(score_change - explained, 2)
-    tail = ''
     if abs(residual) >= 0.05:
-        tail = (
-            f' The parts sum to {explained:+.2f} against a published change of {score_change:+.1f}; '
-            'the difference is rounding in the per-factor values.'
+        caveats.append(
+            f'The drivers sum to {explained:+.2f} against a published change of {score_change:+.1f}; the '
+            f'{abs(residual):.2f} difference is rounding in the per-factor values, not a missing driver.'
         )
 
-    return head + ' ' + '; '.join(clauses) + '.' + tail
+    # The flattened summary must be self-contained: a caller reading only
+    # `explanation` should not lose the workings or the caveats, or they would
+    # miss things like growth being floored — the disclosure that explains why a
+    # collapsing trend can barely move a score.
+    parts = [headline]
+    for d in drivers:
+        parts.append(' '.join(x for x in (d['what'], d['because'], d['workings'], d['weightNote']) if x))
+    parts.extend(caveats)
+    summary = ' '.join(parts)
+
+    return {'headline': headline, 'drivers': drivers, 'caveats': caveats, 'summary': summary}
+
+
+def describe_change(current, previous, city, weights, name=None, cur_bm=None, prev_bm=None):
+    """Flattened prose form of build_why, kept for callers wanting one string."""
+    return build_why(current, previous, city, weights, name, cur_bm, prev_bm)['summary']
 
 
 # London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
@@ -2372,6 +2526,9 @@ def handle_changes(event):
     without a second call."""
     bal = PERSONAS['balanced']
     prev_set = previous_dataset('london')
+    cur_bm = benchmarks(CITIES['london']['boroughs'])
+    prev_bm = benchmarks(prev_set)
+    market = market_context(CITIES['london']['boroughs'], prev_set)
     changes = []
     for name in CITIES['london']['boroughs']:
         cur = calc_score(name, 'london', bal)
@@ -2408,7 +2565,8 @@ def handle_changes(event):
                 # looking like an arithmetic error.
                 'attributionSum': attribution_sum,
                 'roundingResidual': round(score_change - attribution_sum, 2),
-                'explanation': describe_change(cur, prev, 'london', bal),
+                'explanation': describe_change(cur, prev, 'london', bal, name, cur_bm, prev_bm),
+                'why': build_why(cur, prev, 'london', bal, name, cur_bm, prev_bm),
             }
         )
     changes.sort(key=lambda c: abs(c['scoreChange']), reverse=True)
@@ -2428,6 +2586,10 @@ def handle_changes(event):
             # contribution as weight x component change, and verify the parts
             # sum to scoreChange.
             'weights': bal,
+            # The city-wide picture, so a reader can see that most boroughs fell
+            # because the market fell — without it, 25 of 33 dropping reads as a
+            # scoring fault rather than a description of the quarter.
+            'marketContext': market,
             'attributionNote': (
                 'Each attribution contribution is the factor weight multiplied by the change in that '
                 'factor, so contributions sum to scoreChange to within rounding of the 1dp component '

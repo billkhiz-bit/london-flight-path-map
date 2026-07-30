@@ -56,15 +56,42 @@ await first.click();
 record('aria-expanded flips on open', (await first.getAttribute('aria-expanded')) === 'true');
 record('panel visible after click', await panel.isVisible());
 
+// The headline states direction and the before/after pair; the factor names
+// live in the driver blocks below it, checked further down.
 const prose = ((await panel.locator('.why-prose').textContent()) || '').trim();
-record('explanation prose present', prose.length > 40, prose.slice(0, 100));
+record('headline states direction and both scores', /(rose|fell|held).*\d\.\d to \d\.\d/i.test(prose), prose);
 record(
-  'explanation names a direction and a factor',
-  /(rose|fell|unchanged)/i.test(prose) && /(Growth|Affordability|Quiet Skies|Liveability)/.test(prose)
+  'panel names at least one factor',
+  /(Growth|Affordability|Quiet Skies|Liveability)/.test(await panel.textContent())
 );
 
 const bars = await panel.locator('.why-factor').count();
 record('per-factor bars rendered', bars > 0, `${bars} factors`);
+
+// --- the clarity upgrade: workings, benchmark naming, market context --------
+const drivers = await panel.locator('.why-driver').count();
+record('structured driver blocks rendered', drivers > 0, `${drivers} drivers`);
+
+const workings = ((await panel.locator('.why-workings').first().textContent()) || '').trim();
+record('workings shown (the actual sum)', /=/.test(workings), workings);
+record(
+  'workings name the benchmark or the floor',
+  /strongest|dearest|cheapest|floored/.test(workings),
+  workings.slice(0, 90)
+);
+
+const weightNote = ((await panel.locator('.why-weight').first().textContent()) || '').trim();
+record('weight impact explained', /% of the balanced score/.test(weightNote), weightNote.slice(0, 90));
+
+record('no placeholder subject leaks into the UI', !/This area/.test(await panel.textContent()));
+
+// Market context is the page-level answer to "why did everything move?"
+const market = page.locator('#market-context');
+record('market context visible', await market.isVisible());
+const marketText = ((await market.textContent()) || '').replace(/\s+/g, ' ');
+record('market context explains the city-wide move', /market fell/.test(marketText), marketText.slice(0, 110));
+record('market context shows the trend shift', /Average trend/.test(marketText));
+record('market context names the benchmark change', /Strongest grower/.test(marketText));
 
 const sum = ((await panel.locator('.why-sum').textContent()) || '').replace(/\s+/g, ' ');
 record('reconciliation line shown', /Contributions total/.test(sum), sum.slice(0, 120));

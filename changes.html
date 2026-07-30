@@ -121,6 +121,49 @@
     font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--muted);
     border-top: 1px dashed var(--border); padding-top: 8px;
   }
+
+  /* Page-level market context: the one paragraph that makes 25 falling
+     boroughs legible as a market movement rather than a scoring fault. */
+  .market {
+    background: var(--panel); border: 1px solid var(--border);
+    border-left: 3px solid var(--rise); border-radius: 10px;
+    padding: 18px 22px; margin: 22px 0 6px;
+  }
+  .market h2 { font-size: 17px; margin: 0 0 8px; }
+  .market p { margin: 0; font-size: 14.5px; color: var(--text); max-width: 82ch; }
+  .market-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px; margin: 16px 0 0;
+  }
+  .market-stats div { margin: 0; }
+  .market-stats dt {
+    font-family: 'Geist Mono', monospace; font-size: 10.5px; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .market-stats dd {
+    margin: 3px 0 0; font-family: 'Geist Mono', monospace; font-size: 15px; color: var(--text);
+  }
+
+  /* Per-driver blocks inside the why panel. Structured because one long
+     sentence answered "what moved" without answering "why so much". */
+  .why-driver { border-left: 2px solid var(--border); padding: 2px 0 2px 12px; margin: 0 0 12px; }
+  .why-what { font-size: 13.5px; font-weight: 500; margin: 0 0 4px; }
+  .why-because { font-size: 13px; color: var(--text); margin: 0 0 6px; max-width: 80ch; }
+  .why-workings {
+    font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--amber);
+    background: rgba(245, 158, 11, 0.07); border-radius: 6px;
+    padding: 6px 10px; margin: 0 0 6px; display: inline-block; max-width: 100%;
+    overflow-x: auto; white-space: pre-wrap;
+  }
+  .why-weight { font-size: 12px; color: var(--muted); margin: 0; }
+  .why-caveat {
+    font-size: 12.5px; color: var(--muted); border-left: 2px solid var(--amber);
+    padding-left: 12px; margin: 10px 0 0;
+  }
+  .why-section-label {
+    font-family: 'Geist Mono', monospace; font-size: 10.5px; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--muted); margin: 14px 0 6px;
+  }
   @media (max-width: 620px) {
     .why-factor { grid-template-columns: 96px 1fr 76px; font-size: 11px; }
   }
@@ -146,6 +189,13 @@
 
 <main>
   <div class="chips" id="summary-chips" hidden></div>
+  <!-- Why so many boroughs moved at once. Without this, 25 of 33 falling reads
+       as a scoring fault rather than a description of the quarter. -->
+  <section class="market" id="market-context" hidden>
+    <h2>Why so many scores moved</h2>
+    <p id="market-summary"></p>
+    <dl class="market-stats" id="market-stats"></dl>
+  </section>
   <div class="note" id="method-note" hidden></div>
   <p class="status" id="status" role="status">Loading the latest movement data…</p>
   <div class="table-wrap" id="table-wrap" hidden>
@@ -228,25 +278,63 @@
       '</div>';
   }
 
+  // One block per driver: what moved, why it moved that much, the actual sum,
+  // and how much it mattered to the headline. The "workings" line is the part
+  // that stops a big swing looking arbitrary — growth and affordability are
+  // scored *relative* to other boroughs, so the arithmetic has to be visible.
+  function driverBlock(d) {
+    return '<div class="why-driver">' +
+      '<p class="why-what">' + esc(d.what) + '</p>' +
+      (d.because ? '<p class="why-because">' + esc(d.because) + '</p>' : '') +
+      (d.workings ? '<p class="why-workings">' + esc(d.workings) + '</p>' : '') +
+      (d.weightNote ? '<p class="why-weight">' + esc(d.weightNote) + '</p>' : '') +
+      '</div>';
+  }
+
   function whyRow(c, i) {
     if (!c.attribution || !c.attribution.length) return '';
     const scale = Math.max.apply(null, c.attribution.map(f => Math.abs(f.contribution)));
     const bars = c.attribution.map(f => factorBar(f, scale)).join('');
-    const detail = c.attribution.map(f =>
-      esc(f.label) + ' ' + f.before.toFixed(1) + ' → ' + f.after.toFixed(1) +
-      ' (' + signed(f.change) + ') × ' + Math.round(f.weight * 100) + '% weight = ' +
-      signed(f.contribution.toFixed(2))
-    ).join(' · ');
     let sum = 'Contributions total ' + signed(c.attributionSum.toFixed(2)) +
       ' against a published change of ' + signed(c.scoreChange.toFixed(1));
     sum += Math.abs(c.roundingResidual) >= 0.05
       ? '; the ' + Math.abs(c.roundingResidual).toFixed(2) + ' difference is rounding in the per-factor values.'
       : '.';
+
+    // Fall back to the flat sentence if the API predates the structured `why`,
+    // so an older Lambda still renders something useful.
+    const w = c.why;
+    const body = w
+      ? '<p class="why-prose">' + esc(w.headline) + '</p>' +
+        '<div class="why-factors">' + bars + '</div>' +
+        '<p class="why-section-label">What drove it</p>' +
+        w.drivers.map(driverBlock).join('') +
+        (w.caveats && w.caveats.length
+          ? '<p class="why-section-label">Worth knowing</p>' +
+            w.caveats.map(cv => '<p class="why-caveat">' + esc(cv) + '</p>').join('')
+          : '')
+      : '<p class="why-prose">' + esc(c.explanation || '') + '</p>' +
+        '<div class="why-factors">' + bars + '</div>';
+
     return '<tr class="why-row" id="why-' + i + '" hidden><td colspan="9"><div class="why-inner">' +
-      '<p class="why-prose">' + esc(c.explanation) + '</p>' +
-      '<div class="why-factors">' + bars + '</div>' +
-      '<p class="why-sum">' + esc(detail) + '<br>' + esc(sum) + '</p>' +
+      body +
+      '<p class="why-sum">' + esc(sum) + '</p>' +
       '</div></td></tr>';
+  }
+
+  function renderMarketContext(m) {
+    if (!m) return;
+    document.getElementById('market-summary').textContent = m.summary;
+    const stats = [
+      ['Average trend', signed(m.previousMeanTrendPct, '%') + ' → ' + signed(m.meanTrendPct, '%')],
+      ['Boroughs with falling prices', m.previousFallingAreas + ' → ' + m.fallingAreas],
+      ['Strongest grower', m.benchmarks.strongestGrowthArea + ' (' + signed(m.benchmarks.strongestGrowthTrendPct, '%') + ')'],
+      ['Was', m.previousBenchmarks.strongestGrowthArea + ' (' + signed(m.previousBenchmarks.strongestGrowthTrendPct, '%') + ')'],
+    ];
+    document.getElementById('market-stats').innerHTML = stats
+      .map(([k, v]) => '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd></div>')
+      .join('');
+    document.getElementById('market-context').hidden = false;
   }
 
   // Delegated so it survives the innerHTML render and needs no inline handler
@@ -300,6 +388,8 @@
       const chipsEl = document.getElementById('summary-chips');
       chipsEl.innerHTML = chips.map(([v, label]) => '<div class="chip"><strong>' + v + '</strong><span>' + label + '</span></div>').join('');
       chipsEl.hidden = false;
+
+      renderMarketContext(d.marketContext);
 
       const noteEl = document.getElementById('method-note');
       noteEl.textContent = 'Honesty note: ' + d.note + ' This quarter the refresh also coincided with the v3.2 formula clamp, so treat the direction as reliable and the exact magnitudes as first-of-series; from next quarter the comparison is clean like-for-like.';

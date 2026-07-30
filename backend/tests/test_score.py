@@ -203,7 +203,9 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertLess(ealing['scoreChange'], 0)
         self.assertIn('fell', ealing['explanation'])
         self.assertIn('Growth', ealing['explanation'])
-        self.assertIn('floors growth at 0', ealing['explanation'])
+        # The flat string must still disclose the floor, not only the structured
+        # form — a caller reading `explanation` alone should not lose it.
+        self.assertIn('floored at 0', ealing['explanation'])
         # Newham's price fell, so affordability improved — the explanation must
         # not describe every component as moving the same way as the score.
         newham = by_name['Newham']
@@ -223,6 +225,70 @@ class TrendsFeatureTests(unittest.TestCase):
         decoded = json.loads(raw)
         with_symbol = [c for c in decoded['changes'] if '£' in c['explanation']]
         self.assertTrue(with_symbol, 'expected at least one explanation to quote a price')
+
+    def test_market_context_explains_the_city_wide_move(self):
+        """The most useful sentence about this vintage pair is not about one borough.
+
+        Mean trend fell and the count of falling boroughs rose; without that
+        framing, 25 of 33 dropping looks like a scoring fault.
+        """
+        body = json.loads(app.handle_changes({})['body'])
+        m = body['marketContext']
+        self.assertEqual(m['areas'], 33)
+        self.assertLess(m['meanTrendPct'], m['previousMeanTrendPct'])
+        self.assertEqual(m['previousFallingAreas'], 0)
+        self.assertEqual(m['fallingAreas'], 14)
+        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Waltham Forest')
+        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Barking and Dagenham')
+        self.assertIn('market fell', m['summary'])
+
+    def test_why_shows_its_workings_for_relative_factors(self):
+        # Growth and affordability are scored relative to other boroughs, so the
+        # sum must be shown or a large swing looks arbitrary.
+        body = json.loads(app.handle_changes({})['body'])
+        by_name = {c['borough']: c for c in body['changes']}
+        newham = by_name['Newham']['why']
+        growth = next(d for d in newham['drivers'] if d['factor'] == 'growth')
+        # Names the benchmark and reproduces the arithmetic.
+        self.assertIn('Waltham Forest', growth['workings'])
+        self.assertIn('= 2.4', growth['workings'])
+        afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
+        self.assertIn('dearest', afford['workings'])
+        self.assertIn('cheapest', afford['workings'])
+
+    def test_why_explains_amplification_when_area_was_the_benchmark(self):
+        """The main reason a fall looks extreme: it WAS the yardstick.
+
+        Barking scored 10/10 in Q1 by being the strongest grower — a ceiling,
+        not a margin — so it could only move down.
+        """
+        body = json.loads(app.handle_changes({})['body'])
+        barking = next(c for c in body['changes'] if c['borough'] == 'Barking and Dagenham')
+        growth = next(d for d in barking['why']['drivers'] if d['factor'] == 'growth')
+        self.assertIn('WAS the strongest', growth['because'])
+        self.assertIn('nowhere to move but down', growth['because'])
+        self.assertIn('Barking and Dagenham', growth['because'])
+
+    def test_why_names_the_borough_not_a_placeholder(self):
+        # A previous version patched only the flattened summary, leaving the
+        # structured drivers the page renders saying "This area".
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            self.assertNotIn('This area', json.dumps(c['why']), c['borough'])
+
+    def test_why_flags_the_growth_floor_as_a_caveat(self):
+        body = json.loads(app.handle_changes({})['body'])
+        kc = next(c for c in body['changes'] if c['borough'] == 'Kensington and Chelsea')
+        # Trend collapsed +0.5% -> -9.5% but the score barely moved, because
+        # growth was already near the floor. That needs saying.
+        self.assertTrue(any('indistinguishable' in cv for cv in kc['why']['caveats']))
+        growth = next(d for d in kc['why']['drivers'] if d['factor'] == 'growth')
+        self.assertIn('floored at 0', growth['workings'])
+
+    def test_why_summary_matches_flat_explanation(self):
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            self.assertEqual(c['explanation'], c['why']['summary'], c['borough'])
 
     def test_compare_previous_includes_attribution(self):
         body, status = app.resolve_query({'borough': 'Ealing', 'compare': 'previous'})
