@@ -107,9 +107,13 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertEqual(comp['previousAvgPriceGbp'], 680000)
         self.assertEqual(body['context']['avgPriceGbp'], 660000)
         self.assertEqual(comp['scoreChange'], round(body['score'] - comp['previousScore'], 1))
-        # Wandsworth's growth signal died between vintages — the score
-        # change must be negative under identical (v3.2) formula rules.
-        self.assertLess(comp['scoreChange'], 0)
+        # Under v3.3 the balanced persona does not weight growth, so
+        # Wandsworth's dead growth signal no longer moves its score. The
+        # movement must still be REPORTED as unweighted rather than vanish —
+        # otherwise "the market moved and my score didn't" is unexplained.
+        self.assertEqual(comp['scoreChange'], 0.0)
+        self.assertEqual([u['factor'] for u in comp['why']['unweighted']], ['growth'])
+        self.assertIn('did not change the score', comp['why']['unweighted'][0]['note'])
 
     def test_compare_absent_without_param(self):
         body, status = app.resolve_query({'borough': 'Wandsworth'})
@@ -148,6 +152,22 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertEqual(
             body['summary']['risers'] + body['summary']['fallers'],
             len([c for c in changes if c['scoreChange'] != 0]),
+        )
+
+    # --- v3.3: growth is weighted only for `investor`, so the growth-explanation
+    # coverage below runs against that persona. /v1/changes is balanced-only, so
+    # these call build_why directly rather than going through the endpoint.
+    def _investor_why(self, borough):
+        inv = app.PERSONAS['investor']
+        prev_set = app.previous_dataset('london')
+        cur = app.calc_score(borough, 'london', inv)
+        prev = app.calc_score(borough, 'london', inv, boroughs_override=prev_set)
+        return app.build_why(
+            cur, prev, 'london', inv, borough,
+            app.benchmarks(app.CITIES['london']['boroughs']),
+            app.benchmarks(prev_set),
+            app.growth_ranks(app.CITIES['london']['boroughs']),
+            app.growth_ranks(prev_set),
         )
 
     def test_changes_routed_from_handler(self):
@@ -194,27 +214,24 @@ class TrendsFeatureTests(unittest.TestCase):
             self.assertEqual(sizes, sorted(sizes, reverse=True), msg=c['borough'])
 
     def test_explanation_names_the_direction_and_the_driver(self):
-        body = json.loads(app.handle_changes({})['body'])
-        by_name = {c['borough']: c for c in body['changes']}
-        # Ealing's trend went +4.1% -> -0.3%, crossing into negative, so the
-        # explanation must say the score fell, name growth, and disclose that
-        # growth is now floored.
-        ealing = by_name['Ealing']
-        self.assertLess(ealing['scoreChange'], 0)
-        self.assertIn('fell', ealing['explanation'])
-        self.assertIn('Growth', ealing['explanation'])
+        # Ealing's trend went +4.1% -> -0.3%, crossing into negative. Under the
+        # investor view (the only one that weights growth since v3.3) the
+        # explanation must say the score fell, name growth, and disclose the
+        # floor.
+        ealing = self._investor_why('Ealing')
+        self.assertIn('fell', ealing['summary'])
+        self.assertIn('Growth', ealing['summary'])
         # The flat string must still disclose the floor, not only the structured
         # form — a caller reading `explanation` alone should not lose it.
-        self.assertIn('floored at 0', ealing['explanation'])
+        self.assertIn('floored at 0', ealing['summary'])
         # Newham's price fell, so affordability improved even though the overall
         # score dropped. The explanation must not flatten every factor into the
         # same direction as the headline.
-        newham = by_name['Newham']
-        self.assertLess(newham['scoreChange'], 0)
-        afford = next(d for d in newham['why']['drivers'] if d['factor'] == 'afford')
+        newham = self._investor_why('Newham')
+        afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
         self.assertGreater(afford['change'], 0, 'affordability improved')
         self.assertIn('9.3 → 9.5', afford['title'])
-        self.assertTrue(any('price here fell' in s for s in afford['steps']), afford['steps'])
+        self.assertTrue(any('price here fell' in st for st in afford['steps']), afford['steps'])
 
     def test_changes_publishes_weights_so_attribution_is_checkable(self):
         body = json.loads(app.handle_changes({})['body'])
@@ -250,9 +267,7 @@ class TrendsFeatureTests(unittest.TestCase):
     def test_why_shows_its_workings_for_relative_factors(self):
         # Growth and affordability are scored relative to other boroughs, so the
         # sum must be shown or a large swing looks arbitrary.
-        body = json.loads(app.handle_changes({})['body'])
-        by_name = {c['borough']: c for c in body['changes']}
-        newham = by_name['Newham']['why']
+        newham = self._investor_why('Newham')
         growth = next(d for d in newham['drivers'] if d['factor'] == 'growth')
         # Names the benchmark and reproduces the arithmetic.
         self.assertIn('Waltham Forest', growth['workings'])
@@ -289,9 +304,8 @@ class TrendsFeatureTests(unittest.TestCase):
 
     def test_why_uses_rank_to_explain_the_drop(self):
         """Rank is the intuitive anchor the earlier wording talked around."""
-        body = json.loads(app.handle_changes({})['body'])
-        barking = next(c for c in body['changes'] if c['borough'] == 'Barking and Dagenham')
-        growth = next(d for d in barking['why']['drivers'] if d['factor'] == 'growth')
+        barking = self._investor_why('Barking and Dagenham')
+        growth = next(d for d in barking['drivers'] if d['factor'] == 'growth')
         self.assertEqual(growth['previousRank'], 1)
         self.assertEqual(growth['rank'], 17)
         self.assertEqual(growth['rankOf'], 33)
@@ -304,9 +318,8 @@ class TrendsFeatureTests(unittest.TestCase):
         Barking scored 10/10 in Q1 by being the fastest grower — a ceiling, not
         a margin — so it could only move down.
         """
-        body = json.loads(app.handle_changes({})['body'])
-        barking = next(c for c in body['changes'] if c['borough'] == 'Barking and Dagenham')
-        growth = next(d for d in barking['why']['drivers'] if d['factor'] == 'growth')
+        barking = self._investor_why('Barking and Dagenham')
+        growth = next(d for d in barking['drivers'] if d['factor'] == 'growth')
         steps = ' '.join(growth['steps'])
         self.assertIn('league table', steps)
         self.assertIn('took the full 10', steps)
@@ -318,7 +331,7 @@ class TrendsFeatureTests(unittest.TestCase):
             any('still rising' in s.lower() for s in growth['steps']),
             'must say prices are still rising, just more slowly',
         )
-        self.assertTrue(any('did not get worse in absolute terms' in cv for cv in barking['why']['caveats']))
+        self.assertTrue(any('did not get worse in absolute terms' in cv for cv in barking['caveats']))
 
     def test_why_names_the_borough_not_a_placeholder(self):
         # A previous version patched only the flattened summary, leaving the
@@ -328,20 +341,19 @@ class TrendsFeatureTests(unittest.TestCase):
             self.assertNotIn('This area', json.dumps(c['why']), c['borough'])
 
     def test_why_flags_the_growth_floor_as_a_caveat(self):
-        body = json.loads(app.handle_changes({})['body'])
-        kc = next(c for c in body['changes'] if c['borough'] == 'Kensington and Chelsea')
+        kc = self._investor_why('Kensington and Chelsea')
         # Trend collapsed +0.5% -> -9.5% but the score barely moved, because
         # growth was already near the floor. That needs saying.
         self.assertTrue(
-            any('cannot tell a slight dip apart from a steep fall' in cv for cv in kc['why']['caveats']),
-            kc['why']['caveats'],
+            any('cannot tell a slight dip apart from a steep fall' in cv for cv in kc['caveats']),
+            kc['caveats'],
         )
-        growth = next(d for d in kc['why']['drivers'] if d['factor'] == 'growth')
+        growth = next(d for d in kc['drivers'] if d['factor'] == 'growth')
         self.assertIn('floored at 0', growth['workings'])
         # Its RANK improved (33rd -> 30th) while its own prices got worse,
         # because others fell further. Left unexplained that looks like a bug.
         self.assertEqual((growth['previousRank'], growth['rank']), (33, 30))
-        self.assertTrue(any('moved UP the growth table' in cv for cv in kc['why']['caveats']))
+        self.assertTrue(any('moved UP the growth table' in cv for cv in kc['caveats']))
 
     def test_why_summary_matches_flat_explanation(self):
         body = json.loads(app.handle_changes({})['body'])
@@ -419,12 +431,15 @@ class CalcScoreTests(unittest.TestCase):
     """
 
     def test_wandsworth_balanced(self):
-        # Pinned to the 2026-Q2 (May 2026 UK HPI) snapshot + methodology
-        # v3.2 growth clamp. Wandsworth's trend is negative this vintage,
-        # so growth floors at 0.
+        # Pinned to the 2026-Q2 (May 2026 UK HPI) snapshot + methodology v3.3,
+        # which drops growth from the balanced persona. The growth component is
+        # still COMPUTED and still floors at 0 (Wandsworth's trend is negative),
+        # it just carries no weight here — which is why this rose from the v3.2
+        # value of 5.3. A zero growth score was dragging the place down for a
+        # reason that says nothing about the place.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 5.3)
+        self.assertEqual(result['score'], 6.7)
         self.assertEqual(result['components']['quiet'], 5.0)
         self.assertEqual(result['components']['afford'], 6.7)
         self.assertEqual(result['components']['growth'], 0.0)

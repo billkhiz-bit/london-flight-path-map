@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.2, last updated 2026-07-24.
+> Version 3.3, last updated 2026-07-30.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -334,31 +334,39 @@ score = w.quiet × quiet + w.afford × afford + w.growth × growth + w.live × l
 ### 5.1 Default persona, balanced
 
 ```
-balanced = { quiet: 0.30, afford: 0.25, growth: 0.20, live: 0.25 }
+balanced = { quiet: 0.38, afford: 0.31, growth: 0.00, live: 0.31 }
 ```
 
 **Why these defaults?**
-- **Quiet 30%**, prominent because Sky Score's distinctive contribution to the property-data landscape is noise awareness; existing tools (Hometrack, Sprift, Rightmove) underweight noise, so we lead with it.
-- **Affordability 25%**, material to most buyers but not dominant.
-- **Growth 20%**, backward-looking, more prescriptive for investors than for owner-occupiers; weighted lower in the default.
-- **Liveability 25%**, composite of multiple factors, each individually important.
+- **Quiet 38%**, prominent because Sky Score's distinctive contribution to the property-data landscape is noise awareness; existing tools (Hometrack, Sprift, Rightmove) underweight noise, so we lead with it.
+- **Affordability 31%**, material to most buyers but not dominant.
+- **Growth 0%** as of v3.3 — see below. Weighted only for `investor`.
+- **Liveability 31%**, composite of multiple factors, each individually important.
+
+**Why growth carries no weight outside `investor` (v3.3).** In the 2026-Q1 to 2026-Q2 refresh, growth accounted for **87% of all score movement** across the 33 London boroughs; excluding it, the largest change anywhere was 0.62 points. Nothing physical about those places had changed — the same flight paths, schools and crime rates — yet headline scores moved by up to 1.6 points on a single market series.
+
+The other three components describe durable attributes *of a place*. Price growth is a mean-reverting time-series *about the market*: it is revised, it reverses, and (as §4.3 already acknowledged) past growth does not predict future returns. Averaging it into a score users read as a property's quality implied a commensurability that does not hold, and let market noise churn a number that should be stable when nothing about the property has changed.
+
+The component is still computed and still published, so `investor` weights it at 0.40 — expected return is genuinely the question that persona asks — and every response reports growth movement even where it carries no weight, rather than letting it disappear silently.
 
 **This is an editorial choice.** It is not derived from a regression against home-buyer outcomes (we don't have that data); it reflects the product team's positioning. Customers with different priors should use a persona preset or `?weights=` override.
 
 ### 5.2 Persona presets
 
-The eight named personas reflect typical buyer-segment priorities. Each is documented openly so customers can decide whether the preset matches their use case:
+The eight named personas reflect typical buyer-segment priorities. Each is documented openly so customers can decide whether the preset matches their use case.
+
+**As of v3.3, `investor` is the only persona weighting growth.** Where growth previously carried weight, that weight was redistributed across the persona's remaining three components *in proportion*, so each preset's relative emphasis is unchanged. `renter` already carried 0.00 on the same reasoning (no selling event); v3.3 generalises it.
 
 | Persona | quiet | afford | growth | live | Rationale |
 |---|---|---|---|---|---|
-| `balanced` | 0.30 | 0.25 | 0.20 | 0.25 | Default; no specific buyer profile |
-| `family` | 0.20 | 0.20 | 0.10 | 0.50 | Schools dominate; safety and day-to-day liveability matter most. Informed by general buyer-priority research from Rightmove, Zoopla, and RICS publications, which consistently identify schools and safety as primary factors for family buyers. |
+| `balanced` | 0.38 | 0.31 | 0.00 | 0.31 | Default; no specific buyer profile. Growth dropped in v3.3 |
+| `family` | 0.22 | 0.22 | 0.00 | 0.56 | Schools dominate; safety and day-to-day liveability matter most. Informed by general buyer-priority research from Rightmove, Zoopla, and RICS publications, which consistently identify schools and safety as primary factors for family buyers. |
 | `investor` | 0.10 | 0.30 | 0.40 | 0.20 | Capital growth potential and entry price are primary; quality factors discount-driven not lifestyle-driven. |
-| `firsttime` | 0.15 | 0.40 | 0.20 | 0.25 | Affordability dominates first-time-buyer constraints; remaining factors moderately weighted. |
-| `quietlife` | 0.50 | 0.20 | 0.10 | 0.20 | Specialist preset for buyers explicitly prioritising peace; weighted heavily on quiet at the expense of growth. |
+| `firsttime` | 0.19 | 0.50 | 0.00 | 0.31 | Affordability dominates first-time-buyer constraints; remaining factors moderately weighted. |
+| `quietlife` | 0.56 | 0.22 | 0.00 | 0.22 | Specialist preset for buyers explicitly prioritising peace; weighted heavily on quiet at the expense of growth. |
 | `renter` | 0.30 | 0.35 | 0.00 | 0.35 | No selling event so growth is irrelevant; affordability and liveability share weight with quiet. |
-| `commuter` | 0.20 | 0.30 | 0.15 | 0.35 | Transport-led, price-sensitive; liveability captures schools/transport/healthcare composite. |
-| `laterlife` | 0.40 | 0.15 | 0.10 | 0.35 | Cash buyer prioritising peace and healthcare access; growth de-emphasised. (Renamed from `downsizer` in Wave 12.10.) |
+| `commuter` | 0.24 | 0.35 | 0.00 | 0.41 | Transport-led, price-sensitive; liveability captures schools/transport/healthcare composite. |
+| `laterlife` | 0.44 | 0.17 | 0.00 | 0.39 | Cash buyer prioritising peace and healthcare access; growth de-emphasised. (Renamed from `downsizer` in Wave 12.10.) |
 
 **Family persona ratio ~50% on `live` is the largest deviation from balanced**, reflecting that family-segment research consistently shows schools-and-safety as the dominant decision factor. The other personas are smaller deviations that nudge the default in a direction without departing from sensible bounds.
 
@@ -769,6 +777,7 @@ Methodology and API contract versioned independently:
 
 ## 20. Changelog
 
+- **2026-07-30 (v3.3)**, **Growth weighted for `investor` only.** (1) *Rationale:* growth accounted for **87% of all score movement** in the Q1→Q2 refresh; excluding it, the largest change across the 33 boroughs was 0.62 points. Nothing physical about any borough had changed. The other three components describe durable attributes of a place; price growth is a mean-reverting market series that §4.3 already states does not predict future returns, so averaging it into a property-quality score let market noise churn a number users read as stable. (2) *Change:* `growth` is 0.00 for every persona except `investor` (unchanged at 0.40). Each persona's former growth weight was redistributed across its remaining three components in proportion, so relative emphasis is unchanged. (3) *Effect:* scores rise where a floored growth component was dragging a place down — Wandsworth moves 5.3 → 6.7 under balanced weights — and quarter-over-quarter movement collapses to ≤0.6 points, which is the honest reading: these places did not change. (4) *Transparency:* the growth component is still computed and published, and responses now carry a `why.unweighted[]` block reporting movement in factors that carry no weight for the requested persona, so a moving market is never silently dropped. (5) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-07-24 (v3.2)**, **Quarterly price refresh + growth clamp.** (1) *Data:* all 33 London borough `avgPrice`/`trend` values refreshed to the May 2026 UK House Price Index after the quarterly check found 28 boroughs deviating ≥3% from the 2026-Q1 snapshot (largest: Haringey +16.3%, City of London −26.2%; fourteen boroughs now carry negative 12-month trends — the snapshot predated the market turn). (2) *Formula:* the growth component is now clamped to 0–10 (§4.3). The original rising-market formula produced sub-zero components — and in three boroughs sub-zero total scores — once negative trends entered the cohort, violating the documented 0–10 scale. Negative trend now floors at growth = 0. (3) *Effect:* under default balanced weights, 24 borough scores move by more than 0.5 — overwhelmingly downward, dominated by the growth signal turning. Per the notice policy this qualifies for 14-day advance customer notice; the API has no paying customers as at this date, so the change ships with this changelog entry as the record. (4) London affordability cohort bounds moved (max now ~£1.256M Kensington and Chelsea; min ~£361k Barking and Dagenham).
 - **2026-07-23 (v3.1, no version bump)**, **Data-vintage note + consumer-surface honesty pass — no scoring changes.** (1) §7 now records explicitly that DEFRA Round 4 (2022) remains the latest official strategic noise mapping round as of July 2026, mirrored by a note in the consumer site's aircraft-noise legend. (2) The consumer site's detail-panel source badges for the air-quality and flood layers were corrected from "DEFRA DATA"/"EA DATA"/"EPA DATA"/"FEMA DATA" to "borough-level rating (curated)": those two map layers colour boroughs from a curated borough-level classification (`data/borough-extra.json`), not from live DEFRA/EA/EPA/FEMA rasters. The aircraft-noise layer's DEFRA attribution is unaffected (that layer genuinely renders the Round 4 Lden raster). API scoring inputs and formulas are unchanged.
 - **2026-05-07 (v3.1, no version bump)**, **Consumer-side data integrity sweep — no scoring formula changes.** Two material changes worth noting in this doc despite the scoring engine being unchanged: (1) Live OpenSky aircraft tracking removed end-to-end from the consumer site and prototype pending a written licensing agreement with OpenSky (their terms require one for any operational use, including consumer surfaces). The B2B API was never affected — `/v1/score` aviation context comes from DEFRA Round 4, not OpenSky. (2) `FLIGHT_PATHS` polylines used by the consumer-site visualisation and the v3.0 Haversine fallback have been trimmed to the noise-relevant final-approach / initial-departure portions only (~10-22 km from runway), audited against the DEFRA Lden raster via `scripts/audit_flight_paths.py`. Score values are unchanged for postcodes resolved via raster (v3.1 happy path); Haversine-fallback postcodes (outside the DEFRA bbox) may see modest changes where they were within range of the trimmed-off long-distance segments. METHODOLOGY_VERSION not bumped because the algorithm is identical and no anchors moved.

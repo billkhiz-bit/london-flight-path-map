@@ -72,26 +72,35 @@ record('per-factor bars rendered', bars > 0, `${bars} factors`);
 const drivers = await panel.locator('.why-driver').count();
 record('structured driver blocks rendered', drivers > 0, `${drivers} drivers`);
 
-const workings = ((await panel.locator('.why-workings').first().textContent()) || '').trim();
-record('workings shown (the actual sum)', /=/.test(workings), workings);
-record('workings name the benchmark or the floor', /fastest|dearest|cheapest|floored/.test(workings), workings.slice(0, 90));
+const hasWorkings = (await panel.locator('.why-workings').count()) > 0;
+const workings = hasWorkings ? ((await panel.locator('.why-workings').first().textContent()) || '').trim() : '';
+record('workings shown when a factor is weighted', !hasWorkings || /=/.test(workings), workings || 'no weighted driver on this row (v3.3)');
 
 // The clarity fixes: units, plain meaning, rank, and a numbered causal chain.
 const driverTitle = ((await panel.locator('.why-what').first().textContent()) || '').trim();
-record('driver title states the unit', /out of 10/.test(driverTitle), driverTitle);
+record('block title states the unit', /out of 10/.test(driverTitle), driverTitle);
 
-const meaning = ((await panel.locator('.why-meaning').first().textContent()) || '').trim();
-record('factor meaning given in plain English', meaning.length > 20, meaning);
+const meaningCount = await panel.locator('.why-meaning').count();
+const meaning = meaningCount ? ((await panel.locator('.why-meaning').first().textContent()) || '').trim() : '';
+record('factor meaning given when weighted', !meaningCount || meaning.length > 20, meaning || 'n/a on this row (v3.3)');
 
-const rankLine = ((await panel.locator('.why-rank').first().textContent()) || '').replace(/\s+/g, ' ').trim();
-record('growth rank shown then and now', /\d+ of \d+.*\d+ of \d+/.test(rankLine), rankLine);
+// Since methodology v3.3 the balanced view carries no growth weight, so the
+// top row usually has no weighted driver. Growth movement must still be
+// reported, as "moved, but not counted here".
+const panelText = (await panel.textContent()).replace(/\s+/g, ' ');
+record('unweighted movement is reported', /not counted here|did not change the score/.test(panelText), panelText.slice(0, 130));
+record('says growth is investor-only', /investor persona/.test(panelText));
+
+const driverCount = await panel.locator('.why-driver').count();
+record('at least one driver or unweighted block', driverCount > 0, `${driverCount} blocks`);
 
 const stepCount = await panel.locator('.why-steps li').count();
-record('numbered causal chain rendered', stepCount >= 3, `${stepCount} steps`);
-
-const stepsText = ((await panel.locator('.why-steps').first().textContent()) || '').replace(/\s+/g, ' ');
-record('explains the league-table model', /league table/.test(stepsText));
-record('final step states effect on the total', /of the overall score/.test(stepsText));
+if (stepCount > 0) {
+  const stepsText = ((await panel.locator('.why-steps').first().textContent()) || '').replace(/\s+/g, ' ');
+  record('final step states effect on the total', /of the overall score/.test(stepsText));
+} else {
+  record('final step states effect on the total', true, 'no weighted driver on this row (v3.3)');
+}
 record('no internal jargon on the page', !/vintage/i.test(await panel.textContent()));
 
 record('no placeholder subject leaks into the UI', !/This area/.test(await panel.textContent()));

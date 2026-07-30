@@ -75,7 +75,7 @@ def _make_lru(maxsize):
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '3.2'
+METHODOLOGY_VERSION = '3.3'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -95,18 +95,40 @@ IMPACT_TO_QUIET = {
     'severe': 0.0,
 }
 
+# Methodology v3.3 (2026-07-30): growth is now weighted ONLY for the investor
+# persona. Every other persona carries 0.00.
+#
+# The evidence: in the 2026-Q1 → Q2 refresh, growth accounted for **87% of all
+# score movement** across the 33 boroughs. Excluding it, the largest change
+# anywhere in London was 0.62 points. Nothing physical about those places had
+# changed — same flight paths, same schools, same crime — yet headline scores
+# moved by up to 1.6 because of one volatile market series.
+#
+# The other three factors describe durable attributes of a place. Price growth
+# is a mean-reverting time-series about the market, it is revised, and past
+# growth is a weak predictor of future growth. Averaging it in implied a
+# commensurability that does not hold, and let market noise churn a score users
+# read as a property's quality.
+#
+# It is retained at full weight for `investor`, where expected return is the
+# actual question being asked. `renter` already carried 0.00 on the same
+# reasoning (no selling event), which this generalises.
+#
+# Each persona's former growth weight was redistributed across its remaining
+# three factors *in proportion*, so relative emphasis is unchanged.
 PERSONAS = {
-    'balanced': {'quiet': 0.30, 'afford': 0.25, 'growth': 0.20, 'live': 0.25},
-    'family': {'quiet': 0.20, 'afford': 0.20, 'growth': 0.10, 'live': 0.50},
+    'balanced': {'quiet': 0.38, 'afford': 0.31, 'growth': 0.00, 'live': 0.31},
+    'family': {'quiet': 0.22, 'afford': 0.22, 'growth': 0.00, 'live': 0.56},
+    # Investor: expected return IS the question, so growth keeps full weight.
     'investor': {'quiet': 0.10, 'afford': 0.30, 'growth': 0.40, 'live': 0.20},
-    'firsttime': {'quiet': 0.15, 'afford': 0.40, 'growth': 0.20, 'live': 0.25},
-    'quietlife': {'quiet': 0.50, 'afford': 0.20, 'growth': 0.10, 'live': 0.20},
+    'firsttime': {'quiet': 0.19, 'afford': 0.50, 'growth': 0.00, 'live': 0.31},
+    'quietlife': {'quiet': 0.56, 'afford': 0.22, 'growth': 0.00, 'live': 0.22},
     # Renter: no selling event so growth is irrelevant.
     'renter': {'quiet': 0.30, 'afford': 0.35, 'growth': 0.00, 'live': 0.35},
     # Commuter / young professional: transport-led, price-sensitive.
-    'commuter': {'quiet': 0.20, 'afford': 0.30, 'growth': 0.15, 'live': 0.35},
+    'commuter': {'quiet': 0.24, 'afford': 0.35, 'growth': 0.00, 'live': 0.41},
     # Later-life buyer: cash buyer prioritising quiet + healthcare access.
-    'laterlife': {'quiet': 0.40, 'afford': 0.15, 'growth': 0.10, 'live': 0.35},
+    'laterlife': {'quiet': 0.44, 'afford': 0.17, 'growth': 0.00, 'live': 0.39},
 }
 
 # ---------------------------------------------------------------------------
@@ -250,6 +272,13 @@ def build_attribution(current, previous, weights):
         before = prev_c.get(key)
         after = cur_c.get(key)
         if before is None or after is None:
+            continue
+        # A zero-weight factor cannot drive anything, so listing it as a driver
+        # contributing +0.00 is noise. It is reported separately as an
+        # unweighted movement (see build_why) — since v3.3 put growth at 0.00
+        # for every persona but investor, staying silent would leave "the market
+        # moved but my score didn't" unexplained.
+        if weight == 0:
             continue
         change = round(after - before, 1)
         contribution = round((after - before) * weight, 2)
@@ -420,15 +449,61 @@ def build_why(
     factors = build_attribution(current, previous, weights)
     score_change = round(current['score'] - previous['score'], 1)
 
+    # Computed BEFORE the no-drivers early return. Since v3.3 set growth to 0.00
+    # for every persona but investor, "no weighted driver moved" is now the
+    # common case rather than the rare one — returning early without this left
+    # the most interesting fact ("the market moved and your score did not")
+    # unsaid, which is precisely the confusion this whole feature exists to fix.
+    unweighted = []
+    for key, weight in weights.items():
+        if weight != 0:
+            continue
+        before = previous['components'].get(key)
+        after = current['components'].get(key)
+        if before is None or after is None or round(after - before, 1) == 0:
+            continue
+        label = COMPONENT_LABELS.get(key, key)
+        unweighted.append(
+            {
+                'factor': key,
+                'label': label,
+                'before': before,
+                'after': after,
+                'change': round(after - before, 1),
+                'note': (
+                    f'{label} moved from {before} to {after} out of 10, but it carries no weight in this '
+                    'view, so it did not change the score.'
+                ),
+            }
+        )
+    unweighted_caveat = None
+    if unweighted:
+        moved = ' and '.join(u['label'] for u in unweighted)
+        unweighted_caveat = (
+            f'{moved} moved this quarter but is not counted in this view — it is weighted only for the '
+            'investor persona, because past price growth describes the market rather than the property.'
+        )
+
     if not factors:
+        if unweighted:
+            headline = (
+                f'Score unchanged at {current["score"]}, even though the market moved.'
+            )
+            summary = ' '.join(
+                [headline] + [u['note'] for u in unweighted] + [unweighted_caveat]
+            )
+        else:
+            headline = 'Score unchanged.'
+            summary = (
+                'Nothing that this view scores moved between these two quarters, so the score is '
+                'unchanged.'
+            )
         return {
-            'headline': 'Score unchanged.',
+            'headline': headline,
             'drivers': [],
-            'caveats': [],
-            'summary': (
-                'No component moved between these vintages, so the score is unchanged. '
-                'Prices and trends for this area were not revised in this refresh.'
-            ),
+            'unweighted': unweighted,
+            'caveats': [unweighted_caveat] if unweighted_caveat else [],
+            'summary': summary,
         }
 
     magnitude = abs(score_change)
@@ -591,6 +666,9 @@ def build_why(
         driver['steps'].append(effect)
         drivers.append(driver)
 
+    if unweighted_caveat:
+        caveats.append(unweighted_caveat)
+
     explained = round(sum(f['contribution'] for f in factors), 2)
     residual = round(score_change - explained, 2)
     if abs(residual) >= 0.05:
@@ -607,6 +685,7 @@ def build_why(
     # caveats. A caller reading only `explanation` must not lose the floor
     # disclosure, which lives in `workings` — this has regressed once already.
     parts = [headline]
+    parts.extend(u['note'] for u in unweighted)
     for d in drivers:
         parts.append(d['title'] + '.')
         parts.extend(d['steps'])
@@ -615,7 +694,13 @@ def build_why(
     parts.extend(caveats)
     summary = ' '.join(parts)
 
-    return {'headline': headline, 'drivers': drivers, 'caveats': caveats, 'summary': summary}
+    return {
+        'headline': headline,
+        'drivers': drivers,
+        'unweighted': unweighted,
+        'caveats': caveats,
+        'summary': summary,
+    }
 
 
 def describe_change(

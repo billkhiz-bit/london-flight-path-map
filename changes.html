@@ -322,11 +322,24 @@
     // Fall back to the flat sentence if the API predates the structured `why`,
     // so an older Lambda still renders something useful.
     const w = c.why;
+    // Since methodology v3.3 the balanced view does not weight growth, so most
+    // rows have no weighted driver at all. Reporting the unweighted movement is
+    // what answers "the market clearly moved — why didn't the score?".
+    const unweighted = (w && w.unweighted && w.unweighted.length)
+      ? '<p class="why-section-label">Moved, but not counted here</p>' +
+        w.unweighted.map(u =>
+          '<div class="why-driver"><p class="why-what">' + esc(u.label) + ': ' +
+          esc(u.before) + ' → ' + esc(u.after) + ' out of 10</p>' +
+          '<p class="why-because">' + esc(u.note) + '</p></div>'
+        ).join('')
+      : '';
+
     const body = w
       ? '<p class="why-prose">' + esc(w.headline) + '</p>' +
         '<div class="why-factors">' + bars + '</div>' +
-        '<p class="why-section-label">What drove it</p>' +
+        (w.drivers.length ? '<p class="why-section-label">What drove it</p>' : '') +
         w.drivers.map(driverBlock).join('') +
+        unweighted +
         (w.caveats && w.caveats.length
           ? '<p class="why-section-label">Worth knowing</p>' +
             w.caveats.map(cv => '<p class="why-caveat">' + esc(cv) + '</p>').join('')
@@ -410,7 +423,12 @@
       renderMarketContext(d.marketContext);
 
       const noteEl = document.getElementById('method-note');
-      noteEl.textContent = 'Honesty note: ' + d.note + ' This quarter the refresh also coincided with the v3.2 formula clamp, so treat the direction as reliable and the exact magnitudes as first-of-series; from next quarter the comparison is clean like-for-like.';
+      noteEl.textContent = 'Honesty note: ' + d.note +
+        ' Scores here use the balanced view, which since methodology v3.3 does not weight price growth —' +
+        ' growth describes the market rather than the property, and it was responsible for 87% of last' +
+        " quarter's score movement while nothing physical about these places changed. That is why the score" +
+        ' column moves very little and the market movement is reported separately above. Select "why" on any' +
+        ' row to see growth movement reported even where it carries no weight.';
       noteEl.hidden = false;
 
       document.getElementById('rows').innerHTML = d.changes.map((c, i) => (
