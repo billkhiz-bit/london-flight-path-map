@@ -206,10 +206,15 @@ class TrendsFeatureTests(unittest.TestCase):
         # The flat string must still disclose the floor, not only the structured
         # form — a caller reading `explanation` alone should not lose it.
         self.assertIn('floored at 0', ealing['explanation'])
-        # Newham's price fell, so affordability improved — the explanation must
-        # not describe every component as moving the same way as the score.
+        # Newham's price fell, so affordability improved even though the overall
+        # score dropped. The explanation must not flatten every factor into the
+        # same direction as the headline.
         newham = by_name['Newham']
-        self.assertIn('Affordability rose', newham['explanation'])
+        self.assertLess(newham['scoreChange'], 0)
+        afford = next(d for d in newham['why']['drivers'] if d['factor'] == 'afford')
+        self.assertGreater(afford['change'], 0, 'affordability improved')
+        self.assertIn('9.3 → 9.5', afford['title'])
+        self.assertTrue(any('price here fell' in s for s in afford['steps']), afford['steps'])
 
     def test_changes_publishes_weights_so_attribution_is_checkable(self):
         body = json.loads(app.handle_changes({})['body'])
@@ -253,21 +258,67 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertIn('Waltham Forest', growth['workings'])
         self.assertIn('= 2.4', growth['workings'])
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
-        self.assertIn('dearest', afford['workings'])
-        self.assertIn('cheapest', afford['workings'])
+        self.assertIn('= 9.5', afford['workings'])
+        # The cheapest/dearest endpoints are named in the prose steps, so the
+        # reader knows what the scale runs between.
+        steps = ' '.join(afford['steps'])
+        self.assertIn('cheapest', steps)
+        self.assertIn('dearest', steps)
+
+    def test_why_states_units_and_meaning(self):
+        """"Growth fell from 10.0 to 1.8" was read as a percentage.
+
+        Every driver must say it is a score out of 10 and say what the factor
+        actually measures.
+        """
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            for d in c['why']['drivers']:
+                self.assertIn('out of 10', d['title'], c['borough'])
+                self.assertTrue(d['meaning'], f"{c['borough']}/{d['factor']} has no plain-English meaning")
+                self.assertTrue(d['steps'], f"{c['borough']}/{d['factor']} has no steps")
+                # The last step always states the effect on the headline score.
+                self.assertIn('of the overall score', d['steps'][-1])
+
+    def test_why_avoids_internal_jargon(self):
+        # "vintage" is our word for a data snapshot; a reader has never seen it.
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            blob = json.dumps(c['why']).lower()
+            self.assertNotIn('vintage', blob, c['borough'])
+
+    def test_why_uses_rank_to_explain_the_drop(self):
+        """Rank is the intuitive anchor the earlier wording talked around."""
+        body = json.loads(app.handle_changes({})['body'])
+        barking = next(c for c in body['changes'] if c['borough'] == 'Barking and Dagenham')
+        growth = next(d for d in barking['why']['drivers'] if d['factor'] == 'growth')
+        self.assertEqual(growth['previousRank'], 1)
+        self.assertEqual(growth['rank'], 17)
+        self.assertEqual(growth['rankOf'], 33)
+        steps = ' '.join(growth['steps'])
+        self.assertIn('1st of 33 to 17th of 33', steps)
 
     def test_why_explains_amplification_when_area_was_the_benchmark(self):
         """The main reason a fall looks extreme: it WAS the yardstick.
 
-        Barking scored 10/10 in Q1 by being the strongest grower — a ceiling,
-        not a margin — so it could only move down.
+        Barking scored 10/10 in Q1 by being the fastest grower — a ceiling, not
+        a margin — so it could only move down.
         """
         body = json.loads(app.handle_changes({})['body'])
         barking = next(c for c in body['changes'] if c['borough'] == 'Barking and Dagenham')
         growth = next(d for d in barking['why']['drivers'] if d['factor'] == 'growth')
-        self.assertIn('WAS the strongest', growth['because'])
-        self.assertIn('nowhere to move but down', growth['because'])
-        self.assertIn('Barking and Dagenham', growth['because'])
+        steps = ' '.join(growth['steps'])
+        self.assertIn('league table', steps)
+        self.assertIn('took the full 10', steps)
+        self.assertIn('only direction available was down', steps)
+        self.assertIn('Barking and Dagenham', steps)
+        # And it must say prices are still RISING — the score fell for a
+        # relative reason, which is the whole confusion being addressed.
+        self.assertTrue(
+            any('still rising' in s.lower() for s in growth['steps']),
+            'must say prices are still rising, just more slowly',
+        )
+        self.assertTrue(any('did not get worse in absolute terms' in cv for cv in barking['why']['caveats']))
 
     def test_why_names_the_borough_not_a_placeholder(self):
         # A previous version patched only the flattened summary, leaving the
@@ -281,9 +332,16 @@ class TrendsFeatureTests(unittest.TestCase):
         kc = next(c for c in body['changes'] if c['borough'] == 'Kensington and Chelsea')
         # Trend collapsed +0.5% -> -9.5% but the score barely moved, because
         # growth was already near the floor. That needs saying.
-        self.assertTrue(any('indistinguishable' in cv for cv in kc['why']['caveats']))
+        self.assertTrue(
+            any('cannot tell a slight dip apart from a steep fall' in cv for cv in kc['why']['caveats']),
+            kc['why']['caveats'],
+        )
         growth = next(d for d in kc['why']['drivers'] if d['factor'] == 'growth')
         self.assertIn('floored at 0', growth['workings'])
+        # Its RANK improved (33rd -> 30th) while its own prices got worse,
+        # because others fell further. Left unexplained that looks like a bug.
+        self.assertEqual((growth['previousRank'], growth['rank']), (33, 30))
+        self.assertTrue(any('moved UP the growth table' in cv for cv in kc['why']['caveats']))
 
     def test_why_summary_matches_flat_explanation(self):
         body = json.loads(app.handle_changes({})['body'])

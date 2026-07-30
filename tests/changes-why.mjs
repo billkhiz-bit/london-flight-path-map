@@ -74,14 +74,25 @@ record('structured driver blocks rendered', drivers > 0, `${drivers} drivers`);
 
 const workings = ((await panel.locator('.why-workings').first().textContent()) || '').trim();
 record('workings shown (the actual sum)', /=/.test(workings), workings);
-record(
-  'workings name the benchmark or the floor',
-  /strongest|dearest|cheapest|floored/.test(workings),
-  workings.slice(0, 90)
-);
+record('workings name the benchmark or the floor', /fastest|dearest|cheapest|floored/.test(workings), workings.slice(0, 90));
 
-const weightNote = ((await panel.locator('.why-weight').first().textContent()) || '').trim();
-record('weight impact explained', /% of the balanced score/.test(weightNote), weightNote.slice(0, 90));
+// The clarity fixes: units, plain meaning, rank, and a numbered causal chain.
+const driverTitle = ((await panel.locator('.why-what').first().textContent()) || '').trim();
+record('driver title states the unit', /out of 10/.test(driverTitle), driverTitle);
+
+const meaning = ((await panel.locator('.why-meaning').first().textContent()) || '').trim();
+record('factor meaning given in plain English', meaning.length > 20, meaning);
+
+const rankLine = ((await panel.locator('.why-rank').first().textContent()) || '').replace(/\s+/g, ' ').trim();
+record('growth rank shown then and now', /\d+ of \d+.*\d+ of \d+/.test(rankLine), rankLine);
+
+const stepCount = await panel.locator('.why-steps li').count();
+record('numbered causal chain rendered', stepCount >= 3, `${stepCount} steps`);
+
+const stepsText = ((await panel.locator('.why-steps').first().textContent()) || '').replace(/\s+/g, ' ');
+record('explains the league-table model', /league table/.test(stepsText));
+record('final step states effect on the total', /of the overall score/.test(stepsText));
+record('no internal jargon on the page', !/vintage/i.test(await panel.textContent()));
 
 record('no placeholder subject leaks into the UI', !/This area/.test(await panel.textContent()));
 

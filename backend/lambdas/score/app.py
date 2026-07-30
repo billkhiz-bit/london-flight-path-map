@@ -180,9 +180,14 @@ def previous_dataset(city):
     return merged
 
 
-def build_comparison(current, previous, city):
+def build_comparison(current, previous, city, name=None):
     """Assemble the ?compare=previous response block from two calc_score
-    results computed under identical formula + weights."""
+    results computed under identical formula + weights.
+
+    `name` is the resolved borough. Passing it is what lets the explanation say
+    "Barking and Dagenham went from 1st to 17th" rather than "this area", and
+    what enables the growth rank at all.
+    """
     currency = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
     cur_price = current['context'].get(currency)
     prev_price = previous['context'].get(currency)
@@ -190,6 +195,17 @@ def build_comparison(current, previous, city):
         round((cur_price - prev_price) / prev_price * 100, 1)
         if cur_price is not None and prev_price not in (None, 0)
         else None
+    )
+    # Computed once and shared: previously each of describe_change and build_why
+    # rebuilt both benchmark sets, so a single request walked every borough four
+    # times to produce the same two answers.
+    prev_set = previous_dataset(city)
+    cur_bm = benchmarks(CITIES[city]['boroughs'])
+    prev_bm = benchmarks(prev_set)
+    cur_ranks = growth_ranks(CITIES[city]['boroughs'])
+    prev_ranks = growth_ranks(prev_set)
+    why = build_why(
+        current, previous, city, PERSONAS['balanced'], name, cur_bm, prev_bm, cur_ranks, prev_ranks
     )
     return {
         'currentVintage': SNAPSHOT_VINTAGE,
@@ -202,22 +218,8 @@ def build_comparison(current, previous, city):
         'previousTrendPct': previous['context'].get('priceTrendPct'),
         'note': COMPARISON_NOTE,
         'attribution': build_attribution(current, previous, PERSONAS['balanced']),
-        'explanation': describe_change(
-            current,
-            previous,
-            city,
-            PERSONAS['balanced'],
-            cur_bm=benchmarks(CITIES[city]['boroughs']),
-            prev_bm=benchmarks(previous_dataset(city)),
-        ),
-        'why': build_why(
-            current,
-            previous,
-            city,
-            PERSONAS['balanced'],
-            cur_bm=benchmarks(CITIES[city]['boroughs']),
-            prev_bm=benchmarks(previous_dataset(city)),
-        ),
+        'explanation': why['summary'],
+        'why': why,
     }
 
 
@@ -282,6 +284,65 @@ def _money(value, city):
     return f'{symbol}{round(value / 1000):,}k'
 
 
+# One plain sentence per factor. The explanation used to name factors without
+# ever saying what they measure, which assumes the reader already knows.
+FACTOR_MEANINGS = {
+    'quiet': 'How free this area is from aircraft noise.',
+    'afford': 'How cheap this area is, ranked against every other London borough.',
+    'growth': 'How fast property prices are rising here, ranked against every other London borough.',
+    'live': 'Schools, crime and transport, combined.',
+}
+
+
+def _ordinal(n):
+    """1 -> '1st'. Ranks read far more naturally than 'scored relative to'."""
+    if n is None:
+        return ''
+    if 10 <= n % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+    return f'{n}{suffix}'
+
+
+def _fraction_words(share):
+    """Describe a ratio the way a person would: 0.18 -> 'a fifth'.
+
+    The point of the sentence this feeds is intuition, so 'about a fifth of
+    that' lands where '0.18 of the maximum' does not.
+    """
+    if share is None or share <= 0:
+        return 'none'
+    if share >= 0.95:
+        return 'effectively all'
+    named = [
+        (0.9, 'nine tenths'),
+        (0.8, 'four fifths'),
+        (0.75, 'three quarters'),
+        (0.66, 'two thirds'),
+        (0.6, 'three fifths'),
+        (0.5, 'half'),
+        (0.4, 'two fifths'),
+        (0.33, 'a third'),
+        (0.25, 'a quarter'),
+        (0.2, 'a fifth'),
+        (0.16, 'a sixth'),
+        (0.125, 'an eighth'),
+        (0.1, 'a tenth'),
+    ]
+    # Pick the closest named fraction rather than the nearest below, so 0.18
+    # reads as "a fifth" instead of "a sixth".
+    best = min(named, key=lambda pair: abs(share - pair[0]))
+    return best[1]
+
+
+def growth_ranks(boroughs):
+    """Rank every area by price trend, 1 = fastest rising. Ties share a rank."""
+    trends = {name: bd['trend'] for name, bd in boroughs.items()}
+    ordered = sorted(trends.values(), reverse=True)
+    return {name: ordered.index(t) + 1 for name, t in trends.items()}
+
+
 def benchmarks(boroughs):
     """The yardsticks the relative components are measured against.
 
@@ -341,7 +402,9 @@ def market_context(current_boroughs, previous_boroughs):
     }
 
 
-def build_why(current, previous, city, weights, name=None, cur_bm=None, prev_bm=None):
+def build_why(
+    current, previous, city, weights, name=None, cur_bm=None, prev_bm=None, cur_ranks=None, prev_ranks=None
+):
     """A structured account of why a score moved: headline, drivers, caveats.
 
     Deterministic and derived — no model in the loop. Every field traces to a
@@ -391,10 +454,13 @@ def build_why(current, previous, city, weights, name=None, cur_bm=None, prev_bm=
     subject = name or 'This area'
     subject_lower = name or 'this area'
 
+    rank_now = cur_ranks.get(name) if (cur_ranks and name) else None
+    rank_before = prev_ranks.get(name) if (prev_ranks and name) else None
+    rank_of = len(cur_ranks) if cur_ranks else None
+
     drivers = []
     caveats = []
     for f in factors:
-        verb = 'rose' if f['change'] > 0 else 'fell'
         pct_weight = int(round(f['weight'] * 100))
         driver = {
             'factor': f['factor'],
@@ -403,60 +469,126 @@ def build_why(current, previous, city, weights, name=None, cur_bm=None, prev_bm=
             'after': f['after'],
             'change': f['change'],
             'contribution': f['contribution'],
-            'what': f'{f["label"]} {verb} from {f["before"]} to {f["after"]} (a change of {f["change"]:+}).',
-            'weightNote': (
-                f'{f["label"]} is {pct_weight}% of the balanced score, so {f["change"]:+} there moves the '
-                f'headline by {f["contribution"]:+.2f}.'
-            ),
-            'because': '',
+            # Units, stated. "Growth fell from 10.0 to 1.8" was read as a
+            # percentage; it is a score out of 10 and has to say so.
+            'title': f'{f["label"]} score: {f["before"]} → {f["after"]} out of 10',
+            'meaning': FACTOR_MEANINGS.get(f['factor'], ''),
+            'steps': [],
             'workings': '',
         }
+        effect = (
+            f'{f["label"]} is {pct_weight}% of the overall score, so this moved the total by '
+            f'{f["contribution"]:+.2f}.'
+        )
 
         if f['factor'] == 'growth' and cur_trend is not None and prev_trend is not None:
-            driver['because'] = (
-                f'The 12-month price trend went from {prev_trend:+}% to {cur_trend:+}%. Growth is scored '
-                'relative to the strongest-growing borough, not on an absolute scale.'
-            )
-            if prev_bm and prev_trend >= prev_bm['strongestGrowthTrendPct']:
-                # Being the benchmark is a ceiling, not a margin — this is the
-                # single biggest reason a fall can look extreme.
-                driver['because'] += (
-                    f' Last vintage {subject_lower} WAS the strongest ({prev_trend:+}%), so it scored the '
-                    'maximum 10 by definition — it had nowhere to move but down.'
+            # Step 1: what actually happened to prices, in words not scores.
+            if cur_trend > 0 and prev_trend > 0:
+                pace = (
+                    f'Prices here were rising {prev_trend:+}% a year; now they are rising {cur_trend:+}% a year. '
+                    'Still rising, just far more slowly.'
                 )
+            elif cur_trend < 0 <= prev_trend:
+                pace = (
+                    f'Prices here were rising {prev_trend:+}% a year; now they are falling ({cur_trend:+}% a year).'
+                )
+            elif cur_trend < 0 and prev_trend < 0:
+                pace = f'Prices here were already falling ({prev_trend:+}% a year) and now fall {cur_trend:+}% a year.'
+            else:
+                pace = f'The 12-month price trend went from {prev_trend:+}% to {cur_trend:+}% a year.'
+            driver['steps'].append(pace)
+
+            # Step 2: rank. The single most intuitive statement available, and
+            # the one the earlier wording talked around instead of saying.
+            if rank_now and rank_before:
+                driver['rank'] = rank_now
+                driver['previousRank'] = rank_before
+                driver['rankOf'] = rank_of
+                driver['steps'].append(
+                    f'Ranked against every London borough for price growth, {subject_lower} went from '
+                    f'{_ordinal(rank_before)} of {rank_of} to {_ordinal(rank_now)} of {rank_of}.'
+                )
+
+            # Step 3: why that drops the SCORE so far — the league-table model.
+            was_top = prev_bm and prev_trend >= prev_bm['strongestGrowthTrendPct']
             if cur_trend < 0:
-                driver['workings'] = f'{cur_trend:+}% is negative, so growth is floored at 0.'
+                floor_note = (
+                    'The growth score is a league table, not a measurement: 10 out of 10 goes to whichever '
+                    'borough has the fastest-rising prices. Any borough whose prices are falling scores 0.'
+                )
+                if was_top:
+                    floor_note += (
+                        f' Last quarter {subject_lower} had the fastest-rising prices in London, so it held the '
+                        'top score of 10 — which means it could only ever move down from there.'
+                    )
+                driver['steps'].append(floor_note)
+                driver['workings'] = f'{cur_trend:+}% is below zero → score floored at 0 out of 10'
                 caveats.append(
-                    'Any negative trend scores 0 on growth, so a slight dip and a steep fall are '
-                    'indistinguishable on this factor.'
+                    'Because every borough with falling prices scores 0, this factor cannot tell a slight dip '
+                    'apart from a steep fall.'
                 )
             elif cur_bm and cur_bm['strongestGrowthTrendPct'] > 0:
+                share = cur_trend / cur_bm['strongestGrowthTrendPct']
+                model = (
+                    'The growth score is a league table, not a measurement: 10 out of 10 goes to whichever '
+                    'borough has the fastest-rising prices, and everywhere else scores a share of that.'
+                )
+                if was_top:
+                    model += (
+                        f' Last quarter that was {subject_lower} itself, at {prev_trend:+}% — so it took the full '
+                        '10, and the only direction available was down.'
+                    )
+                model += (
+                    f' The fastest now is {cur_bm["strongestGrowthArea"]} at {cur_bm["strongestGrowthTrendPct"]:+}%, '
+                    f'and {cur_trend:+}% is about {_fraction_words(share)} of that — so {f["after"]} out of 10.'
+                )
+                driver['steps'].append(model)
                 driver['workings'] = (
                     f'{cur_trend:+}% ÷ {cur_bm["strongestGrowthTrendPct"]:+}% '
-                    f'({cur_bm["strongestGrowthArea"]}, the strongest) × 10 = {f["after"]}'
+                    f'({cur_bm["strongestGrowthArea"]}, fastest) × 10 = {f["after"]}'
                 )
+                if rank_now and rank_before and rank_now > rank_before and cur_trend > 0:
+                    caveats.append(
+                        f'{subject} did not get worse in absolute terms — prices are still rising. It fell '
+                        'because other boroughs are now rising faster.'
+                    )
+            # Rank can improve while the underlying number gets worse, if others
+            # fall further. Silence there would look like an error.
+            if rank_now and rank_before and rank_now < rank_before and cur_trend < prev_trend:
+                caveats.append(
+                    f'Oddly, {subject_lower} moved UP the growth table ({_ordinal(rank_before)} to '
+                    f'{_ordinal(rank_now)}) even though its own prices did worse — other boroughs fell further.'
+                )
+
         elif f['factor'] == 'afford':
             if price_moved:
                 pct = round((cur_price - prev_price) / prev_price * 100, 1)
                 moved = 'rose' if pct > 0 else 'fell'
-                driver['because'] = (
-                    f'The average price {moved} {abs(pct)}% to {_money(cur_price, city)}. Affordability is '
-                    'scored relative to the cheapest and dearest borough.'
+                driver['steps'].append(
+                    f'The average price here {moved} {abs(pct)}%, from {_money(prev_price, city)} to '
+                    f'{_money(cur_price, city)}.'
                 )
             else:
-                driver['because'] = (
-                    f"{subject}'s own price did not change. Affordability is measured relative to the "
-                    'cheapest and dearest borough, and those moved — so the yardstick shifted, not the area.'
+                driver['steps'].append(
+                    f"The average price here did not change ({_money(cur_price, city)}). What moved was the rest "
+                    'of London.'
                 )
             if cur_bm:
+                driver['steps'].append(
+                    'Affordability is also a league table: the cheapest borough scores 10 and the dearest scores '
+                    f'0, with everywhere else in between. Right now that runs from {cur_bm["cheapestArea"]} at '
+                    f'{_money(cur_bm["cheapestAvgPrice"], city)} up to {cur_bm["dearestArea"]} at '
+                    f'{_money(cur_bm["dearestAvgPrice"], city)}.'
+                )
                 driver['workings'] = (
                     f'({_money(cur_bm["dearestAvgPrice"], city)} − {_money(cur_price, city)}) ÷ '
                     f'({_money(cur_bm["dearestAvgPrice"], city)} − {_money(cur_bm["cheapestAvgPrice"], city)}) '
-                    f'× 10 = {f["after"]}  [dearest {cur_bm["dearestArea"]}, cheapest {cur_bm["cheapestArea"]}]'
+                    f'× 10 = {f["after"]}'
                 )
         elif f['factor'] in ('quiet', 'live'):
-            driver['because'] = 'The underlying inputs for this factor were refreshed in this vintage.'
+            driver['steps'].append('The underlying data for this factor was refreshed this quarter.')
 
+        driver['steps'].append(effect)
         drivers.append(driver)
 
     explained = round(sum(f['contribution'] for f in factors), 2)
@@ -471,18 +603,26 @@ def build_why(current, previous, city, weights, name=None, cur_bm=None, prev_bm=
     # `explanation` should not lose the workings or the caveats, or they would
     # miss things like growth being floored — the disclosure that explains why a
     # collapsing trend can barely move a score.
+    # Self-contained by construction: title, every step, the workings AND the
+    # caveats. A caller reading only `explanation` must not lose the floor
+    # disclosure, which lives in `workings` — this has regressed once already.
     parts = [headline]
     for d in drivers:
-        parts.append(' '.join(x for x in (d['what'], d['because'], d['workings'], d['weightNote']) if x))
+        parts.append(d['title'] + '.')
+        parts.extend(d['steps'])
+        if d['workings']:
+            parts.append(f'({d["workings"]}.)')
     parts.extend(caveats)
     summary = ' '.join(parts)
 
     return {'headline': headline, 'drivers': drivers, 'caveats': caveats, 'summary': summary}
 
 
-def describe_change(current, previous, city, weights, name=None, cur_bm=None, prev_bm=None):
+def describe_change(
+    current, previous, city, weights, name=None, cur_bm=None, prev_bm=None, cur_ranks=None, prev_ranks=None
+):
     """Flattened prose form of build_why, kept for callers wanting one string."""
-    return build_why(current, previous, city, weights, name, cur_bm, prev_bm)['summary']
+    return build_why(current, previous, city, weights, name, cur_bm, prev_bm, cur_ranks, prev_ranks)['summary']
 
 
 # London borough dataset, sourced from index.html BOROUGH_DATA_RAW + BOROUGH_EXTRA.
@@ -2413,7 +2553,7 @@ def resolve_query(query):
             postcode_clean=pc_clean,
             boroughs_override=previous_dataset(city),
         )
-        comparison = build_comparison(score_data, prev_data, city)
+        comparison = build_comparison(score_data, prev_data, city, borough)
 
     body = {
         **score_data,
@@ -2528,6 +2668,8 @@ def handle_changes(event):
     prev_set = previous_dataset('london')
     cur_bm = benchmarks(CITIES['london']['boroughs'])
     prev_bm = benchmarks(prev_set)
+    cur_ranks = growth_ranks(CITIES['london']['boroughs'])
+    prev_ranks = growth_ranks(prev_set)
     market = market_context(CITIES['london']['boroughs'], prev_set)
     changes = []
     for name in CITIES['london']['boroughs']:
@@ -2565,8 +2707,10 @@ def handle_changes(event):
                 # looking like an arithmetic error.
                 'attributionSum': attribution_sum,
                 'roundingResidual': round(score_change - attribution_sum, 2),
-                'explanation': describe_change(cur, prev, 'london', bal, name, cur_bm, prev_bm),
-                'why': build_why(cur, prev, 'london', bal, name, cur_bm, prev_bm),
+                'explanation': describe_change(
+                    cur, prev, 'london', bal, name, cur_bm, prev_bm, cur_ranks, prev_ranks
+                ),
+                'why': build_why(cur, prev, 'london', bal, name, cur_bm, prev_bm, cur_ranks, prev_ranks),
             }
         )
     changes.sort(key=lambda c: abs(c['scoreChange']), reverse=True)
