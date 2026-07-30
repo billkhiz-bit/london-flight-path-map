@@ -6,7 +6,54 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-07-27 (latest) — Bulk export was missing its OGL attribution
+### 2026-07-30 (latest) — Growth reweighted, explanations rewritten, third-party assets vendored
+
+- **Methodology v3.3: growth is weighted for the `investor` persona only.** In
+  the Q1→Q2 refresh growth accounted for **87% of all score movement** across the
+  33 boroughs; excluding it, the largest change anywhere in London was 0.62
+  points, while nothing physical about any borough had changed. Quiet,
+  affordability and liveability describe durable attributes of a place; price
+  growth is a mean-reverting market series that METHODOLOGY §4.3 already stated
+  does not predict future returns. Each persona's former growth weight was
+  redistributed across its remaining three factors in proportion, so relative
+  emphasis is unchanged and all eight still sum to 1.0. Wandsworth moves 5.3 →
+  6.7 under balanced weights, purely because a floored growth component had been
+  dragging it down for a reason that says nothing about Wandsworth.
+- **Movement is reported even where it is not counted.** A zero-weight factor is
+  no longer listed as a driver contributing +0.00, but `why.unweighted[]` reports
+  it and `/changes` renders a "Moved, but not counted here" block — otherwise
+  "the market clearly moved, why didn't my score?" goes unanswered.
+- **`/v1/changes` and `?compare=previous` now explain *why* a score moved.**
+  `attribution[]` decomposes the change exactly (score is a weighted sum, so
+  `Δscore = Σ wᵢ·Δcomponentᵢ`), `why.drivers[]` carries plain-English steps and
+  the actual workings with the benchmark named, and `marketContext` gives the
+  city-wide picture. `weights` is published so a caller can reproduce every
+  contribution; `attributionSum`/`roundingResidual` state the rounding gap rather
+  than hiding it. No model generates any of it.
+- **`/changes` is dated throughout.** Column headers read "Score Q1 2026" and
+  "Score Q2 2026" instead of "then"/"now", set from the API vintages so they
+  cannot drift, plus a dated heading and tab title.
+- **A 19.2 MB third-party download no longer gates first paint.** `init()` awaited
+  borough boundaries fetched from `raw.githubusercontent.com` — all 380 GB local
+  authority districts, ~347 of them discarded in the browser — before revealing
+  the app, and the listed fallback URL had been returning 404. Now a 123 KB
+  same-origin trim (`scripts/build_london_boroughs.py`), precached by the service
+  worker. d3 is self-hosted too (byte-identical to the CDN copy, verified against
+  the SRI hash already pinned in the markup) and `d3js.org` is out of the CSP.
+- **Brentwood, Essex was being drawn as a London borough** — the old filter used a
+  bare substring test, and the borough key `Brent` is a prefix of `Brentwood`. It
+  was also feeding the map projection an outlier ~30 km north-east.
+- **Searches now have deadlines and stop lying about failures.** The
+  AbortController only ever fired when a newer search superseded an older one, so
+  a single search on a stalled network waited on the browser default; and every
+  failure rendered "NOT FOUND — area or borough not found", telling users a valid
+  postcode did not exist. Now 5s/8s timeouts and a "CONNECTION ISSUE" state with
+  a working retry.
+- **`tests/test_persona_parity.py` added.** `index.html` scores client-side from
+  its own copy of PERSONAS and nothing linked it to the Lambda's, so the site
+  could silently disagree with its own API about a score.
+
+### 2026-07-27 — Bulk export was missing its OGL attribution
 
 - **The bulk scoring CSV shipped with no attribution at all.** It is a derived
   work — every row carries an ONS NSPL centroid and a DEFRA-derived quiet score

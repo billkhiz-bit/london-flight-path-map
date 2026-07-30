@@ -2,9 +2,9 @@
 
 **A noise + livability data API for UK and NYC property.**
 
-Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability, surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
+Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability (growth is weighted for the `investor` persona only since methodology v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.2 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs) · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v3.3 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs) · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 
 ## Try it in 30 seconds
 
@@ -110,8 +110,8 @@ Response shape (single):
   },
   "location": { "city": "london", "borough": "Hackney", "postcode": "N1 7SX" },
   "persona": "balanced",
-  "weights": { "quiet": 0.30, "afford": 0.25, "growth": 0.20, "live": 0.25 },
-  "methodologyVersion": "3.1",
+  "weights": { "quiet": 0.38, "afford": 0.31, "growth": 0.00, "live": 0.31 },
+  "methodologyVersion": "3.3",
   "apiVersion": "1.0",
   "sources": [ "EPC data: MHCLG, OGL v3.0", "..." ],
   "sourceBreakdown": {

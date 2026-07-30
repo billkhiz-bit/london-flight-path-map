@@ -2821,7 +2821,7 @@
             target="_blank"
             rel="noopener"
           >
-            Methodology v3.2
+            Methodology v3.3
           </a>
           <span class="sep">·</span>
           <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -4913,6 +4913,10 @@
           const quiet = IMPACT_TO_QUIET[d.impact] ?? 5;
           const afford = ((maxPrice - d.avg_price) / (maxPrice - minPrice)) * 10;
           // Methodology v3.2: growth clamps to 0-10 — negative trends floor
+          // at 0. Still computed under v3.3, but only `investor` weights it:
+          // growth caused 87% of Q1→Q2 score movement while nothing physical
+          // about any borough changed, so it describes the market rather than
+          // the place. See METHODOLOGY.md §5.1.
           // at 0 rather than producing sub-zero components (the 2026-Q2
           // refresh introduced falling boroughs).
           const growth = Math.max(0, Math.min(10, maxTrend > 0 ? (d.trend / maxTrend) * 10 : 0));
