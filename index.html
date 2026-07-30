@@ -7729,21 +7729,46 @@
           if (boroughFeatures.length) renderBoroughs();
         } else {
           // For NYC, load GeoJSON dynamically — then keep it. The borough
-          // outlines never change, so re-fetching cross-origin on every
-          // switch only widened the race window above.
-          try {
-            if (!nycBoroughFeatures.length) {
-              const nycGeo = await d3.json(
-                'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson'
-              );
-              // A newer switch landed while this was in flight — abandon the
-              // render rather than layering it over the current city.
-              if (token !== citySeq) return;
-              if (nycGeo && nycGeo.features) nycBoroughFeatures = nycGeo.features;
+          // outlines never change, so re-fetching on every switch only
+          // widened the race window above.
+          //
+          // Same-origin first, mirroring loadGeoJson(). Until 2026-07-30 the
+          // only source was a 2.67 MB cross-origin fetch issued at the moment
+          // of the click and precached by nothing, so a congested network drew
+          // no boroughs at all. The local file is a simplified 238 KB build
+          // from scripts/build_nyc_boroughs.mjs; the remote stays as a
+          // fallback for the case where our own asset is missing mid-deploy.
+          const nycUrls = [
+            '/data/nyc-boroughs.json',
+            'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson',
+          ];
+          if (!nycBoroughFeatures.length) {
+            for (const url of nycUrls) {
+              try {
+                const nycGeo = await d3.json(url);
+                // A newer switch landed while this was in flight — abandon the
+                // render rather than layering it over the current city.
+                if (token !== citySeq) return;
+                if (nycGeo && nycGeo.features && nycGeo.features.length) {
+                  nycBoroughFeatures = nycGeo.features;
+                  break;
+                }
+              } catch (e) {
+                console.warn('NYC GeoJSON failed from ' + url + ':', e);
+              }
             }
-            if (nycBoroughFeatures.length) renderNycBoroughs(nycBoroughFeatures);
-          } catch (e) {
-            console.warn('NYC GeoJSON failed:', e);
+          }
+          if (token !== citySeq) return;
+          if (nycBoroughFeatures.length) {
+            renderNycBoroughs(nycBoroughFeatures);
+          } else {
+            // Previously a bare console.warn, so a failure here was invisible:
+            // the outlines just did not appear. Flight paths, airports and
+            // search all still work without boundaries, so say what is missing
+            // rather than presenting the whole view as broken.
+            announceResult(
+              'New York borough outlines could not be loaded. The map and search still work.'
+            );
           }
         }
 

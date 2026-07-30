@@ -46,6 +46,7 @@ help:
 	@echo ""
 	@echo "  Web / PWA"
 	@echo "    web-deploy          Upload js/api-base.js + index/privacy/pricing/changes + invalidate"
+	@echo "    data-deploy         Upload data/ boundaries + noise raster (run BEFORE pwa-deploy)"
 	@echo "    pwa-deploy          Upload manifest, sw.js, icons (PWA assets)"
 	@echo "    deeplinks-deploy    Upload .well-known/apple-app-site-association + assetlinks.json"
 	@echo "    web-deploy-all      Run web-deploy + pwa-deploy + deeplinks-deploy"
@@ -107,6 +108,30 @@ web-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/js/*'
 
+.PHONY: data-deploy
+data-deploy:
+	# Added 2026-07-30. Until now nothing under data/ had a target at all —
+	# the boundary files and the DEFRA noise PNG were uploaded by hand, which
+	# is fine right up until someone deploys sw.js without them. SHELL_ASSETS
+	# lists both boundary files and cache.addAll() is ATOMIC: one 404 and the
+	# service worker does not install, taking offline support for both cities
+	# with it. So this runs BEFORE pwa-deploy in web-deploy-all, never after.
+	@echo "Uploading data assets (boundaries + DEFRA noise raster)..."
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/london-boroughs.json \
+		s3://$(S3_BUCKET)/data/london-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
+		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/borough-extra.json \
+		s3://$(S3_BUCKET)/data/borough-extra.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-london-lden.png \
+		s3://$(S3_BUCKET)/data/aircraft-noise-london-lden.png \
+		--content-type "image/png" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/data/*'
+
 .PHONY: pwa-deploy
 pwa-deploy:
 	@echo "Uploading PWA manifest, service worker, icons..."
@@ -143,8 +168,10 @@ deeplinks-deploy:
 		--distribution-id $(CF_DISTRIBUTION) --paths '/.well-known/*'
 
 .PHONY: web-deploy-all
-web-deploy-all: web-deploy pwa-deploy
-	@echo "Web + PWA deployed. Skip deeplinks-deploy until placeholders are filled."
+# Order matters: data-deploy before pwa-deploy, because sw.js precaches the
+# boundary files and cache.addAll() fails atomically on a missing one.
+web-deploy-all: web-deploy data-deploy pwa-deploy
+	@echo "Web + data + PWA deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------
 # iOS (Codemagic does the heavy lifting; we just trigger and submit)

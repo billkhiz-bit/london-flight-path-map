@@ -52,6 +52,24 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 - **`tests/test_persona_parity.py` added.** `index.html` scores client-side from
   its own copy of PERSONAS and nothing linked it to the Lambda's, so the site
   could silently disagree with its own API about a score.
+- **NYC borough boundaries vendored too — the same fix, one city late.** London
+  was moved same-origin above, but switching the map to New York still issued a
+  **2.67 MB** cross-origin fetch to `raw.githubusercontent.com` at the moment of
+  the click, precached by nothing, failing into a bare `console.warn` that left
+  the outlines silently absent. Now a 238 KB same-origin build
+  (`scripts/build_nyc_boroughs.mjs`), precached by the service worker, with the
+  remote kept only as a mid-deploy fallback and a spoken message when both fail.
+  Unlike London there were no surplus features to drop — the source is already
+  the five boroughs — so the 83% cut comes from Douglas-Peucker simplification at
+  ~6 m, which stays under half a pixel at the map's maximum zoom (worst
+  bounding-box shift measured at 4.0 m against ~11 m per pixel).
+- **`tests/smoke-local.mjs` asserted "no `raw.githubusercontent.com`" while only
+  ever loading London.** The NYC fetch above survived a wave because nothing
+  exercised the city switch. The smoke test now clicks through to New York and
+  re-checks the same properties there, and `tests/failure-path.mjs` covers an
+  offline city switch. Noted in that file: Chromium's offline emulation does not
+  apply to loopback, so the offline assertion is only meaningful against a remote
+  base — the precache assertion is what goes red locally.
 
 ### 2026-07-27 — Bulk export was missing its OGL attribution
 

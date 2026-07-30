@@ -98,16 +98,18 @@ record('service worker activates', swState === 'activated', `state=${swState}`);
 // newly-added entries are really there.
 const cached = await page2.evaluate(async () => {
   const keys = await caches.keys();
-  const out = { keys, d3: false, geo: false };
+  const out = { keys, d3: false, geo: false, nycGeo: false };
   for (const k of keys) {
     const c = await caches.open(k);
     if (await c.match('/js/vendor/d3.v7.min.js')) out.d3 = true;
     if (await c.match('/data/london-boroughs.json')) out.geo = true;
+    if (await c.match('/data/nyc-boroughs.json')) out.nycGeo = true;
   }
   return out;
 });
 record('d3 is precached', cached.d3, cached.keys.join(','));
 record('borough geojson is precached', cached.geo);
+record('nyc geojson is precached', cached.nycGeo);
 
 // Now go offline and reload. This is the "tether dies mid-demo" scenario.
 await context.setOffline(true);
@@ -123,6 +125,29 @@ try {
   offlineBoroughs = -1;
 }
 record('offline reload still paints the map', offlineOk, `borough paths=${offlineBoroughs}`);
+
+// Still offline: switch city. Until 2026-07-30 this fetched 2.67 MB from
+// raw.githubusercontent.com at click time, so the one interaction most likely
+// to be performed on stage was also the one guaranteed to fail without a
+// network.
+//
+// CAVEAT — this check only bites against a REMOTE base. Chromium's offline
+// emulation does not apply to loopback, so under the localhost harness the
+// same-origin fetch succeeds on its own and this passes even with the asset
+// absent from SHELL_ASSETS (verified: it lands in RUNTIME_CACHE instead).
+// 'nyc geojson is precached' above is the assertion that actually goes red
+// locally. Run this against CloudFront to exercise the offline path for real.
+let offlineNyc = 0;
+try {
+  await page2.click('.city-btn[data-city="nyc"]');
+  await page2.waitForFunction(() => document.querySelectorAll('path.borough').length === 5, {
+    timeout: 20000,
+  });
+  offlineNyc = await page2.locator('path.borough').count();
+} catch {
+  offlineNyc = await page2.locator('path.borough').count();
+}
+record('offline switch to NYC still paints', offlineNyc === 5, `borough paths=${offlineNyc}`);
 await context.setOffline(false);
 
 await browser.close();

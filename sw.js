@@ -26,7 +26,7 @@
 // stay cache-first — but bump VERSION in the same commit whenever either
 // changes, or installed PWAs keep the old ones indefinitely.
 
-const VERSION = 'v1.0.3';
+const VERSION = 'v1.0.4';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -40,13 +40,20 @@ const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 // change to this worker. It is served network-first instead (A-0724-M4).
 // d3 and the borough boundaries ARE precached, unlike api-base.js, because
 // both are content-stable: d3 is version-pinned in its filename, and the
-// boundary file only changes when the LAD vintage rolls (regenerate with
-// scripts/build_london_boroughs.py and bump VERSION in the same commit).
-// Both were third-party requests until 2026-07-30; the boundaries in
-// particular were a 19.2 MB fetch from raw.githubusercontent.com that
+// boundary files only change when their source vintage rolls (regenerate with
+// scripts/build_london_boroughs.py / build_nyc_boroughs.mjs and bump VERSION
+// in the same commit).
+// All three were third-party requests until 2026-07-30; the London boundaries
+// in particular were a 19.2 MB fetch from raw.githubusercontent.com that
 // init() awaited before revealing the app, so a slow network held first
 // paint indefinitely. Precaching them is what makes an offline launch
 // actually render a map rather than an empty shell.
+//
+// NYC is precached too even though London is the default city: at 238 KB it
+// is a fifth of the shell, and the alternative is that switching city is the
+// one interaction that silently needs the network. Note cache.addAll() is
+// atomic — if any entry here 404s the worker does not install at all, so a
+// new asset must be deployed before, or with, this file.
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -55,6 +62,7 @@ const SHELL_ASSETS = [
   '/icons/icon-maskable.svg',
   '/js/vendor/d3.v7.min.js',
   '/data/london-boroughs.json',
+  '/data/nyc-boroughs.json',
 ];
 
 // Origins where we always go to the network — caching scores or
