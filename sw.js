@@ -26,7 +26,13 @@
 // stay cache-first — but bump VERSION in the same commit whenever either
 // changes, or installed PWAs keep the old ones indefinitely.
 
-const VERSION = 'v1.0.4';
+// v1.0.5: Greater Manchester + the locator inset. The bump is not optional —
+// index.html changed substantially (city registry, country tier, locator) and
+// the shell is cache-first on fallback, so without a new VERSION every
+// installed PWA keeps serving the previous page indefinitely. This was observed
+// locally: the country tabs were served correctly but never appeared, because a
+// worker installed minutes earlier was still answering with the older shell.
+const VERSION = 'v1.0.5';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -63,6 +69,12 @@ const SHELL_ASSETS = [
   '/js/vendor/d3.v7.min.js',
   '/data/london-boroughs.json',
   '/data/nyc-boroughs.json',
+  // Manchester's outlines and the locator silhouette. cache.addAll() is atomic,
+  // so both MUST exist in the deploy or the worker fails to install at all —
+  // taking offline support for every city with it. Both are checked in with
+  // their own !data/ negation in .gitignore for exactly that reason.
+  '/data/manchester-boroughs.json',
+  '/data/uk-locator.json',
 ];
 
 // Origins where we always go to the network — caching scores or
