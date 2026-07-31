@@ -1765,13 +1765,25 @@
         outline: 2px solid var(--orange);
         outline-offset: 1px;
       }
+      /* Two lines: the region identifies the shape, the count reports coverage.
+         One line would run to ~200px in a 112px column. */
       .locator-cap {
         font-family: var(--font-mono);
         font-size: 8px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
+        margin-top: 4px;
+        line-height: 1.5;
+      }
+      .locator-region,
+      .locator-count {
+        display: block;
+      }
+      .locator-region {
+        color: var(--dark);
+      }
+      .locator-count {
         color: var(--mid);
-        margin-top: 3px;
       }
       /* No room beside the map on phones, and the chips already do the job. */
       @media (max-width: 900px) {
@@ -2640,7 +2652,10 @@
             <path id="locator-land" d="" />
             <g id="locator-cities"></g>
           </svg>
-          <div class="locator-cap" id="locator-cap"></div>
+          <div class="locator-cap">
+            <span class="locator-region" id="locator-region"></span>
+            <span class="locator-count" id="locator-count"></span>
+          </div>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
@@ -8127,12 +8142,14 @@
           const dot = document.createElementNS(NS, 'circle');
           dot.setAttribute('cx', c.x);
           dot.setAttribute('cy', c.y);
-          // Planned regions read as small hollow marks: present on the roadmap,
-          // not claiming to be scoreable.
-          dot.setAttribute('r', target ? 3 : 2);
-          dot.setAttribute('fill', target ? 'var(--dark)' : 'none');
-          dot.setAttribute('stroke', 'var(--mid)');
-          dot.setAttribute('stroke-width', target ? 0 : 1);
+          // Live cities are solid dark; planned ones are a light disc with a
+          // dark rim. A hairline over `none` disappeared into the landmass —
+          // too faint to tell the roadmap story, too present to be nothing.
+          // Filling them separates the two states by value rather than by size.
+          dot.setAttribute('r', target ? 3 : 2.6);
+          dot.setAttribute('fill', target ? 'var(--dark)' : 'var(--white)');
+          dot.setAttribute('stroke', target ? 'none' : 'var(--dark)');
+          dot.setAttribute('stroke-width', target ? 0 : 0.9);
           node.appendChild(dot);
           const t = document.createElementNS(NS, 'title');
           t.textContent = target ? c.name : `${c.name} — planned`;
@@ -8140,7 +8157,8 @@
           g.appendChild(node);
         });
         const live = data.cities.filter((c) => LOCATOR_TO_CITY[c.name]).length;
-        document.getElementById('locator-cap').textContent =
+        document.getElementById('locator-region').textContent = data.region || '';
+        document.getElementById('locator-count').textContent =
           `${live} of ${data.cities.length} core cities`;
       }
 

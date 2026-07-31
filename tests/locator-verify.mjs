@@ -31,7 +31,7 @@ const read = () => page.evaluate(() => {
     markers: document.querySelectorAll('#locator-cities .cty').length,
     clickable: document.querySelectorAll('#locator-cities .cty[role="button"]').length,
     highlighted: rings.length,
-    caption: document.getElementById('locator-cap').textContent,
+    caption: [document.getElementById('locator-region').textContent, document.getElementById('locator-count').textContent].filter(Boolean).join(' - '),
     landLength: (document.getElementById('locator-land').getAttribute('d') || '').length,
   };
 });
