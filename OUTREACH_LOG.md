@@ -88,6 +88,18 @@ In-person beats cold email/form — an event is the "named-person" channel in it
 
 Recurring conveyancing circuit (search providers exhibit through the year, track for autumn): Modern Law Conveyancing Conference, Society of Licensed Conveyancers conference, Conveyancing Foundation events, Today's Conveyancer events.
 
+### Attended
+
+| Event | Date | Outcome | Follow-up |
+|---|---|---|---|
+| **Build Night 1** | **Thu 30 Jul 2026** | Demo'd Sky Score in person to several attendees; feedback positive; live site visits landed during/after the demo. **6 LinkedIn connections made.** Name + `skyscore.co.uk` written on the organisers' support sheet. | Organisers offered **funding / networks support via their partners**, routed through a Google Sheet. **Sheet completed by Bill 2026-07-31.** Now awaiting partner intros — no action owed by us. |
+
+**Build Night 1 detail.** The organisers' ask was: "if you're happy for us to support you with funding/networks via our partners, please fill in this spreadsheet". Sheet columns: name, product, one-liner, URL, solo/team, team members, consent to stay in touch (Y/N), consent to be submitted as a "rocket" to **Collective Continuum** (Y/N). Bill filled it in on 31 Jul; the answers given to the two consent fields were not recorded here.
+
+Cohort signal worth keeping: the other rows on that sheet skew **halal fintech** (e.g. TKFL — halal business insurance; Comb — personal finance/wealth management). That maps directly onto **Tier 2 (Islamic finance providers)** in the pipeline above, and Sky Score's affordability model is already riba-free by design (see `METHODOLOGY.md`) — so intros arriving from this network are likelier to be Tier 2 shaped than Tier 1.
+
+**Not captured (recover before the trail cools):** the names/companies of the 6 LinkedIn connections, the organising body, and the venue. LinkedIn's "recently added" list will reconstruct the six. Per the cadence principles below, in-person connections are warmest in the first 48h — a short follow-up message beats a later cold one.
+
 ---
 
 ## Outreach principles (reminder)
