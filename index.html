@@ -2531,7 +2531,7 @@
           <span class="hint-icon" aria-hidden="true">&#9678;</span>
           <span class="hint-text">
             Type a postcode (e.g.
-            <strong>SW11 1AA</strong>
+            <strong id="hint-example-postcode">SW11 1AA</strong>
             ) or click a borough to see its score
           </span>
           <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
@@ -2730,10 +2730,12 @@
             </div>
             <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4">
               <strong>What this is:</strong>
-              DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and
-              LGW — modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
-              strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions.
-              Click any postcode for the exact dB at that spot.
+              <span id="legend-noise-caption"
+                >DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY
+                and LGW — modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
+                strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning
+                decisions. Click any postcode for the exact dB at that spot.</span
+              >
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
@@ -5265,6 +5267,20 @@
           areaMap: () => AREA_MAP,
           detail: () => LONDON_NEIGHBOURHOOD_DETAIL,
           stations: () => STATIONS,
+          examplePostcode: 'SW11 1AA',
+          notFoundExamples: 'Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.',
+          hint: 'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.',
+          legend: {
+            aircraft: 'Aircraft noise', road: 'Road noise', transport: 'Transport',
+            flood: 'Flood risk', aq: 'Air quality',
+            path1: 'LHR PATHS', path2: 'LCY PATHS', heli: true,
+            noiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
+            floodChip: 'FLOOD ZONE', aqChip: 'POOR AIR',
+            roadTitle: 'DEFRA ROAD NOISE', floodTitle: 'EA FLOOD RISK',
+            aqTitle: 'BOROUGH AIR QUALITY',
+            caption:
+              'DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions. Click any postcode for the exact dB at that spot.',
+          },
         },
         nyc: {
           label: 'New York',
@@ -5279,6 +5295,22 @@
           areaMap: () => NYC_AREA_MAP,
           detail: () => NYC_NEIGHBOURHOOD_DETAIL,
           stations: () => NYC_STATIONS,
+          examplePostcode: '11201',
+          notFoundExamples: 'Try e.g. Astoria, Williamsburg, or Queens.',
+          hint: 'Search by area (Astoria, Williamsburg), borough (Queens) or ZIP (11201) - or click the map - to get noise analysis, property data and a value score.',
+          legend: {
+            aircraft: 'Aircraft noise', road: 'Road noise', transport: 'Subway / rail',
+            flood: 'Flood risk', aq: 'Air quality',
+            path1: 'JFK PATHS', path2: 'LGA PATHS', heli: false,
+            noiseTitle: 'BTS AIRCRAFT NOISE (dB DNL)',
+            floodChip: 'FEMA FLOOD', aqChip: 'POOR AIR',
+            roadTitle: 'DOT ROAD NOISE', floodTitle: 'FEMA FLOOD RISK',
+            aqTitle: 'EPA BOROUGH AIR QUALITY',
+            // Was showing London's DEFRA caption verbatim, naming Heathrow,
+            // London City and Gatwick on the New York map.
+            caption:
+              'Curated borough-aggregate aircraft noise bands derived from JFK and LaGuardia approach geometry. There is no published Lden survey covering New York, so these are not directly comparable with the DEFRA bands used for UK cities.',
+          },
         },
         manchester: {
           label: 'Manchester',
@@ -5300,6 +5332,23 @@
           areaMap: () => MANCHESTER_AREA_MAP,
           detail: () => MANCHESTER_NEIGHBOURHOOD_DETAIL,
           stations: () => MANCHESTER_STATIONS,
+          examplePostcode: 'M1 4BT',
+          notFoundExamples: 'Try e.g. Trafford, Stockport, or Wigan.',
+          hint: 'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
+          legend: {
+            aircraft: 'Aircraft noise', road: 'Road noise', transport: 'Transport',
+            flood: 'Flood risk', aq: 'Air quality',
+            path1: '23 APPROACH', path2: '05 APPROACH', heli: false,
+            // Deliberately NOT "DEFRA": these bands are estimated from runway
+            // geometry, and the DEFRA raster has never been run for Greater
+            // Manchester. Same honesty rule as the API provenance strings.
+            noiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+            floodChip: 'FLOOD ZONE', aqChip: 'POOR AIR',
+            roadTitle: 'ROAD NOISE', floodTitle: 'EA FLOOD RISK',
+            aqTitle: 'BOROUGH AIR QUALITY',
+            caption:
+              'Provisional estimate from Manchester Airport runway geometry, not a DEFRA raster sample - the strategic noise map has not been run for Greater Manchester. Both runways share one 052/232 alignment, and the prevailing 23 arrivals track in from the north-east over Stockport. Treat as indicative only.',
+          },
         },
       };
 
@@ -6775,7 +6824,7 @@
           announceResult('No results found for that search.');
           document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
-        <p>${currentCity === 'nyc' ? 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.' : 'Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.'}</p>
+        <p>Area or borough not found. ${cityCfg(currentCity).notFoundExamples}</p>
       </div>`;
           return;
         }
@@ -7852,6 +7901,41 @@
         return cityCfg(city).boroughData();
       }
 
+      // Legend, layer labels and search copy for the active city, from the
+      // registry. Every element is optional: a missing node skips rather than
+      // throwing, so one renamed id cannot take the whole city switch down.
+      function applyCityLegend(city) {
+        const L = cityCfg(city).legend;
+        const set = (id, text) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = text;
+        };
+        set('label-aircraft', L.aircraft);
+        set('label-road', L.road);
+        set('label-transport', L.transport);
+        set('label-flood', L.flood);
+        set('label-aq', L.aq);
+        set('legend-path1', L.path1);
+        set('legend-path2', L.path2);
+        set('legend-noise-title', L.noiseTitle);
+        set('legend-flood', L.floodChip);
+        set('legend-aq', L.aqChip);
+        set('legend-road-title', L.roadTitle);
+        set('legend-flood-title', L.floodTitle);
+        set('legend-aq-title', L.aqTitle);
+        set('legend-noise-caption', L.caption);
+        set('hint-example-postcode', cityCfg(city).examplePostcode);
+        const heli = document.getElementById('legend-heli-row');
+        if (heli) heli.style.display = L.heli ? '' : 'none';
+      }
+
+      // The empty sidebar state, per city. Three call sites used to hardcode
+      // London's "Chelsea, Twickenham, SW11 1AA, Hounslow" example.
+      function emptyStateHtml(city) {
+        return `<div class="empty-state"><div class="icon">&#9678;</div>
+    <p>${cityCfg(city).hint}</p></div>`;
+      }
+
       async function switchCity(city) {
         if (city === currentCity) return;
         // The `city === currentCity` guard only stops a repeat click on the
@@ -7891,43 +7975,15 @@
         // Update layer toggle labels and legend for city. Plain English (no
         // agency acronyms) — the source of the data is shown in the tooltip
         // (`title` attribute) and the methodology footer link.
-        if (city === 'nyc') {
-          document.getElementById('label-aircraft').textContent = 'Aircraft noise';
-          document.getElementById('label-road').textContent = 'Road noise';
-          document.getElementById('label-transport').textContent = 'Subway / rail';
-          document.getElementById('label-flood').textContent = 'Flood risk';
-          document.getElementById('label-aq').textContent = 'Air quality';
-          document.getElementById('legend-path1').textContent = 'JFK PATHS';
-          document.getElementById('legend-path2').textContent = 'LGA PATHS';
-          document.getElementById('legend-heli-row').style.display = 'none';
-          document.getElementById('legend-noise-title').textContent = 'BTS AIRCRAFT NOISE (dB DNL)';
-          document.getElementById('legend-flood').textContent = 'FEMA FLOOD';
-          document.getElementById('legend-aq').textContent = 'POOR AIR';
-          // visual fix-LAYER-LABELS: city-aware legend group titles
-          document.getElementById('legend-road-title').textContent = 'DOT ROAD NOISE';
-          document.getElementById('legend-flood-title').textContent = 'FEMA FLOOD RISK';
-          document.getElementById('legend-aq-title').textContent = 'EPA BOROUGH AIR QUALITY';
-          // Auto-enable labels for NYC (no built-in borough labels)
-          if (!layers.labels) {
-            layers.labels = true;
-            document.querySelector('[data-layer="labels"]').classList.add('active');
-          }
-        } else {
-          document.getElementById('label-aircraft').textContent = 'Aircraft noise';
-          document.getElementById('label-road').textContent = 'Road noise';
-          document.getElementById('label-transport').textContent = 'Transport';
-          document.getElementById('label-flood').textContent = 'Flood risk';
-          document.getElementById('label-aq').textContent = 'Air quality';
-          document.getElementById('legend-path1').textContent = 'LHR PATHS';
-          document.getElementById('legend-path2').textContent = 'LCY PATHS';
-          document.getElementById('legend-heli-row').style.display = '';
-          document.getElementById('legend-noise-title').textContent = 'DEFRA AIRCRAFT NOISE (dB Lden)';
-          document.getElementById('legend-flood').textContent = 'FLOOD ZONE';
-          document.getElementById('legend-aq').textContent = 'POOR AIR';
-          // visual fix-LAYER-LABELS: restore London-default group titles
-          document.getElementById('legend-road-title').textContent = 'DEFRA ROAD NOISE';
-          document.getElementById('legend-flood-title').textContent = 'EA FLOOD RISK';
-          document.getElementById('legend-aq-title').textContent = 'BOROUGH AIR QUALITY';
+        // Was an if/else on `city === 'nyc'`, so a third city silently took
+        // London's legend: Manchester's map named LHR and LCY paths and cited a
+        // DEFRA survey that has never covered it.
+        applyCityLegend(city);
+        // Cities without built-in borough labels on the basemap need the label
+        // layer on, or their outlines are unidentifiable.
+        if (city !== 'london' && !layers.labels) {
+          layers.labels = true;
+          document.querySelector('[data-layer="labels"]').classList.add('active');
         }
 
         // Re-render map with new city data
@@ -8007,9 +8063,7 @@
         // (handleUsZipSearch kicks one off mid-switch), in which case wiping
         // it here would throw away the newer, correct result.
         if (searchSeq === searchAtStart) {
-          document.getElementById('sidebar-content').innerHTML =
-            `<div class="empty-state"><div class="icon">&#9678;</div>
-    <p>${city === 'nyc' ? 'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.' : 'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.'}</p></div>`;
+          document.getElementById('sidebar-content').innerHTML = emptyStateHtml(city);
           document.getElementById('sidebar-title').textContent = 'PROPERTY INTELLIGENCE';
         }
       }
