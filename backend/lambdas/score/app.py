@@ -2148,33 +2148,111 @@ def _postcode_source_line(local_served):
     return 'Postcode resolution: postcodes.io (Open Government Licence v3.0)'
 
 
-def build_sources():
-    """The response `sources` array, built per request.
+# Per-city data lineage. Auditable provenance for each scoring input — B2B audit
+# teams ask "where did this number come from" component-by-component, and this
+# surfaces the answer at the response level.
+#
+# Per-city since 2026-07-31, and the reason is a defect this replaced. Note this
+# deliberately does NOT bump METHODOLOGY_VERSION: no weight, threshold or formula
+# changed and every score is byte-identical, so a version bump would tell
+# integrators to re-run and find nothing moved. Both the sources
+# list and the per-component breakdown used to be single globals, emitted
+# unconditionally on every response. That credited MHCLG, HM Land Registry, ONS,
+# the Home Office, DfE, TfL, NHS and DEFRA — under Open Government Licence v3.0
+# — for NEW YORK scores, where not one of those bodies has a remit and OGL, a UK
+# Crown-copyright licence, does not apply to the data at all. It is the same
+# error _postcode_source_line() exists to prevent, one function up: crediting a
+# source on configuration rather than on what actually answered.
+#
+# Entries may be callables where the line depends on runtime state.
+CITY_PROVENANCE = {
+    'london': {
+        'sources': [
+            'EPC data: MHCLG, Open Government Licence v3.0',
+            'Sold prices: HM Land Registry, Open Government Licence v3.0',
+            # Index 2 by contract — two tests assert the postcode line's position.
+            lambda: _postcode_source_line(_LOCAL_POSTCODE_SERVED),
+            'Borough metadata: ONS, Home Office, Department for Education (Open Government Licence v3.0)',
+            'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
+        ],
+        'breakdown': {
+            'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
+            'afford': 'HM Land Registry House Price Index (HPI), borough cohort min-max scaling',
+            'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
+            'live': 'ONS + Home Office + DfE + TfL + NHS, composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
+        },
+    },
+    'nyc': {
+        'sources': [
+            'Borough metadata: curated from public New York City sources',
+            'Crime: NYPD CompStat-derived offence rates per 1,000, against New York City population denominators',
+            'Prices: curated New York borough median sale prices, in USD',
+            'Aviation noise context: JFK and LaGuardia approach geometry, curated borough-aggregate bands',
+            'Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response',
+        ],
+        'breakdown': {
+            'quiet': 'Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. NOT DEFRA — no published Lden survey covers New York, so the dB thresholds in METHODOLOGY §3 are not directly applicable. The chosen resolution is reported in context.quietResolution.',
+            'afford': 'Curated New York borough median sale prices (USD), borough cohort min-max scaling. NOT HM Land Registry, which holds England and Wales only.',
+            'growth': 'Curated New York borough annualised price trend. NOT HM Land Registry HPI.',
+            'live': 'NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS — none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.',
+        },
+    },
+    'manchester': {
+        'sources': [
+            'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
+            'Aviation noise context: ESTIMATED from Manchester Airport runway geometry — not sampled from DEFRA strategic noise mapping',
+            'Liveability: no source — the component is a placeholder, see sourceBreakdown.live',
+        ],
+        'breakdown': {
+            'quiet': 'PROVISIONAL ESTIMATE derived from Manchester Airport (MAN) runway alignment and approach geometry. NOT sampled from the DEFRA Round 4 raster, which has not been run for Greater Manchester, so the dB Lden thresholds in METHODOLOGY §3 are not evidenced for this city. Treat as indicative only.',
+            'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling',
+            'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative',
+            'live': 'NO DATA SOURCED. No schools, crime, transport or healthcare input exists for this city, so every sub-component falls back to a neutral default. The published value is a placeholder, not a measurement of Greater Manchester.',
+        },
+    },
+}
+
+
+def build_sources(city='london'):
+    """The response `sources` array, built per request and per city.
 
     Deliberately a function, not the import-time constant it replaced: the
     postcode line depends on runtime state (see _postcode_source_line), and
     a constant snapshot taken at cold start would keep claiming postcodes.io
     for the life of a container that had since started resolving locally.
-    """
-    return [
-        'EPC data: MHCLG, Open Government Licence v3.0',
-        'Sold prices: HM Land Registry, Open Government Licence v3.0',
-        _postcode_source_line(_LOCAL_POSTCODE_SERVED),
-        'Borough metadata: ONS, Home Office, Department for Education (Open Government Licence v3.0)',
-        'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
-    ]
 
-# Per-component data lineage. Auditable provenance for each scoring input,
-# B2B audit teams ask "where did this number come from" component-by-component
-# and this surfaces the answer at the response level. The /v1/score endpoint
-# does NOT call OpenSky directly (consumer site does); aviation noise context
-# for the API comes from pre-computed DEFRA borough-aggregate Lden bands.
-SOURCE_BREAKDOWN = {
-    'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
-    'afford': 'HM Land Registry House Price Index (HPI), borough cohort min-max scaling',
-    'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
-    'live': 'ONS + Home Office + DfE + TfL + NHS, composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
-}
+    An unknown city says so rather than falling back to London's list — a
+    silent default is how the original defect published UK provenance over
+    New York data.
+    """
+    prov = CITY_PROVENANCE.get(city)
+    if prov is None:
+        return [f'Provenance not recorded for city {city!r}']
+    return [line() if callable(line) else line for line in prov['sources']]
+
+
+def build_source_breakdown(city='london'):
+    """Per-component lineage for `city`. See build_sources() for why per-city."""
+    prov = CITY_PROVENANCE.get(city)
+    if prov is None:
+        return {}
+    return dict(prov['breakdown'])
+
+
+def build_batch_sources(cities):
+    """Sources for a batch response, which may span several cities.
+
+    One response covers many queries, so any single city's list would be a
+    false claim for every result drawn from another city. With one city the
+    list is exact; with several, each line carries the city it belongs to so
+    nothing is credited to a city that never used it.
+    """
+    seen = sorted({c for c in cities if c})
+    if not seen:
+        return []
+    if len(seen) == 1:
+        return build_sources(seen[0])
+    return [f'[{c}] {line}' for c in seen for line in build_sources(c)]
 
 
 def crime_to_score(rate):
@@ -2790,8 +2868,8 @@ def resolve_query(query):
         'methodologyUrl': METHODOLOGY_URL,
         'apiVersion': API_VERSION,
         'generatedAt': datetime.now(UTC).isoformat(),
-        'sources': build_sources(),
-        'sourceBreakdown': SOURCE_BREAKDOWN,
+        'sources': build_sources(city),
+        'sourceBreakdown': build_source_breakdown(city),
     }
     # Roadmap-visible placeholder components, let prospects see what's planned
     # before they ask. Each entry has a status flag so integrators don't try
@@ -2978,7 +3056,10 @@ def handle_changes(event):
             'methodologyUrl': METHODOLOGY_URL,
             'apiVersion': API_VERSION,
             'generatedAt': datetime.now(UTC).isoformat(),
-            'sources': build_sources(),
+            # /v1/changes covers the London cohort only — previous_dataset() has
+            # no vintage for any other city — so London's provenance is the
+            # accurate claim here rather than a default that happens to fit.
+            'sources': build_sources('london'),
         },
     )
 
@@ -3102,7 +3183,10 @@ def handle_batch(event):
             'apiVersion': API_VERSION,
             'methodologyVersion': METHODOLOGY_VERSION,
             'generatedAt': datetime.now(UTC).isoformat(),
-            'sources': build_sources(),
+            # A batch may span cities; credit only those that actually answered.
+            'sources': build_batch_sources(
+                r.get('location', {}).get('city') for r in results
+            ),
             'results': results,
         },
     )
