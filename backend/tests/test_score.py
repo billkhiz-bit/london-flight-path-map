@@ -933,6 +933,66 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         finally:
             app._LOCAL_POSTCODE_SERVED = original
 
+    def test_every_city_has_its_own_provenance(self):
+        """Adding a city without provenance must fail here, not in production.
+
+        The defect this guards: `sources` and `sourceBreakdown` were single
+        module constants emitted on every response, so New York shipped
+        crediting MHCLG, HM Land Registry, ONS, the Home Office, DfE, TfL, NHS
+        and DEFRA under Open Government Licence v3.0 — none of which has any
+        New York remit, and OGL covers UK Crown copyright only. A new city
+        would silently inherit the same false claim.
+        """
+        for city in app.CITIES:
+            self.assertIn(city, app.CITY_PROVENANCE,
+                          f'{city} is scoreable but has no provenance entry')
+            self.assertTrue(app.build_sources(city), city)
+            self.assertEqual(
+                set(app.build_source_breakdown(city)),
+                {'quiet', 'afford', 'growth', 'live'},
+                f'{city} breakdown must cover every scored component',
+            )
+
+        # Distinct cities must not share provenance text.
+        blobs = {c: json.dumps(app.build_source_breakdown(c)) for c in app.CITIES}
+        self.assertEqual(len(set(blobs.values())), len(blobs),
+                         'two cities publish identical provenance')
+
+    def test_non_uk_city_never_credits_uk_bodies(self):
+        body, status = app.resolve_query({'city': 'nyc', 'borough': 'Brooklyn'})
+        self.assertEqual(status, 200)
+        lines = body['sources'] + list(body['sourceBreakdown'].values())
+        for term in ('MHCLG', 'HM Land Registry', 'Home Office',
+                     'Department for Education', 'DfE', 'TfL', 'NHS', 'DEFRA'):
+            for line in lines:
+                if term in line:
+                    # Permitted only as an explicit disclaimer.
+                    self.assertIn('NOT', line,
+                                  f'NYC response credits {term}: {line}')
+        licence = [ln for ln in body['sources'] if 'Open Government Licence' in ln]
+        self.assertTrue(licence, 'NYC must address the OGL question, not omit it')
+        for ln in licence:
+            self.assertIn('does NOT apply', ln)
+
+    def test_unknown_city_does_not_inherit_london_provenance(self):
+        srcs = app.build_sources('atlantis')
+        self.assertNotIn('MHCLG', ' '.join(srcs))
+        self.assertEqual(app.build_source_breakdown('atlantis'), {})
+
+    def test_batch_spanning_cities_labels_each_source(self):
+        ev = {'body': json.dumps({'queries': [
+            {'city': 'london', 'borough': 'Wandsworth'},
+            {'city': 'nyc', 'borough': 'Brooklyn'},
+        ]})}
+        body = json.loads(app.handle_batch(ev)['body'])
+        self.assertTrue(all(s.startswith('[') for s in body['sources']))
+        self.assertTrue(any(s.startswith('[london]') for s in body['sources']))
+        self.assertTrue(any(s.startswith('[nyc]') for s in body['sources']))
+        # Single-city batches stay unprefixed, so the common case is unchanged.
+        ev1 = {'body': json.dumps({'queries': [{'borough': 'Wandsworth'}]})}
+        body1 = json.loads(app.handle_batch(ev1)['body'])
+        self.assertEqual(body1['sources'], app.build_sources('london'))
+
     def test_spaced_form_derivation(self):
         # `pcds` is derived, not stored: the inward code is always the final
         # three characters, verified across all 2,723,596 rows of the loaded
