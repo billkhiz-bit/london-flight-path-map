@@ -1734,6 +1734,47 @@
         height: 100%;
       }
 
+      /* Locator inset. Aligned to the city chips above it and kept clear of the
+         legend below. Persistent rather than a separate overview screen: the
+         main map stays the scoring map, and the sidebar never empties. */
+      .locator {
+        position: absolute;
+        top: 112px;
+        left: 32px;
+        width: 112px;
+        z-index: 5;
+      }
+      .locator svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      #locator-land {
+        fill: var(--light);
+        stroke: none;
+      }
+      .locator .cty {
+        cursor: pointer;
+      }
+      .locator .cty:focus-visible circle {
+        outline: 2px solid var(--orange);
+        outline-offset: 1px;
+      }
+      .locator-cap {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mid);
+        margin-top: 3px;
+      }
+      /* No room beside the map on phones, and the chips already do the job. */
+      @media (max-width: 900px) {
+        .locator {
+          display: none;
+        }
+      }
+
       /* City selector */
       .city-selector {
         position: absolute;
@@ -2558,6 +2599,18 @@
           >
             Manchester
           </button>
+        </div>
+        <!-- Locator inset: where the current city sits nationally, and which
+             other cities exist. Persistent rather than a separate overview
+             screen - the main map stays the scoring map, and the sidebar never
+             goes empty. Hidden outside the UK, since a GB silhouette says
+             nothing useful on a New York view. -->
+        <div class="locator" id="locator" hidden>
+          <svg id="locator-svg" viewBox="0 0 130 168" role="img" aria-label="Coverage across Great Britain">
+            <path id="locator-land" d="" />
+            <g id="locator-cities"></g>
+          </svg>
+          <div class="locator-cap" id="locator-cap"></div>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
@@ -5256,6 +5309,7 @@
       const CITY_DATA = {
         london: {
           label: 'London',
+          country: 'UK',
           subtitle: 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA',
           currency: '£',
           boundaries: '/data/london-boroughs.json',
@@ -5284,6 +5338,7 @@
         },
         nyc: {
           label: 'New York',
+          country: 'US',
           subtitle: 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA',
           currency: '$',
           boundaries: '/data/nyc-boroughs.json',
@@ -5314,6 +5369,7 @@
         },
         manchester: {
           label: 'Manchester',
+          country: 'UK',
           subtitle: 'GREATER MANCHESTER · INDEPENDENT NOISE + LIVABILITY DATA',
           currency: '£',
           boundaries: '/data/manchester-boroughs.json',
@@ -7936,6 +7992,90 @@
     <p>${cityCfg(city).hint}</p></div>`;
       }
 
+      // --- Locator inset ---------------------------------------------------
+      // Region names in the boundary data are city-REGIONS; the app keys on
+      // city. Only mapped entries are clickable, so a planned region is a
+      // marker rather than a dead link.
+      const LOCATOR_TO_CITY = { London: 'london', 'Greater Manchester': 'manchester' };
+      let locatorData = null;
+
+      async function loadLocator() {
+        if (locatorData) return locatorData;
+        try {
+          locatorData = await d3.json('/data/uk-locator.json');
+        } catch (e) {
+          // A decoration must never take the map down with it.
+          console.warn('Locator inset unavailable:', e);
+          locatorData = null;
+        }
+        return locatorData;
+      }
+
+      async function renderLocator(city) {
+        const box = document.getElementById('locator');
+        if (!box) return;
+        // A GB silhouette says nothing useful on a New York view.
+        if (cityCfg(city).country !== 'UK') {
+          box.hidden = true;
+          return;
+        }
+        const data = await loadLocator();
+        if (!data) {
+          box.hidden = true;
+          return;
+        }
+        box.hidden = false;
+        document.getElementById('locator-land').setAttribute('d', data.d);
+        const g = document.getElementById('locator-cities');
+        g.textContent = '';
+        const NS = 'http://www.w3.org/2000/svg';
+        data.cities.forEach((c) => {
+          const target = LOCATOR_TO_CITY[c.name];
+          const active = target === city;
+          const node = document.createElementNS(NS, 'g');
+          node.setAttribute('class', 'cty');
+          if (target) {
+            node.setAttribute('tabindex', '0');
+            node.setAttribute('role', 'button');
+            node.setAttribute('aria-label', `Switch to ${c.name}`);
+            node.addEventListener('click', () => switchCity(target));
+            node.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                switchCity(target);
+              }
+            });
+          }
+          if (active) {
+            const ring = document.createElementNS(NS, 'circle');
+            ring.setAttribute('cx', c.x);
+            ring.setAttribute('cy', c.y);
+            ring.setAttribute('r', 6);
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', 'var(--orange)');
+            ring.setAttribute('stroke-width', '1.5');
+            node.appendChild(ring);
+          }
+          const dot = document.createElementNS(NS, 'circle');
+          dot.setAttribute('cx', c.x);
+          dot.setAttribute('cy', c.y);
+          // Planned regions read as small hollow marks: present on the roadmap,
+          // not claiming to be scoreable.
+          dot.setAttribute('r', target ? 3 : 2);
+          dot.setAttribute('fill', target ? 'var(--dark)' : 'none');
+          dot.setAttribute('stroke', 'var(--mid)');
+          dot.setAttribute('stroke-width', target ? 0 : 1);
+          node.appendChild(dot);
+          const t = document.createElementNS(NS, 'title');
+          t.textContent = target ? c.name : `${c.name} — planned`;
+          node.appendChild(t);
+          g.appendChild(node);
+        });
+        const live = data.cities.filter((c) => LOCATOR_TO_CITY[c.name]).length;
+        document.getElementById('locator-cap').textContent =
+          `${live} of ${data.cities.length} core cities`;
+      }
+
       async function switchCity(city) {
         if (city === currentCity) return;
         // The `city === currentCity` guard only stops a repeat click on the
@@ -8052,6 +8192,7 @@
           }
         }
 
+        renderLocator(city);
         renderDefraTiles();
         renderCityFlightPaths();
         renderCityAirports();
@@ -8562,6 +8703,9 @@
           boroughFeatures = features;
           renderBoroughs();
         }
+        // init() has no `city` parameter — the initial city is whatever
+        // currentCity was set to at load.
+        renderLocator(currentCity);
         renderDefraTiles();
         renderCityFlightPaths();
         renderCityAirports();

@@ -72,6 +72,10 @@ data/*
 # first paint — but without it the city renders no outlines at all. Regenerate
 # when the ONS LAD vintage rolls, alongside the London file.
 !data/manchester-boroughs.json
+# GB silhouette for the locator inset (52 KB), pre-projected into the inset's
+# own viewBox by scripts/build_locator.py so index.html carries no projection
+# code for a decoration. Whole-pixel precision: the inset renders ~130 px wide.
+!data/uk-locator.json
 .defra_load_checkpoint
 # Loader resume state (plus its .tmp sibling from the atomic write). Committing
 # one is actively dangerous: this repo syncs only via git, so another device
