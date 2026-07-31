@@ -1739,8 +1739,8 @@
          main map stays the scoring map, and the sidebar never empties. */
       .locator {
         position: absolute;
-        /* Clears the country tier (70) and the city chips below it. */
-        top: 138px;
+        /* Clears the country tier (84) and the city chips below it. */
+        top: 156px;
         left: 32px;
         width: 112px;
         z-index: 5;
@@ -1797,23 +1797,27 @@
          two competing rows of buttons. */
       .country-selector {
         position: absolute;
-        top: 70px;
+        /* Was 70px, two pixels under the subtitle — at the same size, face and
+           weight it read as another line of the strapline rather than a
+           control. The gap is what makes it a separate tier. */
+        top: 84px;
         left: 32px;
         z-index: 10;
         display: flex;
-        gap: 14px;
+        gap: 18px;
       }
       .country-btn {
         background: none;
         border: 0;
-        padding: 0 0 3px;
+        padding: 0 1px 4px;
         font-family: var(--font-mono);
-        font-size: 10px;
-        letter-spacing: 0.12em;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--mid);
         cursor: pointer;
-        border-bottom: 2px solid transparent;
+        border-bottom: 2px solid var(--light);
       }
       .country-btn.active {
         color: var(--dark);
@@ -1830,7 +1834,7 @@
       /* City selector */
       .city-selector {
         position: absolute;
-        top: 96px;
+        top: 114px;
         left: 32px;
         z-index: 10;
         display: flex;
