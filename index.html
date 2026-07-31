@@ -2549,6 +2549,15 @@
           <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">
             New York
           </button>
+          <button
+            type="button"
+            class="city-btn"
+            aria-pressed="false"
+            data-city="manchester"
+            onclick="switchCity('manchester')"
+          >
+            Manchester
+          </button>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
@@ -3465,9 +3474,18 @@
       // ============================================================
       let currentCity = 'london';
 
+      // Map projection per city. Kept separate from CITY_DATA below only
+      // because this is read during projection setup, long before the data
+      // blocks exist; the two should be merged once the search path is off the
+      // ternaries too. A city missing from EITHER is broken in a different way.
       const CITIES = {
         london: { center: [-0.1278, 51.5074], scale: 48000, name: 'London' },
         nyc: { center: [-73.97, 40.75], scale: 55000, name: 'New York' },
+        // Greater Manchester spans roughly the same ground as London — Wigan to
+        // Saddleworth is 0.85° of longitude against London's 0.84° — so the
+        // scale is close to London's, trimmed slightly to keep Bolton and the
+        // airport inside the frame.
+        manchester: { center: [-2.32, 53.52], scale: 47000, name: 'Manchester' },
       };
 
       // --- New York Data ---
@@ -4881,8 +4899,12 @@
       }
 
       function getLiveScore(boroughName, city) {
-        const extraData = city === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA;
+        const extraData = cityCfg(city).extra();
         const ex = extraData[boroughName];
+        // No liveability inputs for this borough. 5 is NOT a neutral midpoint —
+        // London's computed range is 5.5-8.8 — so a defaulted borough is
+        // systematically penalised against a measured one. Manchester is
+        // entirely in this state until its data is sourced.
         if (!ex) return 5;
         const sch = SCHOOL_SCORE[ex.schools] || 5;
         const crm = ex.crimeRate ? CRIME_TO_SCORE(ex.crimeRate) : 5;
@@ -5218,6 +5240,85 @@
         'Staten Island': 'low',
       };
 
+      // One registry keyed by city id, replacing the `city === 'nyc' ? … : …`
+      // ternaries this file was threaded with. Those sent every unknown city
+      // down the LONDON branch, so a third city would have rendered London's
+      // boroughs, airports and flight paths with no error anywhere. Adding a
+      // city is now an entry here, not an edit at every call site.
+      //
+      // Values are accessor functions, not references, for two reasons: the
+      // data blocks they point at are declared at very different places in this
+      // file (NYC_STATIONS lands *after* this line), and the borough score sets
+      // are recomputed rather than fixed. An arrow body is not evaluated until
+      // called, so declaration order only has to hold at invocation.
+      const CITY_DATA = {
+        london: {
+          label: 'London',
+          subtitle: 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA',
+          currency: '£',
+          boundaries: '/data/london-boroughs.json',
+          airports: () => AIRPORTS,
+          flightPaths: () => FLIGHT_PATHS,
+          boroughData: () => BOROUGH_DATA,
+          boroughRaw: () => BOROUGH_DATA_RAW,
+          extra: () => BOROUGH_EXTRA,
+          areaMap: () => AREA_MAP,
+          detail: () => LONDON_NEIGHBOURHOOD_DETAIL,
+          stations: () => STATIONS,
+        },
+        nyc: {
+          label: 'New York',
+          subtitle: 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA',
+          currency: '$',
+          boundaries: '/data/nyc-boroughs.json',
+          airports: () => NYC_AIRPORTS,
+          flightPaths: () => NYC_FLIGHT_PATHS,
+          boroughData: () => NYC_BOROUGH_DATA,
+          boroughRaw: () => NYC_BOROUGH_DATA_RAW,
+          extra: () => NYC_BOROUGH_EXTRA,
+          areaMap: () => NYC_AREA_MAP,
+          detail: () => NYC_NEIGHBOURHOOD_DETAIL,
+          stations: () => NYC_STATIONS,
+        },
+        manchester: {
+          label: 'Manchester',
+          subtitle: 'GREATER MANCHESTER · INDEPENDENT NOISE + LIVABILITY DATA',
+          currency: '£',
+          boundaries: '/data/manchester-boroughs.json',
+          airports: () => MANCHESTER_AIRPORTS,
+          flightPaths: () => MANCHESTER_FLIGHT_PATHS,
+          // Scored on first use rather than at load: its raw data is declared
+          // far below this point, and an unvisited city should not cost anything.
+          boroughData: () => {
+            if (!Object.keys(MANCHESTER_BOROUGH_DATA).length) {
+              MANCHESTER_BOROUGH_DATA = calcScores(MANCHESTER_BOROUGH_DATA_RAW, 'manchester');
+            }
+            return MANCHESTER_BOROUGH_DATA;
+          },
+          boroughRaw: () => MANCHESTER_BOROUGH_DATA_RAW,
+          extra: () => MANCHESTER_BOROUGH_EXTRA,
+          areaMap: () => MANCHESTER_AREA_MAP,
+          detail: () => MANCHESTER_NEIGHBOURHOOD_DETAIL,
+          stations: () => MANCHESTER_STATIONS,
+        },
+      };
+
+      // An unregistered city falls back to London, but says so out loud. The
+      // silent version of exactly this fallback is what made a third city look
+      // like it was working when it was rendering London.
+      // NOT named cityData: switchCity() and setupProjection() each already
+      // declare a local `const cityData = CITIES[city]` for projection config,
+      // which would shadow this function and put every call in that const's
+      // temporal dead zone.
+      function cityCfg(city) {
+        const c = city || currentCity;
+        if (!CITY_DATA[c]) {
+          console.warn('[SkyScore] no data registered for city:', c);
+          return CITY_DATA.london;
+        }
+        return CITY_DATA[c];
+      }
+
       // Now that BOROUGH_EXTRA and NYC_BOROUGH_EXTRA are defined, compute scores
       BOROUGH_DATA = calcScores(BOROUGH_DATA_RAW, 'london');
       NYC_BOROUGH_DATA = calcScores(NYC_BOROUGH_DATA_RAW, 'nyc');
@@ -5357,6 +5458,10 @@
       let selectedBorough = null;
       let boroughFeatures = [];
       let nycBoroughFeatures = [];
+      // Boundary features per non-London city, loaded on first switch and kept.
+      // London keeps its own `boroughFeatures` because loadGeoJson() fetches it
+      // during init rather than on a switch.
+      const cityFeatures = {};
       let projection, pathGenerator, svg, g, zoom;
       let layers = {
         paths: true,
@@ -7639,16 +7744,112 @@
       }
 
       // ============================================================
-      // CITY SWITCHING (London <-> NYC)
+      // GREATER MANCHESTER (Core Cities spike)
       // ============================================================
-      function getActiveAirports() {
-        return currentCity === 'nyc' ? NYC_AIRPORTS : AIRPORTS;
+      // Mirrors MANCHESTER_BOROUGHS in backend/lambdas/score/app.py. The two
+      // surfaces score independently, so any divergence here shows up as the
+      // site and the API disagreeing about the same place.
+      //
+      // avg_price / trend  REAL. HM Land Registry UK HPI, May 2026 vintage —
+      //                    the same vintage as the London set.
+      // impact             ESTIMATE from runway geometry, NOT a DEFRA raster
+      //                    sample. Provisional; see app.py for the full note.
+      const MANCHESTER_AIRPORTS = [
+        { code: 'MAN', name: 'Manchester', coords: [-2.275, 53.3537], passengers: '28.1M', type: 'airport' },
+      ];
+
+      // Both runways share one 052/232 alignment, so the corridors lie on a
+      // single axis. Southwesterlies prevail, so the 23 configuration — arrivals
+      // tracking in from the north-east, straight over Stockport — is the usual one.
+      const MANCHESTER_FLIGHT_PATHS = [
+        {
+          name: '23 Approach',
+          airport: 'MAN',
+          type: 'arrival',
+          freq: 'high',
+          coordinates: [
+            [-1.9783, 53.492],
+            [-2.0376, 53.4643],
+            [-2.097, 53.4367],
+            [-2.1563, 53.409],
+            [-2.2157, 53.3814],
+            [-2.275, 53.3537],
+          ],
+        },
+        {
+          name: '05 Approach',
+          airport: 'MAN',
+          type: 'arrival',
+          freq: 'medium',
+          coordinates: [
+            [-2.453, 53.2707],
+            [-2.3937, 53.2984],
+            [-2.3343, 53.326],
+            [-2.275, 53.3537],
+          ],
+        },
+      ];
+
+      const MANCHESTER_BOROUGH_DATA_RAW = {
+        Manchester: {
+          impact: 'severe',
+          avg_price: 247469,
+          trend: 0.5,
+          note: 'Manchester Airport sits inside the city boundary at Wythenshawe. Noise is concentrated in the south of the borough; the city centre and the north are a long way from the runways.',
+        },
+        Stockport: {
+          impact: 'high',
+          avg_price: 318163,
+          trend: 5.4,
+          note: 'Directly beneath the 23 approach, the prevailing arrival configuration. Prices are the second highest in the city-region and rising.',
+        },
+        Trafford: {
+          impact: 'moderate',
+          avg_price: 393244,
+          trend: 6.2,
+          note: 'The dearest and fastest-rising borough in Greater Manchester. West of the airport and off the main approach axis.',
+        },
+        Tameside: {
+          impact: 'moderate',
+          avg_price: 209691,
+          trend: 2.3,
+          note: 'North-east of the airport under the extended 23 approach, but far enough out that aircraft are high overhead.',
+        },
+        Salford: {
+          impact: 'low-moderate',
+          avg_price: 231153,
+          trend: -6.1,
+          note: 'The only borough in the city-region with falling prices. Off the approach axis, north of the airport.',
+        },
+        Oldham: { impact: 'low', avg_price: 212997, trend: 3.0, note: 'North-east of the city, well clear of the approach corridors.' },
+        Rochdale: { impact: 'low', avg_price: 208286, trend: 4.3, note: 'The far north-east of the city-region, beyond the reach of airport noise.' },
+        Bury: { impact: 'low', avg_price: 238266, trend: 3.0, note: 'North of the city and clear of both approach corridors.' },
+        Bolton: { impact: 'low', avg_price: 200126, trend: 3.3, note: 'North-west of the city-region, off every flight path.' },
+        Wigan: { impact: 'low', avg_price: 194494, trend: 5.4, note: 'The cheapest borough in the city-region, furthest from the airport, and rising strongly.' },
+      };
+
+      // Deliberately empty: no schools, crime, transport or healthcare data has
+      // been sourced for Greater Manchester. getLiveScore() therefore falls back
+      // to a neutral 5 for every borough, exactly as the API does. That flat
+      // value is a placeholder, NOT a measurement — see the audit finding on
+      // liveability defaults sitting below London's entire observed range.
+      let MANCHESTER_BOROUGH_EXTRA = {};
+      const MANCHESTER_AREA_MAP = {};
+      const MANCHESTER_NEIGHBOURHOOD_DETAIL = {};
+      const MANCHESTER_STATIONS = [];
+      let MANCHESTER_BOROUGH_DATA = {};
+
+      // ============================================================
+      // CITY SWITCHING
+      // ============================================================
+      function getActiveAirports(city) {
+        return cityCfg(city).airports();
       }
-      function getActiveFlightPaths() {
-        return currentCity === 'nyc' ? NYC_FLIGHT_PATHS : FLIGHT_PATHS;
+      function getActiveFlightPaths(city) {
+        return cityCfg(city).flightPaths();
       }
-      function getActiveBoroughData() {
-        return currentCity === 'nyc' ? NYC_BOROUGH_DATA : BOROUGH_DATA;
+      function getActiveBoroughData(city) {
+        return cityCfg(city).boroughData();
       }
 
       async function switchCity(city) {
@@ -7680,15 +7881,12 @@
         const subtitleEl = document.getElementById('map-subtitle');
         const searchInput = document.getElementById('search-input');
 
-        if (city === 'nyc') {
-          titleEl.textContent = 'Sky Score';
-          subtitleEl.textContent = 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA';
-          searchInput.placeholder = 'Search area, neighbourhood or borough';
-        } else {
-          titleEl.textContent = 'Sky Score';
-          subtitleEl.textContent = 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA';
-          searchInput.placeholder = 'Search area, neighbourhood or borough';
-        }
+        // Both branches of the old if/else set an identical title and
+        // placeholder and differed only in the subtitle, so the whole thing is
+        // one registry read.
+        titleEl.textContent = 'Sky Score';
+        subtitleEl.textContent = cityCfg(city).subtitle;
+        searchInput.placeholder = 'Search area, neighbourhood or borough';
 
         // Update layer toggle labels and legend for city. Plain English (no
         // agency acronyms) — the source of the data is shown in the tooltip
@@ -7752,46 +7950,48 @@
         if (city === 'london') {
           if (boroughFeatures.length) renderBoroughs();
         } else {
-          // For NYC, load GeoJSON dynamically — then keep it. The borough
-          // outlines never change, so re-fetching on every switch only
-          // widened the race window above.
+          // Load this city's GeoJSON once, then keep it. The borough outlines
+          // never change, so re-fetching on every switch only widened the race
+          // window above.
           //
-          // Same-origin first, mirroring loadGeoJson(). Until 2026-07-30 the
+          // Same-origin first, mirroring loadGeoJson(). Until 2026-07-30 NYC's
           // only source was a 2.67 MB cross-origin fetch issued at the moment
           // of the click and precached by nothing, so a congested network drew
-          // no boroughs at all. The local file is a simplified 238 KB build
-          // from scripts/build_nyc_boroughs.mjs; the remote stays as a
-          // fallback for the case where our own asset is missing mid-deploy.
-          const nycUrls = [
-            '/data/nyc-boroughs.json',
-            'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson',
-          ];
-          if (!nycBoroughFeatures.length) {
-            for (const url of nycUrls) {
+          // no boroughs at all. Local files are simplified builds; a remote
+          // stays as fallback where one exists, for the case where our own
+          // asset is missing mid-deploy.
+          const cfg = cityCfg(city);
+          const urls = [cfg.boundaries].concat(cfg.boundariesFallback || []);
+          if (!(cityFeatures[city] || []).length) {
+            for (const url of urls) {
               try {
-                const nycGeo = await d3.json(url);
+                const geo = await d3.json(url);
                 // A newer switch landed while this was in flight — abandon the
                 // render rather than layering it over the current city.
                 if (token !== citySeq) return;
-                if (nycGeo && nycGeo.features && nycGeo.features.length) {
-                  nycBoroughFeatures = nycGeo.features;
+                if (geo && geo.features && geo.features.length) {
+                  cityFeatures[city] = geo.features;
                   break;
                 }
               } catch (e) {
-                console.warn('NYC GeoJSON failed from ' + url + ':', e);
+                console.warn(cfg.label + ' GeoJSON failed from ' + url + ':', e);
               }
             }
           }
           if (token !== citySeq) return;
-          if (nycBoroughFeatures.length) {
-            renderNycBoroughs(nycBoroughFeatures);
+          const feats = cityFeatures[city] || [];
+          // The search path still reads nycBoroughFeatures directly; keep it in
+          // step until that path moves onto the registry too.
+          if (city === 'nyc') nycBoroughFeatures = feats;
+          if (feats.length) {
+            renderCityBoroughs(feats);
           } else {
             // Previously a bare console.warn, so a failure here was invisible:
             // the outlines just did not appear. Flight paths, airports and
             // search all still work without boundaries, so say what is missing
             // rather than presenting the whole view as broken.
             announceResult(
-              'New York borough outlines could not be loaded. The map and search still work.'
+              cfg.label + ' borough outlines could not be loaded. The map and search still work.'
             );
           }
         }
@@ -7814,7 +8014,10 @@
         }
       }
 
-      function renderNycBoroughs(features) {
+      // Renders borough outlines for whichever non-London city is active. Named
+      // for NYC when NYC was the only one; it never contained anything
+      // NYC-specific — it reads the active city's data and `properties.name`.
+      function renderCityBoroughs(features) {
         const nycData = getActiveBoroughData();
         const bg = g.append('g').attr('class', 'layer-boroughs');
         bg.selectAll('path.borough')
@@ -8544,7 +8747,10 @@
           // Projection translate has changed → previously cached g-coords for
           // the aircraft raster are now wrong. Force a re-position next call.
           aircraftRasterLoadedFor = null;
-          if (currentCity === 'nyc' && nycBoroughFeatures.length) renderNycBoroughs(nycBoroughFeatures);
+          // Any non-London city redraws from its own cached features; London
+          // has its own loader and its own variable.
+          const cf = currentCity === 'london' ? [] : cityFeatures[currentCity] || [];
+          if (cf.length) renderCityBoroughs(cf);
           else if (boroughFeatures.length) renderBoroughs();
           renderDefraTiles();
           renderCityFlightPaths();
