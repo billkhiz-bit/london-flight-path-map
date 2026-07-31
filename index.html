@@ -1750,7 +1750,11 @@
         height: auto;
       }
       #locator-land {
-        fill: var(--light);
+        /* --mid at low alpha rather than a flat --light: the silhouette is 291
+           separate district rings, so a stroke would draw every internal border
+           instead of defining the coast. Alpha gives weight without outlines. */
+        fill: var(--mid);
+        fill-opacity: 0.42;
         stroke: none;
       }
       .locator .cty {
