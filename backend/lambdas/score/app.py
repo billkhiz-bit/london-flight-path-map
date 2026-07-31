@@ -1083,9 +1083,96 @@ NYC_BOROUGHS = {
     },
 }
 
+# --- Greater Manchester (Core Cities spike, 2026-07-31) -----------------------
+#
+# The ten metropolitan boroughs of Greater Manchester, modelled exactly like
+# London's 33: a city-region whose constituent local authorities play the role
+# "borough" plays in London. No new concept, same schema, same scoring path.
+#
+# PROVENANCE, read this before trusting any number here:
+#
+#   avgPrice / trend  REAL. HM Land Registry UK House Price Index, **May 2026**
+#                     vintage — the same vintage as LONDON_BOROUGHS, so the two
+#                     cohorts are directly comparable. Fetched per local
+#                     authority from landregistry.data.gov.uk on 2026-07-31.
+#
+#   impact            ESTIMATE, from runway geometry (see FLIGHT_PATHS_MANCHESTER).
+#                     Manchester Airport sits inside the City of Manchester LAD
+#                     at Wythenshawe, and the 23 approach — the prevailing
+#                     configuration — tracks northeast directly over Stockport.
+#                     These bands are the same Haversine-fallback tier London
+#                     used before the DEFRA raster landed, and must be replaced
+#                     by DEFRA Round 4 raster sampling before this ships.
+#
+#   schools           NOT SOURCED — deliberately absent, not defaulted here.
+#   crimeRate         get_live_score() falls back to a neutral 5.0 for each
+#   transport         missing field, so Manchester currently scores an honest
+#   healthcare        "no liveability signal" rather than an invented one.
+#                     Sourcing these is the remaining work: Ofsted (schools),
+#                     ONS LAD-level recorded crime (crimeRate — note Greater
+#                     Manchester Police is ONE force across all ten boroughs,
+#                     so force-level data cannot separate them), and judgement
+#                     calls for transport/healthcare that a human should make.
+#
+# Until the four fields above are filled, every Manchester liveability score is
+# 5.0 by construction. That is a placeholder, NOT a finding about Manchester.
+MANCHESTER_BOROUGHS = {
+    'Manchester': {'impact': 'severe', 'avgPrice': 247469, 'trend': 0.5},
+    'Salford': {'impact': 'low-moderate', 'avgPrice': 231153, 'trend': -6.1},
+    'Stockport': {'impact': 'high', 'avgPrice': 318163, 'trend': 5.4},
+    'Trafford': {'impact': 'moderate', 'avgPrice': 393244, 'trend': 6.2},
+    'Tameside': {'impact': 'moderate', 'avgPrice': 209691, 'trend': 2.3},
+    'Oldham': {'impact': 'low', 'avgPrice': 212997, 'trend': 3.0},
+    'Rochdale': {'impact': 'low', 'avgPrice': 208286, 'trend': 4.3},
+    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.0},
+    'Bolton': {'impact': 'low', 'avgPrice': 200126, 'trend': 3.3},
+    'Wigan': {'impact': 'low', 'avgPrice': 194494, 'trend': 5.4},
+}
+
+AIRPORTS_MANCHESTER = [
+    {'code': 'MAN', 'name': 'Manchester', 'lat': 53.3537, 'lon': -2.2750},
+]
+
+# Manchester's two parallel runways (05L/23R, 05R/23L) share one alignment of
+# roughly 052°/232°, so both approach corridors lie on a single axis through
+# the airport. Southwesterlies prevail, so the 23 configuration — arrivals
+# tracking in from the northeast — is the usual one, and it runs straight over
+# Stockport. The 05 corridor points the other way into Cheshire, outside the
+# city-region entirely, which is why Greater Manchester's noise burden is so
+# unevenly distributed compared with London's five-airport spread.
+FLIGHT_PATHS_MANCHESTER = [
+    {
+        'name': '23 Approach',
+        'airport': 'MAN',
+        'type': 'arrival',
+        'freq': 'high',
+        'coords': [
+            (53.4920, -1.9783),
+            (53.4643, -2.0376),
+            (53.4367, -2.0970),
+            (53.4090, -2.1563),
+            (53.3814, -2.2157),
+            (53.3537, -2.2750),
+        ],
+    },
+    {
+        'name': '05 Approach',
+        'airport': 'MAN',
+        'type': 'arrival',
+        'freq': 'medium',
+        'coords': [
+            (53.2707, -2.4530),
+            (53.2984, -2.3937),
+            (53.3260, -2.3343),
+            (53.3537, -2.2750),
+        ],
+    },
+]
+
 CITIES = {
     'london': {'boroughs': LONDON_BOROUGHS, 'currency': 'GBP'},
     'nyc': {'boroughs': NYC_BOROUGHS, 'currency': 'USD'},
+    'manchester': {'boroughs': MANCHESTER_BOROUGHS, 'currency': 'GBP'},
 }
 
 # NYC ZIP-to-borough mapping. ZIPs grouped per borough and flattened into a
@@ -1544,6 +1631,12 @@ CITY_GEOMETRY = {
         'secondary_airport': None,
     },
     'nyc': {'airports': AIRPORTS_NYC, 'paths': FLIGHT_PATHS_NYC, 'major_airport': 'JFK', 'secondary_airport': 'LGA'},
+    'manchester': {
+        'airports': AIRPORTS_MANCHESTER,
+        'paths': FLIGHT_PATHS_MANCHESTER,
+        'major_airport': 'MAN',
+        'secondary_airport': None,
+    },
 }
 
 # NYC ZIP-to-centroid lookup. Sourced from index.html NYC_AREA_MAP, first
