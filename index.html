@@ -2247,8 +2247,17 @@
         }
 
         /* City selector: was 9px font / 4-12 padding. Bump for touch. */
+        /* The country tier has to move WITH the chips. This override predates
+           it and pinned the chips to 64px while the tier kept its desktop 84px,
+           so between 901px and 1366px the chips rendered directly on top of the
+           tabs: painted, full opacity, and covered by a city button. Keep the
+           30px offset between the two rows. */
+        .country-selector {
+          top: 56px;
+          left: 28px;
+        }
         .city-selector {
-          top: 64px;
+          top: 86px;
           left: 28px;
         }
         .city-btn {
