@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.3, last updated 2026-07-30.
+> Version 3.4, last updated 2026-07-31.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -63,7 +63,7 @@ A request for a postcode outside the supported geography returns a 404 with a `s
 |---|---|---|
 | **Quiet** | Aviation + road noise impact | 0-10 (10 = quietest) |
 | **Affordability** | Average sold price relative to cohort | 0-10 (10 = cheapest in cohort) |
-| **Growth** | Recent price-trend signal | 0-10 (10 = strongest growth) |
+| **Growth** | Recent price-trend signal | 0-10 (10 = fastest riser, 5 = flat market, 0 = steepest faller) |
 | **Liveability** | Schools, crime, transport, healthcare | 0-10 (10 = most liveable) |
 
 Each component is bounded in 0-10 with floating-point precision internally and one-decimal display precision in the API response.
@@ -124,18 +124,25 @@ This is a deliberate cohort-relative scale, not an absolute one. A property at �
 
 **Why min-max rather than a different normalisation?** Min-max scaling is the simplest interpretable approach for a bounded relative measure. Alternatives considered: log-scaled (penalises mid-range too aggressively), z-score (negative values are uninterpretable as "10 = cheapest"), percentile (loses absolute differentiation between price clusters). Min-max wins on transparency: any user can verify the formula against the published cohort min/max.
 
-### 4.3 Growth, linear scale clamped to 0–10
+### 4.3 Growth, dual-anchor scale
 
-Growth is a linear scale of the borough's recent annualised price trend, clamped to the component scale:
+Growth is a **dual-anchor** scale on the borough's recent annualised price trend. A flat market — prices neither rising nor falling — sits at the midpoint, and each tail is scaled to its own extreme within the cohort:
 
 ```
-growth = clamp((trend / max_trend) × 10, 0, 10)    where max_trend > 0
-growth = 0                                          where max_trend ≤ 0
+growth = 5 + (trend / max_trend) × 5    where trend > 0   (max_trend = fastest riser)
+growth = 5                              where trend = 0
+growth = 5 − (trend / min_trend) × 5    where trend < 0   (min_trend = steepest faller)
 ```
 
-Negative trends floor at 0 — "no positive momentum" — rather than producing sub-zero components (v3.2; the original rising-market formula predated any falling borough in the cohort, and this document's own argument against z-score normalisation applies: negative component values are uninterpretable on a 0–10 scale). If the entire cohort is falling there is no relative-momentum signal, so every borough scores 0 on growth.
+all then clamped to 0–10. The fastest-rising borough scores 10, the steepest-falling scores 0, and a flat market scores exactly 5.
 
-For the London cohort as of the 2026-Q2 snapshot, `max_trend` is approximately 4.8% (Lewisham); fourteen boroughs carry negative 12-month trends.
+**Why the midpoint is absolute and the tails are relative.** The 5.0 anchor is a real-world fact (0% price movement), so it does not drift when the cohort is re-based at a quarterly refresh. The extremes are cohort-relative, which keeps the scale usable when the whole market moves. This is the same cohort-relative reasoning applied to both directions rather than only upward.
+
+**Why the tails are scaled separately.** The London cohort's trends run from −28.2% to +5.0% as of the 2026-Q2 snapshot. A single symmetric map across that range would compress every rising borough into the top sixth of the scale, making +5.0% nearly indistinguishable from +0.4%. Scaling each side to its own extreme keeps both tails legible.
+
+**What this replaced (v3.2–v3.3).** The previous formula was `clamp((trend / max_trend) × 10, 0, 10)`, scaled against the fastest riser alone. Every falling borough therefore floored at 0: **fourteen of the thirty-three London boroughs shared one value**, and Ealing (−0.3%) scored identically to the City of London (−28.2%). The component carried no signal for 42% of the map, and the API had to publish a caveat stating that growth "cannot tell a slight dip apart from a steep fall". Under v3.4 the same cohort yields 28 distinct values, and only the steepest faller sits on the floor. See §20 for the full changelog entry.
+
+For the London cohort as of the 2026-Q2 snapshot, `max_trend` is +5.0% (Waltham Forest) and `min_trend` is −28.2% (City of London); fourteen boroughs carry negative 12-month trends.
 
 **Why not absolute thresholds?** UK property markets are cyclical; absolute growth thresholds would need re-calibration every market cycle. Cohort-relative scaling captures *relative momentum within the cohort*, which is more durable as a signal.
 
@@ -433,6 +440,8 @@ growth = (2.1 / 5.8) × 10
        = 3.6206…
        → displayed as 3.6
 ```
+
+> **This worked example reproduces v3.0 and is retained as a historical trace.** It is internally consistent at that version — including the v3.0 balanced weights below — but it no longer matches the live API, and has not since v3.2. Three later changes affect it: the v3.2 clamp, the v3.3 weighting (balanced now carries `growth` at 0.00, not 0.20), and the v3.4 dual-anchor formula in §4.3, under which this borough's growth would be `5 + (2.1 / 5.8) × 5 = 6.8`, not 3.6. The cohort bounds have also moved with each quarterly refresh. To reproduce the *current* numbers by hand, use §4.3 and the persona weights in §5.1 against the present snapshot.
 
 **Liveability**, sub-scores:
 - Schools `excellent` → 9 (Ofsted distribution: >25% Outstanding)
@@ -777,6 +786,7 @@ Methodology and API contract versioned independently:
 
 ## 20. Changelog
 
+- **2026-07-31 (v3.4)**, **Growth rescaled to a dual anchor.** (1) *Defect:* the v3.2 formula `clamp((trend / max_trend) × 10, 0, 10)` scaled against the fastest riser alone, so every falling borough floored at 0. **Fourteen of the thirty-three London boroughs shared that one value** — Ealing at −0.3% scored identically to the City of London at −28.2% — and the API published a caveat conceding that growth "cannot tell a slight dip apart from a steep fall". A component that cannot distinguish a 0.3% dip from a 28% collapse is not measuring anything across 42% of the cohort. (2) *Change:* growth now anchors a flat market (0% trend) at **5.0**, scales rising boroughs across 5–10 against the fastest riser, and falling boroughs across 5–0 against the steepest faller, each tail to its own extreme (§4.3). The tails are scaled separately because London's −28.2%…+5.0% spread would otherwise compress every rising borough into the top sixth of the scale. (3) *Effect:* the London cohort moves from 17 to **28 distinct growth values**, and only the steepest faller now sits on the floor. Falling boroughs rise (Tower Hamlets 0.0 → 3.0, Kensington and Chelsea 0.0 → 3.3, Westminster 0.0 → 1.3); rising boroughs rise more modestly (Southwark 7.6 → 8.8); Waltham Forest holds 10.0. **NYC moves more sharply** because its whole cohort is rising and now scores against the 5.0 flat anchor rather than against its own fastest riser: Manhattan 3.6 → 6.8, Staten Island 5.5 → 7.7. (4) *Headline impact:* because v3.3 already set `growth` to 0.00 for every persona but `investor`, **no persona except `investor` sees any change to its total score** — the component is published but unweighted. `investor` weights growth at 0.40, so its totals move materially, and the previously live sub-zero neighbourhood-view defect (City of London computing −56.4 on a 0–10 scale) is resolved by the same change. (5) *Explanations:* `why.workings` and the prose steps were rewritten to describe the anchor and name the steepest-fall benchmark; the retired floor caveat is gone and a regression test now asserts it cannot return. (6) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-07-30 (v3.3)**, **Growth weighted for `investor` only.** (1) *Rationale:* growth accounted for **87% of all score movement** in the Q1→Q2 refresh; excluding it, the largest change across the 33 boroughs was 0.62 points. Nothing physical about any borough had changed. The other three components describe durable attributes of a place; price growth is a mean-reverting market series that §4.3 already states does not predict future returns, so averaging it into a property-quality score let market noise churn a number users read as stable. (2) *Change:* `growth` is 0.00 for every persona except `investor` (unchanged at 0.40). Each persona's former growth weight was redistributed across its remaining three components in proportion, so relative emphasis is unchanged. (3) *Effect:* scores rise where a floored growth component was dragging a place down — Wandsworth moves 5.3 → 6.7 under balanced weights — and quarter-over-quarter movement collapses to ≤0.6 points, which is the honest reading: these places did not change. (4) *Transparency:* the growth component is still computed and published, and responses now carry a `why.unweighted[]` block reporting movement in factors that carry no weight for the requested persona, so a moving market is never silently dropped. (5) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-07-24 (v3.2)**, **Quarterly price refresh + growth clamp.** (1) *Data:* all 33 London borough `avgPrice`/`trend` values refreshed to the May 2026 UK House Price Index after the quarterly check found 28 boroughs deviating ≥3% from the 2026-Q1 snapshot (largest: Haringey +16.3%, City of London −26.2%; fourteen boroughs now carry negative 12-month trends — the snapshot predated the market turn). (2) *Formula:* the growth component is now clamped to 0–10 (§4.3). The original rising-market formula produced sub-zero components — and in three boroughs sub-zero total scores — once negative trends entered the cohort, violating the documented 0–10 scale. Negative trend now floors at growth = 0. (3) *Effect:* under default balanced weights, 24 borough scores move by more than 0.5 — overwhelmingly downward, dominated by the growth signal turning. Per the notice policy this qualifies for 14-day advance customer notice; the API has no paying customers as at this date, so the change ships with this changelog entry as the record. (4) London affordability cohort bounds moved (max now ~£1.256M Kensington and Chelsea; min ~£361k Barking and Dagenham).
 - **2026-07-23 (v3.1, no version bump)**, **Data-vintage note + consumer-surface honesty pass — no scoring changes.** (1) §7 now records explicitly that DEFRA Round 4 (2022) remains the latest official strategic noise mapping round as of July 2026, mirrored by a note in the consumer site's aircraft-noise legend. (2) The consumer site's detail-panel source badges for the air-quality and flood layers were corrected from "DEFRA DATA"/"EA DATA"/"EPA DATA"/"FEMA DATA" to "borough-level rating (curated)": those two map layers colour boroughs from a curated borough-level classification (`data/borough-extra.json`), not from live DEFRA/EA/EPA/FEMA rasters. The aircraft-noise layer's DEFRA attribution is unaffected (that layer genuinely renders the Round 4 Lden raster). API scoring inputs and formulas are unchanged.

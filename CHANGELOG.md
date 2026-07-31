@@ -6,7 +6,38 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-07-30 (latest) — Growth reweighted, explanations rewritten, third-party assets vendored
+### 2026-07-31 (latest) — Growth rescaled to a dual anchor
+
+- **Methodology v3.4: a flat market now scores 5.0, and both tails are legible.**
+  The v3.2 formula scaled every borough against the fastest riser and clamped at
+  0, so all fourteen falling London boroughs collapsed onto a single value —
+  Ealing at −0.3% scored exactly what the City of London scored at −28.2%, and
+  the API published a caveat conceding that growth "cannot tell a slight dip
+  apart from a steep fall". Growth now anchors 0% trend at **5.0**, scales risers
+  across 5–10 against the fastest riser and fallers across 5–0 against the
+  steepest faller, each tail to its own extreme so that London's −28.2%…+5.0%
+  spread does not compress every rising borough into the top sixth of the scale.
+  The cohort goes from **17 to 28 distinct growth values**, and only the steepest
+  faller now sits on the floor.
+- **Fixed a live sub-zero score in the neighbourhood view.** `index.html` carried
+  a third, separate growth formula that was neither clamped nor guarded against a
+  falsy zero: a City of London postcode computed **−56.4** on a 0–10 scale, and a
+  legitimate trend of `0` was silently replaced with an invented +3%. On the
+  `investor` persona — the only one weighting growth, at 0.40 — that dragged the
+  headline total more than 22 points negative. All three implementations (API,
+  borough view, neighbourhood view) now share one formula, verified identical
+  across all 38 boroughs.
+- **No persona except `investor` sees a headline change.** v3.3 had already set
+  growth to 0.00 everywhere else, so the component is published but unweighted;
+  `investor` totals move materially. NYC moves more than London because its whole
+  cohort is rising and now scores against the absolute 5.0 anchor rather than its
+  own fastest riser (Manhattan 3.6 → 6.8).
+- **Explanations rewritten to match.** `why.workings` and the prose steps now
+  describe the anchor and name the steepest-fall benchmark instead of asserting a
+  floor. The retired caveat is gone, and a regression test asserts that mild and
+  severe falls stay distinguishable so the v3.2 collapse cannot return.
+
+### 2026-07-30 — Growth reweighted, explanations rewritten, third-party assets vendored
 
 - **Methodology v3.3: growth is weighted for the `investor` persona only.** In
   the Q1→Q2 refresh growth accounted for **87% of all score movement** across the

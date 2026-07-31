@@ -75,7 +75,7 @@ def _make_lru(maxsize):
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '3.3'
+METHODOLOGY_VERSION = '3.4'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -385,13 +385,21 @@ def benchmarks(boroughs):
     trends = {name: bd['trend'] for name, bd in boroughs.items()}
     prices = {name: bd['avgPrice'] for name, bd in boroughs.items()}
     max_trend = max(trends.values())
+    min_trend = min(trends.values())
     top = sorted(n for n, t in trends.items() if t == max_trend)
+    # v3.4 scales each tail to its own extreme, so a falling area needs a bottom
+    # yardstick just as a rising one needs the top. Under v3.2 every faller
+    # scored 0 regardless, so only the top benchmark was ever needed.
+    bottom = sorted(n for n, t in trends.items() if t == min_trend)
     dearest = max(prices, key=lambda n: prices[n])
     cheapest = min(prices, key=lambda n: prices[n])
     return {
         'strongestGrowthArea': top[0],
         'strongestGrowthAreas': top,
         'strongestGrowthTrendPct': max_trend,
+        'steepestFallArea': bottom[0],
+        'steepestFallAreas': bottom,
+        'steepestFallTrendPct': min_trend,
         'dearestArea': dearest,
         'dearestAvgPrice': prices[dearest],
         'cheapestArea': cheapest,
@@ -587,26 +595,36 @@ def build_why(
             # Step 3: why that drops the SCORE so far — the league-table model.
             was_top = prev_bm and prev_trend >= prev_bm['strongestGrowthTrendPct']
             if cur_trend < 0:
-                floor_note = (
-                    'The growth score is a league table, not a measurement: 10 out of 10 goes to whichever '
-                    'borough has the fastest-rising prices. Any borough whose prices are falling scores 0.'
+                fall_note = (
+                    'The growth score puts a flat market — prices neither rising nor falling — at 5 out of 10. '
+                    'Falling prices score below 5, scaled against the steepest fall in the city: the borough '
+                    'falling fastest scores 0, and every other falling borough sits between.'
                 )
                 if was_top:
-                    floor_note += (
+                    fall_note += (
                         f' Last quarter {subject_lower} had the fastest-rising prices in London, so it held the '
                         'top score of 10 — which means it could only ever move down from there.'
                     )
-                driver['steps'].append(floor_note)
-                driver['workings'] = f'{cur_trend:+}% is below zero → score floored at 0 out of 10'
-                caveats.append(
-                    'Because every borough with falling prices scores 0, this factor cannot tell a slight dip '
-                    'apart from a steep fall.'
-                )
+                steepest_pct = cur_bm['steepestFallTrendPct'] if cur_bm else None
+                if steepest_pct is not None and steepest_pct < 0:
+                    fall_note += (
+                        f' The steepest fall now is {cur_bm["steepestFallArea"]} at {steepest_pct:+}%, and '
+                        f'{cur_trend:+}% is about {_fraction_words(cur_trend / steepest_pct)} of that — '
+                        f'so {f["after"]} out of 10.'
+                    )
+                    driver['workings'] = (
+                        f'5.0 − {cur_trend:+}% ÷ {steepest_pct:+}% '
+                        f'({cur_bm["steepestFallArea"]}, steepest fall) × 5 = {f["after"]}'
+                    )
+                else:
+                    driver['workings'] = f'{cur_trend:+}% against a flat-market anchor of 5.0 = {f["after"]}'
+                driver['steps'].append(fall_note)
             elif cur_bm and cur_bm['strongestGrowthTrendPct'] > 0:
                 share = cur_trend / cur_bm['strongestGrowthTrendPct']
                 model = (
-                    'The growth score is a league table, not a measurement: 10 out of 10 goes to whichever '
-                    'borough has the fastest-rising prices, and everywhere else scores a share of that.'
+                    'The growth score puts a flat market — prices neither rising nor falling — at 5 out of 10. '
+                    'Rising prices score above 5, scaled against the fastest riser in the city, which takes the '
+                    'full 10.'
                 )
                 if was_top:
                     model += (
@@ -619,8 +637,8 @@ def build_why(
                 )
                 driver['steps'].append(model)
                 driver['workings'] = (
-                    f'{cur_trend:+}% ÷ {cur_bm["strongestGrowthTrendPct"]:+}% '
-                    f'({cur_bm["strongestGrowthArea"]}, fastest) × 10 = {f["after"]}'
+                    f'5.0 + {cur_trend:+}% ÷ {cur_bm["strongestGrowthTrendPct"]:+}% '
+                    f'({cur_bm["strongestGrowthArea"]}, fastest) × 5 = {f["after"]}'
                 )
                 if rank_now and rank_before and rank_now > rank_before and cur_trend > 0:
                     caveats.append(
@@ -2080,6 +2098,38 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
+def growth_score(trend, max_trend, min_trend):
+    """Methodology v3.4: dual-anchor growth on a 0-10 scale.
+
+    A flat market (0% trend) anchors at **5.0**. Rising places spread across
+    5-10 against the fastest riser in the cohort; falling places spread across
+    5-0 against the steepest faller. Each side is scaled to its own extreme,
+    which is what keeps both tails legible.
+
+    Replaces the v3.2/v3.3 formula `(trend / max_trend) * 10` clamped to 0-10.
+    That scaled everything against the fastest riser alone, so every falling
+    place collapsed onto 0.0: 14 of the 33 London boroughs shared one value,
+    and Ealing (-0.3%) read identically to the City of London (-28.2%). The
+    component carried no signal for 42% of the map.
+
+    Scaling each tail separately is deliberate. London's trends run -28.2% to
+    +5.0%, so a single symmetric map across that range would squash every
+    rising borough into the top sixth of the scale and make +5.0% almost
+    indistinguishable from +0.4%.
+
+    The 5.0 anchor is absolute (0% growth), while each tail's extreme is
+    relative to the cohort — so scores stay comparable across a vintage
+    refresh at the midpoint even as the extremes move.
+    """
+    if trend > 0:
+        score = 5.0 + (trend / max_trend) * 5.0 if max_trend > 0 else 5.0
+    elif trend < 0:
+        score = 5.0 - (trend / min_trend) * 5.0 if min_trend < 0 else 5.0
+    else:
+        score = 5.0
+    return max(0.0, min(10.0, score))
+
+
 def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=None, boroughs_override=None):
     """Compute Sky Score for a borough/postcode.
 
@@ -2127,14 +2177,11 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
         afford = ((max_price - bd['avgPrice']) / (max_price - min_price)) * 10
 
     trends = [b['trend'] for b in boroughs.values()]
-    max_trend = max(trends)
-    # Methodology v3.2: growth is clamped to the 0-10 scale. Negative trends
-    # floor at 0 ("no positive momentum") rather than going negative — the
-    # 2026-Q2 refresh introduced falling boroughs, which the original
-    # rising-market formula never had to handle. If the entire cohort is
-    # falling (max_trend <= 0) there is no relative-momentum signal at all.
-    growth = (bd['trend'] / max_trend) * 10 if max_trend > 0 else 0.0
-    growth = max(0.0, min(10.0, growth))
+    max_trend, min_trend = max(trends), min(trends)
+    # Methodology v3.4: dual-anchor — 0% growth sits at 5.0, each tail scaled
+    # to its own extreme. See growth_score() for why the v3.2 single-anchor
+    # formula collapsed 14 of 33 boroughs onto one value.
+    growth = growth_score(bd['trend'], max_trend, min_trend)
 
     live = get_live_score(bd)
 

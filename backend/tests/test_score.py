@@ -217,13 +217,16 @@ class TrendsFeatureTests(unittest.TestCase):
         # Ealing's trend went +4.1% -> -0.3%, crossing into negative. Under the
         # investor view (the only one that weights growth since v3.3) the
         # explanation must say the score fell, name growth, and disclose the
-        # floor.
+        # scoring model.
         ealing = self._investor_why('Ealing')
         self.assertIn('fell', ealing['summary'])
         self.assertIn('Growth', ealing['summary'])
-        # The flat string must still disclose the floor, not only the structured
+        # The flat string must still disclose the model, not only the structured
         # form — a caller reading `explanation` alone should not lose it.
-        self.assertIn('floored at 0', ealing['summary'])
+        # v3.4: the model is the 5.0 flat-market anchor plus the tail benchmark,
+        # where v3.2 disclosed a floor at 0.
+        self.assertIn('flat market', ealing['summary'])
+        self.assertIn('steepest fall', ealing['summary'])
         # Newham's price fell, so affordability improved even though the overall
         # score dropped. The explanation must not flatten every factor into the
         # same direction as the headline.
@@ -269,9 +272,12 @@ class TrendsFeatureTests(unittest.TestCase):
         # sum must be shown or a large swing looks arbitrary.
         newham = self._investor_why('Newham')
         growth = next(d for d in newham['drivers'] if d['factor'] == 'growth')
-        # Names the benchmark and reproduces the arithmetic.
+        # Names the benchmark and reproduces the arithmetic. v3.4 anchors a flat
+        # market at 5.0 and scales the rising tail across 5-10, so Newham's
+        # +1.2% against Waltham Forest's +5.0% gives 5.0 + (1.2/5.0)*5 = 6.2
+        # (it was 2.4 under the v3.2 single-anchor formula).
         self.assertIn('Waltham Forest', growth['workings'])
-        self.assertIn('= 2.4', growth['workings'])
+        self.assertIn('= 6.2', growth['workings'])
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
         self.assertIn('= 9.5', afford['workings'])
         # The cheapest/dearest endpoints are named in the prose steps, so the
@@ -321,7 +327,9 @@ class TrendsFeatureTests(unittest.TestCase):
         barking = self._investor_why('Barking and Dagenham')
         growth = next(d for d in barking['drivers'] if d['factor'] == 'growth')
         steps = ' '.join(growth['steps'])
-        self.assertIn('league table', steps)
+        # v3.4 replaced the pure "league table" model with a flat-market anchor;
+        # the amplification explanation it wraps must survive that change.
+        self.assertIn('flat market', steps)
         self.assertIn('took the full 10', steps)
         self.assertIn('only direction available was down', steps)
         self.assertIn('Barking and Dagenham', steps)
@@ -340,20 +348,51 @@ class TrendsFeatureTests(unittest.TestCase):
         for c in body['changes']:
             self.assertNotIn('This area', json.dumps(c['why']), c['borough'])
 
-    def test_why_flags_the_growth_floor_as_a_caveat(self):
-        kc = self._investor_why('Kensington and Chelsea')
-        # Trend collapsed +0.5% -> -9.5% but the score barely moved, because
-        # growth was already near the floor. That needs saying.
-        self.assertTrue(
-            any('cannot tell a slight dip apart from a steep fall' in cv for cv in kc['caveats']),
-            kc['caveats'],
-        )
-        growth = next(d for d in kc['drivers'] if d['factor'] == 'growth')
-        self.assertIn('floored at 0', growth['workings'])
-        # Its RANK improved (33rd -> 30th) while its own prices got worse,
-        # because others fell further. Left unexplained that looks like a bug.
+    def test_growth_separates_mild_falls_from_severe_ones(self):
+        """v3.4 regression guard, replacing test_why_flags_the_growth_floor_as_a_caveat.
+
+        That test asserted the *defect*: under v3.2 every falling borough scored
+        0, so the API had to publish a caveat admitting the factor "cannot tell a
+        slight dip apart from a steep fall". 14 of 33 London boroughs shared one
+        value and the component carried no signal for 42% of the map.
+
+        The dual anchor scales the falling tail across 5-0 against the steepest
+        faller, so the depth of a fall must now survive into the score. If this
+        ever collapses back onto a shared floor, that is the v3.2 bug returning.
+        """
+        inv = app.PERSONAS['investor']
+
+        def growth_of(borough):
+            return app.calc_score(borough, 'london', inv)['components']['growth']
+
+        # -0.3%, -9.5% and -28.2% respectively: strictly ordered by depth of fall.
+        ealing, kc, col = growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('City of London')
+        self.assertLess(col, kc)
+        self.assertLess(kc, ealing)
+        # All are falling, so all sit below the 5.0 flat-market anchor.
+        self.assertLess(ealing, 5.0)
+        # Only the steepest faller in the cohort may sit on the floor.
+        self.assertEqual(col, 0.0)
+
+        # The workings must name the benchmark the tail is scaled against rather
+        # than assert a floor that no longer exists.
+        kc_why = self._investor_why('Kensington and Chelsea')
+        growth = next(d for d in kc_why['drivers'] if d['factor'] == 'growth')
+        self.assertIn('steepest fall', growth['workings'])
+        self.assertNotIn('floored at 0', growth['workings'])
+
+        # Retained from the test this replaces: K&C's RANK improved (33rd -> 30th)
+        # while its own prices got worse, because others fell further. Left
+        # unexplained that looks like a bug. Ranks come from the raw trend order,
+        # so v3.4 does not move them.
         self.assertEqual((growth['previousRank'], growth['rank']), (33, 30))
-        self.assertTrue(any('moved UP the growth table' in cv for cv in kc['caveats']))
+        self.assertTrue(any('moved UP the growth table' in cv for cv in kc_why['caveats']))
+
+        # And no borough may still publish the retired limitation as a caveat.
+        body = json.loads(app.handle_changes({})['body'])
+        for c in body['changes']:
+            for caveat in c['why']['caveats']:
+                self.assertNotIn('cannot tell a slight dip', caveat, c['borough'])
 
     def test_why_summary_matches_flat_explanation(self):
         body = json.loads(app.handle_changes({})['body'])
@@ -431,18 +470,22 @@ class CalcScoreTests(unittest.TestCase):
     """
 
     def test_wandsworth_balanced(self):
-        # Pinned to the 2026-Q2 (May 2026 UK HPI) snapshot + methodology v3.3,
-        # which drops growth from the balanced persona. The growth component is
-        # still COMPUTED and still floors at 0 (Wandsworth's trend is negative),
-        # it just carries no weight here — which is why this rose from the v3.2
-        # value of 5.3. A zero growth score was dragging the place down for a
-        # reason that says nothing about the place.
+        # Pinned to the 2026-Q2 (May 2026 UK HPI) snapshot + methodology v3.4.
+        # v3.3 dropped growth from the balanced persona, so the component is
+        # computed and published but carries no weight here — which is why the
+        # headline rose from the v3.2 value of 5.3.
+        #
+        # The growth COMPONENT moved 0.0 -> 4.3 in v3.4 (dual-anchor: Wandsworth
+        # is falling, but only mildly, so it now sits just below the 5.0
+        # flat-market anchor instead of collapsing onto the floor). The headline
+        # 6.7 is unchanged, which is the point: v3.3's zero weighting means a
+        # growth-formula change cannot move the balanced score.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
         self.assertEqual(result['score'], 6.7)
         self.assertEqual(result['components']['quiet'], 5.0)
         self.assertEqual(result['components']['afford'], 6.7)
-        self.assertEqual(result['components']['growth'], 0.0)
+        self.assertEqual(result['components']['growth'], 4.3)
         self.assertEqual(result['components']['live'], 8.7)
         self.assertEqual(result['context']['avgPriceGbp'], 660000)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')

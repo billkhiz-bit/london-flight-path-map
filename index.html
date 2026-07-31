@@ -2821,7 +2821,7 @@
             target="_blank"
             rel="noopener"
           >
-            Methodology v3.3
+            Methodology v3.4
           </a>
           <span class="sep">·</span>
           <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -4900,26 +4900,44 @@
         severe: 0,
       };
 
+      // Methodology v3.4: dual-anchor growth. A flat market (0%) anchors at 5.0;
+      // risers spread 5-10 against the fastest riser, fallers spread 5-0 against
+      // the steepest faller, each tail scaled to its own extreme.
+      //
+      // Must stay byte-for-byte equivalent to growth_score() in
+      // backend/lambdas/score/app.py — the site and the API publish the same
+      // number, and a buyer checking one against the other is the whole point of
+      // publishing the methodology.
+      //
+      // v3.2/v3.3 scaled against the fastest riser alone and clamped at 0, which
+      // collapsed all 14 falling boroughs onto 0.0 — Ealing (-0.3%) read the same
+      // as the City of London (-28.2%).
+      function growthScore(trend, maxTrend, minTrend) {
+        let score;
+        if (trend > 0) score = maxTrend > 0 ? 5 + (trend / maxTrend) * 5 : 5;
+        else if (trend < 0) score = minTrend < 0 ? 5 - (trend / minTrend) * 5 : 5;
+        else score = 5;
+        return Math.max(0, Math.min(10, score));
+      }
+
       function calcScores(data, city) {
         const prices = Object.values(data).map((d) => d.avg_price);
         const maxPrice = Math.max(...prices);
         const minPrice = Math.min(...prices);
         const trends = Object.values(data).map((d) => d.trend);
         const maxTrend = Math.max(...trends);
+        const minTrend = Math.min(...trends);
         const w = PERSONAS[currentPersona].weights;
 
         const result = {};
         for (const [name, d] of Object.entries(data)) {
           const quiet = IMPACT_TO_QUIET[d.impact] ?? 5;
           const afford = ((maxPrice - d.avg_price) / (maxPrice - minPrice)) * 10;
-          // Methodology v3.2: growth clamps to 0-10 — negative trends floor
-          // at 0. Still computed under v3.3, but only `investor` weights it:
-          // growth caused 87% of Q1→Q2 score movement while nothing physical
+          // Growth is still computed under v3.3+, but only `investor` weights
+          // it: growth caused 87% of Q1→Q2 score movement while nothing physical
           // about any borough changed, so it describes the market rather than
           // the place. See METHODOLOGY.md §5.1.
-          // at 0 rather than producing sub-zero components (the 2026-Q2
-          // refresh introduced falling boroughs).
-          const growth = Math.max(0, Math.min(10, maxTrend > 0 ? (d.trend / maxTrend) * 10 : 0));
+          const growth = growthScore(d.trend, maxTrend, minTrend);
           const live = getLiveScore(name, city || 'london');
           const total = quiet * w.quiet + afford * w.afford + growth * w.growth + live * w.live;
           result[name] = {
@@ -5017,7 +5035,9 @@
 
         // Collect growth rates from boroughs
         const boroughRaw = city === 'nyc' ? NYC_BOROUGH_DATA_RAW : BOROUGH_DATA_RAW;
-        const maxTrend = Math.max(...Object.values(boroughRaw).map((d) => d.trend));
+        const trendVals = Object.values(boroughRaw).map((d) => d.trend);
+        const maxTrend = Math.max(...trendVals);
+        const minTrend = Math.min(...trendVals);
 
         const results = [];
         for (const [name, info] of Object.entries(areaMap)) {
@@ -5082,8 +5102,12 @@
           // 2. AFFORDABILITY - from neighbourhood-specific price
           const afford = maxPrice === minPrice ? 5 : ((maxPrice - price) / (maxPrice - minPrice)) * 10;
 
-          // 3. GROWTH - inherited from borough
-          const growth = ((borData.trend || boroughRaw[borough]?.trend || 3) / maxTrend) * 10;
+          // 3. GROWTH - inherited from borough. Mirrors the borough-path formula
+          // above and the API (score/app.py) exactly: one concept, one result.
+          // `??` not `||` — a legitimate trend of 0 is data, not a missing value,
+          // and the old `|| 3` substituted +3% growth the data explicitly denies.
+          const growthTrend = borData.trend ?? boroughRaw[borough]?.trend ?? 0;
+          const growth = growthScore(growthTrend, maxTrend, minTrend);
 
           // 4. LIVEABILITY - borough base adjusted by crime modifier
           const borLive = borData.scores?.live ?? 5;
