@@ -1739,7 +1739,8 @@
          main map stays the scoring map, and the sidebar never empties. */
       .locator {
         position: absolute;
-        top: 112px;
+        /* Clears the country tier (70) and the city chips below it. */
+        top: 138px;
         left: 32px;
         width: 112px;
         z-index: 5;
@@ -1779,10 +1780,45 @@
         }
       }
 
+      /* Country tier. Deliberately not chip-styled: underlined text reads as a
+         level ABOVE the city chips, so the two rows are a hierarchy rather than
+         two competing rows of buttons. */
+      .country-selector {
+        position: absolute;
+        top: 70px;
+        left: 32px;
+        z-index: 10;
+        display: flex;
+        gap: 14px;
+      }
+      .country-btn {
+        background: none;
+        border: 0;
+        padding: 0 0 3px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--mid);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      }
+      .country-btn.active {
+        color: var(--dark);
+        border-bottom-color: var(--orange);
+      }
+      .country-btn:hover {
+        color: var(--dark);
+      }
+      .country-btn:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+
       /* City selector */
       .city-selector {
         position: absolute;
-        top: 72px;
+        top: 96px;
         left: 32px;
         z-index: 10;
         display: flex;
@@ -2581,29 +2617,19 @@
           </span>
           <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
         </div>
-        <div class="city-selector" id="city-selector" role="group" aria-label="Select city">
-          <button
-            type="button"
-            class="city-btn active"
-            aria-pressed="true"
-            data-city="london"
-            onclick="switchCity('london')"
-          >
-            London
+        <!-- Country first, then cities within it. A flat list put New York
+             between London and Manchester, which reads as arbitrary - and gets
+             worse as UK cities are added, since New York ends up tacked onto a
+             run of nine. Country is also where the DATA genuinely breaks: DEFRA
+             vs no published US survey, OGL vs not, Ofsted vs no equivalent. The
+             grouping matches the data model rather than tidying the UI. -->
+        <div class="country-selector" id="country-selector" role="tablist" aria-label="Select country">
+          <button type="button" class="country-btn active" role="tab" aria-selected="true" data-country="UK">
+            UK
           </button>
-          <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">
-            New York
-          </button>
-          <button
-            type="button"
-            class="city-btn"
-            aria-pressed="false"
-            data-city="manchester"
-            onclick="switchCity('manchester')"
-          >
-            Manchester
-          </button>
+          <button type="button" class="country-btn" role="tab" aria-selected="false" data-country="US">USA</button>
         </div>
+        <div class="city-selector" id="city-selector" role="group" aria-label="Select city"></div>
         <!-- Locator inset: where the current city sits nationally, and which
              other cities exist. Persistent rather than a separate overview
              screen - the main map stays the scoring map, and the sidebar never
@@ -7996,6 +8022,44 @@
     <p>${cityCfg(city).hint}</p></div>`;
       }
 
+      // --- Country / city selector ------------------------------------------
+      // Chips are built from CITY_DATA, so adding a city is a registry entry
+      // rather than markup. The last city visited per country is remembered, so
+      // flipping UK -> USA -> UK returns you where you were instead of resetting
+      // to London.
+      const lastCityInCountry = {};
+
+      function renderCitySelector(country) {
+        const box = document.getElementById('city-selector');
+        if (!box) return;
+        box.textContent = '';
+        Object.keys(CITY_DATA)
+          .filter((id) => CITY_DATA[id].country === country)
+          .forEach((id) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'city-btn' + (id === currentCity ? ' active' : '');
+            b.dataset.city = id;
+            b.setAttribute('aria-pressed', String(id === currentCity));
+            b.textContent = CITY_DATA[id].label;
+            b.addEventListener('click', () => switchCity(id));
+            box.appendChild(b);
+          });
+        document.querySelectorAll('.country-btn').forEach((t) => {
+          const on = t.dataset.country === country;
+          t.classList.toggle('active', on);
+          t.setAttribute('aria-selected', String(on));
+        });
+      }
+
+      function switchCountry(country) {
+        if (cityCfg(currentCity).country === country) return;
+        const target =
+          lastCityInCountry[country] ||
+          Object.keys(CITY_DATA).find((id) => CITY_DATA[id].country === country);
+        if (target) switchCity(target);
+      }
+
       // --- Locator inset ---------------------------------------------------
       // Region names in the boundary data are city-REGIONS; the app keys on
       // city. Only mapped entries are clickable, so a planned region is a
@@ -8099,11 +8163,10 @@
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
         aircraftRasterLoadedFor = null;
-        document.querySelectorAll('.city-btn').forEach((b) => {
-          const isActive = b.dataset.city === city;
-          b.classList.toggle('active', isActive);
-          b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
+        // Rebuild rather than toggle: the chip row only shows the active
+        // country's cities, so a cross-country switch changes which chips exist.
+        lastCityInCountry[cityCfg(city).country] = city;
+        renderCitySelector(cityCfg(city).country);
 
         const titleEl = document.getElementById('map-title-text');
         const subtitleEl = document.getElementById('map-subtitle');
@@ -8709,6 +8772,11 @@
         }
         // init() has no `city` parameter — the initial city is whatever
         // currentCity was set to at load.
+        document.querySelectorAll('.country-btn').forEach((t) => {
+          t.addEventListener('click', () => switchCountry(t.dataset.country));
+        });
+        lastCityInCountry[cityCfg(currentCity).country] = currentCity;
+        renderCitySelector(cityCfg(currentCity).country);
         renderLocator(currentCity);
         renderDefraTiles();
         renderCityFlightPaths();

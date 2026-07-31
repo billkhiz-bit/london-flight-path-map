@@ -40,6 +40,14 @@ let fail = 0;
 const expect = { london: false, nyc: true, manchester: false };
 for (const city of ['london', 'nyc', 'manchester']) {
   if (city !== 'london') {
+    const want = await page.evaluate((c) => window.cityCfg(c).country, city);
+    const have = await page.evaluate(
+      () => document.querySelector('.country-btn.active')?.dataset.country
+    );
+    if (want !== have) {
+      await page.click(`.country-btn[data-country="${want}"]`);
+      await page.waitForTimeout(1400);
+    }
     await page.click(`.city-btn[data-city="${city}"]`);
     await page.waitForTimeout(1400);
   }

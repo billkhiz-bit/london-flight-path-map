@@ -66,6 +66,15 @@ async function probe(city, { click = true } = {}) {
   // every later probe - London included - must actually drive the button, or
   // the "switch back" check silently re-reads the previous city.
   if (click) {
+    // Chips only exist for the active country, so select that tier first.
+    const want = await page.evaluate((c) => window.cityCfg(c).country, city);
+    const have = await page.evaluate(
+      () => document.querySelector('.country-btn.active')?.dataset.country
+    );
+    if (want !== have) {
+      await page.click(`.country-btn[data-country="${want}"]`);
+      await page.waitForTimeout(1400);
+    }
     await page.click(`.city-btn[data-city="${city}"]`);
     // Boundary fetch + d3 render.
     await page.waitForTimeout(1400);

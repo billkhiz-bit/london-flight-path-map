@@ -29,6 +29,15 @@ await page.waitForTimeout(1200);
 
 for (const city of ['london', 'nyc', 'manchester']) {
   if (city !== 'london') {
+    // Chips exist only for the active country, so select that tier first.
+    const want = await page.evaluate((c) => window.cityCfg(c).country, city);
+    const have = await page.evaluate(
+      () => document.querySelector('.country-btn.active')?.dataset.country
+    );
+    if (want !== have) {
+      await page.click(`.country-btn[data-country="${want}"]`);
+      await page.waitForTimeout(1500);
+    }
     await page.click(`.city-btn[data-city="${city}"]`);
     await page.waitForTimeout(1800);
   }
