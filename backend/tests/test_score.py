@@ -1496,5 +1496,92 @@ class IndependentReviewRegressionTests(unittest.TestCase):
                 self.assertEqual(credits_ons_in_sources, served)
 
 
+class CoreCitiesAuditTests(unittest.TestCase):
+    """Regressions for the 2026-07-31 cross-city audit findings.
+
+    Each of these is written to be able to FAIL. A guard that cannot go red is
+    the failure mode that let preflight report green while running nothing, so
+    the vocabulary test below deliberately feeds bad data and asserts it raises,
+    rather than only asserting the good data passes.
+    """
+
+    def test_vocabulary_guard_rejects_off_table_token(self):
+        # 'poor' is a valid TRANSPORT_SCORE key but not a SCHOOL_SCORE one, so
+        # it is the natural thing to write and the one that silently scored 5.0
+        # — better than the real worst band, 'mixed' at 3.
+        self.assertNotIn('poor', app.SCHOOL_SCORE)
+        self.assertEqual(app.SCHOOL_SCORE.get('poor', 5), 5)
+        self.assertLess(app.SCHOOL_SCORE['mixed'], 5)
+
+        bad = {'testcity': {'boroughs': {'Testville': {'schools': 'poor'}}}}
+        with self.assertRaises(ValueError) as ctx:
+            app.validate_borough_vocabulary(bad)
+        self.assertIn('schools', str(ctx.exception))
+        self.assertIn('Testville', str(ctx.exception))
+
+    def test_vocabulary_guard_allows_absent_fields(self):
+        # A city part-way through sourcing is a known, handled state. Only a
+        # PRESENT-but-unrecognised value is an error.
+        app.validate_borough_vocabulary(
+            {'testcity': {'boroughs': {'Testville': {'avgPrice': 1, 'trend': 0.0}}}}
+        )
+
+    def test_shipped_data_passes_its_own_guard(self):
+        app.validate_borough_vocabulary(app.CITIES)
+
+    def test_regions_announces_every_scoreable_city(self):
+        # The discovery endpoint was a hand-written two-city literal, so adding
+        # Greater Manchester to CITIES produced an API that scored a city it
+        # would not admit to supporting.
+        event = {'requestContext': {'http': {'method': 'GET'}}, 'rawPath': '/v1/regions', 'headers': {}}
+        body = json.loads(app.handle_regions(event)['body'])
+        announced = {c['id'] for c in body['cities']}
+        self.assertEqual(announced, set(app.CITIES))
+        for entry in body['cities']:
+            self.assertEqual(entry['boroughCount'], len(app.CITIES[entry['id']]['boroughs']))
+
+    def test_city_without_history_declines_to_compare(self):
+        # Returning the current dataset made ?compare=previous fabricate a
+        # measured zero change, byte-identical to NYC's honest zero.
+        #
+        # hasHistory defaults to False, so this asserts the guarantee for ANY
+        # future city rather than only the one that exposed the bug. A city
+        # added without declaring a baseline must decline to compare.
+        self.assertIsNotNone(app.previous_dataset('london'))
+        self.assertIsNotNone(app.previous_dataset('nyc'))
+        app.CITIES['testville'] = {
+            'boroughs': {'Testville': {'avgPrice': 1, 'trend': 0.0, 'impact': 'low'}},
+            'currency': 'GBP', 'name': 'Testville', 'country': 'United Kingdom',
+            'postcodeFormat': 'n/a', 'postcodeResolver': lambda: 'n/a',
+        }
+        try:
+            self.assertIsNone(app.previous_dataset('testville'))
+        finally:
+            del app.CITIES['testville']
+
+    def test_include_comparison_keeps_the_reason_there_is_none(self):
+        filtered = app.filter_response(
+            {'comparisonUnavailable': 'why', 'score': 1}, {'comparison'}
+        )
+        self.assertIn('comparisonUnavailable', filtered)
+
+    def test_live_resolution_distinguishes_measured_from_placeholder(self):
+        # 5.0 is below London's entire observed live range, so an unsourced city
+        # is penalised rather than treated neutrally. The score cannot say that;
+        # the resolution field can.
+        london_live = [
+            app.get_live_score(bd) for bd in app.CITIES['london']['boroughs'].values()
+        ]
+        self.assertGreater(min(london_live), 5.0)
+
+        sourced = app.CITIES['london']['boroughs']['Hounslow']
+        self.assertEqual(app.live_resolution(sourced), 'measured')
+
+        unsourced = {'avgPrice': 1, 'trend': 0.0}
+        self.assertEqual(app.get_live_score(unsourced), 5.0)
+        self.assertIn('unavailable', app.live_resolution(unsourced))
+        self.assertIn('partial', app.live_resolution({'schools': 'good'}))
+
+
 if __name__ == '__main__':
     unittest.main()

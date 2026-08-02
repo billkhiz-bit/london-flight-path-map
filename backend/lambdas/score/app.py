@@ -188,11 +188,29 @@ LONDON_PREVIOUS_PT = {
 
 
 def previous_dataset(city):
-    """The borough dataset as of PREVIOUS_VINTAGE: current data overlaid
-    with the superseded price/trend pairs. NYC had no quarterly refresh
-    between vintages, so its previous dataset equals the current one
-    (comparisons honestly report zero change)."""
-    current = CITIES[city]['boroughs']
+    """The borough dataset as of PREVIOUS_VINTAGE, or None if the city had no
+    presence in the dataset at that vintage.
+
+    Three genuinely different cases, which this used to collapse into two:
+
+      london      refreshed between vintages — current data overlaid with the
+                  superseded price/trend pairs.
+      nyc         existed at PREVIOUS_VINTAGE but had no quarterly refresh, so
+                  its previous dataset legitimately equals the current one and
+                  a comparison honestly reports zero change.
+      manchester  did not exist at PREVIOUS_VINTAGE at all. Returning the current
+                  set made ?compare=previous fabricate a *measured* zero change
+                  for a city with no history — byte-identical to NYC's honest
+                  zero, with nothing in the response letting a caller tell an
+                  unchanged market from a city that was not being tracked yet.
+
+    Returning None for the third case makes callers decline to compare instead of
+    inventing a baseline.
+    """
+    cfg = CITIES[city]
+    if not cfg.get('hasHistory', False):
+        return None
+    current = cfg['boroughs']
     if city != 'london':
         return current
     merged = {}
@@ -818,7 +836,7 @@ LONDON_BOROUGHS = {
         'avgPrice': 806000,
         'trend': -3.9,
         'schools': 'excellent',
-        'crimeRate': 130,
+        'crimeRate': 173.3,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -899,7 +917,7 @@ LONDON_BOROUGHS = {
         'avgPrice': 1256000,
         'trend': -9.5,
         'schools': 'excellent',
-        'crimeRate': 95,
+        'crimeRate': 145.8,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -980,7 +998,7 @@ LONDON_BOROUGHS = {
         'avgPrice': 836000,
         'trend': -20.8,
         'schools': 'good',
-        'crimeRate': 175,
+        'crimeRate': 355.5,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -1084,9 +1102,87 @@ NYC_BOROUGHS = {
 }
 
 CITIES = {
-    'london': {'boroughs': LONDON_BOROUGHS, 'currency': 'GBP'},
-    'nyc': {'boroughs': NYC_BOROUGHS, 'currency': 'USD'},
+    'london': {
+        'boroughs': LONDON_BOROUGHS,
+        'currency': 'GBP',
+        'name': 'London',
+        'country': 'United Kingdom',
+        'postcodeFormat': 'UK postcode (e.g. SW11 1AA)',
+        # Keyed on what has actually SERVED, exactly as build_sources is — not
+        # on POSTCODE_TABLE being set. Keying it on config let /v1/regions claim
+        # ONS NSPL while every /v1/score response in the same window credited
+        # postcodes.io: two endpoints of one API contradicting each other on
+        # machine-readable provenance.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
+        # Present in the dataset at PREVIOUS_VINTAGE, so ?compare=previous has a
+        # real baseline. Absent/False means the city postdates that vintage and
+        # must decline to compare — see previous_dataset(). Defaulting to False
+        # makes a newly added city safe rather than silently fabricating history.
+        'hasHistory': True,
+    },
+    'nyc': {
+        'boroughs': NYC_BOROUGHS,
+        'currency': 'USD',
+        'name': 'New York City',
+        'country': 'United States',
+        'postcodeFormat': '5-digit US ZIP (e.g. 10001), with optional +4 suffix',
+        'postcodeResolver': lambda: 'static ZIP-to-borough lookup',
+        'extra': lambda: {'supportedZipCount': len(NYC_ZIP_TO_BOROUGH)},
+        # Existed at PREVIOUS_VINTAGE but had no quarterly refresh, so its
+        # zero-change comparison is an honest measurement, not a placeholder.
+        'hasHistory': True,
+    },
 }
+
+# Guard against the silent-typo class. Every categorical liveability field is
+# read with `.get(value, 5)`, so an unrecognised token does not raise — it scores
+# a middling 5.0. For schools that is BETTER than the genuine worst band ('mixed'
+# = 3), and for healthcare better than 'moderate' (4). So writing
+# `'schools': 'poor'` — the obvious thing to write, and a valid token in the
+# adjacent TRANSPORT_SCORE table — makes a borough look better than the data
+# says, with no error raised anywhere.
+#
+# Validating at import means a bad token fails pytest and the SAM build rather
+# than being served as a fact under an OGL attribution. The check is written to
+# be *able* to go red; test_score.py feeds it a deliberately bad value and
+# asserts it raises.
+_CATEGORICAL_FIELDS = {
+    'schools': SCHOOL_SCORE,
+    'transport': TRANSPORT_SCORE,
+    'healthcare': HEALTH_SCORE,
+}
+
+
+def validate_borough_vocabulary(cities):
+    """Raise if any borough carries a categorical value its lookup table lacks.
+
+    An ABSENT field is allowed: a city part-way through being sourced is a known,
+    handled state (see get_live_score and live_resolution). A field that is
+    present but unrecognised is not — it is always a mistake, and always one that
+    scores 5.0 rather than failing.
+    """
+    problems = []
+    for city_id, cfg in cities.items():
+        for name, bd in cfg['boroughs'].items():
+            for field, table in _CATEGORICAL_FIELDS.items():
+                value = bd.get(field)
+                if value is not None and value not in table:
+                    problems.append(
+                        f'{city_id}/{name}: {field}={value!r} is not one of {sorted(table)}'
+                    )
+    if problems:
+        raise ValueError(
+            'Borough data carries values no scoring table recognises. Each would '
+            'silently score 5.0 instead of raising:\n  ' + '\n  '.join(problems)
+        )
+
+
+validate_borough_vocabulary(CITIES)
+
 
 # NYC ZIP-to-borough mapping. ZIPs grouped per borough and flattened into a
 # dict for O(1) lookup. Sourced from NYC OpenData ZCTA boundaries + USPS.
@@ -2155,12 +2251,43 @@ def crime_to_score(rate):
     return max(0.0, min(10.0, 10.0 - (rate - 50) / 15.0))
 
 
+_LIVE_FIELDS = ('schools', 'crimeRate', 'transport', 'healthcare')
+
+
 def get_live_score(bd):
+    """Liveability composite: schools 35%, crime 30%, transport 25%, health 10%.
+
+    Each absent input falls back to 5.0, and **5.0 is not neutral**. London's
+    computed live scores span 5.5-8.8, so the fallback sits below the entire
+    observed range: a borough with no liveability data scores worse than the
+    weakest borough that has some, and filling in a single below-average field
+    can push it lower still. Partial data is worse than none.
+
+    The fallback is retained because a live API must answer, but the number it
+    produces is structural rather than a claim about the place. live_resolution()
+    is what lets a caller tell those two apart, and the response carries it.
+    """
     sch = SCHOOL_SCORE.get(bd.get('schools'), 5)
     crm = crime_to_score(bd.get('crimeRate'))
     trn = TRANSPORT_SCORE.get(bd.get('transport'), 5)
     hlt = HEALTH_SCORE.get(bd.get('healthcare'), 5)
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
+
+
+def live_resolution(bd):
+    """How much of the liveability composite is measured rather than defaulted.
+
+    Mirrors quietResolution: the response states how an answer was reached, not
+    only what it was. 'unavailable' means every input hit the 5.0 placeholder, so
+    the component says nothing about the location — the distinction that made
+    Greater Manchester's uniform 5.0 read as a finding rather than a gap.
+    """
+    present = sum(1 for f in _LIVE_FIELDS if bd.get(f) is not None)
+    if present == len(_LIVE_FIELDS):
+        return 'measured'
+    if present == 0:
+        return 'unavailable — all inputs defaulted to 5.0 placeholder'
+    return f'partial — {present}/{len(_LIVE_FIELDS)} inputs measured, rest defaulted to 5.0'
 
 
 def growth_score(trend, max_trend, min_trend):
@@ -2267,6 +2394,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             'priceTrendPct': bd['trend'],
             'noiseImpactBand': bd['impact'],
             'quietResolution': quiet_source,
+            'liveResolution': live_resolution(bd),
         },
     }
 
@@ -2496,6 +2624,7 @@ RESPONSE_FIELDS = {
     'score',
     'components',
     'comparison',
+    'comparisonUnavailable',
     'context',
     'location',
     'persona',
@@ -2539,6 +2668,12 @@ def filter_response(body, include):
         return body
     always = {'apiVersion', 'methodologyVersion', 'methodologyUrl', 'generatedAt', 'sources'}
     keep = include | always
+    # Asking for the comparison should also get you the reason there isn't one.
+    # Otherwise ?include=comparison on a city with no prior vintage returns a
+    # body with no comparison and no explanation — indistinguishable from the
+    # parameter having been ignored.
+    if 'comparison' in keep:
+        keep = keep | {'comparisonUnavailable'}
     return {k: v for k, v in body.items() if k in keep}
 
 
@@ -2740,21 +2875,34 @@ def resolve_query(query):
     score_data = calc_score(borough, city, weights, lat=lat, lon=lon, postcode_clean=pc_clean)
 
     comparison = None
+    comparison_unavailable = None
     if parse_str_param(query.get('compare')).lower() == 'previous':
-        prev_data = calc_score(
-            borough,
-            city,
-            weights,
-            lat=lat,
-            lon=lon,
-            postcode_clean=pc_clean,
-            boroughs_override=previous_dataset(city),
-        )
-        comparison = build_comparison(score_data, prev_data, city, borough)
+        prev_set = previous_dataset(city)
+        if prev_set is None:
+            # Saying nothing would leave the caller assuming the parameter was
+            # ignored; reporting zero change would assert a measurement nobody
+            # took. Neither is acceptable, so the response says why explicitly.
+            comparison_unavailable = (
+                f'{CITIES[city]["name"]} entered the dataset after {PREVIOUS_VINTAGE}, '
+                'so no prior vintage exists to compare against. Reporting zero '
+                'change here would imply a measurement that was never taken.'
+            )
+        else:
+            prev_data = calc_score(
+                borough,
+                city,
+                weights,
+                lat=lat,
+                lon=lon,
+                postcode_clean=pc_clean,
+                boroughs_override=prev_set,
+            )
+            comparison = build_comparison(score_data, prev_data, city, borough)
 
     body = {
         **score_data,
         **({'comparison': comparison} if comparison is not None else {}),
+        **({'comparisonUnavailable': comparison_unavailable} if comparison_unavailable else {}),
         'location': location_meta,
         'persona': persona_label,
         'weights': weights,
@@ -2805,41 +2953,37 @@ def handle_options():
 
 def handle_regions(event):
     """GET /v1/regions, discovery endpoint listing supported geographies.
-    Used by integrators to know what's queryable without scraping responses."""
+    Used by integrators to know what's queryable without scraping responses.
+
+    Built by iterating CITIES. This was previously a hand-written literal naming
+    London and NYC only, so adding Greater Manchester to CITIES produced an API
+    that would score a city it refused to admit supporting — the discovery
+    endpoint denying a geography /v1/score answers on. Deriving it means the
+    failure mode cannot recur: a city is discoverable because it is scoreable,
+    not because someone remembered to add it twice.
+
+    Iteration order is CITIES' declaration order, not sorted, so adding a city
+    appends rather than reshuffling an existing integrator's list.
+    """
+    cities = []
+    for city_id, cfg in CITIES.items():
+        entry = {
+            'id': city_id,
+            'name': cfg['name'],
+            'country': cfg['country'],
+            'currency': cfg['currency'],
+            'postcodeFormat': cfg['postcodeFormat'],
+            'postcodeResolver': cfg['postcodeResolver'](),
+            'boroughCount': len(cfg['boroughs']),
+            'boroughs': sorted(cfg['boroughs'].keys()),
+        }
+        if 'extra' in cfg:
+            entry.update(cfg['extra']())
+        cities.append(entry)
     return response(
         200,
         {
-            'cities': [
-                {
-                    'id': 'london',
-                    'name': 'London',
-                    'country': 'United Kingdom',
-                    'currency': 'GBP',
-                    'postcodeFormat': 'UK postcode (e.g. SW11 1AA)',
-                    # Keyed on what has actually SERVED, exactly as
-                    # build_sources is — not on POSTCODE_TABLE being set.
-                    # Keying it on config let /v1/regions claim ONS NSPL while
-                    # every /v1/score response in the same window credited
-                    # postcodes.io: two endpoints of one API contradicting
-                    # each other on machine-readable provenance.
-                    'postcodeResolver': 'ONS NSPL local table, postcodes.io fallback'
-                    if _LOCAL_POSTCODE_SERVED
-                    else 'postcodes.io',
-                    'boroughCount': len(LONDON_BOROUGHS),
-                    'boroughs': sorted(LONDON_BOROUGHS.keys()),
-                },
-                {
-                    'id': 'nyc',
-                    'name': 'New York City',
-                    'country': 'United States',
-                    'currency': 'USD',
-                    'postcodeFormat': '5-digit US ZIP (e.g. 10001), with optional +4 suffix',
-                    'postcodeResolver': 'static ZIP-to-borough lookup',
-                    'boroughCount': len(NYC_BOROUGHS),
-                    'boroughs': sorted(NYC_BOROUGHS.keys()),
-                    'supportedZipCount': len(NYC_ZIP_TO_BOROUGH),
-                },
-            ],
+            'cities': cities,
             'apiVersion': API_VERSION,
             'methodologyVersion': METHODOLOGY_VERSION,
             'methodologyUrl': METHODOLOGY_URL,
