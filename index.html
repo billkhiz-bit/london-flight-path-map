@@ -4814,6 +4814,13 @@
       // Convert text ratings to numeric scores for liveability
       const SCHOOL_SCORE = { outstanding: 10, excellent: 9, good: 6, mixed: 3 };
       const CRIME_TO_SCORE = (rate) => Math.max(0, Math.min(10, 10 - (rate - 50) / 15));
+      // Methodology v3.5. Mirrors school_score() in backend/lambdas/score/app.py
+      // — this file computes its own scores from data/borough-extra.json, so any
+      // divergence here means the site and /v1/score publish different numbers
+      // for the same borough. DfE Progress 8: 0.0 is the national average and
+      // +/-1.0 is a full grade per subject against pupils with the same KS2
+      // baseline, so the anchors are absolute rather than cohort-relative.
+      const SCHOOL_SCORE_P8 = (p8) => Math.max(0, Math.min(10, 5.0 + 5.0 * p8));
       const TRANSPORT_SCORE = { excellent: 10, good: 7, moderate: 4, poor: 2 };
       const HEALTH_SCORE = { excellent: 10, good: 7, moderate: 4 };
 
@@ -4884,7 +4891,13 @@
         const extraData = city === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA;
         const ex = extraData[boroughName];
         if (!ex) return 5;
-        const sch = SCHOOL_SCORE[ex.schools] || 5;
+        // Progress 8 where it exists (English boroughs), the legacy band
+        // otherwise. New York has neither Ofsted nor DfE and keeps its curated
+        // tier. Same precedence as get_live_score() in the score Lambda.
+        const sch =
+          ex.p8 !== undefined && ex.p8 !== null
+            ? SCHOOL_SCORE_P8(ex.p8)
+            : SCHOOL_SCORE[ex.schools] || 5;
         const crm = ex.crimeRate ? CRIME_TO_SCORE(ex.crimeRate) : 5;
         const trn = TRANSPORT_SCORE[ex.transport] || 5;
         const hlt = HEALTH_SCORE[ex.healthcare] || 5;
