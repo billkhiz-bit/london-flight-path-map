@@ -83,6 +83,14 @@ USAGE:
   # Full overnight run (~1 hour, ~1.7M postcodes, ~$2-3 in DDB writes):
   AWS_PROFILE=flightmap python scripts/load_defra_raster.py
 
+  # A second city. DEFRA publishes one raster per agglomeration, and the
+  # bundled London raster covers only 493005-568005E / 155995-206995N, so
+  # Greater Manchester needs its own export and its own pass:
+  AWS_PROFILE=flightmap python scripts/load_defra_raster.py \\
+    --geotiff data/defra_lden_2022_manchester.tif
+  # Each raster keeps its own resume checkpoint, so the second pass does not
+  # inherit the first one's progress and skip the CSV.
+
 EXPECTED RUNTIME:
 
   ~1.7M postcodes, ~500 writes/sec to DynamoDB on-demand → ~1 hour. The
@@ -135,13 +143,29 @@ NSPL_CSV_PATH = Path('data/nspl.csv')
 TABLE_NAME = 'london-flight-map-noise-raster'
 AWS_REGION = 'eu-west-2'
 BATCH_SIZE = 25 # DynamoDB BatchWriteItem max
-CHECKPOINT_PATH = Path('.defra_load_checkpoint')
+
 
 # Lden sanity range, DEFRA values are 30-95 dB; pixels outside this
 # range are nodata sentinels (often 0, 255, or large negative numbers
 # depending on the GeoTIFF encoding).
 LDEN_MIN = 30.0
 LDEN_MAX = 100.0
+
+
+def checkpoint_path_for(geotiff):
+    """Resume checkpoint, namespaced per raster.
+
+    DEFRA publishes one raster per agglomeration, so covering a second city
+    means a second full pass over the same NSPL CSV with a different GeoTIFF.
+    A single shared checkpoint file would make that second pass resume from
+    wherever the first one finished and skip almost every postcode — a run
+    that exits cleanly, prints "Done", and writes nearly nothing.
+
+    Rows are keyed by postcode and the rasters cover disjoint areas, so
+    separate passes never contend: each writes only the postcodes inside its
+    own bbox and falls through on the rest.
+    """
+    return Path(f'.defra_load_checkpoint_{Path(geotiff).stem}')
 
 
 def parse_args():
@@ -162,6 +186,15 @@ def parse_args():
              'what would be written. Use with --limit for a fast (~30 s) '
              'end-to-end smoke test that confirms the raster, CRS '
              'transform, and CSV columns are all working.',
+    )
+    p.add_argument(
+        '--geotiff', type=Path, default=DEFRA_GEOTIFF_PATH, metavar='PATH',
+        help='DEFRA Lden GeoTIFF to sample. Defaults to the London raster. '
+             'DEFRA publishes one raster per agglomeration, so covering a '
+             'second city means running this again with that city\'s raster; '
+             'rows are keyed by postcode and the bboxes are disjoint, so the '
+             'passes do not contend. Each raster gets its own resume '
+             'checkpoint.',
     )
     p.add_argument(
         '--self-test', action='store_true',
@@ -242,7 +275,7 @@ def _flush_batch(ddb, items):
         list(ex.map(_put, items))
 
 
-def run_load(limit, dry_run):
+def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH):
     """Sample the raster at NSPL postcode centroids and write to DynamoDB.
 
     When `dry_run` is True the DynamoDB writes are skipped and the script
@@ -260,10 +293,12 @@ def run_load(limit, dry_run):
         print('Install with: pip install rasterio pyproj boto3 tqdm')
         sys.exit(1)
 
-    if not DEFRA_GEOTIFF_PATH.exists():
-        print(f'DEFRA GeoTIFF not found at {DEFRA_GEOTIFF_PATH}')
+    if not geotiff.exists():
+        print(f'DEFRA GeoTIFF not found at {geotiff}')
         print('Download from https://www.gov.uk/government/collections/strategic-noise-mapping')
         sys.exit(1)
+
+    checkpoint_file = checkpoint_path_for(geotiff)
 
     if not NSPL_CSV_PATH.exists():
         print(f'NSPL CSV not found at {NSPL_CSV_PATH}')
@@ -273,12 +308,12 @@ def run_load(limit, dry_run):
     # Resume from checkpoint if it exists. Skipped when --limit is set
     # to avoid the limited-run resuming a previous full run.
     checkpoint = 0
-    if not limit and CHECKPOINT_PATH.exists():
-        checkpoint = int(CHECKPOINT_PATH.read_text().strip() or 0)
+    if not limit and checkpoint_file.exists():
+        checkpoint = int(checkpoint_file.read_text().strip() or 0)
         print(f'Resuming from row {checkpoint:,}')
 
     # Open the raster
-    raster = rasterio.open(DEFRA_GEOTIFF_PATH)
+    raster = rasterio.open(geotiff)
     raster_band = raster.read(1)
     raster_transform = raster.transform
     raster_crs = raster.crs
@@ -388,7 +423,7 @@ def run_load(limit, dry_run):
             # never filled, the flush never ran, and no checkpoint was
             # written before an interrupt. With this we can resume mid-run.
             if not limit and not dry_run and idx > 0 and idx % 1000 == 0:
-                CHECKPOINT_PATH.write_text(str(idx))
+                checkpoint_file.write_text(str(idx))
 
     # Flush remainder
     if batch:
@@ -398,7 +433,7 @@ def run_load(limit, dry_run):
 
     # Clean up checkpoint on success, only on a full uninterrupted run
     if not limit and not dry_run:
-        CHECKPOINT_PATH.unlink(missing_ok=True)
+        checkpoint_file.unlink(missing_ok=True)
 
     raster.close()
     verb = 'Would have written' if dry_run else 'Wrote'
@@ -414,7 +449,7 @@ def main():
     if args.self_test:
         self_test()
         return
-    run_load(limit=args.limit, dry_run=args.dry_run)
+    run_load(limit=args.limit, dry_run=args.dry_run, geotiff=args.geotiff)
 
 
 if __name__ == '__main__':
