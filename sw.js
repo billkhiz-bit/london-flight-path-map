@@ -26,7 +26,17 @@
 // stay cache-first — but bump VERSION in the same commit whenever either
 // changes, or installed PWAs keep the old ones indefinitely.
 
-const VERSION = 'v1.0.4';
+// v1.0.5 (methodology v3.5): data/borough-extra.json changed — corrected crime
+// rates plus a new `p8` field. It is NOT precached, but it is same-origin
+// static, so the fetch handler serves it CACHE-FIRST out of RUNTIME_CACHE, and
+// only the activate handler's version sweep evicts it.
+//
+// index.html is network-first and would have updated on its own, so without
+// this bump a returning visitor got FRESH scoring code against STALE data:
+// `ex.p8` undefined, silent fallback to the retired editorial bands, and a site
+// showing different borough scores from the ones /v1/score returns. Any future
+// change to a file under /data/ needs this same bump for the same reason.
+const VERSION = 'v1.0.5';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
