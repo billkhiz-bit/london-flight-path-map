@@ -756,6 +756,7 @@ LONDON_BOROUGHS = {
         'trend': -1.1,
         'schools': 'good',
         'crimeRate': 89,
+        'p8': 0.45,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -765,6 +766,7 @@ LONDON_BOROUGHS = {
         'trend': 0.6,
         'schools': 'good',
         'crimeRate': 72,
+        'p8': 0.24,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -774,6 +776,7 @@ LONDON_BOROUGHS = {
         'trend': -1.3,
         'schools': 'excellent',
         'crimeRate': 58,
+        'p8': 0.4,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -783,6 +786,7 @@ LONDON_BOROUGHS = {
         'trend': -0.3,
         'schools': 'good',
         'crimeRate': 88,
+        'p8': 0.62,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -792,6 +796,7 @@ LONDON_BOROUGHS = {
         'trend': -4.2,
         'schools': 'excellent',
         'crimeRate': 82,
+        'p8': 0.33,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -801,6 +806,7 @@ LONDON_BOROUGHS = {
         'trend': -0.2,
         'schools': 'good',
         'crimeRate': 115,
+        'p8': 0.01,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -810,6 +816,7 @@ LONDON_BOROUGHS = {
         'trend': 4.8,
         'schools': 'good',
         'crimeRate': 91,
+        'p8': 0.0,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -819,6 +826,7 @@ LONDON_BOROUGHS = {
         'trend': 2.3,
         'schools': 'good',
         'crimeRate': 93,
+        'p8': -0.01,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -828,6 +836,7 @@ LONDON_BOROUGHS = {
         'trend': -11.0,
         'schools': 'good',
         'crimeRate': 120,
+        'p8': 0.21,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -837,6 +846,7 @@ LONDON_BOROUGHS = {
         'trend': -3.9,
         'schools': 'excellent',
         'crimeRate': 173.3,
+        'p8': -0.03,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -846,6 +856,7 @@ LONDON_BOROUGHS = {
         'trend': -4.4,
         'schools': 'good',
         'crimeRate': 125,
+        'p8': -0.03,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -855,6 +866,7 @@ LONDON_BOROUGHS = {
         'trend': 2.8,
         'schools': 'good',
         'crimeRate': 112,
+        'p8': 0.34,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -864,6 +876,7 @@ LONDON_BOROUGHS = {
         'trend': -2.4,
         'schools': 'excellent',
         'crimeRate': 74,
+        'p8': 0.64,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -873,6 +886,7 @@ LONDON_BOROUGHS = {
         'trend': 1.6,
         'schools': 'good',
         'crimeRate': 98,
+        'p8': 0.01,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -882,6 +896,7 @@ LONDON_BOROUGHS = {
         'trend': 1.5,
         'schools': 'excellent',
         'crimeRate': 65,
+        'p8': 0.04,
         'transport': 'moderate',
         'healthcare': 'good',
     },
@@ -891,6 +906,7 @@ LONDON_BOROUGHS = {
         'trend': 1.2,
         'schools': 'good',
         'crimeRate': 108,
+        'p8': 0.25,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -900,6 +916,7 @@ LONDON_BOROUGHS = {
         'trend': 3.8,
         'schools': 'good',
         'crimeRate': 118,
+        'p8': 0.38,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -909,6 +926,7 @@ LONDON_BOROUGHS = {
         'trend': -9.2,
         'schools': 'excellent',
         'crimeRate': 96,
+        'p8': 0.47,
         'transport': 'excellent',
         'healthcare': 'good',
     },
@@ -918,6 +936,7 @@ LONDON_BOROUGHS = {
         'trend': -9.5,
         'schools': 'excellent',
         'crimeRate': 145.8,
+        'p8': 0.3,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -927,6 +946,7 @@ LONDON_BOROUGHS = {
         'trend': -1.5,
         'schools': 'good',
         'crimeRate': 92,
+        'p8': 0.61,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -936,6 +956,7 @@ LONDON_BOROUGHS = {
         'trend': 4.8,
         'schools': 'good',
         'crimeRate': 99,
+        'p8': 0.21,
         'transport': 'good',
         'healthcare': 'moderate',
     },
@@ -945,6 +966,7 @@ LONDON_BOROUGHS = {
         'trend': 5.0,
         'schools': 'good',
         'crimeRate': 88,
+        'p8': -0.06,
         'transport': 'good',
         'healthcare': 'moderate',
     },
@@ -954,6 +976,7 @@ LONDON_BOROUGHS = {
         'trend': 0.5,
         'schools': 'good',
         'crimeRate': 70,
+        'p8': 0.59,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -963,6 +986,7 @@ LONDON_BOROUGHS = {
         'trend': 4.0,
         'schools': 'excellent',
         'crimeRate': 83,
+        'p8': 0.5,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -972,6 +996,7 @@ LONDON_BOROUGHS = {
         'trend': 1.0,
         'schools': 'good',
         'crimeRate': 85,
+        'p8': 0.21,
         'transport': 'moderate',
         'healthcare': 'moderate',
     },
@@ -981,6 +1006,7 @@ LONDON_BOROUGHS = {
         'trend': 1.3,
         'schools': 'excellent',
         'crimeRate': 62,
+        'p8': 0.58,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -990,6 +1016,7 @@ LONDON_BOROUGHS = {
         'trend': 2.3,
         'schools': 'excellent',
         'crimeRate': 60,
+        'p8': 0.51,
         'transport': 'moderate',
         'healthcare': 'good',
     },
@@ -999,6 +1026,7 @@ LONDON_BOROUGHS = {
         'trend': -20.8,
         'schools': 'good',
         'crimeRate': 355.5,
+        'p8': 0.48,
         'transport': 'excellent',
         'healthcare': 'excellent',
     },
@@ -1017,6 +1045,7 @@ LONDON_BOROUGHS = {
         'trend': 0.9,
         'schools': 'good',
         'crimeRate': 105,
+        'p8': 0.24,
         'transport': 'good',
         'healthcare': 'moderate',
     },
@@ -1026,6 +1055,7 @@ LONDON_BOROUGHS = {
         'trend': 3.3,
         'schools': 'good',
         'crimeRate': 72,
+        'p8': -0.09,
         'transport': 'moderate',
         'healthcare': 'good',
     },
@@ -1035,6 +1065,7 @@ LONDON_BOROUGHS = {
         'trend': 2.7,
         'schools': 'good',
         'crimeRate': 68,
+        'p8': -0.06,
         'transport': 'moderate',
         'healthcare': 'good',
     },
@@ -1044,6 +1075,7 @@ LONDON_BOROUGHS = {
         'trend': 2.3,
         'schools': 'excellent',
         'crimeRate': 70,
+        'p8': 0.45,
         'transport': 'good',
         'healthcare': 'good',
     },
@@ -2182,7 +2214,7 @@ CITY_PROVENANCE = {
             'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
             'afford': 'HM Land Registry House Price Index (HPI), borough cohort min-max scaling',
             'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
-            'live': 'ONS + Home Office + DfE + TfL + NHS, composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%); methodologically aligned with English Indices of Deprivation domains',
+            'live': 'Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2022/23, local-authority level — Progress 8 cannot be calculated for 2023/24 onwards because the KS2 baseline was lost to the 2020 and 2021 test cancellations, and DfE announced no replacement. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport and healthcare: curated tiers. Methodologically aligned with English Indices of Deprivation domains.',
         },
     },
     'nyc': {
@@ -2251,6 +2283,34 @@ def crime_to_score(rate):
     return max(0.0, min(10.0, 10.0 - (rate - 50) / 15.0))
 
 
+def school_score(p8):
+    """DfE Progress 8 -> 0-10, anchored on absolute constants.
+
+    Progress 8 measures the grades a cohort achieves against pupils with the
+    same KS2 starting point nationally, so it is defined such that the national
+    average is ~0.0 and +/-1.0 means a full grade per subject better or worse
+    than similar pupils. Both are real-world quantities, not cohort artefacts,
+    so the mapping needs no reference to which cities happen to be loaded:
+
+        0.0 -> 5.0     national average
+       +1.0 -> 10.0    a grade per subject above similar pupils
+       -1.0 ->  0.0    a grade per subject below
+
+    That is the v3.4 dual-anchor idea with the tails pinned to an external
+    constant instead of the loaded cohort's extremes, which is what makes it
+    comparable across cities AND across vintages. Observed LA scores span -0.90
+    to +0.73 nationally, so nothing clamps in practice.
+
+    This replaces the Ofsted-grade lookup for English boroughs. Ofsted abolished
+    single-word overall-effectiveness grades in September 2024; only ~44% of
+    schools still carry one, that residue is precisely the not-yet-reinspected,
+    and 87.2% of it is Good or Outstanding, so the measure barely discriminated.
+    Progress 8 is intake-adjusted, which also stops school quality quietly
+    re-importing the affluence already priced into the `afford` component.
+    """
+    return max(0.0, min(10.0, 5.0 + 5.0 * p8))
+
+
 _LIVE_FIELDS = ('schools', 'crimeRate', 'transport', 'healthcare')
 
 
@@ -2267,7 +2327,11 @@ def get_live_score(bd):
     produces is structural rather than a claim about the place. live_resolution()
     is what lets a caller tell those two apart, and the response carries it.
     """
-    sch = SCHOOL_SCORE.get(bd.get('schools'), 5)
+    # Progress 8 where it exists (English LAs), the legacy categorical band
+    # otherwise. New York has neither Ofsted nor DfE, so it keeps the curated
+    # tier — declared in CITY_PROVENANCE rather than passed off as DfE.
+    p8 = bd.get('p8')
+    sch = school_score(p8) if p8 is not None else SCHOOL_SCORE.get(bd.get('schools'), 5)
     crm = crime_to_score(bd.get('crimeRate'))
     trn = TRANSPORT_SCORE.get(bd.get('transport'), 5)
     hlt = HEALTH_SCORE.get(bd.get('healthcare'), 5)
@@ -2282,7 +2346,13 @@ def live_resolution(bd):
     the component says nothing about the location — the distinction that made
     Greater Manchester's uniform 5.0 read as a finding rather than a gap.
     """
-    present = sum(1 for f in _LIVE_FIELDS if bd.get(f) is not None)
+    # 'p8' satisfies the schools slot on its own — an English borough carrying
+    # Progress 8 has a *better* schools input than one carrying the legacy band,
+    # so counting only the categorical field would under-report resolution.
+    present = sum(
+        1 for f in _LIVE_FIELDS
+        if bd.get(f) is not None or (f == 'schools' and bd.get('p8') is not None)
+    )
     if present == len(_LIVE_FIELDS):
         return 'measured'
     if present == 0:

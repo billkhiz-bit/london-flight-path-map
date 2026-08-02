@@ -477,16 +477,22 @@ class CalcScoreTests(unittest.TestCase):
         #
         # The growth COMPONENT moved 0.0 -> 4.3 in v3.4 (dual-anchor: Wandsworth
         # is falling, but only mildly, so it now sits just below the 5.0
-        # flat-market anchor instead of collapsing onto the floor). The headline
-        # 6.7 is unchanged, which is the point: v3.3's zero weighting means a
-        # growth-formula change cannot move the balanced score.
+        # flat-market anchor instead of collapsing onto the floor). v3.3's zero
+        # weighting means a growth-formula change cannot move the balanced score,
+        # which is what this fixture exists to guard.
+        #
+        # 6.7 -> 6.4 and live 8.7 -> 7.9 when schools moved from the editorial
+        # Ofsted band to DfE Progress 8. Wandsworth was banded 'excellent'
+        # (SCHOOL_SCORE 9) but measures P8 +0.33 against a London median of
+        # +0.30 -- a shade above average, not exceptional. The drop is the
+        # correction the metric change exists to make, not a regression.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.7)
+        self.assertEqual(result['score'], 6.4)
         self.assertEqual(result['components']['quiet'], 5.0)
         self.assertEqual(result['components']['afford'], 6.7)
         self.assertEqual(result['components']['growth'], 4.3)
-        self.assertEqual(result['components']['live'], 8.7)
+        self.assertEqual(result['components']['live'], 7.9)
         self.assertEqual(result['context']['avgPriceGbp'], 660000)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
 
@@ -973,6 +979,18 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         self.assertTrue(licence, 'NYC must address the OGL question, not omit it')
         for ln in licence:
             self.assertIn('does NOT apply', ln)
+
+    def test_fully_sourced_city_carries_no_partial_disclosure(self):
+        # The Manchester half of this test lives on the Core Cities branch,
+        # where a partially-sourced city actually exists. What master can and
+        # must assert is the other side of the same guarantee: a city with all
+        # four liveability inputs reports 'measured' and carries no PARTIAL
+        # caveat, so the disclosure means something when it does appear.
+        lon, status = app.resolve_query({'city': 'london', 'borough': 'Hounslow'})
+        self.assertEqual(status, 200)
+        self.assertEqual(lon['context']['liveResolution'], 'measured')
+        self.assertNotIn('PARTIAL', lon['sourceBreakdown']['live'])
+        self.assertIn('Progress 8', lon['sourceBreakdown']['live'])
 
     def test_unknown_city_does_not_inherit_london_provenance(self):
         srcs = app.build_sources('atlantis')
@@ -1581,6 +1599,71 @@ class CoreCitiesAuditTests(unittest.TestCase):
         self.assertEqual(app.get_live_score(unsourced), 5.0)
         self.assertIn('unavailable', app.live_resolution(unsourced))
         self.assertIn('partial', app.live_resolution({'schools': 'good'}))
+
+
+class ProgressEightTests(unittest.TestCase):
+    """Schools moved from Ofsted editorial bands to DfE Progress 8, 2022/23."""
+
+    def test_anchors_are_absolute_not_cohort_relative(self):
+        # The whole point: 0.0 is the national average and +/-1.0 is a full
+        # grade per subject. Neither depends on which cities are loaded, which
+        # is what makes the scale comparable across cities and vintages.
+        self.assertEqual(app.school_score(0.0), 5.0)
+        self.assertEqual(app.school_score(1.0), 10.0)
+        self.assertEqual(app.school_score(-1.0), 0.0)
+        self.assertEqual(app.school_score(2.0), 10.0)   # clamped
+        self.assertEqual(app.school_score(-2.0), 0.0)   # clamped
+
+    def test_nothing_clamps_on_real_data(self):
+        # Observed LA Progress 8 runs -0.90 to +0.73 nationally, so a clamp
+        # would mean the anchors are wrong for the data they have to carry.
+        vals = [
+            app.school_score(b['p8'])
+            for city in ('london', 'manchester')
+            for b in app.CITIES[city]['boroughs'].values()
+            if b.get('p8') is not None
+        ]
+        self.assertEqual(len(vals), 42)
+        self.assertNotIn(0.0, vals)
+        self.assertNotIn(10.0, vals)
+
+    def test_it_discriminates_where_the_ofsted_stock_did_not(self):
+        # The Ofsted measure put 11 London boroughs on an identical 100% Good
+        # or Outstanding. A schools input that cannot separate places carries
+        # no signal, which is the defect this change exists to fix.
+        new = {
+            app.school_score(b['p8'])
+            for b in app.LONDON_BOROUGHS.values() if b.get('p8') is not None
+        }
+        old = {
+            app.SCHOOL_SCORE.get(b.get('schools'), 5)
+            for b in app.LONDON_BOROUGHS.values()
+        }
+        # London used exactly two of the four bands, so the old input could
+        # place 33 boroughs in 2 buckets. Progress 8 puts them in 25.
+        self.assertEqual(len(old), 2)
+        self.assertGreater(len(new), 10 * len(old))
+
+    def test_falls_back_where_progress_8_cannot_exist(self):
+        # New York has neither Ofsted nor DfE. It keeps the curated tier, and
+        # CITY_PROVENANCE is what stops that being passed off as DfE.
+        queens = app.NYC_BOROUGHS['Queens']
+        self.assertIsNone(queens.get('p8'))
+        self.assertIsNotNone(app.get_live_score(queens))
+        self.assertIn('Progress 8', app.build_source_breakdown('london')['live'])
+        # NYC's text does contain the string 'DfE' -- inside the disclaimer
+        # 'NOT ONS, Home Office, DfE, TfL or NHS'. So assert on the claim, not
+        # on the substring: NYC must not claim Progress 8, and must carry the
+        # explicit negation.
+        nyc_live = app.build_source_breakdown('nyc')['live']
+        self.assertNotIn('Progress 8', nyc_live)
+        self.assertIn('NOT ONS, Home Office, DfE', nyc_live)
+
+    def test_city_of_london_has_no_progress_8(self):
+        # Not in the DfE local-authority release at all — it has essentially no
+        # secondary schools. Third field to hit the same measured/missing/not-
+        # calculable distinction, alongside its suppressed ONS crime rate.
+        self.assertIsNone(app.LONDON_BOROUGHS['City of London'].get('p8'))
 
 
 if __name__ == '__main__':
