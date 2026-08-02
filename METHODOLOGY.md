@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.4, last updated 2026-07-31.
+> Version 3.5, last updated 2026-08-02.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -156,47 +156,112 @@ Liveability is a weighted combination of four sub-scores:
 live = 0.35 × schools + 0.30 × crime + 0.25 × transport + 0.10 × healthcare
 ```
 
-#### Schools (35% of liveability), anchored to Ofsted distribution
+#### Schools (35% of liveability), DfE Progress 8
 
 ```
-SCHOOL_SCORE = {
-  'outstanding': 10, # >50% of schools rated Outstanding by Ofsted
-  'excellent': 9, # >25% Outstanding + most rest Good
-  'good': 6, # Most schools rated Good
-  'mixed': 3, # Significant Requires Improvement / Inadequate presence
-}
+school_score(p8) = max(0, min(10, 5.0 + 5.0 * p8))
 ```
 
-**Why these thresholds?** Anchored to the live distribution of Ofsted state-funded school inspection grades, see [Reference 3, §19](#19-references), which links to the live Ofsted statistics page so readers can verify against current data. As of late 2024 the distribution is approximately Outstanding 14-16%, Good 70-73%, Requires Improvement 8-12%, Inadequate 2-3%. The exact figures shift annually as schools are re-inspected and Ofsted policy changes (e.g. the removal of Outstanding-exempt status). The Sky Score categorisation translates this distribution into borough-level aggregates:
-- A borough where the distribution roughly mirrors the national average is rated 'good' (6/10).
-- A borough significantly above the national average for Outstanding+Good is rated 'excellent' (9/10).
-- A borough with notably higher Requires Improvement / Inadequate proportion than the national average is rated 'mixed' (3/10).
+Where `p8` is the local authority's average Progress 8 score from the DfE Key
+Stage 4 performance statistics.
 
-**Why is the gap from 'good' to 'mixed' so large (6→3) compared to 'outstanding' to 'excellent' (10→9)?** Because the difference between "borough where most schools are Good" and "borough where some schools are Inadequate" represents a real, well-evidenced educational opportunity gap, the OECD's PISA studies and the UK Education Policy Institute have documented that attending a Good vs Inadequate school has a measurable effect on KS4/GCSE outcomes. The score gap reflects that material difference. Conversely, the difference between 'outstanding' and 'excellent' is a difference of degree at the top of the distribution.
+**Why Progress 8, and why these anchors.** Progress 8 measures the grades a
+cohort achieves against pupils nationally who had the same Key Stage 2 starting
+point. It is *defined* such that the national average is approximately 0.0, and
+±1.0 means a full grade per subject better or worse than similar pupils. Both
+are real-world quantities rather than artefacts of whichever areas happen to be
+in the dataset, so the mapping is:
 
-#### Crime (30% of liveability), calibrated to London medians
+- `p8 = 0.0` → `score = 5.0` — the national average
+- `p8 = +1.0` → `score = 10.0` — a grade per subject above similar pupils
+- `p8 = -1.0` → `score = 0.0` — a grade per subject below
+
+Observed local-authority scores span roughly −0.90 to +0.73 nationally, so
+nothing clamps in practice. Because the anchors are external constants rather
+than the loaded cohort's extremes, scores remain comparable both between areas
+and across data vintages.
+
+**Being intake-adjusted matters here.** Raw attainment (Attainment 8) correlates
+heavily with local affluence, which this model already prices into the
+`afford` component. Using it would let the same underlying factor enter the
+composite twice. Progress 8 measures what schools add to the pupils they have.
+
+**What this replaced, and why.** Until methodology v3.5 the schools input was a
+four-value vocabulary (`outstanding`/`excellent`/`good`/`mixed`) mapped to
+10/9/6/3 and described as anchored to the Ofsted grade distribution. Two
+problems, both material:
+
+1. **The bands were not derivable from Ofsted data.** Checked against the Ofsted
+   management-information release, no threshold on "percentage of schools Good
+   or Outstanding" reproduced the stored values — `excellent` spanned 90.9-100%
+   and `good` spanned 83.3-100%, so Westminster at 100% was banded `good` while
+   Richmond at 100% was banded `excellent`. They were editorial assignments.
+2. **The underlying measure had been withdrawn.** Ofsted abolished single-word
+   overall-effectiveness grades in September 2024. Only around 44% of schools
+   still carry one, and that remainder is precisely those not yet re-inspected,
+   so the sample is both shrinking and non-random. Around 87% of what remains
+   is Good or Outstanding, so the measure barely separated one area from
+   another. Its replacement framework covered under 1% of schools at the time
+   of the change and uses an incompatible vocabulary.
+
+**A caveat on vintage.** Progress 8 cannot be calculated for 2024/25 or 2025/26:
+those cohorts sat Key Stage 2 in 2019/20 and 2020/21 when national tests were
+cancelled, so no prior-attainment baseline exists, and the DfE announced in
+April 2024 that there would be no replacement measure for those years. The
+2022/23 release is therefore the current terminal vintage and will refresh when
+2026/27 data is published. This is disclosed per response in `sourceBreakdown`.
+
+**A caveat on granularity.** Progress 8 is published at local-authority level,
+so every address within a borough receives the same schools sub-score. It
+describes the borough, not the specific catchment of a given property.
+
+#### Crime (30% of liveability)
 
 ```
 CRIME_TO_SCORE = max(0, min(10, 10 - (rate - 50) / 15))
 ```
 
-Where `rate` is offences per 1,000 population per year (Home Office police-force-area data).
+Where `rate` is total recorded offences (excluding fraud) per 1,000 residents
+per year.
+
+**Source.** ONS *Crime in England and Wales: Police Force Area data tables*,
+Table C4, which reports rates per 1,000 population for Community Safety
+Partnership areas — these correspond to local authorities in almost all cases,
+including every London borough. The denominator is ONS mid-year population
+estimates. The separate CSP-level dataset was discontinued; these figures now
+ship inside the Police Force Area workbook.
 
 **Calibration:**
-- `rate = 50` → `score = 10` (lowest-crime tier, e.g. Sutton ~60 lightly clipped, Kingston ~62)
-- `rate ≈ 85-90` → `score ≈ 7.5` (London-wide median; represents a "typical urban" baseline)
-- `rate = 125` → `score ≈ 5.0` (high-crime borough threshold; Lambeth, Hackney, Newham fall here)
-- `rate = 200` → `score = 0.0` (extreme; only City of London ~190 and Westminster ~175 approach this, both inflated by the daytime-population vs residential-population denominator mismatch)
+- `rate = 50` → `score = 10`
+- `rate ≈ 88` → `score ≈ 7.5` (close to the London median)
+- `rate = 125` → `score = 5.0`
+- `rate = 200` → `score = 0.0`
 
-**Why these specific anchors?** The London-wide median crime rate is approximately 85-90 per 1,000 residents per year, derived from:
-- **Numerator**: Home Office police-recorded crime by police-force area, published quarterly by ONS as part of *Crime in England and Wales*, see [Reference 4, §19](#19-references)
-- **Denominator**: ONS mid-year residential population estimates (latest available)
+Tested against the year-ending-March-2026 release, exactly one of 43 London and
+Greater Manchester local authorities clamps (Westminster, discussed below), and
+none clamps at the top. The band is therefore left unchanged at v3.5.
 
-Anchoring `score = 10` at `rate = 50` and `score = 7.5` at the London-wide median (rate ~88) creates a natural "average safety" reading for typical London. The slope of −1 per 15 rate units was chosen so that a 50% increase above the median (rate ~130) yields score ≈ 4.7, which crosses the "below average" threshold visible on the dashboard.
+**Corrections made in v3.5.** Three boroughs carried values that had been
+compressed to fit inside the 50-200 band rather than drawn from the source:
+Westminster held 175 against an actual 355.5, Kensington and Chelsea 95 against
+145.8, and Camden 130 against 173.3. All three are high-crime central boroughs,
+and the effect was to understate them. They now carry the published figures. The
+other 29 boroughs already agreed with the release within 10 per 1,000 and were
+left untouched, so v3.5 is a tail correction rather than a vintage roll.
 
-**The `min(0, …)` floor and `max(10, …)` ceiling** prevent negative scores at extreme rates and inflated scores at impossibly-low rates (which would indicate data quality issues rather than safety).
+**A material caveat on city-centre areas.** Recorded-crime rates divide offences
+by *resident* population, so districts with large commuting, student or visitor
+populations are systematically overstated — the crime is counted, the people are
+not. ONS flags this explicitly and, for the same reason, **declines to publish a
+rate for the City of London at all** owing to its very small resident
+population. Sky Score currently carries an estimated figure there; treat it, and
+Westminster's 355.5, as artefacts of the denominator rather than as statements
+about how safe those places are to live.
 
-**A material caveat:** Home Office police-force-area data has known reporting bias, under-reporting in some communities (particularly where police trust is low) and over-reporting via centralised case logging in others. The City of London's 190/1,000 rate is inflated because it counts all daytime business-district crime against a tiny residential population denominator. We use ONS mid-year estimates as denominator and Home Office police-recorded crime as numerator, which is the standard methodology, but the results should be interpreted as "police-recorded crime rate" not "true crime experience".
+**A second caveat.** Police-recorded crime reflects both offending and reporting
+behaviour, which varies with confidence in the police and with force recording
+practice. These figures should be read as "police-recorded crime rate", not as
+"true crime experience".
 
 #### Transport (25% of liveability), categorical access tiers
 
@@ -795,6 +860,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 ## 20. Changelog
 
 - **2026-07-31 (no version change)**, **Provenance stated per city.** (1) *Defect:* the `sources` array and `sourceBreakdown` object were single module constants emitted on every response regardless of the city scored. Every New York response therefore credited MHCLG, HM Land Registry, ONS, the Home Office, DfE, TfL, NHS and DEFRA, under **Open Government Licence v3.0** — a UK Crown-copyright licence — for data the codebase itself documents as NYPD CompStat-derived and curated from New York sources. None of those bodies has a New York remit. This was live in production, and it is the precise error the adjacent `_postcode_source_line()` exists to prevent: crediting a source on configuration rather than on what actually answered. (2) *Change:* provenance resolves per city from a `CITY_PROVENANCE` registry. New York credits its own sources — NYPD CompStat-derived crime rates and curated borough price and noise data — and states that OGL does not apply to it. An unknown city returns a "not recorded" line instead of inheriting London's. Batch responses spanning several cities label each line with the city it belongs to. (3) *Effect on scores:* **none.** No weight, threshold or formula changed and every score is byte-identical, which is why this carries no version bump — bumping would tell integrators to re-run for movement that does not exist. (4) *Guard:* a city that is scoreable but has no provenance entry now fails `test_every_city_has_its_own_provenance`, so a future city cannot inherit another's sources by omission.
+- **2026-08-02 (v3.5)**, **Schools re-sourced; three crime rates corrected.** (1) *Defect A, schools:* the input was a four-value vocabulary (`outstanding`/`excellent`/`good`/`mixed` → 10/9/6/3) documented as "anchored to the Ofsted distribution". It was not. Checked against the Ofsted management-information release (as at 30 June 2026, 21,957 schools), **no threshold on "% Good or Outstanding" reproduces the stored bands** — `excellent` spanned 90.9–100% and `good` spanned 83.3–100%, so **Westminster at 100% was banded `good` while Richmond at 100% was banded `excellent`**, and Camden was banded `excellent` while its pupils made *below*-median progress. The bands were editorial. Worse, the measure behind them had been withdrawn: Ofsted abolished single-word overall-effectiveness grades in **September 2024**, only ~44% of schools still carry one, that remainder is precisely the not-yet-reinspected (so it is shrinking *and* non-random, with Westminster at n=25 and the City of London at n=1), and **87.2%** of it is Good or Outstanding — a measure that barely separates places. The renewed framework replacing it covered **0.4%** of Greater Manchester schools and 0.0% of sampled London boroughs, with an incompatible vocabulary. (2) *Change A:* schools now uses **DfE Key Stage 4 Progress 8, 2022/23, at local-authority level**, scored continuously by `school_score(p8) = clamp(5.0 + 5.0 × p8, 0, 10)`. Progress 8 is defined so the national average is ~0.0 and ±1.0 is a full grade per subject against pupils with the same KS2 baseline, so the anchors are **external constants, not cohort extremes** — comparable across areas and across vintages. Nothing clamps; London and Greater Manchester span 2.55–8.20. Being intake-adjusted also stops school quality re-importing the affluence already priced into `afford`, which raw Attainment 8 would have done. (3) *Effect A:* London moves from **2 distinct schools sub-scores to 25**. Wandsworth's headline moves 6.7 → 6.4 (banded `excellent`, measures P8 +0.33 against a London median of +0.30); Camden 7.8 → 7.1. (4) *Defect B, crime:* three boroughs carried values compressed to fit inside `CRIME_TO_SCORE`'s 50–200 band rather than drawn from source — **Westminster held 175 against an actual 355.5**, Kensington and Chelsea 95 against 145.8, Camden 130 against 173.3, all three understated. (5) *Change B:* corrected against **ONS *Crime in England and Wales: Police Force Area data tables*, year ending March 2026, Table C4**. The other 29 boroughs already agreed with that release within 10 per 1,000 and are untouched, so this is a tail correction, **not a vintage roll**. The 50/15 band is unchanged: tested on true figures it clamps once in 43. (6) *Vintage warning:* Progress 8 **cannot be calculated for 2024/25 or 2025/26** — those cohorts sat KS2 in the cancelled 2020 and 2021 windows — and DfE announced in April 2024 that there is no replacement, so 2022/23 is the terminal vintage until 2026/27 publishes. (7) *Disclosure:* responses now carry `context.liveResolution` (measured / partial / unavailable) so a defaulted component cannot read as a measurement, and `comparisonUnavailable` where no prior vintage exists. (8) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-07-31 (v3.4)**, **Growth rescaled to a dual anchor.** (1) *Defect:* the v3.2 formula `clamp((trend / max_trend) × 10, 0, 10)` scaled against the fastest riser alone, so every falling borough floored at 0. **Fourteen of the thirty-three London boroughs shared that one value** — Ealing at −0.3% scored identically to the City of London at −28.2% — and the API published a caveat conceding that growth "cannot tell a slight dip apart from a steep fall". A component that cannot distinguish a 0.3% dip from a 28% collapse is not measuring anything across 42% of the cohort. (2) *Change:* growth now anchors a flat market (0% trend) at **5.0**, scales rising boroughs across 5–10 against the fastest riser, and falling boroughs across 5–0 against the steepest faller, each tail to its own extreme (§4.3). The tails are scaled separately because London's −28.2%…+5.0% spread would otherwise compress every rising borough into the top sixth of the scale. (3) *Effect:* the London cohort moves from 17 to **28 distinct growth values**, and only the steepest faller now sits on the floor. Falling boroughs rise (Tower Hamlets 0.0 → 3.0, Kensington and Chelsea 0.0 → 3.3, Westminster 0.0 → 1.3); rising boroughs rise more modestly (Southwark 7.6 → 8.8); Waltham Forest holds 10.0. **NYC moves more sharply** because its whole cohort is rising and now scores against the 5.0 flat anchor rather than against its own fastest riser: Manhattan 3.6 → 6.8, Staten Island 5.5 → 7.7. (4) *Headline impact:* because v3.3 already set `growth` to 0.00 for every persona but `investor`, **no persona except `investor` sees any change to its total score** — the component is published but unweighted. `investor` weights growth at 0.40, so its totals move materially, and the previously live sub-zero neighbourhood-view defect (City of London computing −56.4 on a 0–10 scale) is resolved by the same change. (5) *Explanations:* `why.workings` and the prose steps were rewritten to describe the anchor and name the steepest-fall benchmark; the retired floor caveat is gone and a regression test now asserts it cannot return. (6) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-07-30 (v3.3)**, **Growth weighted for `investor` only.** (1) *Rationale:* growth accounted for **87% of all score movement** in the Q1→Q2 refresh; excluding it, the largest change across the 33 boroughs was 0.62 points. Nothing physical about any borough had changed. The other three components describe durable attributes of a place; price growth is a mean-reverting market series that §4.3 already states does not predict future returns, so averaging it into a property-quality score let market noise churn a number users read as stable. (2) *Change:* `growth` is 0.00 for every persona except `investor` (unchanged at 0.40). Each persona's former growth weight was redistributed across its remaining three components in proportion, so relative emphasis is unchanged. (3) *Effect:* scores rise where a floored growth component was dragging a place down — Wandsworth moves 5.3 → 6.7 under balanced weights — and quarter-over-quarter movement collapses to ≤0.6 points, which is the honest reading: these places did not change. (4) *Transparency:* the growth component is still computed and published, and responses now carry a `why.unweighted[]` block reporting movement in factors that carry no weight for the requested persona, so a moving market is never silently dropped. (5) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-07-24 (v3.2)**, **Quarterly price refresh + growth clamp.** (1) *Data:* all 33 London borough `avgPrice`/`trend` values refreshed to the May 2026 UK House Price Index after the quarterly check found 28 boroughs deviating ≥3% from the 2026-Q1 snapshot (largest: Haringey +16.3%, City of London −26.2%; fourteen boroughs now carry negative 12-month trends — the snapshot predated the market turn). (2) *Formula:* the growth component is now clamped to 0–10 (§4.3). The original rising-market formula produced sub-zero components — and in three boroughs sub-zero total scores — once negative trends entered the cohort, violating the documented 0–10 scale. Negative trend now floors at growth = 0. (3) *Effect:* under default balanced weights, 24 borough scores move by more than 0.5 — overwhelmingly downward, dominated by the growth signal turning. Per the notice policy this qualifies for 14-day advance customer notice; the API has no paying customers as at this date, so the change ships with this changelog entry as the record. (4) London affordability cohort bounds moved (max now ~£1.256M Kensington and Chelsea; min ~£361k Barking and Dagenham).

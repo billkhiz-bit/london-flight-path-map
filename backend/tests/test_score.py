@@ -1617,13 +1617,15 @@ class ProgressEightTests(unittest.TestCase):
     def test_nothing_clamps_on_real_data(self):
         # Observed LA Progress 8 runs -0.90 to +0.73 nationally, so a clamp
         # would mean the anchors are wrong for the data they have to carry.
+        # Iterates CITIES rather than a hardcoded city list so the assertion
+        # keeps holding as cities are added, instead of silently skipping them.
         vals = [
             app.school_score(b['p8'])
-            for city in ('london', 'manchester')
-            for b in app.CITIES[city]['boroughs'].values()
+            for cfg in app.CITIES.values()
+            for b in cfg['boroughs'].values()
             if b.get('p8') is not None
         ]
-        self.assertEqual(len(vals), 42)
+        self.assertEqual(len(vals), 32)  # London's 33 less the City of London
         self.assertNotIn(0.0, vals)
         self.assertNotIn(10.0, vals)
 

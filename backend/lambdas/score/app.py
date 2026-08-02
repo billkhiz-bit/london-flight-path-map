@@ -75,7 +75,24 @@ def _make_lru(maxsize):
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md'
-METHODOLOGY_VERSION = '3.4'
+# v3.5 (2026-08-02): two liveability inputs changed source, and schools changed
+# scale. Not a patch — a caller pinning a methodology version needs to know the
+# schools sub-score is no longer drawn from a four-value vocabulary.
+#
+#   crime    Three boroughs had been compressed to fit crime_to_score's 50-200
+#            band (Westminster carried 175 against an actual 355.5). Corrected
+#            against ONS Crime in England and Wales, Police Force Area data
+#            tables, YE March 2026, Table C4. The other 29 already agreed with
+#            that release within 10 per 1,000, so this is a tail correction and
+#            NOT a vintage roll.
+#
+#   schools  Was an editorial band with no derivable rule: 'excellent' spanned
+#            90.9-100% of schools Good-or-Outstanding and 'good' spanned
+#            83.3-100%, so Westminster at 100% was 'good' and Richmond at 100%
+#            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2022/23), scored
+#            continuously by school_score() on absolute anchors. London goes
+#            from 2 distinct schools sub-scores to 25.
+METHODOLOGY_VERSION = '3.5'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
