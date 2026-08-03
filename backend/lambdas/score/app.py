@@ -1467,6 +1467,67 @@ AIRPORTS_LONDON = [
     {'code': 'LTN', 'name': 'Luton', 'lat': 51.8747, 'lon': -0.3684},
 ]
 
+
+# Rotary-noise sites, ported from index.html on 2026-08-03.
+#
+# The consumer site has scored these since the heliport term existed; this module
+# never did, so site and API disagreed on `quiet` within 5 km of any of them -
+# 14.1% of Greater London. That was the last remaining divergence between the two
+# after the flight-path geometry was trimmed to match earlier the same day.
+#
+# `bands` is [within 3 km, within 5 km], added to noise_score. The tiers are
+# derived, not chosen: sound energy sums logarithmically, so annual movements
+# contribute 10*log10(N) - the same basis as Lden under END 2002/49/EC that
+# METHODOLOGY 4.1 already cites. Battersea (12,000, a Wandsworth planning cap) and
+# Elstree (12,367 rotary in 2016, Elstree Aerodrome Consultative Committee Guide)
+# sit 0.13 dB apart and share the top tier. The two air-ambulance pads at ~1,600
+# and ~800 movements sit ~8.75 dB lower, which is nearly two bands on the 4.1
+# scale; they are dropped ONE, deliberately conservative - erring toward keeping a
+# noise penalty rather than removing one.
+#
+# Denham has no published movement figure and its weight is an editorial
+# assignment by analogy to Elstree, declared in METHODOLOGY 11. It is the weakest
+# entry here and affects 1.50% of London.
+#
+# Kept identical to index.html by test_heliports_match_the_site.
+HELIPORTS_LONDON = [
+    {
+        'code': 'BHL',
+        'name': 'London Heliport (Battersea)',
+        'lat': 51.47, 'lon': -0.178,
+        'movementsPerYear': 12000,  # 12,000/yr
+        'bands': (2, 1),
+    },
+    {
+        'code': 'ELS',
+        'name': 'Elstree Aerodrome',
+        'lat': 51.6558, 'lon': -0.3258,
+        'movementsPerYear': 12367,  # 12,367/yr
+        'bands': (2, 1),
+    },
+    {
+        'code': 'DEN',
+        'name': 'Denham Aerodrome',
+        'lat': 51.5789, 'lon': -0.5133,
+        'movementsPerYear': None,  # None (not published, editorial - see METHODOLOGY 11)
+        'bands': (2, 1),
+    },
+    {
+        'code': 'HEMS',
+        'name': 'Royal London Hospital Helipad',
+        'lat': 51.5178, 'lon': -0.0593,
+        'movementsPerYear': 1600,  # 1,600/yr
+        'bands': (1, 0),
+    },
+    {
+        'code': 'KING',
+        'name': "King's College Hosp Helipad",
+        'lat': 51.4688, 'lon': -0.0941,
+        'movementsPerYear': 800,  # 800/yr
+        'bands': (1, 0),
+    },
+]
+
 AIRPORTS_NYC = [
     {'code': 'JFK', 'name': 'John F. Kennedy', 'lat': 40.6413, 'lon': -73.7781},
     {'code': 'LGA', 'name': 'LaGuardia', 'lat': 40.7769, 'lon': -73.8740},
@@ -1690,10 +1751,20 @@ CITY_GEOMETRY = {
     'london': {
         'airports': AIRPORTS_LONDON,
         'paths': FLIGHT_PATHS_LONDON,
+        'heliports': HELIPORTS_LONDON,
         'major_airport': 'LHR',
         'secondary_airport': None,
     },
-    'nyc': {'airports': AIRPORTS_NYC, 'paths': FLIGHT_PATHS_NYC, 'major_airport': 'JFK', 'secondary_airport': 'LGA'},
+    # New York gets an explicit empty list rather than a missing key, so a future
+    # city that genuinely has rotary sites fails loudly on a typo instead of
+    # silently scoring as though it has none.
+    'nyc': {
+        'airports': AIRPORTS_NYC,
+        'paths': FLIGHT_PATHS_NYC,
+        'heliports': [],
+        'major_airport': 'JFK',
+        'secondary_airport': 'LGA',
+    },
 }
 
 # NYC ZIP-to-centroid lookup. Sourced from index.html NYC_AREA_MAP, first
@@ -2198,6 +2269,23 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None, raster_lden=_RASTER
         secondary_dist = next((d for code, d in airport_dists if code == secondary), None)
         if secondary_dist is not None and secondary_dist < 10:
             noise_score += 1
+
+    # 4. Rotary noise. Ported from the consumer site 2026-08-03; until then the
+    #    site scored heliports and this did not, which was the last remaining
+    #    site/API divergence and covered 14.1% of Greater London.
+    #
+    #    Takes the LOUDEST contribution, not the nearest site. Under the old
+    #    uniform weighting those were the same thing; with per-site tiers they are
+    #    not, and scoring off the closest pad would let a quiet air-ambulance
+    #    helipad mask a busier commercial heliport slightly further out.
+    #    Contributions are not summed, matching the airport and flight-path terms
+    #    above, which also take a single nearest source.
+    heli_bonus = 0
+    for hp in geo.get('heliports', []):
+        hd = haversine_km(lat, lon, hp['lat'], hp['lon'])
+        contribution = hp['bands'][0] if hd < 3 else hp['bands'][1] if hd < 5 else 0
+        heli_bonus = max(heli_bonus, contribution)
+    noise_score += heli_bonus
 
     quiet = max(0.0, min(10.0, 10.0 - noise_score))
     return quiet

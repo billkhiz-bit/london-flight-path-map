@@ -1890,6 +1890,62 @@ class SiteApiGeometryParityTests(unittest.TestCase):
                 'for the same postcode.',
             )
 
+    def test_heliports_match_the_site(self):
+        """Rotary sites and their weights must match index.html.
+
+        The site scored heliports and the Lambda did not, which was the last
+        site/API divergence after the flight-path trim and covered 14.1% of
+        Greater London. Ported 2026-08-03. The weights are derived from published
+        movement counts, so a silent edit on one side is a scoring change on one
+        surface only.
+        """
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        i = src.index('const HELIPORTS = [')
+        start = i + src[i:].index('[')
+        depth = 0
+        for j in range(start, len(src)):
+            if src[j] == '[':
+                depth += 1
+            elif src[j] == ']':
+                depth -= 1
+                if depth == 0:
+                    break
+        block = src[start:j + 1]
+
+        site = {}
+        for m in re.finditer(r"\{\s*code:\s*'([^']+)',(.*?)\n        \}", block, re.S):
+            body = m.group(2)
+            co = re.search(r"coords:\s*\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]", body)
+            bd = re.search(r"bands:\s*\[\s*(\d+)\s*,\s*(\d+)\s*\]", body)
+            site[m.group(1)] = {
+                'lat': float(co.group(2)),
+                'lon': float(co.group(1)),
+                'bands': (int(bd.group(1)), int(bd.group(2))),
+            }
+        self.assertTrue(site, 'could not parse HELIPORTS out of index.html')
+
+        api = {h['code']: h for h in app.CITY_GEOMETRY['london']['heliports']}
+        self.assertEqual(
+            set(api), set(site),
+            f'heliport sets differ: API only {sorted(set(api) - set(site))}, '
+            f'site only {sorted(set(site) - set(api))}',
+        )
+        for code in sorted(site):
+            self.assertAlmostEqual(api[code]['lat'], site[code]['lat'], places=4, msg=f'{code} lat')
+            self.assertAlmostEqual(api[code]['lon'], site[code]['lon'], places=4, msg=f'{code} lon')
+            self.assertEqual(
+                tuple(api[code]['bands']), site[code]['bands'],
+                f'{code}: band weights differ between site and API. These are derived '
+                'from published movement counts; changing one side alone changes scores '
+                'on one surface only.',
+            )
+
+    def test_nyc_declares_no_heliports_explicitly(self):
+        """An empty list, not a missing key, so a typo fails loudly."""
+        self.assertIn('heliports', app.CITY_GEOMETRY['nyc'])
+        self.assertEqual(app.CITY_GEOMETRY['nyc']['heliports'], [])
+
     def test_airports_match_the_site(self):
         """Same guard for the airport list, which feeds the other half of quiet."""
         path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
