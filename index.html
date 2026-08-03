@@ -6081,6 +6081,73 @@
         return { text: (extra && extra.schools) || 'not recorded', cls: ratingBadgeClass(extra && extra.schools) };
       }
 
+      // Why a borough's crime rate is what it is, from the ONS Table C4 offence
+      // breakdown rather than assertion. This replaced "above-average crime rates
+      // - often driven by nightlife, tourism, or town centre activity", which was
+      // an unsourced causal claim printed identically for every high-crime
+      // borough, and a source line crediting the Met when the figures are ONS.
+      //
+      // Two numbers per offence, because either alone misleads. Share-of-total
+      // would call Richmond violence-ridden (26% of its offences) when it has the
+      // lowest total in London; the ratio to the London median is what actually
+      // distinguishes a place. Westminster's theft from the person is 25x the
+      // median — that is the fact worth telling someone, and it is checkable.
+      function londonCrimeMedian() {
+        const rates = Object.values(BOROUGH_EXTRA || {})
+          .map((b) => b && b.crimeRate)
+          .filter((r) => typeof r === 'number');
+        if (!rates.length) return null;
+        rates.sort((a, b) => a - b);
+        const m = Math.floor(rates.length / 2);
+        return rates.length % 2 ? rates[m] : (rates[m - 1] + rates[m]) / 2;
+      }
+
+      function crimeNote(extra) {
+        if (currentCity === 'nyc') {
+          return 'Borough-level rate derived from NYPD CompStat with New York population denominators. Not comparable with the London figures — different collection methodology.';
+        }
+        const rate = extra && extra.crimeRate;
+        if (typeof rate !== 'number') {
+          return 'No published rate for this area.';
+        }
+        const median = londonCrimeMedian();
+        const ratio = median ? rate / median : null;
+        const scale =
+          ratio === null
+            ? ''
+            : ratio >= 1.15
+              ? ` — ${ratio.toFixed(1)}x the London median of ${median.toFixed(1)}`
+              : ratio <= 0.85
+                ? ` — ${(1 / ratio).toFixed(1)}x lower than the London median of ${median.toFixed(1)}`
+                : ` — close to the London median of ${median.toFixed(1)}`;
+
+        // "Distinctive" means well above the London median for that offence, not
+        // merely large. A borough can have a high total with nothing unusual in
+        // it, and saying so is more useful than naming its biggest category.
+        const distinctive = (extra.crimeTop || []).filter(
+          (t) => typeof t.vsLondonMedian === 'number' && t.vsLondonMedian >= 1.5
+        );
+        let why;
+        if (distinctive.length) {
+          why =
+            ' Driven by ' +
+            distinctive
+              .map(
+                (t) =>
+                  `${t.offence.toLowerCase()} (${t.ratePer1000} per 1,000, ${t.vsLondonMedian}x the London median)`
+              )
+              .join(', ') +
+            '.';
+        } else if (ratio !== null && ratio <= 0.85) {
+          why = ' Every major offence category sits at or below the London median.';
+        } else {
+          why =
+            ' No single offence type stands out — every major category is close to the London median.';
+        }
+        const vintage = extra.crimeVintage || 'ONS Table C4';
+        return `${rate} recorded offences per 1,000 residents${scale}.${why} Source: ${vintage}, on mid-2024 population.`;
+      }
+
       function ratingBadgeClass(rating) {
         const r = (rating || '').toLowerCase();
         if (r === 'low' || r === 'good' || r === 'excellent') return 'rating-low';
@@ -7312,7 +7379,7 @@
       <div class="crime-summary">
         <div class="crime-stat"><div class="crime-stat-value">${extra.crimeRate}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (EST.)</div></div>
       </div>
-      <p class="info-note">${extra.crime === 'low' ? 'This borough has lower crime than the ' + (currentCity === 'nyc' ? 'NYC' : 'London') + ' average.' : extra.crime === 'medium' ? 'This borough is around the ' + (currentCity === 'nyc' ? 'NYC' : 'London') + ' average for crime.' : 'This borough has above-average crime rates - often driven by nightlife, tourism, or town centre activity.'} ${currentCity === 'nyc' ? 'Based on NYPD CompStat data.' : 'Estimate based on Met Police published statistics. Use the area search for live crime data from data.police.uk.'}</p>
+      <p class="info-note">${escapeHtml(crimeNote(extra))}${currentCity === 'nyc' ? '' : ' Use the area search for live crime data from data.police.uk.'}</p>
     </div>
 
     <div class="sidebar-section">
@@ -7503,7 +7570,7 @@
       <div style="margin-top:8px;">
         <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">Per 1,000 residents/yr (${escapeHtml(extra.name)} borough)</div></div>
       </div>
-      <p class="info-note" style="margin-top:8px;">${extra.crime === 'low' ? 'This borough has lower crime than the ' + (currentCity === 'nyc' ? 'NYC' : 'London') + ' average.' : extra.crime === 'medium' ? 'This borough is around the ' + (currentCity === 'nyc' ? 'NYC' : 'London') + ' average for crime.' : 'This borough has above-average crime rates - often driven by nightlife, tourism, or town centre activity.'} ${currentCity === 'nyc' ? 'Based on NYPD CompStat data.' : 'Based on Met Police published statistics.'}</p>
+      <p class="info-note" style="margin-top:8px;">${escapeHtml(crimeNote(extra))}</p>
     </div>`
         : ''
     }

@@ -44,7 +44,12 @@
 // v1.0.7 (2026-08-03): heliport noise is now weighted by published annual
 // movements, so the two air-ambulance pads no longer score like a commercial
 // heliport. Affects quiet within 5 km of five rotary sites — 14.1% of London.
-const VERSION = 'v1.0.7';
+// v1.0.8 (2026-08-03): crime rates re-verified against ONS Table C4 — 29 of 33
+// boroughs corrected — and the detail panel now explains WHY from the offence
+// breakdown instead of asserting "nightlife, tourism, or town centre activity".
+// Both index.html and data/borough-extra.json changed, so this bump is required
+// twice over.
+const VERSION = 'v1.0.8';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""Refresh London borough crime rates from the ONS primary source.
+
+WHY THIS EXISTS (2026-08-03). The repo's crime rates were cited as ONS
+*Crime in England and Wales: Police Force Area data tables*, Table C4, and
+three boroughs were corrected against it on 2026-08-02 with the conclusion
+that "the other 29 were already right, within 10 per 1,000". Checked against
+the actual release, that conclusion was drawn from a handful of spot checks
+(Richmond, Sutton, Enfield — all genuinely correct) and generalised. Seven
+boroughs were out by more than 10 per 1,000, the worst by 20.8, and 17 of 33
+carried a crime sub-score wrong by more than 0.3.
+
+Hand-checking a few rows and generalising is precisely how that happened, so
+this script exists to make the comparison total and repeatable: it reads every
+London row from the published workbook rather than sampling it.
+
+It also extracts the per-offence breakdown Table C4 already carries, so the
+consumer site can say *why* a borough scores as it does — "theft from the
+person, 92.5 per 1,000" — instead of the unsourced "often driven by nightlife,
+tourism, or town centre activity" it said before.
+
+USAGE
+
+    python scripts/refresh_crime_from_ons.py --check    # compare only, exit 1 on drift
+    python scripts/refresh_crime_from_ons.py --write    # update data/borough-extra.json
+
+Run --check whenever ONS publishes (quarterly). Rates move with each release,
+so drift here is expected and is the signal to roll the vintage, not a bug.
+
+NOTE ON THE DOWNLOAD: use www.ons.gov.uk, not cdn.ons.gov.uk. The cdn host
+404s on this path.
+"""
+
+import argparse
+import json
+import sys
+import urllib.request
+from pathlib import Path
+
+EDITION = 'yearendingmarch2026'
+XLSX_URL = (
+    'https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/crimeandjustice/'
+    f'datasets/policeforceareadatatables/{EDITION}/pfatablesye{EDITION[4:]}.xlsx'
+)
+CACHE = Path('data/ons_pfa_tables.xlsx')
+EXTRA = Path('data/borough-extra.json')
+
+TOTAL_COL = 'Total recorded crime  (excluding fraud)'
+# Offence columns worth surfacing. Deliberately excludes the sub-totals that
+# would double-count against their parent (e.g. 'Violence with injury' sits
+# inside 'Violence against the person').
+OFFENCE_COLS = [
+    'Violence against the person',
+    'Sexual offences',
+    'Robbery',
+    'Burglary',
+    'Vehicle offences',
+    'Theft from the person',
+    'Bicycle theft',
+    'Shoplifting',
+    'Criminal damage and arson',
+    'Drug offences',
+    'Possession of weapons offences',
+    'Public order offences',
+]
+
+# The site keys Barking and Dagenham as 'Barking'.
+SITE_ALIAS = {'Barking and Dagenham': 'Barking'}
+
+
+def load_table():
+    import openpyxl
+
+    if not CACHE.exists():
+        CACHE.parent.mkdir(parents=True, exist_ok=True)
+        print(f'Downloading {XLSX_URL}')
+        req = urllib.request.Request(XLSX_URL, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=180) as r, open(CACHE, 'wb') as f:
+            f.write(r.read())
+        print(f'  saved {CACHE} ({CACHE.stat().st_size:,} bytes)')
+
+    wb = openpyxl.load_workbook(CACHE, read_only=True, data_only=True)
+    rows = list(wb['Table C4'].iter_rows(values_only=True))
+    h = next(i for i, r in enumerate(rows) if r and r[0] == 'Police Force Area code')
+    hdr = [str(c).replace('\n', ' ').strip() if c else '' for c in rows[h]]
+
+    out = {}
+    for r in rows[h + 1:]:
+        if not r or not r[1]:
+            continue
+        if str(r[1]) not in ('Metropolitan Police', 'London, City of'):
+            continue
+        name = str(r[3]).strip() if r[3] else str(r[1])
+        if 'Unassigned' in name:
+            continue
+        rec = {hdr[j]: r[j] for j in range(len(hdr)) if hdr[j]}
+        out[name] = rec
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--write', action='store_true', help='update data/borough-extra.json')
+    ap.add_argument('--check', action='store_true', help='report drift, exit 1 if any')
+    args = ap.parse_args()
+
+    ons = load_table()
+    data = json.loads(EXTRA.read_text(encoding='utf-8'))
+    london = data['london']
+
+    # London median per offence, computed across every borough ONS publishes a
+    # figure for. Recomputed from the release each run rather than hard-coded,
+    # so a vintage roll cannot leave the comparison anchored to a stale cohort.
+    import statistics
+    medians = {}
+    for col in OFFENCE_COLS:
+        vals = [float(r[col]) for r in ons.values() if isinstance(r.get(col), (int, float))]
+        if vals:
+            medians[col] = statistics.median(vals)
+
+    drift, unresolved = [], []
+    for canonical, rec in ons.items():
+        key = SITE_ALIAS.get(canonical, canonical)
+        if key not in london:
+            continue
+        total = rec.get(TOTAL_COL)
+        if not isinstance(total, (int, float)):
+            # ONS suppresses the City of London rate (small resident population),
+            # so there is nothing to compare against and nothing to write. Whatever
+            # the repo publishes there is our own figure, not theirs — see §11.
+            unresolved.append((key, london[key].get('crimeRate'), str(total)))
+            continue
+        total = round(float(total), 1)
+        current = london[key].get('crimeRate')
+        if current != total:
+            drift.append((key, current, total))
+        if args.write:
+            london[key]['crimeRate'] = total
+            parts = [(c, float(rec[c])) for c in OFFENCE_COLS
+                     if isinstance(rec.get(c), (int, float))]
+            parts.sort(key=lambda t: -t[1])
+            # Two numbers, because either alone misleads. The rate is what a
+            # resident actually experiences; the ratio to the London median is
+            # what makes the borough unusual. Richmond's violence is 26% of its
+            # offences but it has the lowest total in London, so share-of-total
+            # would paint its safest borough as violence-ridden. Westminster's
+            # theft from the person is only 26% of its total but roughly twenty
+            # times the London median — that is the fact worth telling someone.
+            london[key]['crimeTop'] = [
+                {'offence': c, 'ratePer1000': round(v, 1),
+                 'shareOfTotal': round(100 * v / total, 1),
+                 'vsLondonMedian': round(v / medians[c], 1) if medians.get(c) else None}
+                for c, v in parts[:3]
+            ]
+            london[key]['crimeVintage'] = 'ONS Table C4, year ending March 2026'
+
+    print(f'\n  ONS London rows: {len(ons)}   repo boroughs: {len(london)}')
+    print(f'  boroughs whose rate differs from ONS: {len(drift)}')
+    for k, cur, new in sorted(drift, key=lambda t: -abs((t[1] or 0) - t[2])):
+        print(f'    {k:26} repo={str(cur):>7}  ONS={new:>7}  ({new - (cur or 0):+.1f})')
+    if unresolved:
+        print('\n  ONS publishes no rate for:')
+        for k, cur, why in unresolved:
+            print(f'    {k}: repo publishes {cur}, ONS says {why!r}')
+            print('      -> our own figure. Must not be attributed to ONS. See METHODOLOGY §11.')
+
+    if args.write:
+        EXTRA.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
+        )
+        print(f'\n  wrote {EXTRA}')
+        print('  NB: backend/lambdas/score/app.py LONDON_BOROUGHS holds its own copy '
+              'and must be updated to match, or site and API will disagree.')
+        return 0
+
+    if args.check and (drift or unresolved):
+        print('\nRESULT: DRIFT — run with --write, and mirror into the Lambda.')
+        return 1
+    print('\nRESULT: in step with ONS.' if not drift else '')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

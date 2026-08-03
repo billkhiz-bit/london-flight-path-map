@@ -2,7 +2,7 @@
   "london": {
     "Hounslow": {
       "crime": "medium",
-      "crimeRate": 89,
+      "crimeRate": 87.4,
       "schools": "good",
       "schoolNote": "Several good schools including Lampton and Hounslow Heath. Grammar schools nearby in Slough.",
       "flood": "low",
@@ -13,11 +13,32 @@
       "transportNote": "Piccadilly Line, South West Railway. Good bus network. Heathrow proximity useful for frequent flyers.",
       "healthcare": "good",
       "healthcareNote": "West Middlesex University Hospital (A&E). Good GP coverage across the borough. Multiple pharmacies on high streets.",
-      "p8": 0.45
+      "p8": 0.45,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 29.3,
+          "shareOfTotal": 33.5,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Hillingdon": {
       "crime": "low",
-      "crimeRate": 72,
+      "crimeRate": 91.6,
       "schools": "good",
       "schoolNote": "Good school provision including several Outstanding primaries. Vyners School well-regarded.",
       "flood": "low",
@@ -28,11 +49,32 @@
       "transportNote": "Metropolitan and Piccadilly Lines, Elizabeth Line at West Drayton. M40/M4/M25 access.",
       "healthcare": "good",
       "healthcareNote": "Hillingdon Hospital (A&E), Mount Vernon Hospital. Good GP coverage.",
-      "p8": 0.24
+      "p8": 0.24,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 26.5,
+          "shareOfTotal": 28.9,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 10.5,
+          "shareOfTotal": 11.5,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.8,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Richmond upon Thames": {
       "crime": "low",
-      "crimeRate": 58,
+      "crimeRate": 57.3,
       "schools": "excellent",
       "schoolNote": "Multiple Outstanding primaries. Strong grammar school presence in neighbouring Kingston.",
       "flood": "medium",
@@ -43,11 +85,32 @@
       "transportNote": "District Line, South West Railway, London Overground. Cycling infrastructure improving.",
       "healthcare": "good",
       "healthcareNote": "Kingston Hospital nearby. West Middlesex nearby. Good GP coverage in Richmond and Twickenham.",
-      "p8": 0.4
+      "p8": 0.4,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 15.1,
+          "shareOfTotal": 26.3,
+          "vsLondonMedian": 0.5
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 7.6,
+          "shareOfTotal": 13.3,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 5.7,
+          "shareOfTotal": 9.9,
+          "vsLondonMedian": 0.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Ealing": {
       "crime": "medium",
-      "crimeRate": 88,
+      "crimeRate": 80.5,
       "schools": "good",
       "schoolNote": "Good schools throughout. Twyford CofE is Outstanding. Ellen Wilkinson school well-regarded.",
       "flood": "low",
@@ -58,11 +121,32 @@
       "transportNote": "Elizabeth Line transformed connectivity. Central, District, Piccadilly Lines also serve the borough.",
       "healthcare": "good",
       "healthcareNote": "Ealing Hospital (A&E). Good GP density. Several walk-in centres.",
-      "p8": 0.62
+      "p8": 0.62,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 26.3,
+          "shareOfTotal": 32.7,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 10.3,
+          "shareOfTotal": 12.7,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 6.0,
+          "shareOfTotal": 7.5,
+          "vsLondonMedian": 0.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Wandsworth": {
       "crime": "medium",
-      "crimeRate": 82,
+      "crimeRate": 76.4,
       "schools": "excellent",
       "schoolNote": "Some of London's best state schools. Graveney, Burntwood, multiple Outstanding primaries. Major draw for families.",
       "flood": "medium",
@@ -73,11 +157,32 @@
       "transportNote": "Northern Line, Overground, National Rail. Battersea Power Station has Northern Line extension.",
       "healthcare": "good",
       "healthcareNote": "St George's Hospital (major A&E and trauma centre). Excellent healthcare provision.",
-      "p8": 0.33
+      "p8": 0.33,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 22.1,
+          "shareOfTotal": 28.9,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.1,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.7,
+          "shareOfTotal": 10.0,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Lambeth": {
       "crime": "high",
-      "crimeRate": 115,
+      "crimeRate": 114.4,
       "schools": "good",
       "schoolNote": "Dunraven School Outstanding. Several good primaries in Streatham and Clapham.",
       "flood": "medium",
@@ -88,11 +193,32 @@
       "transportNote": "Victoria, Northern, Bakerloo Lines. Major rail hubs at Waterloo and Vauxhall.",
       "healthcare": "good",
       "healthcareNote": "St Thomas' Hospital and King's College Hospital (both major A&E). Excellent tertiary care.",
-      "p8": 0.01
+      "p8": 0.01,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.2,
+          "shareOfTotal": 26.4,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Theft from the person",
+          "ratePer1000": 14.7,
+          "shareOfTotal": 12.8,
+          "vsLondonMedian": 4.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 9.5,
+          "shareOfTotal": 8.3,
+          "vsLondonMedian": 1.2
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Lewisham": {
       "crime": "medium",
-      "crimeRate": 91,
+      "crimeRate": 94.2,
       "schools": "good",
       "schoolNote": "Prendergast and Haberdashers' well-regarded. Several Outstanding primaries in Blackheath area.",
       "flood": "medium",
@@ -103,11 +229,32 @@
       "transportNote": "DLR, National Rail, Overground. Lewisham station is a major hub. Bakerloo Line extension planned.",
       "healthcare": "good",
       "healthcareNote": "Lewisham Hospital (A&E). Good GP and pharmacy coverage.",
-      "p8": 0.0
+      "p8": 0.0,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 32.2,
+          "shareOfTotal": 34.1,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.1,
+          "shareOfTotal": 8.6,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.6,
+          "shareOfTotal": 8.1,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Greenwich": {
       "crime": "medium",
-      "crimeRate": 93,
+      "crimeRate": 90.3,
       "schools": "good",
       "schoolNote": "Thomas Tallis well-regarded. Several Outstanding primaries in Blackheath and Eltham.",
       "flood": "high",
@@ -118,11 +265,32 @@
       "transportNote": "Elizabeth Line at Woolwich. DLR, Jubilee Line at North Greenwich. Good national rail.",
       "healthcare": "good",
       "healthcareNote": "Queen Elizabeth Hospital (A&E). Good healthcare provision across the borough.",
-      "p8": -0.01
+      "p8": -0.01,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.2,
+          "shareOfTotal": 33.5,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 9.9,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 7.9,
+          "shareOfTotal": 8.7,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Tower Hamlets": {
       "crime": "high",
-      "crimeRate": 120,
+      "crimeRate": 106.6,
       "schools": "good",
       "schoolNote": "Mulberry Academy Outstanding. Several strong primaries despite deprivation challenges.",
       "flood": "high",
@@ -133,7 +301,28 @@
       "transportNote": "DLR, Central, District, Hammersmith, Jubilee, Elizabeth Lines. One of London's best-connected boroughs.",
       "healthcare": "excellent",
       "healthcareNote": "Royal London Hospital (major trauma centre). Whitechapel medical hub. Excellent GP coverage.",
-      "p8": 0.21
+      "p8": 0.21,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 31.3,
+          "shareOfTotal": 29.4,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 8.3,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Drug offences",
+          "ratePer1000": 8.1,
+          "shareOfTotal": 7.6,
+          "vsLondonMedian": 1.3
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Camden": {
       "crime": "high",
@@ -148,11 +337,32 @@
       "transportNote": "Northern, Victoria, Metropolitan, Piccadilly Lines. King's Cross, St Pancras, Euston rail termini.",
       "healthcare": "excellent",
       "healthcareNote": "University College Hospital (UCLH), Royal Free Hospital. World-class tertiary care.",
-      "p8": -0.03
+      "p8": -0.03,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 34.3,
+          "shareOfTotal": 19.8,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Theft from the person",
+          "ratePer1000": 27.8,
+          "shareOfTotal": 16.0,
+          "vsLondonMedian": 7.6
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 18.8,
+          "shareOfTotal": 10.8,
+          "vsLondonMedian": 2.4
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Islington": {
       "crime": "high",
-      "crimeRate": 125,
+      "crimeRate": 131.2,
       "schools": "good",
       "schoolNote": "Highbury Grove and City of London Academy well-regarded. Competitive for primary places.",
       "flood": "low",
@@ -163,11 +373,32 @@
       "transportNote": "Victoria, Northern, Piccadilly Lines. King's Cross hub nearby. Excellent bus routes.",
       "healthcare": "good",
       "healthcareNote": "Whittington Hospital (A&E). Good GP provision. UCH nearby.",
-      "p8": -0.03
+      "p8": -0.03,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 32.1,
+          "shareOfTotal": 24.5,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Theft from the person",
+          "ratePer1000": 14.3,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 3.9
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 14.1,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 1.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Hackney": {
       "crime": "high",
-      "crimeRate": 112,
+      "crimeRate": 116.5,
       "schools": "good",
       "schoolNote": "Mossbourne Academy Outstanding. Schools have improved significantly in recent years.",
       "flood": "low",
@@ -178,11 +409,32 @@
       "transportNote": "Overground, National Rail. No tube but excellent bus network. London's best cycling infrastructure.",
       "healthcare": "good",
       "healthcareNote": "Homerton University Hospital (A&E). Good GP coverage. Improving services.",
-      "p8": 0.34
+      "p8": 0.34,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.0,
+          "shareOfTotal": 25.7,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Theft from the person",
+          "ratePer1000": 15.5,
+          "shareOfTotal": 13.3,
+          "vsLondonMedian": 4.2
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.7,
+          "shareOfTotal": 7.4,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Barnet": {
       "crime": "low",
-      "crimeRate": 74,
+      "crimeRate": 67.8,
       "schools": "excellent",
       "schoolNote": "Queen Elizabeth's Boys' and Henrietta Barnett are top grammar schools. Strong primary provision.",
       "flood": "low",
@@ -193,11 +445,32 @@
       "transportNote": "Northern Line (High Barnet/Edgware branches). Thameslink serves New Barnet, Oakleigh Park.",
       "healthcare": "good",
       "healthcareNote": "Barnet Hospital (A&E), Royal Free Barnet. Good GP coverage in residential areas.",
-      "p8": 0.64
+      "p8": 0.64,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 19.4,
+          "shareOfTotal": 28.7,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.4,
+          "shareOfTotal": 12.3,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.4,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Croydon": {
       "crime": "medium",
-      "crimeRate": 98,
+      "crimeRate": 80.4,
       "schools": "good",
       "schoolNote": "Harris Academy Outstanding. Several strong primaries. Selective schools nearby in Sutton.",
       "flood": "low",
@@ -208,11 +481,32 @@
       "transportNote": "East Croydon is a major rail hub (15 mins to Victoria). Tramlink network. Good buses.",
       "healthcare": "good",
       "healthcareNote": "Croydon University Hospital (A&E). Good GP density. Several walk-in centres.",
-      "p8": 0.01
+      "p8": 0.01,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 27.4,
+          "shareOfTotal": 34.1,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.1,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.3,
+          "shareOfTotal": 9.1,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Bromley": {
       "crime": "low",
-      "crimeRate": 65,
+      "crimeRate": 69.1,
       "schools": "excellent",
       "schoolNote": "Grammar school system (Newstead Wood, St Olave's nearby). Strong primary provision throughout.",
       "flood": "low",
@@ -223,11 +517,32 @@
       "transportNote": "National Rail to London Bridge/Victoria. No tube. Bus network adequate but car-dependent in outer areas.",
       "healthcare": "good",
       "healthcareNote": "Princess Royal University Hospital (A&E). Good GP coverage.",
-      "p8": 0.04
+      "p8": 0.04,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 20.1,
+          "shareOfTotal": 29.1,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 9.5,
+          "shareOfTotal": 13.7,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.9,
+          "shareOfTotal": 11.5,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Newham": {
       "crime": "high",
-      "crimeRate": 108,
+      "crimeRate": 104.0,
       "schools": "good",
       "schoolNote": "Brampton Manor sends many students to Oxbridge. Several new academies improving rapidly.",
       "flood": "high",
@@ -238,11 +553,32 @@
       "transportNote": "Elizabeth Line, Jubilee, DLR, Central Line. Stratford is a major interchange.",
       "healthcare": "good",
       "healthcareNote": "Newham University Hospital (A&E). Barts Health Trust. GP provision improving.",
-      "p8": 0.25
+      "p8": 0.25,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 28.9,
+          "shareOfTotal": 27.8,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.8,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 10.6,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 1.3
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Southwark": {
       "crime": "high",
-      "crimeRate": 118,
+      "crimeRate": 120.8,
       "schools": "good",
       "schoolNote": "Harris Academy group has multiple Outstanding academies. Charter School popular.",
       "flood": "medium",
@@ -253,11 +589,32 @@
       "transportNote": "Jubilee, Northern, Bakerloo Lines. London Bridge and Elephant & Castle major hubs.",
       "healthcare": "excellent",
       "healthcareNote": "Guy's and St Thomas' Hospital. King's College Hospital. World-class tertiary care.",
-      "p8": 0.38
+      "p8": 0.38,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 28.5,
+          "shareOfTotal": 23.6,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Theft from the person",
+          "ratePer1000": 20.5,
+          "shareOfTotal": 17.0,
+          "vsLondonMedian": 5.6
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.2,
+          "shareOfTotal": 6.8,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
-      "crimeRate": 96,
+      "crimeRate": 107.0,
       "schools": "excellent",
       "schoolNote": "Lady Margaret, Sacred Heart Outstanding. Strong primary provision throughout.",
       "flood": "high",
@@ -268,7 +625,28 @@
       "transportNote": "Hammersmith, District, Piccadilly, Central Lines. Hammersmith is a major interchange.",
       "healthcare": "good",
       "healthcareNote": "Charing Cross Hospital (A&E). Chelsea and Westminster nearby. Good GP provision.",
-      "p8": 0.47
+      "p8": 0.47,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.8,
+          "shareOfTotal": 28.8,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 12.4,
+          "shareOfTotal": 11.6,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.2,
+          "shareOfTotal": 7.6,
+          "vsLondonMedian": 1.4
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Kensington and Chelsea": {
       "crime": "medium",
@@ -283,11 +661,32 @@
       "transportNote": "District, Circle, Central, Piccadilly Lines. Multiple stations. Among the best-connected boroughs.",
       "healthcare": "excellent",
       "healthcareNote": "Chelsea and Westminster Hospital, Royal Brompton. Private healthcare hub in Harley Street nearby.",
-      "p8": 0.3
+      "p8": 0.3,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 31.8,
+          "shareOfTotal": 21.8,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 22.4,
+          "shareOfTotal": 15.4,
+          "vsLondonMedian": 2.8
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 14.5,
+          "shareOfTotal": 10.0,
+          "vsLondonMedian": 1.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Brent": {
       "crime": "medium",
-      "crimeRate": 92,
+      "crimeRate": 89.3,
       "schools": "good",
       "schoolNote": "Michaela Community School gained national attention. Queens Park Community School is Good.",
       "flood": "low",
@@ -298,11 +697,32 @@
       "transportNote": "Jubilee, Bakerloo, Metropolitan Lines. Wembley Park and Kilburn well-connected.",
       "healthcare": "good",
       "healthcareNote": "Northwick Park Hospital nearby. Central Middlesex Hospital. Good GP coverage.",
-      "p8": 0.61
+      "p8": 0.61,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 27.8,
+          "shareOfTotal": 31.1,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Drug offences",
+          "ratePer1000": 7.9,
+          "shareOfTotal": 8.8,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.6,
+          "shareOfTotal": 8.5,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Haringey": {
       "crime": "medium",
-      "crimeRate": 99,
+      "crimeRate": 104.6,
       "schools": "good",
       "schoolNote": "Fortismere and Highgate Wood strong. Good primaries in the west. East continuing to improve.",
       "flood": "low",
@@ -313,11 +733,32 @@
       "transportNote": "Victoria Line, Piccadilly Line, Overground. No tube in Crouch End/Muswell Hill (bus only).",
       "healthcare": "moderate",
       "healthcareNote": "North Middlesex Hospital (A&E). Some GP capacity pressures in east of the borough.",
-      "p8": 0.21
+      "p8": 0.21,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 29.4,
+          "shareOfTotal": 28.1,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 11.3,
+          "shareOfTotal": 10.8,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.7,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 1.3
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Waltham Forest": {
       "crime": "medium",
-      "crimeRate": 88,
+      "crimeRate": 80.2,
       "schools": "good",
       "schoolNote": "Holy Family, Walthamstow School for Girls well-regarded. Improving primary provision.",
       "flood": "low",
@@ -328,11 +769,32 @@
       "transportNote": "Victoria Line to Walthamstow. Central Line at Leytonstone/Leyton. Overground.",
       "healthcare": "moderate",
       "healthcareNote": "Whipps Cross Hospital (A&E, being rebuilt). Some areas underserved for GPs.",
-      "p8": -0.06
+      "p8": -0.06,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 22.8,
+          "shareOfTotal": 28.4,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.5,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.3,
+          "shareOfTotal": 9.1,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Merton": {
       "crime": "low",
-      "crimeRate": 70,
+      "crimeRate": 59.3,
       "schools": "good",
       "schoolNote": "Harris Academy Morden Outstanding. Wimbledon area has excellent primaries. Several private options.",
       "flood": "low",
@@ -343,11 +805,32 @@
       "transportNote": "District, Northern Lines. Tramlink serves eastern areas. Wimbledon is a major rail interchange.",
       "healthcare": "good",
       "healthcareNote": "St George's Hospital nearby. St Helier Hospital nearby. Good GP coverage in Wimbledon.",
-      "p8": 0.59
+      "p8": 0.59,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 19.6,
+          "shareOfTotal": 33.0,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 5.8,
+          "shareOfTotal": 9.7,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 5.7,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 0.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Redbridge": {
       "crime": "medium",
-      "crimeRate": 83,
+      "crimeRate": 74.3,
       "schools": "excellent",
       "schoolNote": "Ilford County High is a top grammar school. Several Outstanding primaries. Strong academic culture.",
       "flood": "low",
@@ -358,11 +841,32 @@
       "transportNote": "Central Line, Elizabeth Line at Ilford. Good national rail. Bus network adequate.",
       "healthcare": "good",
       "healthcareNote": "King George Hospital (A&E). Queen's Hospital nearby. Good GP density.",
-      "p8": 0.5
+      "p8": 0.5,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 26.1,
+          "shareOfTotal": 35.1,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.1,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 6.7,
+          "shareOfTotal": 9.0,
+          "vsLondonMedian": 0.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Enfield": {
       "crime": "medium",
-      "crimeRate": 85,
+      "crimeRate": 85.2,
       "schools": "good",
       "schoolNote": "Latymer School is a selective grammar. Several Outstanding primaries. Edmonton improving.",
       "flood": "low",
@@ -373,11 +877,32 @@
       "transportNote": "Piccadilly Line to Arnos Grove/Southgate. Overground to Enfield Town. Some areas car-dependent.",
       "healthcare": "moderate",
       "healthcareNote": "North Middlesex Hospital, Chase Farm Hospital (being redeveloped). GP coverage varies.",
-      "p8": 0.21
+      "p8": 0.21,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 25.9,
+          "shareOfTotal": 30.4,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 10.4,
+          "shareOfTotal": 12.2,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 6.5,
+          "shareOfTotal": 7.6,
+          "vsLondonMedian": 0.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Kingston upon Thames": {
       "crime": "low",
-      "crimeRate": 62,
+      "crimeRate": 66.8,
       "schools": "excellent",
       "schoolNote": "Tiffin Boys' and Tiffin Girls' are top grammar schools. Multiple Outstanding primaries.",
       "flood": "medium",
@@ -388,11 +913,32 @@
       "transportNote": "South West Railway to Waterloo (fast trains). Good buses and cycling. No tube but rail is efficient.",
       "healthcare": "good",
       "healthcareNote": "Kingston Hospital (A&E). Good GP provision. Surbiton health centre.",
-      "p8": 0.58
+      "p8": 0.58,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 20.8,
+          "shareOfTotal": 31.2,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.6,
+          "shareOfTotal": 12.9,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 5.9,
+          "shareOfTotal": 8.9,
+          "vsLondonMedian": 0.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Sutton": {
       "crime": "low",
-      "crimeRate": 60,
+      "crimeRate": 60.3,
       "schools": "excellent",
       "schoolNote": "Sutton Grammar, Nonsuch, Wilson's are top selective schools. Outstanding primaries throughout. Best state schools in London.",
       "flood": "low",
@@ -403,7 +949,28 @@
       "transportNote": "National Rail to London Bridge/Victoria. Tramlink connection. No tube. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "St Helier Hospital (A&E), Epsom Hospital nearby. Good GP coverage.",
-      "p8": 0.51
+      "p8": 0.51,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 21.7,
+          "shareOfTotal": 36.1,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 6.4,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 5.4,
+          "shareOfTotal": 9.0,
+          "vsLondonMedian": 0.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Westminster": {
       "crime": "high",
@@ -418,7 +985,28 @@
       "transportNote": "Every tube line passes through or near Westminster. Victoria, Waterloo, Paddington stations. Unrivalled.",
       "healthcare": "excellent",
       "healthcareNote": "St Mary's Hospital (Paddington), Chelsea and Westminster nearby. Private healthcare on Harley Street.",
-      "p8": 0.48
+      "p8": 0.48,
+      "crimeTop": [
+        {
+          "offence": "Theft from the person",
+          "ratePer1000": 92.5,
+          "shareOfTotal": 26.0,
+          "vsLondonMedian": 25.2
+        },
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 52.9,
+          "shareOfTotal": 14.9,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 36.9,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 4.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "City of London": {
       "crime": "high",
@@ -436,7 +1024,7 @@
     },
     "Barking": {
       "crime": "high",
-      "crimeRate": 105,
+      "crimeRate": 84.2,
       "schools": "good",
       "schoolNote": "Sydney Russell Academy improved. Jo Richardson Community School is popular. Some primaries Outstanding.",
       "flood": "medium",
@@ -447,11 +1035,32 @@
       "transportNote": "District Line, Hammersmith & City, c2c to Fenchurch Street. Overground. Barking station is a major hub.",
       "healthcare": "moderate",
       "healthcareNote": "Queen's Hospital (A&E) in Romford. King George Hospital. Some GP capacity pressures.",
-      "p8": 0.24
+      "p8": 0.24,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 31.5,
+          "shareOfTotal": 37.4,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.5,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Drug offences",
+          "ratePer1000": 6.6,
+          "shareOfTotal": 7.9,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Havering": {
       "crime": "low",
-      "crimeRate": 72,
+      "crimeRate": 68.3,
       "schools": "good",
       "schoolNote": "Several Outstanding primaries. Coopers' Company school well-regarded. Grammar schools nearby in Essex.",
       "flood": "low",
@@ -462,11 +1071,32 @@
       "transportNote": "Elizabeth Line at Romford. District Line at Upminster. c2c to Fenchurch Street. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "Queen's Hospital (A&E). Good GP coverage in residential areas.",
-      "p8": -0.09
+      "p8": -0.09,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 22.4,
+          "shareOfTotal": 32.8,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.7,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 7.3,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Bexley": {
       "crime": "low",
-      "crimeRate": 68,
+      "crimeRate": 60.2,
       "schools": "good",
       "schoolNote": "Townley Grammar and Bexley Grammar are selective. Several good primaries across the borough.",
       "flood": "medium",
@@ -477,11 +1107,32 @@
       "transportNote": "Elizabeth Line at Abbey Wood. National Rail to London Bridge. Limited tube access. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "Queen Elizabeth Hospital (Woolwich) nearby. Darent Valley Hospital. Good GP coverage.",
-      "p8": -0.06
+      "p8": -0.06,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 20.5,
+          "shareOfTotal": 34.1,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.2,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 6.2,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 0.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Harrow": {
       "crime": "low",
-      "crimeRate": 70,
+      "crimeRate": 59.5,
       "schools": "excellent",
       "schoolNote": "Harrow School (private, historic). Nower Hill High School is popular. Several Outstanding primaries.",
       "flood": "low",
@@ -492,7 +1143,28 @@
       "transportNote": "Metropolitan Line (fast to Baker Street). Bakerloo to Harrow & Wealdstone. Good bus network.",
       "healthcare": "good",
       "healthcareNote": "Northwick Park Hospital (A&E). Good GP coverage. Several health centres.",
-      "p8": 0.45
+      "p8": 0.45,
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 18.8,
+          "shareOfTotal": 31.6,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 6.2,
+          "shareOfTotal": 10.5,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 5.4,
+          "shareOfTotal": 9.1,
+          "vsLondonMedian": 0.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "nyc": {

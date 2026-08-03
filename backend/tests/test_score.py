@@ -492,7 +492,14 @@ class CalcScoreTests(unittest.TestCase):
         self.assertEqual(result['components']['quiet'], 5.0)
         self.assertEqual(result['components']['afford'], 6.7)
         self.assertEqual(result['components']['growth'], 4.3)
-        self.assertEqual(result['components']['live'], 7.9)
+        # live 7.9 -> 8.0 on 2026-08-03, when the crime rates were re-verified
+        # against ONS Table C4 in full rather than by spot check. Wandsworth held
+        # 82 per 1,000 against a published 76.4, so crime_to_score moves 7.87 ->
+        # 8.24 and, at 30% of the liveability composite, carries `live` up by
+        # 0.11. 29 of 33 boroughs moved; Wandsworth's was among the smaller
+        # corrections. Not a regression — the previous figure was never in the
+        # source it cited.
+        self.assertEqual(result['components']['live'], 8.0)
         self.assertEqual(result['context']['avgPriceGbp'], 660000)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
 
