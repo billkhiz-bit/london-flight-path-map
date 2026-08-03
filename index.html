@@ -1068,6 +1068,33 @@
         cursor: pointer;
         transition: color 0.15s;
       }
+      /* Focus indicators for the rows made keyboard-operable in 2026-08-03's
+         a11y pass. Without these the rows are reachable by Tab and completely
+         invisible while focused, which trades one WCAG failure (2.1.1, keyboard)
+         for another (2.4.7, focus visible). :focus-visible rather than :focus so
+         mouse users do not get an outline they did not ask for.
+
+         The outline sits on the cells, not the row: Chrome and Safari will not
+         paint an outline on a <tr> reliably, so styling the row alone looks like
+         nothing happened. box-shadow inset gives a continuous band across the
+         full row width that a plain td outline cannot. */
+      .rank-table tbody tr:focus-visible {
+        outline: none;
+      }
+      .rank-table tbody tr:focus-visible td {
+        background: var(--bg);
+        box-shadow: inset 0 2px 0 var(--orange), inset 0 -2px 0 var(--orange);
+      }
+      .rank-table tbody tr:focus-visible td:first-child {
+        box-shadow: inset 2px 0 0 var(--orange), inset 0 2px 0 var(--orange), inset 0 -2px 0 var(--orange);
+      }
+      .rank-table tbody tr:focus-visible td:last-child {
+        box-shadow: inset -2px 0 0 var(--orange), inset 0 2px 0 var(--orange), inset 0 -2px 0 var(--orange);
+      }
+      .fav-item:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
       .rank-table tr:hover td {
         color: var(--orange);
       }
@@ -7918,12 +7945,15 @@
 
         // Bind handlers via dataset, no string interpolation in markup.
         el.querySelectorAll('.fav-item').forEach((item) => {
-          item.addEventListener('click', async () => {
-            const pc = item.dataset.favPostcode;
-            const city = item.dataset.favCity || 'london';
-            await switchCity(city);
-            triggerSearch(pc);
-          });
+          const pc = item.dataset.favPostcode;
+          makeKeyActivatable(
+            item,
+            async () => {
+              await switchCity(item.dataset.favCity || 'london');
+              triggerSearch(pc);
+            },
+            { label: `Show scores for saved postcode ${pc}` }
+          );
         });
         el.querySelectorAll('.fav-remove').forEach((btn) => {
           btn.addEventListener('click', (ev) => {
@@ -8360,14 +8390,52 @@
 
         // Bind row clicks via dataset, not inline onclick (audit I8).
         document.querySelectorAll('#borough-ranking tbody tr[data-rank-name]').forEach((tr) => {
-          tr.addEventListener('click', () => {
-            const name = tr.dataset.rankName;
-            if (tr.dataset.rankAction === 'borough') {
-              selectBoroughByName(name);
-            } else {
-              triggerSearch(name);
-            }
-          });
+          const name = tr.dataset.rankName;
+          makeKeyActivatable(
+            tr,
+            () => {
+              if (tr.dataset.rankAction === 'borough') {
+                selectBoroughByName(name);
+              } else {
+                triggerSearch(name);
+              }
+            },
+            { label: `Show scores for ${name}`, asButton: false }
+          );
+        });
+      }
+
+      // Make a non-button element operable by keyboard, not only by mouse.
+      //
+      // The ranking table (128 rows across both views), the saved-postcode list
+      // and the map's borough paths all bound `click` alone with cursor:pointer.
+      // A pointer affordance is not an affordance for anyone using a keyboard,
+      // a switch, or voice control - those rows simply could not be activated.
+      //
+      // Two deliberately different treatments:
+      //
+      //   role='button' is applied to DIVs (the saved list), where it is exactly
+      //   right, and deliberately NOT to table rows. Putting role='button' on a
+      //   <tr> removes it from the table's accessibility tree, so a screen-reader
+      //   user loses the column semantics that carry the actual data - borough,
+      //   score, rank. A focusable row with a key handler and an aria-label is
+      //   operable under WCAG 2.1.1 while keeping the cells announceable, which
+      //   is the better trade here.
+      //
+      //   Space is preventDefault()ed because it scrolls the page by default,
+      //   which on a 128-row table means the user's target moves under them.
+      function makeKeyActivatable(el, handler, { label, asButton = true } = {}) {
+        if (!el || el.dataset.keyBound === '1') return;
+        el.dataset.keyBound = '1';
+        el.setAttribute('tabindex', '0');
+        if (asButton) el.setAttribute('role', 'button');
+        if (label) el.setAttribute('aria-label', label);
+        el.addEventListener('click', handler);
+        el.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+            ev.preventDefault();
+            handler(ev);
+          }
         });
       }
 

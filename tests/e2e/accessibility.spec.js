@@ -131,4 +131,44 @@ test.describe('Accessibility', () => {
         blocking.map((v) => `  [${v.impact.toUpperCase()}] ${v.id}: ${v.description}`).join('\n')
     ).toHaveLength(0);
   });
+
+  // WCAG 2.1.1. Until 2026-08-03 the ranking table's 128 rows and every saved
+  // postcode bound `click` alone with cursor:pointer, so a keyboard, switch or
+  // voice user could not activate any of them. axe does not catch this: a <tr>
+  // with a click listener and no role looks inert to it, which is precisely why
+  // it needs an explicit behavioural test rather than another rule scan.
+  test('ranking rows are operable by keyboard alone', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('#app', { state: 'visible', timeout: 30_000 });
+    await page.evaluate(() => switchTab('ranking'));
+    const rows = page.locator('#borough-ranking tbody tr[data-rank-name]');
+    await expect(rows.first()).toBeVisible({ timeout: 30_000 });
+
+    // Every row must be reachable and labelled.
+    const audit = await page.evaluate(() => {
+      const rs = [...document.querySelectorAll('#borough-ranking tbody tr[data-rank-name]')];
+      return {
+        total: rs.length,
+        missingTabindex: rs.filter((r) => r.getAttribute('tabindex') !== '0').length,
+        missingLabel: rs.filter((r) => !r.getAttribute('aria-label')).length,
+        // role=button on a <tr> would strip the cells from the a11y tree.
+        withButtonRole: rs.filter((r) => r.getAttribute('role') === 'button').length,
+      };
+    });
+    expect(audit.total).toBeGreaterThan(0);
+    expect(audit.missingTabindex, `${audit.missingTabindex} rows are not focusable`).toBe(0);
+    expect(audit.missingLabel, `${audit.missingLabel} rows have no accessible name`).toBe(0);
+    expect(
+      audit.withButtonRole,
+      'role=button on a table row removes the cells from the accessibility tree'
+    ).toBe(0);
+
+    // And activation must actually work with no pointer involved.
+    const before = (await page.locator('#sidebar-title').textContent())?.trim();
+    await page.evaluate(() =>
+      document.querySelectorAll('#borough-ranking tbody tr[data-rank-name]')[2].focus()
+    );
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#sidebar-title')).not.toHaveText(before || '', { timeout: 30_000 });
+  });
 });

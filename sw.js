@@ -70,7 +70,10 @@
 // orange pin visibly MOVES between nearby areas instead of always landing dead
 // centre while the map slid underneath it. Fly duration 800ms -> 450ms. Also
 // removes 184 em dashes from the deployed pages.
-const VERSION = 'v1.0.12';
+// v1.0.13 (2026-08-03): the ranking table (128 rows) and every saved postcode
+// bound click alone, so keyboard, switch and voice users could not activate any
+// of them. Now focusable with Enter/Space handlers and visible focus rings.
+const VERSION = 'v1.0.13';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
