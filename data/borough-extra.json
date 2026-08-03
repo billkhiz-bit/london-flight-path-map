@@ -34,13 +34,14 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Hillingdon": {
       "crime": "low",
       "crimeRate": 91.6,
       "schools": "good",
-      "schoolNote": "Good school provision including several Outstanding primaries. Vyners School well-regarded.",
+      "schoolNote": "Good school provision including several Outstanding primaries. Vyners School well-regarded. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Generally low flood risk. Some surface water risk in lower-lying areas.",
       "airQuality": "moderate",
@@ -70,13 +71,14 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Richmond upon Thames": {
       "crime": "low",
       "crimeRate": 57.3,
       "schools": "excellent",
-      "schoolNote": "Multiple Outstanding primaries. Strong grammar school presence in neighbouring Kingston.",
+      "schoolNote": "Multiple Outstanding primaries. Strong grammar school presence in neighbouring Kingston. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Medium flood risk along Thames corridor. Parts of Twickenham, Teddington, and Richmond town at risk.",
       "airQuality": "good",
@@ -106,13 +108,14 @@
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Ealing": {
       "crime": "medium",
       "crimeRate": 80.5,
       "schools": "good",
-      "schoolNote": "Good schools throughout. Twyford CofE is Outstanding. Ellen Wilkinson school well-regarded.",
+      "schoolNote": "Good schools throughout. Twyford CofE is Outstanding. Ellen Wilkinson school well-regarded. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk in most areas. Some surface water risk along Brent River valley.",
       "airQuality": "moderate",
@@ -142,13 +145,14 @@
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Wandsworth": {
       "crime": "medium",
       "crimeRate": 76.4,
       "schools": "excellent",
-      "schoolNote": "Some of London's best state schools. Graveney, Burntwood, multiple Outstanding primaries. Major draw for families.",
+      "schoolNote": "Some of London's best state schools. Graveney, Burntwood, multiple Outstanding primaries. Major draw for families. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Medium flood risk along Thames frontage. Battersea and Putney embankment areas most at risk.",
       "airQuality": "moderate",
@@ -178,13 +182,14 @@
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Lambeth": {
       "crime": "high",
       "crimeRate": 114.4,
       "schools": "good",
-      "schoolNote": "Dunraven School Outstanding. Several good primaries in Streatham and Clapham.",
+      "schoolNote": "Dunraven School Outstanding. Several good primaries in Streatham and Clapham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Thames flood risk along northern boundary. Parts of Vauxhall and Waterloo in flood zone.",
       "airQuality": "poor",
@@ -214,13 +219,14 @@
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Lewisham": {
       "crime": "medium",
       "crimeRate": 94.2,
       "schools": "good",
-      "schoolNote": "Prendergast and Haberdashers' well-regarded. Several Outstanding primaries in Blackheath area.",
+      "schoolNote": "Prendergast and Haberdashers' well-regarded. Several Outstanding primaries in Blackheath area. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Flood risk along Ravensbourne and Quaggy rivers. Lewisham town centre has had historic flooding.",
       "airQuality": "moderate",
@@ -250,13 +256,14 @@
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Greenwich": {
       "crime": "medium",
       "crimeRate": 90.3,
       "schools": "good",
-      "schoolNote": "Thomas Tallis well-regarded. Several Outstanding primaries in Blackheath and Eltham.",
+      "schoolNote": "Thomas Tallis well-regarded. Several Outstanding primaries in Blackheath and Eltham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "high",
       "floodNote": "High flood risk in riverside areas. Thames Barrier protects but residual risk remains. Woolwich and Thamesmead particularly exposed.",
       "airQuality": "moderate",
@@ -286,13 +293,14 @@
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Tower Hamlets": {
       "crime": "high",
       "crimeRate": 106.6,
       "schools": "good",
-      "schoolNote": "Mulberry Academy Outstanding. Several strong primaries despite deprivation challenges.",
+      "schoolNote": "Mulberry Academy Outstanding. Several strong primaries despite deprivation challenges. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "high",
       "floodNote": "Significant Thames flood risk. Isle of Dogs, Canary Wharf, Wapping in flood zones. Thames Barrier provides protection.",
       "airQuality": "poor",
@@ -322,7 +330,8 @@
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Camden": {
       "crime": "high",
@@ -358,7 +367,8 @@
           "vsLondonMedian": 2.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Islington": {
       "crime": "high",
@@ -394,13 +404,14 @@
           "vsLondonMedian": 1.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Hackney": {
       "crime": "high",
       "crimeRate": 116.5,
       "schools": "good",
-      "schoolNote": "Mossbourne Academy Outstanding. Schools have improved significantly in recent years.",
+      "schoolNote": "Mossbourne Academy Outstanding. Schools have improved significantly in recent years. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk overall. River Lea corridor has localised risk.",
       "airQuality": "moderate",
@@ -430,7 +441,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Barnet": {
       "crime": "low",
@@ -466,13 +478,14 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Croydon": {
       "crime": "medium",
       "crimeRate": 80.4,
       "schools": "good",
-      "schoolNote": "Harris Academy Outstanding. Several strong primaries. Selective schools nearby in Sutton.",
+      "schoolNote": "Harris Academy Outstanding. Several strong primaries. Selective schools nearby in Sutton. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Some surface water risk in central Croydon from the Wandle. Southern areas have localised risk.",
       "airQuality": "moderate",
@@ -502,7 +515,8 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Bromley": {
       "crime": "low",
@@ -538,7 +552,8 @@
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Newham": {
       "crime": "high",
@@ -574,13 +589,14 @@
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Southwark": {
       "crime": "high",
       "crimeRate": 120.8,
       "schools": "good",
-      "schoolNote": "Harris Academy group has multiple Outstanding academies. Charter School popular.",
+      "schoolNote": "Harris Academy group has multiple Outstanding academies. Charter School popular. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Thames flood risk along northern boundary. Bermondsey, Rotherhithe, Borough in flood zones.",
       "airQuality": "poor",
@@ -610,13 +626,14 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
       "crimeRate": 107.0,
       "schools": "excellent",
-      "schoolNote": "Lady Margaret, Sacred Heart Outstanding. Strong primary provision throughout.",
+      "schoolNote": "Lady Margaret, Sacred Heart Outstanding. Strong primary provision throughout. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "high",
       "floodNote": "High flood risk along Thames. Hammersmith riverside and parts of Shepherd's Bush in flood zones.",
       "airQuality": "moderate",
@@ -646,13 +663,14 @@
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Kensington and Chelsea": {
       "crime": "medium",
       "crimeRate": 145.8,
       "schools": "excellent",
-      "schoolNote": "Holland Park School Outstanding. Very high private school density. Excellent state and independent options.",
+      "schoolNote": "Holland Park School Outstanding. Very high private school density. Excellent state and independent options. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Thames flood risk along Chelsea Embankment. Basement flooding a known issue in some streets.",
       "airQuality": "moderate",
@@ -682,7 +700,8 @@
           "vsLondonMedian": 1.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Brent": {
       "crime": "medium",
@@ -718,7 +737,8 @@
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Haringey": {
       "crime": "medium",
@@ -754,7 +774,8 @@
           "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Waltham Forest": {
       "crime": "medium",
@@ -790,13 +811,14 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Merton": {
       "crime": "low",
       "crimeRate": 59.3,
       "schools": "good",
-      "schoolNote": "Harris Academy Morden Outstanding. Wimbledon area has excellent primaries. Several private options.",
+      "schoolNote": "Harris Academy Morden Outstanding. Wimbledon area has excellent primaries. Several private options. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk overall. Some localised risk along River Wandle through Colliers Wood.",
       "airQuality": "moderate",
@@ -826,13 +848,14 @@
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Redbridge": {
       "crime": "medium",
       "crimeRate": 74.3,
       "schools": "excellent",
-      "schoolNote": "Ilford County High is a top grammar school. Several Outstanding primaries. Strong academic culture.",
+      "schoolNote": "Ilford County High is a top grammar school. Several Outstanding primaries. Strong academic culture. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk in most areas. Some risk along Roding Valley in the west.",
       "airQuality": "moderate",
@@ -862,13 +885,14 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Enfield": {
       "crime": "medium",
       "crimeRate": 85.2,
       "schools": "good",
-      "schoolNote": "Latymer School is a selective grammar. Several Outstanding primaries. Edmonton improving.",
+      "schoolNote": "Latymer School is a selective grammar. Several Outstanding primaries. Edmonton improving. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk in most areas. Some localised risk along Turkey Brook and Pymmes Brook.",
       "airQuality": "good",
@@ -898,13 +922,14 @@
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Kingston upon Thames": {
       "crime": "low",
       "crimeRate": 66.8,
       "schools": "excellent",
-      "schoolNote": "Tiffin Boys' and Tiffin Girls' are top grammar schools. Multiple Outstanding primaries.",
+      "schoolNote": "Tiffin Boys' and Tiffin Girls' are top grammar schools. Multiple Outstanding primaries. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Medium flood risk along Thames. Kingston town centre and Surbiton riverside at risk.",
       "airQuality": "good",
@@ -934,13 +959,14 @@
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Sutton": {
       "crime": "low",
       "crimeRate": 60.3,
       "schools": "excellent",
-      "schoolNote": "Sutton Grammar, Nonsuch, Wilson's are top selective schools. Outstanding primaries throughout. Best state schools in London.",
+      "schoolNote": "Sutton Grammar, Nonsuch, Wilson's are top selective schools. Outstanding primaries throughout. Best state schools in London. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk throughout. Mostly elevated terrain away from major rivers.",
       "airQuality": "good",
@@ -970,13 +996,14 @@
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Westminster": {
       "crime": "high",
       "crimeRate": 355.5,
       "schools": "good",
-      "schoolNote": "Grey Coat Hospital Outstanding. Very competitive for school places due to small residential population.",
+      "schoolNote": "Grey Coat Hospital Outstanding. Very competitive for school places due to small residential population. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Thames flood risk along Embankment and Pimlico. Good flood defences in place.",
       "airQuality": "poor",
@@ -1006,7 +1033,8 @@
           "vsLondonMedian": 4.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "City of London": {
       "crime": "high",
@@ -1026,7 +1054,7 @@
       "crime": "high",
       "crimeRate": 84.2,
       "schools": "good",
-      "schoolNote": "Sydney Russell Academy improved. Jo Richardson Community School is popular. Some primaries Outstanding.",
+      "schoolNote": "Sydney Russell Academy improved. Jo Richardson Community School is popular. Some primaries Outstanding. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Barking Riverside and Thames-side areas have flood risk. Inland areas are generally safe.",
       "airQuality": "moderate",
@@ -1056,13 +1084,14 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Havering": {
       "crime": "low",
       "crimeRate": 68.3,
       "schools": "good",
-      "schoolNote": "Several Outstanding primaries. Coopers' Company school well-regarded. Grammar schools nearby in Essex.",
+      "schoolNote": "Several Outstanding primaries. Coopers' Company school well-regarded. Grammar schools nearby in Essex. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk in most areas. Some risk along Thames in Rainham Marshes area.",
       "airQuality": "good",
@@ -1092,7 +1121,8 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Bexley": {
       "crime": "low",
@@ -1128,7 +1158,8 @@
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     },
     "Harrow": {
       "crime": "low",
@@ -1164,7 +1195,8 @@
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     }
   },
   "nyc": {

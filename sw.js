@@ -78,7 +78,11 @@
 // 2 Aug correction, days after it shipped, because force-cache plus an S3
 // object with no Cache-Control let the browser hold it indefinitely - and no
 // sw.js bump could evict it, because that is the HTTP cache, not this one.
-const VERSION = 'v1.0.14';
+// v1.0.15 (2026-08-03): dead DEFRA_WMS block removed along with two CSP hosts
+// it was the only reason for; 21 school notes now mark any Ofsted grade they
+// name as historic (withdrawn Sept 2024, not feeding the score). data/ changed,
+// so this bump is required.
+const VERSION = 'v1.0.15';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -122,7 +126,7 @@ const SHELL_ASSETS = [
 const NEVER_CACHE_ORIGINS = [
   'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com',
   'https://api.postcodes.io',
-  'https://environment.data.gov.uk',
+
 ];
 
 // Cross-origin assets where stale-while-revalidate is appropriate.

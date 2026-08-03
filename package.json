@@ -7,7 +7,7 @@
   "scripts": {
     "lint": "eslint index.html *.js js/api-base.js scripts tests mobile/scripts",
     "lint:fix": "eslint index.html --fix",
-    "lint:html": "html-validate index.html pricing.html privacy.html api/index.html score-demo/index.html score-demo/api-docs.html score-demo/status.html",
+    "lint:html": "html-validate index.html changes.html pricing.html privacy.html api/index.html score-demo/index.html score-demo/api-docs.html score-demo/status.html",
     "lint:css": "stylelint \"index.html\"",
     "lint:security": "eslint index.html --no-eslintrc -c eslint.config.js",
     "format": "prettier --write index.html",

@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://environment.data.gov.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://ukair.maps.rcdo.co.uk https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -5442,31 +5442,18 @@
       const AIRCRAFT_RASTER_PX = 4096;
       let aircraftRasterLoadedFor = null; // 'london' | 'nyc' | null - cleared on city switch
 
-      const DEFRA_WMS = {
-        aircraft: {
-          heathrow: {
-            url: 'https://environment.data.gov.uk/spatialdata/airport-noise-all-metrics-england-round-4/wms',
-            layers: ['Airport_Noise_Heathrow_Lden', 'Airport_Noise_Gatwick_Lden'],
-          },
-          all: {
-            url: 'https://environment.data.gov.uk/spatialdata/airport-noise-all-metrics-england-round-4/wms',
-            layer: 'Airport_Noise_ALL_Lden',
-          },
-        },
-        road: {
-          url: 'https://environment.data.gov.uk/spatialdata/road-noise-all-metrics-england-round-4/wms',
-          layer: 'Road_Noise_Lden_England_Round_4_All',
-        },
-        flood: {
-          url: 'https://environment.data.gov.uk/spatialdata/flood-map-for-planning-flood-zones/wms',
-          layer: 'Flood_Zones_2_3_Rivers_and_Sea',
-        },
-        airQuality: {
-          url: 'https://ukair.maps.rcdo.co.uk/ukairserver/services/AQMA/aqma_no2/MapServer/WMSServer',
-          layer: '0',
-        },
-      };
-
+      // DEFRA_WMS removed 2026-08-03. It was declared and never read: one
+      // occurrence in the whole file, its own declaration. The live aircraft
+      // overlay is the self-hosted PNG at /data/aircraft-noise-london-lden.png
+      // (CloudFront, ~86ms) which replaced these WMS calls; the block sat on as
+      // ~24 lines that read like live provenance and answered nothing.
+      //
+      // Removing it also retired two CSP entries: environment.data.gov.uk and
+      // ukair.maps.rcdo.co.uk appeared ONLY here and in the policy, so the page
+      // was granting network access to two third-party hosts it never called.
+      // geo.dot.gov, gispub.epa.gov and hazards.fema.gov are NOT removed - they
+      // carry live url: entries for the NYC noise, EPA air-quality and FEMA flood
+      // layers. raw.githubusercontent.com stays too: still a boundary fallback.
       // US equivalents (BTS/FEMA/EPA - federal government data)
       const US_MAP_SERVICES = {
         aircraft: {

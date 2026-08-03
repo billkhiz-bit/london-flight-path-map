@@ -15,7 +15,10 @@ set -u
 cd "$(dirname "$0")/.." || exit 2
 
 PATTERN='https\?://[a-z0-9]\+\.execute-api\.eu-west-2\.amazonaws\.com'
-FILES='index.html score-demo/index.html score-demo/api-docs.html score-demo/status.html api/index.html js/api-base.js'
+# changes.html added 2026-08-03. It calls /v1/changes, so it can drift like any
+# other caller, and it was the ONE public page excluded from this check - a
+# blind spot on the page most likely to be edited during a vintage roll.
+FILES='index.html changes.html score-demo/index.html score-demo/api-docs.html score-demo/status.html api/index.html js/api-base.js'
 
 # shellcheck disable=SC2086
 HOSTS=$(grep -ho "$PATTERN" $FILES tests/*.mjs 2>/dev/null | sort -u)
