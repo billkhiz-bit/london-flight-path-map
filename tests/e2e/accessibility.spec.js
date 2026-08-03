@@ -82,4 +82,53 @@ test.describe('Accessibility', () => {
       ).toHaveLength(0);
     });
   }
+
+  // Every scan above is of a page that has just loaded and been left alone, so
+  // this suite could only ever see the initial DOM. The result panel — where the
+  // scores, the badges and the verdict live, i.e. the entire reason someone
+  // visits — is rendered by a search and was therefore never scanned at all.
+  // A gate that inspects one keystroke short of the product is the same shape as
+  // the two gates this repo has already been burned by.
+  test('WCAG 2.1 AA scan: result panel after a postcode search', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForSelector('#app', { state: 'visible', timeout: 30_000 });
+
+    const input = page.locator('#search-input');
+    await input.fill('SW11 1AA');
+    await input.press('Enter');
+
+    // Wait for the RESULT, not for the absence of the loading state. Asserting
+    // "title is not SEARCHING" passes instantly, before the search has even
+    // started, and then races the render — a green wait that guarantees nothing,
+    // which is the failure mode this whole test exists to close.
+    await expect(page.locator('#sidebar-title')).toHaveText(/SW11/i, { timeout: 30_000 });
+    await expect(page.locator('.score-row').first()).toBeVisible({ timeout: 30_000 });
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    if (results.violations.length > 0) {
+      console.log(`\n--- result panel: ${results.violations.length} violation(s) ---`);
+      for (const violation of results.violations) {
+        console.log(`[${violation.impact?.toUpperCase()}] ${violation.id}: ${violation.description}`);
+        for (const node of violation.nodes.slice(0, 5)) {
+          console.log(`  - ${node.target.join(' > ')}`);
+        }
+        if (violation.nodes.length > 5) {
+          console.log(`  ... and ${violation.nodes.length - 5} more`);
+        }
+      }
+      console.log('');
+    }
+
+    const blocking = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious'
+    );
+    expect(
+      blocking,
+      `result panel: ${blocking.length} critical/serious violation(s):\n` +
+        blocking.map((v) => `  [${v.impact.toUpperCase()}] ${v.id}: ${v.description}`).join('\n')
+    ).toHaveLength(0);
+  });
 });

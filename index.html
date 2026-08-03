@@ -113,7 +113,12 @@
         --white: #fafaf9;
         --orange: #f27d26;
         --blue: #267df2;
-        --yellow: #9a7400;
+        /* Darkened from #9a7400 on 2026-08-03. At 4.13:1 on the #fafaf9 sidebar it
+           failed WCAG AA for normal text, and the 'Moderate AIRCRAFT NOISE' badge
+           renders at 10px — the smallest place it is used. Now 4.73:1. All seven
+           uses are color/border-color on light backgrounds, never a fill, so
+           darkening cannot reduce contrast anywhere else. */
+        --yellow: #8e6b00;
         --green: #0a7a3e;
         --red: #f22626;
         --font-mono: 'JetBrains Mono', monospace;
@@ -5020,8 +5025,23 @@
       // Acceptable: the map shell is interactive faster (saves ~25 KB
       // of HTML parsing + ~585 lines of inline JS), and the sidebar
       // refresh is visually invisible once hydration completes.
+      // `_boroughExtraHydrated` was declared and set but NEVER READ — so nothing
+      // distinguished "the data has not arrived yet" from "the data will never
+      // arrive". The transient case above is a deliberate trade-off and is fine.
+      // The permanent one was not disclosed at all: on a failed fetch the flag
+      // stayed false forever, BOROUGH_EXTRA stayed {}, and every borough silently
+      // scored crime/schools/transport/healthcare at their defaults while the UI
+      // presented the totals with no less confidence than real ones. The only
+      // signal was a console.warn.
+      //
+      // That is the defect class this project keeps hitting — absence rendered as
+      // a favourable measurement — and it is the same code path that makes the
+      // native bundle ship flat liveability. `_boroughExtraFailed` is now read by
+      // updateSidebar and renderBoroughRanking, which surface it rather than
+      // printing a confident number built on nothing.
       let _boroughExtraHydrated = false;
-      async function hydrateBoroughExtra() {
+      let _boroughExtraFailed = false;
+      async function hydrateBoroughExtra(attempt = 0) {
         try {
           const resp = await fetch('/data/borough-extra.json', { cache: 'force-cache' });
           if (!resp.ok) throw new Error('borough-extra HTTP ' + resp.status);
@@ -5053,10 +5073,47 @@
             }
           }
         } catch (err) {
-          // Non-fatal — sidebar shows generic content. Log so we can
-          // alarm on this if it ever spikes.
-          console.warn('borough-extra hydration failed; using empty defaults:', err);
+          // One retry first: this file is small and same-origin, so a single
+          // failure is far more likely to be a transient blip than a real
+          // outage, and silently degrading a whole session over one dropped
+          // request would be its own defect.
+          if (attempt < 1) {
+            console.warn('borough-extra hydration failed, retrying once:', err);
+            setTimeout(() => hydrateBoroughExtra(attempt + 1), 1200);
+            return;
+          }
+          // Out of retries. This is now a real, persistent failure, so it must
+          // be visible in the UI and not merely in a console nobody reads.
+          _boroughExtraFailed = true;
+          console.warn('borough-extra hydration failed; scores are incomplete:', err);
+          try {
+            if (typeof renderBoroughRanking === 'function') renderBoroughRanking();
+            if (typeof selectedBorough !== 'undefined' && selectedBorough) {
+              const d = typeof getActiveBoroughData === 'function' ? getActiveBoroughData()[selectedBorough] : null;
+              if (d && typeof updateSidebar === 'function') {
+                updateSidebar({ name: selectedBorough, ...d }, { switchToAnalysis: false });
+              }
+            }
+          } catch (e) {
+            /* nothing rendered yet — the notice appears on first render instead */
+          }
         }
+      }
+
+      // Rendered wherever a score is shown once hydration has permanently failed.
+      // Deliberately states which components are affected rather than a vague
+      // "something went wrong": liveability is the composite that loses crime,
+      // schools, transport and healthcare, and quiet/afford/growth are unaffected
+      // because they do not come from this file.
+      function boroughDataNotice() {
+        if (!_boroughExtraFailed) return '';
+        return (
+          '<p class="info-note" style="border-left:3px solid var(--orange);padding-left:8px;margin-bottom:10px;" role="status">' +
+          '<strong>Liveability data unavailable.</strong> Crime, schools, transport and healthcare ' +
+          'could not be loaded, so the Liveability score and the total below fall back to a neutral ' +
+          '5.0 and are not measurements. Quiet, affordability and growth are unaffected. Reload to retry.' +
+          '</p>'
+        );
       }
 
       // Compute per-neighbourhood scores using actual coordinates
@@ -5146,6 +5203,21 @@
           } else {
             const lhr = apDists.find((a) => a.code === 'LHR');
             if (lhr && lhr.dist < 15) noiseScore += 2;
+          }
+
+          // Rotary noise. Added here 2026-08-03: analysePostcode() has applied this
+          // since the heliport term existed, and this scorer never did — so the same
+          // place scored two different quiet values depending on whether you reached
+          // it through the neighbourhood ranking or by searching its postcode, one
+          // click apart. Denmark Hill differed by 2 points. Must stay in step with
+          // the block in analysePostcode: same sites, same bands, loudest-not-nearest.
+          if (city === 'london') {
+            const heliBonus = HELIPORTS.reduce((best, hp) => {
+              const d = _quickDist(lat, lon, hp.coords[1], hp.coords[0]);
+              const contribution = d < 3 ? hp.bands[0] : d < 5 ? hp.bands[1] : 0;
+              return Math.max(best, contribution);
+            }, 0);
+            noiseScore += heliBonus;
           }
           const quiet = Math.max(0, Math.min(10, 10 - noiseScore));
 
@@ -7336,6 +7408,7 @@
 
     <div class="sidebar-section">
       <h3>SCORE BREAKDOWN <span style="font-weight:400;font-size:10px;color:var(--mid);">${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} PROFILE</span></h3>
+      ${boroughDataNotice()}
       <p class="property-note" style="margin-top:0;margin-bottom:12px;font-size:11px;">Four factors, weighted for <strong>${PERSONAS[currentPersona].label.toLowerCase()}</strong> buyers. <button type="button" onclick="switchTab('ranking')" style="background:none;border:none;border-bottom:1px dotted var(--orange);color:var(--orange);cursor:pointer;padding:0;font:inherit;">Change profile</button></p>
       <div class="score-breakdown">
         <div class="score-row">
@@ -7468,6 +7541,12 @@
 
         let boroughHtml = '';
         const extra = getExtraData(analysis.borough);
+        // Hoisted out of the if-block below on 2026-08-03. The favourites button
+        // near the end of this function reads it, and that button is OUTSIDE the
+        // `if (boroughData)` block — so a `const` declared inside threw
+        // "pcScore is not defined" and took the whole result panel down. Being in
+        // the same FUNCTION is not the same as being in the same BLOCK.
+        let pcScore = 0;
         if (boroughData) {
           const priceFull = formatPrice(boroughData.avg_price, currentCity);
           const a = boroughData.scores?.afford ?? 5,
@@ -7486,7 +7565,7 @@
           // button, and because the favourites Lambda persists it, the wrong value
           // was written to DynamoDB rather than merely shown. Any new surface that
           // needs this postcode's score must read `pcScore`, never re-derive it.
-          const pcScore = Math.round((pcQuiet * pw.quiet + a * pw.afford + gr * pw.growth + lv * pw.live) * 10) / 10;
+          pcScore = Math.round((pcQuiet * pw.quiet + a * pw.afford + gr * pw.growth + lv * pw.live) * 10) / 10;
           // Generate postcode-specific verdict
           const pcVerdict = (() => {
             if (pcScore >= 7.5) {
@@ -7519,6 +7598,7 @@
           <div class="summary-verdict" style="color:${scoreTextColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 — ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
           ${pcVerdict}
         </div>
+        ${boroughDataNotice()}
         <div class="score-breakdown" style="margin-top:14px;">
           <div class="score-row"><span class="score-row-label">Quiet Skies</span>
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${pcQuiet * 10}%;background:${scoreColor(pcQuiet)};"></div></div>
@@ -8238,6 +8318,7 @@
         const areaLabel = rankingView === 'neighbourhood' ? 'Neighbourhood' : 'Borough';
         const toggleLabel = rankingView === 'neighbourhood' ? 'Show boroughs only' : 'Show neighbourhoods';
         document.getElementById('borough-ranking').innerHTML =
+          boroughDataNotice() +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
           '<p class="property-note" style="margin:0;font-size:11px;flex:1;">' +
           `Ranked by <strong>${PERSONAS[currentPersona].label} Buyer Score</strong>: quiet skies (${Math.round(w.quiet * 100)}%) + affordability (${Math.round(w.afford * 100)}%) + growth (${Math.round(w.growth * 100)}%) + liveability (${Math.round(w.live * 100)}%).` +

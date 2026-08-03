@@ -59,7 +59,14 @@
 // from the one shown above the save button - and the favourites Lambda persists
 // it, so the wrong number reached DynamoDB. Also drops the 'exact dB' claim the
 // noise legend made, which no code path delivers.
-const VERSION = 'v1.0.10';
+// v1.0.11 (2026-08-03): fixes a live breakage plus three website findings.
+// pcScore was hoisted to function scope - v1.0.10 shipped it as a const inside
+// `if (boroughData)` while the favourites button reads it OUTSIDE that block,
+// which threw and took the whole postcode result panel down in production.
+// Also: a visible notice when borough data fails to load, the heliport term
+// added to the neighbourhood scorer so it agrees with the postcode panel, and
+// --yellow darkened to clear WCAG AA on the noise badge.
+const VERSION = 'v1.0.11';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
