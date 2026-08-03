@@ -103,6 +103,26 @@ AWS_PROFILE=flightmap aws s3 cp pricing.html s3://london-flight-map-frontend/pri
 AWS_PROFILE=flightmap aws s3 cp privacy.html s3://london-flight-map-frontend/privacy/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws s3 cp changes.html s3://london-flight-map-frontend/changes/index.html --content-type "text/html" --region eu-west-2
 
+# Data assets. NOT covered by the index.html line above and absent from this
+# file entirely until 2026-08-03, which is how the Cache-Control gap below went
+# unnoticed. borough-extra.json carries every borough's crime, schools,
+# transport and healthcare inputs, so a stale copy means wrong scores.
+#
+# --cache-control "no-cache" is LOAD-BEARING, not tidiness. The object shipped
+# with no Cache-Control at all, and index.html fetched it with
+# cache: 'force-cache' - serve any cached copy WITHOUT revalidating - so a
+# browser could pin it indefinitely. A user was served crime figures from before
+# the 2026-08-02 correction, days after it shipped.
+#
+# Bumping sw.js does NOT fix this. That evicts the service worker's caches; the
+# stale copy lived in the browser's HTTP cache, which force-cache had opted out
+# of freshness checks entirely. Prefer `make web-deploy-all`, which gets this
+# right; these lines are the manual fallback.
+AWS_PROFILE=flightmap aws s3 cp data/borough-extra.json s3://london-flight-map-frontend/data/borough-extra.json --content-type "application/json" --cache-control "no-cache" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp data/london-boroughs.json s3://london-flight-map-frontend/data/london-boroughs.json --content-type "application/json" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp data/nyc-boroughs.json s3://london-flight-map-frontend/data/nyc-boroughs.json --content-type "application/json" --region eu-west-2
+
+
 # PWA assets — REQUIRED for the install prompt + offline SW to work. These are
 # NOT covered by the index.html line above; they were missing from the live
 # origin until 2026-05-21 (every asset 403'd → no manifest → install button

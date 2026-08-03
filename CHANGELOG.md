@@ -6,7 +6,41 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-03 (latest) - API flight paths trimmed; quiet rises across a third of London
+### 2026-08-03 (latest) - a stale-cache bug users could hit, and keyboard access
+
+- **Users could be served crime data days out of date.** `index.html` fetched
+  `data/borough-extra.json` with `cache: 'force-cache'`, which serves any cached
+  copy **without revalidating**, and the S3 object carried **no `Cache-Control`
+  at all**. Between them a browser could pin the file indefinitely. Reported by a
+  user seeing a London median of 91.0 against the live 87.4, and "offence
+  breakdown not published" on a borough that has one. Now `no-cache`
+  (revalidate), with an explicit header set in the Makefile.
+- **No service-worker bump could have fixed that.** `sw.js` VERSION bumps evict
+  the *service worker's* caches; this was the *browser's HTTP cache*, which
+  `force-cache` had opted out of freshness checks entirely. Worth knowing before
+  reaching for a VERSION bump as the remedy for stale content.
+- **The ranking table and saved postcodes are now keyboard-operable.** 128 rows
+  bound `click` alone, so keyboard, switch and voice users could not activate any
+  of them (WCAG 2.1.1). Table rows deliberately do **not** carry
+  `role="button"` - that would strip the cells from the accessibility tree and
+  cost screen-reader users the borough, score and rank. Guarded by a behavioural
+  e2e test, because axe cannot see a `<tr>` with a click listener and no role.
+- **Two faults in the crime checker, both found by chasing the cache bug.** The
+  ONS workbook carries footnote suffixes (`"City of London[note 8]"`), so exact
+  name matching silently excluded the one borough `--check` exists to flag while
+  reporting "in step with ONS". And the London median folded in the Metropolitan
+  Police **force-level aggregate**, so every `vsLondonMedian` ratio was computed
+  against a cohort containing its own summary - **12 of 96 published ratios were
+  wrong**. Westminster's headline driver moves 25.2x to 25.5x.
+- **`--check` now fails on drift only.** The City of London case is permanent, so
+  failing on it would leave the gate red for ever, which is how a gate stops
+  being read.
+- **A live EPC credential was redacted** from `archive/prototype-2026-03/`, which
+  is tracked and public. **It remains in git history**; removing it needs a
+  rewrite and is the author's call.
+
+
+### 2026-08-03 - API flight paths trimmed; quiet rises across a third of London
 
 - **The API was scoring noisier than the consumer site for the same postcode, and
   had been for three months.** The 2026-05-07 corridor trim, audited against the

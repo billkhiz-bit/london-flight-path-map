@@ -90,6 +90,17 @@ recorded because they recur: scope was verified by reading line numbers rather t
 running the page, and a later guard's exit code was misread because the command was
 piped to `tail`, which reports the last stage's status.
 
+### Closed 2026-08-03, third pass
+
+| ID | Finding | State |
+|---|---|---|
+| A-0803-50 | 128 ranking rows and every saved postcode were mouse-only (WCAG 2.1.1) | **Fixed.** Focusable with Enter/Space and visible focus rings. Table rows deliberately do **not** get `role="button"` — that strips the cells from the accessibility tree and would trade one user group for another. Guarded by a behavioural e2e test, verified to fail on the old build with "128 rows are not focusable". axe cannot see this class of defect |
+| A-0803-37 | `borough-extra.json` fetched `force-cache` with no `Cache-Control` | **Fixed, and it was live.** A user reported crime figures from before the 2 Aug correction, days after it shipped. Now `no-cache` (revalidate) plus an explicit header set in the Makefile. **No `sw.js` bump could ever have fixed it** — those evict the service worker's cache; this was the browser's HTTP cache |
+| A-0803-27 | ONS crime `--check` could not go red on the one borough it existed to flag | **Fixed.** The workbook carries footnote suffixes (`"City of London[note 8]"`), so exact-match silently excluded it and the script reported "in step with ONS". Suffix now stripped. `--check` fails on **drift only** — the City of London case is permanent, and a gate that is always red stops being read |
+| A-0803-48 | London median included the Met force-level aggregate row | **Fixed.** Every `vsLondonMedian` ratio was computed against a cohort containing its own summary; **12 of 96 were wrong**. Westminster's headline driver moves 25.2× → 25.5× |
+| A-0803-44 | Live EPC credential committed to a public repo | **Redacted from the working tree.** **Still in git history** (from `7eb1984`); removing it needs a rewrite, which is the author's call. Predates the 2026-05-30 bearer-auth migration so is very likely dead — verify before assuming |
+| A-0803-19/20/21/33/34/40/41/43/54/57 | Documentation and licensing claims | **Fixed** in the second and third passes — see the commits for detail |
+
 ### Still open, not yet triaged
 
 Findings 3, 4, 5, 6, 8, 10, 15–22, 25–66 in the full report. The recommended order there starts
