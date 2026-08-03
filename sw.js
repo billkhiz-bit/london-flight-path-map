@@ -54,7 +54,12 @@
 // itself — "2.2x the London median" beside "nothing stands out" — while crediting
 // ONS for a rate ONS explicitly suppresses. Both are in index.html, so returning
 // visitors keep them until this bumps.
-const VERSION = 'v1.0.9';
+// v1.0.10 (2026-08-03): the favourites button recomputed its own score from
+// retired weights with no liveability term, so the value a user SAVED differed
+// from the one shown above the save button - and the favourites Lambda persists
+// it, so the wrong number reached DynamoDB. Also drops the 'exact dB' claim the
+// noise legend made, which no code path delivers.
+const VERSION = 'v1.0.10';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

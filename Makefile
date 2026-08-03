@@ -105,8 +105,25 @@ web-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp changes.html \
 		s3://$(S3_BUCKET)/changes/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
+	# api/index.html had NO target until 2026-08-03 - editable, deployed, and
+	# uploaded by hand. It is the B2B landing page, so a stale copy sells the
+	# product on claims the code no longer honours - exactly what it was doing
+	# (Ofsted as a live source, the DEFRA raster tier as primary).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp api/index.html \
+		s3://$(S3_BUCKET)/api/index.html \
+		--content-type "text/html" --region $(AWS_REGION)
+	# js/vendor/ likewise had no target, and this one can break the site rather
+	# than merely date it: d3.v7.min.js is in sw.js SHELL_ASSETS and cache.addAll()
+	# is ATOMIC, so if it is missing from the origin the service worker fails to
+	# install AT ALL, taking offline support for both cities with it. It returns
+	# 200 today only because a hand-upload happened to land on 2026-07-30; a
+	# fresh bucket would not. Cacheable unlike js/api-base.js above, because the
+	# filename is version-pinned and index.html carries an SRI hash for these bytes.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/vendor/ \
+		s3://$(S3_BUCKET)/js/vendor/ \
+		--recursive --content-type "application/javascript" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
-		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/js/*'
+		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/js/*' '/api/*'
 
 .PHONY: data-deploy
 data-deploy:

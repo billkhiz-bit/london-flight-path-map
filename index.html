@@ -2724,7 +2724,8 @@
               DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and
               LGW — modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
               strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions.
-              Click any postcode for the exact dB at that spot.
+              The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that
+              location, not a decibel reading.
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
@@ -7475,7 +7476,16 @@
           const pw = PERSONAS[currentPersona].weights;
           // Use postcode-specific noise to calculate Quiet Skies score
           const pcQuiet = Math.max(0, Math.min(10, 10 - analysis.noiseScore));
-          // Recalculate Buyer Value Score with postcode noise + persona weights
+          // Recalculate Buyer Value Score with postcode noise + persona weights.
+          //
+          // This is the ONLY score for this postcode. The favourites button below
+          // used to recompute its own with `quiet*0.40 + afford*0.35 + growth*0.25`
+          // — retired weights, no liveability term at all, and growth at 0.25 when
+          // v3.3 set it to 0.00 for every persona but `investor`. So the number a
+          // user saved disagreed with the number displayed directly above the save
+          // button, and because the favourites Lambda persists it, the wrong value
+          // was written to DynamoDB rather than merely shown. Any new surface that
+          // needs this postcode's score must read `pcScore`, never re-derive it.
           const pcScore = Math.round((pcQuiet * pw.quiet + a * pw.afford + gr * pw.growth + lv * pw.live) * 10) / 10;
           // Generate postcode-specific verdict
           const pcVerdict = (() => {
@@ -7544,7 +7554,7 @@
             <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${escapeHtml(analysis.postcode)}</div>
             <div style="font-size:10px;color:var(--mid);">${escapeHtml(analysis.ward)}, ${escapeHtml(analysis.borough)}</div>
           </div>
-          <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(analysis.noiseEstimate)}" data-fav-score="${boroughData ? Math.round((Math.max(0, Math.min(10, 10 - analysis.noiseScore)) * 0.4 + (boroughData.scores?.afford ?? 5) * 0.35 + (boroughData.scores?.growth ?? 5) * 0.25) * 10) / 10 : 0}">
+          <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(analysis.noiseEstimate)}" data-fav-score="${boroughData ? pcScore : 0}">
             <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode) ? 'SAVED' : 'SAVE'}
           </button>
         </div>

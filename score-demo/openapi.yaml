@@ -740,8 +740,18 @@ components:
             Which resolution tier produced the `quiet` score. Resolves
             highest-precision-first:
               `raster`, DEFRA Lden raster sample at postcode centroid (v3.1)
+                        — NOT CURRENTLY RETURNED, see the note below
               `postcode`, Haversine to airports + flight-path geometry (v3.0)
               `borough`, Borough-aggregate Lden band (v2.x fallback)
+
+            NOTE (August 2026): the `raster` tier is bypassed while a coverage
+            problem is resolved, so this field returns `postcode` or `borough`
+            only. DEFRA's aircraft contours cover roughly a tenth of London and
+            the unmapped remainder was being treated as quiet. `raster` is kept
+            in the enum because it is a valid value of the contract and will
+            return once the tier is restored — do not treat its absence as
+            permanent, and do not filter on it expecting results today.
+
             Integrators can use this to surface precision metadata to end
             users or filter for higher-precision results.
 

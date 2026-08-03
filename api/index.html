@@ -231,7 +231,8 @@
       </div>
       <div class="card">
         <h3>Per-postcode noise resolution</h3>
-        <p>v3.1 samples the DEFRA Lden raster at the exact postcode centroid (~10 m grid), with Haversine flight-path proximity as a fallback for postcodes outside the published contour.</p>
+        <p>Quiet is scored per postcode from Haversine proximity to airports and flight-path geometry, at the postcode centroid rather than a borough average. The response reports which tier answered in <code>context.quietResolution</code>.</p>
+        <p><strong>Note (August 2026):</strong> the DEFRA Lden raster tier described in our methodology is currently bypassed while a coverage problem is resolved — DEFRA's aircraft contours cover only about a tenth of London, and treating the unmapped remainder as quiet flattened the component. <code>quietResolution</code> therefore returns <code>postcode</code>, never <code>raster</code>, until that is fixed.</p>
       </div>
     </div>
   </section>
