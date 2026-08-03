@@ -97,7 +97,7 @@ Lden is the day-evening-night equivalent sound level, weighted to penalise eveni
 
 | Score | Band | dB Lden | Health context |
 |---|---|---|---|
-| **10.0** | low | < 55 | Below WHO health-impact threshold; not measurably affected |
+| **10.0** | low | < 55 | **Below DEFRA's 55 dB mapping threshold — unmeasured, not verified quiet.** See the correction below |
 | **7.5** | low-moderate | 55-60 | Below DEFRA "significantly affected" threshold; slight annoyance |
 | **5.0** | moderate | 60-65 | Sleep disturbance becomes detectable in WHO meta-analyses |
 | **3.0** | moderate-high | 65-70 | Significant annoyance; measurable cardiovascular risk increase |
@@ -105,6 +105,28 @@ Lden is the day-evening-night equivalent sound level, weighted to penalise eveni
 | **0.0** | severe | ≥ 75 | DEFRA "important areas" action threshold; hearing impact possible |
 
 The score values are spaced to reflect the inverse-square-ish relationship between noise dB and health effect, the gap from "moderate-high" (3.0) to "high" (1.5) is half the gap from "low" (10.0) to "low-moderate" (7.5), reflecting that small dB increases at high baselines have outsized health consequences.
+
+> **Correction, 2026-08-03.** The `< 55` row previously read *"Below WHO health-impact threshold;
+> not measurably affected"*. That contradicted this very section: WHO's strong recommendation for
+> aircraft is **below 45 dB Lden** (verified against the publisher, not taken from this document),
+> so a band spanning 45-55 dB is **above** the threshold it claimed to be below.
+>
+> **The bands themselves are not wrong and no score has changed.** DEFRA publishes strategic noise
+> mapping only from 55 dB upward - its own bands, quoted above, begin at 55 - so **the 45-55 dB
+> range is not measured by this source at all**. A borough in `low` may sit at 54 dB or at 30 dB;
+> neither DEFRA nor Sky Score can tell you which, and inventing a boundary at 45 would assert a
+> precision the data does not carry.
+>
+> So `low` means **"below the level at which DEFRA is required to map"**, which is a statement
+> about the survey and not about the air. It is kept at 10.0 because the component measures
+> aircraft noise *as mapped by DEFRA*, and by that measure these boroughs are at the floor;
+> lowering it would replace an unevidenced reassurance with an unevidenced penalty. **13 of the 33
+> London boroughs sit in this band.**
+>
+> Full working: [`BAND_MAPPING_ANALYSIS.md`](./BAND_MAPPING_ANALYSIS.md). Revisit if DEFRA Round 5
+> (~2027) maps below 55 dB. **Unverified:** the 53 dB figure cited above is WHO's *road traffic*
+> guideline; whether it is also the aircraft annoyance-onset threshold was not established and
+> should be checked before it is relied on.
 
 ### 4.2 Affordability, min-max scaled across the cohort
 
