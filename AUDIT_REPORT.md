@@ -101,6 +101,50 @@ piped to `tail`, which reports the last stage's status.
 | A-0803-44 | Live EPC credential committed to a public repo | **Redacted from the working tree.** **Still in git history** (from `7eb1984`); removing it needs a rewrite, which is the author's call. Predates the 2026-05-30 bearer-auth migration so is very likely dead — verify before assuming |
 | A-0803-19/20/21/33/34/40/41/43/54/57 | Documentation and licensing claims | **Fixed** in the second and third passes — see the commits for detail |
 
+### Critical status at session close, 2026-08-03
+
+**One of the two criticals is fully closed. The other is fixed in code but NOT in
+users' hands.** Stated plainly because "both criticals fixed" would be misleading.
+
+| ID | Code | Deployed | Users affected? |
+|---|---|---|---|
+| **A-0803-2** flight-path geometry | Fixed | **Yes** | **No — closed.** Lambda carries 10 corridors / 50 waypoints matching the site; live API returns quiet 4.0 for E1 8BL against the site's 4 |
+| **A-0803-1** native bundle | Fixed | **No** | **YES.** `copy-web.mjs` now bundles all four data files and fails the build if one is missing, verified. But the **shipped App Store binary is unchanged**, so every existing install still scores liveability at a flat default. Closing it needs a rebuild and a store resubmission — roughly 2-3 days of Apple review |
+
+**A-0803-44, the committed credential, is also not closed.** Redacted from the
+working tree, but **one commit in history still contains it**. Removing that needs
+a history rewrite, which is destructive on a repo synced across devices and is
+the author's decision. The key predates the 2026-05-30 EPC bearer-auth migration
+so is very likely dead — verify before assuming.
+
+### Closed 2026-08-03, fourth pass
+
+| ID | Finding | State |
+|---|---|---|
+| A-0803-55 | Dead `DEFRA_WMS` block kept four hosts in the CSP | **Fixed.** 26 dead lines removed; `environment.data.gov.uk` and `ukair.maps.rcdo.co.uk` appeared only there and in the policy, so CSP goes 12 hosts to 10. The other three carry live `url:` entries and stay |
+| A-0803-39/59 | `changes.html` excluded from html-validate **and** the API-URL drift check | **Fixed.** Both gates now cover 8 of 8 public pages — it was the page most likely to be edited during a vintage roll |
+| A-0803-35 | 21 school notes named retired Ofsted grades under a Progress 8 badge | **Fixed.** Grades marked historic; named schools kept. Deliberately not rewritten borough by borough — inventing replacement prose is what produced the Ofsted bands originally |
+| A-0803-56 | Three docs cited `index.html:1118-1247` as the Haversine algorithm | **Fixed.** Those lines are CSS. All three now cite `calcScores()` by name |
+| A-0803-58 | `SECURITY.md` and `security.txt` gave different disclosure addresses | **Fixed**, and the same file gave a personal address for SAR requests while `privacy.html` and `SUBPROCESSORS.md` publish `support@`. Zero personal addresses remain |
+
+### DEFRA raster: measured, and the quarantine stands
+
+The hybrid chain was measured properly for the first time across 4,524 London
+postcodes. The raster answers for **10.2%**, Haversine for the rest, and it
+**discriminates fine** — 12 distinct values, no collapse. That earlier worry is
+answered.
+
+But it moves scores **upward**, on exactly the postcodes nearest the airports:
+perfect 10.0 scores go 5.7% → 13.8%, while the 1.0 band halves. That happens
+because every value DEFRA publishes is ≥55 dB, and the §4.1 mapping hands 55-60
+dB a **7.5/10** — when WHO's aircraft guideline is **45 dB**.
+
+The data is sound; **the conversion from measured dB to a 0-10 score is what is
+unresolved**, and that is a different question from `BAND_MAPPING_ANALYSIS.md`,
+which covered the *unmeasured* band below 55. Erring quiet is the one direction a
+noise product cannot afford, so the quarantine stands until the 55+ bands are
+re-derived. That is now a precisely scoped decision rather than a vague blocker.
+
 ### Still open, not yet triaged
 
 Findings 3, 4, 5, 6, 8, 10, 15–22, 25–66 in the full report. The recommended order there starts

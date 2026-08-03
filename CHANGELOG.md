@@ -6,7 +6,34 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-03 (latest) - a stale-cache bug users could hit, and keyboard access
+### 2026-08-03 (latest) - dead code, gate coverage, and honest contact details
+
+- **Removed a dead `DEFRA_WMS` block and two CSP grants it was the only reason
+  for.** The block was declared and never read; `environment.data.gov.uk` and
+  `ukair.maps.rcdo.co.uk` appeared only there and in the policy, so the page was
+  granting network access to two hosts it never called. CSP: 12 hosts to 10. The
+  other three carry live layer URLs and stay.
+- **`changes.html` was excluded from html-validate AND the API-URL drift check** -
+  the one public page missing from both, and the one most likely to be edited
+  during a vintage roll. Both gates now cover 8 of 8.
+- **21 school notes named retired Ofsted grades** beneath a Progress 8 badge. The
+  grades are now marked historic; the named schools stay. Not rewritten borough
+  by borough, because inventing replacement prose is what produced the Ofsted
+  bands in the first place.
+- **Three documents cited `index.html:1118-1247` as the quiet algorithm.** Those
+  lines are CSS. All three now name `calcScores()` instead.
+- **Two disclosure addresses disagreed.** `SECURITY.md` gave a personal Gmail
+  while `security.txt` gave `support@skyscore.co.uk`; the same file also gave the
+  personal address for SAR requests while `privacy.html` and `SUBPROCESSORS.md`
+  publish `support@`. All aligned.
+- **The DEFRA raster quarantine stands, now for a measured reason.** The hybrid
+  chain discriminates fine (12 distinct values) but scores airport-adjacent
+  postcodes *quieter* - perfect 10.0s go 5.7% to 13.8% - because every DEFRA
+  value is above 55 dB and the band mapping awards 55-60 dB a 7.5/10 against a
+  WHO aircraft guideline of 45 dB. Unblocking it means re-deriving the 55+ bands.
+
+
+### 2026-08-03 - a stale-cache bug users could hit, and keyboard access
 
 - **Users could be served crime data days out of date.** `index.html` fetched
   `data/borough-extra.json` with `cache: 'force-cache'`, which serves any cached
