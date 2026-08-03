@@ -1478,7 +1478,16 @@ class IndependentReviewRegressionTests(unittest.TestCase):
 
         app._DDB_CLIENT = _Stub()
         app.NOISE_RASTER_TABLE = 'london-flight-map-noise-raster'
-        with patch.object(app, '_raster_cache_get', lambda k: None):
+        # The 2026-08-03 quarantine means the raster is never looked up, so
+        # without this every count here would be 0. Lifting it for the duration
+        # keeps these two tests guarding what they were written to guard — the
+        # de-duplication that stops ?compare=previous making four GetItems and
+        # timing out into a 502. Rewriting them to expect 0 would have been the
+        # easy way to green and would have quietly retired both guards, leaving
+        # nothing to catch the regression when the tier is eventually restored.
+        with patch.object(app, '_raster_cache_get', lambda k: None), patch.object(
+            app, 'RASTER_TIER_QUARANTINED', False
+        ):
             app.resolve_query(dict(query))
         return len([c for c in calls if 'raster' in c])
 
@@ -1495,6 +1504,94 @@ class IndependentReviewRegressionTests(unittest.TestCase):
         # cost four GetItems per request rather than two.
         self.assertEqual(
             self._count_raster_getitems({'postcode': 'SW11 1AA', 'compare': 'previous'}), 2
+        )
+
+
+class RasterQuarantineTests(unittest.TestCase):
+    """Guards the 2026-08-03 quarantine of the DEFRA raster tier.
+
+    The defect these exist for was invisible to this suite for over a week,
+    because it lived in DynamoDB rather than in any function: every unit test
+    ran with no raster table configured, took the Haversine tier, and passed
+    while production served something else entirely. So these tests stub the
+    table with the values it genuinely holds, rather than with tidy fixtures.
+    """
+
+    # TW6 1AP — inside Heathrow Airport (Heathrow Villages ward, Hillingdon).
+    HEATHROW_LAT, HEATHROW_LON = 51.472385, -0.450939
+    # What london-flight-map-noise-raster actually stores for it. Not invented.
+    HEATHROW_STORED_LDEN = 58.2
+
+    def setUp(self):
+        self._raster = app.NOISE_RASTER_TABLE
+        self._client = app._DDB_CLIENT
+        self._cache = (app._raster_cache_get, app._raster_cache_put)
+        app._raster_cache_get, app._raster_cache_put = app._make_lru(16)
+
+    def tearDown(self):
+        app.NOISE_RASTER_TABLE = self._raster
+        app._DDB_CLIENT = self._client
+        app._raster_cache_get, app._raster_cache_put = self._cache
+
+    def _serve_raster(self, lden):
+        """Point the raster tier at a stub table holding exactly `lden` dB."""
+
+        class _Stub:
+            def get_item(self, **kw):
+                return {'Item': {'ldenDb': {'N': str(lden)}}}
+
+        app._DDB_CLIENT = _Stub()
+        app.NOISE_RASTER_TABLE = 'london-flight-map-noise-raster'
+
+    def test_airport_postcode_is_never_scored_as_quiet(self):
+        """A postcode inside Heathrow must not score as a quiet place.
+
+        Deliberately absolute rather than comparative. "Heathrow scores worse
+        than Finsbury Park" PASSES on the broken data — 7.5 against 10.0 — and
+        that is precisely why the collapse survived a week in production: the
+        ordering stayed plausible while the magnitudes stopped meaning anything.
+        The defect is magnitude, so the assertion has to be about magnitude.
+
+        The stub serves the real stored value, so this returns 7.5 and fails
+        unless the quarantine short-circuits the lookup. Clearing
+        RASTER_TIER_QUARANTINED without first reloading the table turns it red.
+        """
+        self._serve_raster(self.HEATHROW_STORED_LDEN)
+        quiet = app.calc_postcode_quiet(
+            self.HEATHROW_LAT, self.HEATHROW_LON, 'london', postcode_clean='TW61AP'
+        )
+        self.assertLessEqual(
+            quiet,
+            3.0,
+            f'Heathrow Airport scored {quiet}/10 for quiet. The raster tier serves '
+            f'~{self.HEATHROW_STORED_LDEN} dB Lden there, against DEFRA Round 4 '
+            f'contours above 75 dB near the runways.',
+        )
+
+    def test_quiet_still_discriminates_across_london(self):
+        """Quiet must not collapse onto a handful of values.
+
+        Third instance of one defect class: growth once floored fourteen
+        boroughs onto a single value, schools published two distinct sub-scores
+        across all of London, and the raster reduced quiet to exactly two (7.5
+        and 10.0). A component that cannot separate places is not measuring one.
+        """
+        places = [
+            (51.472385, -0.450939),  # Heathrow
+            (51.4700, -0.3600),      # Hounslow, under the approach
+            (51.5665, -0.1058),      # Finsbury Park
+            (51.4650, -0.1680),      # Battersea
+            (51.4060, 0.0150),       # Bromley
+        ]
+        scores = {
+            app.calc_postcode_quiet(la, lo, 'london', postcode_clean=None, raster_lden=None)
+            for la, lo in places
+        }
+        self.assertGreaterEqual(
+            len(scores),
+            3,
+            f'quiet produced only {len(scores)} distinct values across Heathrow to '
+            f'Bromley: {sorted(scores)}',
         )
 
     def test_json_native_parameter_types_do_not_error(self):

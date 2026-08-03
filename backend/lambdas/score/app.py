@@ -1966,6 +1966,39 @@ def _get_ddb_client():
     return _DDB_CLIENT
 
 
+# --- Raster tier quarantined 2026-08-03 -------------------------------------
+# The DEFRA sample table is loaded with values that cannot be right, so the
+# tier is bypassed until the loader is fixed AND the table reloaded.
+#
+# The evidence, read straight out of london-flight-map-noise-raster:
+#   TW61AP, a postcode INSIDE Heathrow Airport ..... ldenDb 58.2
+#   TW31AA, Hounslow, under the approach ........... ldenDb 57.4
+#   E18BL / N41AA, unrelated, miles apart .......... ldenDb 35 (both, exactly)
+# Heathrow reads ~20 dB low against DEFRA Round 4, which puts >75 dB near the
+# runways, and the identical round 35 on unrelated postcodes is a background
+# fill rather than a sample — DEFRA maps only down to the 55 dB reporting
+# threshold, so "no data" was written as though it meant "quiet".
+#
+# Run through lden_db_to_quiet's bands (<55 -> 10.0, <60 -> 7.5) those are the
+# ONLY two outputs the table can produce. `quiet` therefore collapsed to two
+# values across the whole of London, erring optimistic on the one component the
+# product is built to be trusted on, and a single response could report
+# noiseImpactBand 'severe' beside quiet 10.0.
+#
+# Bypassing drops the chain to its Haversine tier, which discriminates properly
+# — Heathrow 0.0, Hounslow 1.0, Finsbury Park 6.0 — and is what the consumer
+# site has computed all along, so this also closes the site/API divergence.
+# Scores move DOWN where the raster had inflated them; that is the correction,
+# not a regression.
+#
+# This fixes nothing in scripts/load_defra_raster.py. Setting it False again
+# without reloading the table simply restores the defect: the quarantine is
+# powerless against the rows already stored. Suspects for the loader: a CRS
+# mismatch (British National Grid vs WGS84), reading a downsampled overview
+# level that averages the peaks away, or the wrong GeoTIFF band.
+RASTER_TIER_QUARANTINED = True
+
+
 def _lookup_lden_raster(postcode_clean):
     """v3.1, Look up DEFRA Lden raster sample for a postcode in DynamoDB.
 
@@ -1978,6 +2011,12 @@ def _lookup_lden_raster(postcode_clean):
     DDB error) are NOT cached, see _make_lru. Positive results live for
     the warm-container lifetime (~15 min) up to 2048 entries LRU.
     """
+    # Deliberate bypass, so it returns before the [SCORE_RASTER_DEGRADED] paths
+    # below: those exist to alarm on the tier dropping *unexpectedly*, and firing
+    # them on every request for a known, chosen quarantine is how an alarm stops
+    # meaning anything.
+    if RASTER_TIER_QUARANTINED:
+        return None
     if not NOISE_RASTER_TABLE or not postcode_clean:
         return None
     cached = _raster_cache_get(postcode_clean)

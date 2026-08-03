@@ -6,7 +6,43 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-02 (latest) — Schools re-sourced to Progress 8; three crime rates corrected
+### 2026-08-03 (latest) — DEFRA raster quarantined; quiet scores corrected downward
+
+- **The loaded noise raster was wrong, and had been serving production since
+  ~26 July.** `london-flight-map-noise-raster` stores **58.2 dB Lden for TW6 1AP,
+  a postcode inside Heathrow Airport**, where DEFRA Round 4 contours exceed
+  75 dB near the runways. It also stores an identical, exactly round **35** for
+  postcodes as far apart as E1 8BL and N4 1AA — a background fill, not a
+  measurement. DEFRA maps only down to the 55 dB reporting threshold, so
+  *absence of data* had been written as though it meant *quiet*.
+- **Quiet had collapsed to two values across all of London.** Through the
+  documented band mapping (`<55 → 10.0`, `<60 → 7.5`) those two inputs are the
+  only outputs the table can yield. The component carried almost no signal and
+  erred **optimistic** — the one direction a noise product cannot be wrong in.
+  Responses could contradict themselves, reporting `noiseImpactBand: "severe"`
+  beside `quiet: 10.0`.
+- **It also explained a site/API divergence.** The consumer site has always
+  computed Haversine client-side, so it published different numbers from the API
+  for the same postcode: SW1A 1AA scored **7.1 via the API and 5.2 on the site**,
+  with `afford`, `growth` and `live` matching to the decimal. The site was right.
+- **Quiet now resolves on the Haversine tier**, already documented in
+  METHODOLOGY §4.5. Scores fall where the raster inflated them: Heathrow
+  **7.5 → 0.0**, Hounslow **7.5 → 1.0**, Finsbury Park 10.0 → 6.0. This is the
+  correction, not a regression. `quietResolution` no longer returns `'raster'`.
+- **No methodology version bump.** No weight, threshold or formula changed and
+  both tiers were already documented; only which tier answers has changed.
+- **Guarded by a test that was verified to fail**, asserting a postcode inside
+  Heathrow scores ≤ 3.0 against the table's real stored value. The assertion is
+  absolute rather than comparative on purpose: "Heathrow beats Finsbury Park"
+  passes on the broken data (7.5 vs 10.0), which is why this survived a week.
+- **The loader is still unfixed.** `scripts/load_defra_raster.py` needs a real
+  diagnosis — CRS mismatch, a downsampled overview level, or the wrong band are
+  the leading suspects. Clearing `RASTER_TIER_QUARANTINED` without reloading the
+  table restores the defect.
+- **Notice:** the API has no paying customers as at this date, so this ships with
+  this changelog entry as the record.
+
+### 2026-08-02 — Schools re-sourced to Progress 8; three crime rates corrected
 
 - **Methodology v3.5: the schools input is now DfE Key Stage 4 Progress 8.**
   The previous input was a four-value vocabulary (`outstanding`/`excellent`/`good`/`mixed`
