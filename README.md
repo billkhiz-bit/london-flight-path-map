@@ -63,7 +63,7 @@ Sky Score is the ethical alternative data layer:
 
 ## API surface
 
-Three endpoints, all API-key gated, all returning JSON.
+Four endpoints returning JSON. Three are API-key gated; `/v1/changes` is deliberately public so anyone can audit what moved between vintages without holding a key.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -132,11 +132,11 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 | Component | Description | Anchored to |
 |---|---|---|
 | **Quiet** | Aviation + road noise impact | DEFRA Strategic Noise Mapping (Round 4, 2022) Lden bands; WHO Environmental Noise Guidelines (2018) health thresholds |
-| **Affordability** | Sold price relative to cohort | HM Land Registry Price Paid Data |
-| **Growth** | Annualised price trend | HM Land Registry Price Paid Data (5-year window) |
-| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | Ofsted distribution; ONS/Home Office crime medians; TfL PTAL approximation; NHS England access targets |
+| **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
+| **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
+| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2022/23); ONS *Crime in England and Wales* PFA tables, Table C4; TfL PTAL approximation; curated healthcare tiers |
 
-The score is fully reproducible, see [the worked example](./METHODOLOGY.md#6-worked-example) for a hand calculation against `SW11 1AA` that matches the live API to within rounding tolerance.
+The score is reproducible by hand: see [the worked example](./METHODOLOGY.md#6-worked-example), a step-by-step calculation for `SW11 1AA` that reproduces the live API exactly. It has twice fallen out of step with the engine (both on 2026-08-03, both recorded in situ rather than quietly amended), so treat a mismatch as a bug in this repo and report it.
 
 ## Coverage
 

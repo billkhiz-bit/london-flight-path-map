@@ -4,7 +4,7 @@ A pre-emptive answer to the "are you SOC 2 / ISO 27001" question that almost eve
 
 In the meantime, this document lists the controls that **are** in place today and the procedures that handle the questions a security questionnaire would raise. It is updated alongside the codebase; the canonical source is the linked AUDIT_REPORT.md, LICENSING.md, and METHODOLOGY.md.
 
-**Last reviewed:** 2026-05-07
+**Last reviewed:** 2026-08-03 (previously stamped 2026-05-07 while the content had moved on three months)
 
 ---
 
@@ -60,7 +60,7 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 ### Application-layer defences
 
 - **XSS sweep**: every `innerHTML` interpolation that touches third-party data (OSM, TfL, Land Registry, NHS, postcodes.io, autocomplete user input, borough/postcode strings) wrapped in `escapeHtml`. URL allow-list `safeUrl` for `href` from community sources. Audit IDs: N-Sec-1, N-Sec-2, N-Sec-3.
-- **Content Security Policy** enforcing on all five HTML pages (consumer site, prototype, score-demo + api-docs + status). Per-page allow-lists; no `'unsafe-eval'`; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`. Plus `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` on every page.
+- **Content Security Policy** enforcing on all **nine** deployed HTML pages (consumer site, prototype, score-demo + api-docs + status, /api, /pricing, /privacy, /changes). This said "five" until 2026-08-03, which *understated* the coverage - the four B2B funnel pages were protected and uncredited. Per-page allow-lists; no `'unsafe-eval'`; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`. Plus `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin` on every page.
 - **Bedrock cost-abuse prevention**: the Bedrock-using Lambdas (chat, multi_agent, analyze_image, analyze_document, report) and their API Gateway routes were removed entirely on 2026-05-07 after a smoke test discovered they were anonymously invokable. Restoration is a `git revert` away if AI features come back as user-triggered constrained variants.
 - **Live aircraft feature removed** pending OpenSky Network licensing (Ticket #835285 with OpenSky open since 2026-05-07).
 - **`AllowedPattern '^.+$'`** on every `NoEcho` SAM parameter (currently `EpcBearerToken`); empty / missing token at deploy time fails CloudFormation parameter validation before the changeset runs. Audit ID: I-A-equivalent.
@@ -88,7 +88,7 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 
 ### Code + change discipline
 
-- **Pre-commit `/preflight`** runs ESLint, Prettier, html-validate, ruff (Python), and the Python test suite (270 tests across backend and root, verified 2026-07-27). Blocking on any new error.
+- **Pre-commit `/preflight`** runs ESLint, Prettier, html-validate, ruff (Python), and the Python test suite (**362 tests** across backend and root: 171 backend + 191 root, counted 2026-08-03). Blocking on any new error.
 - **Commit hygiene**: per-feature atomic commits, full SHA citations in CHANGELOG, audit-finding IDs referenced inline.
 - **Public CHANGELOG** at [`CHANGELOG.md`](./CHANGELOG.md) with the security-relevant items grouped by release.
 
@@ -108,7 +108,7 @@ For a confirmed security incident affecting customer data or the production API:
 ### Disaster recovery
 
 - **RTO**: 24 hours from confirmed loss to restored service.
-- **RPO**: 1 hour for customer-facing state (signup table, favourites table). Achievable by enabling DynamoDB Point-in-Time Recovery (PITR) on both tables (1-click in AWS console; documented in [`backend/template.yaml`](./backend/template.yaml) as a planned addition).
+- **RPO**: 1 hour for customer-facing state (signup table, favourites table). **Met.** DynamoDB Point-in-Time Recovery is enabled on **all four tables** in [`backend/template.yaml`](./backend/template.yaml), not merely planned - this section described it as a pending 1-click console action until 2026-08-03, understating the actual recovery posture.
 - **Source code**: GitHub remote at <https://github.com/billkhiz-bit/london-flight-path-map>; mirrored locally at the canonical `C:\Users\bilal\projects\` clone. Recovery is `git clone` + `sam deploy` (~15 min wall-clock).
 - **Single-region deployment** (eu-west-2). Multi-region failover available on Enterprise tier when contractually required; not built ahead of demand.
 

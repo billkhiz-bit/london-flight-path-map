@@ -631,10 +631,20 @@ healthcare: 'good' # St George's full A&E, good GP coverage
 - Nearest airport: LCY at **15.87 km** → noise_score += 1 (15-20 km band)
 - Major airport (LHR): **20.10 km** → no bonus (>15 km)
 - Nearest flight-path waypoint: **2.38 km**, on the *Dep SE (Detling)* departure route → noise_score += 2 (2-4 km band)
-- Total noise_score: **3**
-- Quiet = 10 − 3 = **7.0**
+- Nearest rotary site: **London Heliport (Battersea) at 1.13 km** → noise_score += 2 (§4.5 top tier, within 3 km)
+- Total noise_score: **5**
+- Quiet = 10 − 5 = **5.0**
 
-For the v3.0 release, the live API returns `quiet: 7.0` for SW11 1AA, which is what the arithmetic above produces — no adjustment, no clipping. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
+The live API returns `quiet: 5.0` and a balanced total of `6.4` for SW11 1AA, which is what the arithmetic above produces — no adjustment, no clipping. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
+
+> **Second correction, 2026-08-03 (later the same day).** The heliport step above was added when
+> the rotary term was ported from the consumer site to `/v1/score`. Until that port this example
+> derived **7.0** and matched the API; the port changed SW11 1AA to **5.0** and left this section
+> asserting the old figure for several hours. SW11 1AA sits 1.13 km from the London Heliport, so
+> it is one of the postcodes the term moves most — the worked example was, by coincidence, the
+> worst possible one to leave unchecked. Recorded rather than quietly amended because "the score
+> is fully reproducible" is a claim this document has now broken twice in one day, both times by
+> changing the engine without re-running the example.
 
 > **Correction, 2026-08-03.** This example previously stated the nearest flight-path
 > waypoint was "~6 km → noise_score += 0", giving a total of 1 and a quiet score of

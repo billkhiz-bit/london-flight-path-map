@@ -7,7 +7,7 @@ _Last full refresh: 2026-07-24 (audit item I14)._
 **Sky Score** is a noise + livability data product for UK and NYC property. Two surfaces:
 
 - **Consumer site**, public, free, no sign-up. Helps renters and buyers see the structural data (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to surface. London + NYC, postcode/ZIP-level for both.
-- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 1000 req/month, self-service signup at `/v1/signup`.
+- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 100 req/month (10,000 scores/month via batch), self-service signup at `/v1/signup`.
 
 Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + Haversine fallback) + 5 NYC boroughs (~182 residential ZIPs, ~110 with per-ZIP centroids).
 
@@ -100,7 +100,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 #### 1. ScoreFunction (`/v1/score`, `/v1/score/batch`, `/v1/regions` GET/POST)
 - **File:** `backend/lambdas/score/app.py`
 - **Purpose:** B2B scoring engine — main product. Returns `score`, `components`, `context`, `sources`. v3.1 raster-first resolution chain falling back to Haversine then borough.
-- **Auth:** API key gated via APIGW Usage Plan (`SkyScoreFreeTier`: 1000 req/month, 5/sec burst)
+- **Auth:** API key gated via APIGW Usage Plan (`SkyScoreFreeTier`: 100 req/month, 5/sec burst)
 
 #### 2. SignupFunction (`/v1/signup` POST)
 - **File:** `backend/lambdas/signup/app.py`

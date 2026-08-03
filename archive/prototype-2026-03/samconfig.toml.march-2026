@@ -1,3 +1,23 @@
+# REDACTED 2026-08-03.
+#
+# This archived March-2026 config was committed and pushed to a PUBLIC repository
+# with a live EpcApiKey and an account email in parameter_overrides. The values
+# are removed from the working tree here.
+#
+# THEY REMAIN IN GIT HISTORY (first landed in commit 7eb1984) and this edit does
+# not change that. Removing them from history needs a rewrite, which is
+# destructive on a repo synced across devices and is the author's call, not
+# something to do unasked.
+#
+# The key targets the EPC API as it existed before the 2026-05-30 migration to
+# bearer-token auth, so it is very likely already dead. "Very likely" is not
+# "confirmed": treat it as live until the old key is verified rejected, and
+# rotate if there is any doubt. The current token lives in .env, which is
+# gitignored and has never been committed.
+#
+# Kept as a file rather than deleted because the archive documents what the
+# March prototype actually deployed; the values are what had to go, not the record.
+
 version = 0.1
 
 [default.deploy.parameters]
@@ -7,5 +27,5 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 disable_rollback = false
 resolve_s3 = true
-parameter_overrides = "EpcApiKey='1cc673a0554347b276cb2a3ff7375952086bc951' EpcApiEmail='billkhiz@gmail.com'"
+parameter_overrides = "EpcApiKey=<REDACTED-2026-08-03-see-note-below>"
 profile = "flightmap"

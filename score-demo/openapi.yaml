@@ -8,8 +8,10 @@ info:
     price), Growth (price-trend signal), and Liveability (schools, crime,
     transport, healthcare).
 
-    **Authentication.** All endpoints require an API key passed in the
-    `X-Api-Key` header. Free tier provides 100 requests/month, 5/sec burst,
+    **Authentication.** Most endpoints require an API key passed in the
+    `X-Api-Key` header. Two do not: `/v1/signup`, which is how you get a key,
+    and `/v1/changes`, which is deliberately public so anyone can audit what
+    moved between data vintages without holding one. Free tier provides 100 requests/month, 5/sec burst,
     1/sec sustained. A `/v1/score/batch` request counts as one request and
     carries up to 100 queries, so the free ceiling is 10,000 scores/month.
     Contact via the [consumer site](https://skyscore.co.uk/) for a key.
@@ -584,7 +586,10 @@ components:
           $ref: '#/components/schemas/Location'
         persona:
           type: string
-          enum: [balanced, family, investor, firsttime, quietlife, custom]
+          # All eight, plus custom. Three enums in this spec listed personas and
+          # only one was complete, so a spec-validating client would have rejected
+          # renter, commuter and laterlife - valid requests and valid responses.
+          enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, laterlife, custom]
           description: |
             Which weighting profile produced the score. `"custom"` indicates
             the `weights` query parameter was applied.
@@ -844,7 +849,7 @@ components:
                 enum: [london, nyc]
               persona:
                 type: string
-                enum: [balanced, family, investor, firsttime, quietlife]
+                enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, laterlife]
               weights:
                 $ref: '#/components/schemas/Weights'
               includeTerminated:
