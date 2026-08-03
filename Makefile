@@ -142,7 +142,8 @@ data-deploy:
 		--content-type "application/json" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/borough-extra.json \
 		s3://$(S3_BUCKET)/data/borough-extra.json \
-		--content-type "application/json" --region $(AWS_REGION)
+		--content-type "application/json" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-london-lden.png \
 		s3://$(S3_BUCKET)/data/aircraft-noise-london-lden.png \
 		--content-type "image/png" --region $(AWS_REGION)

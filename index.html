@@ -5070,7 +5070,20 @@
       let _boroughExtraFailed = false;
       async function hydrateBoroughExtra(attempt = 0) {
         try {
-          const resp = await fetch('/data/borough-extra.json', { cache: 'force-cache' });
+          // 'no-cache' means REVALIDATE, not "don't cache" - the browser keeps
+          // its copy and sends If-None-Match, so an unchanged file still costs
+          // one 304 and no bytes. It replaced 'force-cache', which told the
+          // browser to serve any cached copy WITHOUT revalidating. Combined with
+          // an S3 object that carried no Cache-Control at all, that let a browser
+          // hold this file indefinitely: a user reported crime figures from
+          // before the 2026-08-02 correction, days after it shipped, with a
+          // median of 91.0 against the live 87.4.
+          //
+          // Bumping sw.js could never fix it. That evicts the service worker's
+          // caches; this was the browser's HTTP cache, which force-cache had
+          // opted out of freshness checks entirely. The deploy now also sets an
+          // explicit Cache-Control on the object (see Makefile data-deploy).
+          const resp = await fetch('/data/borough-extra.json', { cache: 'no-cache' });
           if (!resp.ok) throw new Error('borough-extra HTTP ' + resp.status);
           const data = await resp.json();
           Object.assign(BOROUGH_EXTRA, data.london || {});

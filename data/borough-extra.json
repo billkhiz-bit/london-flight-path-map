@@ -343,13 +343,13 @@
           "offence": "Violence against the person",
           "ratePer1000": 34.3,
           "shareOfTotal": 19.8,
-          "vsLondonMedian": 1.3
+          "vsLondonMedian": 1.2
         },
         {
           "offence": "Theft from the person",
           "ratePer1000": 27.8,
           "shareOfTotal": 16.0,
-          "vsLondonMedian": 7.6
+          "vsLondonMedian": 7.7
         },
         {
           "offence": "Shoplifting",
@@ -421,7 +421,7 @@
           "offence": "Theft from the person",
           "ratePer1000": 15.5,
           "shareOfTotal": 13.3,
-          "vsLondonMedian": 4.2
+          "vsLondonMedian": 4.3
         },
         {
           "offence": "Shoplifting",
@@ -559,7 +559,7 @@
           "offence": "Violence against the person",
           "ratePer1000": 28.9,
           "shareOfTotal": 27.8,
-          "vsLondonMedian": 1.1
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Shoplifting",
@@ -601,13 +601,13 @@
           "offence": "Theft from the person",
           "ratePer1000": 20.5,
           "shareOfTotal": 17.0,
-          "vsLondonMedian": 5.6
+          "vsLondonMedian": 5.7
         },
         {
           "offence": "Shoplifting",
           "ratePer1000": 8.2,
           "shareOfTotal": 6.8,
-          "vsLondonMedian": 1.0
+          "vsLondonMedian": 1.1
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026"
@@ -643,7 +643,7 @@
           "offence": "Public order offences",
           "ratePer1000": 8.2,
           "shareOfTotal": 7.6,
-          "vsLondonMedian": 1.4
+          "vsLondonMedian": 1.5
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026"
@@ -673,7 +673,7 @@
           "offence": "Shoplifting",
           "ratePer1000": 22.4,
           "shareOfTotal": 15.4,
-          "vsLondonMedian": 2.8
+          "vsLondonMedian": 2.9
         },
         {
           "offence": "Vehicle offences",
@@ -751,7 +751,7 @@
           "offence": "Shoplifting",
           "ratePer1000": 10.7,
           "shareOfTotal": 10.2,
-          "vsLondonMedian": 1.3
+          "vsLondonMedian": 1.4
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026"
@@ -859,7 +859,7 @@
           "offence": "Shoplifting",
           "ratePer1000": 6.7,
           "shareOfTotal": 9.0,
-          "vsLondonMedian": 0.8
+          "vsLondonMedian": 0.9
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026"
@@ -991,7 +991,7 @@
           "offence": "Theft from the person",
           "ratePer1000": 92.5,
           "shareOfTotal": 26.0,
-          "vsLondonMedian": 25.2
+          "vsLondonMedian": 25.5
         },
         {
           "offence": "Violence against the person",
@@ -1119,7 +1119,7 @@
           "offence": "Criminal damage and arson",
           "ratePer1000": 6.2,
           "shareOfTotal": 10.4,
-          "vsLondonMedian": 1.0
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",

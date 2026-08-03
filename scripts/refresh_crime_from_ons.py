@@ -33,6 +33,7 @@ NOTE ON THE DOWNLOAD: use www.ons.gov.uk, not cdn.ons.gov.uk. The cdn host
 
 import argparse
 import json
+import re
 import sys
 import urllib.request
 from pathlib import Path
@@ -88,9 +89,22 @@ def load_table():
     for r in rows[h + 1:]:
         if not r or not r[1]:
             continue
-        if str(r[1]) not in ('Metropolitan Police', 'London, City of'):
+        # PFA names carry footnote suffixes in this workbook - the City of
+        # London row is literally "City of London[note 8]" - so an exact-match
+        # tuple silently excluded the one borough --check exists to flag. It
+        # reported "in step with ONS" while that borough published a figure ONS
+        # does not produce. Strip the suffix before matching.
+        pfa = re.sub(r"\[note \d+\]", "", str(r[1])).strip()
+        if pfa not in ('Metropolitan Police', 'London, City of', 'City of London'):
             continue
-        name = str(r[3]).strip() if r[3] else str(r[1])
+        # A row with no CSP name is the force-level AGGREGATE, not a place.
+        # Including it named the row 'Metropolitan Police' and folded a
+        # London-wide average into the per-borough median, so every
+        # `vsLondonMedian` ratio was computed against a cohort containing its
+        # own summary. Skip it: this table is read for boroughs.
+        if not r[3]:
+            continue
+        name = str(r[3]).strip()
         if 'Unassigned' in name:
             continue
         rec = {hdr[j]: r[j] for j in range(len(hdr)) if hdr[j]}
@@ -173,7 +187,18 @@ def main():
               'and must be updated to match, or site and API will disagree.')
         return 0
 
-    if args.check and (drift or unresolved):
+    # Exit non-zero on DRIFT only, not on `unresolved`.
+    #
+    # `unresolved` is the City of London, and it is permanent: ONS states it does
+    # not publish a rate there (Table C4 note 8) and never will. Failing on it
+    # would leave this check red for ever, and a gate that is always red is a
+    # gate nobody reads - the exact anti-pattern scripts/preflight.sh was
+    # rewritten to avoid. It is reported loudly above and recorded as an open
+    # decision in METHODOLOGY 11; it is not news.
+    #
+    # Drift IS news: the published rates have moved and the repo has not, which
+    # is the condition this script exists to catch.
+    if args.check and drift:
         print('\nRESULT: DRIFT — run with --write, and mirror into the Lambda.')
         return 1
     print('\nRESULT: in step with ONS.' if not drift else '')

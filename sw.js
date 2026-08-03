@@ -73,7 +73,12 @@
 // v1.0.13 (2026-08-03): the ranking table (128 rows) and every saved postcode
 // bound click alone, so keyboard, switch and voice users could not activate any
 // of them. Now focusable with Enter/Space handlers and visible focus rings.
-const VERSION = 'v1.0.13';
+// v1.0.14 (2026-08-03): borough-extra.json is fetched no-cache (revalidate)
+// instead of force-cache. A user was served crime figures from before the
+// 2 Aug correction, days after it shipped, because force-cache plus an S3
+// object with no Cache-Control let the browser hold it indefinitely - and no
+// sw.js bump could evict it, because that is the HTTP cache, not this one.
+const VERSION = 'v1.0.14';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
