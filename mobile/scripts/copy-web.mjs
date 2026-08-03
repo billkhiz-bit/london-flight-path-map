@@ -13,9 +13,10 @@
 //   ../icons/*          → www/icons/*
 //   ../js/*             → www/js/*             (api-base.js, future shared JS)
 //   ../prototype/*      → www/prototype/*      (3D radar, kept in scope)
-//   ../data/*.png       → www/data/            (DEFRA noise tiles bundled
-//                                               so the app launches even
-//                                               without network)
+//   ../data/<allow-list> → www/data/           (see REQUIRED_DATA below:
+//                                               noise tile + the three JSON
+//                                               files the app cannot score
+//                                               without)
 //
 // Files NOT copied: backend/, score-demo/, node_modules/, tests/,
 // docs (README, METHODOLOGY, etc.) — none of these belong inside the
@@ -60,7 +61,11 @@ async function main() {
       await copyFile(src, join(WWW, f));
       console.log(`  copy ${f}`);
     } else {
-      console.warn(`  MISSING ${f}`);
+      // Fatal, not a warning. A bundle without index.html or sw.js is not a
+      // degraded app, it is a broken one, and a warning in a build log is not
+      // a control.
+      console.error(`  FATAL: missing required shell file ${f}`);
+      process.exit(1);
     }
   }
 
@@ -78,10 +83,46 @@ async function main() {
     console.log('  copy prototype/');
   }
 
-  // DEFRA noise tile (PNGs only — skip the 782 MB raw NSPL CSV).
-  if (existsSync(join(ROOT, 'data'))) {
-    await copyDir(join(ROOT, 'data'), join(WWW, 'data'), (n) => n.endsWith('.png'));
-    console.log('  copy data/*.png');
+  // data/ is an ALLOW-LIST, not an extension filter, and a missing entry is
+  // fatal.
+  //
+  // This was `(n) => n.endsWith('.png')`, written when data/ held nothing but
+  // the DEFRA noise tile and the point was to skip the 769 MB NSPL CSV. It still
+  // skipped the CSV, and it also silently skipped every JSON file added later:
+  // borough-extra.json (crime, schools, transport, healthcare) and both borough
+  // boundary files. Capacitor declares no remote server URL, so index.html's
+  // fetch of /data/borough-extra.json resolved INSIDE the bundle, 404'd, and was
+  // caught into an empty object the code called "non-fatal" - leaving every
+  // borough scoring liveability at a flat default in the shipped app, with a
+  // console.warn nobody reads on a phone as the only signal.
+  //
+  // An extension filter fails open: add a file, get no error, ship without it.
+  // An allow-list fails closed, and this build now exits non-zero rather than
+  // producing a bundle that looks fine and scores wrong.
+  const REQUIRED_DATA = [
+    'borough-extra.json', // crime/schools/transport/healthcare - liveability
+    'london-boroughs.json', // map geometry, precached by sw.js
+    'nyc-boroughs.json', // ditto; cache.addAll() is atomic, so a miss kills install
+    'aircraft-noise-london-lden.png', // DEFRA overlay
+  ];
+  const missingData = [];
+  await mkdir(join(WWW, 'data'), { recursive: true });
+  for (const f of REQUIRED_DATA) {
+    const src = join(ROOT, 'data', f);
+    if (existsSync(src)) {
+      await copyFile(src, join(WWW, 'data', f));
+      console.log(`  copy data/${f}`);
+    } else {
+      missingData.push(f);
+    }
+  }
+  if (missingData.length) {
+    console.error(
+      `
+  FATAL: data/ is missing ${missingData.length} required file(s): ${missingData.join(', ')}`
+    );
+    console.error('  The app would ship scoring liveability at a flat default. Refusing to build.');
+    process.exit(1);
   }
 
   console.log(`done → ${WWW}`);
