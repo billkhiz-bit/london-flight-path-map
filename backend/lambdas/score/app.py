@@ -1061,6 +1061,12 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
     },
     'City of London': {
+        # ONS declines to publish a recorded-crime rate here (Table C4 note 8,
+        # small resident population), so the 190 below is Sky Score's own
+        # estimate and must never be attributed to them. Flagged in the data
+        # rather than in a name list so the fact travels with the row.
+        # METHODOLOGY 11 records it as an open decision.
+        'crimeEstimated': True,
         'impact': 'low-moderate',
         'avgPrice': 627000,
         'trend': -28.2,
@@ -2374,6 +2380,10 @@ def _postcode_source_line(local_served):
 # error _postcode_source_line() exists to prevent, one function up: crediting a
 # source on configuration rather than on what actually answered.
 #
+# Resolved per borough by _london_borough_metadata_line(); a plain callable cannot
+# see which borough is being scored.
+_BOROUGH_METADATA_SENTINEL = object()
+
 # Entries may be callables where the line depends on runtime state.
 CITY_PROVENANCE = {
     'london': {
@@ -2388,7 +2398,7 @@ CITY_PROVENANCE = {
             # configuration rather than on what actually answered" this whole
             # registry exists to prevent. The breakdown below already named the
             # real sources; only this coarse line lagged.
-            'Borough metadata: ONS (Crime in England and Wales, Police Force Area data tables, Table C4) and Department for Education (Key Stage 4 Progress 8), Open Government Licence v3.0',
+            _BOROUGH_METADATA_SENTINEL,
             'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
         ],
         'breakdown': {
@@ -2416,7 +2426,52 @@ CITY_PROVENANCE = {
 }
 
 
-def build_sources(city='london'):
+def _borough_record(city, borough):
+    """The borough's data row, or None if it cannot be resolved.
+
+    Only used to decide provenance, so an unresolved borough must return None
+    and get the generic line rather than raise - a lookup miss should never turn
+    a scoring request into a 500.
+    """
+    try:
+        table = (CITIES.get(city) or {}).get('boroughs') or {}
+        return table.get(borough)
+    except Exception:  # noqa: BLE001 - provenance must never break a response
+        return None
+
+
+def _london_borough_metadata_line(bd=None):
+    """Credit only the bodies that actually supplied this borough's metadata.
+
+    Added 2026-08-03. This line named ONS Table C4 and DfE Progress 8
+    unconditionally, which is false for the City of London: ONS explicitly
+    declines to publish a recorded-crime rate for it (Table C4 note 8, small
+    resident population) and DfE has no Progress 8 figure for it either. So the
+    one borough where both credits are wrong was the one asserting them hardest.
+
+    Same defect as the Home Office line and the NYC/OGL bug before it: crediting
+    on configuration rather than on what answered. CITY_PROVENANCE exists to stop
+    that at city granularity; this does it at borough granularity.
+    """
+    crime_is_ons = bd is None or not bd.get('crimeEstimated')
+    schools_is_dfe = bool(bd is None or bd.get('p8') is not None)
+    parts = []
+    if crime_is_ons:
+        parts.append('ONS (Crime in England and Wales, Police Force Area data tables, Table C4)')
+    else:
+        parts.append(
+            'crime rate is a Sky Score estimate - ONS publishes no rate for this area '
+            'and it must not be attributed to them'
+        )
+    if schools_is_dfe:
+        parts.append('Department for Education (Key Stage 4 Progress 8)')
+    else:
+        parts.append('no Progress 8 figure published for this area; schools falls back to a curated band')
+    suffix = ', Open Government Licence v3.0' if (crime_is_ons or schools_is_dfe) else ''
+    return 'Borough metadata: ' + ' and '.join(parts) + suffix
+
+
+def build_sources(city='london', bd=None):
     """The response `sources` array, built per request and per city.
 
     Deliberately a function, not the import-time constant it replaced: the
@@ -2431,7 +2486,15 @@ def build_sources(city='london'):
     prov = CITY_PROVENANCE.get(city)
     if prov is None:
         return [f'Provenance not recorded for city {city!r}']
-    return [line() if callable(line) else line for line in prov['sources']]
+    out = []
+    for line in prov['sources']:
+        if callable(line):
+            out.append(line())
+        elif line is _BOROUGH_METADATA_SENTINEL:
+            out.append(_london_borough_metadata_line(bd))
+        else:
+            out.append(line)
+    return out
 
 
 def build_source_breakdown(city='london'):
@@ -2519,7 +2582,7 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
-def live_resolution(bd):
+def live_resolution(bd, english=True):
     """How much of the liveability composite is measured rather than defaulted.
 
     Mirrors quietResolution: the response states how an answer was reached, not
@@ -2527,13 +2590,26 @@ def live_resolution(bd):
     the component says nothing about the location — the distinction that made
     Greater Manchester's uniform 5.0 read as a finding rather than a gap.
     """
-    # 'p8' satisfies the schools slot on its own — an English borough carrying
-    # Progress 8 has a *better* schools input than one carrying the legacy band,
-    # so counting only the categorical field would under-report resolution.
-    present = sum(
-        1 for f in _LIVE_FIELDS
-        if bd.get(f) is not None or (f == 'schools' and bd.get('p8') is not None)
-    )
+    # Schools is city-dependent, and getting this wrong is what made the City of
+    # London report 'measured' while its schools input was the retired Ofsted band
+    # and its crime rate was our own estimate.
+    #
+    # For an English borough, Progress 8 IS the schools input (METHODOLOGY 4.4);
+    # the legacy categorical band is the fallback that v3.5 removed as editorial
+    # and unreproducible, so a borough carrying only the band is DEFAULTED, not
+    # measured. Counting it as measured made this field claim the opposite of what
+    # 4.4 says it exists to disclose.
+    #
+    # New York is the reverse: it has neither Ofsted nor DfE, so its curated tier
+    # is the real source and satisfies the slot on its own.
+    def _slot_present(f):
+        if f != 'schools':
+            return bd.get(f) is not None
+        if english:
+            return bd.get('p8') is not None
+        return bd.get('schools') is not None
+
+    present = sum(1 for f in _LIVE_FIELDS if _slot_present(f))
     if present == len(_LIVE_FIELDS):
         return 'measured'
     if present == 0:
@@ -2645,7 +2721,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             'priceTrendPct': bd['trend'],
             'noiseImpactBand': bd['impact'],
             'quietResolution': quiet_source,
-            'liveResolution': live_resolution(bd),
+            'liveResolution': live_resolution(bd, english=(city != 'nyc')),
         },
     }
 
@@ -3161,7 +3237,7 @@ def resolve_query(query):
         'methodologyUrl': METHODOLOGY_URL,
         'apiVersion': API_VERSION,
         'generatedAt': datetime.now(UTC).isoformat(),
-        'sources': build_sources(city),
+        'sources': build_sources(city, bd=_borough_record(city, borough)),
         'sourceBreakdown': build_source_breakdown(city),
     }
     # Roadmap-visible placeholder components, let prospects see what's planned

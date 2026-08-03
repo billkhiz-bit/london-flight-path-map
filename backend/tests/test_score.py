@@ -1000,6 +1000,39 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         self.assertNotIn('PARTIAL', lon['sourceBreakdown']['live'])
         self.assertIn('Progress 8', lon['sourceBreakdown']['live'])
 
+    def test_city_of_london_does_not_credit_bodies_that_supply_nothing(self):
+        """The one borough where both national credits are wrong asserted them hardest.
+
+        ONS declines to publish a recorded-crime rate for the City of London
+        (Table C4 note 8, small resident population) and DfE has no Progress 8
+        figure for it. The response nevertheless credited both, and reported
+        liveResolution 'measured' - the field METHODOLOGY 4.4 says exists so a
+        defaulted component cannot read as a measurement.
+        """
+        bd = app._borough_record('london', 'City of London')
+        self.assertIsNotNone(bd)
+        line = [x for x in app.build_sources('london', bd=bd) if 'Borough metadata' in x][0]
+        self.assertIn('Sky Score estimate', line)
+        self.assertNotIn(
+            'Table C4', line,
+            'City of London credits ONS Table C4 for a rate ONS explicitly suppresses',
+        )
+        # Note the line legitimately contains the words "Progress 8" while
+        # DENYING it ("no Progress 8 figure published for this area"), so assert
+        # on the credit itself rather than the phrase.
+        self.assertNotIn(
+            'Department for Education', line,
+            'City of London credits DfE when no Progress 8 figure is published for it',
+        )
+        self.assertIn('partial', app.live_resolution(bd))
+
+        # A borough with real data must be unaffected.
+        camden = app._borough_record('london', 'Camden')
+        cline = [x for x in app.build_sources('london', bd=camden) if 'Borough metadata' in x][0]
+        self.assertIn('Table C4', cline)
+        self.assertIn('Progress 8', cline)
+        self.assertEqual(app.live_resolution(camden), 'measured')
+
     def test_london_sources_credit_only_bodies_that_answered(self):
         """The coarse `sources` line must track the data, not lag behind it.
 
@@ -1749,7 +1782,17 @@ class CoreCitiesAuditTests(unittest.TestCase):
         unsourced = {'avgPrice': 1, 'trend': 0.0}
         self.assertEqual(app.get_live_score(unsourced), 5.0)
         self.assertIn('unavailable', app.live_resolution(unsourced))
-        self.assertIn('partial', app.live_resolution({'schools': 'good'}))
+        # A single genuinely-measured input is 'partial'.
+        self.assertIn('partial', app.live_resolution({'p8': 0.1}))
+
+        # But the legacy Ofsted band alone is NOT a measured schools input for an
+        # English borough (changed 2026-08-03). It used to count, which is how the
+        # City of London reported 'measured' while its schools input was the
+        # retired editorial band and its crime rate was our own estimate. New York
+        # is the reverse case: it has neither Ofsted nor DfE, so the curated tier
+        # IS its source and still counts.
+        self.assertIn('unavailable', app.live_resolution({'schools': 'good'}))
+        self.assertIn('partial', app.live_resolution({'schools': 'good'}, english=False))
 
 
 class ProgressEightTests(unittest.TestCase):
