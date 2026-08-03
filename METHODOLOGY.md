@@ -358,30 +358,40 @@ This is a material improvement in within-borough accuracy. Some postcodes go up 
 
 The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode' | 'borough'`) so integrators can verify which tier produced the response. While the quarantine holds, `'raster'` is never returned.
 
-> **⚠ Raster tier quarantined, 2026-08-03.** The loaded sample table is wrong, so
-> tier 1 is bypassed in favour of tier 2. `london-flight-map-noise-raster` stores
-> **58.2 dB Lden for TW6 1AP, a postcode inside Heathrow Airport**, against DEFRA
-> Round 4 contours exceeding 75 dB near the runways; and it stores an identical,
-> exactly round **35** for postcodes as far apart as E1 and N4, which is a
-> background fill rather than a measurement — DEFRA maps only down to the 55 dB
-> reporting threshold, so absence of data was recorded as though it meant quiet.
+> **⚠ Raster tier quarantined, 2026-08-03.** Tier 1 is bypassed in favour of tier 2.
+> **The raster is not faulty and neither is the loader** — an earlier version of
+> this note said otherwise, on the strength of an eight-postcode sample, and was
+> wrong. `data/defra_lden_2022.tif` is the genuine DEFRA aircraft Lden map at 10 m
+> resolution with values to 88.9 dB, its loudest cells falling exactly on
+> Heathrow's two runway centrelines and London City Airport, and sampling it at
+> correctly projected coordinates reproduces the stored values exactly.
 >
-> Passed through the §4.1 band mapping, those two inputs are the only outputs the
-> table can yield, so `quiet` took just **two values (7.5 and 10.0) across the
-> whole of London** and erred optimistic. A single response could report
-> `noiseImpactBand: "severe"` alongside `quiet: 10.0`.
+> **The defect is coverage.** Aircraft contours are localised lobes: the raster
+> holds data for 6.2% of its own grid, and **89.5% of London's postcodes fall
+> outside them entirely** (measured over 22,622 live postcodes). The loader filled
+> every one of those with 35 dB so they scored a perfect 10.0 — rendering *not
+> measured* as *perfectly quiet*. The result was **98% of London on a single quiet
+> value**, which cannot support this document's claim that Lden varies 10-15 dB
+> within a borough. A single response could also report `noiseImpactBand:
+> "severe"` alongside `quiet: 10.0`.
 >
-> **Effect on published scores:** quiet falls wherever the raster had inflated it,
-> and totals fall with it — Heathrow moves 7.5 → 0.0, Hounslow 7.5 → 1.0. This is
-> the correction, not a regression. No weight, threshold or formula changed and
-> both tiers were already documented here, so `METHODOLOGY_VERSION` is unchanged;
-> only which documented tier answers has changed. It also closes a divergence in
-> which the consumer site (always Haversine) published different numbers from the
-> API for the same postcode.
+> **Effect on published scores:** quiet falls wherever the fill had inflated it —
+> Heathrow moves 7.5 → 0.0, Hounslow 7.5 → 1.0. No weight, threshold or formula
+> changed and both tiers were already documented here, so `METHODOLOGY_VERSION` is
+> unchanged; only which documented tier answers has changed. It also closes a
+> divergence in which the consumer site (always Haversine) published different
+> numbers from the API for the same postcode.
 >
-> **Do not lift the quarantine by clearing `RASTER_TIER_QUARANTINED` alone.** The
-> flag is powerless against the rows already stored; `scripts/load_defra_raster.py`
-> must be fixed *and* the table reloaded first.
+> **What would let the tier return.** Two things, and the first alone is not enough:
+> (1) uncovered postcodes must fall through to Haversine instead of posing as
+> raster hits — fixed in the loader and guarded in the Lambda, though the stored
+> rows still hold the old fill; and (2) the §4.1 band mapping needs revisiting,
+> because TW6 1AP has a **genuine** 58.2 dB reading that those bands score as
+> quiet 7.5, i.e. an airport rated "fairly quiet". **WHO's 2018 guideline for
+> aircraft noise is 45 dB Lden**, well below this scale's 55 dB top band, so the
+> open question is the mapping rather than the data. `scripts/check_score_sanity.py`
+> asserts an airport scores ≤ 3.0, so lifting the flag early fails a check instead
+> of shipping quietly.
 
 **NYC ZIP centroids (v3.1, shipped).** NYC ZIPs now have static centroid lat/lon for ~110 ZIPs (sourced from the consumer site's `NYC_AREA_MAP`). This means NYC ZIP queries now use the v3.0 Haversine layer too, with the JFK/LGA/EWR/TEB airports and 8 NYC flight-path corridors. Within-borough variation is meaningful: 11201 (DUMBO) returns quiet=8 (north Brooklyn, away from JFK approach), while 11375 (Forest Hills) returns quiet=2 (under JFK / LGA traffic).
 

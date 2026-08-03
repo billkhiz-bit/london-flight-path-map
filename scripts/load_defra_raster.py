@@ -336,6 +336,7 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH):
     batch = []
     written = 0
     skipped = 0
+    nodata_skipped = 0
     samples_logged = 0
     SAMPLE_LOG_LIMIT = 5 # show a few sampled rows so you can eyeball them
 
@@ -395,9 +396,32 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH):
                 nodata is not None and raw_lden == nodata
             )
             if is_nodata:
-                # Below 40 dB Lden contour — treat as low-band quiet.
-                # 35.0 dB maps to quiet=10.0 via lden_db_to_quiet (<55 cutoff).
-                lden = 35.0
+                # CHANGED 2026-08-03. This used to write lden = 35.0, chosen so
+                # lden_db_to_quiet() returned 10.0, on the reasoning above that a
+                # postcode outside every contour is quiet. The reasoning holds for
+                # Twickenham and fails for London.
+                #
+                # Measured across 22,622 live London postcodes: **89.5% fall
+                # outside DEFRA's aircraft contours**, because those contours are
+                # localised lobes around airports — this raster carries data for
+                # only 6.2% of its own grid. Writing 35.0 for all of them put
+                # **98% of London on a single quiet value of 10.0**, which is not
+                # a scoring component, it is a constant. It also states something
+                # DEFRA does not: outside the contours there is no measurement,
+                # and "not measured" is not "quiet".
+                #
+                # Skipping instead leaves no row, so _lookup_lden_raster() returns
+                # None and the postcode falls through to the Haversine tier —
+                # which is exactly the chain METHODOLOGY §4.5 documents, and which
+                # the 35.0 fill was silently defeating by making every uncovered
+                # postcode look like a successful raster hit.
+                #
+                # Twickenham still needs solving, but on its own terms: the fault
+                # there is Haversine over-penalising positions laterally offset
+                # from a runway, and that wants a corridor-aware distance, not a
+                # blanket claim that unmapped means silent.
+                nodata_skipped += 1
+                continue
             elif raw_lden < LDEN_MIN or raw_lden > LDEN_MAX:
                 # Anomalous value (negative, etc) — skip rather than guess
                 skipped += 1

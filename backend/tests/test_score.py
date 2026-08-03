@@ -1568,6 +1568,29 @@ class RasterQuarantineTests(unittest.TestCase):
             f'contours above 75 dB near the runways.',
         )
 
+    def test_legacy_nodata_fill_is_treated_as_a_miss(self):
+        """A stored 35.0 must not be served as a measurement.
+
+        89.5% of London postcodes lie outside DEFRA's aircraft contours, and the
+        loader used to write 35.0 for every one of them so that the score came
+        out at a perfect 10.0. That turned "not measured" into "quiet" and put
+        98% of the city on one value.
+
+        Safe to treat as a sentinel rather than a guess: the raster's minimum
+        real value is 40.0 dB, so 35.0 cannot be a genuine sample. Asserted with
+        the quarantine lifted, because otherwise this passes for the wrong reason
+        — the short-circuit would return None whatever the table held.
+        """
+        self._serve_raster(35.0)
+        with patch.object(app, 'RASTER_TIER_QUARANTINED', False):
+            self.assertIsNone(
+                app._lookup_lden_raster('E18BL'),
+                'legacy 35.0 nodata fill was served as a real Lden reading',
+            )
+            # A real sample must still come through.
+            self._serve_raster(58.2)
+            self.assertEqual(app._lookup_lden_raster('TW61AP'), 58.2)
+
     def test_quiet_still_discriminates_across_london(self):
         """Quiet must not collapse onto a handful of values.
 

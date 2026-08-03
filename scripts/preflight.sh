@@ -93,6 +93,11 @@ check "pytest (backend)"               sh -c 'cd backend && python -m pytest -q'
 # test written that day — were never run before a commit.
 check "pytest (root)"                  python -m pytest tests/ -q
 check "API base-URL drift (I-N5)"      sh scripts/check_api_url_drift.sh
+# Added 2026-08-03. The only check here that can catch a DATA defect: the two
+# pytest suites never reach DynamoDB and Playwright asserts the site against
+# itself, which is how the raster served Heathrow a quiet score of 7.5/10 for a
+# week with this gate green throughout. Hits the live API, like the e2e stage.
+check "score sanity (live API)"        python scripts/check_score_sanity.py
 
 if [ "$SKIP_E2E" -eq 1 ]; then
   printf '  %-34s%s\n' "Playwright e2e" "SKIPPED (--skip-e2e)"

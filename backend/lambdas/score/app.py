@@ -1967,36 +1967,49 @@ def _get_ddb_client():
 
 
 # --- Raster tier quarantined 2026-08-03 -------------------------------------
-# The DEFRA sample table is loaded with values that cannot be right, so the
-# tier is bypassed until the loader is fixed AND the table reloaded.
+# READ THIS BEFORE HUNTING FOR A LOADER BUG. There isn't one. An earlier version
+# of this comment claimed the table held values that "cannot be right" and blamed
+# a CRS mismatch. That was wrong, and it was concluded from a sample of eight
+# postcodes. Verified against data/defra_lden_2022.tif directly:
 #
-# The evidence, read straight out of london-flight-map-noise-raster:
-#   TW61AP, a postcode INSIDE Heathrow Airport ..... ldenDb 58.2
-#   TW31AA, Hounslow, under the approach ........... ldenDb 57.4
-#   E18BL / N41AA, unrelated, miles apart .......... ldenDb 35 (both, exactly)
-# Heathrow reads ~20 dB low against DEFRA Round 4, which puts >75 dB near the
-# runways, and the identical round 35 on unrelated postcodes is a background
-# fill rather than a sample — DEFRA maps only down to the 55 dB reporting
-# threshold, so "no data" was written as though it meant "quiet".
+#   * the raster is the genuine DEFRA aircraft Lden map — EPSG:27700, 10 m
+#     resolution, values to 88.9 dB, 34,414 distinct values, and its loudest
+#     cells sit exactly on Heathrow's two runway centrelines and London City;
+#   * sampling it at correctly projected coordinates returns 58.2 for TW61AP,
+#     identical to the stored value. The projection is correct and the stored
+#     numbers are faithful samples;
+#   * the 35.0 values are a deliberate nodata fill (see _RASTER_NODATA_FILL),
+#     not corruption.
 #
-# Run through lden_db_to_quiet's bands (<55 -> 10.0, <60 -> 7.5) those are the
-# ONLY two outputs the table can produce. `quiet` therefore collapsed to two
-# values across the whole of London, erring optimistic on the one component the
-# product is built to be trusted on, and a single response could report
-# noiseImpactBand 'severe' beside quiet 10.0.
+# The defect is COVERAGE, not correctness. Measured over 22,622 live London
+# postcodes: 89.5% fall outside DEFRA's aircraft contours entirely, because those
+# contours are localised lobes — the raster carries data for 6.2% of its own
+# grid. Filling all of that as 35.0 dB rendered "not measured" as "perfectly
+# quiet" and put 98% of London on a single quiet value of 10.0. A component that
+# is 10.0 for 98% of the city cannot support the claim that Lden varies 10-15 dB
+# within a borough, which is the product's headline differentiator.
 #
 # Bypassing drops the chain to its Haversine tier, which discriminates properly
 # — Heathrow 0.0, Hounslow 1.0, Finsbury Park 6.0 — and is what the consumer
 # site has computed all along, so this also closes the site/API divergence.
-# Scores move DOWN where the raster had inflated them; that is the correction,
-# not a regression.
 #
-# This fixes nothing in scripts/load_defra_raster.py. Setting it False again
-# without reloading the table simply restores the defect: the quarantine is
-# powerless against the rows already stored. Suspects for the loader: a CRS
-# mismatch (British National Grid vs WGS84), reading a downsampled overview
-# level that averages the peaks away, or the wrong GeoTIFF band.
+# WHAT WOULD LET THIS BE LIFTED. Two things, and the nodata fix alone is not
+# enough:
+#   1. Rows reloaded (or read through the _RASTER_NODATA_FILL guard) so uncovered
+#      postcodes fall through to Haversine rather than posing as raster hits.
+#      Done in code; the table itself still holds the old fills.
+#   2. lden_db_to_quiet's bands revisited. TW61AP has a GENUINE 58.2 dB sample,
+#      and the bands map that to quiet 7.5 — an airport scoring "fairly quiet".
+#      WHO's 2018 environmental noise guideline for aircraft is 45 dB Lden, well
+#      below this scale's 55 dB top band, so the mapping is the open question,
+#      not the data.
+# scripts/check_score_sanity.py asserts an airport scores <= 3.0, so lifting the
+# flag prematurely fails that check rather than silently shipping.
 RASTER_TIER_QUARANTINED = True
+
+# The legacy nodata fill written by scripts/load_defra_raster.py before
+# 2026-08-03. Not a measurement — the raster's minimum real value is 40.0 dB.
+_RASTER_NODATA_FILL = 35.0
 
 
 def _lookup_lden_raster(postcode_clean):
@@ -2065,6 +2078,19 @@ def _lookup_lden_raster(postcode_clean):
     try:
         value = float(lden)
     except (TypeError, ValueError):
+        return None
+    # Rows written before 2026-08-03 carry a literal 35.0 wherever the raster had
+    # no data, because the loader filled nodata rather than skipping it. Treat
+    # that as a miss so the postcode falls through to Haversine, which is the
+    # chain §4.5 documents and which the fill silently defeated by making every
+    # uncovered postcode look like a successful raster hit.
+    #
+    # Safe as a sentinel, not a guess: the London raster's minimum real value is
+    # 40.0 dB (DEFRA publishes contours only down to that), so 35.0 cannot be a
+    # genuine sample and no true reading is discarded here. The loader no longer
+    # writes it, so this only matters until the table is reloaded — but 89.5% of
+    # London currently holds this value, so it matters a lot until then.
+    if value == _RASTER_NODATA_FILL:
         return None
     _raster_cache_put(postcode_clean, value)
     return value
