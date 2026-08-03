@@ -36,7 +36,12 @@
 // `ex.p8` undefined, silent fallback to the retired editorial bands, and a site
 // showing different borough scores from the ones /v1/score returns. Any future
 // change to a file under /data/ needs this same bump for the same reason.
-const VERSION = 'v1.0.5';
+// v1.0.6 (2026-08-03): index.html now derives the SCHOOLS badge from Progress 8
+// via schoolBandFromP8() instead of printing the retired Ofsted band. Without a
+// bump, a returning visitor keeps the precached v1.0.5 index.html and still sees
+// Camden badged 'excellent' against a P8 of -0.03 — the stale-shell failure the
+// note above describes, in the very feature it describes it for.
+const VERSION = 'v1.0.6';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

@@ -5998,6 +5998,46 @@
         return null;
       }
 
+      // Progress 8 → the SCHOOLS badge. Added 2026-08-03 to close a gap left by
+      // methodology v3.5: that change moved the schools *score* to Progress 8 but
+      // this badge still printed the retired Ofsted band, so Camden rendered
+      // 'excellent' above a P8 of -0.03. METHODOLOGY §20 cites that exact pairing
+      // as its proof the old bands were editorial, so the site was displaying the
+      // claim the methodology retracts.
+      //
+      // The cut points are DfE's own published Progress 8 bands, not ours — the
+      // whole reason v3.5 happened is that someone once invented bands. Anchoring
+      // to a published source is the standard §11 demands.
+      //
+      // These bands are defined for individual schools and we apply them to
+      // local-authority averages, which cluster more tightly. Checked against the
+      // live cohort before shipping: London's 32 LAs span -0.09..+0.64 and split
+      // 7 / 15 / 10 across the top three bands, so they still discriminate. No
+      // London borough reaches 'below average' nationally — that is the London
+      // effect, not a bug. Note a borough can sit at the national average and
+      // still be below the London median (Camden: -0.03 against +0.30); the badge
+      // deliberately asserts the national anchor, because absolute anchors are
+      // the point of Progress 8 and of the score it feeds.
+      function schoolBandFromP8(p8) {
+        if (p8 >= 0.5) return { label: 'well above average', cls: 'rating-low' };
+        if (p8 >= 0.2) return { label: 'above average', cls: 'rating-low' };
+        if (p8 >= -0.2) return { label: 'average', cls: 'rating-medium' };
+        if (p8 >= -0.5) return { label: 'below average', cls: 'rating-high' };
+        return { label: 'well below average', cls: 'rating-high' };
+      }
+
+      // Progress 8 where it exists, the legacy curated band otherwise. Same
+      // precedence as the score itself, so the badge can never disagree with the
+      // number beside it. City of London (no P8) and all NYC boroughs take the
+      // fallback; `ratingBadgeClass` already understands that vocabulary.
+      function schoolBadge(extra) {
+        if (extra && extra.p8 !== undefined && extra.p8 !== null) {
+          const b = schoolBandFromP8(extra.p8);
+          return { text: b.label, cls: b.cls };
+        }
+        return { text: (extra && extra.schools) || 'not recorded', cls: ratingBadgeClass(extra && extra.schools) };
+      }
+
       function ratingBadgeClass(rating) {
         const r = (rating || '').toLowerCase();
         if (r === 'low' || r === 'good' || r === 'excellent') return 'rating-low';
@@ -7234,7 +7274,7 @@
 
     <div class="sidebar-section">
       <h3>SCHOOLS</h3>
-      <span class="rating-badge ${ratingBadgeClass(extra.schools)}">${extra.schools}</span>
+      <span class="rating-badge ${schoolBadge(extra).cls}">${escapeHtml(schoolBadge(extra).text)}</span>
       <p class="info-note" style="margin-top:6px;">${extra.schoolNote}</p>
     </div>
     ` + buildOptionalSections(extra, 'bor')
@@ -7429,7 +7469,7 @@
         ? `
     <div class="sidebar-section">
       <h3>SCHOOLS</h3>
-      <span class="rating-badge ${ratingBadgeClass(extra.schools)}">${escapeHtml(extra.schools)}</span>
+      <span class="rating-badge ${schoolBadge(extra).cls}">${escapeHtml(schoolBadge(extra).text)}</span>
       <p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>
     </div>`
         : ''

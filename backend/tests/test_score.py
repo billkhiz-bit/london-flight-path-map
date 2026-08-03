@@ -992,6 +992,29 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         self.assertNotIn('PARTIAL', lon['sourceBreakdown']['live'])
         self.assertIn('Progress 8', lon['sourceBreakdown']['live'])
 
+    def test_london_sources_credit_only_bodies_that_answered(self):
+        """The coarse `sources` line must track the data, not lag behind it.
+
+        v3.5 moved the crime rate from Home Office recorded crime to ONS Table
+        C4, but `sources` kept crediting the Home Office for ~24 hours after the
+        deploy while `sourceBreakdown` already named ONS. A stale credit here is
+        the same defect class as the NYC/OGL bug that motivated CITY_PROVENANCE
+        — crediting on configuration rather than on what actually answered —
+        and it is the harder one to notice, because the detailed breakdown
+        sitting next to it is correct.
+        """
+        body, status = app.resolve_query({'city': 'london', 'borough': 'Camden'})
+        self.assertEqual(status, 200)
+        joined = ' '.join(body['sources'])
+        self.assertNotIn(
+            'Home Office', joined,
+            'London sources credit the Home Office, which no longer supplies any '
+            'component: crime is ONS Table C4 and schools are DfE Progress 8',
+        )
+        # The bodies that DO answer must still be named.
+        self.assertIn('ONS', joined)
+        self.assertIn('Department for Education', joined)
+
     def test_unknown_city_does_not_inherit_london_provenance(self):
         srcs = app.build_sources('atlantis')
         self.assertNotIn('MHCLG', ' '.join(srcs))

@@ -2224,7 +2224,13 @@ CITY_PROVENANCE = {
             'Sold prices: HM Land Registry, Open Government Licence v3.0',
             # Index 2 by contract — two tests assert the postcode line's position.
             lambda: _postcode_source_line(_LOCAL_POSTCODE_SERVED),
-            'Borough metadata: ONS, Home Office, Department for Education (Open Government Licence v3.0)',
+            # The Home Office was dropped here on 2026-08-03. v3.5 moved the crime
+            # rate to ONS Table C4, which left the Home Office credited in every
+            # London response while answering for nothing — the same "crediting on
+            # configuration rather than on what actually answered" this whole
+            # registry exists to prevent. The breakdown below already named the
+            # real sources; only this coarse line lagged.
+            'Borough metadata: ONS (Crime in England and Wales, Police Force Area data tables, Table C4) and Department for Education (Key Stage 4 Progress 8), Open Government Licence v3.0',
             'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
         ],
         'breakdown': {
