@@ -10,7 +10,7 @@ In the meantime, this document lists the controls that **are** in place today an
 
 ## Reporting a vulnerability
 
-If you've found a security issue (XSS, IDOR, IAM gap, secret leak, abuse vector, anything you'd want to disclose privately), reach out at **`billkhiz@gmail.com`** or via the contact in [`/.well-known/security.txt`](https://skyscore.co.uk/.well-known/security.txt) (RFC 9116 format).
+If you've found a security issue (XSS, IDOR, IAM gap, secret leak, abuse vector, anything you'd want to disclose privately), reach out at **`support@skyscore.co.uk`** - the same address published in [`/.well-known/security.txt`](https://skyscore.co.uk/.well-known/security.txt) under RFC 9116. (This page named a personal Gmail until 2026-08-03, so the two disclosure routes gave different addresses; a reporter checking both had no way to know they reached the same inbox.) See also the contact in [`/.well-known/security.txt`](https://skyscore.co.uk/.well-known/security.txt) (RFC 9116 format).
 
 Sole-developer, independent project. Reply timeline best-effort but typically within a working day for things that look real.
 
@@ -116,7 +116,7 @@ For a confirmed security incident affecting customer data or the production API:
 
 PII processed: email (and optionally name) for API key issuance, stored in the `london-flight-map-signups` DynamoDB table; CloudWatch logs containing the email for audit traceability.
 
-For an SAR / delete-my-data / data-export request, email `billkhiz@gmail.com`. Manual workflow:
+For an SAR / delete-my-data / data-export request, email `support@skyscore.co.uk` - the address privacy.html and SUBPROCESSORS.md both already publish. This page named a personal Gmail until 2026-08-03, so a data subject following the privacy notice and one following this document were told to write to different places. Manual workflow:
 
 1. **SAR (Subject Access Request)**: query the SignupsTable by email; export the row as JSON; redact internal log identifiers; reply within 30 days per Article 12.
 2. **Delete**: `apigateway:DELETE` the issued key; `dynamodb:DeleteItem` the SignupsTable row; scrub matching CloudWatch log events using a CloudWatch Logs Insights query and `delete-log-event` (best-effort; CloudWatch retains aggregate metrics that can't be deleted per-event).

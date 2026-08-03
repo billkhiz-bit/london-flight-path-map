@@ -337,7 +337,7 @@ HEALTH_SCORE = {
 
 ### 4.5 Per-postcode quiet, Haversine geometry (v3.0)
 
-When the API receives a postcode that resolves to lat/lon (UK postcodes via postcodes.io), the **Quiet** component is computed at *postcode resolution* rather than borough-aggregate, using Haversine distance to airports and flight-path geometry. This is the same algorithm the consumer site has used for 290+ neighbourhoods since launch (`index.html:1118-1247`); v3.0 ports it to the API.
+When the API receives a postcode that resolves to lat/lon (UK postcodes via postcodes.io), the **Quiet** component is computed at *postcode resolution* rather than borough-aggregate, using Haversine distance to airports and flight-path geometry. This is the same algorithm the consumer site has used for 290+ neighbourhoods since launch (`calcScores()` in `index.html`; cited by function name because a line range in an 8,500-line file drifts - the range previously given here pointed at CSS); v3.0 ports it to the API.
 
 **Algorithm (per postcode):**
 

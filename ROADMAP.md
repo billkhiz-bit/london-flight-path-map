@@ -199,7 +199,7 @@ This is the methodology weakness B2B audit teams will challenge first.
 
 Use the postcode's lat/long (postcodes.io already returns it) to sample two data sources:
 1. **DEFRA Strategic Noise Mapping raster**, sample Lden value at postcode centroid (10m grid resolution)
-2. **Haversine distance to flight paths and airports**, already implemented in the consumer site (`index.html` lines 1118-1247)
+2. **Haversine distance to flight paths and airports**, already implemented in the consumer site (`calcScores()` in `index.html`)
 
 Combine into continuous dB-based score:
 ```

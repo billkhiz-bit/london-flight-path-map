@@ -962,7 +962,7 @@ Total: ~45 commits, 7 backend deploys, 11 frontend deploys.
 ## [3.0], 2026-05-05
 
 ### Added
-- **Per-postcode Haversine quiet scoring**, when the API receives a UK postcode (resolved to lat/lon via postcodes.io), the Quiet score is computed at postcode resolution using Haversine distance to airports and flight-path geometry. Same algorithm as the consumer-site neighbourhood scoring (`index.html:1118-1247`); ported to the Lambda.
+- **Per-postcode Haversine quiet scoring**, when the API receives a UK postcode (resolved to lat/lon via postcodes.io), the Quiet score is computed at postcode resolution using Haversine distance to airports and flight-path geometry. Same algorithm as the consumer-site neighbourhood scoring (`calcScores()` in `index.html`); ported to the Lambda.
 - 5 London airports tracked (LHR, LGW, LCY, STN, LTN), 4 NYC airports (JFK, LGA, EWR, TEB).
 - 12 London flight-path corridors (Lambourne / Biggin / Ockham / Bovingdon stacks; LHR departures; LCY / LGW / LTN approaches), 8 NYC corridors.
 - New `context.quietResolution` field (`'postcode' | 'borough'`) reports which tier produced the response.
