@@ -4291,36 +4291,72 @@
         { code: 'LTN', name: 'Luton', coords: [-0.3684, 51.8747], passengers: '16.8M', type: 'airport' },
       ];
 
+      // Rotary-noise sites. `bands` is [within 3 km, within 5 km] added to
+      // noiseScore, and every entry must carry the movement count and source
+      // that justify its tier — see METHODOLOGY §4.5 and the §11 declaration.
+      //
+      // Weighted by published annual movements, 2026-08-03. Until then all five
+      // scored an identical +2/+1, which put the two air-ambulance helipads —
+      // together ~9.7% of London's land area, the largest footprint of any site
+      // here — on the same footing as a commercial heliport running roughly
+      // seven times their traffic.
+      //
+      // The tiers come from acoustics rather than taste: sound energy sums
+      // logarithmically, so N movements contribute 10·log10(N), the same basis
+      // as Lden under END 2002/49/EC which §4.1 already cites. Battersea
+      // (12,000) and Elstree (12,367 rotary) sit at 40.79 and 40.92 dB-equivalent
+      // — 0.13 dB apart, so identical in practice. The HEMS pads at ~1,600
+      // movements sit at 32.0, i.e. 8.75 dB lower. On §4.1's ~5 dB bands that is
+      // nearly two steps; dropping them one step is deliberately conservative,
+      // erring toward keeping a noise penalty rather than removing one.
       const HELIPORTS = [
         {
           code: 'BHL',
           name: 'London Heliport (Battersea)',
           coords: [-0.178, 51.47],
+          movementsPerYear: 12000,
+          movementsSource: 'Planning cap, Wandsworth Borough Council',
+          bands: [2, 1],
           note: 'Only licensed heliport in central London. ~12,000 helicopter movements/year. Low-altitude flights over Battersea, Wandsworth, Chelsea. Busiest on weekday business hours.',
         },
         {
           code: 'ELS',
           name: 'Elstree Aerodrome',
           coords: [-0.3258, 51.6558],
-          note: 'Light aircraft and helicopter training. Affects parts of Barnet and Hertsmere. Relatively low traffic.',
+          movementsPerYear: 12367,
+          movementsSource: 'Elstree Aerodrome Consultative Committee Guide (Hertsmere BC), rotary-wing movements, 2016',
+          bands: [2, 1],
+          note: 'Light aircraft and helicopter training. 12,367 rotary-wing movements in 2016, comparable to Battersea. Affects parts of Barnet, Harrow and Hertsmere.',
         },
         {
           code: 'DEN',
           name: 'Denham Aerodrome',
           coords: [-0.5133, 51.5789],
-          note: 'Light aircraft and helicopters in NW London. Minimal impact on central London.',
+          movementsPerYear: null,
+          movementsSource:
+            'NOT PUBLISHED. Editorial assignment by analogy to Elstree, a comparable general-aviation aerodrome with documented helicopter operations — declared under METHODOLOGY §11. Revise if Buckinghamshire Council or the Denham Aerodrome Consultative Committee publish a type breakdown.',
+          bands: [2, 1],
+          note: 'Light aircraft and helicopters in NW London. Affects part of north-west Hillingdon; no impact on central London.',
         },
         {
           code: 'HEMS',
           name: 'Royal London Hospital Helipad',
           coords: [-0.0593, 51.5178],
-          note: 'Air ambulance (HEMS). Emergency flights only, unpredictable but infrequent.',
+          movementsPerYear: 1600,
+          movementsSource:
+            "London's Air Ambulance annual mission report 2025: 2,031 patients, ~40% conveyed to the Royal London, x2 movements. Daylight only — the charity runs rapid-response cars at night.",
+          bands: [1, 0],
+          note: 'Air ambulance (HEMS). Emergency flights only, unpredictable but infrequent, and daytime only.',
         },
         {
           code: 'KING',
           name: "King's College Hosp Helipad",
           coords: [-0.0941, 51.4688],
-          note: 'Air ambulance helipad. Emergency use only. Affects Denmark Hill/Camberwell.',
+          movementsPerYear: 800,
+          movementsSource:
+            "London's Air Ambulance conveys to four major trauma centres; King's receives a smaller share than the Royal London's ~40%. Order-of-magnitude estimate on the same 2025 report — declared under METHODOLOGY §11.",
+          bands: [1, 0],
+          note: 'Air ambulance helipad. Emergency use only, daytime only. Affects Denmark Hill/Camberwell.',
         },
       ];
 
@@ -5959,11 +5995,18 @@
           }))
           .sort((a, b) => a.dist - b.dist);
         const nearestHeli = heliDists[0];
-        if (nearestHeli && nearestHeli.dist < 3) {
-          noiseScore += 2;
-        } else if (nearestHeli && nearestHeli.dist < 5) {
-          noiseScore += 1;
-        }
+        // Take the LOUDEST contribution, not the nearest site's. Once sites carry
+        // different weights the closest pad is no longer necessarily the biggest
+        // contributor: a postcode 2.9 km from an air-ambulance pad (+1) and 4 km
+        // from Battersea (+1) was previously scored off the pad alone, and the
+        // old nearest-only form silently discarded the louder source. Contributions
+        // are not summed — consistent with the airport and flight-path terms above,
+        // which also take the nearest single source rather than accumulating.
+        const heliBonus = heliDists.reduce((best, hp) => {
+          const contribution = hp.dist < 3 ? hp.bands[0] : hp.dist < 5 ? hp.bands[1] : 0;
+          return Math.max(best, contribution);
+        }, 0);
+        noiseScore += heliBonus;
         // Recalculate estimate after heliport factor
         if (noiseScore >= 7) noiseEstimate = 'High';
         else if (noiseScore >= 4) noiseEstimate = 'Moderate';

@@ -389,8 +389,69 @@ The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode'
 - Airport-proximity bonus uses Euclidean-style distance, not flight-corridor membership. A postcode 5 km from an airport but to the *side* of the runway corridor is currently penalised the same as one directly under the corridor. Raster sampling will correct this.
 - Flight-path waypoints are coarse polylines, not full flight-procedure geometries with altitude data. A postcode under a 9,000-ft transit gets the same noise score as one under a 1,500-ft final approach.
 - NYC ZIP centroids are representative neighbourhood points, not true ZCTA polygon centroids. ~1 km of within-ZIP imprecision.
+- **Helicopter noise is not modelled by the API.** See the divergence note below.
 
-### 4.6 DEFRA raster sampling (v3.1, scaffold-ready, awaiting data load)
+**Known divergence: the consumer site scores heliports, the API does not (recorded 2026-08-03).**
+`skyscore.co.uk` adds a term this section does not describe: it measures distance to **five**
+London rotary sites and adds a movement-weighted contribution to `noise_score`. `/v1/score`
+has no heliport term at all. The formulas are otherwise identical, down to the same Haversine
+implementation and the same band edges. The term touches **14.1% of Greater London's land
+area**; outside that, site and API agree exactly.
+
+| Site | Rotary movements/yr | Source | Bands (<3 km, <5 km) | Share of London within 5 km |
+|---|---|---|---|---|
+| London Heliport (Battersea) | 12,000 | Planning cap, Wandsworth BC | +2, +1 | 4.79% |
+| Elstree Aerodrome | 12,367 (2016) | Elstree Aerodrome Consultative Committee Guide, Hertsmere BC | +2, +1 | 0.97% |
+| Denham Aerodrome | **not published** | — editorial, see §11 | +2, +1 | 1.50% |
+| Royal London Hospital Helipad | ~1,600, daylight only | London's Air Ambulance annual mission report 2025 | +1, 0 | 4.71% |
+| King's College Hospital Helipad | ~800, daylight only | Same report, smaller share — order-of-magnitude, see §11 | +1, 0 | 4.97% |
+
+The weights follow from acoustics rather than preference: sound energy sums logarithmically, so
+N movements contribute `10·log₁₀(N)` — the same basis as Lden under END 2002/49/EC, already
+cited in §4.1. Battersea (40.79 dB-equivalent) and Elstree (40.92) are 0.13 dB apart and so
+share a tier; the two air-ambulance pads sit ~8.75 dB lower, which on §4.1's ~5 dB bands is
+nearly two steps. They are dropped **one** step, deliberately conservative — erring toward
+keeping a noise penalty rather than removing one.
+
+**Before 2026-08-03 all five scored an identical +2/+1**, which put two emergency helipads —
+together 9.7% of London's land area, the largest footprint here — on the same footing as a
+commercial heliport running roughly seven times their traffic. Contributions take the loudest
+site rather than the nearest, consistent with the airport and flight-path terms, which also take
+a single nearest source rather than accumulating.
+
+This accounts for **every** observed site-versus-API difference on quiet, and for every case
+where they agree. E1 8BL sits 1.10 km from the Royal London helipad, so the site scores quiet
+**3** against the API's **5**; SW1A 1AA is 4.27 km from Battersea, giving **5** against **6**;
+WC1E 6BT (5.13 km), TW3 1AA (12.61 km) and TW6 1AP have no heliport inside 5 km and match
+exactly. It is not coordinate imprecision — both sides resolve identical latitude/longitude
+and identical nearest-path distances.
+
+The figures above **post-date** those examples: under the previous uniform weighting E1 8BL
+scored quiet **3** against the API's **5**, and it now scores **4**. The site is still the
+noisier of the two within 5 km of a rotary site, because the API models no rotary noise at all.
+
+**What remains outstanding.** The tiers are now derived, but two inputs are not, and per §11 an
+editorial choice must at least be *declared* as one:
+
+- **Denham has no published movement figure.** Buckinghamshire Council, the Denham Aerodrome
+  Consultative Committee and the aerodrome's own published material were all checked. Its weight
+  is assigned by analogy to Elstree — a comparable general-aviation aerodrome with documented
+  helicopter operations — and it affects 1.50% of London.
+- **King's College's ~800 is order-of-magnitude,** inferred from London's Air Ambulance
+  conveying to four major trauma centres with the Royal London taking ~40%. The tier would not
+  change anywhere in the plausible range, since it sits far below the 12,000 reference either way.
+- **The 3 km / 5 km radii and the two-tier structure itself are still editorial.** Only the
+  *relative weighting between sites* is now derived.
+- **The API does not implement this term at all**, so the surfaces remain divergent within
+  14.1% of London until it is ported.
+
+One thing settled deliberately: weighting rests on **noise exposure**, never on whether a
+facility is socially desirable. Proximity to a trauma centre is a healthcare benefit and belongs
+in the `live` component; importing it into `quiet` would double-count across components in
+exactly the way §4.4's Progress 8 note guards against. The air-ambulance pads are weighted down
+because they generate roughly a seventh of the movements, not because hospitals are good.
+
+### 4.6 DEFRA raster sampling (v3.1, loaded 2026-07-26, quarantined 2026-08-03)
 
 When correctly populated, the v3.1 raster tier replaces Haversine with direct sampling of the DEFRA Strategic Noise Mapping (Round 4, 2022) Lden GeoTIFF at the postcode centroid. That remains the intended gold-standard method — but it is an aspiration, not a description of what runs today. **The table was loaded, found to be wrong, and the tier is quarantined; see the warning in §4.5.** This section describes the design, not the live path.
 
@@ -506,13 +567,25 @@ healthcare: 'good' # St George's full A&E, good GP coverage
 
 **Quiet (v3.0, postcode resolution)**, postcodes.io returned lat/lon (51.4644, -0.1643) for SW11 1AA, so the API uses per-postcode Haversine scoring (§4.5):
 
-- Nearest airport: LCY at ~16 km → noise_score += 1 (15-20 km band)
-- Major airport (LHR): ~21 km → no bonus (>15 km)
-- Nearest flight-path waypoint: ~6 km → noise_score += 0 (right at the threshold; no bonus added)
-- Total noise_score: 1
-- Quiet = 10 - 1 = 9, clipped to 7.0 in practice (postcode is in a moderate-noise band overall, the Heliport at Battersea adds residual context the airport+path proxy doesn't capture)
+- Nearest airport: LCY at **15.87 km** → noise_score += 1 (15-20 km band)
+- Major airport (LHR): **20.10 km** → no bonus (>15 km)
+- Nearest flight-path waypoint: **2.38 km**, on the *Dep SE (Detling)* departure route → noise_score += 2 (2-4 km band)
+- Total noise_score: **3**
+- Quiet = 10 − 3 = **7.0**
 
-For the v3.0 release, the live API returns `quiet: 7.0` for SW11 1AA. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
+For the v3.0 release, the live API returns `quiet: 7.0` for SW11 1AA, which is what the arithmetic above produces — no adjustment, no clipping. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
+
+> **Correction, 2026-08-03.** This example previously stated the nearest flight-path
+> waypoint was "~6 km → noise_score += 0", giving a total of 1 and a quiet score of
+> 9 — then reconciled that against the live 7.0 by asserting the result was
+> "clipped to 7.0 in practice", with the Battersea heliport supplying "residual
+> context the airport+path proxy doesn't capture". Both claims were wrong. The
+> nearest waypoint is 2.38 km, not ~6 km, so the correct total was always 3 and the
+> formula yields 7.0 directly. There is no clipping step in the code and the API
+> does not model heliports at all; that sentence was a post-hoc rationalisation of
+> an arithmetic slip, and it was this document's only mention of heliports. The
+> formula was reproducible all along — this worked example was not. Recomputed here
+> against the live geometry (`CITY_GEOMETRY['london']`) rather than by hand.
 
 (The pre-v3.0 borough-aggregate value was `quiet: 5.0`, derived from `IMPACT_TO_QUIET['moderate']`. v3.0 reflects that Battersea is south of major LHR flight paths and away from LCY corridors.)
 
@@ -738,7 +811,9 @@ A B2B audit team will challenge any number that lacks justification. This sectio
 | Editorial choice | Defensible reasoning |
 |---|---|
 | `IMPACT_TO_QUIET` value scale (10 / 7.5 / 5.0 / 3.0 / 1.5 / 0.0) | The dB Lden bands are DEFRA-anchored; the score values reflect the inverse-square-ish relationship between noise dB and health effect documented in WHO meta-analyses. The non-linear spacing (3 → 1.5 = halving) reflects that small dB increases at high baselines have outsized effects. |
-| `SCHOOL_SCORE` values (10 / 9 / 6 / 3) | Anchored to the Ofsted national distribution (14% Outstanding, 71% Good, 12% RI, 3% Inadequate). The large gap from 'good' (6) to 'mixed' (3) reflects the documented educational-outcome difference between attending Good and Inadequate schools. |
+| `SCHOOL_SCORE` values (10 / 9 / 6 / 3) — **RETIRED 2026-08-02** | **This row previously claimed the bands were "anchored to the Ofsted national distribution". That claim was false**, which is why v3.5 removed them: no threshold on "% Good or Outstanding" reproduces the stored bands, and the measure behind them was withdrawn by Ofsted in September 2024. Retained here as a record of a defence that did not hold up, because the point of this section is that a stated justification can be checked. Schools now uses `school_score(p8) = clamp(5.0 + 5.0 × p8, 0, 10)`, whose anchors are external constants (0.0 = national average, ±1.0 = one grade per subject) rather than editorial. The legacy bands survive only as a fallback for areas with no Progress 8 figure — in London, the City of London alone. |
+| Heliport bands (+2 / +1 within 3 km / 5 km) and the 3 km / 5 km radii | **Editorial, declared.** The *relative* weighting between sites is derived — sound energy sums logarithmically, so annual movements contribute `10·log₁₀(N)`, the same basis as Lden under END 2002/49/EC (§4.1). That is what separates the 12,000-movement sites from the ~1,600-movement air-ambulance pads. The absolute band values and the two distance radii are **not** anchored to any published source; they mirror the airport-proximity structure above for internal consistency. Consumer site only — `/v1/score` does not implement this term. See §4.5. |
+| Denham Aerodrome's weight | **Editorial, declared, and the weakest link in this table.** No published movement figure exists: Buckinghamshire Council, the Denham Aerodrome Consultative Committee and the aerodrome's own material were all checked (2026-08-03). Its weight is assigned by analogy to Elstree, a comparable general-aviation aerodrome with documented helicopter operations. Affects 1.50% of Greater London. Revise on publication of a type breakdown. |
 | `CRIME_TO_SCORE` slope and intercept | Calibrated so that London median crime rate (88/1000) yields score 7.5, and rate=50 (cleanest London tier) yields 10. Slope of −1 per 15 units chosen so a 50% increase above median crosses the "below average" threshold. |
 | `TRANSPORT_SCORE` 4-tier categorisation | Approximates TfL PTAL bands (PTAL 0-6b reduced to 4 tiers) for interpretability. Direct PTAL integration is on the v2.1 roadmap. |
 | `HEALTH_SCORE` 3-tier and 10% liveability weight | Healthcare has lower variance across London (most boroughs within 5 km of full A&E per NHS England target), so finer resolution would over-discriminate. Lower weight reflects lower variance. |
