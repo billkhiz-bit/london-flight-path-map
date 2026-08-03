@@ -768,7 +768,12 @@
 
   <!-- Left panel -->
   <div class="panel" id="panel-left">
-    <div class="panel-header"><span>AIRPORT INTELLIGENCE, EGLL</span><div class="status-dot"></div></div>
+    <!-- The traffic and weather rows below are ILLUSTRATIVE, not a feed. Flights
+         Today jitters on a sine wave, Peak Movements uses Math.random(), and METAR
+         Age ticks up as a counter - all of which read as a live source, especially
+         beside the pulsing status dot this header used to carry. The dot is gone
+         and the label says what these numbers are. -->
+    <div class="panel-header"><span>AIRPORT INTELLIGENCE, EGLL - ILLUSTRATIVE</span></div>
     <div class="row"><span class="label">ICAO / IATA</span><span class="value">EGLL / LHR</span></div>
     <div class="row"><span class="label">Position</span><span class="value cy">51.4700°N 0.4543°W</span></div>
     <div class="row"><span class="label">Elevation</span><span class="value">83 ft AMSL</span></div>
@@ -787,11 +792,21 @@
     <div class="row"><span class="label">Temp / Dew</span><span class="value">12°C / 04°C</span></div>
     <div class="row"><span class="label">METAR Age</span><span class="value" id="metar-age">0m 00s</span></div>
     <div class="divider"></div>
-    <div class="panel-header" style="margin-top:4px"><span>NOISE MONITORING</span></div>
-    <div class="row"><span class="label">Hounslow (2.1km)</span><span class="value rd">72.4 dB</span></div>
-    <div class="row"><span class="label">Richmond (8.3km)</span><span class="value hl">63.1 dB</span></div>
-    <div class="row"><span class="label">Putney (14.7km)</span><span class="value">57.8 dB</span></div>
-    <div class="row"><span class="label">Westminster (21km)</span><span class="value gn">48.2 dB</span></div>
+    <!-- Replaced 2026-08-03. This block was headed "NOISE MONITORING" and carried
+         four invented dB readings at named real places, under a pulsing live dot.
+         Both the levels and the distances were wrong: Hounslow was labelled 2.1 km
+         from Heathrow (actually 6.5 km) at 72.4 dB (actually 57.6), and Westminster
+         was given 48.2 dB when DEFRA publishes no contour there at all. For a noise
+         product, fabricated decibel figures at named locations are the one thing
+         that cannot be shipped. Values below are sampled from the DEFRA Round 4
+         (2022) Lden raster at each location; distances are real great-circle
+         distances to EGLL. Lden is a long-term annual average, NOT a live reading,
+         which is why the heading says so. -->
+    <div class="panel-header" style="margin-top:4px"><span>DEFRA LDEN, ROUND 4 (2022) - ANNUAL AVERAGE, NOT LIVE</span></div>
+    <div class="row"><span class="label">Hounslow (6.5km)</span><span class="value rd">57.6 dB</span></div>
+    <div class="row"><span class="label">Richmond (10.5km)</span><span class="value hl">56.6 dB</span></div>
+    <div class="row"><span class="label">Putney (16.5km)</span><span class="value">52.0 dB</span></div>
+    <div class="row"><span class="label">Westminster (23.1km)</span><span class="value gn">below 55, unmapped</span></div>
   </div>
 
   <!-- Right panel: flight list -->
