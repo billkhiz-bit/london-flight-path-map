@@ -12,6 +12,7 @@ Lambda evolves (bulk endpoint, future per-postcode noise sampling, etc.).
 """
 
 import json
+import re
 import os
 import sys
 import threading
@@ -1820,3 +1821,90 @@ class ProgressEightTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class SiteApiGeometryParityTests(unittest.TestCase):
+    """The consumer site and this Lambda must score quiet from identical geometry.
+
+    They did not, for three months. METHODOLOGY records that the London corridors
+    were trimmed on 2026-05-07 to their noise-relevant portions and audited
+    against the DEFRA raster; the trim landed in index.html and in
+    scripts/audit_flight_paths.py but never here. The API kept 85 waypoints
+    across 12 corridors against the site's 50 across 10, so it scored noisier
+    wherever they differed - 34.6% of London measured over 7,239 live postcodes,
+    and noisier in 100% of the disagreements.
+
+    Nothing could have caught it: the unit suites only ever read this module, and
+    the Playwright suite only ever reads the site. Each half was self-consistent.
+    This test is the only thing that looks at both.
+    """
+
+    @staticmethod
+    def _site_flight_paths():
+        """Parse FLIGHT_PATHS out of index.html. Site stores [lon, lat]."""
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        i = src.index('const FLIGHT_PATHS = [')
+        start = i + src[i:].index('[')
+        depth = 0
+        for j in range(start, len(src)):
+            if src[j] == '[':
+                depth += 1
+            elif src[j] == ']':
+                depth -= 1
+                if depth == 0:
+                    break
+        block = src[start:j + 1]
+        out = {}
+        for m in re.finditer(r"name:\s*'([^']+)'(.*?)(?=name:\s*'|\Z)", block, re.S):
+            pts = re.findall(
+                r'\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]', m.group(2)
+            )
+            out[m.group(1)] = [(float(lat), float(lon)) for lon, lat in pts]
+        return out
+
+    def test_flight_path_geometry_matches_the_site(self):
+        site = self._site_flight_paths()
+        api = {
+            p['name']: [(float(a), float(b)) for a, b in p['coords']]
+            for p in app.CITY_GEOMETRY['london']['paths']
+        }
+        self.assertTrue(site, 'could not parse FLIGHT_PATHS out of index.html')
+
+        only_api = sorted(set(api) - set(site))
+        only_site = sorted(set(site) - set(api))
+        self.assertEqual(
+            only_api, [],
+            f'corridors in the API but not the audited site geometry: {only_api}. '
+            'The 2026-05-07 trim removed Approach N and Approach S; if they are '
+            'back here, this module was edited without index.html.',
+        )
+        self.assertEqual(only_site, [], f'corridors on the site but missing here: {only_site}')
+
+        for name in sorted(site):
+            self.assertEqual(
+                api[name], site[name],
+                f'{name}: geometry differs between index.html and this module. '
+                f'site has {len(site[name])} waypoints, API has {len(api[name])}. '
+                'More waypoints here means the API scores noisier than the site '
+                'for the same postcode.',
+            )
+
+    def test_airports_match_the_site(self):
+        """Same guard for the airport list, which feeds the other half of quiet."""
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        i = src.index('const AIRPORTS = [')
+        block = src[i:src.index('];', i)]
+        site = {
+            m.group(1): (float(m.group(3)), float(m.group(2)))
+            for m in re.finditer(
+                r"code:\s*'([A-Z]{3})'.*?coords:\s*\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]",
+                block, re.S,
+            )
+        }
+        api = {a['code']: (a['lat'], a['lon']) for a in app.CITY_GEOMETRY['london']['airports']}
+        self.assertEqual(set(api), set(site), 'airport sets differ between site and API')
+        for code in sorted(site):
+            self.assertAlmostEqual(api[code][0], site[code][0], places=4, msg=f'{code} lat')
+            self.assertAlmostEqual(api[code][1], site[code][1], places=4, msg=f'{code} lon')

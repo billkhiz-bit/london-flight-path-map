@@ -1477,18 +1477,32 @@ AIRPORTS_NYC = [
 # Flight path geometry: list of paths, each with a sequence of (lat, lon)
 # waypoints. Distance to nearest waypoint is used as proxy for distance to
 # the corridor, same approach as the consumer site.
+# Trimmed to match index.html on 2026-08-03.
+#
+# METHODOLOGY records that on 2026-05-07 the London corridors were scoped to
+# their noise-relevant final-approach / initial-departure portions only, audited
+# against the DEFRA Lden raster by scripts/audit_flight_paths.py. That trim was
+# applied to index.html and to the audit script. It was never applied HERE, so
+# for three months the API carried 85 waypoints across 12 corridors while the
+# site carried 50 across 10 - including two whole corridors, Approach N and
+# Approach S, that the audit removed.
+#
+# More waypoints means more chances to sit near one, so the API scored noisier
+# than the site wherever they differed. Measured over 7,239 live London
+# postcodes: quiet disagreed for 2,503 of them, 34.6%, and the API was the
+# noisier side in 100% of those. Correcting it raises quiet by 1.0 to 4.0 for
+# exactly that 34.6%; nothing moves down, because the extra geometry could only
+# ever add noise.
+#
+# This literal is now asserted identical to index.html's FLIGHT_PATHS by
+# test_flight_path_geometry_matches_the_site, so the two cannot drift again.
+# Regenerate BOTH, and re-run scripts/audit_flight_paths.py, if corridors change.
 FLIGHT_PATHS_LONDON = [
     {
         'name': 'Lambourne Stack',
         'airport': 'LHR',
         'type': 'arrival',
-        'freq': 'high',
         'coords': [
-            (51.65, 0.15),
-            (51.62, 0.08),
-            (51.59, 0.02),
-            (51.565, -0.04),
-            (51.54, -0.10),
             (51.52, -0.18),
             (51.505, -0.25),
             (51.495, -0.32),
@@ -1500,13 +1514,7 @@ FLIGHT_PATHS_LONDON = [
         'name': 'Biggin Stack',
         'airport': 'LHR',
         'type': 'arrival',
-        'freq': 'high',
         'coords': [
-            (51.33, 0.03),
-            (51.35, -0.02),
-            (51.37, -0.06),
-            (51.39, -0.11),
-            (51.41, -0.16),
             (51.425, -0.22),
             (51.44, -0.28),
             (51.45, -0.34),
@@ -1518,13 +1526,9 @@ FLIGHT_PATHS_LONDON = [
         'name': 'Ockham Stack',
         'airport': 'LHR',
         'type': 'arrival',
-        'freq': 'high',
         'coords': [
-            (51.28, -0.45),
-            (51.31, -0.44),
-            (51.34, -0.435),
             (51.37, -0.435),
-            (51.40, -0.435),
+            (51.4, -0.435),
             (51.42, -0.435),
             (51.44, -0.435),
             (51.4644, -0.435),
@@ -1534,12 +1538,8 @@ FLIGHT_PATHS_LONDON = [
         'name': 'Bovingdon Stack',
         'airport': 'LHR',
         'type': 'arrival',
-        'freq': 'high',
         'coords': [
-            (51.72, -0.55),
-            (51.68, -0.52),
-            (51.64, -0.50),
-            (51.60, -0.49),
+            (51.6, -0.49),
             (51.56, -0.48),
             (51.53, -0.47),
             (51.505, -0.46),
@@ -1550,46 +1550,41 @@ FLIGHT_PATHS_LONDON = [
         'name': 'Dep West',
         'airport': 'LHR',
         'type': 'departure',
-        'freq': 'high',
-        'coords': [(51.4775, -0.489), (51.48, -0.55), (51.485, -0.62), (51.49, -0.70), (51.495, -0.78)],
+        'coords': [
+            (51.4775, -0.489),
+            (51.48, -0.55),
+            (51.485, -0.62),
+            (51.49, -0.7),
+        ],
     },
     {
         'name': 'Dep SE (Detling)',
         'airport': 'LHR',
         'type': 'departure',
-        'freq': 'medium',
         'coords': [
             (51.4775, -0.428),
             (51.47, -0.35),
             (51.46, -0.25),
             (51.445, -0.15),
-            (51.43, -0.05),
-            (51.41, 0.05),
-            (51.39, 0.15),
         ],
     },
     {
         'name': 'Dep NE (BPK)',
         'airport': 'LHR',
         'type': 'departure',
-        'freq': 'medium',
         'coords': [
             (51.4775, -0.428),
             (51.49, -0.35),
             (51.51, -0.25),
             (51.53, -0.15),
-            (51.55, -0.05),
-            (51.57, 0.05),
-            (51.59, 0.15),
         ],
     },
     {
         'name': 'Approach East',
         'airport': 'LCY',
         'type': 'arrival',
-        'freq': 'medium',
         'coords': [
-            (51.48, 0.20),
+            (51.48, 0.2),
             (51.485, 0.17),
             (51.488, 0.14),
             (51.492, 0.11),
@@ -1602,29 +1597,26 @@ FLIGHT_PATHS_LONDON = [
         'name': 'Approach West',
         'airport': 'LCY',
         'type': 'arrival',
-        'freq': 'medium',
-        'coords': [(51.52, -0.02), (51.517, -0.005), (51.513, 0.01), (51.51, 0.025), (51.508, 0.04), (51.5053, 0.0553)],
+        'coords': [
+            (51.52, -0.02),
+            (51.517, -0.005),
+            (51.513, 0.01),
+            (51.51, 0.025),
+            (51.508, 0.04),
+            (51.5053, 0.0553),
+        ],
     },
     {
         'name': 'Dep East',
         'airport': 'LCY',
         'type': 'departure',
-        'freq': 'medium',
-        'coords': [(51.5053, 0.067), (51.505, 0.09), (51.503, 0.12), (51.498, 0.16), (51.49, 0.21)],
-    },
-    {
-        'name': 'Approach N',
-        'airport': 'LGW',
-        'type': 'arrival',
-        'freq': 'medium',
-        'coords': [(51.35, -0.10), (51.32, -0.12), (51.28, -0.14), (51.23, -0.16), (51.19, -0.17), (51.1537, -0.182)],
-    },
-    {
-        'name': 'Approach S',
-        'airport': 'LTN',
-        'type': 'arrival',
-        'freq': 'medium',
-        'coords': [(51.60, -0.30), (51.65, -0.32), (51.70, -0.34), (51.75, -0.35), (51.80, -0.36), (51.8747, -0.368)],
+        'coords': [
+            (51.5053, 0.067),
+            (51.505, 0.09),
+            (51.503, 0.12),
+            (51.498, 0.16),
+            (51.49, 0.21),
+        ],
     },
 ]
 
