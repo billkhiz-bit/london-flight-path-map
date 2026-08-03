@@ -49,7 +49,12 @@
 // breakdown instead of asserting "nightlife, tourism, or town centre activity".
 // Both index.html and data/borough-extra.json changed, so this bump is required
 // twice over.
-const VERSION = 'v1.0.8';
+// v1.0.9 (2026-08-03): post-audit doc-truth pass. The footer said Methodology
+// v3.4 while the API returned 3.5, and the City of London crime note contradicted
+// itself — "2.2x the London median" beside "nothing stands out" — while crediting
+// ONS for a rate ONS explicitly suppresses. Both are in index.html, so returning
+// visitors keep them until this bumps.
+const VERSION = 'v1.0.9';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

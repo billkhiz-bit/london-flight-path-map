@@ -35,10 +35,15 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   Heathrow scores ≤ 3.0 against the table's real stored value. The assertion is
   absolute rather than comparative on purpose: "Heathrow beats Finsbury Park"
   passes on the broken data (7.5 vs 10.0), which is why this survived a week.
-- **The loader is still unfixed.** `scripts/load_defra_raster.py` needs a real
-  diagnosis — CRS mismatch, a downsampled overview level, or the wrong band are
-  the leading suspects. Clearing `RASTER_TIER_QUARANTINED` without reloading the
-  table restores the defect.
+- **Corrected 2026-08-03 (same day, second pass): there is no loader bug.** This
+  entry originally called the table invalid and named a CRS mismatch as the likely
+  cause. The raster is genuine, the projection is correct, and the stored values
+  reproduce exactly when sampled. The defect is **coverage** — 89.5% of London
+  falls outside DEFRA's aircraft contours, and filling those with 35 dB rendered
+  *not measured* as *perfectly quiet*, putting 98% of the city on one value. The
+  loader now skips uncovered postcodes; the quarantine remains because the stored
+  rows still hold the old fill and because §4.1's bands score a genuine 58.2 dB
+  reading at Heathrow as quiet 7.5.
 - **Notice:** the API has no paying customers as at this date, so this ships with
   this changelog entry as the record.
 
@@ -64,9 +69,10 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   **Westminster held 175 against an actual 355.5**, Kensington and Chelsea 95 against
   145.8, Camden 130 against 173.3 — all three understated, so all three scores fall.
   Corrected against ONS *Crime in England and Wales: Police Force Area data tables*,
-  year ending March 2026, Table C4. The other 29 boroughs already agreed with that
-  release within 10 per 1,000 and are untouched, so this is a **tail correction, not a
-  vintage roll**. The 50/15 band is unchanged: on true figures it clamps once in 43.
+  year ending March 2026, Table C4. **[Corrected 2026-08-03: this entry claimed the
+  other 29 boroughs already agreed within 10 per 1,000. Generalised from three spot
+  checks, and false — 29 of 33 disagreed with the cited release, seven by more than
+  10 per 1,000. All were corrected on 2026-08-03; see that entry.]** The 50/15 band is unchanged: on true figures it clamps once in 43.
 - **Vintage warning.** Progress 8 **cannot be calculated for 2024/25 or 2025/26** — those
   cohorts sat KS2 in the cancelled 2020 and 2021 windows — and DfE announced in April
   2024 that there is no replacement. **2022/23 is the terminal vintage until 2026/27.**

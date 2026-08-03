@@ -82,9 +82,18 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #   crime    Three boroughs had been compressed to fit crime_to_score's 50-200
 #            band (Westminster carried 175 against an actual 355.5). Corrected
 #            against ONS Crime in England and Wales, Police Force Area data
-#            tables, YE March 2026, Table C4. The other 29 already agreed with
-#            that release within 10 per 1,000, so this is a tail correction and
-#            NOT a vintage roll.
+#            tables, YE March 2026, Table C4.
+#
+#            CORRECTED 2026-08-03: this comment used to end "The other 29
+#            already agreed with that release within 10 per 1,000, so this is a
+#            tail correction and NOT a vintage roll." That was generalised from
+#            three spot checks and was wrong. Every London row of the workbook
+#            was then compared: 29 of 33 disagreed with the cited release, seven
+#            by more than 10 per 1,000 (Barking and Dagenham 105 vs 84.2,
+#            Hillingdon 72 vs 91.6, Croydon 98 vs 80.4), and 17 boroughs carried
+#            a crime sub-score wrong by more than 0.3. All 33 now hold published
+#            figures. Never spot-check this again — run
+#            scripts/refresh_crime_from_ons.py --check, which reads every row.
 #
 #   schools  Was an editorial band with no derivable rule: 'excellent' spanned
 #            90.9-100% of schools Good-or-Outstanding and 'good' spanned
@@ -162,9 +171,13 @@ SNAPSHOT_REFRESHED_AT = '2026-07-24'
 # One-off caveat for this quarter's comparison: v3.2 also clamped the
 # growth formula, so previous scores are recomputed under the CURRENT
 # formula to isolate data movement from formula change.
+# Interpolates METHODOLOGY_VERSION rather than hardcoding it. This string is
+# rendered publicly on /changes, and the literal '(v3.2)' survived v3.3, v3.4 and
+# v3.5 — so one public page displayed three different methodology versions at
+# once. A version string that has to be remembered will eventually be forgotten.
 COMPARISON_NOTE = (
-    'previousScore is recomputed under the current methodology (v3.2), so scoreChange '
-    'isolates data movement between vintages, not formula changes.'
+    f'previousScore is recomputed under the current methodology (v{METHODOLOGY_VERSION}), '
+    'so scoreChange isolates data movement between vintages, not formula changes.'
 )
 
 LONDON_PREVIOUS_PT = {

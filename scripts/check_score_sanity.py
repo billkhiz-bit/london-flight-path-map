@@ -136,12 +136,30 @@ def main():
 
     # 1. An airport must never score as a quiet place. This is the exact
     #    assertion the raster defect violated, at 7.5/10.
-    for pc, label, body in rows:
-        if pc != 'TW6 1AP':
-            continue
-        q = (body.get('components') or {}).get('quiet')
+    #
+    #    Hoisted out of a `for ... continue` loop on 2026-08-03. In the loop form
+    #    this assertion QUIETLY DISAPPEARED whenever its own probe failed: every
+    #    other row was skipped by the continue, check() was never reached, and the
+    #    gate printed eight PASS lines and RESULT: PASS with no line at all for the
+    #    airport. The dropout guard did not save it either — 15 of 16 probes clears
+    #    the 90% threshold. TW6 1AP is the first request in the run, so it is the
+    #    one most likely to meet a cold Lambda or a rate limit.
+    #
+    #    That is the single most important assertion in this file: preflight calls
+    #    this "the only check here that can catch a DATA defect", and app.py names
+    #    it as the gate on lifting the raster quarantine. A check that silently
+    #    stops running is worse than no check, because the green is believed.
+    airport = next((r for r in rows if r[0] == 'TW6 1AP'), None)
+    check('airport probe returned at all', airport is not None,
+          'TW6 1AP did not return, so the airport invariant could not be evaluated. '
+          'This is a FAILURE, not a skip: the assertion it guards is the reason this '
+          'script exists.')
+    if airport is not None:
+        q = (airport[2].get('components') or {}).get('quiet')
         check('airport postcode is not scored quiet', q is not None and q <= 3.0,
-              f'TW6 1AP ({label}) scored quiet={q}; an airport must be <= 3.0')
+              f'TW6 1AP ({airport[1]}) scored quiet={q}; an airport must be <= 3.0')
+    else:
+        print(f'  {"airport postcode is not scored quiet":<46}SKIP (probe missing)')
 
     # 2. Every component must discriminate. Growth once floored 14 boroughs onto
     #    one value, schools published 2 distinct scores citywide, and the raster

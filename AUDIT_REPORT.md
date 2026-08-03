@@ -1,8 +1,78 @@
 # Audit Report, Sky Score
-**Date:** 2026-07-27 (targeted — two gates that could not fail) · 2026-07-24 (full audit)
+**Date:** 2026-08-03 (full audit — see below) · 2026-07-27 (targeted) · 2026-07-24 (full audit)
 **Files scanned:** 7 active Python Lambdas, `template.yaml`, `iam-policy.json`, `index.html` (8.2k lines), `js/api-base.js`, `sw.js`, `score-demo/*`, `api/index.html`, `pricing.html`, `privacy.html`, `tests/`, `backend/tests/`, `.github/workflows/`, live-site parity vs skyscore.co.uk
 **Audit performed by:** 6 parallel dimension agents (security backend/frontend, code backend/frontend, a11y/design, deps + live parity) with per-finding adversarial verification. Verification was cut short by the account's monthly spend limit — see the 2026-07-24 section for what that means.
 **Previous audits:** 2026-05-21 (website, post-launch), 2026-05-07, 2026-05-06 (39-finding baseline; triage table below)
+
+---
+
+## 2026-08-03 — full audit, 66 findings
+
+**Full report: [`AUDIT_REPORT_2026-08-03.md`](./AUDIT_REPORT_2026-08-03.md).** Kept in its own
+file because it runs to 46 kB; this section is the summary and the remediation state.
+
+**Method.** 18-agent workflow (`wf_d518b758-495`): 8 finder dimensions, adversarial refutation
+of every finding (default verdict *refuted*, so a finding had to be independently re-derived to
+survive), a completeness critic, then synthesis. 1,113 tool calls, 2.67M tokens, ~49 minutes.
+66 findings survived: **2 critical, 12 high, 34 medium, 14 low**.
+
+Both criticals were then re-verified by hand before being accepted. That step is not ceremony:
+this project's record includes eleven agents returning confident, well-cited crime figures that
+were wrong, and on 2026-08-03 two defects were misdiagnosed from eight-postcode samples. One
+audit figure was corrected downward as a result (below).
+
+### Open — the two criticals
+
+**A-0803-1 — native bundle ships without `borough-extra.json` (Critical, OPEN).**
+`mobile/scripts/copy-web.mjs:83` filters `data/` through `(n) => n.endsWith('.png')`, a filter
+written when that directory held only DEFRA noise tiles. `capacitor.config.ts` declares no
+remote `url`, so the fetch at `index.html:5025` resolves inside the bundle, 404s, and
+`index.html:5054` catches it into an empty object commented "Non-fatal". Liveability then
+defaults for every borough. Confirmed through all four links; the shipped `.ipa` was **not**
+decompiled, so "shipping since v1.0.21" is inference from the build commit, not artefact
+inspection. Fix is the filter plus a `MISSING` assertion in the build; then rebuild and resubmit.
+
+**A-0803-2 — score Lambda's London flight paths never received the 2026-05-07 trim (Critical,
+OPEN).** The site carries **50** waypoints, the Lambda **85**, including two whole corridors
+(`Approach N`, `Approach S`) the site dropped. Measured over **7,239 live London postcodes**,
+flight-path geometry only so heliports do not confound it: site and API disagree on `quiet` for
+**34.6% of London**, and the API is the noisier side in **100%** of disagreements.
+*The audit reported 41.4%; that folds in the separate, already-documented heliport divergence.
+34.6% is the verified figure.* Fix is one geometry change, but it moves paid API scores across a
+third of London and is the author's call.
+
+### Closed 2026-08-03 — documentation and gate integrity
+
+| ID | Finding | State |
+|---|---|---|
+| A-0803-7 | "The other 29 boroughs already agreed" — false, and repeated in 4 places | **Fixed.** Corrected in METHODOLOGY §crime prose, METHODOLOGY §20, CHANGELOG and `app.py`'s header comment. 29 of 33 disagreed; 7 by >10 per 1,000 |
+| A-0803-9 | City of London crime note contradicted itself and credited ONS for a suppressed figure | **Fixed.** `crimeNote()` now says "Offence breakdown not published for this area" and attributes the estimate to Sky Score, not ONS |
+| A-0803-11 | METHODOLOGY §20 + CHANGELOG published a root cause the code retracts | **Fixed.** Both restated; §4.6 reconciled with §4.5. There is no loader bug — the defect is coverage |
+| A-0803-12 | `SECURITY.md` claimed GitHub OIDC and a read-only deploy user | **Fixed.** CI uses static `AWS_ACCESS_KEY_ID`; the policy grants `DeleteStack`, `DeleteBucket`, `DeleteFunction`, `CreateRole`, `PassRole`. **OIDC migration remains the outstanding remediation** |
+| A-0803-13 | `SUBPROCESSORS.md` said the web app never calls postcodes.io | **Fixed.** Corrected to web + native + server-side Tier-2, data category now includes the user-typed postcode. `SECURITY.md`'s "sole sub-processor" line corrected to match |
+| A-0803-14 | The airport-quiet invariant vanished silently if its own probe failed | **Fixed.** Hoisted out of the loop; a missing probe now FAILS and an unevaluated assertion prints `SKIP`. Verified to exit 1 by dropping the probe |
+| A-0803-23 | Footer showed v3.4 while the API returned 3.5 | **Fixed.** The one version a visitor sees now matches |
+| A-0803-24 | `COMPARISON_NOTE` hardcoded "(v3.2)", rendered publicly on `/changes` | **Fixed.** Interpolates `METHODOLOGY_VERSION`, so it cannot drift again |
+
+### Still open, not yet triaged
+
+Findings 3, 4, 5, 6, 8, 10, 15–22, 25–66 in the full report. The recommended order there starts
+with A-0803-2, then the native bundle, then the saved-postcode weights (#4).
+
+### Verified clean
+
+Recorded so the sweep's breadth is legible: all 33 crime rates match Table C4 (32 within 0.06;
+City of London has no source row); all **96** offence-breakdown values match exactly;
+`IMPACT_TO_QUIET` byte-identical across site and Lambda; **NYC flight paths match perfectly —
+London is the only divergent city**; 54 of 56 HTML template literals escape correctly; no secret
+ever committed (`git log --all -S` clean for `AKIA` and the EPC token); PITR on all four
+DynamoDB tables; 357 tests pass.
+
+### Not covered
+
+No AWS API calls were made — "live" claims rest on public HTTPS GETs. No external fact was
+checked against any publisher outside the repo. `mobile/android/`, the `.is-native` UI path and
+`archive/` are unaudited.
 
 ---
 

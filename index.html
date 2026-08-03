@@ -2821,7 +2821,7 @@
             target="_blank"
             rel="noopener"
           >
-            Methodology v3.4
+            Methodology v3.5
           </a>
           <span class="sep">·</span>
           <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -6138,14 +6138,30 @@
               )
               .join(', ') +
             '.';
+        } else if (!(extra.crimeTop || []).length) {
+          // Absence of a breakdown is NOT evidence that nothing stands out.
+          // Before 2026-08-03 this fell through to the reassuring "no single
+          // offence type stands out" branch, which for the City of London
+          // produced one sentence saying both "2.2x the London median" and
+          // "every major category is close to the London median" — a
+          // contradiction manufactured entirely from missing data. Same class as
+          // the DEFRA nodata fill: not-measured rendered as a favourable
+          // measurement.
+          why = ' Offence breakdown not published for this area.';
         } else if (ratio !== null && ratio <= 0.85) {
           why = ' Every major offence category sits at or below the London median.';
         } else {
           why =
             ' No single offence type stands out — every major category is close to the London median.';
         }
-        const vintage = extra.crimeVintage || 'ONS Table C4';
-        return `${rate} recorded offences per 1,000 residents${scale}.${why} Source: ${vintage}, on mid-2024 population.`;
+        // Never default the attribution. ONS explicitly declines to publish a rate
+        // for the City of London (Table C4 note 8, small resident population), so
+        // crediting them for the figure shown there would credit a body that
+        // supplies nothing — the defect CITY_PROVENANCE exists to prevent.
+        const attribution = extra.crimeVintage
+          ? `Source: ${extra.crimeVintage}, on mid-2024 population.`
+          : 'Sky Score estimate — ONS publishes no recorded-crime rate for this area, so this figure is our own and is not attributable to them.';
+        return `${rate} recorded offences per 1,000 residents${scale}.${why} ${attribution}`;
       }
 
       function ratingBadgeClass(rating) {

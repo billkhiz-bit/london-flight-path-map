@@ -27,7 +27,21 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 - **Per-Lambda IAM policies** (no shared catch-all role). Each Lambda gets only the permissions it needs; the SAM template at [`backend/template.yaml`](./backend/template.yaml) enumerates them inline.
 - **Tag-condition scoped IAM** on the signup Lambda's `apigateway:DELETE` and `apigateway:GET` for `/apikeys/*` — keys are tagged `CreatedBy=SignupLambda` at creation time (with a matching `aws:RequestTag` condition on POST) and only deletable by the same Lambda that created them. Audit ID: N-Code-1.
 - **MFA required** on the AWS account root and admin IAM user (account-level setting; not in code).
-- **No long-lived AWS access keys** in source. CI / deploy uses GitHub OIDC where applicable; `flightmap-dev` is the runtime API user with read-only operational scope.
+- **No AWS access keys in source or git history.** Verified by `git log --all -S` across the
+  full history for both `AKIA` and the EPC token: zero hits. `.env` and `backend/samconfig.toml`
+  are gitignored and have never been committed.
+- **CI uses long-lived static access keys, not OIDC** (corrected 2026-08-03; this section
+  previously claimed "CI / deploy uses GitHub OIDC where applicable" and that `flightmap-dev`
+  had "read-only operational scope" — all three clauses were untrue). `.github/workflows/`
+  authenticates via `aws-actions/configure-aws-credentials@v4` with
+  `aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}`; there is no `id-token` permission or
+  `role-to-assume` anywhere in the repo. **Migrating to OIDC is the outstanding remediation.**
+- **`flightmap-dev` is a deploy user, not a read-only one, and is not the Lambda runtime
+  identity.** `backend/iam-policy.json` grants `cloudformation:DeleteStack`, `s3:DeleteBucket`,
+  `lambda:DeleteFunction`, `iam:CreateRole`, `iam:PutRolePolicy` and `iam:PassRole`. A leaked
+  Actions secret would therefore reach the full production stack. The Lambdas run under
+  per-function roles SAM generates from the `Policies:` blocks in `backend/template.yaml`;
+  no explicit `Role:` is declared.
 
 ### Authentication + authorisation on the API
 
@@ -62,7 +76,12 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 
 ### Supply chain + sub-processors
 
-- **AWS** is the sole sub-processor of customer data (eu-west-2). See [`LICENSING.md`](./LICENSING.md) for full data-source licensing.
+- **AWS** is the primary sub-processor of customer data (eu-west-2). **Corrected 2026-08-03:**
+  this line previously said AWS was the *sole* sub-processor. It is not — a user-typed postcode
+  reaches **api.postcodes.io** from the web app, the native app and the score Lambda's Tier-2
+  resolver, and this register defines that postcode as customer data. See
+  [`SUBPROCESSORS.md`](./SUBPROCESSORS.md) row 4 for the full list; see
+  [`LICENSING.md`](./LICENSING.md) for data-source licensing.
 - **Cloudflare** provides DNS and domain-registration only (no access to API requests, responses, or customer data).
 - **GoatCounter** provides consumer-site analytics on the marketing surface only (no API traffic, no PII, EU-hosted).
 - **The Lambdas have no third-party Python dependencies at all** — every handler imports only the standard library plus the `boto3`/`botocore` provided by the AWS runtime. There are no per-Lambda `requirements.txt` files (an earlier version of this line claimed there were), so the backend has no PyPI supply-chain surface to audit. Frontend/tooling dependencies are tracked in `package.json` and `npm audit` runs as part of the [`/preflight`](./.claude/skills/preflight/SKILL.md) check before every commit.
