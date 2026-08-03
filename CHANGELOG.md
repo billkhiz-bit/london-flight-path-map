@@ -6,7 +6,42 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-07-31 (latest) — Growth rescaled to a dual anchor
+### 2026-08-02 (latest) — Schools re-sourced to Progress 8; three crime rates corrected
+
+- **Methodology v3.5: the schools input is now DfE Key Stage 4 Progress 8.**
+  The previous input was a four-value vocabulary (`outstanding`/`excellent`/`good`/`mixed`
+  → 10/9/6/3) documented as "anchored to the Ofsted distribution". It was not:
+  checked against the Ofsted management-information release (30 June 2026, 21,957
+  schools), **no threshold on "% Good or Outstanding" reproduces the stored bands** —
+  `excellent` spanned 90.9–100% and `good` spanned 83.3–100%, so **Westminster at 100%
+  was banded `good` while Richmond at 100% was banded `excellent`**. The bands were
+  editorial. The measure behind them had also been withdrawn: Ofsted abolished
+  single-word overall-effectiveness grades in **September 2024**, only ~44% of schools
+  still carry one, and that remainder is shrinking *and* non-random. Schools now scores
+  continuously as `clamp(5.0 + 5.0 × p8, 0, 10)`, whose anchors are external constants
+  (0.0 = national average, ±1.0 = a full grade per subject against pupils with the same
+  KS2 baseline) rather than cohort extremes. Being intake-adjusted also stops school
+  quality re-importing the affluence already priced into `afford`.
+- **London goes from 2 distinct schools sub-scores to 25.** Wandsworth's headline moves
+  6.7 → 6.4 (P8 +0.33 against a London median of +0.30); Camden 7.8 → 7.1.
+- **Three London crime rates were compressed to fit the formula, not drawn from source.**
+  **Westminster held 175 against an actual 355.5**, Kensington and Chelsea 95 against
+  145.8, Camden 130 against 173.3 — all three understated, so all three scores fall.
+  Corrected against ONS *Crime in England and Wales: Police Force Area data tables*,
+  year ending March 2026, Table C4. The other 29 boroughs already agreed with that
+  release within 10 per 1,000 and are untouched, so this is a **tail correction, not a
+  vintage roll**. The 50/15 band is unchanged: on true figures it clamps once in 43.
+- **Vintage warning.** Progress 8 **cannot be calculated for 2024/25 or 2025/26** — those
+  cohorts sat KS2 in the cancelled 2020 and 2021 windows — and DfE announced in April
+  2024 that there is no replacement. **2022/23 is the terminal vintage until 2026/27.**
+- **Defaulted components can no longer read as measurements.** Responses now carry
+  `context.liveResolution` (`measured` / `partial` / `unavailable`), plus
+  `comparisonUnavailable` where no prior vintage exists. City of London is the only
+  London borough with no Progress 8 figure and falls back to the legacy band.
+- **Notice:** the API has no paying customers as at this date, so this ships with this
+  changelog entry as the record.
+
+### 2026-07-31 — Growth rescaled to a dual anchor
 
 - **Methodology v3.4: a flat market now scores 5.0, and both tails are legible.**
   The v3.2 formula scaled every borough against the fastest riser and clamped at
