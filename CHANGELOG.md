@@ -6,7 +6,29 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-03 (latest) - dead code, gate coverage, and honest contact details
+### 2026-08-03 (latest) - prototype stops publishing invented noise readings
+
+- **The 3D prototype presented fabricated decibel figures at named real
+  locations as if measured**, under a pulsing green "live" dot. Both the levels
+  and the distances were wrong: Hounslow was labelled 2.1 km from Heathrow at
+  72.4 dB when it is 6.5 km at 57.6 dB - overstated by **14.8 dB** - and
+  Westminster was given 48.2 dB where DEFRA publishes no contour at all.
+- **Values now come from the DEFRA Round 4 (2022) Lden raster**, sampled at each
+  location, with real great-circle distances. Westminster reads "below 55,
+  unmapped", because that is what the source says. The heading states these are
+  annual averages and not live readings.
+- **The traffic and weather rows are labelled ILLUSTRATIVE** and the fake live
+  dot is gone. Those numbers are animated to look like a feed - Flights Today
+  jitters on a sine wave, Peak Movements calls `Math.random()`, METAR Age ticks
+  up as a counter. Simulated data is fine in a demo; simulated data dressed as
+  live is not.
+- The flight panel's status dot is deliberately unchanged: it goes amber with
+  "TRACKED FLIGHTS (SIM)" when no feed is connected, which is the honest pattern
+  the noise block lacked.
+- **No critical or high findings remain on any web surface.**
+
+
+### 2026-08-03 - dead code, gate coverage, and honest contact details
 
 - **Removed a dead `DEFRA_WMS` block and two CSP grants it was the only reason
   for.** The block was declared and never read; `environment.data.gov.uk` and

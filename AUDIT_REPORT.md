@@ -145,6 +145,34 @@ which covered the *unmeasured* band below 55. Erring quiet is the one direction 
 noise product cannot afford, so the quarantine stands until the 55+ bands are
 re-derived. That is now a precisely scoped decision rather than a vague blocker.
 
+### Closed 2026-08-03, fifth pass - the last high finding
+
+| ID | Finding | State |
+|---|---|---|
+| A-0803-6 | Prototype published invented decibel readings at named real locations under a pulsing live dot | **Fixed and deployed.** Both the levels and the distances were wrong: Hounslow was labelled 2.1 km from Heathrow at **72.4 dB** when it is 6.5 km at **57.6 dB**, an overstatement of **14.8 dB**, and Westminster was given 48.2 dB where DEFRA publishes **no contour at all**. Values now sampled from the DEFRA Round 4 raster with real great-circle distances; Westminster reads "below 55, unmapped" because that is what the source says. Traffic and weather rows labelled ILLUSTRATIVE and the fake live dot removed - those figures are animated with `Math.random()` and a sine wave. The flight panel's dot is deliberately untouched: it goes amber with "TRACKED FLIGHTS (SIM)" when no feed is connected, which is the pattern the noise block should have had |
+
+**Website status: no critical or high findings remain.** What is left there is two DOM
+interpolation sites that do not escape (defence-in-depth; not exploitable as data flows
+today) and a band-ladder inconsistency where `moderate-high` is unreachable. Neither is
+user-visible. The outstanding work is off-website: the native rebuild, the EPC key
+verification, and the second MFA device.
+
+### Process failure, 2026-08-03, recorded deliberately
+
+**A commit was made past a red preflight.** `sh scripts/preflight.sh` and `git commit`
+were issued in the same block on consecutive lines rather than joined by `&&`, so the
+commit ran while the gate was printing *"Do not commit past a red gate"*.
+
+The failure was a **flake** - the Playwright suite runs against the live site and is
+documented as producing false failures under load; all five overlay tests pass in
+isolation and the full re-run is green - so nothing bad shipped. That is luck, not
+process.
+
+It was the **third exit-code mistake of the day**, after two instances of `cmd | tail`
+reporting 0 while the command printed FATAL. The lesson recorded in memory has been
+broadened accordingly: the rule is not "never pipe an exit code", it is **make the
+consequence depend on the check rather than merely printing it**.
+
 ### Still open, not yet triaged
 
 Findings 3, 4, 5, 6, 8, 10, 15–22, 25–66 in the full report. The recommended order there starts
