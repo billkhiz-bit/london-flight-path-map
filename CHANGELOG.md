@@ -6,7 +6,38 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-03 (latest) — DEFRA raster quarantined; quiet scores corrected downward
+### 2026-08-03 (latest) - API flight paths trimmed; quiet rises across a third of London
+
+- **The API was scoring noisier than the consumer site for the same postcode, and
+  had been for three months.** The 2026-05-07 corridor trim, audited against the
+  DEFRA Lden raster, reached `index.html` and `scripts/audit_flight_paths.py` but
+  never the score Lambda. `/v1/score` kept **85 waypoints across 12 corridors**
+  against the site's **50 across 10**, including two whole corridors the audit
+  had removed.
+- **Measured, not estimated:** across 7,239 live London postcodes, site and API
+  disagreed on `quiet` for **2,503 (34.6%)**, with the API noisier in **100%** of
+  the disagreements. Correcting it raises `quiet` by **1.0 to 4.0** for that
+  34.6% and lowers it nowhere, because surplus geometry can only add noise.
+- **No methodology version bump.** No weight, threshold or formula changed; only
+  the geometry the existing formula reads.
+- **Guarded so it cannot recur.** Two tests now compare the Lambda against
+  `index.html` directly, verified to fail by restoring a trimmed corridor. Until
+  now nothing could have caught it: the pytest suites only read the Lambda,
+  Playwright only reads the site, and each half was internally consistent.
+- **Heliports are now the only remaining site/API difference**, documented in
+  METHODOLOGY §4.5.
+- **Native bundle fixed at source.** `mobile/scripts/copy-web.mjs` filtered
+  `data/` by `.png`, silently excluding `borough-extra.json` and both boundary
+  files, so the shipped app scored liveability at a flat default for every
+  borough. Now an explicit allow-list that **fails the build** when a required
+  file is absent. The shipped binary still needs a rebuild and resubmission.
+- **Website:** the search pin now visibly moves between nearby areas instead of
+  the map re-centring on every search; a failed borough-data load is disclosed
+  rather than silently scoring defaults; the neighbourhood ranking applies the
+  heliport term the postcode panel already did; and 184 em dashes were removed
+  from the deployed pages, with a preflight gate to keep them out.
+
+### 2026-08-03 — DEFRA raster quarantined; quiet scores corrected downward
 
 - **The loaded noise raster was wrong, and had been serving production since
   ~26 July.** `london-flight-map-noise-raster` stores **58.2 dB Lden for TW6 1AP,

@@ -72,7 +72,7 @@ Always use "Sky Score" in all public-facing files and UI text.
 
 ## Quality & Plugins
 
-- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint, html-validate, ruff over `backend/lambdas` + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, Playwright at `--workers=2`. Advisory: Prettier, npm audit.
+- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint (now `.js`/`.mjs` too, not just `index.html`), html-validate, ruff over `backend/lambdas` + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, **score sanity against the live API** (`scripts/check_score_sanity.py` - the only stage that can catch a DATA defect; the pytest suites never reach DynamoDB and Playwright asserts the site against itself), **no em dashes on the 8 deployed pages**, and Playwright at `--workers=2`. Advisory: Prettier, npm audit.
   - **Read the exit code, never pipe it.** `preflight | tail` is always 0 — a pipeline exits with its LAST stage's status. That is exactly how `make preflight` reported success on 2026-07-27 while running nothing at all (`make` is not on PATH in Git Bash here).
   - `--skip-e2e` skips Playwright, which hits the live site. `--fix` auto-fixes what is auto-fixable.
   - Rewritten 2026-07-27 after the gate produced a false green, a false red, and silently omitted the 167-test root suite. Change what blocks in `scripts/preflight.sh`, **not** in the skill file.

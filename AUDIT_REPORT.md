@@ -21,9 +21,9 @@ this project's record includes eleven agents returning confident, well-cited cri
 were wrong, and on 2026-08-03 two defects were misdiagnosed from eight-postcode samples. One
 audit figure was corrected downward as a result (below).
 
-### Open — the two criticals
+### The two criticals — BOTH CLOSED IN CODE, 2026-08-03
 
-**A-0803-1 — native bundle ships without `borough-extra.json` (Critical, OPEN).**
+**A-0803-1 — native bundle ships without `borough-extra.json` (Critical, FIXED IN CODE; binary not yet rebuilt).**
 `mobile/scripts/copy-web.mjs:83` filters `data/` through `(n) => n.endsWith('.png')`, a filter
 written when that directory held only DEFRA noise tiles. `capacitor.config.ts` declares no
 remote `url`, so the fetch at `index.html:5025` resolves inside the bundle, 404s, and
@@ -33,13 +33,20 @@ decompiled, so "shipping since v1.0.21" is inference from the build commit, not 
 inspection. Fix is the filter plus a `MISSING` assertion in the build; then rebuild and resubmit.
 
 **A-0803-2 — score Lambda's London flight paths never received the 2026-05-07 trim (Critical,
-OPEN).** The site carries **50** waypoints, the Lambda **85**, including two whole corridors
+FIXED AND DEPLOYED 2026-08-03).** The site carries **50** waypoints, the Lambda **85**, including two whole corridors
 (`Approach N`, `Approach S`) the site dropped. Measured over **7,239 live London postcodes**,
 flight-path geometry only so heliports do not confound it: site and API disagree on `quiet` for
 **34.6% of London**, and the API is the noisier side in **100%** of disagreements.
 *The audit reported 41.4%; that folds in the separate, already-documented heliport divergence.
-34.6% is the verified figure.* Fix is one geometry change, but it moves paid API scores across a
-third of London and is the author's call.
+34.6% is the verified figure.*
+
+**Resolution.** Which side was authoritative turned out not to be a judgement call:
+`scripts/audit_flight_paths.py` states in its own header that it mirrors `index.html` "as of
+2026-05-07 (after the trim)", and its geometry is identical to the site's across all ten
+corridors. The Lambda was simply never updated. It now carries the audited 10 corridors / 50
+waypoints; `quiet` rises **1.0 to 4.0** across that 34.6% and falls nowhere, because surplus
+geometry can only add noise. Deployed and verified live. Heliports are now the only remaining
+site/API difference, confirmed on five probes spanning both cases.
 
 ### Closed 2026-08-03 — documentation and gate integrity
 
@@ -53,6 +60,35 @@ third of London and is the author's call.
 | A-0803-14 | The airport-quiet invariant vanished silently if its own probe failed | **Fixed.** Hoisted out of the loop; a missing probe now FAILS and an unevaluated assertion prints `SKIP`. Verified to exit 1 by dropping the probe |
 | A-0803-23 | Footer showed v3.4 while the API returned 3.5 | **Fixed.** The one version a visitor sees now matches |
 | A-0803-24 | `COMPARISON_NOTE` hardcoded "(v3.2)", rendered publicly on `/changes` | **Fixed.** Interpolates `METHODOLOGY_VERSION`, so it cannot drift again |
+
+### Closed 2026-08-03, second pass
+
+| ID | Finding | State |
+|---|---|---|
+| A-0803-1 | Native bundle omitted `borough-extra.json` and both boundary files | **Fixed in code.** `copy-web.mjs` now uses an explicit `REQUIRED_DATA` allow-list and **exits non-zero** when a file is missing, replacing an extension filter that failed open. Verified 1/0, checked unpiped. **The shipped binary still needs a rebuild and store resubmission** |
+| A-0803-2 | Lambda flight-path geometry never trimmed | **Fixed and deployed.** Audited 10 corridors / 50 waypoints. Two parity tests added, verified to fail on a restored corridor |
+| A-0803-4 | Saved-postcode score used retired weights, no liveability term, persisted to DynamoDB | **Fixed.** Reads `pcScore`. This fix initially shipped broken — see the incident note below |
+| A-0803-5 | "Click any postcode for the exact dB" — no code path delivers it | **Fixed.** Replaced with what the product actually does |
+| A-0803-10 | `/api/` and OpenAPI advertised the bypassed raster tier | **Fixed.** Dated quarantine note on both; `raster` stays in the enum but is marked unreturned |
+| A-0803-15 | Result-panel contrast below WCAG AA | **Fixed.** `--yellow` → `#8e6b00` (4.73:1). Measured as **one** failing element, not the 8–9 claimed; the report had flagged that severity as contested |
+| A-0803-16 | a11y gate scanned initial page state only | **Fixed.** Post-search scan added; it immediately caught A-0803-15, which the old spec structurally could not see |
+| A-0803-26 | `_boroughExtraHydrated` was set but never read | **Fixed.** One retry, then a visible notice naming which components defaulted and which did not |
+| A-0803-29 | Neighbourhood ranking omitted the heliport term the postcode panel applied | **Fixed.** Both paths share it |
+| A-0803-31 | ESLint covered one file of twenty-six | **Fixed.** `.js`/`.mjs` linted with the security plugin |
+| — | `api/index.html` and `js/vendor/` deployed with no Makefile target | **Fixed.** Both in `web-deploy`; `/api/*` added to the invalidation |
+| — | Em dashes across the deployed pages | **184 removed**; blocking preflight gate added and proven to fail on one reintroduced character |
+| — | Search pin appeared not to move between areas | **Fixed.** The map re-centred on every search, so the pin always landed dead centre. Now only flies when the result is off-screen; 800ms → 450ms |
+
+**Incident, 2026-08-03.** The A-0803-4 fix shipped broken and took the postcode result
+panel down in production for roughly an hour. `pcScore` was verified to be in the same
+*function* as the favourites button, but it was a `const` declared inside
+`if (boroughData)` and the button sits outside that block, so the deployed page threw
+`pcScore is not defined` and the panel rendered as an empty state. Preflight passed
+throughout, because **no gate loads the page and runs a search** — the same structural
+hole the new a11y scan closes, found one deploy too late. Two process lessons, both
+recorded because they recur: scope was verified by reading line numbers rather than by
+running the page, and a later guard's exit code was misread because the command was
+piped to `tail`, which reports the last stage's status.
 
 ### Still open, not yet triaged
 
