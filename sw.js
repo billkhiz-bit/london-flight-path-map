@@ -66,7 +66,11 @@
 // Also: a visible notice when borough data fails to load, the heliport term
 // added to the neighbourhood scorer so it agrees with the postcode panel, and
 // --yellow darkened to clear WCAG AA on the noise badge.
-const VERSION = 'v1.0.11';
+// v1.0.12 (2026-08-03): the map no longer re-centres on every search, so the
+// orange pin visibly MOVES between nearby areas instead of always landing dead
+// centre while the map slid underneath it. Fly duration 800ms -> 450ms. Also
+// removes 184 em dashes from the deployed pages.
+const VERSION = 'v1.0.12';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

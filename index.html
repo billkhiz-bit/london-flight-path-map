@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <!-- Content Security Policy (enforcing — switched from Report-Only on 2026-05-07 after the survey of external resources matched all known fetches; revert if anything
+    <!-- Content Security Policy (enforcing - switched from Report-Only on 2026-05-07 after the survey of external resources matched all known fetches; revert if anything
          breaks live and re-add '-Report-Only' to the http-equiv). Blocks
          frame-ancestors (no clickjacking), restricts external script/style/font/connect origins
          to known good ones (CDN compromise mitigation), forbids base-uri / form-action redirects.
@@ -85,7 +85,7 @@
     <!-- Self-hosted since 2026-07-30. This was https://d3js.org/d3.v7.min.js;
          the vendored copy is byte-identical (its SHA-384 matches the integrity
          hash that was already pinned here, which is why the attribute is kept
-         — it documents provenance and still verifies same-origin). Serving it
+         - it documents provenance and still verifies same-origin). Serving it
          ourselves removes a third-party script from the critical path and lets
          the service worker precache it for a genuine offline launch. -->
     <script
@@ -115,7 +115,7 @@
         --blue: #267df2;
         /* Darkened from #9a7400 on 2026-08-03. At 4.13:1 on the #fafaf9 sidebar it
            failed WCAG AA for normal text, and the 'Moderate AIRCRAFT NOISE' badge
-           renders at 10px — the smallest place it is used. Now 4.73:1. All seven
+           renders at 10px - the smallest place it is used. Now 4.73:1. All seven
            uses are color/border-color on light backgrounds, never a fill, so
            darkening cannot reduce contrast anywhere else. */
         --yellow: #8e6b00;
@@ -132,7 +132,7 @@
       /* Make the `hidden` attribute authoritative. Components like
          .install-prompt, .install-chip, .ios-install-hint and .native-only
          set an explicit `display`, which by the cascade overrides the UA
-         `[hidden] { display:none }` rule — so toggling `.hidden` in JS had no
+         `[hidden] { display:none }` rule - so toggling `.hidden` in JS had no
          visual effect: the PWA install prompt rendered for every user
          (including inside the native app), and native-only controls could
          leak onto the web. This makes `[hidden]` win everywhere. */
@@ -206,7 +206,7 @@
         letter-spacing: 1px;
       }
 
-      /* "How to read this score" tooltip — appears on hover/focus of the
+      /* "How to read this score" tooltip - appears on hover/focus of the
      summary verdict number. CSS-only show/hide; positioned absolutely
      so it doesn't reflow the sidebar. */
       .score-tip {
@@ -257,13 +257,13 @@
       .score-tip:hover {
         display: block;
       }
-      /* F-UX-9: Esc dismiss support — once dismissed, the tip stays hidden
+      /* F-UX-9: Esc dismiss support - once dismissed, the tip stays hidden
          even if the trigger keeps focus, until focus moves elsewhere and
          the .score-tip-dismissed class is removed by the keydown handler. */
       .score-explain-trigger.score-tip-dismissed ~ .score-tip {
         display: none !important;
       }
-      /* F-UX-9: small-viewport overflow fix — on narrow sidebars (<= 320px)
+      /* F-UX-9: small-viewport overflow fix - on narrow sidebars (<= 320px)
          the tip used to overflow the sidebar's right edge. Constrain via
          max-width on the side columns. */
       @media (max-width: 600px) {
@@ -411,7 +411,7 @@
       /* A-0724-I6: the in-sheet footer replaces the map-overlay footer on
          small screens (the overlay copy sat under the bottom sheet or in
          unreachable static flow). Desktop keeps the overlay; native app
-         (.is-native) shows neither — it has its own nav. */
+         (.is-native) shows neither - it has its own nav. */
       .sheet-footer {
         display: none;
       }
@@ -610,7 +610,7 @@
            (both = dark fill). Adding a left border on .active creates a
            non-colour cue (WCAG 1.4.1). The indicator dot below is also
            filled-when-active vs outline-only-when-inactive (already present;
-           kept) — that's the second non-colour cue. */
+           kept) - that's the second non-colour cue. */
         border-left-width: 4px;
         padding-left: 7px;
       }
@@ -1170,12 +1170,12 @@
       }
       /* ONE rule only. f1abcad bumped the hint 9px → 11px (it was reading as a
          section label) by adding a second .search-hint block ABOVE the
-         original instead of editing it — same specificity, so the older 9px
+         original instead of editing it - same specificity, so the older 9px
          rule kept winning and the accessibility bump never rendered on the
          website. The native app was unaffected: it overrides to 11px via
          .app[data-mview='search'] .search-box .search-hint. Merged here:
          11px from the bump, font-family from the rule it was meant to
-         replace. Do not add a second .search-hint block — edit this one. */
+         replace. Do not add a second .search-hint block - edit this one. */
       .search-hint {
         font-size: 11px;
         color: var(--mid);
@@ -1300,7 +1300,7 @@
         display: flex;
         border-bottom: 1px solid var(--bg);
       }
-      /* Reset native button chrome — these tabs are real <button>s now (audit
+      /* Reset native button chrome - these tabs are real <button>s now (audit
      N-Front-5: a11y + arrow-key keyboard nav) and would otherwise inherit
      the user-agent stylesheet. */
       .tab {
@@ -1547,7 +1547,7 @@
         border: 1px solid transparent;
         transition: all 0.15s;
         position: relative;
-        /* Reset native button chrome — these are real <button>s now (audit
+        /* Reset native button chrome - these are real <button>s now (audit
            F-A11y-3) so keyboard activation + screen-reader semantics work.
            Without these resets they'd inherit user-agent button styling. */
         font-family: inherit;
@@ -1932,7 +1932,7 @@
         /* Audit F-UX-6: bump every interactive control to WCAG 2.5.5
            target-size minimum (44×44, Apple/Google guideline). Was: layer-
            toggle 32px; persona-btn ~25; fav-btn ~22; city-btn ~22; tab ~30.
-           Mobile only — desktop keeps tighter dimensions for density. */
+           Mobile only - desktop keeps tighter dimensions for density. */
         .persona-btn,
         .fav-btn,
         .city-btn,
@@ -1956,7 +1956,7 @@
         }
         /* Audit F-A11Y-7: hide the subtitle at ≤480px to free ~25px of
            vertical space. display:none removes it from screen readers
-           too, which is intentional here — the H1 "Sky Score" already
+           too, which is intentional here - the H1 "Sky Score" already
            identifies the page, and the subtitle is decorative chrome. */
         .map-title .subtitle {
           display: none;
@@ -1973,7 +1973,7 @@
           padding: 8px 14px;
           max-width: 200px;
           font-size: 11px;
-          /* Mirrors the layers-trigger position on the right — both
+          /* Mirrors the layers-trigger position on the right - both
              cluster just above the sheet peek so all map-affordance
              chrome lives in the same band. Visual treatment matches
              .layers-trigger: dark pill with light text. */
@@ -2014,7 +2014,7 @@
            right of the map area, just above the sheet peek. Tapping it
            flips aria-expanded, which the general-sibling rule below uses
            to reveal the .layer-toggles popover. Replaces the horizontal
-           scroll strip — that strip clipped toggles past the visible
+           scroll strip - that strip clipped toggles past the visible
            edge with no scroll affordance, so hidden controls were
            effectively invisible. */
         .layers-trigger {
@@ -2048,7 +2048,7 @@
         }
         /* Layer-toggles is now a popover hidden by default. Sibling rule
            reveals it when the trigger is expanded. The popover anchors
-           above the trigger and stacks the toggles vertically — every
+           above the trigger and stacks the toggles vertically - every
            toggle is reachable, no horizontal scroll needed. */
         .layer-toggles {
           display: none;
@@ -2210,7 +2210,7 @@
       }
 
       /* ============================================================
-         MOBILE REDESIGN — Option A v2: 3-tab bottom nav with the map
+         MOBILE REDESIGN - Option A v2: 3-tab bottom nav with the map
          + search merged into one tab. Scoped to <=900px. Search view
          shows the map full-screen with a floating search bar overlay;
          a result card slides up over the map when one lands. Rankings
@@ -2219,7 +2219,7 @@
       .mobile-nav {
         display: none;
       }
-      /* Result-card close button is mobile-search-only — hidden by
+      /* Result-card close button is mobile-search-only - hidden by
          default; the mobile media query reveals it inside the search view. */
       .result-close {
         display: none;
@@ -2230,7 +2230,7 @@
            class added to <html> only inside the Capacitor app (see
            setupNativeFeatures). On web/PWA the class is absent, these rules
            never match, and the site keeps its classic bottom-sheet layout.
-           NB: written as ".is-native .app > …" (class only) — prefixing with
+           NB: written as ".is-native .app > …" (class only) - prefixing with
            "html.is-native" would add element-specificity and out-rank the
            [data-mview] view rules, breaking the native map swap. */
         .is-native .mobile-nav {
@@ -2281,7 +2281,7 @@
 
         /* Both panes fill the screen above the nav. Visibility (not
            display) is used so #map-container retains a non-zero
-           clientWidth — D3 reads this at init time. */
+           clientWidth - D3 reads this at init time. */
         .is-native .app > #map-container,
         .is-native .app > .sidebar {
           position: fixed;
@@ -2326,7 +2326,7 @@
           pointer-events: none;
           padding-top: env(safe-area-inset-top);
         }
-        /* Re-enable interaction on the children — only the sidebar's empty
+        /* Re-enable interaction on the children - only the sidebar's empty
            backdrop areas should pass clicks through to the map below. */
         .app[data-mview='search'] > .sidebar > * {
           pointer-events: auto;
@@ -2336,7 +2336,7 @@
         .app[data-mview='search'] .disclaimer,
         .app[data-mview='search'] .empty-state,
         /* The first-time hint ("type a postcode or click a borough") is
-           redundant on mobile search view — the floating search card
+           redundant on mobile search view - the floating search card
            shows the same guidance, and the hint banner overlaps it. */
         .app[data-mview='search'] .first-hint {
           display: none;
@@ -2420,7 +2420,7 @@
           background: var(--cream, #ebe8e1);
         }
 
-        /* Sheet artefacts + in-sidebar tab bar belong to the bottom nav —
+        /* Sheet artefacts + in-sidebar tab bar belong to the bottom nav -
            native app only. On web these stay visible so the classic
            bottom-sheet layout keeps its drag handle and in-panel tabs. */
         .is-native .sheet-handle {
@@ -2441,14 +2441,14 @@
           bottom: calc(56px + env(safe-area-inset-bottom) + 62px);
         }
 
-        /* CLEAN MOBILE CHROME — search view only.
+        /* CLEAN MOBILE CHROME - search view only.
            City switcher becomes a tiny inline chip in the top-right
            corner of the screen (aligned with the search card). Zoom
-           +/-/reset buttons are hidden — touchscreens have pinch-zoom
+           +/-/reset buttons are hidden - touchscreens have pinch-zoom
            and double-tap natively. The locate button (#locate-me, the
            App Store 4.2 GPS feature) survives as a floating circular
            button at the bottom-right, above the layer chips.
-           The map-title (large "SKY SCORE" mark) is hidden — the brand
+           The map-title (large "SKY SCORE" mark) is hidden - the brand
            is already in the PWA chrome / tab nav. */
         .app[data-mview='search'] .map-title {
           display: none;
@@ -2529,7 +2529,7 @@
         <!-- First-paint hint to teach the search interaction. role="status" was
          removed (audit N-Front-6): it announced on every page load to
          screen-reader users, then auto-dismissed at 30s with no way to
-         re-trigger — noisy and unrecoverable. The hint is now visual-only;
+         re-trigger - noisy and unrecoverable. The hint is now visual-only;
          SR users get the same affordance from the search input's aria-label
          and the layer toggle group's aria-label. -->
         <div class="first-hint" id="first-hint">
@@ -2727,7 +2727,7 @@
             <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4">
               <strong>What this is:</strong>
               DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and
-              LGW — modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
+              LGW - modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
               strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions.
               The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that
               location, not a decibel reading.
@@ -3089,7 +3089,7 @@
     <script>
       // PWA: register the service worker. Runs after window load so it
       // never blocks the initial map paint. Service workers only register
-      // over HTTPS or http://localhost — file:// is silently no-op, which
+      // over HTTPS or http://localhost - file:// is silently no-op, which
       // is fine for local layout testing. The catch is intentional: if
       // registration fails we don't want to break the rest of the app.
       if ('serviceWorker' in navigator) {
@@ -3103,7 +3103,7 @@
       // Capacitor native bridge. window.Capacitor only exists when the
       // app is running inside the iOS or Android native WebView; on web
       // and PWA installs it's undefined and these features stay dormant.
-      // The same index.html serves all three contexts — feature detect,
+      // The same index.html serves all three contexts - feature detect,
       // don't fork.
       (function setupNativeFeatures() {
         const cap = window.Capacitor;
@@ -3113,7 +3113,7 @@
         // map-as-background, all scoped to @media (max-width: 900px))
         // activates ONLY inside the native iOS/Android app. On web and PWA
         // window.Capacitor is undefined, this class is never added, and the
-        // .is-native-prefixed redesign rules never match — so the website
+        // .is-native-prefixed redesign rules never match - so the website
         // keeps its classic bottom-sheet mobile layout. Web and native are
         // deliberately separate now. See MOBILE_REDESIGN_PLAN.md.
         document.documentElement.classList.add('is-native');
@@ -3168,7 +3168,7 @@
             const { Share } = cap.Plugins;
             await Share.share({
               title: 'Sky Score',
-              text: `${data.name}: ${data.score}/10 — ${data.persona || 'Buyer'} score on Sky Score`,
+              text: `${data.name}: ${data.score}/10 - ${data.persona || 'Buyer'} score on Sky Score`,
               url: 'https://skyscore.co.uk/',
               dialogTitle: 'Share this score',
             });
@@ -3179,11 +3179,11 @@
       })();
 
       // PWA install UX. Two paths because Chrome/Edge/Android fire
-      // beforeinstallprompt while iOS Safari deliberately does not —
+      // beforeinstallprompt while iOS Safari deliberately does not -
       // iOS users have to use Share → Add to Home Screen manually, so
       // they get a one-time hint instead of a one-tap chip.
       (function setupInstallUX() {
-        // Inside the native iOS/Android wrapper there is nothing to install —
+        // Inside the native iOS/Android wrapper there is nothing to install -
         // the app already IS installed. Bail before any PWA install chip or
         // "Add to Home Screen" hint can render. setupNativeFeatures() reveals
         // the native-only additions; this guard suppresses the PWA-only
@@ -3194,7 +3194,7 @@
 
         // Modern iPadOS Safari reports its UA as "Macintosh", so the
         // /iPad|iPhone|iPod/ test alone misses most iPads. Catch them via
-        // MacIntel + multi-touch — Macs have no touchscreen, so
+        // MacIntel + multi-touch - Macs have no touchscreen, so
         // maxTouchPoints > 1 on a "Mac" means it's really an iPad.
         const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
         const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) || isIPadOS) && !window.MSStream;
@@ -3214,21 +3214,21 @@
           });
         }
 
-        if (isStandalone) return; // already installed — nothing to show
+        if (isStandalone) return; // already installed - nothing to show
 
         if (isIOS) {
           // Name the browser the user is actually in, falling back to a
           // browser-neutral instruction. Caveats that drive the logic:
           //   - On iPad, Chrome/Edge/Brave send DESKTOP-style UAs (Chrome/…,
           //     Edg/…) with no CriOS/EdgiOS and no "Version/" token, so we
-          //     match those tokens too — not just the iPhone CriOS/EdgiOS ones.
+          //     match those tokens too - not just the iPhone CriOS/EdgiOS ones.
           //   - Order matters: Edge & Opera UAs also contain "Chrome".
           //   - Brave deliberately mimics Safari (no navigator.brave on iOS
-          //     WebKit) so it can't be named — it lands in the neutral branch.
+          //     WebKit) so it can't be named - it lands in the neutral branch.
           //   - Only KNOWN in-app webviews (Facebook/Instagram/etc.) truly
           //     can't Add-to-Home-Screen, so only they are told to open in a
           //     real browser. We no longer treat "missing Version/ token" as
-          //     a webview — that wrongly swept iPad Chrome/Edge into it.
+          //     a webview - that wrongly swept iPad Chrome/Edge into it.
           const ua = navigator.userAgent;
           const isInApp = /FBAN|FBAV|Instagram|Line\/|Twitter|LinkedInApp|GSA\//.test(ua);
           let browser = null;
@@ -3256,7 +3256,7 @@
         } else {
           // Chrome / Edge / Android: capture the prompt event and surface
           // a custom chip. Calling prompt() is only valid once per event
-          // instance — after the user makes their choice we drop the ref.
+          // instance - after the user makes their choice we drop the ref.
           window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -3268,7 +3268,7 @@
           if (ev.target.closest('#install-chip')) {
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
-            // Await the user choice but ignore the outcome — we hide the
+            // Await the user choice but ignore the outcome - we hide the
             // chip either way; the appinstalled event handles success.
             await deferredPrompt.userChoice.catch(() => {});
             deferredPrompt = null;
@@ -4299,19 +4299,19 @@
 
       // Rotary-noise sites. `bands` is [within 3 km, within 5 km] added to
       // noiseScore, and every entry must carry the movement count and source
-      // that justify its tier — see METHODOLOGY §4.5 and the §11 declaration.
+      // that justify its tier - see METHODOLOGY §4.5 and the §11 declaration.
       //
       // Weighted by published annual movements, 2026-08-03. Until then all five
-      // scored an identical +2/+1, which put the two air-ambulance helipads —
+      // scored an identical +2/+1, which put the two air-ambulance helipads -
       // together ~9.7% of London's land area, the largest footprint of any site
-      // here — on the same footing as a commercial heliport running roughly
+      // here - on the same footing as a commercial heliport running roughly
       // seven times their traffic.
       //
       // The tiers come from acoustics rather than taste: sound energy sums
       // logarithmically, so N movements contribute 10·log10(N), the same basis
       // as Lden under END 2002/49/EC which §4.1 already cites. Battersea
       // (12,000) and Elstree (12,367 rotary) sit at 40.79 and 40.92 dB-equivalent
-      // — 0.13 dB apart, so identical in practice. The HEMS pads at ~1,600
+      // - 0.13 dB apart, so identical in practice. The HEMS pads at ~1,600
       // movements sit at 32.0, i.e. 8.75 dB lower. On §4.1's ~5 dB bands that is
       // nearly two steps; dropping them one step is deliberately conservative,
       // erring toward keeping a noise penalty rather than removing one.
@@ -4340,7 +4340,7 @@
           coords: [-0.5133, 51.5789],
           movementsPerYear: null,
           movementsSource:
-            'NOT PUBLISHED. Editorial assignment by analogy to Elstree, a comparable general-aviation aerodrome with documented helicopter operations — declared under METHODOLOGY §11. Revise if Buckinghamshire Council or the Denham Aerodrome Consultative Committee publish a type breakdown.',
+            'NOT PUBLISHED. Editorial assignment by analogy to Elstree, a comparable general-aviation aerodrome with documented helicopter operations - declared under METHODOLOGY §11. Revise if Buckinghamshire Council or the Denham Aerodrome Consultative Committee publish a type breakdown.',
           bands: [2, 1],
           note: 'Light aircraft and helicopters in NW London. Affects part of north-west Hillingdon; no impact on central London.',
         },
@@ -4350,7 +4350,7 @@
           coords: [-0.0593, 51.5178],
           movementsPerYear: 1600,
           movementsSource:
-            "London's Air Ambulance annual mission report 2025: 2,031 patients, ~40% conveyed to the Royal London, x2 movements. Daylight only — the charity runs rapid-response cars at night.",
+            "London's Air Ambulance annual mission report 2025: 2,031 patients, ~40% conveyed to the Royal London, x2 movements. Daylight only - the charity runs rapid-response cars at night.",
           bands: [1, 0],
           note: 'Air ambulance (HEMS). Emergency flights only, unpredictable but infrequent, and daytime only.',
         },
@@ -4360,7 +4360,7 @@
           coords: [-0.0941, 51.4688],
           movementsPerYear: 800,
           movementsSource:
-            "London's Air Ambulance conveys to four major trauma centres; King's receives a smaller share than the Royal London's ~40%. Order-of-magnitude estimate on the same 2025 report — declared under METHODOLOGY §11.",
+            "London's Air Ambulance conveys to four major trauma centres; King's receives a smaller share than the Royal London's ~40%. Order-of-magnitude estimate on the same 2025 report - declared under METHODOLOGY §11.",
           bands: [1, 0],
           note: 'Air ambulance helipad. Emergency use only, daytime only. Affects Denmark Hill/Camberwell.',
         },
@@ -4368,7 +4368,7 @@
 
       // Polylines deliberately trimmed to the noise-relevant final-approach /
       // initial-departure portion only (~15-22 km from the runway). Audited
-      // 2026-05-07 against the DEFRA Round 4 Lden raster — earlier polylines
+      // 2026-05-07 against the DEFRA Round 4 Lden raster - earlier polylines
       // extended out to holding fixes 30-45 km from the runway where aircraft
       // are at FL80+ and DEFRA shows zero ground noise. The trimmed shapes are
       // what generates audible noise. Re-run scripts/audit_flight_paths.py
@@ -4512,7 +4512,7 @@
         // only the airport-adjacent portion is. Outer-London / Surrey
         // / Bedfordshire portions of each approach are correctly noisy
         // but fall outside the DEFRA Round 4 England-bbox in the
-        // raster we ship — and Sky Score's coverage is London-centric
+        // raster we ship - and Sky Score's coverage is London-centric
         // anyway. Restore by adding back the polylines from any pre-
         // 2026-05-07 commit if a paying customer needs LGW/LTN
         // approach context. Ockham + Bovingdon stacks above are kept
@@ -4857,7 +4857,7 @@
       const SCHOOL_SCORE = { outstanding: 10, excellent: 9, good: 6, mixed: 3 };
       const CRIME_TO_SCORE = (rate) => Math.max(0, Math.min(10, 10 - (rate - 50) / 15));
       // Methodology v3.5. Mirrors school_score() in backend/lambdas/score/app.py
-      // — this file computes its own scores from data/borough-extra.json, so any
+      // - this file computes its own scores from data/borough-extra.json, so any
       // divergence here means the site and /v1/score publish different numbers
       // for the same borough. DfE Progress 8: 0.0 is the national average and
       // +/-1.0 is a full grade per subject against pupils with the same KS2
@@ -4900,7 +4900,7 @@
       }
 
       // Tooltip explaining the 0-10 score on hover. The composite mixes
-      // absolute and cohort-relative components — surfacing this transparency
+      // absolute and cohort-relative components - surfacing this transparency
       // is part of the methodology-defensibility positioning. Returns the
       // markup; CSS styles it as a popover anchored to .score-explain-trigger.
       function renderScoreTip() {
@@ -4960,12 +4960,12 @@
       // the steepest faller, each tail scaled to its own extreme.
       //
       // Must stay byte-for-byte equivalent to growth_score() in
-      // backend/lambdas/score/app.py — the site and the API publish the same
+      // backend/lambdas/score/app.py - the site and the API publish the same
       // number, and a buyer checking one against the other is the whole point of
       // publishing the methodology.
       //
       // v3.2/v3.3 scaled against the fastest riser alone and clamped at 0, which
-      // collapsed all 14 falling boroughs onto 0.0 — Ealing (-0.3%) read the same
+      // collapsed all 14 falling boroughs onto 0.0 - Ealing (-0.3%) read the same
       // as the City of London (-28.2%).
       function growthScore(trend, maxTrend, minTrend) {
         let score;
@@ -5025,7 +5025,7 @@
       // Acceptable: the map shell is interactive faster (saves ~25 KB
       // of HTML parsing + ~585 lines of inline JS), and the sidebar
       // refresh is visually invisible once hydration completes.
-      // `_boroughExtraHydrated` was declared and set but NEVER READ — so nothing
+      // `_boroughExtraHydrated` was declared and set but NEVER READ - so nothing
       // distinguished "the data has not arrived yet" from "the data will never
       // arrive". The transient case above is a deliberate trade-off and is fine.
       // The permanent one was not disclosed at all: on a failed fetch the flag
@@ -5034,8 +5034,8 @@
       // presented the totals with no less confidence than real ones. The only
       // signal was a console.warn.
       //
-      // That is the defect class this project keeps hitting — absence rendered as
-      // a favourable measurement — and it is the same code path that makes the
+      // That is the defect class this project keeps hitting - absence rendered as
+      // a favourable measurement - and it is the same code path that makes the
       // native bundle ship flat liveability. `_boroughExtraFailed` is now read by
       // updateSidebar and renderBoroughRanking, which surface it rather than
       // printing a confident number built on nothing.
@@ -5095,7 +5095,7 @@
               }
             }
           } catch (e) {
-            /* nothing rendered yet — the notice appears on first render instead */
+            /* nothing rendered yet - the notice appears on first render instead */
           }
         }
       }
@@ -5206,7 +5206,7 @@
           }
 
           // Rotary noise. Added here 2026-08-03: analysePostcode() has applied this
-          // since the heliport term existed, and this scorer never did — so the same
+          // since the heliport term existed, and this scorer never did - so the same
           // place scored two different quiet values depending on whether you reached
           // it through the neighbourhood ranking or by searching its postcode, one
           // click apart. Denmark Hill differed by 2 points. Must stay in step with
@@ -5226,7 +5226,7 @@
 
           // 3. GROWTH - inherited from borough. Mirrors the borough-path formula
           // above and the API (score/app.py) exactly: one concept, one result.
-          // `??` not `||` — a legitimate trend of 0 is data, not a missing value,
+          // `??` not `||` - a legitimate trend of 0 is data, not a missing value,
           // and the old `|| 3` substituted +3% growth the data explicitly denies.
           const growthTrend = borData.trend ?? boroughRaw[borough]?.trend ?? 0;
           const growth = growthScore(growthTrend, maxTrend, minTrend);
@@ -5380,10 +5380,10 @@
       // clipped the western half of LHR's butterfly contour and missed
       // Gatwick entirely. New bbox covers the full noise footprint of all
       // four London airports that affect inhabited Greater London:
-      //   LHR (51.47, -0.45) — Heathrow, full east+west approach corridors
-      //   LCY (51.51, +0.05) — London City, eastern approach
-      //   LGW (51.15, -0.18) — Gatwick, affects Croydon/Sutton/Bromley
-      //   (Stansted/Luton still excluded — their contours don't reach
+      //   LHR (51.47, -0.45) - Heathrow, full east+west approach corridors
+      //   LCY (51.51, +0.05) - London City, eastern approach
+      //   LGW (51.15, -0.18) - Gatwick, affects Croydon/Sutton/Bromley
+      //   (Stansted/Luton still excluded - their contours don't reach
       //    inhabited London at the Lden 55+ dB threshold.)
       const LONDON_AIRCRAFT_BBOX = {
         minLon: -0.85,
@@ -5400,7 +5400,7 @@
       // crisp contour edges that survive downsampling. Trade-off: PNG grows
       // from ~14 KB to ~50 KB; cached 24h, so paid once per visitor.
       const AIRCRAFT_RASTER_PX = 4096;
-      let aircraftRasterLoadedFor = null; // 'london' | 'nyc' | null — cleared on city switch
+      let aircraftRasterLoadedFor = null; // 'london' | 'nyc' | null - cleared on city switch
 
       const DEFRA_WMS = {
         aircraft: {
@@ -5492,7 +5492,7 @@
 
       // Generation counter for the flight-path dot animations. Each dot loop
       // reschedules itself from its own transition-end handler, so removing
-      // the node it drives does not stop it — the transition keeps ticking on
+      // the node it drives does not stop it - the transition keeps ticking on
       // a detached element forever, calling getPointAtLength ~60×/sec, and
       // every teardown (city switch, resize) starts a fresh set on top. Ten
       // resizes = ten immortal loops, and an Android soft keyboard opening
@@ -5505,7 +5505,7 @@
       // ------------------------------------------------------------
       // Searches and city switches both await network round-trips, so a slow
       // first request can resolve after a fast second one and paint stale data
-      // under the newer heading — a terminal state, with no error and no
+      // under the newer heading - a terminal state, with no error and no
       // loading indicator to give it away. Every search claims a token before
       // its first await and hands that token to everything that paints later.
       // The token travels with the request rather than being read back off a
@@ -5541,14 +5541,14 @@
         return !!search && search.token === searchSeq;
       }
 
-      // An aborted fetch means "you were superseded", not "the API failed" —
+      // An aborted fetch means "you were superseded", not "the API failed" -
       // don't log it as one.
       function isAbortError(e) {
         return !!e && e.name === 'AbortError';
       }
 
       // AbortSignal.timeout() rejects with TimeoutError, which is a *real*
-      // failure the user should hear about — unlike AbortError, which only
+      // failure the user should hear about - unlike AbortError, which only
       // means a newer search took over. Keeping them apart is the whole point
       // of using timeout() rather than a manual abort() on a setTimeout.
       function isTimeoutError(e) {
@@ -5556,7 +5556,7 @@
       }
 
       // How long a search waits before giving up. The postcode lookup gates
-      // everything — no coordinates means no map move, no score, no panels —
+      // everything - no coordinates means no map move, no score, no panels -
       // so it fails fastest. The enrichment panels are additive, so they get
       // longer before we stop waiting on them.
       const SEARCH_TIMEOUT_MS = 5000;
@@ -5565,7 +5565,7 @@
       // Compose the supersede signal from beginSearch() with a wall-clock
       // deadline. Without this, `searchAbort` only ever fires when a *newer*
       // search starts, so a single search on a stalled network waits on the
-      // browser's own default timeout — tens of seconds to minutes, during
+      // browser's own default timeout - tens of seconds to minutes, during
       // which the UI shows nothing but a spinner.
       //
       // AbortSignal.any/timeout are Baseline 2024; if either is missing we
@@ -5583,7 +5583,7 @@
         return withDeadline(search && search.signal, ms);
       }
 
-      // Paint a reachability failure — distinct from "we looked and it isn't
+      // Paint a reachability failure - distinct from "we looked and it isn't
       // there". `query` is echoed back so the user can see we kept their input,
       // and is escaped because it comes straight off a text field.
       function renderSearchFailure(failure, query) {
@@ -5602,7 +5602,7 @@
             ? `The lookup for <strong>${safeQuery}</strong> took more than ${Math.round(SEARCH_TIMEOUT_MS / 1000)} seconds to respond.`
             : `We couldn't reach the lookup service to find <strong>${safeQuery}</strong>.`
         }</p>
-        <p>This is a connection problem, not a bad search — the postcode may well be fine.</p>
+        <p>This is a connection problem, not a bad search - the postcode may well be fine.</p>
         <button type="button" id="search-retry-btn" class="retry-btn" aria-label="Retry the search for ${safeQuery}">
           Try again
         </button>
@@ -5621,7 +5621,7 @@
       // `init()` awaits this before it reveals #app, so whatever this function
       // waits on gates first paint. Until 2026-07-30 that was a 19.2 MB
       // third-party download of all 380 GB local authority districts, of which
-      // ~347 were discarded below — on a slow or congested network the app sat
+      // ~347 were discarded below - on a slow or congested network the app sat
       // on its loading spinner indefinitely. The first URL is now a 123 KB
       // same-origin trim containing exactly the 33 London boroughs, built by
       // scripts/build_london_boroughs.py and precached by the service worker.
@@ -5661,14 +5661,14 @@
 
       // Does `ladName` from the boundary file name the borough `key`?
       //
-      // A bare substring test — which this used to be — accepts Brentwood in
+      // A bare substring test - which this used to be - accepts Brentwood in
       // Essex, because the borough key "Brent" is a prefix of it. Brentwood was
       // being drawn as a London borough and, sitting ~30 km north-east of the
       // rest, was also handed to the projection when fitting the map's extent.
       //
       // Equality alone would not do either: the key is "Barking" while the LAD
       // name is "Barking and Dagenham". So a prefix only counts when the next
-      // character is a space — "Barking and…" passes, "Brentwood" does not.
+      // character is a space - "Barking and…" passes, "Brentwood" does not.
       // Mirrors _boundary_match() in scripts/build_london_boroughs.py; keep the
       // two in step.
       function boroughNameMatches(key, ladName) {
@@ -5820,7 +5820,7 @@
           // pan/zoom for new tiles to load at the current viewport.
           renderTileGrid('us-aircraft-tiles', US_MAP_SERVICES.aircraft.url, minLat, minLon, maxLat, maxLon);
         } else {
-          // London: idempotent — only fetch on first show / after city
+          // London: idempotent - only fetch on first show / after city
           // switch / after window resize. Per-pan calls hit this guard
           // and return immediately. visual fix-DEFRA-1.
           if (aircraftRasterLoadedFor !== 'london') {
@@ -5837,7 +5837,7 @@
             const url = '/data/aircraft-noise-london-lden.png';
             // Position in g-local coordinates by projecting the bbox corners.
             // The SVG zoom transform handles all subsequent pan/zoom natively
-            // — no further WMS requests are made.
+            // - no further WMS requests are made.
             const tl = projection([lb.minLon, lb.maxLat]); // top-left
             const br = projection([lb.maxLon, lb.minLat]); // bottom-right
             if (tl && br) {
@@ -5866,7 +5866,7 @@
       // postcode/outcode data or null; `failure` is null when the lookup
       // genuinely found nothing, otherwise 'timeout' | 'network' | 'superseded'.
       //
-      // The split exists because the caller used to render "NOT FOUND — Area or
+      // The split exists because the caller used to render "NOT FOUND - Area or
       // borough not found" for every falsy return, so a stalled network told the
       // user their perfectly valid postcode did not exist. A wrong diagnosis is
       // worse than a vague one: it sends them off to re-type a correct query.
@@ -6073,7 +6073,7 @@
         // contributor: a postcode 2.9 km from an air-ambulance pad (+1) and 4 km
         // from Battersea (+1) was previously scored off the pad alone, and the
         // old nearest-only form silently discarded the louder source. Contributions
-        // are not summed — consistent with the airport and flight-path terms above,
+        // are not summed - consistent with the airport and flight-path terms above,
         // which also take the nearest single source rather than accumulating.
         const heliBonus = heliDists.reduce((best, hp) => {
           const contribution = hp.dist < 3 ? hp.bands[0] : hp.dist < 5 ? hp.bands[1] : 0;
@@ -6121,7 +6121,7 @@
       // as its proof the old bands were editorial, so the site was displaying the
       // claim the methodology retracts.
       //
-      // The cut points are DfE's own published Progress 8 bands, not ours — the
+      // The cut points are DfE's own published Progress 8 bands, not ours - the
       // whole reason v3.5 happened is that someone once invented bands. Anchoring
       // to a published source is the standard §11 demands.
       //
@@ -6129,7 +6129,7 @@
       // local-authority averages, which cluster more tightly. Checked against the
       // live cohort before shipping: London's 32 LAs span -0.09..+0.64 and split
       // 7 / 15 / 10 across the top three bands, so they still discriminate. No
-      // London borough reaches 'below average' nationally — that is the London
+      // London borough reaches 'below average' nationally - that is the London
       // effect, not a bug. Note a borough can sit at the national average and
       // still be below the London median (Camden: -0.03 against +0.30); the badge
       // deliberately asserts the national anchor, because absolute anchors are
@@ -6164,7 +6164,7 @@
       // would call Richmond violence-ridden (26% of its offences) when it has the
       // lowest total in London; the ratio to the London median is what actually
       // distinguishes a place. Westminster's theft from the person is 25x the
-      // median — that is the fact worth telling someone, and it is checkable.
+      // median - that is the fact worth telling someone, and it is checkable.
       function londonCrimeMedian() {
         const rates = Object.values(BOROUGH_EXTRA || {})
           .map((b) => b && b.crimeRate)
@@ -6177,7 +6177,7 @@
 
       function crimeNote(extra) {
         if (currentCity === 'nyc') {
-          return 'Borough-level rate derived from NYPD CompStat with New York population denominators. Not comparable with the London figures — different collection methodology.';
+          return 'Borough-level rate derived from NYPD CompStat with New York population denominators. Not comparable with the London figures - different collection methodology.';
         }
         const rate = extra && extra.crimeRate;
         if (typeof rate !== 'number') {
@@ -6189,10 +6189,10 @@
           ratio === null
             ? ''
             : ratio >= 1.15
-              ? ` — ${ratio.toFixed(1)}x the London median of ${median.toFixed(1)}`
+              ? ` - ${ratio.toFixed(1)}x the London median of ${median.toFixed(1)}`
               : ratio <= 0.85
-                ? ` — ${(1 / ratio).toFixed(1)}x lower than the London median of ${median.toFixed(1)}`
-                : ` — close to the London median of ${median.toFixed(1)}`;
+                ? ` - ${(1 / ratio).toFixed(1)}x lower than the London median of ${median.toFixed(1)}`
+                : ` - close to the London median of ${median.toFixed(1)}`;
 
         // "Distinctive" means well above the London median for that offence, not
         // merely large. A borough can have a high total with nothing unusual in
@@ -6216,7 +6216,7 @@
           // Before 2026-08-03 this fell through to the reassuring "no single
           // offence type stands out" branch, which for the City of London
           // produced one sentence saying both "2.2x the London median" and
-          // "every major category is close to the London median" — a
+          // "every major category is close to the London median" - a
           // contradiction manufactured entirely from missing data. Same class as
           // the DEFRA nodata fill: not-measured rendered as a favourable
           // measurement.
@@ -6225,15 +6225,15 @@
           why = ' Every major offence category sits at or below the London median.';
         } else {
           why =
-            ' No single offence type stands out — every major category is close to the London median.';
+            ' No single offence type stands out - every major category is close to the London median.';
         }
         // Never default the attribution. ONS explicitly declines to publish a rate
         // for the City of London (Table C4 note 8, small resident population), so
         // crediting them for the figure shown there would credit a body that
-        // supplies nothing — the defect CITY_PROVENANCE exists to prevent.
+        // supplies nothing - the defect CITY_PROVENANCE exists to prevent.
         const attribution = extra.crimeVintage
           ? `Source: ${extra.crimeVintage}, on mid-2024 population.`
-          : 'Sky Score estimate — ONS publishes no recorded-crime rate for this area, so this figure is our own and is not attributable to them.';
+          : 'Sky Score estimate - ONS publishes no recorded-crime rate for this area, so this figure is our own and is not attributable to them.';
         return `${rate} recorded offences per 1,000 residents${scale}.${why} ${attribution}`;
       }
 
@@ -6369,7 +6369,7 @@
       function renderTransportData(containerId, data) {
         const el = document.getElementById(containerId);
         if (!el || !data) return;
-        // A-0724-I5: available === false means TfL was unreachable — say so,
+        // A-0724-I5: available === false means TfL was unreachable - say so,
         // rather than presenting an outage as confident emptiness.
         if (data.available === false) {
           el.innerHTML = '<p class="info-note">Live transport data is temporarily unavailable. Try again shortly.</p>';
@@ -6427,14 +6427,14 @@
       async function fetchEpcData(postcode, signal) {
         // Always resolve to an object, never null. Returning null used to
         // make renderEpcData early-return, which left the "Loading from EPC
-        // register..." placeholder on screen permanently — a worse outcome
+        // register..." placeholder on screen permanently - a worse outcome
         // than an error message, because it reads as "still working".
         try {
           const resp = await fetch(`${API_BASE}/epc?postcode=${encodeURIComponent(postcode)}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
           if (!resp.ok) return { available: false };
           return await resp.json();
         } catch (e) {
-          // Superseded by a newer search — the caller's token guard drops this
+          // Superseded by a newer search - the caller's token guard drops this
           // response anyway, so don't report it as an API failure.
           if (isAbortError(e)) return { available: false };
           // A throttled request usually lands HERE rather than in the
@@ -6743,7 +6743,7 @@
 
         // Each item gets role="option" + a stable id so the input's
         // aria-activedescendant can point to the highlighted one
-        // (audit F-A11y-1 — combobox pattern). screen readers announce
+        // (audit F-A11y-1 - combobox pattern). screen readers announce
         // both the suggestion count and which is currently selected.
         let html = '';
         let idx = 0;
@@ -6893,14 +6893,7 @@
               if (feature) renderNoiseOverlay(feature);
             }
             renderPostcodePin(analysis.lat, analysis.lon);
-            const [px, py] = projection([analysis.lon, analysis.lat]);
-            const container = document.getElementById('map-container');
-            const cw = container.clientWidth / 2;
-            const ch = container.clientHeight / 2;
-            svg
-              .transition()
-              .duration(800)
-              .call(zoom.transform, d3.zoomIdentity.translate(cw - px * 2, ch - py * 2).scale(2));
+            flyToSearchResult(analysis.lat, analysis.lon);
             updateSidebarPostcode(analysis, borData, search);
             return;
           }
@@ -6910,7 +6903,7 @@
         document.getElementById('sidebar-title').textContent = 'SEARCHING...';
         const { result, failure } = await lookupPostcode(q, search);
         if (!isCurrentSearch(search)) return;
-        // A superseded search must paint nothing at all — a newer one owns the
+        // A superseded search must paint nothing at all - a newer one owns the
         // sidebar now.
         if (failure === 'superseded') return;
         if (failure) {
@@ -6948,14 +6941,7 @@
 
         renderPostcodePin(analysis.lat, analysis.lon);
 
-        const [px, py] = projection([analysis.lon, analysis.lat]);
-        const container = document.getElementById('map-container');
-        const cw = container.clientWidth / 2;
-        const ch = container.clientHeight / 2;
-        svg
-          .transition()
-          .duration(800)
-          .call(zoom.transform, d3.zoomIdentity.translate(cw - px * 2, ch - py * 2).scale(2));
+        flyToSearchResult(analysis.lat, analysis.lon);
 
         updateSidebarPostcode(analysis, boroughData, search);
       }
@@ -7019,11 +7005,11 @@
         // there" against our light-grey basemap (user feedback: "I don't
         // see aircraft noise anymore" after the fix-DEFRA-1 refactor).
         // Three combined fixes:
-        //   1. Opacity 1.0 (was 0.6) — don't double-dim the PNG's own alpha
-        //   2. CSS filter saturate(1.6) brightness(0.92) — boosts contour
+        //   1. Opacity 1.0 (was 0.6) - don't double-dim the PNG's own alpha
+        //   2. CSS filter saturate(1.6) brightness(0.92) - boosts contour
         //      band saturation and slightly darkens light pixels for more
         //      contrast against the basemap
-        //   3. mix-blend-mode: multiply on the layer — colours composite
+        //   3. mix-blend-mode: multiply on the layer - colours composite
         //      against the basemap rather than just sitting on top
         const aircraftG = g
           .append('g')
@@ -7073,7 +7059,7 @@
         // sibling captions for flood + AQ). Two problems: (1) at default
         // zoom they overlapped the SKY SCORE map title and the LONDON/NYC
         // city-selector buttons in the top-left corner; (2) they were
-        // redundant — the bottom-left HTML legend already shows a clear
+        // redundant - the bottom-left HTML legend already shows a clear
         // colour-keyed entry for each toggled layer (legend-{road,flood,
         // aq}-group, gated on toggle state by the layer click handler).
         // Removing them gives a cleaner top-left and "made clearer" via
@@ -7097,7 +7083,7 @@
             .attr('stroke-width', 0.5)
             .style('pointer-events', 'none');
         });
-        // (visual fix-LAYER-LABELS: in-map flood caption removed — see comment above renderDefraTiles roadG.)
+        // (visual fix-LAYER-LABELS: in-map flood caption removed - see comment above renderDefraTiles roadG.)
 
         // Air quality overlay, borough-level coloring (visible at all zoom levels) + WMS detail
         const aqG = g.append('g').attr('class', 'layer-air-quality').style('opacity', 0.55);
@@ -7117,7 +7103,7 @@
             .attr('stroke-width', 0.5)
             .style('pointer-events', 'none');
         });
-        // (visual fix-LAYER-LABELS: in-map air-quality caption removed — see comment above renderDefraTiles roadG.)
+        // (visual fix-LAYER-LABELS: in-map air-quality caption removed - see comment above renderDefraTiles roadG.)
 
         updateDefraTiles();
       }
@@ -7168,7 +7154,7 @@
           // dark even after the fill went dark.
           //
           // Switched to a single label colour with a white stroke halo via
-          // paint-order: stroke (same trick as airport codes) — labels now
+          // paint-order: stroke (same trick as airport codes) - labels now
           // read on ANY background colour without needing per-click updates.
           // Bumped opacity 0.6 → 0.9 since the halo gives us the contrast.
           lg.append('text')
@@ -7226,6 +7212,46 @@
             .attr('stroke-width', 20)
             .attr('opacity', 0.18);
         });
+      }
+
+      // Move the map to a search result - but only when it is actually needed.
+      //
+      // Both call sites used to run this unconditionally:
+      //     svg.transition().duration(800)
+      //        .call(zoom.transform, d3.zoomIdentity.translate(cw - px*2, ch - py*2).scale(2));
+      // which re-centred and re-zoomed on EVERY search. Two consequences, both
+      // reported as bugs and both correct observations:
+      //
+      //   1. The pin always ended up dead centre, so it never appeared to move.
+      //      Measured: searching Battersea then Hounslow, 14 km apart, put the
+      //      dot at the same on-screen pixel (450,400) both times. The pin was
+      //      drawn in the right place; the map slid underneath it by exactly the
+      //      offsetting amount, which is indistinguishable from a stuck marker.
+      //   2. 800ms of animation on every search, so the view felt slow to catch
+      //      up even though the sidebar had already repainted.
+      //
+      // Now: if the target is already comfortably on screen at a useful zoom,
+      // leave the map alone and let the PIN move, which is the thing the user is
+      // looking for. Only fly when the result is off-screen, near an edge, or
+      // the map is zoomed too far out to read, and do it in 450ms.
+      function flyToSearchResult(lat, lon) {
+        const [px, py] = projection([lon, lat]);
+        const container = document.getElementById('map-container');
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        const t = d3.zoomTransform(svg.node());
+        const sx = t.applyX(px);
+        const sy = t.applyY(py);
+        // Keep a margin clear of each edge: a pin 5px inside the frame is
+        // technically visible and practically not.
+        const mx = w * 0.2;
+        const my = h * 0.2;
+        const comfortablyVisible = sx > mx && sx < w - mx && sy > my && sy < h - my;
+        if (comfortablyVisible && t.k >= 1.5) return;
+        svg
+          .transition()
+          .duration(450)
+          .call(zoom.transform, d3.zoomIdentity.translate(w / 2 - px * 2, h / 2 - py * 2).scale(2));
       }
 
       function renderPostcodePin(lat, lon) {
@@ -7330,28 +7356,28 @@
         return `<strong>Think carefully.</strong> This area scores low because of ${q < 3 ? 'significant aircraft noise' : 'very high prices'}${q < 3 && a < 3 ? ' combined with high prices' : ''}. Only buy here if you have specific reasons.`;
       }
 
-      // Score-bar and map fills. Bright by design and NOT safe as text — see
+      // Score-bar and map fills. Bright by design and NOT safe as text - see
       // scoreTextColor below before reaching for this one.
       function scoreColor(v) {
         return v >= 7 ? '#26F27D' : v >= 4 ? '#F2B826' : '#F27D26';
       }
       // WCAG 1.4.3 (AA, 4.5:1): the same three bands in ink dark enough to
       // read as text. Painting the headline verdict in scoreColor put every
-      // possible score below the floor on --bg (#e4e3e0) — green 1.16:1,
-      // amber 1.40:1, orange 2.11:1 — and .summary-verdict is 14px/600, so it
+      // possible score below the floor on --bg (#e4e3e0) - green 1.16:1,
+      // amber 1.40:1, orange 2.11:1 - and .summary-verdict is 14px/600, so it
       // is never "large text" and does not get the relaxed 3:1 bar either.
       // Measured ratios for these three, on --bg / on --white (#fafaf9, the
       // desktop sidebar): green 5.17 / 6.35, amber 4.62 / 5.67,
       // orange 4.60 / 5.65. Orange reuses the #a04d00 that audit fix I9 put
       // into privacy.html rather than inventing a second dark orange; green
       // is a darker cousin of the --green token (#0a7a3e, only 4.23:1).
-      // Bar fills stay on scoreColor — a fill carries no text, so 1.4.3 does
+      // Bar fills stay on scoreColor - a fill carries no text, so 1.4.3 does
       // not apply to it and the bright palette is the point.
       function scoreTextColor(v) {
         return v >= 7 ? '#076b36' : v >= 4 ? '#8a5a00' : '#a04d00';
       }
       // Audit F-A11Y-2 (WCAG 1.4.1): pair every score colour with a redundant
-      // non-colour signal — a glyph for colour-blind sighted users, plus an
+      // non-colour signal - a glyph for colour-blind sighted users, plus an
       // adjective used for both visible label and screen-reader aria-label.
       // Glyph chosen to be visually distinct in monochrome (filled vs hollow
       // vs down-arrow) rather than three same-shape variants.
@@ -7371,7 +7397,7 @@
         announceResult('Results loaded for ' + data.name + '.');
         if (switchToAnalysis) switchTab('analysis');
         // Audit F-A11Y-4 hook: a result has just landed. On phones the
-        // sheet starts in 'peek' so the map stays visible — TODO below
+        // sheet starts in 'peek' so the map stays visible - TODO below
         // decides whether to auto-open it now or leave the user to tap up.
         revealSheetIfMobile();
 
@@ -7397,7 +7423,7 @@
     <div class="sidebar-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict score-explain-trigger" style="color:${scoreTextColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 — ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
+          <div class="summary-verdict score-explain-trigger" style="color:${scoreTextColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 - ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
           ${getVerdict(data)}
         </div>
         <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}" style="margin-left:10px;">
@@ -7503,21 +7529,21 @@
       }
 
       // Audit F-A11Y-4: bottom-sheet reveal policy. Called whenever a
-      // result lands in the sidebar. Auto-open chosen for discoverability —
+      // result lands in the sidebar. Auto-open chosen for discoverability -
       // the alternative was peek-only or once-per-session; auto-open won
       // because the alternatives risked users not noticing their result.
       function revealSheetIfMobile() {
         if (window.innerWidth > 900) return;
         // A result just landed. Native app: switch to the redesign's Search
         // view so the result shows over the map. Web/PWA: open the classic
-        // bottom sheet instead — the two mobile experiences are separate now.
+        // bottom sheet instead - the two mobile experiences are separate now.
         const native = document.documentElement.classList.contains('is-native');
         if (native && window.setMobileView) window.setMobileView('search');
         else if (window.setSheetState) window.setSheetState('open');
       }
 
       // `search` is the token from beginSearch(), and the hydration callbacks
-      // below check it rather than a module-level postcode string — the string
+      // below check it rather than a module-level postcode string - the string
       // is already the new search's by the time a late response lands, which
       // is exactly how SW11's EPC counts and sold prices ended up rendered
       // under a TW3 heading. The fallback keeps a future call site that omits
@@ -7543,7 +7569,7 @@
         const extra = getExtraData(analysis.borough);
         // Hoisted out of the if-block below on 2026-08-03. The favourites button
         // near the end of this function reads it, and that button is OUTSIDE the
-        // `if (boroughData)` block — so a `const` declared inside threw
+        // `if (boroughData)` block - so a `const` declared inside threw
         // "pcScore is not defined" and took the whole result panel down. Being in
         // the same FUNCTION is not the same as being in the same BLOCK.
         let pcScore = 0;
@@ -7559,7 +7585,7 @@
           //
           // This is the ONLY score for this postcode. The favourites button below
           // used to recompute its own with `quiet*0.40 + afford*0.35 + growth*0.25`
-          // — retired weights, no liveability term at all, and growth at 0.25 when
+          // - retired weights, no liveability term at all, and growth at 0.25 when
           // v3.3 set it to 0.00 for every persona but `investor`. So the number a
           // user saved disagreed with the number displayed directly above the save
           // button, and because the favourites Lambda persists it, the wrong value
@@ -7595,7 +7621,7 @@
       <div class="sidebar-section">
         <h3>${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} SCORE - THIS LOCATION</h3>
         <div class="summary-card">
-          <div class="summary-verdict" style="color:${scoreTextColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 — ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
+          <div class="summary-verdict" style="color:${scoreTextColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 - ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
           ${pcVerdict}
         </div>
         ${boroughDataNotice()}
@@ -7728,7 +7754,7 @@
         // Fetch transport/EPC/sold data (London only - these APIs are UK-specific)
         if (currentCity === 'london') {
           // These four panels carry no postcode label, so a stale response is
-          // invisible to the reader — every callback re-checks the token.
+          // invisible to the reader - every callback re-checks the token.
           const signal = req.signal;
           fetchTransportData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
@@ -7804,7 +7830,7 @@
       }
 
       // Return true only when the backend confirmed the write. Callers use the
-      // result to keep the button + local state truthful — never assume success
+      // result to keep the button + local state truthful - never assume success
       // (audit I-0521-1: the UI used to show "SAVED" even on a 4xx/5xx).
       async function saveFavourite(postcode, borough, noiseLevel, buyerScore) {
         try {
@@ -7924,7 +7950,7 @@
         if (city === currentCity) return;
         // The `city === currentCity` guard only stops a repeat click on the
         // SAME city, and currentCity is mutated before the NYC GeoJSON await
-        // below — so London→NYC→London during that fetch used to let the
+        // below - so London→NYC→London during that fetch used to let the
         // superseded switch finish its render on top of the current one:
         // doubled paths, boroughs and labels, two #defra-aircraft-img nodes,
         // and layer toggles that then silently stopped working (g.select()
@@ -7960,7 +7986,7 @@
         }
 
         // Update layer toggle labels and legend for city. Plain English (no
-        // agency acronyms) — the source of the data is shown in the tooltip
+        // agency acronyms) - the source of the data is shown in the tooltip
         // (`title` attribute) and the methodology footer link.
         if (city === 'nyc') {
           document.getElementById('label-aircraft').textContent = 'Aircraft noise';
@@ -8021,7 +8047,7 @@
         if (city === 'london') {
           if (boroughFeatures.length) renderBoroughs();
         } else {
-          // For NYC, load GeoJSON dynamically — then keep it. The borough
+          // For NYC, load GeoJSON dynamically - then keep it. The borough
           // outlines never change, so re-fetching on every switch only
           // widened the race window above.
           //
@@ -8039,7 +8065,7 @@
             for (const url of nycUrls) {
               try {
                 const nycGeo = await d3.json(url);
-                // A newer switch landed while this was in flight — abandon the
+                // A newer switch landed while this was in flight - abandon the
                 // render rather than layering it over the current city.
                 if (token !== citySeq) return;
                 if (nycGeo && nycGeo.features && nycGeo.features.length) {
@@ -8072,7 +8098,7 @@
         renderLabels();
         renderBoroughRanking();
 
-        // Reset sidebar — unless a search has started since this switch began
+        // Reset sidebar - unless a search has started since this switch began
         // (handleUsZipSearch kicks one off mid-switch), in which case wiping
         // it here would throw away the newer, correct result.
         if (searchSeq === searchAtStart) {
@@ -8139,7 +8165,7 @@
             .curve(d3.curveBasis);
           const color = PATH_COLORS[fp.airport] || '#26B8F2';
           // Audit visual fix-3: stroke at 1.5/2.25 px @ 0.7 opacity (was
-          // 1/1.5 px @ 0.5) — visible over hi-DPI basemap + DEFRA raster.
+          // 1/1.5 px @ 0.5) - visible over hi-DPI basemap + DEFRA raster.
           // Solid line (no dasharray) reads as "corridor" not "draft".
           pg.append('path')
             .attr('d', line(lineData))
@@ -8461,7 +8487,7 @@
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'grid';
-        // Don't `await extraPromise` — we want the map to paint as soon as
+        // Don't `await extraPromise` - we want the map to paint as soon as
         // geojson is ready. The hydration callback handles re-scoring +
         // sidebar refresh whenever it lands.
 
@@ -8508,7 +8534,7 @@
             // signals. `once: true` so each listener fires at most once.
             document.getElementById('search-input').addEventListener('focus', dismiss, { once: true });
             document.getElementById('layer-toggles').addEventListener('click', dismiss, { once: true });
-            // Auto-dismiss after 30 seconds even if the user doesn't interact —
+            // Auto-dismiss after 30 seconds even if the user doesn't interact -
             // by that point the banner is just chrome.
             setTimeout(dismiss, 30_000);
           }
@@ -8547,7 +8573,7 @@
             // visual fix-DEFRA-1: ONLY NYC needs per-pan tile refresh
             // (slippy XYZ tiles need new tiles loaded for the new viewport).
             // London is a single pre-fetched raster positioned in g-coords
-            // — D3's transform handles all pan/zoom natively, no refetch.
+            // - D3's transform handles all pan/zoom natively, no refetch.
             if (currentCity === 'nyc') {
               clearTimeout(zoomTileTimer);
               zoomTileTimer = setTimeout(() => {
@@ -8663,17 +8689,17 @@
           // fully usable on initial load. User can tap the handle to
           // collapse to peek (search box stays visible at peek height).
           // At iPad portrait (640-900px) the sheet starts in peek state
-          // so the map is visible behind it on first load — auto-opening
+          // so the map is visible behind it on first load - auto-opening
           // hid the map entirely on iPad, which Apple's reviewer cited
           // under Guideline 4.0 (Design) on 2026-05-18. revealSheetIfMobile()
           // still auto-opens after a search result lands. Above 900px the
-          // sheet is irrelevant — desktop sidebar is a static column.
+          // sheet is irrelevant - desktop sidebar is a static column.
           if (window.innerWidth <= 640) {
             window.setSheetState('open');
           }
         }
         // TODO (you): decide when to auto-open the sheet on result load.
-        // See updateSidebar() — search result and borough click both call it.
+        // See updateSidebar() - search result and borough click both call it.
         // The hook point is below in updateSidebar; expand based on viewport.
 
         // Layer toggles
@@ -8696,7 +8722,7 @@
             if (sel.node()) sel.style('display', layers[layer] ? null : 'none');
             // Show/hide legend colour scale for the toggled layer (audit
             // visual fix-6: aircraft-noise legend was always visible
-            // regardless of toggle state — gate it like the others).
+            // regardless of toggle state - gate it like the others).
             const legendMap = {
               'defra-aircraft': 'legend-aircraft-group',
               'defra-road': 'legend-road-group',
@@ -8783,13 +8809,13 @@
         // F-UX-9: Esc dismisses the score-explain tooltip when its trigger
         // has focus. Adds .score-tip-dismissed which suppresses the tip via
         // CSS. Cleared when the trigger loses focus, so re-tabbing shows it
-        // again — matches the behaviour users expect from native popovers.
+        // again - matches the behaviour users expect from native popovers.
         document.addEventListener('keydown', (e) => {
           if (e.key !== 'Escape') return;
           const trig = document.activeElement;
           if (trig && trig.classList && trig.classList.contains('score-explain-trigger')) {
             trig.classList.add('score-tip-dismissed');
-            // Don't actually blur — that would lose the user's keyboard
+            // Don't actually blur - that would lose the user's keyboard
             // position. They can Tab away normally.
             e.preventDefault();
           }
@@ -8809,7 +8835,7 @@
           const nh = container.clientHeight;
           const baseScale = CITIES[currentCity].scale;
           projection.scale(nw < 600 ? baseScale * 0.625 : baseScale).translate([nw / 2, nh / 2]);
-          // interrupt() before remove() — see the matching call in switchCity.
+          // interrupt() before remove() - see the matching call in switchCity.
           g.selectAll('*').interrupt().remove();
           // Projection translate has changed → previously cached g-coords for
           // the aircraft raster are now wrong. Force a re-position next call.
@@ -8823,15 +8849,15 @@
           renderLabels();
         }
         // Audit I-0521-5: redrawForViewport() tears down and rebuilds every
-        // layer — boroughs, DEFRA tiles, flight paths, airports, transport,
-        // labels — at a measured 14-17 ms of synchronous main-thread work on
+        // layer - boroughs, DEFRA tiles, flight paths, airports, transport,
+        // labels - at a measured 14-17 ms of synchronous main-thread work on
         // desktop and 45-70 ms on a mid-range phone. Chrome fires resize at up
         // to 60 Hz while a window is being dragged, so running it per event
         // spent the whole frame budget before layout or paint. Trailing-edge
         // debounce: redraw once the viewport has settled. 160 ms is under the
         // ~200 ms at which a redraw stops feeling like part of the drag, and
         // long enough to collapse a drag or an orientation change into one
-        // pass. No leading call — the intermediate sizes are never the size
+        // pass. No leading call - the intermediate sizes are never the size
         // the user wants to look at.
         let resizeTimer = null;
         window.addEventListener('resize', () => {
@@ -8853,7 +8879,7 @@
         // Snapshot the initial empty-state DOM so the close button can
         // restore it after a result has been rendered. Captured at boot
         // as a cloned node (NOT an HTML string) so the restore path uses
-        // safe DOM cloning instead of innerHTML — no XSS surface even if
+        // safe DOM cloning instead of innerHTML - no XSS surface even if
         // the template later gains dynamic content.
         const sidebarContent = document.getElementById('sidebar-content');
         const emptyStateNode =
@@ -8861,7 +8887,7 @@
 
         window.setMobileView = function (view) {
           // Native-only: this is the sole writer of data-mview. On web the
-          // is-native class is absent, so bail before touching the attribute —
+          // is-native class is absent, so bail before touching the attribute -
           // that keeps every @media redesign rule dormant and leaves the
           // classic bottom-sheet layout in charge.
           if (!document.documentElement.classList.contains('is-native')) return;
@@ -8875,7 +8901,7 @@
           switchTab(TAB_FOR[view]);
           const sb = document.getElementById('sidebar');
           if (sb) sb.scrollTop = 0;
-          // Search view brings the map to the foreground — nudge D3 to
+          // Search view brings the map to the foreground - nudge D3 to
           // recompute the projection in case orientation or the keyboard
           // changed the viewport since load.
           if (view === 'search') window.dispatchEvent(new Event('resize'));

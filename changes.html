@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Content Security Policy (enforcing — same family as /pricing). This page
+<!-- Content Security Policy (enforcing - same family as /pricing). This page
      makes ONE fetch: the public /v1/changes endpoint (no API key). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -18,7 +18,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://skyscore.co.uk/changes">
 <meta property="og:title" content="Sky Score · What changed this quarter">
-<meta property="og:description" content="Which London boroughs rose, which fell, and what the official price data did — most property sites bury falling markets; we headline them.">
+<meta property="og:description" content="Which London boroughs rose, which fell, and what the official price data did - most property sites bury falling markets; we headline them.">
 <meta property="og:site_name" content="Sky Score">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,7 +88,7 @@
   }
 
   /* "Why did it move?" disclosure. The score is a weighted sum, so a change
-     decomposes exactly into per-factor contributions — this is where that
+     decomposes exactly into per-factor contributions - this is where that
      arithmetic is shown rather than asserted. */
   .why-btn {
     background: transparent; border: 1px solid var(--border); border-radius: 6px;
@@ -190,7 +190,7 @@
 <header>
   <p class="crumb"><a href="/">Sky Score</a> / changes</p>
   <h1>What changed this quarter</h1>
-  <p class="tagline">Quarter-over-quarter movement in London borough scores, driven by the official UK House Price Index. Most property sites bury falling markets; we headline them — the point of Sky Score is the data listings sites won't show you. Every row can tell you <em>why</em> it moved.</p>
+  <p class="tagline">Quarter-over-quarter movement in London borough scores, driven by the official UK House Price Index. Most property sites bury falling markets; we headline them - the point of Sky Score is the data listings sites won't show you. Every row can tell you <em>why</em> it moved.</p>
   <p class="period" id="period-line"></p>
   <p class="vintage" id="vintage-line">Loading vintages…</p>
 </header>
@@ -229,7 +229,7 @@
 <footer>
   Scores use the balanced persona under the published methodology. Data: HM Land Registry UK House Price Index (OGL v3.0) and the sources listed in the
   <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" data-event="changes-methodology-click" target="_blank" rel="noopener">methodology</a>.
-  Integrators: the same data is on the API as <code>GET /v1/changes</code> (no key needed) and per-location via <code>?compare=previous</code> —
+  Integrators: the same data is on the API as <code>GET /v1/changes</code> (no key needed) and per-location via <code>?compare=previous</code> -
   see <a href="/api/" data-event="changes-api-click">the developer page</a> or <a href="/pricing" data-event="changes-pricing-click">pricing</a>.
 </footer>
 
@@ -246,7 +246,7 @@
   const deltaGlyph = n => (n > 0 ? '▲ ' : n < 0 ? '▼ ' : '· ');
 
   // The API sends vintages as '2026-Q2'. Reading order matters for a human:
-  // the quarter first, then the year, and the year is never dropped — a
+  // the quarter first, then the year, and the year is never dropped - a
   // visitor two years from now needs to know which quarter this page describes.
   function vintageLabel(v) {
     const m = /^(\d{4})-(Q[1-4])$/.exec(String(v || ''));
@@ -288,7 +288,7 @@
 
   // One block per driver: what moved, why it moved that much, the actual sum,
   // and how much it mattered to the headline. The "workings" line is the part
-  // that stops a big swing looking arbitrary — growth and affordability are
+  // that stops a big swing looking arbitrary - growth and affordability are
   // scored *relative* to other boroughs, so the arithmetic has to be visible.
   function driverBlock(d) {
     // Numbered because it is a causal chain: what happened to prices, where
@@ -324,7 +324,7 @@
     const w = c.why;
     // Since methodology v3.3 the balanced view does not weight growth, so most
     // rows have no weighted driver at all. Reporting the unweighted movement is
-    // what answers "the market clearly moved — why didn't the score?".
+    // what answers "the market clearly moved - why didn't the score?".
     const unweighted = (w && w.unweighted && w.unweighted.length)
       ? '<p class="why-section-label">Moved, but not counted here</p>' +
         w.unweighted.map(u =>
@@ -424,7 +424,7 @@
 
       const noteEl = document.getElementById('method-note');
       noteEl.textContent = 'Honesty note: ' + d.note +
-        ' Scores here use the balanced view, which since methodology v3.3 does not weight price growth —' +
+        ' Scores here use the balanced view, which since methodology v3.3 does not weight price growth -' +
         ' growth describes the market rather than the property, and it was responsible for 87% of last' +
         " quarter's score movement while nothing physical about these places changed. That is why the score" +
         ' column moves very little and the market movement is reported separately above. Select "why" on any' +
@@ -448,7 +448,7 @@
       document.getElementById('table-wrap').hidden = false;
       status.textContent = d.changes.length + ' boroughs · sorted by size of score change · select "why" on any row for the breakdown.';
     } catch (err) {
-      status.textContent = 'Could not load the movement data (' + esc(err.message) + '). The API may be briefly unavailable — refresh to retry.';
+      status.textContent = 'Could not load the movement data (' + esc(err.message) + '). The API may be briefly unavailable - refresh to retry.';
     }
   }
   load();

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Content Security Policy (enforcing — see comment in index.html for the rationale). B2B demo only fetches /v1/score from
+<!-- Content Security Policy (enforcing - see comment in index.html for the rationale). B2B demo only fetches /v1/score from
      the API Gateway origin; no other connect destinations needed. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -567,13 +567,13 @@
     };
 
     // The API names the price field by currency (avgPriceGbp for London,
-    // avgPriceUsd for NYC) — render whichever is present (A-0724-I3).
+    // avgPriceUsd for NYC) - render whichever is present (A-0724-I3).
     const priceCell =
       d.context.avgPriceUsd != null ? `$${(d.context.avgPriceUsd / 1000).toFixed(0)}K`
       : d.context.avgPriceGbp != null ? `£${(d.context.avgPriceGbp / 1000).toFixed(0)}K`
-      : '—';
+      : '-';
     const trend = d.context.priceTrendPct;
-    const trendCell = trend != null ? `${trend >= 0 ? '+' : ''}${trend.toFixed(1)}%` : '—';
+    const trendCell = trend != null ? `${trend >= 0 ? '+' : ''}${trend.toFixed(1)}%` : '-';
 
     result.innerHTML = `
       <div class="borough-row">
@@ -644,7 +644,7 @@
     const email = document.getElementById('signupEmail').value.trim();
     const name = document.getElementById('signupName').value.trim();
     if (!email) return;
-    // Track INTENT, not just success — we want to know how many people
+    // Track INTENT, not just success - we want to know how many people
     // try to sign up vs how many actually receive a key (409 etc.).
     trackEvent('signup-attempted');
 
@@ -701,7 +701,7 @@
     }
   });
 </script>
-<!-- Goatcounter analytics — same cubitt33 tracker as index.html + api/.
+<!-- Goatcounter analytics - same cubitt33 tracker as index.html + api/.
      Was missing from this page (CSP allowed it but the script wasn't loaded);
      fixed so we can actually measure "did anyone try the API after visiting". -->
 <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

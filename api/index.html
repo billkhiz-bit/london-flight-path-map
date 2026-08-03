@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Content Security Policy (enforcing — see comment in /index.html for the rationale).
+<!-- Content Security Policy (enforcing - see comment in /index.html for the rationale).
      /api landing is a static B2B funnel page; only fonts + analytics, no fetches. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -232,7 +232,7 @@
       <div class="card">
         <h3>Per-postcode noise resolution</h3>
         <p>Quiet is scored per postcode from Haversine proximity to airports and flight-path geometry, at the postcode centroid rather than a borough average. The response reports which tier answered in <code>context.quietResolution</code>.</p>
-        <p><strong>Note (August 2026):</strong> the DEFRA Lden raster tier described in our methodology is currently bypassed while a coverage problem is resolved — DEFRA's aircraft contours cover only about a tenth of London, and treating the unmapped remainder as quiet flattened the component. <code>quietResolution</code> therefore returns <code>postcode</code>, never <code>raster</code>, until that is fixed.</p>
+        <p><strong>Note (August 2026):</strong> the DEFRA Lden raster tier described in our methodology is currently bypassed while a coverage problem is resolved - DEFRA's aircraft contours cover only about a tenth of London, and treating the unmapped remainder as quiet flattened the component. <code>quietResolution</code> therefore returns <code>postcode</code>, never <code>raster</code>, until that is fixed.</p>
       </div>
     </div>
   </section>
@@ -260,11 +260,11 @@
     <div class="audience-list">
       <div class="card">
         <h3>Property data aggregators</h3>
-        <p>Landmark, TM Group, OneSearch Direct — drop-in noise + livability layer for conveyancing search reports.</p>
+        <p>Landmark, TM Group, OneSearch Direct - drop-in noise + livability layer for conveyancing search reports.</p>
       </div>
       <div class="card">
         <h3>Sharia-compliant home finance</h3>
-        <p>Al Rayan, StrideUp, Gatehouse, Nester, Yielders — riba-free underwriting context with attribution.</p>
+        <p>Al Rayan, StrideUp, Gatehouse, Nester, Yielders - riba-free underwriting context with attribution.</p>
       </div>
       <div class="card">
         <h3>Conveyancers + surveyors</h3>
@@ -314,7 +314,7 @@
     <ol style="padding-left:20px;color:var(--text);font-size:15px;line-height:1.8;">
       <li>Try the <a href="/score-demo/index.html" style="color:var(--amber);">live demo</a> with one of your live property postcodes.</li>
       <li>If the output is useful, sign up for a free API key on the same page.</li>
-      <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" style="color:var(--amber);">methodology</a> — every threshold anchored, every assumption written down.</li>
+      <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" style="color:var(--amber);">methodology</a> - every threshold anchored, every assumption written down.</li>
       <li>Open the <a href="/score-demo/api-docs.html" style="color:var(--amber);">OpenAPI 3.0 reference</a> and integrate.</li>
       <li>If you need a paid tier, MSA, or have integration questions: <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration" style="color:var(--amber);">support@skyscore.co.uk</a>.</li>
     </ol>
@@ -345,7 +345,7 @@
      (someone reading the maths vs just kicking tyres). Demo/spec clicks
      signal someone wanting to actually try / integrate. UTM parameters
      in incoming traffic (?utm_source=outreach-landmark) flow through to
-     the GoatCounter referrer log automatically — see OUTREACH_DRAFTS.md
+     the GoatCounter referrer log automatically - see OUTREACH_DRAFTS.md
      for the per-prospect convention. -->
 <script>
   function trackEvent(name) {

@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Content Security Policy (enforcing — see comment in index.html for the rationale). Status page only pings the API Gateway. -->
+<!-- Content Security Policy (enforcing - see comment in index.html for the rationale). Status page only pings the API Gateway. -->
 <!-- M-E: Goatcounter analytics deliberately omitted from this page's CSP
      because the status page itself doesn't load the tracker. We don't
-     want analytics on the "is the API up" surface — it adds noise to
+     want analytics on the "is the API up" surface - it adds noise to
      real failure investigations. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' https://skyscore.co.uk https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; frame-ancestors 'none'; base-uri 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -284,7 +284,7 @@
       state.textContent = `${upCount}/${results.length} endpoints up`;
     }
 
-    // Pull methodology version from the body captured during the check —
+    // Pull methodology version from the body captured during the check -
     // no extra key'd request (A-0724-I2).
     const scoreCheck = results.find(r => r.name.includes('London') && r.ok && r.data);
     if (scoreCheck) {
@@ -309,7 +309,7 @@
 
   // Quota discipline (A-0724-I2): the four keyed checks share the public
   // demo key's 1,000 req/month usage plan with the browser demo. A 60s
-  // interval burned ~300 req/hour — one forgotten tab exhausted the
+  // interval burned ~300 req/hour - one forgotten tab exhausted the
   // monthly quota in ~3.3h and 429'd the demo for everyone. Now: 5-minute
   // cadence, and never while the tab is hidden; returning to the tab
   // refreshes immediately if the last run is stale.
