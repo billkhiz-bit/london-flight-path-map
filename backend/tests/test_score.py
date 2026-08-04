@@ -1885,6 +1885,46 @@ class CoreCitiesAuditTests(unittest.TestCase):
         self.assertIn('schools', str(ctx.exception))
         self.assertIn('Testville', str(ctx.exception))
 
+    def test_vocabulary_guard_rejects_off_table_noise_band(self):
+        """`impact` was unguarded until 2026-08-04 (audit finding 28).
+
+        The most consequential field to miss, and the last one added. It feeds
+        `IMPACT_TO_QUIET.get(bd['impact'], 5.0)`, so a plausible typo does not
+        raise — it silently scores 5.0 on the product's headline component, and
+        the direction is always the same: a severe-noise borough is *upgraded*
+        to middling. Erring quiet is the one direction a noise product cannot
+        afford, which is what makes this worse than the schools case above.
+        """
+        self.assertIn('impact', app._CATEGORICAL_FIELDS)
+        # 'sever' is the natural mistype of the real worst band, and it scores
+        # 5.0 against 'severe' at 0.0 — a 5-point silent upgrade.
+        self.assertNotIn('sever', app.IMPACT_TO_QUIET)
+        self.assertEqual(app.IMPACT_TO_QUIET.get('sever', 5.0), 5.0)
+        self.assertLess(app.IMPACT_TO_QUIET['severe'], 5.0)
+
+        bad = {'testcity': {'boroughs': {'Testville': {'impact': 'sever'}}}}
+        with self.assertRaises(ValueError) as ctx:
+            app.validate_borough_vocabulary(bad)
+        self.assertIn('impact', str(ctx.exception))
+        self.assertIn('Testville', str(ctx.exception))
+
+    def test_every_scoring_lookup_table_is_actually_guarded(self):
+        """The guard's coverage, not just its behaviour.
+
+        `impact` was missing for months while three sibling fields were
+        covered, and nothing detected that because every test asserted the
+        guard's *logic* rather than its *scope*. This asserts the scope: any
+        categorical borough field the scoring engine reads through a
+        `.get(value, default)` lookup must appear in _CATEGORICAL_FIELDS.
+        """
+        for field in ('impact', 'transport', 'healthcare'):
+            with self.subTest(field=field):
+                self.assertIn(
+                    field, app._CATEGORICAL_FIELDS,
+                    f'{field} is read from borough data through a defaulting '
+                    f'lookup but is not validated at import, so a typo in it '
+                    f'scores the default instead of failing.')
+
     def test_vocabulary_guard_allows_absent_fields(self):
         # A city part-way through sourcing is a known, handled state. Only a
         # PRESENT-but-unrecognised value is an error.

@@ -6,7 +6,67 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-03 (latest) - prototype stops publishing invented noise readings
+### 2026-08-04 (latest) - the DEFRA raster maps a COVID year, and the band mapping was built for the wrong dataset
+
+**Deployed:** the consumer site, `/pricing`, `/api/`, `/score-demo/*` and the
+prototype. **Not deployed:** the signup Lambda's new `upgrade` block, and
+`privacy.html`.
+
+- **The dB-to-quiet curve was re-derived, and the premise three documents
+  rested on was false.** `AUDIT_REPORT.md` said "every DEFRA value is above
+  55 dB"; `BAND_MAPPING_ANALYSIS.md` said "there is no 45-55 dB contour to
+  score against" and recommended **no code change** on that basis. Reading
+  `data/defra_lden_2022.tif` directly refutes both: **2,359,172 valid cells
+  spanning 40.0 to 88.9 dB**, and 40.0 to 73.0 dB at London postcode centroids
+  with a **median of 51.0**. The band table had been derived for DEFRA's
+  *published reporting bands*, which do begin at 55, and then applied to the
+  *raster*, which begins at 40 - so its top bucket spanned 40.0-55.0 dB and put
+  **80.4% of every measurement we hold (15,173 of 18,862 postcodes) on a flat
+  10.0**. `lden_db_to_quiet` is now a continuous ramp between two cited
+  thresholds, 10.0 at WHO's 45 dB to 0.0 at ~63 dB Lden: **101 distinct values
+  instead of 5**, Heathrow **7.5 to 2.7**. 16 tests.
+- **DEFRA Round 4 maps 2021, a COVID year, and every surface fed by it errs
+  quiet.** Round 4 documentation calls the result "a highly anomalous
+  situation". London City flew **12,921 movements in 2021 against 80,751 in
+  2019** - 16%, or **-8.0 dB** on a logarithmic energy sum. The prototype's
+  noise panel now names the year; so does the consumer map legend, which had
+  said "Round 4, 2022 data" when 2022 is the *publication* year. **Re-anchoring
+  needs Round 5 (~2027); no correction factor has been invented.**
+- **A site-defect finding was raised and then retracted the same day.** The
+  raster/Haversine gap concentrated at London City (+4.03 against Heathrow's
+  +1.97) looked like the airport term being distance-only. The COVID
+  differential explains essentially all of it, so the "2,007 postcodes shown at
+  2.5/10" figure is withdrawn as evidence. **The mechanism is still real** - the
+  airport term uses `min(distance)` across all five airports while the heliport
+  term beside it is movement-weighted - **but its magnitude is now unmeasured.**
+- **The raster tier stays quarantined**, on a third condition nobody had listed:
+  the consumer site scores quiet from Haversine and cannot read the raster, so
+  lifting the flag re-opens the site/API divergence across 18,862 postcodes -
+  and the parity test would not catch it, because the geometry it compares still
+  matches.
+- **Professional's score ceiling is published**, completing the 2026-07-29
+  decision: 100,000 requests/month under a **fair-use ceiling of 1,000,000
+  scores/month**. Free's ceiling is an arithmetic identity; Professional's is a
+  contractual cap deliberately below the product (100,000 x 100 = 10,000,000),
+  and `scoreCeilingBasis` now marks which is which.
+- **The Article 28 sub-processor register was materially incomplete and its
+  residency claim was false.** It stated the request body "never leaves UK AWS
+  infrastructure during processing"; the `nhs` Lambda sends lat/lon to
+  **`overpass-api.de` in Germany**. Ten rows added across server-side upstreams
+  (TfL, MHCLG, HM Land Registry, Overpass) and browser-contacted third parties
+  (Google Fonts, GitHub, US DOT, EPA, FEMA). **Google Fonts is recorded as an
+  open compliance item, not as compliant.**
+- **`quiet` measures aircraft noise only.** README and METHODOLOGY both said
+  "Aviation + road noise impact"; there is no road-noise term in the engine. The
+  live consumer surfaces were already correct.
+- **Gate and deploy coverage:** `backend/tests/` was outside every ruff target;
+  `web-deploy-all` covered 4 of 15 public surfaces while being named "all", so
+  eleven live files had no deploy command (audit finding 38). Both closed.
+- Also: audit findings 30, 49, 53 and 62 closed; the `/api/` sample response and
+  README's, both wrong in every field, replaced with live captures; README's
+  persona count corrected from five to eight.
+
+### 2026-08-03 - prototype stops publishing invented noise readings
 
 - **The 3D prototype presented fabricated decibel figures at named real
   locations as if measured**, under a pulsing green "live" dot. Both the levels

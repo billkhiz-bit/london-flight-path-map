@@ -1219,6 +1219,18 @@ CITIES = {
 # be *able* to go red; test_score.py feeds it a deliberately bad value and
 # asserts it raises.
 _CATEGORICAL_FIELDS = {
+    # 'impact' added 2026-08-04 (audit finding 28). It was the one categorical
+    # field this guard did not cover, and the most consequential to miss: it
+    # feeds IMPACT_TO_QUIET.get(bd['impact'], 5.0), so a typo like 'sever' does
+    # not raise — it silently upgrades a severe-noise borough to a middling 5.0
+    # on the product's headline component. Every other categorical field was
+    # already guarded precisely against that failure mode.
+    'impact': IMPACT_TO_QUIET,
+    # NOTE: 'schools' is vestigial. Boroughs still carry the retired Ofsted
+    # vocabulary alongside 'p8', but the score has been driven by Progress 8
+    # since v3.5, so this entry now validates a field nothing reads. Kept
+    # because the values are still rendered in prose on the consumer site
+    # (audit finding 35), which is a separate cleanup.
     'schools': SCHOOL_SCORE,
     'transport': TRANSPORT_SCORE,
     'healthcare': HEALTH_SCORE,
