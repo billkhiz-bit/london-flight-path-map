@@ -5033,6 +5033,11 @@
               growth: Math.round(growth * 10) / 10,
               live: Math.round(live * 10) / 10,
             },
+            // Unrounded companions, added 2026-08-04. `scores` above is rounded
+            // for DISPLAY and must stay that way; anything that RECOMBINES these
+            // into a total must use these instead, or it double-rounds and
+            // disagrees with /v1/score. See the note on pcScore.
+            scoresRaw: { quiet, afford, growth, live },
             score: Math.round(total * 10) / 10,
           };
         }
@@ -7646,9 +7651,25 @@
         let pcScore = 0;
         if (boroughData) {
           const priceFull = formatPrice(boroughData.avg_price, currentCity);
-          const a = boroughData.scores?.afford ?? 5,
-            gr = boroughData.scores?.growth ?? 5,
-            lv = boroughData.scores?.live ?? 5;
+          // Read the UNROUNDED components, not `scores`. Fixed 2026-08-04.
+          //
+          // This read `boroughData.scores`, which calcScores rounds to one
+          // decimal for display, and then recombined those rounded values into
+          // pcScore below - rounding twice. The API sums at full precision and
+          // rounds ONCE, so the two disagreed by 0.1 wherever the double
+          // rounding crossed a 0.05 boundary. Measured over 30 random live
+          // London postcodes: 4 of 30 (13%) disagreed, in both directions.
+          // W3 7BN read 5.8 on the site against 5.7 from the API; SW12 0DL
+          // read 6.0 against 6.1.
+          //
+          // Not a data divergence - every component matched exactly, which is
+          // why it survived the geometry parity tests and the site/API probes
+          // that compare components. Only the headline total moved, and only
+          // the postcode panel was affected: the borough score at line ~5036
+          // already combined unrounded values, matching the API.
+          const a = boroughData.scoresRaw?.afford ?? boroughData.scores?.afford ?? 5,
+            gr = boroughData.scoresRaw?.growth ?? boroughData.scores?.growth ?? 5,
+            lv = boroughData.scoresRaw?.live ?? boroughData.scores?.live ?? 5;
           const pw = PERSONAS[currentPersona].weights;
           // Use postcode-specific noise to calculate Quiet Skies score
           const pcQuiet = Math.max(0, Math.min(10, 10 - analysis.noiseScore));
