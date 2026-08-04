@@ -1,139 +1,156 @@
 # The airport term treats London City like Heathrow
 
-**Date:** 2026-08-04 · **Status:** measured, one blocking fact unresolved, no code change made
-**Found by:** measuring the raster/Haversine gap before choosing how to close it (see `METHODOLOGY.md` §4.5, quarantine condition 3)
+**Date:** 2026-08-04 · **Status:** RESOLVED — the blocking fact was checked and it reverses the headline finding
+**Found by:** measuring the raster/Haversine gap before choosing how to close it (`METHODOLOGY.md` §4.5, quarantine condition 3)
 
 ---
 
-## 1. Conclusion first
+## 0. Resolution, added the same day — read this first
 
-The consumer site's `quiet` score penalises proximity to **any** airport by distance alone.
-`calc_postcode_quiet` computes `nearest_ap_dist = min(...)` across all five airports and applies
-one distance ladder to the result, so **London City contributes exactly the same penalty as
-Heathrow at the same distance**.
+**The blocking question in §4 was answered, and the answer overturns §1's original conclusion.**
+This document first read *"the site penalises London City as if it were Heathrow, and 2,007
+postcodes DEFRA maps below WHO's guideline are shown at ~2.5/10"*. **That is retracted as evidence
+of a site defect.** The measurements below are all correct; the inference drawn from them was not.
 
-The same function's **heliport** term *is* movement-weighted, with a derivation in the source:
+**DEFRA Round 4 maps the situation during 2021, and DEFRA's own Noise Action Plan documentation
+describes the result as *"a highly anomalous situation"* influenced by COVID travel restrictions.**
+Major airports were even *designated* on the basis of exceeding 50,000 movements **during 2021**.
 
-> *"derived, not chosen: sound energy sums logarithmically, so annual movements…"*
-> — `app.py:1485`, weighting Battersea (12,000/yr) against air-ambulance pads (~800/yr)
+For London City specifically (CAA / airport statistics):
 
-So the model already knows movements belong in the term. It applies that reasoning to
-helicopters and not to aeroplanes.
+| year | aircraft movements |
+|---|---|
+| 2019 | **80,751** |
+| 2020 | 18,850 |
+| **2021 (the mapped year)** | **12,921** |
+| 2022 | 44,731 |
+| 2023 | 52,101 |
 
-**What is not yet established** is how large the resulting error is, because the obvious
-yardstick — the DEFRA raster — has an unresolved vintage question. See §4. **No code has been
-changed.**
+2021 traffic was **16% of 2019**. Sound energy sums logarithmically, so
+`10·log10(12,921 / 80,751)` = **−8.0 dB**. **DEFRA's Round 4 contours understate a normal year at
+London City by roughly 8 dB.**
+
+Heathrow was hit far less hard (roughly 449k movements in 2019 against a substantially reduced but
+much larger 2021 figure), so its deficit is a few dB at most. **That differential is almost
+exactly what the measurement found:**
+
+- measured gap differential, LCY vs LHR: **+4.03 − 1.97 = 2.06 points**
+- the v3.6 curve runs 10 points over 18 dB, so 2.06 points ≈ **3.7 dB**
+- predicted differential from the traffic figures: **~4–6 dB**
+
+So the LCY/LHR split this document was built on is **substantially or wholly a COVID artefact in
+the raster**, not evidence that the site's airport weighting is wrong. **The raster was the
+unreliable side, exactly as §4 warned it might be.**
+
+**What survives:** §5's observation stands on its own terms — the airport term really is
+distance-only while the heliport term in the same function really is movement-weighted, and that
+inconsistency is worth resolving. But **its magnitude is now unmeasured**, because the yardstick
+used to size it has been disqualified. Do not cite the 2,007-postcode figure.
+
+**What this cost:** the same mistake the rest of this repo has been correcting all week — a source
+was used without checking its vintage. The 2021 reference year was one search away and was not
+checked before the finding was written up.
 
 ---
 
-## 2. What was measured
+## 1. Original conclusion — RETRACTED, see §0
 
-All **18,862** live London postcodes with a genuine DEFRA sample, scored both ways using the
-real Lambda functions (`lden_db_to_quiet` and `calc_postcode_quiet`), not reimplementations.
+> The consumer site's `quiet` score penalises proximity to **any** airport by distance alone.
+> `calc_postcode_quiet` computes `nearest_ap_dist = min(...)` across all five airports and applies
+> one distance ladder to the result, so **London City contributes exactly the same penalty as
+> Heathrow at the same distance**.
+
+The mechanism above is **correct and confirmed in source**. The inference that it produces a large
+live error is what does not survive §0.
+
+---
+
+## 2. What was measured (unchanged, still valid)
+
+All **18,862** live London postcodes with a genuine DEFRA sample, scored both ways using the real
+Lambda functions (`lden_db_to_quiet` and `calc_postcode_quiet`), not reimplementations.
 
 | | raster (v3.6 curve) | Haversine (what the site serves) |
 |---|---|---|
 | mean quiet | **6.33** | **3.25** |
 
-The raster reads **quieter** for **84.4%** of them; the two agree within ±0.5 for only 11.7%.
-
-**The gap is not uniform — it is concentrated at one airport:**
+The raster reads quieter for **84.4%** of them; the two agree within ±0.5 for only 11.7%.
 
 | nearest airport | postcodes | mean DEFRA dB | raster quiet | site quiet | mean gap | >2.0 apart |
 |---|---|---|---|---|---|---|
 | **LCY** | 10,192 | 48.5 | 7.77 | 3.74 | **+4.03** | **65.0%** |
 | LHR | 8,670 | 54.7 | 4.65 | 2.68 | +1.97 | 41.3% |
 
-Around Heathrow the two methods broadly track each other — Hounslow approach differs by 0.1, Kew
-by 0.1, Bedfont by 0.0. Around London City they do not.
-
-**The sharpest cases**, all within LCY's catchment:
-
-| postcode | DEFRA | km from LCY | raster | site shows |
-|---|---|---|---|---|
-| `E6 5QT` | 44.8 dB | 0.69 | 10.0 | **1.0** |
-| `E6 5QS` | 44.8 dB | 0.73 | 10.0 | **1.0** |
-| `E6 5TP` | 41.1 dB | 1.32 | 10.0 | **1.0** |
-| `SE28 0FH` | 42.3 dB | 2.15 | 10.0 | **1.0** |
-| `E13 8LU` | 43.0 dB | 2.52 | 10.0 | **1.0** |
-
-**2,007 postcodes** in LCY's catchment are mapped by DEFRA at **or below WHO's 45 dB aircraft
-guideline** — the threshold below which WHO finds no adverse effect — while the live site scores
-them at a mean of **2.5/10**, worst **1.0**. That is Beckton, Silvertown, Custom House,
-Thamesmead and Woolwich.
+**These numbers are sound.** What changed is their interpretation: the gap measures how much the
+2021 contours understate normal traffic, more than it measures a modelling error in the site.
 
 ---
 
-## 3. Why the mechanism is plausible
+## 3. Why the mechanism is still plausible in principle
 
-London City is not a small Heathrow. Under Lden specifically:
+London City is not a small Heathrow, and under Lden specifically:
 
-- **~1/6 the annual movements.** Sound energy sums logarithmically, so an order-of-magnitude
-  movement gap is worth roughly 8 dB — which the heliport term in this very file already
-  accounts for, and the airport term does not.
-- **No night flights.** Lden applies a **+10 dB** penalty to the night period. An airport with no
-  night operations gets nothing from the term that dominates Lden around Heathrow.
+- **Fewer movements**, and sound energy sums logarithmically — the reasoning the heliport term in
+  this very file already applies.
+- **No night flights.** Lden applies a **+10 dB** penalty to the night period, so an airport with
+  no night operations gets nothing from the term that dominates Lden around Heathrow.
 - **Restricted weekend operation** (closed Saturday afternoon to Sunday morning).
-- **Short-field aircraft only** — no widebodies, and a 5.5° approach that keeps arrivals higher
-  for longer than a standard 3° glideslope.
+- **Short-field aircraft only**, on a 5.5° approach that keeps arrivals higher than a standard 3°
+  glideslope.
 
-Every one of those cuts the same way, and none of them is visible to a distance-only ladder.
+None of this is visible to a distance-only ladder. It remains a real design gap; it is simply no
+longer quantified.
 
 ---
 
-## 4. The one fact that decides this — UNRESOLVED
+## 4. The blocking fact — ANSWERED
 
-**Which side is wrong depends on the DEFRA raster's traffic year, and that is not established.**
+DEFRA's own methodology page does not state a reference year, and says aircraft mapping is carried
+out by *"the relevant airport operators and in some cases, the Department for Transport"* rather
+than by DEFRA's geospatial model. The answer came from the Round 4 dataset documentation and from
+Noise Action Plans adopted under it:
 
-`METHODOLOGY.md` §4.1 records Round 4 as *"published 2022, data current as of 2021"*. **2021 was
-a COVID-suppressed year for UK aviation, and London City was among the worst affected** — it
-closed entirely for part of 2020 and ran far below normal through 2021. If the contours reflect
-that traffic, they understate a normal year and **the raster is the unreliable side**.
+> Round 4 (2022) strategic noise mapping **represents the situation during 2021**. Major airports
+> were identified as those exceeding **50,000 aircraft movements per year during 2021**. The
+> results *"are influenced by Covid travel restrictions, and as such the results of the 2021
+> mapping show **a highly anomalous situation**"*.
 
-DEFRA's own methodology page was checked
-(`gov.uk/government/publications/strategic-noise-mapping-2022/explaining-the-2022-noise-maps`)
-and **does not state a reference year**. It does say aircraft mapping is carried out by *"the
-relevant airport operators and in some cases, the Department for Transport"* rather than by
-DEFRA's geospatial model — so the answer likely sits with LCY's own Round 4 submission, not with
-DEFRA.
-
-**Until that is answered, do not adopt raster values around LCY and do not conclude the site is
-wrong by the full margin above.** Erring quiet is the direction this product cannot afford, and
-a COVID-year contour is exactly how you would err quiet without noticing.
+Note the second sentence's consequence for this project: **London City recorded 12,921 movements
+in 2021 and would not have met the 50,000 threshold.** Whatever contours exist near it in the
+Round 4 raster should be treated with corresponding care, including the possibility that they
+originate from a different designation or a different source than assumed here.
 
 ---
 
 ## 5. What is safe to conclude regardless
 
-**The airport term's uniformity is an internal inconsistency in its own right**, and it does not
-depend on the vintage question at all. The same function weights heliports by movements, on a
-stated logarithmic derivation, and weights airports by distance alone. Whatever the correct
-magnitude turns out to be, treating a ~1/6-movement, no-night-flights airport identically to
-Heathrow is not defensible on the model's own reasoning.
+**The airport term's uniformity is an internal inconsistency in its own right.** The same function
+weights heliports by movements on a stated logarithmic derivation and weights airports by distance
+alone. That is worth fixing on its own merits — but **not on the strength of this document's
+measurements**, and not until there is a yardstick that is not COVID-anomalous.
 
 ---
 
-## 6. Options, in the order they should be considered
+## 6. Options, revised
 
-1. **Resolve the vintage question first.** LCY's Round 4 noise submission, or its published
-   contour maps, against a pre-2020 baseline. This is the cheapest step and it gates the rest.
-2. **Movement-weight the airport term** the way heliports already are. Defensible independently
-   of the raster, but it changes live consumer scores across east and southeast London and must
-   land in `index.html` **and** the Lambda together, with a parity test — `index.html` holds its
-   own copy of this geometry, and that is exactly how the three-month flight-path divergence
-   happened.
-3. **Only then** revisit quarantine condition 3 (site/API divergence), because the size of that
-   divergence is partly an artefact of this defect rather than a real tier disagreement.
+1. **Do not act on the LCY weighting yet.** The evidence that motivated it has been disqualified.
+   Revisit when DEFRA Round 5 (~2027) maps a normal traffic year, or against a non-DEFRA source.
+2. **Treat the whole raster as vintage-suspect**, not just around LCY. This is broader than this
+   document and is tracked as a separate finding — see `AUDIT_REPORT.md` A-0804-2. It affects the
+   quarantine decision, the site's DEFRA contour overlay, and the prototype's published dB values.
+3. **Quarantine condition 3 is unchanged**, and is now better justified: the raster should not
+   become the API's answer while its inputs are anomalous.
 
 ---
 
 ## 7. What this does not cover
 
-- **No claim about which airports are mapped in Round 4.** Stansted and Luton have no covered
-  postcodes in this sample; whether that is genuine absence or non-submission was not checked.
+- **The size of the residual gap after adjustment.** Adding ~8 dB to `E6 5QS` (44.8 → ~52.8 dB)
+  gives ~5.7 on the v3.6 curve against the site's 1.0 — so a gap may well remain. That rests on an
+  **estimated** adjustment, not a measurement, and is not a basis for changing scores.
+- **Which airports Round 4 actually mapped.** Stansted and Luton have no covered postcodes in this
+  sample; whether that is genuine absence or non-designation was not checked, and the same question
+  now applies to LCY.
 - **Gatwick was not examined.** No sampled London postcode had LGW as its nearest airport.
-- **The flight-path term was not separated from the airport term.** Both feed `noise_score`; this
-  analysis attributes the gap to the airport ladder on the strength of the LHR/LCY split, which
-  is strong but is not a decomposition.
-- **No dose-response validation of the v3.6 curve itself** — that curve is assumed correct here
-  and is documented in `METHODOLOGY.md` §4.6.
+- **The flight-path term was not separated from the airport term.** Both feed `noise_score`.
+- **No dose-response validation of the v3.6 curve itself** — see `METHODOLOGY.md` §4.6.

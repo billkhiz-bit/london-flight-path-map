@@ -197,19 +197,43 @@ guideline are shown on the site at a mean of **2.5/10**, worst **1.0** — Beckt
 Custom House, Thamesmead, Woolwich. `E6 5QS`, 0.73 km from LCY, is mapped at **44.8 dB** and the
 site shows **1.0/10**.
 
-**BLOCKING UNKNOWN — do not act on the magnitude yet.** DEFRA Round 4 is *"data current as of
-2021"*, a COVID-suppressed year, and London City was among the worst-affected UK airports. If the
-contours reflect that traffic they understate a normal year and the raster is the unreliable
-side. DEFRA's methodology page was checked and **does not state a reference year**; it says
-aircraft mapping is done by *"the relevant airport operators and in some cases, the Department
-for Transport"*, so the answer sits with LCY's own Round 4 submission. Erring quiet is the
-direction this product cannot afford, and a COVID-year contour is exactly how you would err quiet
-without noticing.
+**DOWNGRADED SAME DAY — the vintage was checked and it reverses the finding.** Round 4 maps
+**2021**, and Round 4 documentation describes the result as *"a highly anomalous situation"*
+influenced by COVID travel restrictions. London City flew **12,921 movements in 2021 against
+80,751 in 2019** — 16% — which on a logarithmic energy sum is **−8.0 dB**. Heathrow's deficit is
+far smaller, and that differential (~4–6 dB) accounts for essentially all of the measured LCY/LHR
+gap (2.06 points ÷ 0.556 points-per-dB ≈ **3.7 dB**).
 
-**Next step is the vintage check, not a code change.** Fixing the weighting would alter live
-consumer scores across east and southeast London and must land in `index.html` **and** the Lambda
-together with a parity test — `index.html` holds its own copy of this geometry, which is how the
-three-month flight-path divergence happened.
+**So the raster was the unreliable side, and the "2,007 postcodes shown at 2.5/10" figure is
+retracted as evidence of a site defect.** The mechanism is real and confirmed in source — the
+airport term is distance-only while the heliport term is movement-weighted — but **its magnitude
+is now unmeasured**, because the yardstick has been disqualified. Do not act on the weighting
+until there is a non-anomalous source. Full working:
+[`LCY_AIRPORT_WEIGHTING_ANALYSIS.md`](./LCY_AIRPORT_WEIGHTING_ANALYSIS.md) §0.
+
+### A-0804-2 — the whole DEFRA raster is a COVID-year snapshot (**NEW, open**)
+
+Broader than A-0804-1 and the more consequential half. **DEFRA Round 4 maps 2021 traffic**, which
+its own documentation calls *"a highly anomalous situation"*. Every surface fed by that raster
+therefore carries an undisclosed downward bias, largest at the airports worst hit.
+
+| surface | exposure |
+|---|---|
+| `/v1/score` raster tier | **Not exposed** — quarantined. The quarantine is now better justified than when it was imposed |
+| Consumer-site contour overlay (`data/aircraft-noise-london-lden.png`) | **Live.** Renders Round 4 contours |
+| **Prototype noise panel** | **Live, and publishes named figures** — `Hounslow (6.5km) 57.6 dB`, `Richmond (10.5km) 56.6 dB`, `Putney (16.5km) 52.0 dB` |
+| `METHODOLOGY.md` §4.1 band anchoring | Documents Round 4 as the anchor without the vintage caveat |
+
+The prototype case is the sharpest: those three rows were added on **2026-08-03** precisely to
+replace invented readings with real DEFRA measurements, and the panel is headed *"DEFRA LDEN,
+ROUND 4 (2022) — ANNUAL AVERAGE, NOT LIVE"*. **2022 is the publication year; the data is 2021.**
+A reader takes 57.6 dB for Hounslow as representative, and it is a pandemic-year figure
+understating a normal year by a few dB. Same defect class as the one that fix was closing —
+directionally right, but the replacement values carry an undisclosed anomaly.
+
+**Erring quiet is the one direction this product cannot afford**, and this errs quiet on every
+surface at once. Disclosure is the cheap correct fix; re-anchoring needs Round 5 (~2027) or a
+non-DEFRA source.
 
 ### Closed 2026-08-03, fifth pass - the last high finding
 

@@ -801,8 +801,18 @@
          that cannot be shipped. Values below are sampled from the DEFRA Round 4
          (2022) Lden raster at each location; distances are real great-circle
          distances to EGLL. Lden is a long-term annual average, NOT a live reading,
-         which is why the heading says so. -->
-    <div class="panel-header" style="margin-top:4px"><span>DEFRA LDEN, ROUND 4 (2022) - ANNUAL AVERAGE, NOT LIVE</span></div>
+         which is why the heading says so.
+
+         VINTAGE CAVEAT ADDED 2026-08-04. "Round 4 (2022)" is the PUBLICATION year.
+         The mapped year is 2021, and Round 4 documentation describes the result as
+         "a highly anomalous situation" influenced by COVID travel restrictions.
+         Heathrow flew well below normal that year, so these figures understate a
+         representative year by a few dB. Left in place rather than adjusted,
+         because an invented correction factor is how the original block went wrong;
+         the honest fix is to say which year it is. Re-anchor at DEFRA Round 5
+         (~2027). See AUDIT_REPORT.md A-0804-2. -->
+    <div class="panel-header" style="margin-top:4px"><span>DEFRA LDEN, ROUND 4 - 2021 TRAFFIC, ANNUAL AVERAGE, NOT LIVE</span></div>
+    <div class="row" style="opacity:.7"><span class="label" style="font-size:10px">2021 was COVID-suppressed; a normal year reads higher</span></div>
     <div class="row"><span class="label">Hounslow (6.5km)</span><span class="value rd">57.6 dB</span></div>
     <div class="row"><span class="label">Richmond (10.5km)</span><span class="value hl">56.6 dB</span></div>
     <div class="row"><span class="label">Putney (16.5km)</span><span class="value">52.0 dB</span></div>

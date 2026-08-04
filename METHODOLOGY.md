@@ -586,6 +586,25 @@ two must not be read as the same number.
 | Hounslow approach `TW3 4DX` (59.29 dB) | 7.5 | **2.1** |
 | Bedfont `TW14 9QP` (72.97 dB, loudest) | 1.5 | **0.0** |
 
+**Declared limitation — the mapped year is 2021, and it was not a normal year.** Round 4 is
+published in 2022 but **maps the situation during 2021**, and Round 4 documentation describes the
+result as *"a highly anomalous situation"* influenced by COVID travel restrictions — major
+airports were even designated on the basis of movements *during 2021*. The understatement scales
+with how hard each airport was hit, and sound energy sums logarithmically:
+
+| airport | 2019 movements | 2021 movements | implied deficit |
+|---|---|---|---|
+| London City | 80,751 | **12,921** (16%) | **≈ −8.0 dB** |
+| Heathrow | ~448,700 | substantially reduced | a few dB |
+
+So **every dB figure derived from this raster errs quiet**, unevenly, and most at the smaller
+airports. This affects the contour overlay on the consumer map and the prototype's published
+readings as well as this tier — see `AUDIT_REPORT.md` A-0804-2. It is one more reason the raster
+tier stays quarantined, and it cannot be corrected by re-banding: the fix is DEFRA Round 5
+(~2027), which should map a representative year, or a non-DEFRA source. **Do not apply an
+estimated correction factor** — inventing a multiplier is the failure mode this project has
+already had to undo twice.
+
 **Declared limitation — saturation at the loud end.** Everything at or above 63 dB reads 0.0, so
 the loudest **348 covered postcodes (1.8% of covered, 0.18% of London)** cannot be told apart:
 Bedfont at 72.97 dB and a postcode at 63.1 dB both score 0.0. This is the mirror of the defect it
