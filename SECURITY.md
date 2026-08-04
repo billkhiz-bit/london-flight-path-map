@@ -36,6 +36,14 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
   authenticates via `aws-actions/configure-aws-credentials@v4` with
   `aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}`; there is no `id-token` permission or
   `role-to-assume` anywhere in the repo. **Migrating to OIDC is the outstanding remediation.**
+  **Prepared 2026-08-04:** the full procedure is now `OPERATIONS.md` §3.7 — identity provider,
+  role trust policy scoped with `StringEquals` on
+  `repo:billkhiz-bit/london-flight-path-map:environment:production`, the workflow diff,
+  verification and rollback. **Not performed:** it needs IAM write, which `flightmap-dev` is
+  deliberately denied, so it is a console action. The workflows are intentionally left on static
+  keys until the role exists, because flipping them first breaks the next manual deploy. This
+  bullet will be updated when the migration is verified from the workflows, not when it is
+  scheduled.
 - **`flightmap-dev` is a deploy user, not a read-only one, and is not the Lambda runtime
   identity.** `backend/iam-policy.json` grants `cloudformation:DeleteStack`, `s3:DeleteBucket`,
   `lambda:DeleteFunction`, `iam:CreateRole`, `iam:PutRolePolicy` and `iam:PassRole`. A leaked

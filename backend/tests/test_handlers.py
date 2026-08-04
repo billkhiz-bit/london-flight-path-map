@@ -554,7 +554,7 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
                    'checking anything. Fix the test, do not delete it.')
         return int(match.group(1))
 
-    def _signup_limits(self):
+    def _signup_body(self):
         app = _import_lambda('signup')
         with patch.object(app, '_usage_plan_id_cache', None), \
              patch.object(app.apigw, 'get_paginator') as mock_pag, \
@@ -572,7 +572,10 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
                 'body': json.dumps({'email': 'drift@example.com'}),
             }, None)
         self.assertEqual(result['statusCode'], 201)
-        return json.loads(result['body'])['limits']
+        return json.loads(result['body'])
+
+    def _signup_limits(self):
+        return self._signup_body()['limits']
 
     def test_signup_response_matches_the_enforced_usage_plan(self):
         limits = self._signup_limits()
@@ -597,6 +600,59 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         # Proves the template read works and is not silently returning a
         # default. Per the 27 Jul lesson: assert the gate can go red.
         self.assertGreater(self._plan_int('Limit'), 0)
+
+    # --- Professional upgrade block, added 2026-08-04 -------------------
+    # Completing BATCH_METERING_DECISION.md's 2026-07-29 decision. The same
+    # three assertions the free tier already carries, because the defect the
+    # decision fixed was arithmetic nobody had done: quoting a request quota
+    # while selling scores let the real entitlement sit at 100x the number on
+    # the page. An unmultiplied figure is exactly how that recurs.
+
+    def test_upgrade_block_states_the_professional_ceiling(self):
+        upgrade = self._signup_body()['upgrade']
+        self.assertEqual(upgrade['tier'], 'Professional')
+        self.assertEqual(upgrade['monthlyQuota'], 100000)
+        self.assertEqual(upgrade['monthlyScoreCeiling'], 1000000)
+
+    def test_upgrade_multiplier_matches_the_score_lambda(self):
+        # Same coupling as the free tier: if MAX_BATCH_SIZE moves and this
+        # does not, the published ceiling silently becomes wrong.
+        upgrade = self._signup_body()['upgrade']
+        self.assertEqual(upgrade['batchMultiplier'],
+                         _import_lambda('score').MAX_BATCH_SIZE)
+
+    def test_upgrade_ceiling_is_a_cap_BELOW_the_product_not_equal_to_it(self):
+        # This assertion was written backwards first time and the test caught
+        # it. Professional's ceiling is NOT quota x multiplier: that product is
+        # 10,000,000, which is what a £499 key could technically drain and what
+        # undercut the £12,000 Enterprise floor. 1,000,000 is a deliberate
+        # contractual cap at a tenth of it. Asserting equality here would
+        # silently re-authorise the 10x giveaway the 2026-07-29 decision closed.
+        upgrade = self._signup_body()['upgrade']
+        product = upgrade['monthlyQuota'] * upgrade['batchMultiplier']
+        self.assertLess(
+            upgrade['monthlyScoreCeiling'], product,
+            'Professional ceiling is meant to sit BELOW quota x multiplier. '
+            f'Got {upgrade["monthlyScoreCeiling"]:,} against a product of '
+            f'{product:,}.')
+        self.assertEqual(upgrade['scoreCeilingBasis'], 'fair-use')
+
+    def test_the_two_tiers_ceilings_are_different_KINDS_of_number(self):
+        # Free is an arithmetic identity; Professional is a contractual cap.
+        # A client that reads both as the same kind will compute the wrong
+        # entitlement, which is the exact failure the decision documented.
+        body = self._signup_body()
+        self.assertEqual(body['limits']['scoreCeilingBasis'], 'quota')
+        self.assertEqual(body['upgrade']['scoreCeilingBasis'], 'fair-use')
+
+    def test_both_tiers_are_quoted_in_the_same_unit(self):
+        # The decision's core point: a developer comparing tiers must not have
+        # to multiply anything themselves. Both blocks carry all three fields.
+        body = self._signup_body()
+        for block in (body['limits'], body['upgrade']):
+            for field in ('monthlyQuota', 'batchMultiplier',
+                          'monthlyScoreCeiling'):
+                self.assertIn(field, block)
         with self.assertRaises(AssertionError):
             self._plan_int('NoSuchField')
 

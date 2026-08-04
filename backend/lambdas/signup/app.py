@@ -392,6 +392,40 @@ def handle_post(event):
                 'sustainedRateLimit': 1,
                 'batchMultiplier': 100,
                 'monthlyScoreCeiling': 10000,
+                # 'quota' means the ceiling IS monthlyQuota x batchMultiplier.
+                # Professional's is 'fair-use' and is deliberately lower than
+                # that product; the field exists so the two are not read as the
+                # same kind of number.
+                'scoreCeilingBasis': 'quota',
+            },
+            # Added 2026-08-04, completing the 2026-07-29 decision in
+            # BATCH_METERING_DECISION.md. Stated in the SAME UNIT as the tier
+            # above it, because the defect that decision fixed was quoting
+            # requests while selling scores.
+            #
+            # THE CEILING IS NOT monthlyQuota x batchMultiplier HERE, and that
+            # difference is the whole point. 100,000 x 100 is 10,000,000, which
+            # is what a £499 key could technically drain: roughly every home in
+            # London three times over, undercutting both the £12,000 Enterprise
+            # floor and the £2,500 pilot. 1,000,000 is a deliberate contractual
+            # cap at a tenth of that. scoreCeilingBasis distinguishes the two
+            # kinds of number so a client cannot read one as the other, and a
+            # test asserts this block's ceiling is BELOW the product rather
+            # than equal to it.
+            #
+            # Unenforced, and not described as if it were: API Gateway meters
+            # requests, so nothing technically stops a key spending the full
+            # 10,000,000. This is a published commitment, not a control. It
+            # closes when per-score metering (option A) ships, and the first
+            # paying Professional customer is exactly that trigger.
+            'upgrade': {
+                'tier': 'Professional',
+                'priceGbpPerMonth': 499,
+                'monthlyQuota': 100000,
+                'batchMultiplier': 100,
+                'monthlyScoreCeiling': 1000000,
+                'scoreCeilingBasis': 'fair-use',
+                'contact': 'support@skyscore.co.uk',
             },
             'note': (
                 'Save this key now. It is shown ONCE and cannot be '

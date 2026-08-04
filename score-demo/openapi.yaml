@@ -14,6 +14,10 @@ info:
     moved between data vintages without holding one. Free tier provides 100 requests/month, 5/sec burst,
     1/sec sustained. A `/v1/score/batch` request counts as one request and
     carries up to 100 queries, so the free ceiling is 10,000 scores/month.
+    Professional keeps 100,000 requests/month under a fair-use ceiling of
+    1,000,000 scores/month. Note the free ceiling is the arithmetic product of
+    quota and multiplier, whereas Professional's is a contractual cap set below
+    what its request quota alone would permit.
     Contact via the [consumer site](https://skyscore.co.uk/) for a key.
 
     **Methodology.** Every numeric threshold and weight is anchored to a
@@ -563,8 +567,9 @@ components:
       description: |
         API key issued via the SkyScoreFreeTierKey usage plan (100 req/month,
         5/sec burst, 1/sec sustained on the free tier, and up to 10,000
-        scores/month once the batch multiplier is counted). Contact for paid
-        tiers.
+        scores/month once the batch multiplier is counted). Professional is
+        100,000 req/month under a fair-use ceiling of 1,000,000 scores/month.
+        Contact for paid tiers.
 
   schemas:
     ScoreResponse:

@@ -41,6 +41,23 @@ not a control. It stops the price list lying; it does not stop the extraction. T
 only when option A ships, and **Professional's first paying customer is precisely the trigger
 condition this document deferred option A against** — so expect to build it then, not later.
 
+> **IMPLEMENTED 2026-08-04.** All four surfaces below now carry the figure, plus six tests.
+> **Not deployed** — `pricing.html`, `api/index.html` and `score-demo/openapi.yaml` need a
+> `web-deploy`, and the signup change needs a SAM deploy.
+>
+> **One thing this document did not say explicitly, and it caused a wrong first attempt.**
+> The free ceiling is an *arithmetic identity* (100 × 100 = 10,000). Professional's is a
+> *contractual cap deliberately below* the product (100,000 × 100 = **10,000,000**, capped at
+> 1,000,000). The first implementation copied the free tier's phrasing — *"a batch request carries
+> up to 100 addresses, so the ceiling is 1,000,000"* — which states a derivation that is false by a
+> factor of ten, on a public price list, in the customer's favour. A reader doing the multiplication
+> would have caught it.
+>
+> Caught by `test_upgrade_ceiling_is_a_cap_BELOW_the_product_not_equal_to_it`, which was itself
+> written backwards first and failed. The response now carries **`scoreCeilingBasis`** on both
+> blocks (`quota` vs `fair-use`) so the two kinds of number cannot be read as the same, and the
+> public copy says *"fair-use ceiling"* rather than deriving it.
+
 **Surfaces still to change** (none done as of 2026-07-29): `pricing.html`, `api/index.html`,
 `score-demo/openapi.yaml`, and the `signup` Lambda's response, which already returns
 `batchMultiplier` + `monthlyScoreCeiling` for the free tier and needs the Professional equivalent.

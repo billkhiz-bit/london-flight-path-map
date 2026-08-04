@@ -232,7 +232,13 @@
       <div class="card">
         <h3>Per-postcode noise resolution</h3>
         <p>Quiet is scored per postcode from Haversine proximity to airports and flight-path geometry, at the postcode centroid rather than a borough average. The response reports which tier answered in <code>context.quietResolution</code>.</p>
-        <p><strong>Note (August 2026):</strong> the DEFRA Lden raster tier described in our methodology is currently bypassed while a coverage problem is resolved - DEFRA's aircraft contours cover only about a tenth of London, and treating the unmapped remainder as quiet flattened the component. <code>quietResolution</code> therefore returns <code>postcode</code>, never <code>raster</code>, until that is fixed.</p>
+        <p><strong>Note (updated 4 August 2026):</strong> the DEFRA Lden raster tier described in our methodology is currently bypassed, and <code>quietResolution</code> therefore returns <code>postcode</code>, never <code>raster</code>. Three separate reasons, stated plainly because two of them were understood only after the first was published:</p>
+        <ul style="margin:8px 0 0 18px;padding:0;font-size:14px;line-height:1.55;">
+          <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
+          <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
+          <li><strong>Vintage.</strong> DEFRA Round 4 is published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. Re-anchoring needs Round 5, expected around 2027.</li>
+        </ul>
+        <p style="margin-top:8px;">The Haversine tier that answers today is unaffected by any of this and is documented in full in METHODOLOGY section 4.5.</p>
       </div>
     </div>
   </section>
@@ -243,13 +249,16 @@
   -H 'X-Api-Key: YOUR_KEY' \
   -H 'Accept: application/json'
 
-# Returns:
+# Returns (verbatim from the live API, 4 August 2026):
 # {
-#   "score": 7.7,
-#   "components": { "quiet": 10.0, "afford": 7.5, "growth": 5.2, "live": 7.1 },
-#   "context": { "noiseImpactBand": "low", "quietResolution": "raster", ... },
+#   "score": 6.7,
+#   "components": { "quiet": 5.0, "afford": 7.2, "growth": 7.8, "live": 7.2 },
+#   "context": { "noiseImpactBand": "low", "quietResolution": "postcode",
+#                "liveResolution": "measured", "avgPriceGbp": 608000, ... },
 #   "location": { "city": "london", "postcode": "N1 7SX", "borough": "Hackney", ... },
-#   "persona": "balanced", "methodologyVersion": "3.4",
+#   "persona": "family",
+#   "weights": { "quiet": 0.22, "afford": 0.22, "growth": 0.0, "live": 0.56 },
+#   "methodologyVersion": "3.5",
 #   "sources": [...]
 # }</pre>
     <p style="margin-top:12px;">More examples in the <a href="/score-demo/api-docs.html" style="color:var(--amber);">Swagger UI reference</a>.</p>
@@ -296,7 +305,7 @@
       <div class="pricing-cell">
         <div class="tier">Professional · Launching</div>
         <div class="price">£499<span class="unit"> /mo · 100k req/mo</span></div>
-        <div class="quota">Suitable for one platform integrating Sky Score.</div>
+        <div class="quota">Fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each, so scores rather than requests are the binding limit. Suitable for one platform integrating Sky Score.</div>
         <a class="btn btn-secondary" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
       </div>
       <div class="pricing-cell">

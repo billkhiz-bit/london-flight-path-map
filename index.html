@@ -2753,11 +2753,13 @@
             </div>
             <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4">
               <strong>What this is:</strong>
-              DEFRA Strategic Noise Map (Round 4, 2022 data), the long-term average aircraft noise around LHR, LCY and
-              LGW - modelled from a year of actual flight tracks, not a live feed. Round 4 is the latest official
-              strategic noise mapping round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions.
-              The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that
-              location, not a decibel reading.
+              DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR,
+              LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is
+              2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4
+              result as a highly anomalous situation. These contours therefore understate a typical year, most at the
+              airports worst affected. Round 4 is still the latest official round; DEFRA expects Round 5 around 2027.
+              Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search
+              gives a 0-10 quiet score for that location, not a decibel reading.
             </div>
           </div>
           <div id="legend-road-group" style="display: none">
@@ -5292,9 +5294,31 @@
 
           const total = quiet * w.quiet + afford * w.afford + growth * w.growth + adjLive * w.live;
 
-          // Derive noise impact label
+          // Derive noise impact label.
+          //
+          // Thresholds are the MIDPOINTS between IMPACT_TO_QUIET's six values
+          // (10 / 7.5 / 5 / 3 / 1.5 / 0), so this ladder inverts the same
+          // mapping the borough tier uses rather than inventing a second one.
+          //
+          // Fixed 2026-08-04 (audit finding 49). The old ladder ran
+          // 8 / 6 / 4 / 2 across FIVE labels, which made 'moderate-high'
+          // unreachable here while the borough vocabulary defines it, and gave
+          // 'severe' two different meanings: everything under 2 on this scale,
+          // against exactly 0 on the borough scale. A neighbourhood scoring 3.0
+          // read 'high' here and 'moderate-high' one click away, for the same
+          // place and the same number.
           const impact =
-            quiet >= 8 ? 'low' : quiet >= 6 ? 'low-moderate' : quiet >= 4 ? 'moderate' : quiet >= 2 ? 'high' : 'severe';
+            quiet >= 8.75
+              ? 'low'
+              : quiet >= 6.25
+                ? 'low-moderate'
+                : quiet >= 4
+                  ? 'moderate'
+                  : quiet >= 2.25
+                    ? 'moderate-high'
+                    : quiet >= 0.75
+                      ? 'high'
+                      : 'severe';
 
           results.push({
             name,
@@ -6500,31 +6524,51 @@
           G: '#e9153b',
         };
         const dist = s.bandDistribution || {};
-        const maxCount = Math.max(...Object.values(dist), 1);
+        const maxCount = Math.max(...Object.values(dist).map((n) => Number(n) || 0), 1);
+
+        // Escaped 2026-08-04 (audit finding 53). Every value below arrives from
+        // MHCLG via the epc Lambda, so it is remote data being interpolated
+        // into innerHTML. Not exploitable as the data flows today - MHCLG does
+        // not put markup in a band letter - but this is the one renderer that
+        // had been left unhardened while renderNhsData beside it already used
+        // escapeHtml/safeUrl throughout. Defence in depth against an upstream
+        // that changes shape, not a live vulnerability.
+        //
+        // The bandColors[...] lookups were always safe (a key miss falls to
+        // '#999', so nothing remote reaches the style attribute); it is the
+        // TEXT interpolations that were open. Counts are coerced numerically
+        // rather than escaped, which also stops a non-numeric width reaching
+        // the inline style.
+        const avgBand = escapeHtml(String(s.averageBand ?? ''));
+        const avgRating = escapeHtml(String(s.averageRating ?? ''));
+        const certCount = Number(data.count) || 0;
         let html = `
     <div style="display:flex;gap:12px;margin-bottom:12px;">
       <div class="crime-stat" style="flex:1;">
-        <div class="epc-band" style="background:${bandColors[s.averageBand] || '#999'};font-size:22px;padding:4px 12px;">${s.averageBand}</div>
+        <div class="epc-band" style="background:${bandColors[s.averageBand] || '#999'};font-size:22px;padding:4px 12px;">${avgBand}</div>
         <div class="crime-stat-label">AVG BAND</div>
       </div>
       <div class="crime-stat" style="flex:1;">
-        <div class="crime-stat-value">${s.averageRating}</div>
+        <div class="crime-stat-value">${avgRating}</div>
         <div class="crime-stat-label">AVG RATING / 100</div>
       </div>
       <div class="crime-stat" style="flex:1;">
-        <div class="crime-stat-value">${data.count}</div>
+        <div class="crime-stat-value">${certCount}</div>
         <div class="crime-stat-label">CERTIFICATES</div>
       </div>
     </div>`;
         html += Object.entries(dist)
-          .map(
-            ([band, count]) => `
+          .map(([band, count]) => {
+            const bandLabel = escapeHtml(String(band));
+            const bandCount = Number(count) || 0;
+            const widthPct = (bandCount / maxCount) * 100;
+            return `
     <div class="epc-bar">
-      <span class="epc-band" style="background:${bandColors[band] || '#999'};">${band}</span>
-      <div class="epc-bar-track"><div class="epc-bar-fill" style="width:${(count / maxCount) * 100}%;background:${bandColors[band] || '#999'};"></div></div>
-      <span style="font-size:10px;width:20px;text-align:right;">${count}</span>
-    </div>`
-          )
+      <span class="epc-band" style="background:${bandColors[band] || '#999'};">${bandLabel}</span>
+      <div class="epc-bar-track"><div class="epc-bar-fill" style="width:${widthPct}%;background:${bandColors[band] || '#999'};"></div></div>
+      <span style="font-size:10px;width:20px;text-align:right;">${bandCount}</span>
+    </div>`;
+          })
           .join('');
         html +=
           '<p class="info-note" style="margin-top:8px;">Source: Energy Performance of Buildings Register (Open Government Licence).</p>';

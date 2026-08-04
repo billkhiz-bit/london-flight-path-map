@@ -558,7 +558,15 @@ When correctly populated, the v3.1 raster tier replaces Haversine with direct sa
 - LRU-cached at the Lambda level for repeat queries within a container
 
 **The dB → quiet curve (v3.6, re-derived 2026-08-04).** A continuous linear ramp between two
-published thresholds, replacing the six-value band table §4.1 documents for boroughs:
+published thresholds, replacing the six-value band table §4.1 documents for boroughs.
+
+> **`METHODOLOGY_VERSION` is still `3.5`, and that is correct.** "v3.6" names the curve, not the
+> live methodology. The raster tier is quarantined, so **no request reaches this function** and no
+> published score has changed; the version bumps to 3.6 on the deploy that unquarantines the tier,
+> not before. Same reasoning as the 2026-08-03 quarantine entry, which also changed which
+> documented tier answers without moving any weight, threshold or formula. Stated explicitly
+> because a version that disagrees across surfaces is finding **#23** of the 2026-08-03 audit, and
+> staging a curve under a version number is exactly how that starts.
 
 | | dB Lden | Quiet | Source of the anchor |
 |---|---|---|---|

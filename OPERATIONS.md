@@ -304,6 +304,97 @@ storage:
 Old tokens are not explicitly revoked by the rotation — MHCLG's UI just
 issues a new one and silently expires the old one.
 
+### 3.7 — Migrate CI from static keys to GitHub OIDC — **OPEN, prepared 2026-08-04**
+
+**Status:** the outstanding security remediation from audit finding A-0803-12.
+`SECURITY.md` once claimed CI already used OIDC; it does not. Both deploy
+workflows authenticate with `secrets.AWS_ACCESS_KEY_ID` /
+`AWS_SECRET_ACCESS_KEY`, which are long-lived credentials sitting in GitHub.
+
+**Do the AWS side FIRST. Do not edit the workflows before the role exists** —
+they would fail on the next `workflow_dispatch` with an opaque credentials
+error. Both are manual-dispatch only, so nothing breaks on a push, but a
+broken deploy path discovered mid-incident is the worst time to find out.
+
+**Step 1 — create the OIDC identity provider** (IAM → Identity providers →
+Add provider → OpenID Connect):
+
+- Provider URL: `https://token.actions.githubusercontent.com`
+- Audience: `sts.amazonaws.com`
+
+One provider serves every repo in the account; skip if it already exists.
+
+**Step 2 — create the role.** Name it `flightmap-github-deploy`. Trust policy,
+scoped to this repo *and* the `production` environment so a fork or an
+unrelated branch cannot assume it:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::072674217857:oidc-provider/token.actions.githubusercontent.com"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {
+        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+        "token.actions.githubusercontent.com:sub": "repo:billkhiz-bit/london-flight-path-map:environment:production"
+      }
+    }
+  }]
+}
+```
+
+**The `sub` condition is the whole security value.** With `StringLike` and a
+`*`, any branch or PR from a fork can assume the role. Use `StringEquals`
+against the exact `environment:production` subject, matching the `environment:
+production` already declared in both workflow files.
+
+**Step 3 — attach permissions.** Simplest correct move is to attach the same
+`FlightMapDeployPolicy` the user carries today, so the migration changes *how*
+CI authenticates without changing *what* it can do. Tightening the policy is a
+separate change and should not ride along with this one.
+
+**Step 4 — edit both workflows** (`.github/workflows/deploy-frontend.yml` and
+`deploy-backend.yml`). Add the `permissions` block at job level and swap the
+credential inputs:
+
+```yaml
+    permissions:
+      id-token: write     # required to mint the OIDC token
+      contents: read      # default is dropped once permissions is declared
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::072674217857:role/flightmap-github-deploy
+          aws-region: eu-west-2
+```
+
+Delete the `aws-access-key-id` and `aws-secret-access-key` lines. **`contents:
+read` is not optional** — declaring `permissions` at all replaces the default
+set, so omitting it breaks `actions/checkout`.
+
+**Step 5 — verify before deleting anything.** Dispatch *Deploy Frontend*
+manually and confirm it succeeds. Only then delete the `AWS_ACCESS_KEY_ID` /
+`AWS_SECRET_ACCESS_KEY` repository secrets and deactivate the access key in
+IAM.
+
+**Rollback:** the access key stays valid until explicitly deactivated, so
+reverting the two workflow files restores the previous path. This is why
+Step 5 deletes the secrets last rather than first.
+
+**Verification the migration actually landed:**
+
+```bash
+grep -rn "AWS_SECRET_ACCESS_KEY\|role-to-assume" .github/workflows/
+```
+
+Expected afterwards: `role-to-assume` in both files, `AWS_SECRET_ACCESS_KEY`
+in neither. `SECURITY.md`'s CI bullet must be updated in the same commit —
+that bullet describing a state that did not exist is what the finding was.
+
 ---
 
 ## 4. Disaster Recovery
