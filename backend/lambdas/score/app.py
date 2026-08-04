@@ -2075,23 +2075,42 @@ def _get_ddb_client():
 # — Heathrow 0.0, Hounslow 1.0, Finsbury Park 6.0 — and is what the consumer
 # site has computed all along, so this also closes the site/API divergence.
 #
-# WHAT WOULD LET THIS BE LIFTED. Two things, and the nodata fix alone is not
-# enough:
-#   1. Rows reloaded (or read through the _RASTER_NODATA_FILL guard) so uncovered
-#      postcodes fall through to Haversine rather than posing as raster hits.
-#      Done in code; the table itself still holds the old fills.
-#   2. lden_db_to_quiet's bands revisited. TW61AP has a GENUINE 58.2 dB sample,
-#      and the bands map that to quiet 7.5 — an airport scoring "fairly quiet".
-#      WHO's 2018 environmental noise guideline for aircraft is 45 dB Lden, well
-#      below this scale's 55 dB top band, so the mapping is the open question,
-#      not the data.
-# scripts/check_score_sanity.py asserts an airport scores <= 3.0, so lifting the
-# flag prematurely fails that check rather than silently shipping.
+# WHAT WOULD LET THIS BE LIFTED. This list said "two things" until 2026-08-04.
+# It was wrong: there is a third, and it is the one now blocking.
+#   1. DONE (code). Rows reloaded, or read through the plausibility guard, so
+#      uncovered postcodes fall through to Haversine rather than posing as
+#      raster hits. The table itself still holds the old 35.0 fills; the
+#      read-side guard neutralises them, so a reload is tidiness, not a gate.
+#   2. DONE 2026-08-04. lden_db_to_quiet's bands re-derived — see that function.
+#      The old table scored TW6 1AP's genuine 58.2 dB sample at 7.5, an airport
+#      reading as "fairly quiet"; it now returns 2.7, inside the <= 3.0 that
+#      scripts/check_score_sanity.py enforces.
+#   3. OPEN, and newly identified. The consumer site computes quiet from
+#      Haversine geometry in index.html (~line 5985) and has no access to the
+#      raster. Lifting this flag therefore makes the API answer from the raster
+#      for the 10.4% of London postcodes DEFRA covers while the site keeps
+#      answering from geometry — re-opening, for 18,862 postcodes, exactly the
+#      site/API divergence closed on 2026-08-03.
+#
+#      SiteApiGeometryParityTests will NOT catch this. It compares FLIGHT_PATHS
+#      waypoints, and those would still match; the API would simply stop
+#      consulting them wherever a raster sample exists. Both halves stay
+#      self-consistent, which is the same shape as the three-month defect that
+#      test was written for.
+#
+#      Resolving it means picking one: serve the site's quiet from /v1/score,
+#      ship the raster samples to the client, or accept and document the
+#      divergence. That is a product decision, not a data one.
 RASTER_TIER_QUARANTINED = True
 
 # The legacy nodata fill written by scripts/load_defra_raster.py before
 # 2026-08-03. Not a measurement — the raster's minimum real value is 40.0 dB.
 _RASTER_NODATA_FILL = 35.0
+
+# The DEFRA London raster's true minimum, measured off the GeoTIFF on
+# 2026-08-04 (min 40.0, max 88.9, 2,359,172 valid cells). Anything below this
+# is a sentinel or a corrupt row, never a reading.
+_RASTER_MIN_PLAUSIBLE_DB = 40.0
 
 
 def _lookup_lden_raster(postcode_clean):
@@ -2172,28 +2191,118 @@ def _lookup_lden_raster(postcode_clean):
     # genuine sample and no true reading is discarded here. The loader no longer
     # writes it, so this only matters until the table is reloaded — but 89.5% of
     # London currently holds this value, so it matters a lot until then.
-    if value == _RASTER_NODATA_FILL:
+    #
+    # Widened 2026-08-04 from `== 35.0` to a plausibility floor. Confirmed by
+    # reading the GeoTIFF directly rather than from the docs: min 40.0, max 88.9
+    # over 2,359,172 valid cells. The equality test only caught the one fill we
+    # happened to have written; any future loader writing a different sentinel
+    # (0, -1, -9999) would have sailed through and, under the pre-v3.6 bands,
+    # scored a perfect 10.0. That is this project's most-repeated defect —
+    # absence of measurement rendered as a favourable measurement, logged four
+    # times on 2026-08-03 alone — so the guard is now a range, not a value.
+    # Logged, not silent: an unexpected sentinel should surface, and the
+    # [SCORE_RASTER_DEGRADED] prefix is what the tier's alarms already key on.
+    # REVISIT when the raster vintage rolls: if DEFRA Round 5 maps below 40 dB,
+    # this floor would discard genuine quiet samples.
+    if value < _RASTER_MIN_PLAUSIBLE_DB:
+        if value != _RASTER_NODATA_FILL:
+            logger.warning(
+                '[SCORE_RASTER_DEGRADED] postcode=%s err=implausible-lden value=%s',
+                postcode_clean, value)
         return None
     _raster_cache_put(postcode_clean, value)
     return value
 
 
+# Ceiling: WHO Environmental Noise Guidelines for the European Region (2018)
+# strongly recommends aircraft noise below 45 dB Lden. At or under it, 10.0.
+# This replaces DEFRA's 55 dB, which is a *reporting* threshold under END
+# 2002/49/EC (the level above which member states must publish strategic maps)
+# and was never a health claim.
+_QUIET_CEILING_DB = 45.0
+
+# Floor: the UK's 57 dB LAeq,16h "onset of significant community annoyance"
+# contour, re-expressed in Lden. Lden carries +5 dB evening and +10 dB night
+# weighting, which puts 57 LAeq,16h at roughly 63 Lden for typical Heathrow
+# operations. At or above it, 0.0.
+_QUIET_FLOOR_DB = 63.0
+
+
 def lden_db_to_quiet(lden):
-    """Convert dB Lden to a 0-10 quiet score using the same band mapping
-    documented in METHODOLOGY.md §4.1. Used by v3.1 raster path."""
+    """Convert dB Lden to a 0-10 quiet score. Used by the v3.1 raster path.
+
+    THE BANDS BELOW ARE THE REASON THE RASTER TIER IS QUARANTINED, and they
+    are wrong for a reason neither AUDIT_REPORT.md nor BAND_MAPPING_ANALYSIS.md
+    stated correctly. Both documents claimed the 40-55 dB range is unmeasured:
+    the audit as "every DEFRA value is above 55 dB", the analysis as "there is
+    no 45-55 dB contour to score against". Measured against the GeoTIFF at all
+    180,983 live London postcode centroids on 2026-08-04, both are false.
+
+    What the raster actually holds (data/defra_lden_2022.tif, 10 m, EPSG:27700):
+
+      covered London postcodes   18,862 (10.4%; the rest are nodata -> Haversine)
+      range at those postcodes   40.0 - 73.0 dB, median 51.0
+      scored 10.0 by this table  15,173 = 80.4% OF EVERY MEASUREMENT WE HOLD
+      of that bucket, > WHO 45   13,166 = 86.8%
+
+    DEFRA's *published reporting bands* begin at 55 dB. The *raster* does not;
+    it begins at 40.0. This table was derived for the former and applied to the
+    latter, so its top bucket spans 40.0-55.0 dB - about 15 dB, roughly a
+    tripling of perceived loudness - and flattens all of it to a perfect 10.0.
+    That is the same "absence of measurement rendered as a favourable
+    measurement" defect logged four times on 2026-08-03, except here the
+    measurement is present and is being discarded.
+
+    Anchors to calibrate against (all verified samples, not estimates):
+
+      TW6 1AP  Heathrow Airport        58.20 dB   <- check_score_sanity.py
+                                                     requires quiet <= 3.0
+      TW3 4DX  Hounslow, under approach 59.29 dB
+      TW14 9QP Bedfont, runway threshold 72.97 dB  <- loudest in London
+      TW9 1AA  Kew                      55.96 dB
+      SW13 9AA Barnes                   52.46 dB
+
+    Nothing in London reaches 75 dB, so a >= 75 band is unreachable here and
+    the 70-75 band catches 4 postcodes.
+
+    Evidence for where the ceiling belongs: WHO's 2018 Environmental Noise
+    Guidelines strongly recommend aircraft Lden below 45 dB. DEFRA's 55 dB is a
+    *reporting* threshold under END 2002/49/EC - the level above which member
+    states must publish maps - not a health threshold. Conflating the two is
+    what put the ceiling at 55.
+
+    Caution on the loud end: the UK's familiar 57 dB "onset of significant
+    community annoyance" contour is LAeq,16h, NOT Lden. Lden adds +5 dB evening
+    and +10 dB night weighting, so 57 dB LAeq,16h is roughly 63 dB Lden for
+    typical Heathrow operations. Do not read a 57 here as that 57.
+
+    RESOLVED 2026-08-04, v3.6: a continuous ramp between two cited thresholds,
+    replacing the six-value ladder. Continuous because resolution is the whole
+    reason this tier exists - re-banding a 33 dB continuous measurement into six
+    buckets discards the precision we sampled the raster to obtain.
+
+    Why the floor is 63 and not a rounder number: the gate in
+    scripts/check_score_sanity.py requires Heathrow (58.20 dB) to score <= 3.0.
+    Anchoring 10.0 at WHO's 45 dB then forces any linear ramp to reach 0.0 by
+    ~64 dB. 63 is therefore not a free parameter - it is the only point in this
+    family that is both defensible and compatible with the gate.
+
+    KNOWN LIMITATION, disclosed in METHODOLOGY.md §4.6: everything at or above
+    63 dB saturates at 0.0, so the loudest 334 covered postcodes (1.8% of
+    covered, 0.18% of London) lose discrimination between each other - Bedfont
+    at 72.97 dB and a postcode at 63.1 dB both read 0.0. This is the mirror of
+    the defect being fixed, at the other end and affecting 1.8% rather than
+    80.4%, and every one of them is already in the worst category. Accepted
+    rather than hidden: erring loud is the safe direction for a noise product.
+    """
     if lden is None:
         return None
-    if lden < 55:
+    if lden <= _QUIET_CEILING_DB:
         return 10.0
-    if lden < 60:
-        return 7.5
-    if lden < 65:
-        return 5.0
-    if lden < 70:
-        return 3.0
-    if lden < 75:
-        return 1.5
-    return 0.0
+    if lden >= _QUIET_FLOOR_DB:
+        return 0.0
+    span = _QUIET_FLOOR_DB - _QUIET_CEILING_DB
+    return round(10.0 * (_QUIET_FLOOR_DB - lden) / span, 1)
 
 
 _RASTER_UNKNOWN = object()

@@ -145,6 +145,31 @@ which covered the *unmeasured* band below 55. Erring quiet is the one direction 
 noise product cannot afford, so the quarantine stands until the 55+ bands are
 re-derived. That is now a precisely scoped decision rather than a vague blocker.
 
+> **Correction, 2026-08-04.** *"Every value DEFRA publishes is ≥55 dB"* is **false**, and so is
+> the framing that follows from it. The GeoTIFF was read directly rather than inferred from the
+> docs: **2,359,172 valid cells, 40.0–88.9 dB**; at London's live postcode centroids, **40.0–73.0
+> dB with a median of 51.0**, and only **19.6% of covered postcodes reach 55 dB at all**.
+>
+> The defect was consequently understated. It was not that airport-adjacent postcodes get 7.5 —
+> it was that **80.4% of every raster measurement in London (15,173 of 18,862 postcodes) collapsed
+> onto a flat 10.0**, because the band table's top bucket spans 40.0–55.0 dB. **86.8% of that
+> bucket sits above WHO's 45 dB guideline.**
+>
+> Root cause: §4.1's table was derived for DEFRA's *published reporting bands*, which do begin at
+> 55, and then reused on the *raster*, which begins at 40. A unit mismatch, not a disagreement
+> about health evidence.
+>
+> **Resolved.** `lden_db_to_quiet` is now a continuous ramp — 10.0 at WHO's 45 dB, 0.0 at ~63 dB
+> Lden (the UK's 57 dB LAeq,16h annoyance contour re-expressed) — giving 101 distinct values
+> instead of 5 and scoring Heathrow **2.7**. See `METHODOLOGY.md` §4.6.
+>
+> **The quarantine still stands, for a third reason this report did not list:** the consumer site
+> scores quiet from Haversine in `index.html` and cannot read the raster, so lifting the flag
+> re-opens the site/API divergence across 18,862 postcodes — and
+> `SiteApiGeometryParityTests` would not catch it, because the geometry it compares would still
+> match. That is a product decision (serve the site from `/v1/score`, ship samples to the client,
+> or accept the divergence), not a data one.
+
 ### Closed 2026-08-03, fifth pass - the last high finding
 
 | ID | Finding | State |

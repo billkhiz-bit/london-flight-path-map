@@ -1,5 +1,35 @@
 # Quiet band mapping: WHO 45 dB against DEFRA's 55 dB floor
 
+> ## ⚠ PARTIALLY SUPERSEDED, 2026-08-04
+>
+> **This document's central factual premise is false for the raster tier, and its
+> recommendation ("do not change any score") was acted on and has now been reversed there.**
+>
+> §1 and §4 assert that *"Re-banding cannot fix this, because the data does not exist"* and
+> *"There is no 45-55 dB contour to score against"*. That was inferred from DEFRA's **published
+> reporting bands**, which do begin at 55 dB. It was never checked against the **raster**, which
+> does not.
+>
+> `data/defra_lden_2022.tif` was read directly on 2026-08-04: **2,359,172 valid cells spanning
+> 40.0 to 88.9 dB**; at London's live postcode centroids, **40.0 to 73.0 dB, median 51.0**.
+> **13,166 London postcodes are measured inside the 45-55 dB range this document calls
+> unmeasurable.** §5's claim that the mapping question "does not gate the raster quarantine" was
+> therefore also wrong: the bands put **80.4% of every raster measurement on a flat 10.0**, which
+> is precisely a gate.
+>
+> **What still stands:** everything about the **borough** tier. DEFRA's published *borough band
+> assignments* genuinely do not resolve below 55 dB, so `IMPACT_TO_QUIET` and §4.1's table remain
+> unchanged, and the relabelling recommended in §5 was right and was applied. The error was
+> generalising a true statement about the borough tier onto the raster tier.
+>
+> **What replaced it:** the continuous v3.6 curve in `METHODOLOGY.md` §4.6, anchored at WHO's
+> 45 dB and the UK's 57 dB LAeq,16h contour re-expressed as ~63 dB Lden.
+>
+> **The transferable lesson** is the one §2 already states and this document then failed to
+> apply to itself: *"the repo asserting a number is not evidence that the number is right"*. The
+> 55 dB floor was taken from `METHODOLOGY.md` rather than from the GeoTIFF sitting in `data/`.
+> Three claims of that shape had already failed that week; this was the fourth.
+
 **Date:** 2026-08-03 · **Status:** analysis, no code change recommended beyond a documentation correction
 **Question:** METHODOLOGY §4.1 awards a perfect **10.0** to everything below **55 dB Lden**, while citing a WHO guideline of **45 dB**. Is the mapping wrong?
 

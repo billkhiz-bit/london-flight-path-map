@@ -128,6 +128,22 @@ The score values are spaced to reflect the inverse-square-ish relationship betwe
 > guideline; whether it is also the aircraft annoyance-onset threshold was not established and
 > should be checked before it is relied on.
 
+> **Correction to the correction, 2026-08-04. The table above now describes the borough tier
+> only.** The 2026-08-03 note generalised one true statement into a false one. "The 45-55 dB range
+> is not measured by this source at all" holds for **DEFRA's published borough band assignments**,
+> which genuinely do not resolve below 55 — that part stands, and the borough mapping is unchanged.
+>
+> It does **not** hold for the **raster**. `data/defra_lden_2022.tif` was read directly on
+> 2026-08-04: **2,359,172 valid cells spanning 40.0 to 88.9 dB**, and at London's live postcode
+> centroids **40.0 to 73.0 dB, median 51.0**. There is no missing 45-55 dB range there —
+> **13,166 London postcodes are measured inside it**. Applying this table to those samples put
+> **80.4% of every measurement on a flat 10.0**, flattening a ~15 dB spread that is roughly a
+> tripling of perceived loudness.
+>
+> The raster tier therefore no longer uses this table. It uses the continuous v3.6 curve in
+> **§4.6**. Two rows here remain unreachable from raster data regardless: nothing in London reaches
+> 75 dB, and only four postcodes reach 70.
+
 ### 4.2 Affordability, min-max scaled across the cohort
 
 Affordability is computed by min-max scaling the borough's average sold price against the cohort min/max:
@@ -421,16 +437,35 @@ The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode'
 > divergence in which the consumer site (always Haversine) published different
 > numbers from the API for the same postcode.
 >
-> **What would let the tier return.** Two things, and the first alone is not enough:
-> (1) uncovered postcodes must fall through to Haversine instead of posing as
-> raster hits — fixed in the loader and guarded in the Lambda, though the stored
-> rows still hold the old fill; and (2) the §4.1 band mapping needs revisiting,
-> because TW6 1AP has a **genuine** 58.2 dB reading that those bands score as
-> quiet 7.5, i.e. an airport rated "fairly quiet". **WHO's 2018 guideline for
-> aircraft noise is 45 dB Lden**, well below this scale's 55 dB top band, so the
-> open question is the mapping rather than the data. `scripts/check_score_sanity.py`
-> asserts an airport scores ≤ 3.0, so lifting the flag early fails a check instead
-> of shipping quietly.
+> **What would let the tier return.** This said "two things" until 2026-08-04. It was
+> wrong — there is a third, and it is the one now blocking.
+>
+> 1. **Done (code).** Uncovered postcodes must fall through to Haversine instead of
+>    posing as raster hits. Guarded in the Lambda; the stored rows still hold the old
+>    35.0 fill, but the read-side guard neutralises it, so a reload is tidiness rather
+>    than a gate. The guard was widened on 2026-08-04 from an equality test on 35.0 to
+>    a plausibility floor at 40.0 dB (the raster's true minimum), so a *different*
+>    sentinel from some future loader cannot slip through the way 35.0 once did.
+> 2. **Done 2026-08-04.** The band mapping is re-derived — see **§4.6**, which the
+>    raster tier now uses instead of §4.1's borough table. TW6 1AP's genuine 58.2 dB
+>    reading scored 7.5 under the old bands (an airport rated "fairly quiet") and
+>    scores **2.7** under the v3.6 curve, inside the ≤ 3.0 that
+>    `scripts/check_score_sanity.py` enforces.
+> 3. **OPEN — the actual blocker.** The consumer site computes quiet from Haversine
+>    geometry in `index.html` and has no access to the raster. Lifting the flag would
+>    make the API answer from the raster for the 10.4% of London postcodes DEFRA
+>    covers, while the site keeps answering from geometry — **re-opening, for 18,862
+>    postcodes, the very site/API divergence this quarantine closed.**
+>
+>    The parity test will not catch it. `SiteApiGeometryParityTests` compares
+>    `FLIGHT_PATHS` waypoints, which would still match; the API would simply stop
+>    consulting them wherever a raster sample exists. Both halves stay self-consistent
+>    — the same shape as the three-month divergence that test was written for.
+>
+>    Resolving it means choosing one of: serve the site's quiet from `/v1/score`, ship
+>    the raster samples to the client, or accept and document the divergence. **That is
+>    a product decision, not a data one**, and it is the last thing standing between
+>    this tier and production.
 
 **NYC ZIP centroids (v3.1, shipped).** NYC ZIPs now have static centroid lat/lon for ~110 ZIPs (sourced from the consumer site's `NYC_AREA_MAP`). This means NYC ZIP queries now use the v3.0 Haversine layer too, with the JFK/LGA/EWR/TEB airports and 8 NYC flight-path corridors. Within-borough variation is meaningful: 11201 (DUMBO) returns quiet=8 (north Brooklyn, away from JFK approach), while 11375 (Forest Hills) returns quiet=2 (under JFK / LGA traffic).
 
@@ -519,8 +554,44 @@ When correctly populated, the v3.1 raster tier replaces Haversine with direct sa
 **Architecture:**
 - DynamoDB table `london-flight-map-noise-raster` (deployed and loaded; **tier bypassed since 2026-08-03 — the samples are correct but cover only ~10% of London, see the §4.5 warning. The contents are not invalid; an earlier revision of this line said they were**)
 - Schema: `postcode` (string, hash key) → `ldenDb` (number, dB Lden value)
-- Score Lambda reads with `ProjectionExpression='ldenDb'` and converts dB to quiet score using the same band mapping documented in §4.1
+- Score Lambda reads with `ProjectionExpression='ldenDb'` and converts dB to quiet score using the **v3.6 continuous curve below** (until 2026-08-04 it reused §4.1's borough band table, which is what made this tier unusable)
 - LRU-cached at the Lambda level for repeat queries within a container
+
+**The dB → quiet curve (v3.6, re-derived 2026-08-04).** A continuous linear ramp between two
+published thresholds, replacing the six-value band table §4.1 documents for boroughs:
+
+| | dB Lden | Quiet | Source of the anchor |
+|---|---|---|---|
+| **Ceiling** | ≤ 45 | 10.0 | WHO Environmental Noise Guidelines (2018): aircraft Lden below 45 dB for residential areas, [Reference 2, §19](#19-references) |
+| **Ramp** | 45 → 63 | 10.0 → 0.0 | Linear in dB, which is already perceptually reasonable — 10 dB ≈ a doubling of loudness |
+| **Floor** | ≥ 63 | 0.0 | The UK's 57 dB LAeq,16h "onset of significant community annoyance" contour, re-expressed in Lden |
+
+**Why 63 is not a free parameter.** Anchoring 10.0 at WHO's 45 dB, and requiring an airport to
+score ≤ 3.0 (the invariant `scripts/check_score_sanity.py` enforces against the live API), forces
+any linear ramp to reach 0.0 by ~64 dB. 63 is the point in that family with an independent
+citation rather than one chosen to make a test pass.
+
+**On the 57 dB figure.** It is `LAeq,16h`, **not** Lden. Lden carries +5 dB evening and +10 dB
+night weighting, which puts 57 LAeq,16h at roughly 63 Lden for typical Heathrow operations. The
+two must not be read as the same number.
+
+**What changed, measured over all 18,862 covered London postcodes:**
+
+| | old band table | v3.6 curve |
+|---|---|---|
+| Scored a flat 10.0 | 15,173 (**80.4%**) | 2,007 (**10.6%**) |
+| Distinct values produced | 5 | 101 |
+| Median | 10.0 | 6.7 |
+| Heathrow `TW6 1AP` (58.20 dB) | 7.5 | **2.7** |
+| Hounslow approach `TW3 4DX` (59.29 dB) | 7.5 | **2.1** |
+| Bedfont `TW14 9QP` (72.97 dB, loudest) | 1.5 | **0.0** |
+
+**Declared limitation — saturation at the loud end.** Everything at or above 63 dB reads 0.0, so
+the loudest **348 covered postcodes (1.8% of covered, 0.18% of London)** cannot be told apart:
+Bedfont at 72.97 dB and a postcode at 63.1 dB both score 0.0. This is the mirror of the defect it
+replaces — at the other end, affecting 1.8% rather than 80.4%, and only among postcodes already
+in the worst category. Erring loud is the safe direction for a noise product, so it is accepted
+and disclosed rather than tuned away.
 
 **Population (one-time batch):**
 - The `scripts/load_defra_raster.py` script downloads the DEFRA GeoTIFF (~500 MB, free OGL) and the ONS NSPL postcode lat/lon table, then samples the raster at every UK postcode centroid and writes (postcode, ldenDb) tuples to DynamoDB.

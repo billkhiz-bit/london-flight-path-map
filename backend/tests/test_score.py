@@ -1698,6 +1698,170 @@ class RasterQuarantineTests(unittest.TestCase):
                 self.assertEqual(credits_ons_in_sources, served)
 
 
+class LdenBandMappingTests(unittest.TestCase):
+    """v3.6 dB → quiet curve, re-derived 2026-08-04.
+
+    The bands this replaces were not merely mis-tuned. They were derived for
+    DEFRA's *published reporting bands*, which begin at 55 dB, and then applied
+    to the *raster*, which begins at 40.0. Two repo documents recorded the
+    premise backwards — AUDIT_REPORT.md as "every DEFRA value is above 55 dB",
+    BAND_MAPPING_ANALYSIS.md as "there is no 45-55 dB contour to score against"
+    — and both are refuted by the GeoTIFF itself.
+
+    Measured over all 180,983 live London postcode centroids on 2026-08-04:
+    18,862 covered, spanning 40.0-73.0 dB, of which the old table scored
+    15,173 (80.4%) at a flat 10.0. These tests exist so that cannot recur
+    silently.
+    """
+
+    # Real samples, read off data/defra_lden_2022.tif. Not fixtures.
+    HEATHROW = 58.20        # TW6 1AP
+    HOUNSLOW_APPROACH = 59.29  # TW3 4DX
+    BEDFONT_LOUDEST = 72.97    # TW14 9QP, loudest covered postcode in London
+    KEW = 55.96             # TW9 1AA
+    BARNES = 52.46          # SW13 9AA
+    RASTER_MIN = 40.0       # the raster's true floor
+
+    def test_who_guideline_anchors_the_ceiling(self):
+        """10.0 means "at or below WHO's 45 dB aircraft guideline".
+
+        Not "below DEFRA's 55 dB reporting threshold", which is a statement
+        about which maps must be published, not about anyone's health.
+        """
+        self.assertEqual(app.lden_db_to_quiet(45.0), 10.0)
+        self.assertEqual(app.lden_db_to_quiet(self.RASTER_MIN), 10.0)
+        self.assertLess(app.lden_db_to_quiet(45.1), 10.0)
+
+    def test_none_is_preserved_as_no_sample(self):
+        """None must survive: the caller reads it as "no raster sample", which
+        is what routes an uncovered postcode down to the Haversine tier."""
+        self.assertIsNone(app.lden_db_to_quiet(None))
+
+    def test_airport_is_not_scored_quiet(self):
+        """The invariant scripts/check_score_sanity.py enforces against the
+        live API, asserted here where it is cheap to run.
+
+        The old table returned 7.5 for this exact value — an airport reading
+        as "fairly quiet" — and that is the assertion the quarantine exists
+        to hold until it passes.
+        """
+        self.assertLessEqual(app.lden_db_to_quiet(self.HEATHROW), 3.0)
+        self.assertLessEqual(app.lden_db_to_quiet(self.HOUNSLOW_APPROACH), 3.0)
+        self.assertEqual(app.lden_db_to_quiet(self.BEDFONT_LOUDEST), 0.0)
+
+    def test_curve_does_not_collapse_the_measured_range(self):
+        """The 40-55 dB range must produce many values, not one.
+
+        This is the defect in one assertion. Those 15,173 postcodes carry
+        genuine measurements spanning ~15 dB — roughly a tripling of perceived
+        loudness — and the old table handed every one of them a flat 10.0.
+        A tier that cannot separate places is not measuring one.
+        """
+        values = {app.lden_db_to_quiet(db) for db in
+                  [40.0, 43.0, 46.0, 48.0, 50.0, 52.0, 54.0]}
+        self.assertGreaterEqual(
+            len(values), 5,
+            f'the 40-55 dB range collapsed to {len(values)} distinct value(s): '
+            f'{sorted(values)}. This is the 2026-08-03 defect returning.')
+
+    def test_curve_is_monotonic_non_increasing(self):
+        """Louder can never score quieter. Guards a mis-ordered band edge."""
+        prev = 10.0
+        db = 40.0
+        while db <= 90.0:
+            cur = app.lden_db_to_quiet(db)
+            self.assertLessEqual(
+                cur, prev, f'quiet rose from {prev} to {cur} at {db} dB')
+            prev = cur
+            db += 0.5
+
+    def test_named_places_keep_their_relative_order(self):
+        """Ordering across real London places, quietest to loudest."""
+        ordered = [self.BARNES, self.KEW, self.HEATHROW,
+                   self.HOUNSLOW_APPROACH, self.BEDFONT_LOUDEST]
+        scores = [app.lden_db_to_quiet(d) for d in ordered]
+        self.assertEqual(scores, sorted(scores, reverse=True),
+                         f'Barnes→Bedfont did not descend: {scores}')
+
+    def test_saturation_at_the_loud_end_is_bounded(self):
+        """The known limitation, pinned so it cannot widen unnoticed.
+
+        Everything at or above the 63 dB floor reads 0.0, which costs
+        discrimination among the loudest 1.8% of covered postcodes. Accepted
+        and disclosed in METHODOLOGY.md §4.6 — but if a future edit drops the
+        floor much lower, that 1.8% grows and this test should be the thing
+        that objects.
+        """
+        self.assertEqual(app.lden_db_to_quiet(63.0), 0.0)
+        self.assertGreater(app.lden_db_to_quiet(62.0), 0.0,
+                           'saturation reached below the documented 63 dB floor')
+
+
+class RasterPlausibilityGuardTests(unittest.TestCase):
+    """The read-side guard widened 2026-08-04 from `== 35.0` to a range.
+
+    Equality only ever caught the one sentinel we happened to have written.
+    Any other (0, -1, -9999) would have passed through and, under the old
+    bands, scored a perfect 10.0 — this project's most-repeated defect,
+    absence of measurement rendered as a favourable measurement.
+    """
+
+    def setUp(self):
+        self._raster = app.NOISE_RASTER_TABLE
+        self._client = app._DDB_CLIENT
+        self._cache = (app._raster_cache_get, app._raster_cache_put)
+        app._raster_cache_get, app._raster_cache_put = app._make_lru(16)
+
+    def tearDown(self):
+        app.NOISE_RASTER_TABLE = self._raster
+        app._DDB_CLIENT = self._client
+        app._raster_cache_get, app._raster_cache_put = self._cache
+
+    def _serve_raster(self, lden):
+        class _Stub:
+            def get_item(self, **kw):
+                return {'Item': {'ldenDb': {'N': str(lden)}}}
+
+        app._DDB_CLIENT = _Stub()
+        app.NOISE_RASTER_TABLE = 'london-flight-map-noise-raster'
+
+    def test_sentinels_below_the_raster_floor_are_misses(self):
+        """Asserted with the quarantine lifted — otherwise every case passes
+        for the wrong reason, since the short-circuit returns None regardless
+        of what the table holds."""
+        for sentinel in (35.0, 0.0, -1.0, -9999.0, 39.9):
+            with self.subTest(sentinel=sentinel):
+                self._serve_raster(sentinel)
+                with patch.object(app, 'RASTER_TIER_QUARANTINED', False):
+                    self.assertIsNone(
+                        app._lookup_lden_raster(f'X{sentinel}'),
+                        f'{sentinel} was served as a genuine Lden reading')
+
+    def test_the_rasters_true_minimum_is_still_a_valid_reading(self):
+        """40.0 is a real DEFRA value, not a sentinel. Widening the guard must
+        not have swallowed the quietest genuine samples."""
+        self._serve_raster(40.0)
+        with patch.object(app, 'RASTER_TIER_QUARANTINED', False):
+            self.assertEqual(app._lookup_lden_raster('TESTMIN'), 40.0)
+
+    def test_unexpected_sentinel_is_logged_but_known_fill_is_not(self):
+        """An unexpected value should surface; the 35.0 we already know about
+        should not spam the alarm channel on 89.5% of London's postcodes."""
+        self._serve_raster(-9999.0)
+        with patch.object(app, 'RASTER_TIER_QUARANTINED', False):
+            with patch.object(app, 'logger') as log:
+                app._lookup_lden_raster('WEIRD1')
+                self.assertTrue(log.warning.called,
+                                'implausible Lden passed without a warning')
+
+        self._serve_raster(35.0)
+        with patch.object(app, 'RASTER_TIER_QUARANTINED', False):
+            with patch.object(app, 'logger') as log:
+                app._lookup_lden_raster('KNOWN1')
+                self.assertFalse(log.warning.called,
+                                 'the known 35.0 fill should not alarm')
+
+
 class CoreCitiesAuditTests(unittest.TestCase):
     """Regressions for the 2026-07-31 cross-city audit findings.
 
