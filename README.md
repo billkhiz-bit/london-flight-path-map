@@ -100,30 +100,41 @@ Response shape (single):
 
 ```json
 {
-  "score": 7.7,
-  "components": { "quiet": 10.0, "afford": 7.5, "growth": 5.2, "live": 7.1 },
+  "score": 6.4,
+  "components": { "quiet": 5.0, "afford": 7.2, "growth": 7.8, "live": 7.2 },
   "context": {
-    "avgPriceGbp": 590000,
-    "priceTrendPct": 3.0,
+    "avgPriceGbp": 608000,
+    "priceTrendPct": 2.8,
     "noiseImpactBand": "low",
-    "quietResolution": "postcode"
+    "quietResolution": "postcode",
+    "liveResolution": "measured"
   },
   "location": { "city": "london", "borough": "Hackney", "postcode": "N1 7SX" },
   "persona": "balanced",
   "weights": { "quiet": 0.38, "afford": 0.31, "growth": 0.00, "live": 0.31 },
-  "methodologyVersion": "3.3",
+  "methodologyVersion": "3.5",
   "apiVersion": "1.0",
-  "sources": [ "EPC data: MHCLG, OGL v3.0", "..." ],
+  "sources": [ "EPC data: MHCLG, Open Government Licence v3.0", "..." ],
   "sourceBreakdown": {
-    "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022), borough-aggregate Lden band",
-    "afford": "HM Land Registry Price Paid Data, borough cohort min-max scaling",
-    "growth": "HM Land Registry Price Paid Data, annualised price trend, cohort-relative",
-    "live": "ONS + Home Office + DfE + TfL + NHS, composite weighted"
+    "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 raster sample -> v3.0 Haversine to airports + flight-path geometry -> v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
+    "afford": "HM Land Registry House Price Index (HPI), borough cohort min-max scaling",
+    "growth": "HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative",
+    "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2022/23. Crime: ONS Crime in England and Wales, PFA data tables, Table C4. Transport and healthcare: curated tiers."
   }
 }
 ```
 
-Five named persona presets: `balanced`, `family`, `investor`, `firsttime`, `quietlife`. The `?weights=` parameter lets integrators apply their own preference profile.
+> **Captured from the live API on 2026-08-04, not hand-written.** The block above previously
+> carried `score: 7.7` with `methodologyVersion: "3.3"` and every component value stale, and its
+> `sourceBreakdown` credited **Home Office** for crime (re-sourced to ONS Table C4 in v3.5),
+> **NHS** for healthcare (curated tiers), and **Price Paid Data** for affordability and growth
+> where the engine uses **HPI** — while the table further down this same file already said HPI.
+> Re-capture it when the methodology version moves rather than editing values by hand.
+
+**Eight** named persona presets: `balanced`, `family`, `investor`, `firsttime`, `quietlife`,
+`renter`, `commuter`, `laterlife`. The `?weights=` parameter lets integrators apply their own
+preference profile instead. (This said "five" until 2026-08-04, omitting the last three — the
+same undercount that made the OpenAPI spec reject valid requests until it was corrected.)
 
 ## What the score measures
 
@@ -131,12 +142,14 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 
 | Component | Description | Anchored to |
 |---|---|---|
-| **Quiet** | Aviation + road noise impact | DEFRA Strategic Noise Mapping (Round 4, 2022) Lden bands; WHO Environmental Noise Guidelines (2018) health thresholds |
+| **Quiet** | **Aircraft noise only.** Road noise is a map overlay on the consumer site and is **not** a score input | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. **Live tier is Haversine to airports + flight-path geometry** — the direct raster tier is quarantined, see [METHODOLOGY §4.5](./METHODOLOGY.md) |
 | **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
 | **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
 | **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2022/23); ONS *Crime in England and Wales* PFA tables, Table C4; TfL PTAL approximation; curated healthcare tiers |
 
-The score is reproducible by hand: see [the worked example](./METHODOLOGY.md#6-worked-example), a step-by-step calculation for `SW11 1AA` that reproduces the live API exactly. It has twice fallen out of step with the engine (both on 2026-08-03, both recorded in situ rather than quietly amended), so treat a mismatch as a bug in this repo and report it.
+The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and the persona weights in §5.1, against the current data snapshot.
+
+> **Corrected 2026-08-04.** This paragraph said the [worked example](./METHODOLOGY.md#6-worked-example) "reproduces the live API exactly" and that a mismatch should be reported as a bug. **§6 of that document says the opposite** — it is explicitly retained as a **historical trace of v3.0** and "no longer matches the live API, and has not since v3.2", because of the v3.2 clamp, the v3.3 weighting change and the v3.4 dual-anchor growth formula. Anyone following the old instruction would have filed a bug against a discrepancy the methodology already documents. The example is still worth reading for the *method*; it is not a current-values check.
 
 ## Coverage
 

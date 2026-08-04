@@ -61,12 +61,28 @@ A request for a postcode outside the supported geography returns a 404 with a `s
 
 | Component | What it measures | Range |
 |---|---|---|
-| **Quiet** | Aviation + road noise impact | 0-10 (10 = quietest) |
+| **Quiet** | **Aircraft noise only** — see the note below | 0-10 (10 = quietest) |
 | **Affordability** | Average sold price relative to cohort | 0-10 (10 = cheapest in cohort) |
 | **Growth** | Recent price-trend signal | 0-10 (10 = fastest riser, 5 = flat market, 0 = steepest faller) |
 | **Liveability** | Schools, crime, transport, healthcare | 0-10 (10 = most liveable) |
 
 Each component is bounded in 0-10 with floating-point precision internally and one-decimal display precision in the API response.
+
+> **Correction, 2026-08-04: `quiet` measures aircraft noise only.** The row above read
+> *"Aviation + road noise impact"*, and `README.md` said the same. **There is no road-noise term
+> in the scoring engine** — `backend/lambdas/score/app.py` contains no road-noise code at all, and
+> §4.1/§4.5 describe only aircraft sources (DEFRA aircraft Lden, distance to airports,
+> flight-path geometry, heliports).
+>
+> The confusion has a real origin: DEFRA publishes aircraft **and** road contours, the loader
+> script documents both datasets, and the consumer site renders a **road-noise map overlay** as a
+> separate visual layer. None of that reaches the score. A buyer comparing this document against
+> a competitor's road-noise product would have been misled about what the number contains, which
+> matters more than a typical doc error because it is a claim about the headline component.
+>
+> Road noise remains a genuine candidate for a future version — the loader already documents the
+> logarithmic dB sum for combining the two rasters — but it is **not implemented**, and this
+> document will say so until it is.
 
 ## 4. Component formulas, anchored values
 
@@ -837,15 +853,35 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
-| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | Aviation + road noise contours for England | Open Government Licence v3.0 | 5-yearly (next: 2027) |
+| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England (the road dataset is published too and is used only for the consumer-site map overlay, never for the score — see §3) | Open Government Licence v3.0 | 5-yearly (next: 2027) |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **MHCLG Energy Performance Certificates** (new "Get energy performance of buildings data" service from 2026-05-30) | Per-property EPC bands | Open Government Licence v3.0 | Quarterly |
 | **TfL Open Data** | Transport accessibility, station and live line status | TfL Open Data terms, commercial use permitted with attribution | Real-time |
-| **NHS Service Search API** | GP, pharmacy, hospital availability | Provided by NHS Digital under public-sector terms | Real-time |
+| **OpenStreetMap, via the Overpass API** (`overpass-api.de`, FOSSGIS e.V.) | GP, pharmacy and hospital proximity for the `live` component | Data under **ODbL 1.0** (share-alike, *not* OGL) — attribution required. Service provided best-effort with no SLA | Continuous (community-maintained) |
 | **ONS** | Population estimates, boundary geometry | Open Government Licence v3.0 + OS Open Licence | Annual |
-| **Home Office crime statistics** | Borough-level crime rate (numerator); ONS provides denominator | Open Government Licence v3.0 | Monthly |
-| **Department for Education / Ofsted school ratings** | School quality categorisation | Open Government Licence v3.0 | Continuous |
+| **ONS, *Crime in England and Wales*, Police Force Area data tables, Table C4** | Borough-level offence rate per 1,000 residents, on mid-2024 population | Open Government Licence v3.0 | Quarterly release; year ending March 2026 in use |
+| **Department for Education, Key Stage 4 Progress 8** | School quality, intake-adjusted, at local-authority level | Open Government Licence v3.0 | Annual — but **2022/23 is the terminal vintage** until 2026/27 publishes (§4.4) |
+| **HM Land Registry House Price Index (HPI)** | Affordability cohort scaling and the growth trend. Distinct from Price Paid Data above, which serves the sold-price panel | Open Government Licence v3.0 | Monthly |
 | **postcodes.io** | UK postcode → administrative-district resolution | Open Government Licence v3.0 (data) | Quarterly |
+
+> **Corrected 2026-08-04.** This table credited **three suppliers the engine no longer uses, and
+> one it never used**:
+>
+> - *"NHS Service Search API — provided by NHS Digital"*. **Nothing calls NHS Digital.**
+>   `backend/lambdas/nhs/app.py` makes exactly one outbound request, to the **OpenStreetMap
+>   Overpass API**. The `www.nhs.uk` URLs in that file are link targets placed in the response
+>   body, never fetched. The licence was wrong as well as the supplier: OSM is **ODbL**, a
+>   share-alike licence, not OGL — the same mislabelling audit finding 33 flagged on the privacy
+>   page.
+> - *"Home Office crime statistics"* — re-sourced to **ONS Table C4** in v3.5 (2026-08-02).
+> - *"Department for Education / Ofsted school ratings"* — Ofsted single-word grades were
+>   abolished in September 2024 and the bands were found to be editorial; replaced by **DfE
+>   Progress 8** in v3.5.
+>
+> **HM Land Registry HPI** was missing entirely, despite driving both `afford` and `growth` —
+> the table listed only Price Paid Data, which serves the sold-price panel. This is the table a
+> diligence process starts from, so a supplier list that is three-quarters out of date on the
+> `live` component is a procurement problem, not a tidiness one.
 
 ### Data refresh policy
 
