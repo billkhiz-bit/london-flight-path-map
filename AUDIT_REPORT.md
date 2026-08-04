@@ -235,6 +235,49 @@ directionally right, but the replacement values carry an undisclosed anomaly.
 surface at once. Disclosure is the cheap correct fix; re-anchoring needs Round 5 (~2027) or a
 non-DEFRA source.
 
+### A-0804-3 — the site and the API disagreed on 13% of London postcodes (**FIXED + DEPLOYED**)
+
+**Not a data divergence, which is why every guard missed it.** Driving the live site with
+`tests/rehearse.mjs` and diffing against `/v1/score` showed SW11 1AA rendering **6.5** against the
+API's **6.4** — while *every component matched exactly* (5 / 6.7 / 4.3 / 8).
+
+`calcScores` rounds components to one decimal for **display**, and the postcode panel recombined
+**those rounded values** into the headline total. The API sums at full precision and rounds once.
+The two disagree wherever double-rounding crosses a 0.05 boundary.
+
+Measured over 30 random live London postcodes: **4 of 30 (13%) disagreed, in both directions** —
+W3 7BN read 5.8 against 5.7, SW12 0DL read 6.0 against 6.1. The **borough** score was always
+correct; only the postcode panel, the product's headline surface, re-derived from rounded values.
+
+**Why nothing caught it, and this is the generalisable part.** All three existing parity guards
+compare **inputs**: `SiteApiGeometryParityTests` compares flight-path waypoints,
+`test_persona_parity.py` compares persona weights, and the probes run during the raster incident
+compared components. **A parity check that validates the inputs does not validate the output.**
+This is the second time that exact gap has bitten — the geometry trim was the first, where each
+half was internally self-consistent.
+
+**Fixed:** `calcScores` now also emits `scoresRaw` (unrounded); anything recombining into a total
+reads that, while `scores` stays rounded because it is what gets displayed. Verified live on all
+four known-divergent postcodes.
+
+**Guarded:** new `tests/site-api-parity.mjs`, wired into preflight as advisory. It reads the
+rendered total and the API score and compares them. Proven able to fail **against the real
+pre-fix build** rather than a synthetic defect: served `901b5ba`'s `index.html` locally and it
+reproduced all three divergences exactly, while correctly passing the postcode that never
+diverged.
+
+### New gates added 2026-08-04
+
+| Gate | Compares | Catches | Status |
+|---|---|---|---|
+| `deployed == source (14 pages)` | repo vs what CloudFront serves | a corrected file sitting unpublished — `privacy.html` had a **false** residency claim fixed in git and not deployed | advisory |
+| `site == /v1/score (6 postcodes)` | rendered total vs API score | A-0804-3 and anything else input-parity cannot see | advisory |
+| `ruff (backend/tests/)` | lint coverage | `backend/tests/` was outside every ruff target; held 4 import errors and an S105 | blocking |
+
+Both new gates are advisory deliberately: each compares **deployed** state, so it reports on
+production rather than on the commit in hand, and a permanently-amber gate that reflects a real
+transient beats a blocking one that gets ignored. Both exit non-zero only on a *measured* problem.
+
 ### Closed 2026-08-04
 
 | ID | Finding | State |

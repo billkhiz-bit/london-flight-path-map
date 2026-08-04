@@ -72,7 +72,9 @@ Always use "Sky Score" in all public-facing files and UI text.
 
 ## Quality & Plugins
 
-- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint (now `.js`/`.mjs` too, not just `index.html`), html-validate, ruff over `backend/lambdas` + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, **score sanity against the live API** (`scripts/check_score_sanity.py` - the only stage that can catch a DATA defect; the pytest suites never reach DynamoDB and Playwright asserts the site against itself), **no em dashes on the 8 deployed pages**, and Playwright at `--workers=2`. Advisory: Prettier, npm audit.
+- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint (now `.js`/`.mjs` too, not just `index.html`), html-validate, ruff over `backend/lambdas` + **`backend/tests/`** + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, **score sanity against the live API** (`scripts/check_score_sanity.py` - the only stage that can catch a DATA defect; the pytest suites never reach DynamoDB and Playwright asserts the site against itself), **no em dashes on the 8 deployed pages**, and Playwright at `--workers=2`. Advisory: Prettier, npm audit, **`deployed == source`**, **`site == /v1/score`**.
+  - **`backend/tests/` joined the ruff targets on 2026-08-04.** It had been outside every one of them — the suite guarding the score engine was the one directory nothing linted, and it held 4 import-order errors and an S105.
+  - **The two new advisory stages both compare DEPLOYED state**, which is why they are advisory rather than blocking. `scripts/check_deploy_drift.sh` compares all 14 public surfaces against what CloudFront serves (drift between commit and deploy is expected, so blocking it would go red on nearly every run). `tests/site-api-parity.mjs` compares the score the **live site renders** against what `/v1/score` returns — the only check that reads the *output* rather than the inputs, added after the site and API disagreed on 13% of London postcodes while every component matched. Promote either to `check` once it has a track record; both already exit non-zero only on a measured problem.
   - **Read the exit code, never pipe it.** `preflight | tail` is always 0 — a pipeline exits with its LAST stage's status. That is exactly how `make preflight` reported success on 2026-07-27 while running nothing at all (`make` is not on PATH in Git Bash here).
   - `--skip-e2e` skips Playwright, which hits the live site. `--fix` auto-fixes what is auto-fixable.
   - Rewritten 2026-07-27 after the gate produced a false green, a false red, and silently omitted the 167-test root suite. Change what blocks in `scripts/preflight.sh`, **not** in the skill file.
@@ -84,6 +86,32 @@ Always use "Sky Score" in all public-facing files and UI text.
 - Use **frontend-design** when modifying the UI in index.html
 
 ## Build & Deploy
+
+**Prefer the make targets; the commands below are the manual fallback.** As of
+2026-08-04 every publicly-served file has one, and `make web-deploy-all` covers
+all 15 surfaces:
+
+| Target | Covers |
+|---|---|
+| `web-deploy` | `index.html`, privacy, pricing, changes, `api/`, `js/` |
+| `data-deploy` | `data/*` (gets `borough-extra.json`'s load-bearing `no-cache` right) |
+| `pwa-deploy` | manifest, `sw.js`, icons |
+| `demo-deploy` | **new** — all 7 `score-demo/` files incl. the vendored Swagger UI |
+| `prototype-deploy` | **new** — `prototype/index.html` |
+| `meta-deploy` | **new** — `robots.txt`, `sitemap.xml`, `.well-known/security.txt` |
+| `web-deploy-all` | all of the above |
+
+The last three were added closing audit finding 38: **eleven live files had no
+deploy command anywhere** and had reached production by hand-upload, which is
+how `api/index.html` sold the product on retired claims for months.
+`web-deploy-all` previously covered **4 of 15** surfaces while being named
+"all". Run `sh scripts/check_deploy_drift.sh` to see what is currently stale.
+
+**`make` is not on PATH in Git Bash here**, and there are **no `deploy:*` npm
+aliases** despite the Makefile header once claiming otherwise — so on this
+machine the manual commands below are what actually runs. Fixing that properly
+means one shared script behind all three entry points, as `preflight` already
+does.
 
 ```bash
 # Shared API base URL constant (loaded by index.html, score-demo/index.html,

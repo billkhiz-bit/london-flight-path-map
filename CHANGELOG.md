@@ -66,6 +66,55 @@ prototype. **Not deployed:** the signup Lambda's new `upgrade` block, and
   README's, both wrong in every field, replaced with live captures; README's
   persona count corrected from five to eight.
 
+**Second half of the day — everything below is now DEPLOYED.**
+
+- **The site and the API disagreed on 13% of London postcodes, and every
+  existing parity guard was blind to it.** Found by driving the live site with
+  `tests/rehearse.mjs` and diffing against `/v1/score`: SW11 1AA rendered
+  **6.5** against the API's **6.4** while *every component matched exactly*
+  (5 / 6.7 / 4.3 / 8). `calcScores` rounds components to 1 dp for display and
+  the postcode panel recombined **those rounded values** — double-rounding,
+  where the API sums at full precision and rounds once. Measured over 30 random
+  live postcodes: **4 of 30, in both directions** (W3 7BN site-high, SW12 0DL
+  site-low). `calcScores` now also emits `scoresRaw`; anything recombining into
+  a total reads that. The **borough** score was always correct — only the
+  postcode panel re-derived from rounded values.
+- **New gate: `site == /v1/score`.** The three existing parity guards all
+  compare *inputs* — geometry, weights, components — which is exactly why the
+  above survived. This one compares the **output**: the number a user sees
+  against the number a customer receives. Proven able to fail against the real
+  pre-fix build, reproducing all three divergences and correctly passing the
+  postcode that never diverged. Advisory for now.
+- **New gate: `deployed == source`.** Compares all 14 public surfaces against
+  what CloudFront actually serves. `privacy.html` had been corrected in git —
+  removing a **false** claim that request data "never leaves UK AWS
+  infrastructure" — and then sat unpublished, so the live policy kept saying
+  something untrue. Advisory, because drift between commit and deploy is the
+  expected state.
+- **`?methodology=` version pinning is withdrawn, not fixed.** It was promised
+  in three places including a **contractual 14-day grace period**, and the
+  parameter is read nowhere in the Lambda — a caller passing it was silently
+  ignored while believing they had pinned. Real pinning needs retained data
+  vintages *and* retained formula paths; it will be built when a contract
+  requires it. `?compare=previous` and `/v1/changes` cover the "what moved and
+  why" case meanwhile. §16's "currently 3.1" was also stale by four versions.
+- **Cloud review acted on.** It caught an assertion I orphaned earlier the same
+  day — inserting tests mid-method split `test_gate_can_actually_fail`, leaving
+  it asserting only `Limit > 0` while its comment still promised the gate could
+  go red. Also flagged the OpenAPI spec, which I had edited that morning and
+  still left out of sync with the Lambda's new `upgrade` block *and* carrying
+  two "aviation + road noise" strings the correction wave had fixed elsewhere.
+  A `348` vs `334` disagreement it reported as a mistranscription turned out to
+  be **two correct measurements of different questions**: 334 postcodes sit at
+  or above the 63 dB floor, 348 *read* 0.0 once `round(x, 1)` is applied.
+- **Backend deployed.** `SignupFunction` now returns the `upgrade` block;
+  `ScoreFunction` shipped the re-derived quiet curve and the widened vocabulary
+  guard, verified **unchanged in production** as intended — the curve is live
+  but dormant behind the quarantine.
+- **CLAUDE.md's documented backend deploy could never have worked**: it sourced
+  `../.env`, which does not exist, and the `&&` chain aborted the whole deploy
+  rather than failing on a missing token.
+
 ### 2026-08-03 - prototype stops publishing invented noise readings
 
 - **The 3D prototype presented fabricated decibel figures at named real
