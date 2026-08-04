@@ -152,6 +152,22 @@ advise "npm audit"                      npm audit
 # Skipped with --skip-e2e: it hits the network, same as the Playwright stage.
 if [ "$SKIP_E2E" -eq 0 ]; then
   advise "deployed == source (14 pages)" sh scripts/check_deploy_drift.sh
+
+  # Compares the score the LIVE SITE renders against what /v1/score returns for
+  # the same postcode — the only check that reads the OUTPUT rather than the
+  # inputs. Three site/API divergences have shipped, and each survived because
+  # the existing guards compare geometry, weights or components: on SW11 1AA
+  # every component matched exactly while the totals differed, because the site
+  # recombined already-rounded values.
+  #
+  # Advisory, matching the drift check above, for two reasons: it drives a real
+  # browser against the live site (this repo has documented Playwright false
+  # failures under load) and it compares deployed-against-deployed, so it is
+  # reporting on production rather than on the commit in hand. Promote it to
+  # `check` once it has a track record of not flaking — it is written to exit 1
+  # only on a MEASURED disagreement, and to fail loudly rather than pass quietly
+  # if too few probes return.
+  advise "site == /v1/score (6 postcodes)" node tests/site-api-parity.mjs
 fi
 
 echo
