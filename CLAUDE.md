@@ -141,7 +141,18 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 # Backend, SAM build + deploy (always clean .aws-sam first)
 # EPC bearer token is required after the 2026-05-30 service migration.
 # Source from .env (gitignored); never paste the token into source files or chat.
-set -a && source ../.env && set +a && \
+# NOTE (corrected 2026-08-04): this line said `source ../.env`, which does not
+# exist — `.env` is at the repo root, and `../.env` would be
+# `C:\Users\bilal\projects\.env`. Because the whole block is `&&`-chained, the
+# failed source ABORTED THE ENTIRE DEPLOY rather than falling through, so the
+# documented command could never have worked from the repo root. Verified by
+# running it during the 2026-08-04 signup deploy.
+#
+# Second gotcha, same deploy: the Bash tool's working directory PERSISTS between
+# calls while environment variables do NOT, so splitting build and deploy across
+# two invocations lands the second one in backend/ with no EPC_BEARER_TOKEN.
+# Use absolute paths, or keep source + build + deploy in one invocation.
+set -a && source .env && set +a && \
   cd backend && rm -rf .aws-sam && \
   AWS_PROFILE=flightmap sam build && \
   AWS_PROFILE=flightmap sam deploy --parameter-overrides \
