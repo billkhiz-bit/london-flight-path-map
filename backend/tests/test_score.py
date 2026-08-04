@@ -12,8 +12,8 @@ Lambda evolves (bulk endpoint, future per-postcode noise sampling, etc.).
 """
 
 import json
-import re
 import os
+import re
 import sys
 import threading
 import time

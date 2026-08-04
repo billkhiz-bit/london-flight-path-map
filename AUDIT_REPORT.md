@@ -170,6 +170,47 @@ re-derived. That is now a precisely scoped decision rather than a vague blocker.
 > match. That is a product decision (serve the site from `/v1/score`, ship samples to the client,
 > or accept the divergence), not a data one.
 
+### A-0804-1 — the airport term treats London City like Heathrow (**NEW, open**)
+
+**Severity: high if confirmed, and it is live on the consumer site.** Full working:
+[`LCY_AIRPORT_WEIGHTING_ANALYSIS.md`](./LCY_AIRPORT_WEIGHTING_ANALYSIS.md).
+
+Found by measuring the raster/Haversine gap before choosing how to close it — the gap turned out
+not to be uniform. Across all 18,862 covered London postcodes the raster reads quieter by a mean
+of **+3.08**, but split by nearest airport:
+
+| nearest | postcodes | mean DEFRA dB | raster | site | gap | >2.0 apart |
+|---|---|---|---|---|---|---|
+| **LCY** | 10,192 | 48.5 | 7.77 | 3.74 | **+4.03** | **65.0%** |
+| LHR | 8,670 | 54.7 | 4.65 | 2.68 | +1.97 | 41.3% |
+
+**Mechanism, confirmed in source.** `calc_postcode_quiet` takes
+`nearest_ap_dist = min(...)` across all five airports and applies one distance ladder, so London
+City contributes the same penalty as Heathrow at the same distance. Meanwhile the **heliport**
+term in the same function *is* movement-weighted, with a stated derivation
+(`app.py:1485`, *"sound energy sums logarithmically, so annual movements…"*). The model applies
+that reasoning to helicopters and not to aeroplanes — an internal inconsistency independent of
+any raster question.
+
+**Live consumer impact.** **2,007 postcodes** DEFRA maps at or below WHO's 45 dB aircraft
+guideline are shown on the site at a mean of **2.5/10**, worst **1.0** — Beckton, Silvertown,
+Custom House, Thamesmead, Woolwich. `E6 5QS`, 0.73 km from LCY, is mapped at **44.8 dB** and the
+site shows **1.0/10**.
+
+**BLOCKING UNKNOWN — do not act on the magnitude yet.** DEFRA Round 4 is *"data current as of
+2021"*, a COVID-suppressed year, and London City was among the worst-affected UK airports. If the
+contours reflect that traffic they understate a normal year and the raster is the unreliable
+side. DEFRA's methodology page was checked and **does not state a reference year**; it says
+aircraft mapping is done by *"the relevant airport operators and in some cases, the Department
+for Transport"*, so the answer sits with LCY's own Round 4 submission. Erring quiet is the
+direction this product cannot afford, and a COVID-year contour is exactly how you would err quiet
+without noticing.
+
+**Next step is the vintage check, not a code change.** Fixing the weighting would alter live
+consumer scores across east and southeast London and must land in `index.html` **and** the Lambda
+together with a parity test — `index.html` holds its own copy of this geometry, which is how the
+three-month flight-path divergence happened.
+
 ### Closed 2026-08-03, fifth pass - the last high finding
 
 | ID | Finding | State |

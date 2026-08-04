@@ -21,7 +21,7 @@ import json
 import os
 import sys
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 # Make every Lambda's app module importable without spinning up boto3.
 LAMBDAS_DIR = os.path.join(os.path.dirname(__file__), '..', 'lambdas')
@@ -36,7 +36,7 @@ def _import_lambda(name):
     if 'app' in sys.modules:
         del sys.modules['app']
     try:
-        import app # noqa: F401, pylint: disable=import-outside-toplevel
+        import app  # noqa: F401, pylint: disable=import-outside-toplevel
         return app
     finally:
         sys.path.pop(0)
@@ -97,7 +97,10 @@ class FavouritesHandlerTests(unittest.TestCase):
 
     def test_uuid_format_accepted(self):
         # Token validates, but DynamoDB call would happen; mock it.
-        good_token = '550e8400-e29b-41d4-a716-446655440000'
+        # noqa justified: RFC 4122 example UUID, a format fixture rather than a
+        # credential. X-Device-Token is an opaque per-install identifier, not a
+        # secret — see the auth note in lambdas/favourites/app.py.
+        good_token = '550e8400-e29b-41d4-a716-446655440000'  # noqa: S105
         canonical = self.app.get_device_token(
             {'headers': {'X-Device-Token': good_token}},
         )
@@ -543,7 +546,7 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         cls.plan = text[start:end]
 
     def _plan_int(self, field):
-        import re # pylint: disable=import-outside-toplevel
+        import re  # pylint: disable=import-outside-toplevel
         match = re.search(rf'^\s*{field}:\s*(\d+)\s*$', self.plan, re.MULTILINE)
         self.assertIsNotNone(
             match, f'{field} not found in ScoreFreeUsagePlan — the block was '

@@ -80,13 +80,18 @@ echo "Blocking:"
 
 if [ "$FIX" -eq 1 ]; then
   npm run lint:fix >/dev/null 2>&1
-  python -m ruff check backend/lambdas/ scripts/ tests/ --fix >/dev/null 2>&1
+  python -m ruff check backend/lambdas/ backend/tests/ scripts/ tests/ --fix >/dev/null 2>&1
 fi
 
 check "ESLint (index.html)"            npm run lint
 check "html-validate (7 pages)"        npm run lint:html
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
-check "ruff (scripts, tests)"          python -m ruff check scripts/ tests/
+# backend/tests/ was outside every ruff target until 2026-08-04, so the suite
+# that guards the score engine was the one directory nothing linted — it had
+# accumulated 4 import-order errors and an S105. Same shape as the root-suite
+# omission below and the single-page a11y scan: the gate looked green because
+# of what it was not looking at.
+check "ruff (scripts, tests)"          python -m ruff check backend/tests/ scripts/ tests/
 check "pytest (backend)"               sh -c 'cd backend && python -m pytest -q'
 # Root suite covers the NSPL loader, the bulk scorer and the handler contracts.
 # It was absent from the gate until 2026-07-27, so 167 tests — including every
