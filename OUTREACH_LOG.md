@@ -96,6 +96,18 @@ Recurring conveyancing circuit (search providers exhibit through the year, track
 
 **Build Night 1 detail.** The organisers' ask was: "if you're happy for us to support you with funding/networks via our partners, please fill in this spreadsheet". Sheet columns: name, product, one-liner, URL, solo/team, team members, consent to stay in touch (Y/N), consent to be submitted as a "rocket" to **Collective Continuum** (Y/N). Bill filled it in on 31 Jul; the answers given to the two consent fields were not recorded here.
 
+**Organiser and venue identified 2026-08-04, from their public recap.** Organising body is **Deen Developers**; venue was **Muzz**; **Collective Continuum** is their partner on the series — so the sheet's "rocket" column fed an existing partnership rather than a speculative one.
+
+**Sky Score was named in the public write-up**, one of **15 apps**, and a photo of Bill demoing went on their Instagram. Their description: *"a postcode tool for the air quality and aircraft noise you'd actually be living under, London and New York. someone is going to use this before signing a tenancy."*
+
+Three things worth acting on:
+
+1. **The format is explicitly not a pitch.** In their words: *"You're not allowed to pitch at our hack night. You open the thing and use it in front of everyone, live, and you just hope it loads."* Preparation for the next one is a rehearsed working demo path, not slides — `tests/rehearse.mjs` drives the live site through a postcode list for exactly this and is now tracked rather than throwaway.
+2. **Their framing is a renter use-case**, not a buyer one — *"before signing a tenancy"*. The outreach pack currently leads with aggregators and Islamic home-finance (Tier 1/Tier 2). If intros arrive from this network, the `renter` persona is the closer story, and it is the one their audience already articulated back to us unprompted.
+3. **The recap credits Sky Score with air quality.** That is a curated borough-level *map layer*, not a score component — `quiet` is aircraft noise only, corrected across README, METHODOLOGY and the OpenAPI spec on 2026-08-04. No need to correct anyone's caption, but **do not let that phrasing migrate into our own copy**, or it becomes the same overstatement class fixed that day.
+
+**Next event:** organisers say "very soon" and to follow them for the announcement. No date yet.
+
 Cohort signal worth keeping: the other rows on that sheet skew **halal fintech** (e.g. TKFL — halal business insurance; Comb — personal finance/wealth management). That maps directly onto **Tier 2 (Islamic finance providers)** in the pipeline above, and Sky Score's affordability model is already riba-free by design (see `METHODOLOGY.md`) — so intros arriving from this network are likelier to be Tier 2 shaped than Tier 1.
 
 **Not captured (recover before the trail cools):** the names/companies of the 6 LinkedIn connections, the organising body, and the venue. LinkedIn's "recently added" list will reconstruct the six. Per the cadence principles below, in-person connections are warmest in the first 48h — a short follow-up message beats a later cold one.

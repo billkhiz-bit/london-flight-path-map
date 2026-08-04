@@ -941,15 +941,21 @@ The DEFRA noise data is by far the slowest-refreshing input. This subsection mak
 | **DEFRA noise mapping** | **5 years** ← slowest |
 | MHCLG EPC | Continuous (per certificate issued) |
 
-**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"3.1"`). On any methodology change — including a new noise-mapping round — this version increments. Integrators can pin to a specific version via `?methodology=X.Y` (where supported) for grace-period reproducibility. When Round 5 data lands the version will jump to `"4.0"`.
+**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"3.5"`). On any methodology change — including a new noise-mapping round — this version increments. When Round 5 data lands the version will jump to `"4.0"`.
+
+> **Corrected 2026-08-04.** Two errors in the sentence above. (1) It said "currently `3.1`", **stale by four versions** — the live API returns `3.5`. (2) It promised *"integrators can pin to a specific version via `?methodology=X.Y` (where supported)"*. **That parameter is not implemented anywhere.** `backend/lambdas/score/app.py` never reads it, so the request is silently ignored and the caller receives current-version numbers while believing they pinned. The hedge "(where supported)" was doing a great deal of work; it is nowhere supported.
+>
+> The claim is **withdrawn rather than built.** Real pinning means retaining prior data vintages *and* prior formula code paths — this document's own §6 shows why, since reproducing v3.0 needs the pre-v3.2 clamp, the pre-v3.3 weights and the pre-v3.4 growth formula. That is a substantial piece of engineering and there is no paying customer to justify it yet. **It will be built when a contract requires it, not before, and this document will not claim it until it exists.**
+>
+> **What does exist today** is `?compare=previous`, which returns the current score alongside the prior vintage with an exact weighted-sum attribution of what moved — see §4.7 and `/v1/changes`. That answers "what changed and why", which is most of what pinning is usually wanted for, though it is not the same guarantee.
 
 **Round 5 transition plan (forecast: late 2027).** When DEFRA publishes Round 5:
 1. New aircraft + road GeoTIFFs are downloaded from the data.gov.uk dataset pages
 2. The offline loader (`scripts/load_defra_raster.py`) is re-run; it overwrites by postcode key, so 1.7M new values cleanly replace the old ones with no migration needed
-3. `METHODOLOGY_VERSION` in the score Lambda bumps from `3.1` → `4.0`
+3. `METHODOLOGY_VERSION` in the score Lambda bumps to `4.0` (from `3.5` as at 2026-08-04)
 4. Methodology document updates with the new round reference and any methodology-model changes (e.g. CNOSSOS revision)
 5. B2B customers get the standard 14-day advance notice via email
-6. Old responses remain reproducible by passing the prior `?methodology=` value (until the grace period expires)
+6. ~~Old responses remain reproducible by passing the prior `?methodology=` value~~ — **not available; that parameter is unimplemented, see the correction in §16.** Use `?compare=previous` and `/v1/changes` to see what moved between vintages
 
 The Lambda's quiet-resolution chain (raster → Haversine → borough) means the API silently upgrades to the new data; no client changes needed at the integration layer.
 
@@ -1113,7 +1119,7 @@ Any breaking change deploys under `/v2/`; `/v1/` remains for **at least 6 months
 
 Material changes (any borough's score moving by >0.5 under default weights):
 1. Announced in the changelog and to API customers via email.
-2. Subject to a **14-day grace period** during which the prior methodology version remains accessible via `?methodology=` query parameter.
+2. Subject to **14 days' advance notice** before the change takes effect. **Corrected 2026-08-04:** this previously promised a "14-day grace period during which the prior methodology version remains accessible via `?methodology=`". No such parameter exists, so no grace period was ever technically available — the notice period is real, the version-pinning mechanism behind it was not. Stated as notice-only until pinning is actually built.
 3. Documented as a `methodologyVersion` bump in the API response.
 
 Non-material changes ship without notice.

@@ -273,8 +273,8 @@ Sky Score charges for *integration value* (SLA, structured JSON, batch, audit tr
 | **Bulk endpoint** (`POST /v1/score/batch`) | Shipped |
 | **Structured response** (OpenAPI 3.0 spec) | Shipped |
 | **Audit log access** (per-key CloudWatch filter) | Available; could expose to customers |
-| **Methodology document for due diligence** | Shipped (v3.1) |
-| **Methodology version pinning** (`?methodology=` for grace periods) | Documented in §16 |
+| **Methodology document for due diligence** | Shipped (v3.5 as at 2026-08-04; the "v3.1" here was stale by four versions) |
+| **Methodology version pinning** (`?methodology=` for grace periods) | **NOT BUILT — and "Documented in §16" was the problem, not the status.** The parameter is read nowhere in the score Lambda, so a caller passing it is silently ignored and receives current-version numbers believing they pinned. §16 promised it, the Round 5 plan relied on it, and the change policy hung a contractual 14-day grace period off it. All three retracted 2026-08-04. Build when a contract requires it: it needs retained data vintages **and** retained formula code paths (reproducing v3.0 needs the pre-v3.2 clamp, pre-v3.3 weights and pre-v3.4 growth formula). `?compare=previous` + `/v1/changes` cover the "what moved and why" case meanwhile |
 | **Custom weights + persona profiles** | Shipped (`?weights=`, `?persona=`) |
 | **Selective response shaping** | Shipped (`?include=`) |
 | **Data refresh on a schedule** | Documented commitment in §7 |
