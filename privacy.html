@@ -273,7 +273,14 @@
             <td>GoatCounter</td>
             <td>Anonymous analytics</td>
             <td>Aggregate counts</td>
-            <td>EU (Berlin)</td>
+            <!-- Was "EU (Berlin)" until 2026-08-04, while SUBPROCESSORS.md
+                 says "EU (Netherlands)" and names the operator as offshootbv,
+                 a Dutch BV. Two published documents disagreeing on a data
+                 location is worse than one imprecise one, and neither figure
+                 was verifiable from here, so both now state the claim that is
+                 certainly true. Confirm the hosting region with GoatCounter
+                 and then make both documents specific again. -->
+            <td>EU</td>
           </tr>
           <tr>
             <td>Codemagic</td>
@@ -287,8 +294,65 @@
             <td>Standard store telemetry</td>
             <td>Various</td>
           </tr>
+          <!-- Rows below added 2026-08-04. This table listed six entries and
+               omitted every upstream data API the score Lambdas call, plus the
+               third parties this page's own CSP allows the browser to contact.
+               SUBPROCESSORS.md had the same gap and was corrected in the same
+               change; the two are meant to agree, and a reader who follows the
+               link at the bottom of this table would have found two different
+               lists. Derived from the Lambda call sites and the page CSP, each
+               verified as genuinely used rather than merely allow-listed. -->
+          <tr>
+            <td>Transport for London</td>
+            <td>Nearest stations and line status</td>
+            <td>Lat/lon (transient)</td>
+            <td>UK</td>
+          </tr>
+          <tr>
+            <td>MHCLG (EPC register)</td>
+            <td>Energy certificates for the property panel</td>
+            <td>Postcode (transient)</td>
+            <td>UK</td>
+          </tr>
+          <tr>
+            <td>HM Land Registry</td>
+            <td>Sold price history</td>
+            <td>Postcode (transient)</td>
+            <td>UK</td>
+          </tr>
+          <tr>
+            <td>OpenStreetMap Overpass (FOSSGIS e.V.)</td>
+            <td>Nearby healthcare facilities</td>
+            <td>Lat/lon (transient)</td>
+            <td><strong>Germany</strong></td>
+          </tr>
+          <tr>
+            <td>Google Fonts</td>
+            <td>Web fonts on this and other pages</td>
+            <td>Your IP address, when your browser loads the font</td>
+            <td>US</td>
+          </tr>
+          <tr>
+            <td>GitHub (raw.githubusercontent.com)</td>
+            <td>Fallback map boundary files only</td>
+            <td>Your IP address</td>
+            <td>US</td>
+          </tr>
+          <tr>
+            <td>FEMA, US EPA, US DOT</td>
+            <td>Flood, air quality and noise map layers, New York view only</td>
+            <td>Your IP address and the map area you are viewing</td>
+            <td>US</td>
+          </tr>
         </tbody>
       </table>
+      <p>
+        Everything in the "transient" rows above is passed straight through to answer your search and is never
+        stored by Sky Score. The rows marked US or Germany are the ones worth noting if you need UK-only
+        processing: the healthcare lookup goes to a server in Germany, and your browser loads fonts and the
+        New York map layers from US-hosted services. We correct this table when the code changes, and on
+        2026-08-04 we corrected it because it had been incomplete rather than because the code had changed.
+      </p>
       <p>
         Full list with their respective privacy policies:
         <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/SUBPROCESSORS.md">SUBPROCESSORS.md</a> in our public
