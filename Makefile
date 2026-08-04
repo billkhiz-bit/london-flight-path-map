@@ -22,8 +22,17 @@
 #       choco install make           (Chocolatey)
 #       scoop install make           (Scoop)
 #       winget install GnuWin32.Make (winget)
-#     Or use the equivalent npm-script aliases in package.json instead
-#     (e.g. `npm run deploy:web` ≡ `make web-deploy`).
+#     CORRECTED 2026-08-04: this used to say "or use the equivalent npm-script
+#     aliases in package.json instead (e.g. `npm run deploy:web`)". THERE ARE
+#     NO deploy:* npm scripts. package.json has lint/test/preflight aliases and
+#     no deploy aliases at all, so on a machine without GNU Make — which is the
+#     default state of this one, `make` is not on PATH in Git Bash — the
+#     documented fallback did not exist and the deploy commands had to be run
+#     by hand. That is a contributing cause of audit finding 38: eleven live
+#     files reached production by hand-upload with no deploy command anywhere.
+#     Until deploy:* aliases exist (ideally delegating to one shared script, as
+#     preflight already does, so they cannot drift), run the aws commands in
+#     the targets below directly, or use OPERATIONS.md section 2.
 #   - AWS CLI v2 with `flightmap` profile configured
 #   - Node + npm (for the asset pipeline)
 #   - Android Studio (for the GUI-based AAB build) OR a JDK + the Android
@@ -49,7 +58,10 @@ help:
 	@echo "    data-deploy         Upload data/ boundaries + noise raster (run BEFORE pwa-deploy)"
 	@echo "    pwa-deploy          Upload manifest, sw.js, icons (PWA assets)"
 	@echo "    deeplinks-deploy    Upload .well-known/apple-app-site-association + assetlinks.json"
-	@echo "    web-deploy-all      Run web-deploy + pwa-deploy + deeplinks-deploy"
+	@echo "    demo-deploy         Upload score-demo/ (Swagger UI, openapi.yaml, status)"
+	@echo "    prototype-deploy    Upload prototype/index.html (Sky Score Radar)"
+	@echo "    meta-deploy         Upload robots.txt, sitemap.xml, .well-known/security.txt"
+	@echo "    web-deploy-all      web + data + pwa + demo + prototype + meta"
 	@echo ""
 	@echo "  iOS (Codemagic-driven)"
 	@echo "    ios-trigger         git push origin master (Codemagic auto-builds)"
@@ -185,11 +197,85 @@ deeplinks-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/.well-known/*'
 
+.PHONY: demo-deploy
+# Added 2026-08-04, closing audit finding 38. Every file below was already
+# serving 200 from CloudFront and NONE of them had a deploy command anywhere:
+# they got there by hand-upload, so the only record that they exist was the
+# live bucket. That is how api/index.html drifted until 2026-08-03, and on
+# 2026-08-04 a `make web-deploy-all` would have silently skipped two files
+# that had just been edited while still reporting success.
+#
+# openapi.yaml is the one that matters most: Swagger UI at /score-demo/
+# api-docs.html reads it, so a stale copy documents an API that no longer
+# exists. Content type must stay application/yaml (matched to what the live
+# object already serves) or the browser downloads it instead of rendering.
+demo-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/index.html \
+		s3://$(S3_BUCKET)/score-demo/index.html \
+		--content-type "text/html" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/api-docs.html \
+		s3://$(S3_BUCKET)/score-demo/api-docs.html \
+		--content-type "text/html" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/status.html \
+		s3://$(S3_BUCKET)/score-demo/status.html \
+		--content-type "text/html" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/openapi.yaml \
+		s3://$(S3_BUCKET)/score-demo/openapi.yaml \
+		--content-type "application/yaml" --region $(AWS_REGION)
+	# Vendored Swagger UI. Separate content types, so no --recursive here:
+	# one wrong type on the CSS and the reference page renders unstyled.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui.css \
+		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui.css \
+		--content-type "text/css" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui-bundle.js \
+		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui-bundle.js \
+		--content-type "application/javascript" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui-standalone-preset.js \
+		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui-standalone-preset.js \
+		--content-type "application/javascript" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/score-demo/*'
+
+.PHONY: prototype-deploy
+# Sky Score Radar. Standalone page, no shared assets, so it deploys alone.
+# Also hand-uploaded until now (most recently 2026-08-04, adding the DEFRA
+# vintage disclosure to its noise panel).
+prototype-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp prototype/index.html \
+		s3://$(S3_BUCKET)/prototype/index.html \
+		--content-type "text/html" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/prototype/*'
+
+.PHONY: meta-deploy
+# robots.txt, sitemap.xml and .well-known/security.txt. Low churn, but they
+# are the three files most likely to be edited and then forgotten, because
+# nothing visibly breaks when they go stale. security.txt in particular
+# carries a disclosure address that SECURITY.md is checked against.
+meta-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp robots.txt \
+		s3://$(S3_BUCKET)/robots.txt \
+		--content-type "text/plain" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp sitemap.xml \
+		s3://$(S3_BUCKET)/sitemap.xml \
+		--content-type "application/xml" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/security.txt \
+		s3://$(S3_BUCKET)/.well-known/security.txt \
+		--content-type "text/plain" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*'
+
 .PHONY: web-deploy-all
 # Order matters: data-deploy before pwa-deploy, because sw.js precaches the
 # boundary files and cache.addAll() fails atomically on a missing one.
-web-deploy-all: web-deploy data-deploy pwa-deploy
-	@echo "Web + data + PWA deployed. Skip deeplinks-deploy until placeholders are filled."
+#
+# demo-deploy, prototype-deploy and meta-deploy joined on 2026-08-04. Before
+# that this target covered 4 of the 15 publicly-served surfaces while being
+# named "all", which is the shape of every gate failure in this repo: green
+# because of what it was not looking at.
+web-deploy-all: web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy meta-deploy
+	@echo "Web + data + PWA + demo + prototype + meta deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------
 # iOS (Codemagic does the heavy lifting; we just trigger and submit)

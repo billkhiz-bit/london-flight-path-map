@@ -235,6 +235,25 @@ directionally right, but the replacement values carry an undisclosed anomaly.
 surface at once. Disclosure is the cheap correct fix; re-anchoring needs Round 5 (~2027) or a
 non-DEFRA source.
 
+### Closed 2026-08-04
+
+| ID | Finding | State |
+|---|---|---|
+| A-0803-30 | `lden_db_to_quiet` is the only untested function in the score Lambda | **Fixed.** 16 tests. The finding called it *"unguarded exactly where the next change is planned"*, which proved exact — the next change was the band re-derivation, and one of those tests caught a wrong assertion in it |
+| A-0803-38 | Eleven tracked, publicly-served files have no deploy command anywhere | **Fixed.** All eleven identified and covered: `score-demo/` (7 files, incl. the Swagger vendor bundle), `prototype/index.html`, `robots.txt`, `sitemap.xml`, `.well-known/security.txt`. New `demo-deploy`, `prototype-deploy`, `meta-deploy` targets, all three wired into `web-deploy-all` — which previously covered 4 of 15 public surfaces while being named "all". Confirmed live and byte-identical to the repo at time of writing, so nothing had silently drifted |
+| A-0803-49 | Neighbourhood band ladder inconsistent with `IMPACT_TO_QUIET` | **Fixed and deployed.** Thresholds are now the midpoints between the six shared values, so `moderate-high` is reachable and `severe` means one thing |
+| A-0803-53 | Two DOM injection sites interpolate remote data without escaping | **Fixed and deployed.** The cited line had drifted; the actual site was `renderEpcData`, interpolating five remote MHCLG values, the last renderer left unhardened while `renderNhsData` beside it already used `escapeHtml`/`safeUrl` |
+| A-0803-62 | `score-demo/status.html` comment anchored to a false quota budget | **Fixed and deployed.** Said 1,000 req/month; untrue since the demo key moved to its own 2,000/month plan on 2026-07-29 |
+| A-0803-52, A-0803-54 | Dash artefact; status-page refresh claim | **Already fixed** before this pass. Re-verified rather than assumed |
+
+**New, found while closing #38:** the Makefile header directed anyone without GNU Make to
+`npm run deploy:web`. **No `deploy:*` npm script exists** — `package.json` has lint, test and
+preflight aliases and no deploy aliases at all. On Windows/Git Bash, where `make` is not on PATH,
+the documented fallback was therefore unusable, which is a plausible contributing cause of #38
+itself: eleven files reached production by hand because the sanctioned route did not run. Header
+corrected to say so. **The real fix is deploy aliases delegating to one shared script**, the way
+`preflight` already works so `make`, `npm` and `sh` cannot drift apart. Not done.
+
 ### Closed 2026-08-03, fifth pass - the last high finding
 
 | ID | Finding | State |
