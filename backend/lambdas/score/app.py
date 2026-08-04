@@ -2300,12 +2300,22 @@ def lden_db_to_quiet(lden):
     family that is both defensible and compatible with the gate.
 
     KNOWN LIMITATION, disclosed in METHODOLOGY.md §4.6: everything at or above
-    63 dB saturates at 0.0, so the loudest 334 covered postcodes (1.8% of
-    covered, 0.18% of London) lose discrimination between each other - Bedfont
-    at 72.97 dB and a postcode at 63.1 dB both read 0.0. This is the mirror of
-    the defect being fixed, at the other end and affecting 1.8% rather than
-    80.4%, and every one of them is already in the worst category. Accepted
-    rather than hidden: erring loud is the safe direction for a noise product.
+    63 dB saturates at 0.0, so the loudest covered postcodes lose discrimination
+    between each other - Bedfont at 72.97 dB and a postcode at 63.1 dB both read
+    0.0. This is the mirror of the defect being fixed, at the other end and
+    affecting under 2% rather than 80.4%, and every one of them is already in
+    the worst category. Accepted rather than hidden: erring loud is the safe
+    direction for a noise product.
+
+    THE COUNT IS 348, NOT 334, AND THE DIFFERENCE IS INSTRUCTIVE. Re-measured
+    2026-08-04 after a review flagged this docstring and METHODOLOGY §4.6 giving
+    two different figures. Both were real measurements of different questions:
+    **334** postcodes sit at or above the 63 dB floor, but **348** actually
+    return 0.0, because the `round(..., 1)` below pulls anything from about
+    62.91 dB upward down to 0.0. So 14 postcodes read 0.0 without being at the
+    floor. The claim here is about which postcodes cannot be told apart, and
+    that is what a caller sees, so 348 is the figure that belongs: **1.8% of
+    covered, 0.19% of London** (0.18% was the proportion for 334).
     """
     if lden is None:
         return None

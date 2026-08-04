@@ -4,7 +4,7 @@ info:
   description: |
     Sky Score is a noise + livability data API for UK property. The score
     is a 0-10 holistic property quality signal computed from four
-    components: Quiet (aviation + road noise), Affordability (cohort-relative
+    components: Quiet (aircraft noise only), Affordability (cohort-relative
     price), Growth (price-trend signal), and Liveability (schools, crime,
     transport, healthcare).
 
@@ -90,7 +90,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [apiKey, keyId, usagePlan, limits, note, docs]
+                required: [apiKey, keyId, usagePlan, limits, upgrade, note, docs]
                 properties:
                   apiKey:
                     type: string
@@ -125,6 +125,49 @@ paths:
                         type: integer
                         description: monthlyQuota x batchMultiplier, the real ceiling.
                         example: 10000
+                      scoreCeilingBasis:
+                        type: string
+                        enum: [quota, fair-use]
+                        description: >-
+                          How monthlyScoreCeiling was derived. `quota` means it is
+                          exactly monthlyQuota x batchMultiplier, as on the free
+                          tier. `fair-use` means it is a contractual cap set BELOW
+                          that product, as on Professional. Do not compute the
+                          ceiling yourself from the other two fields without
+                          checking this.
+                        example: quota
+                  upgrade:
+                    type: object
+                    description: >-
+                      The paid tier this key can move to, quoted in the same units
+                      as `limits` so no arithmetic is needed to compare them.
+                    properties:
+                      tier:
+                        type: string
+                        example: Professional
+                      priceGbpPerMonth:
+                        type: integer
+                        example: 499
+                      monthlyQuota:
+                        type: integer
+                        example: 100000
+                      batchMultiplier:
+                        type: integer
+                        example: 100
+                      monthlyScoreCeiling:
+                        type: integer
+                        description: >-
+                          Fair-use cap. Deliberately BELOW monthlyQuota x
+                          batchMultiplier (which is 10,000,000) - see
+                          scoreCeilingBasis.
+                        example: 1000000
+                      scoreCeilingBasis:
+                        type: string
+                        enum: [quota, fair-use]
+                        example: fair-use
+                      contact:
+                        type: string
+                        example: support@skyscore.co.uk
                   note:
                     type: string
                     description: Reminder that the key is shown once.
@@ -706,7 +749,9 @@ components:
           format: float
           minimum: 0
           maximum: 10
-          description: Aviation + road noise impact, 10 = quietest.
+          description: >-
+            Aircraft noise impact, 10 = quietest. Aircraft ONLY - road noise is a
+            map layer on the consumer site and is not a score input.
         afford:
           type: number
           format: float

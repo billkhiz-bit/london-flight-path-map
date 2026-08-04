@@ -630,11 +630,19 @@ estimated correction factor** — inventing a multiplier is the failure mode thi
 already had to undo twice.
 
 **Declared limitation — saturation at the loud end.** Everything at or above 63 dB reads 0.0, so
-the loudest **348 covered postcodes (1.8% of covered, 0.18% of London)** cannot be told apart:
+the loudest **348 covered postcodes (1.8% of covered, 0.19% of London)** cannot be told apart:
 Bedfont at 72.97 dB and a postcode at 63.1 dB both score 0.0. This is the mirror of the defect it
 replaces — at the other end, affecting 1.8% rather than 80.4%, and only among postcodes already
 in the worst category. Erring loud is the safe direction for a noise product, so it is accepted
 and disclosed rather than tuned away.
+
+> **Why 348 and not 334.** A review on 2026-08-04 found this section and the `lden_db_to_quiet`
+> docstring giving two different counts, and assumed one was a mistranscription. Neither was:
+> **334** postcodes sit at or above the 63 dB floor, while **348** actually return 0.0, because
+> the curve rounds to one decimal and anything from about **62.91 dB** upward rounds down to
+> zero. Fourteen postcodes therefore read 0.0 without being at the floor. Since this limitation is
+> about what a caller can distinguish, 348 is the correct figure and both surfaces now use it. The
+> London proportion was also corrected from 0.18% to **0.19%** — 0.18% was the share for 334.
 
 **Population (one-time batch):**
 - The `scripts/load_defra_raster.py` script downloads the DEFRA GeoTIFF (~500 MB, free OGL) and the ONS NSPL postcode lat/lon table, then samples the raster at every UK postcode centroid and writes (postcode, ldenDb) tuples to DynamoDB.

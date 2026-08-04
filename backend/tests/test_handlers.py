@@ -599,7 +599,16 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
     def test_gate_can_actually_fail(self):
         # Proves the template read works and is not silently returning a
         # default. Per the 27 Jul lesson: assert the gate can go red.
+        #
+        # Restored 2026-08-04. The assertRaises block below was orphaned into
+        # test_both_tiers_are_quoted_in_the_same_unit when the Professional
+        # tests were inserted mid-method, leaving this test asserting only
+        # `Limit > 0` while its comment still promised the gate could go red.
+        # It would have passed even if _plan_int started returning a default on
+        # a miss, which is the precise failure it exists to catch.
         self.assertGreater(self._plan_int('Limit'), 0)
+        with self.assertRaises(AssertionError):
+            self._plan_int('NoSuchField')
 
     # --- Professional upgrade block, added 2026-08-04 -------------------
     # Completing BATCH_METERING_DECISION.md's 2026-07-29 decision. The same
@@ -620,6 +629,50 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         upgrade = self._signup_body()['upgrade']
         self.assertEqual(upgrade['batchMultiplier'],
                          _import_lambda('score').MAX_BATCH_SIZE)
+
+    def test_openapi_signup_schema_matches_what_the_lambda_returns(self):
+        """The published spec must describe the actual 201 body.
+
+        Added 2026-08-04 after a review found the spec had not been updated
+        when `scoreCeilingBasis` and the whole `upgrade` block were added to the
+        Lambda in the same change that edited this very file for other reasons.
+        Nothing caught it: OpenAPI 3.0 does not enforce `additionalProperties`,
+        so clients keep deserialising fine while generated SDKs silently omit
+        the fields and Swagger UI shows a stale example.
+
+        This asserts COVERAGE, not behaviour — the same gap that let `impact` go
+        unguarded in the score Lambda. A spec is a list of things it describes,
+        and lists are where these decay.
+        """
+        try:
+            import yaml  # pylint: disable=import-outside-toplevel
+        except ImportError:
+            self.skipTest('PyYAML not installed')
+
+        spec_path = os.path.join(
+            os.path.dirname(__file__), '..', '..', 'score-demo', 'openapi.yaml')
+        with open(os.path.abspath(spec_path), encoding='utf-8') as handle:
+            spec = yaml.safe_load(handle)
+
+        schema = (spec['paths']['/v1/signup']['post']['responses']['201']
+                  ['content']['application/json']['schema'])
+        body = self._signup_body()
+
+        for key in body:
+            with self.subTest(field=key):
+                self.assertIn(
+                    key, schema['properties'],
+                    f'/v1/signup returns {key!r} but the OpenAPI 201 schema '
+                    f'does not describe it. Generated SDKs will drop it.')
+
+        for block in ('limits', 'upgrade'):
+            declared = set(schema['properties'][block]['properties'])
+            returned = set(body[block])
+            with self.subTest(block=block):
+                self.assertEqual(
+                    returned - declared, set(),
+                    f'{block} returns fields absent from the spec: '
+                    f'{sorted(returned - declared)}')
 
     def test_upgrade_ceiling_is_a_cap_BELOW_the_product_not_equal_to_it(self):
         # This assertion was written backwards first time and the test caught
@@ -653,8 +706,6 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             for field in ('monthlyQuota', 'batchMultiplier',
                           'monthlyScoreCeiling'):
                 self.assertIn(field, block)
-        with self.assertRaises(AssertionError):
-            self._plan_int('NoSuchField')
 
 
 if __name__ == '__main__':
