@@ -135,6 +135,25 @@ advise "Prettier (all files deviate)"   npm run format:check
 # the result with `|| true` — a no-op that rendered as a green tick.
 advise "npm audit"                      npm audit
 
+# Compares all 14 publicly-served files against what CloudFront actually
+# serves. Advisory because drift is the EXPECTED state between committing and
+# deploying — blocking it would go red on nearly every run and be ignored
+# inside a week, the same trap the Prettier line above describes.
+#
+# It exists because on 2026-08-04 `privacy.html` was corrected in git, removing
+# a false claim that request data "never leaves UK AWS infrastructure", and
+# then sat unpublished — the live policy kept saying something untrue and
+# nothing would have noticed. Audit finding 38 is the same defect at scale:
+# eleven live files had no deploy command at all, so `api/index.html` sold the
+# product on retired claims for months. Deploy targets now exist for all of
+# them; a target only helps if somebody runs it, and this is what notices when
+# nobody did.
+#
+# Skipped with --skip-e2e: it hits the network, same as the Playwright stage.
+if [ "$SKIP_E2E" -eq 0 ]; then
+  advise "deployed == source (14 pages)" sh scripts/check_deploy_drift.sh
+fi
+
 echo
 echo "===================="
 if [ -n "$FAILED" ]; then
