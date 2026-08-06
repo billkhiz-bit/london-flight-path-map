@@ -99,6 +99,17 @@ const text = await page.locator('#cubitt33-panel').innerText();
 
 check('address echoed back', text.includes('Collingham Road'));
 check('healthcare section present', /HEALTHCARE/i.test(text));
+
+// NOT just "the section rendered". On 2026-08-06 this suite passed 24/24 while
+// /nhs was falling back to nhs.uk links on every single request — the section
+// was present, the panel looked fine, and the check could not tell the
+// difference between real data and a graceful failure. A named facility with a
+// distance is what "healthcare works" actually means.
+check(
+  'healthcare returns real facilities, not fallback links',
+  /\d+\s*m\b/.test(text) && !/Search NHS .* on nhs\.uk/i.test(text),
+  text.includes('nhs.uk') ? 'fallback links present' : ''
+);
 check('no stale Loading text', !text.includes('Loading'));
 check('TfL attribution', /TfL Open Data/i.test(text));
 check('OSM/ODbL attribution', /OpenStreetMap/i.test(text));
