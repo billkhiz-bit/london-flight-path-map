@@ -120,6 +120,60 @@ const text2 = await page.locator('#cubitt33-panel').innerText();
 check('second view served from cache', text2.includes('cached'), `${cachedMs} ms`);
 check('cached view still renders stations', /TRANSPORT/i.test(text2));
 
+// --- Degraded paths -------------------------------------------------------
+//
+// decidePresentation() is the honesty gate: it decides what the panel is
+// ALLOWED to show at a given precision, and until now it had never run in a
+// browser. Both cases below are ones where showing the obvious thing would
+// state more than we know.
+
+// Outside Greater London, TfL has no coverage, so /transport returns zero
+// stations. Rendering that as "no stations nearby" would assert an absence of
+// TRANSPORT while only knowing an absence of DATA.
+const manchester = readFileSync(join(HERE, 'fixtures', 'rightmove-manchester.html'), 'utf8');
+await page.locator('#cubitt33-panel .c33-close').click();
+await page.unroute('**://www.rightmove.co.uk/**');
+await page.route('**://www.rightmove.co.uk/**', (route) =>
+  route.fulfill({ status: 200, contentType: 'text/html', body: manchester })
+);
+await page.goto('https://www.rightmove.co.uk/properties/555000111');
+await page.locator('#cubitt33-badge').waitFor({ timeout: 15000 });
+await page.locator('#cubitt33-badge').click();
+await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
+const mcr = await page.locator('#cubitt33-panel').innerText();
+
+check('non-London: caveat shown', (await page.locator('#cubitt33-panel .c33-caveat').count()) === 1);
+
+// Assert on STRUCTURE, not free text. A /transport/i match over innerText also
+// hits the caveat ("Transport data covers Greater London only...") and the TfL
+// attribution line, so the loose version failed while the code was correct.
+// Counting section headings is what "the section is absent" actually means.
+const transportHeadings = await page
+  .locator('#cubitt33-panel .c33-section h3')
+  .filter({ hasText: /^\s*transport\s*$/i })
+  .count();
+check('non-London: transport section suppressed', transportHeadings === 0, `${transportHeadings} headings`);
+check('non-London: healthcare still shown', /HEALTHCARE/i.test(mcr));
+check('non-London: outcode parsed', mcr.includes('M1'));
+
+// No coordinates anywhere. The panel must render NOTHING — not an empty card,
+// not a "couldn't find anything" message. An inert badge is a promise we then
+// break, and an empty panel invites the reader to conclude the area has no GPs
+// and no stations.
+const noCoords = readFileSync(join(HERE, 'fixtures', 'rightmove-no-coords.html'), 'utf8');
+await page.unroute('**://www.rightmove.co.uk/**');
+await page.route('**://www.rightmove.co.uk/**', (route) =>
+  route.fulfill({ status: 200, contentType: 'text/html', body: noCoords })
+);
+await page.goto('https://www.rightmove.co.uk/properties/555000222');
+await page.waitForTimeout(3000);
+
+check('unlocatable: no badge rendered', (await page.locator('#cubitt33-badge').count()) === 0);
+check('unlocatable: no panel rendered', (await page.locator('#cubitt33-panel').count()) === 0);
+
+console.log('\n--- panel (non-London) ---');
+console.log(mcr.split('\n').filter(Boolean).slice(0, 10).map((l) => '  ' + l).join('\n'));
+
 console.log('\n--- panel (first view) ---');
 console.log(
   text.split('\n').filter(Boolean).map((l) => '  ' + l).join('\n')

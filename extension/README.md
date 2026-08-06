@@ -85,6 +85,13 @@ has drifted and should be re-derived.
 ## Known limits
 
 - **Rightmove only.** Zoopla and OnTheMarket need their own adapters.
+- **"GP surgeries" is looser than it sounds.** The bucket comes from OSM's
+  `amenity=doctors`, which tags private clinics the same as NHS practices - the
+  Manchester e2e fixture returns "Skinspace UK" and "Deansgate Hospital" under
+  GP surgeries. That is upstream tagging, not our partitioning, but a demo
+  audience will read it as an NHS list. Either relabel the bucket honestly
+  ("Doctors and clinics") or filter on additional OSM tags before this goes in
+  front of anyone who matters.
 - **Selectors will rot.** A portal redesign breaks extraction silently. The
   debug line exists so the failure is diagnosable in one glance.
 - **No icons.** Chrome requires PNG for extension icons and this repo only has
