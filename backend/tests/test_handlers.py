@@ -770,3 +770,56 @@ class ChatGroundingTests(unittest.TestCase):
         chat = self._chat()
         ok, _ = chat.verify_answer('There are 3 things worth noting.', self.CONTEXT)
         self.assertTrue(ok)
+
+
+class NhsBundleTests(unittest.TestCase):
+    """London healthcare is served from a bundled snapshot, not a live call.
+
+    /nhs proxied Overpass per request and kept returning nhs.uk fallback links.
+    The query was fine - it returns 200 in ~2s from a laptop. Lambda egress uses
+    AWS-managed shared IPs, so we compete for Overpass's per-IP budget with all
+    of AWS. Shipping the data removes the dependency rather than tuning it.
+    """
+
+    @staticmethod
+    def _nhs():
+        import importlib.util
+        import pathlib
+
+        path = pathlib.Path(__file__).resolve().parents[1] / 'lambdas' / 'nhs' / 'app.py'
+        spec = importlib.util.spec_from_file_location('nhs_app', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_london_is_inside_the_bundle(self):
+        nhs = self._nhs()
+        self.assertTrue(nhs.in_bundle_area(51.49423, -0.18825))  # SW5
+        self.assertTrue(nhs.in_bundle_area(51.4713, -0.1580))    # SW11
+
+    def test_outside_london_falls_through_to_live(self):
+        # The extension's Manchester case. Must NOT be answered from a London
+        # snapshot, which would report London facilities as nearby.
+        nhs = self._nhs()
+        self.assertFalse(nhs.in_bundle_area(53.4772, -2.2497))
+
+    def test_bundle_returns_real_named_results(self):
+        nhs = self._nhs()
+        buckets = nhs.from_bundle(51.49423, -0.18825)
+        self.assertTrue(buckets['gp'], 'expected GP results in central London')
+        self.assertTrue(all(item['name'] for item in buckets['gp']))
+        self.assertFalse(any(item.get('fallback') for item in buckets['gp']))
+
+    def test_results_are_sorted_nearest_first(self):
+        nhs = self._nhs()
+        buckets = nhs.from_bundle(51.49423, -0.18825)
+        for key in ('gp', 'pharmacies', 'hospitals'):
+            distances = [i['distance'] for i in buckets[key]]
+            self.assertEqual(distances, sorted(distances), f'{key} not sorted')
+
+    def test_nothing_beyond_the_search_radius_is_returned(self):
+        nhs = self._nhs()
+        buckets = nhs.from_bundle(51.49423, -0.18825)
+        for key in ('gp', 'pharmacies', 'hospitals'):
+            for item in buckets[key]:
+                self.assertLessEqual(item['distance'], nhs.SEARCH_RADIUS_M)
