@@ -2997,7 +2997,13 @@ def build_environment(noise_row, postcode_clean=''):
         # bare invites interpretation against whatever they happen to assume.
         # Stating the reference is not editorialising; omitting it is.
         env['roadNoiseWhoGuidelineDb'] = 53
-        env['roadNoiseSource'] = 'DEFRA Strategic Noise Mapping Round 4 (2022), road, Lden'
+        # Same vintage caveat as aircraft, and it applies to road traffic too -
+        # 2021 road volumes were also depressed, though less sharply than
+        # aviation. See METHODOLOGY.md section 4.6.
+        env['roadNoiseSource'] = (
+            'DEFRA Strategic Noise Mapping Round 4, road Lden. '
+            'Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.'
+        )
 
     # Air quality: DEFRA PCM background maps, annual mean, 2022, 1 km grid.
     #
@@ -4037,8 +4043,14 @@ def handle_environment(event):
         # _QUIET_CEILING_DB is already anchored on, restated so a consumer does
         # not have to know the scoring internals to read the decibels.
         env['aircraftNoiseWhoGuidelineDb'] = 45
+        # "Round 4 (2022)" reads as 2022 DATA. It is not: Round 4 was published
+        # in 2022 and maps 2021, which DEFRA's own documentation calls "a highly
+        # anomalous situation" because of COVID travel restrictions. Naming the
+        # publication year alone implies a representative year and understates
+        # nothing visibly - the reader simply believes a wrong thing.
         env['aircraftNoiseSource'] = (
-            'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden'
+            'DEFRA Strategic Noise Mapping Round 4, aircraft Lden. '
+            'Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.'
         )
 
     notices = []

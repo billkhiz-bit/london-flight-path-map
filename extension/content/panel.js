@@ -202,6 +202,30 @@ function renderEnvironment(result) {
     section.appendChild(list);
   }
 
+  // The vintage caveat travels with the reading, not just in the footer.
+  //
+  // DEFRA Round 4 was published in 2022 and maps 2021 — a year its own
+  // documentation calls "a highly anomalous situation" because of COVID travel
+  // restrictions, with Heathrow movements substantially below 2019. Every dB
+  // here therefore ERRS QUIET. Shown beside the numbers because a reader who
+  // takes 50.4 dB at face value has been misled by an omission, and the footer
+  // is not where anyone looks for that.
+  //
+  // No corrected figure is offered. METHODOLOGY §4.6 forbids applying an
+  // estimated correction factor: inventing a multiplier is a failure mode this
+  // project has already had to undo twice.
+  const sources = [env.aircraftNoiseSource, env.roadNoiseSource].filter(Boolean);
+  if (sources.some((s) => /maps 2021/.test(s))) {
+    section.appendChild(
+      el(
+        'div',
+        'c33-sub',
+        'DEFRA noise data maps 2021, a COVID-affected year, so these readings ' +
+          'understate current exposure. The direction is known; the amount is not.'
+      )
+    );
+  }
+
   // Notices explain what was NOT measured. Rendered even when rows exist,
   // because a partial answer is the case most likely to be misread as complete.
   for (const notice of data.notices || []) {
