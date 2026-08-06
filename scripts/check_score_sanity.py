@@ -179,6 +179,28 @@ def main():
         band, q = ctx.get('noiseImpactBand'), (body.get('components') or {}).get('quiet')
         if q is None or not band:
             continue
+
+        # SKIPPED FOR RASTER-RESOLVED POSTCODES, from 2026-08-06.
+        #
+        # noiseImpactBand is a BOROUGH-level curated label; quiet may now be a
+        # POSTCODE-level measurement. Where DEFRA measured, the two are expected
+        # to disagree, and that disagreement is the product's entire claim:
+        # Lden varies 10-15 dB inside a borough.
+        #
+        # This fired on TW7 5QD, Isleworth, band=severe but quiet=6.8. Verified
+        # against the GeoTIFF before touching the check: it samples 50.75 dB,
+        # its neighbour TW7 5QB 50.87, while TW3 4DX reads 59.29 and Heathrow
+        # TW6 1AP 58.23 — all inside Hounslow. An 8.5 dB spread across one
+        # borough, every value a genuine reading. The measurement was right and
+        # the assertion had gone stale.
+        #
+        # The guard is NOT weakened where it still applies. Borough- and
+        # geometry-resolved postcodes have nothing better than the band to
+        # contradict, so they are still checked, and the airport ceiling in
+        # section 2 above still holds raster-resolved Heathrow to <= 3.0.
+        if (ctx.get('quietResolution') or '') == 'raster':
+            continue
+
         if band == 'severe' and q > 5.0:
             contradictions.append(f'{pc}: band=severe but quiet={q}')
         if band == 'low' and q < 3.0:

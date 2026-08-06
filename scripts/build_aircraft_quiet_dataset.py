@@ -53,6 +53,14 @@ LDEN_MIN = 40.0
 LDEN_MAX = 100.0
 
 # Greater London plus margin, matching the noise-raster bbox.
+#
+# The margin means the file carries some postcodes /v1/score will not serve:
+# terminated ones (NSPL keeps them, postcodes.io 404s them) and ones outside the
+# 33 boroughs, such as TW20 in Egham. Measured over a 12-postcode spread, 9 were
+# scorable and all 9 matched the live API exactly; the other 3 returned errors
+# rather than different numbers. Harmless - index.html only looks up postcodes a
+# user searched, which resolved through postcodes.io to get there - and trimming
+# them would need per-postcode borough data this script does not read.
 BBOX = (51.25, -0.55, 51.72, 0.35)
 
 
@@ -101,7 +109,15 @@ def main():
             value = float(list(raster.sample([(x, y)]))[0][0])
             if not (LDEN_MIN <= value <= LDEN_MAX):
                 continue
-            quiet[row['pcds'].replace(' ', '').upper()] = lden_db_to_quiet(value)
+            # ROUND TO 1 DP BEFORE THE RAMP, matching what the loader stores.
+            #
+            # load_defra_raster.py writes f'{lden:.1f}', so DynamoDB holds 58.2
+            # for Heathrow while the raster itself samples 58.24. Feeding the
+            # full-precision value into the ramp gave 2.6 here against the API's
+            # 2.7 — a 0.1 divergence on exactly the measured postcodes this file
+            # exists to make agree, and one that only appeared because the live
+            # API was checked after deploying rather than the file being trusted.
+            quiet[row['pcds'].replace(' ', '').upper()] = lden_db_to_quiet(round(value, 1))
 
     payload = {
         'methodologyVersion': METHODOLOGY_VERSION,
