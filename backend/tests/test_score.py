@@ -1526,9 +1526,15 @@ class IndependentReviewRegressionTests(unittest.TestCase):
         # timing out into a 502. Rewriting them to expect 0 would have been the
         # easy way to green and would have quietly retired both guards, leaving
         # nothing to catch the regression when the tier is eventually restored.
+        # _road_cache_get is defeated for the same reason as _raster_cache_get:
+        # a warm memo would make the second calc_score of ?compare=previous
+        # issue no GetItem at all, and the count would pass while proving
+        # nothing. Added 2026-08-06 when the road metric started reading from
+        # this table — the counts below now cover BOTH metrics, which is the
+        # number that actually decides whether a request times out.
         with patch.object(app, '_raster_cache_get', lambda k: None), patch.object(
-            app, 'RASTER_TIER_QUARANTINED', False
-        ):
+            app, '_road_cache_get', lambda k: None
+        ), patch.object(app, 'RASTER_TIER_QUARANTINED', False):
             app.resolve_query(dict(query))
         return len([c for c in calls if 'raster' in c])
 
@@ -2257,3 +2263,47 @@ class CoverageNoticeTests(unittest.TestCase):
         cov = app.build_coverage('raster', 'measured')
         self.assertEqual(cov['quiet']['basis'], 'raster')
         self.assertEqual(cov['live']['basis'], 'measured')
+
+
+class RoadNoiseReportingTests(unittest.TestCase):
+    """Road Lden is REPORTED, not scored, and absent means absent.
+
+    DEFRA's road raster carries data for 92.2% of its grid (roads are
+    everywhere) against the aircraft raster's 6.2% (contours are localised lobes
+    around airports). So road noise does not inherit the coverage defect that
+    quarantined the aircraft tier — but it inherits the same rule about missing
+    values, which this codebase has broken more often than any other: a reading
+    that was never taken must never surface as a favourable one.
+    """
+
+    def test_absent_reading_yields_no_key_at_all(self):
+        # Not null, not a default. A numeric field carrying a placeholder is
+        # exactly how "not measured" becomes "measured and fine".
+        self.assertEqual(app.build_environment(None), {})
+        self.assertEqual(app.build_environment({'lden': 55.0, 'roadLden': None}), {})
+
+    def test_present_reading_is_reported_with_its_source(self):
+        env = app.build_environment({'lden': None, 'roadLden': 62.14})
+        self.assertEqual(env['roadNoiseLdenDb'], 62.1)
+        self.assertIn('DEFRA', env['roadNoiseSource'])
+
+    def test_implausible_road_value_is_dropped_not_reported(self):
+        # The raster's real minimum is 40.0 dB. Anything below is a sentinel,
+        # and a sentinel that sailed through would read as a silent street.
+        self.assertIsNone(app.road_lden_from_row({'roadLden': 0.0}))
+        self.assertIsNone(app.road_lden_from_row({'roadLden': 35.0}))
+        self.assertEqual(app.road_lden_from_row({'roadLden': 40.0}), 40.0)
+
+    def test_road_reading_does_not_enter_the_weighted_score(self):
+        # Folding it in would change every score the API has ever returned,
+        # which METHODOLOGY §7 treats as a version bump with 14 days' notice.
+        body, status = app.resolve_query({'borough': 'Hackney', 'city': 'london'})
+        self.assertEqual(status, 200)
+        self.assertEqual(set(body['components']), {'quiet', 'afford', 'growth', 'live'})
+
+    def test_aircraft_floor_still_rejects_the_legacy_nodata_fill(self):
+        # 89.5% of London currently holds the 35.0 fill written before
+        # 2026-08-03. Treating it as a reading is what made every uncovered
+        # postcode look like a successful raster hit.
+        self.assertIsNone(app.lden_from_row({'lden': 35.0}))
+        self.assertEqual(app.lden_from_row({'lden': 58.2}), 58.2)

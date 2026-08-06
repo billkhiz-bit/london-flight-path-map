@@ -197,6 +197,16 @@ def parse_args():
              'checkpoint.',
     )
     p.add_argument(
+        '--attribute', default='ldenDb', metavar='NAME',
+        help='DynamoDB attribute to write the sampled value into. Defaults to '
+             'ldenDb (aircraft Lden). Use roadLdenDb for the road raster: the '
+             'two metrics share one row per postcode, and writes go through '
+             'UpdateItem so a road pass merges rather than replacing the '
+             'aircraft value. Pair this with --geotiff; getting one right and '
+             'the other wrong writes road decibels into the aircraft column, '
+             'which nothing downstream would flag.',
+    )
+    p.add_argument(
         '--self-test', action='store_true',
         help='Run the WGS84 → BNG CRS transform on a known UK postcode '
              '(SW1A 1AA, Buckingham Palace) without needing the data '
@@ -250,32 +260,41 @@ def self_test():
     print('Self-test passed. Pyproj + PROJ data are configured correctly.')
 
 
-def _flush_batch(ddb, items):
-    """Write a batch of (postcode, ldenDb) pairs to DynamoDB.
+def _flush_batch(ddb, items, attribute='ldenDb'):
+    """Write a batch of (postcode, value) pairs to DynamoDB.
 
     Originally this used `BatchWriteItem` (25 items per call) for speed,
     but flightmap-dev's IAM policy only grants `PutItem` / `DeleteItem`
     on the table — `BatchWriteItem` is a separate IAM action and was
-    denied. Rather than expand IAM, we parallelise per-item PutItems
+    denied. Rather than expand IAM, we parallelise per-item writes
     via a ThreadPoolExecutor. ~25 concurrent writes get us throughput
     comparable to BatchWriteItem within DynamoDB's PAY_PER_REQUEST mode.
+
+    UPDATEITEM, NOT PUTITEM (2026-08-06). PutItem REPLACES the whole item, so
+    the moment a second metric shares this table — road Lden alongside aircraft
+    Lden — a road pass would silently delete every aircraft value it touched.
+    UpdateItem with SET merges, leaving other attributes intact. Verified
+    against the live table before this change, because `dynamodb:UpdateItem`
+    appearing in backend/iam-policy.json proves nothing: `BatchWriteItem` is in
+    that same file and is denied on the live policy, which is exactly how the
+    NSPL load ended up on the slow path.
     """
     from concurrent.futures import ThreadPoolExecutor
 
     def _put(item):
-        ddb.put_item(
+        ddb.update_item(
             TableName=TABLE_NAME,
-            Item={
-                'postcode': {'S': item['postcode']},
-                'ldenDb':   {'N': item['ldenDb']},
-            },
+            Key={'postcode': {'S': item['postcode']}},
+            UpdateExpression='SET #a = :v',
+            ExpressionAttributeNames={'#a': attribute},
+            ExpressionAttributeValues={':v': {'N': item['value']}},
         )
 
     with ThreadPoolExecutor(max_workers=25) as ex:
         list(ex.map(_put, items))
 
 
-def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH):
+def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
     """Sample the raster at NSPL postcode centroids and write to DynamoDB.
 
     When `dry_run` is True the DynamoDB writes are skipped and the script
@@ -433,11 +452,11 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH):
                 print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
                 samples_logged += 1
 
-            batch.append({'postcode': pc, 'ldenDb': f'{lden:.1f}'})
+            batch.append({'postcode': pc, 'value': f'{lden:.1f}'})
 
             if len(batch) >= BATCH_SIZE:
                 if not dry_run:
-                    _flush_batch(ddb, batch)
+                    _flush_batch(ddb, batch, attribute)
                 written += len(batch)
                 batch.clear()
 
@@ -452,7 +471,7 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH):
     # Flush remainder
     if batch:
         if not dry_run:
-            _flush_batch(ddb, batch)
+            _flush_batch(ddb, batch, attribute)
         written += len(batch)
 
     # Clean up checkpoint on success, only on a full uninterrupted run
@@ -473,7 +492,12 @@ def main():
     if args.self_test:
         self_test()
         return
-    run_load(limit=args.limit, dry_run=args.dry_run, geotiff=args.geotiff)
+    run_load(
+        limit=args.limit,
+        dry_run=args.dry_run,
+        geotiff=args.geotiff,
+        attribute=args.attribute,
+    )
 
 
 if __name__ == '__main__':

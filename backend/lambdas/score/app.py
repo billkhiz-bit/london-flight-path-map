@@ -2226,6 +2226,182 @@ def _lookup_lden_raster(postcode_clean):
     return value
 
 
+# --- Road noise (2026-08-06) ------------------------------------------------
+#
+# Shares the noise-raster table with aircraft Lden, under `roadLdenDb`. Loaded
+# by scripts/load_defra_raster.py with --attribute roadLdenDb, which writes
+# through UpdateItem so the two metrics coexist on one row per postcode.
+#
+# NOT SUBJECT TO RASTER_TIER_QUARANTINED, and that is deliberate rather than an
+# oversight. The aircraft tier is quarantined because DEFRA's aircraft contours
+# are localised lobes around airports: measured over the source GeoTIFF, only
+# 6.2% of its grid carries data, so 89.5% of London postcodes have no reading
+# and filling them as quiet flattened the component. The road raster is a
+# different dataset with a different shape — 92.2% of its grid carries data,
+# because roads are everywhere. Measured 2026-08-06: range 40.0-92.7 dB, median
+# 51.7, Hyde Park Corner 70.1. The defect that blocks aircraft does not exist
+# here.
+#
+# REPORTED, NOT SCORED. This value is surfaced in the response and does not
+# enter the weighted total. Adding a component would redistribute the existing
+# weights and change every score the API has ever returned — a breaking change
+# for B2B integrators, which METHODOLOGY §7 says gets a version bump and 14
+# days' notice. That is a product decision, not one to make in passing while
+# wiring up a data source.
+_ROAD_MIN_PLAUSIBLE_DB = 40.0
+
+
+_road_cache_get, _road_cache_put = _make_lru(2048)
+
+
+def _lookup_noise_row(postcode_clean):
+    """One GetItem returning every noise metric on this postcode's row.
+
+    ONE ROUND-TRIP, SHARED. Aircraft and road Lden live on the same row, and
+    IndependentReviewRegressionTests holds the line at one GetItem per score
+    (two for ?compare=previous) because duplicate lookups once pushed a
+    ?compare=previous request past the 28s Lambda timeout into a 502. Fetching
+    road separately doubled the count and that test caught it immediately, which
+    is why this exists rather than two independent readers.
+
+    Returns {'lden': float|None, 'roadLden': float|None}, or None if the table
+    is unavailable. Callers apply their own plausibility rules — the aircraft
+    tier has a quarantine and a nodata sentinel the road tier does not share.
+    """
+    if not NOISE_RASTER_TABLE or not postcode_clean:
+        return None
+
+    ddb = _get_ddb_client()
+    if ddb is None:
+        return None
+
+    try:
+        from botocore.exceptions import BotoCoreError, ClientError
+    except ImportError:
+        return None
+
+    try:
+        result = ddb.get_item(
+            TableName=NOISE_RASTER_TABLE,
+            Key={'postcode': {'S': postcode_clean}},
+            ProjectionExpression='ldenDb, roadLdenDb',
+        )
+    except (BotoCoreError, ClientError) as exc:
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
+        return None
+
+    item = result.get('Item') or {}
+
+    def _num(key):
+        raw = item.get(key, {}).get('N')
+        if not raw:
+            return None
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return None
+
+    return {'lden': _num('ldenDb'), 'roadLden': _num('roadLdenDb')}
+
+
+def lden_from_row(row, postcode_clean=''):
+    """Apply the aircraft plausibility floor to a pre-fetched row.
+
+    Mirrors the tail of _lookup_lden_raster, which still exists for
+    calc_postcode_quiet's own sentinel-driven path. Rows written before
+    2026-08-03 carry a literal 35.0 wherever the raster had no data, and 89.5%
+    of London holds that value — treating it as a reading is what made every
+    uncovered postcode look like a successful hit.
+    """
+    value = (row or {}).get('lden')
+    if value is None:
+        return None
+    if value < _RASTER_MIN_PLAUSIBLE_DB:
+        if value != _RASTER_NODATA_FILL:
+            logger.warning(
+                '[SCORE_RASTER_DEGRADED] postcode=%s err=implausible-lden value=%s',
+                postcode_clean, value)
+        return None
+    return value
+
+
+def road_lden_from_row(row, postcode_clean=''):
+    """Apply the road plausibility floor to a pre-fetched row."""
+    value = (row or {}).get('roadLden')
+    if value is None:
+        return None
+    # Same reasoning as the aircraft floor: a sentinel that sailed through would
+    # read as an implausibly quiet street.
+    if value < _ROAD_MIN_PLAUSIBLE_DB:
+        logger.warning(
+            '[SCORE_ROAD_DEGRADED] postcode=%s err=implausible-lden value=%s',
+            postcode_clean, value)
+        return None
+    return value
+
+
+def _lookup_road_lden(postcode_clean):
+    """Road Lden sample for a postcode, or None.
+
+    Same table and same failure posture as _lookup_lden_raster: every negative
+    result returns None so the caller simply omits the figure. A missing road
+    reading must never become a favourable one — that substitution is this
+    project's most-repeated defect.
+
+    ONE ROUND-TRIP PER SCORE. This projects `roadLdenDb` from the same row the
+    aircraft tier reads, and memoises per warm container, because
+    IndependentReviewRegressionTests counts GetItems against the noise table and
+    holds the line at one per score, two for ?compare=previous. That guard was
+    written after duplicate lookups pushed a ?compare=previous request past the
+    28s Lambda timeout into a 502 — adding a second unconditional GetItem here
+    would walk straight back into it, and the test caught exactly that on the
+    first run of this function.
+    """
+    if not NOISE_RASTER_TABLE or not postcode_clean:
+        return None
+
+    cached = _road_cache_get(postcode_clean)
+    if cached is not None:
+        return cached
+
+    ddb = _get_ddb_client()
+    if ddb is None:
+        return None
+
+    try:
+        from botocore.exceptions import BotoCoreError, ClientError
+    except ImportError:
+        return None
+
+    try:
+        result = ddb.get_item(
+            TableName=NOISE_RASTER_TABLE,
+            Key={'postcode': {'S': postcode_clean}},
+            ProjectionExpression='roadLdenDb',
+        )
+    except (BotoCoreError, ClientError) as exc:
+        logger.warning('[SCORE_ROAD_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
+        return None
+
+    raw = (result.get('Item') or {}).get('roadLdenDb', {}).get('N')
+    if not raw:
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+
+    # Same plausibility floor as aircraft, same reasoning: a sentinel that
+    # sailed through would read as an implausibly quiet street.
+    if value < _ROAD_MIN_PLAUSIBLE_DB:
+        logger.warning(
+            '[SCORE_ROAD_DEGRADED] postcode=%s err=implausible-lden value=%s',
+            postcode_clean, value)
+        return None
+    _road_cache_put(postcode_clean, value)
+    return value
+
+
 # Ceiling: WHO Environmental Noise Guidelines for the European Region (2018)
 # strongly recommends aircraft noise below 45 dB Lden. At or under it, 10.0.
 # This replaces DEFRA's 55 dB, which is a *reporting* threshold under END
@@ -2749,6 +2925,30 @@ _LIVE_UNAVAILABLE_NOTICE = (
 )
 
 
+def build_environment(noise_row, postcode_clean=''):
+    """Measured environmental readings for a postcode, omitting what is absent.
+
+    Returns a dict to be spliced into `context`. An absent measurement means an
+    ABSENT KEY — never null, never a default. A numeric field carrying a
+    placeholder is precisely how "we did not measure here" becomes "we measured
+    here and it was fine", which is the defect that quarantined the aircraft
+    raster and the one this codebase has repeated most often.
+
+    Road Lden is reported, not scored. Folding it into the weighted total would
+    change every score the API has ever returned, which METHODOLOGY §7 treats as
+    a version bump with 14 days' notice to integrators — a product decision, not
+    a side effect of adding a data source.
+    """
+    env = {}
+
+    road_lden = road_lden_from_row(noise_row, postcode_clean)
+    if road_lden is not None:
+        env['roadNoiseLdenDb'] = round(road_lden, 1)
+        env['roadNoiseSource'] = 'DEFRA Strategic Noise Mapping Round 4 (2022), road, Lden'
+
+    return env
+
+
 def build_coverage(quiet_source, live_source):
     """Per-component coverage statements plus any plain-English notices.
 
@@ -2869,10 +3069,21 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
 
     borough_quiet = IMPACT_TO_QUIET.get(bd['impact'], 5.0)
     quiet_source = 'borough'
+    # Initialised here, not inside the lat/lon branch below: a borough-only
+    # query never enters that branch, and build_environment reads this when
+    # assembling the response regardless.
+    noise_row = None
 
     if lat is not None and lon is not None:
         # Try raster first (v3.1), Haversine second (v3.0), borough last
-        raster_lden = _lookup_lden_raster(postcode_clean) if postcode_clean else None
+        # ONE GetItem, shared by both metrics. Aircraft and road Lden live on
+        # the same row, and a second reader doubled the lookups per score —
+        # caught immediately by the regression guard written after duplicate
+        # lookups pushed a ?compare=previous request into a 502.
+        noise_row = _lookup_noise_row(postcode_clean) if postcode_clean else None
+        raster_lden = (
+            None if RASTER_TIER_QUARANTINED else lden_from_row(noise_row, postcode_clean)
+        )
         if raster_lden is not None:
             quiet = lden_db_to_quiet(raster_lden)
             quiet_source = 'raster'
@@ -2922,6 +3133,12 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             'noiseImpactBand': bd['impact'],
             'quietResolution': quiet_source,
             'liveResolution': live_resolution(bd, english=(city != 'nyc')),
+            # Measured environmental readings at this postcode, REPORTED AND
+            # NOT SCORED. Present only where a real sample exists; the key is
+            # absent rather than null or a default when it does not, because a
+            # placeholder in a numeric field is how "not measured" becomes
+            # "measured as fine". See build_environment.
+            **build_environment(noise_row, postcode_clean),
         },
         # Plain-English restatement of the two *Resolution fields above, so a
         # consumer surface can show a limitation without having to know what
