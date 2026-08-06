@@ -148,12 +148,24 @@ check "extension extraction"           node tests/extension-extraction.mjs
 
 if [ "$SKIP_E2E" -eq 1 ]; then
   printf '  %-34s%s\n' "Playwright e2e" "SKIPPED (--skip-e2e)"
+  printf '  %-34s%s\n' "extension e2e" "SKIPPED (--skip-e2e)"
 else
   # --workers=2 is load-bearing, not tuning. The suite's baseURL is the live
   # CloudFront site; at the default worker count the parallel burst produces
   # timeouts indistinguishable from real assertion failures (measured
   # 2026-07-27: 14 failed / 2 passed at default, 16 passed at --workers=2).
   check "Playwright e2e (--workers=2)"  npx playwright test --workers=2 --reporter=line
+
+  # Loads the extension into a real Chromium and drives it against a fixture
+  # served AT the rightmove.co.uk URL, so the content script's match pattern
+  # fires without a single request reaching Rightmove. Grouped under --skip-e2e
+  # because it launches a browser and calls the live /transport and /nhs.
+  #
+  # It cannot run under Playwright's normal headless mode: that uses
+  # chromium_headless_shell, which does not load extensions at all, so every
+  # assertion would fail for reasons unrelated to the code. The suite passes
+  # --headless=new itself.
+  check "extension e2e"                 node tests/extension-e2e.mjs
 fi
 
 echo

@@ -79,43 +79,54 @@ async function fetchEndpoint(path, lat, lon) {
   }
 }
 
-async function fetchPropertyData(lat, lon) {
-  const key = cacheKey(lat, lon);
+// ONE endpoint per message, deliberately.
+//
+// The first version fetched both under a single Promise.all and answered once
+// both had settled. TfL returns in about a second; /nhs goes through Overpass,
+// which is why that Lambda carries a 45s timeout — so the panel sat on
+// "Loading…" for up to half a minute with the transport data already in memory,
+// and showed nothing at all if Overpass hung. Measured in tests/extension-e2e.mjs
+// against a live Overpass outage, which is exactly when it hurts most.
+//
+// Splitting the request lets the panel paint each section the moment its own
+// upstream answers, so a slow or dead Overpass costs the healthcare section
+// only. It also makes the cache per-endpoint, so a working /transport is not
+// re-fetched just because /nhs failed alongside it.
+const ENDPOINTS = {
+  transport: '/transport',
+  nhs: '/nhs',
+};
+
+async function fetchOne(name, lat, lon) {
+  const path = ENDPOINTS[name];
+  if (!path) return { ok: false, error: 'unknown-endpoint' };
+
+  const key = `${cacheKey(lat, lon)}:${name}`;
 
   const cached = await readCache(key);
   if (cached) return { ...cached, fromCache: true };
 
-  // Parallel, not sequential. These are independent upstreams and /nhs is the
-  // slow one (~3s via Overpass); running them in series would add TfL's latency
-  // on top of it for no reason.
-  const [transport, nhs] = await Promise.all([
-    fetchEndpoint('/transport', lat, lon),
-    fetchEndpoint('/nhs', lat, lon),
-  ]);
+  const result = await fetchEndpoint(path, lat, lon);
 
-  const payload = { transport, nhs };
+  // Only cache a success. Caching a failure would pin a broken section for six
+  // hours over what may have been a two-second blip — and Overpass outages are
+  // exactly that shape.
+  if (result.ok) await writeCache(key, result);
 
-  // Only cache when at least one upstream succeeded. Caching a double failure
-  // would pin a broken panel for 6 hours over what may have been a 2-second
-  // network blip.
-  if (transport.ok || nhs.ok) {
-    await writeCache(key, payload);
-  }
-
-  return { ...payload, fromCache: false };
+  return { ...result, fromCache: false };
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== 'FETCH_PROPERTY_DATA') return false;
+  if (message?.type !== 'FETCH_ENDPOINT') return false;
 
-  const { lat, lon } = message;
+  const { endpoint, lat, lon } = message;
   if (typeof lat !== 'number' || typeof lon !== 'number') {
     sendResponse({ ok: false, error: 'bad-coords' });
     return false;
   }
 
-  fetchPropertyData(lat, lon)
-    .then((payload) => sendResponse({ ok: true, ...payload }))
+  fetchOne(endpoint, lat, lon)
+    .then((payload) => sendResponse(payload))
     .catch((err) => sendResponse({ ok: false, error: String(err) }));
 
   // MUST return true, synchronously, to hold the message channel open for the

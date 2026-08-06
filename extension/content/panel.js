@@ -252,35 +252,62 @@ function buildPanel(listing, plan) {
   return body;
 }
 
-async function loadInto(body, listing, plan) {
-  let response;
+const SECTIONS = {
+  transport: { label: 'Transport', render: renderTransport },
+  nhs: { label: 'Healthcare', render: renderNhs },
+};
+
+async function requestSection(name, listing) {
   try {
-    response = await chrome.runtime.sendMessage({
-      type: 'FETCH_PROPERTY_DATA',
+    return await chrome.runtime.sendMessage({
+      type: 'FETCH_ENDPOINT',
+      endpoint: name,
       lat: listing.lat,
       lon: listing.lon,
     });
   } catch {
-    // Fires when the service worker has been torn down mid-flight, or when the
-    // extension was reloaded while this tab stayed open. Both are recoverable
-    // by the user, so say so rather than failing silently.
-    body.replaceChildren(
-      el('p', 'c33-muted', 'Extension connection lost. Reload the page and try again.')
-    );
-    return;
+    // Fires when the service worker was torn down mid-flight, or the extension
+    // was reloaded while this tab stayed open. Both are recoverable by the
+    // user, so report rather than fail silently.
+    return { ok: false, error: 'extension reloaded, refresh the page' };
   }
+}
 
-  if (!response?.ok) {
-    body.replaceChildren(el('p', 'c33-muted', `Could not load data (${response?.error || 'unknown'}).`));
-    return;
-  }
-
+async function loadInto(body, listing, plan) {
+  // Each section gets its own placeholder and fills in when ITS upstream
+  // answers. Previously the panel waited for both and repainted once, which
+  // meant a slow or dead Overpass held the transport data hostage — measured at
+  // up to 30 seconds of "Loading…" with TfL's answer already in memory.
+  const slots = {};
   const parts = [];
-  if (plan.sections.includes('transport')) parts.push(renderTransport(response.transport));
-  if (plan.sections.includes('nhs')) parts.push(renderNhs(response.nhs));
 
-  const sources = renderSources([response.transport, response.nhs]);
+  body.replaceChildren();
+  for (const name of plan.sections) {
+    const holder = el('section', 'c33-section');
+    holder.appendChild(el('h3', 'c33-h3', SECTIONS[name].label));
+    holder.appendChild(el('p', 'c33-muted', 'Loading…'));
+    slots[name] = holder;
+    body.appendChild(holder);
+  }
+
+  const results = {};
+  await Promise.all(
+    plan.sections.map(async (name) => {
+      const result = await requestSection(name, listing);
+      results[name] = result;
+      const rendered = SECTIONS[name].render(result);
+      slots[name].replaceWith(rendered);
+      slots[name] = rendered;
+    })
+  );
+
+  // Attribution and the debug line go in once everything has settled: both are
+  // summaries over the whole response set, so painting them early would mean
+  // rewriting them.
+  const sources = renderSources(Object.values(results));
   if (sources) parts.push(sources);
+
+  const fromCache = Object.values(results).some((r) => r?.fromCache);
 
   // Debug line. Which extraction strategy won, the outcode we parsed, the
   // coordinates, and whether this came from cache. When Rightmove ships a
@@ -298,14 +325,17 @@ async function loadInto(body, listing, plan) {
       listing.source,
       listing.outcode || 'no-outcode',
       `${listing.lat.toFixed(4)}, ${listing.lon.toFixed(4)}`,
-      response.fromCache ? 'cached' : null,
+      fromCache ? 'cached' : null,
     ]
       .filter(Boolean)
       .join(' · ')
   );
   parts.push(debug);
 
-  body.replaceChildren(...parts);
+  // append, NOT replaceChildren. The sections are already in the DOM — they
+  // painted as each upstream answered. Replacing here would wipe them and
+  // undo the whole point of the incremental render.
+  body.append(...parts);
 }
 
 // --- Badge (the click target) --------------------------------------------

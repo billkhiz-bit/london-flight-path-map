@@ -46,44 +46,41 @@ needs no backend change and no API key.
 
 ## What is already verified
 
-- ESLint clean, including `security/detect-unsafe-regex` as an **error** (not
-  the repo default of `warn`) for this directory. It caught a genuine ReDoS
-  star-height problem in the outcode pattern during the build.
-- `manifest.json` parses; all three JS files parse.
-- Field names rendered by the panel match the Lambdas: stations expose
-  `name` / `distance` / `lines` (`transport/app.py:102`), line status exposes
-  `name` / `status` (`transport/app.py:135`), NHS items expose
-  `name` / `distance` / `fallback` (`nhs/app.py:134`).
-- Outcode extraction passes 9 cases including full postcodes (`SW2 5TT` → `SW2`),
-  bare outcodes (`W8`), non-London (`M1`), the 4-character `EC1A`, and three
-  negatives that must return empty. The first version of that regex silently
-  failed every full-postcode case; only running it showed that.
+Automated, all wired into `scripts/preflight.sh` so they cannot rot:
+
+- **`tests/extension-extraction.mjs`** - 9 cases over the four extraction
+  strategies: correct attribution, non-London flagged, out-of-UK and null
+  island rejected. No `jsdom`; `extract.js` touches four DOM surfaces and the
+  suite shims exactly those.
+- **`tests/extension-e2e.mjs`** - 18 checks driving the real extension in a
+  real Chromium. Badge injects, nothing fetches until clicked, panel renders
+  live TfL and NHS data, attribution present, cache hit on a second nearby
+  listing. Measured: transport paints in **852 ms**, cached view in **37 ms**.
+- ESLint clean with `security/detect-unsafe-regex` at **error** for this
+  directory, stricter than the repo default.
+- Field names match the Lambdas: `transport/app.py:102`, `:135`, `nhs/app.py:134`.
+
+The e2e serves its fixture **at** the rightmove.co.uk URL via request
+interception, so the content script's match pattern fires and no request ever
+reaches Rightmove.
 
 ## Verification still outstanding
 
-**No part of the DOM extraction has been run against a live Rightmove page.** It
-was written from the outside, so the four strategies in `content/extract.js` are
-best-effort and at least one is likely wrong today. There is also no automated
-test for them: that needs `jsdom`, which is not currently a dependency, plus
-wiring into `scripts/preflight.sh` — an unwired test file would just be another
-check that cannot fail. Do this manual pass first:
+**One thing, and only one: whether Rightmove's real markup still looks like the
+fixture.** Everything else above is now covered automatically. That single
+question needs a browser on a live listing:
 
-- [ ] Panel appears on a **for-sale** listing
-- [ ] Panel appears on a **to-rent** listing
-- [ ] Panel appears on a **new-build** listing (different template)
-- [ ] The address echoed in the panel matches the property on screen
-- [ ] The debug line (bottom of panel) shows which strategy won — `page-model`
-      is the expected winner. `static-map` or `meta` means the primary
-      extraction has already drifted
-- [ ] Coordinates in the debug line land on the right place when pasted into a
-      map
-- [ ] Navigating listing → listing without a page reload re-renders the badge
-- [ ] A non-London property (try Manchester) shows the healthcare section and
-      the transport caveat, **not** an empty transport list
-- [ ] Second view of a nearby property shows `· cached` in the debug line
+```
+sh scripts/build_extraction_probe.sh | clip
+```
 
-If the badge never appears, open DevTools → Console on the listing page and run
-`extractListing()`. It returns `null` when every strategy missed.
+Then paste into DevTools on a Rightmove property page (type `allow pasting`
+first if Chrome blocks it). It prints the winning strategy, coordinates,
+outcode, and an OpenStreetMap link to confirm the pin. Check a **for-sale**, a
+**to-rent** and a **new-build** listing - different templates.
+
+`page-model` is the expected winner. Anything else means the primary strategy
+has drifted and should be re-derived.
 
 ## Known limits
 
@@ -117,10 +114,11 @@ renders them in its footer. Do not drop that footer.
 
 ## Before this could ship publicly
 
-1. **`privacy.html` must be corrected.** The Chrome Web Store requires a privacy
-   policy URL, and §2d currently claims 30-day log retention while all 13 log
-   groups are verified `None`. Replacement wording is in
-   `DRAFT_security_retention_passage.md` §2b.
+1. ~~**`privacy.html` must be corrected.**~~ **DONE 2026-08-06.** §2d now states
+   what is actually configured, and the page is deployed. The Chrome Web Store
+   requires a privacy policy URL and this is the page it would cite, so it had
+   to be true before any listing. A **store-specific** disclosure is still
+   needed covering what the extension itself handles.
 2. **Caching must move server-side.** The session cache here dies with the
    browser; a shared DynamoDB cache in front of `/epc`, `/sold-prices` and
    `/nhs` is what actually protects skyscore.co.uk from the extension's traffic.
