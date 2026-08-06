@@ -2211,3 +2211,49 @@ class SiteApiGeometryParityTests(unittest.TestCase):
         for code in sorted(site):
             self.assertAlmostEqual(api[code][0], site[code][0], places=4, msg=f'{code} lat')
             self.assertAlmostEqual(api[code][1], site[code][1], places=4, msg=f'{code} lon')
+
+
+class CoverageNoticeTests(unittest.TestCase):
+    """build_coverage turns the machine-readable *Resolution fields into a
+    plain statement a consumer surface can show.
+
+    The point is not cosmetic. 89.5% of London sits outside DEFRA's aircraft
+    contours, so for most postcodes the quiet score is geometry, not a
+    measurement. Reporting that only as quietResolution='postcode' means the
+    limitation is stated in a field almost nobody reads.
+    """
+
+    def test_raster_hit_carries_no_notice(self):
+        cov = app.build_coverage('raster', 'measured')
+        self.assertEqual(cov['notices'], [])
+        self.assertTrue(cov['quiet']['measuredAtLocation'])
+
+    def test_geometric_estimate_discloses_it_is_not_measured(self):
+        cov = app.build_coverage('postcode', 'measured')
+        self.assertEqual(len(cov['notices']), 1)
+        self.assertIn('not measured', cov['notices'][0])
+        self.assertFalse(cov['quiet']['measuredAtLocation'])
+
+    def test_borough_average_says_so(self):
+        cov = app.build_coverage('borough', 'measured')
+        self.assertEqual(len(cov['notices']), 1)
+        self.assertIn('borough-wide average', cov['notices'][0])
+
+    def test_unavailable_liveability_is_disclosed_as_a_gap(self):
+        # The Greater Manchester case: a uniform 5.0 read as a finding rather
+        # than an absence of inputs.
+        cov = app.build_coverage('raster', 'unavailable')
+        self.assertEqual(len(cov['notices']), 1)
+        self.assertIn('placeholder', cov['notices'][0])
+        self.assertFalse(cov['live']['measuredAtLocation'])
+
+    def test_both_degraded_yields_both_notices(self):
+        cov = app.build_coverage('postcode', 'unavailable')
+        self.assertEqual(len(cov['notices']), 2)
+
+    def test_basis_is_always_reported_even_when_clean(self):
+        # A field that appears only on failure trains readers to ignore its
+        # absence, so 'measured' is stated too.
+        cov = app.build_coverage('raster', 'measured')
+        self.assertEqual(cov['quiet']['basis'], 'raster')
+        self.assertEqual(cov['live']['basis'], 'measured')

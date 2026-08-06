@@ -2713,6 +2713,75 @@ def get_live_score(bd):
     return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
 
+# Human-readable coverage notices. Added 2026-08-06.
+#
+# WHY THIS EXISTS. `context.quietResolution` has always said HOW an answer was
+# reached, but only in machine terms ('raster' | 'postcode' | 'borough'), and
+# only an integrator reading the docs would know that 'postcode' means "DEFRA
+# never measured here, this is geometry". A consumer sees a number.
+#
+# That gap is the entire reason the raster tier is quarantined: 89.5% of London
+# sits outside DEFRA's aircraft contours, and rendering "not measured" as a
+# confident score is the defect. A short, plain notice converts an unstated
+# limitation into a stated one — the same move as the extension's non-London
+# caveat, and the same principle as the Core Cities finding that partial data
+# presented as complete is worse than no data.
+#
+# Keyed by component so airQuality and roadNoise slot in unchanged when their
+# rasters land. Both are declared in plannedComponents today; neither has data
+# in this repo yet, so neither appears here.
+_COVERAGE_NOTICES = {
+    'raster': None,  # measured at this location — nothing to disclose
+    'postcode': (
+        'Aircraft noise here is estimated from distance to airports and '
+        'flight-path geometry, not measured. DEFRA publishes contours for '
+        'about 10% of London postcodes and this one falls outside them.'
+    ),
+    'borough': (
+        'Aircraft noise here is a borough-wide average, not a figure for this '
+        'address. Expect real variation of 10-15 dB within a borough.'
+    ),
+}
+
+_LIVE_UNAVAILABLE_NOTICE = (
+    'Liveability inputs are unavailable for this area, so that component is a '
+    'neutral placeholder rather than a measurement. Do not read it as average.'
+)
+
+
+def build_coverage(quiet_source, live_source):
+    """Per-component coverage statements plus any plain-English notices.
+
+    Returned on every response, not only degraded ones: a field that appears
+    only when something is wrong trains readers to ignore its absence, and
+    'measured' is itself worth stating. `notices` is empty when everything is
+    measured at the queried location.
+    """
+    notices = []
+
+    quiet_notice = _COVERAGE_NOTICES.get(quiet_source)
+    if quiet_notice:
+        notices.append(quiet_notice)
+
+    # 'unavailable' is live_resolution's way of saying every input hit the 5.0
+    # placeholder — the Greater Manchester case, where a uniform 5.0 read as a
+    # finding rather than a gap.
+    if live_source == 'unavailable':
+        notices.append(_LIVE_UNAVAILABLE_NOTICE)
+
+    return {
+        'quiet': {
+            'basis': quiet_source,
+            'measuredAtLocation': quiet_source == 'raster',
+        },
+        'live': {
+            'basis': live_source,
+            'measuredAtLocation': live_source == 'measured',
+        },
+        'notices': notices,
+    }
+
+
 def live_resolution(bd, english=True):
     """How much of the liveability composite is measured rather than defaulted.
 
@@ -2854,6 +2923,12 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             'quietResolution': quiet_source,
             'liveResolution': live_resolution(bd, english=(city != 'nyc')),
         },
+        # Plain-English restatement of the two *Resolution fields above, so a
+        # consumer surface can show a limitation without having to know what
+        # 'postcode' means. See build_coverage.
+        'coverage': build_coverage(
+            quiet_source, live_resolution(bd, english=(city != 'nyc'))
+        ),
     }
 
 
