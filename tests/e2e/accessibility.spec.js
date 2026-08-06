@@ -12,6 +12,7 @@ const PAGES = [
   { path: '/', name: 'consumer app', waitFor: '#loading' },
   { path: '/pricing', name: 'pricing' },
   { path: '/privacy', name: 'privacy' },
+  { path: '/terms', name: 'terms of use' },
   { path: '/api/', name: 'API landing' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },

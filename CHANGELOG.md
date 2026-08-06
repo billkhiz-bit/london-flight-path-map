@@ -6,7 +6,151 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-04 (latest) - the DEFRA raster maps a COVID year, and the band mapping was built for the wrong dataset
+### 2026-08-06 (latest) - privacy.html is true again, and the check guarding it now reads the page
+
+**`privacy.html` §2d now carries Version B**: logs are "currently retained
+indefinitely", with the 30-day policy described as intended rather than done.
+The subprocessor table row was corrected to match, because leaving the two
+disagreeing would have swapped one false statement for an internal
+contradiction.
+
+**This unblocks the deploy the 2026-08-05 entry held back.** That entry withheld
+`privacy.html` because its source claimed 30-day retention while AWS reported
+never-expire, so shipping it would have replaced one untruth with another. The
+source is now accurate, and **the live page still reads "7 days", which is
+false** - so `privacy.html` should be deployed. It is the only surface still
+publishing the original claim.
+
+- **`scripts/check_log_retention.sh` rewritten to do what its name says.** It
+  has been called "log retention == privacy.html" since it was written and
+  never opened `privacy.html`; it hardcoded `WANT_DAYS=30`. That made the
+  console work the only route to green, so making the page *truthful* left the
+  gate **red on a truthful tree**. `DRAFT_security_retention_passage.md` §2b had
+  flagged exactly this. It now parses the claim out of §2d and asserts AWS
+  matches whatever the page says - strictly stronger, because it still reds on
+  "page says 30, AWS says None" **and** on the reverse, which the old version
+  could not detect. Both directions proven red, plus the unparseable-claim case.
+- **The 6 orphaned log groups now WARN rather than fail.** Under an
+  "indefinite" claim they do not contradict the page, and deleting them needs
+  `logs:DeleteLogGroup`, which `flightmap-dev` lacks - blocking there gated
+  every commit in the repo on a console action nobody can take from the CLI.
+  **The console work in §1 is still outstanding**, and the warning names the
+  Signup group specifically: raw emails from 26 Jun - 23 Jul 2026, in a location
+  §2b does not disclose.
+- **Windows gotcha, found by a false red:** the AWS CLI emits CRLF here, so the
+  retention field arrives as `None\r` and never string-equals `None`. Every
+  group compared unequal against a value it visibly matched. The `tr -d '\r'`
+  is load-bearing; the same bug on the name-matching side would have failed
+  green rather than red.
+- **`extension/` added** - an unlisted Rightmove demo using `/transport` and
+  `/nhs`, the two endpoints that already take lat/lon and need no API key. Not
+  for publication. `/v1/score`, `/epc` and `/sold-prices` are all
+  postcode-keyed, so they need a lat/lon to postcode reverse lookup that does
+  not exist yet; aircraft noise stays out while the DEFRA quarantine stands.
+  The directory was outside the lint script's file list on arrival and is now
+  inside it.
+- **`ESLint` preflight stage relabelled** from "(index.html)" to "(8 targets)",
+  stale since the 2026-08-03 config change. The command was always right; the
+  label understated it, which is the same failure as a label that overstates.
+- **iOS rebuild confirmed necessary and unblocked.** The shipped binary is
+  commit `4af9bc5` (29 May); the native bundle fix is `3b31ca9` (3 Aug), and
+  `git merge-base` confirms it is not an ancestor - so every App Store install
+  still scores liveability without `borough-extra.json`. `3b31ca9` is already on
+  `origin/master`, so the rebuild never depended on this commit gate. Building
+  after this push carries both that fix and `d7c5af3`, the postcode
+  double-rounding correction, in one review cycle.
+
+### 2026-08-05 - a terms page finally exists, and the privacy policy was found to be publicly false
+
+**DEPLOYED AND VERIFIED LIVE** the same day: `fonts/`, `terms.html` (now serving
+at `/terms`, previously 403), `index.html`, `pricing`, `changes`, `api/`, both
+`score-demo` pages, `prototype/` and `sw.js`. Verified from CloudFront:
+`/terms` returns 200, `/fonts/inter.woff2` returns 200 as `font/woff2`, and the
+live homepage carries **zero** references to `fonts.googleapis.com`.
+
+**`privacy.html` was deliberately HELD BACK.** Its source now claims 30-day log
+retention while AWS still reports never-expire, so deploying it would swap one
+false statement for another. The live page therefore still reads "7 days", which
+is equally untrue - the honest fix is the 15 minutes of console work in
+`DRAFT_security_retention_passage.md` §1, after which it deploys truthfully. One
+consequence to note: with the fonts change live, the live subprocessor table now
+lists Google Fonts as a subprocessor that is no longer used. That is
+over-disclosure, which is the harmless direction, and it clears when
+`privacy.html` ships.
+
+- **`privacy.html` §2d states three things that are not true**, found by
+  checking AWS rather than reading the document. It says server logs are
+  "retained for 7 days then automatically deleted"; **all 13 log groups are
+  verified `retentionInDays: None`**, meaning never expire. It describes **API
+  Gateway logs that do not exist** - there is no API Gateway log group in the
+  account and no `AccessLogSetting` in `template.yaml`, so what actually exists
+  is 13 Lambda *execution* log groups. And the subprocessor table calls them
+  "anonymous request logs" when the Signup group held **raw email addresses**
+  from 26 Jun to 23 Jul and **still holds 8,730 bytes today**. This is a UK GDPR
+  Art 13(2)(a) transparency problem on top of an Art 5(1)(e) storage-limitation
+  one, and it means `privacy.html` and `SECURITY.md` now **contradict each other
+  in public** - SECURITY.md honestly describes the gap as open. **Not corrected
+  **Corrected to 30 days, and the claim is now enforced rather than asserted**:
+  `scripts/check_log_retention.sh` reads the live log groups and fails while
+  they disagree with the document, wired into `/preflight` as a **blocking**
+  check. It is **red right now, deliberately** - the retention policy is console
+  work that `flightmap-dev` cannot perform (`logs:PutRetentionPolicy` is not
+  granted, though `DescribeLogGroups` is, which is what makes this checkable).
+  The repo is public, so a privacy claim ships on `git push` rather than on
+  deploy, which is why the gate guards the commit. Two honest routes to green
+  and no bypass flag: apply the policy, or revert §2d to the interim wording in
+  `DRAFT_security_retention_passage.md` §2b. **The old "7 days" claim was never
+  true at any point in the project's life**, and it survived because nothing
+  compared the document to the infrastructure.
+- **`terms.html` added** - the first liability page Sky Score has ever had. A
+  repo-wide search for `no warranty`, `as is`, `not liable`, `not advice` and
+  `terms of use` returned **zero hits** outside documents discussing the gap.
+  What had been assumed to be the disclaimer was `METHODOLOGY.md` §18, a
+  *regulatory-scope* note that says nothing about accuracy and lives in a GitHub
+  file rather than on any page a user reads. Covers informational-not-advice, no
+  accuracy warranty, acceptable use, ODbL/TfL attribution pass-through, and
+  liability capped at fees paid, with the mandatory UCTA 1977 s.2(1) carve-out
+  and CRA 2015 statutory-rights preservation. **Drafted for a solicitor to
+  review rather than to replace one**: UCTA s.2(2) and CRA s.62 make an
+  over-broad exclusion *void rather than weak*, so a bad one is worse than none.
+  Linked from both `index.html` footers and `privacy.html`, and added to the
+  em-dash gate, html-validate, the a11y scan and the deploy-drift list.
+- **`LIA.md` added.** Narrower than expected: `privacy.html` relies primarily on
+  Art 6(1)(b) for key issuance, so the assessment covers only the 6(1)(f)
+  processing (one-key-per-email, rate limiting, abuse investigation). Its §6
+  records that **the balancing test is conditional until log retention is
+  actually bounded**, rather than asserting a conclusion the infrastructure does
+  not support.
+- **Google Fonts removed from all nine deployed pages.** Every page load was
+  transferring the visitor's IP address to Google in the US;
+  `SUBPROCESSORS.md` row 12 had already recorded this as an open compliance item
+  citing *LG München I, 3 O 17493/20* and naming self-hosting as the remedy.
+  Fonts are now vendored by `scripts/vendor_fonts.py` into `fonts/`, and both
+  Google hosts are out of every CSP and out of `sw.js` `SWR_ORIGINS`.
+  **Google's CSS hides that these are variable fonts** - it emits one
+  `@font-face` per weight, all pointing at the same file, so a naive fetch wrote
+  **four byte-identical copies of Geist**. Deduplicated by checksum: 371,488
+  bytes across 11 files became **141,188 across 4**. The declared weight *range*
+  is load-bearing and fails silently, since a variable font declared `400 600`
+  renders a 300-weight request clamped at 400 with no warning; `index.html` uses
+  JetBrains Mono 300-700, wider than the range first vendored.
+- **`tests/fonts-selfhosted.mjs` added and proven able to fail** (exits 1 on a
+  removed woff2). It serves the repo over a local static server, so it validates
+  **source before a deploy**. Uses `document.fonts.load()` rather than
+  `check()`: fonts are fetched lazily, so `check()` only sees what painted above
+  the fold and reported Geist Mono missing on `score-demo/index.html`, where it
+  is declared on four selectors inside a results panel that is empty until a
+  query runs.
+- **`LICENSING.md` corrected**: its TL;DR grouped OpenStreetMap with OGL and TfL
+  as "similar". **ODbL 1.0 is share-alike**, which for a paid B2B product is a
+  materially different obligation. `privacy.html` had described it correctly
+  since 2026-08-03, so the two documents disagreed and the **more permissive
+  reading was the one in the licensing file**. Now records the three reasons
+  current use is very likely outside the Derivative Database trigger, the
+  load-bearing one being that healthcare scoring comes from
+  `data/borough-extra.json`, not from OSM.
+
+### 2026-08-04 - the DEFRA raster maps a COVID year, and the band mapping was built for the wrong dataset
 
 **Deployed:** the consumer site, `/pricing`, `/api/`, `/score-demo/*` and the
 prototype. **Not deployed:** the signup Lambda's new `upgrade` block, and

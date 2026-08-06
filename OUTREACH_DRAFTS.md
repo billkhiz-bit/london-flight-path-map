@@ -226,6 +226,25 @@ Post-Haatch reframe: the ask is no longer "a 20-minute call to discuss" — it i
 3. Signed LOI → log in `OUTREACH_LOG.md` (🟢), tell Haatch thread.
 4. Kickoff invoice (entity gate: incorporate first — see one-pager internal notes).
 
+**⚠ Second gate, added 2026-08-04 — terms of service, and it binds BEFORE the
+invoice.** A repo-wide search returns **zero** liability language (`no warranty`,
+`as is`, `limitation of liability`, `not liable`, `not advice`) and there is **no
+terms page**. What was assumed to be the disclaimer is `METHODOLOGY.md` §18, a
+*regulatory-scope* note about the Estate Agents Act — it says nothing about
+accuracy, and it lives in a GitHub file rather than on any page a customer reads.
+
+This matters here specifically rather than in the abstract: **"informative, not
+instructive" is a sound defence for the free consumer site and inverts for this
+pilot.** Steps 1-4 above deliberately construct an identified client, a
+jointly-defined success metric, founder integration support and a written
+evidence report — which is precisely the assumption-of-responsibility fact
+pattern the free-site argument relies on being absent.
+
+Do not send an LOI for signature without terms attached or referenced. Note that
+UCTA 1977 s.2(2) limits negligence exclusions to what is *reasonable* and an
+over-broad one is **void rather than merely weak**, so this is a draft-for-review
+job, not a copy-paste one. Tracked in `ROADMAP.md` → *Legal & entity*.
+
 ---
 
 ## Warm-intro ask (LinkedIn DM)

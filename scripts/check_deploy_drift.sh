@@ -37,6 +37,7 @@ SURFACES='
 index.html|index.html
 pricing.html|pricing
 privacy.html|privacy
+terms.html|terms
 changes.html|changes
 api/index.html|api/
 score-demo/index.html|score-demo/index.html
@@ -48,6 +49,7 @@ robots.txt|robots.txt
 sitemap.xml|sitemap.xml
 .well-known/security.txt|.well-known/security.txt
 js/api-base.js|js/api-base.js
+fonts/fonts.css|fonts/fonts.css
 '
 
 DRIFTED=0
