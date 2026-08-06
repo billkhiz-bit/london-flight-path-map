@@ -2307,3 +2307,38 @@ class RoadNoiseReportingTests(unittest.TestCase):
         # postcode look like a successful raster hit.
         self.assertIsNone(app.lden_from_row({'lden': 35.0}))
         self.assertEqual(app.lden_from_row({'lden': 58.2}), 58.2)
+
+
+class AirQualityReportingTests(unittest.TestCase):
+    """DEFRA PCM background concentrations, reported alongside their guideline.
+
+    Full UK coverage (254,905 cells, 0 missing at 60k sampled postcodes), so
+    unlike the aircraft raster this carries a reading almost everywhere. The
+    absent-means-absent rule still applies: a missing concentration must not
+    surface as a clean one.
+    """
+
+    def test_absent_readings_produce_no_keys(self):
+        self.assertEqual(app.build_environment({'no2': None, 'pm25': None}), {})
+
+    def test_values_are_reported_with_the_who_guideline(self):
+        env = app.build_environment({'no2': 33.42, 'pm25': 11.87})
+        self.assertEqual(env['no2AnnualMeanUgm3'], 33.4)
+        self.assertEqual(env['pm25AnnualMeanUgm3'], 11.9)
+        # A bare concentration means nothing without a reference point.
+        self.assertEqual(env['no2WhoGuidelineUgm3'], 10)
+        self.assertEqual(env['pm25WhoGuidelineUgm3'], 5)
+        self.assertIn('PCM', env['airQualitySource'])
+
+    def test_one_pollutant_present_does_not_invent_the_other(self):
+        env = app.build_environment({'no2': 22.0, 'pm25': None})
+        self.assertIn('no2AnnualMeanUgm3', env)
+        self.assertNotIn('pm25AnnualMeanUgm3', env)
+
+    def test_air_quality_does_not_enter_the_weighted_score(self):
+        # plannedComponents still lists airQuality as planned; reporting a
+        # measurement is not the same as scoring it, and scoring it would
+        # change every score ever returned.
+        body, status = app.resolve_query({'borough': 'Camden', 'city': 'london'})
+        self.assertEqual(status, 200)
+        self.assertEqual(set(body['components']), {'quiet', 'afford', 'growth', 'live'})

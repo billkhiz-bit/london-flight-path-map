@@ -2284,7 +2284,7 @@ def _lookup_noise_row(postcode_clean):
         result = ddb.get_item(
             TableName=NOISE_RASTER_TABLE,
             Key={'postcode': {'S': postcode_clean}},
-            ProjectionExpression='ldenDb, roadLdenDb',
+            ProjectionExpression='ldenDb, roadLdenDb, no2Ugm3, pm25Ugm3',
         )
     except (BotoCoreError, ClientError) as exc:
         logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
@@ -2301,7 +2301,12 @@ def _lookup_noise_row(postcode_clean):
         except (TypeError, ValueError):
             return None
 
-    return {'lden': _num('ldenDb'), 'roadLden': _num('roadLdenDb')}
+    return {
+        'lden': _num('ldenDb'),
+        'roadLden': _num('roadLdenDb'),
+        'no2': _num('no2Ugm3'),
+        'pm25': _num('pm25Ugm3'),
+    }
 
 
 def lden_from_row(row, postcode_clean=''):
@@ -2945,6 +2950,33 @@ def build_environment(noise_row, postcode_clean=''):
     if road_lden is not None:
         env['roadNoiseLdenDb'] = round(road_lden, 1)
         env['roadNoiseSource'] = 'DEFRA Strategic Noise Mapping Round 4 (2022), road, Lden'
+
+    # Air quality: DEFRA PCM background maps, annual mean, 2022, 1 km grid.
+    #
+    # NOT the Daily Air Quality Index that plannedComponents still names. DAQI
+    # is a daily index at monitoring stations — sparse, and as much about
+    # today's weather as about the address. Annual mean concentration on a
+    # modelled grid is the measure a property decision wants, and the one the
+    # WHO guidelines below are expressed against.
+    #
+    # The guideline is carried alongside the value because a bare "13.3" means
+    # nothing to a reader. WHO 2021: NO2 10 ug/m3, PM2.5 5 ug/m3 annual mean.
+    # Stating the reference is not editorialising — omitting it would leave the
+    # number to be interpreted against whatever the reader assumes.
+    no2 = (noise_row or {}).get('no2')
+    if no2 is not None and no2 >= 0:
+        env['no2AnnualMeanUgm3'] = round(no2, 1)
+        env['no2WhoGuidelineUgm3'] = 10
+
+    pm25 = (noise_row or {}).get('pm25')
+    if pm25 is not None and pm25 >= 0:
+        env['pm25AnnualMeanUgm3'] = round(pm25, 1)
+        env['pm25WhoGuidelineUgm3'] = 5
+
+    if no2 is not None or pm25 is not None:
+        env['airQualitySource'] = (
+            'DEFRA background pollution maps (PCM), annual mean 2022, 1 km grid'
+        )
 
     return env
 
