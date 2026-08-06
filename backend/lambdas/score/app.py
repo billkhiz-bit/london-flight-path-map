@@ -2113,6 +2113,29 @@ def _get_ddb_client():
 #      Resolving it means picking one: serve the site's quiet from /v1/score,
 #      ship the raster samples to the client, or accept and document the
 #      divergence. That is a product decision, not a data one.
+#
+#      MEASURED 2026-08-06, and it reorders those three options.
+#
+#      "Serve the site's quiet from /v1/score" reads as the clean answer and was
+#      recommended as such. It has a cost that recommendation missed: /v1/score
+#      is API-key gated (template.yaml, ApiKeyRequired on all three routes), so
+#      the consumer site would have to embed a key and meter every visitor
+#      against a usage plan. The site currently makes no authenticated calls at
+#      all.
+#
+#      "Ship the raster samples to the client" turns out to be cheap, because
+#      DEFRA's coverage is so sparse. Sampling data/defra_lden_2022.tif at every
+#      NSPL centroid inside the London bbox: 393,942 postcodes, of which 35,352
+#      (9.0%) carry a real reading. As postcode->dB JSON that is ~483 KB, the
+#      same order as the data files index.html already fetches, and it needs no
+#      key, no request per visitor and no new route.
+#
+#      Watch the nodata sentinel when regenerating it. This GeoTIFF declares
+#      nodata as 3.4e38 (float32 max), NOT the 35.0 the loader wrote into
+#      DynamoDB. A `>= 40.0` plausibility test passes 3.4e38 unharmed — that
+#      mistake reported 100% coverage on the first attempt at this measurement,
+#      which is the same "absence read as measurement" defect the quarantine
+#      exists for, reproduced while measuring the quarantine.
 RASTER_TIER_QUARANTINED = True
 
 # The legacy nodata fill written by scripts/load_defra_raster.py before
