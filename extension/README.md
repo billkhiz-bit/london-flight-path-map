@@ -48,14 +48,15 @@ needs no backend change and no API key.
 
 Automated, all wired into `scripts/preflight.sh` so they cannot rot:
 
-- **`tests/extension-extraction.mjs`** - 9 cases over the four extraction
-  strategies: correct attribution, non-London flagged, out-of-UK and null
-  island rejected. No `jsdom`; `extract.js` touches four DOM surfaces and the
-  suite shims exactly those.
-- **`tests/extension-e2e.mjs`** - 18 checks driving the real extension in a
-  real Chromium. Badge injects, nothing fetches until clicked, panel renders
-  live TfL and NHS data, attribution present, cache hit on a second nearby
-  listing. Measured: transport paints in **852 ms**, cached view in **37 ms**.
+- **`tests/extension-extraction.mjs`** - 12 cases over all five extraction
+  strategies, including one against a **real saved Rightmove listing**.
+  Correct attribution, non-London flagged, out-of-UK and null island rejected.
+  No `jsdom`; `extract.js` touches four DOM surfaces and the suite shims those.
+- **`tests/extension-e2e.mjs`** - 24 checks driving the real extension in a
+  real Chromium, against the real saved listing. Badge injects, nothing fetches
+  until clicked, panel renders live TfL and NHS data, attribution present,
+  cache hit on a second view, plus the degraded paths: non-London suppresses
+  transport with a caveat, an unlocatable page renders nothing at all.
 - ESLint clean with `security/detect-unsafe-regex` at **error** for this
   directory, stricter than the repo default.
 - Field names match the Lambdas: `transport/app.py:102`, `:135`, `nhs/app.py:134`.
@@ -64,11 +65,36 @@ The e2e serves its fixture **at** the rightmove.co.uk URL via request
 interception, so the content script's match pattern fires and no request ever
 reaches Rightmove.
 
+## How Rightmove actually encodes coordinates
+
+Derived from a saved listing on 2026-08-06, not assumed. Four regex strategies
+failed on every real listing before this was understood:
+
+```
+window.__PAGE_MODEL = {"data":"[ ...1612 entries... ]","encoding":...}
+```
+
+- `data` is a JSON **string** containing JSON, so keys appear escaped as
+  `\"latitude\"` - no pattern matching a bare quoted key can hit
+- the array is **flattened**: `{"latitude":160,"longitude":161}` holds INDICES,
+  so even after unescaping the number beside `latitude` is `160`, not a
+  coordinate. `flat[160] === 51.49423`, `flat[161] === -0.18825`
+- it is `window.__PAGE_MODEL`, **two** leading underscores
+
+`fromRightmovePageModel()` unpacks this and runs first in the cascade.
+`tests/fixtures/rightmove-real-sw5.html` carries that script verbatim, so if
+Rightmove changes the format the suite says so.
+
+**Timing is part of the contract.** `run_at` is `document_end`, not
+`document_idle`. The page model is transient - present on a fresh load, gone
+from the same tab minutes later once React has hydrated. At `document_idle` the
+extension arrived after the data left, found nothing, and rendered no badge,
+which looks identical to "this page has no coordinates".
+
 ## Verification still outstanding
 
-**One thing, and only one: whether Rightmove's real markup still looks like the
-fixture.** Everything else above is now covered automatically. That single
-question needs a browser on a live listing:
+Whether the strategies hold on **other** portals, and on rent/new-build
+templates. To check any page:
 
 ```
 sh scripts/build_extraction_probe.sh | clip
@@ -79,8 +105,9 @@ first if Chrome blocks it). It prints the winning strategy, coordinates,
 outcode, and an OpenStreetMap link to confirm the pin. Check a **for-sale**, a
 **to-rent** and a **new-build** listing - different templates.
 
-`page-model` is the expected winner. Anything else means the primary strategy
-has drifted and should be re-derived.
+On Rightmove, `rightmove-page-model` is the expected winner. Anything else
+means the page model changed and the unpacker needs re-deriving. On other
+portals any strategy winning is a success - the cascade is the point.
 
 ## Known limits
 

@@ -4,6 +4,15 @@ import security from 'eslint-plugin-security';
 import globals from 'globals';
 
 export default [
+  // Global ignore. tests/fixtures/ holds CAPTURED THIRD-PARTY MARKUP — real
+  // property-portal pages saved verbatim so the extension's extraction is
+  // tested against what those sites actually ship rather than what we assumed.
+  // eslint-plugin-html lints inline <script> content, so without this the gate
+  // reports on Rightmove's minified bundle (undeclared globals, ==, unused
+  // vars) as though it were ours. Those files are evidence, not source: fixing
+  // their lint errors would destroy the only thing that makes them useful.
+  { ignores: ['tests/fixtures/**'] },
+
   // Added 2026-08-03. Before this, the config declared ONLY `files: ['**/*.html']`,
   // so every .js and .mjs in the repo was linted by nothing at all — sw.js,
   // js/api-base.js, the tests/*.mjs harnesses, mobile/scripts/copy-web.mjs (the

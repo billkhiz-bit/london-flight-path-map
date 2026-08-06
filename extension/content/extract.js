@@ -18,6 +18,23 @@
 // Nothing here is transmitted anywhere. The only value that leaves the browser
 // is a rounded coordinate pair (see background.js) — never listing content,
 // never the address, never the price.
+//
+// TIMING IS PART OF THE CONTRACT. manifest.json sets run_at: "document_end",
+// NOT the more usual "document_idle", and manifest.json cannot carry a comment
+// saying why — so it is recorded here.
+//
+// Rightmove server-renders a `window.__PAGE_MODEL` blob into the HTML and then
+// React hydrates over it. That script is TRANSIENT: observed present on a
+// freshly loaded listing on 2026-08-06 and absent from the same tab minutes
+// later, with `outerHTML.includes('__PAGE_MODEL')` returning false. document_idle
+// fires after `load`, by which point hydration may already have removed it — so
+// the extension would arrive after the data had gone, find nothing, and render
+// no badge, which is indistinguishable from "this page has no coordinates".
+//
+// document_end runs once the DOM is parsed but before subresources finish, which
+// is early enough to read server-rendered markup. If a future change needs even
+// earlier access, the next step is document_start plus a DOMContentLoaded hook —
+// do not simply move back to idle.
 
 // UK bounding box. A page contains many numbers and some of them are called
 // "latitude"; without this a stray match in an analytics blob or an advert
@@ -55,6 +72,119 @@ function validCoords(lat, lon) {
   );
 }
 
+// --- Strategy 0: Rightmove's flattened page model ------------------------
+//
+// The authoritative source on Rightmove, and the reason every regex strategy
+// below failed on real listings. Derived from a saved page on 2026-08-06, not
+// from assumption.
+//
+// The shape:
+//
+//   window.__PAGE_MODEL = {"data":"[ ...1612 entries... ]","encoding":...}
+//
+// Three things make this invisible to a naive pattern:
+//
+//   1. `data` is a JSON STRING containing JSON, so every key in it appears
+//      escaped as \"latitude\" — a quote, a backslash, then the word. No
+//      pattern matching "latitude" as a bare quoted key will ever hit.
+//   2. It is a FLATTENED array. Objects do not hold values, they hold indices
+//      into the top-level array: {"latitude":160,"longitude":161} means
+//      flat[160] and flat[161]. So even after unescaping, the number sitting
+//      next to "latitude" is 160, not a coordinate.
+//   3. It is `window.__PAGE_MODEL`, two leading underscores.
+//
+// Verified: flat[160] === 51.49423, flat[161] === -0.18825, which is
+// Collingham Road SW5 — the listing the fixture was saved from.
+//
+// Cost is one ~100 KB JSON.parse, once, on a page that already parsed it
+// itself. Everything is wrapped so a Rightmove format change degrades to the
+// regex strategies below rather than throwing.
+function fromRightmovePageModel() {
+  const script = [...document.querySelectorAll('script:not([src])')].find((s) =>
+    s.textContent.includes('__PAGE_MODEL')
+  );
+  if (!script) return null;
+
+  const raw = script.textContent;
+  const start = raw.indexOf('{', raw.indexOf('__PAGE_MODEL'));
+  if (start < 0) return null;
+
+  // Balanced-brace scan. The assignment is followed by more script, so the
+  // last `}` in the element is not the end of this object. Must track string
+  // state and escapes, because the payload is dense with both.
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let end = -1;
+  for (let i = start; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escaped) {
+      escaped = false;
+    } else if (ch === '\\') {
+      escaped = true;
+    } else if (ch === '"') {
+      inString = !inString;
+    } else if (!inString) {
+      if (ch === '{') {
+        depth += 1;
+      } else if (ch === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
+      }
+    }
+  }
+  if (end < 0) return null;
+
+  let flat;
+  try {
+    const outer = JSON.parse(raw.slice(start, end));
+    flat = typeof outer.data === 'string' ? JSON.parse(outer.data) : outer.data;
+  } catch {
+    // Malformed or re-encoded: fall through to the regex strategies.
+    return null;
+  }
+  if (!Array.isArray(flat)) return null;
+
+  // Resolve an index reference into the flat array. A direct number is
+  // accepted too, in case Rightmove ever inlines the values.
+  const deref = (v) => {
+    if (typeof v !== 'number') return NaN;
+    const target = flat[v];
+    return typeof target === 'number' ? target : v;
+  };
+
+  const seen = new Set();
+  const search = (node, depth2) => {
+    if (!node || typeof node !== 'object' || depth2 > 6 || seen.has(node)) return null;
+    seen.add(node);
+
+    for (const [key, value] of Object.entries(node)) {
+      if (/^lat(itude)?$/i.test(key)) {
+        const pair = Object.entries(node).find(([k]) => /^l(on|ng|ongitude)$/i.test(k));
+        if (pair) {
+          const lat = deref(value);
+          const lon = deref(pair[1]);
+          if (validCoords(lat, lon)) return { lat, lon };
+        }
+      }
+      if (value && typeof value === 'object') {
+        const found = search(value, depth2 + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  for (const entry of flat) {
+    const found = search(entry, 0);
+    if (found) return { ...found, source: 'rightmove-page-model' };
+  }
+  return null;
+}
+
 // --- Strategy A: the page model blob -------------------------------------
 // Rightmove serialises the property into a <script> as window.PAGE_MODEL. We
 // cannot read the object, but we can read the script's source text. Prefer the
@@ -62,11 +192,27 @@ function validCoords(lat, lon) {
 // coordinate pair is serialised — two lone "latitude" mentions far apart in a
 // document are much more likely to be something else.
 function fromScriptBlob() {
+  // The `"?` around each value is not defensive padding — it is the whole
+  // reason this works. Rightmove serialises coordinates as STRINGS:
+  //
+  //     "latitude":"51.473422"
+  //
+  // not as bare numbers. A pattern requiring digits immediately after the colon
+  // dies on the opening quote.
+  //
+  // PROVENANCE, because it matters: this was observed on a live
+  // apparentproperties.com listing on 2026-08-06, NOT on Rightmove. Rightmove's
+  // own serialisation is still unverified — nobody has run this against one.
+  // The quoted form is real and worth handling either way, but do not read this
+  // comment as evidence about Rightmove specifically.
+  //
+  // Both forms are accepted rather than switching to the quoted one: portals
+  // differ, and handling both costs one character each.
   const pairPattern =
-    /"latitude"\s*:\s*(-?\d{1,3}\.\d+)\s*,\s*"longitude"\s*:\s*(-?\d{1,3}\.\d+)/;
+    /"latitude"\s*:\s*"?(-?\d{1,3}\.\d+)"?\s*,\s*"longitude"\s*:\s*"?(-?\d{1,3}\.\d+)"?/;
   // Some builds order the keys the other way round.
   const reversePattern =
-    /"longitude"\s*:\s*(-?\d{1,3}\.\d+)\s*,\s*"latitude"\s*:\s*(-?\d{1,3}\.\d+)/;
+    /"longitude"\s*:\s*"?(-?\d{1,3}\.\d+)"?\s*,\s*"latitude"\s*:\s*"?(-?\d{1,3}\.\d+)"?/;
 
   for (const script of document.querySelectorAll('script')) {
     // Skip JSON-LD and leave it to fromJsonLd(). querySelectorAll('script')
@@ -98,6 +244,24 @@ function fromScriptBlob() {
       const lon = parseFloat(reverse[1]);
       const lat = parseFloat(reverse[2]);
       if (validCoords(lat, lon)) return { lat, lon, source: 'page-model' };
+    }
+
+    // Last resort WITHIN this script: the two keys exist but are not adjacent,
+    // e.g. separated by other fields or nested differently. Adjacency was the
+    // original guard against pairing a latitude from one object with a
+    // longitude from another, so this is deliberately the third attempt rather
+    // than the first, and it is still scoped to a single script element —
+    // never across the whole document, which is where mismatched pairing gets
+    // genuinely dangerous.
+    //
+    // validCoords is what makes this safe enough to try: a mispaired result
+    // almost always lands outside the UK bounding box and is rejected.
+    const loneLat = text.match(/"lat(?:itude)?"\s*:\s*"?(-?\d{1,3}\.\d+)"?/);
+    const loneLon = text.match(/"l(?:on|ng|ongitude)"\s*:\s*"?(-?\d{1,3}\.\d+)"?/);
+    if (loneLat && loneLon) {
+      const lat = parseFloat(loneLat[1]);
+      const lon = parseFloat(loneLon[1]);
+      if (validCoords(lat, lon)) return { lat, lon, source: 'page-model-split' };
     }
   }
   return null;
@@ -212,8 +376,17 @@ function extractOutcode(address) {
  * expected to render nothing in that case rather than guess.
  */
 function extractListing() {
+  // Ordered by authority, not convenience. The page model is Rightmove's own
+  // structured data; everything after it is inference from whatever the page
+  // happens to leak. A cascade is what makes this portable across portals —
+  // apparentproperties.com is served entirely by fromScriptBlob, Rightmove
+  // entirely by the page-model unpacker, and neither knows about the other.
   const coords =
-    fromScriptBlob() || fromJsonLd() || fromStaticMap() || fromMetaTags();
+    fromRightmovePageModel() ||
+    fromScriptBlob() ||
+    fromJsonLd() ||
+    fromStaticMap() ||
+    fromMetaTags();
 
   if (!coords) return null;
 

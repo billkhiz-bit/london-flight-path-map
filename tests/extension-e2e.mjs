@@ -29,10 +29,10 @@ import { readFileSync } from 'node:fs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXT = join(HERE, '..', 'extension');
-const fixture = readFileSync(join(HERE, 'fixtures', 'rightmove-listing.html'), 'utf8');
+const fixture = readFileSync(join(HERE, 'fixtures', 'rightmove-real-sw5.html'), 'utf8');
 
-// Battersea, matching the fixture's PAGE_MODEL.
-const LAT = '51.4713';
+// Collingham Road SW5, from the real saved listing the fixture carries.
+const LAT = '51.4942';
 
 const results = [];
 const check = (name, ok, detail = '') => results.push([name, ok, detail]);
@@ -97,13 +97,13 @@ check('real stations returned', stationCount > 0, `${stationCount} stations`);
 await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
 const text = await page.locator('#cubitt33-panel').innerText();
 
-check('address echoed back', text.includes('Battersea Park Road'));
+check('address echoed back', text.includes('Collingham Road'));
 check('healthcare section present', /HEALTHCARE/i.test(text));
 check('no stale Loading text', !text.includes('Loading'));
 check('TfL attribution', /TfL Open Data/i.test(text));
 check('OSM/ODbL attribution', /OpenStreetMap/i.test(text));
-check('debug reports page-model', text.includes('page-model'));
-check('debug reports outcode', text.includes('SW11'));
+check('debug reports rightmove-page-model', text.includes('rightmove-page-model'));
+check('debug reports outcode', text.includes('SW5'));
 check('debug reports coordinates', text.includes(LAT));
 check('no uncaught page errors', pageErrors.length === 0, pageErrors.join('; '));
 

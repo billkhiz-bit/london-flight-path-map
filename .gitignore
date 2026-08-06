@@ -75,3 +75,12 @@ data/*
 # one is actively dangerous: this repo syncs only via git, so another device
 # would silently resume a load it never ran and then stamp __META__ for it.
 .nspl_load_checkpoint*
+
+# Raw browser-saved property pages used to derive extension fixtures.
+# Ctrl+S output is ~1 MB plus a _files/ directory of assets, none of which the
+# extraction reads. The DERIVED fixture (tests/fixtures/rightmove-real-*.html)
+# IS committed: it carries the __PAGE_MODEL script verbatim, which is the only
+# part any strategy touches, at a tenth the size. Regenerate a new one by
+# saving a listing here and trimming to <title>, <h1> and that script.
+tests/fixtures/*bedroom*
+tests/fixtures/*_files/

@@ -25,7 +25,8 @@
       ],
       "js": ["content/extract.js", "content/panel.js"],
       "css": ["content/panel.css"],
-      "run_at": "document_idle"
+
+      "run_at": "document_end"
     }
   ]
 }

@@ -45,7 +45,12 @@ function makeDoc({ scripts = [], jsonld = [], imgs = [], h1 = '', metas = {} }) 
     querySelectorAll(sel) {
       // A real querySelectorAll('script') returns ld+json blocks too. Modelling
       // that is the whole reason the strategy-attribution bug was findable.
-      if (sel === 'script') {
+      //
+      // 'script:not([src])' is what the page-model unpacker asks for. Every
+      // fixture here is inline, so it resolves to the same set — but it must be
+      // handled explicitly, or the selector falls through to [] and the
+      // strategy silently sees an empty page.
+      if (sel === 'script' || sel === 'script:not([src])') {
         return [
           ...scripts.map((t) => node(t)),
           ...jsonld.map((t) => node(t, 'application/ld+json')),
@@ -102,6 +107,32 @@ const CASES = [
       h1: 'Clapham, London SW4 7AA',
     },
     want: { source: 'page-model', lat: 51.4613, outcode: 'SW4', inLondon: true },
+  },
+  {
+    // Rightmove serves coordinates as quoted STRINGS. The fixture above uses
+    // that form because it is what a live page actually returned on
+    // 2026-08-06; this case keeps the numeric form covered, since other
+    // portals serialise that way and the pattern accepts both.
+    name: 'page-model with unquoted numeric values',
+    doc: {
+      scripts: [`window.PAGE_MODEL={"pad":"${pad}","latitude":51.4613,"longitude":-0.1656}`],
+      h1: 'Battersea, London SW11',
+    },
+    want: { source: 'page-model', lat: 51.4613, inLondon: true },
+  },
+  {
+    // Keys present but not adjacent — the third-attempt split path. Scoped to a
+    // single script so a latitude from one object cannot pair with a longitude
+    // from another; reported under its own strategy name so the debug line
+    // still says which route won.
+    name: 'page-model with non-adjacent keys uses the split path',
+    doc: {
+      scripts: [
+        `window.PAGE_MODEL={"latitude":"51.4613","displayAddress":"${pad}","propertyType":"flat","longitude":"-0.1656"}`,
+      ],
+      h1: 'Battersea, London SW11',
+    },
+    want: { source: 'page-model-split', lat: 51.4613, lon: -0.1656 },
   },
   {
     name: 'json-ld attributes to json-ld, not page-model',
@@ -187,9 +218,52 @@ for (const { name, doc, want } of CASES) {
   }
 }
 
+// --- The real page --------------------------------------------------------
+//
+// Every case above is synthetic, and synthetic fixtures are exactly how this
+// suite went green for a day while the extension found nothing on a single
+// real listing: the fixtures used the serialisation I ASSUMED rather than the
+// one Rightmove ships.
+//
+// rightmove-real-sw5.html carries the `window.__PAGE_MODEL` script verbatim
+// from a listing saved on 2026-08-06 (Collingham Road, SW5) — untrimmed and
+// unreformatted, because normalising it would reintroduce the same problem.
+// If this case ever fails, Rightmove changed their page model and the
+// unpacker needs re-deriving. Nothing else in the suite can tell you that.
+const REAL = join(HERE, 'fixtures', 'rightmove-real-sw5.html');
+const realHtml = readFileSync(REAL, 'utf8');
+const realScript = realHtml.slice(
+  realHtml.indexOf('>', realHtml.indexOf('<script')) + 1,
+  realHtml.indexOf('</script>')
+);
+const realH1 = (realHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || '';
+
+const realResult = extractWith(makeDoc({ scripts: [realScript], h1: realH1 }));
+
+const REAL_EXPECTED = {
+  source: 'rightmove-page-model',
+  lat: 51.49423,
+  lon: -0.18825,
+  outcode: 'SW5',
+  inLondon: true,
+};
+
+const realMismatches = Object.entries(REAL_EXPECTED).filter(([k, v]) => realResult?.[k] !== v);
+if (!realResult) {
+  console.log('FAIL  real Rightmove page (SW5)\n      extraction returned null');
+  failed += 1;
+} else if (realMismatches.length) {
+  console.log('FAIL  real Rightmove page (SW5)');
+  for (const [k, v] of realMismatches) {
+    console.log(`      ${k}: got ${JSON.stringify(realResult[k])}, want ${JSON.stringify(v)}`);
+  }
+  failed += 1;
+} else {
+  console.log('PASS  real Rightmove page (SW5)');
+}
+
+const total = CASES.length + 1;
 console.log(
-  failed === 0
-    ? `\n${CASES.length} extraction cases passed.`
-    : `\n${failed} of ${CASES.length} FAILED.`
+  failed === 0 ? `\n${total} extraction cases passed.` : `\n${failed} of ${total} FAILED.`
 );
 process.exit(failed === 0 ? 0 : 1);
