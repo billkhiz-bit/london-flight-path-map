@@ -969,6 +969,12 @@ The Lambda's quiet-resolution chain (raster → Haversine → borough) means the
 
 Both DEFRA dataset pages have an interactive "Download data by area of interest and format" tool. Select **all of England**, **GeoTIFF** format, and the **Lden** metric, submit, and download once the export is prepared (typically 5 minutes).
 
+> **Corrected 2026-08-06: the interactive tool is not the only route, and for road noise it is no longer the one we use.** The dataset pages also publish an **OGC WCS endpoint**, which takes bounding-box requests over plain HTTP and returns the same GeoTIFF under the same licence. `scripts/fetch_defra_road_noise.py` uses it to pull Greater London directly, so the road-noise raster is reproducible from a terminal rather than dependent on someone clicking through a portal. That also removes the manual step from the Round 5 plan above.
+>
+> One constraint found by measurement: a single request for the whole Greater London bbox returns **504**. 20 km tiles return 200 in a few seconds each (2000x2000 at native 10 m), so the script tiles and mosaics — 12 tiles, ~62 MB output.
+>
+> **Coverage differs enormously between the two rasters, and it changes what each can support.** The aircraft raster carries data for **6.2%** of its grid, because DEFRA's aircraft contours are localised lobes around airports — which is why the raster tier is quarantined (§4.5). The road raster carries **92.2%**, because roads are everywhere. Road noise therefore does not inherit the coverage defect that blocks aircraft, and can be scored honestly for nearly every London postcode. Measured 2026-08-06: range 40.0-92.7 dB, median 51.7, Hyde Park Corner 70.1.
+
 ## 8. Attribution
 
 Live API responses include a `sources` array in the response body. Consumers redistributing Sky Score outputs are expected to preserve attribution.
