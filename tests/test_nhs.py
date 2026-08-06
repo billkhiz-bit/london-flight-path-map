@@ -78,14 +78,22 @@ class TestHandlerValidation:
 # OSM Overpass response shape (the handler's data source since the NHS
 # Service Search API was retired behind a subscription key). Ways and
 # relations carry coordinates under "center"; nodes carry lat/lon directly.
+#
+# COORDINATES ARE MANCHESTER, DELIBERATELY. From 2026-08-06 the handler serves
+# Greater London from a bundled snapshot and never calls Overpass there, so a
+# London fixture would short-circuit and these tests would assert nothing about
+# the code path they exist to cover. They WERE London, and failed the moment
+# that change landed — the gate working exactly as intended. The whole fixture
+# and its query point were shifted by one constant offset, so every relative
+# distance the assertions depend on is unchanged.
 OVERPASS_RESPONSE = json.dumps(
     {
         "elements": [
             {
                 "type": "node",
                 "id": 1,
-                "lat": 51.5055,
-                "lon": -0.0862,
+                "lat": 53.4753,
+                "lon": -2.2081,
                 "tags": {
                     "amenity": "doctors",
                     "name": "City Medical Centre",
@@ -98,7 +106,7 @@ OVERPASS_RESPONSE = json.dumps(
             {
                 "type": "way",
                 "id": 2,
-                "center": {"lat": 51.5040, "lon": -0.0900},
+                "center": {"lat": 53.4738, "lon": -2.2119},
                 "tags": {
                     "amenity": "pharmacy",
                     "name": "Bridge Pharmacy",
@@ -108,8 +116,8 @@ OVERPASS_RESPONSE = json.dumps(
             {
                 "type": "node",
                 "id": 3,
-                "lat": 51.5100,
-                "lon": -0.0950,
+                "lat": 53.4798,
+                "lon": -2.2169,
                 "tags": {"amenity": "hospital", "name": "Riverside Hospital"},
             },
         ]
@@ -127,7 +135,7 @@ def _mock_urlopen(req, timeout=12):
 class TestHandlerSuccess:
     def test_success_response_structure(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", _mock_urlopen)
-        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        event = make_api_event("GET", query_params={"lat": "53.4772", "lon": "-2.2497"})
         result = handler(event, None)
         assert result["statusCode"] == 200
         body = json.loads(result["body"])
@@ -138,7 +146,7 @@ class TestHandlerSuccess:
 
     def test_gp_results_parsed(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", _mock_urlopen)
-        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        event = make_api_event("GET", query_params={"lat": "53.4772", "lon": "-2.2497"})
         body = json.loads(handler(event, None)["body"])
         gps = body["gp"]
         assert len(gps) >= 1
@@ -150,7 +158,7 @@ class TestHandlerSuccess:
 
     def test_way_elements_use_center_coords(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", _mock_urlopen)
-        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        event = make_api_event("GET", query_params={"lat": "53.4772", "lon": "-2.2497"})
         body = json.loads(handler(event, None)["body"])
         pharmacies = body["pharmacies"]
         assert pharmacies[0]["name"] == "Bridge Pharmacy"
@@ -158,7 +166,7 @@ class TestHandlerSuccess:
 
     def test_cors_headers_on_success(self, monkeypatch):
         monkeypatch.setattr(app, "urlopen", _mock_urlopen)
-        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        event = make_api_event("GET", query_params={"lat": "53.4772", "lon": "-2.2497"})
         result = handler(event, None)
         for key, val in CORS_HEADERS.items():
             assert result["headers"][key] == val
@@ -172,7 +180,7 @@ class TestHandlerSuccess:
             raise URLError("API down")
 
         monkeypatch.setattr(app, "urlopen", _raise)
-        event = make_api_event("GET", query_params={"lat": "51.5074", "lon": "-0.1278"})
+        event = make_api_event("GET", query_params={"lat": "53.4772", "lon": "-2.2497"})
         result = handler(event, None)
         assert result["statusCode"] == 200
         body = json.loads(result["body"])
