@@ -148,15 +148,21 @@ function renderEnvironment(result) {
   // omits the key rather than sending null or a default. So an empty list here
   // means "nothing was measured for this postcode", which the notices explain,
   // and never "measured as fine".
+  // Every environmental row now carries its WHO reference. A bare "69.6 dB
+  // Lden" is uninterpretable — the guideline is what turns a number into
+  // something a reader can act on, and it is cited rather than invented:
+  // WHO Environmental Noise Guidelines for the European Region (2018) for the
+  // two noise rows, WHO global air quality guidelines (2021) for the two
+  // pollutant rows.
+  //
+  // The estimated aircraft row is the exception and deliberately carries none.
+  // It is on a 0-10 quiet scale, not decibels, because it comes from
+  // flight-path geometry rather than a reading — putting a dB guideline beside
+  // it would imply a measurement that does not exist.
   const rows = [
-    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden'],
-    // The estimate, for the ~91% of London DEFRA never measured. Shown on a
-    // 0-10 quiet scale rather than in dB, deliberately: it comes from
-    // flight-path geometry, not a decibel reading, and presenting it as "52 dB"
-    // would dress an estimate up as a measurement. The basis line below says
-    // which it is, and the two never appear together.
-    ['Aircraft noise (estimated)', env.aircraftQuietEstimated, '/10 quiet'],
-    ['Road noise', env.roadNoiseLdenDb, 'dB Lden'],
+    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden', env.aircraftNoiseWhoGuidelineDb],
+    ['Aircraft noise (estimated)', env.aircraftQuietEstimated, '/10 quiet', null],
+    ['Road noise', env.roadNoiseLdenDb, 'dB Lden', env.roadNoiseWhoGuidelineDb],
     ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3],
     ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3],
   ].filter((r) => typeof r[1] === 'number');
@@ -167,12 +173,29 @@ function renderEnvironment(result) {
       const item = el('li', 'c33-item');
       const row = el('div', 'c33-row');
       row.appendChild(el('span', 'c33-name', label));
-      row.appendChild(el('span', 'c33-dist', `${value} ${unit}`));
-      item.appendChild(row);
-      // The guideline is the difference between a number and a judgement.
-      // "33.4" tells a reader nothing; "WHO guideline 10" tells them a lot.
+
+      const readout = el('span', 'c33-dist', `${value} ${unit}`);
+      // Colour states a fact, not a verdict: whether the measurement is above
+      // the cited guideline. No "good"/"bad" wording, because the guideline is
+      // WHO's judgement and the comparison is arithmetic — anything richer
+      // would be us editorialising over someone else's threshold.
       if (typeof guideline === 'number') {
-        item.appendChild(el('div', 'c33-sub', `WHO guideline ${guideline} ${unit}`));
+        readout.className += value > guideline ? ' c33-over' : ' c33-under';
+      }
+      row.appendChild(readout);
+      item.appendChild(row);
+
+      if (typeof guideline === 'number') {
+        const over = value > guideline;
+        item.appendChild(
+          el(
+            'div',
+            'c33-sub',
+            over
+              ? `above the WHO guideline of ${guideline} ${unit}`
+              : `within the WHO guideline of ${guideline} ${unit}`
+          )
+        );
       }
       list.appendChild(item);
     }
@@ -231,7 +254,14 @@ function renderEpc(result) {
     const item = el('li', 'c33-item');
     const row = el('div', 'c33-row');
     row.appendChild(el('span', 'c33-name', cert.address || 'Address not given'));
-    row.appendChild(el('span', 'c33-dist', cert.band || '?'));
+    // EPC bands carry a colour scale everyone already recognises from the
+    // certificate itself, so reusing it costs nothing and reads instantly.
+    // Class per band rather than a computed colour: A-G is a fixed, official
+    // seven-step scale, not something to interpolate.
+    const band = (cert.band || '').toUpperCase();
+    const badge = el('span', 'c33-dist c33-band', band || '?');
+    if (/^[A-G]$/.test(band)) badge.className += ` c33-band-${band.toLowerCase()}`;
+    row.appendChild(badge);
     item.appendChild(row);
     if (cert.date) item.appendChild(el('div', 'c33-sub', `lodged ${cert.date.slice(0, 10)}`));
     list.appendChild(item);

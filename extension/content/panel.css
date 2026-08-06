@@ -31,7 +31,7 @@
   letter-spacing: 0.01em;
   color: #fff;
   background: #12263f;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 4px 16px rgb(0, 0, 0, 0.28);
   cursor: pointer;
 }
 
@@ -49,13 +49,11 @@
   right: 20px;
   bottom: 20px;
   z-index: 2147483000;
-
   box-sizing: border-box;
   width: 340px;
   max-width: calc(100vw - 40px);
   max-height: min(70vh, 640px);
   overflow-y: auto;
-
   margin: 0;
   padding: 0 16px 14px;
   border-radius: 12px;
@@ -64,7 +62,7 @@
   line-height: 1.45;
   color: #12263f;
   background: #fff;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 8px 32px rgb(0, 0, 0, 0.24);
 }
 
 #cubitt33-panel * {
@@ -223,4 +221,71 @@
       transform: translateY(6px);
     }
   }
+}
+
+/* --- Measurement against a cited threshold -------------------------------
+ *
+ * Colour states a FACT, not a verdict: whether a reading is above or below the
+ * WHO guideline shipped beside it. Deliberately not red/green — those read as
+ * "bad"/"good", and this is not our judgement to make. Amber for over, neutral
+ * slate for within, with the wording carrying the meaning.
+ *
+ * Colour is never the only signal. Every row states "above the WHO guideline of
+ * 53 dB Lden" or "within..." in text, so the information survives a colour-blind
+ * reader, a screenshot in greyscale, and a printed page.
+ */
+#cubitt33-panel .c33-over {
+  color: #a35200;
+  font-weight: 600;
+}
+
+#cubitt33-panel .c33-under {
+  color: #2c6e49;
+  font-weight: 600;
+}
+
+/* EPC bands A-G, the official certificate scale. A fixed seven-step ramp, so
+ * one class per band rather than an interpolation. */
+#cubitt33-panel .c33-band {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+  background: #8a97a8;
+}
+
+#cubitt33-panel .c33-band-a {
+  background: #008054;
+}
+
+#cubitt33-panel .c33-band-b {
+  background: #19b459;
+}
+
+/* C, D and E take dark text: their backgrounds are light enough that white
+ * would fall below the 4.5:1 contrast minimum. */
+#cubitt33-panel .c33-band-c {
+  color: #12263f;
+  background: #8dce46;
+}
+
+#cubitt33-panel .c33-band-d {
+  color: #12263f;
+  background: #ffd500;
+}
+
+#cubitt33-panel .c33-band-e {
+  color: #12263f;
+  background: #fcaa65;
+}
+
+#cubitt33-panel .c33-band-f {
+  background: #ef8023;
+}
+
+#cubitt33-panel .c33-band-g {
+  background: #e9153b;
 }

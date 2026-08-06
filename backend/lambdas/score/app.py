@@ -2987,6 +2987,16 @@ def build_environment(noise_row, postcode_clean=''):
     road_lden = road_lden_from_row(noise_row, postcode_clean)
     if road_lden is not None:
         env['roadNoiseLdenDb'] = round(road_lden, 1)
+        # WHO Environmental Noise Guidelines for the European Region (2018)
+        # strongly recommends road traffic below 53 dB Lden. The same document
+        # gives the 45 dB aircraft anchor already used by _QUIET_CEILING_DB, so
+        # this is a figure this codebase already relies on, not a new source.
+        #
+        # Carried alongside the value for the same reason the air-quality rows
+        # carry theirs: "69.6 dB Lden" means nothing to a reader, and leaving it
+        # bare invites interpretation against whatever they happen to assume.
+        # Stating the reference is not editorialising; omitting it is.
+        env['roadNoiseWhoGuidelineDb'] = 53
         env['roadNoiseSource'] = 'DEFRA Strategic Noise Mapping Round 4 (2022), road, Lden'
 
     # Air quality: DEFRA PCM background maps, annual mean, 2022, 1 km grid.
@@ -4023,6 +4033,10 @@ def handle_environment(event):
     if aircraft_lden is not None:
         env['aircraftNoiseLdenDb'] = round(aircraft_lden, 1)
         env['aircraftQuiet'] = lden_db_to_quiet(aircraft_lden)
+        # Same WHO 2018 document as the road figure above; this is the value
+        # _QUIET_CEILING_DB is already anchored on, restated so a consumer does
+        # not have to know the scoring internals to read the decibels.
+        env['aircraftNoiseWhoGuidelineDb'] = 45
         env['aircraftNoiseSource'] = (
             'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden'
         )
