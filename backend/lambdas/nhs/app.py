@@ -39,8 +39,17 @@ OVERPASS_URL = os.environ.get('OVERPASS_URL', 'https://overpass-api.de/api/inter
 SEARCH_RADIUS_M = 1500
 MAX_RESULTS_PER_TYPE = 5
 
+# Reworded 2026-08-06. The previous string claimed results were "verified
+# against NHS service-search where available". No such verification happens —
+# nothing in this file contacts NHS Digital, and the NHS Service Search API has
+# required a subscription key since before this Lambda was written. It also
+# called them "NHS service locations", which OSM cannot support: `amenity=doctors`
+# tags private clinics identically to NHS practices, so a search at Collingham
+# Road SW5 returns "The Medical Chambers Kensington" and "Courtfield Private
+# Practice" at the top. Both are real doctors; neither is an NHS GP surgery.
 ATTRIBUTION = (
-    'NHS service locations: OpenStreetMap contributors (ODbL); verified against NHS service-search where available.'
+    'Healthcare locations: OpenStreetMap contributors (ODbL). '
+    'OpenStreetMap does not distinguish NHS practices from private clinics, so both appear.'
 )
 
 # NHS Service Search canonical URLs, verified live 2026-05-06.

@@ -6600,7 +6600,7 @@
         const pharmacies = data.pharmacies || [];
         const hospitals = data.hospitals || [];
         if (gp.length === 0 && pharmacies.length === 0 && hospitals.length === 0) {
-          el.innerHTML = '<p class="info-note">No NHS services found within 3km.</p>';
+          el.innerHTML = '<p class="info-note">No healthcare locations found within 1.5km.</p>';
           return;
         }
         const renderGroup = (title, items) => {
@@ -6632,7 +6632,7 @@
           );
         };
         el.innerHTML =
-          renderGroup('GP SURGERIES', gp) +
+          renderGroup('DOCTORS &amp; CLINICS', gp) +
           renderGroup('PHARMACIES', pharmacies) +
           renderGroup('HOSPITALS', hospitals) +
           '<p class="info-note" style="margin-top:8px;">Source: OpenStreetMap (ODbL); cross-link to nhs.uk service search.</p>';

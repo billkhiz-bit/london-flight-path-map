@@ -153,7 +153,7 @@ function renderNhs(result) {
   }
 
   const groups = [
-    ['gp', 'GP surgeries'],
+    ['gp', 'Doctors & clinics'],
     ['pharmacies', 'Pharmacies'],
     ['hospitals', 'Hospitals'],
   ];
