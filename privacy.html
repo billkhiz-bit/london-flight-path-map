@@ -8,7 +8,7 @@
          (no analytics on the privacy policy), so the policy can be strict. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <title>Sky Score - Privacy Policy</title>
     <meta
@@ -21,12 +21,7 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;</text></svg>"
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap"
-    />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {
         --bg: #e4e3e0;
@@ -180,10 +175,23 @@
       </div>
 
       <h2>1. Who we are</h2>
+      <!-- ENTITY LINE. On incorporation, replace the single <p> below with the
+           commented-out version beneath it and fill in the three bracketed
+           values. This is the ONLY place this page names the controller.
+           The matching lines are terms.html §1 and SUBPROCESSORS.md §1.
+           Note: incorporating changes WHO the controller is, so the ICO
+           registration must be in the company's name, not a personal one. -->
       <p>
         <strong>Sky Score</strong> is operated by Bilal Khizar, an independent developer based in the United Kingdom. Web:
         <a href="https://skyscore.co.uk">skyscore.co.uk</a>. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.
       </p>
+      <!--
+      <p>
+        <strong>Sky Score</strong> is a trading name of [COMPANY] Ltd, a company registered in England and Wales
+        (company number [NUMBER]), whose registered office is [REGISTERED OFFICE ADDRESS]. Web:
+        <a href="https://skyscore.co.uk">skyscore.co.uk</a>. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.
+      </p>
+      -->
       <p>For data protection purposes, we act as the <strong>data controller</strong> for the limited data described below.</p>
 
       <h2>2. What data we collect</h2>
@@ -225,9 +233,12 @@
 
       <h3>2d. Server logs (AWS)</h3>
       <p>
-        Sky Score's backend runs on AWS Lambda + API Gateway in the <code>eu-west-2</code> region (London). API Gateway logs include
-        request timestamps, paths, response codes, source IPs, and user agents. Logs are retained for <strong>7 days</strong> then
-        automatically deleted. Used solely for debugging and to investigate suspected abuse. We do not link logs to identities.
+        Sky Score's backend runs on AWS Lambda + API Gateway in the <code>eu-west-2</code> region (London). Each Lambda function
+        writes an execution log containing request timestamps, paths, response codes and error traces. We do not enable API Gateway
+        access logging, so no separate access log of source IPs and user agents is kept. Execution logs are currently retained
+        <strong>indefinitely</strong>. We are applying a 30-day retention policy across all log groups; until that work completes
+        this page will continue to say so rather than describe an intention as a fact. They are used solely for debugging and to
+        investigate suspected abuse, and we do not link them to identities.
       </p>
 
       <h2>3. What data we do NOT collect</h2>
@@ -254,7 +265,7 @@
           <tr>
             <td>Amazon Web Services (AWS)</td>
             <td>Backend compute, API Gateway, DynamoDB</td>
-            <td>Anonymous request logs (7-day retention)</td>
+            <td>Lambda execution logs (currently retained indefinitely, see 2d)</td>
             <td>eu-west-2 (London)</td>
           </tr>
           <tr>
@@ -325,12 +336,6 @@
             <td>Nearby healthcare facilities</td>
             <td>Lat/lon (transient)</td>
             <td><strong>Germany</strong></td>
-          </tr>
-          <tr>
-            <td>Google Fonts</td>
-            <td>Web fonts on this and other pages</td>
-            <td>Your IP address, when your browser loads the font</td>
-            <td>US</td>
           </tr>
           <tr>
             <td>GitHub (raw.githubusercontent.com)</td>
@@ -413,7 +418,7 @@
       </p>
 
       <footer>
-        &copy; 2026 Bilal Khizar · <a href="/">Back to Sky Score</a> ·
+        &copy; 2026 Bilal Khizar · <a href="/">Back to Sky Score</a> · <a href="/terms">Terms</a> ·
         <a href="https://github.com/billkhiz-bit/london-flight-path-map">GitHub</a>
       </footer>
     </div>

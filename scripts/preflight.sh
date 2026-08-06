@@ -83,8 +83,13 @@ if [ "$FIX" -eq 1 ]; then
   python -m ruff check backend/lambdas/ backend/tests/ scripts/ tests/ --fix >/dev/null 2>&1
 fi
 
-check "ESLint (index.html)"            npm run lint
-check "html-validate (7 pages)"        npm run lint:html
+# Label was "ESLint (index.html)" until 2026-08-06, three days after the config
+# and npm script grew to cover *.js, js/, scripts/, tests/, mobile/scripts/ and
+# now extension/. The command was right; the label understated it, which is the
+# same failure mode as a gate that overstates — either way the name stops
+# describing what actually ran.
+check "ESLint (8 targets)"             npm run lint
+check "html-validate (9 pages)"        npm run lint:html
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
 # backend/tests/ was outside every ruff target until 2026-08-04, so the suite
 # that guards the score engine was the one directory nothing linted — it had
@@ -105,7 +110,31 @@ check "API base-URL drift (I-N5)"      sh scripts/check_api_url_drift.sh
 check "score sanity (live API)"        python scripts/check_score_sanity.py
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
-check "no em dashes (8 pages)"         sh scripts/check_no_em_dash.sh
+check "no em dashes (9 pages)"         sh scripts/check_no_em_dash.sh
+
+# privacy.html §2d promises 30-day log retention. This asserts AWS actually
+# does that. BLOCKING, and currently RED on purpose.
+#
+# The repo is PUBLIC, so a claim in privacy.html is published on push, not on
+# deploy — which is why this guards the commit and not just the CloudFront
+# upload. The previous claim ("7 days") was never true at any point in the
+# project's life and survived for months precisely because nothing compared the
+# document to the infrastructure.
+#
+# There are two honest ways to make this green, and no bypass flag:
+#   1. apply the retention policy (console: DRAFT_security_retention_passage.md §1)
+#   2. revert §2d to the interim wording in that file's §2b, Version B
+check "log retention == privacy.html"  sh scripts/check_log_retention.sh
+
+# Fonts were self-hosted on 2026-08-05 to close a UK GDPR Chapter V item (every
+# page load transferred the visitor's IP to Google in the US). That touched the
+# CSP on nine pages, and every way it can break is SILENT: a bad path, a
+# too-strict font-src, or a variable font declared with too narrow a weight
+# range all still render a plausible-looking page in a fallback font.
+#
+# Serves the repo locally, so this validates SOURCE and runs before a deploy.
+# Proven able to fail: with fonts/inter.woff2 removed it exits 1 on a 404.
+check "self-hosted fonts (9 pages)"    node tests/fonts-selfhosted.mjs
 
 if [ "$SKIP_E2E" -eq 1 ]; then
   printf '  %-34s%s\n' "Playwright e2e" "SKIPPED (--skip-e2e)"

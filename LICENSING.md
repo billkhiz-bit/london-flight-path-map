@@ -6,11 +6,40 @@ and any obligations or restrictions. This is the canonical reference
 for "are we allowed to use this commercially" questions.
 
 **TL;DR:** every UK government source is **OGL v3.0** (commercial use OK
-with attribution), TfL is similar, OpenStreetMap is ODbL (similar),
+with attribution), TfL is similar,
+**OpenStreetMap is ODbL and is NOT "similar"** — see the note below,
 MHCLG EPC needs attribution + bearer token, Bedrock is a paid AWS
 service (and the consumer-side AI features that used it were removed
 end-to-end; their Lambda code + template entries live in git history
 only, verified 2026-07-23).
+
+> **ODbL is share-alike, not just attribution — corrected 2026-08-05.**
+> This TL;DR previously grouped OpenStreetMap with OGL and TfL as
+> "similar". It is not. OGL and the TfL licence permit commercial reuse
+> on attribution alone; **ODbL 1.0 additionally requires that a
+> *Derivative Database* be offered under ODbL**, which for a paid B2B
+> product is a materially different obligation. `privacy.html` §5 has
+> described it correctly as "share-alike rather than permissive" since
+> 2026-08-03, so the two documents disagreed, and the more permissive
+> reading was the one sitting in the licensing file.
+>
+> **Why our current use is very likely outside the share-alike trigger,
+> stated so it can be re-checked rather than assumed:**
+> 1. OSM is reached through Overpass **per request, as a transient
+>    passthrough** for the `/nhs` nearby-facilities panel. Nothing is
+>    stored, so there is no database of ours for the term to attach to.
+> 2. **The healthcare component of the liveability score does not come
+>    from OSM.** It comes from `data/borough-extra.json`, which this file
+>    records as our own editorial work. That separation is what keeps the
+>    score itself clear of ODbL, and it is load-bearing.
+> 3. Attribution is emitted in the `/nhs` response, which ODbL requires
+>    regardless.
+>
+> **Re-open this if any of those three stop being true** — in particular
+> if OSM output is ever cached, stored, or fed into a scored component.
+> At that point the question becomes whether `/v1/score` output is a
+> Produced Work or a Derivative Database, and that is a question for a
+> solicitor, not for this file.
 **OpenSky was removed entirely on 2026-05-07** — see "Removed sources"
 below. We're clean for both consumer + B2B.
 

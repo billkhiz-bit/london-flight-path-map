@@ -72,7 +72,8 @@ Always use "Sky Score" in all public-facing files and UI text.
 
 ## Quality & Plugins
 
-- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint (now `.js`/`.mjs` too, not just `index.html`), html-validate, ruff over `backend/lambdas` + **`backend/tests/`** + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, **score sanity against the live API** (`scripts/check_score_sanity.py` - the only stage that can catch a DATA defect; the pytest suites never reach DynamoDB and Playwright asserts the site against itself), **no em dashes on the 8 deployed pages**, and Playwright at `--workers=2`. Advisory: Prettier, npm audit, **`deployed == source`**, **`site == /v1/score`**.
+- Run `/preflight` before every commit — or directly: **`sh scripts/preflight.sh`** (also `npm run preflight`, `make preflight`; all three invoke the same script so they cannot drift apart). Blocking: ESLint (now `.js`/`.mjs` too, not just `index.html`), html-validate, ruff over `backend/lambdas` + **`backend/tests/`** + `scripts/` + `tests/`, **both** pytest suites, API-URL drift, **score sanity against the live API** (`scripts/check_score_sanity.py` - the only stage that can catch a DATA defect; the pytest suites never reach DynamoDB and Playwright asserts the site against itself), **no em dashes on the 9 deployed pages** (`terms.html` joined 2026-08-05), **self-hosted fonts on all 9** (`tests/fonts-selfhosted.mjs`, serves the repo locally so it validates source before a deploy), **log retention == `privacy.html`** (`scripts/check_log_retention.sh` — see below, currently RED on purpose), and Playwright at `--workers=2`
+  - **`log retention == privacy.html` is BLOCKING and now PASSES, honestly (2026-08-06).** It asserts that AWS matches **whatever `privacy.html` §2d claims** — it parses the figure out of the page rather than hardcoding one. Until 2026-08-06 it hardcoded `WANT_DAYS=30` and never opened `privacy.html` despite its name, so the only route to green was the console work, and switching §2d to the honest interim wording left the gate **red on a truthful tree**. `DRAFT_security_retention_passage.md` §2b had flagged exactly this. The rewrite is strictly stronger: it still reds on "page says 30, AWS says None" and additionally reds on the reverse, which the old one could not see. **Both failure directions are proven red, plus an unparseable-claim case.** §2d now carries **Version B** ("currently retained indefinitely"), which is true, so page and infrastructure agree. **Still outstanding:** the console work in §1 — 6 orphaned log groups from removed Lambdas remain, and the Signup one holds raw emails from 26 Jun–23 Jul 2026 in a location §2b does not disclose. Those **WARN, they do not fail**, because under an "indefinite" claim they do not contradict the page and deleting them needs `logs:DeleteLogGroup`, which `flightmap-dev` lacks — blocking there would gate every commit in the repo on a console action. When the console work lands, flip §2d back to Version A and the same check validates it. Gotcha: the AWS CLI here emits **CRLF**, so `retention=None\r` never string-equals `None`; the script strips `\r` and that line is load-bearing. Advisory: Prettier, npm audit, **`deployed == source`**, **`site == /v1/score`**.
   - **`backend/tests/` joined the ruff targets on 2026-08-04.** It had been outside every one of them — the suite guarding the score engine was the one directory nothing linted, and it held 4 import-order errors and an S105.
   - **The two new advisory stages both compare DEPLOYED state**, which is why they are advisory rather than blocking. `scripts/check_deploy_drift.sh` compares all 14 public surfaces against what CloudFront serves (drift between commit and deploy is expected, so blocking it would go red on nearly every run). `tests/site-api-parity.mjs` compares the score the **live site renders** against what `/v1/score` returns — the only check that reads the *output* rather than the inputs, added after the site and API disagreed on 13% of London postcodes while every component matched. Promote either to `check` once it has a track record; both already exit non-zero only on a measured problem.
   - **Read the exit code, never pipe it.** `preflight | tail` is always 0 — a pipeline exits with its LAST stage's status. That is exactly how `make preflight` reported success on 2026-07-27 while running nothing at all (`make` is not on PATH in Git Bash here).
@@ -93,13 +94,14 @@ all 15 surfaces:
 
 | Target | Covers |
 |---|---|
-| `web-deploy` | `index.html`, privacy, pricing, changes, `api/`, `js/` |
+| `fonts-deploy` | **new (2026-08-05)** — self-hosted `fonts/`. **Runs FIRST in `web-deploy-all`, and that ordering is load-bearing**: three font files are in `sw.js` `SHELL_ASSETS` and `cache.addAll()` is atomic, so shipping `sw.js` before the fonts exist at the origin makes the service worker fail to install at all |
+| `web-deploy` | `index.html`, privacy, pricing, changes, **terms**, `api/`, `js/` |
 | `data-deploy` | `data/*` (gets `borough-extra.json`'s load-bearing `no-cache` right) |
 | `pwa-deploy` | manifest, `sw.js`, icons |
 | `demo-deploy` | **new** — all 7 `score-demo/` files incl. the vendored Swagger UI |
 | `prototype-deploy` | **new** — `prototype/index.html` |
 | `meta-deploy` | **new** — `robots.txt`, `sitemap.xml`, `.well-known/security.txt` |
-| `web-deploy-all` | all of the above |
+| `web-deploy-all` | all of the above, `fonts-deploy` first |
 
 The last three were added closing audit finding 38: **eleven live files had no
 deploy command anywhere** and had reached production by hand-upload, which is
@@ -120,6 +122,13 @@ does.
 # can skip this line. Wave 12.9 / I-N5 offensive half.
 AWS_PROFILE=flightmap aws s3 cp js/api-base.js s3://london-flight-map-frontend/js/api-base.js --content-type "application/javascript" --region eu-west-2
 
+# Self-hosted fonts (added 2026-08-05). Deploy these BEFORE sw.js — three of
+# them are in SHELL_ASSETS and cache.addAll() is atomic, so a missing font at
+# the origin stops the service worker installing entirely. Regenerate with
+# `python scripts/vendor_fonts.py`; they change only when that script is re-run.
+AWS_PROFILE=flightmap aws s3 cp fonts/ s3://london-flight-map-frontend/fonts/ --recursive --exclude "*" --include "*.woff2" --content-type "font/woff2" --cache-control "public,max-age=31536000" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp fonts/fonts.css s3://london-flight-map-frontend/fonts/fonts.css --content-type "text/css" --cache-control "public,max-age=86400" --region eu-west-2
+
 # Frontend, upload to S3 then invalidate CloudFront
 AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
@@ -129,6 +138,7 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 # paths to <path>/index.html; a flat "pricing" key is never served).
 AWS_PROFILE=flightmap aws s3 cp pricing.html s3://london-flight-map-frontend/pricing/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws s3 cp privacy.html s3://london-flight-map-frontend/privacy/index.html --content-type "text/html" --region eu-west-2
+AWS_PROFILE=flightmap aws s3 cp terms.html s3://london-flight-map-frontend/terms/index.html --content-type "text/html" --region eu-west-2
 AWS_PROFILE=flightmap aws s3 cp changes.html s3://london-flight-map-frontend/changes/index.html --content-type "text/html" --region eu-west-2
 
 # Data assets. NOT covered by the index.html line above and absent from this

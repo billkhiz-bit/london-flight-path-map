@@ -22,6 +22,7 @@ cd "$(dirname "$0")/.." || exit 2
 EM=$(printf '\342\200\224')
 
 PAGES="index.html api/index.html pricing.html privacy.html changes.html
+       terms.html
        score-demo/index.html score-demo/status.html score-demo/api-docs.html"
 
 found=0

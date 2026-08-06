@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <!-- Script-free by design, matching privacy.html: no analytics on the
+         legal pages, so the policy can be strict. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    />
+    <title>Sky Score - Terms of Use</title>
+    <meta
+      name="description"
+      content="Sky Score terms of use: what Sky Score is and is not, the limits of the data, acceptable use of the site and API, and how liability is allocated."
+    />
+    <link rel="canonical" href="https://skyscore.co.uk/terms" />
+    <meta name="theme-color" content="#fafaf9" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;</text></svg>"
+    />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        --bg: #e4e3e0;
+        --dark: #141414;
+        --mid: #636363;
+        --orange: #f27d26;
+        /* Matches privacy.html: brand orange is 2.1:1 on this background and
+           fails WCAG AA for text, so text-level orange is the darker value. */
+        --orange-text: #a04d00;
+        --font-mono: 'JetBrains Mono', monospace;
+        --font-sans: 'Inter', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--dark);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        padding: 40px 20px 60px;
+      }
+      .wrap {
+        max-width: 780px;
+        margin: 0 auto;
+      }
+      header {
+        border-bottom: 1px solid var(--dark);
+        padding-bottom: 16px;
+        margin-bottom: 32px;
+      }
+      header a {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--mid);
+        text-decoration: none;
+      }
+      header a:hover {
+        color: var(--dark);
+      }
+      h1 {
+        font-family: var(--font-mono);
+        font-size: 22px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 12px;
+      }
+      .updated {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--mid);
+        margin-top: 6px;
+      }
+      h2 {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--orange-text);
+        margin-top: 32px;
+        margin-bottom: 8px;
+      }
+      h3 {
+        font-size: 15px;
+        margin-top: 20px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin-bottom: 14px;
+      }
+      ul {
+        margin: 0 0 14px 22px;
+      }
+      li {
+        margin-bottom: 4px;
+      }
+      a {
+        color: var(--orange-text);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 14px;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid rgba(20, 20, 20, 0.15);
+        padding: 8px 6px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--mid);
+      }
+      .tldr {
+        background: rgba(20, 20, 20, 0.05);
+        padding: 18px 22px;
+        margin: 16px 0 32px;
+        border-left: 3px solid var(--orange);
+      }
+      .tldr p {
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      .tldr p:last-child {
+        margin-bottom: 0;
+      }
+      footer {
+        margin-top: 48px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(20, 20, 20, 0.2);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--mid);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      footer a {
+        color: var(--mid);
+      }
+      footer a:hover {
+        color: var(--dark);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <a href="/">&larr; Sky Score</a>
+        <h1>Terms of Use</h1>
+        <p class="updated">Last updated: 2026-08-05 · Effective: 2026-08-05</p>
+      </header>
+
+      <div class="tldr">
+        <p><strong>TL;DR</strong></p>
+        <p>Sky Score gives you information, not advice. Decisions about where to live, what to buy and what to lend against are yours.</p>
+        <p>The scores are computed from public datasets. Those datasets can be out of date, incomplete or wrong, and so can we.</p>
+        <p>The free site and apps come with no warranty. If you pay us, our liability to you is capped at what you paid.</p>
+        <p>Nothing here takes away rights you have by law.</p>
+      </div>
+
+      <h2>1. About these terms</h2>
+      <!-- ENTITY LINE. On incorporation, replace the single <p> below with the
+           commented-out version beneath it and fill in the three bracketed
+           values. Nothing else on this page names the operator, so this is the
+           only edit required here. The matching line is privacy.html §1, and
+           SUBPROCESSORS.md §1. Keeping the brand and the legal entity separate
+           is deliberate: "Sky Score" can be rebranded without touching the
+           company, and the company can change without touching the brand. -->
+      <p>
+        <strong>Sky Score</strong> is operated by Bilal Khizar, an independent developer based in the United Kingdom. Web:
+        <a href="https://skyscore.co.uk">skyscore.co.uk</a>. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.
+      </p>
+      <!--
+      <p>
+        <strong>Sky Score</strong> is a trading name of [COMPANY] Ltd, a company registered in England and Wales
+        (company number [NUMBER]), whose registered office is [REGISTERED OFFICE ADDRESS]. Web:
+        <a href="https://skyscore.co.uk">skyscore.co.uk</a>. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.
+      </p>
+      -->
+      <p>
+        References to "we", "us" and "our" in these terms are to the operator named above.
+      </p>
+      <p>
+        These terms govern your use of the Sky Score website, the iOS and Android apps, and the Sky Score API. By using any of them
+        you accept these terms. If you do not accept them, please do not use Sky Score.
+      </p>
+      <p>
+        If you have signed a separate written agreement with us, for example a pilot agreement or an API licence, that agreement
+        governs the services it covers and prevails over these terms wherever the two conflict.
+      </p>
+
+      <h2>2. What Sky Score is, and what it is not</h2>
+      <p>
+        Sky Score computes a score from 0 to 10 for a location, from published datasets, using a
+        <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">documented and versioned methodology</a>.
+        It is an information tool. It is designed to make hidden characteristics of a place easier to see.
+      </p>
+      <p><strong>Sky Score is not:</strong></p>
+      <ul>
+        <li>a survey, valuation, or structural report</li>
+        <li>financial, mortgage, investment or lending advice</li>
+        <li>legal advice, or a substitute for conveyancing searches</li>
+        <li>an environmental, flood or contaminated land report</li>
+        <li>a statement about any individual property, its condition, or its value</li>
+      </ul>
+      <p>
+        Sky Score is not regulated under the Estate Agents Act 1979 or the Property Misdescriptions Act 1991, and we are not
+        authorised or regulated by the Financial Conduct Authority.
+      </p>
+      <p>
+        <strong>Please do not use a Sky Score as the sole basis for a decision</strong> to buy, sell, rent, lend against, insure or
+        invest in a property. It is one input among many, and it is not a replacement for professional advice or your own inspection
+        of a place.
+      </p>
+
+      <h2>3. Accuracy and the limits of the data</h2>
+      <p>
+        Sky Score is derived from third-party public datasets, each listed with its source and licence in
+        <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">LICENSING.md</a>. We do not control
+        those datasets and we cannot guarantee them.
+      </p>
+      <p>
+        <strong>Published data lags reality, sometimes by years.</strong> Official datasets are released on their own schedules and
+        we publish the vintage of each one in our methodology. Where a dataset is known to be anomalous or unusually old, we say so
+        there. A score describes the data we hold, not the state of a place today.
+      </p>
+      <p>
+        <strong>Scores change.</strong> They change when a source dataset is refreshed and when our methodology is revised. The
+        methodology is versioned like software and every change is recorded in our changelog. A score you saw previously may not be
+        the score you see now, and neither is a promise about the future.
+      </p>
+      <p>
+        To the fullest extent permitted by law, we give no warranty that Sky Score, its scores, or any data it returns are accurate,
+        current, complete, or fit for any particular purpose.
+      </p>
+
+      <h2>4. Acceptable use</h2>
+      <p>You may use the free consumer website and apps for your own personal, non-commercial purposes. You may not:</p>
+      <ul>
+        <li>scrape, harvest or bulk-extract scores or data in order to reconstruct our dataset or build a competing product</li>
+        <li>use automated means to place unreasonable load on the service, or attempt to circumvent rate limits or quotas</li>
+        <li>resell, redistribute or present Sky Score data as your own without a written licence from us</li>
+        <li>remove or obscure any attribution required by the third-party licences described in section 6</li>
+        <li>use Sky Score for any unlawful purpose, or in any way that could damage or impair the service</li>
+      </ul>
+      <p>
+        Commercial and high-volume use is what the API is for. If you want to use Sky Score in a product or a workflow, talk to us
+        about a licence rather than working around these limits.
+      </p>
+
+      <h2>5. The API and paid services</h2>
+      <p>
+        API access is granted by key. Keys are issued to you and you are responsible for keeping yours confidential and for all use
+        made of it. Tell us promptly if you believe a key has been exposed and we will revoke and reissue it.
+      </p>
+      <p>
+        Each tier carries a published request quota and rate limit. We may change quotas, rate limits and tier pricing, and we will
+        give reasonable notice of changes that reduce what a paying customer already receives.
+      </p>
+      <p>
+        We may suspend or revoke a key without notice where we reasonably believe it is being used in breach of these terms, or
+        where continued use threatens the stability or security of the service.
+      </p>
+
+      <h2>6. Third-party data and attribution</h2>
+      <p>
+        Sky Score is built on public data, most of it under the
+        <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>. Two
+        sources carry different terms that pass through to you if you integrate our data:
+      </p>
+      <ul>
+        <li>
+          <strong>OpenStreetMap</strong> data is licensed under the
+          <a href="https://opendatacommons.org/licenses/odbl/">Open Database Licence 1.0</a>, which is share-alike rather than
+          permissive and carries a mandatory attribution requirement
+        </li>
+        <li><strong>Transport for London</strong> Open Data carries its own licence and its own attribution requirement</li>
+      </ul>
+      <p>
+        Every API response includes a <code>sources</code> array naming the datasets used to produce it. If you display or
+        redistribute Sky Score data, you must carry that attribution through to your own users. Full per-source detail is in
+        <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">LICENSING.md</a>.
+      </p>
+      <p>
+        The Sky Score name, branding, and the methodology and software that produce the scores remain ours. Nothing in these terms
+        transfers ownership of them to you.
+      </p>
+
+      <h2>7. Liability</h2>
+      <p>
+        <strong>Nothing in these terms excludes or limits our liability for</strong> death or personal injury caused by our
+        negligence, for fraud or fraudulent misrepresentation, or for any other liability that cannot lawfully be excluded or
+        limited. If you are a consumer, your statutory rights are unaffected by anything in this section.
+      </p>
+      <p>
+        <strong>Free services.</strong> The website, the apps and the free API tier are provided without charge and, to the fullest
+        extent permitted by law, are provided as they are, without warranty of any kind. We are not liable for loss or damage
+        arising from reliance on a score obtained through them.
+      </p>
+      <p>
+        <strong>Paid services.</strong> Where you have paid us, our total liability to you in connection with the services, whether
+        in contract, tort including negligence, breach of statutory duty or otherwise, is limited in aggregate to the total fees you
+        paid us in the twelve months immediately preceding the event giving rise to the claim.
+      </p>
+      <p>
+        <strong>Business users.</strong> If you are using Sky Score for the purposes of a business, we are not liable to you for
+        loss of profit, loss of revenue, loss of anticipated savings, loss of business or opportunity, loss of goodwill, or for any
+        indirect or consequential loss, however arising.
+      </p>
+      <p>
+        These limits reflect that Sky Score is an information service built on public data, that the free service is provided at no
+        charge, and that decisions about property are made by you with the benefit of professional advice.
+      </p>
+
+      <h2>8. Availability</h2>
+      <p>
+        We aim to keep Sky Score available but we do not guarantee uninterrupted access. The free website, apps and free API tier
+        carry no service level commitment, and we may change, suspend or withdraw any part of them. Service levels for paid tiers,
+        where offered, are set out in the relevant written agreement.
+      </p>
+
+      <h2>9. Your data</h2>
+      <p>
+        How we handle personal data is set out in our <a href="/privacy">Privacy Policy</a>, which forms part of these terms.
+        Browsing and scoring require no account and collect no personal data. The one exception is the email address you give us if
+        you request an API key.
+      </p>
+
+      <h2>10. Changes to these terms</h2>
+      <p>
+        We may update these terms. The "Last updated" date at the top records when we last did. Material changes will be notified in
+        the same way as changes to the Privacy Policy. Continuing to use Sky Score after a change means you accept the updated
+        terms.
+      </p>
+
+      <h2>11. Governing law</h2>
+      <p>
+        These terms and any dispute arising out of them are governed by the law of England and Wales, and the courts of England and
+        Wales have exclusive jurisdiction. If you are a consumer resident elsewhere in the United Kingdom, you may also bring
+        proceedings in the courts of the part of the United Kingdom in which you live.
+      </p>
+
+      <h2>12. Contact</h2>
+      <p>
+        Questions about these terms: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>. We aim to reply within 5
+        working days.
+      </p>
+
+      <footer>
+        &copy; 2026 Bilal Khizar · <a href="/">Back to Sky Score</a> · <a href="/privacy">Privacy</a> ·
+        <a href="https://github.com/billkhiz-bit/london-flight-path-map">GitHub</a>
+      </footer>
+    </div>
+  </body>
+</html>
