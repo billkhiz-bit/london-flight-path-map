@@ -136,6 +136,16 @@ check "log retention == privacy.html"  sh scripts/check_log_retention.sh
 # Proven able to fail: with fonts/inter.woff2 removed it exits 1 on a 404.
 check "self-hosted fonts (9 pages)"    node tests/fonts-selfhosted.mjs
 
+# The extension's coordinate extraction is the only code in the repo that reads
+# a third party's markup, and it fails SILENTLY — a Rightmove redesign turns
+# every listing into "no panel" with no error raised anywhere. Wired in on the
+# day it was written rather than left as a file nothing runs. It needs no jsdom;
+# extract.js touches four DOM surfaces and the suite shims exactly those.
+#
+# This proves the code is not broken. It CANNOT prove Rightmove still looks like
+# the fixtures — only a browser can, via scripts/build_extraction_probe.sh.
+check "extension extraction"           node tests/extension-extraction.mjs
+
 if [ "$SKIP_E2E" -eq 1 ]; then
   printf '  %-34s%s\n' "Playwright e2e" "SKIPPED (--skip-e2e)"
 else

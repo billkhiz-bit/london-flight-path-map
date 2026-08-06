@@ -41,9 +41,15 @@ function validCoords(lat, lon) {
   return (
     Number.isFinite(lat) &&
     Number.isFinite(lon) &&
-    // Reject exact zeroes. (0, 0) is in the Atlantic but passes a naive
-    // finite-number check, and it is the classic value for an uninitialised
-    // coordinate field in a page's JSON.
+    // Reject exact zeroes: (0, 0) is the classic value for an uninitialised
+    // coordinate field in a page's JSON, and it passes a naive finite check.
+    //
+    // REDUNDANT TODAY and deliberately kept. UK_BOUNDS already excludes it,
+    // because latitude 0 is far below minLat — so removing this line does not
+    // change any current behaviour, and tests/extension-extraction.mjs cannot
+    // isolate it (proven: deleting it leaves the suite green). It stays as
+    // defence for the day someone widens UK_BOUNDS to cover another country
+    // and silently readmits null island with it.
     !(lat === 0 && lon === 0) &&
     inBounds(lat, lon, UK_BOUNDS)
   );
@@ -63,7 +69,21 @@ function fromScriptBlob() {
     /"longitude"\s*:\s*(-?\d{1,3}\.\d+)\s*,\s*"latitude"\s*:\s*(-?\d{1,3}\.\d+)/;
 
   for (const script of document.querySelectorAll('script')) {
+    // Skip JSON-LD and leave it to fromJsonLd(). querySelectorAll('script')
+    // returns ld+json blocks too, and a schema.org Residence carries
+    // "latitude"/"longitude" as adjacent keys — so without this the blob
+    // strategy matches the JSON-LD text and the panel reports `page-model`
+    // for what was really a `json-ld` hit. The coordinates would still be
+    // correct, but the strategy label is the drift signal: it exists to say
+    // which source is holding up, and a label that cannot distinguish two
+    // sources cannot do that. Caught by scripts/build_extraction_probe.sh's
+    // shim tests, not by reading.
+    const type = (script.getAttribute('type') || '').toLowerCase();
+    if (type.includes('ld+json')) continue;
+
     const text = script.textContent;
+    // Real page models are tens of kilobytes; this skips the many tiny inline
+    // analytics snippets without scanning each with two regexes.
     if (!text || text.length < 50) continue;
 
     const forward = text.match(pairPattern);
