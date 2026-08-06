@@ -255,6 +255,63 @@ Resources:
             Method: delete
 
   # --- B2B Score API (/v1/score), API-key gated ---
+  # --- Retrieval-only chat (restored 2026-08-06) ---
+  # The five Bedrock Lambdas were deleted in 6bad8ce. This is not a restoration
+  # of the free-form assistant: the model here may only phrase data retrieved
+  # from ScoreFunction, never supply it. See lambdas/chat/app.py for why, and
+  # verify_answer() for the control that enforces it rather than requesting it.
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/chat/
+      Handler: app.handler
+      # Two sequential network hops: a ScoreFunction invoke (up to 28s worst
+      # case) then a Bedrock call. 60s leaves headroom without letting a hung
+      # model call bill indefinitely.
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          CORS_ORIGIN: '*'
+          SCORE_FUNCTION_NAME: !Ref ScoreFunction
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
+        # Direct invoke rather than an HTTP call to /v1/score: identical code
+        # path, no API key to provision, and no way for a chat answer to drift
+        # from what the API would say. Scoped to the one function.
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: !GetAtt ScoreFunction.Arn
+      Events:
+        ChatPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/chat
+            Method: post
+            # API KEY REQUIRED, deliberately. An unauthenticated model endpoint
+            # is a free LLM for anyone who finds it, billed to this account.
+            # /epc is an open proxy because a dark EPC panel would break the
+            # consumer site; nothing here has that excuse.
+            Auth:
+              ApiKeyRequired: true
+        ChatOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/chat
+            Method: options
+
   ScoreFunction:
     Type: AWS::Serverless::Function
     Properties:

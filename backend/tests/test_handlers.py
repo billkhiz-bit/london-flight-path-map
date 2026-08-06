@@ -710,3 +710,63 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ChatGroundingTests(unittest.TestCase):
+    """verify_answer is the control that makes the chat endpoint safe.
+
+    The system prompt ASKS the model not to invent figures. This checks whether
+    it did. Without it the endpoint is a free-form assistant with a polite
+    request attached, which is the thing 6bad8ce removed.
+
+    The canonical failure: on 2026-08-03 Barking's crime rate in this repo was
+    corrected from 105 to 84.2 against ONS Table C4. A model that answers "about
+    105 per 1,000" undoes that in one sentence, fluently.
+    """
+
+    @staticmethod
+    def _chat():
+        import importlib.util
+        import pathlib
+
+        path = pathlib.Path(__file__).resolve().parents[1] / 'lambdas' / 'chat' / 'app.py'
+        spec = importlib.util.spec_from_file_location('chat_app', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    CONTEXT = {
+        'total': 7.2,
+        'components': {'quiet': 8.1, 'afford': 4.0},
+        'context': {'avgPriceGbp': 465000},
+    }
+
+    def test_figures_present_in_context_are_grounded(self):
+        chat = self._chat()
+        ok, bad = chat.verify_answer('It scores 7.2, quiet 8.1, average £465,000.', self.CONTEXT)
+        self.assertTrue(ok)
+        self.assertEqual(bad, [])
+
+    def test_invented_crime_rate_is_caught(self):
+        chat = self._chat()
+        ok, bad = chat.verify_answer('Crime is around 105 per 1,000 residents.', self.CONTEXT)
+        self.assertFalse(ok)
+        self.assertIn('105', bad)
+
+    def test_invented_price_is_caught(self):
+        chat = self._chat()
+        ok, bad = chat.verify_answer('Homes here average about £512,000.', self.CONTEXT)
+        self.assertFalse(ok)
+        self.assertIn('512000', bad)
+
+    def test_prose_without_numbers_is_grounded(self):
+        chat = self._chat()
+        ok, _ = chat.verify_answer('Quiet is the strongest component here.', self.CONTEXT)
+        self.assertTrue(ok)
+
+    def test_small_ordinals_do_not_trip_the_check(self):
+        # "2 or 3 sentences" style phrasing would otherwise flag constantly, and
+        # a check that fires on everything stops being read.
+        chat = self._chat()
+        ok, _ = chat.verify_answer('There are 3 things worth noting.', self.CONTEXT)
+        self.assertTrue(ok)
