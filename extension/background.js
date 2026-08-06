@@ -58,8 +58,8 @@ async function writeCache(key, payload) {
 // One endpoint fetch. Never throws: the panel needs to render partial results
 // (transport up, NHS down) rather than an all-or-nothing error, so a failure
 // here becomes a value, not an exception.
-async function fetchEndpoint(path, lat, lon) {
-  const url = `${API_BASE}${path}?lat=${lat}&lon=${lon}`;
+async function fetchEndpoint(path, query) {
+  const url = `${API_BASE}${path}?${new URLSearchParams(query)}`;
   try {
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
@@ -92,27 +92,44 @@ async function fetchEndpoint(path, lat, lon) {
 // upstream answers, so a slow or dead Overpass costs the healthcare section
 // only. It also makes the cache per-endpoint, so a working /transport is not
 // re-fetched just because /nhs failed alongside it.
+// Two families, and the difference matters to the caller.
+//
+// COORDINATE-KEYED endpoints can be called immediately from what the listing
+// page yields. POSTCODE-KEYED ones cannot: a listing gives a point, not a
+// postcode, so they have to wait for /v1/environment to reverse-geocode one.
+// panel.js chains them accordingly.
+//
+// /transport was removed 2026-08-06. Rightmove already prints nearest stations
+// with distances on every listing, so that section duplicated the page it sat
+// on. Being useful here means showing what the portal does not.
 const ENDPOINTS = {
-  transport: '/transport',
-  nhs: '/nhs',
-  // Added 2026-08-06. Aircraft/road noise and air quality, keyed by coordinate.
-  // These datasets are postcode-keyed everywhere else, and a listing page gives
-  // coordinates, so /v1/environment does the reverse geocode server-side. It is
-  // unauthenticated for the same reason /transport and /nhs are: an extension
-  // is a public artefact and cannot hold a key.
-  environment: '/v1/environment',
+  environment: { path: '/v1/environment', key: 'coords' },
+  nhs: { path: '/nhs', key: 'coords' },
+  epc: { path: '/epc', key: 'postcode' },
+  soldPrices: { path: '/sold-prices', key: 'postcode' },
 };
 
-async function fetchOne(name, lat, lon) {
-  const path = ENDPOINTS[name];
-  if (!path) return { ok: false, error: 'unknown-endpoint' };
+async function fetchOne(name, { lat, lon, postcode }) {
+  const spec = ENDPOINTS[name];
+  if (!spec) return { ok: false, error: 'unknown-endpoint' };
 
-  const key = `${cacheKey(lat, lon)}:${name}`;
+  let query;
+  let key;
+  if (spec.key === 'postcode') {
+    if (!postcode) return { ok: false, error: 'no-postcode' };
+    query = { postcode };
+    // Keyed on the postcode, not the coordinate: two listings on the same
+    // postcode share one answer, which is the whole point of these two.
+    key = `p:${postcode.replace(/\s+/g, '').toUpperCase()}:${name}`;
+  } else {
+    query = { lat, lon };
+    key = `${cacheKey(lat, lon)}:${name}`;
+  }
 
   const cached = await readCache(key);
   if (cached) return { ...cached, fromCache: true };
 
-  const result = await fetchEndpoint(path, lat, lon);
+  const result = await fetchEndpoint(spec.path, query);
 
   // Only cache a success. Caching a failure would pin a broken section for six
   // hours over what may have been a two-second blip — and Overpass outages are
@@ -125,13 +142,14 @@ async function fetchOne(name, lat, lon) {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== 'FETCH_ENDPOINT') return false;
 
-  const { endpoint, lat, lon } = message;
-  if (typeof lat !== 'number' || typeof lon !== 'number') {
+  const { endpoint, lat, lon, postcode } = message;
+  const needsCoords = ENDPOINTS[endpoint]?.key !== 'postcode';
+  if (needsCoords && (typeof lat !== 'number' || typeof lon !== 'number')) {
     sendResponse({ ok: false, error: 'bad-coords' });
     return false;
   }
 
-  fetchOne(endpoint, lat, lon)
+  fetchOne(endpoint, { lat, lon, postcode })
     .then((payload) => sendResponse(payload))
     .catch((err) => sendResponse({ ok: false, error: String(err) }));
 

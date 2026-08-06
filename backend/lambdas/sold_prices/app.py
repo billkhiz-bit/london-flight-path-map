@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -15,6 +16,47 @@ OGL_ATTRIBUTION = (
 )
 
 
+def _pref_label(node):
+    """Pull the human label out of a Land Registry SKOS-ish concept.
+
+    `propertyType` is not a string. It is an object whose `prefLabel` is a LIST
+    OF OBJECTS: [{'_value': 'flat-maisonette', '_lang': 'en'}]. The previous
+    code took prefLabel[0] and returned that object, which serialised into the
+    response and rendered as "[object Object]" in every consumer.
+
+    Returns '' rather than a placeholder when the shape is unfamiliar: an
+    unknown property type is better shown as nothing than as a guess.
+    """
+    labels = (node or {}).get('prefLabel')
+    if isinstance(labels, list) and labels:
+        first = labels[0]
+        if isinstance(first, dict):
+            return first.get('_value', '')
+        if isinstance(first, str):
+            return first
+    if isinstance(labels, str):
+        return labels
+    return ''
+
+
+def _iso_date(raw):
+    """Normalise Land Registry's RFC-style date to ISO, or '' if unparseable.
+
+    They send 'Thu, 17 Oct 1996' — no time, no timezone, day name first. Every
+    consumer here treats dates as ISO and slices the first ten characters, which
+    turned that into 'Thu, 17 Oc'. Converting once at the boundary is better than
+    teaching each consumer a second date format.
+    """
+    if not raw:
+        return ''
+    try:
+        return datetime.strptime(raw.strip(), '%a, %d %b %Y').strftime('%Y-%m-%d')
+    except (TypeError, ValueError):
+        # Unrecognised shape: hand back what we were given rather than invent a
+        # date. A visibly odd string is debuggable; a fabricated one is not.
+        return raw
+
+
 def handler(event, context):
     try:
         params = event.get('queryStringParameters') or {}
@@ -23,7 +65,22 @@ def handler(event, context):
         if not postcode:
             return response(400, {'error': 'postcode parameter is required'})
 
-        clean = postcode.strip().upper().replace(' ', '+')
+        # DO NOT substitute '+' for the space here.
+        #
+        # This read `.replace(' ', '+')` and was then passed through quote()
+        # below, which percent-encodes the plus as %2B. Land Registry therefore
+        # received the literal string "WA2+8SN" and matched nothing, so this
+        # endpoint returned an EMPTY LIST WITH HTTP 200 for every postcode ever
+        # queried. It has never returned a transaction.
+        #
+        # It looked healthy the whole time: no error, no exception, no log line,
+        # just `transactions: []` — indistinguishable from a postcode with no
+        # recorded sales, which is a real and common case. Isolated 2026-08-06
+        # against WA2 8SN, which has records: space encoding returns 3 items,
+        # %2B returns 0, no-space returns 0.
+        #
+        # quote() already encodes a space as %20 and Land Registry accepts that.
+        clean = postcode.strip().upper()
 
         # HM Land Registry Price Paid Data - official free API
         url = (
@@ -63,12 +120,10 @@ def handler(event, context):
             results.append(
                 {
                     'price': item.get('pricePaid', 0),
-                    'date': item.get('transactionDate', ''),
+                    'date': _iso_date(item.get('transactionDate', '')),
                     'address': item.get('propertyAddress', {}).get('paon', ''),
                     'street': item.get('propertyAddress', {}).get('street', ''),
-                    'type': item.get('propertyType', {}).get('prefLabel', [''])[0]
-                    if isinstance(item.get('propertyType', {}).get('prefLabel'), list)
-                    else item.get('propertyType', {}).get('prefLabel', ''),
+                    'type': _pref_label(item.get('propertyType')),
                     'newBuild': item.get('newBuild', False),
                 }
             )

@@ -63,79 +63,22 @@ function decidePresentation(listing) {
   }
 
   if (!listing.inLondon) {
-    // Outside Greater London TfL simply has no coverage, so /transport would
-    // return zero stations. That is an absence of DATA, not an absence of
-    // TRANSPORT, and rendering it as a bare "0 stations" would state the
-    // second while only knowing the first.
+    // Outside London the environmental rasters thin out - DEFRA's aircraft
+    // contours are English agglomerations and the road raster we hold is a
+    // London bbox. Everything here still resolves via postcode, so the sections
+    // stay; the caveat exists so a sparse answer is not read as a clean one.
     return {
       show: 'partial',
-      sections: ['environment', 'nhs'],
-      caveat: 'Transport data covers Greater London only — not shown for this property.',
+      sections: ['environment', 'epc', 'soldPrices', 'nhs'],
+      caveat:
+        'Aircraft and road noise coverage is strongest in London; figures outside it may be absent.',
     };
   }
 
-  return { show: 'full', sections: ['environment', 'transport', 'nhs'], caveat: null };
+  return { show: 'full', sections: ['environment', 'epc', 'soldPrices', 'nhs'], caveat: null };
 }
 
 // --- Section renderers ---------------------------------------------------
-
-function renderTransport(result) {
-  const section = el('section', 'c33-section');
-  section.appendChild(el('h3', 'c33-h3', 'Transport'));
-
-  if (!result.ok) {
-    section.appendChild(el('p', 'c33-muted', `Transport data unavailable (${result.error}).`));
-    return section;
-  }
-
-  const data = result.data;
-
-  // The Lambda distinguishes "TfL unreachable" from "no stations nearby" via
-  // an explicit `available` flag. Honour that distinction here — collapsing
-  // the two is the exact defect that flag exists to prevent.
-  if (data.available === false) {
-    section.appendChild(el('p', 'c33-muted', data.note || 'Transport data temporarily unavailable.'));
-    return section;
-  }
-
-  const stations = data.stations || [];
-  if (stations.length === 0) {
-    section.appendChild(el('p', 'c33-muted', 'No stations found within 1.5 km.'));
-    return section;
-  }
-
-  const list = el('ul', 'c33-list');
-  for (const station of stations.slice(0, 5)) {
-    const item = el('li', 'c33-item');
-    const row = el('div', 'c33-row');
-    row.appendChild(el('span', 'c33-name', station.name || 'Unnamed station'));
-    row.appendChild(el('span', 'c33-dist', metres(station.distance)));
-    item.appendChild(row);
-
-    const lines = station.lines || [];
-    if (lines.length) {
-      item.appendChild(el('div', 'c33-sub', lines.join(' · ')));
-    }
-    list.appendChild(item);
-  }
-  section.appendChild(list);
-
-  // Line status is only worth surfacing when something is actually wrong —
-  // a wall of "Good Service" is noise that trains the eye to skip the block.
-  const disrupted = (data.lineStatus || []).filter(
-    (l) => l.status && !/good service/i.test(l.status)
-  );
-  if (disrupted.length) {
-    const warn = el('div', 'c33-warn');
-    warn.appendChild(el('strong', null, 'Now: '));
-    warn.appendChild(
-      document.createTextNode(disrupted.map((l) => `${l.name} — ${l.status}`).join('; '))
-    );
-    section.appendChild(warn);
-  }
-
-  return section;
-}
 
 function renderNhs(result) {
   const section = el('section', 'c33-section');
@@ -249,6 +192,92 @@ function renderEnvironment(result) {
   return section;
 }
 
+function renderEpc(result) {
+  const section = el('section', 'c33-section');
+  section.appendChild(el('h3', 'c33-h3', 'EPC register'));
+
+  if (!result.ok) {
+    section.appendChild(el('p', 'c33-muted', `EPC data unavailable (${result.error}).`));
+    return section;
+  }
+
+  const data = result.data;
+  const certs = data.certificates || [];
+  const summary = data.summary || {};
+
+  if (!certs.length) {
+    section.appendChild(el('p', 'c33-muted', 'No lodged certificates for this postcode.'));
+    return section;
+  }
+
+  // The point is NOT "here is the EPC" — Rightmove already shows one, from
+  // whatever the agent uploaded. The point is what the MHCLG register holds for
+  // this postcode, and how this property's claim sits against its neighbours.
+  // A listing claiming C on a postcode where seven of nine homes are D or E is
+  // a question worth asking, and no listing page asks it for you.
+  const dist = summary.bandDistribution || {};
+  const bands = Object.entries(dist).filter(([, n]) => n > 0);
+  if (bands.length) {
+    section.appendChild(
+      el('div', 'c33-sub', 'Postcode: ' + bands.map(([b, n]) => `${b}×${n}`).join('  '))
+    );
+  }
+  if (summary.mostCommonBand && summary.mostCommonBand !== 'N/A') {
+    section.appendChild(el('div', 'c33-sub', `Most common band here: ${summary.mostCommonBand}`));
+  }
+
+  const list = el('ul', 'c33-list');
+  for (const cert of certs.slice(0, 4)) {
+    const item = el('li', 'c33-item');
+    const row = el('div', 'c33-row');
+    row.appendChild(el('span', 'c33-name', cert.address || 'Address not given'));
+    row.appendChild(el('span', 'c33-dist', cert.band || '?'));
+    item.appendChild(row);
+    if (cert.date) item.appendChild(el('div', 'c33-sub', `lodged ${cert.date.slice(0, 10)}`));
+    list.appendChild(item);
+  }
+  section.appendChild(list);
+  return section;
+}
+
+function renderSoldPrices(result) {
+  const section = el('section', 'c33-section');
+  section.appendChild(el('h3', 'c33-h3', 'Sold nearby'));
+
+  if (!result.ok) {
+    section.appendChild(el('p', 'c33-muted', `Sold-price data unavailable (${result.error}).`));
+    return section;
+  }
+
+  const tx = (result.data || {}).transactions || [];
+  if (!tx.length) {
+    section.appendChild(el('p', 'c33-muted', 'No Land Registry sales recorded for this postcode.'));
+    return section;
+  }
+
+  // Rightmove HAS sold-price data, but as a separate search tool — not on the
+  // listing you are looking at, beside the asking price. Putting the street's
+  // actual transactions next to what is being asked for is the whole value.
+  const list = el('ul', 'c33-list');
+  for (const t of tx.slice(0, 4)) {
+    const item = el('li', 'c33-item');
+    const row = el('div', 'c33-row');
+    const where = [t.address, t.street].filter(Boolean).join(' ') || 'Address not given';
+    row.appendChild(el('span', 'c33-name', where));
+    row.appendChild(
+      el('span', 'c33-dist', t.price ? '£' + Number(t.price).toLocaleString('en-GB') : '')
+    );
+    item.appendChild(row);
+    const meta = [t.date ? t.date.slice(0, 10) : '', t.type, t.newBuild ? 'new build' : '']
+      .filter(Boolean)
+      .join(' · ');
+    if (meta) item.appendChild(el('div', 'c33-sub', meta));
+    list.appendChild(item);
+  }
+  section.appendChild(list);
+  return section;
+}
+
 // --- Attribution ---------------------------------------------------------
 // Both upstreams carry licence obligations that follow the data into any
 // surface that displays it — TfL Open Data requires credit, and OpenStreetMap
@@ -312,19 +341,31 @@ function buildPanel(listing, plan) {
   return body;
 }
 
+// Ordered by how much each adds that the listing page does not.
+//
+// Environment first: noise and air quality are the only figures here a portal
+// will never print. EPC and sold prices next - both exist on Rightmove, but the
+// register is the authority rather than the agent's upload, and sold prices sit
+// in a separate search tool rather than beside the asking price. Healthcare
+// last, as the weakest.
+//
+// `postcode: true` marks a section that cannot start until /v1/environment has
+// reverse-geocoded a postcode from the listing's coordinates.
 const SECTIONS = {
   environment: { label: 'Environment', render: renderEnvironment },
-  transport: { label: 'Transport', render: renderTransport },
+  epc: { label: 'EPC register', render: renderEpc, postcode: true },
+  soldPrices: { label: 'Sold nearby', render: renderSoldPrices, postcode: true },
   nhs: { label: 'Healthcare', render: renderNhs },
 };
 
-async function requestSection(name, listing) {
+async function requestSection(name, listing, postcode) {
   try {
     return await chrome.runtime.sendMessage({
       type: 'FETCH_ENDPOINT',
       endpoint: name,
       lat: listing.lat,
       lon: listing.lon,
+      postcode,
     });
   } catch {
     // Fires when the service worker was torn down mid-flight, or the extension
@@ -352,15 +393,52 @@ async function loadInto(body, listing, plan) {
   }
 
   const results = {};
-  await Promise.all(
-    plan.sections.map(async (name) => {
-      const result = await requestSection(name, listing);
-      results[name] = result;
-      const rendered = SECTIONS[name].render(result);
-      slots[name].replaceWith(rendered);
-      slots[name] = rendered;
-    })
-  );
+
+  const paint = (name, result) => {
+    results[name] = result;
+    const rendered = SECTIONS[name].render(result);
+    slots[name].replaceWith(rendered);
+    slots[name] = rendered;
+  };
+
+  // Coordinate-keyed sections start immediately. Postcode-keyed ones cannot:
+  // a listing page yields a point, and /epc and /sold-prices want a postcode,
+  // so they wait for /v1/environment to reverse-geocode one. Chained rather
+  // than blocked — the coordinate sections still paint as they land, and a
+  // failed environment call costs only the two that depend on it.
+  const byKey = (wantsPostcode) =>
+    plan.sections.filter((n) => Boolean(SECTIONS[n].postcode) === wantsPostcode);
+
+  const coordWork = byKey(false).map(async (name) => {
+    const result = await requestSection(name, listing);
+    paint(name, result);
+    return [name, result];
+  });
+
+  const postcodeWork = (async () => {
+    const dependants = byKey(true);
+    if (!dependants.length) return;
+
+    const env = await requestSection('environment', listing);
+    const postcode = env.ok ? (env.data || {}).location?.postcode : null;
+
+    if (!postcode) {
+      // No postcode means these genuinely cannot be answered, which is a
+      // different thing from "we looked and found nothing". Say which.
+      for (const name of dependants) {
+        paint(name, { ok: false, error: 'no postcode resolved for this location' });
+      }
+      return;
+    }
+
+    await Promise.all(
+      dependants.map(async (name) => {
+        paint(name, await requestSection(name, listing, postcode));
+      })
+    );
+  })();
+
+  await Promise.all([...coordWork, postcodeWork]);
 
   // Attribution and the debug line go in once everything has settled: both are
   // summaries over the whole response set, so painting them early would mean

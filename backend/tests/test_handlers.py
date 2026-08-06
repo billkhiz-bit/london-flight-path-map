@@ -823,3 +823,75 @@ class NhsBundleTests(unittest.TestCase):
         for key in ('gp', 'pharmacies', 'hospitals'):
             for item in buckets[key]:
                 self.assertLessEqual(item['distance'], nhs.SEARCH_RADIUS_M)
+
+
+class SoldPricesParsingTests(unittest.TestCase):
+    """/sold-prices returned an empty list with HTTP 200 for EVERY postcode.
+
+    `.replace(' ', '+')` followed by quote() sent Land Registry the literal
+    string "WA2+8SN". It never matched, so the endpoint had never returned a
+    transaction - and it looked healthy the whole time, because an empty list is
+    indistinguishable from a postcode with no recorded sales.
+    """
+
+    @staticmethod
+    def _sp():
+        import importlib.util
+        import pathlib
+
+        path = pathlib.Path(__file__).resolve().parents[1] / 'lambdas' / 'sold_prices' / 'app.py'
+        spec = importlib.util.spec_from_file_location('sold_prices_app', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_rfc_date_becomes_iso(self):
+        # Land Registry sends 'Thu, 17 Oct 1996'. Consumers slice [0:10] for a
+        # date, which turned that into 'Thu, 17 Oc'.
+        self.assertEqual(self._sp()._iso_date('Thu, 17 Oct 1996'), '1996-10-17')
+
+    def test_unparseable_date_is_passed_through_not_invented(self):
+        sp = self._sp()
+        self.assertEqual(sp._iso_date('not a date'), 'not a date')
+        self.assertEqual(sp._iso_date(''), '')
+
+    def test_property_type_extracts_the_label_not_the_object(self):
+        # prefLabel is a LIST OF OBJECTS. Taking [0] returned the dict, which
+        # serialised into the response and rendered as "[object Object]".
+        sp = self._sp()
+        node = {'prefLabel': [{'_value': 'flat-maisonette', '_lang': 'en'}]}
+        self.assertEqual(sp._pref_label(node), 'flat-maisonette')
+
+    def test_unknown_property_type_shape_yields_empty_not_a_guess(self):
+        sp = self._sp()
+        self.assertEqual(sp._pref_label(None), '')
+        self.assertEqual(sp._pref_label({}), '')
+        self.assertEqual(sp._pref_label({'prefLabel': []}), '')
+
+    def test_request_url_encodes_the_space_not_a_plus(self):
+        # THE regression. A '+' here becomes %2B once quoted, which Land Registry
+        # reads as a literal plus and matches nothing.
+        #
+        # First written as an inspect.getsource() scan for "replace(' ', '+')",
+        # which failed immediately — the comment explaining the bug quotes the
+        # bug. Reading source text cannot tell code from prose. Asserting the URL
+        # actually built tests the behaviour instead, and would still catch the
+        # regression if someone reintroduced it a different way.
+        import io as _io
+        from unittest.mock import patch
+
+        sp = self._sp()
+        captured = {}
+
+        def fake_urlopen(req, timeout=10):
+            captured['url'] = req.full_url
+            body = _io.BytesIO(b'{"result": {"items": []}}')
+            body.__enter__ = lambda s: s
+            body.__exit__ = lambda s, *a: None
+            return body
+
+        with patch.object(sp, 'urlopen', fake_urlopen):
+            sp.handler({'queryStringParameters': {'postcode': 'WA2 8SN'}}, None)
+
+        self.assertIn('WA2%208SN', captured['url'])
+        self.assertNotIn('%2B', captured['url'])

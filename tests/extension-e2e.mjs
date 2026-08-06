@@ -74,24 +74,30 @@ await page.locator('#cubitt33-badge').click();
 check('panel appears on click', (await page.locator('#cubitt33-panel').count()) === 1);
 check('badge removed when panel opens', (await page.locator('#cubitt33-badge').count()) === 0);
 
-// THE REGRESSION ASSERTION. Transport must paint without waiting for /nhs.
-// Before the incremental-render fix the panel did Promise.all over both, so a
-// slow or dead Overpass — which is its normal state often enough to matter —
-// held TfL's answer hostage for up to 30 seconds.
+// THE REGRESSION ASSERTION. A fast section must paint without waiting for the
+// slow one. The panel used to Promise.all over every endpoint, so a slow or
+// dead Overpass — its normal state often enough to matter — held everything
+// else hostage for up to 30 seconds.
+//
+// Anchored on Environment now that Transport is gone. Transport was dropped on
+// 2026-08-06: Rightmove already prints nearest stations with distances on every
+// listing, so that section duplicated the page it sat on.
 await page
-  .locator('#cubitt33-panel .c33-section', { hasText: /transport/i })
-  .locator('.c33-name')
+  .locator('#cubitt33-panel .c33-section', { hasText: /environment/i })
+  .locator('.c33-name, .c33-caveat')
   .first()
   .waitFor({ timeout: 20000 });
-const transportMs = Date.now() - clickedAt;
+const firstPaintMs = Date.now() - clickedAt;
 
-check('transport paints without waiting for /nhs', transportMs < 12000, `${transportMs} ms`);
+check('environment paints without waiting for /nhs', firstPaintMs < 12000, `${firstPaintMs} ms`);
 
-const stationCount = await page
-  .locator('#cubitt33-panel .c33-section', { hasText: /transport/i })
-  .locator('.c33-item')
-  .count();
-check('real stations returned', stationCount > 0, `${stationCount} stations`);
+check(
+  'transport section is gone',
+  (await page
+    .locator('#cubitt33-panel .c33-section h3')
+    .filter({ hasText: /^\s*transport\s*$/i })
+    .count()) === 0
+);
 
 // Let /nhs settle so attribution and the debug line land.
 await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
@@ -111,7 +117,6 @@ check(
   text.includes('nhs.uk') ? 'fallback links present' : ''
 );
 check('no stale Loading text', !text.includes('Loading'));
-check('TfL attribution', /TfL Open Data/i.test(text));
 check('OSM/ODbL attribution', /OpenStreetMap/i.test(text));
 check('debug reports rightmove-page-model', text.includes('rightmove-page-model'));
 check('debug reports outcode', text.includes('SW5'));
@@ -129,7 +134,7 @@ const cachedMs = Date.now() - cacheClick;
 const text2 = await page.locator('#cubitt33-panel').innerText();
 
 check('second view served from cache', text2.includes('cached'), `${cachedMs} ms`);
-check('cached view still renders stations', /TRANSPORT/i.test(text2));
+check('cached view still renders sections', /ENVIRONMENT/i.test(text2));
 
 // --- Degraded paths -------------------------------------------------------
 //
@@ -160,22 +165,19 @@ const mcr = await page.locator('#cubitt33-panel').innerText();
 // assertion tied to the thing it was written for: transport being suppressed
 // outside TfL's coverage.
 check(
-  'non-London: transport caveat shown',
+  'non-London: coverage caveat shown',
   (await page
     .locator('#cubitt33-panel .c33-caveat')
-    .filter({ hasText: /Greater London only/i })
+    .filter({ hasText: /coverage is strongest in London/i })
     .count()) === 1
 );
 
-// Assert on STRUCTURE, not free text. A /transport/i match over innerText also
-// hits the caveat ("Transport data covers Greater London only...") and the TfL
-// attribution line, so the loose version failed while the code was correct.
-// Counting section headings is what "the section is absent" actually means.
-const transportHeadings = await page
-  .locator('#cubitt33-panel .c33-section h3')
-  .filter({ hasText: /^\s*transport\s*$/i })
-  .count();
-check('non-London: transport section suppressed', transportHeadings === 0, `${transportHeadings} headings`);
+// EPC and sold prices are postcode-keyed, so they only appear once
+// /v1/environment has reverse-geocoded one. Outside London that still works —
+// the postcode resolves, the data may simply be sparse — so the sections must
+// be PRESENT rather than suppressed.
+const mcrSections = await page.locator('#cubitt33-panel .c33-section h3').allInnerTexts();
+check('non-London: EPC section still attempted', mcrSections.some((h) => /EPC/i.test(h)), mcrSections.join(','));
 check('non-London: healthcare still shown', /HEALTHCARE/i.test(mcr));
 check('non-London: outcode parsed', mcr.includes('M1'));
 
