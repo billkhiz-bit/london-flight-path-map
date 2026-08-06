@@ -5074,6 +5074,51 @@
       // printing a confident number built on nothing.
       let _boroughExtraHydrated = false;
       let _boroughExtraFailed = false;
+      // Per-postcode aircraft quiet scores for the ~9% of London postcodes DEFRA
+      // actually measured. Empty until hydrated; a miss falls through to the
+      // flight-path geometry below, which is what every postcode used before.
+      const AIRCRAFT_QUIET = {};
+
+      // Must match METHODOLOGY_VERSION in backend/lambdas/score/app.py. The file
+      // ships the COMPUTED quiet score, not decibels, so this page never
+      // reimplements the 45-to-63 dB ramp. That duplication is how the site and
+      // /v1/score came to publish different numbers before. The trade is that
+      // the file goes stale when the ramp changes, so the version is checked and
+      // a mismatched file is refused rather than trusted.
+      const AIRCRAFT_QUIET_METHODOLOGY = '3.6';
+
+      async function hydrateAircraftQuiet() {
+        try {
+          const resp = await fetch('/data/aircraft-quiet-london.json', { cache: 'no-cache' });
+          if (!resp.ok) throw new Error('aircraft-quiet HTTP ' + resp.status);
+          const data = await resp.json();
+
+          if (data.methodologyVersion !== AIRCRAFT_QUIET_METHODOLOGY) {
+            // Refuse rather than blend. Serving scores derived under one ramp
+            // beside scores derived under another is precisely the site/API
+            // divergence this file exists to close, with the added cost that
+            // nothing would look wrong.
+            console.warn(
+              'aircraft-quiet methodology mismatch: file %s, page expects %s. Ignoring file; ' +
+                'quiet falls back to flight-path geometry. Regenerate with ' +
+                'scripts/build_aircraft_quiet_dataset.py',
+              data.methodologyVersion,
+              AIRCRAFT_QUIET_METHODOLOGY
+            );
+            return;
+          }
+
+          Object.assign(AIRCRAFT_QUIET, data.quiet || {});
+        } catch (err) {
+          // Deliberately quiet, and deliberately not retried. Failing here
+          // returns every postcode to the geometry path that served them all
+          // until 2026-08-06: the status quo, not a degraded page. Making it
+          // loud would train users to ignore a warning that describes working
+          // behaviour.
+          console.warn('aircraft-quiet unavailable; using flight-path geometry:', err);
+        }
+      }
+
       async function hydrateBoroughExtra(attempt = 0) {
         try {
           // 'no-cache' means REVALIDATE, not "don't cache" - the browser keeps
@@ -7671,7 +7716,23 @@
             lv = boroughData.scoresRaw?.live ?? boroughData.scores?.live ?? 5;
           const pw = PERSONAS[currentPersona].weights;
           // Use postcode-specific noise to calculate Quiet Skies score
-          const pcQuiet = Math.max(0, Math.min(10, 10 - analysis.noiseScore));
+          // DEFRA's measurement where it exists, flight-path geometry otherwise.
+          //
+          // This is the site half of lifting RASTER_TIER_QUARANTINED. The API
+          // resolves quiet from the raster for the ~9% of London postcodes DEFRA
+          // covers; without this the site kept answering from geometry for those
+          // same postcodes and the two would publish different numbers - the
+          // divergence closed on 2026-08-03, reopened for 35,352 postcodes.
+          //
+          // SiteApiGeometryParityTests would not catch it: it compares
+          // FLIGHT_PATHS waypoints, and those still match. The API would simply
+          // stop consulting them wherever a raster sample exists.
+          const pcKey = (analysis.postcode || '').replace(/\s+/g, '').toUpperCase();
+          const rasterQuiet = AIRCRAFT_QUIET[pcKey];
+          const pcQuiet =
+            typeof rasterQuiet === 'number'
+              ? rasterQuiet
+              : Math.max(0, Math.min(10, 10 - analysis.noiseScore));
           // Recalculate Buyer Value Score with postcode noise + persona weights.
           //
           // This is the ONLY score for this postcode. The favourites button below
@@ -8615,6 +8676,8 @@
         // geojson load. Both are needed eventually but neither blocks the
         // other; whichever finishes second triggers a re-score.
         const extraPromise = hydrateBoroughExtra();
+        // Parallel, not awaited: a miss falls back to geometry, so nothing blocks.
+        hydrateAircraftQuiet();
         const features = await loadGeoJson();
 
         document.getElementById('loading').style.display = 'none';

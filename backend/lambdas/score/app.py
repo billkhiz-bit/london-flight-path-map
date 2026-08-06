@@ -2136,7 +2136,22 @@ def _get_ddb_client():
 #      mistake reported 100% coverage on the first attempt at this measurement,
 #      which is the same "absence read as measurement" defect the quarantine
 #      exists for, reproduced while measuring the quarantine.
-RASTER_TIER_QUARANTINED = True
+# LIFTED 2026-08-06. Condition 3 above — the site computing quiet from geometry
+# with no access to the raster — is resolved: data/aircraft-quiet-london.json
+# ships the same 35,352 measured postcodes to index.html, carrying the COMPUTED
+# quiet score rather than decibels so neither side reimplements the ramp. Both
+# halves now answer from the same measurements, so lifting this no longer
+# reopens the divergence.
+#
+# Conditions 1 and 2 were already done: the read-side plausibility guard
+# neutralises the legacy 35.0 nodata fill, and lden_db_to_quiet was re-derived
+# on 2026-08-04 so Heathrow's 58.20 dB scores 2.6 rather than 7.5 — inside the
+# <= 3.0 that scripts/check_score_sanity.py enforces.
+#
+# To re-quarantine, set this True AND remove the fetch in index.html. Leaving
+# the client dataset in place while the API falls back to geometry recreates the
+# same divergence from the opposite side.
+RASTER_TIER_QUARANTINED = False
 
 # The legacy nodata fill written by scripts/load_defra_raster.py before
 # 2026-08-03. Not a measurement — the raster's minimum real value is 40.0 dB.

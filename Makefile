@@ -183,6 +183,17 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/london-boroughs.json \
 		s3://$(S3_BUCKET)/data/london-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
+	# aircraft-quiet-london.json, added 2026-08-06. 35,352 measured postcodes.
+	# LOAD-BEARING FOR CORRECTNESS, not just features: index.html reads quiet
+	# from this file wherever DEFRA has a measurement, and /v1/score reads the
+	# same measurements from DynamoDB. Ship one without the other and the site
+	# and the API publish different numbers for the same postcode — the exact
+	# divergence closed on 2026-08-03, reopened for 35,352 postcodes by a
+	# partial deploy. no-cache for the same reason as borough-extra: a pinned
+	# stale copy would serve scores from a retired methodology.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-quiet-london.json \
+		s3://$(S3_BUCKET)/data/aircraft-quiet-london.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
