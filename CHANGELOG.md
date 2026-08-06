@@ -6,6 +6,37 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-06 (evening) - coverage notices, a retrieval-only chatbot, and /nhs fixed
+
+**DEPLOYED**: `NhsFunction`, `ScoreFunction`, and a new `ChatFunction`.
+
+- **`/nhs` was falling back to nhs.uk links on every request**, on both the
+  site's healthcare panel and the extension. Not rate limiting - the same query
+  from a second IP also returned 504. `[out:json][timeout:10]` is the budget we
+  hand *Overpass*, and a 3 km radius returned 187 elements to display 3 per
+  category. Now 1.5 km / `[timeout:25]` / 30s client. **Verified live**: The
+  Medical Chambers Kensington at 159 m.
+- **`context.coverage` added to `/v1/score`.** `quietResolution` always said HOW
+  an answer was reached, but in machine terms - only an integrator would know
+  `'postcode'` means "DEFRA never measured here". 89.5% of London falls outside
+  the aircraft contours. Coverage now carries a plain-English notice per
+  component; it appears on **every** response, since a field that shows up only
+  on failure teaches readers to ignore its absence. Keyed so airQuality and
+  roadNoise slot in unchanged.
+- **`POST /v1/chat` restored as RETRIEVAL-ONLY**, not the free-form assistant
+  deleted in `6bad8ce`. Context comes from invoking `ScoreFunction` directly, so
+  an answer cannot drift from the API. `verify_answer()` checks every number in
+  the reply against the retrieved payload and **discards** the answer if one
+  came from nowhere. API-key gated.
+  - **The control earned itself on the third live question.** Asked for a 2030
+    price forecast, the model produced a number despite the prompt forbidding
+    it; `verify_answer` caught it and the reply was replaced. **The prompt
+    failed and the control held** - which is the entire argument for building it
+    this way.
+  - Composition worth noting: asked about noise, the chatbot volunteered the
+    coverage notice added hours earlier, unprompted.
+  - Cost ~£0.25 per 1,000 messages (Nova Lite, 400-token cap).
+
 ### 2026-08-06 (later the same day) - the browser extension works on real Rightmove, and the tests that said it did were circular
 
 **`extension/` now works on live Rightmove listings.** It had 33 passing checks
