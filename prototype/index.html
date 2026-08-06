@@ -8,7 +8,7 @@
      OpenSky-related corsproxy.io / api.allorigins.win deliberately omitted — the
      dormant fetchLiveData function would fire CSP violations if anyone re-enabled
      the live mode without also restoring the licensing path. Defence-in-depth. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -26,7 +26,10 @@
 <meta name="twitter:title" content="Sky Score Radar · 3D London Airspace">
 <meta name="twitter:description" content="3D terrain visualisation with live aircraft tracking and noise contours.">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+  /* Self-hosted since 2026-08-05; see scripts/vendor_fonts.py. The vendored
+     JetBrains Mono is a variable font covering 300-700, so every weight this
+     page used from Google is still available. */
+  @import url('/fonts/fonts.css');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 

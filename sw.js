@@ -82,7 +82,7 @@
 // it was the only reason for; 21 school notes now mark any Ofsted grade they
 // name as historic (withdrawn Sept 2024, not feeding the score). data/ changed,
 // so this bump is required.
-const VERSION = 'v1.0.15';
+const VERSION = 'v1.0.16';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -119,6 +119,14 @@ const SHELL_ASSETS = [
   '/js/vendor/d3.v7.min.js',
   '/data/london-boroughs.json',
   '/data/nyc-boroughs.json',
+  // Self-hosted fonts, 2026-08-05. Only the two families index.html actually
+  // uses — Geist is for pricing/changes/api and is not part of the app shell.
+  // These are precached rather than left to the runtime because they replaced
+  // cross-origin fonts that this SW used to stale-while-revalidate, so leaving
+  // them out would make the offline shell render worse than before the change.
+  '/fonts/fonts.css',
+  '/fonts/inter.woff2',
+  '/fonts/jetbrains-mono.woff2',
 ];
 
 // Origins where we always go to the network — caching scores or
@@ -130,7 +138,11 @@ const NEVER_CACHE_ORIGINS = [
 ];
 
 // Cross-origin assets where stale-while-revalidate is appropriate.
-const SWR_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
+// Emptied 2026-08-05: both entries were the Google Fonts hosts, and the fonts
+// are now self-hosted under /fonts/ and precached in SHELL_ASSETS above. Kept
+// as an empty list rather than deleted because the fetch handler still branches
+// on it and a future cross-origin asset belongs here.
+const SWR_ORIGINS = [];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

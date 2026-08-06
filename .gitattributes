@@ -6,3 +6,7 @@ score-demo/vendor/* -text
 # This is not cosmetic: without -text, a fresh clone on Windows produces a
 # working tree that deploys a broken site.
 js/vendor/* -text
+# Vendored woff2 fonts. Binary: any line-ending translation corrupts the file
+# and the browser silently falls back to a system font. Same reasoning as
+# js/vendor/ above, minus the SRI hash.
+fonts/*.woff2 -text

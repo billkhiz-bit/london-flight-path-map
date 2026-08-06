@@ -1,0 +1,42 @@
+/* Sky Score self-hosted fonts. GENERATED - do not hand-edit.
+ *
+ * Vendored from Google Fonts on 2026-08-05 so no visitor IP is transferred
+ * to fonts.googleapis.com / fonts.gstatic.com. Latin subset only.
+ *
+ * These are VARIABLE fonts: one file per family covers the whole weight
+ * range declared below. Do not split them back out per weight.
+ *
+ * Regenerate: python scripts/vendor_fonts.py   Deploy: make fonts-deploy
+ */
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/geist.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/geist-mono.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url('/fonts/inter.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono.woff2') format('woff2');
+}

@@ -117,6 +117,13 @@ web-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp changes.html \
 		s3://$(S3_BUCKET)/changes/index.html \
 		--content-type "text/html" --region $(AWS_REGION)
+	# terms.html added 2026-08-05. Same extensionless-key rule as privacy and
+	# pricing: it MUST land at terms/index.html or /terms is never served. This
+	# is the liability page, so an unpublished copy means the one document that
+	# allocates risk exists only in git.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp terms.html \
+		s3://$(S3_BUCKET)/terms/index.html \
+		--content-type "text/html" --region $(AWS_REGION)
 	# api/index.html had NO target until 2026-08-03 - editable, deployed, and
 	# uploaded by hand. It is the B2B landing page, so a stale copy sells the
 	# product on claims the code no longer honours - exactly what it was doing
@@ -135,7 +142,34 @@ web-deploy:
 		s3://$(S3_BUCKET)/js/vendor/ \
 		--recursive --content-type "application/javascript" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
-		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/js/*' '/api/*'
+		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*'
+
+.PHONY: fonts-deploy
+fonts-deploy:
+	# Self-hosted fonts, added 2026-08-05 (see scripts/vendor_fonts.py). These
+	# replaced fonts.googleapis.com / fonts.gstatic.com, which transferred every
+	# visitor's IP address to Google in the US on each page load.
+	#
+	# ORDER IS LOAD-BEARING: fonts-deploy runs FIRST in web-deploy-all, ahead of
+	# pwa-deploy. /fonts/fonts.css and the two Inter/JetBrains files are in
+	# sw.js SHELL_ASSETS, and cache.addAll() is ATOMIC — ship sw.js before the
+	# fonts exist at the origin and the service worker fails to install AT ALL,
+	# taking offline support with it. Same trap as js/vendor/d3.v7.min.js.
+	#
+	# The .woff2 files are variable fonts, one per family, and change only when
+	# vendor_fonts.py is re-run, so they cache hard. fonts.css references them by
+	# fixed name, so it gets a shorter TTL and the deploy invalidates both.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp fonts/ \
+		s3://$(S3_BUCKET)/fonts/ \
+		--recursive --exclude "*" --include "*.woff2" \
+		--content-type "font/woff2" \
+		--cache-control "public,max-age=31536000" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp fonts/fonts.css \
+		s3://$(S3_BUCKET)/fonts/fonts.css \
+		--content-type "text/css" \
+		--cache-control "public,max-age=86400" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/fonts/*'
 
 .PHONY: data-deploy
 data-deploy:
@@ -274,7 +308,7 @@ meta-deploy:
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy meta-deploy
+web-deploy-all: fonts-deploy web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy meta-deploy
 	@echo "Web + data + PWA + demo + prototype + meta deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------

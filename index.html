@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -92,18 +92,13 @@
       src="/js/vendor/d3.v7.min.js"
       integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
     ></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- visual fix-DEFRA-5: preload the aircraft noise raster so the browser
          starts the fetch during HTML parse, in parallel with JS download +
          eval. By the time renderDefraTiles runs, the PNG is already in the
          HTTP cache. Combined with self-hosting on CloudFront, the visible
          "lag" between map paint and contour appearance drops near zero. -->
     <link rel="preload" as="image" href="/data/aircraft-noise-london-lden.png" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
-    />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {
         --bg: #e4e3e0;
@@ -2879,6 +2874,8 @@
           <span class="sep">·</span>
           <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
+          <a href="/terms">Terms</a>
+          <span class="sep">·</span>
           <span title="Open Government Licence v3.0">OGL v3.0</span>
         </footer>
       </main>
@@ -3090,6 +3087,8 @@
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
           <a href="/privacy">Privacy</a>
+          <span class="sep">·</span>
+          <a href="/terms">Terms</a>
         </footer>
       </aside>
 

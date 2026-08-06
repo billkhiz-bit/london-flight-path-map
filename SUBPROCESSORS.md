@@ -7,6 +7,14 @@ behalf. Provided to satisfy enterprise procurement / DPA requirements
 **Last updated:** 2026-05-09
 **Maintained by:** support@skyscore.co.uk (sole controller)
 
+<!-- ENTITY LINE. Sky Score is currently operated by Bilal Khizar as a sole
+     trader. On incorporation, add here: "Sky Score is a trading name of
+     [COMPANY] Ltd, registered in England and Wales, company number [NUMBER]."
+     The matching lines are privacy.html §1 and terms.html §1 - those three are
+     the only places the operating entity is named, so incorporation is a
+     three-line change across the whole repo. -->
+
+
 ---
 
 ## 1. What "customer data" means here
@@ -73,7 +81,7 @@ entry alone is not evidence of use. All six below are genuinely fetched.
 
 | # | Third party | Purpose | Data categories | Region | Legal basis |
 |---|---|---|---|---|---|
-| 12 | **Google LLC** (`fonts.googleapis.com`, `fonts.gstatic.com`) | Web fonts (Inter, JetBrains Mono), loaded via `<link>` at `index.html:105`. | Visitor **IP address**, `Referer`, user-agent. No account data. | **US.** | ⚠️ **Compliance gap, not a settled basis.** German case law (LG München I, 3 O 17493/20) held that embedding Google Fonts transmits the visitor's IP to a US provider without consent, contrary to GDPR. **Remedy is to self-host**, exactly as `js/vendor/d3.v7.min.js` already is. Tracked as an open item; recorded here rather than presented as compliant. |
+| 12 | ~~**Google LLC** (`fonts.googleapis.com`, `fonts.gstatic.com`)~~ **REMOVED 2026-08-05** | ~~Web fonts (Inter, JetBrains Mono)~~ Fonts are now **self-hosted** at `/fonts/`, vendored by `scripts/vendor_fonts.py`. | **None. No request is made to Google.** | n/a | ✅ **Gap closed.** This row previously recorded an open compliance item: German case law (LG München I, 3 O 17493/20) held that embedding Google Fonts transmits the visitor's IP to a US provider without consent, contrary to GDPR, and named self-hosting as the remedy. That remedy is now applied, matching `js/vendor/d3.v7.min.js`. Both hosts are out of every page CSP and out of `sw.js` `SWR_ORIGINS`. Row kept rather than deleted so the register shows the gap was closed, not that it never existed. |
 | 13 | **GitHub, Inc.** (Microsoft) (`raw.githubusercontent.com`) | **Fallback only** — boundary GeoJSON for UK LADs and NYC boroughs (`index.html:5687`, `:8136`) when the vendored same-origin copies are unavailable. Primary path is same-origin since 2026-07-30. | Visitor **IP address**, `Referer`. | **US.** | Legitimate interests; static public file, no customer data in the request. Retiring the fallback would remove this row. |
 | 14 | **US Department of Transportation** (`geo.dot.gov`) | NTAD aviation + road noise map layers for the **NYC** view (`index.html:5485`, `:5490`). | Visitor **IP address** and the **map viewport bbox**, which indicates the area being viewed. | **US.** | Public-sector open data; US federal public-domain layers. |
 | 15 | **US Environmental Protection Agency** (`gispub.epa.gov`) | Air-quality non-attainment-area layer for the NYC view (`index.html:5501`). | Visitor **IP address** and map viewport bbox. | **US.** | Public-sector open data. |
@@ -142,10 +150,12 @@ Removing a sub-processor: noted here on the same business day.
   are cached at CloudFront edge POPs globally. These contain no customer
   data.
 - **The visitor's browser contacts US-hosted third parties** while rendering the
-  consumer site (rows 12-16): Google Fonts on every page load, and the FEMA / EPA /
-  US-DOT map layers on the NYC view. These receive the visitor's IP address, not API
-  customer data, and are separate from the server-side processing path above. **The
-  Google Fonts route is an open compliance item** — see row 12.
+  consumer site (rows 13-16): the FEMA / EPA / US-DOT map layers on the NYC view,
+  and GitHub for a boundary-file fallback. These receive the visitor's IP address,
+  not API customer data, and are separate from the server-side processing path
+  above. **Google Fonts was the every-page-load case and is gone as of
+  2026-08-05** — fonts are self-hosted, so the remaining US contacts are
+  view-specific rather than universal. See row 12.
 
 If you require US-only or APAC-only deployment for compliance reasons,
 contact support@skyscore.co.uk — the SAM template is region-agnostic and a
