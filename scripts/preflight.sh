@@ -166,6 +166,18 @@ else
   # assertion would fail for reasons unrelated to the code. The suite passes
   # --headless=new itself.
   check "extension e2e"                 node tests/extension-e2e.mjs
+
+  # Loads the live site at ten viewports, 320px to 1920px, and fails ONLY on
+  # horizontal overflow. That is the failure that matters on a phone and the one
+  # least likely to be noticed otherwise: the page still works, it just drifts
+  # sideways, and nobody testing at 1440px will ever see it.
+  #
+  # Tap-target findings are printed but do not fail the run. They need judgement
+  # rather than a threshold — the site footer is 8px uppercase chrome, hidden
+  # entirely below 900px, and forcing it to 24px would triple its height to fix
+  # a desktop-only mouse target. A gate that demanded that would be overruled
+  # every time it fired, which is how a gate stops being read.
+  check "responsive (10 viewports)"     node tests/responsive.mjs
 fi
 
 echo
