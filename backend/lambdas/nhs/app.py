@@ -1,7 +1,7 @@
 """
 Sky Score NHS Lambda, nearby NHS-relevant services for a given lat/lon.
 
-Returns hospitals, pharmacies, GP surgeries (and clinics) within 3 km of a
+Returns hospitals, pharmacies, GP surgeries (and clinics) within 1.5 km of a
 property location. Used by the consumer site to surface "what's nearby"
 context on a postcode page.
 
@@ -31,7 +31,12 @@ from urllib.request import Request, urlopen
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 OVERPASS_URL = os.environ.get('OVERPASS_URL', 'https://overpass-api.de/api/interpreter')
-SEARCH_RADIUS_M = 3000  # 3 km, typical "your nearest" range
+# 1500 m, reduced from 3000 m on 2026-08-06. Measured at Collingham Road SW5:
+# 3 km returns 187 elements, 1.5 km returns 66 — and MAX_RESULTS_PER_TYPE means
+# we display 3 per category regardless, so the wider radius bought nothing and
+# cost the timeouts above. 1.5 km still comfortably contains the nearest GP,
+# pharmacy and hospital anywhere in urban London.
+SEARCH_RADIUS_M = 1500
 MAX_RESULTS_PER_TYPE = 5
 
 ATTRIBUTION = (
@@ -77,8 +82,18 @@ def haversine(lat1, lon1, lat2, lon2):
 def query_overpass(lat, lon):
     """Single Overpass query for all four amenity types in one round-trip.
     Returns parsed elements or raises HTTPError/URLError on failure."""
+    # [timeout:N] is the OVERPASS-SIDE budget, not ours. At 10s this returned
+    # 504 Gateway Timeout under load, which surfaced as "Live data unavailable"
+    # on both the site's healthcare panel and the extension — reproduced from a
+    # second IP on 2026-08-06, so it was the query cost, not our Lambda being
+    # rate-limited. The same query at [timeout:25] returned 200 in ~3s.
+    #
+    # It must stay below the urlopen timeout below, which must stay below the
+    # function Timeout in template.yaml (45s). Ordering matters: if Overpass's
+    # budget exceeds ours we abandon a query it is still paying to run, which is
+    # the least polite possible way to use a free shared service.
     query = (
-        f'[out:json][timeout:10];'
+        f'[out:json][timeout:25];'
         f'('
         f'nwr["amenity"="hospital"](around:{SEARCH_RADIUS_M},{lat},{lon});'
         f'nwr["amenity"="pharmacy"](around:{SEARCH_RADIUS_M},{lat},{lon});'
@@ -96,7 +111,9 @@ def query_overpass(lat, lon):
             'User-Agent': 'sky-score/1.0 (https://d1oe4ftwutjpf.cloudfront.net)',
         },
     )
-    with urlopen(req, timeout=12) as resp:
+    # 30s, above Overpass's own 25s budget so it finishes rather than being
+    # abandoned mid-flight, and below the 45s function Timeout.
+    with urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode()).get('elements', [])
 
 

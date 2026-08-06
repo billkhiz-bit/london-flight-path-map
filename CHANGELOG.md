@@ -6,7 +6,44 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-06 (latest) - privacy.html is true again, and the check guarding it now reads the page
+### 2026-08-06 (later the same day) - the browser extension works on real Rightmove, and the tests that said it did were circular
+
+**`extension/` now works on live Rightmove listings.** It had 33 passing checks
+while never once working on a real page, because every fixture was one Claude
+wrote, encoding the assumption that a portal serialises coordinates as
+`"latitude":51.47`.
+
+- **Rightmove ships `window.__PAGE_MODEL = {"data":"[...]"}`** - a JSON *string*
+  containing JSON (so keys arrive escaped as `\"latitude\"`) holding a
+  **flattened** array where `{"latitude":160}` is an **index**, not a value.
+  `flat[160] === 51.49423`. Two leading underscores. No pattern reachable by
+  reasoning would have matched. `fromRightmovePageModel()` unpacks it and runs
+  first in the cascade.
+- **Timing was the other half, and would have defeated the unpacker too.**
+  `run_at` was `document_idle`, which fires after `load`; the page model is
+  transient and React hydration removes it. Observed directly - present on a
+  fresh load, gone from the same tab minutes later. Now `document_end`.
+  **When extraction finds nothing, suspect *when* you looked before *how* you
+  parsed.**
+- **`tests/fixtures/rightmove-real-sw5.html`** carries that script verbatim from
+  a saved listing. It is the first fixture in the extension capable of
+  contradicting its author; both suites now run against it.
+- **The panel no longer blocks on the slowest upstream.** It did `Promise.all`
+  over `/transport` and `/nhs`; Overpass can take 30s or hang, so the panel sat
+  on "Loading..." with TfL's answer already in memory. One endpoint per message
+  now. Measured: transport paints in **~880 ms**, cached view **~40 ms**.
+- **Degraded paths tested in a browser**: a non-London property suppresses the
+  transport section with a caveat rather than rendering "0 stations" (an absence
+  of DATA is not an absence of TRANSPORT); an unlocatable page renders nothing
+  at all, not an inert badge.
+- Preflight gained **`extension extraction`** and **`extension e2e`**, taking
+  blocking stages from 12 to **14**. `tests/fixtures/` is globally ignored by
+  ESLint - captured third-party markup is evidence, not source.
+- Known limit recorded: the "GP surgeries" bucket is OSM `amenity=doctors`,
+  which tags private clinics identically to NHS practices. Relabel or filter
+  before demoing.
+
+### 2026-08-06 - privacy.html is true again, and the check guarding it now reads the page
 
 **`privacy.html` §2d now carries Version B**: logs are "currently retained
 indefinitely", with the 30-day policy described as intended rather than done.
