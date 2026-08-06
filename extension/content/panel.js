@@ -207,6 +207,12 @@ function renderEnvironment(result) {
   // and never "measured as fine".
   const rows = [
     ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden'],
+    // The estimate, for the ~91% of London DEFRA never measured. Shown on a
+    // 0-10 quiet scale rather than in dB, deliberately: it comes from
+    // flight-path geometry, not a decibel reading, and presenting it as "52 dB"
+    // would dress an estimate up as a measurement. The basis line below says
+    // which it is, and the two never appear together.
+    ['Aircraft noise (estimated)', env.aircraftQuietEstimated, '/10 quiet'],
     ['Road noise', env.roadNoiseLdenDb, 'dB Lden'],
     ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3],
     ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3],

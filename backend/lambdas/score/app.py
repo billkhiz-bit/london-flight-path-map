@@ -4029,6 +4029,20 @@ def handle_environment(event):
 
     notices = []
     if aircraft_lden is None:
+        # DEFRA measures about 9% of London postcodes, so this branch is the
+        # common one — roughly 91% of lookups. Returning nothing but an apology
+        # made the section empty for almost everyone, and a notice that nearly
+        # every user always sees stops being read.
+        #
+        # /v1/score already computes a geometric estimate for exactly these
+        # postcodes (quietResolution 'postcode'), from distance to airports and
+        # flight-path geometry. Surfacing it, clearly labelled as an estimate,
+        # is more useful than silence and still not a claim to have measured.
+        # Same function the score uses, so the two cannot disagree.
+        estimated = calc_postcode_quiet(lat, lon, 'london', postcode_clean)
+        if estimated is not None:
+            env['aircraftQuietEstimated'] = estimated
+            env['aircraftQuietBasis'] = 'flight-path geometry, not measured'
         notices.append(_COVERAGE_NOTICES['postcode'])
     if 'roadNoiseLdenDb' not in env:
         notices.append(
