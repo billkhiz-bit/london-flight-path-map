@@ -35,14 +35,36 @@ needs no backend change and no API key.
 
 **From the page, no network call** — map-pin coordinates, address, outcode.
 
-## What it deliberately does not show
+## Environment (added 2026-08-06)
+
+`GET /v1/environment?lat=&lon=` - unauthenticated, like `/transport` and `/nhs`.
+
+Listing pages give COORDINATES; every environmental dataset here is keyed by
+POSTCODE, so none of it could reach a listing. That endpoint does the reverse
+geocode server-side, which is the one thing the extension cannot do for itself.
+
+- **Aircraft noise** - DEFRA Round 4 Lden where measured (~9% of London
+  postcodes; the contours are localised lobes around airports)
+- **Road noise** - DEFRA Round 4 road Lden (92.2% coverage; roads are everywhere)
+- **NO2 and PM2.5** - DEFRA PCM background maps, annual mean, each shown against
+  its WHO guideline, because a bare concentration means nothing without one
+
+Every row appears only where a real measurement exists. Absent means the key is
+missing, never null and never a default - and what was NOT measured is stated in
+a notice rather than left to be assumed.
+
+It is unauthenticated deliberately: an extension is a public artefact, so it
+cannot hold a key, and a bundled key would meter every install against one plan.
+What it returns is measurements, not the product - no weights, no persona, no
+composite score. The scoring engine stays behind the key.
+
+## What it still does not show
 
 | Omitted | Why |
 |---|---|
-| Sky Score total + components | `/v1/score` takes postcode or borough, never lat/lon. Needs the reverse-geocode path. |
-| EPC | `/epc` is postcode-keyed, same blocker. `floorArea` also comes back empty (`epc/app.py:186`) so no £/sq ft without a second upstream call. |
-| Sold prices | `/sold-prices` is postcode-keyed, same blocker. |
-| Aircraft noise | DEFRA quarantine stands. 89.5% of London sits outside the aircraft contours and 98% of postcodes score exactly 10.0. This is the number users would trust most and the one we can least defend. |
+| Sky Score total + components | `/v1/score` is API-key gated and an extension cannot hold a key. `/v1/environment` deliberately returns measurements only. |
+| EPC | `/epc` is postcode-keyed; the reverse geocode now exists, so this is a smaller job than it was. `floorArea` also comes back empty (`epc/app.py:186`). |
+| Sold prices | Same: postcode-keyed, now unblocked by the reverse geocode. |
 
 ## What is already verified
 

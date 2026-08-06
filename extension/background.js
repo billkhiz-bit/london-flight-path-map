@@ -95,6 +95,12 @@ async function fetchEndpoint(path, lat, lon) {
 const ENDPOINTS = {
   transport: '/transport',
   nhs: '/nhs',
+  // Added 2026-08-06. Aircraft/road noise and air quality, keyed by coordinate.
+  // These datasets are postcode-keyed everywhere else, and a listing page gives
+  // coordinates, so /v1/environment does the reverse geocode server-side. It is
+  // unauthenticated for the same reason /transport and /nhs are: an extension
+  // is a public artefact and cannot hold a key.
+  environment: '/v1/environment',
 };
 
 async function fetchOne(name, lat, lon) {

@@ -153,7 +153,19 @@ await page.locator('#cubitt33-badge').click();
 await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
 const mcr = await page.locator('#cubitt33-panel').innerText();
 
-check('non-London: caveat shown', (await page.locator('#cubitt33-panel .c33-caveat').count()) === 1);
+// Assert the SPECIFIC caveat, not a count. This counted `.c33-caveat === 1`
+// until the Environment section began rendering its own coverage notices with
+// the same class, at which point a passing count became an accident of how many
+// unrelated caveats happened to be on screen. Matching the text keeps the
+// assertion tied to the thing it was written for: transport being suppressed
+// outside TfL's coverage.
+check(
+  'non-London: transport caveat shown',
+  (await page
+    .locator('#cubitt33-panel .c33-caveat')
+    .filter({ hasText: /Greater London only/i })
+    .count()) === 1
+);
 
 // Assert on STRUCTURE, not free text. A /transport/i match over innerText also
 // hits the caveat ("Transport data covers Greater London only...") and the TfL
@@ -166,6 +178,29 @@ const transportHeadings = await page
 check('non-London: transport section suppressed', transportHeadings === 0, `${transportHeadings} headings`);
 check('non-London: healthcare still shown', /HEALTHCARE/i.test(mcr));
 check('non-London: outcode parsed', mcr.includes('M1'));
+
+// A postcode DEFRA actually measured. The SW5 fixture above exercises only the
+// "nothing measured, here is why" path; without this the Environment section
+// could stop rendering values entirely and the suite would stay green.
+const heathrow = readFileSync(join(HERE, 'fixtures', 'rightmove-heathrow.html'), 'utf8');
+await page.locator('#cubitt33-panel .c33-close').click();
+await page.unroute('**://www.rightmove.co.uk/**');
+await page.route('**://www.rightmove.co.uk/**', (route) =>
+  route.fulfill({ status: 200, contentType: 'text/html', body: heathrow })
+);
+await page.goto('https://www.rightmove.co.uk/properties/555000333');
+await page.locator('#cubitt33-badge').waitFor({ timeout: 15000 });
+await page.locator('#cubitt33-badge').click();
+await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
+const lhr = await page.locator('#cubitt33-panel').innerText();
+
+const aircraftRow = (lhr.split('\n').find((l) => /Aircraft noise/i.test(l)) || '').trim();
+check(
+  'measured postcode shows an aircraft dB figure',
+  /Aircraft noise/i.test(lhr) && /58\.2 dB Lden/.test(lhr),
+  aircraftRow || 'no aircraft row'
+);
+check('measured postcode carries no "not measured" notice', !/not measured/i.test(lhr));
 
 // No coordinates anywhere. The panel must render NOTHING — not an empty card,
 // not a "couldn't find anything" message. An inert badge is a promise we then

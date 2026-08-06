@@ -3354,6 +3354,57 @@ def _fetch_postcode(clean):
     return payload.get('result')
 
 
+_reverse_cache_get, _reverse_cache_put = _make_lru(1024)
+
+
+def reverse_geocode(lat, lon):
+    """Nearest UK postcode to a coordinate, or None.
+
+    The one thing the browser extension cannot do for itself. A property
+    listing yields coordinates; every environmental dataset here is keyed by
+    postcode, so without this none of it can reach a listing page.
+
+    postcodes.io rather than the local NSPL table, deliberately: that table is
+    keyed BY postcode, and DynamoDB has no geospatial query, so reverse lookup
+    would mean a full scan of 2.7M rows. postcodes.io is already a hard
+    dependency of the forward path a few lines below, so this adds a new use of
+    an existing dependency rather than a new dependency.
+
+    Cached per warm container on a rounded coordinate. 4 dp is ~11 m, far below
+    the 1 km air-quality grid and comparable to the 10 m noise rasters, so the
+    rounding cannot move an answer to a different postcode in any way that
+    matters — and listing pages cluster, so the cache earns its keep.
+    """
+    key = f'{lat:.4f},{lon:.4f}'
+    cached = _reverse_cache_get(key)
+    if cached is not None:
+        return cached
+
+    url = f'https://api.postcodes.io/postcodes?lat={lat}&lon={lon}&limit=1'
+    req = Request(url, headers={'Accept': 'application/json'})
+    try:
+        with urlopen(req, timeout=5) as resp:
+            payload = json.loads(resp.read().decode())
+    except (HTTPError, URLError, TimeoutError) as exc:
+        logger.warning('postcodes.io reverse lookup failed for %s: %s', key, exc)
+        return None
+    except json.JSONDecodeError as exc:
+        logger.warning('postcodes.io returned non-JSON for %s: %s', key, exc)
+        return None
+
+    # A coordinate in the sea returns status 200 with result: null. That is a
+    # legitimate "no postcode here", not an error, and must not be cached as
+    # one — _make_lru does not cache negatives, so returning None is enough.
+    results = payload.get('result') or []
+    if not results:
+        return None
+
+    postcode = (results[0] or {}).get('postcode')
+    if postcode:
+        _reverse_cache_put(key, postcode)
+    return postcode
+
+
 def lookup_postcode(postcode, include_terminated=False):
     """Resolve a UK postcode to a postcodes.io-shaped result dict.
 
@@ -3922,12 +3973,89 @@ def handle_changes(event):
     )
 
 
+def handle_environment(event):
+    """GET /v1/environment?lat=&lon= — measured readings for a coordinate.
+
+    WHY THIS EXISTS. The browser extension reads a property listing and gets
+    COORDINATES. /v1/score, /epc and /sold-prices are all postcode-keyed, so
+    none of today's environmental data could reach a listing page. This closes
+    that with the one thing the extension cannot do for itself: turn a point
+    into a postcode.
+
+    UNAUTHENTICATED, like /transport and /nhs and unlike /v1/score. The
+    extension is a public artefact — anything bundled in it is readable by
+    anyone who unzips the .crx — so a key-gated route is unusable there. This
+    returns measurements, not the scoring engine's output: no weights, no
+    persona, no total. The product remains behind the key.
+
+    It reuses _lookup_noise_row and build_environment, so a reading here cannot
+    disagree with the same reading inside a /v1/score response.
+    """
+    params = event.get('queryStringParameters') or {}
+    try:
+        lat = float(params.get('lat'))
+        lon = float(params.get('lon'))
+    except (TypeError, ValueError):
+        return response(400, {'error': 'lat and lon are required and must be numbers.'})
+
+    if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+        return response(400, {'error': 'lat/lon out of range.'})
+
+    pc = reverse_geocode(lat, lon)
+    if not pc:
+        return response(
+            404,
+            {
+                'error': 'No UK postcode found near those coordinates.',
+                'location': {'lat': lat, 'lon': lon},
+            },
+        )
+
+    postcode_clean = pc.replace(' ', '').upper()
+    noise_row = _lookup_noise_row(postcode_clean)
+    env = build_environment(noise_row, postcode_clean)
+
+    # Aircraft quiet is derived rather than stored, so it is computed here
+    # through the same ramp /v1/score uses. Absent when DEFRA did not measure
+    # this postcode — 91% of London — and absent means the key is missing, not
+    # null or a default.
+    aircraft_lden = lden_from_row(noise_row, postcode_clean)
+    if aircraft_lden is not None:
+        env['aircraftNoiseLdenDb'] = round(aircraft_lden, 1)
+        env['aircraftQuiet'] = lden_db_to_quiet(aircraft_lden)
+        env['aircraftNoiseSource'] = (
+            'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden'
+        )
+
+    notices = []
+    if aircraft_lden is None:
+        notices.append(_COVERAGE_NOTICES['postcode'])
+    if 'roadNoiseLdenDb' not in env:
+        notices.append(
+            'Road noise has not been measured for this postcode, or is still '
+            'being loaded. No figure is shown rather than an assumed one.'
+        )
+
+    return response(
+        200,
+        {
+            'location': {'lat': lat, 'lon': lon, 'postcode': pc},
+            'environment': env,
+            'notices': notices,
+            'apiVersion': API_VERSION,
+            'methodologyVersion': METHODOLOGY_VERSION,
+        },
+    )
+
+
 def handle_get(event):
     path = (event.get('path') or '').rstrip('/')
     if path.endswith('/regions'):
         return handle_regions(event)
     if path.endswith('/changes'):
         return handle_changes(event)
+    if path.endswith('/environment'):
+        return handle_environment(event)
     params = event.get('queryStringParameters') or {}
     body, status = resolve_query(params)
     return response(status, body)

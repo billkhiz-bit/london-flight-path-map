@@ -69,12 +69,12 @@ function decidePresentation(listing) {
     // second while only knowing the first.
     return {
       show: 'partial',
-      sections: ['nhs'],
+      sections: ['environment', 'nhs'],
       caveat: 'Transport data covers Greater London only — not shown for this property.',
     };
   }
 
-  return { show: 'full', sections: ['transport', 'nhs'], caveat: null };
+  return { show: 'full', sections: ['environment', 'transport', 'nhs'], caveat: null };
 }
 
 // --- Section renderers ---------------------------------------------------
@@ -189,6 +189,60 @@ function renderNhs(result) {
   return section;
 }
 
+function renderEnvironment(result) {
+  const section = el('section', 'c33-section');
+  section.appendChild(el('h3', 'c33-h3', 'Environment'));
+
+  if (!result.ok) {
+    section.appendChild(el('p', 'c33-muted', `Environment data unavailable (${result.error}).`));
+    return section;
+  }
+
+  const data = result.data;
+  const env = data.environment || {};
+
+  // Every row is present only when a real measurement exists — the endpoint
+  // omits the key rather than sending null or a default. So an empty list here
+  // means "nothing was measured for this postcode", which the notices explain,
+  // and never "measured as fine".
+  const rows = [
+    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden'],
+    ['Road noise', env.roadNoiseLdenDb, 'dB Lden'],
+    ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3],
+    ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3],
+  ].filter((r) => typeof r[1] === 'number');
+
+  if (rows.length) {
+    const list = el('ul', 'c33-list');
+    for (const [label, value, unit, guideline] of rows) {
+      const item = el('li', 'c33-item');
+      const row = el('div', 'c33-row');
+      row.appendChild(el('span', 'c33-name', label));
+      row.appendChild(el('span', 'c33-dist', `${value} ${unit}`));
+      item.appendChild(row);
+      // The guideline is the difference between a number and a judgement.
+      // "33.4" tells a reader nothing; "WHO guideline 10" tells them a lot.
+      if (typeof guideline === 'number') {
+        item.appendChild(el('div', 'c33-sub', `WHO guideline ${guideline} ${unit}`));
+      }
+      list.appendChild(item);
+    }
+    section.appendChild(list);
+  }
+
+  // Notices explain what was NOT measured. Rendered even when rows exist,
+  // because a partial answer is the case most likely to be misread as complete.
+  for (const notice of data.notices || []) {
+    section.appendChild(el('div', 'c33-caveat', notice));
+  }
+
+  if (!rows.length && !(data.notices || []).length) {
+    section.appendChild(el('p', 'c33-muted', 'No environmental measurements for this location.'));
+  }
+
+  return section;
+}
+
 // --- Attribution ---------------------------------------------------------
 // Both upstreams carry licence obligations that follow the data into any
 // surface that displays it — TfL Open Data requires credit, and OpenStreetMap
@@ -253,6 +307,7 @@ function buildPanel(listing, plan) {
 }
 
 const SECTIONS = {
+  environment: { label: 'Environment', render: renderEnvironment },
   transport: { label: 'Transport', render: renderTransport },
   nhs: { label: 'Healthcare', render: renderNhs },
 };
