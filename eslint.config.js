@@ -33,6 +33,46 @@ export default [
     },
   },
 
+  // Browser-extension sources (added 2026-08-06). Needs its own block for two
+  // reasons the generic **/*.{js,mjs} block above cannot cover:
+  //
+  //   1. `chrome.*` is a WebExtension global, present in neither globals.browser
+  //      nor globals.node, so every runtime/storage call would read as no-undef.
+  //   2. Content scripts listed together in one manifest entry SHARE a single
+  //      isolated-world scope — extract.js defines extractListing() and panel.js
+  //      calls it, with no import between them. That is correct WebExtension
+  //      code but looks like an undefined reference to a per-file linter. The
+  //      two files carry `/* exported */` and `/* global */` directives to
+  //      express that link; declaring it here instead would collide with the
+  //      real definition (no-redeclare) in the file that owns it.
+  //
+  // sourceType is 'script', not 'module': content scripts are classic scripts.
+  // The service worker IS a module (manifest declares type: 'module'), but it
+  // imports nothing, so one block covers both without a parse error.
+  {
+    files: ['extension/**/*.js'],
+    plugins: { security },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.webextensions,
+      },
+      ecmaVersion: 2022,
+      sourceType: 'script',
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      'no-unused-vars': 'warn',
+      'no-undef': 'error',
+      'no-redeclare': 'error',
+      'eqeqeq': ['warn', 'always'],
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'security/detect-eval-with-expression': 'error',
+      'security/detect-unsafe-regex': 'error',
+    },
+  },
+
   {
     files: ['**/*.html'],
     plugins: { html, security },

@@ -5,9 +5,9 @@
   "type": "module",
   "description": "AI-Powered Property Noise Intelligence for London and New York",
   "scripts": {
-    "lint": "eslint index.html *.js js/api-base.js scripts tests mobile/scripts",
+    "lint": "eslint index.html *.js js/api-base.js scripts tests mobile/scripts extension",
     "lint:fix": "eslint index.html --fix",
-    "lint:html": "html-validate index.html changes.html pricing.html privacy.html api/index.html score-demo/index.html score-demo/api-docs.html score-demo/status.html",
+    "lint:html": "html-validate index.html changes.html pricing.html privacy.html terms.html api/index.html score-demo/index.html score-demo/api-docs.html score-demo/status.html",
     "lint:css": "stylelint \"index.html\"",
     "lint:security": "eslint index.html --no-eslintrc -c eslint.config.js",
     "format": "prettier --write index.html",

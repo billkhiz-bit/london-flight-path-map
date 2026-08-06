@@ -1,0 +1,226 @@
+/* cubitt33 extension — panel styles.
+ *
+ * Every rule is prefixed with #cubitt33-panel / #cubitt33-badge. That is not
+ * tidiness, it is defence: this stylesheet is injected into a page that has its
+ * own global styles, and an unprefixed `ul { }` here would restyle Rightmove's
+ * entire listing. The ID prefix also wins most specificity contests in the
+ * other direction, so their resets do not bleed into us.
+ *
+ * The bulletproof version of this is Shadow DOM, which gives real style
+ * isolation instead of a specificity arms race. Worth doing if this graduates
+ * from demo to product — the cost is that content_scripts CSS is injected into
+ * the page, not the shadow root, so the styles would need to move into JS.
+ */
+
+#cubitt33-badge {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483000;
+
+  /* Explicit values throughout — inheriting anything from the host page is how
+   * an injected widget ends up in Rightmove's brand font at their line-height. */
+  margin: 0;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: #12263f;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+
+#cubitt33-badge:hover {
+  background: #1d3a5f;
+}
+
+#cubitt33-badge:focus-visible {
+  outline: 3px solid #4a9eff;
+  outline-offset: 2px;
+}
+
+#cubitt33-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483000;
+
+  box-sizing: border-box;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+
+  margin: 0;
+  padding: 0 16px 14px;
+  border-radius: 12px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #12263f;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+}
+
+#cubitt33-panel * {
+  box-sizing: border-box;
+}
+
+#cubitt33-panel .c33-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -16px 10px;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e6eaef;
+}
+
+#cubitt33-panel .c33-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+#cubitt33-panel .c33-close {
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: #6b7c93;
+  background: none;
+  cursor: pointer;
+}
+
+#cubitt33-panel .c33-close:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 2px;
+}
+
+#cubitt33-panel .c33-addr {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #6b7c93;
+}
+
+/* The caveat is the honesty line — when a section is suppressed because the
+ * data source does not cover this property, this is what says so. Styled to be
+ * read, not skimmed past. */
+#cubitt33-panel .c33-caveat {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid #d99000;
+  font-size: 12px;
+  color: #6b4d00;
+  background: #fff8e6;
+}
+
+#cubitt33-panel .c33-section {
+  margin: 0 0 14px;
+}
+
+#cubitt33-panel .c33-h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7c93;
+}
+
+#cubitt33-panel .c33-h4 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #12263f;
+}
+
+#cubitt33-panel .c33-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#cubitt33-panel .c33-item {
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f3f6;
+}
+
+#cubitt33-panel .c33-item:last-child {
+  border-bottom: 0;
+}
+
+#cubitt33-panel .c33-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#cubitt33-panel .c33-name {
+  font-weight: 500;
+}
+
+#cubitt33-panel .c33-dist {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: #6b7c93;
+}
+
+#cubitt33-panel .c33-sub {
+  margin-top: 1px;
+  font-size: 11px;
+  color: #8a97a8;
+}
+
+#cubitt33-panel .c33-warn {
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #7a2018;
+  background: #fdecea;
+}
+
+#cubitt33-panel .c33-muted {
+  margin: 0;
+  color: #6b7c93;
+}
+
+#cubitt33-panel .c33-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e6eaef;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #8a97a8;
+}
+
+#cubitt33-panel .c33-debug {
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  color: #b3bdc9;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #cubitt33-panel {
+    animation: c33-in 140ms ease-out;
+  }
+
+  @keyframes c33-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+}

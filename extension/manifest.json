@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "cubitt33 — property data (demo)",
+  "version": "0.1.0",
+  "description": "Shows independent transport and healthcare data alongside Rightmove listings. Unlisted demo build.",
+
+  "permissions": ["storage"],
+
+  "host_permissions": [
+    "https://www.rightmove.co.uk/*",
+    "https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.rightmove.co.uk/properties/*",
+        "https://www.rightmove.co.uk/property-for-sale/property-*",
+        "https://www.rightmove.co.uk/property-to-rent/property-*"
+      ],
+      "js": ["content/extract.js", "content/panel.js"],
+      "css": ["content/panel.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
