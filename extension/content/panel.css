@@ -203,6 +203,62 @@
   color: #6b7c93;
 }
 
+/* "Not available", compactly. Was a section heading plus a full sentence, so
+ * four dead sections cost eight lines and pushed the data that DID arrive below
+ * the fold. One quiet line each now. Deliberately not styled as a warning: a
+ * source having no coverage here is ordinary, and dressing it in red trains the
+ * reader to ignore the colour that does mean something. */
+#cubitt33-panel .c33-none {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: #8a97a8;
+}
+
+/* The vintage tag, e.g. 2021 on DEFRA readings. Sits ON the row it qualifies,
+ * where a paragraph underneath appeared to qualify every row including the air
+ * quality ones it has nothing to do with. */
+#cubitt33-panel .c33-tag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b4d00;
+  background: #fff3d4;
+  vertical-align: 1px;
+}
+
+/* Collapsed explanation. The facts stay on the rows; this holds the reasoning.
+ * The summary is a real control, so it gets a 24px target like everything else
+ * and a visible focus ring - it is keyboard-reachable by default and would
+ * otherwise be the one interactive element in the panel without one. */
+#cubitt33-panel .c33-note {
+  margin: 8px 0 0;
+  border-top: 1px solid #eef1f5;
+}
+
+#cubitt33-panel .c33-note-sum {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 12px;
+  color: #4a6484;
+  cursor: pointer;
+  list-style: revert;
+}
+
+#cubitt33-panel .c33-note-sum:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 2px;
+}
+
+#cubitt33-panel .c33-note-body {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b7c93;
+}
+
 #cubitt33-panel .c33-foot {
   margin-top: 12px;
   padding-top: 10px;

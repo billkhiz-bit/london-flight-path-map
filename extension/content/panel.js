@@ -38,6 +38,40 @@ function metres(d) {
 }
 
 /**
+ * A collapsed explanation. Added 2026-08-07 because the panel was mostly prose:
+ * on a real SW5 listing it showed three measurements carrying a two-sentence
+ * coverage notice, a two-sentence DEFRA vintage paragraph and a guideline
+ * sub-line each, and outside London it showed ONE measurement under two
+ * notices. Caveats that long stop being read, which defeats the point of
+ * writing them.
+ *
+ * What stays visible is the FACT; what collapses is the JUSTIFICATION. "Aircraft
+ * noise (estimated)" is in the row label, and DEFRA-sourced rows are tagged
+ * with their vintage inline, so a reader who never opens this still cannot
+ * mistake an estimate for a measurement or 2021 data for current. What moves in
+ * here is why DEFRA covers so little and what the anomalous year means — real
+ * and worth keeping, but not worth burying the numbers under.
+ */
+function disclosure(summaryText, paragraphs) {
+  const box = el('details', 'c33-note');
+  box.appendChild(el('summary', 'c33-note-sum', summaryText));
+  for (const p of paragraphs) box.appendChild(el('p', 'c33-note-body', p));
+  return box;
+}
+
+/**
+ * The compact "we have nothing" state. Was a heading plus a sentence per
+ * section, so four dead sections cost eight lines and pushed the data that DID
+ * arrive off-screen. One line each now, and the reason is kept in the title
+ * attribute rather than thrown away.
+ */
+function unavailable(label, reason) {
+  const row = el('p', 'c33-none', `${label} — not available`);
+  if (reason) row.title = String(reason);
+  return row;
+}
+
+/**
  * Decide what the panel is allowed to show for a given extraction.
  *
  * This is the honesty gate. The Core Cities audit recorded the underlying
@@ -81,18 +115,17 @@ function decidePresentation(listing) {
 // --- Section renderers ---------------------------------------------------
 
 function renderNhs(result) {
+  if (!result.ok) {
+    return unavailable('Healthcare', result.error);
+  }
+
   const section = el('section', 'c33-section');
   section.appendChild(el('h3', 'c33-h3', 'Healthcare'));
-
-  if (!result.ok) {
-    section.appendChild(el('p', 'c33-muted', `Healthcare data unavailable (${result.error}).`));
-    return section;
-  }
 
   const data = result.data;
 
   if (data.available === false) {
-    section.appendChild(el('p', 'c33-muted', data.note || 'Live data unavailable.'));
+    section.appendChild(el('p', 'c33-none', data.note || 'Live data unavailable'));
   }
 
   const groups = [
@@ -126,20 +159,19 @@ function renderNhs(result) {
   }
 
   if (rendered === 0) {
-    section.appendChild(el('p', 'c33-muted', 'No healthcare facilities found nearby.'));
+    section.appendChild(el('p', 'c33-none', 'None found nearby'));
   }
 
   return section;
 }
 
 function renderEnvironment(result) {
+  if (!result.ok) {
+    return unavailable('Environment', result.error);
+  }
+
   const section = el('section', 'c33-section');
   section.appendChild(el('h3', 'c33-h3', 'Environment'));
-
-  if (!result.ok) {
-    section.appendChild(el('p', 'c33-muted', `Environment data unavailable (${result.error}).`));
-    return section;
-  }
 
   const data = result.data;
   const env = data.environment || {};
@@ -159,22 +191,48 @@ function renderEnvironment(result) {
   // It is on a 0-10 quiet scale, not decibels, because it comes from
   // flight-path geometry rather than a reading — putting a dB guideline beside
   // it would imply a measurement that does not exist.
+  // Whether the DEFRA rows carry the COVID-year vintage. Kept as a per-row flag
+  // so the tag sits ON the affected reading rather than as a paragraph under
+  // rows it does not apply to.
+  const mapsCovidYear = [env.aircraftNoiseSource, env.roadNoiseSource]
+    .filter(Boolean)
+    .some((s) => /maps 2021/.test(s));
+
   const rows = [
-    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden', env.aircraftNoiseWhoGuidelineDb],
-    ['Aircraft noise (estimated)', env.aircraftQuietEstimated, '/10 quiet', null],
-    ['Road noise', env.roadNoiseLdenDb, 'dB Lden', env.roadNoiseWhoGuidelineDb],
-    ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3],
-    ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3],
+    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden', env.aircraftNoiseWhoGuidelineDb, mapsCovidYear],
+    ['Aircraft noise (estimated)', env.aircraftQuietEstimated, '/10 quiet', null, false],
+    ['Road noise', env.roadNoiseLdenDb, 'dB Lden', env.roadNoiseWhoGuidelineDb, mapsCovidYear],
+    ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3, false],
+    ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3, false],
   ].filter((r) => typeof r[1] === 'number');
 
   if (rows.length) {
     const list = el('ul', 'c33-list');
-    for (const [label, value, unit, guideline] of rows) {
+    for (const [label, value, unit, guideline, vintage] of rows) {
       const item = el('li', 'c33-item');
       const row = el('div', 'c33-row');
-      row.appendChild(el('span', 'c33-name', label));
+      const name = el('span', 'c33-name', label);
+      // The vintage rides on the reading it qualifies. This used to be a
+      // two-sentence paragraph below the list, which meant it applied visually
+      // to the air-quality rows it has nothing to do with.
+      if (vintage) {
+        // The space is a real text node, not CSS margin. Without it textContent
+        // is "Aircraft noise2021", which is what a screen reader announces and
+        // what any text assertion sees - the margin only moves pixels.
+        name.appendChild(document.createTextNode(' '));
+        const tag = el('span', 'c33-tag', '2021');
+        tag.title = 'DEFRA data mapping 2021';
+        name.appendChild(tag);
+      }
+      row.appendChild(name);
 
-      const readout = el('span', 'c33-dist', `${value} ${unit}`);
+      // "/10 quiet" is a suffix, not a unit, so it takes no leading space -
+      // this rendered as "5 /10 quiet".
+      const readout = el(
+        'span',
+        'c33-dist',
+        unit.startsWith('/') ? `${value}${unit}` : `${value} ${unit}`
+      );
       // Colour states a fact, not a verdict: whether the measurement is above
       // the cited guideline. No "good"/"bad" wording, because the guideline is
       // WHO's judgement and the comparison is arithmetic — anything richer
@@ -191,9 +249,11 @@ function renderEnvironment(result) {
           el(
             'div',
             'c33-sub',
-            over
-              ? `above the WHO guideline of ${guideline} ${unit}`
-              : `within the WHO guideline of ${guideline} ${unit}`
+            // Shortened 2026-08-07 from "above/within the WHO guideline of X".
+            // The words "above"/"within" stay, because colour alone would put
+            // the over/under fact behind a colour cue (WCAG 1.4.1); the rest
+            // was repeated verbatim on every row and read as boilerplate.
+            over ? `above WHO ${guideline} ${unit}` : `within WHO ${guideline} ${unit}`
           )
         );
       }
@@ -214,39 +274,43 @@ function renderEnvironment(result) {
   // No corrected figure is offered. METHODOLOGY §4.6 forbids applying an
   // estimated correction factor: inventing a multiplier is a failure mode this
   // project has already had to undo twice.
-  const sources = [env.aircraftNoiseSource, env.roadNoiseSource].filter(Boolean);
-  if (sources.some((s) => /maps 2021/.test(s))) {
-    section.appendChild(
-      el(
-        'div',
-        'c33-sub',
-        'DEFRA noise data maps 2021, a COVID-affected year, so these readings ' +
-          'understate current exposure. The direction is known; the amount is not.'
-      )
+  // One disclosure for everything explanatory, rather than a stack of
+  // paragraphs. The facts these justify are already on the rows: "(estimated)"
+  // in a label, "2021" tagged on the readings it applies to. See disclosure().
+  const explanations = [];
+  if (mapsCovidYear) {
+    explanations.push(
+      'DEFRA noise data maps 2021, a COVID-affected year, so these readings ' +
+        'understate current exposure. The direction is known; the amount is not, ' +
+        'and no correction factor is applied.'
     );
   }
+  explanations.push(...(data.notices || []));
 
-  // Notices explain what was NOT measured. Rendered even when rows exist,
-  // because a partial answer is the case most likely to be misread as complete.
-  for (const notice of data.notices || []) {
-    section.appendChild(el('div', 'c33-caveat', notice));
+  if (explanations.length) {
+    // The summary names the count so it is obvious something was left out,
+    // rather than a decorative "more info" nobody opens.
+    const label =
+      explanations.length === 1
+        ? 'About this reading'
+        : `About these readings (${explanations.length})`;
+    section.appendChild(disclosure(label, explanations));
   }
 
-  if (!rows.length && !(data.notices || []).length) {
-    section.appendChild(el('p', 'c33-muted', 'No environmental measurements for this location.'));
+  if (!rows.length && !explanations.length) {
+    section.appendChild(el('p', 'c33-none', 'No environmental measurements here'));
   }
 
   return section;
 }
 
 function renderEpc(result) {
+  if (!result.ok) {
+    return unavailable('EPC register', result.error);
+  }
+
   const section = el('section', 'c33-section');
   section.appendChild(el('h3', 'c33-h3', 'EPC register'));
-
-  if (!result.ok) {
-    section.appendChild(el('p', 'c33-muted', `EPC data unavailable (${result.error}).`));
-    return section;
-  }
 
   const data = result.data;
   const certs = data.certificates || [];
@@ -295,13 +359,12 @@ function renderEpc(result) {
 }
 
 function renderSoldPrices(result) {
+  if (!result.ok) {
+    return unavailable('Sold nearby', result.error);
+  }
+
   const section = el('section', 'c33-section');
   section.appendChild(el('h3', 'c33-h3', 'Sold nearby'));
-
-  if (!result.ok) {
-    section.appendChild(el('p', 'c33-muted', `Sold-price data unavailable (${result.error}).`));
-    return section;
-  }
 
   const tx = (result.data || {}).transactions || [];
   if (!tx.length) {
@@ -380,7 +443,23 @@ function buildPanel(listing, plan) {
   // Echo back what we located, so a mislocation is obvious at a glance rather
   // than silently poisoning every number below it.
   if (listing.address) {
-    panel.appendChild(el('p', 'c33-addr', listing.address));
+    // Rightmove's displayAddress repeats the town when the street already names
+    // it, so a real SW5 listing renders "Collingham Road, London, London, SW5".
+    // Dedupe case-insensitively and keep the FIRST occurrence, which preserves
+    // the address's own ordering rather than imposing one.
+    const seen = new Set();
+    const address = String(listing.address)
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => {
+        if (!part) return false;
+        const key = part.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .join(', ');
+    panel.appendChild(el('p', 'c33-addr', address));
   }
 
   if (plan.caveat) {
