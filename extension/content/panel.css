@@ -299,6 +299,58 @@
  * 53 dB Lden" or "within..." in text, so the information survives a colour-blind
  * reader, a screenshot in greyscale, and a printed page.
  */
+/* The scale bar. Replaces the per-row sentence that said the same thing in
+ * words on every row. The domain is 0 to twice the WHO guideline, with the
+ * guideline at the midpoint - see scaleBar() for why it is not the London
+ * range. Over/under is legible from the dot's side of the tick, so the colour
+ * below reinforces rather than carries it. */
+#cubitt33-panel .c33-bar {
+  display: block;
+  margin-top: 3px;
+  overflow: visible;
+}
+
+#cubitt33-panel .c33-bar-track {
+  fill: #eef1f5;
+}
+
+#cubitt33-panel .c33-bar-fill {
+  fill: #9db4cc;
+}
+
+#cubitt33-panel .c33-bar-over .c33-bar-fill,
+#cubitt33-panel .c33-bar-over .c33-bar-dot {
+  fill: #a35200;
+}
+
+#cubitt33-panel .c33-bar-under .c33-bar-fill,
+#cubitt33-panel .c33-bar-under .c33-bar-dot {
+  fill: #2c6e49;
+}
+
+/* No guideline, so no verdict: slate, not green. */
+#cubitt33-panel .c33-bar-neutral .c33-bar-fill,
+#cubitt33-panel .c33-bar-neutral .c33-bar-dot {
+  fill: #9db4cc;
+}
+
+#cubitt33-panel .c33-bar-dot {
+  fill: #4a6484;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+#cubitt33-panel .c33-bar-tick {
+  stroke: #12263f;
+  stroke-width: 1;
+}
+
+#cubitt33-panel .c33-bar-lab {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 9px;
+  fill: #8a97a8;
+}
+
 #cubitt33-panel .c33-over {
   color: #a35200;
   font-weight: 600;

@@ -59,6 +59,72 @@ function disclosure(summaryText, paragraphs) {
   return box;
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgEl(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+  return node;
+}
+
+/**
+ * Where a reading sits relative to its guideline, as one small bar.
+ *
+ * WHY THE SCALE RUNS 0 TO TWICE THE GUIDELINE. A bar needs a domain, and the
+ * obvious choice - the observed range across London - is a number we would be
+ * inventing at the point of drawing. METHODOLOGY §4.6 forbids exactly that
+ * shape of thing for noise, and this project has twice had to undo a figure
+ * that was estimated rather than sourced. The guideline is the ONLY reference
+ * the endpoint hands us, so it is the only one used: it sits at the midpoint,
+ * the scale ends at twice it, and every number drawn is one we were given.
+ *
+ * The consequence is that the bar answers "how does this compare to the WHO
+ * guideline", not "how does this compare to London". That is a narrower claim
+ * and it is the one the data supports.
+ *
+ * Over/under is carried by POSITION relative to the tick, not by colour alone,
+ * so it survives WCAG 1.4.1. Colour reinforces it. The aria-label carries the
+ * whole sentence, because a bar announces nothing on its own.
+ */
+function scaleBar({ value, guideline, unit, max }) {
+  const ceiling = guideline ? guideline * 2 : max;
+  const clamped = Math.min(Math.max(value / ceiling, 0), 1);
+  const over = typeof guideline === 'number' && value > guideline;
+  const pct = clamped * 100;
+
+  const height = guideline ? 24 : 12;
+  // Neutral when there is no guideline. Falling through to "under" would paint
+  // the 0-10 quiet estimate green, i.e. assert it is good, against a threshold
+  // that does not exist. Colour here reports a comparison; with nothing to
+  // compare to it must report nothing.
+  const verdict =
+    typeof guideline === 'number' ? (over ? 'c33-bar-over' : 'c33-bar-under') : 'c33-bar-neutral';
+
+  const svg = svgEl('svg', {
+    class: `c33-bar ${verdict}`,
+    width: '100%',
+    height,
+    role: 'img',
+    'aria-label': guideline
+      ? `${value} ${unit}, ${over ? 'above' : 'within'} the WHO guideline of ${guideline} ${unit}`
+      : `${value} out of ${max}`,
+  });
+
+  svg.appendChild(svgEl('rect', { class: 'c33-bar-track', x: 0, y: 4, width: '100%', height: 4, rx: 2 }));
+  svg.appendChild(svgEl('rect', { class: 'c33-bar-fill', x: 0, y: 4, width: `${pct}%`, height: 4, rx: 2 }));
+
+  if (guideline) {
+    // The tick is always at the midpoint, by construction of the domain.
+    svg.appendChild(svgEl('line', { class: 'c33-bar-tick', x1: '50%', x2: '50%', y1: 1, y2: 11 }));
+    const lab = svgEl('text', { class: 'c33-bar-lab', x: '50%', y: 21, 'text-anchor': 'middle' });
+    lab.textContent = `WHO ${guideline}`;
+    svg.appendChild(lab);
+  }
+
+  svg.appendChild(svgEl('circle', { class: 'c33-bar-dot', cx: `${pct}%`, cy: 6, r: 3.5 }));
+  return svg;
+}
+
 /**
  * The compact "we have nothing" state. Was a heading plus a sentence per
  * section, so four dead sections cost eight lines and pushed the data that DID
@@ -243,19 +309,18 @@ function renderEnvironment(result) {
       row.appendChild(readout);
       item.appendChild(row);
 
+      // The bar replaces the sub-line it used to carry ("within WHO 53 dB
+      // Lden"), which was repeated verbatim on every row and read as
+      // boilerplate. The same fact is now positional, and the aria-label still
+      // says it in words for anyone the bar cannot reach.
       if (typeof guideline === 'number') {
-        const over = value > guideline;
-        item.appendChild(
-          el(
-            'div',
-            'c33-sub',
-            // Shortened 2026-08-07 from "above/within the WHO guideline of X".
-            // The words "above"/"within" stay, because colour alone would put
-            // the over/under fact behind a colour cue (WCAG 1.4.1); the rest
-            // was repeated verbatim on every row and read as boilerplate.
-            over ? `above WHO ${guideline} ${unit}` : `within WHO ${guideline} ${unit}`
-          )
-        );
+        item.appendChild(scaleBar({ value, guideline, unit }));
+      } else if (unit.startsWith('/')) {
+        // The 0-10 quiet estimate: a scale by construction, so it gets a bar
+        // with no guideline tick. There is nothing to compare it to, and
+        // inventing a threshold for a geometry-derived figure would be exactly
+        // the move the comment above refuses.
+        item.appendChild(scaleBar({ value, guideline: null, unit, max: 10 }));
       }
       list.appendChild(item);
     }
