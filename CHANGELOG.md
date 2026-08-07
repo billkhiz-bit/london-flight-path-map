@@ -6,6 +6,58 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-06 (evening, cont.) - the raster quarantine is lifted, and /sold-prices had never worked
+
+**DEPLOYED**: `ScoreFunction`, `NhsFunction`, `SoldPricesFunction`, new
+`ChatFunction`, `index.html`, `data/aircraft-quiet-london.json`.
+
+- **`RASTER_TIER_QUARANTINED` is now False.** Condition 3 - the site computing
+  quiet from geometry with no access to the raster - is closed by
+  `data/aircraft-quiet-london.json`, 35,352 measured postcodes at 461 KB,
+  fetched alongside `borough-extra.json`. It ships the **computed quiet score,
+  not decibels**, so neither side reimplements the 45-to-63 dB ramp;
+  `methodologyVersion` is embedded and the page REFUSES a mismatched file.
+  - **Not the option originally recommended.** "Serve the site's quiet from
+    `/v1/score`" is API-key gated, so the site would embed a key and meter every
+    visitor. The sparse coverage that caused the problem is what made the
+    client-side option cheap.
+  - A first build disagreed with the API by 0.1 on measured postcodes: the
+    loader stores `f'{lden:.1f}'` so DynamoDB holds 58.2 while the raster
+    samples 58.24. Found only by querying the live API after deploying.
+- **`POST /v1/chat` restored as RETRIEVAL-ONLY.** Context comes from invoking
+  `ScoreFunction` directly; `verify_answer()` discards any reply containing a
+  number absent from the retrieved payload. **The control earned itself on the
+  third live question** - asked for a 2030 price forecast, the model produced a
+  number despite the prompt forbidding it.
+- **`GET /v1/environment?lat=&lon=`** - unauthenticated, reverse-geocodes
+  server-side so the extension can reach postcode-keyed data from a listing's
+  coordinates. Returns measurements only: no weights, no persona, no composite.
+- **Road noise + air quality now reported per postcode.** Road via a WCS fetch
+  (`scripts/fetch_defra_road_noise.py`) that removes the browser-only download
+  step from METHODOLOGY §7; air quality from DEFRA PCM background maps. Both
+  **reported, not scored** - weighting them would change every score ever
+  returned. Coverage: aircraft 9.0%, road 99.2%, air 100%.
+- **`/sold-prices` HAD NEVER RETURNED A TRANSACTION.** `.replace(' ', '+')` then
+  `quote()` sent Land Registry the literal string `WA2+8SN`. Every postcode
+  returned `[]` with HTTP 200 - indistinguishable from a postcode with no sales.
+  The consumer site's sold-prices panel has been silently empty for its whole
+  existence. Two parsing bugs surfaced once data flowed: RFC-style dates sliced
+  to `Thu, 17 Oc`, and `propertyType.prefLabel` rendering as `[object Object]`.
+- **`/nhs` fixed twice.** First the Overpass budget and radius; then the real
+  cause - Lambda egress uses AWS-managed **shared IPs**, so we compete for
+  Overpass's per-IP budget with all of AWS. Greater London now ships inside the
+  function: 3,224 POIs, 447 KB. Mirrors were rejected;
+  `overpass.osm.ch` returns **200 with zero elements** for London queries.
+- **DEFRA vintage stated beside the readings**, not only in a footer. The label
+  said "Round 4 (2022)", which reads as 2022 data; it maps **2021**, a
+  COVID-affected year, so readings err quiet. No correction factor is applied.
+- **Responsive audit added** (`tests/responsive.mjs`, 10 viewports). No
+  horizontal overflow anywhere. Found `#first-hint button` at 17x44 on mobile
+  and 17x18 on desktop - raised to 44px height in a media query, never widened.
+- **`extension/`**: Transport dropped (Rightmove already prints stations), EPC
+  and sold prices added, WHO guidelines on every environmental row, official
+  EPC band colours. **Blocking preflight stages: 12 -> 16.**
+
 ### 2026-08-06 (evening) - coverage notices, a retrieval-only chatbot, and /nhs fixed
 
 **DEPLOYED**: `NhsFunction`, `ScoreFunction`, and a new `ChatFunction`.

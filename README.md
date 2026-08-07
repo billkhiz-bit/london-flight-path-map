@@ -63,13 +63,16 @@ Sky Score is the ethical alternative data layer:
 
 ## API surface
 
-Four endpoints returning JSON. Three are API-key gated; `/v1/changes` is deliberately public so anyone can audit what moved between vintages without holding a key.
+Six endpoints returning JSON. Four are API-key gated. Two are deliberately public: `/v1/changes`, so anyone can audit what moved between vintages without holding a key, and `/v1/environment`, because it serves a browser extension that cannot keep a key secret — which is why it returns measurements only and never a score.
 
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/v1/score` | Score a single postcode or borough |
 | `POST` | `/v1/score/batch` | Bulk lookup, up to 100 queries per call |
 | `GET` | `/v1/regions` | Discovery, list supported cities, boroughs, postcode formats |
+| `POST` | `/v1/chat` | Retrieval-only assistant; answers are discarded if they contain a number the retrieved data does not |
+| `GET` | `/v1/changes` | **Public.** What moved between data vintages, and why |
+| `GET` | `/v1/environment` | **Public.** Aircraft/road Lden, NO2 and PM2.5 for a coordinate, each against its WHO guideline. No weights, no persona, no composite score |
 
 Free tier: 100 requests/month, 5/sec burst, 1/sec sustained — and because a batch request carries up to 100 addresses for one request, that is a ceiling of 10,000 scores/month. Paid tiers introduced when the first paying integrator commits.
 
@@ -164,7 +167,7 @@ Single-region AWS, fully serverless, deployed via SAM:
 ```
 CloudFront ── S3 (frontend, prototype, score-demo, OpenAPI spec)
                 │
-API Gateway ── Lambda × 7 active ── DynamoDB (favourites, signups, DEFRA
+API Gateway ── Lambda × 8 active ── DynamoDB (favourites, signups, DEFRA
                                  │              noise raster, ONS NSPL postcodes)
                                  ── External APIs (postcodes.io fallback, MHCLG EPC,
                                                    Land Registry, TfL, NHS)
@@ -172,7 +175,8 @@ API Gateway ── Lambda × 7 active ── DynamoDB (favourites, signups, DEFR
 
 | Lambda | Path | Purpose |
 |---|---|---|
-| `score` | `/v1/score`, `/v1/score/batch`, `/v1/regions` | B2B scoring, API-key gated |
+| `score` | `/v1/score`, `/v1/score/batch`, `/v1/regions`, `/v1/changes`, `/v1/environment` | B2B scoring, API-key gated except `/v1/changes` and `/v1/environment` |
+| `chat` | `/v1/chat` | Retrieval-only assistant; context comes from invoking `score` directly, never from the model |
 | `signup` | `/v1/signup` | Self-service API-key issuance |
 | `favourites` | `/favourites` | Consumer saved-property storage (`X-Device-Token` auth) |
 | `epc` | `/epc` | EPC certificate proxy (MHCLG `Get energy performance of buildings data`) |
@@ -197,7 +201,7 @@ API Gateway ── Lambda × 7 active ── DynamoDB (favourites, signups, DEFR
 ├── prototype/ # Sky Score Radar, 3D Three.js prototype
 ├── score-demo/ # B2B API browser demo + Swagger UI + OpenAPI spec
 ├── backend/
-│ ├── template.yaml # SAM stack: 7 Lambdas, API Gateway (per-route throttle), 4× DynamoDB (PITR-ready), Usage Plan
+│ ├── template.yaml # SAM stack: 8 Lambdas, API Gateway (per-route throttle), 4× DynamoDB (PITR-ready), Usage Plan
 │ ├── lambdas/ # One folder per Lambda
 │ └── tests/ # Unit tests: score engine + handler suite
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source
