@@ -6,6 +6,67 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-07 - log retention actually bound, the company named as controller, and a gate that could be starved
+
+**DEPLOYED**: `privacy.html`, `terms.html`, `index.html`,
+`score-demo/index.html`. **AWS changed**: `FlightMapDeployPolicy` widened, 7 log
+groups deleted, 30-day retention set on 7, new `SkyScoreCiTier` plan and key.
+
+- **Log retention is 30 days, verified from the API rather than the console.**
+  The 26 July attempt was reported done and found unchanged, so verification is
+  a fresh `describe-log-groups` read. One deleted group held **raw email
+  addresses from 26 Jun to 23 Jul**; deletion removes them, where retention
+  would have preserved them for the window.
+  - **The count was 14 groups, not the 13 recorded for weeks.** Restoring `chat`
+    on 6 Aug added an eighth function and orphaned its predecessor, leaving
+    **two `ChatFunction` groups** differing only in CloudFormation suffix. The
+    runbook said to delete "ChatFunction" by name, which would have taken out
+    the live one.
+  - **The retention gate had been exempting that live chat Lambda.** Its orphan
+    list was hand-maintained and named `ChatFunction`, so the fragment matched
+    both groups and the only Lambda receiving free-text user input was
+    downgraded to a warning and never compared against `privacy.html`. The
+    active set now derives from `template.yaml`.
+  - **`privacy.html` stated the retention claim twice.** Correcting §2d left the
+    sub-processor table reading "indefinitely", and the check parsed §2d alone,
+    so it passed a self-contradictory document. A contradiction guard was added
+    and proven red against that exact bug.
+  - **Residual, stated not hidden:** Lambda recreates a deleted group with no
+    retention, so signup returns at *Never Expire* on the next signup. Durable
+    fix written up in `DRAFT_security_retention_passage.md` §5, not applied:
+    CloudFormation *creates* log groups, so declaring one of the seven that
+    exist fails the whole stack update.
+- **CUBITT33 LTD (13651304) is now the named operator and data controller** on
+  `privacy.html`, `terms.html`, `SUBPROCESSORS.md` and `LIA.md`, from the
+  Companies House record. Called a three-line change in three places; it was
+  four. **The footer copyright still names a person deliberately** -
+  controllership follows who decides purposes and means, copyright follows
+  authorship, which does not move until the IP deed signs. **The ICO
+  registration is now due in the company's name.**
+- **A blocking gate was sharing a quota with a public page.**
+  `check_score_sanity.py` hard-coded the demo key embedded in
+  `score-demo/index.html`; that key's 2,000/month allowance ran out and
+  **preflight went red with nothing wrong in the tree**, with 25 days until it
+  reset. Per-day usage showed our own testing spent it, not demo visitors. CI
+  now has its own plan and key via `.env`; a missing key fails loudly rather
+  than falling back.
+- **Every pointer target now meets the WCAG 2.5.8 24px minimum.** Mobile was
+  already clean; this was all desktop. Layer toggles and city buttons were 22px;
+  footer links 12-14px, which needed the hover underline moved off
+  `border-bottom` (it draws at the padding edge, 6px adrift of its text) and
+  compensation in **two** `.site-footer` rules, the base one and a 901-1366px
+  override. Text lands within 1px of its original position.
+- **`score-demo` never styled its email field.** The CSS covered
+  `input[type="text"]` and `select`, so the signup email input rendered as a
+  browser default beside a styled name field, on the page that sells the API.
+- **The extension's close button was 20x20**, the panel's only dismiss control.
+- **`/aws-debug` works for the first time**, and deploys can finally self-verify
+  their own CloudFront invalidation.
+- **Gotcha recorded:** `backend/iam-policy.json` is sanitised - 8 ARNs carry an
+  account-ID placeholder - and pasting it verbatim makes IAM reject the document
+  with **"The policy failed legacy parsing"**, which says nothing about account
+  IDs. The failed save is harmless; AWS validates before storing.
+
 ### 2026-08-06 (evening, cont.) - the raster quarantine is lifted, and /sold-prices had never worked
 
 **DEPLOYED**: `ScoreFunction`, `NhsFunction`, `SoldPricesFunction`, new
