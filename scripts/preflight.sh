@@ -39,6 +39,22 @@ done
 
 cd "$(dirname "$0")/.." || exit 2
 
+# Load .env so checks that need a credential can find one (added 2026-08-07).
+# `score sanity` is the first: it used to hard-code the demo API key, which put
+# a blocking gate on the same public 2,000/month quota as score-demo/index.html,
+# and when that ran out every commit in the repo was blocked by an exhausted
+# counter rather than a defect. It now needs SKY_SCORE_API_KEY from here.
+#
+# `set -a` exports what the file defines; the guard keeps a fresh clone without
+# a .env working for every check that does not need one, rather than failing at
+# startup with a message about a file the developer has not been told to create.
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+
 FAILED=""
 PASSED=""
 ADVISORY=""

@@ -40,9 +40,20 @@ import urllib.parse
 import urllib.request
 
 DEFAULT_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'
-# Published demo key — already public in score-demo/index.html, so it is not a
-# secret and hard-coding it here leaks nothing.
-DEFAULT_KEY = 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe'
+
+# No default key any more (changed 2026-08-07). This used to fall back to the
+# demo key embedded in score-demo/index.html, on the reasoning that a public key
+# is not a secret and hard-coding it leaks nothing. That reasoning was sound
+# about secrecy and wrong about QUOTA: it put a blocking preflight stage on the
+# same 2,000/month allowance as a page anyone can load, and on 2026-08-07 the
+# allowance ran out and every commit in the repo was blocked by an exhausted
+# counter rather than by a defect.
+#
+# CI now uses its own key on SkyScoreCiTier, supplied via SKY_SCORE_API_KEY out
+# of the gitignored .env, which scripts/preflight.sh sources. Missing is a hard
+# failure rather than a silent fallback, because falling back to a shared key is
+# exactly the failure this replaced.
+DEFAULT_KEY = None
 
 # A spread chosen to span the noise gradient, not a convenience sample. Includes
 # the airport itself, the approach corridor, inner and outer London.
@@ -101,6 +112,18 @@ def main():
     ap.add_argument('--api-key', default=os.environ.get('SKY_SCORE_API_KEY', DEFAULT_KEY))
     args = ap.parse_args()
 
+    if not args.api_key:
+        print('SCORE SANITY, live API')
+        print('=' * 22)
+        print('  FAIL: no API key.')
+        print('  Set SKY_SCORE_API_KEY in .env (gitignored), or pass --api-key.')
+        print('  preflight sources .env; a bare `python scripts/check_score_sanity.py`')
+        print('  does not, so export it or run it through preflight.')
+        print('  The key belongs to the SkyScoreCiTier usage plan. Do NOT reuse the')
+        print('  demo key from score-demo/index.html: that is what coupled this')
+        print('  blocking check to a public quota and blocked commits on 2026-08-07.')
+        return 1
+
     print('SCORE SANITY, live API')
     print('=' * 22)
     print(f'  base: {args.base}\n')
@@ -108,7 +131,7 @@ def main():
     rows, transport_failures = [], []
     for pc, label in PROBES:
         body, err = fetch(args.base, args.api_key, pc)
-        time.sleep(0.4)  # stay under the demo key's rate limit
+        time.sleep(0.4)  # stay under the CI key's 5 rps rate limit
         if err:
             transport_failures.append(f'{pc} ({label}): {err}')
             continue
