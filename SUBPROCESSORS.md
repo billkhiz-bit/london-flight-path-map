@@ -4,15 +4,17 @@ This page lists every third party that processes customer data on Sky Score's
 behalf. Provided to satisfy enterprise procurement / DPA requirements
 ("section 28(2) GDPR sub-processor disclosure").
 
-**Last updated:** 2026-05-09
+**Last updated:** 2026-08-07
 **Maintained by:** support@skyscore.co.uk (sole controller)
 
-<!-- ENTITY LINE. Sky Score is currently operated by Bilal Khizar as a sole
-     trader. On incorporation, add here: "Sky Score is a trading name of
-     [COMPANY] Ltd, registered in England and Wales, company number [NUMBER]."
-     The matching lines are privacy.html §1 and terms.html §1 - those three are
-     the only places the operating entity is named, so incorporation is a
-     three-line change across the whole repo. -->
+Sky Score is a trading name of **CUBITT33 LTD**, registered in England and Wales,
+company number **13651304**, registered office 50 Pembroke Road, London W8 6NX.
+
+<!-- ENTITY LINE, switched to the company 2026-08-07. The matching lines are
+     privacy.html §1, terms.html §1 and LIA.md. The old comment called this a
+     three-line change; it was four, and the footer copyright on both HTML
+     pages names a person too. That one stays as it is: copyright follows
+     authorship and does not move until the IP assignment deed is signed. -->
 
 
 ---

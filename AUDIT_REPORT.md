@@ -860,7 +860,7 @@ These didn't block today's session and are tracked here so they aren't lost. Eac
 | I-D | No per-route throttle on `/v1/score` or `/v1/score/batch` (per-key usage plan caps cost; per-route would prevent one tenant starving others) | Medium | ~5 min in `template.yaml` |
 | I-E | Favourites `X-Device-Token` is capability-only (not identity-based) — known limitation; tokens never expire / no rotation | Low until PII expands | Bigger redesign |
 | I-H | No CAPTCHA on `/v1/signup` (1 RPS / 5 burst gates abuse but ~60 keys/min still possible) | Low-medium | ~30 min (hCaptcha free tier) |
-| M-B | No `Strict-Transport-Security` header (needs CloudFront response-headers policy, can't be set via `<meta>`) | Low | ~15 min in CloudFront console |
+| ~~M-B~~ | ~~No `Strict-Transport-Security` header~~ **CLOSED — verified live 2026-08-07: `Strict-Transport-Security: max-age=31536000` is served on `skyscore.co.uk`.** Closure was already recorded further up this file; this row was left open and was still being read as pending console work. Only the 2-year preload-eligible value remains, and that is optional | — | none |
 | M-C | No `Permissions-Policy` header (same constraint as HSTS) | Low | ~10 min |
 | M-D | CSP `connect-src` includes whole `raw.githubusercontent.com` host — pin specific commit + SRI for the geojson load | Low | ~5 min |
 | M-E | Status-page CSP omits Goatcounter (intentional? or oversight?) | Trivial | ~3 min |

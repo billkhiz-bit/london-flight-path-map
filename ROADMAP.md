@@ -136,9 +136,22 @@ in stores"**.
 Using the existing company beats a NewCo because **the carve-out cost is
 proportional to what has accumulated, and that is currently nothing** — one
 pilot contract later is a one-page novation; fifteen contracts plus revenue is a
-project. Sky Score becomes a **trading name** of Cubitt33 Ltd; the three entity
-lines in `privacy.html` §1, `terms.html` §1 and `SUBPROCESSORS.md` §1 are already
-marked up with the replacement text commented out beneath them.
+project. Sky Score becomes a **trading name** of Cubitt33 Ltd.
+
+**SWITCHED IN SOURCE 2026-08-07, not yet deployed.** `privacy.html` §1,
+`terms.html` §1, `SUBPROCESSORS.md` §1 and `LIA.md` now name **CUBITT33 LTD,
+company 13651304, registered office 50 Pembroke Road, London W8 6NX**, confirmed
+against the Companies House public record. It was called a three-line change; it
+was four, because `LIA.md` names the controller in its header. The **footer
+copyright on both HTML pages still reads "Bilal Khizar" deliberately** —
+controllership follows who decides the purposes and means of the processing and
+has moved to the company, while copyright follows authorship and does not move
+until the IP assignment deed below is signed. Two tests, two answers, both true
+at once.
+
+**The ICO registration must now be in the company's name**, and should follow
+promptly rather than sitting behind the deed: the pages say the company is the
+controller, so the company is the entity that owes a registration.
 
 | Task | Status |
 |---|---|

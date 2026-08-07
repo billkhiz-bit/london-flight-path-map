@@ -1,13 +1,19 @@
 # Legitimate Interests Assessment
 
-**Controller:** Bilal Khizar, trading as Sky Score (sole trader, United Kingdom)
+**Controller:** CUBITT33 LTD (company number 13651304), trading as Sky Score, registered office 50 Pembroke Road, London W8 6NX
 **Assessment date:** 2026-08-05
+**Controller changed:** 2026-08-07, from Bilal Khizar as a sole trader
 **Next review:** 2027-08-05, or on any change to the signup flow, whichever is sooner
 
 > **Status note.** This assessment records the reasoning behind relying on UK
 > GDPR Article 6(1)(f) for the processing described below. It is the controller's
-> own assessment, not legal advice. It should be revisited on incorporation,
-> because the controller will change from a sole trader to a company.
+> own assessment, not legal advice.
+>
+> The controller changed on 2026-08-07 from a sole trader to CUBITT33 LTD. The
+> balancing test below is unaffected: it turns on what the processing does to
+> the data subject, not on who performs it. What does change is that the ICO
+> registration must be in the company's name, and that the company is the party
+> a data subject would bring a complaint against.
 
 ---
 
