@@ -18,22 +18,54 @@ Nothing is fetched until the badge is clicked.
 
 ## What it shows
 
-Both endpoints already exist in production and take `lat`/`lon`, so this build
-needs no backend change and no API key.
+Every endpoint already exists in production, and all of them are either
+coordinate-keyed or reachable from the postcode `/v1/environment` reverse-
+geocodes, so this build needs no backend change and no API key.
 
-**Transport** — `GET /transport?lat=&lon=` (TfL, 1,500 m radius)
-- Up to 5 nearest stations, name and distance
-- Lines serving each station
-- Live line status, shown **only when something is disrupted** (a wall of
-  "Good Service" trains the eye to skip the block)
-- An explicit outage state, because `backend/lambdas/transport/app.py:41`
-  deliberately distinguishes "TfL unreachable" from "no stations nearby"
+**Environment** — `GET /v1/environment?lat=&lon=`, detailed in the next section.
+
+**EPC register** — `GET /epc?postcode=` (MHCLG)
+- Recent certificates for the postcode, band and lodgement date
+- The band distribution for the postcode, so a single certificate has context
+
+**Sold nearby** — `GET /sold-prices?postcode=` (HM Land Registry Price Paid)
+- Recent transactions with date, price and property type
 
 **Healthcare** — `GET /nhs?lat=&lon=` (OpenStreetMap via Overpass)
 - Nearest 3 GP surgeries, pharmacies and hospitals, with distances
 - Falls back to nhs.uk search links when Overpass is down
 
+~~**Transport**~~ — **dropped 2026-08-06.** Rightmove already prints the nearest
+stations with distances on every listing, so the section duplicated the page it
+was sitting on. `GET /transport?lat=&lon=` still exists and is still deployed;
+nothing about it was wrong, it just had nothing to add here.
+
 **From the page, no network call** — map-pin coordinates, address, outcode.
+
+## How it reads (reworked 2026-08-07)
+
+The panel was mostly prose: a real SW5 listing carried four lines of caveat
+supporting two numbers, and outside London it showed one measurement under two
+notices. Caveats that long stop being read.
+
+- Each measurement gets a **scale bar** showing where it sits against its WHO
+  guideline. The domain is 0 to twice the guideline, with the guideline at the
+  midpoint — deliberately *not* the observed range across London, which would
+  be a number invented at the point of drawing it. So the bar answers "how does
+  this compare to the guideline", not "how does this compare to London".
+- Over or under is legible from **which side of the tick the dot sits**, so it
+  does not depend on colour (WCAG 1.4.1). The `aria-label` says it in words.
+- The 0–10 aircraft estimate gets a bar with **no tick and a neutral fill**.
+  Colouring it green would assert it is good against a threshold that does not
+  exist.
+- The DEFRA vintage is a **`2021` tag on the two rows it applies to**, not a
+  paragraph beneath rows it has nothing to do with.
+- Everything explanatory collapses into one **"About these readings"**
+  disclosure. What stays visible is the fact — "(estimated)" in a label, the
+  vintage tag, the value, the guideline. What collapses is the justification.
+- A source with nothing to say is **one quiet line**, not a heading and a
+  sentence. Four dead sources used to cost eight lines and push the data that
+  did arrive below the fold.
 
 ## Environment (added 2026-08-06)
 
@@ -47,7 +79,12 @@ geocode server-side, which is the one thing the extension cannot do for itself.
   postcodes; the contours are localised lobes around airports)
 - **Road noise** - DEFRA Round 4 road Lden (92.2% coverage; roads are everywhere)
 - **NO2 and PM2.5** - DEFRA PCM background maps, annual mean, each shown against
-  its WHO guideline, because a bare concentration means nothing without one
+  its WHO guideline, because a bare concentration means nothing without one.
+  **Being loaded as of 2026-08-07 22:09 and not yet complete**: the loader had
+  never been run, so these two rows have never rendered for anyone. The load
+  works in postcode-string order, so coverage arrives alphabetically - East
+  London before South West - and a listing showing no air quality mid-load is
+  the frontier, not a fault
 
 Every row appears only where a real measurement exists. Absent means the key is
 missing, never null and never a default - and what was NOT measured is stated in

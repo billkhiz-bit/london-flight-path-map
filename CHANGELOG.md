@@ -67,6 +67,43 @@ groups deleted, 30-day retention set on 7, new `SkyScoreCiTier` plan and key.
   with **"The policy failed legacy parsing"**, which says nothing about account
   IDs. The failed save is harmless; AWS validates before storing.
 
+**Extension (same day, later):**
+
+- **The panel was mostly prose, and now is not.** A real SW5 listing showed
+  three measurements carrying a two-sentence coverage notice, a two-sentence
+  DEFRA vintage paragraph and a guideline sub-line each; outside London, one
+  measurement under two notices. Visible text on the same listing: **1,660 ->
+  1,317 characters**, with the environment section itself losing about
+  two-thirds while keeping every fact.
+  - Explanatory prose collapses into one **"About these readings"** disclosure.
+    What stays visible is the fact - "(estimated)" in the label, the value, the
+    guideline - and what collapses is the justification.
+  - The DEFRA vintage became a **`2021` tag on the two rows it applies to**,
+    replacing a paragraph that visually qualified the air-quality rows too.
+  - Unavailable sources went from a heading plus a sentence each to **one quiet
+    line**. Four dead sources had cost eight lines.
+- **Each reading now carries a scale bar against its WHO guideline.** The domain
+  is 0 to twice the guideline, with the guideline at the midpoint. The obvious
+  alternative - the observed range across London - is a number that would be
+  **invented at the point of drawing it**, which METHODOLOGY 4.6 forbids and
+  which this project has twice had to undo. So the bar answers "how does this
+  compare to the guideline", not "how does this compare to London". Over/under
+  is legible from which side of the tick the dot sits, so it does not rest on
+  colour; the 0-10 aircraft estimate gets a neutral fill and no tick, because
+  colouring it green would assert it is good against a threshold that does not
+  exist.
+- **A full interactive map was considered and rejected.** MV3 forbids remote
+  code, so D3 plus the borough GeoJSON plus the aircraft dataset - about 800 KB
+  - would ship inside the extension and load on every listing, to duplicate the
+  map Rightmove already shows on the same page. The bar does the job the map was
+  wanted for, in about 2 KB, and removes text rather than adding it.
+- Two defects the screenshots caught that reading the code did not: the quiet
+  readout rendered **"5 /10 quiet"**, and Rightmove repeats the town so the
+  address read **"Collingham Road, London, London, SW5"**.
+- The vintage tag needed a real space text node rather than CSS margin -
+  `textContent` was "Aircraft noise2021", which is what a screen reader
+  announces.
+
 ### 2026-08-06 (evening, cont.) - the raster quarantine is lifted, and /sold-prices had never worked
 
 **DEPLOYED**: `ScoreFunction`, `NhsFunction`, `SoldPricesFunction`, new
@@ -98,6 +135,19 @@ groups deleted, 30-day retention set on 7, new `SkyScoreCiTier` plan and key.
   step from METHODOLOGY §7; air quality from DEFRA PCM background maps. Both
   **reported, not scored** - weighting them would change every score ever
   returned. Coverage: aircraft 9.0%, road 99.2%, air 100%.
+  - **CORRECTION (2026-08-07): the air figure described the SOURCE GRID, not
+    what was served.** `scripts/load_defra_air_quality.py` was written and the
+    two DEFRA CSVs downloaded, but **the loader was never run**, so
+    `no2Ugm3`/`pm25Ugm3` were absent from every row of
+    `london-flight-map-noise-raster` and **`/v1/environment` had never returned
+    an air-quality figure to anyone**. The Lambda code was correct throughout,
+    which is why nothing failed: the endpoint omits a key when a measurement is
+    missing - a deliberate design so an absent reading cannot be misread as a
+    good one - and that makes "never loaded" indistinguishable from "not
+    measured here", at HTTP 200. Same shape as the `/sold-prices` defect two
+    entries down. Found on 2026-08-07 only because the extension gained a bar
+    chart for those two rows and the rows never appeared. Load started
+    2026-08-07 22:09.
 - **`/sold-prices` HAD NEVER RETURNED A TRANSACTION.** `.replace(' ', '+')` then
   `quote()` sent Land Registry the literal string `WA2+8SN`. Every postcode
   returned `[]` with HTTP 200 - indistinguishable from a postcode with no sales.
