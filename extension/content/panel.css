@@ -88,8 +88,17 @@
 }
 
 #cubitt33-panel .c33-close {
+  /* Was 20x20, under the WCAG 2.5.8 minimum of 24x24, on the panel's only
+   * dismiss control — the one thing a user reaches for when the widget is in
+   * the way. The glyph stays 20px; the box around it grows, so this reads
+   * identically and is easier to hit. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
   margin: 0;
-  padding: 0 4px;
+  padding: 0;
   border: 0;
   font-size: 20px;
   line-height: 1;

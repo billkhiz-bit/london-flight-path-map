@@ -378,13 +378,28 @@
      reachable; previously hidden < 768 px which broke B2B discovery. */
       .site-footer {
         position: absolute;
-        bottom: 8px;
+        /* Was 8px. The links are now 24px tall for WCAG 2.5.8 and this box is
+           bottom-anchored, so half the extra height lands below the text and
+           lifts it ~6px. Taking 6px off the inset puts the text back exactly
+           where the design had it; only the band's invisible top edge moves.
+           The 901-1366px override further down needs the same 6px. */
+        bottom: 2px;
         left: 32px;
         right: 32px;
         z-index: 10;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 14px;
+        /* Centre rather than the default stretch: the links below are 24px tall
+           for WCAG 2.5.8 while the separators are text-height, and stretched
+           items render their text at the top of the box, so without this the
+           dots sit above the words they divide. */
+        align-items: center;
+        /* Row gap is 0 BECAUSE the links are now 24px tall. Targets must not
+           overlap, so the row pitch has to be at least the target height; with
+           the old 8px row gap the footer would have grown 20px instead of 12px
+           for no benefit, since 24px boxes already sit clear of each other.
+           Column gap is unchanged. */
+        gap: 0 14px;
         font-family: var(--font-mono);
         font-size: 8px;
         letter-spacing: 1px;
@@ -396,12 +411,29 @@
         color: var(--mid);
         text-decoration: none;
         pointer-events: auto;
-        border-bottom: 1px solid transparent;
-        padding-bottom: 1px;
+        /* WCAG 2.5.8 (AA) wants 24x24 CSS px of pointer target; these rendered
+           12-14px tall. The target is grown with height rather than by
+           enlarging the 8px type, so the footer reads exactly as designed.
+           The container's `bottom` is reduced by the same 5px the text would
+           otherwise rise, so nothing moves on screen.
+
+           The hover underline had to leave `border-bottom`: a border draws at
+           the edge of the padding box, which is now 6px below the text it is
+           meant to underline. A background gradient can be positioned against
+           the text instead, and animating background-size keeps the
+           no-layout-shift property the transparent border was there to give. */
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        background-image: linear-gradient(currentColor, currentColor);
+        background-repeat: no-repeat;
+        background-size: 0 1px;
+        background-position: left calc(50% + 6px);
+        transition: background-size 0.12s ease;
       }
       .site-footer a:hover {
         color: var(--dark);
-        border-bottom-color: var(--dark);
+        background-size: 100% 1px;
       }
       .site-footer .sep {
         opacity: 0.5;
@@ -592,6 +624,12 @@
         letter-spacing: 1px;
         cursor: pointer;
         padding: 4px 10px;
+        /* WCAG 2.5.8 (AA) asks for 24x24 CSS px of pointer target. These
+           rendered at 22px: a 9px line box plus 8px padding plus 2px border.
+           min-height rather than more padding, because box-sizing is
+           border-box globally, so this is the finished height and the text
+           stays where the design put it. */
+        min-height: 24px;
         background: rgba(250, 250, 249, 0.85);
         backdrop-filter: blur(8px);
         border: 1px solid var(--dark);
@@ -1787,6 +1825,12 @@
         letter-spacing: 1px;
         text-transform: uppercase;
         cursor: pointer;
+        /* Same 22px -> 24px WCAG 2.5.8 correction as .layer-toggle. inline-flex
+           so the extra 2px centres the label instead of hanging below it. */
+        min-height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border: 1px solid var(--dark);
         background: rgba(250, 250, 249, 0.85);
         backdrop-filter: blur(8px);
@@ -2191,7 +2235,9 @@
         /* Footer kept at bottom but with more inset and slightly larger
            type (9px instead of 8px) to clear the layer-toggle band. */
         .site-footer {
-          bottom: 12px;
+          /* Was 12px; 6px less for the same reason as the base rule, so the
+             24px WCAG targets do not lift the text off its design position. */
+          bottom: 6px;
           left: 28px;
           right: 28px;
           font-size: 9px;

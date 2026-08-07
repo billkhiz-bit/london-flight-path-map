@@ -99,7 +99,11 @@
   /* Form */
   form { display: flex; flex-direction: column; gap: 14px; }
   label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
-  input[type="text"], select {
+  /* input[type="email"] was missing here, so #signupEmail on the signup form
+     rendered as an unstyled browser default beside a styled name field, and at
+     21px tall it also missed the WCAG 2.5.8 24px target. Found 2026-08-07 by
+     the tap-target audit, which is not what that audit was looking for. */
+  input[type="text"], input[type="email"], select {
     width: 100%;
     padding: 10px 12px;
     background: #060810;
@@ -109,7 +113,7 @@
     font-family: inherit;
     font-size: 14px;
   }
-  input[type="text"]:focus, select:focus {
+  input[type="text"]:focus, input[type="email"]:focus, select:focus {
     outline: none;
     border-color: var(--amber);
   }
