@@ -145,19 +145,31 @@ anyone who objects rather than treated as a refusal.
 
 ---
 
-## 6. Open issue affecting this assessment
+## 6. Issue affecting this assessment — CLOSED 2026-08-07
 
-**Server log retention is unlimited, and the privacy policy says otherwise.**
+**Server log retention was unlimited. It is now 30 days, verified against the
+AWS API.**
 
-Verified 2026-08-05: all 13 CloudWatch log groups in the account read
-`retentionInDays: None`, meaning never expire, while `privacy.html` §2d states
-logs are "retained for 7 days then automatically deleted".
+The position on 2026-08-05 was that every CloudWatch log group read
+`retentionInDays: None`, meaning never expire, while `privacy.html` §2d claimed
+7 days. Both halves have been resolved: retention is set to **30 days** on all
+seven live groups, `privacy.html` §2d states 30 days, and a blocking preflight
+check asserts the two agree in both directions.
 
-This assessment relies on retention being proportionate to the abuse-investigation
-purpose. **Indefinite retention is not proportionate to that purpose**, so the
-balancing test above is sound only once a defined retention period is actually in
-force. Separately, the signup Lambda logged raw email addresses between
-2026-06-26 and 2026-07-23, and that log group still exists.
+This assessment relies on retention being proportionate to the
+abuse-investigation purpose. Indefinite retention was not proportionate; a
+defined 30-day period is, so **the balancing test above is no longer
+conditional**.
+
+The signup Lambda logged raw email addresses between 2026-06-26 and 2026-07-23.
+**That log group was deleted on 2026-08-07**, which removes the data rather than
+ageing it out.
+
+**Residual, honestly stated:** Lambda recreates a deleted log group with no
+retention policy, so the signup group will reappear at *Never Expire* on the next
+signup until retention is reapplied. The preflight check goes red when that
+happens, so it cannot pass unnoticed, but it is a manual step rather than an
+automatic one.
 
 Remediation runbook: `DRAFT_security_retention_passage.md` §1. Until it is
 applied, treat section 4's conclusion as conditional.

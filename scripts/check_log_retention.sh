@@ -94,6 +94,41 @@ fi
 
 echo "privacy.html §2d claims: ${CLAIM_TEXT}"
 
+# --- 1b. The page must not contradict itself ------------------------------
+#
+# Added 2026-08-07 after §2d was corrected to 30 days and a SECOND retention
+# claim, in the sub-processor table at privacy.html:263, was left reading
+# "currently retained indefinitely". The check passed: it parses §2d and nothing
+# else, so a page that stated both 30 days and indefinitely in two places was
+# green. A document can be internally inconsistent and still satisfy a check
+# that only ever reads one sentence of it.
+CONTRADICTION=0
+
+if [ "$CLAIM" = "days" ]; then
+  if echo "$FLAT" | grep -qi 'retained indefinitely\|retention[^.<]\{0,20\}indefinit'; then
+    echo "FAIL: §2d says ${CLAIM_TEXT}, but privacy.html also says retention is indefinite somewhere." >&2
+    CONTRADICTION=1
+  fi
+  # Every "N-day retention" elsewhere on the page must agree with §2d.
+  for N in $(echo "$FLAT" | grep -oiE '[0-9]+[- ]day retention' | grep -oE '[0-9]+'); do
+    if [ "$N" != "$WANT" ]; then
+      echo "FAIL: §2d says $WANT days, but privacy.html also states a ${N}-day retention." >&2
+      CONTRADICTION=1
+    fi
+  done
+else
+  if echo "$FLAT" | grep -qiE '[0-9]+[- ]day retention|retained for (<strong>)?[0-9]+ days'; then
+    echo "FAIL: §2d says retention is indefinite, but privacy.html also states a specific period." >&2
+    CONTRADICTION=1
+  fi
+fi
+
+if [ "$CONTRADICTION" != "0" ]; then
+  echo "      Fix every mention, not just §2d. The sub-processor table at" >&2
+  echo "      privacy.html:263 is the one that was missed on 2026-08-07." >&2
+  exit 1
+fi
+
 # --- 2. Derive which functions are supposed to exist ----------------------
 #
 # Logical IDs of every AWS::Serverless::Function in the SAM template. A log

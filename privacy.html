@@ -231,9 +231,8 @@
       <p>
         Sky Score's backend runs on AWS Lambda + API Gateway in the <code>eu-west-2</code> region (London). Each Lambda function
         writes an execution log containing request timestamps, paths, response codes and error traces. We do not enable API Gateway
-        access logging, so no separate access log of source IPs and user agents is kept. Execution logs are currently retained
-        <strong>indefinitely</strong>. We are applying a 30-day retention policy across all log groups; until that work completes
-        this page will continue to say so rather than describe an intention as a fact. They are used solely for debugging and to
+        access logging, so no separate access log of source IPs and user agents is kept. Execution logs are retained for
+        <strong>30 days</strong> and then deleted automatically. They are used solely for debugging and to
         investigate suspected abuse, and we do not link them to identities.
       </p>
 
@@ -261,7 +260,7 @@
           <tr>
             <td>Amazon Web Services (AWS)</td>
             <td>Backend compute, API Gateway, DynamoDB</td>
-            <td>Lambda execution logs (currently retained indefinitely, see 2d)</td>
+            <td>Lambda execution logs (30-day retention, see 2d)</td>
             <td>eu-west-2 (London)</td>
           </tr>
           <tr>

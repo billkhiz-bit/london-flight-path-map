@@ -91,6 +91,28 @@ settles it independently of any console caching question.
 `backend/iam-policy.json`, but **that file is not the live policy** — it has to be pasted in. Doing
 it in the same session saves a second recovery-and-sign-in cycle.
 
+> **Do NOT paste `backend/iam-policy.json` verbatim (learned the hard way 2026-08-07).** It is
+> sanitised for the public repo: **8 ARNs carry the literal string
+> `REPLACE_WITH_YOUR_AWS_ACCOUNT_ID`**. An ARN's account field must be 12 digits or empty, so the
+> console rejects the whole document with **"The policy failed legacy parsing"** — an error
+> message that says nothing about account IDs and sends you looking for a JSON syntax error.
+>
+> Substitute the real account ID first, and write the result **outside the repo** so it is never
+> committed:
+>
+> ```bash
+> python -c "import pathlib; p=pathlib.Path('backend/iam-policy.json'); \
+>   open('/tmp/policy.json','w',newline='').write(p.read_text().replace('REPLACE_WITH_YOUR_AWS_ACCOUNT_ID','072674217857'))"
+> ```
+>
+> The failed save is harmless — AWS validates before storing, so the live policy is untouched and
+> deploys keep working. Verify afterwards by probing rather than by reading the console: a
+> `delete-log-group` against a **non-existent** group name returns `AccessDenied` while the grant
+> is missing and `ResourceNotFoundException` once it lands, and it cannot delete anything either way.
+>
+> Note the sanitising is inconsistent: the same account ID appears in cleartext in six other
+> committed files, so the placeholder buys nothing and costs a failed save each time.
+
 **1. Add two actions to the `DynamoDB` statement** (`dynamodb:BatchWriteItem` is the ~25× NSPL
 loader speedup; a vintage roll that still takes ~6 hours is the signal this never landed):
 
