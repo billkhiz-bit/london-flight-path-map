@@ -25,26 +25,35 @@ do any of this — it lacks `logs:PutRetentionPolicy` and `logs:DeleteLogGroup`.
 
 ### Delete these 7 log groups
 
-Six belong to Lambdas that no longer exist; the seventh is the GDPR fix, because applying
-30-day retention to it would *preserve* the raw-email entries from 26 Jun – 23 Jul rather
-than remove them. Deleting the group is what actually clears them.
+**Read the suffixes, not the function names.** As of 2026-08-06 there are two `ChatFunction`
+groups and only one of them is dead — `chat` was restored that evening as a retrieval-only
+function, so `ChatFunction-LuxoNSLxJMva` is **live and must be kept**. Deleting by eye, on the
+name `ChatFunction`, takes out the wrong one.
+
+Five below belong to Lambdas that no longer exist. `ChatFunction-wzeXuMdafiCz` is a stale
+generation of a function that does still exist. The seventh, Signup, is the GDPR fix: applying
+30-day retention to it would *preserve* the raw-email entries from 26 Jun – 23 Jul rather than
+remove them, so deleting the group is what actually clears them.
 
 ```
 /aws/lambda/london-flight-map-AnalyzeDocumentFunction-WGYkSBln0Rii
 /aws/lambda/london-flight-map-AnalyzeImageFunction-BYNUmNi4Lxbq
-/aws/lambda/london-flight-map-ChatFunction-wzeXuMdafiCz
+/aws/lambda/london-flight-map-ChatFunction-wzeXuMdafiCz     <- DEAD, delete
 /aws/lambda/london-flight-map-LiveFlightsFunction-inXEwZXJB5hG
 /aws/lambda/london-flight-map-MultiAgentFunction-0BaKRcMkZzE6
 /aws/lambda/london-flight-map-ReportFunction-bnFAI9UXiDBI
 /aws/lambda/london-flight-map-SignupFunction-vLApmPCZyQTD
 ```
 
+Do **not** delete `/aws/lambda/london-flight-map-ChatFunction-LuxoNSLxJMva`. It is the live one.
+
 The signup group will be recreated automatically, empty, on the next invocation. That is
 expected and is the point — set its retention afterwards.
 
-### Set 30-day retention on these 6
+### Set 30-day retention on these 7
 
-Score, Favourites, Transport, Epc, SoldPrices, Nhs — plus the freshly recreated Signup group.
+Score, Favourites, Transport, Epc, SoldPrices, Nhs and **Chat** (`ChatFunction-LuxoNSLxJMva`,
+new to this list on 2026-08-07) — plus the freshly recreated Signup group, making 8.
 
 **The known silent failure:** *Actions → Edit retention setting* opens a modal whose dropdown
 appears to take effect immediately. It does not. Closing the modal without pressing **Save**
@@ -62,8 +71,15 @@ AWS_PROFILE=flightmap aws logs describe-log-groups \
   --query 'logGroups[].[logGroupName,retentionInDays]' --output table
 ```
 
-Expected after the work: **7 rows, every one showing 30**. Anything reading `None`, or any of
-the 6 orphans still listed, means it did not take.
+Expected after the work: **8 rows, every one showing 30** (7 functions plus the recreated
+Signup group). Anything reading `None`, or any of the 6 deleted groups still listed, means it
+did not take.
+
+Better than reading the table by eye, `sh scripts/preflight.sh` runs
+`scripts/check_log_retention.sh`, which derives the expected set from `backend/template.yaml`
+and names anything that does not belong. It reports the stale generations and orphans as
+warnings today; once §2d carries Version A it asserts the 30 and fails on any group that
+missed it.
 
 Do not trust a dashboard glance for this. On 26 Jul the work was reported done and was verified
 unchanged — the tell was the signup group's `creationTime` still reading 2026-05-06 13:23, which

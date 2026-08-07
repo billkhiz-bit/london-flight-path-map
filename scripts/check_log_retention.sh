@@ -22,6 +22,19 @@
 # red on "page promises indefinite, AWS says 30" — a direction the old script
 # could not see at all. The invariant is agreement, not a particular number.
 #
+# WHAT CHANGED AGAIN (2026-08-07). The orphan list was hand-maintained, and it
+# named `ChatFunction`. Restoring chat on 2026-08-06 made that entry false:
+# there are now TWO chat log groups, the dead Bedrock one and the live
+# retrieval-only one, and the fragment match classified BOTH as orphans. The
+# live Lambda — the only one that receives free-text user input — was therefore
+# downgraded to a WARN and never asserted against the page at all. Benign under
+# the current "indefinite" claim, and a silent hole the moment Version A lands.
+#
+# The list is now DERIVED from backend/template.yaml, which is the thing that
+# actually decides whether a function exists. A hand-copied list of a fact that
+# lives somewhere else goes stale on the first change to the real source, and
+# does so silently, because nothing fails when a list is merely out of date.
+#
 # `flightmap-dev` CAN call logs:DescribeLogGroups — that grant exists and is
 # what makes this checkable without admin credentials. It CANNOT call
 # logs:PutRetentionPolicy or logs:DeleteLogGroup, so changing the
@@ -35,17 +48,12 @@ REGION="eu-west-2"
 PREFIX="/aws/lambda/london-flight-map"
 PROFILE="${AWS_PROFILE_NAME:-flightmap}"
 PRIVACY="$(dirname "$0")/../privacy.html"
+TEMPLATE="$(dirname "$0")/../backend/template.yaml"
 
 # Git Bash rewrites a leading-slash argument into a Windows path unless this is
 # set, which turns the prefix into something that matches nothing and would make
 # this check pass vacuously — the exact failure mode it exists to prevent.
 export MSYS_NO_PATHCONV=1
-
-# Lambdas removed from template.yaml. Deleting a function does NOT delete its log
-# group, so these linger with whatever they last held. Listed by function-name
-# fragment rather than full ARN because CloudFormation assigns a fresh random
-# suffix on every create.
-ORPHANS="AnalyzeDocumentFunction AnalyzeImageFunction ChatFunction LiveFlightsFunction MultiAgentFunction ReportFunction"
 
 # --- 1. Read the claim out of privacy.html -------------------------------
 #
@@ -86,12 +94,48 @@ fi
 
 echo "privacy.html §2d claims: ${CLAIM_TEXT}"
 
-# --- 2. Read what AWS actually does --------------------------------------
+# --- 2. Derive which functions are supposed to exist ----------------------
+#
+# Logical IDs of every AWS::Serverless::Function in the SAM template. A log
+# group is named /aws/lambda/<stack>-<LogicalId>-<random suffix>, so the logical
+# ID is recoverable from the group name and is stable across redeploys, while
+# the suffix is not.
+#
+# Matching only the FIRST `Type:` line after a logical ID is deliberate: a
+# looser pattern would also match a `Type:` nested inside some other resource's
+# properties and silently widen the active set.
+if [ ! -r "$TEMPLATE" ]; then
+  echo "FAIL: cannot read $TEMPLATE, so 'which functions are active' is UNKNOWN." >&2
+  exit 1
+fi
+
+ACTIVE_IDS=$(awk '
+  /^  [A-Za-z0-9]+:[[:space:]]*$/ { name = $1; sub(/:$/, "", name); next }
+  /^    Type:[[:space:]]/ {
+    if (name != "" && $2 == "AWS::Serverless::Function") print name
+    name = ""
+  }
+' "$TEMPLATE")
+
+# Collapse to a space-separated list for `case` membership tests.
+ACTIVE_LIST=$(echo $ACTIVE_IDS)
+
+if [ -z "$ACTIVE_LIST" ]; then
+  echo "FAIL: parsed zero functions out of $TEMPLATE." >&2
+  echo "      Every group would then look like an orphan and be waved through" >&2
+  echo "      as a WARN, so this check would pass while asserting nothing." >&2
+  echo "      If the template's indentation changed, fix the awk above." >&2
+  exit 1
+fi
+
+echo "template.yaml declares: $(echo "$ACTIVE_IDS" | wc -l | tr -d ' ') functions"
+
+# --- 3. Read what AWS actually does --------------------------------------
 
 RAW=$(AWS_PROFILE="$PROFILE" aws logs describe-log-groups \
         --log-group-name-prefix "$PREFIX" \
         --region "$REGION" \
-        --query 'logGroups[].[logGroupName,retentionInDays]' \
+        --query 'logGroups[].[logGroupName,retentionInDays,creationTime,storedBytes]' \
         --output text 2>&1)
 AWS_STATUS=$?
 
@@ -111,59 +155,111 @@ if [ -z "$RAW" ]; then
   exit 1
 fi
 
-# --- 3. Compare -----------------------------------------------------------
-#
-# The loop reads from a redirect, NOT a pipe. A piped `while` runs in a subshell
-# whose variable assignments are discarded, which the previous version worked
-# around by writing the verdict to a file inside the loop — a workaround that
-# silently skipped its own write on any iteration that hit `continue`. Reading
-# from a file keeps the loop in this shell and lets FAILED just be a variable.
+# --- 4. Sort the groups into orphans and live generations -----------------
 #
 # `tr -d '\r'` is load-bearing on Windows. The AWS CLI here emits CRLF, so the
 # retention field arrives as "None\r" and never string-equals "None" — every
 # group compared unequal against a value it visibly matched. This one failed
 # safe (a false RED), but the identical bug on the name-matching side would
 # have silently skipped the orphan checks instead, which fails green.
+#
+# Both loops read from a redirect, NOT a pipe. A piped `while` runs in a
+# subshell whose variable assignments are discarded, which an earlier version
+# worked around by writing the verdict to a file inside the loop — a workaround
+# that silently skipped its own write on any iteration that hit `continue`.
 TMP="${TMPDIR:-/tmp}/.skyscore_retention_$$"
+ROWS="${TMPDIR:-/tmp}/.skyscore_retention_rows_$$"
 printf '%s\n' "$RAW" | tr -d '\r' > "$TMP"
+: > "$ROWS"
 
 FAILED=0
 ORPHANS_FOUND=0
-ACTIVE=0
+STALE_FOUND=0
+SIGNUP_BYTES=""
 
-while IFS="$(printf '\t')" read -r NAME DAYS; do
+while IFS="$(printf '\t')" read -r NAME DAYS CREATED BYTES; do
   [ -z "$NAME" ] && continue
 
-  IS_ORPHAN=0
-  for ORPHAN in $ORPHANS; do
-    case "$NAME" in
-      *"$ORPHAN"*) IS_ORPHAN=1 ;;
-    esac
-  done
+  # /aws/lambda/london-flight-map-ScoreFunction-AQH1Sxwg3LaF -> ScoreFunction
+  LOGICAL=$(printf '%s' "$NAME" | sed "s|^${PREFIX}-||" | cut -d'-' -f1)
 
-  if [ "$IS_ORPHAN" -eq 1 ]; then
-    # WARN, not FAIL. Under an "indefinite" claim these groups do not
-    # contradict the page — they are retained indefinitely, exactly as stated.
-    # They are still wrong to exist, but deleting them needs logs:DeleteLogGroup
-    # which flightmap-dev does not have, so blocking here would gate every
-    # commit in the repo on a console action. Tracked in
-    # DRAFT_security_retention_passage.md §1 instead.
-    echo "WARN orphan group still present: $NAME (retention=$DAYS)"
-    ORPHANS_FOUND=$((ORPHANS_FOUND + 1))
+  case " $ACTIVE_LIST " in
+    *" $LOGICAL "*)
+      # creationTime is epoch millis; kept so the current generation of a
+      # redeployed function can be told from its predecessors.
+      printf '%s %s %s %s\n' "$LOGICAL" "$CREATED" "$NAME" "$DAYS" >> "$ROWS"
+      [ "$LOGICAL" = "SignupFunction" ] && SIGNUP_BYTES="$BYTES"
+      ;;
+    *)
+      # WARN, not FAIL. Under an "indefinite" claim these groups do not
+      # contradict the page — they are retained indefinitely, exactly as stated.
+      # They are still wrong to exist, but deleting them needs logs:DeleteLogGroup
+      # which flightmap-dev does not have, so blocking here would gate every
+      # commit in the repo on a console action. Tracked in
+      # DRAFT_security_retention_passage.md §1 instead.
+      echo "WARN orphan: $NAME (retention=$DAYS) — no $LOGICAL in template.yaml"
+      ORPHANS_FOUND=$((ORPHANS_FOUND + 1))
+      ;;
+  esac
+done < "$TMP"
+
+# --- 5. Compare each live function against the page -----------------------
+#
+# POLICY DECISION, currently a no-op — see the note in the commit that added it.
+#
+# A function declared in template.yaml with NO log group at all has never been
+# invoked in this account. That is either completely fine (it was deployed
+# minutes ago and nothing has called it yet) or a real finding (an endpoint
+# nobody has ever reached, which is how /sold-prices stayed broken for its
+# entire existence while returning HTTP 200).
+#
+# Today this ignores the case, which is what the previous version did by
+# accident rather than by choice. The alternatives are to WARN — surfaces the
+# dead endpoint, stays green on a fresh deploy — or to FAIL, which is honest
+# about an unverifiable claim but reds the gate on every new function until
+# something calls it.
+check_missing_group() {
+  : "${1:?logical id}"
+}
+
+ACTIVE=0
+
+for ID in $ACTIVE_LIST; do
+  MATCHES=$(awk -v id="$ID" '$1 == id' "$ROWS" | sort -k2 -nr)
+
+  if [ -z "$MATCHES" ]; then
+    # A declared function with no log group at all. See the policy note below.
+    check_missing_group "$ID"
     continue
   fi
 
+  # Newest creationTime is the current generation. A redeployed function gets a
+  # fresh group; an older group for the same logical ID can only be a previous
+  # generation, so this ordering does not depend on how much traffic either saw.
+  CURRENT=$(printf '%s\n' "$MATCHES" | head -1)
+  CUR_NAME=$(printf '%s' "$CURRENT" | cut -d' ' -f3)
+  CUR_DAYS=$(printf '%s' "$CURRENT" | cut -d' ' -f4)
+
   ACTIVE=$((ACTIVE + 1))
-  if [ "$DAYS" != "$WANT" ]; then
-    echo "FAIL $NAME retention=$DAYS, but privacy.html says $CLAIM_TEXT (expected $WANT)"
+  if [ "$CUR_DAYS" != "$WANT" ]; then
+    echo "FAIL $CUR_NAME retention=$CUR_DAYS, but privacy.html says $CLAIM_TEXT (expected $WANT)"
     FAILED=1
   fi
-done < "$TMP"
 
-rm -f "$TMP"
+  # Older generations of a live function: same console fix as an orphan, same
+  # reason for warning rather than failing.
+  printf '%s\n' "$MATCHES" | tail -n +2 | while read -r LINE; do
+    [ -z "$LINE" ] && continue
+    echo "WARN stale generation of $ID: $(printf '%s' "$LINE" | cut -d' ' -f3)"
+  done
+  STALE_HERE=$(printf '%s\n' "$MATCHES" | tail -n +2 | grep -c . || true)
+  STALE_FOUND=$((STALE_FOUND + STALE_HERE))
+done
+
+rm -f "$TMP" "$ROWS"
 
 if [ "$ACTIVE" -eq 0 ]; then
-  echo "FAIL: no active (non-orphan) log groups found." >&2
+  echo "FAIL: no live log groups matched any function in template.yaml." >&2
   echo "      Every assertion above was vacuous, so this is a failure." >&2
   exit 1
 fi
@@ -176,17 +272,33 @@ if [ "$FAILED" != "0" ]; then
   exit 1
 fi
 
-echo "$ACTIVE active log groups match privacy.html (${CLAIM_TEXT})."
+echo "$ACTIVE live log groups match privacy.html (${CLAIM_TEXT})."
+
+if [ "$STALE_FOUND" -gt 0 ]; then
+  echo ""
+  echo "WARNING: $STALE_FOUND stale generation(s) of a live function remain."
+  echo "  These belong to a previous deployment of a function that still"
+  echo "  exists, so they are invisible to any check keyed on function names."
+fi
 
 if [ "$ORPHANS_FOUND" -gt 0 ]; then
   echo ""
   echo "WARNING: $ORPHANS_FOUND orphaned log group(s) from removed Lambdas remain."
-  echo "  The Signup group among them holds raw email addresses from"
-  echo "  26 Jun - 23 Jul 2026, in a location privacy.html does not disclose"
-  echo "  (2b names DynamoDB and API key metadata, not CloudWatch)."
-  echo "  Setting retention on it would PRESERVE those entries for the window"
-  echo "  rather than remove them; deleting the group is what clears them."
   echo "  Console steps: DRAFT_security_retention_passage.md section 1."
+fi
+
+# The signup group is NOT an orphan — signup is a live function — so this
+# warning is emitted on its own terms rather than folded into the count above,
+# which is where the previous version misfiled it. The byte figure is read from
+# AWS rather than quoted from a document, so it cannot drift.
+if [ -n "$SIGNUP_BYTES" ] && [ "$SIGNUP_BYTES" != "0" ] && [ "$SIGNUP_BYTES" != "None" ]; then
+  echo ""
+  echo "WARNING: the Signup log group holds $SIGNUP_BYTES bytes."
+  echo "  It contains raw email addresses from 26 Jun - 23 Jul 2026, in a"
+  echo "  location privacy.html does not disclose (2b names DynamoDB and API"
+  echo "  key metadata, not CloudWatch). Setting retention on it PRESERVES"
+  echo "  those entries for the window rather than removing them; deleting the"
+  echo "  group is what clears them. It is recreated empty on next invocation."
 fi
 
 exit 0
