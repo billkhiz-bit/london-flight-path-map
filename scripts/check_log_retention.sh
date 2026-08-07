@@ -240,21 +240,28 @@ done < "$TMP"
 
 # --- 5. Compare each live function against the page -----------------------
 #
-# POLICY DECISION, currently a no-op — see the note in the commit that added it.
+# POLICY: WARN. Settled 2026-08-07, having been a deliberate no-op for a day.
 #
-# A function declared in template.yaml with NO log group at all has never been
-# invoked in this account. That is either completely fine (it was deployed
-# minutes ago and nothing has called it yet) or a real finding (an endpoint
-# nobody has ever reached, which is how /sold-prices stayed broken for its
-# entire existence while returning HTTP 200).
+# A function declared in template.yaml with NO log group has never been invoked
+# in this account. That is either fine (deployed minutes ago, nothing has called
+# it) or a real finding (an endpoint nobody has ever reached, which is how
+# /sold-prices returned HTTP 200 and zero transactions for its entire
+# existence).
 #
-# Today this ignores the case, which is what the previous version did by
-# accident rather than by choice. The alternatives are to WARN — surfaces the
-# dead endpoint, stays green on a fresh deploy — or to FAIL, which is honest
-# about an unverifiable claim but reds the gate on every new function until
-# something calls it.
+# FAIL was rejected: it would red the gate on every newly deployed function
+# until something happened to call it, which is a gate going red for a reason
+# that is not a defect — precisely the failure mode removed from
+# check_score_sanity.py on the same day. Ignoring was rejected because
+# "never invoked in production" is exactly the shape of the /sold-prices bug.
+#
+# WARN keeps the signal and keeps the gate honest. It matches how orphaned
+# groups are treated a few lines up, and for the same reason: worth saying,
+# not worth blocking a commit over.
+MISSING_GROUPS=0
 check_missing_group() {
-  : "${1:?logical id}"
+  ID="${1:?logical id}"
+  echo "WARN $ID is declared in template.yaml but has no log group: never invoked"
+  MISSING_GROUPS=$((MISSING_GROUPS + 1))
 }
 
 ACTIVE=0
@@ -320,6 +327,16 @@ if [ "$ORPHANS_FOUND" -gt 0 ]; then
   echo ""
   echo "WARNING: $ORPHANS_FOUND orphaned log group(s) from removed Lambdas remain."
   echo "  Console steps: DRAFT_security_retention_passage.md section 1."
+fi
+
+if [ "$MISSING_GROUPS" -gt 0 ]; then
+  echo ""
+  echo "WARNING: $MISSING_GROUPS declared function(s) have never been invoked."
+  echo "  Expected right after a deploy, or after a group was deleted, in which"
+  echo "  case the group returns on the next invocation WITH NO RETENTION and"
+  echo "  this check goes red. Otherwise it means an endpoint nobody has ever"
+  echo "  reached - the shape of the /sold-prices defect, which answered 200"
+  echo "  with zero transactions for its whole existence."
 fi
 
 # The signup group is NOT an orphan — signup is a live function — so this

@@ -291,3 +291,44 @@ git push origin master
 
 `npm run trigger:ios` *is* `git push origin master`, so the push also kicks off a Codemagic iOS
 build. That is fine, but know it is happening rather than discovering it from an email.
+
+---
+
+## 5. The durable fix, NOT yet done: declare retention in `template.yaml`
+
+§1 is complete, but it was done **by hand**, and hand-applied retention does not survive the
+thing most likely to undo it. **Lambda recreates a deleted log group on the next invocation with
+no retention policy at all.** `SignupFunction`'s group was deleted on 2026-08-07, so the next
+person who signs up recreates it at *Never Expire*, `privacy.html` immediately overstates the
+position again, and `scripts/check_log_retention.sh` goes red — blocking commits for a reason
+that is a customer action rather than a defect. That is the same shape as the API-quota failure
+the same day, and it is worth removing rather than living with.
+
+**The fix** is an explicit `AWS::Logs::LogGroup` per function:
+
+```yaml
+ScoreFunctionLogGroup:
+  Type: AWS::Logs::LogGroup
+  Properties:
+    LogGroupName: !Sub "/aws/lambda/${ScoreFunction}"
+    RetentionInDays: 30
+```
+
+**Why it is not done yet, and what to watch for.** CloudFormation *creates* the group, so a
+declaration for a group that already exists fails the whole stack update with
+`already exists`. Seven of the eight groups exist right now; only `SignupFunction`'s does not,
+because we deleted it. So this cannot simply be added in one pass. The options, in order of
+preference:
+
+1. **Resource import** — bring the seven existing groups under stack management, then add
+   `RetentionInDays`. Correct and non-destructive, but a multi-step console/CLI flow.
+2. **Delete then declare** — delete each group and let the stack create it. Now much cheaper
+   than it was, since the most we lose is 30 days rather than the project's entire history, and
+   `flightmap-dev` finally has `logs:DeleteLogGroup`. Destructive, and it discards whatever the
+   logs currently hold.
+3. **Declare for `SignupFunction` only** — legal today and fixes the one group actually at risk,
+   but leaves the template inconsistent, which is its own trap for the next reader.
+
+Whichever is chosen, do it as a **deliberate deploy**, not folded into an unrelated change: it
+touches every function in the stack, and a failed stack update on this template takes the whole
+API down with it.
