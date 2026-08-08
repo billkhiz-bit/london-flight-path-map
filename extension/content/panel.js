@@ -283,6 +283,35 @@ function bandStrip(distribution) {
   return svg;
 }
 
+/**
+ * Which London borough contains a point. Null outside all 33.
+ *
+ * Ray casting, the standard even-odd test. Rings arrive pre-flattened by
+ * scripts/build_london_rents.py, so a Polygon and a MultiPolygon are the same
+ * shape here and there is exactly one case to get right.
+ *
+ * Interior rings (holes) are not distinguished. No London borough contains a
+ * hole, and the even-odd rule handles one correctly anyway: a point inside a
+ * hole crosses two boundaries and counts as outside.
+ */
+function boroughAt(shapes, lat, lon) {
+  const inRing = (ring) => {
+    let hit = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+        hit = !hit;
+      }
+    }
+    return hit;
+  };
+  for (const [code, rings] of Object.entries(shapes || {})) {
+    if (rings.some(inRing)) return code;
+  }
+  return null;
+}
+
 /** Compact money, for axis labels where "£1,250,000" will not fit. */
 function money(n) {
   if (n >= 1000000) return `£${(n / 1000000).toFixed(n >= 10000000 ? 0 : 1)}m`;
@@ -497,9 +526,13 @@ function decidePresentation(listing) {
   // A null channel keeps the sale layout. That is the conservative direction:
   // an unnecessary Sold nearby on a rental is noise, where a missing one on a
   // sale removes the section most likely to be the reason someone opened this.
+  // `rent` takes the slot `soldPrices` occupies on a sale - same position, same
+  // role (what does money look like here), different claim. Keeping the price
+  // context in one place across both layouts is the same reasoning that keeps
+  // Environment leading throughout.
   const letting = listing.channel === 'letting';
   const order = letting
-    ? ['environment', 'epc', 'nhs']
+    ? ['environment', 'epc', 'rent', 'nhs']
     : ['environment', 'epc', 'soldPrices', 'nhs'];
 
   if (!listing.inLondon) {
@@ -867,6 +900,86 @@ function renderEpc(result, listing) {
   return section;
 }
 
+/**
+ * Typical rent for the borough this listing sits in.
+ *
+ * DELIBERATELY NOT A CHART, AND THAT IS THE WHOLE DESIGN.
+ *
+ * Sold nearby draws a range because every dot in it is a real transaction on
+ * THIS postcode, listed underneath — the axis claims nothing the rows do not.
+ * There is no rental equivalent: HM Land Registry records sales only, and no
+ * open UK dataset publishes rental comparables below local-authority level.
+ *
+ * So this is a borough-wide average over every property, condition and street
+ * in it. Drawn as a range with a marker it would say "here is what things like
+ * this go for near here", which is a claim about the neighbourhood the data
+ * cannot support. As one labelled figure naming its geography, its month and
+ * its source, it says exactly what it is. The difference between those two
+ * renderings is the difference between context and a false comparable.
+ *
+ * Bedroom count picks the row when the page gives one, because a borough
+ * average across studios and six-beds is coarser still. Falls back to the
+ * all-property figure rather than guessing a size.
+ */
+function renderRent(rents, listing) {
+  if (!rents?.boroughs || !rents?.shapes) return null;
+
+  const code = boroughAt(rents.shapes, listing.lat, listing.lon);
+  const row = code && rents.boroughs[code];
+  // No row is the honest outcome for the City of London, which ONS does not
+  // publish, and for anywhere outside the 33. Render nothing at all rather
+  // than a neighbour's figure.
+  if (!row) return null;
+
+  const beds = listing.bedrooms;
+  const key = beds >= 1 && beds <= 3 ? String(beds) : beds >= 4 ? '4+' : 'all';
+  const value = row[key] ?? row.all;
+  if (typeof value !== 'number') return null;
+
+  const label =
+    key === 'all'
+      ? `${row.name}, all properties`
+      : `${row.name}, ${key === '4+' ? '4+' : key} bed`;
+
+  const section = el('section', 'c33-section');
+  section.appendChild(el('h3', 'c33-h3', 'Typical rent'));
+
+  const row1 = el('div', 'c33-row');
+  row1.appendChild(el('span', 'c33-name', label));
+  row1.appendChild(el('span', 'c33-price', `£${value.toLocaleString('en-GB')} pcm`));
+  section.appendChild(row1);
+
+  // The month is not decoration. A rent figure with no date is unreadable and
+  // a stale one is worse than none, so it prints beside the number rather than
+  // in a footer nobody opens.
+  const month = rents.sourceMonth
+    ? new Date(`${rents.sourceMonth}-01T00:00:00Z`).toLocaleDateString('en-GB', {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    : '';
+  section.appendChild(
+    el('div', 'c33-sub', `Borough average, ${month}${month ? ' · ' : ''}ONS`)
+  );
+
+  section.appendChild(
+    disclosure('Why this is a borough figure', [
+      'This is the average private rent across the whole borough for this ' +
+        'property size, not an average of comparable homes on this street. No ' +
+        'open UK dataset publishes rents below local-authority level, so a ' +
+        'street-level figure would have to be invented.',
+      'It covers every condition, age and street in the borough, so a specific ' +
+        'property can sit well above or below it for reasons this number ' +
+        'cannot see. Read it as context for the area, not as a valuation of ' +
+        'this home.',
+      `Source: ${rents.source}. ${rents.licence}.`,
+    ])
+  );
+
+  return section;
+}
+
 function renderSoldPrices(result, listing) {
   if (!result.ok) {
     return unavailable('Sold nearby', result.error);
@@ -1113,10 +1226,26 @@ const SECTIONS = {
   environment: { label: 'Environment', render: renderEnvironment },
   epc: { label: 'EPC register', render: renderEpc, postcode: true },
   soldPrices: { label: 'Sold nearby', render: renderSoldPrices, postcode: true },
+  // `local` means the data ships inside the extension rather than coming from
+  // an endpoint, so it needs no network and no postcode. It still goes through
+  // the same request/paint pipeline so the section cannot special-case its way
+  // around the loading and failure states every other section honours.
+  rent: {
+    label: 'Typical rent',
+    render: (result, listing) => (result.ok ? renderRent(result.data, listing) : null),
+    local: true,
+  },
   nhs: { label: 'Healthcare', render: renderNhs },
 };
 
 async function requestSection(name, listing, postcode) {
+  if (SECTIONS[name]?.local) {
+    try {
+      return await chrome.runtime.sendMessage({ type: 'GET_RENTS' });
+    } catch {
+      return { ok: false, error: 'extension reloaded, refresh the page' };
+    }
+  }
   try {
     return await chrome.runtime.sendMessage({
       type: 'FETCH_ENDPOINT',
@@ -1158,6 +1287,17 @@ async function loadInto(body, listing, plan) {
     // Passed to all of them rather than special-cased, so the next renderer
     // that needs page context does not have to re-plumb this.
     const rendered = SECTIONS[name].render(result, listing);
+    // A renderer may return null to mean "there is nothing here worth a
+    // heading" - the rent section does, outside the 33 boroughs and for the
+    // City of London, which ONS does not publish. Remove the slot rather than
+    // leave an empty section: a heading with nothing under it asserts that the
+    // question was asked and answered. Without this, replaceWith(null) would
+    // insert the literal string "null" into the panel.
+    if (!rendered) {
+      slots[name].remove();
+      delete slots[name];
+      return;
+    }
     slots[name].replaceWith(rendered);
     slots[name] = rendered;
   };

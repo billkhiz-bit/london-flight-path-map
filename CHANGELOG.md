@@ -60,6 +60,24 @@ DynamoDB, which the score Lambda reads live.
   `list-style: revert` that had been sitting on `.c33-note-sum` could never have
   worked - "About these readings" had been rendering with no disclosure
   affordance at all. Both kinds now draw their own triangle.
+- **Typical rent, on letting listings.** ONS Price Index of Private Rents,
+  average monthly rent for the borough the listing sits in, split by bedroom
+  count — `Brent, 2 bed · £1,932 pcm · Borough average, June 2026 · ONS`.
+  Built by `scripts/build_london_rents.py` from the 18 MB ONS workbook down to a
+  275 KB bundle. **Deliberately NOT a chart**: Sold nearby earns a range because
+  every dot is a real transaction on that postcode, and there is no rental
+  equivalent below local-authority level, so the same visual grammar would claim
+  a comparable the data cannot support. An e2e assertion exists purely to fail
+  if a chart appears there. Borough resolves by point-in-polygon from the
+  coordinate against outlines generated into the *same file* as the rents so
+  they cannot drift; bedroom count comes through the page model's index
+  indirection (`{"bedrooms":228}` → `flat[228] === 2`). **Bundled and served by
+  the service worker**, not `web_accessible_resources` — which would expose it
+  to every host page — so a whole data source landed with **no Lambda change and
+  no deploy**. Renders nothing outside the 33 boroughs and for the City of
+  London, which ONS does not publish, rather than borrowing a neighbour's figure.
+  Corroborated independently: our June figure for Kensington and Chelsea is
+  £3,596 against ONS's published May headline of £3,591.
 - **The extension shows a different panel for lettings.** The `channel`
   (`RES_BUY` / `RES_LET`) already had to be read to stop a monthly rent being
   plotted against completed sales; it now decides what renders. On a letting

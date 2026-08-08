@@ -94,12 +94,38 @@ their cookie manifest nobody knew were there. The synthetic variant has been
 deleted rather than kept alongside: two fixtures asserting the same thing would
 imply two independent proofs where there was one.
 
-**Rental comparables are NOT shown, and this is not an oversight.** There is no
-open, postcode-level UK rental dataset — Price Paid is sales only, and ONS
-publishes rents at local-authority level. Drawing a borough median in the
-sold-price chart's visual grammar would say "here is what things like this go
-for near here" while being a materially weaker claim, which is exactly the
-failure `decidePresentation()`'s own docstring warns about.
+### Typical rent (lettings only, added 2026-08-08)
+
+`extension/data/london-rents.json` — ONS Price Index of Private Rents, average
+monthly rent per London borough, split by bedroom count. Regenerate with
+`python scripts/build_london_rents.py` when ONS publishes a new month.
+
+**Bundled, not fetched.** ~275 KB shipping inside the extension, served by the
+service worker over the existing message channel. That deliberately avoids
+`web_accessible_resources`, which would expose the file to every host page the
+extension matches — and it means **no Lambda change and no deploy** were needed
+to add a whole data source.
+
+**Borough comes from the coordinate**, by point-in-polygon against outlines
+generated into the *same file* as the rents and keyed identically, so the two
+cannot drift. Bedroom count comes from the page model through the same index
+indirection as everything else (`{"bedrooms":228}` → `flat[228] === 2`), and
+falls back to the all-property figure when absent rather than guessing a size.
+
+**It is deliberately NOT a chart, and that is the whole design.** Sold nearby
+earns a range because every dot in it is a real transaction on *this postcode*,
+listed underneath — the axis claims nothing the rows do not. There is no rental
+equivalent: Price Paid is sales only, and no open UK dataset publishes rental
+comparables below local-authority level. So this is a borough-wide average over
+every property, condition and street in it. Drawn as a range with a marker it
+would say "here is what things like this go for near here", which the data
+cannot support. As one labelled figure naming its geography, its month and its
+source, it says exactly what it is. There is an e2e assertion whose only job is
+to fail if a chart ever appears in this section.
+
+**Renders nothing rather than approximating.** Outside the 33 boroughs, and for
+the City of London (which ONS does not publish), the section is removed
+entirely — not shown empty, and never filled with a neighbour's figure.
 
 **Healthcare** — `GET /nhs?lat=&lon=` (OpenStreetMap via Overpass)
 - Nearest 3 GP surgeries, pharmacies and hospitals, with distances

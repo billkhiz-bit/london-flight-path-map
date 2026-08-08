@@ -139,7 +139,35 @@ async function fetchOne(name, { lat, lon, postcode }) {
   return { ...result, fromCache: false };
 }
 
+// The bundled ONS borough rent reference, served from HERE rather than fetched
+// by the content script.
+//
+// A content script can only fetch an extension file if it is declared in
+// `web_accessible_resources`, which also exposes it to the HOST PAGE - every
+// site matching our patterns could then read it. The service worker has no such
+// restriction on its own package, so serving it over the existing message
+// channel keeps the file private to the extension and the manifest unchanged.
+//
+// Memoised: ~275 KB parsed once per worker lifetime, not once per listing.
+let rentsPromise = null;
+function loadRents() {
+  if (!rentsPromise) {
+    rentsPromise = fetch(chrome.runtime.getURL('data/london-rents.json'))
+      .then((r) => (r.ok ? r.json() : null))
+      // A missing or unparseable dataset must cost the rent line only. It is
+      // one optional row on one listing type; it is not worth a dead panel.
+      .catch(() => null);
+  }
+  return rentsPromise;
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === 'GET_RENTS') {
+    loadRents()
+      .then((data) => sendResponse(data ? { ok: true, data } : { ok: false, error: 'no-dataset' }))
+      .catch(() => sendResponse({ ok: false, error: 'no-dataset' }));
+    return true;
+  }
   if (message?.type !== 'FETCH_ENDPOINT') return false;
 
   const { endpoint, lat, lon, postcode } = message;

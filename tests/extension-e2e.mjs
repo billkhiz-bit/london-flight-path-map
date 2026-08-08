@@ -310,6 +310,15 @@ check(
   (await panelBox.locator('.c33-toggle .c33-close').count()) === 0
 );
 
+// The rent reference is letting-only. On a sale, Sold nearby occupies that slot
+// with actual transactions on this postcode, which is a stronger claim than a
+// borough average; showing both would put a coarse figure beside a fine one and
+// invite them to be read as the same kind of number.
+check(
+  'sale: no borough rent section',
+  (await page.locator('#cubitt33-panel .c33-section h3').filter({ hasText: /Typical rent/i }).count()) === 0
+);
+
 check('no stale Loading text', !text.includes('Loading'));
 check('OSM/ODbL attribution', /OpenStreetMap/i.test(text));
 check('debug reports rightmove-page-model', text.includes('rightmove-page-model'));
@@ -392,6 +401,48 @@ check(
   !/this (property|flat|home) is band/i.test(letText)
 );
 check('letting: place data still shown', /ENVIRONMENT/i.test(letText) && /HEALTHCARE/i.test(letText));
+
+// --- The borough rent reference -------------------------------------------
+//
+// NW2 sits in Brent, resolved by point-in-polygon from the listing coordinate
+// against the outlines bundled with the ONS figures. The bedroom count comes
+// through the same index indirection as everything else in the page model
+// ({"bedrooms":228} -> flat[228] === 2), so a wrong deref would show a rent for
+// the wrong property size rather than failing visibly.
+const rentSection = page.locator('#cubitt33-panel .c33-section', { hasText: /Typical rent/i });
+const hasRent = (await rentSection.count()) > 0;
+check('letting: borough rent shown', hasRent, hasRent ? '' : 'no Typical rent section');
+
+if (hasRent) {
+  const rentText = await rentSection.innerText();
+  check(
+    'rent names the borough and the property size, not "London"',
+    /Brent/.test(rentText) && /2 bed/i.test(rentText),
+    rentText.split('\n').slice(0, 2).join(' / ')
+  );
+  // A rent figure with no date is unreadable and a stale one is worse than
+  // none, so the month must be ON the row rather than in a footer.
+  check(
+    'rent is dated and attributed on the row',
+    /\b(January|February|March|April|May|June|July|August|September|October|November|December) \d{4}\b/.test(rentText) &&
+      /ONS/.test(rentText),
+    (rentText.match(/Borough average[^\n]*/) || ['not found'])[0]
+  );
+  // THE HONESTY ASSERTION. Sold nearby earns a range chart because every dot
+  // is a real transaction on that postcode. This is a borough-wide average
+  // over every property and street in it; drawn the same way it would claim
+  // to be a comparable. If a chart ever appears in this section, that claim
+  // has been made by accident.
+  check(
+    'rent is NOT drawn as a range chart',
+    (await rentSection.locator('.c33-range, .c33-bar, .c33-strip').count()) === 0
+  );
+  check(
+    'rent states it is a borough figure, not a local one',
+    /borough average/i.test(rentText),
+    ''
+  );
+}
 
 // --- Degraded paths -------------------------------------------------------
 //

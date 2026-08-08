@@ -394,6 +394,7 @@ function saleInfoFromPageModel() {
 
   let isSale = null;
   let amount = null;
+  let beds = null;
   const seen = new Set();
 
   const walk = (node, depth) => {
@@ -413,6 +414,14 @@ function saleInfoFromPageModel() {
         const n = deref(value);
         if (typeof n === 'number' && n >= MIN_SALE && n <= MAX_SALE) amount = n;
       }
+      // Reached through the SAME index indirection as everything else here:
+      // the node says {"bedrooms":228} and flat[228] is 2. Verified against
+      // both real pages - SW5 resolves to 81 (it is a block of 81 flats) and
+      // NW2 to 2. Taking the raw number would have printed 228 bedrooms.
+      if (/^bedrooms$/i.test(key) && beds === null) {
+        const n = deref(value);
+        if (typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 99) beds = n;
+      }
       if (value && typeof value === 'object') walk(value, depth + 1);
     }
   };
@@ -423,6 +432,10 @@ function saleInfoFromPageModel() {
     // Still sales only. A letting's channel is useful; its `price` is a
     // monthly figure this panel has nothing to compare against.
     askingPrice: isSale === true && amount !== null ? amount : null,
+    // Used only to pick WHICH borough rent figure to show. Null is fine and
+    // common — the panel falls back to the all-property figure rather than
+    // guessing a size.
+    bedrooms: beds,
   };
 }
 
