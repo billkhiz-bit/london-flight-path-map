@@ -19,6 +19,53 @@ set -u
 ROOT="$(dirname "$0")/.."
 NSPL_ROWS=2723596
 
+# A checkpoint file outlives the process that wrote it. The loaders delete it
+# only on a clean full finish, so every interrupted run leaves one behind and
+# "file exists" means "a run STARTED", never "a run is RUNNING". On 2026-08-08
+# this script reported both loaders RUNNING - one of them 38 hours dead - and
+# printed a throughput figure scraped from a log nothing had written to since.
+#
+# The checkpoint's MODIFICATION TIME is the liveness signal, not its existence:
+# a live loader rewrites it every 1000 NSPL rows.
+age_secs() {
+  # Seconds since $1 was last modified. Git Bash ships GNU stat; the BSD form
+  # is the fallback. An unreadable mtime returns a large number, so the
+  # unknown case reads as stale rather than as healthy - this script's whole
+  # bug was an unknown rendering as healthy.
+  mtime=$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null)
+  [ -z "$mtime" ] && { echo 999999; return; }
+  echo $(( $(date +%s) - mtime ))
+}
+
+# Thresholds are derived from the checkpoint WRITE CADENCE, not from a guess at
+# how long feels reasonable. Both loaders rewrite every 1000 NSPL rows, so the
+# quiet gap between writes is 1000/rate seconds. Measured 2026-08-08 on the road
+# pass resuming into the dense UB-onward range: 8,000 rows in 522s = ~15 rows/s,
+# so a HEALTHY loader is silent for ~65s at a stretch. Anything under ~2 minutes
+# would therefore flag a running loader as dead - which is the failure that gets
+# a check switched off and ignored.
+#
+# 300s is ~4.6x that observed worst cadence: enough headroom for a slower patch
+# or the startup skip (the road pass reads past ~2.5M already-done CSV rows to
+# reach its resume point, writing nothing meanwhile), while still turning an
+# overnight death into something you see immediately.
+STALLED_SECS=300
+STOPPED_SECS=1800
+
+# Two verdicts, because they call for different actions. STALLED might be a slow
+# patch and might be a death - run this again in a minute. STOPPED past half an
+# hour is never a slow patch; it needs restarting.
+liveness() {
+  age=$(age_secs "$1")
+  if [ "$age" -lt "$STALLED_SECS" ]; then
+    echo 'RUNNING'
+  elif [ "$age" -lt "$STOPPED_SECS" ]; then
+    echo 'STALLED?'
+  else
+    echo 'STOPPED'
+  fi
+}
+
 bar() {
   # $1 = percent (integer 0-100)
   filled=$(( $1 * 30 / 100 ))
@@ -52,12 +99,22 @@ report() {
   [ -z "$rows" ] && rows=0
   pct=$(( rows * 100 / NSPL_ROWS ))
 
-  printf '%s: RUNNING\n' "$name"
+  verdict=$(liveness "$checkpoint")
+  printf '%s: %s\n' "$name" "${verdict:-UNKNOWN}"
   bar "$pct"
   printf '  %s of %s NSPL rows scanned\n' "$rows" "$NSPL_ROWS"
+  # Always show the age, whatever the verdict. The reader can then disagree
+  # with the threshold, which they could not do when the only output was a
+  # bare "RUNNING".
+  printf '  checkpoint last moved %ss ago\n' "$(age_secs "$checkpoint")"
   [ -n "$expected_writes" ] && printf '  %s postcodes expected to be written in total\n' "$expected_writes"
 
-  if [ -f "$log" ]; then
+  # Only scrape the log while the loader is actually live. A tqdm frame carries
+  # no timestamp, so a rate read from a dead run is indistinguishable from a
+  # live one: on 2026-08-08 this line printed "rate 25.27it/s, elapsed 3:19:34"
+  # for a process that had been dead 38 hours. A number that cannot say how old
+  # it is must not outlive the thing it measured.
+  if [ -f "$log" ] && [ "$verdict" = 'RUNNING' ]; then
     # tqdm redraws with \r, so split on it and take the last frame. This is
     # display only — the checkpoint above is the number that matters.
     rate=$(tr '\r' '\n' < "$log" | grep -oE '[0-9.]+it/s' | tail -1)
