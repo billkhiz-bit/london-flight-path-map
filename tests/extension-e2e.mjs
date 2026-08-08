@@ -181,6 +181,37 @@ if (epcCerts > 0) {
   check('EPC band chart', 'skip', 'register returned no certificates for SW5');
 }
 
+// --- The aircraft estimate carries its caveat, above road noise -----------
+//
+// The estimated aircraft figure is the one reading here that is NOT a
+// measurement: geometry, on a 0-10 scale, for the ~91% of London postcodes
+// DEFRA never surveyed. Its caveat must sit ON that row and BEFORE the measured
+// road figure, or a reader scanning down meets "5/10 quiet" then "49.5 dB Lden"
+// with nothing saying those are different kinds of number.
+//
+// Asserted on DOCUMENT ORDER, not just presence - "the note exists somewhere"
+// was true when it lived in a collapsed disclosure two rows below.
+const envSection = page.locator('#cubitt33-panel .c33-section', { hasText: /environment/i });
+const envItems = await envSection.locator('.c33-item').all();
+const envTexts = await Promise.all(envItems.map((i) => i.innerText()));
+const estIdx = envTexts.findIndex((t) => /estimated/i.test(t));
+const roadIdx = envTexts.findIndex((t) => /road noise/i.test(t));
+
+if (estIdx >= 0) {
+  check(
+    'estimated aircraft row carries its own caveat',
+    /not measured/i.test(envTexts[estIdx] || ''),
+    (envTexts[estIdx] || '').replace(/\n/g, ' / ').slice(0, 70)
+  );
+  check(
+    'the caveat precedes road noise rather than trailing it',
+    roadIdx === -1 || estIdx < roadIdx,
+    `estimated at ${estIdx}, road at ${roadIdx}`
+  );
+} else {
+  check('estimated aircraft caveat', 'skip', 'postcode has a measured DEFRA reading');
+}
+
 // Sold-price range chart. The fixture is a real RES_BUY listing asking
 // £34,000,000, so when Land Registry returns anything for SW5 the asking marker
 // must be drawn - and must NOT be drawn as a verdict.

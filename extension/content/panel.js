@@ -574,17 +574,46 @@ function renderEnvironment(result) {
     .filter(Boolean)
     .some((s) => /maps 2021/.test(s));
 
+  // THE AIRCRAFT CAVEAT RIDES ITS OWN ROW, ABOVE ROAD NOISE.
+  //
+  // It was in the disclosure at the foot of the section, which meant the one
+  // reading on this panel that is NOT a measurement - a geometric estimate, on
+  // a 0-10 scale, for the ~91% of London postcodes DEFRA never surveyed - had
+  // its caveat sitting two rows below a measured road figure and behind a
+  // click. A reader scanning down met "5/10 quiet" and then "49.5 dB Lden" with
+  // nothing between them to say those are different KINDS of number.
+  //
+  // Same principle as the 2021 vintage tag: put the qualification on the
+  // reading it qualifies, not in a paragraph under readings it does not.
+  //
+  // Matched on the notice's opening rather than a flag because both strings
+  // live in this repo (`_COVERAGE_NOTICES['postcode']` in score/app.py). If
+  // that wording ever changes the match fails OPEN - the notice stays in the
+  // disclosure and nothing is lost, rather than vanishing from both places.
+  const aircraftNotice = (data.notices || []).find((n) => /^Aircraft noise here is/.test(n));
+
   const rows = [
-    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden', env.aircraftNoiseWhoGuidelineDb, mapsCovidYear],
-    ['Aircraft noise (estimated)', env.aircraftQuietEstimated, '/10 quiet', null, false],
-    ['Road noise', env.roadNoiseLdenDb, 'dB Lden', env.roadNoiseWhoGuidelineDb, mapsCovidYear],
-    ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3, false],
-    ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3, false],
+    ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden', env.aircraftNoiseWhoGuidelineDb, mapsCovidYear, ''],
+    [
+      'Aircraft noise (estimated)',
+      env.aircraftQuietEstimated,
+      '/10 quiet',
+      null,
+      false,
+      // Prefer the endpoint's own per-row basis string, which exists for this;
+      // fall back to the longer coverage notice when it is absent.
+      env.aircraftQuietBasis
+        ? `Estimated from ${env.aircraftQuietBasis}.`
+        : aircraftNotice || '',
+    ],
+    ['Road noise', env.roadNoiseLdenDb, 'dB Lden', env.roadNoiseWhoGuidelineDb, mapsCovidYear, ''],
+    ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3, false, ''],
+    ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3, false, ''],
   ].filter((r) => typeof r[1] === 'number');
 
   if (rows.length) {
     const list = el('ul', 'c33-list');
-    for (const [label, value, unit, guideline, vintage] of rows) {
+    for (const [label, value, unit, guideline, vintage, note] of rows) {
       const item = el('li', 'c33-item');
       const row = el('div', 'c33-row');
       const name = el('span', 'c33-name', label);
@@ -632,6 +661,10 @@ function renderEnvironment(result) {
         // the move the comment above refuses.
         item.appendChild(scaleBar({ value, guideline: null, unit, max: 10 }));
       }
+
+      // Below the bar, so it reads as a footnote to THIS reading and the next
+      // row starts clean.
+      if (note) item.appendChild(el('div', 'c33-rownote', note));
       list.appendChild(item);
     }
     section.appendChild(list);
@@ -660,7 +693,13 @@ function renderEnvironment(result) {
         'and no correction factor is applied.'
     );
   }
-  explanations.push(...(data.notices || []));
+  // Everything except the aircraft coverage notice, which now sits inline on
+  // the row it describes. Kept here when no estimated row rendered to carry it
+  // — a caveat with nothing to attach to still has to be said somewhere.
+  const inlinedAircraftNotice = rows.some((r) => r[5] && r[0].includes('estimated'));
+  explanations.push(
+    ...(data.notices || []).filter((n) => !(inlinedAircraftNotice && n === aircraftNotice))
+  );
 
   if (explanations.length) {
     // The summary names the count so it is obvious something was left out,

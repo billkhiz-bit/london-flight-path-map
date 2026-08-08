@@ -360,6 +360,16 @@
   color: #6b7c93;
 }
 
+/* A caveat belonging to one reading, sitting under its bar. Indented to the
+ * bar's edge and set below the row's own text so it reads as a footnote to
+ * that number rather than as the start of the next row. */
+#cubitt33-panel .c33-rownote {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #8a97a8;
+}
+
 #cubitt33-panel .c33-sub {
   margin-top: 1px;
   font-size: 11px;
