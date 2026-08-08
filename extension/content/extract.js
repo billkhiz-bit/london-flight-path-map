@@ -362,23 +362,33 @@ const MIN_SALE = 10000;
 const MAX_SALE = 500000000;
 
 /**
- * The listing's asking price, for SALES ONLY.
+ * Whether the listing is a sale or a letting, and its asking price.
  *
- * WHY THE SALE TEST IS THE POINT OF THIS FUNCTION. The panel draws this against
- * HM Land Registry sold prices. On a letting, Rightmove's `price` is a monthly
- * figure, so £2,400 pcm would render as a dot at the far left of a range of
- * completed sales and read as an extraordinary bargain. That is the worst
- * misread this panel could produce, and it is one field away at all times.
- * So the default is null: a price is returned only when the page POSITIVELY
- * says the listing is a sale, never when the channel is merely absent.
+ * Returns { channel: 'sale' | 'letting' | null, askingPrice: number | null }.
  *
- * WHAT LEAVES THE BROWSER: nothing. This value is read from the DOM, held in
- * the content script, and used only to position a marker. background.js sends
- * a rounded coordinate pair and nothing else — see the header of this file.
+ * WHY THE SALE TEST IS THE POINT OF THIS FUNCTION. The panel draws the price
+ * against HM Land Registry sold prices. On a letting, Rightmove's `price` is a
+ * monthly figure, so £2,400 pcm would render as a dot at the far left of a
+ * range of completed sales and read as an extraordinary bargain. That is the
+ * worst misread this panel could produce, and it is one field away at all
+ * times. So the default is null: a price is returned only when the page
+ * POSITIVELY says the listing is a sale, never when the channel is absent.
+ *
+ * The channel used to be computed here and thrown away once it had gated the
+ * price. It is now returned, because the same fact decides what the panel
+ * should show at all: Land Registry records SALES, so a sold-price section on
+ * a rental is not neutral padding, it is a list of numbers in the wrong unit
+ * beside a property nobody is selling.
+ *
+ * WHAT LEAVES THE BROWSER: nothing. Both values are read from the DOM, held in
+ * the content script, and used only to choose and position what is drawn.
+ * background.js sends a rounded coordinate pair and nothing else — see the
+ * header of this file.
  */
-function askingPriceFromPageModel() {
+function saleInfoFromPageModel() {
+  const none = { channel: null, askingPrice: null };
   const flat = pageModelFlat();
-  if (!flat) return null;
+  if (!flat) return none;
 
   const deref = (v) => (typeof v === 'number' && v >= 0 && v < flat.length ? flat[v] : v);
 
@@ -408,7 +418,12 @@ function askingPriceFromPageModel() {
   };
   flat.forEach((entry) => walk(entry, 0));
 
-  return isSale === true && amount !== null ? amount : null;
+  return {
+    channel: isSale === true ? 'sale' : isSale === false ? 'letting' : null,
+    // Still sales only. A letting's channel is useful; its `price` is a
+    // monthly figure this panel has nothing to compare against.
+    askingPrice: isSale === true && amount !== null ? amount : null,
+  };
 }
 
 function extractAddress() {
@@ -475,12 +490,15 @@ function extractListing() {
     lon: coords.lon,
     address,
     outcode: extractOutcode(address),
-    // Sales only, and null whenever the page does not positively say so. Read
-    // HERE rather than on badge click because the page model is transient:
-    // React hydration removes it, and the badge may be clicked minutes later.
-    // Never transmitted — it positions a marker against sold prices the API
-    // already returned, and the comparison happens entirely in this tab.
-    askingPrice: askingPriceFromPageModel(),
+    // Read HERE rather than on badge click because the page model is
+    // transient: React hydration removes it, and the badge may be clicked
+    // minutes later. Neither value is transmitted — they choose and position
+    // what is drawn, from a payload already fetched on a rounded coordinate.
+    //
+    // `channel` is 'sale' | 'letting' | null. null means the page did not say,
+    // and every consumer must treat that as "do not assume a sale" — a
+    // sold-price comparison shown on a rental is the failure being avoided.
+    ...saleInfoFromPageModel(),
     // Which strategy won. Surfaced in the panel's debug line because when this
     // breaks after a Rightmove redesign, the first question is always "did we
     // fall through to a weaker strategy, or fail outright?"

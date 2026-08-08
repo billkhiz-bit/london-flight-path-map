@@ -251,6 +251,9 @@ const REAL_EXPECTED = {
   // real saved page, because a synthetic fixture would only re-encode whatever
   // shape I assumed - the mistake this whole file exists to have caught once.
   askingPrice: 34000000,
+  // The channel used to be computed and discarded once it had gated the price.
+  // It now decides which sections render at all, so it is asserted directly.
+  channel: 'sale',
 };
 
 const realMismatches = Object.entries(REAL_EXPECTED).filter(([k, v]) => realResult?.[k] !== v);
@@ -280,17 +283,20 @@ if (!realResult) {
 // to "RES_LET", which is precisely the pair the guard reads.
 const variants = [
   {
-    name: 'letting: asking price withheld, coordinates still extracted',
+    name: 'letting: channel detected, asking price withheld',
     script: realScript.replace(/BUY/g, 'LET'),
     wantPrice: null,
+    wantChannel: 'letting',
   },
   {
-    // Neither BUY nor LET anywhere. The guard must default to withholding:
+    // Neither BUY nor LET anywhere. Both outputs must default to withholding:
     // a missing channel is not evidence of a sale, and the damaging direction
-    // is the one that guesses.
-    name: 'no channel signal: asking price withheld rather than assumed',
+    // is the one that guesses. A null channel keeps the SALE layout, so this
+    // case is also what stops an unreadable page silently losing Sold nearby.
+    name: 'no channel signal: neither price nor channel assumed',
     script: realScript.replace(/BUY/g, 'XXX'),
     wantPrice: null,
+    wantChannel: null,
   },
 ];
 
@@ -298,14 +304,16 @@ let variantFails = 0;
 for (const v of variants) {
   const got = extractWith(makeDoc({ scripts: [v.script], h1: realH1 }));
   const priceOk = (got?.askingPrice ?? null) === v.wantPrice;
+  const channelOk = (got?.channel ?? null) === v.wantChannel;
   // Coordinates must survive: the price guard must not cost us the panel.
   const coordsOk = got?.lat === 51.49423;
-  if (priceOk && coordsOk) {
+  if (priceOk && channelOk && coordsOk) {
     console.log(`PASS  ${v.name}`);
   } else {
     console.log(
       `FAIL  ${v.name}\n      askingPrice ${JSON.stringify(got?.askingPrice ?? null)} ` +
-        `(want ${JSON.stringify(v.wantPrice)}), lat ${JSON.stringify(got?.lat)}`
+        `(want ${JSON.stringify(v.wantPrice)}), channel ${JSON.stringify(got?.channel ?? null)} ` +
+        `(want ${JSON.stringify(v.wantChannel)}), lat ${JSON.stringify(got?.lat)}`
     );
     variantFails += 1;
   }

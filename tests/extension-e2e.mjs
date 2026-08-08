@@ -330,6 +330,52 @@ const text2 = await page.locator('#cubitt33-panel').innerText();
 check('second view served from cache', text2.includes('cached'), `${cachedMs} ms`);
 check('cached view still renders sections', /ENVIRONMENT/i.test(text2));
 
+// --- Lettings switch the panel --------------------------------------------
+//
+// The real fixture with its channel strings rewritten - real markup, one field
+// changed, so it cannot encode an assumption about Rightmove's shape.
+//
+// Land Registry records SALES. On a rental, Sold nearby is a column of
+// six-figure sums beside a property nobody is selling, in a different unit
+// from the only price on the page. It must be GONE, not empty: an empty
+// section still asserts the question was worth asking.
+await page.locator('#cubitt33-panel .c33-close').click();
+await page.unroute('**://www.rightmove.co.uk/**');
+await page.route('**://www.rightmove.co.uk/**', (route) =>
+  route.fulfill({ status: 200, contentType: 'text/html', body: fixture.replace(/BUY/g, 'LET') })
+);
+await page.goto('https://www.rightmove.co.uk/properties/246813579');
+await page.locator('#cubitt33-badge').waitFor({ timeout: 15000 });
+await page.locator('#cubitt33-badge').click();
+await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
+
+const letSections = await page.locator('#cubitt33-panel .c33-section h3').allInnerTexts();
+const letText = await page.locator('#cubitt33-panel').innerText();
+
+check(
+  'letting: sold prices removed, not rendered empty',
+  !letSections.some((h) => /sold/i.test(h)),
+  letSections.join(',')
+);
+check(
+  'letting: EPC leads the panel',
+  /EPC/i.test(letSections[0] || ''),
+  letSections.join(',')
+);
+check(
+  'letting: MEES stated against the letting minimum',
+  /minimum for a new letting/i.test(letText) && /certificates at this postcode/i.test(letText),
+  (letText.match(/[^\n]*minimum for a new letting[^\n]*/i) || ['not found'])[0].slice(0, 70)
+);
+// The claim we are NOT entitled to make. No address is ever captured, so no
+// certificate can be tied to the listing; any wording implying otherwise is a
+// regression regardless of how it reads.
+check(
+  'letting: never claims a band for THIS property',
+  !/this (property|flat|home) is band/i.test(letText)
+);
+check('letting: place data still shown', /ENVIRONMENT/i.test(letText) && /HEALTHCARE/i.test(letText));
+
 // --- Degraded paths -------------------------------------------------------
 //
 // decidePresentation() is the honesty gate: it decides what the panel is

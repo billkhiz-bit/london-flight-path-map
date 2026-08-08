@@ -44,6 +44,46 @@ geocodes, so this build needs no backend change and no API key.
   by around two months and is unadjusted for size, condition, floor or lease, so
   position is a fact it supports and "overpriced" is not
 
+### Sales and lettings show different panels (2026-08-08)
+
+The listing's own `channel` (`RES_BUY` / `RES_LET`) already had to be read to
+stop a monthly rent being plotted against completed sales. The same fact now
+decides what renders at all.
+
+| | Sale | Letting |
+|---|---|---|
+| Order | Environment, EPC, Sold nearby, Healthcare | **EPC**, Environment, Healthcare |
+| Sold nearby | Chart with the asking price marked | **Removed** |
+| EPC | Band chart | Band chart **+ MEES line + tenant disclosure** |
+
+**Why Sold nearby goes rather than rendering empty.** Land Registry Price Paid
+records *sales*. On a rental it is a column of six-figure sums beside a property
+nobody is selling, in a different unit from the only price on the page. An empty
+section would still assert that the question was worth asking.
+
+**Why EPC leads instead.** For a buyer the band is context. For a tenant it is
+two live facts, neither of which is on the listing page: under MEES a property
+in band F or G generally cannot be let on a new tenancy, and the band is a
+heating bill the tenant pays on fabric only the landlord can change.
+
+**What it must never say.** No certificate can be tied to the listing — the
+extension deliberately never reads the address — so every sentence is about the
+*postcode's* lodged certificates and says so. "This flat is band D" is the claim
+we are not entitled to make, and it is the one a reader would most like to be
+given. There is an e2e assertion whose only job is to fail if that wording ever
+appears.
+
+**A null channel keeps the sale layout**, deliberately. An unnecessary Sold
+nearby on a rental is noise; a missing one on a sale removes the section most
+likely to be why someone opened the panel.
+
+**Rental comparables are NOT shown, and this is not an oversight.** There is no
+open, postcode-level UK rental dataset — Price Paid is sales only, and ONS
+publishes rents at local-authority level. Drawing a borough median in the
+sold-price chart's visual grammar would say "here is what things like this go
+for near here" while being a materially weaker claim, which is exactly the
+failure `decidePresentation()`'s own docstring warns about.
+
 **Healthcare** — `GET /nhs?lat=&lon=` (OpenStreetMap via Overpass)
 - Nearest 3 GP surgeries, pharmacies and hospitals, with distances
 - Falls back to nhs.uk search links when Overpass is down

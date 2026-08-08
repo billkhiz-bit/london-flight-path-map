@@ -60,6 +60,23 @@ DynamoDB, which the score Lambda reads live.
   `list-style: revert` that had been sitting on `.c33-note-sum` could never have
   worked - "About these readings" had been rendering with no disclosure
   affordance at all. Both kinds now draw their own triangle.
+- **The extension shows a different panel for lettings.** The `channel`
+  (`RES_BUY` / `RES_LET`) already had to be read to stop a monthly rent being
+  plotted against completed sales; it now decides what renders. On a letting
+  **Sold nearby is removed** — Price Paid records sales, so on a rental it is a
+  column of six-figure sums beside a property nobody is selling, and an empty
+  section would still assert the question was worth asking. **EPC leads
+  instead**, with a MEES line: for a buyer the band is context, for a tenant it
+  is two live facts the listing page omits — band F or G generally cannot be let
+  on a new tenancy, and the band is a heating bill paid on fabric only the
+  landlord can change. Every sentence is about the **postcode's** certificates,
+  because the extension never reads the listing address and so cannot tie one to
+  this property; an e2e assertion exists purely to fail if that wording appears.
+  A **null** channel keeps the sale layout, the conservative direction.
+  **Rental comparables are deliberately absent**: there is no open,
+  postcode-level UK rental dataset, and drawing a borough median in the
+  sold-price chart's grammar would be the failure `decidePresentation()` already
+  warns about.
 - **Constant fields are elided from the sold list.** Land Registry keys on PAON,
   so a block of flats returns every sale at the same address and often the same
   type; six rows of `4 COLLINGHAM ROAD · flat-maisonette` read as one property

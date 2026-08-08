@@ -464,6 +464,24 @@
   color: #8a97a8;
 }
 
+/* The MEES line on a letting. Neutral by default - "all certificates meet
+ * band E" is not good news, it is the expected state. The flag variant fires
+ * only when something here is actually below the letting minimum, and uses the
+ * charts' existing "over threshold" amber rather than a new colour, because
+ * that is exactly what it is: a reading past a published line. */
+#cubitt33-panel .c33-mees {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #4a6484;
+}
+
+#cubitt33-panel .c33-mees-flag {
+  padding-left: 8px;
+  border-left: 3px solid #a35200;
+  color: #12263f;
+}
+
 /* Stated once above the rows when every transaction shares an address. */
 #cubitt33-panel .c33-common {
   margin: 2px 0 4px;

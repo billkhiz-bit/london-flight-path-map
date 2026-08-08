@@ -472,6 +472,25 @@ function decidePresentation(listing) {
     return { show: 'nothing', sections: [], caveat: null };
   }
 
+  // WHAT THE CHANNEL DECIDES.
+  //
+  // Land Registry Price Paid records SALES. On a letting, "Sold nearby" is not
+  // neutral padding - it is a column of six-figure sums beside a property
+  // nobody is selling, in a different unit from the only price on the page.
+  // Dropped rather than shown empty.
+  //
+  // EPC leads instead, because on a rental it stops being trivia. MEES makes
+  // band E the lowest a property may legally be let at, and the band is a bill
+  // the tenant pays and cannot fix. Neither fact is on the listing page.
+  //
+  // A null channel keeps the sale layout. That is the conservative direction:
+  // an unnecessary Sold nearby on a rental is noise, where a missing one on a
+  // sale removes the section most likely to be the reason someone opened this.
+  const letting = listing.channel === 'letting';
+  const order = letting
+    ? ['epc', 'environment', 'nhs']
+    : ['environment', 'epc', 'soldPrices', 'nhs'];
+
   if (!listing.inLondon) {
     // Outside London the environmental rasters thin out - DEFRA's aircraft
     // contours are English agglomerations and the road raster we hold is a
@@ -479,13 +498,14 @@ function decidePresentation(listing) {
     // stay; the caveat exists so a sparse answer is not read as a clean one.
     return {
       show: 'partial',
-      sections: ['environment', 'epc', 'soldPrices', 'nhs'],
+      sections: order,
+      letting,
       caveat:
         'Aircraft and road noise coverage is strongest in London; figures outside it may be absent.',
     };
   }
 
-  return { show: 'full', sections: ['environment', 'epc', 'soldPrices', 'nhs'], caveat: null };
+  return { show: 'full', sections: order, letting, caveat: null };
 }
 
 // --- Section renderers ---------------------------------------------------
@@ -718,7 +738,7 @@ function renderEnvironment(result) {
   return section;
 }
 
-function renderEpc(result) {
+function renderEpc(result, listing) {
   if (!result.ok) {
     return unavailable('EPC register', result.error);
   }
@@ -754,6 +774,35 @@ function renderEpc(result) {
   const strip = bandStrip(summary.bandDistribution || {});
   if (strip) section.appendChild(strip);
 
+  // ON A LETTING, MEES IS THE POINT OF THIS SECTION.
+  //
+  // For a buyer the band is context. For a tenant it is two live facts: below
+  // band E a property generally may not lawfully be let, and the band is a
+  // heating bill they pay on fabric they cannot change. Rightmove prints the
+  // band; it does not print either consequence.
+  //
+  // THE CONSTRAINT THAT SHAPES THE WORDING. We deliberately never capture the
+  // listing's address, so no certificate here can be matched to THIS property.
+  // Every sentence below is therefore about the POSTCODE's lodged certificates
+  // and says so. "This flat is band D" is the claim we are not entitled to
+  // make, and it is the one a reader would most like to be given.
+  if (listing?.channel === 'letting') {
+    const dist = summary.bandDistribution || {};
+    const belowE = (Number(dist.F) || 0) + (Number(dist.G) || 0);
+    const total = EPC_BANDS.reduce((n, b) => n + (Number(dist[b]) || 0), 0);
+
+    if (total > 0) {
+      const line =
+        belowE > 0
+          ? `${belowE} of ${total} certificates at this postcode are below band E`
+          : `All ${total} certificates at this postcode meet band E`;
+      const mees = el('p', 'c33-mees', `${line} — the minimum for a new letting.`);
+      if (belowE > 0) mees.className += ' c33-mees-flag';
+      section.appendChild(mees);
+    }
+
+  }
+
   const list = el('ul', 'c33-list');
   for (const cert of certs.slice(0, 6)) {
     const item = el('li', 'c33-item');
@@ -783,6 +832,27 @@ function renderEpc(result) {
       ? `${shown} of ${certs.length} certificates`
       : `${shown} certificate${shown === 1 ? '' : 's'}`;
   section.appendChild(collapsible(label, list));
+
+  // Last, after the evidence, matching Sold nearby's chart → fold → disclosure
+  // order. Explanation belongs behind the thing it explains; the first cut put
+  // it above the certificate list and the two sections read differently for no
+  // reason a user could infer.
+  if (listing?.channel === 'letting') {
+    section.appendChild(
+      disclosure('What the band means for a tenant', [
+        'Under the Minimum Energy Efficiency Standard, a property in band F or ' +
+          'G generally cannot be let on a new tenancy in England and Wales, ' +
+          'with limited registered exemptions.',
+        'The band is also a running cost. Heating a band D home costs ' +
+          'materially more than a band B one, and it is a bill the tenant pays ' +
+          'on fabric only the landlord can change.',
+        'These certificates are everything lodged at this postcode. This ' +
+          'extension never reads the listing address, so none of them can be ' +
+          'matched to the specific property you are looking at — treat them as ' +
+          'the building stock here, not as this flat.',
+      ])
+    );
+  }
   return section;
 }
 
