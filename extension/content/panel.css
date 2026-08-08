@@ -20,8 +20,11 @@
 
   /* Explicit values throughout — inheriting anything from the host page is how
    * an injected widget ends up in Rightmove's brand font at their line-height. */
+  display: flex;
+  gap: 9px;
+  align-items: center;
   margin: 0;
-  padding: 10px 18px;
+  padding: 10px 18px 10px 15px;
   border: 0;
   border-radius: 999px;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -30,13 +33,46 @@
   line-height: 1.2;
   letter-spacing: 0.01em;
   color: #fff;
-  background: #12263f;
+  /* A slight vertical lift rather than a flat fill. The badge sits on a busy
+   * portal page full of flat brand colours, and depth is what separates "part
+   * of this site" from "a tool on top of it". */
+  background: linear-gradient(180deg, #1d3a5f, #12263f);
   box-shadow: 0 4px 16px rgb(0, 0, 0, 0.28);
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+/* The mark inherits the button's colour, so there is one place to change it. */
+#cubitt33-badge .c33-badge-mark {
+  display: block;
+  flex: none;
+  fill: currentcolor;
+}
+
+#cubitt33-badge .c33-badge-word {
+  letter-spacing: 0.02em;
 }
 
 #cubitt33-badge:hover {
-  background: #1d3a5f;
+  background: linear-gradient(180deg, #24456e, #16304f);
+  box-shadow: 0 6px 20px rgb(0, 0, 0, 0.32);
+  transform: translateY(-1px);
+}
+
+#cubitt33-badge:active {
+  transform: translateY(0);
+}
+
+/* Respect a user who has asked for less motion. The transform is decorative;
+ * the colour change alone still confirms the hover. */
+@media (prefers-reduced-motion: reduce) {
+  #cubitt33-badge {
+    transition: none;
+  }
+
+  #cubitt33-badge:hover {
+    transform: none;
+  }
 }
 
 #cubitt33-badge:focus-visible {
@@ -81,10 +117,85 @@
   border-bottom: 1px solid #e6eaef;
 }
 
+/* The whole title area is the collapse control, so it needs a real hit target
+ * across the header's width rather than just the word. Negative margins pull
+ * the padding back out to the header edges so the clickable area matches what
+ * the hover highlight suggests. */
+#cubitt33-panel .c33-toggle {
+  display: flex;
+  flex: 1;
+  gap: 9px;
+  align-items: center;
+  min-height: 24px;
+  margin: -6px 0 -6px -6px;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  cursor: pointer;
+}
+
+#cubitt33-panel .c33-toggle:hover {
+  background: #f2f5f8;
+}
+
+#cubitt33-panel .c33-toggle:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 1px;
+}
+
+#cubitt33-panel .c33-toggle .c33-badge-mark {
+  flex: none;
+  fill: #12263f;
+}
+
 #cubitt33-panel .c33-title {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+/* Points down when open, right when collapsed - the direction the content
+ * would travel. Rotation rather than swapping the glyph so it animates. */
+#cubitt33-panel .c33-chev {
+  display: block;
+  flex: none;
+  margin-left: auto;
+  color: #6b7c93;
+  transition: transform 140ms ease;
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-chev {
+  transform: rotate(-90deg);
+}
+
+/* Collapsed: only the header survives. The panel is fixed-position over
+ * someone else's page, so "out of the way" has to mean genuinely small, not
+ * a shorter scroll area. */
+#cubitt33-panel[data-collapsed='true'] {
+  max-height: none;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-body,
+#cubitt33-panel[data-collapsed='true'] .c33-addr,
+#cubitt33-panel[data-collapsed='true'] .c33-caveat {
+  display: none;
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-header {
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cubitt33-panel .c33-chev {
+    transition: none;
+  }
 }
 
 #cubitt33-panel .c33-close {
@@ -232,6 +343,58 @@
  * The summary is a real control, so it gets a 24px target like everything else
  * and a visible focus ring - it is keyboard-reachable by default and would
  * otherwise be the one interactive element in the panel without one. */
+/* Collapsible evidence lists (EPC certificates, sold transactions). Visually
+ * quieter than .c33-note: that one carries caveats you should probably read,
+ * this one carries rows backing a chart you have already read. */
+#cubitt33-panel .c33-fold {
+  margin: 6px 0 0;
+}
+
+/* Sentence case and normal weight, deliberately. The first cut used uppercase
+ * 600, which is exactly the treatment .c33-h3 uses for SECTION headings - so
+ * "6 of 10 certificates" read as a peer of "EPC REGISTER" rather than as a
+ * control inside it. A disclosure toggle must sit BELOW the heading it lives
+ * under, or the hierarchy inverts. */
+#cubitt33-panel .c33-fold-sum {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 12px;
+  color: #6b7c93;
+  cursor: pointer;
+  list-style: none;
+}
+
+#cubitt33-panel .c33-fold-sum:hover {
+  color: #12263f;
+}
+
+#cubitt33-panel .c33-fold-sum:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 2px;
+}
+
+/* The sold-price row: figure first, date beside it. Tabular numerals so the
+ * prices form a column the eye can compare down, which is the entire job of
+ * this list. */
+#cubitt33-panel .c33-price {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+#cubitt33-panel .c33-when {
+  flex: none;
+  font-size: 11px;
+  color: #8a97a8;
+}
+
+/* Stated once above the rows when every transaction shares an address. */
+#cubitt33-panel .c33-common {
+  margin: 2px 0 4px;
+  font-size: 11px;
+  color: #8a97a8;
+}
+
 #cubitt33-panel .c33-note {
   margin: 8px 0 0;
   border-top: 1px solid #eef1f5;
@@ -244,7 +407,49 @@
   font-size: 12px;
   color: #4a6484;
   cursor: pointer;
-  list-style: revert;
+  list-style: none;
+}
+
+/* THE DISCLOSURE TRIANGLE, DRAWN BY HAND.
+ *
+ * `display: flex` on a <summary> removes the ::marker box entirely in Chrome,
+ * so the `list-style: revert` that used to sit here could never have worked -
+ * there was no marker left to restore. "About these readings" has been
+ * rendering with no affordance at all, looking like inert grey text on a
+ * control that does something. Found in a screenshot on 2026-08-08; no
+ * assertion could see it, because the element and its handler were both fine.
+ *
+ * A CSS triangle rather than a glyph: no font dependency, inherits
+ * currentColor, and rotates cleanly. Both disclosure kinds share it. */
+#cubitt33-panel .c33-note-sum::before,
+#cubitt33-panel .c33-fold-sum::before {
+  content: '';
+  flex: none;
+  width: 0;
+  height: 0;
+  margin-right: 7px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid currentcolor;
+  transition: transform 140ms ease;
+}
+
+#cubitt33-panel .c33-note[open] .c33-note-sum::before,
+#cubitt33-panel .c33-fold[open] .c33-fold-sum::before {
+  transform: rotate(90deg);
+}
+
+/* Older Chrome still paints its own marker despite the flex rule above. */
+#cubitt33-panel .c33-note-sum::-webkit-details-marker,
+#cubitt33-panel .c33-fold-sum::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cubitt33-panel .c33-note-sum::before,
+  #cubitt33-panel .c33-fold-sum::before {
+    transition: none;
+  }
 }
 
 #cubitt33-panel .c33-note-sum:focus-visible {

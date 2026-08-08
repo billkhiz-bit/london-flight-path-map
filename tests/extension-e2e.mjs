@@ -172,7 +172,12 @@ if (epcCerts > 0) {
 // £34,000,000, so when Land Registry returns anything for SW5 the asking marker
 // must be drawn - and must NOT be drawn as a verdict.
 const soldSection = page.locator('#cubitt33-panel .c33-section', { hasText: /Sold nearby/i });
-const soldRows = await soldSection.locator('.c33-name').count();
+// .c33-price, not .c33-name: the sold rows lead with the figure since the
+// 2026-08-08 rework. Left as .c33-name this whole block would have quietly
+// taken the SKIP branch and reported "no sales for SW5" forever - the exact
+// failure the SKIP state was added to make visible, arriving through a
+// renamed selector rather than through missing data.
+const soldRows = await soldSection.locator('.c33-price').count();
 if (soldRows > 0) {
   check('sold-price range chart rendered', (await soldSection.locator('.c33-range').count()) === 1);
   check(
@@ -221,6 +226,40 @@ if (soldRows > 0) {
 } else {
   check('sold-price range chart', 'skip', 'Land Registry returned no sales for SW5');
 }
+
+// --- Header collapse ------------------------------------------------------
+// The panel is fixed-position over someone else's page, so "get out of the
+// way" has to actually shrink it. Asserting the attribute alone would pass on
+// a data-collapsed that no CSS rule reads, so the HEIGHT is measured too.
+const panelBox = page.locator('#cubitt33-panel');
+const openHeight = (await panelBox.boundingBox())?.height ?? 0;
+await panelBox.locator('.c33-toggle').click();
+await page.waitForTimeout(250);
+const shutHeight = (await panelBox.boundingBox())?.height ?? 0;
+check(
+  'header click collapses the panel to its header',
+  (await panelBox.getAttribute('data-collapsed')) === 'true' && shutHeight < openHeight / 2,
+  `${Math.round(openHeight)}px -> ${Math.round(shutHeight)}px`
+);
+check(
+  'collapsed state is announced, not only drawn',
+  (await panelBox.locator('.c33-toggle').getAttribute('aria-expanded')) === 'false'
+);
+await panelBox.locator('.c33-toggle').click();
+await page.waitForTimeout(250);
+check(
+  'header click expands it again',
+  (await panelBox.getAttribute('data-collapsed')) === 'false' &&
+    ((await panelBox.boundingBox())?.height ?? 0) > shutHeight
+);
+
+// The close button lives inside the header beside the toggle. If it ever ends
+// up NESTED in the toggle button, Chrome resolves the click ambiguously and
+// close starts collapsing instead. Invalid HTML that still renders.
+check(
+  'close button is not nested inside the collapse toggle',
+  (await panelBox.locator('.c33-toggle .c33-close').count()) === 0
+);
 
 check('no stale Loading text', !text.includes('Loading'));
 check('OSM/ODbL attribution', /OpenStreetMap/i.test(text));

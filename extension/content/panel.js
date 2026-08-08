@@ -59,6 +59,50 @@ function disclosure(summaryText, paragraphs) {
   return box;
 }
 
+/**
+ * A collapsible list, closed by default.
+ *
+ * WHY THE DETAIL COLLAPSES AND THE CHART DOES NOT. Each section now leads with
+ * a chart that answers the question at a glance - the postcode's band spread,
+ * the sold range - and follows with the rows the chart was built from. Those
+ * rows are evidence, not headline: four EPC certificates and four transactions
+ * is sixteen lines of small text, which pushed everything after it off-screen
+ * and made two summarised sections read as one undifferentiated list.
+ *
+ * <details> rather than a click handler because it is the browser's own
+ * disclosure widget: keyboard operable, announced as expandable, and included
+ * in find-in-page in Chrome. Reimplementing it with a div and a listener loses
+ * all three.
+ */
+function collapsible(summaryText, contentNode) {
+  const box = el('details', 'c33-fold');
+  box.appendChild(el('summary', 'c33-fold-sum', summaryText));
+  box.appendChild(contentNode);
+  return box;
+}
+
+/**
+ * "4 COLLINGHAM ROAD" -> "4 Collingham Road".
+ *
+ * Land Registry publishes addresses in caps. Reproduced verbatim they read as
+ * shouting inside a panel where nothing else is uppercase except the section
+ * headings, so the loudest text on screen ends up being the least important.
+ * Words already containing a digit are left alone, so "SW5" and "C14" survive.
+ */
+function titleCase(s) {
+  return String(s || '').replace(/[^\s·]+/g, (w) =>
+    /\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  );
+}
+
+/** "2025-03-14" -> "Mar 2025". Day precision is noise for a sold price. */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function shortDate(iso) {
+  const m = /^(\d{4})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return '';
+  return `${MONTHS[Number(m[2]) - 1] || ''} ${m[1]}`.trim();
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function svgEl(tag, attrs) {
@@ -661,7 +705,7 @@ function renderEpc(result) {
   }
 
   const list = el('ul', 'c33-list');
-  for (const cert of certs.slice(0, 4)) {
+  for (const cert of certs.slice(0, 6)) {
     const item = el('li', 'c33-item');
     const row = el('div', 'c33-row');
     row.appendChild(el('span', 'c33-name', cert.address || 'Address not given'));
@@ -674,10 +718,21 @@ function renderEpc(result) {
     if (/^[A-G]$/.test(band)) badge.className += ` c33-band-${band.toLowerCase()}`;
     row.appendChild(badge);
     item.appendChild(row);
-    if (cert.date) item.appendChild(el('div', 'c33-sub', `lodged ${cert.date.slice(0, 10)}`));
+    // "lodged 2025-01-21" -> "Jan 2025". The day a certificate was filed is
+    // never the question; roughly how recent it is always is.
+    if (cert.date) item.appendChild(el('div', 'c33-sub', shortDate(cert.date)));
     list.appendChild(item);
   }
-  section.appendChild(list);
+
+  // Folded away by default. The chart above already answers "what are the
+  // bands here"; these rows are the evidence behind it, and open they cost
+  // twelve lines that pushed Sold nearby off the first screen entirely.
+  const shown = Math.min(certs.length, 6);
+  const label =
+    certs.length > shown
+      ? `${shown} of ${certs.length} certificates`
+      : `${shown} certificate${shown === 1 ? '' : 's'}`;
+  section.appendChild(collapsible(label, list));
   return section;
 }
 
@@ -705,23 +760,74 @@ function renderSoldPrices(result, listing) {
   const range = priceRange(tx, listing?.askingPrice ?? null);
   if (range) section.appendChild(range);
 
+  // Most recent first. The API's order is not guaranteed, and a 2007 sale at
+  // the top of a list headed "Sold nearby" invites the reader to take it as
+  // current. Sorting on the date we already display keeps what is shown and
+  // what it is ranked by the same thing.
+  const ordered = [...tx].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+  const shownTx = ordered.slice(0, 6);
+  const whereOf = (t) => titleCase([t.address, t.street].filter(Boolean).join(' ').trim());
+  // "flat-maisonette" is Land Registry's raw enum. Presented as written it looks
+  // like a field we forgot to format; hyphen to slash is the whole fix.
+  const typeOf = (t) => (t.type ? String(t.type).replace(/-/g, '/') : '');
+
+  // ELIDE WHAT IS CONSTANT. Land Registry keys on PAON, so a block of flats
+  // returns every sale at the same "4 COLLINGHAM ROAD" and often the same
+  // property type - printed per row that reads as one property sold six times,
+  // and it fills the line where the distinguishing detail should be. Any field
+  // identical across the whole list is stated ONCE above the rows: a repeated
+  // value carries no information after its first appearance.
+  const constant = (fn) => {
+    const vals = shownTx.map(fn);
+    return vals[0] && vals.every((v) => v === vals[0]) ? vals[0] : null;
+  };
+  const commonWhere = constant(whereOf);
+  const commonType = constant(typeOf);
+
   const list = el('ul', 'c33-list');
-  for (const t of tx.slice(0, 4)) {
+  for (const t of shownTx) {
     const item = el('li', 'c33-item');
+
+    // Price leads, date beside it. This row used to put the address first and
+    // the price right-aligned, with the date on a third line - so scanning for
+    // "what did things go for, and when" meant reading three lines per sale in
+    // two different alignments. Price and date are the comparison; the address
+    // is which one, and drops to the secondary line with the property type.
     const row = el('div', 'c33-row');
-    const where = [t.address, t.street].filter(Boolean).join(' ') || 'Address not given';
-    row.appendChild(el('span', 'c33-name', where));
     row.appendChild(
-      el('span', 'c33-dist', t.price ? '£' + Number(t.price).toLocaleString('en-GB') : '')
+      el('span', 'c33-price', t.price ? '£' + Number(t.price).toLocaleString('en-GB') : '')
     );
+    row.appendChild(el('span', 'c33-when', shortDate(t.date)));
     item.appendChild(row);
-    const meta = [t.date ? t.date.slice(0, 10) : '', t.type, t.newBuild ? 'new build' : '']
+
+    const meta = [
+      commonWhere ? '' : whereOf(t) || 'Address not given',
+      commonType ? '' : typeOf(t),
+      // Never elided: "new build" is true of individual sales, so its absence
+      // on a row is information rather than repetition.
+      t.newBuild ? 'new build' : '',
+    ]
       .filter(Boolean)
       .join(' · ');
     if (meta) item.appendChild(el('div', 'c33-sub', meta));
     list.appendChild(item);
   }
-  section.appendChild(list);
+
+  const wrap = el('div', null);
+  // "at" before the address, or "All 4 Collingham Road" reads as "all four".
+  const shared = commonWhere
+    ? [`at ${commonWhere}`, commonType].filter(Boolean).join(' · ')
+    : commonType;
+  if (shared) wrap.appendChild(el('p', 'c33-common', `All ${shared}`));
+  wrap.appendChild(list);
+
+  const shown = shownTx.length;
+  const label =
+    ordered.length > shown
+      ? `${shown} most recent of ${ordered.length} sales`
+      : `${shown} sale${shown === 1 ? '' : 's'}`;
+  section.appendChild(collapsible(label, wrap));
   return section;
 }
 
@@ -758,7 +864,49 @@ function buildPanel(listing, plan) {
   panel.setAttribute('aria-label', 'cubitt33 property data');
 
   const header = el('header', 'c33-header');
-  header.appendChild(el('span', 'c33-title', 'cubitt33'));
+
+  // The title is a BUTTON, not a span with a listener on the header. A bare
+  // click handler on a <header> is invisible to the keyboard and announces
+  // nothing; a button is focusable, operable with Enter and Space, and carries
+  // aria-expanded so the collapsed state is perceivable without seeing it.
+  //
+  // It does NOT wrap the close button. Nesting an interactive element inside
+  // another is invalid HTML and Chrome resolves the click ambiguously - close
+  // would sometimes collapse instead.
+  const toggle = el('button', 'c33-toggle');
+  toggle.type = 'button';
+  toggle.setAttribute('aria-expanded', 'true');
+  toggle.appendChild(badgeMark());
+  toggle.appendChild(el('span', 'c33-title', 'cubitt33'));
+  // Drawn, not the '⌄' character. That glyph has no consistent metrics across
+  // the system-ui stack and rendered as a small lowercase "v" sitting off the
+  // baseline - visible in the 2026-08-08 screenshot. A path has the shape it
+  // is given, everywhere.
+  const chev = svgEl('svg', {
+    class: 'c33-chev',
+    width: 12,
+    height: 12,
+    viewBox: '0 0 12 12',
+    'aria-hidden': 'true',
+    focusable: 'false',
+  });
+  chev.appendChild(
+    svgEl('path', {
+      d: 'M3 4.5 L6 7.5 L9 4.5',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': 1.6,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    })
+  );
+  toggle.appendChild(chev);
+  toggle.addEventListener('click', () => {
+    const collapsed = panel.getAttribute('data-collapsed') === 'true';
+    panel.setAttribute('data-collapsed', String(!collapsed));
+    toggle.setAttribute('aria-expanded', String(collapsed));
+  });
+  header.appendChild(toggle);
 
   const close = el('button', 'c33-close', '×');
   close.type = 'button';
@@ -950,12 +1098,41 @@ function removeBadge() {
   document.getElementById(BADGE_ID)?.remove();
 }
 
+/**
+ * The badge mark: a miniature of the scale bar the panel is built from.
+ *
+ * A track, a threshold tick, and a dot sitting past it. It is the same shape as
+ * every reading inside — the WHO bars, the MEES tick, the asking-price marker —
+ * so the button previews what clicking it gives you rather than just spelling
+ * the name. Drawn rather than an image file so it inherits currentColor and
+ * needs no web-accessible resource declaration in the manifest.
+ */
+function badgeMark() {
+  const svg = svgEl('svg', {
+    class: 'c33-badge-mark',
+    width: 18,
+    height: 12,
+    viewBox: '0 0 18 12',
+    'aria-hidden': 'true',
+    focusable: 'false',
+  });
+  // r=2.6 on a 2px track, not r=3: the first cut read as a lollipop rather than
+  // a marker on a scale. The dot has to sit ON the track, not swallow it.
+  svg.appendChild(svgEl('rect', { x: 0, y: 5, width: 18, height: 2, rx: 1, opacity: 0.35 }));
+  svg.appendChild(svgEl('rect', { x: 0, y: 5, width: 10, height: 2, rx: 1 }));
+  svg.appendChild(svgEl('rect', { x: 13.2, y: 1.5, width: 1.2, height: 9, rx: 0.6 }));
+  svg.appendChild(svgEl('circle', { cx: 10, cy: 6, r: 2.6 }));
+  return svg;
+}
+
 function showBadge(listing) {
   removeBadge();
 
-  const badge = el('button', null, 'cubitt33');
+  const badge = el('button', null);
   badge.id = BADGE_ID;
   badge.type = 'button';
+  badge.appendChild(badgeMark());
+  badge.appendChild(el('span', 'c33-badge-word', 'cubitt33'));
   badge.setAttribute('aria-label', 'Show cubitt33 property data for this listing');
 
   badge.addEventListener('click', () => {
