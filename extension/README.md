@@ -94,7 +94,7 @@ their cookie manifest nobody knew were there. The synthetic variant has been
 deleted rather than kept alongside: two fixtures asserting the same thing would
 imply two independent proofs where there was one.
 
-### Typical rent (lettings only, added 2026-08-08)
+### Typical rent (both sales and lettings, added 2026-08-08)
 
 `extension/data/london-rents.json` — ONS Price Index of Private Rents, average
 monthly rent per London borough, split by bedroom count. Regenerate with

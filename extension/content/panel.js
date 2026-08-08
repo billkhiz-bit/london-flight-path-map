@@ -149,9 +149,12 @@ function scaleBar({ value, guideline, unit, max }) {
     width: '100%',
     height,
     role: 'img',
+    // Without a guideline the bare "5 out of 10" says nothing about direction,
+    // which is precisely the ambiguity the visible row was just fixed for. The
+    // unit's trailing word ("/10 noise" -> "noise") names what is being scored.
     'aria-label': guideline
       ? `${value} ${unit}, ${over ? 'above' : 'within'} the WHO guideline of ${guideline} ${unit}`
-      : `${value} out of ${max}`,
+      : `${value} out of ${max}${/^\/\d+\s+(.+)$/.exec(unit || '') ? ` for ${/^\/\d+\s+(.+)$/.exec(unit)[1]}` : ''}`,
   });
 
   svg.appendChild(svgEl('rect', { class: 'c33-bar-track', x: 0, y: 4, width: '100%', height: 4, rx: 2 }));
@@ -530,10 +533,16 @@ function decidePresentation(listing) {
   // role (what does money look like here), different claim. Keeping the price
   // context in one place across both layouts is the same reasoning that keeps
   // Environment leading throughout.
+  // Rent shows on BOTH, after the sale prices rather than instead of them. On a
+  // purchase the borough rent is the yield side of the same question, and it is
+  // the one number here a buyer cannot get from the listing page. It sits
+  // second because Sold nearby is the stronger claim - real transactions on
+  // this postcode against a borough-wide average - and the weaker figure should
+  // not be met first.
   const letting = listing.channel === 'letting';
   const order = letting
     ? ['environment', 'epc', 'rent', 'nhs']
-    : ['environment', 'epc', 'soldPrices', 'nhs'];
+    : ['environment', 'epc', 'soldPrices', 'rent', 'nhs'];
 
   if (!listing.inLondon) {
     // Outside London the environmental rasters thin out - DEFRA's aircraft
@@ -656,12 +665,30 @@ function renderEnvironment(result) {
   // disclosure and nothing is lost, rather than vanishing from both places.
   const aircraftNotice = (data.notices || []).find((n) => /^Aircraft noise here is/.test(n));
 
+  // THE ESTIMATE IS INVERTED FOR DISPLAY, AND THE REASON IS THE ROW BESIDE IT.
+  //
+  // `/v1/environment` returns aircraftQuietEstimated as a QUIET score: 10 is
+  // the quietest. Every other row in this section runs the other way - dB Lden
+  // and ug/m3 all rise with the thing that harms you - so one row silently
+  // inverted its axis while wearing the same bar. "Aircraft noise 8/10" beside
+  // "Road noise 49.5 dB" reads as loud, and the long bar reinforces it. The
+  // word "quiet" in the unit was carrying the entire correction, in the
+  // smallest text on the row.
+  //
+  // 10 - quiet is exact and reversible on a bounded scale, not an estimate.
+  // But it DOES mean the panel prints a number the API does not, which is the
+  // shape of divergence this project has been bitten by three times - so the
+  // relationship is asserted in tests/extension-e2e.mjs against a live
+  // /v1/environment call rather than left as an implementation detail.
+  const aircraftNoiseScore =
+    typeof env.aircraftQuietEstimated === 'number' ? 10 - env.aircraftQuietEstimated : null;
+
   const rows = [
     ['Aircraft noise', env.aircraftNoiseLdenDb, 'dB Lden', env.aircraftNoiseWhoGuidelineDb, mapsCovidYear, ''],
     [
       'Aircraft noise (estimated)',
-      env.aircraftQuietEstimated,
-      '/10 quiet',
+      aircraftNoiseScore,
+      '/10 noise',
       null,
       false,
       // Prefer the endpoint's own per-row basis string, which exists for this;

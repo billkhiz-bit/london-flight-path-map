@@ -203,6 +203,55 @@ if (estIdx >= 0) {
     /not measured/i.test(envTexts[estIdx] || ''),
     (envTexts[estIdx] || '').replace(/\n/g, ' / ').slice(0, 70)
   );
+
+  // THE INVERSION PARITY CHECK.
+  //
+  // The endpoint returns a QUIET score (10 = quietest); the panel prints NOISE
+  // (10 = loudest) so the number rises with the row's own name, like every
+  // other reading in the section. That transform means the panel shows a value
+  // /v1/environment does not, which is the exact shape of divergence this
+  // project has been bitten by three times - all of which were invisible to
+  // checks that compared inputs rather than the rendered output.
+  //
+  // So this asks the live endpoint for the same coordinate and asserts the
+  // arithmetic, rather than trusting that a constant in one file still matches
+  // a constant in another.
+  const envApi = await fetch(
+    `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=${LAT}&lon=-0.18825`
+  )
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  const apiQuiet = envApi?.environment?.aircraftQuietEstimated;
+  const shownNoise = Number((/(\d+(?:\.\d+)?)\s*\/\s*10/.exec(envTexts[estIdx] || '') || [])[1]);
+
+  if (typeof apiQuiet === 'number' && Number.isFinite(shownNoise)) {
+    // SW5's quiet score is 5, and 10 - 5 = 5, so on THIS fixture the assertion
+    // passes identically whether or not the inversion is applied. Recorded
+    // rather than glossed: the discriminating case is the NW2 letting page
+    // below, whose quiet score is 8 and must therefore render 2.
+    const symmetric = apiQuiet === 5;
+    check(
+      'aircraft score is the API quiet value inverted, exactly',
+      shownNoise === 10 - apiQuiet,
+      `panel ${shownNoise}/10 noise, API ${apiQuiet}/10 quiet` +
+        (symmetric ? ' — SYMMETRIC, cannot detect a missing inversion here' : '')
+    );
+  } else {
+    check(
+      'aircraft score inversion parity',
+      'skip',
+      `API quiet ${JSON.stringify(apiQuiet)}, panel ${JSON.stringify(shownNoise)}`
+    );
+  }
+
+  // The label must name what rises. "8/10" beside "Road noise 49.5 dB Lden"
+  // read as loud when it meant quiet; the word "quiet" in the smallest text on
+  // the row was carrying the whole correction.
+  check(
+    'aircraft score is expressed as noise, not quiet',
+    /\/10\s*noise/i.test(envTexts[estIdx] || '') && !/quiet/i.test(envTexts[estIdx] || ''),
+    (envTexts[estIdx] || '').split('\n')[1] || ''
+  );
   check(
     'the caveat precedes road noise rather than trailing it',
     roadIdx === -1 || estIdx < roadIdx,
@@ -310,13 +359,17 @@ check(
   (await panelBox.locator('.c33-toggle .c33-close').count()) === 0
 );
 
-// The rent reference is letting-only. On a sale, Sold nearby occupies that slot
-// with actual transactions on this postcode, which is a stronger claim than a
-// borough average; showing both would put a coarse figure beside a fine one and
-// invite them to be read as the same kind of number.
+// Rent shows on sales too, AFTER Sold nearby. Ordering is the assertion: real
+// transactions on this postcode are a stronger claim than a borough-wide
+// average, and the weaker figure must not be met first.
+const saleHeads = await page.locator('#cubitt33-panel .c33-section h3').allInnerTexts();
+const soldPos = saleHeads.findIndex((h) => /sold nearby/i.test(h));
+const rentPos = saleHeads.findIndex((h) => /typical rent/i.test(h));
+check('sale: borough rent shown too', rentPos >= 0, saleHeads.join(','));
 check(
-  'sale: no borough rent section',
-  (await page.locator('#cubitt33-panel .c33-section h3').filter({ hasText: /Typical rent/i }).count()) === 0
+  'sale: rent follows sold prices, never precedes them',
+  soldPos === -1 || rentPos === -1 || soldPos < rentPos,
+  `sold at ${soldPos}, rent at ${rentPos}`
 );
 
 check('no stale Loading text', !text.includes('Loading'));
@@ -401,6 +454,31 @@ check(
   !/this (property|flat|home) is band/i.test(letText)
 );
 check('letting: place data still shown', /ENVIRONMENT/i.test(letText) && /HEALTHCARE/i.test(letText));
+
+// THE DISCRIMINATING INVERSION CASE. NW2's quiet score is 8, so noise must
+// render 2. Unlike SW5 (quiet 5, where 10-5=5 and the check cannot tell an
+// inverted value from an un-inverted one), this asymmetric value fails loudly
+// if the transform is ever dropped.
+const letEnvApi = await fetch(
+  'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.556473&lon=-0.218428'
+)
+  .then((r) => (r.ok ? r.json() : null))
+  .catch(() => null);
+const letQuiet = letEnvApi?.environment?.aircraftQuietEstimated;
+const letShown = Number((/(\d+(?:\.\d+)?)\s*\/\s*10\s*noise/i.exec(letText) || [])[1]);
+if (typeof letQuiet === 'number' && letQuiet !== 5 && Number.isFinite(letShown)) {
+  check(
+    'aircraft inversion proven on an asymmetric value',
+    letShown === 10 - letQuiet,
+    `panel ${letShown}/10 noise, API ${letQuiet}/10 quiet`
+  );
+} else {
+  check(
+    'aircraft inversion on an asymmetric value',
+    'skip',
+    `API quiet ${JSON.stringify(letQuiet)} — symmetric or absent, cannot discriminate`
+  );
+}
 
 // --- The borough rent reference -------------------------------------------
 //
