@@ -26,7 +26,11 @@ geocodes, so this build needs no backend change and no API key.
 
 **EPC register** — `GET /epc?postcode=` (MHCLG)
 - Recent certificates for the postcode, band and lodgement date
-- The band distribution for the postcode, so a single certificate has context
+- The band distribution for the postcode, so a single certificate has context,
+  drawn as seven discrete columns with the MEES threshold (band E, the lowest a
+  property may legally be let at) marked. Deliberately **not** a continuous bar:
+  `cert.rating` is synthesised from band midpoints upstream, so every C returns
+  75 and plotting it would invent a precision the data does not carry
 
 **Sold nearby** — `GET /sold-prices?postcode=` (HM Land Registry Price Paid)
 - Recent transactions with date, price and property type
