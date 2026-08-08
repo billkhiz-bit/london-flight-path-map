@@ -33,7 +33,16 @@ geocodes, so this build needs no backend change and no API key.
   75 and plotting it would invent a precision the data does not carry
 
 **Sold nearby** — `GET /sold-prices?postcode=` (HM Land Registry Price Paid)
-- Recent transactions with date, price and property type
+- The recorded sales as a range, with **this listing's asking price marked on
+  it**. Where the asking price falls outside the sales entirely the chart says
+  so in words, because that is the case where the dots collapse into one blob
+  and the spread stops being readable
+- Recent transactions, most recent first, with date, price and property type.
+  Any field identical across the whole list (Land Registry keys on PAON, so a
+  block of flats repeats one address and one type) is stated once above the rows
+- **No verdict**: no colour, no "% above average". Land Registry lags completion
+  by around two months and is unadjusted for size, condition, floor or lease, so
+  position is a fact it supports and "overpriced" is not
 
 **Healthcare** — `GET /nhs?lat=&lon=` (OpenStreetMap via Overpass)
 - Nearest 3 GP surgeries, pharmacies and hospitals, with distances
@@ -44,9 +53,36 @@ stations with distances on every listing, so the section duplicated the page it
 was sitting on. `GET /transport?lat=&lon=` still exists and is still deployed;
 nothing about it was wrong, it just had nothing to add here.
 
-**From the page, no network call** — map-pin coordinates, address, outcode.
+**From the page, no network call** — map-pin coordinates, address, outcode, and
+since 2026-08-08 the **asking price**.
 
-## How it reads (reworked 2026-08-07)
+The price is **read, never transmitted.** The only value that leaves the browser
+is still a rounded coordinate pair; the comparison against sold prices happens
+in the tab, against a payload already fetched on that coordinate. `extract.js`'s
+header comment previously said the price was never read at all, and was
+corrected rather than quietly weakened — that sentence is what a Chrome Web
+Store listing and `privacy.html` would both rest on.
+
+It is returned **only on a positive `RES_BUY` / `BUY` signal**, never when the
+channel is merely absent. On a letting Rightmove's `price` is a *monthly* figure,
+so £2,400 pcm would plot at the far left of a range of completed sales and read
+as the bargain of the century. That is one field away at all times, so the
+default is to withhold.
+
+## How it reads (reworked 2026-08-07, extended 2026-08-08)
+
+**2026-08-08 layout.** Each section leads with a chart that answers its question
+at a glance and folds the rows it was built from into a closed `<details>`. The
+panel itself collapses to its header on a header click (504px → 48px), because
+it is fixed-position over someone else's page and "out of the way" has to mean
+genuinely small.
+
+Gotcha worth keeping: **`display: flex` on a `<summary>` removes the `::marker`
+box entirely in Chrome**, so `list-style: revert` cannot bring the disclosure
+triangle back — there is no marker left to style. "About these readings" had
+been rendering with no affordance at all. The panel draws its own triangle now.
+Only a screenshot found it; the element and its handler were both correct.
+
 
 The panel was mostly prose: a real SW5 listing carried four lines of caveat
 supporting two numbers, and outside London it showed one measurement under two
@@ -104,8 +140,13 @@ composite score. The scoring engine stays behind the key.
 | Omitted | Why |
 |---|---|
 | Sky Score total + components | `/v1/score` is API-key gated and an extension cannot hold a key. `/v1/environment` deliberately returns measurements only. |
-| EPC | `/epc` is postcode-keyed; the reverse geocode now exists, so this is a smaller job than it was. `floorArea` also comes back empty (`epc/app.py:186`). |
-| Sold prices | Same: postcode-keyed, now unblocked by the reverse geocode. |
+| EPC floor area | `floorArea` comes back empty from the search API (`epc/app.py:186`), so a £/m² comparison is not available. This is the single field that would let the sold-price chart adjust for size. |
+
+**Corrected 2026-08-08:** this table listed EPC and Sold prices as omitted while
+the section above documented both — they were unblocked by the reverse geocode
+and shipped, and the table was never updated. A "what we don't do" list that
+disagrees with the "what we do" list six paragraphs above it is worse than
+absent, because it is the one a reviewer quotes.
 
 ## What is already verified
 
@@ -215,7 +256,12 @@ renders them in its footer. Do not drop that footer.
    what is actually configured, and the page is deployed. The Chrome Web Store
    requires a privacy policy URL and this is the page it would cite, so it had
    to be true before any listing. A **store-specific** disclosure is still
-   needed covering what the extension itself handles.
+   needed covering what the extension itself handles — and since 2026-08-08 that
+   must state plainly that the **asking price is read from the page and never
+   transmitted**. Chrome's data-use declarations ask what is *collected*, and
+   "read into a content script, compared locally, never sent" is a different
+   answer from both "collected" and "not handled". Get that wording right before
+   filing, not after.
 2. **Caching must move server-side.** The session cache here dies with the
    browser; a shared DynamoDB cache in front of `/epc`, `/sold-prices` and
    `/nhs` is what actually protects skyscore.co.uk from the extension's traffic.

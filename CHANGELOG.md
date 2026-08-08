@@ -6,6 +6,65 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-08 - both DEFRA loaders found dead, and the charts learned to say less
+
+**DEPLOYED**: nothing. Extension is local-only and the loaders write straight to
+DynamoDB, which the score Lambda reads live.
+
+- **Both DEFRA loaders had been dead for a day and `load_status.sh` reported
+  both as RUNNING.** Road stopped 6 Aug at 92%, air quality 7 Aug at 4%; the
+  script branched on whether the checkpoint FILE EXISTED, and the loaders delete
+  it only on a clean full finish, so every interrupted run leaves one behind
+  forever. It also printed `rate 25.27it/s, elapsed 3:19:34` scraped from a log
+  nothing had written to in 38 hours - a tqdm frame carries no timestamp, so a
+  rate from a dead run is indistinguishable from a live one. Liveness now comes
+  from the checkpoint's mtime, with thresholds derived from the measured write
+  cadence (~15 rows/s over 1,000-row checkpoints means a HEALTHY loader is
+  silent for ~65s, so anything under two minutes would have flagged the running
+  loader as dead). The raw age prints on every line whatever the verdict says.
+- **CORRECTION: "road 99.2%" below was the SOURCE GRID too, not what was
+  served.** The 2026-08-07 correction caught the air figure and did not ask
+  where the number beside it came from. The road pass had died at `UB6 9TJ`, so
+  everything from there on - **`W`, `WC` and `WD`, the entire West End** - had
+  never been served a road reading. `W1D 3QU` held no `roadLdenDb` at all until
+  the pass was resumed and finished today; it now reads 56. Two coverage
+  percentages written in one sentence, both describing the source rather than
+  the table, and only one of them was checked.
+- **Road load COMPLETE.** Air quality resumed and running; it writes in
+  postcode-alphabetical order and had only reached `BA14` (Bath), so **no London
+  postcode had an air-quality figure** a day after the coverage claim was
+  corrected. Measured at 27 rows/s, ~26h to finish. Watch what a loader has
+  REACHED, not the percentage: 4% of an alphabetical pass over the whole UK is
+  0% of the city that matters.
+- **EPC bands now render as a chart**, seven discrete columns with the MEES
+  threshold (band E, the lowest a property may legally be let at) marked.
+  Deliberately **not** a `scaleBar`: `cert.rating` looks like a plottable SAP
+  score but is synthesised from `BAND_MIDPOINT` in the Lambda, because MHCLG's
+  search API dropped the numeric rating - every band C in the country returns
+  exactly 75. Plotting it on a continuous axis would assert a precision that no
+  longer exists anywhere in the pipeline.
+- **Sold prices render as a range with the asking price marked.** The asking
+  price is now READ from the listing page and **still never transmitted** - the
+  comparison happens in the tab, against a payload already fetched on a rounded
+  coordinate. `extract.js`'s "never the price" header was corrected rather than
+  quietly weakened, because that sentence is what the store listing and
+  `privacy.html` both rest on. Returned **only on a positive `RES_BUY`/`BUY`
+  signal**: on a letting Rightmove's `price` is a monthly figure, so £2,400 pcm
+  would plot at the far left of a range of completed sales and read as the
+  bargain of the century. No verdict anywhere - no colour, no "% above average"
+  - because Land Registry lags completion and is unadjusted for size, condition
+  or lease.
+- **Panel collapses to its header**, and the EPC certificates and sold
+  transactions fold into `<details>` under their charts. **Gotcha: `display:
+  flex` on a `<summary>` removes the `::marker` box in Chrome**, so the
+  `list-style: revert` that had been sitting on `.c33-note-sum` could never have
+  worked - "About these readings" had been rendering with no disclosure
+  affordance at all. Both kinds now draw their own triangle.
+- **Constant fields are elided from the sold list.** Land Registry keys on PAON,
+  so a block of flats returns every sale at the same address and often the same
+  type; six rows of `4 COLLINGHAM ROAD · flat-maisonette` read as one property
+  sold six times. Anything identical across the list is stated once above it.
+
 ### 2026-08-07 - log retention actually bound, the company named as controller, and a gate that could be starved
 
 **DEPLOYED**: `privacy.html`, `terms.html`, `index.html`,
@@ -134,7 +193,9 @@ groups deleted, 30-day retention set on 7, new `SkyScoreCiTier` plan and key.
   (`scripts/fetch_defra_road_noise.py`) that removes the browser-only download
   step from METHODOLOGY §7; air quality from DEFRA PCM background maps. Both
   **reported, not scored** - weighting them would change every score ever
-  returned. Coverage: aircraft 9.0%, road 99.2%, air 100%.
+  returned. Coverage: aircraft 9.0%, road 99.2%, air 100%. **Every one of these
+  three figures describes the SOURCE GRID, not the table** - see the two
+  corrections below, 7 Aug for air and 8 Aug for road.
   - **CORRECTION (2026-08-07): the air figure described the SOURCE GRID, not
     what was served.** `scripts/load_defra_air_quality.py` was written and the
     two DEFRA CSVs downloaded, but **the loader was never run**, so

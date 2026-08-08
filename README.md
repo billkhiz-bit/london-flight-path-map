@@ -160,6 +160,23 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 - **NYC**: 5 boroughs by ZIP (~182 residential ZIPs supported), or by borough name
 - **Planned**: UK Core Cities (Manchester, Birmingham, Bristol, Leeds, etc.), then England + Wales
 
+### Environmental measurements (`/v1/environment`), as at 2026-08-08
+
+These are **reported, not scored** — weighting them would change every score the
+API has ever returned. Coverage differs enormously per measurement, and the
+figures below describe **what the table actually holds**, not what the source
+grids contain:
+
+| Measurement | Coverage | Note |
+|---|---|---|
+| Aircraft Lden | ~9% of London postcodes | DEFRA's contours are localised lobes around airports. Outside them there is no reading, and the endpoint **omits the key** rather than returning a default |
+| Road Lden | Complete across the London raster | Finished 2026-08-08. Was missing everything from `UB6` onward — `W`, `WC`, `WD` — for two days before that |
+| NO₂ / PM2.5 | **Loading; London not yet reached** | The pass runs in postcode-alphabetical order over the whole UK, so early-alphabet regions have figures well before London does |
+
+A missing key means "not measured here", never "measured and fine" — the
+distinction is deliberate, and it is also what let an unrun loader look
+identical to genuine absence for a day. See `CHANGELOG.md` for both corrections.
+
 ## Architecture
 
 Single-region AWS, fully serverless, deployed via SAM:
