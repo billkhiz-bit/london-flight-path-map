@@ -125,6 +125,96 @@ function scaleBar({ value, guideline, unit, max }) {
   return svg;
 }
 
+// The official certificate scale, worst to best left-to-right is NOT how the
+// certificate prints it, so A first. Fixed seven steps, never interpolated.
+const EPC_BANDS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
+/**
+ * The postcode's EPC bands as seven columns.
+ *
+ * WHY THIS IS NOT A scaleBar. `cert.rating` looks like a plottable 1-100 SAP
+ * score and is not one: MHCLG's search API stopped returning the numeric
+ * rating, so `backend/lambdas/epc/app.py` synthesises it from BAND_MIDPOINT.
+ * Every band C in the country comes back as exactly 75. Drawing that on a
+ * continuous axis would assert a precision that no longer exists anywhere in
+ * the pipeline - the same invented-number failure scaleBar()'s domain comment
+ * refuses, only wearing a real number's clothing. The BAND is the datum, so
+ * the chart has exactly as many positions as there are bands.
+ *
+ * WHY THE TICK IS AT E. Same rule as the WHO guideline: cite a threshold,
+ * never invent one. The Minimum Energy Efficiency Standard makes E the lowest
+ * band a property may legally be let at, so F and G columns are the ones that
+ * carry a consequence. It is someone else's threshold and it is named on the
+ * chart, exactly as "WHO 53" is.
+ *
+ * Height encodes count, colour is the official band ramp, and the letters sit
+ * under the columns - so the chart is readable without colour, which the ramp
+ * alone would not be.
+ */
+function bandStrip(distribution) {
+  const counts = EPC_BANDS.map((b) => Number(distribution[b]) || 0);
+  const total = counts.reduce((a, b) => a + b, 0);
+  if (!total) return null;
+
+  const peak = Math.max(...counts);
+  const colW = 100 / EPC_BANDS.length;
+  const FLOOR = 32;
+  const TALLEST = 26;
+
+  const svg = svgEl('svg', {
+    class: 'c33-strip',
+    width: '100%',
+    height: 56,
+    role: 'img',
+    'aria-label':
+      `EPC bands lodged for this postcode: ` +
+      EPC_BANDS.map((b, i) => `${b} ${counts[i]}`).join(', ') +
+      `. E is the minimum band a property may legally be let at.`,
+  });
+
+  counts.forEach((n, i) => {
+    // A zero column still gets a 1px stub. A band with no certificates and a
+    // band that is simply short must not look identical, and an empty gap
+    // reads as "no data for this band" rather than "none here".
+    const h = peak ? Math.max((n / peak) * TALLEST, n ? 3 : 1) : 1;
+    svg.appendChild(
+      svgEl('rect', {
+        class: `c33-strip-col c33-strip-${EPC_BANDS[i].toLowerCase()}`,
+        x: `${i * colW + 1.2}%`,
+        width: `${colW - 2.4}%`,
+        y: FLOOR - h,
+        height: h,
+        rx: 1,
+      })
+    );
+
+    const lab = svgEl('text', {
+      class: 'c33-strip-lab',
+      x: `${(i + 0.5) * colW}%`,
+      y: 43,
+      'text-anchor': 'middle',
+    });
+    lab.textContent = EPC_BANDS[i];
+    svg.appendChild(lab);
+  });
+
+  // The boundary between E and F, i.e. after the fifth column.
+  const tickX = `${5 * colW}%`;
+  svg.appendChild(
+    svgEl('line', { class: 'c33-strip-tick', x1: tickX, x2: tickX, y1: 0, y2: 35 })
+  );
+  const tickLab = svgEl('text', {
+    class: 'c33-strip-ticklab',
+    x: tickX,
+    y: 54,
+    'text-anchor': 'middle',
+  });
+  tickLab.textContent = 'MEES E';
+  svg.appendChild(tickLab);
+
+  return svg;
+}
+
 /**
  * The compact "we have nothing" state. Was a heading plus a sentence per
  * section, so four dead sections cost eight lines and pushed the data that DID
@@ -391,15 +481,17 @@ function renderEpc(result) {
   // this postcode, and how this property's claim sits against its neighbours.
   // A listing claiming C on a postcode where seven of nine homes are D or E is
   // a question worth asking, and no listing page asks it for you.
-  const dist = summary.bandDistribution || {};
-  const bands = Object.entries(dist).filter(([, n]) => n > 0);
-  if (bands.length) {
-    section.appendChild(
-      el('div', 'c33-sub', 'Postcode: ' + bands.map(([b, n]) => `${b}×${n}`).join('  '))
-    );
-  }
-  if (summary.mostCommonBand && summary.mostCommonBand !== 'N/A') {
-    section.appendChild(el('div', 'c33-sub', `Most common band here: ${summary.mostCommonBand}`));
+  // Was two text lines - "Postcode: B×2 C×5 D×3" and "Most common band here: C"
+  // - which asked the reader to hold seven counts in their head to see a shape.
+  // The chart is that shape, and the tallest column IS the most common band, so
+  // the second line stated something the first already contained. Same move as
+  // the scale bar replacing its per-row "within WHO 53 dB" sentence: keep the
+  // fact, drop the words, and put the words in the aria-label for anyone the
+  // chart cannot reach.
+  const strip = bandStrip(summary.bandDistribution || {});
+  if (strip) {
+    section.appendChild(el('div', 'c33-sub', 'EPC bands lodged at this postcode'));
+    section.appendChild(strip);
   }
 
   const list = el('ul', 'c33-list');

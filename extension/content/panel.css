@@ -361,6 +361,71 @@
   font-weight: 600;
 }
 
+/* The EPC band histogram. Seven fixed columns rather than a continuous bar,
+ * because the numeric SAP rating no longer exists upstream - see bandStrip().
+ * The MEES tick names its source on the chart, exactly as "WHO 53" does. */
+#cubitt33-panel .c33-strip {
+  display: block;
+  margin-top: 4px;
+  overflow: visible;
+}
+
+#cubitt33-panel .c33-strip-col {
+  fill: #c8d2de;
+}
+
+#cubitt33-panel .c33-strip-lab,
+#cubitt33-panel .c33-strip-ticklab {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 9px;
+  fill: #6a7787;
+}
+
+#cubitt33-panel .c33-strip-lab {
+  font-weight: 700;
+}
+
+#cubitt33-panel .c33-strip-ticklab {
+  font-weight: 400;
+}
+
+#cubitt33-panel .c33-strip-tick {
+  stroke: #12263f;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+/* The official ramp, as fills. These are the same seven colours as the badges
+ * below; the badges additionally flip their TEXT colour on C/D/E for contrast,
+ * which does not apply here because a column carries no text. */
+#cubitt33-panel .c33-strip-a {
+  fill: #008054;
+}
+
+#cubitt33-panel .c33-strip-b {
+  fill: #19b459;
+}
+
+#cubitt33-panel .c33-strip-c {
+  fill: #8dce46;
+}
+
+#cubitt33-panel .c33-strip-d {
+  fill: #ffd500;
+}
+
+#cubitt33-panel .c33-strip-e {
+  fill: #fcaa65;
+}
+
+#cubitt33-panel .c33-strip-f {
+  fill: #ef8023;
+}
+
+#cubitt33-panel .c33-strip-g {
+  fill: #e9153b;
+}
+
 /* EPC bands A-G, the official certificate scale. A fixed seven-step ramp, so
  * one class per band rather than an interpolation. */
 #cubitt33-panel .c33-band {

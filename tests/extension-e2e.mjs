@@ -116,6 +116,57 @@ check(
   /\d+\s*m\b/.test(text) && !/Search NHS .* on nhs\.uk/i.test(text),
   text.includes('nhs.uk') ? 'fallback links present' : ''
 );
+// The same discipline as the healthcare check above, applied to the EPC band
+// chart added 2026-08-08. Asserting "the EPC section rendered" would pass on a
+// section holding nothing, which is precisely how /sold-prices went months
+// without ever having returned a transaction while this suite stayed green.
+//
+// Reported as SKIP rather than PASS when the register has no certificates for
+// SW5: a check that silently passes when it did not run is the defect it is
+// supposed to catch. If this ever shows SKIP on every run, the chart is
+// untested and the summary line says so out loud.
+const epcSection = page.locator('#cubitt33-panel .c33-section', { hasText: /EPC register/i });
+const epcCerts = await epcSection.locator('.c33-band').count();
+if (epcCerts > 0) {
+  // Read through count() first, ALWAYS. textContent()/getAttribute() auto-wait,
+  // so on a missing element they block for the full 30s and then THROW - which
+  // aborts the whole run and takes every later assertion with it. Proven on
+  // 2026-08-08: a deliberately broken chart produced no results at all, rather
+  // than the one FAIL it should have. A test that cannot survive the failure it
+  // is testing for reports nothing on the day it matters.
+  const textOf = async (sel) =>
+    (await epcSection.locator(sel).count())
+      ? ((await epcSection.locator(sel).textContent()) || '').trim()
+      : null;
+
+  const cols = await epcSection.locator('.c33-strip-col').count();
+  check('EPC band chart draws all seven bands', cols === 7, `${cols} columns`);
+
+  // textContent, not innerText: the tick label is an SVG <text>, and SVGElement
+  // is not an HTMLElement, so Playwright's innerText refuses it outright with
+  // "Node is not an HTMLElement".
+  const tick = await textOf('.c33-strip-ticklab');
+  check(
+    'EPC band chart names its threshold rather than inventing one',
+    tick === 'MEES E',
+    tick === null ? 'no tick label rendered' : tick
+  );
+
+  // The chart replaced two text lines; the facts they carried must still reach
+  // a screen reader, or this was a downgrade wearing an improvement's clothes.
+  const label = (await epcSection.locator('.c33-strip').count())
+    ? await epcSection.locator('.c33-strip').getAttribute('aria-label')
+    : null;
+  check(
+    'EPC band chart is readable without sight of it',
+    /A \d+, B \d+, C \d+, D \d+, E \d+, F \d+, G \d+/.test(label || '') &&
+      /legally be let/.test(label || ''),
+    label ? label.slice(0, 60) : 'no aria-label'
+  );
+} else {
+  check('EPC band chart', 'skip', 'register returned no certificates for SW5');
+}
+
 check('no stale Loading text', !text.includes('Loading'));
 check('OSM/ODbL attribution', /OpenStreetMap/i.test(text));
 check('debug reports rightmove-page-model', text.includes('rightmove-page-model'));
@@ -229,12 +280,20 @@ console.log(
 
 console.log('\n--- results ---');
 let failed = 0;
+let skipped = 0;
 for (const [name, ok, detail] of results) {
-  if (!ok) failed += 1;
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `   [${detail}]` : ''}`);
+  // A third state, because PASS and FAIL cannot both describe "did not run".
+  // Folding a skip into PASS is how a suite reports coverage it never had.
+  const state = ok === 'skip' ? 'SKIP' : ok ? 'PASS' : 'FAIL';
+  if (state === 'FAIL') failed += 1;
+  if (state === 'SKIP') skipped += 1;
+  console.log(`${state}  ${name}${detail ? `   [${detail}]` : ''}`);
 }
+const tail = skipped ? ` (${skipped} skipped - those assertions did NOT run)` : '';
 console.log(
-  failed === 0 ? `\nAll ${results.length} checks passed.` : `\n${failed} of ${results.length} FAILED.`
+  failed === 0
+    ? `\n${results.length - skipped} checks passed${tail}.`
+    : `\n${failed} of ${results.length} FAILED${tail}.`
 );
 
 await ctx.close();
