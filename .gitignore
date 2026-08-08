@@ -82,5 +82,17 @@ data/*
 # IS committed: it carries the __PAGE_MODEL script verbatim, which is the only
 # part any strategy touches, at a tenth the size. Regenerate a new one by
 # saving a listing here and trimming to <title>, <h1> and that script.
-tests/fixtures/*bedroom*
-tests/fixtures/*_files/
+# Ignore EVERYTHING here, then un-ignore the curated fixtures by name.
+#
+# This was `tests/fixtures/*bedroom*`, which matched the first raw save only
+# because that listing happened to be "81 bedroom block of apartments...".
+# Chrome names the file after the page TITLE, so the next two saves - an agent
+# branch page and "2 bedroom apartment for rent..." - were a coin flip: one
+# matched, one landed in `git status` as a 923 KB untracked file. A pattern
+# keyed on someone else's page title is a coincidence waiting to lapse.
+#
+# Inverting it makes the safe case the default: a raw save is ignored whatever
+# it is called, and a fixture only enters git by being named rightmove-*.html,
+# which is a deliberate act.
+tests/fixtures/*
+!tests/fixtures/rightmove-*.html

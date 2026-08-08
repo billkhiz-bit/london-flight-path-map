@@ -77,6 +77,14 @@ appears.
 nearby on a rental is noise; a missing one on a sale removes the section most
 likely to be why someone opened the panel.
 
+**Verified against a real To Rent listing** (`rightmove-real-letting-nw2.html`,
+Ashford Road NW2, saved 2026-08-08). This path shipped first against the SW5
+*sale* fixture with `BUY` rewritten to `LET` — which tested a model of
+Rightmove against itself, and, found afterwards, also rewrote strings inside
+their cookie manifest nobody knew were there. The synthetic variant has been
+deleted rather than kept alongside: two fixtures asserting the same thing would
+imply two independent proofs where there was one.
+
 **Rental comparables are NOT shown, and this is not an oversight.** There is no
 open, postcode-level UK rental dataset — Price Paid is sales only, and ONS
 publishes rents at local-authority level. Drawing a borough median in the

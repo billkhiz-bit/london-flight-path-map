@@ -230,44 +230,76 @@ for (const { name, doc, want } of CASES) {
 // unreformatted, because normalising it would reintroduce the same problem.
 // If this case ever fails, Rightmove changed their page model and the
 // unpacker needs re-deriving. Nothing else in the suite can tell you that.
-const REAL = join(HERE, 'fixtures', 'rightmove-real-sw5.html');
-const realHtml = readFileSync(REAL, 'utf8');
-const realScript = realHtml.slice(
-  realHtml.indexOf('>', realHtml.indexOf('<script')) + 1,
-  realHtml.indexOf('</script>')
-);
-const realH1 = (realHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || '';
-
-const realResult = extractWith(makeDoc({ scripts: [realScript], h1: realH1 }));
-
-const REAL_EXPECTED = {
-  source: 'rightmove-page-model',
-  lat: 51.49423,
-  lon: -0.18825,
-  outcode: 'SW5',
-  inLondon: true,
-  // Reached through the same index-reference indirection as the coordinates:
-  // the node says {"price":233} and flat[233] is 34000000. Asserted against the
-  // real saved page, because a synthetic fixture would only re-encode whatever
-  // shape I assumed - the mistake this whole file exists to have caught once.
-  askingPrice: 34000000,
-  // The channel used to be computed and discarded once it had gated the price.
-  // It now decides which sections render at all, so it is asserted directly.
-  channel: 'sale',
+// TWO real pages, because one of them can only prove half of it. SW5 is a sale;
+// the letting path was built and shipped against that same file with BUY
+// rewritten to LET — a fixture that tests my model of Rightmove twice over, and
+// which (found later) also rewrote strings in their cookie manifest I did not
+// know were there. rightmove-real-letting-nw2.html is a genuine To Rent listing
+// saved on 2026-08-08, trimmed to this shape and otherwise verbatim.
+const loadReal = (file) => {
+  const html = readFileSync(join(HERE, 'fixtures', file), 'utf8');
+  return {
+    script: html.slice(html.indexOf('>', html.indexOf('<script')) + 1, html.indexOf('</script>')),
+    h1: (html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || '',
+  };
 };
 
-const realMismatches = Object.entries(REAL_EXPECTED).filter(([k, v]) => realResult?.[k] !== v);
-if (!realResult) {
-  console.log('FAIL  real Rightmove page (SW5)\n      extraction returned null');
-  failed += 1;
-} else if (realMismatches.length) {
-  console.log('FAIL  real Rightmove page (SW5)');
-  for (const [k, v] of realMismatches) {
-    console.log(`      ${k}: got ${JSON.stringify(realResult[k])}, want ${JSON.stringify(v)}`);
+const REAL_PAGES = [
+  {
+    name: 'real Rightmove page (SW5, sale)',
+    file: 'rightmove-real-sw5.html',
+    want: {
+      source: 'rightmove-page-model',
+      lat: 51.49423,
+      lon: -0.18825,
+      outcode: 'SW5',
+      inLondon: true,
+      // Reached through the same index-reference indirection as the
+      // coordinates: the node says {"price":233} and flat[233] is 34000000.
+      askingPrice: 34000000,
+      // Computed and discarded until it only gated the price; it now decides
+      // which sections render at all, so it is asserted directly.
+      channel: 'sale',
+    },
+  },
+  {
+    name: 'real Rightmove page (NW2, letting)',
+    file: 'rightmove-real-letting-nw2.html',
+    want: {
+      source: 'rightmove-page-model',
+      lat: 51.556473,
+      lon: -0.218428,
+      outcode: 'NW2',
+      inLondon: true,
+      // THE ASSERTION THIS FIXTURE EXISTS FOR. A letting's `price` is a monthly
+      // figure; withholding it is what stops £1,800 pcm being plotted against
+      // completed sales. Proven now on a real To Rent page rather than on a
+      // sale page with a string substituted.
+      askingPrice: null,
+      channel: 'letting',
+    },
+  },
+];
+
+// Kept for the variant tests below, which need a page to mutate.
+const { script: realScript, h1: realH1 } = loadReal('rightmove-real-sw5.html');
+
+for (const page of REAL_PAGES) {
+  const { script, h1 } = loadReal(page.file);
+  const got = extractWith(makeDoc({ scripts: [script], h1 }));
+  const mismatches = Object.entries(page.want).filter(([k, v]) => got?.[k] !== v);
+  if (!got) {
+    console.log(`FAIL  ${page.name}\n      extraction returned null`);
+    failed += 1;
+  } else if (mismatches.length) {
+    console.log(`FAIL  ${page.name}`);
+    for (const [k, v] of mismatches) {
+      console.log(`      ${k}: got ${JSON.stringify(got[k])}, want ${JSON.stringify(v)}`);
+    }
+    failed += 1;
+  } else {
+    console.log(`PASS  ${page.name}`);
   }
-  failed += 1;
-} else {
-  console.log('PASS  real Rightmove page (SW5)');
 }
 
 // --- The sale/letting guard ----------------------------------------------
@@ -281,13 +313,12 @@ if (!realResult) {
 // derived from real markup rather than authored, so they cannot encode an
 // assumption about Rightmove's shape. "BUY" -> "LET" also rewrites "RES_BUY"
 // to "RES_LET", which is precisely the pair the guard reads.
+// The synthetic BUY->LET variant that used to live here is GONE, superseded by
+// the real NW2 letting page above. It asserted the same thing against a fixture
+// I had written by substitution, which is the circularity this file exists to
+// avoid; keeping both would have implied two independent proofs where there was
+// one. What remains is the case no real page can supply.
 const variants = [
-  {
-    name: 'letting: channel detected, asking price withheld',
-    script: realScript.replace(/BUY/g, 'LET'),
-    wantPrice: null,
-    wantChannel: 'letting',
-  },
   {
     // Neither BUY nor LET anywhere. Both outputs must default to withholding:
     // a missing channel is not evidence of a sale, and the damaging direction
@@ -320,7 +351,7 @@ for (const v of variants) {
 }
 failed += variantFails;
 
-const total = CASES.length + 1 + variants.length;
+const total = CASES.length + REAL_PAGES.length + variants.length;
 console.log(
   failed === 0 ? `\n${total} extraction cases passed.` : `\n${failed} of ${total} FAILED.`
 );
