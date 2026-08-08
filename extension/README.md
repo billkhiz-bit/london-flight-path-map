@@ -52,8 +52,9 @@ decides what renders at all.
 
 | | Sale | Letting |
 |---|---|---|
-| Order | Environment, EPC, Sold nearby, Healthcare | Environment, EPC, Healthcare |
+| Order | Environment, EPC, Sold nearby, Typical rent, Healthcare | Environment, EPC, Typical rent, Healthcare |
 | Sold nearby | Chart with the asking price marked | **Removed** |
+| Typical rent | Borough figure, after Sold nearby | Borough figure, in Sold nearby's slot |
 | EPC | Band chart | Band chart **+ MEES line + tenant disclosure** |
 
 **Section order is identical; only content differs.** An earlier cut promoted
@@ -126,6 +127,17 @@ to fail if a chart ever appears in this section.
 **Renders nothing rather than approximating.** Outside the 33 boroughs, and for
 the City of London (which ONS does not publish), the section is removed
 entirely — not shown empty, and never filled with a neighbour's figure.
+
+**On a sale it sits AFTER Sold nearby**, never before. Real transactions on this
+postcode are a stronger claim than a borough-wide average, and the weaker figure
+should not be the one met first. There is an assertion on that ordering.
+
+**Known limit — bedroom brackets.** Matching uses ONS's own brackets, which top
+out at "4 or more". The SW5 fixture is a block of 81 flats, so it shows the 4+
+figure. The label names the *bracket* rather than the property, so it does not
+claim to be about 81 bedrooms, but the number is not meaningful for a whole
+block. Capping it would mean inventing a threshold, which is the move this
+codebase refuses.
 
 **Healthcare** — `GET /nhs?lat=&lon=` (OpenStreetMap via Overpass)
 - Nearest 3 GP surgeries, pharmacies and hospitals, with distances
