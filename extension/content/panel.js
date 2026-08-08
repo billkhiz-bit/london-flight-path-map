@@ -479,16 +479,27 @@ function decidePresentation(listing) {
   // nobody is selling, in a different unit from the only price on the page.
   // Dropped rather than shown empty.
   //
-  // EPC leads instead, because on a rental it stops being trivia. MEES makes
-  // band E the lowest a property may legally be let at, and the band is a bill
-  // the tenant pays and cannot fix. Neither fact is on the listing page.
+  // SECTION ORDER DOES NOT CHANGE. Only the CONTENT does.
+  //
+  // The first cut promoted EPC to the top on a letting, reasoning that MEES is
+  // legally material to a tenant where the band is mere context to a buyer.
+  // That reasoning still holds and it still produced the wrong design: a user
+  // moving between a sale and a rental met a panel whose sections had moved,
+  // and read it as the extension behaving inconsistently rather than as an
+  // editorial judgement about their situation. Reported from live use, which is
+  // the only place a reordering cost like that shows up.
+  //
+  // Environment leads throughout - it is the measurement nobody else on the
+  // page is offering, and the reason to open this at all. The letting-specific
+  // value arrives inside EPC (the MEES line, the tenant disclosure) rather than
+  // by moving furniture around it. Stable layout, situational content.
   //
   // A null channel keeps the sale layout. That is the conservative direction:
   // an unnecessary Sold nearby on a rental is noise, where a missing one on a
   // sale removes the section most likely to be the reason someone opened this.
   const letting = listing.channel === 'letting';
   const order = letting
-    ? ['epc', 'environment', 'nhs']
+    ? ['environment', 'epc', 'nhs']
     : ['environment', 'epc', 'soldPrices', 'nhs'];
 
   if (!listing.inLondon) {

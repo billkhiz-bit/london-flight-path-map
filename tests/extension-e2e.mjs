@@ -361,9 +361,13 @@ check(
   !letSections.some((h) => /sold/i.test(h)),
   letSections.join(',')
 );
+// Section ORDER must match the sale layout minus Sold nearby. Promoting EPC on
+// a letting was tried and reverted: moving sections between listing types reads
+// as the extension behaving inconsistently, not as a judgement about the
+// reader's situation. The letting-specific value lives INSIDE EPC instead.
 check(
-  'letting: EPC leads the panel',
-  /EPC/i.test(letSections[0] || ''),
+  'letting: environment still leads, order unchanged from a sale',
+  /ENVIRONMENT/i.test(letSections[0] || ''),
   letSections.join(',')
 );
 // A different postcode from the sale fixture, so the register may hold nothing

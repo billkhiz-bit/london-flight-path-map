@@ -52,9 +52,18 @@ decides what renders at all.
 
 | | Sale | Letting |
 |---|---|---|
-| Order | Environment, EPC, Sold nearby, Healthcare | **EPC**, Environment, Healthcare |
+| Order | Environment, EPC, Sold nearby, Healthcare | Environment, EPC, Healthcare |
 | Sold nearby | Chart with the asking price marked | **Removed** |
 | EPC | Band chart | Band chart **+ MEES line + tenant disclosure** |
+
+**Section order is identical; only content differs.** An earlier cut promoted
+EPC to the top on lettings, on the reasoning that MEES is legally material to a
+tenant where the band is context to a buyer. The reasoning holds and the design
+was still wrong: moving between a sale and a rental, the sections moved, and it
+read as the extension behaving inconsistently rather than as a judgement about
+the reader's situation. Reported from live use — a reordering cost only shows up
+when someone actually moves between two listings. Stable layout, situational
+content.
 
 **Why Sold nearby goes rather than rendering empty.** Land Registry Price Paid
 records *sales*. On a rental it is a column of six-figure sums beside a property
