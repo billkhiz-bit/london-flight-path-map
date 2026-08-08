@@ -362,7 +362,25 @@ renders them in its footer. Do not drop that footer.
    `/nhs` is what actually protects skyscore.co.uk from the extension's traffic.
 3. **cubitt33 needs its attorney opinion.** A store listing is a durable public
    first use of the mark.
-4. **Portal ToS.** Rightmove prohibits automated extraction. This build's
-   posture is deliberately defensive — user-triggered, DOM-read only, no listing
-   content transmitted (only a rounded coordinate pair leaves the browser), no
-   content hidden or reflowed. That reduces the risk; it does not remove it.
+4. **Portal ToS — stronger than previously recorded (checked 2026-08-08).**
+   Their terms carry **two** relevant clauses, and this build's posture only
+   answers one of them:
+
+   - **Automated access** — *"must not use or attempt to use any automated
+     program (including spiders or web crawlers) to access Rightmove's system or
+     Site"*. The extension makes **no request to their servers**; the user's
+     browser already fetched the page. On a plain reading this is not engaged,
+     and the read-versus-scrape distinction does real work here.
+   - **Extensions, named explicitly** — *"must not load, embed, frame or
+     otherwise access images or other assets directly from the Platform within
+     any other website, application, **extension, plug-in**, automated tool or
+     computer program without prior written consent from Rightmove's Legal
+     team"*. This one turns on **what the software is**, not on what it fetches,
+     so no amount of defensive posture answers it.
+
+   Not legal advice, and summarised from search results rather than the verbatim
+   document — read it at `rightmove.co.uk/popup/this-site/terms-of-use.html`
+   before relying on this. But note the clause specifies *prior written
+   consent*, which makes permission a defined route rather than a closed door —
+   and that is the same conclusion every alternative surface pointed at: the
+   version of this that works is the invited one.

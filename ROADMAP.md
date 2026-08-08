@@ -108,6 +108,28 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 
 ### Legal & entity — blocks the first pilot invoice (raised 2026-08-04)
 
+> ## ⛔ THERE IS NOTHING TO INCORPORATE
+>
+> **Cubitt33 Ltd (13651304) has existed since 2021.** It is already the named
+> operator and data controller on the **live** `privacy.html`, and in
+> `terms.html`, `LIA.md` and `SUBPROCESSORS.md`.
+>
+> This has now surfaced as a to-do **three times** — it blocked the ICO fee for
+> two days in August, and was raised again as planned work on 2026-08-08. The
+> struck-through row below is invisible when scanning a long table for what to
+> do next, so the ghost keeps returning. **The stale record is what does the
+> damage, not the missing work.**
+>
+> **The real company tasks are exactly two:**
+> 1. **Sign the IP assignment deed** (`Desktop/CUBITT33_IP_ASSIGNMENT_DRAFT.md`)
+>    — must be a **deed**, no consideration, witnessed by a **non-cohabitee**,
+>    ODbL/OGL carve-out at clause 5. Dad to confirm connected-party tax
+>    treatment first. Without it the company would be selling IP it does not
+>    own, which is a standard diligence failure the moment a pilot lands.
+> 2. **Pay the ICO fee, £52.** The controller decision that blocked it is
+>    settled and already public. Nothing is left to decide.
+
+
 **Not legal advice; these are verified gaps.** Full reasoning in
 `memory/project-legal-liability-gaps.md`.
 
@@ -242,7 +264,34 @@ Headlines:
   Companies House by SIC code. The IPO register is the authoritative step and
   has **no public API**. Search the **root**, filter to **classes 9 and 42**.
 
-### Outreach
+### Outreach — NOTHING HAS EVER BEEN SENT (measured 2026-08-08)
+
+**`OUTREACH_LOG.md` holds five Tier 1 targets, all dated 21 May, all still 🟡
+"Draft ready" or "To draft". Eleven weeks. Zero sent. The signups table holds
+one row**, which is a test.
+
+One identified route has already expired in the interval: the log names Mike
+Holden at Landmark as a panellist at the **Bold Legal Group Conference, 17
+June**, calling it the best route. That passed seven weeks ago. **Identified-but-
+unsent decays** — the same shape as the DEFRA loaders, work correctly specified
+and never actually run.
+
+**The blocker was real but narrower than applied.** "Rename before outreach" is
+right for **cold** channels — a first impression is spent once, and burning
+Landmark under a name being retired is a genuine cost. It does **not** apply to
+warm ones:
+
+| Channel | Now, or wait? |
+|---|---|
+| Cold email / cold LinkedIn | **Wait for the rename.** Spent once. |
+| Warm intro, events, in-person | **Go now.** A relationship survives a rename; "we're rebranding next month" reads as momentum. |
+
+So the events, and the six LinkedIn connections from Build Night 1, were never
+blocked by anything. That is also the highest-converting channel — this file's
+own line is *"One warm intro beats 20 cold emails."*
+
+**Before any email goes out at all:** confirm **DKIM** is configured. Five good
+drafts landing in spam folders spends them for nothing.
 
 | Task | Deadline | Why |
 |---|---|---|
