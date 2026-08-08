@@ -12,6 +12,27 @@
  * the page, not the shadow root, so the styles would need to move into JS.
  */
 
+/* BRAND vs SEMANTIC COLOUR — the one rule that keeps this readable.
+ *
+ * The charts already spend amber (#a35200) on "above the WHO guideline" and
+ * green (#2c6e49) on "within it". Those are MEANINGS, and a reader who has
+ * learned them will read any orange as a verdict. So the brand orange below is
+ * confined to CHROME - the badge, the collapsed chip, the header mark - and
+ * never appears inside a chart, a readout or a row. Two zones, two palettes.
+ *
+ * --c33-brand is deliberately the darkest step that still passes 4.5:1 against
+ * white text at 14px/600 (which is NOT WCAG "large text" - that needs 18.66px
+ * bold). #c2540f measures 4.57:1. A brighter, more saturated orange looks
+ * better in isolation and fails the only test that matters on a button whose
+ * entire content is a word. */
+#cubitt33-badge,
+#cubitt33-panel {
+  --c33-brand: #c2540f;
+  --c33-brand-deep: #9c3f0a;
+  --c33-brand-lift: #d35f16;
+  --c33-brand-glow: #ffc08a;
+}
+
 #cubitt33-badge {
   position: fixed;
   right: 20px;
@@ -35,27 +56,33 @@
   color: #fff;
   /* A slight vertical lift rather than a flat fill. The badge sits on a busy
    * portal page full of flat brand colours, and depth is what separates "part
-   * of this site" from "a tool on top of it". */
-  background: linear-gradient(180deg, #1d3a5f, #12263f);
-  box-shadow: 0 4px 16px rgb(0, 0, 0, 0.28);
+   * of this site" from "a tool on top of it". The shadow is TINTED with the
+   * brand rather than neutral black, which is most of what reads as "premium"
+   * - a warm object casting a grey shadow looks pasted on. */
+  background: linear-gradient(180deg, var(--c33-brand-lift), var(--c33-brand-deep));
+  box-shadow: 0 4px 14px rgb(156, 63, 10, 0.42), 0 1px 3px rgb(0, 0, 0, 0.2);
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
 }
 
-/* The mark inherits the button's colour, so there is one place to change it. */
+/* The mark is the ONE place colour is spent on the badge: a pale warm glow
+ * against the deep body. Colour here is free - unlike the wordmark it carries
+ * no contrast obligation, because it is aria-hidden decoration beside a text
+ * label that says the same thing. */
 #cubitt33-badge .c33-badge-mark {
   display: block;
   flex: none;
-  fill: currentcolor;
+  fill: var(--c33-brand-glow);
 }
 
 #cubitt33-badge .c33-badge-word {
+  color: #fff;
   letter-spacing: 0.02em;
 }
 
 #cubitt33-badge:hover {
-  background: linear-gradient(180deg, #24456e, #16304f);
-  box-shadow: 0 6px 20px rgb(0, 0, 0, 0.32);
+  box-shadow: 0 8px 22px rgb(156, 63, 10, 0.5), 0 2px 4px rgb(0, 0, 0, 0.22);
+  filter: brightness(1.06);
   transform: translateY(-1px);
 }
 
@@ -147,9 +174,11 @@
   outline-offset: 1px;
 }
 
+/* Brand orange, expanded too - it is the only accent in the panel's chrome and
+ * it sits in the header, well away from any chart. */
 #cubitt33-panel .c33-toggle .c33-badge-mark {
   flex: none;
-  fill: #12263f;
+  fill: var(--c33-brand);
 }
 
 #cubitt33-panel .c33-title {
@@ -172,13 +201,50 @@
   transform: rotate(-90deg);
 }
 
-/* Collapsed: only the header survives. The panel is fixed-position over
- * someone else's page, so "out of the way" has to mean genuinely small, not
- * a shorter scroll area. */
+/* COLLAPSED: the panel becomes the badge again.
+ *
+ * There were two idle states for one idea - a dark pill bottom-right before
+ * you open it, a white bordered bar after you collapse it - sharing no visual
+ * identity, so collapsing read as the widget turning into a different widget.
+ * Collapsed now wears the badge's colour, radius and shadow, and shrinks to its
+ * content, so there is ONE chip that grows and shrinks. The only difference
+ * that remains is the dismiss control, which is a real difference: this one has
+ * been opened and can be sent away entirely.
+ *
+ * width:auto is what makes it a chip rather than a 340px bar. */
 #cubitt33-panel[data-collapsed='true'] {
+  width: auto;
   max-height: none;
-  padding-bottom: 0;
+  padding: 0;
   overflow: hidden;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, var(--c33-brand-lift), var(--c33-brand-deep));
+  box-shadow: 0 4px 14px rgb(156, 63, 10, 0.42), 0 1px 3px rgb(0, 0, 0, 0.2);
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-header {
+  margin: 0;
+  padding: 10px 16px 10px 15px;
+  background: none;
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-title {
+  color: #fff;
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-toggle .c33-badge-mark {
+  fill: var(--c33-brand-glow);
+}
+
+#cubitt33-panel[data-collapsed='true'] .c33-chev,
+#cubitt33-panel[data-collapsed='true'] .c33-close {
+  color: rgb(255, 255, 255, 0.75);
+}
+
+/* The white hover wash would be invisible on the orange body. */
+#cubitt33-panel[data-collapsed='true'] .c33-toggle:hover {
+  background: rgb(255, 255, 255, 0.12);
 }
 
 #cubitt33-panel[data-collapsed='true'] .c33-body,
@@ -550,10 +616,15 @@
   stroke-width: 1;
 }
 
+/* THRESHOLD labels - "WHO 53", "MEES E". One colour across every chart,
+ * because they are the same KIND of thing: somebody else's published line that
+ * the reading is being measured against. These were #8a97a8 here and #6a7787
+ * on the EPC chart, so two identical roles rendered at different weights and
+ * the eye had to work out whether that meant something. */
 #cubitt33-panel .c33-bar-lab {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 9px;
-  fill: #8a97a8;
+  fill: #6a7787;
 }
 
 #cubitt33-panel .c33-over {
@@ -697,6 +768,11 @@
 
 #cubitt33-panel .c33-strip-g {
   fill: #e9153b;
+}
+
+/* A band with no certificates. Last so it wins over the ramp above. */
+#cubitt33-panel .c33-strip-empty {
+  fill: #dbe1e8;
 }
 
 /* EPC bands A-G, the official certificate scale. A fixed seven-step ramp, so

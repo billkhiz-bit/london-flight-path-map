@@ -223,9 +223,15 @@ function bandStrip(distribution) {
     // band that is simply short must not look identical, and an empty gap
     // reads as "no data for this band" rather than "none here".
     const h = peak ? Math.max((n / peak) * TALLEST, n ? 3 : 1) : 1;
+    // An empty band keeps its stub but LOSES its colour. Painting band A green
+    // when no property here is band A spends the reader's attention on the
+    // scale rather than the data - seven coloured marks of which four mean
+    // "none". Colour earns its place only where there is something to count.
     svg.appendChild(
       svgEl('rect', {
-        class: `c33-strip-col c33-strip-${EPC_BANDS[i].toLowerCase()}`,
+        class:
+          `c33-strip-col ` +
+          (n > 0 ? `c33-strip-${EPC_BANDS[i].toLowerCase()}` : 'c33-strip-empty'),
         x: `${i * colW + 1.2}%`,
         width: `${colW - 2.4}%`,
         y: FLOOR - h,
@@ -340,14 +346,14 @@ function priceRange(transactions, asking) {
   // whole block of apartments against a street of one-bed flats, where sitting
   // far above the sales is exactly correct and means nothing about value.
   const outlier = asking ? (asking > hi ? 'above' : asking < lo ? 'below' : null) : null;
-  const outlierNote = outlier
-    ? `asking price is ${outlier} every recorded sale here`
-    : '';
+  // Short enough to sit inline with the count. The long form lives in the
+  // aria-label, where length costs nothing.
+  const outlierNote = outlier ? `asking is ${outlier} all of them` : '';
 
   const svg = svgEl('svg', {
     class: 'c33-range',
     width: '100%',
-    height: outlierNote ? 76 : 62,
+    height: 62,
     role: 'img',
     'aria-label':
       `${sold.length} Land Registry ${sold.length === 1 ? 'sale' : 'sales'} on this postcode` +
@@ -411,16 +417,20 @@ function priceRange(transactions, asking) {
   bandLab.textContent = hi === lo ? money(lo) : `${money(lo)}-${money(hi)}`;
   svg.appendChild(bandLab);
 
+  // ONE caption line, not three. This carried the range, then a count-plus-
+  // caveat, then the outlier note - three left-aligned greys stacked under a
+  // chart, which is more text than the chart it explains. The caveat moves to
+  // the section's disclosure, where Environment already keeps its caveats, so
+  // both sections now behave the same way. The outlier note stays visible: it
+  // is a fact about THIS listing, not a standing footnote.
+  // One caption line. Not two text nodes on the same baseline at opposite
+  // anchors: "asking price is above every recorded sale here" is ~45 characters
+  // and would have overlapped the count in a 300px-wide panel.
   const cap = svgEl('text', { class: 'c33-range-cap', x: '0%', y: 56, 'text-anchor': 'start' });
-  cap.textContent =
-    `${sold.length} sold${years ? ` ${years}` : ''} - not size-adjusted`;
+  cap.textContent = [`${sold.length} sold${years ? ` ${years}` : ''}`, outlierNote]
+    .filter(Boolean)
+    .join(' · ');
   svg.appendChild(cap);
-
-  if (outlierNote) {
-    const note = svgEl('text', { class: 'c33-range-note', x: '0%', y: 70, 'text-anchor': 'start' });
-    note.textContent = outlierNote;
-    svg.appendChild(note);
-  }
 
   return svg;
 }
@@ -698,11 +708,12 @@ function renderEpc(result) {
   // the scale bar replacing its per-row "within WHO 53 dB" sentence: keep the
   // fact, drop the words, and put the words in the aria-label for anyone the
   // chart cannot reach.
+  // No intro line above the chart. "EPC bands lodged at this postcode" restated
+  // what the section heading, the A-G axis and the counts already say between
+  // them - a caption is worth a line only when the chart is ambiguous without
+  // it. The full sentence still reaches screen readers via the aria-label.
   const strip = bandStrip(summary.bandDistribution || {});
-  if (strip) {
-    section.appendChild(el('div', 'c33-sub', 'EPC bands lodged at this postcode'));
-    section.appendChild(strip);
-  }
+  if (strip) section.appendChild(strip);
 
   const list = el('ul', 'c33-list');
   for (const cert of certs.slice(0, 6)) {
@@ -828,6 +839,22 @@ function renderSoldPrices(result, listing) {
       ? `${shown} most recent of ${ordered.length} sales`
       : `${shown} sale${shown === 1 ? '' : 's'}`;
   section.appendChild(collapsible(label, wrap));
+
+  // The standing caveats, in the same disclosure Environment uses for its own.
+  // They were a permanent grey line under the chart, read once and ignored
+  // after - and they are the difference between a position and a valuation, so
+  // being ignored is the failure mode. One consistent place for "what you
+  // should know about these numbers", in every section that has any.
+  section.appendChild(
+    disclosure('About these figures', [
+      'HM Land Registry Price Paid records completed sales and publishes them ' +
+        'roughly two months in arrears, so the most recent sale on a street may ' +
+        'not appear here yet.',
+      'Figures are not adjusted for size, condition, floor or lease length. A ' +
+        'larger or freehold property sitting above its neighbours is expected, ' +
+        'not a signal, which is why nothing here is coloured as good or bad.',
+    ])
+  );
   return section;
 }
 

@@ -148,6 +148,19 @@ if (epcCerts > 0) {
   const cols = await epcSection.locator('.c33-strip-col').count();
   check('EPC band chart draws all seven bands', cols === 7, `${cols} columns`);
 
+  // Colour marks data, not the scale. An empty band keeps its stub and loses
+  // its band colour, so a postcode with certificates in three bands shows three
+  // coloured columns and four grey ones - not seven coloured marks of which
+  // four mean "none". Asserted as a strict subset so this cannot silently
+  // regress to painting the whole ramp.
+  const empties = await epcSection.locator('.c33-strip-empty').count();
+  const coloured = cols - empties;
+  check(
+    'only bands with certificates carry colour',
+    empties > 0 && coloured > 0 && coloured + empties === 7,
+    `${coloured} coloured, ${empties} empty`
+  );
+
   const tick = await textOfIn(epcSection, '.c33-strip-ticklab');
   check(
     'EPC band chart names its threshold rather than inventing one',
@@ -209,12 +222,17 @@ if (soldRows > 0) {
   // into one blob and the chart alone stops being readable. Must stay
   // arithmetic: "above every recorded sale" is a fact, "overpriced" is not one
   // Land Registry data can support unadjusted for size or property type.
-  const note = await textOfIn(soldSection, '.c33-range-note');
+  // Lives in the caption line since 2026-08-08 - it was a third stacked grey
+  // line under the chart, which was more text than the chart it explained. The
+  // aria-label keeps the long form, where length is free.
+  const cap = await textOfIn(soldSection, '.c33-range-cap');
   const noteExpected = /(above|below) every recorded sale/.test(rangeLabel);
   check(
     'outlier note appears exactly when the asking price is outside the sales',
-    noteExpected ? /^asking price is (above|below) every recorded sale here$/.test(note || '') : note === null,
-    note === null ? 'no note (asking price within range)' : note
+    noteExpected
+      ? /· asking is (above|below) all of them$/.test(cap || '')
+      : !/asking is/.test(cap || ''),
+    cap || 'no caption'
   );
 
   check(
