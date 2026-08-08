@@ -64,6 +64,17 @@ Or just describe what you need, I have full context of this project.
 
 Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) plus B2B funnel pages (`/api/`, `/pricing`, `/privacy`) backed by the 8 active AWS Lambda functions orchestrated via SAM (the 4 dormant Bedrock Lambdas live in git history only; `live_flights` was removed in May 2026 pending OpenSky licensing).
 
+## Scale direction — do NOT "fix" the apparent site/extension disagreement
+
+**Scores rise, measurements rise, and the label names which.** See `METHODOLOGY.md` §11.0.
+
+- **Scores** (0–10 components) run **higher = better** and are labelled with the *good* thing: `Quiet Skies`, `Affordability`, `Liveability`. Site score panel and `/v1/score`.
+- **Measurements** run **higher = worse** and are labelled with the *bad* thing: `Road noise 49.5 dB Lden`, `Aircraft noise 2/10 noise`. `/v1/environment` and the extension's Environment section.
+
+So the same postcode reads **`Quiet Skies 8/10` on the site** and **`Aircraft noise 2/10` in the extension**. That is one value under two labels, *not* a divergence: `/v1/environment` returns `aircraftQuietEstimated: 8` and the extension shows `10 − 8`, asserted against the live endpoint in `tests/extension-e2e.mjs` (on an **asymmetric** value — SW5 scores 5, which inverts to itself and cannot detect a missing transform).
+
+The rule is not "noise always goes up" — it is that direction must agree with whatever the number sits *beside*. Until 2026-08-08 the extension rendered a quiet score under a "noise" label, so the longest bar in the section marked the quietest row. Harmonising the two surfaces reintroduces that defect in one direction or the other.
+
 ## Branding
 
 Always use "Sky Score" in all public-facing files and UI text.

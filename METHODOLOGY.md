@@ -1033,6 +1033,21 @@ If a Sky Score output reflects bias or unfair input handling, contact via the Gi
 
 A B2B audit team will challenge any number that lacks justification. This section names every editorial choice in the methodology and gives the reasoning. Where there isn't a single published source to anchor a choice, we say so.
 
+### 11.0 Scale direction: scores rise, measurements rise, and the label says which
+
+**Two opposite conventions run in this product, deliberately. Do not harmonise them.**
+
+| Kind of number | Direction | Label pattern | Where |
+|---|---|---|---|
+| **Score** (0–10 component) | higher = **better** | names the *good* thing — `Quiet Skies`, `Affordability`, `Liveability` | `index.html` score panel, `/v1/score` components |
+| **Measurement** (physical unit or a 0–10 stand-in for one) | higher = **worse** | names the *bad* thing — `Road noise 49.5 dB Lden`, `NO₂ 23.9 µg/m³`, `Aircraft noise 2/10 noise` | `/v1/environment`, the browser extension's Environment section |
+
+The rule is **not** "noise always goes up". It is that a number's direction must agree with everything it is displayed *beside*, and the label must name which thing is being counted.
+
+A score component sits alongside Affordability and Growth, where higher is better; making noise rise there would leave one bar filling up to mean the opposite of its neighbours. A measurement sits alongside dB and µg/m³, where higher is worse; a quiet score there does the same damage in reverse. **That reverse case was a live defect**: until 2026-08-08 the extension rendered `Aircraft noise 8/10` from a quiet score, so the row with the *longest* bar was the *quietest* one, and the only thing distinguishing them was the word "quiet" in the smallest text on the row.
+
+**Consequence, and it is intended:** the same postcode reads `Quiet Skies 8/10` on the site and `Aircraft noise 2/10` in the extension. That is one value under two labels, not a disagreement — `/v1/environment` returns `aircraftQuietEstimated: 8` and the extension displays `10 − 8`, a transform asserted against the live endpoint in `tests/extension-e2e.mjs`. It is written down here because it *looks* like the site/API divergences this project has genuinely had three times, and a future session correcting the resemblance would reintroduce the defect above.
+
 | Editorial choice | Defensible reasoning |
 |---|---|
 | `IMPACT_TO_QUIET` value scale (10 / 7.5 / 5.0 / 3.0 / 1.5 / 0.0) | The dB Lden bands are DEFRA-anchored; the score values reflect the inverse-square-ish relationship between noise dB and health effect documented in WHO meta-analyses. The non-linear spacing (3 → 1.5 = halving) reflects that small dB increases at high baselines have outsized effects. |
