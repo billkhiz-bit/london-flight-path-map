@@ -4967,7 +4967,7 @@
       // Returns 'N/A' for null/0/missing.
       function formatPrice(rawPrice, city) {
         if (rawPrice == null || rawPrice === 0) return 'N/A';
-        const symbol = city === 'nyc' ? '$' : '£';
+        const symbol = cityOf(city).currency;
         return symbol + Math.round(rawPrice).toLocaleString('en-GB');
       }
 
@@ -5015,10 +5015,75 @@
 
       // Compact form for table rows where horizontal space is tight (rankings,
       // compare table). Still avoids the lossy K abbreviation by using a
+      // ─── City registry ──────────────────────────────────────────────────
+      //
+      // WHY THIS EXISTS. Every city-dependent value used to be a binary
+      // ternary - `city === 'nyc' ? NYC_X : X` - twenty-two of them for data
+      // alone. With exactly two cities that is correct. With three it is
+      // silently WRONG, because anything that is not 'nyc' inherits LONDON's
+      // airports, flight paths, area maps and borough data rather than
+      // failing. The defect appears the day a third city is added, which is
+      // the worst possible day to discover it, and it appears as plausible
+      // numbers rather than an error.
+      //
+      // THUNKS, NOT VALUES. Several of these constants are declared LATER in
+      // this file - STATIONS around line 5528, NYC_STATIONS around 5625 - so a
+      // plain object literal would evaluate them here, inside the temporal
+      // dead zone, and throw at load. Thunks defer resolution to call time,
+      // which is always after the whole script has executed. `boroughFeatures`
+      // and `nycBoroughFeatures` are additionally *mutable*, assigned once
+      // their GeoJSON arrives; a thunk reads the current value, where a
+      // captured reference would freeze the pre-fetch undefined.
+      const CITY_DATA = {
+        london: {
+          label: 'London',
+          currency: '£',
+          boroughData: () => BOROUGH_DATA,
+          boroughRaw: () => BOROUGH_DATA_RAW,
+          boroughExtra: () => BOROUGH_EXTRA,
+          areaMap: () => AREA_MAP,
+          neighbourhoodDetail: () => LONDON_NEIGHBOURHOOD_DETAIL,
+          airports: () => AIRPORTS,
+          flightPaths: () => FLIGHT_PATHS,
+          stations: () => STATIONS,
+          roadNoise: () => BOROUGH_ROAD_NOISE,
+          features: () => boroughFeatures,
+        },
+        nyc: {
+          label: 'New York City',
+          currency: '$',
+          boroughData: () => NYC_BOROUGH_DATA,
+          boroughRaw: () => NYC_BOROUGH_DATA_RAW,
+          boroughExtra: () => NYC_BOROUGH_EXTRA,
+          areaMap: () => NYC_AREA_MAP,
+          neighbourhoodDetail: () => NYC_NEIGHBOURHOOD_DETAIL,
+          airports: () => NYC_AIRPORTS,
+          flightPaths: () => NYC_FLIGHT_PATHS,
+          stations: () => NYC_STATIONS,
+          roadNoise: () => NYC_BOROUGH_ROAD_NOISE,
+          features: () => nycBoroughFeatures,
+        },
+      };
+
+      // An unknown city is an ERROR, not London. That single choice IS the fix:
+      // the ternaries failed open, so a mis-spelled or not-yet-registered city
+      // rendered London's data under its name, indistinguishable from a correct
+      // answer. Failing loudly here is the difference between a bug you find in
+      // the first minute and one that ships.
+      function cityOf(id) {
+        const entry = CITY_DATA[id];
+        if (!entry) {
+          throw new Error(
+            `Unknown city "${id}" - add it to CITY_DATA rather than relying on a default.`
+          );
+        }
+        return entry;
+      }
+
       // clearer format: £1.35M or £680K. Falls back to N/A when missing.
       function formatPriceCompact(rawPrice, city) {
         if (rawPrice == null || rawPrice === 0) return 'N/A';
-        const symbol = city === 'nyc' ? '$' : '£';
+        const symbol = cityOf(city).currency;
         if (rawPrice >= 1_000_000) {
           return symbol + (rawPrice / 1_000_000).toFixed(2).replace(/\.?0+$/, '') + 'M';
         }
@@ -5026,7 +5091,7 @@
       }
 
       function getLiveScore(boroughName, city) {
-        const extraData = city === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA;
+        const extraData = cityOf(city).boroughExtra();
         const ex = extraData[boroughName];
         if (!ex) return 5;
         // Progress 8 where it exists (English boroughs), the legacy band
@@ -5277,13 +5342,13 @@
 
       // Compute per-neighbourhood scores using actual coordinates
       function calcNeighbourhoodScores(city) {
-        const areaMap = city === 'nyc' ? NYC_AREA_MAP : AREA_MAP;
-        const detail = city === 'nyc' ? NYC_NEIGHBOURHOOD_DETAIL : LONDON_NEIGHBOURHOOD_DETAIL;
-        const boroughData = city === 'nyc' ? NYC_BOROUGH_DATA : BOROUGH_DATA;
-        const boroughExtra = city === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA;
-        const airports = city === 'nyc' ? NYC_AIRPORTS : AIRPORTS;
-        const paths = city === 'nyc' ? NYC_FLIGHT_PATHS : FLIGHT_PATHS;
-        const stations = city === 'nyc' ? NYC_STATIONS : STATIONS;
+        const areaMap = cityOf(city).areaMap();
+        const detail = cityOf(city).neighbourhoodDetail();
+        const boroughData = cityOf(city).boroughData();
+        const boroughExtra = cityOf(city).boroughExtra();
+        const airports = cityOf(city).airports();
+        const paths = cityOf(city).flightPaths();
+        const stations = cityOf(city).stations();
         const w = PERSONAS[currentPersona].weights;
 
         // Collect all neighbourhood prices for affordability scaling
@@ -5300,7 +5365,7 @@
         const minPrice = Math.min(...allPrices);
 
         // Collect growth rates from boroughs
-        const boroughRaw = city === 'nyc' ? NYC_BOROUGH_DATA_RAW : BOROUGH_DATA_RAW;
+        const boroughRaw = cityOf(city).boroughRaw();
         const trendVals = Object.values(boroughRaw).map((d) => d.trend);
         const maxTrend = Math.max(...trendVals);
         const minTrend = Math.min(...trendVals);
@@ -6274,7 +6339,7 @@
       function getExtraData(boroughName) {
         if (!boroughName) return null;
         const c = boroughName.toLowerCase().trim();
-        const extraData = currentCity === 'nyc' ? NYC_BOROUGH_EXTRA : BOROUGH_EXTRA;
+        const extraData = cityOf(currentCity).boroughExtra();
         for (const [key, val] of Object.entries(extraData)) {
           const k = key.toLowerCase();
           if (c === k || c.includes(k) || k.includes(c)) return { name: key, ...val };
@@ -6895,7 +6960,7 @@
 
         // Check for borough name matches (city-aware)
         const activeBoroughs = currentCity === 'nyc' ? getActiveBoroughData() : BOROUGH_DATA;
-        const activeAreas = currentCity === 'nyc' ? NYC_AREA_MAP : AREA_MAP;
+        const activeAreas = cityOf(currentCity).areaMap();
         const boroughMatches = Object.keys(activeBoroughs)
           .filter((b) => b.toLowerCase().includes(inputVal))
           .slice(0, 3);
@@ -7030,7 +7095,7 @@
 
         // Borough match
         const boroughMatch = matchBorough(q);
-        const activeAreaMap = currentCity === 'nyc' ? NYC_AREA_MAP : AREA_MAP;
+        const activeAreaMap = cityOf(currentCity).areaMap();
         if (
           boroughMatch &&
           q.length > 3 &&
@@ -7073,7 +7138,7 @@
                 return m && m.name === selectedBorough ? '#141414' : '#E4E3E0';
               });
               g.selectAll('.noise-overlay').remove();
-              const activeBorFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+              const activeBorFeatures = cityOf(currentCity).features();
               const feature = activeBorFeatures.find((f) => {
                 const m = matchBorough(getName(f));
                 return m && m.name === borData.name;
@@ -7119,7 +7184,7 @@
             return m && m.name === selectedBorough ? '#141414' : '#E4E3E0';
           });
           g.selectAll('.noise-overlay').remove();
-          const pcBorFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+          const pcBorFeatures = cityOf(currentCity).features();
           const feature = pcBorFeatures.find((f) => {
             const m = matchBorough(getName(f));
             return m && m.name === boroughData.name;
@@ -7229,8 +7294,8 @@
         if (!layers['defra-road']) roadG.style('display', 'none');
         // Borough-level road noise fill
         const roadNoiseColors = { high: '#7c3aed', moderate: '#a78bfa', low: '#ddd6fe' };
-        const roadNoiseData = currentCity === 'nyc' ? NYC_BOROUGH_ROAD_NOISE : BOROUGH_ROAD_NOISE;
-        const roadFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+        const roadNoiseData = cityOf(currentCity).roadNoise();
+        const roadFeatures = cityOf(currentCity).features();
         roadFeatures.forEach((f) => {
           const n = getName(f);
           const level = roadNoiseData[n] || 'moderate';
@@ -7258,7 +7323,7 @@
         if (!layers.flood) floodG.style('display', 'none');
         // Borough-level flood risk fill
         const floodColors = { high: '#1e3a8a', medium: '#3b82f6', low: '#93c5fd' };
-        const floodFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+        const floodFeatures = cityOf(currentCity).features();
         floodFeatures.forEach((f) => {
           const n = getName(f);
           const extra = getExtraData(n);
@@ -7278,7 +7343,7 @@
         if (!layers['air-quality']) aqG.style('display', 'none');
         // Borough-level air quality fill
         const aqColors = { poor: '#dc2626', moderate: '#f59e0b', good: '#22c55e', excellent: '#16a34a' };
-        const aqFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+        const aqFeatures = cityOf(currentCity).features();
         aqFeatures.forEach((f) => {
           const n = getName(f);
           const extra = getExtraData(n);
@@ -7299,7 +7364,7 @@
       function renderTransport() {
         const tg = g.append('g').attr('class', 'layer-transport');
         if (!layers.transport) tg.style('display', 'none');
-        const stations = currentCity === 'nyc' ? NYC_STATIONS : STATIONS;
+        const stations = cityOf(currentCity).stations();
         stations.forEach((s) => {
           const [x, y] = projection(s.coords);
           const col = s.type === 'hub' ? '#267DF2' : '#141414';
@@ -7327,7 +7392,7 @@
       function renderLabels() {
         const lg = g.append('g').attr('class', 'layer-labels');
         if (!layers.labels) lg.style('display', 'none');
-        const features = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+        const features = cityOf(currentCity).features();
         features.forEach((f) => {
           const n = getName(f);
           const data = matchBorough(n);
@@ -8160,13 +8225,13 @@
       // CITY SWITCHING (London <-> NYC)
       // ============================================================
       function getActiveAirports() {
-        return currentCity === 'nyc' ? NYC_AIRPORTS : AIRPORTS;
+        return cityOf(currentCity).airports();
       }
       function getActiveFlightPaths() {
-        return currentCity === 'nyc' ? NYC_FLIGHT_PATHS : FLIGHT_PATHS;
+        return cityOf(currentCity).flightPaths();
       }
       function getActiveBoroughData() {
-        return currentCity === 'nyc' ? NYC_BOROUGH_DATA : BOROUGH_DATA;
+        return cityOf(currentCity).boroughData();
       }
 
       async function switchCity(city) {
@@ -8702,7 +8767,7 @@
           return m && m.name === selectedBorough ? '#141414' : '#E4E3E0';
         });
         g.selectAll('.noise-overlay').remove();
-        const activeBorFeatures = currentCity === 'nyc' ? nycBoroughFeatures : boroughFeatures;
+        const activeBorFeatures = cityOf(currentCity).features();
         const feature = activeBorFeatures.find((f) => {
           const m = matchBorough(getName(f));
           return m && m.name === name;

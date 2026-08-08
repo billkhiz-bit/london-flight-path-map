@@ -115,6 +115,39 @@ consoleErrors.slice(0, 12).forEach((e) => console.log('   !', e));
 console.log('failed requests:         ', failedRequests.length);
 failedRequests.slice(0, 12).forEach((e) => console.log('   x', e));
 
+// --- City registry: an unknown city must FAIL, not silently become London ---
+//
+// Added 2026-08-08 with the CITY_DATA refactor. Twenty-six binary ternaries
+// (`city === 'nyc' ? NYC_X : X`) were correct for exactly two cities and
+// silently wrong for three: anything not 'nyc' inherited London's airports,
+// flight paths and borough data under another city's name. This asserts the new
+// behaviour directly, because "London still renders" cannot distinguish the fix
+// from its absence — that passed before the refactor too.
+const registry = await page.evaluate(() => {
+  const out = { known: [], throwsOnUnknown: false, londonOk: false, nycOk: false };
+  try {
+    out.known = Object.keys(CITY_DATA);
+    out.londonOk = typeof cityOf('london').boroughData() === 'object';
+    out.nycOk = typeof cityOf('nyc').boroughData() === 'object';
+  } catch {
+    // Reported through the flags above rather than thrown, so a broken
+    // registry fails this test instead of aborting the whole run.
+  }
+  try {
+    cityOf('manchester');
+  } catch {
+    out.throwsOnUnknown = true;
+  }
+  return out;
+});
+
+console.log('');
+console.log('--- city registry ---');
+console.log('registered cities:        ', registry.known.join(', '));
+console.log('london resolves:          ', registry.londonOk);
+console.log('nyc resolves:             ', registry.nycOk);
+console.log('unknown city throws:      ', registry.throwsOnUnknown, '(must be true)');
+
 await browser.close();
 
 const ok =
@@ -129,7 +162,10 @@ const ok =
   nycBoroughCount === 5 &&
   nycNamesOk &&
   nycAskedLocalGeo &&
-  !nycAskedGithub;
+  !nycAskedGithub &&
+  registry.londonOk &&
+  registry.nycOk &&
+  registry.throwsOnUnknown;
 
 console.log('\nRESULT:', ok ? 'PASS' : 'FAIL');
 process.exit(ok ? 0 : 1);

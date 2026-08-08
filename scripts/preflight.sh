@@ -194,6 +194,28 @@ else
   # a desktop-only mouse target. A gate that demanded that would be overruled
   # every time it fired, which is how a gate stops being read.
   check "responsive (10 viewports)"     node tests/responsive.mjs
+
+  # LOCAL smoke, and the distinction from every other e2e stage here is the
+  # point: those hit the DEPLOYED site, so a broken index.html in the working
+  # tree passes all of them. tests/smoke-local.mjs has existed since the
+  # 2026-07-30 vendoring work and was in no gate at all — the one test that
+  # could catch a regression before it shipped was the one nothing ran.
+  #
+  # It loads the working tree over a throwaway static server, paints both
+  # cities, and asserts the CITY_DATA registry rejects an unknown city instead
+  # of silently serving London's data under its name.
+  smoke_port=8123
+  python -m http.server "$smoke_port" --bind 127.0.0.1 >/dev/null 2>&1 &
+  smoke_pid=$!
+  # Wait for the socket rather than sleeping a guessed interval.
+  smoke_tries=0
+  until curl -sf "http://127.0.0.1:$smoke_port/index.html" -o /dev/null; do
+    smoke_tries=$((smoke_tries + 1))
+    [ "$smoke_tries" -gt 30 ] && break
+    sleep 1
+  done
+  check "local smoke (both cities)"     node tests/smoke-local.mjs
+  kill "$smoke_pid" 2>/dev/null || true
 fi
 
 echo
