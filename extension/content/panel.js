@@ -159,7 +159,9 @@ function bandStrip(distribution) {
   const peak = Math.max(...counts);
   const colW = 100 / EPC_BANDS.length;
   const FLOOR = 32;
-  const TALLEST = 26;
+  // 20, not 26: the count now sits 3px above each column, so the tallest bar
+  // must leave room for a 9px label inside the SVG box or it clips at y=0.
+  const TALLEST = 20;
 
   const svg = svgEl('svg', {
     class: 'c33-strip',
@@ -196,6 +198,22 @@ function bandStrip(distribution) {
     });
     lab.textContent = EPC_BANDS[i];
     svg.appendChild(lab);
+
+    // The count, because height alone cannot separate 0 from 1. Both render as
+    // a few pixels of stub - visible in the 2026-08-08 screenshot, where A and
+    // B (zero) were indistinguishable from E, F and G (small but non-zero).
+    // Omitted on zero rather than printed as "0": an empty column already says
+    // none, and seven zeroes would be noise on a postcode with few lodgements.
+    if (n > 0) {
+      const cnt = svgEl('text', {
+        class: 'c33-strip-cnt',
+        x: `${(i + 0.5) * colW}%`,
+        y: FLOOR - h - 3,
+        'text-anchor': 'middle',
+      });
+      cnt.textContent = String(n);
+      svg.appendChild(cnt);
+    }
   });
 
   // The boundary between E and F, i.e. after the fifth column.
@@ -211,6 +229,154 @@ function bandStrip(distribution) {
   });
   tickLab.textContent = 'MEES E';
   svg.appendChild(tickLab);
+
+  return svg;
+}
+
+/** Compact money, for axis labels where "£1,250,000" will not fit. */
+function money(n) {
+  if (n >= 1000000) return `£${(n / 1000000).toFixed(n >= 10000000 ? 0 : 1)}m`;
+  if (n >= 1000) return `£${Math.round(n / 1000)}k`;
+  return `£${n}`;
+}
+
+/**
+ * Recent sold prices on this postcode, with the asking price marked.
+ *
+ * WHY THIS DOMAIN IS ALLOWED WHERE "THE LONDON RANGE" WAS NOT. scaleBar()
+ * refuses a domain drawn from observed spread, because for a noise reading that
+ * spread is a statistic we would have to source and did not. Here the observed
+ * spread IS the dataset being displayed — these are the very transactions
+ * listed underneath, every one of them on screen. The axis makes no claim the
+ * list does not already make.
+ *
+ * WHAT IT DELIBERATELY DOES NOT SAY. Not "over" or "under", no verdict colour,
+ * no "% above local average". Land Registry lags completion by around two
+ * months, and nothing here is adjusted for size, condition, floor or lease. A
+ * £34m block of flats sits legitimately far right of four one-bed sales on the
+ * same postcode. Position is a fact; "overpriced" would be an inference the
+ * data cannot carry, and the caption says so in words.
+ */
+function priceRange(transactions, asking) {
+  const sold = transactions.map((t) => Number(t.price)).filter((n) => Number.isFinite(n) && n > 0);
+  if (!sold.length) return null;
+
+  const lo = Math.min(...sold);
+  const hi = Math.max(...sold);
+  // The asking price extends the axis when it falls outside the sold range —
+  // clamping it to the edge would hide exactly the case worth seeing.
+  const axisLo = Math.min(lo, asking ?? lo);
+  const axisHi = Math.max(hi, asking ?? hi);
+  const span = axisHi - axisLo;
+  // 8% padding so an extreme value is not drawn half off the edge. A display
+  // margin only: the labels state the true lo/hi, unpadded.
+  //
+  // Clamped at zero because the padding is proportional to the SPAN, and the
+  // span is set by the asking price when that is an outlier. SW5 in the e2e:
+  // sales £290k-£1.0m against a £34m asking price gives an 8% pad of £2.7m,
+  // putting the axis origin at MINUS £2.4m. An axis that starts below zero
+  // implies negative sale prices exist.
+  const pad = span ? span * 0.08 : 1;
+  const p0 = Math.max(axisLo - pad, 0);
+  const p1 = axisHi + pad;
+  const at = (v) => ((v - p0) / (p1 - p0)) * 100;
+
+  const dates = transactions.map((t) => (t.date || '').slice(0, 4)).filter(Boolean).sort();
+  const years = dates.length
+    ? dates[0] === dates[dates.length - 1]
+      ? dates[0]
+      : `${dates[0]}-${dates[dates.length - 1]}`
+    : '';
+
+  // When the asking price falls outside the recorded sales entirely, say so in
+  // words. The chart already shows it, but only as dot positions the reader has
+  // to interpret - and in the outlier case the sales collapse into one blob, so
+  // the spread they came for is unreadable. Stated as arithmetic ("above every
+  // recorded sale"), never as judgement ("overpriced"): the SW5 fixture is a
+  // whole block of apartments against a street of one-bed flats, where sitting
+  // far above the sales is exactly correct and means nothing about value.
+  const outlier = asking ? (asking > hi ? 'above' : asking < lo ? 'below' : null) : null;
+  const outlierNote = outlier
+    ? `asking price is ${outlier} every recorded sale here`
+    : '';
+
+  const svg = svgEl('svg', {
+    class: 'c33-range',
+    width: '100%',
+    height: outlierNote ? 76 : 62,
+    role: 'img',
+    'aria-label':
+      `${sold.length} Land Registry ${sold.length === 1 ? 'sale' : 'sales'} on this postcode` +
+      `${years ? `, ${years}` : ''}, from ${money(lo)} to ${money(hi)}` +
+      (asking ? `. This listing is asking ${money(asking)}` : '') +
+      (outlierNote ? `, ${outlier} every recorded sale here.` : asking ? '.' : '.') +
+      ' Not adjusted for size, condition or lease.',
+  });
+
+  svg.appendChild(
+    svgEl('rect', { class: 'c33-range-track', x: '0%', y: 18, width: '100%', height: 4, rx: 2 })
+  );
+  // The sold band: where the actual transactions sit, ignoring the asking price.
+  svg.appendChild(
+    svgEl('rect', {
+      class: 'c33-range-band',
+      x: `${at(lo)}%`,
+      y: 18,
+      width: `${Math.max(at(hi) - at(lo), 0.5)}%`,
+      height: 4,
+      rx: 2,
+    })
+  );
+
+  for (const n of sold) {
+    svg.appendChild(svgEl('circle', { class: 'c33-range-dot', cx: `${at(n)}%`, cy: 20, r: 3 }));
+  }
+
+  if (asking) {
+    const x = `${at(asking)}%`;
+    svg.appendChild(svgEl('line', { class: 'c33-range-ask', x1: x, x2: x, y1: 10, y2: 30 }));
+    // Anchor the label inward at the extremes or it renders off the panel.
+    const pct = at(asking);
+    const lab = svgEl('text', {
+      class: 'c33-range-asklab',
+      x,
+      y: 7,
+      'text-anchor': pct < 18 ? 'start' : pct > 82 ? 'end' : 'middle',
+    });
+    lab.textContent = `asking ${money(asking)}`;
+    svg.appendChild(lab);
+  }
+
+  // ONE label, on the sold band, naming the range it actually covers.
+  //
+  // This was two labels pinned to the axis ends (x=0% and x=100%) showing the
+  // sold lo and hi - which is correct only while the asking price sits inside
+  // the sold range. On the SW5 fixture it does not: 10 sales spanning
+  // £290k-£1.0m against £34m asking put the £1.0m label at the right-hand edge,
+  // where the axis actually reads £34m. The label would have named the sold
+  // maximum while pointing at the asking price. Anchoring both labels to the
+  // BAND instead of the axis makes the position and the number agree by
+  // construction, and it stays right whatever the asking price does.
+  const bandMid = (at(lo) + at(hi)) / 2;
+  const bandLab = svgEl('text', {
+    class: 'c33-range-lab',
+    x: `${bandMid}%`,
+    y: 40,
+    'text-anchor': bandMid < 12 ? 'start' : bandMid > 88 ? 'end' : 'middle',
+  });
+  bandLab.textContent = hi === lo ? money(lo) : `${money(lo)}-${money(hi)}`;
+  svg.appendChild(bandLab);
+
+  const cap = svgEl('text', { class: 'c33-range-cap', x: '0%', y: 56, 'text-anchor': 'start' });
+  cap.textContent =
+    `${sold.length} sold${years ? ` ${years}` : ''} - not size-adjusted`;
+  svg.appendChild(cap);
+
+  if (outlierNote) {
+    const note = svgEl('text', { class: 'c33-range-note', x: '0%', y: 70, 'text-anchor': 'start' });
+    note.textContent = outlierNote;
+    svg.appendChild(note);
+  }
 
   return svg;
 }
@@ -515,7 +681,7 @@ function renderEpc(result) {
   return section;
 }
 
-function renderSoldPrices(result) {
+function renderSoldPrices(result, listing) {
   if (!result.ok) {
     return unavailable('Sold nearby', result.error);
   }
@@ -532,6 +698,13 @@ function renderSoldPrices(result) {
   // Rightmove HAS sold-price data, but as a separate search tool — not on the
   // listing you are looking at, beside the asking price. Putting the street's
   // actual transactions next to what is being asked for is the whole value.
+  //
+  // The chart is that sentence made literal. The asking price is absent on a
+  // letting and whenever the page did not positively say it is a sale, in which
+  // case this still draws the spread of completed sales, which stands alone.
+  const range = priceRange(tx, listing?.askingPrice ?? null);
+  if (range) section.appendChild(range);
+
   const list = el('ul', 'c33-list');
   for (const t of tx.slice(0, 4)) {
     const item = el('li', 'c33-item');
@@ -686,7 +859,10 @@ async function loadInto(body, listing, plan) {
 
   const paint = (name, result) => {
     results[name] = result;
-    const rendered = SECTIONS[name].render(result);
+    // `listing` reaches the renderers so sold prices can mark the asking price.
+    // Passed to all of them rather than special-cased, so the next renderer
+    // that needs page context does not have to re-plumb this.
+    const rendered = SECTIONS[name].render(result, listing);
     slots[name].replaceWith(rendered);
     slots[name] = rendered;
   };

@@ -19,6 +19,14 @@
 // is a rounded coordinate pair (see background.js) — never listing content,
 // never the address, never the price.
 //
+// That last clause was literally true until 2026-08-08, when the asking price
+// began to be READ (see askingPriceFromPageModel) so the panel can position it
+// against the sold prices the API already returned. It is still never SENT: the
+// comparison happens in this tab, against a payload that arrived keyed on a
+// rounded coordinate. Read and transmit are different verbs, and the sentence
+// above is kept accurate rather than quietly weakened, because it is the claim
+// the store listing and privacy page both rest on.
+//
 // TIMING IS PART OF THE CONTRACT. manifest.json sets run_at: "document_end",
 // NOT the more usual "document_idle", and manifest.json cannot carry a comment
 // saying why — so it is recorded here.
@@ -99,7 +107,16 @@ function validCoords(lat, lon) {
 // Cost is one ~100 KB JSON.parse, once, on a page that already parsed it
 // itself. Everything is wrapped so a Rightmove format change degrades to the
 // regex strategies below rather than throwing.
-function fromRightmovePageModel() {
+/**
+ * The page model's flattened array, or null.
+ *
+ * Split out of fromRightmovePageModel() on 2026-08-08 so the asking-price
+ * reader can use the same parse. Deliberately NOT memoised: run() is
+ * re-invoked on SPA navigation, and a cached array from the previous listing
+ * would silently attribute one property's price to another. Re-parsing costs
+ * one linear scan of a script that is already in memory.
+ */
+function pageModelFlat() {
   const script = [...document.querySelectorAll('script:not([src])')].find((s) =>
     s.textContent.includes('__PAGE_MODEL')
   );
@@ -146,7 +163,12 @@ function fromRightmovePageModel() {
     // Malformed or re-encoded: fall through to the regex strategies.
     return null;
   }
-  if (!Array.isArray(flat)) return null;
+  return Array.isArray(flat) ? flat : null;
+}
+
+function fromRightmovePageModel() {
+  const flat = pageModelFlat();
+  if (!flat) return null;
 
   // Resolve an index reference into the flat array. A direct number is
   // accepted too, in case Rightmove ever inlines the values.
@@ -333,6 +355,62 @@ function fromMetaTags() {
 // --- Address and outcode -------------------------------------------------
 // Only used for the panel's "we think this is the place" line, so the user can
 // spot a mislocation immediately. Never sent anywhere.
+// Plausible UK sale price. The floor rejects a monthly rent that slipped past
+// the channel test below; the ceiling rejects an index that happened to deref
+// to something enormous. Both are sanity rails, not judgements about value.
+const MIN_SALE = 10000;
+const MAX_SALE = 500000000;
+
+/**
+ * The listing's asking price, for SALES ONLY.
+ *
+ * WHY THE SALE TEST IS THE POINT OF THIS FUNCTION. The panel draws this against
+ * HM Land Registry sold prices. On a letting, Rightmove's `price` is a monthly
+ * figure, so £2,400 pcm would render as a dot at the far left of a range of
+ * completed sales and read as an extraordinary bargain. That is the worst
+ * misread this panel could produce, and it is one field away at all times.
+ * So the default is null: a price is returned only when the page POSITIVELY
+ * says the listing is a sale, never when the channel is merely absent.
+ *
+ * WHAT LEAVES THE BROWSER: nothing. This value is read from the DOM, held in
+ * the content script, and used only to position a marker. background.js sends
+ * a rounded coordinate pair and nothing else — see the header of this file.
+ */
+function askingPriceFromPageModel() {
+  const flat = pageModelFlat();
+  if (!flat) return null;
+
+  const deref = (v) => (typeof v === 'number' && v >= 0 && v < flat.length ? flat[v] : v);
+
+  let isSale = null;
+  let amount = null;
+  const seen = new Set();
+
+  const walk = (node, depth) => {
+    if (!node || typeof node !== 'object' || depth > 6 || seen.has(node)) return;
+    seen.add(node);
+
+    for (const [key, value] of Object.entries(node)) {
+      if (/^(channel|transactionType)$/i.test(key)) {
+        const v = String(deref(value) ?? '').toUpperCase();
+        // Explicit either way. RES_LET / LET / RENT settle it as a letting even
+        // if a BUY appears elsewhere in the blob, because a false sale is the
+        // damaging direction and a false letting only costs us the marker.
+        if (/LET|RENT/.test(v)) isSale = false;
+        else if (/BUY|SALE/.test(v) && isSale === null) isSale = true;
+      }
+      if (/^price$/i.test(key) && amount === null) {
+        const n = deref(value);
+        if (typeof n === 'number' && n >= MIN_SALE && n <= MAX_SALE) amount = n;
+      }
+      if (value && typeof value === 'object') walk(value, depth + 1);
+    }
+  };
+  flat.forEach((entry) => walk(entry, 0));
+
+  return isSale === true && amount !== null ? amount : null;
+}
+
 function extractAddress() {
   // The <h1> on a Rightmove detail page is the property address. Falling back
   // to og:title covers layout changes, since the SEO tags outlive the markup.
@@ -397,6 +475,12 @@ function extractListing() {
     lon: coords.lon,
     address,
     outcode: extractOutcode(address),
+    // Sales only, and null whenever the page does not positively say so. Read
+    // HERE rather than on badge click because the page model is transient:
+    // React hydration removes it, and the badge may be clicked minutes later.
+    // Never transmitted — it positions a marker against sold prices the API
+    // already returned, and the comparison happens entirely in this tab.
+    askingPrice: askingPriceFromPageModel(),
     // Which strategy won. Surfaced in the panel's debug line because when this
     // breaks after a Rightmove redesign, the first question is always "did we
     // fall through to a weaker strategy, or fail outright?"

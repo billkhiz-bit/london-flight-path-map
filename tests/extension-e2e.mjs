@@ -37,6 +37,23 @@ const LAT = '51.4942';
 const results = [];
 const check = (name, ok, detail = '') => results.push([name, ok, detail]);
 
+// Read text through count() FIRST, always. textContent()/getAttribute() auto-
+// wait, so on a missing element they block for the full 30s and then THROW,
+// aborting the run and taking every later assertion with it. Proven on
+// 2026-08-08: a deliberately broken chart produced no output at all rather than
+// the one FAIL it should have. A test that cannot survive the failure it tests
+// for reports nothing on the day it matters.
+//
+// textContent, not innerText: these targets are SVG <text>, and SVGElement is
+// not an HTMLElement, so Playwright's innerText refuses outright with "Node is
+// not an HTMLElement".
+const textOfIn = async (scope, sel) =>
+  (await scope.locator(sel).count())
+    ? ((await scope.locator(sel).textContent()) || '').trim()
+    : null;
+const attrOfIn = async (scope, sel, attr) =>
+  (await scope.locator(sel).count()) ? await scope.locator(sel).getAttribute(attr) : null;
+
 // Empty path = a fresh throwaway profile per run. A reused profile carries
 // extension state between runs, which makes failures depend on what the last
 // run left behind — and the cache assertions below would pass against a
@@ -128,24 +145,10 @@ check(
 const epcSection = page.locator('#cubitt33-panel .c33-section', { hasText: /EPC register/i });
 const epcCerts = await epcSection.locator('.c33-band').count();
 if (epcCerts > 0) {
-  // Read through count() first, ALWAYS. textContent()/getAttribute() auto-wait,
-  // so on a missing element they block for the full 30s and then THROW - which
-  // aborts the whole run and takes every later assertion with it. Proven on
-  // 2026-08-08: a deliberately broken chart produced no results at all, rather
-  // than the one FAIL it should have. A test that cannot survive the failure it
-  // is testing for reports nothing on the day it matters.
-  const textOf = async (sel) =>
-    (await epcSection.locator(sel).count())
-      ? ((await epcSection.locator(sel).textContent()) || '').trim()
-      : null;
-
   const cols = await epcSection.locator('.c33-strip-col').count();
   check('EPC band chart draws all seven bands', cols === 7, `${cols} columns`);
 
-  // textContent, not innerText: the tick label is an SVG <text>, and SVGElement
-  // is not an HTMLElement, so Playwright's innerText refuses it outright with
-  // "Node is not an HTMLElement".
-  const tick = await textOf('.c33-strip-ticklab');
+  const tick = await textOfIn(epcSection, '.c33-strip-ticklab');
   check(
     'EPC band chart names its threshold rather than inventing one',
     tick === 'MEES E',
@@ -154,9 +157,7 @@ if (epcCerts > 0) {
 
   // The chart replaced two text lines; the facts they carried must still reach
   // a screen reader, or this was a downgrade wearing an improvement's clothes.
-  const label = (await epcSection.locator('.c33-strip').count())
-    ? await epcSection.locator('.c33-strip').getAttribute('aria-label')
-    : null;
+  const label = await attrOfIn(epcSection, '.c33-strip', 'aria-label');
   check(
     'EPC band chart is readable without sight of it',
     /A \d+, B \d+, C \d+, D \d+, E \d+, F \d+, G \d+/.test(label || '') &&
@@ -165,6 +166,60 @@ if (epcCerts > 0) {
   );
 } else {
   check('EPC band chart', 'skip', 'register returned no certificates for SW5');
+}
+
+// Sold-price range chart. The fixture is a real RES_BUY listing asking
+// £34,000,000, so when Land Registry returns anything for SW5 the asking marker
+// must be drawn - and must NOT be drawn as a verdict.
+const soldSection = page.locator('#cubitt33-panel .c33-section', { hasText: /Sold nearby/i });
+const soldRows = await soldSection.locator('.c33-name').count();
+if (soldRows > 0) {
+  check('sold-price range chart rendered', (await soldSection.locator('.c33-range').count()) === 1);
+  check(
+    'asking price marked on the range',
+    (await soldSection.locator('.c33-range-ask').count()) === 1
+  );
+  const dots = await soldSection.locator('.c33-range-dot').count();
+  check('every sale plotted, not just the extremes', dots >= 1, `${dots} dots`);
+
+  // The chart must report a position and never a judgement. If a future change
+  // adds "23% above local average" or an over/under colour, this goes red -
+  // which is the intent. Land Registry data is not size-adjusted and cannot
+  // carry that claim.
+  const rangeLabel = (await attrOfIn(soldSection, '.c33-range', 'aria-label')) || '';
+  // The regression assertion for the label-position bug found 2026-08-08: the
+  // sold-range label used to be pinned to the axis ends, so with an outlier
+  // asking price it named the sold maximum while pointing at the asking price.
+  // Asserting the label agrees with the aria-label's stated range catches any
+  // future divergence between what the chart says and where it says it.
+  const bandLab = await textOfIn(soldSection, '.c33-range-lab');
+  check(
+    'range label names the sold range, not the axis extremes',
+    /^£[\d.]+[km]?-£[\d.]+[km]?$|^£[\d.]+[km]?$/.test(bandLab || ''),
+    bandLab || 'no band label'
+  );
+
+  // The outlier note. Present only when the asking price sits wholly outside
+  // the recorded sales, which is exactly the case where the sale dots collapse
+  // into one blob and the chart alone stops being readable. Must stay
+  // arithmetic: "above every recorded sale" is a fact, "overpriced" is not one
+  // Land Registry data can support unadjusted for size or property type.
+  const note = await textOfIn(soldSection, '.c33-range-note');
+  const noteExpected = /(above|below) every recorded sale/.test(rangeLabel);
+  check(
+    'outlier note appears exactly when the asking price is outside the sales',
+    noteExpected ? /^asking price is (above|below) every recorded sale here$/.test(note || '') : note === null,
+    note === null ? 'no note (asking price within range)' : note
+  );
+
+  check(
+    'range chart states its limits and passes no verdict',
+    /not adjusted for size/i.test(rangeLabel) &&
+      !/over-?priced|under-?priced|good value|above average/i.test(rangeLabel),
+    rangeLabel.slice(0, 70)
+  );
+} else {
+  check('sold-price range chart', 'skip', 'Land Registry returned no sales for SW5');
 }
 
 check('no stale Loading text', !text.includes('Loading'));

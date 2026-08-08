@@ -246,6 +246,11 @@ const REAL_EXPECTED = {
   lon: -0.18825,
   outcode: 'SW5',
   inLondon: true,
+  // Reached through the same index-reference indirection as the coordinates:
+  // the node says {"price":233} and flat[233] is 34000000. Asserted against the
+  // real saved page, because a synthetic fixture would only re-encode whatever
+  // shape I assumed - the mistake this whole file exists to have caught once.
+  askingPrice: 34000000,
 };
 
 const realMismatches = Object.entries(REAL_EXPECTED).filter(([k, v]) => realResult?.[k] !== v);
@@ -262,7 +267,52 @@ if (!realResult) {
   console.log('PASS  real Rightmove page (SW5)');
 }
 
-const total = CASES.length + 1;
+// --- The sale/letting guard ----------------------------------------------
+//
+// THE DANGEROUS PATH. The panel draws askingPrice against Land Registry sold
+// prices. On a letting Rightmove's `price` is a MONTHLY figure, so £2,400 pcm
+// would land at the far left of a range of completed sales and read as the
+// bargain of the century. One field separates those two renderings.
+//
+// These fixtures are the REAL page with exactly the channel strings rewritten -
+// derived from real markup rather than authored, so they cannot encode an
+// assumption about Rightmove's shape. "BUY" -> "LET" also rewrites "RES_BUY"
+// to "RES_LET", which is precisely the pair the guard reads.
+const variants = [
+  {
+    name: 'letting: asking price withheld, coordinates still extracted',
+    script: realScript.replace(/BUY/g, 'LET'),
+    wantPrice: null,
+  },
+  {
+    // Neither BUY nor LET anywhere. The guard must default to withholding:
+    // a missing channel is not evidence of a sale, and the damaging direction
+    // is the one that guesses.
+    name: 'no channel signal: asking price withheld rather than assumed',
+    script: realScript.replace(/BUY/g, 'XXX'),
+    wantPrice: null,
+  },
+];
+
+let variantFails = 0;
+for (const v of variants) {
+  const got = extractWith(makeDoc({ scripts: [v.script], h1: realH1 }));
+  const priceOk = (got?.askingPrice ?? null) === v.wantPrice;
+  // Coordinates must survive: the price guard must not cost us the panel.
+  const coordsOk = got?.lat === 51.49423;
+  if (priceOk && coordsOk) {
+    console.log(`PASS  ${v.name}`);
+  } else {
+    console.log(
+      `FAIL  ${v.name}\n      askingPrice ${JSON.stringify(got?.askingPrice ?? null)} ` +
+        `(want ${JSON.stringify(v.wantPrice)}), lat ${JSON.stringify(got?.lat)}`
+    );
+    variantFails += 1;
+  }
+}
+failed += variantFails;
+
+const total = CASES.length + 1 + variants.length;
 console.log(
   failed === 0 ? `\n${total} extraction cases passed.` : `\n${failed} of ${total} FAILED.`
 );

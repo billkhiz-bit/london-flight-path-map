@@ -361,6 +361,66 @@
   font-weight: 600;
 }
 
+/* Sold-price range, with the asking price marked. No verdict colours anywhere
+ * in here on purpose: the marker's POSITION is a fact, and green/amber would
+ * turn it into "good price"/"bad price", which Land Registry data cannot
+ * support unadjusted for size, condition or lease. See priceRange(). */
+#cubitt33-panel .c33-range {
+  display: block;
+  margin: 2px 0 4px;
+  overflow: visible;
+}
+
+#cubitt33-panel .c33-range-track {
+  fill: #eef1f5;
+}
+
+/* The span actually covered by completed sales. */
+#cubitt33-panel .c33-range-band {
+  fill: #c8d2de;
+}
+
+#cubitt33-panel .c33-range-dot {
+  fill: #4a6484;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+/* The asking price. Distinguished by SHAPE - a full-height rule against round
+ * sale dots - so it survives greyscale and colour blindness, matching how
+ * scaleBar carries over/under by position rather than colour alone. */
+#cubitt33-panel .c33-range-ask {
+  stroke: #12263f;
+  stroke-width: 2;
+}
+
+#cubitt33-panel .c33-range-asklab {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  fill: #12263f;
+}
+
+#cubitt33-panel .c33-range-lab,
+#cubitt33-panel .c33-range-cap {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 9px;
+  fill: #6a7787;
+}
+
+#cubitt33-panel .c33-range-cap {
+  fill: #8a97a8;
+}
+
+/* "asking price is above every recorded sale here". Darker than the caption
+ * because it is a fact about THIS listing rather than a standing caveat, but
+ * still not a verdict colour - see priceRange(). */
+#cubitt33-panel .c33-range-note {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  fill: #4a6484;
+}
+
 /* The EPC band histogram. Seven fixed columns rather than a continuous bar,
  * because the numeric SAP rating no longer exists upstream - see bandStrip().
  * The MEES tick names its source on the chart, exactly as "WHO 53" does. */
@@ -383,6 +443,14 @@
 
 #cubitt33-panel .c33-strip-lab {
   font-weight: 700;
+}
+
+/* Certificate count above each non-empty column. Height alone cannot separate
+ * a zero column from a one column at this scale. */
+#cubitt33-panel .c33-strip-cnt {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 9px;
+  fill: #6a7787;
 }
 
 #cubitt33-panel .c33-strip-ticklab {
