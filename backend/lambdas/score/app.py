@@ -2928,13 +2928,15 @@ def live_weights_for(present):
     Returns a dict over exactly those fields. Returning an empty dict means the
     caller must decline to score `live` at all rather than invent one.
 
-    WHY THIS IS NOT JUST get(field, 5.0). A missing input currently scores 5.0,
-    and 5.0 is NOT neutral: London's computed live scores span 5.5-8.4, so the
-    placeholder sits below every real borough. Filling one of four fields can
-    therefore make a place score WORSE, which is why Greater Manchester is all
-    four fields or none. City of London is the live example in the other
-    direction - it has no Progress 8 because it has no state secondary
-    provision, so its 5.5 today is 35% a number about nothing.
+    WHY THIS IS NOT JUST get(field, 5.0), which is what it replaced. A missing
+    input used to score 5.0, and 5.0 is NOT neutral: London's computed live
+    scores span 5.5-8.4, so the placeholder sat below every real borough and
+    filling one of four fields could make a place score WORSE. That is what
+    forced Greater Manchester to be all four fields or none - a constraint this
+    function LIFTS, so GM can now be sourced one field at a time. City of London
+    was the live example in the other direction: it has no Progress 8 because it
+    has no state secondary provision, so 35% of its 5.5 was a number about
+    nothing. It now scores 5.2 from what is actually known about it.
 
     The precedent is methodology v3.4/v3.3, which dropped `growth` for
     non-investor personas and redistributed its weight across the remaining
@@ -3146,9 +3148,11 @@ def build_coverage(quiet_source, live_source):
     if quiet_notice:
         notices.append(quiet_notice)
 
-    # 'unavailable' is live_resolution's way of saying every input hit the 5.0
-    # placeholder — the Greater Manchester case, where a uniform 5.0 read as a
-    # finding rather than a gap.
+    # 'unavailable' is live_resolution's way of saying no input was measured.
+    # It used to mean every one of them hit a 5.0 placeholder, which is how a
+    # uniform Greater Manchester 5.0 read as a finding rather than a gap; the
+    # component is now omitted outright rather than defaulted, and this notice
+    # is what says so in plain English.
     if live_source == 'unavailable':
         notices.append(_LIVE_UNAVAILABLE_NOTICE)
 
@@ -3301,9 +3305,9 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     # `live` is None when fewer than two of its four inputs exist, so the
     # component would say nothing about this place. Drop it and rescale the
     # remaining weights in proportion - the same move v3.3 made when it dropped
-    # `growth` for non-investor personas. The alternative, a 5.0 placeholder,
-    # sits below every real London live score and so penalises a city for the
-    # gap: that is why Greater Manchester is all four fields or none.
+    # `growth` for non-investor personas. The alternative it replaced, a 5.0
+    # placeholder, sat below every real London live score and so penalised a
+    # city for the gap - which is what made Greater Manchester all-or-nothing.
     parts = {'quiet': quiet, 'afford': afford, 'growth': growth}
     effective = {k: weights[k] for k in parts}
     if live is not None:
