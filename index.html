@@ -6810,7 +6810,12 @@
           );
         };
         el.innerHTML =
-          renderGroup('DOCTORS &amp; CLINICS', gp) +
+          // Plain '&', NOT '&amp;'. renderGroup escapes its own title, so an
+          // entity here is encoded a second time and renders as the literal
+          // text "DOCTORS &amp; CLINICS". The entity was correct when this
+          // string went straight into innerHTML; escapeHtml() was added later
+          // and turned it into a bug.
+          renderGroup('DOCTORS & CLINICS', gp) +
           renderGroup('PHARMACIES', pharmacies) +
           renderGroup('HOSPITALS', hospitals) +
           '<p class="info-note" style="margin-top:8px;">Source: OpenStreetMap (ODbL); cross-link to nhs.uk service search.</p>';
