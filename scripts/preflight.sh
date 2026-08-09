@@ -221,6 +221,12 @@ else
     sleep 1
   done
   check "local smoke (3 cities)"        node tests/smoke-local.mjs
+  # Both ported from the core-cities spike branch with the country tier, and
+  # both serve the repo themselves rather than reusing the server above.
+  # locator-verify is proven able to fail: remove data/uk-locator.json and
+  # London and Manchester report markers=0 land=0.
+  check "locator inset"                 node tests/locator-verify.mjs
+  check "selector tiers do not overlap" node tests/selector-widths.mjs
   kill "$smoke_pid" 2>/dev/null || true
 fi
 

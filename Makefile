@@ -208,6 +208,15 @@ data-deploy:
 		s3://$(S3_BUCKET)/data/borough-extra.json \
 		--content-type "application/json" \
 		--cache-control "no-cache" --region $(AWS_REGION)
+	# uk-locator.json, added 2026-08-09 with the country tier. Deliberately NOT
+	# in sw.js SHELL_ASSETS, unlike the boundary files above: cache.addAll() is
+	# atomic, and this is a decoration with a graceful fallback, so precaching
+	# it would let a missing decoration stop the service worker installing for
+	# every city. It still needs a deploy target, because a 404 here silently
+	# removes the coverage inset with only a console.warn.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/uk-locator.json \
+		s3://$(S3_BUCKET)/data/uk-locator.json \
+		--content-type "application/json" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-london-lden.png \
 		s3://$(S3_BUCKET)/data/aircraft-noise-london-lden.png \
 		--content-type "image/png" --region $(AWS_REGION)

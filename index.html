@@ -1809,37 +1809,105 @@
         height: 100%;
       }
 
-      /* City selector */
-      .city-selector {
+      /* Country tier. Deliberately NOT chip-styled: underlined text reads as a
+         level ABOVE the city chips, so the two rows are a hierarchy rather than
+         two competing rows of buttons. */
+      .country-selector {
         position: absolute;
-        top: 72px;
+        top: 70px;
         left: 32px;
         z-index: 10;
         display: flex;
         gap: 14px;
-        align-items: flex-start;
       }
-      .city-group {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-      /* The country label is a heading for the buttons beneath it, not a
-         control. aria-labelledby on the inner group is what carries it to
-         assistive tech; pointer-events:none keeps it from looking clickable. */
-      .city-group-label {
+      .country-btn {
+        background: none;
+        border: 0;
+        padding: 0 0 3px;
         font-family: var(--font-mono);
-        font-size: 8px;
-        letter-spacing: 1.5px;
+        font-size: 10px;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: var(--dark);
-        opacity: 0.55;
-        padding-left: 1px;
-        pointer-events: none;
+        color: var(--mid);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        /* WCAG 2.5.8: text-only controls still need a 24px target. */
+        min-height: 24px;
       }
-      .city-group-btns {
+      .country-btn.active {
+        color: var(--dark);
+        border-bottom-color: var(--orange);
+      }
+      .country-btn:hover {
+        color: var(--dark);
+      }
+      .country-btn:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+
+      /* City selector */
+      .city-selector {
+        position: absolute;
+        top: 96px;
+        left: 32px;
+        z-index: 10;
         display: flex;
         gap: 2px;
+      }
+
+      /* Locator inset. Aligned to the city chips above it and kept clear of the
+         legend below. Persistent rather than a separate overview screen: the
+         main map stays the scoring map, and the sidebar never empties. */
+      .locator {
+        position: absolute;
+        top: 138px;
+        left: 32px;
+        width: 112px;
+        z-index: 5;
+      }
+      .locator svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      /* --mid at 42% alpha, not a stroke: the silhouette is 291 separate
+         district rings, so stroking it would draw every internal border rather
+         than defining the coast. At --light on --bg it read as a smudge. */
+      #locator-land {
+        fill: color-mix(in srgb, var(--mid) 42%, transparent);
+        stroke: none;
+      }
+      .locator .cty {
+        cursor: pointer;
+      }
+      .locator .cty:focus-visible circle {
+        outline: 2px solid var(--orange);
+        outline-offset: 1px;
+      }
+      /* Two lines: the region identifies the shape, the count reports coverage.
+         One line would run to ~200px in a 112px column. */
+      .locator-cap {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mid);
+        margin-top: 4px;
+        line-height: 1.5;
+      }
+      .locator-region,
+      .locator-count {
+        display: block;
+      }
+      .locator-region {
+        color: var(--dark);
+      }
+      /* No room beside the map on phones, and the chips already do the job. */
+      @media (max-width: 900px) {
+        .locator {
+          display: none;
+        }
       }
       .city-btn {
         padding: 4px 12px;
@@ -2267,9 +2335,16 @@
           letter-spacing: 0.6px;
         }
 
+        /* Country tier sits where the city row used to, and the chips drop
+           below it. Both shift together: leaving .city-selector at 64px would
+           stack the two rows on top of each other. */
+        .country-selector {
+          top: 58px;
+          left: 28px;
+        }
         /* City selector: was 9px font / 4-12 padding. Bump for touch. */
         .city-selector {
-          top: 64px;
+          top: 86px;
           left: 28px;
         }
         .city-btn {
@@ -2584,41 +2659,45 @@
           min-height: 22px;
           border-radius: 0;
         }
-        /* NATIVE ONLY, and it is a single segmented chip here rather than the
-           website's grouped-by-country layout: at this size the country labels
-           cost more width than they earn. So the groups flatten back into one
-           row and the caps are taken from the FIRST button of the first group
-           and the LAST button of the last group.
-           A bare `.city-btn:first-child` would now match the first button in
-           EVERY group - New York would render a left cap mid-chip. */
-        .app[data-mview='search'] .city-group-label {
-          display: none;
+        /* The chips are flat siblings again under the country tier, so
+           :first-child / :last-child address the ends of the segmented control
+           correctly - and the row is now SHORTER than before, because only the
+           active country's cities are shown (UK: two chips, USA: one). */
+        .app[data-mview='search'] .city-btn:first-child {
+          border-radius: 6px 0 0 6px;
         }
-        .app[data-mview='search'] .city-group,
-        .app[data-mview='search'] .city-group-btns {
-          flex-direction: row;
-          gap: 0;
-        }
-        .app[data-mview='search'] .city-btn {
+        .app[data-mview='search'] .city-btn:last-child {
+          border-radius: 0 6px 6px 0;
           border-left: none;
         }
-        .app[data-mview='search'] .city-group:first-child .city-btn:first-child {
-          border-radius: 6px 0 0 6px;
-          border-left: 1px solid var(--dark);
+        /* The country tier still has to be reachable here, or the USA is
+           unreachable in the app. Sits directly above the chip, right-aligned
+           to it, and smaller than on the website. */
+        .app[data-mview='search'] .country-selector {
+          position: fixed;
+          top: calc(env(safe-area-inset-top) + 1px);
+          right: 14px;
+          left: auto;
+          z-index: 4;
+          gap: 10px;
         }
-        .app[data-mview='search'] .city-group:last-child .city-btn:last-child {
-          border-radius: 0 6px 6px 0;
+        .app[data-mview='search'] .country-btn {
+          font-size: 8px;
+          letter-spacing: 0.08em;
+          min-height: 14px;
+          padding-bottom: 1px;
         }
         /* Make the search card leave room for the city chip on the right.
-           Was sized for two buttons ("LONDON" + "NEW YORK", ~110px) and was
-           not revisited when Manchester made it three, so the reserved width
-           has been short by roughly a button since 2026-08-09. Widened to fit
-           three. NOT VERIFIED ON A DEVICE: this whole block is native-only,
+           At most two chips now that the country tier filters the row, but the
+           widest UK pair is "LONDON" + "GREATER MANCHESTER" - the chips take
+           their text from the registry `label`, which is the full region name,
+           not the old hardcoded "Manchester". Sized for that pair.
+           NOT VERIFIED ON A DEVICE: this whole block is native-only,
            `data-mview` is never set on the website, and no gate here loads the
            native shell - the responsive audit walks the website. Check it in
            the simulator before the next binary. */
         .app[data-mview='search'] .search-box {
-          margin-right: 190px;
+          margin-right: 165px;
         }
 
         /* Hide desktop zoom controls on mobile (pinch/double-tap covers it).
@@ -2677,52 +2756,33 @@
           </span>
           <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
         </div>
-        <!-- Grouped by country. The grouping is not decoration: the three
-             cities do not share a currency, a lookup unit (postcode vs ZIP) or
-             a noise authority, and a flat list invited the reading that they
-             are interchangeable rows of one dataset. Each country is its own
-             role="group" named by its visible label, so a screen reader
-             announces "United Kingdom, London" rather than three peer buttons.
-             CITY_DATA already carries `country` per city - see applyCityChrome
-             - so a fourth city belongs under an existing heading or brings a
-             new one, and this markup is what syncCitySelector() keeps true. -->
-        <div class="city-selector" id="city-selector" role="group" aria-label="Select city">
-          <div class="city-group">
-            <span class="city-group-label" id="city-group-uk">UK</span>
-            <div class="city-group-btns" role="group" aria-labelledby="city-group-uk">
-              <button
-                type="button"
-                class="city-btn active"
-                aria-pressed="true"
-                data-city="london"
-                onclick="switchCity('london')"
-              >
-                London
-              </button>
-              <button
-                type="button"
-                class="city-btn"
-                aria-pressed="false"
-                data-city="manchester"
-                onclick="switchCity('manchester')"
-              >
-                Manchester
-              </button>
-            </div>
-          </div>
-          <div class="city-group">
-            <span class="city-group-label" id="city-group-usa">USA</span>
-            <div class="city-group-btns" role="group" aria-labelledby="city-group-usa">
-              <button
-                type="button"
-                class="city-btn"
-                aria-pressed="false"
-                data-city="nyc"
-                onclick="switchCity('nyc')"
-              >
-                New York
-              </button>
-            </div>
+        <!-- Country first, then the cities within it. A flat row put New York
+             between London and Manchester, which reads as arbitrary and gets
+             worse as UK cities are added, since New York ends up tacked onto a
+             run of nine.
+             Country is also where the DATA genuinely breaks, not just the UI:
+             DEFRA versus no published US survey, Open Government Licence versus
+             not, DfE Progress 8 versus no equivalent, Land Registry versus
+             curated New York prices. The provenance strings already draw that
+             line and the locator inset already hides across it, so this makes
+             navigation agree with the data model rather than treating the
+             difference as cosmetic. -->
+        <div class="country-selector" id="country-selector" role="tablist" aria-label="Select country"></div>
+        <div class="city-selector" id="city-selector" role="group" aria-label="Select city"></div>
+
+        <!-- Locator inset: where the current city sits nationally, and which
+             other cities exist. Persistent rather than a separate overview
+             screen - the main map stays the scoring map and the sidebar never
+             goes empty. Hidden outside the UK, since an England & Wales
+             silhouette says nothing useful on a New York view. -->
+        <div class="locator" id="locator" hidden>
+          <svg id="locator-svg" viewBox="0 0 130 168" role="img" aria-label="Coverage across England and Wales">
+            <path id="locator-land" d="" />
+            <g id="locator-cities"></g>
+          </svg>
+          <div class="locator-cap">
+            <span class="locator-region" id="locator-region"></span>
+            <span class="locator-count" id="locator-count"></span>
           </div>
         </div>
         <div class="map-controls">
@@ -8737,6 +8797,168 @@
        * literals in this file, not user or third-party data. Everything else
        * uses textContent.
        */
+      // --- Country / city selector ------------------------------------------
+      // Both tiers are built from CITY_DATA, so adding a city stays a registry
+      // entry rather than markup. The last city visited per country is
+      // remembered, so UK -> USA -> UK returns you where you were instead of
+      // resetting to London.
+      const lastCityInCountry = {};
+
+      // Display labels for the country tier. Full names live on each city as
+      // `country` because provenance uses them ("Contains public sector
+      // information licensed under the OGL"); the tabs want two or three
+      // characters. Derived from the registry rather than hardcoded so a
+      // country with no cities never gets a tab.
+      const COUNTRY_SHORT = { 'United Kingdom': 'UK', 'United States': 'USA' };
+
+      function countriesInRegistry() {
+        const seen = [];
+        Object.keys(CITY_DATA).forEach((id) => {
+          const c = CITY_DATA[id].country;
+          if (!seen.includes(c)) seen.push(c);
+        });
+        return seen;
+      }
+
+      function renderCountrySelector(active) {
+        const box = document.getElementById('country-selector');
+        if (!box) return;
+        box.textContent = '';
+        countriesInRegistry().forEach((country) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'country-btn' + (country === active ? ' active' : '');
+          b.setAttribute('role', 'tab');
+          b.setAttribute('aria-selected', String(country === active));
+          b.dataset.country = country;
+          // Falls back to the full name rather than to nothing, so a country
+          // added to the registry without a short label still renders.
+          b.textContent = COUNTRY_SHORT[country] || country;
+          b.addEventListener('click', () => switchCountry(country));
+          box.appendChild(b);
+        });
+      }
+
+      function renderCitySelector(country) {
+        const box = document.getElementById('city-selector');
+        if (!box) return;
+        box.textContent = '';
+        Object.keys(CITY_DATA)
+          .filter((id) => CITY_DATA[id].country === country)
+          .forEach((id) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'city-btn' + (id === currentCity ? ' active' : '');
+            b.dataset.city = id;
+            b.setAttribute('aria-pressed', String(id === currentCity));
+            b.textContent = CITY_DATA[id].label;
+            b.addEventListener('click', () => switchCity(id));
+            box.appendChild(b);
+          });
+        renderCountrySelector(country);
+      }
+
+      function switchCountry(country) {
+        if (cityOf(currentCity).country === country) return;
+        const target =
+          lastCityInCountry[country] ||
+          Object.keys(CITY_DATA).find((id) => CITY_DATA[id].country === country);
+        if (target) switchCity(target);
+      }
+
+      // --- Locator inset ------------------------------------------------------
+      // Names in the locator data are city-REGIONS ("West Midlands"); the app
+      // keys on city id. Only mapped entries are clickable, so a planned region
+      // is a marker rather than a dead link.
+      const LOCATOR_TO_CITY = { London: 'london', 'Greater Manchester': 'manchester' };
+      let locatorData = null;
+
+      async function loadLocator() {
+        if (locatorData) return locatorData;
+        try {
+          locatorData = await d3.json('/data/uk-locator.json');
+        } catch (e) {
+          // A decoration must never take the map down with it. This is also
+          // why the file is NOT in sw.js SHELL_ASSETS: cache.addAll() is
+          // atomic, so precaching a decoration would let its absence stop the
+          // service worker installing for every city.
+          console.warn('Locator inset unavailable:', e);
+          locatorData = null;
+        }
+        return locatorData;
+      }
+
+      async function renderLocator(city) {
+        const box = document.getElementById('locator');
+        if (!box) return;
+        // An England & Wales silhouette says nothing useful on a New York view.
+        if (cityOf(city).country !== 'United Kingdom') {
+          box.hidden = true;
+          return;
+        }
+        const data = await loadLocator();
+        if (!data) {
+          box.hidden = true;
+          return;
+        }
+        box.hidden = false;
+        document.getElementById('locator-land').setAttribute('d', data.d);
+        const g = document.getElementById('locator-cities');
+        g.textContent = '';
+        const NS = 'http://www.w3.org/2000/svg';
+        data.cities.forEach((c) => {
+          const target = LOCATOR_TO_CITY[c.name];
+          const active = target === city;
+          const node = document.createElementNS(NS, 'g');
+          node.setAttribute('class', 'cty');
+          if (target) {
+            node.setAttribute('tabindex', '0');
+            node.setAttribute('role', 'button');
+            node.setAttribute('aria-label', `Switch to ${c.name}`);
+            node.addEventListener('click', () => switchCity(target));
+            node.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                switchCity(target);
+              }
+            });
+          }
+          if (active) {
+            const ring = document.createElementNS(NS, 'circle');
+            ring.setAttribute('cx', c.x);
+            ring.setAttribute('cy', c.y);
+            ring.setAttribute('r', 6);
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', 'var(--orange)');
+            ring.setAttribute('stroke-width', '1.5');
+            node.appendChild(ring);
+          }
+          const dot = document.createElementNS(NS, 'circle');
+          dot.setAttribute('cx', c.x);
+          dot.setAttribute('cy', c.y);
+          // Three states separating by VALUE rather than size: solid dark is
+          // live, light disc with a dark rim is planned, orange ring is where
+          // you are. A hairline over `none` disappeared into the landmass -
+          // too faint to tell the roadmap story, too present to be nothing.
+          dot.setAttribute('r', target ? 3 : 2.6);
+          dot.setAttribute('fill', target ? 'var(--dark)' : 'var(--white)');
+          dot.setAttribute('stroke', target ? 'none' : 'var(--dark)');
+          dot.setAttribute('stroke-width', target ? 0 : 0.9);
+          node.appendChild(dot);
+          const t = document.createElementNS(NS, 'title');
+          // Plain hyphen: the em-dash gate covers this file.
+          t.textContent = target ? c.name : `${c.name} - planned`;
+          node.appendChild(t);
+          g.appendChild(node);
+        });
+        // The caption names the REGION because the shape alone cannot: at this
+        // size an absent Scotland and a broken Scotland render identically.
+        const live = data.cities.filter((c) => LOCATOR_TO_CITY[c.name]).length;
+        document.getElementById('locator-region').textContent = data.region || '';
+        document.getElementById('locator-count').textContent =
+          `${live} of ${data.cities.length} core cities`;
+      }
+
       function applyCityChrome(city) {
         const cfg = cityOf(city);
         const set = (id, text) => {
@@ -8807,11 +9029,12 @@
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
         aircraftRasterLoadedFor = null;
-        document.querySelectorAll('.city-btn').forEach((b) => {
-          const isActive = b.dataset.city === city;
-          b.classList.toggle('active', isActive);
-          b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
+        // Rebuild rather than toggle: the chip row only shows the ACTIVE
+        // country's cities, so a cross-country switch changes which chips
+        // exist, not merely which is highlighted.
+        lastCityInCountry[cityOf(city).country] = city;
+        renderCitySelector(cityOf(city).country);
+        renderLocator(city);
 
         applyCityChrome(city);
 
@@ -9357,6 +9580,14 @@
         // in it, and only gained "LONDON ·" once you had visited another city
         // and come back. Now the initial state is derived like every other.
         applyCityChrome(currentCity);
+        // Both selector tiers are now GENERATED, so unlike the old static
+        // markup nothing exists until this runs. init() has no `city`
+        // parameter - the starting city is whatever currentCity was set to at
+        // load. renderLocator is not awaited: it fetches, and a decoration must
+        // not hold up first paint.
+        lastCityInCountry[cityOf(currentCity).country] = currentCity;
+        renderCitySelector(cityOf(currentCity).country);
+        renderLocator(currentCity);
         // Don't `await extraPromise` - we want the map to paint as soon as
         // geojson is ready. The hydration callback handles re-scoring +
         // sidebar refresh whenever it lands.

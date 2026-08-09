@@ -63,8 +63,26 @@ const renderedNames = await page.evaluate(() => {
 // cross-origin fetch for another wave precisely because nothing exercised the
 // city switch. Everything above this line is London; everything after the
 // click is NYC.
+// Select a city through BOTH tiers. The chip row shows only the active
+// country's cities, so clicking `.city-btn[data-city="nyc"]` while the UK tab
+// is active waits 30s for an element that does not exist - which is exactly
+// how this test failed when the country tier landed. Country first, then chip.
+async function selectCity(id) {
+  const want = await page.evaluate((c) => window.cityOf(c).country, id);
+  const have = await page.evaluate(
+    () => document.querySelector('.country-btn.active')?.dataset.country
+  );
+  if (want !== have) {
+    await page.click(`.country-btn[data-country="${want}"]`);
+    // switchCountry() routes through switchCity(), which awaits a boundary
+    // fetch, so the chip row is rebuilt asynchronously.
+    await page.waitForSelector(`.city-btn[data-city="${id}"]`, { timeout: 20000 });
+  }
+  await page.click(`.city-btn[data-city="${id}"]`);
+}
+
 const londonRequestCount = requests.length;
-await page.click('.city-btn[data-city="nyc"]');
+await selectCity('nyc');
 
 let nycBoroughCount = 0;
 try {
@@ -109,7 +127,9 @@ const nycNamesOk = NYC_EXPECTED.every((n) => nycNames.includes(n));
 // Asserting the local fetch here means a fresh clone fails the gate instead of
 // the deploy serving "outlines could not be loaded".
 const nycRequestCount = requests.length;
-await page.click('.city-btn[data-city="manchester"]');
+// Via selectCity too: this one crosses BACK from USA to UK, so the Manchester
+// chip does not exist at the moment this line runs either.
+await selectCity('manchester');
 
 let manBoroughCount = 0;
 try {

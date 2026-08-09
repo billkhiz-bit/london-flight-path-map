@@ -6,6 +6,54 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-09 (night, latest) - Country tier and locator inset, recovered from the spike branch
+
+- **The city switcher is two tiers**: country tabs (underlined text, not chips,
+  so the rows read as a hierarchy) above city chips showing only that country's
+  cities. **The last city visited per country is remembered**, so UK to USA to
+  UK returns you to Manchester rather than resetting to London.
+- **Country is where the DATA breaks, not just the UI**: DEFRA versus no
+  published US survey, Open Government Licence versus not, DfE Progress 8
+  versus no equivalent, Land Registry versus curated New York prices. A flat
+  row also put New York between two UK cities and would have tacked it onto a
+  run of nine as Core Cities land.
+- **Locator inset**: an England & Wales silhouette showing where the current
+  city sits and which others exist. Three marker states separating by value
+  rather than size - **solid dark is live, light disc with a dark rim is
+  planned, orange ring is where you are** - captioned `ENGLAND & WALES / 2 OF
+  10 CORE CITIES`. Clipped to England and Wales because Scotland and Northern
+  Ireland sit in different data regimes, and at inset scale an empty Scotland
+  and a broken one render identically.
+- **Both tiers are generated from `CITY_DATA`**, so a Core City is a registry
+  entry rather than markup, and the locator's ten markers already name the
+  full roadmap.
+- **This was recovered, not invented.** It was built on
+  `worktree-core-cities-spike-2026-07-31` (commits `e892789`, `d83fbde`,
+  `1dc2d2e`, `e227cc6`, `7d29ae9`, `12437a1`) and never reached master. An
+  earlier search for it this session looked only at `index.html` on the current
+  branch and wrongly concluded no prior version existed; the flat
+  grouped-by-country row built on that conclusion is replaced by this.
+- `data/uk-locator.json` is checked in and **has no generator** - it is an
+  artefact, which is precisely why it must live in git rather than on one
+  machine. It is deliberately **NOT in `sw.js` SHELL_ASSETS**: `cache.addAll()`
+  is atomic and this is a decoration with a graceful fallback, so precaching it
+  would let a missing decoration stop the service worker installing for every
+  city. It does have a `make data-deploy` line, because a 404 removes the inset
+  with only a `console.warn`.
+- **Fixed the same bug in both ported harnesses**: their static server wrote the
+  200 header before `readFile` could throw, so a missing file killed the run
+  with `ERR_HTTP_HEADERS_SENT` rather than reporting. Found by red-proofing
+  `locator-verify` - it exited 1, but for entirely the wrong reason, which is a
+  green check's evil twin. Both now report `markers=0 land=0` cleanly.
+- Both harnesses added to preflight (**18 blocking stages**).
+- **The gate caught this before it shipped.** `local smoke (3 cities)` went red:
+  it clicked `.city-btn[data-city="nyc"]` directly, and that chip does not exist
+  while the UK tab is active, so it waited 30s for an element that was gone. The
+  spike branch had flagged exactly this ("all three harnesses had to learn the
+  new tier"), and master's smoke test post-dates that branch so it never got the
+  memo. It now selects country then chip via a `selectCity()` helper - which the
+  Manchester leg needs too, since that one crosses back from USA to UK.
+
 ### 2026-08-09 (night, later) - GM neighbourhoods, sourced rather than authored
 
 - **85 Greater Manchester neighbourhoods in the ranking**, across all ten
