@@ -5044,6 +5044,29 @@
           // the input. Declared here rather than tested as `city === 'nyc'`,
           // which is the trap the registry exists to remove.
           country: 'United Kingdom',
+          // Prose and presentation that differ per city. These were inline
+          // `currentCity === 'nyc' ? ... : ...` ternaries, which meant every
+          // city that is not NYC got LONDON's copy - so a third city would
+          // have told users to "Try e.g. Chelsea, Twickenham, SW11 1AA, or
+          // Hounslow". Declared here, adding a city is a compile-time
+          // conversation about what it should say rather than a silent
+          // inheritance of what London says.
+          //
+          // noiseAuthority and noiseAuthorityPlain are BOTH kept because the
+          // live copy already used two different labels for the same body -
+          // "DEFRA" in the map badge, "government" in the how-to-read panel.
+          // Preserved rather than unified: changing user-facing wording is a
+          // separate decision from removing the ternaries.
+          healthSource: 'NHS TRUST DATA (CURATED)',
+          searchNotFound: 'Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.',
+          mapLabelFontSize: '6px',
+          noiseAuthority: 'DEFRA',
+          noiseAuthorityPlain: 'government',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'TfL and EPC',
+          runwayNote: 'Heathrow alternates runways',
+          currencyHtml: '&pound;',
           boroughData: () => BOROUGH_DATA,
           boroughRaw: () => BOROUGH_DATA_RAW,
           boroughExtra: () => BOROUGH_EXTRA,
@@ -5059,6 +5082,16 @@
           label: 'New York City',
           currency: '$',
           country: 'United States',
+          healthSource: 'NYC HEALTH+HOSPITALS DATA (CURATED)',
+          searchNotFound: 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.',
+          mapLabelFontSize: '8px',
+          noiseAuthority: 'FAA/BTS',
+          noiseAuthorityPlain: 'FAA/BTS',
+          crimeLiveNote: '',
+          localDataLabel: 'property data',
+          localDataSources: 'transit and listing',
+          runwayNote: 'airports operate on different runway configurations',
+          currencyHtml: '$',
           boroughData: () => NYC_BOROUGH_DATA,
           boroughRaw: () => NYC_BOROUGH_DATA_RAW,
           boroughExtra: () => NYC_BOROUGH_EXTRA,
@@ -6603,7 +6636,7 @@
           ? `<div class="metric-detail" id="${id}-nhs">
         <span class="rating-badge ${ratingBadgeClass(extra.healthcare === 'excellent' ? 'low' : extra.healthcare === 'good' ? 'medium' : 'high')}">${extra.healthcare}</span>
         <p class="info-note">${extra.healthcareNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">SOURCE: ${currentCity === 'nyc' ? 'NYC HEALTH+HOSPITALS DATA (CURATED)' : 'NHS TRUST DATA (CURATED)'}</div>
+        <div class="defra-badge" style="margin-top:8px;">SOURCE: ${cityOf(currentCity).healthSource}</div>
       </div>`
           : ''
       }
@@ -7243,7 +7276,7 @@
           announceResult('No results found for that search.');
           document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
-        <p>${currentCity === 'nyc' ? 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.' : 'Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.'}</p>
+        <p>${cityOf(currentCity).searchNotFound}</p>
       </div>`;
           return;
         }
@@ -7490,7 +7523,7 @@
             .attr('y', c[1])
             .text(data.name.toUpperCase())
             .attr('text-anchor', 'middle')
-            .attr('font-size', currentCity === 'nyc' ? '8px' : '6px')
+            .attr('font-size', cityOf(currentCity).mapLabelFontSize)
             .attr('font-family', 'var(--font-mono)')
             .attr('font-weight', '600')
             .attr('fill', '#141414')
@@ -7807,7 +7840,7 @@
       <span class="noise-indicator ${noiseClass}">${(data.impact || 'UNKNOWN').toUpperCase()}</span>
       <div class="noise-bar"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
       <p class="property-note">${data.note}</p>
-      <div class="defra-badge">ZOOM INTO MAP TO SEE OFFICIAL ${currentCity === 'nyc' ? 'FAA/BTS' : 'DEFRA'} NOISE CONTOURS</div>
+      <div class="defra-badge">ZOOM INTO MAP TO SEE OFFICIAL ${cityOf(currentCity).noiseAuthority} NOISE CONTOURS</div>
     </div>
 
     <div class="sidebar-section">
@@ -7830,7 +7863,7 @@
       <div class="crime-summary">
         <div class="crime-stat"><div class="crime-stat-value">${extra.crimeRate}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (EST.)</div></div>
       </div>
-      <p class="info-note">${escapeHtml(crimeNote(extra))}${currentCity === 'nyc' ? '' : ' Use the area search for live crime data from data.police.uk.'}</p>
+      <p class="info-note">${escapeHtml(crimeNote(extra))}${cityOf(currentCity).crimeLiveNote}</p>
     </div>
 
     <div class="sidebar-section">
@@ -7844,8 +7877,8 @@
 
     <div class="sidebar-section" style="background:rgba(242,125,38,0.05);border-left:3px solid var(--orange);padding-left:21px;">
       <p class="info-note" style="margin:0;font-size:10px;line-height:1.5;">
-        <strong>Want nearest stations &amp; ${currentCity === 'nyc' ? 'property data' : 'energy ratings'}?</strong><br>
-        Use the area search above for precise, location-specific ${currentCity === 'nyc' ? 'transit and listing' : 'TfL and EPC'} data.
+        <strong>Want nearest stations &amp; ${cityOf(currentCity).localDataLabel}?</strong><br>
+        Use the area search above for precise, location-specific ${cityOf(currentCity).localDataSources} data.
       </p>
     </div>`;
       }
@@ -8116,13 +8149,13 @@
     <div class="sidebar-section">
       <h3>YOUR NEXT STEPS</h3>
       <p class="property-note" style="margin-top:0;">
-        <strong>1. Check noise overlay</strong> - zoom into the map to see official ${currentCity === 'nyc' ? 'FAA/BTS' : 'government'} noise contours at your location.<br><br>
+        <strong>1. Check noise overlay</strong> - zoom into the map to see official ${cityOf(currentCity).noiseAuthorityPlain} noise contours at your location.<br><br>
         ${
           currentCity === 'nyc'
             ? '<strong>2. Check FAA data</strong> - review flight tracking tools for JFK, LaGuardia and Newark to see which planes fly over this area.<br><br>'
             : '<strong>2. Use WebTrak</strong> - <a href="https://webtrak.emsbk.com/lhr6" target="_blank" style="color:var(--orange);">Heathrow WebTrak</a> shows exactly which planes fly over this location and how often.<br><br>'
         }
-        <strong>3. Visit at different times</strong> - ${currentCity === 'nyc' ? 'airports operate on different runway configurations' : 'Heathrow alternates runways'}, so noise changes between morning and afternoon. Visit at least twice.<br><br>
+        <strong>3. Visit at different times</strong> - ${cityOf(currentCity).runwayNote}, so noise changes between morning and afternoon. Visit at least twice.<br><br>
         <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
       </p>
     </div>`;
@@ -8683,7 +8716,7 @@
           return '<span class="rank-tag ' + cls + '">' + impact + '</span>';
         };
         const w = PERSONAS[currentPersona].weights;
-        const currency = currentCity === 'nyc' ? '$' : '&pound;';
+        const currency = cityOf(currentCity).currencyHtml;
 
         let tableRows = '';
         // Same escapeHtml + dataset pattern as renderFavourites, keeps user-

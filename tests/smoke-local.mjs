@@ -124,11 +124,35 @@ failedRequests.slice(0, 12).forEach((e) => console.log('   x', e));
 // behaviour directly, because "London still renders" cannot distinguish the fix
 // from its absence — that passed before the refactor too.
 const registry = await page.evaluate(() => {
-  const out = { known: [], throwsOnUnknown: false, londonOk: false, nycOk: false };
+  const out = {
+    known: [],
+    throwsOnUnknown: false,
+    londonOk: false,
+    nycOk: false,
+    keysMatch: false,
+    missing: [],
+  };
   try {
     out.known = Object.keys(CITY_DATA);
     out.londonOk = typeof cityOf('london').boroughData() === 'object';
     out.nycOk = typeof cityOf('nyc').boroughData() === 'object';
+
+    // Every city must declare the SAME keys. Added 2026-08-09 with the prose
+    // fields (healthSource, searchNotFound, noiseAuthority and the rest), which
+    // replaced inline `currentCity === 'nyc' ? ... : ...` ternaries.
+    //
+    // The ternaries at least forced both branches to exist. A registry does
+    // not: adding a field to london and forgetting nyc yields `undefined`,
+    // which renders as the literal string "undefined" in a template rather
+    // than throwing. This is the coverage assertion for the registry - it
+    // fails on the field that was forgotten, not on the city that was.
+    const union = new Set(out.known.flatMap((c) => Object.keys(CITY_DATA[c])));
+    for (const city of out.known) {
+      for (const key of union) {
+        if (CITY_DATA[city][key] === undefined) out.missing.push(`${city}.${key}`);
+      }
+    }
+    out.keysMatch = out.missing.length === 0;
   } catch {
     // Reported through the flags above rather than thrown, so a broken
     // registry fails this test instead of aborting the whole run.
@@ -147,6 +171,8 @@ console.log('registered cities:        ', registry.known.join(', '));
 console.log('london resolves:          ', registry.londonOk);
 console.log('nyc resolves:             ', registry.nycOk);
 console.log('unknown city throws:      ', registry.throwsOnUnknown, '(must be true)');
+console.log('every city declares same keys:', registry.keysMatch);
+if (registry.missing.length) console.log('  MISSING:', registry.missing.join(', '));
 
 await browser.close();
 
@@ -165,7 +191,8 @@ const ok =
   !nycAskedGithub &&
   registry.londonOk &&
   registry.nycOk &&
-  registry.throwsOnUnknown;
+  registry.throwsOnUnknown &&
+  registry.keysMatch;
 
 console.log('\nRESULT:', ok ? 'PASS' : 'FAIL');
 process.exit(ok ? 0 : 1);
