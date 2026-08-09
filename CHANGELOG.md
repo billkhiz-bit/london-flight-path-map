@@ -6,6 +6,62 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-09 - the loaders were dying, not slow, and air quality is finally served
+
+**DEPLOYED**: nothing. The loaders write straight to DynamoDB and the score
+Lambda reads it live, so postcodes gain their values as the run reaches them.
+The `index.html` fix below is in source and **needs a `web-deploy`**.
+
+- **`/v1/environment` returned its first NO2 and PM2.5 figures.** A Bromley
+  coordinate now reads `no2AnnualMeanUgm3` 18.3 against a WHO guideline of 10,
+  and `pm25AnnualMeanUgm3` 8.5 against 5. The endpoint has advertised those
+  fields since 6 Aug and had never once populated them.
+- **The air-quality loader had been DYING mid-run, twice, and the cause was
+  configuration rather than data.** Windows entered sleep at 21:28:12 on 8 Aug;
+  the checkpoint last moved at 21:27. Sleep does not kill the process - the
+  system resumed six seconds later - it kills the in-flight HTTPS connections,
+  and `list(ex.map(_put, batch))` re-raises the first worker exception with no
+  `try` anywhere beneath it. One broken socket ended a 26-hour run at 28%.
+  Neither death left a log; the cause came out of the Windows event log.
+- **The fix already existed one file over.** `load_nspl.py` builds its client
+  with adaptive retry and is the only loader here that has ever run to
+  completion (5.8h, 2.7M rows); both DEFRA loaders used a bare client. Policy is
+  now shared in `scripts/ddb_write.py` rather than pasted, because the part worth
+  getting right is `FATAL_CODES` and two copies drift into one loader waiting out
+  an error the other raises on.
+- **The wait is bounded at 30 minutes on purpose.** Unbounded waiting swaps this
+  failure for the worse one `load_nspl.py` already hit: an IAM denial spinning
+  silently forever, making no progress and saying nothing. Verified by pointing
+  the loader at a table it cannot write - it raised `AccessDeniedException` in
+  3.1s, not 1800. Stalled postcodes are recorded **by name** to a failures file,
+  never as a count, because a tally cannot be re-run.
+- **Both loaders stopped over-reporting `written`.** Each added `len(batch)`
+  whether or not the batch landed, so 25 items with 3 stalls claimed 25 - the
+  same absent-read-as-present error one layer up from the data.
+- **13 tests, both failure directions proven red.** Emptying `FATAL_CODES` fails
+  6; making transient faults re-raise fails 3. **The first version of the test
+  could not fail**: it parametrised over the constant it guards, so emptying that
+  constant printed `7 passed, 1 skipped` and exit 0 - the test was deleted rather
+  than failed. The codes are now written out in the test, because an expectation
+  that reads from the code it checks cannot disagree with it.
+- **Coverage lands alphabetically and central London is last.** The first `SW`
+  row sits at ~85% of a full NSPL pass and the first `W` at ~93%, so outer London
+  lights up early while the West End stays blank. This is the same shape as the
+  road figure published as 99.2% while `W`, `WC` and `WD` held nothing. Air
+  quality figures must not be read as complete from an outer-London spot check.
+- **Fixed: the healthcare panel heading rendered as literal
+  "DOCTORS &amp; CLINICS".** Reported from the live site. `renderGroup` escapes
+  its own title and was handed a pre-escaped entity, so it encoded a second time,
+  in both the heading and the "Search NHS ... services" fallback. The entity was
+  correct when the string went straight into `innerHTML`; `escapeHtml()` was
+  added later - rightly, since `/nhs` proxies OpenStreetMap names - and the old
+  entity silently became a defect. The extension was unaffected: `panel.js`
+  builds nodes with `textContent`, which needs no entity.
+- **The raster loader stopped recommending `describe-table`'s `ItemCount`** for
+  verifying a load. That figure refreshes roughly every six hours, so it reads 0
+  through most of a run and a load that wrote nothing looks exactly like one that
+  worked. It now prints a `get-item` on a known postcode.
+
 ### 2026-08-08 - both DEFRA loaders found dead, and the charts learned to say less
 
 **DEPLOYED**: nothing. Extension is local-only and the loaders write straight to
