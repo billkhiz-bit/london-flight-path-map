@@ -197,6 +197,13 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
+	# manchester-boroughs.json, added 2026-08-09 with the third city. In
+	# SHELL_ASSETS like the other two, so the atomic-addAll note above applies
+	# to it identically: missing here means the service worker stops installing
+	# for ALL three cities, not just this one.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/manchester-boroughs.json \
+		s3://$(S3_BUCKET)/data/manchester-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/borough-extra.json \
 		s3://$(S3_BUCKET)/data/borough-extra.json \
 		--content-type "application/json" \

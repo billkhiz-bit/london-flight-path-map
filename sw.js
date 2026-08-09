@@ -82,7 +82,16 @@
 // it was the only reason for; 21 school notes now mark any Ofsted grade they
 // name as historic (withdrawn Sept 2024, not feeding the score). data/ changed,
 // so this bump is required.
-const VERSION = 'v1.0.16';
+// (v1.0.16 has no entry here. It was bumped without one, which is why this log
+// is worth keeping: the next reader cannot tell what a returning visitor was
+// getting a fresh shell for.)
+// v1.0.17 (2026-08-09): Greater Manchester joins as a third city. Both
+// index.html and data/borough-extra.json changed - the latter gained a
+// `manchester` block - so this bump is required twice over by the rule at the
+// top. data/manchester-boroughs.json is new in SHELL_ASSETS, and cache.addAll()
+// is atomic, so it must reach the origin BEFORE or WITH this file or the worker
+// stops installing entirely.
+const VERSION = 'v1.0.17';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -119,6 +128,12 @@ const SHELL_ASSETS = [
   '/js/vendor/d3.v7.min.js',
   '/data/london-boroughs.json',
   '/data/nyc-boroughs.json',
+  // Greater Manchester, added 2026-08-09 with the third city. DEPLOY ORDER IS
+  // LOAD-BEARING: cache.addAll() is atomic, so shipping this sw.js before the
+  // data file exists at the origin makes the service worker fail to INSTALL AT
+  // ALL, taking offline support for all three cities with it. `make
+  // data-deploy` before `make pwa-deploy`, exactly as the fonts do.
+  '/data/manchester-boroughs.json',
   // Self-hosted fonts, 2026-08-05. Only the two families index.html actually
   // uses — Geist is for pricing/changes/api and is not part of the app shell.
   // These are precached rather than left to the runtime because they replaced

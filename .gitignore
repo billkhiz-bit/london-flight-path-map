@@ -66,6 +66,14 @@ data/*
 # taking offline support for BOTH cities with it. Regenerate when the source
 # vintage rolls, and bump sw.js VERSION in the same commit.
 !data/nyc-boroughs.json
+# Greater Manchester borough boundaries (66 KB), from the spike branch's ONS
+# LAD extract. Checked in for the same reason as the two above, and the failure
+# mode without it is quiet rather than loud: `data/*` ignores this directory, so
+# a new city's boundaries are invisible to git by DEFAULT. The file sits on the
+# author's disk, the map renders, every local check passes - and a fresh clone
+# or a deploy shows "Greater Manchester borough outlines could not be loaded".
+# Any future city needs a line here.
+!data/manchester-boroughs.json
 .defra_load_checkpoint
 # Trailing * is load-bearing since the loader gained --geotiff: checkpoints are
 # now namespaced per raster (.defra_load_checkpoint_defra_lden_2022_manchester),
