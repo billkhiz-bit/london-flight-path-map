@@ -50,8 +50,17 @@ The product exists to address a structural information asymmetry in UK property:
 **Currently supported:**
 - 33 London boroughs (32 boroughs plus the City of London), UK postcode resolution
 - 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island), borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
+- 10 Greater Manchester metropolitan boroughs, **borough-name lookup only** — postcode resolution is London-only, because `resolve_query()` gates it there *and* the NSPL loader writes the borough attribute for London local authorities alone. Two separate blockers, not one.
 
-**Planned:** UK Core Cities (Manchester, Birmingham, Bristol, Leeds, Edinburgh, Glasgow, Liverpool, Newcastle, Sheffield, Cardiff, Belfast, Nottingham), then England + Wales.
+**Coverage is not uniform, and every response says which inputs it rests on**
+via `context.liveResolution`. Greater Manchester's
+aircraft bands are **estimated from runway geometry, not sampled from the DEFRA
+strategic noise maps** that cover London, and its liveability rests on 2 of the
+4 inputs (see the table in §4.4.1) with the absent inputs' weight redistributed
+rather than filled with a placeholder. Road noise, flood risk and air quality
+have no Greater Manchester source and are not published for it.
+
+**Planned:** the remaining UK Core Cities (Birmingham, Bristol, Leeds, Edinburgh, Glasgow, Liverpool, Newcastle, Sheffield, Cardiff, Belfast, Nottingham), then England + Wales.
 
 **Postcode → borough resolution** uses `postcodes.io` for UK postcodes; NYC ZIPs use a static lookup table baked into the Lambda (sourced from NYC OpenData ZCTA boundaries + USPS). ZIPs without an explicit centroid fall back to the borough-aggregate Lden band for the quiet score; non-NYC US ZIPs (e.g. 90210) return a structured 404 with the supported borough list.
 

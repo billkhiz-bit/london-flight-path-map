@@ -201,9 +201,15 @@ else
   # 2026-07-30 vendoring work and was in no gate at all — the one test that
   # could catch a regression before it shipped was the one nothing ran.
   #
-  # It loads the working tree over a throwaway static server, paints both
+  # It loads the working tree over a throwaway static server, paints ALL THREE
   # cities, and asserts the CITY_DATA registry rejects an unknown city instead
   # of silently serving London's data under its name.
+  #
+  # The count in this label is load-bearing, not decoration: it read "both
+  # cities" for the whole session in which Greater Manchester became the third,
+  # and a stage that names a smaller number than the app carries is how a new
+  # city goes unexercised. If a fourth is added, this label and the test move
+  # together.
   smoke_port=8123
   python -m http.server "$smoke_port" --bind 127.0.0.1 >/dev/null 2>&1 &
   smoke_pid=$!
@@ -214,7 +220,7 @@ else
     [ "$smoke_tries" -gt 30 ] && break
     sleep 1
   done
-  check "local smoke (both cities)"     node tests/smoke-local.mjs
+  check "local smoke (3 cities)"        node tests/smoke-local.mjs
   kill "$smoke_pid" 2>/dev/null || true
 fi
 

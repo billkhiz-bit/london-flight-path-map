@@ -6,13 +6,17 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 
 > Methodology v3.3 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs) + 10 Greater Manchester boroughs · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
-> **Greater Manchester is API-only and partially sourced.** Added 2026-08-09, it
-> is not on the consumer site. Its aircraft-noise bands are estimated from
-> runway geometry rather than sampled from DEFRA, and liveability rests on two
-> measured inputs (DfE Progress 8, ONS recorded crime) where London has four —
-> `context.liveResolution` reports that per response, and the absent inputs have
-> their weight redistributed rather than filled with a placeholder. Query it with
-> `?borough=Trafford&city=manchester`; **postcode resolution is London-only**.
+> **Greater Manchester is live on both the site and the API, and is thinner than
+> the other two on purpose.** Added 2026-08-09. Its aircraft-noise bands are
+> estimated from runway geometry rather than sampled from DEFRA — the map legend
+> says so rather than borrowing London's DEFRA labelling — and liveability rests
+> on two measured inputs (DfE Progress 8, ONS recorded crime) where London has
+> four, with `context.liveResolution` reporting that per response and the absent
+> inputs having their weight redistributed rather than filled with a placeholder.
+> Road noise, flood risk, air quality, area search and station data do not exist
+> for this city and are shown as "NO DATA" rather than left to look sourced.
+> Query it with `?borough=Trafford&city=manchester`; **postcode resolution is
+> London-only**.
 
 ## Try it in 30 seconds
 
@@ -169,13 +173,14 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 - **Greater Manchester**: 10 boroughs **by borough name only** — postcode
   resolution is London-only, because `resolve_query()` gates it there *and*
   `scripts/load_nspl.py` writes the borough attribute for London LADs alone.
-  Two blockers, not one. API-only; not on the consumer site.
+  Two blockers, not one. On the site and the API.
 - **Planned**: the rest of the UK Core Cities (Birmingham, Bristol, Leeds, etc.), then England + Wales
 
 **What "supported" means per city**, because it is not uniform:
 
 | | London | NYC | Greater Manchester |
 |---|---|---|---|
+| On the consumer site | yes | yes | yes, visibly thinner |
 | Lookup | postcode or borough | ZIP or borough | **borough only** |
 | Aircraft noise | DEFRA raster where covered, else geometry | curated bands from approach geometry | **runway geometry only, not DEFRA** |
 | Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **2 of 4** (schools, crime) |

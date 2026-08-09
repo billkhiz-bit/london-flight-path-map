@@ -96,6 +96,62 @@ const nycNames = await page.evaluate(() => {
 const NYC_EXPECTED = ['Queens', 'Brooklyn', 'Manhattan', 'Bronx', 'Staten Island'];
 const nycNamesOk = NYC_EXPECTED.every((n) => nycNames.includes(n));
 
+// --- Greater Manchester, added 2026-08-09 ---
+// The reason written above for NYC applied again, unchanged: nothing that
+// loads the page had ever rendered this city. The site agreed with /v1/score
+// on all ten boroughs only because someone diffed them by hand - the first cut
+// drew ten correct outlines, the right airport and both approach corridors
+// while disagreeing with the API on EVERY borough by up to 1.5 points, and
+// nothing errored. A map that looks correct is not evidence.
+//
+// This also guards the git trap: data/* is gitignored and un-ignored file by
+// file, so these boundaries lived on disk and outside git for a whole session.
+// Asserting the local fetch here means a fresh clone fails the gate instead of
+// the deploy serving "outlines could not be loaded".
+const nycRequestCount = requests.length;
+await page.click('.city-btn[data-city="manchester"]');
+
+let manBoroughCount = 0;
+try {
+  // Coming from NYC's 5 paths, so waiting for >= 10 is a real wait rather than
+  // a condition that is already true.
+  await page.waitForFunction(() => document.querySelectorAll('path.borough').length >= 10, {
+    timeout: 20000,
+  });
+  manBoroughCount = await page.locator('path.borough').count();
+} catch {
+  manBoroughCount = await page.locator('path.borough').count();
+}
+
+const manRequests = requests.slice(nycRequestCount);
+const manAskedGithub = manRequests.some((u) => u.includes('raw.githubusercontent.com'));
+const manAskedLocalGeo = manRequests.some((u) => u.includes('/data/manchester-boroughs.json'));
+
+const manNames = await page.evaluate(() => {
+  const out = [];
+  document.querySelectorAll('path.borough').forEach((el) => {
+    const d = el.__data__;
+    if (d && d.properties && d.properties.name) out.push(d.properties.name);
+  });
+  return out;
+});
+// The boundary branch used to be `if london ... else <NYC>`, which meant a
+// third city silently loaded New York's outlines. Asserting the names is what
+// separates "drew ten shapes" from "drew the right ten shapes".
+const MAN_EXPECTED = [
+  'Bolton',
+  'Bury',
+  'Manchester',
+  'Oldham',
+  'Rochdale',
+  'Salford',
+  'Stockport',
+  'Tameside',
+  'Trafford',
+  'Wigan',
+];
+const manNamesOk = MAN_EXPECTED.every((n) => manNames.includes(n));
+
 console.log('--- LOCAL SMOKE ---');
 console.log('#app visible:            ', appVisible);
 console.log('d3 loaded:               ', d3Loaded, d3Version);
@@ -110,6 +166,11 @@ console.log('NYC borough paths:       ', nycBoroughCount, '(expect 5)');
 console.log('NYC names all present:   ', nycNamesOk, nycNamesOk ? '' : JSON.stringify(nycNames));
 console.log('requested nyc geojson:   ', nycAskedLocalGeo);
 console.log('requested github raw:    ', nycAskedGithub, '(must be false)');
+console.log('--- after switch to Greater Manchester ---');
+console.log('GM borough paths:        ', manBoroughCount, '(expect 10)');
+console.log('GM names all present:    ', manNamesOk, manNamesOk ? '' : JSON.stringify(manNames));
+console.log('requested gm geojson:    ', manAskedLocalGeo);
+console.log('requested github raw:    ', manAskedGithub, '(must be false)');
 console.log('console errors:          ', consoleErrors.length);
 consoleErrors.slice(0, 12).forEach((e) => console.log('   !', e));
 console.log('failed requests:         ', failedRequests.length);
@@ -129,6 +190,7 @@ const registry = await page.evaluate(() => {
     throwsOnUnknown: false,
     londonOk: false,
     nycOk: false,
+    manchesterOk: false,
     keysMatch: false,
     missing: [],
   };
@@ -136,6 +198,7 @@ const registry = await page.evaluate(() => {
     out.known = Object.keys(CITY_DATA);
     out.londonOk = typeof cityOf('london').boroughData() === 'object';
     out.nycOk = typeof cityOf('nyc').boroughData() === 'object';
+    out.manchesterOk = typeof cityOf('manchester').boroughData() === 'object';
 
     // Every city must declare the SAME keys. Added 2026-08-09 with the prose
     // fields (healthSource, searchNotFound, noiseAuthority and the rest), which
@@ -175,6 +238,7 @@ console.log('--- city registry ---');
 console.log('registered cities:        ', registry.known.join(', '));
 console.log('london resolves:          ', registry.londonOk);
 console.log('nyc resolves:             ', registry.nycOk);
+console.log('manchester resolves:      ', registry.manchesterOk);
 console.log('unknown city throws:      ', registry.throwsOnUnknown, '(must be true)');
 console.log('every city declares same keys:', registry.keysMatch);
 if (registry.missing.length) console.log('  MISSING:', registry.missing.join(', '));
@@ -194,8 +258,13 @@ const ok =
   nycNamesOk &&
   nycAskedLocalGeo &&
   !nycAskedGithub &&
+  manBoroughCount === 10 &&
+  manNamesOk &&
+  manAskedLocalGeo &&
+  !manAskedGithub &&
   registry.londonOk &&
   registry.nycOk &&
+  registry.manchesterOk &&
   registry.throwsOnUnknown &&
   registry.keysMatch;
 

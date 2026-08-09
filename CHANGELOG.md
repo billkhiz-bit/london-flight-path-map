@@ -6,6 +6,63 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-09 (night) - Greater Manchester on the consumer site
+
+**DEPLOYED**: nothing. Frontend + data change, needs `make web-deploy-all`.
+**Supersedes the API-only note in the entry below**: the site now offers three
+cities.
+
+- **Greater Manchester is on the map**, and site and API agree on **all 48
+  boroughs** across the three cities - verified by loading the working-tree
+  page and diffing every borough against the working-tree Lambda, not by
+  looking at the map.
+- **Looking at the map was the point.** The first cut rendered ten correct
+  outlines, the right airport and both approach corridors, and disagreed with
+  `/v1/score` on **every single borough by up to 1.5 points** - Trafford read
+  2.8 against 4.1. Nothing errored and nothing looked wrong. Two causes:
+  `data/borough-extra.json` had no `manchester` entry, so the site could not
+  see Progress 8 or crime, `live` fell below its floor of two and the
+  composite rescaled onto the other three components; and
+  `hydrateBoroughExtra()` assigned `london` and `nyc` and nothing else, so
+  even once the data existed the site scored from an empty object.
+  `recalcAllScores()` had the same two-city shape.
+- **The parity guard could not have caught either**, which is why it was fixed
+  first: both holders *had* the data, and the site never loaded it into the
+  object it scores from. `BACKEND_ONLY_CITIES` is declared rather than
+  inferred, so "someone shipped a city and forgot its data" stays
+  distinguishable from "backend-only on purpose", and it fails in **both**
+  directions - a declared city that *gains* site data also fails, so it starts
+  being compared instead of staying permanently exempt. It is now
+  `frozenset()`.
+- **Map chrome comes from the registry.** `applyCityChrome()` replaces two
+  `if (city === 'nyc') ... else ...` blocks holding ~20 DOM assignments, and
+  runs at init where nothing ran before - first paint used whatever the markup
+  said, so London's subtitle gained its "LONDON" prefix only after you visited
+  another city and came back. That surfaced a defect **live on production and
+  unrelated to Manchester**: the aircraft explainer had no id and nothing
+  swapped it, so New York rendered a paragraph about DEFRA, LHR, LCY and LGW
+  underneath a "BTS AIRCRAFT NOISE (dB DNL)" heading.
+- **Manchester's legend does not say DEFRA.** It says ESTIMATED AIRCRAFT
+  NOISE, and the explainer states the bands come from runway geometry and are
+  not sampled from the DEFRA maps covering London. A regulator's name there
+  would contradict, on the one surface a consumer actually reads, the
+  provenance `/v1/score` publishes for the same city. Road noise, flood and
+  air quality read **"NO DATA"** rather than borrowing London's labels for
+  layers with nothing behind them; area search, stations and neighbourhood
+  detail are declared empty, so those layers render blank instead of throwing.
+- **The city would have shipped broken despite every local gate passing.**
+  `data/*` is gitignored with files un-ignored one at a time, so the
+  boundaries file sat on disk, the map rendered, and it was never in git - a
+  fresh clone or a deploy would have served "Greater Manchester borough
+  outlines could not be loaded". Added to `.gitignore`, to `SHELL_ASSETS` and
+  to `make data-deploy`; `cache.addAll()` is atomic, so a file listed in the
+  worker but missing at the origin stops the service worker installing **at
+  all**, taking offline support for all three cities with it.
+- `sw.js` **v1.0.17**, required twice over by that file's own rule
+  (`index.html` and `data/borough-extra.json` both changed). Logged that
+  v1.0.16 has no entry - bumped without one, which is what the log exists to
+  prevent.
+
 ### 2026-08-09 (evening) - Greater Manchester, and the checks that let it in
 
 **DEPLOYED**: nothing. Backend change, needs a SAM deploy.
