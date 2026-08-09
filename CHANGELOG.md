@@ -8,9 +8,20 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ### 2026-08-09 (night) - Greater Manchester on the consumer site
 
-**DEPLOYED**: nothing. Frontend + data change, needs `make web-deploy-all`.
-**Supersedes the API-only note in the entry below**: the site now offers three
-cities.
+**DEPLOYED 2026-08-09 night**, backend first then frontend, and verified at
+each step. **Supersedes the API-only note in the entry below**: the site now
+offers three cities.
+
+- Verification: `/v1/regions` returns three cities; Trafford scores **4.1** on
+  `/v1/score`; all 12 `SHELL_ASSETS` return 200 so the service worker installs;
+  16 of 16 surfaces hash-match the source. **All ten GM boroughs verified
+  identical between the deployed site and the deployed API** (3.6 Manchester to
+  8.5 Wigan) - done by hand, because `tests/site-api-parity.mjs` probes by
+  postcode and GM is borough-only, so the one gate that compares OUTPUT cannot
+  see this city.
+- City of London moved **6.7 to 6.6** as predicted from the working tree before
+  the deploy, Camden unchanged. §7's notice threshold is a score moving more
+  than **0.5**, so at 0.1 this is not a §7 event and no customer notice is due.
 
 - **Greater Manchester is on the map**, and site and API agree on **all 48
   boroughs** across the three cities - verified by loading the working-tree
@@ -65,7 +76,11 @@ cities.
 
 ### 2026-08-09 (evening) - Greater Manchester, and the checks that let it in
 
-**DEPLOYED**: nothing. Backend change, needs a SAM deploy.
+**DEPLOYED** the same night, with the frontend entry above - not when this
+entry was written. Note the gap: this said "needs a SAM deploy" and was
+correct, while `ROADMAP.md` and the memory index simultaneously said Greater
+Manchester was "LIVE ON THE API". Production answered
+`{"error": "Unsupported city: manchester"}` for hours afterwards.
 
 - **Greater Manchester is a third city on `/v1/score` and `/v1/regions`**, ten
   metropolitan boroughs. **API-only**: the consumer site still offers two
