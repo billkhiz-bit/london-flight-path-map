@@ -6,6 +6,60 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-09 (later) - liveability stops filling gaps with a penalty
+
+**DEPLOYED**: nothing. Both the Lambda and `index.html` are changed in source
+and need a backend deploy plus a `web-deploy`. **`index.html` also still carries
+the healthcare-heading fix from earlier today**, so the two ship together.
+
+- **An absent liveability input is now redistributed, not defaulted to 5.0.**
+  Its weight is spread across the sub-scores that exist, in proportion, so the
+  remaining weights sum to 1.0 and their relative emphasis is unchanged.
+  Below two of the four inputs `live` is not published at all and the component
+  weight is redistributed across quiet/afford/growth by the same rule.
+- **Why it mattered: 5.0 was not neutral.** London's computed liveability spans
+  5.5-8.4, so the placeholder sat below every real borough. A place with no data
+  scored worse than the worst place with data, and filling in one of four fields
+  could push a place lower. That is what forced Greater Manchester to be "all
+  four fields or none" - **that constraint is now lifted**, and GM can be
+  sourced one field at a time.
+- **This is a correction, not a reweighting.** 37 of 38 boroughs are
+  bit-identical and a test locks it. The one that moves is **City of London,
+  5.5 -> 5.2**, because 35% of its published liveability was a number about
+  nothing: it has no Progress 8, having effectively no state secondary
+  provision. That absence is correct and the borough stays scoreable - which is
+  why the rule is redistribution and never refusal. It moved DOWN: the
+  placeholder had been flattering it against a high crime rate.
+- **Ported to `index.html` in the same commit.** The site scores client-side
+  from its own copy, and three site/API divergences have come from one side
+  changing alone. `site == /v1/score` could not have caught this one - it
+  compares deployed against deployed, so a source change on both sides at once
+  is invisible to it. Verified instead by loading the working-tree page and
+  diffing all 38 boroughs against the working-tree Lambda: zero divergences.
+- **Three call sites in `index.html` wrote `?? 5`**, reinstating the placeholder
+  downstream of its removal - including `pcScore`, which the favourites Lambda
+  persists to DynamoDB. All now route through one `combineWeighted()`. The two
+  display rows render "no data" rather than painting a bar at an unmeasured
+  value.
+- **`CITY_DATA` gained `country`**, mirroring the Lambda, because the schools
+  rule is jurisdictional: an English borough's input is Progress 8 while New
+  York's curated tier is its input. Testing `city === 'nyc'` would have been the
+  trap the 8 Aug registry removed, and getting it wrong drops New York's schools
+  input silently rather than failing.
+- **Three of five recorded Core Cities blockers were already closed** and were
+  re-audited this session because the note was stale: `hasHistory`
+  (`app.py:241`), `/v1/regions` iterating `CITIES` (`:3855`) and
+  `validate_borough_vocabulary(CITIES)` at import (`:1264`). Only the Greater
+  Manchester DEFRA raster remains.
+- **Corrected "5.5-8.8"** in two docstrings. The real pre-change range was
+  5.5-8.4; the wrong figure had been carried for months and quoted in
+  `AUDIT_REPORT_2026-08-03.md`.
+- **Branches:** master fast-forwarded; `london-corrections-2026-08-02`,
+  `site-trust-fixes-2026-07-23`, `wave-13.8.1-fastlane-verified` and the merged
+  `core-cities-2026-08-08` deleted after verifying each held nothing master
+  lacked. `worktree-core-cities-spike-2026-07-31` kept - it is the only home of
+  `data/manchester-boroughs.json`, `data/uk-locator.json` and four test files.
+
 ### 2026-08-09 - the loaders were dying, not slow, and air quality is finally served
 
 **DEPLOYED**: nothing. The loaders write straight to DynamoDB and the score

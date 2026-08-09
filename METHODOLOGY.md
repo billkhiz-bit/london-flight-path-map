@@ -210,6 +210,35 @@ Liveability is a weighted combination of four sub-scores:
 live = 0.35 × schools + 0.30 × crime + 0.25 × transport + 0.10 × healthcare
 ```
 
+**When a sub-score has no data (added 2026-08-09).** An absent input is not
+filled with a placeholder. Its weight is redistributed across the sub-scores
+that do exist, **in proportion**, so the remaining weights still sum to 1.0 and
+their relative emphasis is unchanged. Dropping schools leaves crime at three
+times healthcare exactly as declared above.
+
+Below **two** of the four inputs, liveability is not published at all: `live` is
+omitted from the response and the *component* weight is redistributed across
+Quiet, Affordability and Growth by the same rule. One surviving sub-score scaled
+to 1.0 would make `live` mean that one thing under a label promising four.
+
+This replaced a fixed 5.0 fallback, which was not neutral. London's computed
+liveability spans 5.5–8.4, so 5.0 sat below every real borough: a place with no
+data scored worse than the worst place with data, and filling in one of four
+fields could push a place *lower*. Redistribution removes both effects.
+
+The mechanism follows the v3.3 growth decision in §5.1, which redistributed a
+dropped component's weight across the others *in proportion* so that relative
+emphasis was preserved and the weights still summed to 1.0. The circumstances
+differ — §5.1 drops a component deliberately, this drops one for want of data —
+but both refuse the same substitution: a component that is **not counted** must
+never be rendered as a component **counted as poor**.
+
+*Worked example.* City of London has no Progress 8 figure, because it has
+effectively no state secondary provision. Its schools weight of 0.35 is spread
+across the other three in proportion — crime 0.30/0.65, transport 0.25/0.65,
+healthcare 0.10/0.65 — and its liveability is computed from what is actually
+known about it. Its published `context.liveResolution` reports `partial`.
+
 #### Schools (35% of liveability), DfE Progress 8
 
 ```
