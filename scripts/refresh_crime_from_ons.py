@@ -23,6 +23,7 @@ USAGE
 
     python scripts/refresh_crime_from_ons.py --check    # compare only, exit 1 on drift
     python scripts/refresh_crime_from_ons.py --write    # update data/borough-extra.json
+    python scripts/refresh_crime_from_ons.py --check --city manchester
 
 Run --check whenever ONS publishes (quarterly). Rates move with each release,
 so drift here is expected and is the signal to roll the vintage, not a bug.
@@ -68,8 +69,61 @@ OFFENCE_COLS = [
 # The site keys Barking and Dagenham as 'Barking'.
 SITE_ALIAS = {'Barking and Dagenham': 'Barking'}
 
+# Which Police Force Area rows belong to each city. Table C4 is published per
+# force, and each force block carries Community Safety Partnership rows beneath
+# it - CSPs are local-authority level, which is what makes a ten-borough
+# city-region separable inside a single-force area.
+CITY_PFA = {
+    'london': ('Metropolitan Police', 'London, City of', 'City of London'),
+    'manchester': ('Greater Manchester',),
+}
 
-def load_table():
+# CSP rows that are NOT boroughs. Greater Manchester publishes ELEVEN: the ten
+# metropolitan boroughs plus `Manchester Airport`, which is its own partnership.
+# Without this it enters as an eleventh borough, and because the comparison
+# below SKIPS names it cannot pair up, it would do so silently.
+CSP_EXCLUDE = {
+    'london': frozenset(),
+    'manchester': frozenset({'Manchester Airport'}),
+}
+
+
+def lambda_rates(city):
+    """Crime rates as the score Lambda holds them, for a city not in
+    data/borough-extra.json.
+
+    Greater Manchester is backend-only - the consumer site does not offer it -
+    so CITIES is its single holder. London has two holders, and
+    tests/test_borough_data_parity.py is what keeps them equal.
+    """
+    import types
+
+    # Compiled from the SOURCE TEXT rather than imported, and that is not
+    # fussiness. importlib honours __pycache__, which it validates on the
+    # source's recorded size and mtime. Proving this check can go red means
+    # editing app.py and putting it back, and a same-length edit restored
+    # within the same clock second matches both - so Python silently ran
+    # bytecode compiled from code that no longer existed, and this script
+    # reported drift against a value the file did not contain. Reading the
+    # text has no cache to be stale.
+    path = Path('backend/lambdas/score/app.py')
+    mod = types.ModuleType('score_app_crime_check')
+    mod.__file__ = str(path)
+    # noqa justified: the input is a first-party file inside this repo, read by
+    # a maintainer-run script that is never deployed and never sees user input.
+    # The alternative, importlib, is what introduced the staleness above.
+    exec(  # noqa: S102
+        compile(path.read_text(encoding='utf-8'), str(path), 'exec'), mod.__dict__
+    )
+    # Shaped like a borough-extra.json city block so the comparison below is
+    # identical for both holders rather than branching per city.
+    return {
+        n: {'crimeRate': bd.get('crimeRate')}
+        for n, bd in mod.CITIES[city]['boroughs'].items()
+    }
+
+
+def load_table(city='london'):
     import openpyxl
 
     if not CACHE.exists():
@@ -95,7 +149,7 @@ def load_table():
         # reported "in step with ONS" while that borough published a figure ONS
         # does not produce. Strip the suffix before matching.
         pfa = re.sub(r"\[note \d+\]", "", str(r[1])).strip()
-        if pfa not in ('Metropolitan Police', 'London, City of', 'City of London'):
+        if pfa not in CITY_PFA[city]:
             continue
         # A row with no CSP name is the force-level AGGREGATE, not a place.
         # Including it named the row 'Metropolitan Police' and folded a
@@ -105,7 +159,7 @@ def load_table():
         if not r[3]:
             continue
         name = str(r[3]).strip()
-        if 'Unassigned' in name:
+        if 'Unassigned' in name or name in CSP_EXCLUDE[city]:
             continue
         rec = {hdr[j]: r[j] for j in range(len(hdr)) if hdr[j]}
         out[name] = rec
@@ -116,11 +170,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--write', action='store_true', help='update data/borough-extra.json')
     ap.add_argument('--check', action='store_true', help='report drift, exit 1 if any')
+    ap.add_argument(
+        '--city',
+        default='london',
+        choices=sorted(CITY_PFA),
+        help='city to check. london reads data/borough-extra.json and supports '
+             '--write; manchester is backend-only, so it reads CITIES directly '
+             'and is check-only.',
+    )
     args = ap.parse_args()
 
-    ons = load_table()
-    data = json.loads(EXTRA.read_text(encoding='utf-8'))
-    london = data['london']
+    ons = load_table(args.city)
+
+    # Greater Manchester's ten rates were verified by hand on 2026-08-09 and all
+    # matched. Wiring that in is what stops it being a one-off: ONS republishes
+    # quarterly, and a check nobody can re-run decays into a claim.
+    if args.city != 'london':
+        if args.write:
+            print(f'--write is London-only; {args.city} has no borough-extra.json entry.')
+            return 2
+        data, london = None, lambda_rates(args.city)
+    else:
+        data = json.loads(EXTRA.read_text(encoding='utf-8'))
+        london = data['london']
 
     # London median per offence, computed across every borough ONS publishes a
     # figure for. Recomputed from the release each run rather than hard-coded,
@@ -168,7 +240,17 @@ def main():
             ]
             london[key]['crimeVintage'] = 'ONS Table C4, year ending March 2026'
 
-    print(f'\n  ONS London rows: {len(ons)}   repo boroughs: {len(london)}')
+    print(f'\n  city: {args.city}')
+    # Compare each ONS row AFTER aliasing, against the repo's keys.
+    # Comparing the aliased set against the raw set instead reported
+    # `Barking and Dagenham` as unmatched when the alias resolves it.
+    unmatched = sorted(n for n in ons if SITE_ALIAS.get(n, n) not in london)
+    if unmatched:
+        # Loud, because the loop below SKIPS any ONS row it cannot pair
+        # up, so a rename on either side would quietly leave the
+        # comparison rather than fail it.
+        print(f'  ONS rows not matched to a repo borough: {unmatched}')
+    print(f'  ONS rows: {len(ons)}   repo boroughs: {len(london)}')
     print(f'  boroughs whose rate differs from ONS: {len(drift)}')
     for k, cur, new in sorted(drift, key=lambda t: -abs((t[1] or 0) - t[2])):
         print(f'    {k:26} repo={str(cur):>7}  ONS={new:>7}  ({new - (cur or 0):+.1f})')
