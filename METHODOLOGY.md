@@ -52,6 +52,16 @@ The product exists to address a structural information asymmetry in UK property:
 - 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island), borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
 - 10 Greater Manchester metropolitan boroughs, **borough-name lookup only** — postcode resolution is London-only, because `resolve_query()` gates it there *and* the NSPL loader writes the borough attribute for London local authorities alone. Two separate blockers, not one.
 
+**Sub-borough granularity differs by city, and the consumer-site ranking says
+so per city.** London and New York rank *named areas* whose median prices are
+indicative and whose crime figure is a relative modifier rather than a measured
+rate. Greater Manchester ranks **85 postcode districts** whose price is the
+**median of real HM Land Registry transactions** in that district (built by
+`scripts/build_manchester_neighbourhoods.py`, minimum 30 sales or the district
+is omitted rather than estimated) and which carry **no crime modifier at all**,
+because sub-borough crime is not published for Greater Manchester. None of this
+enters `/v1/score`, which is borough-level for all three cities.
+
 **Coverage is not uniform, and every response says which inputs it rests on**
 via `context.liveResolution`. Greater Manchester's
 aircraft bands are **estimated from runway geometry, not sampled from the DEFRA

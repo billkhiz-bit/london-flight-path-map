@@ -6,6 +6,49 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-09 (night, later) - GM neighbourhoods, sourced rather than authored
+
+- **85 Greater Manchester neighbourhoods in the ranking**, across all ten
+  boroughs, built by `scripts/build_manchester_neighbourhoods.py` from
+  **43,512 real HM Land Registry transactions** (2025). Previously
+  `MANCHESTER_AREA_MAP` and `MANCHESTER_NEIGHBOURHOOD_DETAIL` were both `{}`,
+  so "Show neighbourhoods" on Manchester rendered an empty table.
+- **Nothing in it is authored.** London's and NYC's tables carry a curated
+  median price and a hand-assigned `crime` modifier on a -2..+1 scale. Writing
+  85 more of those would repeat the Ofsted-bands defect: numbers that no
+  published threshold reproduces. Here `price` is the **median of real sales**
+  per postcode district, coordinates are the **mean of live ONS NSPL
+  postcodes**, and `borough` comes off the transactions themselves.
+- **`crime` is 0 everywhere and says so.** There is no sub-borough crime source
+  for Greater Manchester - ONS Table C4 is Community Safety Partnership level,
+  which here is the borough. A per-neighbourhood modifier would have been
+  invented. The panel states this rather than printing a silent zero.
+- **A "neighbourhood" here is a POSTCODE DISTRICT** and is labelled as one, so
+  it cannot borrow the precision of London's named areas. Districts under **30
+  sales are dropped, not estimated** - M90 (Manchester Airport, 3 sales), M17
+  (Trafford Park), M2 (city-centre commercial) among them - and every drop is
+  printed by the build.
+- **Labels are curated where the name is a checkable fact and only there.**
+  Royal Mail's `locality` field is blank for 44 districts, which would have
+  rendered "Manchester" 17 times; 26 got a postal-district name (M20 =
+  Didsbury & Withington). A label is not a measurement, it enters no score, and
+  the outward code stays visible beside it. The 15 with no widely recognised
+  name keep their post town.
+- **`neighbourhoodNote` added to all three cities**, forced by the registry
+  key-parity test - which is the point. Adding a sourced table for one city
+  while leaving the others undescribed would let the coarser ones borrow its
+  credibility, so London and NYC now say their figures are indicative and
+  their crime value is a relative modifier.
+- **Fixed a latent fail-open in search**: the area branch tested
+  `currentCity === 'nyc'` to decide whether an `areaMap` entry was an object,
+  so a third city with object entries would have handed a whole object to
+  `lookupPostcode` and queried postcodes.io for `[object Object]`. It now
+  branches on the value's type.
+- Land Registry's API cannot serve this: `propertyAddress.postcode=M20` returns
+  **HTTP 200 with an empty list**, indistinguishable from "no sales", which is
+  the same graceful-failure shape that let `/sold-prices` return nothing for
+  its entire existence. The bulk CSV is used instead.
+
 ### 2026-08-09 (night) - Greater Manchester on the consumer site
 
 **DEPLOYED 2026-08-09 night**, backend first then frontend, and verified at
