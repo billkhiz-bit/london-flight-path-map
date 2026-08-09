@@ -46,6 +46,56 @@ NAME_ALIASES = {'Barking': 'Barking and Dagenham'}
 # nor DfE, so its curated `schools` tier is its schools input.
 SHARED_FIELDS = ('crimeRate', 'schools', 'transport', 'healthcare', 'p8')
 
+# Cities the score Lambda serves that the consumer site does NOT, so they have
+# one holder and nothing to compare. Declared explicitly rather than inferred,
+# because the difference between "backend-only on purpose" and "someone put a
+# city on the site and forgot its data" is exactly what this file exists to
+# catch — and inferring it would make the second case look like the first.
+#
+# Proven necessary on 2026-08-09: a preview branch wired Greater Manchester into
+# the site with no borough-extra entry, and ALL TEN boroughs disagreed with the
+# API by up to 1.5 points, because the site could not see p8 or crimeRate and
+# dropped `live` entirely. The map looked correct throughout. The tests below
+# were parametrised over a hardcoded ['london', 'nyc'] and could not have
+# caught it.
+BACKEND_ONLY_CITIES = frozenset({'manchester'})
+
+
+def _site_cities():
+    with open(DATA, encoding='utf-8') as handle:
+        return set(json.load(handle))
+
+
+def test_backend_only_cities_are_declared_not_discovered():
+    """Every city the Lambda scores is either on the site or declared here.
+
+    Fails in BOTH directions, which is the point: a new city that reaches the
+    site without borough-extra data fails, and a city that gains borough-extra
+    data while still listed as backend-only also fails, so it starts being
+    compared instead of staying exempt.
+    """
+    lambda_cities = set(score_app.CITIES)
+    site_cities = _site_cities()
+
+    undeclared = lambda_cities - site_cities - BACKEND_ONLY_CITIES
+    assert not undeclared, (
+        'city scored by the Lambda with no borough-extra.json data and not '
+        f'declared backend-only: {sorted(undeclared)}. The site cannot '
+        'reproduce its liveability, so the two will disagree on every borough.'
+    )
+
+    no_longer_exempt = BACKEND_ONLY_CITIES & site_cities
+    assert not no_longer_exempt, (
+        f'{sorted(no_longer_exempt)} now has borough-extra.json data, so it '
+        'must be removed from BACKEND_ONLY_CITIES and actually compared.'
+    )
+
+
+def test_site_has_no_city_the_lambda_cannot_score():
+    """The reverse gap: data on the site for a city the API does not serve."""
+    orphans = _site_cities() - set(score_app.CITIES)
+    assert not orphans, f'borough-extra.json holds unscoreable cities: {sorted(orphans)}'
+
 
 def _extra():
     with open(DATA, encoding='utf-8') as handle:
