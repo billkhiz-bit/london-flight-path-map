@@ -35,6 +35,7 @@ throughput.
 import argparse
 import csv
 import sys
+import time
 from pathlib import Path
 
 if hasattr(sys.stdout, 'reconfigure'):
@@ -47,6 +48,29 @@ TABLE_NAME = 'london-flight-map-noise-raster'
 AWS_REGION = 'eu-west-2'
 BATCH_SIZE = 25
 CHECKPOINT = Path('.defra_aq_checkpoint')
+
+# Postcodes whose write could not be made to land. Written out so the run can
+# complete without the gap being invisible - a skipped postcode is ABSENT from
+# the table, and absent is exactly the state this project keeps misreading as
+# "measured and fine" (see MISSING_TOKENS below). A tally alone would not say
+# WHICH, so it could not be re-run.
+FAILURES = Path('.defra_aq_failures')
+
+# Error codes that cannot succeed on a retry: a missing grant, a malformed
+# item, a table that is not there. Waiting on these is the failure mode
+# load_nspl.py hit when BatchWriteItem was denied - it made no progress and
+# said nothing, so a run taking 6 hours was the only signal anything was wrong.
+FATAL_CODES = frozenset({
+    'AccessDeniedException',
+    'UnrecognizedClientException',
+    'InvalidSignatureException',
+    'ValidationException',
+    'ResourceNotFoundException',
+})
+
+# How long one item may stall before it is recorded as failed and the run moves
+# on. Sized to outlast a laptop sleep and a router reboot, not an outage.
+MAX_STALL_S = 1800
 
 # The grids are 1 km. Cell centres sit on x500/y500, so flooring to the
 # kilometre and keying on that maps any coordinate to its containing cell.
@@ -111,8 +135,19 @@ def main():
     ddb = None
     if not args.dry_run:
         import boto3
+        from botocore.config import Config
 
-        ddb = boto3.client('dynamodb', region_name=AWS_REGION)
+        # Adaptive retry, matching load_nspl.py — the only loader here that has
+        # ever run to completion (5.8h, 2.7M rows). The two DEFRA loaders used a
+        # bare client and both died mid-run: this one at 28% on 2026-08-08, one
+        # minute before the machine slept at 21:28:12. Sleep does not kill the
+        # process (the system resumed 6s later), it kills the in-flight HTTPS
+        # connections, and an unguarded update_item turns that into a fatal.
+        ddb = boto3.client(
+            'dynamodb',
+            region_name=AWS_REGION,
+            config=Config(retries={'max_attempts': 10, 'mode': 'adaptive'}),
+        )
 
     start = 0
     if CHECKPOINT.exists() and not args.limit:
@@ -120,7 +155,7 @@ def main():
         print(f'resuming from row {start:,}')
 
     batch = []
-    written = missed = 0
+    written = missed = failed = 0
     samples = 0
 
     def flush():
@@ -140,8 +175,57 @@ def main():
                 ExpressionAttributeValues=values,
             )
 
+        def _put_guarded(item):
+            """Write one postcode. Wait out a transient fault, record a real one.
+
+            Reached only once boto3's adaptive retry (10 attempts) is exhausted,
+            so anything arriving here is sustained rather than a blip. Waiting
+            is therefore the right default - the run this replaces died one
+            minute before the machine slept, and the connection it lost was
+            healthy again six seconds later. update_item with SET is idempotent,
+            so replaying a postcode is always safe.
+
+            The wait is BOUNDED because the alternative failure is worse than
+            the one it fixes: an IAM denial would otherwise spin silently
+            forever. Fatal codes raise immediately, a stall past MAX_STALL_S
+            returns False, and False is recorded to FAILURES by name.
+            """
+            from botocore.exceptions import BotoCoreError, ClientError
+
+            delay = waited = 0
+            while True:
+                try:
+                    _put(item)
+                    return True
+                except ClientError as exc:
+                    if exc.response.get('Error', {}).get('Code') in FATAL_CODES:
+                        raise
+                except BotoCoreError:
+                    pass  # connection reset, timeout, endpoint gone: retryable
+                if waited >= MAX_STALL_S:
+                    return False
+                delay = min(delay * 2, 300) if delay else 5
+                time.sleep(delay)
+                waited += delay
+
         with ThreadPoolExecutor(max_workers=25) as ex:
-            list(ex.map(_put, batch))
+            results = list(ex.map(_put_guarded, batch))
+
+        stalled = [
+            item['postcode']
+            for item, ok in zip(batch, results, strict=True)
+            if not ok
+        ]
+        if stalled:
+            nonlocal failed
+            failed += len(stalled)
+            with FAILURES.open('a', encoding='utf-8') as fh:
+                fh.write('\n'.join(stalled) + '\n')
+
+        # Callers add THIS, not len(batch) - a batch of 25 with 3 stalls put 22
+        # rows in the table, and reporting 25 would be the same "absent read as
+        # present" error one layer up from the data.
+        return len(batch) - len(stalled)
 
     with NSPL_CSV.open(encoding='utf-8', errors='replace') as fh:
         for idx, row in enumerate(csv.DictReader(fh)):
@@ -179,22 +263,26 @@ def main():
 
             batch.append({'postcode': pc, 'attrs': attrs})
             if len(batch) >= BATCH_SIZE:
-                flush()
-                written += len(batch)
+                written += flush()
                 batch.clear()
 
             if not args.limit and idx % 1000 == 0:
                 CHECKPOINT.write_text(str(idx))
 
     if batch and not args.dry_run:
-        flush()
-        written += len(batch)
+        written += flush()
 
     if not args.limit and not args.dry_run:
         CHECKPOINT.unlink(missing_ok=True)
 
     verb = 'Would have written' if args.dry_run else 'Wrote'
     print(f'\n{verb}: {written:,} postcodes. No grid cell: {missed:,}.')
+    if failed:
+        print(
+            f'STALLED: {failed:,} postcodes could not be written and are NOT in '
+            f'the table. Named in {FAILURES}; re-run once the fault is fixed.'
+        )
+        return 2
     return 0
 
 

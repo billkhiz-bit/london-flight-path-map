@@ -75,6 +75,12 @@ data/*
 # one is actively dangerous: this repo syncs only via git, so another device
 # would silently resume a load it never ran and then stamp __META__ for it.
 .nspl_load_checkpoint*
+# The air-quality loader's resume state, and the list of postcodes whose write
+# could not be made to land. Neither was ignored until 2026-08-09, so the
+# checkpoint had been sitting in `git status` as an untracked file for days -
+# harmless in itself, but it is exactly the noise that hides a real one.
+.defra_aq_checkpoint
+.defra_aq_failures
 
 # Raw browser-saved property pages used to derive extension fixtures.
 # Ctrl+S output is ~1 MB plus a _files/ directory of assets, none of which the
