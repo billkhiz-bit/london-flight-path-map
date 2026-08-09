@@ -6,6 +6,56 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-09 (evening) - Greater Manchester, and the checks that let it in
+
+**DEPLOYED**: nothing. Backend change, needs a SAM deploy.
+
+- **Greater Manchester is a third city on `/v1/score` and `/v1/regions`**, ten
+  metropolitan boroughs. **API-only**: the consumer site still offers two
+  cities, because `cityOf()` throws on a city missing any registry field and
+  the frontend needs boundaries, area maps, stations and neighbourhood detail
+  that GM does not have. A half-added city on the map is worse than none.
+- **Unblocked by the redistribution, not by new data.** These figures have sat
+  on a spike branch since 2 August. Manchester has schools and crime but no
+  transport or healthcare, and while absent inputs defaulted to 5.0 a partial
+  city scored WORSE than an empty one. The ten boroughs now span 4.3-7.2;
+  against the placeholder formula they would span 4.5-6.4. Removing the
+  placeholders widens the spread by 53%, and Trafford gains most (+0.8)
+  because the strongest borough was dragged down hardest by two invented
+  inputs.
+- **Every figure re-verified rather than taken on the porting commit's word**,
+  which mattered: that commit's own header comment said "schools NOT SOURCED"
+  above ten Progress 8 values. Crime: **all ten exact** against ONS Table C4.
+  Progress 8: verified sideways, since all 32 London p8 values are identical
+  between that commit and master, so the same DfE extraction produced both.
+- **`scripts/refresh_crime_from_ons.py` now takes `--city manchester`**, so
+  that verification is repeatable rather than a one-off claim. Greater
+  Manchester publishes **eleven** Community Safety Partnership rows in Table
+  C4: the ten boroughs plus `Manchester Airport`, which is its own
+  partnership and is excluded explicitly.
+- **The checker loads the Lambda from source text, not importlib.** Proving it
+  can go red means editing `app.py` and restoring it, and importlib validates
+  `__pycache__` on recorded source size and mtime - a same-length edit
+  restored within the same second matches both, so it ran bytecode compiled
+  from code that no longer existed and reported drift against a value the file
+  did not contain. Any inject-and-restore proof against an imported module has
+  this hazard.
+- **`liveResolution` no longer says "defaulted to 5.0"**, which had been true
+  that morning and false that afternoon. It is a served string, so a stale one
+  is a public claim about how a number was reached. The partial/unavailable
+  boundary also moved: one measured input now reads `unavailable`, because the
+  component is omitted below the floor of two.
+- **Manchester's affordability provenance states it is NOT comparable across
+  cities.** A first draft claimed the opposite from "same vintage as London",
+  conflating source with scaling: min-max is cohort-relative, so Trafford at
+  £393k scores 0.0 exactly as London's priciest borough does at several times
+  that.
+- **Three tests broke and none wanted a blanket update.** One hardcoded
+  `len(vals) == 32` directly beneath a comment explaining it iterates `CITIES`
+  so it survives new cities; one hardcoded which borough may move under
+  redistribution, where the invariant is that no *complete* borough may; one
+  compared two single-input cases the new floor collapses to the same answer.
+
 ### 2026-08-09 (later) - liveability stops filling gaps with a penalty
 
 **DEPLOYED**: nothing. Both the Lambda and `index.html` are changed in source

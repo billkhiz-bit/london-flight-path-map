@@ -4,7 +4,15 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability (growth is weighted for the `investor` persona only since methodology v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.3 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs) · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v3.3 · API v1.0 · Live in production · 33 London boroughs + 5 NYC boroughs (~182 ZIPs) + 10 Greater Manchester boroughs · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+>
+> **Greater Manchester is API-only and partially sourced.** Added 2026-08-09, it
+> is not on the consumer site. Its aircraft-noise bands are estimated from
+> runway geometry rather than sampled from DEFRA, and liveability rests on two
+> measured inputs (DfE Progress 8, ONS recorded crime) where London has four —
+> `context.liveResolution` reports that per response, and the absent inputs have
+> their weight redistributed rather than filled with a placeholder. Query it with
+> `?borough=Trafford&city=manchester`; **postcode resolution is London-only**.
 
 ## Try it in 30 seconds
 
@@ -158,7 +166,26 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 
 - **London**: 33 boroughs by postcode (local ONS NSPL table, postcodes.io fallback)
 - **NYC**: 5 boroughs by ZIP (~182 residential ZIPs supported), or by borough name
-- **Planned**: UK Core Cities (Manchester, Birmingham, Bristol, Leeds, etc.), then England + Wales
+- **Greater Manchester**: 10 boroughs **by borough name only** — postcode
+  resolution is London-only, because `resolve_query()` gates it there *and*
+  `scripts/load_nspl.py` writes the borough attribute for London LADs alone.
+  Two blockers, not one. API-only; not on the consumer site.
+- **Planned**: the rest of the UK Core Cities (Birmingham, Bristol, Leeds, etc.), then England + Wales
+
+**What "supported" means per city**, because it is not uniform:
+
+| | London | NYC | Greater Manchester |
+|---|---|---|---|
+| Lookup | postcode or borough | ZIP or borough | **borough only** |
+| Aircraft noise | DEFRA raster where covered, else geometry | curated bands from approach geometry | **runway geometry only, not DEFRA** |
+| Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **2 of 4** (schools, crime) |
+| Quarterly comparison | yes | yes | **declines** — no prior vintage exists |
+
+Absent liveability inputs are **not** estimated: their weight is redistributed
+across the measured ones, and `context.liveResolution` states how many were
+measured. Affordability and growth are scaled **within** each city's cohort, so
+those two components are not comparable between cities — compare
+`context.avgPriceGbp` directly instead.
 
 ### Environmental measurements (`/v1/environment`), as at 2026-08-08
 

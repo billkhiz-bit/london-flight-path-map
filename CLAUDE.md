@@ -62,6 +62,8 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
+**Three cities as of 2026-08-09: London (33), NYC (5), Greater Manchester (10).** Manchester is **API-only** — `/v1/score?borough=…&city=manchester` and `/v1/regions` — and deliberately absent from the consumer site, because `cityOf()` throws on a city missing any registry field and the frontend needs boundaries, area maps, stations and neighbourhood detail that GM has not got. Its aircraft bands are **runway geometry, not DEFRA** (the last Core Cities blocker), it has **2 of 4** liveability inputs, and postcode resolution is London-only. Verify its crime rates with `python scripts/refresh_crime_from_ons.py --check --city manchester`.
+
 Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) plus B2B funnel pages (`/api/`, `/pricing`, `/privacy`) backed by the 8 active AWS Lambda functions orchestrated via SAM (the 4 dormant Bedrock Lambdas live in git history only; `live_flights` was removed in May 2026 pending OpenSky licensing).
 
 ## Scale direction — do NOT "fix" the apparent site/extension disagreement

@@ -239,6 +239,31 @@ across the other three in proportion — crime 0.30/0.65, transport 0.25/0.65,
 healthcare 0.10/0.65 — and its liveability is computed from what is actually
 known about it. Its published `context.liveResolution` reports `partial`.
 
+*Second worked example, and the reason this rule exists.* Greater Manchester
+has schools and crime but no transport or healthcare — 2 of 4. Under the old
+fallback its ten boroughs spanned 4.5–6.4, compressed toward 5.0 by two
+invented inputs; under redistribution they span 4.3–7.2. Both figures describe
+the same places. The difference is that one of them is partly a statement about
+data we do not hold.
+
+### 4.4.1 Which liveability inputs each city has
+
+Not uniform, and the response says so per request via
+`context.liveResolution`. Cross-city comparison of `live` should account for
+this: a two-input composite is a narrower claim than a four-input one, even
+though both are on 0–10.
+
+| City | schools | crime | transport | healthcare | Resolution |
+|---|---|---|---|---|---|
+| London | Progress 8 | ONS Table C4 | curated | curated | `measured` (32 of 33; City of London is `partial`) |
+| New York | curated tier | NYPD CompStat | curated | curated | `measured` |
+| Greater Manchester | Progress 8 | ONS Table C4 | — | — | `partial — 2/4` |
+
+Below **two** inputs the component is omitted entirely rather than published,
+and `liveResolution` reads `unavailable`. This is why one measured input is
+reported as `unavailable` rather than `partial`: `partial` would describe a
+number the caller never receives.
+
 #### Schools (35% of liveability), DfE Progress 8
 
 ```
