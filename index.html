@@ -5038,6 +5038,12 @@
         london: {
           label: 'London',
           currency: '£',
+          // Mirrors CITIES[...]['country'] in the score Lambda. Drives which
+          // schools source counts: an English borough's input is Progress 8,
+          // while New York has neither Ofsted nor DfE and its curated tier IS
+          // the input. Declared here rather than tested as `city === 'nyc'`,
+          // which is the trap the registry exists to remove.
+          country: 'United Kingdom',
           boroughData: () => BOROUGH_DATA,
           boroughRaw: () => BOROUGH_DATA_RAW,
           boroughExtra: () => BOROUGH_EXTRA,
@@ -5052,6 +5058,7 @@
         nyc: {
           label: 'New York City',
           currency: '$',
+          country: 'United States',
           boroughData: () => NYC_BOROUGH_DATA,
           boroughRaw: () => NYC_BOROUGH_DATA_RAW,
           boroughExtra: () => NYC_BOROUGH_EXTRA,
@@ -5090,21 +5097,73 @@
         return symbol + Math.round(rawPrice / 1000).toLocaleString('en-GB') + 'k';
       }
 
+      // Declared liveability weights, mirroring _LIVE_WEIGHTS in the score
+      // Lambda. Named rather than inlined so an absent input can have its
+      // weight redistributed instead of being filled with a placeholder.
+      const LIVE_WEIGHTS = { schools: 0.35, crimeRate: 0.3, transport: 0.25, healthcare: 0.1 };
+      const LIVE_MIN_FIELDS = 2;
+
+      // Port of live_weights_for() in the score Lambda, 2026-08-09. Both sides
+      // must agree: the site computes scores client-side from its own copy of
+      // this logic, and three separate site/API divergences have come from one
+      // side changing alone. Proportional, so dropping schools leaves crime at
+      // three times healthcare exactly as declared. Empty result means decline.
+      function liveWeightsFor(present) {
+        const fields = Object.keys(LIVE_WEIGHTS).filter((f) => present.includes(f));
+        if (fields.length < LIVE_MIN_FIELDS) return {};
+        const total = fields.reduce((a, f) => a + LIVE_WEIGHTS[f], 0);
+        const out = {};
+        for (const f of fields) out[f] = LIVE_WEIGHTS[f] / total;
+        return out;
+      }
+
+      // Weighted total over the components that exist, rescaling the rest in
+      // proportion when one is null. Mirrors calc_scores() in the score Lambda.
+      //
+      // This exists so there is ONE place that decides what a missing component
+      // means. Three separate call sites used to write `?? 5`, which quietly
+      // reinstated the placeholder that a data gap is not: 5 sits below every
+      // real London liveability score, so the fallback penalised a borough for
+      // being unmeasured and disagreed with the API, which rescales instead.
+      // With every component present the scale is 1.0 and this is the identity.
+      function combineWeighted(parts, weights) {
+        const present = Object.keys(parts).filter((k) => parts[k] !== null && parts[k] !== undefined);
+        const scale = present.reduce((a, k) => a + weights[k], 0);
+        if (scale <= 0) return null;
+        return present.reduce((a, k) => a + parts[k] * (weights[k] / scale), 0);
+      }
+
+      // Returns null when fewer than two inputs exist, matching the Lambda.
+      // An absent input is OMITTED, never defaulted: 5.0 sits below London's
+      // whole observed live range (5.5-8.4), so the old placeholder made a data
+      // gap read as a bad place and could push a city lower as fields were
+      // filled in. City of London legitimately has no Progress 8.
       function getLiveScore(boroughName, city) {
         const extraData = cityOf(city).boroughExtra();
         const ex = extraData[boroughName];
-        if (!ex) return 5;
-        // Progress 8 where it exists (English boroughs), the legacy band
-        // otherwise. New York has neither Ofsted nor DfE and keeps its curated
-        // tier. Same precedence as get_live_score() in the score Lambda.
-        const sch =
-          ex.p8 !== undefined && ex.p8 !== null
-            ? SCHOOL_SCORE_P8(ex.p8)
-            : SCHOOL_SCORE[ex.schools] || 5;
-        const crm = ex.crimeRate ? CRIME_TO_SCORE(ex.crimeRate) : 5;
-        const trn = TRANSPORT_SCORE[ex.transport] || 5;
-        const hlt = HEALTH_SCORE[ex.healthcare] || 5;
-        return Math.round((sch * 0.35 + crm * 0.3 + trn * 0.25 + hlt * 0.1) * 10) / 10;
+        if (!ex) return null;
+        const english = cityOf(city).country !== 'United States';
+        const scores = {};
+        // Progress 8 where it exists (English boroughs), the curated tier
+        // otherwise. New York has neither Ofsted nor DfE. For an English
+        // borough the retired Ofsted band is NOT a fallback: v3.5 removed it.
+        if (english) {
+          if (ex.p8 !== undefined && ex.p8 !== null) scores.schools = SCHOOL_SCORE_P8(ex.p8);
+        } else if (ex.schools !== undefined && ex.schools !== null) {
+          scores.schools = SCHOOL_SCORE[ex.schools];
+        }
+        if (ex.crimeRate !== undefined && ex.crimeRate !== null)
+          scores.crimeRate = CRIME_TO_SCORE(ex.crimeRate);
+        if (ex.transport !== undefined && ex.transport !== null)
+          scores.transport = TRANSPORT_SCORE[ex.transport];
+        if (ex.healthcare !== undefined && ex.healthcare !== null)
+          scores.healthcare = HEALTH_SCORE[ex.healthcare];
+
+        const weights = liveWeightsFor(Object.keys(scores));
+        const fields = Object.keys(weights);
+        if (!fields.length) return null;
+        const sum = fields.reduce((a, f) => a + scores[f] * weights[f], 0);
+        return Math.round(sum * 10) / 10;
       }
 
       const IMPACT_TO_QUIET = {
@@ -5155,21 +5214,29 @@
           // the place. See METHODOLOGY.md §5.1.
           const growth = growthScore(d.trend, maxTrend, minTrend);
           const live = getLiveScore(name, city || 'london');
-          const total = quiet * w.quiet + afford * w.afford + growth * w.growth + live * w.live;
+          // `live` is null when fewer than two of its four inputs exist, so the
+          // component would say nothing about this place. combineWeighted drops
+          // it and rescales, exactly as calc_scores() does in the score Lambda.
+          // Both sides must make the same choice or the site and /v1/score
+          // disagree, which has already happened three times.
+          const total = combineWeighted({ quiet, afford, growth, live }, w);
           result[name] = {
             ...d,
             trend_pct: (d.trend >= 0 ? '+' : '') + d.trend + '%',
+            // `live` is OMITTED, not null and not defaulted, when it could not
+            // be computed - a placeholder in a numeric field is how "not
+            // measured" becomes "measured as fine".
             scores: {
               quiet: Math.round(quiet * 10) / 10,
               afford: Math.round(afford * 10) / 10,
               growth: Math.round(growth * 10) / 10,
-              live: Math.round(live * 10) / 10,
+              ...(live !== null ? { live: Math.round(live * 10) / 10 } : {}),
             },
             // Unrounded companions, added 2026-08-04. `scores` above is rounded
             // for DISPLAY and must stay that way; anything that RECOMBINES these
             // into a total must use these instead, or it double-rounds and
             // disagrees with /v1/score. See the note on pcScore.
-            scoresRaw: { quiet, afford, growth, live },
+            scoresRaw: { quiet, afford, growth, ...(live !== null ? { live } : {}) },
             score: Math.round(total * 10) / 10,
           };
         }
@@ -5455,10 +5522,13 @@
           const growthTrend = borData.trend ?? boroughRaw[borough]?.trend ?? 0;
           const growth = growthScore(growthTrend, maxTrend, minTrend);
 
-          // 4. LIVEABILITY - borough base adjusted by crime modifier
-          const borLive = borData.scores?.live ?? 5;
+          // 4. LIVEABILITY - borough base adjusted by crime modifier.
+          // `?? 5` here used to substitute a placeholder when the borough had no
+          // liveability score; null now propagates so combineWeighted drops the
+          // component rather than penalising the neighbourhood for a data gap.
+          const borLive = borData.scores?.live ?? null;
           // Each crime step = ~0.7 points of liveability adjustment (crime is 30% of live)
-          const live = Math.max(0, Math.min(10, borLive - crimeMod * 0.7));
+          const live = borLive === null ? null : Math.max(0, Math.min(10, borLive - crimeMod * 0.7));
 
           // 5. TRANSPORT - distance to nearest station hub
           let minStDist = Infinity;
@@ -5472,9 +5542,9 @@
           else if (minStDist < 1) transportAdj = 0.2;
           else if (minStDist > 5) transportAdj = -0.4;
           else if (minStDist > 3) transportAdj = -0.2;
-          const adjLive = Math.max(0, Math.min(10, live + transportAdj));
+          const adjLive = live === null ? null : Math.max(0, Math.min(10, live + transportAdj));
 
-          const total = quiet * w.quiet + afford * w.afford + growth * w.growth + adjLive * w.live;
+          const total = combineWeighted({ quiet, afford, growth, live: adjLive }, w);
 
           // Derive noise impact label.
           //
@@ -7674,7 +7744,10 @@
         const q = data.scores?.quiet ?? 5,
           a = data.scores?.afford ?? 5,
           gr = data.scores?.growth ?? 5,
-          lv = data.scores?.live ?? 5;
+          // null rather than 5 when the borough publishes no liveability score.
+          // The row below renders "no data" instead of painting a bar at a
+          // value nothing measured - the display half of the same rule.
+          lv = data.scores?.live ?? null;
         const pw = PERSONAS[currentPersona].weights;
 
         document.getElementById('sidebar-content').innerHTML = `
@@ -7718,8 +7791,12 @@
 
         <div class="score-row" style="margin-top:10px;">
           <span class="score-row-label">Liveability</span>
-          <div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
-          <span class="score-row-value">${lv}/10</span>
+          ${
+            lv === null
+              ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
+              : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
+          <span class="score-row-value">${lv}/10</span>`
+          }
         </div>
         <div class="score-explain">Schools, crime, transport, healthcare combined. Weight: <strong>${Math.round(pw.live * 100)}%</strong></div>
       </div>
@@ -7851,7 +7928,11 @@
           // already combined unrounded values, matching the API.
           const a = boroughData.scoresRaw?.afford ?? boroughData.scores?.afford ?? 5,
             gr = boroughData.scoresRaw?.growth ?? boroughData.scores?.growth ?? 5,
-            lv = boroughData.scoresRaw?.live ?? boroughData.scores?.live ?? 5;
+            // null, not 5, when the borough has too few liveability inputs to
+            // publish one. combineWeighted below then drops the component and
+            // rescales, which is what /v1/score does; substituting 5 here would
+            // both penalise the postcode and reopen a site/API divergence.
+            lv = boroughData.scoresRaw?.live ?? boroughData.scores?.live ?? null;
           const pw = PERSONAS[currentPersona].weights;
           // Use postcode-specific noise to calculate Quiet Skies score
           // DEFRA's measurement where it exists, flight-path geometry otherwise.
@@ -7881,7 +7962,8 @@
           // button, and because the favourites Lambda persists it, the wrong value
           // was written to DynamoDB rather than merely shown. Any new surface that
           // needs this postcode's score must read `pcScore`, never re-derive it.
-          pcScore = Math.round((pcQuiet * pw.quiet + a * pw.afford + gr * pw.growth + lv * pw.live) * 10) / 10;
+          pcScore =
+            Math.round(combineWeighted({ quiet: pcQuiet, afford: a, growth: gr, live: lv }, pw) * 10) / 10;
           // Generate postcode-specific verdict
           const pcVerdict = (() => {
             if (pcScore >= 7.5) {
@@ -7926,8 +8008,12 @@
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${gr * 10}%;background:${scoreColor(gr)};"></div></div>
             <span class="score-row-value">${gr}/10</span></div>
           <div class="score-row"><span class="score-row-label">Liveability</span>
-            <div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
-            <span class="score-row-value">${lv}/10</span></div>
+            ${
+              lv === null
+                ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
+                : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
+            <span class="score-row-value">${lv}/10</span>`
+            }</div>
         </div>
         <p class="info-note" style="margin-top:8px;font-size:9px;">Quiet Skies uses your location's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
       </div>

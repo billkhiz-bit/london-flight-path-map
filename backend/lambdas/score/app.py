@@ -2907,29 +2907,126 @@ def school_score(p8):
 
 _LIVE_FIELDS = ('schools', 'crimeRate', 'transport', 'healthcare')
 
+# Declared weights, summing to 1.0. Previously these were four literals inside
+# get_live_score; naming them is what lets an absent input be redistributed
+# rather than filled with a placeholder.
+_LIVE_WEIGHTS = {
+    'schools': 0.35,
+    'crimeRate': 0.30,
+    'transport': 0.25,
+    'healthcare': 0.10,
+}
 
-def get_live_score(bd):
-    """Liveability composite: schools 35%, crime 30%, transport 25%, health 10%.
+# Minimum inputs before `live` is published at all. See live_weights_for.
+_LIVE_MIN_FIELDS = 2
 
-    Each absent input falls back to 5.0, and **5.0 is not neutral**. London's
-    computed live scores span 5.5-8.8, so the fallback sits below the entire
-    observed range: a borough with no liveability data scores worse than the
-    weakest borough that has some, and filling in a single below-average field
-    can push it lower still. Partial data is worse than none.
 
-    The fallback is retained because a live API must answer, but the number it
-    produces is structural rather than a claim about the place. live_resolution()
-    is what lets a caller tell those two apart, and the response carries it.
+def live_weights_for(present):
+    """Weights to apply given the subset of liveability inputs that exist.
+
+    `present` is the set of _LIVE_FIELDS with real data for this borough.
+    Returns a dict over exactly those fields. Returning an empty dict means the
+    caller must decline to score `live` at all rather than invent one.
+
+    WHY THIS IS NOT JUST get(field, 5.0). A missing input currently scores 5.0,
+    and 5.0 is NOT neutral: London's computed live scores span 5.5-8.4, so the
+    placeholder sits below every real borough. Filling one of four fields can
+    therefore make a place score WORSE, which is why Greater Manchester is all
+    four fields or none. City of London is the live example in the other
+    direction - it has no Progress 8 because it has no state secondary
+    provision, so its 5.5 today is 35% a number about nothing.
+
+    The precedent is methodology v3.4/v3.3, which dropped `growth` for
+    non-investor personas and redistributed its weight across the remaining
+    components IN PROPORTION, so relative emphasis was preserved and every
+    persona still summed to 1.0.
+
+    TODO(bill): implement the redistribution. Roughly 5 lines. The decisions
+    that matter, and why they are yours rather than mine:
+
+      - PROPORTIONAL vs EQUAL. Proportional keeps crime dominant over
+        healthcare when schools drops out; equal treats the remaining inputs as
+        interchangeable. Proportional matches v3.3; equal is defensible if you
+        think the declared ratios only ever meant anything as a complete set.
+      - A FLOOR. Should one surviving input be allowed to carry 100% of
+        liveability? A borough with only `healthcare` would score `live` purely
+        on a 10%-weighted field promoted to the whole thing. Refusing below
+        some coverage (return {}) is honest but means some places have no live
+        score at all.
+
+    PROPORTIONAL, not equal, so the declared ratios keep their meaning: when
+    schools drops out, crime stays three times healthcare exactly as it was.
+    Equal shares would silently promote healthcare from a 10% input to a 25%
+    one, which is a different opinion about the place, not the same one with a
+    gap in it.
+
+    FLOOR AT TWO of the four. One surviving input scaled to 1.0 is a stronger
+    claim than the data supports - a borough known only by its healthcare tier
+    would have `live` mean "healthcare", under a label that promises four
+    things. Below the floor the caller declines to score rather than publishing
+    a number it would have to caveat away.
     """
-    # Progress 8 where it exists (English LAs), the legacy categorical band
-    # otherwise. New York has neither Ofsted nor DfE, so it keeps the curated
-    # tier — declared in CITY_PROVENANCE rather than passed off as DfE.
-    p8 = bd.get('p8')
-    sch = school_score(p8) if p8 is not None else SCHOOL_SCORE.get(bd.get('schools'), 5)
-    crm = crime_to_score(bd.get('crimeRate'))
-    trn = TRANSPORT_SCORE.get(bd.get('transport'), 5)
-    hlt = HEALTH_SCORE.get(bd.get('healthcare'), 5)
-    return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
+    present = [f for f in _LIVE_FIELDS if f in present]
+    if len(present) < _LIVE_MIN_FIELDS:
+        return {}
+    total = sum(_LIVE_WEIGHTS[f] for f in present)
+    return {f: _LIVE_WEIGHTS[f] / total for f in present}
+
+
+def live_component_scores(bd, english=True):
+    """Score each liveability input that this borough actually has.
+
+    A field the borough lacks is ABSENT from the result, never present with a
+    stand-in value. That is the whole point: the previous version defaulted each
+    missing input to 5.0, and 5.0 is not neutral - London's computed live scores
+    span 5.5-8.4 (measured 2026-08-09; "8.8" was carried in this docstring for
+    months and was never right), so the placeholder sat below every real borough
+    and made a gap
+    read as a bad place.
+
+    Indexing is direct (`TRANSPORT_SCORE[...]`) rather than `.get(..., 5)`,
+    which is safe because validate_borough_vocabulary() runs at import and
+    raises on any value its table lacks. A KeyError here would mean that guard
+    was bypassed, and raising beats resurrecting the silent 5.0 it replaced.
+    """
+    scores = {}
+    # Progress 8 where it exists (English LAs), the curated tier otherwise. New
+    # York has neither Ofsted nor DfE, so the tier IS its schools input, and is
+    # declared as such in CITY_PROVENANCE rather than passed off as DfE. For an
+    # English borough the retired Ofsted band is NOT a fallback - v3.5 removed
+    # it as editorial, so a borough carrying only the band has no schools input.
+    if english:
+        if bd.get('p8') is not None:
+            scores['schools'] = school_score(bd['p8'])
+    elif bd.get('schools') is not None:
+        scores['schools'] = SCHOOL_SCORE[bd['schools']]
+
+    if bd.get('crimeRate') is not None:
+        scores['crimeRate'] = crime_to_score(bd['crimeRate'])
+    if bd.get('transport') is not None:
+        scores['transport'] = TRANSPORT_SCORE[bd['transport']]
+    if bd.get('healthcare') is not None:
+        scores['healthcare'] = HEALTH_SCORE[bd['healthcare']]
+    return scores
+
+
+def get_live_score(bd, english=True):
+    """Liveability composite over the inputs that exist, or None if too few.
+
+    Declared weights are schools 35%, crime 30%, transport 25%, health 10%; an
+    absent input has its weight redistributed across the rest in proportion
+    (live_weights_for) rather than filled with a placeholder.
+
+    Returns None when fewer than two inputs are present, meaning `live` cannot
+    be published for this borough at all. Callers must handle that rather than
+    substituting a number - see calc_scores, which drops the component and
+    rescales the composite the way v3.3 dropped growth.
+    """
+    scores = live_component_scores(bd, english)
+    weights = live_weights_for(scores)
+    if not weights:
+        return None
+    return round(sum(scores[f] * w for f, w in weights.items()) * 10) / 10
 
 
 # Human-readable coverage notices. Added 2026-08-06.
@@ -3199,19 +3296,39 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     # formula collapsed 14 of 33 boroughs onto one value.
     growth = growth_score(bd['trend'], max_trend, min_trend)
 
-    live = get_live_score(bd)
+    live = get_live_score(bd, english=(city != 'nyc'))
 
-    total = quiet * weights['quiet'] + afford * weights['afford'] + growth * weights['growth'] + live * weights['live']
+    # `live` is None when fewer than two of its four inputs exist, so the
+    # component would say nothing about this place. Drop it and rescale the
+    # remaining weights in proportion - the same move v3.3 made when it dropped
+    # `growth` for non-investor personas. The alternative, a 5.0 placeholder,
+    # sits below every real London live score and so penalises a city for the
+    # gap: that is why Greater Manchester is all four fields or none.
+    parts = {'quiet': quiet, 'afford': afford, 'growth': growth}
+    effective = {k: weights[k] for k in parts}
+    if live is not None:
+        parts['live'] = live
+        effective['live'] = weights['live']
+    else:
+        scale = sum(effective.values())
+        if scale > 0:
+            effective = {k: v / scale for k, v in effective.items()}
+
+    total = sum(parts[k] * effective[k] for k in parts)
 
     currency_field = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
 
     return {
         'score': round(total * 10) / 10,
+        # `live` is OMITTED, not null and not defaulted, when it could not be
+        # computed - the same convention build_environment uses below and for
+        # the same reason: a placeholder in a numeric field is how "not
+        # measured" becomes "measured as fine". liveResolution says why.
         'components': {
             'quiet': round(quiet * 10) / 10,
             'afford': round(afford * 10) / 10,
             'growth': round(growth * 10) / 10,
-            'live': round(live * 10) / 10,
+            **({'live': round(live * 10) / 10} if live is not None else {}),
         },
         'context': {
             currency_field: bd['avgPrice'],

@@ -1978,19 +1978,24 @@ class CoreCitiesAuditTests(unittest.TestCase):
         self.assertIn('comparisonUnavailable', filtered)
 
     def test_live_resolution_distinguishes_measured_from_placeholder(self):
-        # 5.0 is below London's entire observed live range, so an unsourced city
-        # is penalised rather than treated neutrally. The score cannot say that;
-        # the resolution field can.
+        # This test used to assert an unsourced borough scores exactly 5.0,
+        # which recorded the DEFECT as the contract: 5.0 sits below London's
+        # entire observed live range, so a data gap read as a bad place and
+        # filling one field of four could push a city lower. As of 2026-08-09
+        # an absent input has its weight redistributed instead, and a borough
+        # with fewer than two inputs declines to score rather than inventing
+        # one. The resolution field still carries the explanation.
         london_live = [
             app.get_live_score(bd) for bd in app.CITIES['london']['boroughs'].values()
         ]
+        self.assertTrue(all(v is not None for v in london_live))
         self.assertGreater(min(london_live), 5.0)
 
         sourced = app.CITIES['london']['boroughs']['Hounslow']
         self.assertEqual(app.live_resolution(sourced), 'measured')
 
         unsourced = {'avgPrice': 1, 'trend': 0.0}
-        self.assertEqual(app.get_live_score(unsourced), 5.0)
+        self.assertIsNone(app.get_live_score(unsourced))
         self.assertIn('unavailable', app.live_resolution(unsourced))
         # A single genuinely-measured input is 'partial'.
         self.assertIn('partial', app.live_resolution({'p8': 0.1}))
