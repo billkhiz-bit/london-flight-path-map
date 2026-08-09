@@ -129,6 +129,16 @@ import csv
 import sys
 from pathlib import Path
 
+# Shared write policy (adaptive retry, bounded wait, fatal-code list). Sibling
+# module, so a plain import works when this is run the documented way - as
+# `python scripts/load_defra_raster.py`, which puts scripts/ on sys.path. The
+# fallback covers loading this file by path, which is how its tests reach it.
+try:
+    import ddb_write
+except ImportError:  # pragma: no cover - depends on how the file was loaded
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import ddb_write
+
 # Force UTF-8 stdout so the en-dashes / arrows / pound signs in our help
 # text and progress lines render on Windows cp1252 consoles. Python 3.7+.
 if hasattr(sys.stdout, 'reconfigure'):
@@ -166,6 +176,13 @@ def checkpoint_path_for(geotiff):
     own bbox and falls through on the rest.
     """
     return Path(f'.defra_load_checkpoint_{Path(geotiff).stem}')
+
+
+def failures_path_for(geotiff):
+    """Postcodes whose write could not be made to land, namespaced like the
+    checkpoint and for the same reason: two rasters are two independent passes,
+    and merging their failure lists would misattribute every line in it."""
+    return Path(f'.defra_load_failures_{Path(geotiff).stem}')
 
 
 def parse_args():
@@ -260,7 +277,7 @@ def self_test():
     print('Self-test passed. Pyproj + PROJ data are configured correctly.')
 
 
-def _flush_batch(ddb, items, attribute='ldenDb'):
+def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
     """Write a batch of (postcode, value) pairs to DynamoDB.
 
     Originally this used `BatchWriteItem` (25 items per call) for speed,
@@ -278,6 +295,16 @@ def _flush_batch(ddb, items, attribute='ldenDb'):
     appearing in backend/iam-policy.json proves nothing: `BatchWriteItem` is in
     that same file and is denied on the live policy, which is exactly how the
     NSPL load ended up on the slow path.
+
+    SURVIVES A DROPPED CONNECTION (2026-08-09). Every write used to be
+    unguarded, so `list(ex.map(...))` re-raised the first worker exception and
+    one broken socket ended a multi-hour run. The air-quality loader died that
+    way twice, a minute before the machine slept each time. Policy is shared
+    with it in ddb_write.py rather than pasted, because the part worth getting
+    right is FATAL_CODES and two copies of that list would drift.
+
+    Returns the number of items that actually LANDED, which is not necessarily
+    len(items) - callers must add this rather than the batch size.
     """
     from concurrent.futures import ThreadPoolExecutor
 
@@ -291,7 +318,16 @@ def _flush_batch(ddb, items, attribute='ldenDb'):
         )
 
     with ThreadPoolExecutor(max_workers=25) as ex:
-        list(ex.map(_put, items))
+        landed = list(ex.map(lambda it: ddb_write.guarded_put(_put, it), items))
+
+    stalled = [
+        it['postcode']
+        for it, ok in zip(items, landed, strict=True)
+        if not ok
+    ]
+    if stalled and failures_path is not None:
+        ddb_write.record_failures(failures_path, stalled)
+    return len(items) - len(stalled)
 
 
 def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
@@ -301,9 +337,15 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
     just reports what it would write. When `limit` is set, only that many
     rows of the NSPL CSV are processed (useful for smoke-tests).
     """
-    # Lazy imports so this file is readable without the deps installed
+    # Lazy imports so this file is readable without the deps installed.
+    # boto3 is imported by ddb_write.make_client rather than here, but it is
+    # still checked, so a missing install fails with the install line below
+    # instead of a traceback several hundred thousand rows into a run.
     try:
-        import boto3  # type: ignore
+        import importlib.util
+
+        if importlib.util.find_spec('boto3') is None:
+            raise ImportError('boto3')
         import rasterio  # type: ignore
         from pyproj import Transformer  # type: ignore
         from tqdm import tqdm  # type: ignore
@@ -318,6 +360,7 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
         sys.exit(1)
 
     checkpoint_file = checkpoint_path_for(geotiff)
+    failures_file = failures_path_for(geotiff)
 
     if not NSPL_CSV_PATH.exists():
         print(f'NSPL CSV not found at {NSPL_CSV_PATH}')
@@ -344,7 +387,8 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
 
     # DynamoDB, instantiate even in dry-run so a missing AWS profile
     # surfaces immediately rather than after a long sample.
-    ddb = boto3.client('dynamodb', region_name=AWS_REGION)
+    # Adaptive retry, not a bare client. See ddb_write for why.
+    ddb = ddb_write.make_client(AWS_REGION)
     if dry_run:
         print('DRY-RUN MODE: no DynamoDB writes will be performed.')
 
@@ -455,9 +499,13 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
             batch.append({'postcode': pc, 'value': f'{lden:.1f}'})
 
             if len(batch) >= BATCH_SIZE:
-                if not dry_run:
-                    _flush_batch(ddb, batch, attribute)
-                written += len(batch)
+                # Add what LANDED, not the batch size. A batch of 25 with 3
+                # stalls put 22 rows in the table, and reporting 25 is the same
+                # absent-read-as-present error one layer up from the data.
+                if dry_run:
+                    written += len(batch)
+                else:
+                    written += _flush_batch(ddb, batch, attribute, failures_file)
                 batch.clear()
 
             # Checkpoint every 1000 NSPL rows, regardless of whether the
@@ -470,9 +518,10 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
 
     # Flush remainder
     if batch:
-        if not dry_run:
-            _flush_batch(ddb, batch, attribute)
-        written += len(batch)
+        if dry_run:
+            written += len(batch)
+        else:
+            written += _flush_batch(ddb, batch, attribute, failures_file)
 
     # Clean up checkpoint on success, only on a full uninterrupted run
     if not limit and not dry_run:
@@ -481,10 +530,21 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
     raster.close()
     verb = 'Would have written' if dry_run else 'Wrote'
     print(f'\nDone. {verb}: {written:,} postcodes. Skipped: {skipped:,}.')
+
+    if not dry_run and failures_file.exists():
+        stalled = len(failures_file.read_text(encoding='utf-8').split())
+        print(
+            f'STALLED: {stalled:,} postcodes could not be written and are NOT '
+            f'in the table. Named in {failures_file}; re-run once fixed.'
+        )
+
     if not dry_run and not limit:
+        # get-item on a KNOWN postcode, never describe-table's ItemCount: that
+        # figure refreshes about every six hours, so it reads 0 for most of a
+        # load and a run that wrote nothing looks identical to one that worked.
         print('Verify with:')
-        print(f' AWS_PROFILE=flightmap aws dynamodb describe-table --table-name {TABLE_NAME} \\')
-        print(' --query "Table.ItemCount" --region eu-west-2')
+        print(f' AWS_PROFILE=flightmap aws dynamodb get-item --table-name {TABLE_NAME} \\')
+        print('   --key \'{"postcode":{"S":"SW1A1AA"}}\' --region eu-west-2')
 
 
 def main():

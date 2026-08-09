@@ -35,8 +35,16 @@ throughput.
 import argparse
 import csv
 import sys
-import time
 from pathlib import Path
+
+# Shared write policy. Sibling module, so a plain import works when this is run
+# the documented way - `python scripts/load_defra_air_quality.py` puts scripts/
+# on sys.path. The fallback covers loading this file by path, as its tests do.
+try:
+    import ddb_write
+except ImportError:  # pragma: no cover - depends on how the file was loaded
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import ddb_write
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -55,22 +63,6 @@ CHECKPOINT = Path('.defra_aq_checkpoint')
 # "measured and fine" (see MISSING_TOKENS below). A tally alone would not say
 # WHICH, so it could not be re-run.
 FAILURES = Path('.defra_aq_failures')
-
-# Error codes that cannot succeed on a retry: a missing grant, a malformed
-# item, a table that is not there. Waiting on these is the failure mode
-# load_nspl.py hit when BatchWriteItem was denied - it made no progress and
-# said nothing, so a run taking 6 hours was the only signal anything was wrong.
-FATAL_CODES = frozenset({
-    'AccessDeniedException',
-    'UnrecognizedClientException',
-    'InvalidSignatureException',
-    'ValidationException',
-    'ResourceNotFoundException',
-})
-
-# How long one item may stall before it is recorded as failed and the run moves
-# on. Sized to outlast a laptop sleep and a router reboot, not an outage.
-MAX_STALL_S = 1800
 
 # The grids are 1 km. Cell centres sit on x500/y500, so flooring to the
 # kilometre and keying on that maps any coordinate to its containing cell.
@@ -134,20 +126,10 @@ def main():
 
     ddb = None
     if not args.dry_run:
-        import boto3
-        from botocore.config import Config
-
-        # Adaptive retry, matching load_nspl.py — the only loader here that has
-        # ever run to completion (5.8h, 2.7M rows). The two DEFRA loaders used a
-        # bare client and both died mid-run: this one at 28% on 2026-08-08, one
-        # minute before the machine slept at 21:28:12. Sleep does not kill the
-        # process (the system resumed 6s later), it kills the in-flight HTTPS
-        # connections, and an unguarded update_item turns that into a fatal.
-        ddb = boto3.client(
-            'dynamodb',
-            region_name=AWS_REGION,
-            config=Config(retries={'max_attempts': 10, 'mode': 'adaptive'}),
-        )
+        # Adaptive retry, not a bare client. This loader died at 28% on
+        # 2026-08-08, one minute before the machine slept at 21:28:12. See
+        # ddb_write for the full reasoning.
+        ddb = ddb_write.make_client(AWS_REGION)
 
     start = 0
     if CHECKPOINT.exists() and not args.limit:
@@ -175,52 +157,18 @@ def main():
                 ExpressionAttributeValues=values,
             )
 
-        def _put_guarded(item):
-            """Write one postcode. Wait out a transient fault, record a real one.
-
-            Reached only once boto3's adaptive retry (10 attempts) is exhausted,
-            so anything arriving here is sustained rather than a blip. Waiting
-            is therefore the right default - the run this replaces died one
-            minute before the machine slept, and the connection it lost was
-            healthy again six seconds later. update_item with SET is idempotent,
-            so replaying a postcode is always safe.
-
-            The wait is BOUNDED because the alternative failure is worse than
-            the one it fixes: an IAM denial would otherwise spin silently
-            forever. Fatal codes raise immediately, a stall past MAX_STALL_S
-            returns False, and False is recorded to FAILURES by name.
-            """
-            from botocore.exceptions import BotoCoreError, ClientError
-
-            delay = waited = 0
-            while True:
-                try:
-                    _put(item)
-                    return True
-                except ClientError as exc:
-                    if exc.response.get('Error', {}).get('Code') in FATAL_CODES:
-                        raise
-                except BotoCoreError:
-                    pass  # connection reset, timeout, endpoint gone: retryable
-                if waited >= MAX_STALL_S:
-                    return False
-                delay = min(delay * 2, 300) if delay else 5
-                time.sleep(delay)
-                waited += delay
-
         with ThreadPoolExecutor(max_workers=25) as ex:
-            results = list(ex.map(_put_guarded, batch))
+            landed = list(ex.map(lambda it: ddb_write.guarded_put(_put, it), batch))
 
         stalled = [
             item['postcode']
-            for item, ok in zip(batch, results, strict=True)
+            for item, ok in zip(batch, landed, strict=True)
             if not ok
         ]
         if stalled:
             nonlocal failed
             failed += len(stalled)
-            with FAILURES.open('a', encoding='utf-8') as fh:
-                fh.write('\n'.join(stalled) + '\n')
+            ddb_write.record_failures(FAILURES, stalled)
 
         # Callers add THIS, not len(batch) - a batch of 25 with 3 stalls put 22
         # rows in the table, and reporting 25 would be the same "absent read as
