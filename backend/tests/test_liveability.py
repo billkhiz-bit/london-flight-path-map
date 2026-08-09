@@ -181,14 +181,37 @@ def test_every_complete_borough_is_unchanged_by_redistribution():
         hlt = app.HEALTH_SCORE.get(bd.get('healthcare'), 5)
         return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
 
-    moved = []
+    # Asserts the PROPERTY, not a fixed list. This held `== ['london/City of
+    # London']` until Greater Manchester was added, at which point ten boroughs
+    # that are legitimately 2-of-4 moved and broke a test whose actual claim
+    # they satisfy. A hardcoded expectation of which places have gaps decays
+    # every time a city is added; the invariant does not.
+    moved_but_complete = []
     for city_id, cfg in app.CITIES.items():
         english = cfg.get('country') == 'United Kingdom'
         for name, bd in cfg['boroughs'].items():
             new = app.get_live_score(bd, english=english)
-            if new != old_formula(bd):
-                moved.append(f'{city_id}/{name}')
+            if new == old_formula(bd):
+                continue
+            if app.live_resolution(bd, english=english) == 'measured':
+                moved_but_complete.append(f'{city_id}/{name}')
 
-    assert moved == ['london/City of London'], (
-        'only boroughs with a genuine data gap may move; moved=' + repr(moved)
+    assert not moved_but_complete, (
+        'a borough with all four inputs must be unaffected by redistribution; '
+        'moved=' + repr(moved_but_complete)
     )
+
+
+def test_redistribution_only_ever_affects_incomplete_boroughs():
+    """The other half: something must actually move, or the lock proves nothing.
+
+    If every borough were complete, the assertion above would pass over an
+    empty set and keep passing if redistribution broke entirely.
+    """
+    moved = []
+    for city_id, cfg in app.CITIES.items():
+        english = cfg.get('country') == 'United Kingdom'
+        for name, bd in cfg['boroughs'].items():
+            if app.live_resolution(bd, english=english) != 'measured':
+                moved.append(f'{city_id}/{name}')
+    assert moved, 'no incomplete borough exists, so the lock above is vacuous'

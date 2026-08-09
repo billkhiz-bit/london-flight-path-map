@@ -1169,6 +1169,73 @@ NYC_BOROUGHS = {
     },
 }
 
+# --- Greater Manchester ------------------------------------------------------
+#
+# The ten metropolitan boroughs, modelled exactly like London's 33: a
+# city-region whose constituent local authorities play the role "borough" plays
+# in London. No new concept, same schema, same scoring path.
+#
+# PROVENANCE, read this before trusting any number here. Every figure below was
+# re-verified on 2026-08-09 rather than taken on the word of the commit that
+# added it, because that commit's own header comment described a DIFFERENT set
+# of fields to the ones it shipped.
+#
+#   avgPrice / trend  REAL. HM Land Registry UK House Price Index, May 2026
+#                     vintage - the same vintage as LONDON_BOROUGHS, so the two
+#                     cohorts are directly comparable.
+#
+#   crimeRate         REAL. ONS Crime in England and Wales, Police Force Area
+#                     data tables, Table C4, year ending March 2026 - the same
+#                     release and period as London. VERIFIED: all ten match the
+#                     published workbook exactly.
+#
+#                     These predate scripts/refresh_crime_from_ons.py, which was
+#                     written after that script's London run found 29 of 33
+#                     borough rates wrong, so "same source as London" was not on
+#                     its own sufficient assurance. They were checked directly.
+#
+#                     Greater Manchester Police is ONE force across all ten
+#                     boroughs, so force-level data cannot separate them. Table
+#                     C4 also carries COMMUNITY SAFETY PARTNERSHIP rows, which
+#                     are local-authority level, and that is what these are.
+#                     Note GM returns ELEVEN CSP rows: `Manchester Airport` is
+#                     its own partnership and is not a borough.
+#
+#   p8                REAL. DfE Key Stage 4 Progress 8, 2022/23, local-authority
+#                     level - the same release London uses. VERIFIED by a
+#                     different route: all 32 of London's p8 values are
+#                     byte-identical between this data's source commit and
+#                     master, so the same extraction produced both and this
+#                     inherits London's standing.
+#
+#   impact            ESTIMATE, from runway geometry - see FLIGHT_PATHS_MANCHESTER.
+#                     NOT DEFRA. The Round 4 raster has not been sampled for
+#                     Greater Manchester, so METHODOLOGY section 3's dB Lden
+#                     thresholds are not evidenced here. CITY_PROVENANCE says so
+#                     in every response; do not let this become a measurement by
+#                     omission.
+#
+#   transport         NOT SOURCED. Absent, not defaulted. Since 2026-08-09 an
+#   healthcare        absent liveability input has its weight redistributed
+#                     across the ones that exist rather than filled with a 5.0
+#                     placeholder, so these two being missing costs Manchester
+#                     nothing it has not earned - it is scored on schools and
+#                     crime, and context.liveResolution reports "partial - 2/4".
+#                     Before that change a partial city scored WORSE than an
+#                     empty one, which is why this data sat unported for a week.
+MANCHESTER_BOROUGHS = {
+    'Manchester': {'impact': 'severe', 'avgPrice': 247469, 'trend': 0.5, 'p8': -0.02, 'crimeRate': 142.7},
+    'Salford': {'impact': 'low-moderate', 'avgPrice': 231153, 'trend': -6.1, 'p8': -0.49, 'crimeRate': 105.8},
+    'Stockport': {'impact': 'high', 'avgPrice': 318163, 'trend': 5.4, 'p8': -0.04, 'crimeRate': 74.8},
+    'Trafford': {'impact': 'moderate', 'avgPrice': 393244, 'trend': 6.2, 'p8': 0.24, 'crimeRate': 74.9},
+    'Tameside': {'impact': 'moderate', 'avgPrice': 209691, 'trend': 2.3, 'p8': -0.21, 'crimeRate': 96.4},
+    'Oldham': {'impact': 'low', 'avgPrice': 212997, 'trend': 3.0, 'p8': -0.18, 'crimeRate': 106.6},
+    'Rochdale': {'impact': 'low', 'avgPrice': 208286, 'trend': 4.3, 'p8': -0.28, 'crimeRate': 104.6},
+    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.0, 'p8': -0.14, 'crimeRate': 92.1},
+    'Bolton': {'impact': 'low', 'avgPrice': 200126, 'trend': 3.3, 'p8': -0.08, 'crimeRate': 98.0},
+    'Wigan': {'impact': 'low', 'avgPrice': 194494, 'trend': 5.4, 'p8': -0.39, 'crimeRate': 91.0},
+}
+
 CITIES = {
     'london': {
         'boroughs': LONDON_BOROUGHS,
@@ -1203,6 +1270,23 @@ CITIES = {
         # Existed at PREVIOUS_VINTAGE but had no quarterly refresh, so its
         # zero-change comparison is an honest measurement, not a placeholder.
         'hasHistory': True,
+    },
+    'manchester': {
+        'boroughs': MANCHESTER_BOROUGHS,
+        'currency': 'GBP',
+        'name': 'Greater Manchester',
+        'country': 'United Kingdom',
+        'postcodeFormat': 'UK postcode (e.g. M1 1AE)',
+        # Honest rather than aspirational: resolve_query() hard-gates UK
+        # postcode lookup to London, AND scripts/load_nspl.py writes the borough
+        # attribute for London LADs only, so a Manchester postcode does not
+        # resolve today. Two blockers, not one. An integrator should learn that
+        # here rather than by sending a request and getting an unhelpful miss.
+        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Omitted deliberately, which means False: Greater Manchester did not
+        # exist at PREVIOUS_VINTAGE, so ?compare=previous must DECLINE rather
+        # than return the current set and present a fabricated zero change.
+        # 'hasHistory': False,
     },
 }
 
@@ -1765,6 +1849,59 @@ FLIGHT_PATHS_NYC = [
     },
 ]
 
+AIRPORTS_MANCHESTER = [
+    {'code': 'MAN', 'name': 'Manchester', 'lat': 53.3537, 'lon': -2.2750},
+]
+
+# Manchester's two parallel runways (05L/23R, 05R/23L) share one alignment of
+# roughly 052/232 degrees, so both approach corridors lie on a single axis
+# through the airport. Southwesterlies prevail, so the 23 configuration -
+# arrivals tracking in from the northeast - is the usual one, and it runs
+# straight over Stockport. The 05 corridor points the other way into Cheshire,
+# outside the city-region entirely, which is why Greater Manchester's noise
+# burden concentrates on one side.
+#
+# THESE ARE GEOMETRY, NOT MEASUREMENTS. The waypoints are derived from runway
+# alignment, so the `impact` bands in MANCHESTER_BOROUGHS are an estimate of the
+# same kind London used before the DEFRA raster landed. CITY_PROVENANCE labels
+# them as such in every response. Replacing them means sampling DEFRA Round 4
+# for Greater Manchester - scripts/load_defra_raster.py takes --geotiff with a
+# per-raster checkpoint, so it needs the export, not new code.
+#
+# Waypoint SPACING differs from London's (roughly 5 km here against 1 km there),
+# which matters because corridor distance is measured to the nearest waypoint:
+# a coarser polyline reads as further from the corridor for the same real
+# position. Do not compare a Manchester corridor distance with a London one
+# until the two are resampled to a common interval.
+FLIGHT_PATHS_MANCHESTER = [
+    {
+        'name': '23 Approach',
+        'airport': 'MAN',
+        'type': 'arrival',
+        'freq': 'high',
+        'coords': [
+            (53.4920, -1.9783),
+            (53.4643, -2.0376),
+            (53.4367, -2.0970),
+            (53.4090, -2.1563),
+            (53.3814, -2.2157),
+            (53.3537, -2.2750),
+        ],
+    },
+    {
+        'name': '05 Approach',
+        'airport': 'MAN',
+        'type': 'arrival',
+        'freq': 'medium',
+        'coords': [
+            (53.2707, -2.4530),
+            (53.2984, -2.3937),
+            (53.3260, -2.3343),
+            (53.3537, -2.2750),
+        ],
+    },
+]
+
 CITY_GEOMETRY = {
     'london': {
         'airports': AIRPORTS_LONDON,
@@ -1782,6 +1919,21 @@ CITY_GEOMETRY = {
         'heliports': [],
         'major_airport': 'JFK',
         'secondary_airport': 'LGA',
+    },
+    'manchester': {
+        'airports': AIRPORTS_MANCHESTER,
+        'paths': FLIGHT_PATHS_MANCHESTER,
+        # Barton (City Airport Manchester) exists but has no scheduled rotary
+        # traffic of the kind the London heliport term models, so an explicit
+        # empty list rather than a missing key - see the NYC note above.
+        'heliports': [],
+        'major_airport': 'MAN',
+        # One airport, so no secondary. The airport term takes min(distance)
+        # across the list, which for a single-airport city is simply distance
+        # to MAN. Note that term is DISTANCE-ONLY and calibrated on Heathrow:
+        # MAN handles roughly a third of LHR's movements, so the same ladder
+        # overstates its reach. Tracked as Core Cities finding 7.
+        'secondary_airport': None,
     },
 }
 
@@ -2773,6 +2925,21 @@ CITY_PROVENANCE = {
             'live': 'NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS — none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.',
         },
     },
+    'manchester': {
+        'sources': [
+            'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
+            'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Schools: Department for Education, Key Stage 4 Progress 8, 2022/23, Open Government Licence v3.0',
+            'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
+            'Transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+        ],
+        'breakdown': {
+            'quiet': 'PROVISIONAL ESTIMATE derived from Manchester Airport (MAN) runway alignment and approach geometry. NOT sampled from the DEFRA Round 4 raster, which has not been run for Greater Manchester, so the dB Lden thresholds in METHODOLOGY §3 are not evidenced for this city. Corridor waypoints are also spaced more coarsely than London\'s (~5 km against ~1 km), so corridor distances are not directly comparable between the two. Treat as indicative only.',
+            'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN the Greater Manchester cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs, and Trafford at GBP 393k scores as London\'s most expensive borough does at several times that. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. Greater Manchester has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
+            'live': 'PARTIAL, 2 of 4 inputs measured, and context.liveResolution says so per response. Schools: DfE Key Stage 4 Progress 8, 2022/23, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport and healthcare are NOT sourced; since 2026-08-09 their weight is REDISTRIBUTED across schools and crime in proportion rather than filled with a placeholder, so their absence does not depress the score. It does mean liveability here rests on two inputs where London rests on four.',
+        },
+    },
 }
 
 
@@ -3197,11 +3364,23 @@ def live_resolution(bd, english=True):
         return bd.get('schools') is not None
 
     present = sum(1 for f in _LIVE_FIELDS if _slot_present(f))
-    if present == len(_LIVE_FIELDS):
+    total = len(_LIVE_FIELDS)
+    if present == total:
         return 'measured'
-    if present == 0:
-        return 'unavailable — all inputs defaulted to 5.0 placeholder'
-    return f'partial — {present}/{len(_LIVE_FIELDS)} inputs measured, rest defaulted to 5.0'
+    # Wording corrected 2026-08-09. These strings said "defaulted to 5.0" and
+    # "5.0 placeholder", which described the behaviour get_live_score() had that
+    # morning and stopped having that afternoon. They are SERVED - in
+    # context.liveResolution and in coverage.live.basis - so a stale one is a
+    # public claim about how a number was reached, not an internal comment.
+    if present < _LIVE_MIN_FIELDS:
+        return (
+            f'unavailable — {present}/{total} inputs measured, too few to publish; '
+            'the component is omitted and its weight redistributed'
+        )
+    return (
+        f'partial — {present}/{total} inputs measured; the absent inputs are not '
+        'estimated, their weight is redistributed across the measured ones'
+    )
 
 
 def growth_score(trend, max_trend, min_trend):

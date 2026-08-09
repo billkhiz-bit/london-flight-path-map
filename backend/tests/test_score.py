@@ -1997,8 +1997,18 @@ class CoreCitiesAuditTests(unittest.TestCase):
         unsourced = {'avgPrice': 1, 'trend': 0.0}
         self.assertIsNone(app.get_live_score(unsourced))
         self.assertIn('unavailable', app.live_resolution(unsourced))
-        # A single genuinely-measured input is 'partial'.
-        self.assertIn('partial', app.live_resolution({'p8': 0.1}))
+        # ONE measured input reads 'unavailable', not 'partial', and that
+        # boundary moved on 2026-08-09. It used to be 'partial' because a
+        # single input still produced a score, padded out by three 5.0
+        # placeholders. There is now a floor of two: below it the component is
+        # omitted from the response entirely, so 'partial' would describe a
+        # number the caller never receives.
+        self.assertIn('unavailable', app.live_resolution({'p8': 0.1}))
+        self.assertIsNone(app.get_live_score({'p8': 0.1}))
+        # TWO is the first count that publishes, and reads 'partial'.
+        two = app.live_resolution({'p8': 0.1, 'crimeRate': 90})
+        self.assertIn('partial', two)
+        self.assertIsNotNone(app.get_live_score({'p8': 0.1, 'crimeRate': 90}))
 
         # But the legacy Ofsted band alone is NOT a measured schools input for an
         # English borough (changed 2026-08-03). It used to count, which is how the
@@ -2006,8 +2016,17 @@ class CoreCitiesAuditTests(unittest.TestCase):
         # retired editorial band and its crime rate was our own estimate. New York
         # is the reverse case: it has neither Ofsted nor DfE, so the curated tier
         # IS its source and still counts.
-        self.assertIn('unavailable', app.live_resolution({'schools': 'good'}))
-        self.assertIn('partial', app.live_resolution({'schools': 'good'}, english=False))
+        #
+        # Paired with a second input, because the floor of two would otherwise
+        # collapse both branches to 'unavailable' and the test would pass
+        # without distinguishing anything. With crimeRate present: an English
+        # borough counts 1 (band ignored) and declines; New York counts 2 (band
+        # IS its source) and publishes. That gap is the assertion.
+        band_only = {'schools': 'good', 'crimeRate': 90}
+        self.assertIn('unavailable', app.live_resolution(band_only))
+        self.assertIsNone(app.get_live_score(band_only))
+        self.assertIn('partial', app.live_resolution(band_only, english=False))
+        self.assertIsNotNone(app.get_live_score(band_only, english=False))
 
 
 class ProgressEightTests(unittest.TestCase):
@@ -2034,7 +2053,19 @@ class ProgressEightTests(unittest.TestCase):
             for b in cfg['boroughs'].values()
             if b.get('p8') is not None
         ]
-        self.assertEqual(len(vals), 32)  # London's 33 less the City of London
+        # Derived, not hardcoded. This said `32` ("London's 33 less the City of
+        # London") directly beneath a comment explaining that it iterates CITIES
+        # so it keeps holding as cities are added - the iteration generalised
+        # and the assertion did not, so adding Greater Manchester broke a test
+        # that was written to survive exactly that.
+        expected = sum(
+            1
+            for cfg in app.CITIES.values()
+            for b in cfg['boroughs'].values()
+            if b.get('p8') is not None
+        )
+        self.assertEqual(len(vals), expected)
+        self.assertGreater(expected, 32, 'more than London alone should carry p8')
         self.assertNotIn(0.0, vals)
         self.assertNotIn(10.0, vals)
 
