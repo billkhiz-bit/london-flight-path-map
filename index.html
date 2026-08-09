@@ -1816,6 +1816,29 @@
         left: 32px;
         z-index: 10;
         display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .city-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      /* The country label is a heading for the buttons beneath it, not a
+         control. aria-labelledby on the inner group is what carries it to
+         assistive tech; pointer-events:none keeps it from looking clickable. */
+      .city-group-label {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--dark);
+        opacity: 0.55;
+        padding-left: 1px;
+        pointer-events: none;
+      }
+      .city-group-btns {
+        display: flex;
         gap: 2px;
       }
       .city-btn {
@@ -2561,18 +2584,41 @@
           min-height: 22px;
           border-radius: 0;
         }
-        .app[data-mview='search'] .city-btn:first-child {
-          border-radius: 6px 0 0 6px;
+        /* NATIVE ONLY, and it is a single segmented chip here rather than the
+           website's grouped-by-country layout: at this size the country labels
+           cost more width than they earn. So the groups flatten back into one
+           row and the caps are taken from the FIRST button of the first group
+           and the LAST button of the last group.
+           A bare `.city-btn:first-child` would now match the first button in
+           EVERY group - New York would render a left cap mid-chip. */
+        .app[data-mview='search'] .city-group-label {
+          display: none;
         }
-        .app[data-mview='search'] .city-btn:last-child {
-          border-radius: 0 6px 6px 0;
+        .app[data-mview='search'] .city-group,
+        .app[data-mview='search'] .city-group-btns {
+          flex-direction: row;
+          gap: 0;
+        }
+        .app[data-mview='search'] .city-btn {
           border-left: none;
         }
+        .app[data-mview='search'] .city-group:first-child .city-btn:first-child {
+          border-radius: 6px 0 0 6px;
+          border-left: 1px solid var(--dark);
+        }
+        .app[data-mview='search'] .city-group:last-child .city-btn:last-child {
+          border-radius: 0 6px 6px 0;
+        }
         /* Make the search card leave room for the city chip on the right.
-           Both buttons ("LONDON" + "NEW YORK") together need ~110px;
-           less than that and the chip slides under the search card. */
+           Was sized for two buttons ("LONDON" + "NEW YORK", ~110px) and was
+           not revisited when Manchester made it three, so the reserved width
+           has been short by roughly a button since 2026-08-09. Widened to fit
+           three. NOT VERIFIED ON A DEVICE: this whole block is native-only,
+           `data-mview` is never set on the website, and no gate here loads the
+           native shell - the responsive audit walks the website. Check it in
+           the simulator before the next binary. */
         .app[data-mview='search'] .search-box {
-          margin-right: 118px;
+          margin-right: 190px;
         }
 
         /* Hide desktop zoom controls on mobile (pinch/double-tap covers it).
@@ -2631,28 +2677,53 @@
           </span>
           <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
         </div>
+        <!-- Grouped by country. The grouping is not decoration: the three
+             cities do not share a currency, a lookup unit (postcode vs ZIP) or
+             a noise authority, and a flat list invited the reading that they
+             are interchangeable rows of one dataset. Each country is its own
+             role="group" named by its visible label, so a screen reader
+             announces "United Kingdom, London" rather than three peer buttons.
+             CITY_DATA already carries `country` per city - see applyCityChrome
+             - so a fourth city belongs under an existing heading or brings a
+             new one, and this markup is what syncCitySelector() keeps true. -->
         <div class="city-selector" id="city-selector" role="group" aria-label="Select city">
-          <button
-            type="button"
-            class="city-btn active"
-            aria-pressed="true"
-            data-city="london"
-            onclick="switchCity('london')"
-          >
-            London
-          </button>
-          <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">
-            New York
-          </button>
-          <button
-            type="button"
-            class="city-btn"
-            aria-pressed="false"
-            data-city="manchester"
-            onclick="switchCity('manchester')"
-          >
-            Manchester
-          </button>
+          <div class="city-group">
+            <span class="city-group-label" id="city-group-uk">UK</span>
+            <div class="city-group-btns" role="group" aria-labelledby="city-group-uk">
+              <button
+                type="button"
+                class="city-btn active"
+                aria-pressed="true"
+                data-city="london"
+                onclick="switchCity('london')"
+              >
+                London
+              </button>
+              <button
+                type="button"
+                class="city-btn"
+                aria-pressed="false"
+                data-city="manchester"
+                onclick="switchCity('manchester')"
+              >
+                Manchester
+              </button>
+            </div>
+          </div>
+          <div class="city-group">
+            <span class="city-group-label" id="city-group-usa">USA</span>
+            <div class="city-group-btns" role="group" aria-labelledby="city-group-usa">
+              <button
+                type="button"
+                class="city-btn"
+                aria-pressed="false"
+                data-city="nyc"
+                onclick="switchCity('nyc')"
+              >
+                New York
+              </button>
+            </div>
+          </div>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
