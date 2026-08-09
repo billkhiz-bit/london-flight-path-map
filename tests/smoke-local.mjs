@@ -157,8 +157,13 @@ const registry = await page.evaluate(() => {
     // Reported through the flags above rather than thrown, so a broken
     // registry fails this test instead of aborting the whole run.
   }
+  // A city that will never exist. This probe used 'manchester', which was a
+  // fine choice for one day and then became a real city on 2026-08-09 - at
+  // which point the assertion started failing for the best possible reason and
+  // would have been "fixed" by deleting it. A placeholder that names a PLANNED
+  // thing is a scheduled false alarm; name something impossible instead.
   try {
-    cityOf('manchester');
+    cityOf('__no_such_city__');
   } catch {
     out.throwsOnUnknown = true;
   }

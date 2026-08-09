@@ -1270,5 +1270,67 @@
       "healthcare": "moderate",
       "healthcareNote": "Staten Island University Hospital. Limited compared to other boroughs."
     }
+  },
+  "manchester": {
+    "Manchester": {
+      "p8": -0.02,
+      "crimeRate": 142.7,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Salford": {
+      "p8": -0.49,
+      "crimeRate": 105.8,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Stockport": {
+      "p8": -0.04,
+      "crimeRate": 74.8,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Trafford": {
+      "p8": 0.24,
+      "crimeRate": 74.9,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Tameside": {
+      "p8": -0.21,
+      "crimeRate": 96.4,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Oldham": {
+      "p8": -0.18,
+      "crimeRate": 106.6,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Rochdale": {
+      "p8": -0.28,
+      "crimeRate": 104.6,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Bury": {
+      "p8": -0.14,
+      "crimeRate": 92.1,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Bolton": {
+      "p8": -0.08,
+      "crimeRate": 98.0,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    },
+    "Wigan": {
+      "p8": -0.39,
+      "crimeRate": 91.0,
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+    }
   }
 }

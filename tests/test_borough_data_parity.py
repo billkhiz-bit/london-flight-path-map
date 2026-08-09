@@ -50,20 +50,42 @@ SHARED_FIELDS = ('crimeRate', 'schools', 'transport', 'healthcare', 'p8')
 # one holder and nothing to compare. Declared explicitly rather than inferred,
 # because the difference between "backend-only on purpose" and "someone put a
 # city on the site and forgot its data" is exactly what this file exists to
-# catch — and inferring it would make the second case look like the first.
+# catch, and inferring it would make the second case look like the first.
 #
-# Proven necessary on 2026-08-09: a preview branch wired Greater Manchester into
-# the site with no borough-extra entry, and ALL TEN boroughs disagreed with the
-# API by up to 1.5 points, because the site could not see p8 or crimeRate and
-# dropped `live` entirely. The map looked correct throughout. The tests below
-# were parametrised over a hardcoded ['london', 'nyc'] and could not have
-# caught it.
-BACKEND_ONLY_CITIES = frozenset({'manchester'})
+# EMPTY today: Greater Manchester was the only entry, and it gained its
+# borough-extra data when the consumer site started offering it. The set stays
+# because the next city will land backend-first, exactly as that one did.
+#
+# It earned its place first: a preview branch put Greater Manchester on the site
+# with no borough-extra entry and ALL TEN boroughs disagreed with the API by up
+# to 1.5 points, because the site could not see p8 or crimeRate and dropped
+# `live` entirely. The map looked correct throughout.
+BACKEND_ONLY_CITIES = frozenset()
 
 
 def _site_cities():
     with open(DATA, encoding='utf-8') as handle:
         return set(json.load(handle))
+
+
+# Cities held by BOTH surfaces, so there is something to compare. Derived, not
+# listed: the three tests below were parametrised over a hardcoded
+# ['london', 'nyc'] and silently kept comparing two cities after a third was
+# added to both holders — the same decay these tests exist to catch, in the file
+# that catches it. test_comparison_covers_every_shared_city guards the
+# derivation itself, because parametrising over an empty list SKIPS rather than
+# fails.
+COMPARED_CITIES = sorted(set(score_app.CITIES) & _site_cities())
+
+
+def test_comparison_covers_every_shared_city():
+    """The derived list must cover every city both holders carry.
+
+    Without this, a rename or a load failure would shrink COMPARED_CITIES and
+    the parametrised tests below would quietly pass over fewer cities, or none.
+    """
+    assert COMPARED_CITIES == sorted(set(score_app.CITIES) & _site_cities())
+    assert len(COMPARED_CITIES) >= 2, 'comparison collapsed to fewer than two cities'
 
 
 def test_backend_only_cities_are_declared_not_discovered():
@@ -114,7 +136,7 @@ def _pairs(city):
     return out
 
 
-@pytest.mark.parametrize('city', ['london', 'nyc'])
+@pytest.mark.parametrize('city', COMPARED_CITIES)
 def test_both_holders_cover_the_same_boroughs(city):
     """Coverage, not just agreement.
 
@@ -133,7 +155,7 @@ def test_both_holders_cover_the_same_boroughs(city):
     )
 
 
-@pytest.mark.parametrize('city', ['london', 'nyc'])
+@pytest.mark.parametrize('city', COMPARED_CITIES)
 def test_shared_liveability_inputs_agree(city):
     """Every field both holders carry must hold the same value.
 
@@ -149,7 +171,7 @@ def test_shared_liveability_inputs_agree(city):
     assert not disagreements, 'borough inputs have drifted:\n  ' + '\n  '.join(disagreements)
 
 
-@pytest.mark.parametrize('city', ['london', 'nyc'])
+@pytest.mark.parametrize('city', COMPARED_CITIES)
 def test_a_field_is_not_silently_missing_from_one_side(city):
     """Presence must match too, not only value.
 

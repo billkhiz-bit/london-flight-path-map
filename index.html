@@ -2644,6 +2644,15 @@
           <button type="button" class="city-btn" aria-pressed="false" data-city="nyc" onclick="switchCity('nyc')">
             New York
           </button>
+          <button
+            type="button"
+            class="city-btn"
+            aria-pressed="false"
+            data-city="manchester"
+            onclick="switchCity('manchester')"
+          >
+            Manchester
+          </button>
         </div>
         <div class="map-controls">
           <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
@@ -2814,7 +2823,14 @@
               <div class="legend-swatch" style="background: rgba(242, 38, 38, 0.5)"></div>
               <span>75+ dB</span>
             </div>
-            <div style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4">
+            <!-- Set from the city registry by applyCityChrome(). Had no id and
+                 was never swapped, so New York showed this DEFRA / LHR / LCY /
+                 LGW paragraph beneath a "BTS AIRCRAFT NOISE (dB DNL)" heading.
+                 The markup below is London's copy and is the initial state. -->
+            <div
+              id="legend-noise-explainer"
+              style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4"
+            >
               <strong>What this is:</strong>
               DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR,
               LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is
@@ -3567,9 +3583,110 @@
       // ============================================================
       let currentCity = 'london';
 
+      // Map projection per city. SECOND registry, separate from CITY_DATA
+      // below, which holds data and copy. They are not merged because this one
+      // is read before CITY_DATA's thunks can resolve.
+
+      // ============================================================
+      // GREATER MANCHESTER (Core Cities spike)
+      // ============================================================
+      // Mirrors MANCHESTER_BOROUGHS in backend/lambdas/score/app.py. The two
+      // surfaces score independently, so any divergence here shows up as the
+      // site and the API disagreeing about the same place.
+      //
+      // avg_price / trend  REAL. HM Land Registry UK HPI, May 2026 vintage -
+      //                    the same vintage as the London set.
+      // impact             ESTIMATE from runway geometry, NOT a DEFRA raster
+      //                    sample. Provisional; see app.py for the full note.
+      const MANCHESTER_AIRPORTS = [
+        { code: 'MAN', name: 'Manchester', coords: [-2.275, 53.3537], passengers: '28.1M', type: 'airport' },
+      ];
+
+      // Both runways share one 052/232 alignment, so the corridors lie on a
+      // single axis. Southwesterlies prevail, so the 23 configuration - arrivals
+      // tracking in from the north-east, straight over Stockport - is the usual one.
+      const MANCHESTER_FLIGHT_PATHS = [
+        {
+          name: '23 Approach',
+          airport: 'MAN',
+          type: 'arrival',
+          freq: 'high',
+          coordinates: [
+            [-1.9783, 53.492],
+            [-2.0376, 53.4643],
+            [-2.097, 53.4367],
+            [-2.1563, 53.409],
+            [-2.2157, 53.3814],
+            [-2.275, 53.3537],
+          ],
+        },
+        {
+          name: '05 Approach',
+          airport: 'MAN',
+          type: 'arrival',
+          freq: 'medium',
+          coordinates: [
+            [-2.453, 53.2707],
+            [-2.3937, 53.2984],
+            [-2.3343, 53.326],
+            [-2.275, 53.3537],
+          ],
+        },
+      ];
+
+      const MANCHESTER_BOROUGH_DATA_RAW = {
+        Manchester: {
+          impact: 'severe',
+          avg_price: 247469,
+          trend: 0.5,
+          note: 'Manchester Airport sits inside the city boundary at Wythenshawe. Noise is concentrated in the south of the borough; the city centre and the north are a long way from the runways.',
+        },
+        Stockport: {
+          impact: 'high',
+          avg_price: 318163,
+          trend: 5.4,
+          note: 'Directly beneath the 23 approach, the prevailing arrival configuration. Prices are the second highest in the city-region and rising.',
+        },
+        Trafford: {
+          impact: 'moderate',
+          avg_price: 393244,
+          trend: 6.2,
+          note: 'The dearest and fastest-rising borough in Greater Manchester. West of the airport and off the main approach axis.',
+        },
+        Tameside: {
+          impact: 'moderate',
+          avg_price: 209691,
+          trend: 2.3,
+          note: 'North-east of the airport under the extended 23 approach, but far enough out that aircraft are high overhead.',
+        },
+        Salford: {
+          impact: 'low-moderate',
+          avg_price: 231153,
+          trend: -6.1,
+          note: 'The only borough in the city-region with falling prices. Off the approach axis, north of the airport.',
+        },
+        Oldham: { impact: 'low', avg_price: 212997, trend: 3.0, note: 'North-east of the city, well clear of the approach corridors.' },
+        Rochdale: { impact: 'low', avg_price: 208286, trend: 4.3, note: 'The far north-east of the city-region, beyond the reach of airport noise.' },
+        Bury: { impact: 'low', avg_price: 238266, trend: 3.0, note: 'North of the city and clear of both approach corridors.' },
+        Bolton: { impact: 'low', avg_price: 200126, trend: 3.3, note: 'North-west of the city-region, off every flight path.' },
+        Wigan: { impact: 'low', avg_price: 194494, trend: 5.4, note: 'The cheapest borough in the city-region, furthest from the airport, and rising strongly.' },
+      };
+
+      // Deliberately empty: no schools, crime, transport or healthcare data has
+      // been sourced for Greater Manchester. getLiveScore() therefore falls back
+      // to a neutral 5 for every borough, exactly as the API does. That flat
+      // value is a placeholder, NOT a measurement - see the audit finding on
+      // liveability defaults sitting below London's entire observed range.
+      let MANCHESTER_BOROUGH_EXTRA = {};
+      const MANCHESTER_AREA_MAP = {};
+      const MANCHESTER_NEIGHBOURHOOD_DETAIL = {};
+      const MANCHESTER_STATIONS = [];
+      let MANCHESTER_BOROUGH_DATA = {};
+
       const CITIES = {
         london: { center: [-0.1278, 51.5074], scale: 48000, name: 'London' },
         nyc: { center: [-73.97, 40.75], scale: 55000, name: 'New York' },
+        manchester: { center: [-2.32, 53.52], scale: 47000, name: 'Greater Manchester' },
       };
 
       // --- New York Data ---
@@ -5067,6 +5184,29 @@
           localDataSources: 'TfL and EPC',
           runwayNote: 'Heathrow alternates runways',
           currencyHtml: '&pound;',
+          // Map chrome, applied by applyCityChrome(). These were ~20 DOM
+          // assignments inside switchCity() behind `if (city === 'nyc') ... else
+          // ...`, so every city that was not New York silently got London's -
+          // the same fail-open shape this registry exists to remove, in if/else
+          // form rather than ternary.
+          subtitle: 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search area, neighbourhood or borough',
+          emptyStateHint:
+            'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
+          legendPath1: 'LHR PATHS',
+          legendPath2: 'LCY PATHS',
+          legendHeli: true,
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. These contours therefore understate a typical year, most at the airports worst affected. Round 4 is still the latest official round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading.",
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'EA FLOOD RISK',
+          legendAqTitle: 'BOROUGH AIR QUALITY',
+          legendFlood: 'FLOOD ZONE',
+          legendAq: 'POOR AIR',
+          autoLabels: false,
           boroughData: () => BOROUGH_DATA,
           boroughRaw: () => BOROUGH_DATA_RAW,
           boroughExtra: () => BOROUGH_EXTRA,
@@ -5092,6 +5232,27 @@
           localDataSources: 'transit and listing',
           runwayNote: 'airports operate on different runway configurations',
           currencyHtml: '$',
+          subtitle: 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search area, neighbourhood or borough',
+          emptyStateHint:
+            'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.',
+          labelTransport: 'Subway / rail',
+          contourBadge: 'ZOOM INTO MAP TO SEE CURATED FAA/BTS NOISE CONTOURS',
+          legendPath1: 'JFK PATHS',
+          legendPath2: 'LGA PATHS',
+          legendHeli: false,
+          legendNoiseTitle: 'BTS AIRCRAFT NOISE (dB DNL)',
+          // Was the DEFRA paragraph, live, under this BTS heading, because the
+          // explainer had no id and nothing swapped it.
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading.",
+          legendRoadTitle: 'DOT ROAD NOISE',
+          legendFloodTitle: 'FEMA FLOOD RISK',
+          legendAqTitle: 'EPA BOROUGH AIR QUALITY',
+          legendFlood: 'FEMA FLOOD',
+          legendAq: 'POOR AIR',
+          // NYC boundaries carry no built-in borough labels, so turn them on.
+          autoLabels: true,
           boroughData: () => NYC_BOROUGH_DATA,
           boroughRaw: () => NYC_BOROUGH_DATA_RAW,
           boroughExtra: () => NYC_BOROUGH_EXTRA,
@@ -5102,6 +5263,71 @@
           stations: () => NYC_STATIONS,
           roadNoise: () => NYC_BOROUGH_ROAD_NOISE,
           features: () => nycBoroughFeatures,
+        },
+        // Greater Manchester. THINNER THAN THE OTHER TWO, deliberately and
+        // visibly: the boroughs, boundaries, airport and approach corridors are
+        // real, and area search, stations, road noise and neighbourhood detail
+        // do not exist for this city. They are declared empty rather than
+        // omitted so the registry contract holds and the failure is a blank
+        // layer rather than a thrown error.
+        manchester: {
+          label: 'Greater Manchester',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (CURATED)',
+          searchNotFound: 'Borough not found. Try e.g. Trafford, Stockport, or Wigan.',
+          mapLabelFontSize: '7px',
+          // Runway geometry, NOT DEFRA. Said plainly because the London label
+          // in the same slot names a regulator, and reusing it here would claim
+          // a measurement this city has not had.
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Manchester runs both runways on one 052/232 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'GREATER MANCHESTER · INDEPENDENT NOISE + LIVABILITY DATA',
+          // No area map for this city, so do not invite an area search.
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '23 APPROACH',
+          legendPath2: '05 APPROACH',
+          legendHeli: false,
+          // NOT "DEFRA". These bands are runway geometry, and the API's
+          // provenance is explicit that they are an estimate; putting a
+          // regulator's name on the legend would contradict it on the one
+          // surface a consumer actually reads.
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Treat these bands as indicative until DEFRA Round 4 is sampled for this city.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          // These boundaries carry no built-in labels, same as New York.
+          autoLabels: true,
+          // Scored on first use, not at load: an unvisited city should cost
+          // nothing, and MANCHESTER_BOROUGH_DATA_RAW is declared above.
+          boroughData: () => {
+            if (!Object.keys(MANCHESTER_BOROUGH_DATA).length) {
+              MANCHESTER_BOROUGH_DATA = calcScores(MANCHESTER_BOROUGH_DATA_RAW, 'manchester');
+            }
+            return MANCHESTER_BOROUGH_DATA;
+          },
+          boroughRaw: () => MANCHESTER_BOROUGH_DATA_RAW,
+          boroughExtra: () => MANCHESTER_BOROUGH_EXTRA,
+          areaMap: () => MANCHESTER_AREA_MAP,
+          neighbourhoodDetail: () => MANCHESTER_NEIGHBOURHOOD_DETAIL,
+          airports: () => MANCHESTER_AIRPORTS,
+          flightPaths: () => MANCHESTER_FLIGHT_PATHS,
+          stations: () => MANCHESTER_STATIONS,
+          roadNoise: () => MANCHESTER_BOROUGH_ROAD_NOISE,
+          features: () => manchesterBoroughFeatures,
         },
       };
 
@@ -5279,6 +5505,13 @@
       function recalcAllScores() {
         Object.assign(BOROUGH_DATA, calcScores(BOROUGH_DATA_RAW, 'london'));
         Object.assign(NYC_BOROUGH_DATA, calcScores(NYC_BOROUGH_DATA_RAW, 'nyc'));
+        // Greater Manchester scores LAZILY on first use and caches the result,
+        // so re-scoring it means clearing that cache rather than assigning over
+        // it - its registry thunk rebuilds on the next read. Without this the
+        // hydrated crime and Progress 8 figures would land in
+        // MANCHESTER_BOROUGH_EXTRA and never reach a score, which looks
+        // identical to not having loaded them at all.
+        MANCHESTER_BOROUGH_DATA = {};
       }
 
       // F-Perf-10: lazy-load BOROUGH_EXTRA + NYC_BOROUGH_EXTRA from
@@ -5372,6 +5605,14 @@
           const data = await resp.json();
           Object.assign(BOROUGH_EXTRA, data.london || {});
           Object.assign(NYC_BOROUGH_EXTRA, data.nyc || {});
+          // A THIRD `Object.assign` had to be remembered here for a third city,
+          // and forgetting it is silent: Greater Manchester rendered with an
+          // empty extra, so `live` fell below its floor and was dropped, and
+          // all ten boroughs disagreed with /v1/score by up to 1.5 points with
+          // nothing raised. tests/test_borough_data_parity.py compares the
+          // INPUTS and would not have caught it either - both holders had the
+          // data, the site just never loaded it into the object it scores from.
+          Object.assign(MANCHESTER_BOROUGH_EXTRA, data.manchester || {});
           _boroughExtraHydrated = true;
           // Re-score now that the real crime/schools/transport/healthcare
           // attributes are available.
@@ -5815,6 +6056,13 @@
       let selectedBorough = null;
       let boroughFeatures = [];
       let nycBoroughFeatures = [];
+      let manchesterBoroughFeatures = [];
+      // Greater Manchester has NO road-noise data. An empty object rather than
+      // a missing key, so the layer renders nothing instead of throwing, and so
+      // the registry key-parity check in tests/smoke-local.mjs still passes -
+      // that check asserts a field is DEFINED, not that it has substance, which
+      // is a real limit worth knowing when reading it.
+      const MANCHESTER_BOROUGH_ROAD_NOISE = {};
       let projection, pathGenerator, svg, g, zoom;
       let layers = {
         paths: true,
@@ -7840,7 +8088,7 @@
       <span class="noise-indicator ${noiseClass}">${(data.impact || 'UNKNOWN').toUpperCase()}</span>
       <div class="noise-bar"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
       <p class="property-note">${data.note}</p>
-      <div class="defra-badge">ZOOM INTO MAP TO SEE OFFICIAL ${cityOf(currentCity).noiseAuthority} NOISE CONTOURS</div>
+      <div class="defra-badge">${escapeHtml(cityOf(currentCity).contourBadge)}</div>
     </div>
 
     <div class="sidebar-section">
@@ -8346,8 +8594,70 @@
       }
 
       // ============================================================
-      // CITY SWITCHING (London <-> NYC)
+      // CITY SWITCHING
       // ============================================================
+
+      /**
+       * Point every piece of map chrome at the city registry.
+       *
+       * This replaced two `if (city === 'nyc') ... else ...` blocks holding ~20
+       * DOM assignments between them. With two cities that was correct; with
+       * three it hands London's copy to anything that is not New York, which is
+       * the same fail-open shape the CITY_DATA registry was built to remove -
+       * it had simply never been applied to this function.
+       *
+       * The aircraft explainer is the one that mattered most. It had no id and
+       * nothing swapped it, so New York rendered a paragraph about DEFRA, LHR,
+       * LCY and LGW underneath a "BTS AIRCRAFT NOISE (dB DNL)" heading. That
+       * was live. Greater Manchester would have gone further and shown the
+       * DEFRA heading itself over bands that are runway-geometry estimates,
+       * contradicting the provenance /v1/score publishes for the same city.
+       *
+       * innerHTML on the explainer is deliberate and safe: the strings are
+       * literals in this file, not user or third-party data. Everything else
+       * uses textContent.
+       */
+      function applyCityChrome(city) {
+        const cfg = cityOf(city);
+        const set = (id, text) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = text;
+        };
+
+        document.getElementById('map-title-text').textContent = 'Sky Score';
+        set('map-subtitle', cfg.subtitle);
+        document.getElementById('search-input').placeholder = cfg.searchPlaceholder;
+
+        // Layer toggles. Plain English, no agency acronyms - the source is in
+        // the tooltip and the methodology link.
+        set('label-aircraft', 'Aircraft noise');
+        set('label-road', 'Road noise');
+        set('label-transport', cfg.labelTransport);
+        set('label-flood', 'Flood risk');
+        set('label-aq', 'Air quality');
+
+        set('legend-path1', cfg.legendPath1);
+        set('legend-path2', cfg.legendPath2);
+        const heli = document.getElementById('legend-heli-row');
+        if (heli) heli.style.display = cfg.legendHeli ? '' : 'none';
+
+        set('legend-noise-title', cfg.legendNoiseTitle);
+        const explainer = document.getElementById('legend-noise-explainer');
+        if (explainer) explainer.innerHTML = cfg.legendNoiseExplainer;
+
+        set('legend-road-title', cfg.legendRoadTitle);
+        set('legend-flood-title', cfg.legendFloodTitle);
+        set('legend-aq-title', cfg.legendAqTitle);
+        set('legend-flood', cfg.legendFlood);
+        set('legend-aq', cfg.legendAq);
+
+        // Cities whose boundaries carry no built-in labels need them on.
+        if (cfg.autoLabels && !layers.labels) {
+          layers.labels = true;
+          const btn = document.querySelector('[data-layer="labels"]');
+          if (btn) btn.classList.add('active');
+        }
+      }
       function getActiveAirports() {
         return cityOf(currentCity).airports();
       }
@@ -8383,61 +8693,7 @@
           b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
 
-        const titleEl = document.getElementById('map-title-text');
-        const subtitleEl = document.getElementById('map-subtitle');
-        const searchInput = document.getElementById('search-input');
-
-        if (city === 'nyc') {
-          titleEl.textContent = 'Sky Score';
-          subtitleEl.textContent = 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA';
-          searchInput.placeholder = 'Search area, neighbourhood or borough';
-        } else {
-          titleEl.textContent = 'Sky Score';
-          subtitleEl.textContent = 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA';
-          searchInput.placeholder = 'Search area, neighbourhood or borough';
-        }
-
-        // Update layer toggle labels and legend for city. Plain English (no
-        // agency acronyms) - the source of the data is shown in the tooltip
-        // (`title` attribute) and the methodology footer link.
-        if (city === 'nyc') {
-          document.getElementById('label-aircraft').textContent = 'Aircraft noise';
-          document.getElementById('label-road').textContent = 'Road noise';
-          document.getElementById('label-transport').textContent = 'Subway / rail';
-          document.getElementById('label-flood').textContent = 'Flood risk';
-          document.getElementById('label-aq').textContent = 'Air quality';
-          document.getElementById('legend-path1').textContent = 'JFK PATHS';
-          document.getElementById('legend-path2').textContent = 'LGA PATHS';
-          document.getElementById('legend-heli-row').style.display = 'none';
-          document.getElementById('legend-noise-title').textContent = 'BTS AIRCRAFT NOISE (dB DNL)';
-          document.getElementById('legend-flood').textContent = 'FEMA FLOOD';
-          document.getElementById('legend-aq').textContent = 'POOR AIR';
-          // visual fix-LAYER-LABELS: city-aware legend group titles
-          document.getElementById('legend-road-title').textContent = 'DOT ROAD NOISE';
-          document.getElementById('legend-flood-title').textContent = 'FEMA FLOOD RISK';
-          document.getElementById('legend-aq-title').textContent = 'EPA BOROUGH AIR QUALITY';
-          // Auto-enable labels for NYC (no built-in borough labels)
-          if (!layers.labels) {
-            layers.labels = true;
-            document.querySelector('[data-layer="labels"]').classList.add('active');
-          }
-        } else {
-          document.getElementById('label-aircraft').textContent = 'Aircraft noise';
-          document.getElementById('label-road').textContent = 'Road noise';
-          document.getElementById('label-transport').textContent = 'Transport';
-          document.getElementById('label-flood').textContent = 'Flood risk';
-          document.getElementById('label-aq').textContent = 'Air quality';
-          document.getElementById('legend-path1').textContent = 'LHR PATHS';
-          document.getElementById('legend-path2').textContent = 'LCY PATHS';
-          document.getElementById('legend-heli-row').style.display = '';
-          document.getElementById('legend-noise-title').textContent = 'DEFRA AIRCRAFT NOISE (dB Lden)';
-          document.getElementById('legend-flood').textContent = 'FLOOD ZONE';
-          document.getElementById('legend-aq').textContent = 'POOR AIR';
-          // visual fix-LAYER-LABELS: restore London-default group titles
-          document.getElementById('legend-road-title').textContent = 'DEFRA ROAD NOISE';
-          document.getElementById('legend-flood-title').textContent = 'EA FLOOD RISK';
-          document.getElementById('legend-aq-title').textContent = 'BOROUGH AIR QUALITY';
-        }
+        applyCityChrome(city);
 
         // Re-render map with new city data
         const container = document.getElementById('map-container');
@@ -8458,6 +8714,30 @@
 
         if (city === 'london') {
           if (boroughFeatures.length) renderBoroughs();
+        } else if (city === 'manchester') {
+          // Same lazy pattern as NYC below, and an EXPLICIT branch rather than
+          // an else: the old `if london ... else <NYC>` shape meant any third
+          // city silently loaded New York's boundaries. That is the fail-open
+          // trap the city registry was introduced to remove, in if/else form.
+          if (!manchesterBoroughFeatures.length) {
+            try {
+              const geo = await d3.json('/data/manchester-boroughs.json');
+              if (token !== citySeq) return;
+              if (geo && geo.features && geo.features.length) {
+                manchesterBoroughFeatures = geo.features;
+              }
+            } catch (e) {
+              console.warn('Manchester GeoJSON failed:', e);
+            }
+          }
+          if (token !== citySeq) return;
+          if (manchesterBoroughFeatures.length) {
+            renderNycBoroughs(manchesterBoroughFeatures);
+          } else {
+            announceResult(
+              'Greater Manchester borough outlines could not be loaded. The map and search still work.'
+            );
+          }
         } else {
           // For NYC, load GeoJSON dynamically - then keep it. The borough
           // outlines never change, so re-fetching on every switch only
@@ -8516,7 +8796,7 @@
         if (searchSeq === searchAtStart) {
           document.getElementById('sidebar-content').innerHTML =
             `<div class="empty-state"><div class="icon">&#9678;</div>
-    <p>${city === 'nyc' ? 'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.' : 'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.'}</p></div>`;
+    <p>${escapeHtml(cityOf(city).emptyStateHint)}</p></div>`;
           document.getElementById('sidebar-title').textContent = 'PROPERTY INTELLIGENCE';
         }
       }
@@ -8939,6 +9219,13 @@
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'grid';
+
+        // Chrome for the STARTING city. applyCityChrome only ran on a switch,
+        // so first paint used whatever the markup happened to say - which for
+        // the subtitle was "INDEPENDENT NOISE + LIVABILITY DATA" with no city
+        // in it, and only gained "LONDON ·" once you had visited another city
+        // and come back. Now the initial state is derived like every other.
+        applyCityChrome(currentCity);
         // Don't `await extraPromise` - we want the map to paint as soon as
         // geojson is ready. The hydration callback handles re-scoring +
         // sidebar refresh whenever it lands.
