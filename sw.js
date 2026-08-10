@@ -98,7 +98,11 @@
 // two pages. Changed to role="group". index.html is in SHELL_ASSETS, so this
 // bump is required by the rule at the top; without it an installed PWA keeps
 // serving the inaccessible shell indefinitely.
-// v1.0.19 (2026-08-10): scoring went lazy and registry-driven - recalcAllScores
+// v1.0.19 (2026-08-10): London's 33 `trend` values corrected to HM Land
+// Registry HPI 2026-05, which is what CITY_PROVENANCE already claimed they
+// were. They matched no HPI month at all, while the same test identifies the
+// price source at 33/33, so the growth input was reading from something nobody
+// could name. Also in this version: scoring went lazy and registry-driven - recalcAllScores
 // and hydrateBoroughExtra no longer name any city. index.html changed again,
 // and v1.0.18 has already SHIPPED, so a returning visitor holds that shell
 // precached; without this bump they would keep the pre-refactor page, including

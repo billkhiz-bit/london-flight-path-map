@@ -124,6 +124,22 @@ check "API base-URL drift (I-N5)"      sh scripts/check_api_url_drift.sh
 # itself, which is how the raster served Heathrow a quiet score of 7.5/10 for a
 # week with this gate green throughout. Hits the live API, like the e2e stage.
 check "score sanity (live API)"        python scripts/check_score_sanity.py
+# Borough avgPrice and trend against HM Land Registry HPI, keyed on ONS codes.
+# Placed with the offline gates rather than in the --skip-e2e block: it needs no
+# browser and no live site, only data/hpi-average-prices.csv, which it fetches
+# once and caches.
+#
+# The only gate that can catch a PARTIAL VINTAGE ROLL, and it was written
+# because there was one. Until 2026-08-10 London's avgPrice matched HPI 2026-05
+# for all 33 boroughs while its `trend` matched NO HPI month - the growth input
+# was reading from a source nobody could name, under a CITY_PROVENANCE sentence
+# telling B2B customers it was HPI. Nothing noticed, because both fields sit in
+# TWO holders and test_borough_data_parity.py compares only the liveability
+# inputs.
+#
+# Proven able to fail: it went red on exactly that defect, 0/33 trends agreeing,
+# which is why it was not wired in here until the data agreed.
+check "prices == HM Land Registry"     python scripts/build_hpi_prices.py --check --all
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
 check "no em dashes (9 pages)"         sh scripts/check_no_em_dash.sh

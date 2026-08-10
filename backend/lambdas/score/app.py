@@ -783,7 +783,7 @@ LONDON_BOROUGHS = {
     'Hounslow': {
         'impact': 'severe',
         'avgPrice': 501000,
-        'trend': -1.1,
+        'trend': -2.4,
         'schools': 'good',
         'crimeRate': 87.4,
         'p8': 0.45,
@@ -793,7 +793,7 @@ LONDON_BOROUGHS = {
     'Hillingdon': {
         'impact': 'severe',
         'avgPrice': 468000,
-        'trend': 0.6,
+        'trend': -0.7,
         'schools': 'good',
         'crimeRate': 91.6,
         'p8': 0.24,
@@ -803,7 +803,7 @@ LONDON_BOROUGHS = {
     'Richmond upon Thames': {
         'impact': 'high',
         'avgPrice': 789000,
-        'trend': -1.3,
+        'trend': -2.5,
         'schools': 'excellent',
         'crimeRate': 57.3,
         'p8': 0.4,
@@ -813,7 +813,7 @@ LONDON_BOROUGHS = {
     'Ealing': {
         'impact': 'high',
         'avgPrice': 569000,
-        'trend': -0.3,
+        'trend': -2.5,
         'schools': 'good',
         'crimeRate': 80.5,
         'p8': 0.62,
@@ -823,7 +823,7 @@ LONDON_BOROUGHS = {
     'Wandsworth': {
         'impact': 'moderate',
         'avgPrice': 660000,
-        'trend': -4.2,
+        'trend': -6.1,
         'schools': 'excellent',
         'crimeRate': 76.4,
         'p8': 0.33,
@@ -833,7 +833,7 @@ LONDON_BOROUGHS = {
     'Lambeth': {
         'impact': 'moderate',
         'avgPrice': 545000,
-        'trend': -0.2,
+        'trend': -2.9,
         'schools': 'good',
         'crimeRate': 114.4,
         'p8': 0.01,
@@ -843,7 +843,7 @@ LONDON_BOROUGHS = {
     'Lewisham': {
         'impact': 'low-moderate',
         'avgPrice': 497000,
-        'trend': 4.8,
+        'trend': 2.3,
         'schools': 'good',
         'crimeRate': 94.2,
         'p8': 0.0,
@@ -853,7 +853,7 @@ LONDON_BOROUGHS = {
     'Greenwich': {
         'impact': 'moderate',
         'avgPrice': 463000,
-        'trend': 2.3,
+        'trend': 0.1,
         'schools': 'good',
         'crimeRate': 90.3,
         'p8': -0.01,
@@ -863,7 +863,7 @@ LONDON_BOROUGHS = {
     'Tower Hamlets': {
         'impact': 'low-moderate',
         'avgPrice': 444000,
-        'trend': -11.0,
+        'trend': -14.5,
         'schools': 'good',
         'crimeRate': 106.6,
         'p8': 0.21,
@@ -873,7 +873,7 @@ LONDON_BOROUGHS = {
     'Camden': {
         'impact': 'low',
         'avgPrice': 806000,
-        'trend': -3.9,
+        'trend': -6.2,
         'schools': 'excellent',
         'crimeRate': 173.3,
         'p8': -0.03,
@@ -883,7 +883,7 @@ LONDON_BOROUGHS = {
     'Islington': {
         'impact': 'low',
         'avgPrice': 670000,
-        'trend': -4.4,
+        'trend': -6.4,
         'schools': 'good',
         'crimeRate': 131.2,
         'p8': -0.03,
@@ -893,7 +893,7 @@ LONDON_BOROUGHS = {
     'Hackney': {
         'impact': 'low',
         'avgPrice': 608000,
-        'trend': 2.8,
+        'trend': 0.1,
         'schools': 'good',
         'crimeRate': 116.5,
         'p8': 0.34,
@@ -903,7 +903,7 @@ LONDON_BOROUGHS = {
     'Barnet': {
         'impact': 'low-moderate',
         'avgPrice': 591000,
-        'trend': -2.4,
+        'trend': -4.3,
         'schools': 'excellent',
         'crimeRate': 67.8,
         'p8': 0.64,
@@ -913,7 +913,7 @@ LONDON_BOROUGHS = {
     'Croydon': {
         'impact': 'moderate',
         'avgPrice': 397000,
-        'trend': 1.6,
+        'trend': -0.4,
         'schools': 'good',
         'crimeRate': 80.4,
         'p8': 0.01,
@@ -923,7 +923,7 @@ LONDON_BOROUGHS = {
     'Bromley': {
         'impact': 'low',
         'avgPrice': 525000,
-        'trend': 1.5,
+        'trend': 0.2,
         'schools': 'excellent',
         'crimeRate': 69.1,
         'p8': 0.04,
@@ -933,7 +933,7 @@ LONDON_BOROUGHS = {
     'Newham': {
         'impact': 'moderate-high',
         'avgPrice': 405000,
-        'trend': 1.2,
+        'trend': -1.4,
         'schools': 'good',
         'crimeRate': 104.0,
         'p8': 0.25,
@@ -943,7 +943,7 @@ LONDON_BOROUGHS = {
     'Southwark': {
         'impact': 'low-moderate',
         'avgPrice': 579000,
-        'trend': 3.8,
+        'trend': 0.9,
         'schools': 'good',
         'crimeRate': 120.8,
         'p8': 0.38,
@@ -953,7 +953,7 @@ LONDON_BOROUGHS = {
     'Hammersmith and Fulham': {
         'impact': 'moderate-high',
         'avgPrice': 729000,
-        'trend': -9.2,
+        'trend': -10.9,
         'schools': 'excellent',
         'crimeRate': 107.0,
         'p8': 0.47,
@@ -963,7 +963,7 @@ LONDON_BOROUGHS = {
     'Kensington and Chelsea': {
         'impact': 'moderate',
         'avgPrice': 1256000,
-        'trend': -9.5,
+        'trend': -10.7,
         'schools': 'excellent',
         'crimeRate': 145.8,
         'p8': 0.3,
@@ -973,7 +973,7 @@ LONDON_BOROUGHS = {
     'Brent': {
         'impact': 'low-moderate',
         'avgPrice': 549000,
-        'trend': -1.5,
+        'trend': -3.3,
         'schools': 'good',
         'crimeRate': 89.3,
         'p8': 0.61,
@@ -983,7 +983,7 @@ LONDON_BOROUGHS = {
     'Haringey': {
         'impact': 'low',
         'avgPrice': 634000,
-        'trend': 4.8,
+        'trend': 2.4,
         'schools': 'good',
         'crimeRate': 104.6,
         'p8': 0.21,
@@ -993,7 +993,7 @@ LONDON_BOROUGHS = {
     'Waltham Forest': {
         'impact': 'low',
         'avgPrice': 524000,
-        'trend': 5.0,
+        'trend': 3.1,
         'schools': 'good',
         'crimeRate': 80.2,
         'p8': -0.06,
@@ -1003,7 +1003,7 @@ LONDON_BOROUGHS = {
     'Merton': {
         'impact': 'low-moderate',
         'avgPrice': 597000,
-        'trend': 0.5,
+        'trend': -1.3,
         'schools': 'good',
         'crimeRate': 59.3,
         'p8': 0.59,
@@ -1013,7 +1013,7 @@ LONDON_BOROUGHS = {
     'Redbridge': {
         'impact': 'low',
         'avgPrice': 496000,
-        'trend': 4.0,
+        'trend': 2.4,
         'schools': 'excellent',
         'crimeRate': 74.3,
         'p8': 0.5,
@@ -1023,7 +1023,7 @@ LONDON_BOROUGHS = {
     'Enfield': {
         'impact': 'low',
         'avgPrice': 469000,
-        'trend': 1.0,
+        'trend': -0.7,
         'schools': 'good',
         'crimeRate': 85.2,
         'p8': 0.21,
@@ -1033,7 +1033,7 @@ LONDON_BOROUGHS = {
     'Kingston upon Thames': {
         'impact': 'low-moderate',
         'avgPrice': 582000,
-        'trend': 1.3,
+        'trend': 0.0,
         'schools': 'excellent',
         'crimeRate': 66.8,
         'p8': 0.58,
@@ -1043,7 +1043,7 @@ LONDON_BOROUGHS = {
     'Sutton': {
         'impact': 'low',
         'avgPrice': 445000,
-        'trend': 2.3,
+        'trend': 0.9,
         'schools': 'excellent',
         'crimeRate': 60.3,
         'p8': 0.51,
@@ -1053,7 +1053,7 @@ LONDON_BOROUGHS = {
     'Westminster': {
         'impact': 'moderate',
         'avgPrice': 836000,
-        'trend': -20.8,
+        'trend': -22.8,
         'schools': 'good',
         'crimeRate': 355.5,
         'p8': 0.48,
@@ -1069,7 +1069,7 @@ LONDON_BOROUGHS = {
         'crimeEstimated': True,
         'impact': 'low-moderate',
         'avgPrice': 627000,
-        'trend': -28.2,
+        'trend': -28.1,
         'schools': 'good',
         'crimeRate': 190,
         'transport': 'excellent',
@@ -1078,7 +1078,7 @@ LONDON_BOROUGHS = {
     'Barking and Dagenham': {
         'impact': 'low',
         'avgPrice': 361000,
-        'trend': 0.9,
+        'trend': -0.2,
         'schools': 'good',
         'crimeRate': 84.2,
         'p8': 0.24,
@@ -1088,7 +1088,7 @@ LONDON_BOROUGHS = {
     'Havering': {
         'impact': 'low',
         'avgPrice': 453000,
-        'trend': 3.3,
+        'trend': 2.8,
         'schools': 'good',
         'crimeRate': 68.3,
         'p8': -0.09,
@@ -1098,7 +1098,7 @@ LONDON_BOROUGHS = {
     'Bexley': {
         'impact': 'low',
         'avgPrice': 409000,
-        'trend': 2.7,
+        'trend': 2.2,
         'schools': 'good',
         'crimeRate': 60.2,
         'p8': -0.06,
@@ -1108,7 +1108,7 @@ LONDON_BOROUGHS = {
     'Harrow': {
         'impact': 'low',
         'avgPrice': 530000,
-        'trend': 2.3,
+        'trend': 0.4,
         'schools': 'excellent',
         'crimeRate': 59.5,
         'p8': 0.45,

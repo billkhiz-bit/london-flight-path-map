@@ -6,7 +6,41 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-09 (night, latest) - Country tier and locator inset, recovered from the spike branch
+### 2026-08-10 (latest) - London's growth input now comes from the source it always claimed
+
+- **London's 33 `trend` values corrected to HM Land Registry HPI, 2026-05.**
+  They matched **no HPI month at all** - the closest was 4 of 33, which is
+  noise - while the same test identifies the *price* source unambiguously at
+  33 of 33. Greater Manchester's ten already matched 2026-05 exactly. Two
+  cities carried one provenance sentence from two different sources, and
+  `CITY_PROVENANCE` has been telling `/v1/score` consumers that London's growth
+  is *"HM Land Registry House Price Index (HPI), annualised price trend"*
+  throughout. It is now true.
+- **What moves**: 18 of 33 boroughs shift by 0.5 or more growth points, mean
+  absolute change 0.84, mostly downward - the held trends were optimistic
+  against HPI. Largest are Hackney 7.8 to 5.2, Southwark 8.8 to 6.5, Greenwich
+  7.3 to 5.2. **Composite scores move for the `investor` persona only**, since
+  METHODOLOGY section 5.1 weights `growth` for that persona alone.
+- **Note for `?compare=previous`**: the previous-vintage table is unchanged, so
+  a comparison spanning this release mixes a source correction in with real
+  market movement. It is a one-off at this boundary.
+- **New: `scripts/build_hpi_prices.py`**, so both fields are re-derivable rather
+  than hand-entered. Keyed on **ONS area codes, not names** - name matching has
+  failed here five times and each failure read as missing data rather than a
+  spelling difference (`Brentwood` matching the borough key `Brent`;
+  `ST. HELENS`; `THE VALE OF GLAMORGAN`; `CITY OF NOTTINGHAM`; `Westminster`,
+  which HPI calls `City of Westminster`). The same authority is `ST. HELENS` in
+  Price Paid and `St Helens` in HPI.
+- **New blocking gate `prices == HM Land Registry`**, covering both holders.
+  `avgPrice` and `trend` exist in `index.html` and in the score Lambda and
+  **nothing enforced that they agree** - `test_borough_data_parity.py` compares
+  the liveability inputs only. `--write` refuses to touch either file unless
+  every borough resolves, because a half-applied correction is exactly the
+  site/API divergence this repo has shipped three times.
+- Covers all eleven cities and 91 authorities, so the eight Core Cities regions
+  still to come inherit one source at one vintage.
+
+### 2026-08-09 (night) - Country tier and locator inset, recovered from the spike branch
 
 - **The city switcher is two tiers**: country tabs (underlined text, not chips,
   so the rows read as a hierarchy) above city chips showing only that country's

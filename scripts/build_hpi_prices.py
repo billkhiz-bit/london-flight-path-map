@@ -302,21 +302,131 @@ def emit(city: str, hpi: dict[str, dict]) -> int:
     return problems
 
 
+# `trend` and `avgPrice` live in TWO holders, and unlike the liveability inputs
+# nothing enforces that they agree: tests/test_borough_data_parity.py compares
+# crimeRate/schools/transport/healthcare/p8 only. So --write must touch both or
+# it creates exactly the site/API divergence this repo has shipped three times.
+SITE_HOLDER = Path("index.html")
+# The site keys this borough differently from the Lambda. Declared, not
+# fuzzy-matched, for the reason test_borough_data_parity.py gives: a fuzzy match
+# would also quietly pair a genuinely missing borough with a similar one.
+SITE_NAME = {"Barking and Dagenham": "Barking"}
+
+
+def _block_span(text: str, marker: str) -> tuple[int, int]:
+    """Character span of the object literal introduced by `marker`.
+
+    Scoping the rewrite to this span is load-bearing, not tidiness. Searching
+    the whole file finds the FIRST `Hounslow: {`, which in index.html is a
+    different structure entirely - AREA_MAP and the road-noise table both key on
+    borough names and both appear before BOROUGH_DATA_RAW. The first attempt at
+    this failed on 11 of 33 boroughs for exactly that reason, and the ones it
+    did not fail on were the multi-word names that happen to be unique.
+    """
+    i = text.index(marker)
+    open_at = text.index("{", i)
+    depth, j = 0, open_at
+    while j < len(text):
+        if text[j] == "{":
+            depth += 1
+        elif text[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return open_at, j
+        j += 1
+    raise SystemExit(f"Unbalanced braces after {marker!r}")
+
+
+def _rewrite_trend(
+    text: str, marker: str, key_pat: str, trend_pat: str, wanted: dict[str, float]
+) -> tuple[str, list[str]]:
+    """Replace each borough's `trend` in one holder. Returns (text, unapplied)."""
+    import re
+
+    lo, hi = _block_span(text, marker)
+    unapplied = []
+    for name, value in wanted.items():
+        key = re.compile(key_pat.format(name=re.escape(name))).search(text, lo, hi)
+        if not key:
+            unapplied.append(f"{name}: key not found")
+            continue
+        # Scoped to this borough's own block - search forward from its key only,
+        # and only a short way, so a miss cannot silently edit the NEXT
+        # borough's trend and report success.
+        window = text[key.end() : key.end() + 900]
+        m = re.search(trend_pat, window)
+        if not m:
+            unapplied.append(f"{name}: no trend line within its block")
+            continue
+        start = key.end() + m.start()
+        end = key.end() + m.end()
+        text = text[:start] + m.group(0).replace(m.group(1), f"{value}") + text[end:]
+    return text, unapplied
+
+
+def write(city: str, hpi: dict[str, dict]) -> int:
+    """Correct `trend` in both holders from HPI. Returns the number unapplied."""
+    if city != "london":
+        print("--write is London-only for now; it is the city with two holders.", file=sys.stderr)
+        return 1
+
+    lads = CITY_LADS[city]
+    held = registry_boroughs(city)
+    wanted = {n: hpi[lads[n]]["trend"] for n in held if lads.get(n) and hpi.get(lads[n])}
+    changed = {n: v for n, v in wanted.items() if abs(held[n]["trend"] - v) > TREND_TOLERANCE}
+    if not changed:
+        print("Nothing to do: every trend already matches HPI.")
+        return 0
+    print(f"{len(changed)} of {len(held)} boroughs need a new trend.")
+
+    # Lambda:  'Hounslow': {  ...  'trend': -1.1,
+    lam = SCORE_APP.read_text(encoding="utf-8")
+    lam, bad_lam = _rewrite_trend(
+        lam, "LONDON_BOROUGHS = {", r"'{name}': \{{", r"'trend': (-?\d+\.?\d*)", changed
+    )
+    # Site:    Hounslow: {  ...  trend: -1.1,     (quoted key when it has spaces)
+    site = SITE_HOLDER.read_text(encoding="utf-8")
+    site_wanted = {SITE_NAME.get(n, n): v for n, v in changed.items()}
+    site, bad_site = _rewrite_trend(
+        site, "const BOROUGH_DATA_RAW = {", r"'?{name}'?: \{{", r"\btrend: (-?\d+\.?\d*)", site_wanted
+    )
+
+    problems = bad_lam + bad_site
+    if problems:
+        # Write NEITHER file. A half-applied correction is the divergence this
+        # function exists to avoid, and it would be committed looking complete.
+        for p in problems:
+            print(f"  UNAPPLIED: {p}", file=sys.stderr)
+        print("No files written - fix the above and re-run.", file=sys.stderr)
+        return len(problems)
+
+    SCORE_APP.write_text(lam, encoding="utf-8", newline="")
+    SITE_HOLDER.write_text(site, encoding="utf-8", newline="")
+    print(f"Wrote {SCORE_APP} and {SITE_HOLDER}. Re-run --check to confirm.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--city", choices=sorted(CITY_LADS), help="city to check or emit")
     ap.add_argument("--all", action="store_true", help="check every city already in the registry")
     ap.add_argument("--check", action="store_true", help="compare the registry against HPI")
     ap.add_argument("--emit", action="store_true", help="print a paste-ready borough block")
+    ap.add_argument("--write", action="store_true", help="correct `trend` in BOTH holders from HPI")
     ap.add_argument("--vintage", default=DEFAULT_VINTAGE, help=f"HPI month, default {DEFAULT_VINTAGE}")
     args = ap.parse_args()
 
-    if not (args.check or args.emit):
-        ap.error("pass --check or --emit")
+    if not (args.check or args.emit or args.write):
+        ap.error("pass --check, --emit or --write")
     if not args.city and not args.all:
         ap.error("pass --city, or --all with --check")
 
     hpi = load_hpi(args.vintage)
+
+    if args.write:
+        if not args.city:
+            ap.error("--write needs --city")
+        return 1 if write(args.city, hpi) else 0
 
     if args.emit:
         if not args.city:
