@@ -6,6 +6,38 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-10 (evening, latest) - Six regions reach the website, and postcode scoring leaves London
+
+- **The consumer site goes from 3 cities to 9.** West Midlands, West Yorkshire,
+  South Yorkshire, Merseyside, Tyne and Wear and Bristol. Verified as an OUTPUT
+  comparison before opening the one-way door: all 30 boroughs score identically
+  on the site and in the Lambda. Input parity would not have been enough - the
+  Manchester incident had matching inputs on both sides and still diverged.
+- **Boundaries load through one registry-driven path.** The loader was
+  `if london / else if manchester / else NYC`, whose own comment described the
+  bug it had caused; six more branches would have entrenched it.
+- **Postcode-level scoring now works for every city.** The gate was
+  `if city != 'london': return 400`, and it needed **no reload** to remove: NSPL
+  already stores the LAD code for all 2.7M rows, only the borough NAME was
+  London-only. Verified against the live table before changing anything.
+- **Corridors resampled to a common 1 km interval**, which had to precede
+  un-gating: corridor distance is measured to the nearest waypoint, so a coarse
+  polyline reads as further away and therefore quieter. Measuring first
+  corrected a claim this repo made in three places - **London was 3.34 km
+  median, not "~1 km"** - so the disparity was ~20%, not 4x. London's own change
+  was measured: median 0 m, p90 390 m closer, max 2.7 km.
+- **Two defects the un-gate exposed, both previously unreachable.** South
+  Yorkshire has no airports, so `min()` raised on an empty sequence and every
+  one of its postcodes would have 500'd. And the new resolver strings were
+  static, claiming the NSPL table even when it had not answered - caught
+  immediately by the test that flips `_LOCAL_POSTCODE_SERVED`.
+- **Progress 8 landed for 31 boroughs across seven regions**, DfE KS4 2022/23
+  Revised, 0 differing including the 42 values already present. That is what
+  lifted these cities over the two-input liveability floor and made the site
+  rollout possible.
+- Cardiff and Nottingham stay API-only and cannot follow on current data.
+
+
 ### 2026-08-10 (latest) - Eight more UK city-regions on the API, and the DEFRA blocker turns out not to exist
 
 - **`/v1/score` goes from 3 cities to 11.** West Midlands, West Yorkshire,

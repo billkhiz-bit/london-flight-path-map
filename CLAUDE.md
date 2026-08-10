@@ -62,13 +62,16 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-**ELEVEN cities on `/v1/score` as of 2026-08-10; THREE on the consumer site.**
+**ELEVEN cities on `/v1/score` as of 2026-08-10; NINE on the consumer site.**
 That split is the single most important fact about the current state.
 
-- **On both site and API (3):** London (33 boroughs), NYC (5), Greater Manchester (10)
-- **API only, and declared so in `BACKEND_ONLY_CITIES` (8):** West Midlands (7),
-  West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5),
-  Bristol (4), Cardiff (4), Nottingham (4)
+- **On both site and API (9):** London (33), NYC (5), Greater Manchester (10),
+  West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5),
+  Tyne and Wear (5), Bristol (4)
+- **API only, declared in `BACKEND_ONLY_CITIES` (2):** Cardiff (4), Nottingham (4).
+  Neither can leave on current data - Progress 8 is an ENGLAND measure so Cardiff
+  has none, and Nottingham has 1 of 4 because Broxtowe, Gedling and Rushcliffe are
+  districts inside Nottinghamshire. ONS crime has the identical gap for both.
 
 Every field of the eight is **script-derived and independently verified**, and
 each has a `--check` that can go red:
@@ -81,14 +84,17 @@ each has a `--check` that can go red:
 | impact | `build_aircraft_bands.py --city X` | ESTIMATE from runway geometry, NOT DEFRA |
 | boundaries | `build_city_boroughs.py --all` | ONS codes, counts asserted |
 
-**Why the eight are not on the site.** Not a data gap - a code shape. The
-boundary loader is still `if london / else if manchester / else NYC`, which is
-the fail-open trap the registry exists to remove, and six more branches would
-entrench it. It needs a `boundaries` registry field and one generic loader,
-exactly as `locator` was done. Leaving `BACKEND_ONLY_CITIES` is a ONE-WAY DOOR:
-the moment a city drops out of that set, the site must reproduce the API on
-every borough, and `test_backend_only_cities_are_declared_not_discovered` fails
-in both directions to force it.
+**Leaving `BACKEND_ONLY_CITIES` is a ONE-WAY DOOR.** The moment a city drops
+out, the site must reproduce the API on every borough, and
+`test_backend_only_cities_are_declared_not_discovered` fails in both directions
+to force it. Six cities went through that door on 2026-08-10; before opening it,
+all 30 of their boroughs were compared site-vs-Lambda as an OUTPUT check.
+Input parity is not enough - the Manchester incident had matching inputs on both
+sides and still diverged by up to 1.5 points, because the site never loaded them.
+
+**Boundaries load through one registry-driven path**, `loadCityBoundaries()`
+reading a `boundaries` field. It used to be `if london / else if manchester /
+else NYC`, whose own comment described the bug it had already caused.
 
 **Cardiff and Nottingham can never fully leave** on current data: Progress 8 is
 an ENGLAND measure so Cardiff has none, and Nottingham gets 1 of 4 because
@@ -105,16 +111,27 @@ and is corrected. We have not SAMPLED it. Use the **per-airport** coverages
 which is 26,097 x 48,046 - 1.25 billion cells. The host needs a browser
 User-Agent; without one it answers 403 and looks bot-blocked.
 
-**Postcode-level quiet is London-only, and it is ONE GATE.** `app.py` has a
-literal `if city != 'london': return 400` on the postcode path. London's own
-per-postcode scores are ~19% raster and ~81% flight-path geometry, and every
-city now HAS airports and paths in `CITY_GEOMETRY` - so the geometry tier would
-serve them today. Two blockers: that gate, and `load_nspl.py` writing the
-borough attribute for London LADs only. **Resample corridors to ~1 km before
-un-gating**: new cities are spaced ~4 km against London's ~1 km, corridor
-distance is to the NEAREST waypoint, so a coarse polyline reads as further from
-the corridor and therefore QUIETER - the one direction this product cannot be
-wrong in.
+**Postcode-level scoring works for every city (un-gated 2026-08-10).** It was
+`if city != 'london': return 400`, and the recorded reason - that NSPL writes
+the borough attribute for London LADs alone - was half the story. NSPL writes
+the LAD **code** for all 2.7M rows, so `LAD_TO_BOROUGH` in the Lambda resolves
+the rest and **no reload was needed**. Verified against the live table: M1 1AE
+carries `lad=E08000003` with `b` absent. The "two blockers, not one" recorded
+here for months were really one, and it was a lookup rather than missing data.
+
+**Corridors are on a common 1 km interval.** Corridor distance is measured to
+the nearest waypoint, so a coarse polyline reads as further from the corridor
+and therefore QUIETER - which is why resampling had to precede un-gating.
+Measuring first also corrected a claim this file used to make: **London was
+3.34 km median, not "~1 km"**, so the gap against the new cities' 4.00 km was
+about 20% rather than 4x. Everything is now <=1.01 km. Regenerate at 1 km if
+any corridor is ever re-derived.
+
+**A city with NO airports is a real case.** South Yorkshire has none (Doncaster
+Sheffield closed to commercial flights in 2022), and un-gating turned that into
+`min()` on an empty sequence - a 500 on every South Yorkshire postcode, which
+the gate had been hiding. It now falls back to the borough band. Any new city
+without an airport needs that path to stay intact.
 
 **Adding a city — the things that bite. Points 1-3 were found doing the third city and all still apply; the scripts in the table above now handle the DATA half, so what is left is the wiring.**
 1. **`data/*` is gitignored**, un-ignored file by file, so a new city's boundaries are invisible to git BY DEFAULT. It works on your machine, every gate passes, and the deploy serves "outlines could not be loaded". Add a `!data/<city>-boroughs.json` line, a `SHELL_ASSETS` entry, and a `make data-deploy` line — `cache.addAll()` is atomic, so a precached file missing at the origin stops the service worker installing for **every** city.

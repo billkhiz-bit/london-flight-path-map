@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability (growth is weighted for the `investor` persona only since methodology v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.3 · API v1.0 · Live in production · **11 cities on `/v1/score`, 3 on the consumer site** · 33 London + 5 NYC + 10 Greater Manchester boroughs on both, plus 8 UK city-regions API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v3.3 · API v1.0 · Live in production · **11 cities on `/v1/score`, 9 on the consumer site** · 33 London + 5 NYC + 10 Greater Manchester boroughs on both, plus 8 UK city-regions API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **Greater Manchester is live on both the site and the API, and is thinner than
 > the other two on purpose.** Added 2026-08-09. Its aircraft-noise bands are
@@ -170,17 +170,17 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 
 - **London**: 33 boroughs by postcode (local ONS NSPL table, postcodes.io fallback)
 - **NYC**: 5 boroughs by ZIP (~182 residential ZIPs supported), or by borough name
-- **Greater Manchester**: 10 boroughs **by borough name only** — postcode
-  resolution is London-only, because `resolve_query()` gates it there *and*
-  `scripts/load_nspl.py` writes the borough attribute for London LADs alone.
-  Two blockers, not one. On the site and the API.
-- **Eight further UK city-regions, on `/v1/score` only** (2026-08-10): West
-  Midlands, West Yorkshire, South Yorkshire, Merseyside, Tyne and Wear, Bristol,
-  Cardiff, Nottingham. Prices, trends, crime, Progress 8 and boundaries are all
-  script-derived and verified against the publishing body; aircraft bands are an
-  **estimate from runway geometry, not DEFRA**. They are declared in
-  `BACKEND_ONLY_CITIES`, not discovered, and reach the consumer site when the
-  boundary loader stops being a per-city if/else chain.
+- **Greater Manchester**: 10 boroughs, by postcode or borough name.
+- **Six further UK city-regions, on the site and the API** (2026-08-10): West
+  Midlands, West Yorkshire, South Yorkshire, Merseyside, Tyne and Wear and
+  Bristol, by postcode or borough name. Prices, trends, crime, Progress 8 and
+  boundaries are all script-derived and verified against the publishing body;
+  aircraft bands are an **estimate from runway geometry, not DEFRA**.
+- **Cardiff and Nottingham, on `/v1/score` only.** Progress 8 is an England
+  measure so Cardiff has none, and Nottingham has 1 of 4 because Broxtowe,
+  Gedling and Rushcliffe are districts inside Nottinghamshire rather than
+  local authorities. ONS crime has the same gap for both, so neither can reach
+  the two-input liveability floor the site needs.
 - **Planned**: the rest of England and Wales. Both the price and crime loaders
   are already parameterised by city, so roughly 318 local authorities are
   reachable without new research. The site's locator inset names the ten UK core
@@ -188,10 +188,10 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 
 **What "supported" means per city**, because it is not uniform:
 
-| | London | NYC | Greater Manchester | The other 8 |
+| | London | NYC | Greater Manchester | Cardiff + Nottingham |
 |---|---|---|---|---|
-| On the consumer site | yes | yes | yes, visibly thinner | **no - API only** |
-| Lookup | postcode or borough | ZIP or borough | **borough only** | **borough only** |
+| On the consumer site | yes | yes | yes | **no - API only** |
+| Lookup | postcode or borough | ZIP or borough | postcode or borough | **borough only** |
 | Aircraft noise | DEFRA raster where covered, else geometry | curated bands from approach geometry | **runway geometry only, not DEFRA** | **runway geometry only, not DEFRA** |
 | Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **2 of 4** (schools, crime) | **2 of 4**, except Cardiff **1 of 4** (no Progress 8 in Wales) |
 | Quarterly comparison | yes | yes | **declines** — no prior vintage exists | **declines** — no prior vintage |
