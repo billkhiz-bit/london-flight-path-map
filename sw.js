@@ -118,7 +118,13 @@
 // cache.addAll() is atomic, so `make data-deploy` MUST land these at the origin
 // before this file ships, or the service worker fails to install for EVERY
 // city. index.html changed too, and v1.0.20 has already shipped.
-const VERSION = 'v1.0.21';
+// v1.0.22 (2026-08-10): corridor polylines resampled to a common 1 km interval
+// in BOTH holders. Corridor distance is measured to the nearest waypoint, so a
+// coarse polyline reads as further from the corridor and therefore quieter -
+// shipping the Lambda's densified geometry without the site's would make the
+// two disagree on every neighbourhood quiet score. index.html is in
+// SHELL_ASSETS and v1.0.21 has already shipped.
+const VERSION = 'v1.0.22';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
