@@ -48,12 +48,16 @@ let fail = 0;
 // hidden=true - `country !== 'United Kingdom'` hid it rather than drawing the
 // USA - and now draws the contiguous US with one marker. markers/clickable
 // differ per silhouette, so they are declared here rather than assumed:
-// England & Wales carries ten Core Cities of which two are live, the USA
-// carries New York alone.
+// clickable was 2 until 2026-08-10 and is now 8: six Core Cities regions
+// joined LOCATOR_TO_CITY when they reached the consumer site, so their markers
+// went from a "planned" light disc to a live, clickable one and the caption
+// moved from "2 of 10" to "8 of 10". Cardiff and Nottingham stay planned - they
+// are API-only, Cardiff having no Progress 8 at all (England measure) and
+// Nottingham only 1 of 4.
 const expect = {
-  london: { hidden: false, markers: 10, clickable: 2, highlighted: 1 },
+  london: { hidden: false, markers: 10, clickable: 8, highlighted: 1 },
   nyc: { hidden: false, markers: 1, clickable: 1, highlighted: 1 },
-  manchester: { hidden: false, markers: 10, clickable: 2, highlighted: 1 },
+  manchester: { hidden: false, markers: 10, clickable: 8, highlighted: 1 },
 };
 for (const city of ['london', 'nyc', 'manchester']) {
   if (city !== 'london') {

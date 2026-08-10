@@ -113,7 +113,12 @@
 // keeps the shell that has no USA silhouette in it. data/usa-locator.json is
 // deliberately NOT in SHELL_ASSETS (a decoration must not be able to stop an
 // atomic cache.addAll()), so it needs `make data-deploy`, not this bump.
-const VERSION = 'v1.0.20';
+// v1.0.21 (2026-08-10): six Core Cities regions reach the consumer site, so
+// six boundary files join SHELL_ASSETS. DEPLOY ORDER IS LOAD-BEARING:
+// cache.addAll() is atomic, so `make data-deploy` MUST land these at the origin
+// before this file ships, or the service worker fails to install for EVERY
+// city. index.html changed too, and v1.0.20 has already shipped.
+const VERSION = 'v1.0.21';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -156,6 +161,12 @@ const SHELL_ASSETS = [
   // ALL, taking offline support for all three cities with it. `make
   // data-deploy` before `make pwa-deploy`, exactly as the fonts do.
   '/data/manchester-boroughs.json',
+  '/data/westmidlands-boroughs.json',
+  '/data/westyorkshire-boroughs.json',
+  '/data/southyorkshire-boroughs.json',
+  '/data/merseyside-boroughs.json',
+  '/data/tyneandwear-boroughs.json',
+  '/data/bristol-boroughs.json',
   // Self-hosted fonts, 2026-08-05. Only the two families index.html actually
   // uses — Geist is for pricing/changes/api and is not part of the app shell.
   // These are precached rather than left to the runtime because they replaced

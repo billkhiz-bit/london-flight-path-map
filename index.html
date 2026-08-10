@@ -3735,6 +3735,127 @@
       //                    the same vintage as the London set.
       // impact             ESTIMATE from runway geometry, NOT a DEFRA raster
       //                    sample. Provisional; see app.py for the full note.
+      // West Midlands. API-derived; every value has a script that re-derives it.
+      const WESTMIDLANDS_BOROUGH_DATA_RAW = {
+          'Birmingham': { impact: 'severe', avg_price: 232657, trend: -0.3 },
+          'Coventry': { impact: 'low-moderate', avg_price: 220410, trend: 1.3 },
+          'Dudley': { impact: 'low-moderate', avg_price: 229616, trend: 4.5 },
+          'Sandwell': { impact: 'low-moderate', avg_price: 209354, trend: 2.9 },
+          'Solihull': { impact: 'severe', avg_price: 336572, trend: 4.0 },
+          'Walsall': { impact: 'moderate', avg_price: 214032, trend: 1.6 },
+          'Wolverhampton': { impact: 'low', avg_price: 216339, trend: 8.0 },
+      };
+      let WESTMIDLANDS_BOROUGH_EXTRA = {};
+      const WESTMIDLANDS_AREA_MAP = {};
+      const WESTMIDLANDS_NEIGHBOURHOOD_DETAIL = {};
+      const WESTMIDLANDS_STATIONS = [];
+      const WESTMIDLANDS_BOROUGH_ROAD_NOISE = {};
+      const WESTMIDLANDS_AIRPORTS = [
+        { code: 'BHX', name: 'Birmingham', coords: [-1.748, 52.4539] },
+      ];
+      const WESTMIDLANDS_FLIGHT_PATHS = [
+        { name: '33 Approach', airport: 'BHX', type: 'arrival', freq: 'high', coords: [[-1.9267, 52.6142], [-1.8936, 52.5845], [-1.8605, 52.5548], [-1.8273, 52.5251], [-1.7942, 52.4953], [-1.748, 52.4539]] },
+        { name: '15 Approach', airport: 'BHX', type: 'arrival', freq: 'medium', coords: [[-1.5703, 52.2943], [-1.6034, 52.324], [-1.6365, 52.3538], [-1.6697, 52.3835], [-1.7028, 52.4132], [-1.748, 52.4539]] },
+      ];
+
+      // West Yorkshire. API-derived; every value has a script that re-derives it.
+      const WESTYORKSHIRE_BOROUGH_DATA_RAW = {
+          'Bradford': { impact: 'moderate', avg_price: 187452, trend: 5.6 },
+          'Calderdale': { impact: 'low', avg_price: 189509, trend: 5.1 },
+          'Kirklees': { impact: 'low', avg_price: 205971, trend: 4.1 },
+          'Leeds': { impact: 'moderate-high', avg_price: 246699, trend: 3.7 },
+          'Wakefield': { impact: 'low', avg_price: 197140, trend: 2.7 },
+      };
+      let WESTYORKSHIRE_BOROUGH_EXTRA = {};
+      const WESTYORKSHIRE_AREA_MAP = {};
+      const WESTYORKSHIRE_NEIGHBOURHOOD_DETAIL = {};
+      const WESTYORKSHIRE_STATIONS = [];
+      const WESTYORKSHIRE_BOROUGH_ROAD_NOISE = {};
+      const WESTYORKSHIRE_AIRPORTS = [
+        { code: 'LBA', name: 'Leeds Bradford', coords: [-1.6606, 53.8659] },
+      ];
+      const WESTYORKSHIRE_FLIGHT_PATHS = [
+        { name: '32 Approach', airport: 'LBA', type: 'arrival', freq: 'high', coords: [[-1.8764, 54.0067], [-1.8355, 53.98], [-1.7947, 53.9534], [-1.7538, 53.9267], [-1.7129, 53.9001], [-1.6606, 53.8659]] },
+        { name: '14 Approach', airport: 'LBA', type: 'arrival', freq: 'medium', coords: [[-1.4448, 53.7251], [-1.4856, 53.7518], [-1.5265, 53.7784], [-1.5673, 53.8051], [-1.6082, 53.8317], [-1.6606, 53.8659]] },
+      ];
+
+      // South Yorkshire. API-derived; every value has a script that re-derives it.
+      const SOUTHYORKSHIRE_BOROUGH_DATA_RAW = {
+          'Barnsley': { impact: 'low', avg_price: 173077, trend: 3.8 },
+          'Doncaster': { impact: 'low', avg_price: 172857, trend: 4.1 },
+          'Rotherham': { impact: 'low', avg_price: 192309, trend: 2.9 },
+          'Sheffield': { impact: 'low', avg_price: 220804, trend: 3.5 },
+      };
+      let SOUTHYORKSHIRE_BOROUGH_EXTRA = {};
+      const SOUTHYORKSHIRE_AREA_MAP = {};
+      const SOUTHYORKSHIRE_NEIGHBOURHOOD_DETAIL = {};
+      const SOUTHYORKSHIRE_STATIONS = [];
+      const SOUTHYORKSHIRE_BOROUGH_ROAD_NOISE = {};
+      const SOUTHYORKSHIRE_AIRPORTS = [];
+      const SOUTHYORKSHIRE_FLIGHT_PATHS = [];
+
+      // Merseyside. API-derived; every value has a script that re-derives it.
+      const MERSEYSIDE_BOROUGH_DATA_RAW = {
+          'Knowsley': { impact: 'moderate', avg_price: 188727, trend: 3.0 },
+          'Liverpool': { impact: 'high', avg_price: 184670, trend: 4.8 },
+          'St Helens': { impact: 'low-moderate', avg_price: 182923, trend: 8.8 },
+          'Sefton': { impact: 'low', avg_price: 222406, trend: 3.5 },
+          'Wirral': { impact: 'moderate-high', avg_price: 217407, trend: 6.5 },
+      };
+      let MERSEYSIDE_BOROUGH_EXTRA = {};
+      const MERSEYSIDE_AREA_MAP = {};
+      const MERSEYSIDE_NEIGHBOURHOOD_DETAIL = {};
+      const MERSEYSIDE_STATIONS = [];
+      const MERSEYSIDE_BOROUGH_ROAD_NOISE = {};
+      const MERSEYSIDE_AIRPORTS = [
+        { code: 'LPL', name: 'Liverpool John Lennon', coords: [-2.8496, 53.3349] },
+      ];
+      const MERSEYSIDE_FLIGHT_PATHS = [
+        { name: '27 Approach', airport: 'LPL', type: 'arrival', freq: 'high', coords: [[-3.1669, 53.319], [-3.1069, 53.3218], [-3.0469, 53.3246], [-2.9869, 53.3273], [-2.9269, 53.3301], [-2.8496, 53.3349]] },
+        { name: '09 Approach', airport: 'LPL', type: 'arrival', freq: 'medium', coords: [[-2.5327, 53.3482], [-2.5927, 53.3455], [-2.6527, 53.3427], [-2.7127, 53.3399], [-2.7727, 53.3372], [-2.8496, 53.3349]] },
+      ];
+
+      // Tyne and Wear. API-derived; every value has a script that re-derives it.
+      const TYNEANDWEAR_BOROUGH_DATA_RAW = {
+          'Gateshead': { impact: 'moderate', avg_price: 158765, trend: 6.3 },
+          'Newcastle upon Tyne': { impact: 'severe', avg_price: 207029, trend: 3.7 },
+          'North Tyneside': { impact: 'moderate', avg_price: 200392, trend: 3.8 },
+          'South Tyneside': { impact: 'low-moderate', avg_price: 159318, trend: 3.8 },
+          'Sunderland': { impact: 'low-moderate', avg_price: 145921, trend: 6.9 },
+      };
+      let TYNEANDWEAR_BOROUGH_EXTRA = {};
+      const TYNEANDWEAR_AREA_MAP = {};
+      const TYNEANDWEAR_NEIGHBOURHOOD_DETAIL = {};
+      const TYNEANDWEAR_STATIONS = [];
+      const TYNEANDWEAR_BOROUGH_ROAD_NOISE = {};
+      const TYNEANDWEAR_AIRPORTS = [
+        { code: 'NCL', name: 'Newcastle', coords: [-1.6896, 55.038] },
+      ];
+      const TYNEANDWEAR_FLIGHT_PATHS = [
+        { name: '25 Approach', airport: 'NCL', type: 'arrival', freq: 'high', coords: [[-1.9907, 54.9578], [-1.9338, 54.973], [-1.877, 54.9881], [-1.8201, 55.0032], [-1.7632, 55.0184], [-1.6896, 55.038]] },
+        { name: '07 Approach', airport: 'NCL', type: 'arrival', freq: 'medium', coords: [[-1.3889, 55.118], [-1.4458, 55.1028], [-1.5027, 55.0877], [-1.5595, 55.0726], [-1.6164, 55.0574], [-1.6896, 55.038]] },
+      ];
+
+      // Bristol. API-derived; every value has a script that re-derives it.
+      const BRISTOL_BOROUGH_DATA_RAW = {
+          'City of Bristol': { impact: 'moderate', avg_price: 354924, trend: 2.2 },
+          'Bath and North East Somerset': { impact: 'moderate', avg_price: 406169, trend: 0.9 },
+          'North Somerset': { impact: 'severe', avg_price: 312303, trend: 6.4 },
+          'South Gloucestershire': { impact: 'low', avg_price: 340401, trend: 2.1 },
+      };
+      let BRISTOL_BOROUGH_EXTRA = {};
+      const BRISTOL_AREA_MAP = {};
+      const BRISTOL_NEIGHBOURHOOD_DETAIL = {};
+      const BRISTOL_STATIONS = [];
+      const BRISTOL_BOROUGH_ROAD_NOISE = {};
+      const BRISTOL_AIRPORTS = [
+        { code: 'BRS', name: 'Bristol', coords: [-2.7165, 51.3823] },
+      ];
+      const BRISTOL_FLIGHT_PATHS = [
+        { name: '27 Approach', airport: 'BRS', type: 'arrival', freq: 'high', coords: [[-3.0208, 51.3711], [-2.9634, 51.3733], [-2.9059, 51.3755], [-2.8484, 51.3777], [-2.791, 51.3799], [-2.7165, 51.3823]] },
+        { name: '09 Approach', airport: 'BRS', type: 'arrival', freq: 'medium', coords: [[-2.4173, 51.3942], [-2.4748, 51.392], [-2.5323, 51.3898], [-2.5897, 51.3876], [-2.6472, 51.3854], [-2.7165, 51.3823]] },
+      ];
+
       const MANCHESTER_AIRPORTS = [
         { code: 'MAN', name: 'Manchester', coords: [-2.275, 53.3537], passengers: '28.1M', type: 'airport' },
       ];
@@ -5447,6 +5568,288 @@
             'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson',
           ],
           locator: '/data/usa-locator.json',
+        },
+        westmidlands: {
+          label: 'West Midlands',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Solihull, Coventry or Dudley.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Birmingham runs one runway on a 148/328 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'WEST MIDLANDS · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Solihull, Coventry or Dudley) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '33 APPROACH',
+          legendPath2: '15 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('westmidlands'),
+          boroughRaw: () => WESTMIDLANDS_BOROUGH_DATA_RAW,
+          boroughExtra: () => WESTMIDLANDS_BOROUGH_EXTRA,
+          areaMap: () => WESTMIDLANDS_AREA_MAP,
+          neighbourhoodDetail: () => WESTMIDLANDS_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'No neighbourhood table for this city yet. Boroughs only.',
+          airports: () => WESTMIDLANDS_AIRPORTS,
+          flightPaths: () => WESTMIDLANDS_FLIGHT_PATHS,
+          stations: () => WESTMIDLANDS_STATIONS,
+          roadNoise: () => WESTMIDLANDS_BOROUGH_ROAD_NOISE,
+          features: () => cityBoundaries.westmidlands || [],
+          boundaries: ['/data/westmidlands-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        westyorkshire: {
+          label: 'West Yorkshire',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Leeds, Bradford or Wakefield.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Leeds Bradford runs one runway on a 138/318 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'WEST YORKSHIRE · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Leeds, Bradford or Wakefield) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '32 APPROACH',
+          legendPath2: '14 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('westyorkshire'),
+          boroughRaw: () => WESTYORKSHIRE_BOROUGH_DATA_RAW,
+          boroughExtra: () => WESTYORKSHIRE_BOROUGH_EXTRA,
+          areaMap: () => WESTYORKSHIRE_AREA_MAP,
+          neighbourhoodDetail: () => WESTYORKSHIRE_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'No neighbourhood table for this city yet. Boroughs only.',
+          airports: () => WESTYORKSHIRE_AIRPORTS,
+          flightPaths: () => WESTYORKSHIRE_FLIGHT_PATHS,
+          stations: () => WESTYORKSHIRE_STATIONS,
+          roadNoise: () => WESTYORKSHIRE_BOROUGH_ROAD_NOISE,
+          features: () => cityBoundaries.westyorkshire || [],
+          boundaries: ['/data/westyorkshire-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        southyorkshire: {
+          label: 'South Yorkshire',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Sheffield, Doncaster or Barnsley.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'NO AIRPORT',
+          noiseAuthorityPlain: 'not applicable',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'no commercial airport operates in South Yorkshire',
+          currencyHtml: '&pound;',
+          subtitle: 'SOUTH YORKSHIRE · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Sheffield, Doncaster or Barnsley) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'NO COMMERCIAL AIRPORT IN THIS CITY REGION',
+          legendPath1: 'NO PATHS',
+          legendPath2: 'NO PATHS',
+          legendHeli: false,
+          legendNoiseTitle: 'AIRCRAFT NOISE (NO AIRPORT)',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> <strong>No commercial airport operates in South Yorkshire.</strong> Doncaster Sheffield closed to commercial flights in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is banded quiet on aircraft noise. That is a measured absence of a noise source, not an unmeasured city.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('southyorkshire'),
+          boroughRaw: () => SOUTHYORKSHIRE_BOROUGH_DATA_RAW,
+          boroughExtra: () => SOUTHYORKSHIRE_BOROUGH_EXTRA,
+          areaMap: () => SOUTHYORKSHIRE_AREA_MAP,
+          neighbourhoodDetail: () => SOUTHYORKSHIRE_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'No neighbourhood table for this city yet. Boroughs only.',
+          airports: () => SOUTHYORKSHIRE_AIRPORTS,
+          flightPaths: () => SOUTHYORKSHIRE_FLIGHT_PATHS,
+          stations: () => SOUTHYORKSHIRE_STATIONS,
+          roadNoise: () => SOUTHYORKSHIRE_BOROUGH_ROAD_NOISE,
+          features: () => cityBoundaries.southyorkshire || [],
+          boundaries: ['/data/southyorkshire-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        merseyside: {
+          label: 'Merseyside',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Liverpool, Wirral or Sefton.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Liverpool runs one runway on an 086/266 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'MERSEYSIDE · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Liverpool, Wirral or Sefton) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '27 APPROACH',
+          legendPath2: '09 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('merseyside'),
+          boroughRaw: () => MERSEYSIDE_BOROUGH_DATA_RAW,
+          boroughExtra: () => MERSEYSIDE_BOROUGH_EXTRA,
+          areaMap: () => MERSEYSIDE_AREA_MAP,
+          neighbourhoodDetail: () => MERSEYSIDE_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'No neighbourhood table for this city yet. Boroughs only.',
+          airports: () => MERSEYSIDE_AIRPORTS,
+          flightPaths: () => MERSEYSIDE_FLIGHT_PATHS,
+          stations: () => MERSEYSIDE_STATIONS,
+          roadNoise: () => MERSEYSIDE_BOROUGH_ROAD_NOISE,
+          features: () => cityBoundaries.merseyside || [],
+          boundaries: ['/data/merseyside-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        tyneandwear: {
+          label: 'Tyne and Wear',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Newcastle, Gateshead or Sunderland.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Newcastle runs one runway on an 065/245 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'TYNE AND WEAR · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Newcastle, Gateshead or Sunderland) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '25 APPROACH',
+          legendPath2: '07 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('tyneandwear'),
+          boroughRaw: () => TYNEANDWEAR_BOROUGH_DATA_RAW,
+          boroughExtra: () => TYNEANDWEAR_BOROUGH_EXTRA,
+          areaMap: () => TYNEANDWEAR_AREA_MAP,
+          neighbourhoodDetail: () => TYNEANDWEAR_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'No neighbourhood table for this city yet. Boroughs only.',
+          airports: () => TYNEANDWEAR_AIRPORTS,
+          flightPaths: () => TYNEANDWEAR_FLIGHT_PATHS,
+          stations: () => TYNEANDWEAR_STATIONS,
+          roadNoise: () => TYNEANDWEAR_BOROUGH_ROAD_NOISE,
+          features: () => cityBoundaries.tyneandwear || [],
+          boundaries: ['/data/tyneandwear-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        bristol: {
+          label: 'Bristol',
+          currency: '£',
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Bristol, Bath or Weston.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Bristol runs one runway on an 087/267 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'BRISTOL · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Bristol, Bath or Weston) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '27 APPROACH',
+          legendPath2: '09 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+          legendRoadTitle: 'ROAD NOISE (NO DATA)',
+          legendFloodTitle: 'FLOOD RISK (NO DATA)',
+          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendFlood: 'NO DATA',
+          legendAq: 'NO DATA',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('bristol'),
+          boroughRaw: () => BRISTOL_BOROUGH_DATA_RAW,
+          boroughExtra: () => BRISTOL_BOROUGH_EXTRA,
+          areaMap: () => BRISTOL_AREA_MAP,
+          neighbourhoodDetail: () => BRISTOL_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'No neighbourhood table for this city yet. Boroughs only.',
+          airports: () => BRISTOL_AIRPORTS,
+          flightPaths: () => BRISTOL_FLIGHT_PATHS,
+          stations: () => BRISTOL_STATIONS,
+          roadNoise: () => BRISTOL_BOROUGH_ROAD_NOISE,
+          features: () => cityBoundaries.bristol || [],
+          boundaries: ['/data/bristol-boroughs.json'],
+          locator: '/data/uk-locator.json',
         },
         // Greater Manchester. THINNER THAN THE OTHER TWO, deliberately and
         // visibly: the boroughs, boundaries, airport and approach corridors are
@@ -8964,6 +9367,12 @@
         London: 'london',
         'Greater Manchester': 'manchester',
         'New York City': 'nyc',
+        'West Midlands': 'westmidlands',
+        'West Yorkshire': 'westyorkshire',
+        'South Yorkshire': 'southyorkshire',
+        Merseyside: 'merseyside',
+        'Tyne and Wear': 'tyneandwear',
+        Bristol: 'bristol',
       };
       // Keyed by URL, not a single slot: there is more than one silhouette now,
       // and a lone `locatorData` would serve England & Wales to New York after

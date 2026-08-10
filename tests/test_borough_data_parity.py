@@ -52,34 +52,20 @@ SHARED_FIELDS = ('crimeRate', 'schools', 'transport', 'healthcare', 'p8')
 # city on the site and forgot its data" is exactly what this file exists to
 # catch, and inferring it would make the second case look like the first.
 #
-# EIGHT entries as of 2026-08-10, all of the Core Cities regions. Greater
-# Manchester was once the only entry and left when the consumer site started
-# offering it, which is the shape every one of these should follow.
+# TWO entries. Six Core Cities regions passed through here on 2026-08-10 and
+# left the same day, once Progress 8 gave them a second liveability input and
+# they went on the site - which is exactly the shape an entry here should have.
 #
 # It earned its place first: a preview branch put Greater Manchester on the site
 # with no borough-extra entry and ALL TEN boroughs disagreed with the API by up
 # to 1.5 points, because the site could not see p8 or crimeRate and dropped
 # `live` entirely. The map looked correct throughout.
 BACKEND_ONLY_CITIES = frozenset({
-    # West Midlands, added 2026-08-10. On /v1/score only, deliberately: it has
-    # no `data/borough-extra.json` entry because it has no liveability inputs to
-    # put there beyond crime, and no Progress 8 - this repo has no pipeline for
-    # p8 in ANY city. With one input the component is below its two-input floor,
-    # so the Lambda drops `live` and redistributes its weight. Putting the city
-    # on the site before that is settled is what this exemption exists to make
-    # a DECISION rather than an accident: the moment it gains a borough-extra
-    # entry, the assertion below fails until it is removed from here and
-    # actually compared.
-    'westmidlands',
-    # The other seven Core Cities regions, added the same day and for the same
-    # reason. Every one of them has prices, crime and an estimated aircraft band
-    # and NO Progress 8, so each has a single liveability input and `live` is
-    # dropped. They go on /v1/score now and on the consumer site once p8 exists.
-    'westyorkshire',
-    'southyorkshire',
-    'merseyside',
-    'tyneandwear',
-    'bristol',
+    # Cardiff and Nottingham STAY, and cannot leave on current data. Progress 8
+    # is an ENGLAND measure so Cardiff has none at all, and Nottingham gets 1 of
+    # 4 because Broxtowe, Gedling and Rushcliffe are districts inside
+    # Nottinghamshire rather than local authorities - ONS crime has the same gap.
+    # The other six left on 2026-08-10 when p8 landed and they went on the site.
     'cardiff',
     'nottingham',
 })

@@ -197,6 +197,24 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/westmidlands-boroughs.json \
+		s3://$(S3_BUCKET)/data/westmidlands-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/westyorkshire-boroughs.json \
+		s3://$(S3_BUCKET)/data/westyorkshire-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/southyorkshire-boroughs.json \
+		s3://$(S3_BUCKET)/data/southyorkshire-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/merseyside-boroughs.json \
+		s3://$(S3_BUCKET)/data/merseyside-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/tyneandwear-boroughs.json \
+		s3://$(S3_BUCKET)/data/tyneandwear-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/bristol-boroughs.json \
+		s3://$(S3_BUCKET)/data/bristol-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
 	# manchester-boroughs.json, added 2026-08-09 with the third city. In
 	# SHELL_ASSETS like the other two, so the atomic-addAll note above applies
 	# to it identically: missing here means the service worker stops installing

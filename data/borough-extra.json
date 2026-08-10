@@ -1332,5 +1332,137 @@
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
     }
+  },
+  "westmidlands": {
+    "Birmingham": {
+      "crimeRate": 114.2,
+      "p8": 0.03
+    },
+    "Coventry": {
+      "crimeRate": 88.4,
+      "p8": -0.05
+    },
+    "Dudley": {
+      "crimeRate": 74.5,
+      "p8": -0.11
+    },
+    "Sandwell": {
+      "crimeRate": 95.9,
+      "p8": -0.07
+    },
+    "Solihull": {
+      "crimeRate": 79.5,
+      "p8": -0.11
+    },
+    "Walsall": {
+      "crimeRate": 92.9,
+      "p8": -0.2
+    },
+    "Wolverhampton": {
+      "crimeRate": 92.0,
+      "p8": -0.02
+    }
+  },
+  "westyorkshire": {
+    "Bradford": {
+      "crimeRate": 117.0,
+      "p8": -0.26
+    },
+    "Calderdale": {
+      "crimeRate": 103.4,
+      "p8": -0.03
+    },
+    "Kirklees": {
+      "crimeRate": 87.6,
+      "p8": 0.11
+    },
+    "Leeds": {
+      "crimeRate": 114.6,
+      "p8": 0.12
+    },
+    "Wakefield": {
+      "crimeRate": 105.8,
+      "p8": 0.12
+    }
+  },
+  "southyorkshire": {
+    "Barnsley": {
+      "crimeRate": 95.1,
+      "p8": -0.16
+    },
+    "Doncaster": {
+      "crimeRate": 117.3,
+      "p8": 0.01
+    },
+    "Rotherham": {
+      "crimeRate": 93.1,
+      "p8": -0.15
+    },
+    "Sheffield": {
+      "crimeRate": 96.9,
+      "p8": -0.09
+    }
+  },
+  "merseyside": {
+    "Knowsley": {
+      "crimeRate": 81.8,
+      "p8": -0.9
+    },
+    "Liverpool": {
+      "crimeRate": 124.1,
+      "p8": -0.43
+    },
+    "St Helens": {
+      "crimeRate": 86.4,
+      "p8": -0.35
+    },
+    "Sefton": {
+      "crimeRate": 75.5,
+      "p8": -0.48
+    },
+    "Wirral": {
+      "crimeRate": 71.1,
+      "p8": -0.11
+    }
+  },
+  "tyneandwear": {
+    "Gateshead": {
+      "crimeRate": 87.8,
+      "p8": -0.11
+    },
+    "Newcastle upon Tyne": {
+      "crimeRate": 107.4,
+      "p8": -0.4
+    },
+    "North Tyneside": {
+      "crimeRate": 81.8,
+      "p8": -0.09
+    },
+    "South Tyneside": {
+      "crimeRate": 96.6,
+      "p8": -0.27
+    },
+    "Sunderland": {
+      "crimeRate": 93.6,
+      "p8": -0.5
+    }
+  },
+  "bristol": {
+    "City of Bristol": {
+      "crimeRate": 131.0,
+      "p8": -0.03
+    },
+    "Bath and North East Somerset": {
+      "crimeRate": 79.0,
+      "p8": 0.26
+    },
+    "North Somerset": {
+      "crimeRate": 81.8,
+      "p8": -0.02
+    },
+    "South Gloucestershire": {
+      "crimeRate": 73.8,
+      "p8": 0.02
+    }
   }
 }
