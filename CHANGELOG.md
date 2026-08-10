@@ -6,6 +6,43 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-10 (latest) - Eight more UK city-regions on the API, and the DEFRA blocker turns out not to exist
+
+- **`/v1/score` goes from 3 cities to 11.** West Midlands, West Yorkshire,
+  South Yorkshire, Merseyside, Tyne and Wear, Bristol, Cardiff and Nottingham.
+  **API only**, declared in `BACKEND_ONLY_CITIES` rather than discovered.
+- **Every field is script-derived and verified against the publishing body**,
+  and each check can go red: prices and trends against HM Land Registry HPI
+  2026-05 (now a blocking preflight stage covering all cities, derived from the
+  Lambda rather than a hardcoded pair), crime against ONS Table C4 (0 differ in
+  every region), Progress 8 against DfE KS4 2022/23 **Revised** (0 differ,
+  including the 42 values that were already here).
+- **New loaders**: `build_hpi_prices.py`, `build_city_boroughs.py`,
+  `build_aircraft_bands.py`, `build_progress8.py`, `build_locator.py`. Between
+  them the data half of adding a city is now a command rather than research.
+- **DEFRA Round 4 covers every one of these cities, and always did.**
+  GetCapabilities on the WCS this repo already named advertises 16 airports with
+  an Lden surface. `CITY_PROVENANCE` had been telling API consumers the raster
+  "has not been run for" the city - false for nine cities, live in production,
+  and corrected. We have not sampled it; the gap is in our pipeline, not in the
+  regulator's coverage.
+- **Aircraft bands are an ESTIMATE and say so.** Derived from each airport's
+  runway geometry (OurAirports, verified against Manchester's existing data),
+  calibrated on the only part of London that is genuinely distance-driven, and
+  deliberately PESSIMISTIC because erring quiet is the one direction a noise
+  product cannot be wrong in.
+- **New York gets its own map.** The locator inset was hidden for NYC by a
+  `country !== 'United Kingdom'` test; it is now a registry field, and
+  `data/usa-locator.json` is generated rather than hand-authored.
+- **Scoring is registry-driven and lazy.** `recalcAllScores()` and
+  `hydrateBoroughExtra()` no longer name any city, so adding one needs no change
+  in either. Also fixed: `showAutocomplete()` offered LONDON boroughs in
+  Greater Manchester.
+- **Two new blocking preflight stages**: WCAG over the source tree
+  (`tests/a11y-source.mjs`) and `prices == HM Land Registry`. Both were
+  red-proofed before being wired in.
+
+
 ### 2026-08-10 (latest) - London's growth input now comes from the source it always claimed
 
 - **London's 33 `trend` values corrected to HM Land Registry HPI, 2026-05.**

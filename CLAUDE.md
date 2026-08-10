@@ -62,14 +62,66 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-**Three cities as of 2026-08-09: London (33), NYC (5), Greater Manchester (10)**, all on both the site and the API. Manchester is **deliberately thinner and visibly so**: aircraft bands are **runway geometry, NOT DEFRA** (the last Core Cities blocker, and the legend says "ESTIMATED AIRCRAFT NOISE" rather than borrowing London's DEFRA labelling), **2 of 4** liveability inputs, postcode resolution London-only, and road noise / flood / air quality / area search / stations read "NO DATA". Verify its crime with `python scripts/refresh_crime_from_ons.py --check --city manchester`.
+**ELEVEN cities on `/v1/score` as of 2026-08-10; THREE on the consumer site.**
+That split is the single most important fact about the current state.
 
-**Adding a fourth city — the three things that will bite, all found doing the third:**
+- **On both site and API (3):** London (33 boroughs), NYC (5), Greater Manchester (10)
+- **API only, and declared so in `BACKEND_ONLY_CITIES` (8):** West Midlands (7),
+  West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5),
+  Bristol (4), Cardiff (4), Nottingham (4)
+
+Every field of the eight is **script-derived and independently verified**, and
+each has a `--check` that can go red:
+
+| Input | Script | Status |
+|---|---|---|
+| avgPrice / trend | `build_hpi_prices.py --check --all` | HPI 2026-05, **blocking preflight stage**, all agree |
+| crimeRate | `refresh_crime_from_ons.py --check --city X` | ONS Table C4, 0 differ everywhere |
+| p8 | `build_progress8.py --check` | DfE KS4 2022/23 **Revised**, 0 differ |
+| impact | `build_aircraft_bands.py --city X` | ESTIMATE from runway geometry, NOT DEFRA |
+| boundaries | `build_city_boroughs.py --all` | ONS codes, counts asserted |
+
+**Why the eight are not on the site.** Not a data gap - a code shape. The
+boundary loader is still `if london / else if manchester / else NYC`, which is
+the fail-open trap the registry exists to remove, and six more branches would
+entrench it. It needs a `boundaries` registry field and one generic loader,
+exactly as `locator` was done. Leaving `BACKEND_ONLY_CITIES` is a ONE-WAY DOOR:
+the moment a city drops out of that set, the site must reproduce the API on
+every borough, and `test_backend_only_cities_are_declared_not_discovered` fails
+in both directions to force it.
+
+**Cardiff and Nottingham can never fully leave** on current data: Progress 8 is
+an ENGLAND measure so Cardiff has none, and Nottingham gets 1 of 4 because
+Broxtowe, Gedling and Rushcliffe are districts inside `South Nottinghamshire`
+rather than local authorities. Both also have that gap in ONS crime.
+
+**DEFRA IS NOT A BLOCKER AND NEVER WAS (measured 2026-08-10).** GetCapabilities
+on the WCS named in `scripts/download_defra_wcs.py` advertises **16 airports
+with a Round 4 Lden surface** - Manchester, Birmingham, Leeds Bradford,
+Liverpool, Newcastle, Bristol and East Midlands among them. Provenance for nine
+cities used to say the raster "has not been run for" the city; that was false
+and is corrected. We have not SAMPLED it. Use the **per-airport** coverages
+(Birmingham is 979x1467, an 11.5 MB GeoTIFF), never `Airport_Noise_ALL_Lden`,
+which is 26,097 x 48,046 - 1.25 billion cells. The host needs a browser
+User-Agent; without one it answers 403 and looks bot-blocked.
+
+**Postcode-level quiet is London-only, and it is ONE GATE.** `app.py` has a
+literal `if city != 'london': return 400` on the postcode path. London's own
+per-postcode scores are ~19% raster and ~81% flight-path geometry, and every
+city now HAS airports and paths in `CITY_GEOMETRY` - so the geometry tier would
+serve them today. Two blockers: that gate, and `load_nspl.py` writing the
+borough attribute for London LADs only. **Resample corridors to ~1 km before
+un-gating**: new cities are spaced ~4 km against London's ~1 km, corridor
+distance is to the NEAREST waypoint, so a coarse polyline reads as further from
+the corridor and therefore QUIETER - the one direction this product cannot be
+wrong in.
+
+**Adding a city — the things that bite. Points 1-3 were found doing the third city and all still apply; the scripts in the table above now handle the DATA half, so what is left is the wiring.**
 1. **`data/*` is gitignored**, un-ignored file by file, so a new city's boundaries are invisible to git BY DEFAULT. It works on your machine, every gate passes, and the deploy serves "outlines could not be loaded". Add a `!data/<city>-boroughs.json` line, a `SHELL_ASSETS` entry, and a `make data-deploy` line — `cache.addAll()` is atomic, so a precached file missing at the origin stops the service worker installing for **every** city.
 2. **Three places still enumerate cities by name**: `hydrateBoroughExtra()`, `recalcAllScores()` and `data/borough-extra.json`. Miss any and the site scores from an empty object while the API scores properly — all ten Manchester boroughs disagreed by up to 1.5 points that way, with nothing raised, because both holders *had* the data and the site never loaded it.
 3. **Map chrome comes from the registry** via `applyCityChrome()`. Do not add an `if (city === 'x')` branch; add registry fields. The legend copy in particular is a provenance claim — NYC shipped a DEFRA/LHR explainer under a "BTS AIRCRAFT NOISE" heading for months because that block had no id. Adding a registry field means adding it to **all** cities: `tests/smoke-local.mjs` asserts key parity, so a field on one city and not the others fails the build.
 
-4. **The city switcher is TWO TIERS** (country tabs above city chips) and both are **generated from `CITY_DATA`** by `renderCitySelector()` / `renderCountrySelector()` — there is no city markup to edit. A new country needs a `COUNTRY_SHORT` entry or its tab shows the full name. The **locator inset** (`data/uk-locator.json`, checked in, **no generator exists**) draws the ten core-city markers: add the city to `LOCATOR_TO_CITY` or it stays a "planned" light disc. The file is deliberately **not** in `SHELL_ASSETS` — decorations must not be able to stop an atomic `cache.addAll()` — but it does have a `data-deploy` line. Guarded by `tests/locator-verify.mjs` and `tests/selector-widths.mjs`, both in preflight.
+4. **The city switcher is TWO TIERS** (country tabs above city chips) and both are **generated from `CITY_DATA`** by `renderCitySelector()` / `renderCountrySelector()` — there is no city markup to edit. A new country needs a `COUNTRY_SHORT` entry or its tab shows the full name. The **locator inset** (`data/uk-locator.json` and `data/usa-locator.json`, both checked in; `scripts/build_locator.py` generates them from a boundary GeoJSON - the UK file predates it and has not been regenerated) draws the ten UK core-city markers, and the USA file draws New York alone: add the city to `LOCATOR_TO_CITY` or it stays a "planned" light disc. The file is deliberately **not** in `SHELL_ASSETS` — decorations must not be able to stop an atomic `cache.addAll()` — but it does have a `data-deploy` line. Guarded by `tests/locator-verify.mjs` and `tests/selector-widths.mjs`, both in preflight.
 
 **Neighbourhood ranking data.** London and NYC hold *curated* medians and a hand-assigned `crime` modifier inline. **Greater Manchester's 85 entries are generated** — `python scripts/build_manchester_neighbourhoods.py --write-index` rewrites `index.html` between the `GM-NEIGHBOURHOODS:START/END` markers from HM Land Registry's **bulk** Price Paid CSV (the linked-data API returns **HTTP 200 with an empty list** for a district query, so it cannot be used) plus NSPL for coordinates. A GM "neighbourhood" is a **postcode district**, districts under 30 sales are dropped rather than estimated, and `crime` is 0 everywhere because sub-borough crime is not published for GM. Do not hand-edit inside the markers; re-run the script. The 155 MB PPD cache and the JSON by-product both land in gitignored `data/`.
 
