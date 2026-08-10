@@ -5306,8 +5306,8 @@
       // plain object literal would evaluate them here, inside the temporal
       // dead zone, and throw at load. Thunks defer resolution to call time,
       // which is always after the whole script has executed. `boroughFeatures`
-      // and `nycBoroughFeatures` are additionally *mutable*, assigned once
-      // their GeoJSON arrives; a thunk reads the current value, where a
+      // and the `cityBoundaries` entries are additionally *mutable*, filled in
+      // once their GeoJSON arrives; a thunk reads the current value, where a
       // captured reference would freeze the pre-fetch undefined.
       const CITY_DATA = {
         london: {
@@ -5382,6 +5382,10 @@
           stations: () => STATIONS,
           roadNoise: () => BOROUGH_ROAD_NOISE,
           features: () => boroughFeatures,
+          // Declared for key parity and for documentation. London does NOT go
+          // through loadCityBoundaries: loadGeoJson() fetches it at init with a
+          // name-matching filter for the remote fallback, which no other city needs.
+          boundaries: ['/data/london-boroughs.json'],
           // Which national silhouette the locator inset draws. A registry field
           // rather than a country test, because `country !== 'United Kingdom'`
           // is what hid the inset from New York entirely - the fail-open shape
@@ -5435,7 +5439,13 @@
           flightPaths: () => NYC_FLIGHT_PATHS,
           stations: () => NYC_STATIONS,
           roadNoise: () => NYC_BOROUGH_ROAD_NOISE,
-          features: () => nycBoroughFeatures,
+          features: () => cityBoundaries.nyc || [],
+          // Same-origin first, remote as a fallback for a missing asset
+          // mid-deploy. The remote is 2.67 MB against our 238 KB build.
+          boundaries: [
+            '/data/nyc-boroughs.json',
+            'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson',
+          ],
           locator: '/data/usa-locator.json',
         },
         // Greater Manchester. THINNER THAN THE OTHER TWO, deliberately and
@@ -5500,7 +5510,8 @@
           flightPaths: () => MANCHESTER_FLIGHT_PATHS,
           stations: () => MANCHESTER_STATIONS,
           roadNoise: () => MANCHESTER_BOROUGH_ROAD_NOISE,
-          features: () => manchesterBoroughFeatures,
+          features: () => cityBoundaries.manchester || [],
+          boundaries: ['/data/manchester-boroughs.json'],
           locator: '/data/uk-locator.json',
         },
       };
@@ -6255,8 +6266,41 @@
       // ============================================================
       let selectedBorough = null;
       let boroughFeatures = [];
-      let nycBoroughFeatures = [];
-      let manchesterBoroughFeatures = [];
+      // Boundary features per city id. Was one mutable module variable PER CITY,
+      // which is why loading them needed a branch per city and why any city
+      // that was not London or Manchester silently rendered New York's.
+      const cityBoundaries = {};
+
+      /**
+       * Boundary features for a city, fetched once and cached.
+       *
+       * Replaces an `if london / else if manchester / else <NYC>` chain. That
+       * shape had already caused the bug its own comment described - any city
+       * that was not London or Manchester fell into the NYC branch and rendered
+       * New York's outlines - and eight more cities would have meant eight more
+       * branches, each one a chance to repeat it.
+       *
+       * Returns null when a newer city switch has landed mid-fetch, so the
+       * caller abandons instead of drawing stale outlines over the new city.
+       */
+      async function loadCityBoundaries(city, token) {
+        if (cityBoundaries[city] && cityBoundaries[city].length) return cityBoundaries[city];
+        const urls = cityOf(city).boundaries || [];
+        for (const url of urls) {
+          try {
+            const geo = await d3.json(url);
+            if (token !== citySeq) return null;
+            if (geo && geo.features && geo.features.length) {
+              cityBoundaries[city] = geo.features;
+              return cityBoundaries[city];
+            }
+          } catch (e) {
+            console.warn(city + ' GeoJSON failed from ' + url + ':', e);
+          }
+        }
+        if (token !== citySeq) return null;
+        return cityBoundaries[city] || [];
+      }
       // Greater Manchester has NO road-noise data. An empty object rather than
       // a missing key, so the layer renders nothing instead of throwing, and so
       // the registry key-parity check in tests/smoke-local.mjs still passes -
@@ -9126,72 +9170,23 @@
         selectedBorough = null;
 
         if (city === 'london') {
+          // London alone keeps its own path: loadGeoJson() fetched it at init,
+          // and its remote fallback needs a borough-name filter no other city
+          // does. Everything else goes through one loader.
           if (boroughFeatures.length) renderBoroughs();
-        } else if (city === 'manchester') {
-          // Same lazy pattern as NYC below, and an EXPLICIT branch rather than
-          // an else: the old `if london ... else <NYC>` shape meant any third
-          // city silently loaded New York's boundaries. That is the fail-open
-          // trap the city registry was introduced to remove, in if/else form.
-          if (!manchesterBoroughFeatures.length) {
-            try {
-              const geo = await d3.json('/data/manchester-boroughs.json');
-              if (token !== citySeq) return;
-              if (geo && geo.features && geo.features.length) {
-                manchesterBoroughFeatures = geo.features;
-              }
-            } catch (e) {
-              console.warn('Manchester GeoJSON failed:', e);
-            }
-          }
-          if (token !== citySeq) return;
-          if (manchesterBoroughFeatures.length) {
-            renderNycBoroughs(manchesterBoroughFeatures);
-          } else {
-            announceResult(
-              'Greater Manchester borough outlines could not be loaded. The map and search still work.'
-            );
-          }
         } else {
-          // For NYC, load GeoJSON dynamically - then keep it. The borough
-          // outlines never change, so re-fetching on every switch only
-          // widened the race window above.
-          //
-          // Same-origin first, mirroring loadGeoJson(). Until 2026-07-30 the
-          // only source was a 2.67 MB cross-origin fetch issued at the moment
-          // of the click and precached by nothing, so a congested network drew
-          // no boroughs at all. The local file is a simplified 238 KB build
-          // from scripts/build_nyc_boroughs.mjs; the remote stays as a
-          // fallback for the case where our own asset is missing mid-deploy.
-          const nycUrls = [
-            '/data/nyc-boroughs.json',
-            'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/new-york-city-boroughs.geojson',
-          ];
-          if (!nycBoroughFeatures.length) {
-            for (const url of nycUrls) {
-              try {
-                const nycGeo = await d3.json(url);
-                // A newer switch landed while this was in flight - abandon the
-                // render rather than layering it over the current city.
-                if (token !== citySeq) return;
-                if (nycGeo && nycGeo.features && nycGeo.features.length) {
-                  nycBoroughFeatures = nycGeo.features;
-                  break;
-                }
-              } catch (e) {
-                console.warn('NYC GeoJSON failed from ' + url + ':', e);
-              }
-            }
-          }
-          if (token !== citySeq) return;
-          if (nycBoroughFeatures.length) {
-            renderNycBoroughs(nycBoroughFeatures);
+          const feats = await loadCityBoundaries(city, token);
+          // null means a newer switch landed mid-fetch - abandon rather than
+          // layering this city's outlines over the one now selected.
+          if (feats === null || token !== citySeq) return;
+          if (feats.length) {
+            renderNycBoroughs(feats);
           } else {
-            // Previously a bare console.warn, so a failure here was invisible:
-            // the outlines just did not appear. Flight paths, airports and
-            // search all still work without boundaries, so say what is missing
-            // rather than presenting the whole view as broken.
+            // Say what is missing rather than presenting the view as broken:
+            // flight paths, airports and search all still work without outlines.
             announceResult(
-              'New York borough outlines could not be loaded. The map and search still work.'
+              cityOf(city).label +
+                ' borough outlines could not be loaded. The map and search still work.'
             );
           }
         }
@@ -10011,7 +10006,12 @@
           // Projection translate has changed → previously cached g-coords for
           // the aircraft raster are now wrong. Force a re-position next call.
           aircraftRasterLoadedFor = null;
-          if (currentCity === 'nyc' && nycBoroughFeatures.length) renderNycBoroughs(nycBoroughFeatures);
+          // Any non-London city, not just New York: this was `currentCity ===
+          // 'nyc'`, so Greater Manchester's outlines were never re-rendered here.
+          if (currentCity !== 'london') {
+            const feats = cityBoundaries[currentCity];
+            if (feats && feats.length) renderNycBoroughs(feats);
+          }
           else if (boroughFeatures.length) renderBoroughs();
           renderDefraTiles();
           renderCityFlightPaths();
