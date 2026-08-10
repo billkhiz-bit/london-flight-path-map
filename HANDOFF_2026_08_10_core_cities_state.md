@@ -66,6 +66,53 @@ unweighted), so its scores are more extreme than London's - Solihull lands at
 0.0 by being both the priciest borough in its cohort and under the approach.
 That is arithmetically correct and reads harshly. Progress 8 is what fixes it.
 
+## 🚨 THE DEFRA "BLOCKER" IS NOT A BLOCKER. THE DATA EXISTS FOR EVERY CITY.
+
+**Measured 2026-08-10 against the DEFRA WCS the repo already knows about**
+(`environment.data.gov.uk/spatialdata/airport-noise-all-metrics-england-round-4/wcs`,
+the endpoint named in `scripts/download_defra_wcs.py`). GetCapabilities
+advertises **80 coverages, 16 airports with a Round 4 `Lden` surface**:
+
+    ALL, Birmingham, Bournemouth, Bristol, EastMidlands, Gatwick, Heathrow,
+    LeedsBradford, Liverpool, LondonCity, Luton, Manchester, Newcastle,
+    Southampton, Southend, Stansted
+
+Every airport this product needs is there, **including Manchester**:
+
+| City | Airport coverage | Status |
+|---|---|---|
+| Greater Manchester | `Airport_Noise_Manchester_Lden` | AVAILABLE |
+| West Midlands | `Airport_Noise_Birmingham_Lden` | AVAILABLE |
+| West Yorkshire | `Airport_Noise_LeedsBradford_Lden` | AVAILABLE |
+| Merseyside | `Airport_Noise_Liverpool_Lden` | AVAILABLE |
+| Tyne and Wear | `Airport_Noise_Newcastle_Lden` | AVAILABLE |
+| Bristol | `Airport_Noise_Bristol_Lden` | AVAILABLE |
+| Nottingham | `Airport_Noise_EastMidlands_Lden` | AVAILABLE |
+
+There is also an **`Airport_Noise_ALL_Lden`** coverage - one England-wide
+surface rather than seven downloads.
+
+### Two provenance statements in production are therefore FALSE
+
+`CITY_PROVENANCE` tells `/v1/score` consumers, for Greater Manchester and for
+all eight regions added today, that the estimate is used because the Round 4
+raster **"has not been run for"** that city. It has been run. The correct
+sentence is that it **has not been SAMPLED by us** - a statement about our
+pipeline, not about DEFRA's coverage.
+
+Manchester has carried that wording since it shipped; I copied it onto eight
+more cities today before checking it. It is the same defect class as London's
+`trend` claiming HPI: a provenance sentence the data does not support. **Fix
+this before any outreach**, because it understates the product to a customer
+and misstates a public body's coverage.
+
+### What this changes strategically
+
+The estimate is a **stopgap, not a limitation**. `scripts/load_defra_raster.py`
+already takes `--geotiff` with per-raster checkpointing, so this needs the
+exports and a loader run - not new code and not new research. Ten cities can
+move from *modelled* to *measured against the regulator's own surface*.
+
 ## ⚠️ DO NOT DEMO THE NEW CITIES UNTIL PROGRESS 8 LANDS
 
 All nine UK/US regions are live on `/v1/score`. Measured on the deployed API:
