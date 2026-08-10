@@ -1387,7 +1387,16 @@ CITIES = {
         # Same two blockers as Greater Manchester, stated the same way:
         # resolve_query() gates UK postcode lookup to London, and load_nspl.py
         # writes the borough attribute for London LADs alone.
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: this city did not exist at PREVIOUS_VINTAGE and
         # ?compare=previous must decline rather than report a fabricated zero.
         # 'hasHistory': False,
@@ -1398,7 +1407,16 @@ CITIES = {
         'name': 'West Yorkshire',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. LS1 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
     },
@@ -1408,7 +1426,16 @@ CITIES = {
         'name': 'South Yorkshire',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. S1 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
     },
@@ -1418,7 +1445,16 @@ CITIES = {
         'name': 'Merseyside',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. L1 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
     },
@@ -1428,7 +1464,16 @@ CITIES = {
         'name': 'Tyne and Wear',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. NE1 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
     },
@@ -1438,7 +1483,16 @@ CITIES = {
         'name': 'Bristol',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. BS1 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
     },
@@ -1448,7 +1502,16 @@ CITIES = {
         'name': 'Cardiff',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. CF10 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
     },
@@ -1458,7 +1521,16 @@ CITIES = {
         'name': 'Nottingham',
         'country': 'United Kingdom',
         'postcodeFormat': 'UK postcode (e.g. NG1 1AA)',
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
     },
     'manchester': {
         'boroughs': MANCHESTER_BOROUGHS,
@@ -1471,7 +1543,16 @@ CITIES = {
         # attribute for London LADs only, so a Manchester postcode does not
         # resolve today. Two blockers, not one. An integrator should learn that
         # here rather than by sending a request and getting an unhelpful miss.
-        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Keyed on what has actually SERVED, exactly as London is. A static
+        # string here claimed the NSPL table even when it had not answered -
+        # the "credit a source on configuration rather than on what answered"
+        # defect CITY_PROVENANCE exists to prevent. The test that flips
+        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
         # Omitted deliberately, which means False: Greater Manchester did not
         # exist at PREVIOUS_VINTAGE, so ?compare=previous must DECLINE rather
         # than return the current set and present a fabricated zero change.
@@ -1856,9 +1937,25 @@ FLIGHT_PATHS_LONDON = [
         'type': 'arrival',
         'coords': [
             (51.52, -0.18),
+            (51.5175, -0.1917),
+            (51.515, -0.2033),
+            (51.5125, -0.215),
+            (51.51, -0.2267),
+            (51.5075, -0.2383),
             (51.505, -0.25),
+            (51.503, -0.264),
+            (51.501, -0.278),
+            (51.499, -0.292),
+            (51.497, -0.306),
             (51.495, -0.32),
+            (51.493, -0.332),
+            (51.491, -0.344),
+            (51.489, -0.356),
+            (51.487, -0.368),
             (51.485, -0.38),
+            (51.4831, -0.392),
+            (51.4813, -0.404),
+            (51.4794, -0.416),
             (51.4775, -0.428),
         ],
     },
@@ -1868,9 +1965,22 @@ FLIGHT_PATHS_LONDON = [
         'type': 'arrival',
         'coords': [
             (51.425, -0.22),
+            (51.428, -0.232),
+            (51.431, -0.244),
+            (51.434, -0.256),
+            (51.437, -0.268),
             (51.44, -0.28),
+            (51.442, -0.292),
+            (51.444, -0.304),
+            (51.446, -0.316),
+            (51.448, -0.328),
             (51.45, -0.34),
+            (51.4525, -0.3525),
+            (51.455, -0.365),
+            (51.4575, -0.3775),
             (51.46, -0.39),
+            (51.4615, -0.4027),
+            (51.4629, -0.4153),
             (51.4644, -0.428),
         ],
     },
@@ -1880,9 +1990,18 @@ FLIGHT_PATHS_LONDON = [
         'type': 'arrival',
         'coords': [
             (51.37, -0.435),
+            (51.3775, -0.435),
+            (51.385, -0.435),
+            (51.3925, -0.435),
             (51.4, -0.435),
+            (51.4067, -0.435),
+            (51.4133, -0.435),
             (51.42, -0.435),
+            (51.4267, -0.435),
+            (51.4333, -0.435),
             (51.44, -0.435),
+            (51.4481, -0.435),
+            (51.4563, -0.435),
             (51.4644, -0.435),
         ],
     },
@@ -1892,9 +2011,21 @@ FLIGHT_PATHS_LONDON = [
         'type': 'arrival',
         'coords': [
             (51.6, -0.49),
+            (51.592, -0.488),
+            (51.584, -0.486),
+            (51.576, -0.484),
+            (51.568, -0.482),
             (51.56, -0.48),
+            (51.5525, -0.4775),
+            (51.545, -0.475),
+            (51.5375, -0.4725),
             (51.53, -0.47),
+            (51.5217, -0.4667),
+            (51.5133, -0.4633),
             (51.505, -0.46),
+            (51.4981, -0.4575),
+            (51.4913, -0.455),
+            (51.4844, -0.4525),
             (51.4775, -0.45),
         ],
     },
@@ -1904,8 +2035,21 @@ FLIGHT_PATHS_LONDON = [
         'type': 'departure',
         'coords': [
             (51.4775, -0.489),
+            (51.478, -0.5012),
+            (51.4785, -0.5134),
+            (51.479, -0.5256),
+            (51.4795, -0.5378),
             (51.48, -0.55),
+            (51.481, -0.564),
+            (51.482, -0.578),
+            (51.483, -0.592),
+            (51.484, -0.606),
             (51.485, -0.62),
+            (51.4858, -0.6333),
+            (51.4867, -0.6467),
+            (51.4875, -0.66),
+            (51.4883, -0.6733),
+            (51.4892, -0.6867),
             (51.49, -0.7),
         ],
     },
@@ -1915,8 +2059,27 @@ FLIGHT_PATHS_LONDON = [
         'type': 'departure',
         'coords': [
             (51.4775, -0.428),
+            (51.4763, -0.415),
+            (51.475, -0.402),
+            (51.4737, -0.389),
+            (51.4725, -0.376),
+            (51.4712, -0.363),
             (51.47, -0.35),
+            (51.4688, -0.3375),
+            (51.4675, -0.325),
+            (51.4663, -0.3125),
+            (51.465, -0.3),
+            (51.4637, -0.2875),
+            (51.4625, -0.275),
+            (51.4612, -0.2625),
             (51.46, -0.25),
+            (51.4581, -0.2375),
+            (51.4562, -0.225),
+            (51.4544, -0.2125),
+            (51.4525, -0.2),
+            (51.4506, -0.1875),
+            (51.4488, -0.175),
+            (51.4469, -0.1625),
             (51.445, -0.15),
         ],
     },
@@ -1926,8 +2089,27 @@ FLIGHT_PATHS_LONDON = [
         'type': 'departure',
         'coords': [
             (51.4775, -0.428),
+            (51.4796, -0.415),
+            (51.4817, -0.402),
+            (51.4838, -0.389),
+            (51.4858, -0.376),
+            (51.4879, -0.363),
             (51.49, -0.35),
+            (51.4925, -0.3375),
+            (51.495, -0.325),
+            (51.4975, -0.3125),
+            (51.5, -0.3),
+            (51.5025, -0.2875),
+            (51.505, -0.275),
+            (51.5075, -0.2625),
             (51.51, -0.25),
+            (51.5125, -0.2375),
+            (51.515, -0.225),
+            (51.5175, -0.2125),
+            (51.52, -0.2),
+            (51.5225, -0.1875),
+            (51.525, -0.175),
+            (51.5275, -0.1625),
             (51.53, -0.15),
         ],
     },
@@ -1937,11 +2119,20 @@ FLIGHT_PATHS_LONDON = [
         'type': 'arrival',
         'coords': [
             (51.48, 0.2),
+            (51.4817, 0.19),
+            (51.4833, 0.18),
             (51.485, 0.17),
+            (51.486, 0.16),
+            (51.487, 0.15),
             (51.488, 0.14),
+            (51.4893, 0.13),
+            (51.4907, 0.12),
             (51.492, 0.11),
+            (51.4945, 0.1),
             (51.497, 0.09),
+            (51.4995, 0.08),
             (51.502, 0.07),
+            (51.5037, 0.0627),
             (51.5053, 0.0553),
         ],
     },
@@ -1951,10 +2142,15 @@ FLIGHT_PATHS_LONDON = [
         'type': 'arrival',
         'coords': [
             (51.52, -0.02),
+            (51.5185, -0.0125),
             (51.517, -0.005),
+            (51.515, 0.0025),
             (51.513, 0.01),
+            (51.5115, 0.0175),
             (51.51, 0.025),
+            (51.509, 0.0325),
             (51.508, 0.04),
+            (51.5067, 0.0476),
             (51.5053, 0.0553),
         ],
     },
@@ -1964,9 +2160,17 @@ FLIGHT_PATHS_LONDON = [
         'type': 'departure',
         'coords': [
             (51.5053, 0.067),
+            (51.5052, 0.0785),
             (51.505, 0.09),
+            (51.5043, 0.1),
+            (51.5037, 0.11),
             (51.503, 0.12),
+            (51.5013, 0.1333),
+            (51.4997, 0.1467),
             (51.498, 0.16),
+            (51.496, 0.1725),
+            (51.494, 0.185),
+            (51.492, 0.1975),
             (51.49, 0.21),
         ],
     },
@@ -1979,11 +2183,24 @@ FLIGHT_PATHS_NYC = [
         'type': 'arrival',
         'freq': 'high',
         'coords': [
-            (40.60, -73.60),
+            (40.6, -73.6),
+            (40.6025, -73.61),
+            (40.605, -73.62),
+            (40.6075, -73.63),
             (40.61, -73.64),
+            (40.6125, -73.65),
+            (40.615, -73.66),
+            (40.6175, -73.67),
             (40.62, -73.68),
+            (40.6225, -73.69),
+            (40.625, -73.7),
+            (40.6275, -73.71),
             (40.63, -73.72),
+            (40.6325, -73.73),
+            (40.635, -73.74),
+            (40.6375, -73.75),
             (40.64, -73.76),
+            (40.6407, -73.769),
             (40.6413, -73.7781),
         ],
     },
@@ -1992,49 +2209,141 @@ FLIGHT_PATHS_NYC = [
         'airport': 'JFK',
         'type': 'departure',
         'freq': 'high',
-        'coords': [(40.6413, -73.7781), (40.62, -73.76), (40.60, -73.74), (40.58, -73.72), (40.56, -73.70)],
+        'coords': [
+            (40.6413, -73.7781),
+            (40.6342, -73.7721),
+            (40.6271, -73.766),
+            (40.62, -73.76),
+            (40.6133, -73.7533),
+            (40.6067, -73.7467),
+            (40.6, -73.74),
+            (40.5933, -73.7333),
+            (40.5867, -73.7267),
+            (40.58, -73.72),
+            (40.5733, -73.7133),
+            (40.5667, -73.7067),
+            (40.56, -73.7),
+        ],
     },
     {
         'name': 'JFK 22L Arrival (ILS)',
         'airport': 'JFK',
         'type': 'arrival',
         'freq': 'medium',
-        'coords': [(40.70, -73.70), (40.69, -73.72), (40.68, -73.74), (40.66, -73.76), (40.6413, -73.7781)],
+        'coords': [
+            (40.7, -73.7),
+            (40.6967, -73.7067),
+            (40.6933, -73.7133),
+            (40.69, -73.72),
+            (40.6867, -73.7267),
+            (40.6833, -73.7333),
+            (40.68, -73.74),
+            (40.6733, -73.7467),
+            (40.6667, -73.7533),
+            (40.66, -73.76),
+            (40.6538, -73.766),
+            (40.6475, -73.7721),
+            (40.6413, -73.7781),
+        ],
     },
     {
         'name': 'LGA 31 Arrival',
         'airport': 'LGA',
         'type': 'arrival',
         'freq': 'high',
-        'coords': [(40.72, -73.80), (40.73, -73.82), (40.74, -73.84), (40.76, -73.86), (40.7769, -73.8740)],
+        'coords': [
+            (40.72, -73.8),
+            (40.7233, -73.8067),
+            (40.7267, -73.8133),
+            (40.73, -73.82),
+            (40.7333, -73.8267),
+            (40.7367, -73.8333),
+            (40.74, -73.84),
+            (40.7467, -73.8467),
+            (40.7533, -73.8533),
+            (40.76, -73.86),
+            (40.7656, -73.8647),
+            (40.7713, -73.8693),
+            (40.7769, -73.874),
+        ],
     },
     {
         'name': 'LGA 4 Departure',
         'airport': 'LGA',
         'type': 'departure',
         'freq': 'high',
-        'coords': [(40.7769, -73.8740), (40.79, -73.87), (40.81, -73.86), (40.83, -73.85), (40.86, -73.84)],
+        'coords': [
+            (40.7769, -73.874),
+            (40.7835, -73.872),
+            (40.79, -73.87),
+            (40.7967, -73.8667),
+            (40.8033, -73.8633),
+            (40.81, -73.86),
+            (40.8167, -73.8567),
+            (40.8233, -73.8533),
+            (40.83, -73.85),
+            (40.8375, -73.8475),
+            (40.845, -73.845),
+            (40.8525, -73.8425),
+            (40.86, -73.84),
+        ],
     },
     {
         'name': 'LGA Expressway Visual 31',
         'airport': 'LGA',
         'type': 'arrival',
         'freq': 'medium',
-        'coords': [(40.78, -73.95), (40.78, -73.93), (40.78, -73.91), (40.78, -73.89), (40.7769, -73.8740)],
+        'coords': [
+            (40.78, -73.95),
+            (40.78, -73.94),
+            (40.78, -73.93),
+            (40.78, -73.92),
+            (40.78, -73.91),
+            (40.78, -73.9),
+            (40.78, -73.89),
+            (40.7784, -73.882),
+            (40.7769, -73.874),
+        ],
     },
     {
         'name': 'EWR 4R Arrival',
         'airport': 'EWR',
         'type': 'arrival',
         'freq': 'high',
-        'coords': [(40.62, -74.10), (40.64, -74.12), (40.66, -74.14), (40.68, -74.16), (40.6895, -74.1745)],
+        'coords': [
+            (40.62, -74.1),
+            (40.6267, -74.1067),
+            (40.6333, -74.1133),
+            (40.64, -74.12),
+            (40.6467, -74.1267),
+            (40.6533, -74.1333),
+            (40.66, -74.14),
+            (40.6667, -74.1467),
+            (40.6733, -74.1533),
+            (40.68, -74.16),
+            (40.6848, -74.1672),
+            (40.6895, -74.1745),
+        ],
     },
     {
         'name': 'EWR 22L Departure',
         'airport': 'EWR',
         'type': 'departure',
         'freq': 'medium',
-        'coords': [(40.6895, -74.1745), (40.68, -74.18), (40.66, -74.19), (40.64, -74.20), (40.62, -74.22)],
+        'coords': [
+            (40.6895, -74.1745),
+            (40.6848, -74.1773),
+            (40.68, -74.18),
+            (40.6733, -74.1833),
+            (40.6667, -74.1867),
+            (40.66, -74.19),
+            (40.6533, -74.1933),
+            (40.6467, -74.1967),
+            (40.64, -74.2),
+            (40.6333, -74.2067),
+            (40.6267, -74.2133),
+            (40.62, -74.22),
+        ],
     },
 ]
 
@@ -2069,12 +2378,32 @@ FLIGHT_PATHS_MANCHESTER = [
         'type': 'arrival',
         'freq': 'high',
         'coords': [
-            (53.4920, -1.9783),
+            (53.492, -1.9783),
+            (53.4865, -1.9902),
+            (53.4809, -2.002),
+            (53.4754, -2.0139),
+            (53.4698, -2.0257),
             (53.4643, -2.0376),
-            (53.4367, -2.0970),
-            (53.4090, -2.1563),
+            (53.4588, -2.0495),
+            (53.4533, -2.0614),
+            (53.4477, -2.0732),
+            (53.4422, -2.0851),
+            (53.4367, -2.097),
+            (53.4312, -2.1089),
+            (53.4256, -2.1207),
+            (53.4201, -2.1326),
+            (53.4145, -2.1444),
+            (53.409, -2.1563),
+            (53.4035, -2.1682),
+            (53.398, -2.1801),
+            (53.3924, -2.1919),
+            (53.3869, -2.2038),
             (53.3814, -2.2157),
-            (53.3537, -2.2750),
+            (53.3759, -2.2276),
+            (53.3703, -2.2394),
+            (53.3648, -2.2513),
+            (53.3592, -2.2631),
+            (53.3537, -2.275),
         ],
     },
     {
@@ -2083,10 +2412,23 @@ FLIGHT_PATHS_MANCHESTER = [
         'type': 'arrival',
         'freq': 'medium',
         'coords': [
-            (53.2707, -2.4530),
+            (53.2707, -2.453),
+            (53.2753, -2.4431),
+            (53.2799, -2.4332),
+            (53.2845, -2.4234),
+            (53.2892, -2.4135),
+            (53.2938, -2.4036),
             (53.2984, -2.3937),
-            (53.3260, -2.3343),
-            (53.3537, -2.2750),
+            (53.3039, -2.3818),
+            (53.3094, -2.3699),
+            (53.315, -2.3581),
+            (53.3205, -2.3462),
+            (53.326, -2.3343),
+            (53.3315, -2.3224),
+            (53.3371, -2.3106),
+            (53.3426, -2.2987),
+            (53.3482, -2.2869),
+            (53.3537, -2.275),
         ],
     },
 ]
@@ -2111,11 +2453,28 @@ FLIGHT_PATHS_WESTMIDLANDS = [
         'freq': 'high',
         'coords': [
             (52.6142, -1.9267),
+            (52.6068, -1.9184),
+            (52.5994, -1.9102),
+            (52.5919, -1.9019),
             (52.5845, -1.8936),
+            (52.5771, -1.8853),
+            (52.5696, -1.8771),
+            (52.5622, -1.8688),
             (52.5548, -1.8605),
+            (52.5474, -1.8522),
+            (52.54, -1.8439),
+            (52.5325, -1.8356),
             (52.5251, -1.8273),
+            (52.5177, -1.819),
+            (52.5102, -1.8108),
+            (52.5027, -1.8025),
             (52.4953, -1.7942),
-            (52.4539, -1.7480),
+            (52.4884, -1.7865),
+            (52.4815, -1.7788),
+            (52.4746, -1.7711),
+            (52.4677, -1.7634),
+            (52.4608, -1.7557),
+            (52.4539, -1.748),
         ],
     },
     {
@@ -2125,11 +2484,29 @@ FLIGHT_PATHS_WESTMIDLANDS = [
         'freq': 'medium',
         'coords': [
             (52.2943, -1.5703),
-            (52.3240, -1.6034),
+            (52.3017, -1.5786),
+            (52.3092, -1.5869),
+            (52.3166, -1.5951),
+            (52.324, -1.6034),
+            (52.33, -1.61),
+            (52.3359, -1.6166),
+            (52.3419, -1.6233),
+            (52.3478, -1.6299),
             (52.3538, -1.6365),
+            (52.3612, -1.6448),
+            (52.3687, -1.6531),
+            (52.3761, -1.6614),
             (52.3835, -1.6697),
+            (52.3909, -1.678),
+            (52.3984, -1.6863),
+            (52.4058, -1.6945),
             (52.4132, -1.7028),
-            (52.4539, -1.7480),
+            (52.42, -1.7103),
+            (52.4268, -1.7179),
+            (52.4335, -1.7254),
+            (52.4403, -1.7329),
+            (52.4471, -1.7405),
+            (52.4539, -1.748),
         ],
     },
 ]
@@ -2147,10 +2524,27 @@ FLIGHT_PATHS_WESTYORKSHIRE = [
         'freq': 'high',
         'coords': [
             (54.0067, -1.8764),
-            (53.9800, -1.8355),
+            (54.0, -1.8662),
+            (53.9933, -1.8559),
+            (53.9867, -1.8457),
+            (53.98, -1.8355),
+            (53.9733, -1.8253),
+            (53.9667, -1.8151),
+            (53.9601, -1.8049),
             (53.9534, -1.7947),
+            (53.9467, -1.7845),
+            (53.94, -1.7742),
+            (53.9334, -1.764),
             (53.9267, -1.7538),
+            (53.92, -1.7436),
+            (53.9134, -1.7334),
+            (53.9068, -1.7231),
             (53.9001, -1.7129),
+            (53.8944, -1.7042),
+            (53.8887, -1.6955),
+            (53.883, -1.6867),
+            (53.8773, -1.678),
+            (53.8716, -1.6693),
             (53.8659, -1.6606),
         ],
     },
@@ -2161,10 +2555,28 @@ FLIGHT_PATHS_WESTYORKSHIRE = [
         'freq': 'medium',
         'coords': [
             (53.7251, -1.4448),
+            (53.7304, -1.453),
+            (53.7358, -1.4611),
+            (53.7411, -1.4693),
+            (53.7465, -1.4774),
             (53.7518, -1.4856),
+            (53.7585, -1.4958),
+            (53.7651, -1.5061),
+            (53.7717, -1.5163),
             (53.7784, -1.5265),
+            (53.7851, -1.5367),
+            (53.7918, -1.5469),
+            (53.7984, -1.5571),
             (53.8051, -1.5673),
+            (53.8118, -1.5775),
+            (53.8184, -1.5877),
+            (53.825, -1.598),
             (53.8317, -1.6082),
+            (53.8374, -1.6169),
+            (53.8431, -1.6257),
+            (53.8488, -1.6344),
+            (53.8545, -1.6431),
+            (53.8602, -1.6519),
             (53.8659, -1.6606),
         ],
     },
@@ -2182,11 +2594,28 @@ FLIGHT_PATHS_MERSEYSIDE = [
         'type': 'arrival',
         'freq': 'high',
         'coords': [
-            (53.3190, -3.1669),
+            (53.319, -3.1669),
+            (53.3197, -3.1519),
+            (53.3204, -3.1369),
+            (53.3211, -3.1219),
             (53.3218, -3.1069),
+            (53.3225, -3.0919),
+            (53.3232, -3.0769),
+            (53.3239, -3.0619),
             (53.3246, -3.0469),
+            (53.3253, -3.0319),
+            (53.3259, -3.0169),
+            (53.3266, -3.0019),
             (53.3273, -2.9869),
+            (53.328, -2.9719),
+            (53.3287, -2.9569),
+            (53.3294, -2.9419),
             (53.3301, -2.9269),
+            (53.3309, -2.914),
+            (53.3317, -2.9011),
+            (53.3325, -2.8883),
+            (53.3333, -2.8754),
+            (53.3341, -2.8625),
             (53.3349, -2.8496),
         ],
     },
@@ -2197,10 +2626,27 @@ FLIGHT_PATHS_MERSEYSIDE = [
         'freq': 'medium',
         'coords': [
             (53.3482, -2.5327),
+            (53.3475, -2.5477),
+            (53.3469, -2.5627),
+            (53.3462, -2.5777),
             (53.3455, -2.5927),
+            (53.3448, -2.6077),
+            (53.3441, -2.6227),
+            (53.3434, -2.6377),
             (53.3427, -2.6527),
+            (53.342, -2.6677),
+            (53.3413, -2.6827),
+            (53.3406, -2.6977),
             (53.3399, -2.7127),
+            (53.3392, -2.7277),
+            (53.3385, -2.7427),
+            (53.3379, -2.7577),
             (53.3372, -2.7727),
+            (53.3368, -2.7855),
+            (53.3364, -2.7983),
+            (53.3361, -2.8112),
+            (53.3357, -2.824),
+            (53.3353, -2.8368),
             (53.3349, -2.8496),
         ],
     },
@@ -2219,11 +2665,30 @@ FLIGHT_PATHS_TYNEANDWEAR = [
         'freq': 'high',
         'coords': [
             (54.9578, -1.9907),
-            (54.9730, -1.9338),
-            (54.9881, -1.8770),
+            (54.9608, -1.9793),
+            (54.9639, -1.9679),
+            (54.9669, -1.9566),
+            (54.97, -1.9452),
+            (54.973, -1.9338),
+            (54.9768, -1.9196),
+            (54.9806, -1.9054),
+            (54.9843, -1.8912),
+            (54.9881, -1.877),
+            (54.9919, -1.8628),
+            (54.9956, -1.8485),
+            (54.9994, -1.8343),
             (55.0032, -1.8201),
+            (55.0062, -1.8087),
+            (55.0093, -1.7973),
+            (55.0123, -1.786),
+            (55.0154, -1.7746),
             (55.0184, -1.7632),
-            (55.0380, -1.6896),
+            (55.0217, -1.7509),
+            (55.0249, -1.7387),
+            (55.0282, -1.7264),
+            (55.0315, -1.7141),
+            (55.0347, -1.7019),
+            (55.038, -1.6896),
         ],
     },
     {
@@ -2232,12 +2697,29 @@ FLIGHT_PATHS_TYNEANDWEAR = [
         'type': 'arrival',
         'freq': 'medium',
         'coords': [
-            (55.1180, -1.3889),
+            (55.118, -1.3889),
+            (55.1142, -1.4031),
+            (55.1104, -1.4173),
+            (55.1066, -1.4316),
             (55.1028, -1.4458),
+            (55.099, -1.46),
+            (55.0953, -1.4743),
+            (55.0915, -1.4885),
             (55.0877, -1.5027),
+            (55.0839, -1.5169),
+            (55.0802, -1.5311),
+            (55.0764, -1.5453),
             (55.0726, -1.5595),
+            (55.0688, -1.5737),
+            (55.065, -1.588),
+            (55.0612, -1.6022),
             (55.0574, -1.6164),
-            (55.0380, -1.6896),
+            (55.0542, -1.6286),
+            (55.0509, -1.6408),
+            (55.0477, -1.653),
+            (55.0445, -1.6652),
+            (55.0412, -1.6774),
+            (55.038, -1.6896),
         ],
     },
 ]
@@ -2255,10 +2737,27 @@ FLIGHT_PATHS_BRISTOL = [
         'freq': 'high',
         'coords': [
             (51.3711, -3.0208),
+            (51.3717, -3.0065),
+            (51.3722, -2.9921),
+            (51.3727, -2.9777),
             (51.3733, -2.9634),
+            (51.3739, -2.949),
+            (51.3744, -2.9346),
+            (51.3749, -2.9203),
             (51.3755, -2.9059),
+            (51.376, -2.8915),
+            (51.3766, -2.8771),
+            (51.3772, -2.8628),
             (51.3777, -2.8484),
-            (51.3799, -2.7910),
+            (51.3782, -2.834),
+            (51.3788, -2.8197),
+            (51.3794, -2.8053),
+            (51.3799, -2.791),
+            (51.3803, -2.7786),
+            (51.3807, -2.7662),
+            (51.3811, -2.7538),
+            (51.3815, -2.7413),
+            (51.3819, -2.7289),
             (51.3823, -2.7165),
         ],
     },
@@ -2269,10 +2768,26 @@ FLIGHT_PATHS_BRISTOL = [
         'freq': 'medium',
         'coords': [
             (51.3942, -2.4173),
-            (51.3920, -2.4748),
+            (51.3937, -2.4317),
+            (51.3931, -2.4461),
+            (51.3925, -2.4604),
+            (51.392, -2.4748),
+            (51.3915, -2.4892),
+            (51.3909, -2.5036),
+            (51.3903, -2.5179),
             (51.3898, -2.5323),
+            (51.3893, -2.5467),
+            (51.3887, -2.561),
+            (51.3881, -2.5754),
             (51.3876, -2.5897),
+            (51.3871, -2.6041),
+            (51.3865, -2.6185),
+            (51.3859, -2.6328),
             (51.3854, -2.6472),
+            (51.3848, -2.6611),
+            (51.3842, -2.6749),
+            (51.3835, -2.6888),
+            (51.3829, -2.7026),
             (51.3823, -2.7165),
         ],
     },
@@ -2291,10 +2806,27 @@ FLIGHT_PATHS_CARDIFF = [
         'freq': 'high',
         'coords': [
             (51.4827, -3.6156),
+            (51.4787, -3.6028),
+            (51.4746, -3.5899),
+            (51.4706, -3.577),
             (51.4665, -3.5642),
+            (51.4624, -3.5514),
+            (51.4584, -3.5385),
+            (51.4543, -3.5256),
             (51.4502, -3.5128),
-            (51.4340, -3.4614),
+            (51.4462, -3.5),
+            (51.4421, -3.4871),
+            (51.438, -3.4742),
+            (51.434, -3.4614),
+            (51.4299, -3.4486),
+            (51.4258, -3.4357),
+            (51.4218, -3.4229),
             (51.4177, -3.4101),
+            (51.4142, -3.399),
+            (51.4107, -3.3878),
+            (51.4072, -3.3767),
+            (51.4037, -3.3656),
+            (51.4002, -3.3544),
             (51.3967, -3.3433),
         ],
     },
@@ -2305,10 +2837,30 @@ FLIGHT_PATHS_CARDIFF = [
         'freq': 'medium',
         'coords': [
             (51.3106, -3.0711),
+            (51.3138, -3.0814),
+            (51.3171, -3.0917),
+            (51.3203, -3.1019),
+            (51.3236, -3.1122),
             (51.3268, -3.1225),
+            (51.3301, -3.1328),
+            (51.3333, -3.1431),
+            (51.3366, -3.1533),
+            (51.3398, -3.1636),
             (51.3431, -3.1739),
+            (51.3471, -3.1867),
+            (51.3512, -3.1996),
+            (51.3552, -3.2124),
             (51.3593, -3.2252),
+            (51.3626, -3.2355),
+            (51.3658, -3.2458),
+            (51.3691, -3.256),
+            (51.3723, -3.2663),
             (51.3756, -3.2766),
+            (51.3791, -3.2877),
+            (51.3826, -3.2988),
+            (51.3862, -3.31),
+            (51.3897, -3.3211),
+            (51.3932, -3.3322),
             (51.3967, -3.3433),
         ],
     },
@@ -2329,10 +2881,27 @@ FLIGHT_PATHS_NOTTINGHAM = [
         'freq': 'high',
         'coords': [
             (52.8251, -1.6468),
+            (52.8254, -1.632),
+            (52.8256, -1.6171),
+            (52.8259, -1.6022),
             (52.8262, -1.5874),
+            (52.8265, -1.5725),
+            (52.8268, -1.5576),
+            (52.827, -1.5428),
             (52.8273, -1.5279),
+            (52.8276, -1.5131),
+            (52.8278, -1.4982),
+            (52.8281, -1.4833),
             (52.8284, -1.4685),
-            (52.8295, -1.4090),
+            (52.8287, -1.4536),
+            (52.829, -1.4387),
+            (52.8292, -1.4239),
+            (52.8295, -1.409),
+            (52.8298, -1.3955),
+            (52.83, -1.382),
+            (52.8303, -1.3685),
+            (52.8306, -1.3551),
+            (52.8308, -1.3416),
             (52.8311, -1.3281),
         ],
     },
@@ -2342,11 +2911,28 @@ FLIGHT_PATHS_NOTTINGHAM = [
         'type': 'arrival',
         'freq': 'medium',
         'coords': [
-            (52.8370, -1.0094),
+            (52.837, -1.0094),
+            (52.8367, -1.0243),
+            (52.8364, -1.0392),
+            (52.8361, -1.054),
             (52.8358, -1.0689),
+            (52.8355, -1.0837),
+            (52.8353, -1.0986),
+            (52.835, -1.1135),
             (52.8347, -1.1283),
+            (52.8344, -1.1432),
+            (52.8341, -1.1581),
+            (52.8339, -1.1729),
             (52.8336, -1.1878),
+            (52.8333, -1.2026),
+            (52.8331, -1.2175),
+            (52.8328, -1.2324),
             (52.8325, -1.2472),
+            (52.8323, -1.2607),
+            (52.832, -1.2742),
+            (52.8318, -1.2877),
+            (52.8316, -1.3011),
+            (52.8313, -1.3146),
             (52.8311, -1.3281),
         ],
     },
@@ -3270,7 +3856,18 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None, raster_lden=_RASTER
     if not geo:
         return None
 
-    # 1. Distance to nearest airport
+    # 1. Distance to nearest airport.
+    #
+    # A city can legitimately have NO airports: South Yorkshire has none, since
+    # Doncaster Sheffield closed to commercial flights in 2022. Before
+    # 2026-08-10 that was unreachable because postcode resolution was gated to
+    # London; un-gating it made `min()` raise on an empty sequence and turned
+    # every South Yorkshire postcode into a 500. Returning None falls back to
+    # the borough-aggregate band, which for that city is the measured `low`
+    # everywhere - the honest answer, not a crash and not a fabricated 10.
+    if not geo['airports']:
+        return None
+
     airport_dists = [(ap['code'], haversine_km(lat, lon, ap['lat'], ap['lon'])) for ap in geo['airports']]
     nearest_ap_dist = min(d for _, d in airport_dists)
 
@@ -4285,7 +4882,14 @@ def _lookup_postcode_local(clean, include_terminated=False):
         # intentional: normalise_borough(None) -> None -> the existing
         # "Borough not currently supported in london." 404, byte-identical
         # to what postcodes.io produces today for e.g. a Manchester postcode.
-        'admin_district': item.get('b', {}).get('S'),
+        # Falls back to the LAD code when the stored name is absent, which it
+        # is for every postcode outside the 33 London boroughs. Before
+        # 2026-08-10 this was None there and the caller 404'd; the code was
+        # sitting in the same row the whole time.
+        'admin_district': (
+            item.get('b', {}).get('S')
+            or (LAD_TO_BOROUGH.get(item.get('lad', {}).get('S')) or (None, None))[1]
+        ),
         'latitude': latitude,
         'longitude': longitude,
         'region': item.get('rgn', {}).get('S'),
@@ -4368,6 +4972,103 @@ def reverse_geocode(lat, lon):
         _reverse_cache_put(key, postcode)
     return postcode
 
+
+# LAD code -> (city id, borough name as CITIES holds it).
+#
+# GENERATED from CITY_LADS in scripts/build_hpi_prices.py, the one place the
+# code-to-borough mapping lives - the same registry the price and boundary
+# loaders read - so a city cannot resolve postcodes to a borough set it does
+# not score.
+#
+# This is what un-gated postcode lookup beyond London, and it needed NO reload.
+# The NSPL table already stores `lad` for all 2.7M rows; only the borough NAME
+# (`b`) was written for London LADs alone. Verified against the LIVE table:
+# M1 1AE carries lad=E08000003 with b absent, B1 1AA lad=E08000025, LS1 1AA
+# lad=E08000035. The gap was a lookup, not missing data, so the two blockers
+# recorded in CITY_PROVENANCE were really one.
+LAD_TO_BOROUGH = {
+    'E09000018': ('london', 'Hounslow'),
+    'E09000017': ('london', 'Hillingdon'),
+    'E09000027': ('london', 'Richmond upon Thames'),
+    'E09000009': ('london', 'Ealing'),
+    'E09000032': ('london', 'Wandsworth'),
+    'E09000022': ('london', 'Lambeth'),
+    'E09000023': ('london', 'Lewisham'),
+    'E09000011': ('london', 'Greenwich'),
+    'E09000030': ('london', 'Tower Hamlets'),
+    'E09000007': ('london', 'Camden'),
+    'E09000019': ('london', 'Islington'),
+    'E09000012': ('london', 'Hackney'),
+    'E09000003': ('london', 'Barnet'),
+    'E09000008': ('london', 'Croydon'),
+    'E09000006': ('london', 'Bromley'),
+    'E09000025': ('london', 'Newham'),
+    'E09000028': ('london', 'Southwark'),
+    'E09000013': ('london', 'Hammersmith and Fulham'),
+    'E09000020': ('london', 'Kensington and Chelsea'),
+    'E09000005': ('london', 'Brent'),
+    'E09000014': ('london', 'Haringey'),
+    'E09000031': ('london', 'Waltham Forest'),
+    'E09000024': ('london', 'Merton'),
+    'E09000026': ('london', 'Redbridge'),
+    'E09000010': ('london', 'Enfield'),
+    'E09000021': ('london', 'Kingston upon Thames'),
+    'E09000029': ('london', 'Sutton'),
+    'E09000033': ('london', 'Westminster'),
+    'E09000001': ('london', 'City of London'),
+    'E09000002': ('london', 'Barking and Dagenham'),
+    'E09000016': ('london', 'Havering'),
+    'E09000004': ('london', 'Bexley'),
+    'E09000015': ('london', 'Harrow'),
+    'E08000003': ('manchester', 'Manchester'),
+    'E08000006': ('manchester', 'Salford'),
+    'E08000007': ('manchester', 'Stockport'),
+    'E08000009': ('manchester', 'Trafford'),
+    'E08000008': ('manchester', 'Tameside'),
+    'E08000004': ('manchester', 'Oldham'),
+    'E08000005': ('manchester', 'Rochdale'),
+    'E08000002': ('manchester', 'Bury'),
+    'E08000001': ('manchester', 'Bolton'),
+    'E08000010': ('manchester', 'Wigan'),
+    'E08000025': ('westmidlands', 'Birmingham'),
+    'E08000026': ('westmidlands', 'Coventry'),
+    'E08000027': ('westmidlands', 'Dudley'),
+    'E08000028': ('westmidlands', 'Sandwell'),
+    'E08000029': ('westmidlands', 'Solihull'),
+    'E08000030': ('westmidlands', 'Walsall'),
+    'E08000031': ('westmidlands', 'Wolverhampton'),
+    'E08000032': ('westyorkshire', 'Bradford'),
+    'E08000033': ('westyorkshire', 'Calderdale'),
+    'E08000034': ('westyorkshire', 'Kirklees'),
+    'E08000035': ('westyorkshire', 'Leeds'),
+    'E08000036': ('westyorkshire', 'Wakefield'),
+    'E08000038': ('southyorkshire', 'Barnsley'),
+    'E08000017': ('southyorkshire', 'Doncaster'),
+    'E08000018': ('southyorkshire', 'Rotherham'),
+    'E08000039': ('southyorkshire', 'Sheffield'),
+    'E08000011': ('merseyside', 'Knowsley'),
+    'E08000012': ('merseyside', 'Liverpool'),
+    'E08000013': ('merseyside', 'St Helens'),
+    'E08000014': ('merseyside', 'Sefton'),
+    'E08000015': ('merseyside', 'Wirral'),
+    'E08000037': ('tyneandwear', 'Gateshead'),
+    'E08000021': ('tyneandwear', 'Newcastle upon Tyne'),
+    'E08000022': ('tyneandwear', 'North Tyneside'),
+    'E08000023': ('tyneandwear', 'South Tyneside'),
+    'E08000024': ('tyneandwear', 'Sunderland'),
+    'E06000023': ('bristol', 'City of Bristol'),
+    'E06000022': ('bristol', 'Bath and North East Somerset'),
+    'E06000024': ('bristol', 'North Somerset'),
+    'E06000025': ('bristol', 'South Gloucestershire'),
+    'E06000018': ('nottingham', 'City of Nottingham'),
+    'E07000172': ('nottingham', 'Broxtowe'),
+    'E07000173': ('nottingham', 'Gedling'),
+    'E07000176': ('nottingham', 'Rushcliffe'),
+    'W06000015': ('cardiff', 'Cardiff'),
+    'W06000014': ('cardiff', 'Vale of Glamorgan'),
+    'W06000022': ('cardiff', 'Newport'),
+    'W06000018': ('cardiff', 'Caerphilly'),
+}
 
 def lookup_postcode(postcode, include_terminated=False):
     """Resolve a UK postcode to a postcodes.io-shaped result dict.
@@ -4637,9 +5338,15 @@ def resolve_query(query):
         else:
             # UK postcode path, the local NSPL table then postcodes.io
             # resolve to a London borough.
-            if city != 'london':
+            # Un-gated 2026-08-10. This was `if city != 'london': return 400`,
+            # and the reason given was that NSPL wrote the borough attribute for
+            # London LADs alone. It writes the LAD CODE for all 2.7M rows, so
+            # LAD_TO_BOROUGH resolves the rest without a reload - see the note
+            # on that map. A postcode in a city we do not score still 404s
+            # below, on the borough lookup, which is the honest place for it.
+            if city not in CITIES:
                 return {
-                    'error': f'Postcode resolution is UK-only for non-NYC ZIPs. For {city} use ?borough=, or pass a 5-digit US ZIP for NYC auto-detection.',
+                    'error': f'Unsupported city: {city}',
                 }, 400
             pc = lookup_postcode(postcode, include_terminated=include_terminated)
             if not pc:

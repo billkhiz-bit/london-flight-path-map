@@ -934,16 +934,24 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         with patch.object(app, '_fetch_postcode', return_value=sentinel):
             self.assertIs(app.lookup_postcode('SW11 1AA'), sentinel)
 
-    def test_non_london_row_returns_dict_with_null_admin_district(self):
-        # The subtle trap. Returning None here would treat "no borough" as a
-        # local miss and send every non-London UK postcode back to
-        # postcodes.io — restoring the fair-use problem for most of a
-        # national back-book.
+    def test_non_london_row_resolves_its_borough_from_the_lad_code(self):
+        # The subtle trap this has always guarded. Returning None here would
+        # treat "no borough" as a local miss and send every non-London UK
+        # postcode back to postcodes.io — restoring the fair-use problem for
+        # most of a national back-book. That invariant is asserted below and is
+        # unchanged.
+        #
+        # What DID change on 2026-08-10: admin_district was None for every
+        # postcode outside the 33 London boroughs, because NSPL wrote the
+        # borough NAME for London LADs alone. It writes the LAD CODE for all
+        # 2.7M rows, so LAD_TO_BOROUGH resolves the rest with no reload, and
+        # this row now names Manchester instead of nothing. Asserting None here
+        # would be asserting the gate that was removed.
         self._stub_ddb(_NSPL_M1_1AE)
         with patch.object(app, '_fetch_postcode') as fetch:
             result = app.lookup_postcode('M1 1AE')
         self.assertIsNotNone(result)
-        self.assertIsNone(result['admin_district'])
+        self.assertEqual(result['admin_district'], 'Manchester')
         self.assertEqual(result['postcode'], 'M1 1AE')
         self.assertEqual(result['region'], 'North West')
         self.assertEqual(result['_ladCode'], 'E08000003')
