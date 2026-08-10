@@ -174,7 +174,13 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
   resolution is London-only, because `resolve_query()` gates it there *and*
   `scripts/load_nspl.py` writes the borough attribute for London LADs alone.
   Two blockers, not one. On the site and the API.
-- **Planned**: the rest of the UK Core Cities (Birmingham, Bristol, Leeds, etc.), then England + Wales
+- **Planned**: the rest of the UK Core Cities, then England + Wales. The site's
+  locator inset names all ten and marks which are live, so the roadmap is
+  visible rather than only written down. Price data for the eight outstanding
+  regions is already sourced and measured (see
+  `HANDOFF_2026_08_09_core_cities_next.md`); what each still needs is boundary
+  geometry, runway geometry for its aircraft bands, and a registry entry in
+  both the Lambda and the frontend.
 
 **What "supported" means per city**, because it is not uniform:
 
