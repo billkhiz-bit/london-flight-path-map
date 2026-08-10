@@ -66,6 +66,35 @@ unweighted), so its scores are more extreme than London's - Solihull lands at
 0.0 by being both the priciest borough in its cohort and under the approach.
 That is arithmetically correct and reads harshly. Progress 8 is what fixes it.
 
+## ⚠️ DO NOT DEMO THE NEW CITIES UNTIL PROGRESS 8 LANDS
+
+All nine UK/US regions are live on `/v1/score`. Measured on the deployed API:
+
+| Flagship borough | City | Score | quiet | afford |
+|---|---|---|---|---|
+| Newcastle upon Tyne | Tyne and Wear | **0.0** | 0.0 | 0.0 |
+| Leeds | West Yorkshire | **1.7** | 3.0 | 0.0 |
+| Birmingham | West Midlands | **3.7** | 0.0 | 8.2 |
+| Cardiff | Cardiff | **3.7** | 5.0 | 2.1 |
+
+**The flagship city of each region scores near the floor, and it is arithmetic,
+not data error.** With no Progress 8 there is one liveability input, so `live`
+is dropped. v3.3 already gives `growth` zero weight for the `balanced` persona.
+That leaves **quiet and afford alone** - and the biggest city in any region is
+usually its priciest borough, which takes `afford` 0.0 by definition of cohort
+min-max scaling. Newcastle is both the priciest in Tyne and Wear and close to
+NCL, so it takes 0.0 twice and lands at 0.0 overall.
+
+The responses are honest - `liveResolution` says "1/4 inputs measured" and the
+provenance says the city is thinner than Greater Manchester - but "Newcastle
+upon Tyne: 0.0 out of 10" is not a number to put in front of a prospect.
+
+**This is the single strongest argument for doing Progress 8 next.** It is one
+extraction, 2022/23 is terminal until 2026/27, and it restores the third
+component for all nine cities at once. Until then the new regions are
+API-reachable but not demo-ready, and they are correctly kept off the consumer
+site by `BACKEND_ONLY_CITIES`.
+
 ## The two blockers, both real
 
 ### 1. Aircraft bands — the last one, and the one that matters most
