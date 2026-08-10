@@ -91,7 +91,14 @@
 // top. data/manchester-boroughs.json is new in SHELL_ASSETS, and cache.addAll()
 // is atomic, so it must reach the origin BEFORE or WITH this file or the worker
 // stops installing entirely.
-const VERSION = 'v1.0.17';
+// v1.0.18 (2026-08-10): locator inset carried role="img" while holding ten
+// focusable role="button" markers. An img role is a LEAF, so the markers were
+// in the tab order and absent from the accessibility tree at the same time -
+// axe scores it `nested-interactive`, serious, and it failed the WCAG gate on
+// two pages. Changed to role="group". index.html is in SHELL_ASSETS, so this
+// bump is required by the rule at the top; without it an installed PWA keeps
+// serving the inaccessible shell indefinitely.
+const VERSION = 'v1.0.18';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

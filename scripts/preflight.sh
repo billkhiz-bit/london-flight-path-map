@@ -227,6 +227,20 @@ else
   # London and Manchester report markers=0 land=0.
   check "locator inset"                 node tests/locator-verify.mjs
   check "selector tiers do not overlap" node tests/selector-widths.mjs
+  # WCAG over the SOURCE tree, on its own server on 8923 with the CloudFront
+  # extensionless rewrite reproduced, so /pricing resolves the way the origin
+  # resolves it.
+  #
+  # The Playwright a11y spec above scans CloudFront, so until 2026-08-10 an
+  # accessibility regression could not be caught until it was already serving to
+  # users - which is exactly how the locator inset shipped `role="img"` around
+  # ten focusable markers and failed this gate the next morning, from
+  # production. The two are complementary: this one gates the deploy, that one
+  # catches a bad or partial deploy.
+  #
+  # Proven able to fail: flipping #locator-svg back to role="img" reds it with
+  # "[SERIOUS] nested-interactive" on `/` alone and exits 1.
+  check "WCAG source scan (9 pages)"    node tests/a11y-source.mjs
   kill "$smoke_pid" 2>/dev/null || true
 fi
 

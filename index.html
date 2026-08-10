@@ -2776,7 +2776,13 @@
              goes empty. Hidden outside the UK, since an England & Wales
              silhouette says nothing useful on a New York view. -->
         <div class="locator" id="locator" hidden>
-          <svg id="locator-svg" viewBox="0 0 130 168" role="img" aria-label="Coverage across England and Wales">
+          <!-- role="group", NOT role="img". An img role is a LEAF: assistive
+               tech announces the label and stops descending, so the ten city
+               markers inside - which carry tabindex="0" and role="button" -
+               were reachable by keyboard while being unreachable by a screen
+               reader. axe flags that as `nested-interactive` (serious). The
+               city-selector one line above already had the right pattern. -->
+          <svg id="locator-svg" viewBox="0 0 130 168" role="group" aria-label="Coverage across England and Wales">
             <path id="locator-land" d="" />
             <g id="locator-cities"></g>
           </svg>
