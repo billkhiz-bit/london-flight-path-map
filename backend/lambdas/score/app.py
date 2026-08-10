@@ -1236,6 +1236,44 @@ MANCHESTER_BOROUGHS = {
     'Wigan': {'impact': 'low', 'avgPrice': 194494, 'trend': 5.4, 'p8': -0.39, 'crimeRate': 91.0},
 }
 
+# West Midlands, the fourth city, 2026-08-10. Every field is generated, not
+# authored, and each has a script that re-derives it:
+#
+#   avgPrice / trend  REAL. HM Land Registry UK HPI, May 2026 vintage - the same
+#                     release London and Greater Manchester use, so the three
+#                     cohorts are on one vintage. `scripts/build_hpi_prices.py
+#                     --check --city westmidlands` is a blocking preflight stage.
+#
+#   crimeRate         REAL. ONS Crime in England and Wales, Police Force Area
+#                     tables, Table C4, year ending March 2026 - Community
+#                     Safety Partnership rows, which are local-authority level.
+#                     West Midlands Police is one force across all seven, and
+#                     all seven matched. Same release and period as London.
+#
+#   impact            ESTIMATE from Birmingham Airport's runway 15/33 geometry,
+#                     NOT DEFRA - `scripts/build_aircraft_bands.py`. The Round 4
+#                     raster has not been sampled here, so METHODOLOGY section 3's
+#                     dB Lden thresholds are not evidenced for this city and the
+#                     legend says ESTIMATED rather than naming a regulator.
+#
+#   schools (p8)      NOT SOURCED, for any city added after Greater Manchester -
+#   transport         there is no Progress 8 pipeline in this repo at all. With
+#   healthcare        crime as the only liveability input, `live` falls below its
+#                     two-input floor and is DROPPED, its weight redistributed
+#                     across quiet/afford/growth rather than filled with a 5.0
+#                     placeholder. context.liveResolution reports that per
+#                     response. This city is thinner than Greater Manchester and
+#                     says so.
+WESTMIDLANDS_BOROUGHS = {
+    'Birmingham': {'impact': 'severe', 'avgPrice': 232657, 'trend': -0.3, 'crimeRate': 114.2},
+    'Coventry': {'impact': 'low-moderate', 'avgPrice': 220410, 'trend': 1.3, 'crimeRate': 88.4},
+    'Dudley': {'impact': 'low-moderate', 'avgPrice': 229616, 'trend': 4.5, 'crimeRate': 74.5},
+    'Sandwell': {'impact': 'low-moderate', 'avgPrice': 209354, 'trend': 2.9, 'crimeRate': 95.9},
+    'Solihull': {'impact': 'severe', 'avgPrice': 336572, 'trend': 4.0, 'crimeRate': 79.5},
+    'Walsall': {'impact': 'moderate', 'avgPrice': 214032, 'trend': 1.6, 'crimeRate': 92.9},
+    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.0, 'crimeRate': 92.0},
+}
+
 CITIES = {
     'london': {
         'boroughs': LONDON_BOROUGHS,
@@ -1270,6 +1308,20 @@ CITIES = {
         # Existed at PREVIOUS_VINTAGE but had no quarterly refresh, so its
         # zero-change comparison is an honest measurement, not a placeholder.
         'hasHistory': True,
+    },
+    'westmidlands': {
+        'boroughs': WESTMIDLANDS_BOROUGHS,
+        'currency': 'GBP',
+        'name': 'West Midlands',
+        'country': 'United Kingdom',
+        'postcodeFormat': 'UK postcode (e.g. B1 1AA)',
+        # Same two blockers as Greater Manchester, stated the same way:
+        # resolve_query() gates UK postcode lookup to London, and load_nspl.py
+        # writes the borough attribute for London LADs alone.
+        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
+        # Omitted, so False: this city did not exist at PREVIOUS_VINTAGE and
+        # ?compare=previous must decline rather than report a fabricated zero.
+        # 'hasHistory': False,
     },
     'manchester': {
         'boroughs': MANCHESTER_BOROUGHS,
@@ -1902,6 +1954,49 @@ FLIGHT_PATHS_MANCHESTER = [
     },
 ]
 
+AIRPORTS_WESTMIDLANDS = [
+    {'code': 'BHX', 'name': 'Birmingham', 'lat': 52.4539, 'lon': -1.7480},
+]
+
+# Birmingham has ONE runway, 15/33, on a 148/328 alignment - verified against
+# OurAirports runway data rather than recalled, the same source that confirmed
+# Manchester's 051 heading matches the geometry already shipped here.
+#
+# GEOMETRY, NOT MEASUREMENT, exactly as Greater Manchester's is. Waypoints are
+# spaced ~4 km, finer than Manchester's ~5 km but still coarser than London's
+# ~1 km, so corridor distances are NOT comparable between cities until they are
+# resampled to a common interval.
+FLIGHT_PATHS_WESTMIDLANDS = [
+    {
+        'name': '33 Approach',
+        'airport': 'BHX',
+        'type': 'arrival',
+        'freq': 'high',
+        'coords': [
+            (52.6142, -1.9267),
+            (52.5845, -1.8936),
+            (52.5548, -1.8605),
+            (52.5251, -1.8273),
+            (52.4953, -1.7942),
+            (52.4539, -1.7480),
+        ],
+    },
+    {
+        'name': '15 Approach',
+        'airport': 'BHX',
+        'type': 'arrival',
+        'freq': 'medium',
+        'coords': [
+            (52.2943, -1.5703),
+            (52.3240, -1.6034),
+            (52.3538, -1.6365),
+            (52.3835, -1.6697),
+            (52.4132, -1.7028),
+            (52.4539, -1.7480),
+        ],
+    },
+]
+
 CITY_GEOMETRY = {
     'london': {
         'airports': AIRPORTS_LONDON,
@@ -1919,6 +2014,20 @@ CITY_GEOMETRY = {
         'heliports': [],
         'major_airport': 'JFK',
         'secondary_airport': 'LGA',
+    },
+    'westmidlands': {
+        'airports': AIRPORTS_WESTMIDLANDS,
+        'paths': FLIGHT_PATHS_WESTMIDLANDS,
+        # Explicit empty list rather than a missing key, per the NYC note above.
+        'heliports': [],
+        'major_airport': 'BHX',
+        # One airport, so no secondary. Note the airport term is DISTANCE-ONLY
+        # and calibrated on Heathrow: BHX handles a fraction of LHR's movements,
+        # so the ladder reaches further than this airport really does and the
+        # result is PESSIMISTIC. That is the survivable direction - the DEFRA
+        # raster incident is on record for erring the other way. Core Cities
+        # finding 7 covers the same overstatement for Manchester.
+        'secondary_airport': None,
     },
     'manchester': {
         'airports': AIRPORTS_MANCHESTER,
@@ -2923,6 +3032,20 @@ CITY_PROVENANCE = {
             'afford': 'Curated New York borough median sale prices (USD), borough cohort min-max scaling. NOT HM Land Registry, which holds England and Wales only.',
             'growth': 'Curated New York borough annualised price trend. NOT HM Land Registry HPI.',
             'live': 'NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS — none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.',
+        },
+    },
+    'westmidlands': {
+        'sources': [
+            'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
+            'Aviation noise context: ESTIMATED from Birmingham Airport runway geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
+            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+        ],
+        'breakdown': {
+            'quiet': 'PROVISIONAL ESTIMATE derived from Birmingham Airport (BHX) runway 15/33 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster, which has not been run for the West Midlands, so the dB Lden thresholds in METHODOLOGY section 3 are not evidenced for this city. The distance ladder is calibrated on Heathrow, which is several times Birmingham\'s size, so these bands reach further than the airport really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are spaced ~4 km against London\'s ~1 km, so corridor distances are not comparable between cities. Treat as indicative only.',
+            'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London and Greater Manchester, but scaled WITHIN the West Midlands cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. The West Midlands has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
+            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, all seven matched, same release and period as London. Schools, transport and healthcare are NOT sourced - there is no Progress 8 pipeline in this codebase for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is therefore DROPPED and its weight redistributed across quiet, afford and growth rather than filled with a placeholder. This city is thinner than Greater Manchester and the response says so rather than implying parity.',
         },
     },
     'manchester': {

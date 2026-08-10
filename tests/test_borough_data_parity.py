@@ -60,7 +60,18 @@ SHARED_FIELDS = ('crimeRate', 'schools', 'transport', 'healthcare', 'p8')
 # with no borough-extra entry and ALL TEN boroughs disagreed with the API by up
 # to 1.5 points, because the site could not see p8 or crimeRate and dropped
 # `live` entirely. The map looked correct throughout.
-BACKEND_ONLY_CITIES = frozenset()
+BACKEND_ONLY_CITIES = frozenset({
+    # West Midlands, added 2026-08-10. On /v1/score only, deliberately: it has
+    # no `data/borough-extra.json` entry because it has no liveability inputs to
+    # put there beyond crime, and no Progress 8 - this repo has no pipeline for
+    # p8 in ANY city. With one input the component is below its two-input floor,
+    # so the Lambda drops `live` and redistributes its weight. Putting the city
+    # on the site before that is settled is what this exemption exists to make
+    # a DECISION rather than an accident: the moment it gains a borough-extra
+    # entry, the assertion below fails until it is removed from here and
+    # actually compared.
+    'westmidlands',
+})
 
 
 def _site_cities():

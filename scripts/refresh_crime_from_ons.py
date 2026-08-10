@@ -76,6 +76,14 @@ SITE_ALIAS = {'Barking and Dagenham': 'Barking'}
 CITY_PFA = {
     'london': ('Metropolitan Police', 'London, City of', 'City of London'),
     'manchester': ('Greater Manchester',),
+    # West Midlands Police is one force covering exactly the seven metropolitan
+    # boroughs, so like Greater Manchester the CSP rows need no include-list.
+    # That does NOT generalise to the rest of the Core Cities: Northumbria
+    # covers Northumberland as well as Tyne and Wear, Avon and Somerset covers
+    # Somerset as well as Bristol, and Cardiff spans TWO forces (South Wales and
+    # Gwent). Those need an include-list rather than an exclude-list, which this
+    # script does not have yet.
+    'westmidlands': ('West Midlands',),
 }
 
 # CSP rows that are NOT boroughs. Greater Manchester publishes ELEVEN: the ten
@@ -85,6 +93,9 @@ CITY_PFA = {
 CSP_EXCLUDE = {
     'london': frozenset(),
     'manchester': frozenset({'Manchester Airport'}),
+    # West Midlands publishes exactly the seven boroughs plus the force-level
+    # 'Unassigned' row, which load_table already skips. Nothing else to drop.
+    'westmidlands': frozenset(),
 }
 
 
