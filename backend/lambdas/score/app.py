@@ -1265,51 +1265,51 @@ MANCHESTER_BOROUGHS = {
 #                     response. This city is thinner than Greater Manchester and
 #                     says so.
 WESTMIDLANDS_BOROUGHS = {
-    'Birmingham': {'impact': 'severe', 'avgPrice': 232657, 'trend': -0.3, 'crimeRate': 114.2},
-    'Coventry': {'impact': 'low-moderate', 'avgPrice': 220410, 'trend': 1.3, 'crimeRate': 88.4},
-    'Dudley': {'impact': 'low-moderate', 'avgPrice': 229616, 'trend': 4.5, 'crimeRate': 74.5},
-    'Sandwell': {'impact': 'low-moderate', 'avgPrice': 209354, 'trend': 2.9, 'crimeRate': 95.9},
-    'Solihull': {'impact': 'severe', 'avgPrice': 336572, 'trend': 4.0, 'crimeRate': 79.5},
-    'Walsall': {'impact': 'moderate', 'avgPrice': 214032, 'trend': 1.6, 'crimeRate': 92.9},
-    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.0, 'crimeRate': 92.0},
+    'Birmingham': {'impact': 'severe', 'avgPrice': 232657, 'trend': -0.3, 'crimeRate': 114.2, 'p8': 0.03},
+    'Coventry': {'impact': 'low-moderate', 'avgPrice': 220410, 'trend': 1.3, 'crimeRate': 88.4, 'p8': -0.05},
+    'Dudley': {'impact': 'low-moderate', 'avgPrice': 229616, 'trend': 4.5, 'crimeRate': 74.5, 'p8': -0.11},
+    'Sandwell': {'impact': 'low-moderate', 'avgPrice': 209354, 'trend': 2.9, 'crimeRate': 95.9, 'p8': -0.07},
+    'Solihull': {'impact': 'severe', 'avgPrice': 336572, 'trend': 4.0, 'crimeRate': 79.5, 'p8': -0.11},
+    'Walsall': {'impact': 'moderate', 'avgPrice': 214032, 'trend': 1.6, 'crimeRate': 92.9, 'p8': -0.2},
+    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.0, 'crimeRate': 92.0, 'p8': -0.02},
 }
 
 WESTYORKSHIRE_BOROUGHS = {
-    'Bradford': {'impact': 'moderate', 'avgPrice': 187452, 'trend': 5.6, 'crimeRate': 117.0},
-    'Calderdale': {'impact': 'low', 'avgPrice': 189509, 'trend': 5.1, 'crimeRate': 103.4},
-    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 4.1, 'crimeRate': 87.6},
-    'Leeds': {'impact': 'moderate-high', 'avgPrice': 246699, 'trend': 3.7, 'crimeRate': 114.6},
-    'Wakefield': {'impact': 'low', 'avgPrice': 197140, 'trend': 2.7, 'crimeRate': 105.8},
+    'Bradford': {'impact': 'moderate', 'avgPrice': 187452, 'trend': 5.6, 'crimeRate': 117.0, 'p8': -0.26},
+    'Calderdale': {'impact': 'low', 'avgPrice': 189509, 'trend': 5.1, 'crimeRate': 103.4, 'p8': -0.03},
+    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 4.1, 'crimeRate': 87.6, 'p8': 0.11},
+    'Leeds': {'impact': 'moderate-high', 'avgPrice': 246699, 'trend': 3.7, 'crimeRate': 114.6, 'p8': 0.12},
+    'Wakefield': {'impact': 'low', 'avgPrice': 197140, 'trend': 2.7, 'crimeRate': 105.8, 'p8': 0.12},
 }
 
 SOUTHYORKSHIRE_BOROUGHS = {
-    'Barnsley': {'impact': 'low', 'avgPrice': 173077, 'trend': 3.8, 'crimeRate': 95.1},
-    'Doncaster': {'impact': 'low', 'avgPrice': 172857, 'trend': 4.1, 'crimeRate': 117.3},
-    'Rotherham': {'impact': 'low', 'avgPrice': 192309, 'trend': 2.9, 'crimeRate': 93.1},
-    'Sheffield': {'impact': 'low', 'avgPrice': 220804, 'trend': 3.5, 'crimeRate': 96.9},
+    'Barnsley': {'impact': 'low', 'avgPrice': 173077, 'trend': 3.8, 'crimeRate': 95.1, 'p8': -0.16},
+    'Doncaster': {'impact': 'low', 'avgPrice': 172857, 'trend': 4.1, 'crimeRate': 117.3, 'p8': 0.01},
+    'Rotherham': {'impact': 'low', 'avgPrice': 192309, 'trend': 2.9, 'crimeRate': 93.1, 'p8': -0.15},
+    'Sheffield': {'impact': 'low', 'avgPrice': 220804, 'trend': 3.5, 'crimeRate': 96.9, 'p8': -0.09},
 }
 
 MERSEYSIDE_BOROUGHS = {
-    'Knowsley': {'impact': 'moderate', 'avgPrice': 188727, 'trend': 3.0, 'crimeRate': 81.8},
-    'Liverpool': {'impact': 'high', 'avgPrice': 184670, 'trend': 4.8, 'crimeRate': 124.1},
-    'St Helens': {'impact': 'low-moderate', 'avgPrice': 182923, 'trend': 8.8, 'crimeRate': 86.4},
-    'Sefton': {'impact': 'low', 'avgPrice': 222406, 'trend': 3.5, 'crimeRate': 75.5},
-    'Wirral': {'impact': 'moderate-high', 'avgPrice': 217407, 'trend': 6.5, 'crimeRate': 71.1},
+    'Knowsley': {'impact': 'moderate', 'avgPrice': 188727, 'trend': 3.0, 'crimeRate': 81.8, 'p8': -0.9},
+    'Liverpool': {'impact': 'high', 'avgPrice': 184670, 'trend': 4.8, 'crimeRate': 124.1, 'p8': -0.43},
+    'St Helens': {'impact': 'low-moderate', 'avgPrice': 182923, 'trend': 8.8, 'crimeRate': 86.4, 'p8': -0.35},
+    'Sefton': {'impact': 'low', 'avgPrice': 222406, 'trend': 3.5, 'crimeRate': 75.5, 'p8': -0.48},
+    'Wirral': {'impact': 'moderate-high', 'avgPrice': 217407, 'trend': 6.5, 'crimeRate': 71.1, 'p8': -0.11},
 }
 
 TYNEANDWEAR_BOROUGHS = {
-    'Gateshead': {'impact': 'moderate', 'avgPrice': 158765, 'trend': 6.3, 'crimeRate': 87.8},
-    'Newcastle upon Tyne': {'impact': 'severe', 'avgPrice': 207029, 'trend': 3.7, 'crimeRate': 107.4},
-    'North Tyneside': {'impact': 'moderate', 'avgPrice': 200392, 'trend': 3.8, 'crimeRate': 81.8},
-    'South Tyneside': {'impact': 'low-moderate', 'avgPrice': 159318, 'trend': 3.8, 'crimeRate': 96.6},
-    'Sunderland': {'impact': 'low-moderate', 'avgPrice': 145921, 'trend': 6.9, 'crimeRate': 93.6},
+    'Gateshead': {'impact': 'moderate', 'avgPrice': 158765, 'trend': 6.3, 'crimeRate': 87.8, 'p8': -0.11},
+    'Newcastle upon Tyne': {'impact': 'severe', 'avgPrice': 207029, 'trend': 3.7, 'crimeRate': 107.4, 'p8': -0.4},
+    'North Tyneside': {'impact': 'moderate', 'avgPrice': 200392, 'trend': 3.8, 'crimeRate': 81.8, 'p8': -0.09},
+    'South Tyneside': {'impact': 'low-moderate', 'avgPrice': 159318, 'trend': 3.8, 'crimeRate': 96.6, 'p8': -0.27},
+    'Sunderland': {'impact': 'low-moderate', 'avgPrice': 145921, 'trend': 6.9, 'crimeRate': 93.6, 'p8': -0.5},
 }
 
 BRISTOL_BOROUGHS = {
-    'City of Bristol': {'impact': 'moderate', 'avgPrice': 354924, 'trend': 2.2, 'crimeRate': 131.0},
-    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 406169, 'trend': 0.9, 'crimeRate': 79.0},
-    'North Somerset': {'impact': 'severe', 'avgPrice': 312303, 'trend': 6.4, 'crimeRate': 81.8},
-    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.1, 'crimeRate': 73.8},
+    'City of Bristol': {'impact': 'moderate', 'avgPrice': 354924, 'trend': 2.2, 'crimeRate': 131.0, 'p8': -0.03},
+    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 406169, 'trend': 0.9, 'crimeRate': 79.0, 'p8': 0.26},
+    'North Somerset': {'impact': 'severe', 'avgPrice': 312303, 'trend': 6.4, 'crimeRate': 81.8, 'p8': -0.02},
+    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.1, 'crimeRate': 73.8, 'p8': 0.02},
 }
 
 CARDIFF_BOROUGHS = {
@@ -1337,7 +1337,7 @@ CARDIFF_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low-moderate', 'avgPrice': 190806, 'trend': -0.7, 'crimeRate': 124.9},
+    'City of Nottingham': {'impact': 'low-moderate', 'avgPrice': 190806, 'trend': -0.7, 'crimeRate': 124.9, 'p8': -0.23},
     'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253567, 'trend': 1.9},
     'Gedling': {'impact': 'low', 'avgPrice': 246120, 'trend': 3.1},
     'Rushcliffe': {'impact': 'low-moderate', 'avgPrice': 338301, 'trend': 3.5},
