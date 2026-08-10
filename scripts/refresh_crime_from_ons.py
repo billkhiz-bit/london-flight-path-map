@@ -84,6 +84,21 @@ CITY_PFA = {
     # Gwent). Those need an include-list rather than an exclude-list, which this
     # script does not have yet.
     'westmidlands': ('West Midlands',),
+    'westyorkshire': ('West Yorkshire',),
+    'southyorkshire': ('South Yorkshire',),
+    'merseyside': ('Merseyside',),
+    'tyneandwear': ('Northumbria',),
+    'bristol': ('Avon and Somerset',),
+    # Cardiff is the only city here that spans two forces. CITY_PFA already
+    # takes a tuple, so this needs no new machinery - but the include-list is
+    # what stops it collecting the whole of South Wales and Gwent.
+    'cardiff': ('South Wales', 'Gwent'),
+    # Nottingham is NOT here on purpose. ONS publishes `Nottingham` and
+    # `South Nottinghamshire`, and Broxtowe, Gedling and Rushcliffe are inside
+    # that one combined row rather than published separately. Spreading a single
+    # rate across three boroughs would render one measurement as three, which is
+    # the defect class this whole file exists to prevent. Decide it explicitly
+    # before adding it.
 }
 
 # CSP rows that are NOT boroughs. Greater Manchester publishes ELEVEN: the ten
@@ -96,6 +111,29 @@ CSP_EXCLUDE = {
     # West Midlands publishes exactly the seven boroughs plus the force-level
     # 'Unassigned' row, which load_table already skips. Nothing else to drop.
     'westmidlands': frozenset(),
+    'westyorkshire': frozenset(),
+    'southyorkshire': frozenset(),
+    'merseyside': frozenset(),
+}
+
+# Cities whose police force covers MORE than the city region. Only these need an
+# include-list; a metropolitan county's force is the county.
+CSP_INCLUDE = {
+    'tyneandwear': frozenset({
+        'Gateshead', 'Newcastle upon Tyne', 'North Tyneside', 'South Tyneside', 'Sunderland',
+    }),  # Northumbria also covers Northumberland
+    'bristol': frozenset({
+        'Bath and North East Somerset', 'Bristol, City of', 'North Somerset', 'South Gloucestershire',
+    }),  # Avon and Somerset also covers Somerset
+    'cardiff': frozenset({
+        'Cardiff', 'Vale of Glamorgan', 'Newport', 'Caerphilly',
+    }),  # spans TWO forces: South Wales and Gwent
+}
+
+# ONS CSP name -> the name the registry holds.
+CSP_RENAME = {
+    'bristol': {'Bristol, City of': 'City of Bristol'},
+    'merseyside': {'St. Helens': 'St Helens'},
 }
 
 
@@ -170,8 +208,22 @@ def load_table(city='london'):
         if not r[3]:
             continue
         name = str(r[3]).strip()
-        if 'Unassigned' in name or name in CSP_EXCLUDE[city]:
+        if 'Unassigned' in name or name in CSP_EXCLUDE.get(city, frozenset()):
             continue
+        # INCLUDE-list, for city-regions whose police force is larger than the
+        # city. Metropolitan counties need none - West Midlands Police covers
+        # exactly the seven boroughs - but Northumbria also covers
+        # Northumberland, Avon and Somerset also covers Somerset, and
+        # Nottinghamshire covers the whole county. Inverting to an exclude-list
+        # there would mean naming every authority we do NOT want and silently
+        # gaining a borough whenever ONS adds a CSP row.
+        allowed = CSP_INCLUDE.get(city)
+        if allowed is not None and name not in allowed:
+            continue
+        # ONS spells some of these differently from the registry. Mapped rather
+        # than fuzzy-matched: a fuzzy match would also pair a genuinely missing
+        # borough with a similar one and report success.
+        name = CSP_RENAME.get(city, {}).get(name, name)
         rec = {hdr[j]: r[j] for j in range(len(hdr)) if hdr[j]}
         out[name] = rec
     return out

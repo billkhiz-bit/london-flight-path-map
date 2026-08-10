@@ -4,10 +4,11 @@ Why this exists
 ---------------
 Both fields were entered by hand for every city, with no script and no cached
 dataset, so nothing in the repo could re-derive them and nothing could notice
-when one of them drifted. That is not hypothetical: as of 2026-08-10 London's
-`avgPrice` matches HPI 2026-05 for all 33 boroughs while its `trend` matches
-**no HPI month at all**, and Greater Manchester's matches 2026-05 for all ten.
-Two cities, one provenance sentence in CITY_PROVENANCE, two different sources.
+when one of them drifted. That is not hypothetical. When this script was first
+run on 2026-08-10 it found London's `avgPrice` matching HPI 2026-05 for all 33
+boroughs while its `trend` matched **no HPI month at all** - two cities carrying
+one provenance sentence from two different sources. The trends were corrected in
+the same commit that added this, and `--check` has guarded them since.
 
 WHY ONS CODES AND NOT NAMES
 ---------------------------
@@ -185,7 +186,17 @@ CITY_LADS = {
 
 # Cities the score Lambda actually holds, so --check has something to compare
 # against. The rest are --emit only until they are added.
-IN_REGISTRY = ("london", "manchester")
+#
+# DERIVED, not listed. It was a hardcoded ("london", "manchester") pair, and
+# eight cities landed in the Lambda while the blocking `prices == HM Land
+# Registry` stage went on checking two of them - a gate quietly covering a fifth
+# of what it claimed. Reading the Lambda means a city cannot join the registry
+# without joining the check.
+def _in_registry():
+    try:
+        return tuple(c for c in registry_cities() if c in CITY_LADS)
+    except Exception:  # noqa: BLE001 - fall back rather than break --emit
+        return ("london", "manchester")
 
 # Registry prices are rounded to the nearest GBP 1,000 for London and exact for
 # Greater Manchester, so an equality test would report drift on 33 boroughs that
@@ -232,6 +243,22 @@ def load_hpi(vintage: str) -> dict[str, dict]:
     return out
 
 
+def _load_score_app():
+    """The score Lambda, compiled from source text - see registry_boroughs."""
+    mod = types.ModuleType("score_app_hpi_check")
+    mod.__file__ = str(SCORE_APP)
+    exec(  # noqa: S102 - first-party file, maintainer-run script, never deployed
+        compile(SCORE_APP.read_text(encoding="utf-8"), str(SCORE_APP), "exec"),
+        mod.__dict__,
+    )
+    return mod
+
+
+def registry_cities():
+    """Every city the score Lambda holds."""
+    return list(_load_score_app().CITIES)
+
+
 def registry_boroughs(city: str) -> dict[str, dict]:
     """What the score Lambda holds for `city`.
 
@@ -241,13 +268,7 @@ def registry_boroughs(city: str) -> dict[str, dict]:
     same-length edit restored within one clock second lets Python run bytecode
     compiled from code that no longer exists. Reading the text has no cache.
     """
-    mod = types.ModuleType("score_app_hpi_check")
-    mod.__file__ = str(SCORE_APP)
-    exec(  # noqa: S102 - first-party file, maintainer-run script, never deployed
-        compile(SCORE_APP.read_text(encoding="utf-8"), str(SCORE_APP), "exec"),
-        mod.__dict__,
-    )
-    return mod.CITIES[city]["boroughs"]
+    return _load_score_app().CITIES[city]["boroughs"]
 
 
 def check(city: str, hpi: dict[str, dict], vintage: str) -> int:
@@ -433,9 +454,10 @@ def main() -> int:
             ap.error("--emit needs --city")
         return 1 if emit(args.city, hpi) else 0
 
-    cities = IN_REGISTRY if args.all else (args.city,)
+    in_registry = _in_registry()
+    cities = in_registry if args.all else (args.city,)
     for city in cities:
-        if city not in IN_REGISTRY:
+        if city not in in_registry:
             print(f"{city} is not in the score Lambda yet - use --emit.", file=sys.stderr)
             return 2
     bad = sum(check(city, hpi, args.vintage) for city in cities)

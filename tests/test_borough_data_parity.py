@@ -71,6 +71,16 @@ BACKEND_ONLY_CITIES = frozenset({
     # entry, the assertion below fails until it is removed from here and
     # actually compared.
     'westmidlands',
+    # The other seven Core Cities regions, added the same day and for the same
+    # reason. Every one of them has prices, crime and an estimated aircraft band
+    # and NO Progress 8, so each has a single liveability input and `live` is
+    # dropped. They go on /v1/score now and on the consumer site once p8 exists.
+    'westyorkshire',
+    'southyorkshire',
+    'merseyside',
+    'tyneandwear',
+    'bristol',
+    'cardiff',
 })
 
 
