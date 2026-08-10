@@ -3818,7 +3818,8 @@
       const MANCHESTER_AREA_MAP = {};
       const MANCHESTER_NEIGHBOURHOOD_DETAIL = {};
       const MANCHESTER_STATIONS = [];
-      let MANCHESTER_BOROUGH_DATA = {};
+      // No MANCHESTER_BOROUGH_DATA cache here any more: every city's scored
+      // table lives in the one _scoredBoroughs map keyed by city id.
 
       // Greater Manchester neighbourhoods. Unlike London's and NYC's tables,
       // which carry a curated median price and a hand-assigned crime modifier,
@@ -5364,7 +5365,7 @@
           legendFlood: 'FLOOD ZONE',
           legendAq: 'POOR AIR',
           autoLabels: false,
-          boroughData: () => BOROUGH_DATA,
+          boroughData: () => scoredBoroughs('london'),
           boroughRaw: () => BOROUGH_DATA_RAW,
           boroughExtra: () => BOROUGH_EXTRA,
           areaMap: () => AREA_MAP,
@@ -5417,7 +5418,7 @@
           legendAq: 'POOR AIR',
           // NYC boundaries carry no built-in borough labels, so turn them on.
           autoLabels: true,
-          boroughData: () => NYC_BOROUGH_DATA,
+          boroughData: () => scoredBoroughs('nyc'),
           boroughRaw: () => NYC_BOROUGH_DATA_RAW,
           boroughExtra: () => NYC_BOROUGH_EXTRA,
           areaMap: () => NYC_AREA_MAP,
@@ -5477,14 +5478,7 @@
           legendAq: 'NO DATA',
           // These boundaries carry no built-in labels, same as New York.
           autoLabels: true,
-          // Scored on first use, not at load: an unvisited city should cost
-          // nothing, and MANCHESTER_BOROUGH_DATA_RAW is declared above.
-          boroughData: () => {
-            if (!Object.keys(MANCHESTER_BOROUGH_DATA).length) {
-              MANCHESTER_BOROUGH_DATA = calcScores(MANCHESTER_BOROUGH_DATA_RAW, 'manchester');
-            }
-            return MANCHESTER_BOROUGH_DATA;
-          },
+          boroughData: () => scoredBoroughs('manchester'),
           boroughRaw: () => MANCHESTER_BOROUGH_DATA_RAW,
           boroughExtra: () => MANCHESTER_BOROUGH_EXTRA,
           areaMap: () => MANCHESTER_AREA_MAP,
@@ -5674,16 +5668,36 @@
         return result;
       }
 
+      // Scored borough data, computed on FIRST READ and cached per city id.
+      //
+      // Every city goes through here, which is the point. Until 2026-08-10
+      // London and New York were scored eagerly at parse time into two
+      // module-level objects while Greater Manchester scored lazily into a
+      // third, so the two shapes had to be kept straight by hand and
+      // recalcAllScores() needed a DIFFERENT line for the third city than for
+      // the first two. Getting that distinction right once per city does not
+      // scale to the eight Core Cities regions still to come, and getting it
+      // wrong is silent: the site scores from an empty object while the API
+      // scores properly, which is how all ten Manchester boroughs came to
+      // disagree with /v1/score by up to 1.5 points with nothing raised.
+      //
+      // Lazy for everyone also means an unvisited city costs nothing - at
+      // eleven cities the eager path scored every borough twice over (once at
+      // load, once after borough-extra.json hydrated) for cities nobody opened.
+      const _scoredBoroughs = {};
+
+      function scoredBoroughs(cityId) {
+        if (!_scoredBoroughs[cityId]) {
+          _scoredBoroughs[cityId] = calcScores(cityOf(cityId).boroughRaw(), cityId);
+        }
+        return _scoredBoroughs[cityId];
+      }
+
+      // INVALIDATES, it does not recompute. Each city rescores on its next read
+      // through the registry thunk, so this has no per-city line to forget and
+      // adding a city needs no change here at all.
       function recalcAllScores() {
-        Object.assign(BOROUGH_DATA, calcScores(BOROUGH_DATA_RAW, 'london'));
-        Object.assign(NYC_BOROUGH_DATA, calcScores(NYC_BOROUGH_DATA_RAW, 'nyc'));
-        // Greater Manchester scores LAZILY on first use and caches the result,
-        // so re-scoring it means clearing that cache rather than assigning over
-        // it - its registry thunk rebuilds on the next read. Without this the
-        // hydrated crime and Progress 8 figures would land in
-        // MANCHESTER_BOROUGH_EXTRA and never reach a score, which looks
-        // identical to not having loaded them at all.
-        MANCHESTER_BOROUGH_DATA = {};
+        Object.keys(_scoredBoroughs).forEach((id) => delete _scoredBoroughs[id]);
       }
 
       // F-Perf-10: lazy-load BOROUGH_EXTRA + NYC_BOROUGH_EXTRA from
@@ -5775,16 +5789,24 @@
           const resp = await fetch('/data/borough-extra.json', { cache: 'no-cache' });
           if (!resp.ok) throw new Error('borough-extra HTTP ' + resp.status);
           const data = await resp.json();
-          Object.assign(BOROUGH_EXTRA, data.london || {});
-          Object.assign(NYC_BOROUGH_EXTRA, data.nyc || {});
-          // A THIRD `Object.assign` had to be remembered here for a third city,
-          // and forgetting it is silent: Greater Manchester rendered with an
-          // empty extra, so `live` fell below its floor and was dropped, and
-          // all ten boroughs disagreed with /v1/score by up to 1.5 points with
-          // nothing raised. tests/test_borough_data_parity.py compares the
-          // INPUTS and would not have caught it either - both holders had the
-          // data, the site just never loaded it into the object it scores from.
-          Object.assign(MANCHESTER_BOROUGH_EXTRA, data.manchester || {});
+          // Driven by the registry, not by a list of names. This was three
+          // hand-written Object.assign calls, one per city, and a fourth had to
+          // be REMEMBERED for each new city - forgetting it is silent, because
+          // the city then renders from an empty extra: `live` falls below its
+          // floor and is dropped, and every borough disagrees with /v1/score
+          // while the map still looks correct. That is exactly what happened to
+          // all ten Manchester boroughs, by up to 1.5 points, with nothing
+          // raised. tests/test_borough_data_parity.py could not have caught it
+          // either - it compares the INPUTS, and both holders had the data; the
+          // site simply never loaded it into the object it scores from.
+          //
+          // The JSON is keyed by city id, so the registry's own key set is the
+          // correct enumeration. A city present in CITY_DATA but absent from
+          // the file gets {} - the same handled state a part-sourced city
+          // already has - rather than a missing assign nobody notices.
+          Object.keys(CITY_DATA).forEach((id) => {
+            Object.assign(cityOf(id).boroughExtra(), data[id] || {});
+          });
           _boroughExtraHydrated = true;
           // Re-score now that the real crime/schools/transport/healthcare
           // attributes are available.
@@ -6051,8 +6073,10 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // BOROUGH_DATA and NYC_BOROUGH_DATA are initialized after BOROUGH_EXTRA is defined below.
-      let BOROUGH_DATA, NYC_BOROUGH_DATA;
+      // BOROUGH_DATA / NYC_BOROUGH_DATA used to be declared here and assigned
+      // further down, once BOROUGH_EXTRA existed. Scoring is lazy now, so the
+      // ordering problem that split declaration from assignment is gone with
+      // them - see scoredBoroughs().
 
       // Borough-level crime, schools, flood risk, air quality, transport data
       // F-Perf-10: BOROUGH_EXTRA (~503 lines) lazy-loaded from /data/borough-extra.json. See comment at NYC_BOROUGH_EXTRA above.
@@ -6101,10 +6125,6 @@
         Queens: 'moderate',
         'Staten Island': 'low',
       };
-
-      // Now that BOROUGH_EXTRA and NYC_BOROUGH_EXTRA are defined, compute scores
-      BOROUGH_DATA = calcScores(BOROUGH_DATA_RAW, 'london');
-      NYC_BOROUGH_DATA = calcScores(NYC_BOROUGH_DATA_RAW, 'nyc');
 
       const STATIONS = [
         { name: "King's Cross", coords: [-0.1238, 51.5308], zone: 1, type: 'hub' },
@@ -6395,7 +6415,11 @@
           try {
             const data = await d3.json(url);
             if (data && data.features) {
-              const londonNames = Object.keys(BOROUGH_DATA);
+              // The RAW table, not the scored one: this needs borough NAMES to
+              // match GeoJSON features against, and reading the scored object
+              // here would force London to score during boundary loading for
+              // no reason. Same keys either way.
+              const londonNames = Object.keys(BOROUGH_DATA_RAW);
               let features = data.features;
               // The local file is already trimmed (33 < 40), so this only runs
               // on the remote fallback.
@@ -7486,8 +7510,16 @@
         input.removeAttribute('aria-activedescendant');
         const inputVal = input.value.toLowerCase().trim();
 
-        // Check for borough name matches (city-aware)
-        const activeBoroughs = currentCity === 'nyc' ? getActiveBoroughData() : BOROUGH_DATA;
+        // Check for borough name matches (city-aware).
+        //
+        // This line CLAIMED to be city-aware while testing only for New York,
+        // so every other city read LONDON's table: in Greater Manchester the
+        // borough suggestions were London boroughs - type "Bre" and it offered
+        // Brent - and no Manchester borough could be suggested at all. A
+        // survivor of the ten city ternaries, and the same fail-open shape the
+        // registry exists to remove, since `boroughData` for london IS this
+        // object. Deleting the ternary is the whole fix.
+        const activeBoroughs = getActiveBoroughData();
         const activeAreas = cityOf(currentCity).areaMap();
         const boroughMatches = Object.keys(activeBoroughs)
           .filter((b) => b.toLowerCase().includes(inputVal))

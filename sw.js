@@ -98,7 +98,12 @@
 // two pages. Changed to role="group". index.html is in SHELL_ASSETS, so this
 // bump is required by the rule at the top; without it an installed PWA keeps
 // serving the inaccessible shell indefinitely.
-const VERSION = 'v1.0.18';
+// v1.0.19 (2026-08-10): scoring went lazy and registry-driven - recalcAllScores
+// and hydrateBoroughExtra no longer name any city. index.html changed again,
+// and v1.0.18 has already SHIPPED, so a returning visitor holds that shell
+// precached; without this bump they would keep the pre-refactor page, including
+// the autocomplete that offers London boroughs while you are in Manchester.
+const VERSION = 'v1.0.19';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
