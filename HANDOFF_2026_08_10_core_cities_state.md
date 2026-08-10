@@ -35,6 +35,37 @@ half of any borough table.
 **Seven of eight are data-complete on prices and crime.** Boundaries exist for
 all eight, are checked in, and are un-ignored in `.gitignore`.
 
+## West Midlands is LIVE on /v1/score (backend-only)
+
+Deployed and verified from the endpoint: `/v1/regions` returns four cities and
+Birmingham scores 3.7. It is **backend-only and declared as such** in
+`BACKEND_ONLY_CITIES`, because it has no `data/borough-extra.json` entry.
+
+`scripts/build_aircraft_bands.py` now exists and covers all eight regions -
+`--city <id>` prints a paste-ready `impact` block. The remaining seven need only
+that command plus the mechanical checklist below.
+
+**The band rule was wrong first time and the fix matters.** Taking
+`min(distance-to-airport, distance-to-corridor)` rated Walsall `severe` at
+21.9 km from Birmingham on the strength of sitting 3.2 km off the extended
+centreline. Aircraft that far out are ~6,000 ft up. Being under the approach now
+makes a place one band worse, not equivalent to the runway. If you regenerate
+bands for another city, sanity-check the far-field boroughs against that.
+
+### Why it is not on the consumer site
+
+There is **no Progress 8 pipeline in this repo for any city**, so West Midlands
+has crime as its only liveability input. That is below the two-input floor, so
+`live` is dropped and its weight redistributed, and `liveResolution` reports
+"1/4 inputs measured, too few to publish". Putting it on the site in that state
+is exactly what made all ten Manchester boroughs disagree with the API.
+
+Consequence worth knowing before outreach: for the default `balanced` persona
+the city effectively scores on **quiet and afford alone** (v3.3 leaves growth
+unweighted), so its scores are more extreme than London's - Solihull lands at
+0.0 by being both the priciest borough in its cohort and under the approach.
+That is arithmetically correct and reads harshly. Progress 8 is what fixes it.
+
 ## The two blockers, both real
 
 ### 1. Aircraft bands — the last one, and the one that matters most
