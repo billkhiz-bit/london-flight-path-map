@@ -1320,6 +1320,29 @@ CARDIFF_BOROUGHS = {
 }
 
 
+# Nottingham (Greater Nottingham: the city plus the three boroughs of its
+# conurbation, so the cohort is not a single authority scoring afford 5.0 flat).
+#
+# crimeRate is present for the CITY ONLY, and its absence elsewhere is the
+# honest reading rather than a gap to fill. ONS Table C4 publishes `Nottingham`
+# and `South Nottinghamshire`; Broxtowe, Gedling and Rushcliffe sit inside that
+# one combined partnership row and are not published separately. Spreading the
+# combined rate across the three would render ONE measurement as THREE, which is
+# the defect class the crime checker exists to prevent.
+#
+# It costs nothing today: get_live_score returns None below two inputs, and with
+# no Progress 8 pipeline every city added after Greater Manchester has crime as
+# its ONLY liveability input, so `live` is dropped for all of them regardless.
+# When p8 lands, these three need a decision before `live` can be published
+# here - the omission is what forces that rather than letting a shared rate
+# become three measurements by default.
+NOTTINGHAM_BOROUGHS = {
+    'City of Nottingham': {'impact': 'low-moderate', 'avgPrice': 190806, 'trend': -0.7, 'crimeRate': 124.9},
+    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253567, 'trend': 1.9},
+    'Gedling': {'impact': 'low', 'avgPrice': 246120, 'trend': 3.1},
+    'Rushcliffe': {'impact': 'low-moderate', 'avgPrice': 338301, 'trend': 3.5},
+}
+
 CITIES = {
     'london': {
         'boroughs': LONDON_BOROUGHS,
@@ -1428,6 +1451,14 @@ CITIES = {
         'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
+    },
+    'nottingham': {
+        'boroughs': NOTTINGHAM_BOROUGHS,
+        'currency': 'GBP',
+        'name': 'Nottingham',
+        'country': 'United Kingdom',
+        'postcodeFormat': 'UK postcode (e.g. NG1 1AA)',
+        'postcodeResolver': lambda: 'borough name only - postcode resolution is London-only',
     },
     'manchester': {
         'boroughs': MANCHESTER_BOROUGHS,
@@ -2284,6 +2315,43 @@ FLIGHT_PATHS_CARDIFF = [
 ]
 
 
+AIRPORTS_NOTTINGHAM = [
+    {'code': 'EMA', 'name': 'East Midlands', 'lat': 52.8311, 'lon': -1.3281},
+]
+
+# East Midlands runway 09/27, from OurAirports. Geometry, not measurement.
+# The airport sits in Leicestershire, outside the city region.
+FLIGHT_PATHS_NOTTINGHAM = [
+    {
+        'name': '27 Approach',
+        'airport': 'EMA',
+        'type': 'arrival',
+        'freq': 'high',
+        'coords': [
+            (52.8251, -1.6468),
+            (52.8262, -1.5874),
+            (52.8273, -1.5279),
+            (52.8284, -1.4685),
+            (52.8295, -1.4090),
+            (52.8311, -1.3281),
+        ],
+    },
+    {
+        'name': '09 Approach',
+        'airport': 'EMA',
+        'type': 'arrival',
+        'freq': 'medium',
+        'coords': [
+            (52.8370, -1.0094),
+            (52.8358, -1.0689),
+            (52.8347, -1.1283),
+            (52.8336, -1.1878),
+            (52.8325, -1.2472),
+            (52.8311, -1.3281),
+        ],
+    },
+]
+
 CITY_GEOMETRY = {
     'london': {
         'airports': AIRPORTS_LONDON,
@@ -2375,6 +2443,17 @@ CITY_GEOMETRY = {
         # Distance ladder calibrated on Heathrow, so it reaches further than
         # this airport does: the estimate is PESSIMISTIC. See the West Midlands
         # note above and Core Cities finding 7.
+        'secondary_airport': None,
+    },
+    'nottingham': {
+        'airports': AIRPORTS_NOTTINGHAM,
+        'paths': FLIGHT_PATHS_NOTTINGHAM,
+        'heliports': [],
+        # East Midlands Airport is OUTSIDE the city region, in Leicestershire,
+        # which is why no Nottingham borough is nearer than 16 km and none is
+        # banded above low-moderate. Named here so a future reader does not
+        # "correct" an airport that looks misplaced.
+        'major_airport': 'EMA',
         'secondary_airport': None,
     },
     'manchester': {
@@ -3478,6 +3557,20 @@ CITY_PROVENANCE = {
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from South Wales Police and Gwent Police, filtered to the four partnerships of the city region, all 4 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+        },
+    },
+    'nottingham': {
+        'sources': [
+            'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
+            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, CITY OF NOTTINGHAM ONLY, Open Government Licence v3.0',
+            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+        ],
+        'breakdown': {
+            'quiet': "PROVISIONAL ESTIMATE derived from East Midlands Airport (EMA) runway 09/27 alignment and its extended approach centreline. The airport lies OUTSIDE the city region, in Leicestershire, so no borough here is nearer than 16 km and none is banded above low-moderate. NOT sampled from the DEFRA Round 4 raster, so the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The ladder is calibrated on Heathrow and is therefore PESSIMISTIC rather than optimistic. Indicative only.",
+            'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling across Greater Nottingham (the city plus Broxtowe, Gedling and Rushcliffe). Scaled WITHIN this cohort, so figures are not comparable across cities; compare context.avgPriceGbp directly.',
+            'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. No previous vintage exists for this city, so ?compare=previous declines rather than reporting zero change.',
+            'live': 'UNAVAILABLE, and doubly so. Crime is published by ONS for the CITY OF NOTTINGHAM ONLY: Table C4 carries `Nottingham` and `South Nottinghamshire`, and Broxtowe, Gedling and Rushcliffe sit inside that one combined partnership row rather than being published separately. Their crimeRate is therefore ABSENT rather than filled with the combined figure, which would render one measurement as three. Schools, transport and healthcare are not sourced for any city added after Greater Manchester. With at most one input, `live` falls below its two-input floor and is DROPPED with its weight redistributed. The thinnest city in the registry, and the response says so.',
         },
     },
     'manchester': {

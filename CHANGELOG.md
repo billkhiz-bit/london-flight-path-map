@@ -37,7 +37,7 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
   the liveability inputs only. `--write` refuses to touch either file unless
   every borough resolves, because a half-applied correction is exactly the
   site/API divergence this repo has shipped three times.
-- Covers all eleven cities and 91 authorities, so the eight Core Cities regions
+- Covers all eleven cities and 81 authorities, so the eight Core Cities regions
   still to come inherit one source at one vintage.
 
 ### 2026-08-09 (night) - Country tier and locator inset, recovered from the spike branch

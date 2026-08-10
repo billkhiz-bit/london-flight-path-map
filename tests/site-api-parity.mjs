@@ -33,8 +33,29 @@ const SITE = process.env.SMOKE_BASE || 'https://d1oe4ftwutjpf.cloudfront.net';
 const API =
   process.env.SKY_SCORE_API ||
   'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
-// Same public demo key scripts/check_score_sanity.py defaults to.
-const KEY = process.env.SKY_SCORE_API_KEY || 'avPkPw4yug7JbZ9XSEyuZsH8F79n7h12qeUoTXDe';
+// NO hardcoded fallback, and the missing one is deliberate.
+//
+// This used to default to the public demo key, with a comment saying
+// check_score_sanity.py did the same - that script has since dropped its
+// fallback to None and this did not follow. The demo key is now attached to NO
+// usage plan, and API Gateway answers a valid key with no plan by returning
+// **429**, which is indistinguishable from quota exhaustion and has no quota to
+// inspect. Running this standalone therefore failed on all six probes, in
+// 0.147s, and read as rate limiting.
+//
+// preflight.sh sources .env with `set -a`, so the gate always has a real key.
+// Running it by hand needs the same: `set -a && source .env && set +a`.
+const KEY = process.env.SKY_SCORE_API_KEY;
+if (!KEY) {
+  // Fail FAST and say why. Without this the run still goes red, but via "0 of 6
+  // probes returned", which reads as an API problem rather than a missing
+  // variable - a red that does not mean what it says is only marginally better
+  // than a green that does not.
+  console.error('SKY_SCORE_API_KEY is not set.');
+  console.error('preflight.sh sources .env itself; running this by hand needs:');
+  console.error('  set -a && source .env && set +a && node tests/site-api-parity.mjs');
+  process.exit(2);
+}
 
 // Chosen for coverage of the failure modes, not at random:
 //   SW11 1AA  the postcode the double-rounding defect was found on

@@ -52,9 +52,9 @@ SHARED_FIELDS = ('crimeRate', 'schools', 'transport', 'healthcare', 'p8')
 # city on the site and forgot its data" is exactly what this file exists to
 # catch, and inferring it would make the second case look like the first.
 #
-# EMPTY today: Greater Manchester was the only entry, and it gained its
-# borough-extra data when the consumer site started offering it. The set stays
-# because the next city will land backend-first, exactly as that one did.
+# EIGHT entries as of 2026-08-10, all of the Core Cities regions. Greater
+# Manchester was once the only entry and left when the consumer site started
+# offering it, which is the shape every one of these should follow.
 #
 # It earned its place first: a preview branch put Greater Manchester on the site
 # with no borough-extra entry and ALL TEN boroughs disagreed with the API by up
@@ -81,6 +81,7 @@ BACKEND_ONLY_CITIES = frozenset({
     'tyneandwear',
     'bristol',
     'cardiff',
+    'nottingham',
 })
 
 
