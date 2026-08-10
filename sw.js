@@ -107,7 +107,13 @@
 // and v1.0.18 has already SHIPPED, so a returning visitor holds that shell
 // precached; without this bump they would keep the pre-refactor page, including
 // the autocomplete that offers London boroughs while you are in Manchester.
-const VERSION = 'v1.0.19';
+// v1.0.20 (2026-08-10): the locator inset is no longer UK-only - New York draws
+// the contiguous United States instead of hiding the panel. index.html changed
+// and v1.0.19 has already shipped, so without this bump a returning visitor
+// keeps the shell that has no USA silhouette in it. data/usa-locator.json is
+// deliberately NOT in SHELL_ASSETS (a decoration must not be able to stop an
+// atomic cache.addAll()), so it needs `make data-deploy`, not this bump.
+const VERSION = 'v1.0.20';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

@@ -1,0 +1,140 @@
+# Handoff, 2026-08-10 — Core Cities: what is built, what is blocked, and how far this scales
+
+Supersedes the data-sourcing half of `HANDOFF_2026_08_09_core_cities_next.md`.
+Read that one for the traps; read this one for the current state.
+
+## What shipped today
+
+| Change | Commit |
+|---|---|
+| Locator a11y regression fixed; new WCAG source gate | `9d47ebd` |
+| Registry-driven lazy scoring; Manchester autocomplete bug | `37e06ea` |
+| `build_hpi_prices.py` — prices re-derivable, ONS-code keyed | `d86e956` |
+| London's `trend` corrected to HPI; new blocking gate | `c5b237c` |
+| USA locator + all eight regions' boundaries | `fbf6705` |
+
+Deployed and verified from the endpoint: the corrected trends (site and API
+agree on all 6 parity postcodes), `sw.js` v1.0.19, `deployed == source` clean.
+
+## Per-region readiness, MEASURED not estimated
+
+Run `python scripts/build_hpi_prices.py --emit --city <id>` to get the price
+half of any borough table.
+
+| Region | Authorities | Prices | Crime | Boundaries |
+|---|---|---|---|---|
+| West Midlands | 7 | 7/7 | 7/7 | ✅ |
+| West Yorkshire | 5 | 5/5 | 5/5 | ✅ |
+| South Yorkshire | 4 | 4/4 | 4/4 | ✅ |
+| Merseyside | 5 | 5/5 | 5/5 | ✅ |
+| Tyne and Wear | 5 | 5/5 | 5/5 | ✅ |
+| Bristol | 4 | 4/4 | 4/4 | ✅ |
+| Nottingham | 4 | 4/4 | **1/4** | ✅ |
+| Cardiff | 4 | 4/4 | 4/4 | ✅ |
+
+**Seven of eight are data-complete on prices and crime.** Boundaries exist for
+all eight, are checked in, and are un-ignored in `.gitignore`.
+
+## The two blockers, both real
+
+### 1. Aircraft bands — the last one, and the one that matters most
+
+`impact` is effectively **required**: `calc_score` does `bd['impact']`, so a
+borough without one raises rather than degrading. And it feeds the product's
+headline component, so getting it wrong is being wrong about the thing the
+product is for.
+
+Verified airport coordinates (OurAirports, public domain — do NOT type these
+from memory, that is how a confidently-wrong figure gets in):
+
+| Region | Airport | Lat | Lon |
+|---|---|---|---|
+| West Midlands | EGBB / BHX | 52.453899 | -1.74803 |
+| West Yorkshire | EGNM / LBA | 53.865898 | -1.66057 |
+| Merseyside | EGGP / LPL | 53.334863 | -2.849637 |
+| Tyne and Wear | EGNT / NCL | 55.037958 | -1.689577 |
+| Bristol | EGGD / BRS | 51.382326 | -2.716453 |
+| Nottingham | EGNX / EMA | 52.8311 | -1.32806 |
+| Cardiff | EGFF / CWL | 51.396702 | -3.34333 |
+| **South Yorkshire** | **none** | — | — |
+
+**South Yorkshire has no operating commercial airport.** OurAirports lists
+Doncaster Sheffield as `type=closed`. That is evidenced, not assumed. Its
+boroughs are genuinely not aircraft-affected, and the nearest large airports are
+Leeds Bradford and Manchester at roughly 50-60 km. Whatever is published for it
+must say that rather than implying a measurement.
+
+**Do not reuse London's distance ladder unmodified.** `CITY_GEOMETRY` already
+records that the airport term is distance-only and calibrated on Heathrow, and
+that Manchester at roughly a third of Heathrow's movements is already overstated
+by it (Core Cities finding 7). Applied to Bristol or Cardiff it would overstate
+badly. The saving grace is the DIRECTION: overstating noise understates quiet,
+and the DEFRA raster incident is on record precisely because it erred the other
+way. Erring pessimistic is survivable; erring optimistic is not.
+
+### 2. Progress 8 — no pipeline exists for any city
+
+London's and Greater Manchester's `p8` values came from a DfE Key Stage 4
+release, and **nothing in the repo re-derives them**. Without `p8` a new city has
+one liveability input (crime), which is below the two-input floor, so `live` is
+dropped entirely and its weight redistributed. That is handled and honest, but it
+makes every new city thinner than Greater Manchester rather than equal to it.
+
+2022/23 is the terminal vintage until 2026/27 publishes, so this is a one-off
+extraction, not a recurring one.
+
+### Nottingham specifically
+
+ONS publishes `Nottingham` and `South Nottinghamshire` as Community Safety
+Partnerships. Broxtowe, Gedling and Rushcliffe are **not published separately** —
+they are inside that one combined row. Options: give the three the combined rate
+with an explicit disclosure that it is a shared figure, or leave crime absent for
+them. Do not silently spread one rate across three boroughs as if measured.
+
+## Remaining mechanical work per city
+
+Once a city has `impact`, everything else is the checklist from the previous
+handoff, all of it mechanical:
+
+1. `CITIES` + `CITY_PROVENANCE` in `backend/lambdas/score/app.py`
+2. `CITY_DATA` in `index.html` — every key, since `tests/smoke-local.mjs`
+   asserts key parity across cities
+3. `data/borough-extra.json` entry
+4. `sw.js` `SHELL_ASSETS` + a `make data-deploy` line for the boundary file
+5. `LOCATOR_TO_CITY` in `index.html`
+6. `CITY_PFA` + a CSP include-list in `scripts/refresh_crime_from_ons.py`
+
+Steps that used to be error-prone are now closed: `hydrateBoroughExtra()` and
+`recalcAllScores()` no longer enumerate cities by name, so there is nothing to
+forget in either.
+
+## How far this actually scales
+
+The question was how many cities are reachable. Measured against what the
+pipelines can already read:
+
+- **England and Wales, ~318 local authorities.** HPI covers every one, and ONS
+  Table C4 publishes CSP rows at local-authority level for all 43 forces. Both
+  loaders are already parameterised, so this is not a per-city research task any
+  more. Progress 8 is **England only** — Wales has no equivalent.
+- **Scotland and Northern Ireland** need different sources: Police Scotland and
+  PSNI publish separately from ONS, and neither is in Table C4.
+- **The United States** needs a different pipeline for every input. The one
+  genuinely strong asset is the **Bureau of Transportation Statistics National
+  Transportation Noise Map**, which is a national road and aviation noise
+  surface — the nearest thing to DEFRA outside Europe. Prices via FHFA HPI or
+  Census ACS; crime via the FBI Crime Data Explorer, which is agency-level and
+  patchy. No national schools equivalent.
+- **Canada**: StatCan publishes crime by census metropolitan area, which is
+  usable. Prices are the problem — the CREA MLS HPI is licensed restrictively.
+  No national noise map.
+- **The EU is the real lever, and it is not close.** The **Environmental Noise
+  Directive 2002/49/EC** — already cited in `METHODOLOGY.md` as the regulatory
+  foundation DEFRA's mapping implements — obliges *every member state* to
+  produce strategic noise maps, on the same Lden basis, for every agglomeration
+  over 100,000 people. That is the same data model this product is built on,
+  several hundred cities wide, rather than a per-country reinvention.
+
+The honest summary: **the UK is a data-pipeline problem that is now mostly
+solved, Europe is the same product in another jurisdiction, and North America is
+a different product wearing the same interface.**
