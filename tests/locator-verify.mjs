@@ -44,7 +44,17 @@ const read = () => page.evaluate(() => {
 });
 
 let fail = 0;
-const expect = { london: false, nyc: true, manchester: false };
+// Per city, because the inset is no longer UK-only. New York used to expect
+// hidden=true - `country !== 'United Kingdom'` hid it rather than drawing the
+// USA - and now draws the contiguous US with one marker. markers/clickable
+// differ per silhouette, so they are declared here rather than assumed:
+// England & Wales carries ten Core Cities of which two are live, the USA
+// carries New York alone.
+const expect = {
+  london: { hidden: false, markers: 10, clickable: 2, highlighted: 1 },
+  nyc: { hidden: false, markers: 1, clickable: 1, highlighted: 1 },
+  manchester: { hidden: false, markers: 10, clickable: 2, highlighted: 1 },
+};
 for (const city of ['london', 'nyc', 'manchester']) {
   if (city !== 'london') {
     // window.cityOf, not window.CITY_DATA: `const` at script top level is not
@@ -62,8 +72,14 @@ for (const city of ['london', 'nyc', 'manchester']) {
     await page.waitForTimeout(1400);
   }
   const r = await read();
-  const wantHidden = expect[city];
-  const ok = r.hidden === wantHidden && (wantHidden || (r.markers === 10 && r.highlighted === 1 && r.clickable === 2));
+  const want = expect[city];
+  const ok =
+    r.hidden === want.hidden &&
+    (want.hidden ||
+      (r.markers === want.markers &&
+        r.highlighted === want.highlighted &&
+        r.clickable === want.clickable &&
+        r.landLength > 1000));
   if (!ok) fail++;
   console.log(`${city.padEnd(11)} ${ok ? 'OK  ' : 'FAIL'} hidden=${r.hidden} markers=${r.markers} clickable=${r.clickable} highlighted=${r.highlighted} land=${r.landLength} "${r.caption}"`);
 }

@@ -5382,6 +5382,12 @@
           stations: () => STATIONS,
           roadNoise: () => BOROUGH_ROAD_NOISE,
           features: () => boroughFeatures,
+          // Which national silhouette the locator inset draws. A registry field
+          // rather than a country test, because `country !== 'United Kingdom'`
+          // is what hid the inset from New York entirely - the fail-open shape
+          // this registry exists to remove. Null means a city with no inset,
+          // which stays a handled state rather than a broken one.
+          locator: '/data/uk-locator.json',
         },
         nyc: {
           label: 'New York City',
@@ -5430,6 +5436,7 @@
           stations: () => NYC_STATIONS,
           roadNoise: () => NYC_BOROUGH_ROAD_NOISE,
           features: () => nycBoroughFeatures,
+          locator: '/data/usa-locator.json',
         },
         // Greater Manchester. THINNER THAN THE OTHER TWO, deliberately and
         // visibly: the boroughs, boundaries, airport and approach corridors are
@@ -5494,6 +5501,7 @@
           stations: () => MANCHESTER_STATIONS,
           roadNoise: () => MANCHESTER_BOROUGH_ROAD_NOISE,
           features: () => manchesterBoroughFeatures,
+          locator: '/data/uk-locator.json',
         },
       };
 
@@ -8908,38 +8916,56 @@
       // Names in the locator data are city-REGIONS ("West Midlands"); the app
       // keys on city id. Only mapped entries are clickable, so a planned region
       // is a marker rather than a dead link.
-      const LOCATOR_TO_CITY = { London: 'london', 'Greater Manchester': 'manchester' };
-      let locatorData = null;
+      const LOCATOR_TO_CITY = {
+        London: 'london',
+        'Greater Manchester': 'manchester',
+        'New York City': 'nyc',
+      };
+      // Keyed by URL, not a single slot: there is more than one silhouette now,
+      // and a lone `locatorData` would serve England & Wales to New York after
+      // one UK visit - a wrong map with no error anywhere.
+      const locatorCache = {};
 
-      async function loadLocator() {
-        if (locatorData) return locatorData;
+      async function loadLocator(url) {
+        if (url in locatorCache) return locatorCache[url];
         try {
-          locatorData = await d3.json('/data/uk-locator.json');
+          locatorCache[url] = await d3.json(url);
         } catch (e) {
           // A decoration must never take the map down with it. This is also
           // why the file is NOT in sw.js SHELL_ASSETS: cache.addAll() is
           // atomic, so precaching a decoration would let its absence stop the
           // service worker installing for every city.
           console.warn('Locator inset unavailable:', e);
-          locatorData = null;
+          locatorCache[url] = null;
         }
-        return locatorData;
+        return locatorCache[url];
       }
 
       async function renderLocator(city) {
         const box = document.getElementById('locator');
         if (!box) return;
-        // An England & Wales silhouette says nothing useful on a New York view.
-        if (cityOf(city).country !== 'United Kingdom') {
+        // Which silhouette comes from the registry. This was
+        // `country !== 'United Kingdom'`, which hid the inset from New York
+        // altogether rather than drawing New York's own map.
+        const url = cityOf(city).locator;
+        if (!url) {
           box.hidden = true;
           return;
         }
-        const data = await loadLocator();
+        const data = await loadLocator(url);
         if (!data) {
           box.hidden = true;
           return;
         }
         box.hidden = false;
+        // The viewBox is per silhouette, not a constant: England & Wales is
+        // portrait at 130x168 and the contiguous US is landscape at 170x107.
+        // It was hardcoded in the markup, so a second country drew its path
+        // into the first one's box and rendered a sliver of the east coast.
+        document
+          .getElementById('locator-svg')
+          .setAttribute('viewBox', `0 0 ${data.w} ${data.h}`);
+        document.getElementById('locator-svg').setAttribute('aria-label', `Coverage across ${data.region}`);
         document.getElementById('locator-land').setAttribute('d', data.d);
         const g = document.getElementById('locator-cities');
         g.textContent = '';
@@ -8992,9 +9018,15 @@
         // The caption names the REGION because the shape alone cannot: at this
         // size an absent Scotland and a broken Scotland render identically.
         const live = data.cities.filter((c) => LOCATOR_TO_CITY[c.name]).length;
+        const total = data.cities.length;
         document.getElementById('locator-region').textContent = data.region || '';
+        // "N of M core cities" is a ROADMAP claim, and it only makes sense where
+        // there is a roadmap: Core Cities is the name of a specific group of ten
+        // UK cities. The United States has one city here and no declared plan,
+        // so it names the city rather than inventing a denominator to be a
+        // fraction of. `unit` comes from the data file for the same reason.
         document.getElementById('locator-count').textContent =
-          `${live} of ${data.cities.length} core cities`;
+          total === 1 ? data.cities[0].name : `${live} of ${total} ${data.unit || 'core cities'}`;
       }
 
       function applyCityChrome(city) {

@@ -217,6 +217,11 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/uk-locator.json \
 		s3://$(S3_BUCKET)/data/uk-locator.json \
 		--content-type "application/json" --region $(AWS_REGION)
+	# usa-locator.json, added 2026-08-10 so the New York view gets its own
+	# silhouette instead of no inset at all. Same not-in-SHELL_ASSETS rule.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/usa-locator.json \
+		s3://$(S3_BUCKET)/data/usa-locator.json \
+		--content-type "application/json" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-london-lden.png \
 		s3://$(S3_BUCKET)/data/aircraft-noise-london-lden.png \
 		--content-type "image/png" --region $(AWS_REGION)

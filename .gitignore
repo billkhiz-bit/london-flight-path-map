@@ -80,6 +80,25 @@ data/*
 # machine. The region label travels inside the file so the caption follows the
 # clip if coverage ever changes.
 !data/uk-locator.json
+# USA silhouette for the New York view, added 2026-08-10. Same rule as the UK
+# one: deliberately NOT in sw.js SHELL_ASSETS, because cache.addAll() is atomic
+# and a decoration must not be able to stop the service worker installing.
+!data/usa-locator.json
+
+# Core Cities boundary files, added 2026-08-10. `data/*` above ignores this
+# directory and every file is un-ignored one at a time, so a new city's
+# boundaries are invisible to git BY DEFAULT - it works on the machine that
+# generated them, every local gate passes, and the deploy serves "outlines
+# could not be loaded". That is exactly how Greater Manchester nearly shipped.
+# Regenerate any of these with `python scripts/build_city_boroughs.py --all`.
+!data/westmidlands-boroughs.json
+!data/westyorkshire-boroughs.json
+!data/southyorkshire-boroughs.json
+!data/merseyside-boroughs.json
+!data/tyneandwear-boroughs.json
+!data/bristol-boroughs.json
+!data/nottingham-boroughs.json
+!data/cardiff-boroughs.json
 .defra_load_checkpoint
 # Trailing * is load-bearing since the loader gained --geotiff: checkpoints are
 # now namespaced per raster (.defra_load_checkpoint_defra_lden_2022_manchester),
