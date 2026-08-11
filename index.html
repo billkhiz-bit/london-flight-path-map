@@ -1847,13 +1847,68 @@
       }
 
       /* City selector */
+      /* The scroll strip is the BASE behaviour, at every width, and that is a
+         correction made on 2026-08-11 when Leicester and Teesside took the row
+         to eleven chips.
+
+         The bound and the overflow used to live only in the <=900px block. Just
+         above that breakpoint the row was `position: absolute` with `left` and
+         no `right`, so it sized to its content again and ran off the viewport -
+         `Greater Manchester` sat at 806..906px in a 901px window, clipped by the
+         map container's `overflow: hidden` with nothing scrollable around it.
+         So the phone fix was reapplied at the one width the phone fix did not
+         cover. tests/responsive.mjs caught it at 901x800; nothing else could,
+         because the page itself never scrolls sideways.
+
+         `right: 76px` clears the .map-controls column, which is 40px wide at a
+         24px inset here and shares this vertical band. The <=900px block
+         narrows it to 60px, where the controls are smaller. */
       .city-selector {
         position: absolute;
         top: 96px;
         left: 32px;
+        right: 76px;
         z-index: 10;
         display: flex;
         gap: 2px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        /* A scrollbar gutter here would eat into the map and read as a UI seam.
+           The mask fade below is the affordance instead. */
+        scrollbar-width: none;
+      }
+      .city-selector::-webkit-scrollbar {
+        display: none;
+      }
+      /* Without this the chips shrink to fit instead of scrolling, and the
+         labels truncate rather than the row moving. */
+      .city-btn {
+        flex: 0 0 auto;
+      }
+      /* THE FADE IS THE FEATURE, not decoration, and it belongs at every width
+         for the same reason the bound does. This app has already retired one
+         horizontal scroll strip because it had none: the layer toggles
+         "clipped toggles past the visible edge with no scroll affordance, so
+         hidden controls were effectively invisible" (see .layers-trigger).
+
+         data-scroll is written by updateCityStripFade() on render, scroll and
+         resize, so the fade appears on the side that actually has more chips
+         and disappears at each end - a permanent fade would claim there is
+         always more to see. */
+      .city-selector[data-scroll='right'] {
+        mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+      }
+      .city-selector[data-scroll='left'] {
+        mask-image: linear-gradient(to right, transparent, #000 28px);
+      }
+      .city-selector[data-scroll='both'] {
+        mask-image: linear-gradient(
+          to right,
+          transparent,
+          #000 28px,
+          #000 calc(100% - 28px),
+          transparent
+        );
       }
 
       /* Locator inset. Aligned to the city chips above it and kept clear of the
@@ -2155,25 +2210,18 @@
 
            `right: 60px` clears the .map-controls column, which is 44px wide at
            an 8px inset and shares this vertical band - the chips ran underneath
-           the reset button before. */
+           the reset button before.
+
+           The bound, the overflow and the fade now live in the BASE rule and
+           apply at every width; what stays here is only what is genuinely
+           touch-specific. Keeping them mobile-only is what left an 11-chip row
+           running off the edge at 901px. */
         .city-selector {
           right: 60px;
-          overflow-x: auto;
-          overflow-y: hidden;
           scroll-snap-type: x proximity;
-          /* The strip is chrome over a map; a scrollbar gutter here would eat
-             into the map and read as a UI seam. The fade below is the
-             affordance instead. */
-          scrollbar-width: none;
           -webkit-overflow-scrolling: touch;
         }
-        .city-selector::-webkit-scrollbar {
-          display: none;
-        }
-        /* Without this the chips shrink to fit instead of scrolling, and the
-           labels truncate rather than the row moving. */
         .city-btn {
-          flex: 0 0 auto;
           scroll-snap-align: start;
         }
 
@@ -2189,21 +2237,6 @@
            resize, so the fade appears on the side that actually has more chips
            and disappears at each end - a permanent fade would claim there is
            always more to see. */
-        .city-selector[data-scroll='right'] {
-          mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
-        }
-        .city-selector[data-scroll='left'] {
-          mask-image: linear-gradient(to right, transparent, #000 28px);
-        }
-        .city-selector[data-scroll='both'] {
-          mask-image: linear-gradient(
-            to right,
-            transparent,
-            #000 28px,
-            #000 calc(100% - 28px),
-            transparent
-          );
-        }
       }
       @media (max-width: 480px) {
         /* Compress UI on small phones. Keep the default control positions
@@ -4004,6 +4037,71 @@
       const BRISTOL_FLIGHT_PATHS = [
         { name: '27 Approach', airport: 'BRS', type: 'arrival', freq: 'high', coordinates: [[-3.0208, 51.3711], [-3.0065, 51.3717], [-2.9921, 51.3722], [-2.9777, 51.3727], [-2.9634, 51.3733], [-2.949, 51.3739], [-2.9346, 51.3744], [-2.9203, 51.3749], [-2.9059, 51.3755], [-2.8915, 51.376], [-2.8771, 51.3766], [-2.8628, 51.3772], [-2.8484, 51.3777], [-2.834, 51.3782], [-2.8197, 51.3788], [-2.8053, 51.3794], [-2.791, 51.3799], [-2.7786, 51.3803], [-2.7662, 51.3807], [-2.7538, 51.3811], [-2.7413, 51.3815], [-2.7289, 51.3819], [-2.7165, 51.3823]] },
         { name: '09 Approach', airport: 'BRS', type: 'arrival', freq: 'medium', coordinates: [[-2.4173, 51.3942], [-2.4317, 51.3937], [-2.4461, 51.3931], [-2.4604, 51.3925], [-2.4748, 51.392], [-2.4892, 51.3915], [-2.5036, 51.3909], [-2.5179, 51.3903], [-2.5323, 51.3898], [-2.5467, 51.3893], [-2.561, 51.3887], [-2.5754, 51.3881], [-2.5897, 51.3876], [-2.6041, 51.3871], [-2.6185, 51.3865], [-2.6328, 51.3859], [-2.6472, 51.3854], [-2.6611, 51.3848], [-2.6749, 51.3842], [-2.6888, 51.3835], [-2.7026, 51.3829], [-2.7165, 51.3823]] },
+      ];
+
+      const LEICESTER_BOROUGH_DATA_RAW = {
+          'Leicester': { impact: 'low', avg_price: 230107, trend: 2.0 },
+          'Blaby': { impact: 'low', avg_price: 281459, trend: -0.5 },
+          'Charnwood': { impact: 'low-moderate', avg_price: 278883, trend: 5.1 },
+          'Harborough': { impact: 'low', avg_price: 346278, trend: 7.1 },
+          'Hinckley and Bosworth': { impact: 'low', avg_price: 260282, trend: 2.0 },
+          'Melton': { impact: 'low', avg_price: 288513, trend: 0.9 },
+          'North West Leicestershire': { impact: 'moderate', avg_price: 286826, trend: 6.0 },
+          'Oadby and Wigston': { impact: 'low', avg_price: 263380, trend: -0.9 },
+      };
+      let LEICESTER_BOROUGH_EXTRA = {};
+      const LEICESTER_AREA_MAP = {};
+      const LEICESTER_NEIGHBOURHOOD_DETAIL = {};
+      /* LEICESTER-NEIGHBOURHOODS:START */
+      // GENERATED by scripts/build_city_neighbourhoods.py - do not hand-edit.
+      // 26 postcode districts. price = MEDIAN of real HM Land Registry
+      // Price Paid transactions (2025), sales = how many that median rests on,
+      // coordinates = mean of live ONS NSPL postcodes in the district.
+      // crime is 0 for every entry and is NOT a measurement - sub-borough crime
+      // is not published at this geography. renderGroup discloses this.
+      const LEICESTER_NEIGHBOURHOOD_VINTAGE = "2025";
+      const LEICESTER_NEIGHBOURHOOD_MIN_SALES = 30;
+      Object.assign(LEICESTER_AREA_MAP, {"Asfordby (LE14)": {"borough": "Melton", "code": "LE14", "lat": 52.78537, "lon": -0.89989}, "Ashby-De-La-Zouch (LE65)": {"borough": "North West Leicestershire", "code": "LE65", "lat": 52.74878, "lon": -1.46947}, "Barlestone (CV13)": {"borough": "Hinckley and Bosworth", "code": "CV13", "lat": 52.61632, "lon": -1.41277}, "Blackfordby (DE11)": {"borough": "North West Leicestershire", "code": "DE11", "lat": 52.77271, "lon": -1.55645}, "Bottesford (NG13)": {"borough": "Melton", "code": "NG13", "lat": 52.94958, "lon": -0.90923}, "Castle Donington (DE74)": {"borough": "North West Leicestershire", "code": "DE74", "lat": 52.83877, "lon": -1.32515}, "Coalville (LE67)": {"borough": "North West Leicestershire", "code": "LE67", "lat": 52.71518, "lon": -1.3621}, "Earl Shilton (LE9)": {"borough": "Hinckley and Bosworth", "code": "LE9", "lat": 52.57341, "lon": -1.28142}, "Enderby (LE19)": {"borough": "Blaby", "code": "LE19", "lat": 52.58607, "lon": -1.20746}, "Fleckney (LE8)": {"borough": "Harborough", "code": "LE8", "lat": 52.55468, "lon": -1.09409}, "Hinckley (LE10)": {"borough": "Hinckley and Bosworth", "code": "LE10", "lat": 52.53675, "lon": -1.37029}, "Leicester (LE1)": {"borough": "Leicester", "code": "LE1", "lat": 52.63388, "lon": -1.13309}, "Leicester (LE2)": {"borough": "Leicester", "code": "LE2", "lat": 52.60725, "lon": -1.1168}, "Leicester (LE3)": {"borough": "Leicester", "code": "LE3", "lat": 52.63173, "lon": -1.17681}, "Leicester (LE4)": {"borough": "Leicester", "code": "LE4", "lat": 52.66478, "lon": -1.12503}, "Leicester (LE5)": {"borough": "Leicester", "code": "LE5", "lat": 52.63827, "lon": -1.08557}, "Loughborough (LE11)": {"borough": "Charnwood", "code": "LE11", "lat": 52.76807, "lon": -1.21913}, "Lutterworth (LE17)": {"borough": "Harborough", "code": "LE17", "lat": 52.46702, "lon": -1.17781}, "Market Harborough (LE16)": {"borough": "Harborough", "code": "LE16", "lat": 52.48615, "lon": -0.89776}, "Measham (DE12)": {"borough": "North West Leicestershire", "code": "DE12", "lat": 52.72311, "lon": -1.55353}, "Melton Mowbray (LE13)": {"borough": "Melton", "code": "LE13", "lat": 52.76599, "lon": -0.88751}, "Ratby (LE6)": {"borough": "Hinckley and Bosworth", "code": "LE6", "lat": 52.65699, "lon": -1.23363}, "Sheepy Magna (CV9)": {"borough": "Hinckley and Bosworth", "code": "CV9", "lat": 52.58653, "lon": -1.56207}, "Shepshed (LE12)": {"borough": "Charnwood", "code": "LE12", "lat": 52.76833, "lon": -1.19168}, "Syston (LE7)": {"borough": "Charnwood", "code": "LE7", "lat": 52.67995, "lon": -1.07031}, "Wigston (LE18)": {"borough": "Oadby and Wigston", "code": "LE18", "lat": 52.58299, "lon": -1.11125}});
+      Object.assign(LEICESTER_NEIGHBOURHOOD_DETAIL, {"Asfordby (LE14)": {"borough": "Melton", "crime": 0, "lat": 52.78537, "lon": -0.89989, "price": 360, "sales": 341}, "Ashby-De-La-Zouch (LE65)": {"borough": "North West Leicestershire", "crime": 0, "lat": 52.74878, "lon": -1.46947, "price": 300, "sales": 313}, "Barlestone (CV13)": {"borough": "Hinckley and Bosworth", "crime": 0, "lat": 52.61632, "lon": -1.41277, "price": 348, "sales": 208}, "Blackfordby (DE11)": {"borough": "North West Leicestershire", "crime": 0, "lat": 52.77271, "lon": -1.55645, "price": 266, "sales": 87}, "Bottesford (NG13)": {"borough": "Melton", "crime": 0, "lat": 52.94958, "lon": -0.90923, "price": 310, "sales": 91}, "Castle Donington (DE74)": {"borough": "North West Leicestershire", "crime": 0, "lat": 52.83877, "lon": -1.32515, "price": 285, "sales": 314}, "Coalville (LE67)": {"borough": "North West Leicestershire", "crime": 0, "lat": 52.71518, "lon": -1.3621, "price": 250, "sales": 1262}, "Earl Shilton (LE9)": {"borough": "Hinckley and Bosworth", "crime": 0, "lat": 52.57341, "lon": -1.28142, "price": 260, "sales": 1037}, "Enderby (LE19)": {"borough": "Blaby", "crime": 0, "lat": 52.58607, "lon": -1.20746, "price": 285, "sales": 347}, "Fleckney (LE8)": {"borough": "Harborough", "crime": 0, "lat": 52.55468, "lon": -1.09409, "price": 290, "sales": 743}, "Hinckley (LE10)": {"borough": "Hinckley and Bosworth", "crime": 0, "lat": 52.53675, "lon": -1.37029, "price": 262, "sales": 1086}, "Leicester (LE1)": {"borough": "Leicester", "crime": 0, "lat": 52.63388, "lon": -1.13309, "price": 131, "sales": 149}, "Leicester (LE2)": {"borough": "Leicester", "crime": 0, "lat": 52.60725, "lon": -1.1168, "price": 250, "sales": 1348}, "Leicester (LE3)": {"borough": "Leicester", "crime": 0, "lat": 52.63173, "lon": -1.17681, "price": 229, "sales": 1263}, "Leicester (LE4)": {"borough": "Leicester", "crime": 0, "lat": 52.66478, "lon": -1.12503, "price": 257, "sales": 1044}, "Leicester (LE5)": {"borough": "Leicester", "crime": 0, "lat": 52.63827, "lon": -1.08557, "price": 270, "sales": 697}, "Loughborough (LE11)": {"borough": "Charnwood", "crime": 0, "lat": 52.76807, "lon": -1.21913, "price": 235, "sales": 844}, "Lutterworth (LE17)": {"borough": "Harborough", "crime": 0, "lat": 52.46702, "lon": -1.17781, "price": 345, "sales": 400}, "Market Harborough (LE16)": {"borough": "Harborough", "crime": 0, "lat": 52.48615, "lon": -0.89776, "price": 325, "sales": 790}, "Measham (DE12)": {"borough": "North West Leicestershire", "crime": 0, "lat": 52.72311, "lon": -1.55353, "price": 258, "sales": 222}, "Melton Mowbray (LE13)": {"borough": "Melton", "crime": 0, "lat": 52.76599, "lon": -0.88751, "price": 245, "sales": 647}, "Ratby (LE6)": {"borough": "Hinckley and Bosworth", "crime": 0, "lat": 52.65699, "lon": -1.23363, "price": 278, "sales": 214}, "Sheepy Magna (CV9)": {"borough": "Hinckley and Bosworth", "crime": 0, "lat": 52.58653, "lon": -1.56207, "price": 475, "sales": 33}, "Shepshed (LE12)": {"borough": "Charnwood", "crime": 0, "lat": 52.76833, "lon": -1.19168, "price": 275, "sales": 1094}, "Syston (LE7)": {"borough": "Charnwood", "crime": 0, "lat": 52.67995, "lon": -1.07031, "price": 320, "sales": 1020}, "Wigston (LE18)": {"borough": "Oadby and Wigston", "crime": 0, "lat": 52.58299, "lon": -1.11125, "price": 252, "sales": 495}});
+      /* LEICESTER-NEIGHBOURHOODS:END */
+      const LEICESTER_STATIONS = [];
+      const LEICESTER_AIRPORTS = [
+        { code: 'EMA', name: 'East Midlands', coords: [-1.32806, 52.8311] },
+      ];
+      const LEICESTER_FLIGHT_PATHS = [
+        { name: '27 Approach', airport: 'EMA', type: 'arrival', freq: 'high', coordinates: [[-1.2918, 52.8317], [-1.2769, 52.832], [-1.2621, 52.8322], [-1.2472, 52.8325], [-1.2324, 52.8328], [-1.2175, 52.8331], [-1.2026, 52.8333], [-1.1878, 52.8336], [-1.1729, 52.8339], [-1.1581, 52.8342], [-1.1432, 52.8345], [-1.1283, 52.8347], [-1.1135, 52.835], [-1.0986, 52.8353], [-1.0837, 52.8356], [-1.0689, 52.8358], [-1.054, 52.8361], [-1.0392, 52.8364], [-1.0243, 52.8367], [-1.0094, 52.837]] },
+        { name: '09 Approach', airport: 'EMA', type: 'arrival', freq: 'medium', coordinates: [[-1.3644, 52.8303], [-1.3793, 52.83], [-1.3942, 52.8298], [-1.409, 52.8295], [-1.4239, 52.8292], [-1.4387, 52.8289], [-1.4536, 52.8287], [-1.4685, 52.8284], [-1.4833, 52.8281], [-1.4982, 52.8278], [-1.513, 52.8275], [-1.5279, 52.8273], [-1.5428, 52.827], [-1.5576, 52.8267], [-1.5725, 52.8264], [-1.5874, 52.8262], [-1.6022, 52.8259], [-1.6171, 52.8256], [-1.6319, 52.8253], [-1.6468, 52.8251]] },
+      ];
+
+      const TEESSIDE_BOROUGH_DATA_RAW = {
+          'Hartlepool': { impact: 'low', avg_price: 131342, trend: 2.8 },
+          'Middlesbrough': { impact: 'low', avg_price: 138122, trend: 1.4 },
+          'Redcar and Cleveland': { impact: 'low', avg_price: 154696, trend: 8.7 },
+          'Stockton-on-Tees': { impact: 'moderate', avg_price: 169010, trend: 2.6 },
+          'Darlington': { impact: 'moderate', avg_price: 157239, trend: 1.9 },
+      };
+      let TEESSIDE_BOROUGH_EXTRA = {};
+      const TEESSIDE_AREA_MAP = {};
+      const TEESSIDE_NEIGHBOURHOOD_DETAIL = {};
+      /* TEESSIDE-NEIGHBOURHOODS:START */
+      // GENERATED by scripts/build_city_neighbourhoods.py - do not hand-edit.
+      // 29 postcode districts. price = MEDIAN of real HM Land Registry
+      // Price Paid transactions (2025), sales = how many that median rests on,
+      // coordinates = mean of live ONS NSPL postcodes in the district.
+      // crime is 0 for every entry and is NOT a measurement - sub-borough crime
+      // is not published at this geography. renderGroup discloses this.
+      const TEESSIDE_NEIGHBOURHOOD_VINTAGE = "2025";
+      const TEESSIDE_NEIGHBOURHOOD_MIN_SALES = 30;
+      Object.assign(TEESSIDE_AREA_MAP, {"Billingham (TS23)": {"borough": "Stockton-on-Tees", "code": "TS23", "lat": 54.60956, "lon": -1.28506}, "Coulby Newham (TS8)": {"borough": "Middlesbrough", "code": "TS8", "lat": 54.52177, "lon": -1.23259}, "Darlington (DL1)": {"borough": "Darlington", "code": "DL1", "lat": 54.52999, "lon": -1.53884}, "Darlington (DL2)": {"borough": "Darlington", "code": "DL2", "lat": 54.52885, "lon": -1.5957}, "Darlington (DL3)": {"borough": "Darlington", "code": "DL3", "lat": 54.53247, "lon": -1.57166}, "Eaglescliffe (TS16)": {"borough": "Stockton-on-Tees", "code": "TS16", "lat": 54.52243, "lon": -1.35665}, "Guisborough (TS14)": {"borough": "Redcar and Cleveland", "code": "TS14", "lat": 54.53248, "lon": -1.0627}, "Hartlepool (TS24)": {"borough": "Hartlepool", "code": "TS24", "lat": 54.69698, "lon": -1.21133}, "Hartlepool (TS25)": {"borough": "Hartlepool", "code": "TS25", "lat": 54.66297, "lon": -1.2252}, "Hartlepool (TS26)": {"borough": "Hartlepool", "code": "TS26", "lat": 54.689, "lon": -1.23319}, "Hartlepool (TS27)": {"borough": "Hartlepool", "code": "TS27", "lat": 54.72334, "lon": -1.2893}, "Heighington Village (DL5)": {"borough": "Darlington", "code": "DL5", "lat": 54.61773, "lon": -1.57867}, "Ingleby Barwick (TS17)": {"borough": "Stockton-on-Tees", "code": "TS17", "lat": 54.5353, "lon": -1.30472}, "Loftus (TS13)": {"borough": "Redcar and Cleveland", "code": "TS13", "lat": 54.5498, "lon": -0.85429}, "Marske By The Sea (TS11)": {"borough": "Redcar and Cleveland", "code": "TS11", "lat": 54.58761, "lon": -1.02687}, "Marton In Cleveland (TS7)": {"borough": "Middlesbrough", "code": "TS7", "lat": 54.53379, "lon": -1.18298}, "Middlesbrough (TS1)": {"borough": "Middlesbrough", "code": "TS1", "lat": 54.57192, "lon": -1.23935}, "Middlesbrough (TS3)": {"borough": "Middlesbrough", "code": "TS3", "lat": 54.56048, "lon": -1.19686}, "Middlesbrough (TS4)": {"borough": "Middlesbrough", "code": "TS4", "lat": 54.55578, "lon": -1.22278}, "Middlesbrough (TS5)": {"borough": "Middlesbrough", "code": "TS5", "lat": 54.55036, "lon": -1.25248}, "Middlesbrough (TS6)": {"borough": "Redcar and Cleveland", "code": "TS6", "lat": 54.56548, "lon": -1.15366}, "Redcar (TS10)": {"borough": "Redcar and Cleveland", "code": "TS10", "lat": 54.6066, "lon": -1.06948}, "Skelton In Cleveland (TS12)": {"borough": "Redcar and Cleveland", "code": "TS12", "lat": 54.56286, "lon": -0.96715}, "Stockton-On-Tees (TS18)": {"borough": "Stockton-on-Tees", "code": "TS18", "lat": 54.56102, "lon": -1.32413}, "Stockton-On-Tees (TS19)": {"borough": "Stockton-on-Tees", "code": "TS19", "lat": 54.57724, "lon": -1.34324}, "Stockton-On-Tees (TS20)": {"borough": "Stockton-on-Tees", "code": "TS20", "lat": 54.58677, "lon": -1.31385}, "Stockton-On-Tees (TS21)": {"borough": "Stockton-on-Tees", "code": "TS21", "lat": 54.62601, "lon": -1.42676}, "Wynyard (TS22)": {"borough": "Stockton-on-Tees", "code": "TS22", "lat": 54.62719, "lon": -1.32499}, "Yarm (TS15)": {"borough": "Stockton-on-Tees", "code": "TS15", "lat": 54.48728, "lon": -1.33516}});
+      Object.assign(TEESSIDE_NEIGHBOURHOOD_DETAIL, {"Billingham (TS23)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.60956, "lon": -1.28506, "price": 128, "sales": 454}, "Coulby Newham (TS8)": {"borough": "Middlesbrough", "crime": 0, "lat": 54.52177, "lon": -1.23259, "price": 177, "sales": 401}, "Darlington (DL1)": {"borough": "Darlington", "crime": 0, "lat": 54.52999, "lon": -1.53884, "price": 135, "sales": 892}, "Darlington (DL2)": {"borough": "Darlington", "crime": 0, "lat": 54.52885, "lon": -1.5957, "price": 235, "sales": 460}, "Darlington (DL3)": {"borough": "Darlington", "crime": 0, "lat": 54.53247, "lon": -1.57166, "price": 144, "sales": 844}, "Eaglescliffe (TS16)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.52243, "lon": -1.35665, "price": 230, "sales": 288}, "Guisborough (TS14)": {"borough": "Redcar and Cleveland", "crime": 0, "lat": 54.53248, "lon": -1.0627, "price": 185, "sales": 315}, "Hartlepool (TS24)": {"borough": "Hartlepool", "crime": 0, "lat": 54.69698, "lon": -1.21133, "price": 90, "sales": 367}, "Hartlepool (TS25)": {"borough": "Hartlepool", "crime": 0, "lat": 54.66297, "lon": -1.2252, "price": 114, "sales": 701}, "Hartlepool (TS26)": {"borough": "Hartlepool", "crime": 0, "lat": 54.689, "lon": -1.23319, "price": 125, "sales": 718}, "Hartlepool (TS27)": {"borough": "Hartlepool", "crime": 0, "lat": 54.72334, "lon": -1.2893, "price": 210, "sales": 151}, "Heighington Village (DL5)": {"borough": "Darlington", "crime": 0, "lat": 54.61773, "lon": -1.57867, "price": 265, "sales": 49}, "Ingleby Barwick (TS17)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.5353, "lon": -1.30472, "price": 162, "sales": 817}, "Loftus (TS13)": {"borough": "Redcar and Cleveland", "crime": 0, "lat": 54.5498, "lon": -0.85429, "price": 95, "sales": 137}, "Marske By The Sea (TS11)": {"borough": "Redcar and Cleveland", "crime": 0, "lat": 54.58761, "lon": -1.02687, "price": 175, "sales": 197}, "Marton In Cleveland (TS7)": {"borough": "Middlesbrough", "crime": 0, "lat": 54.53379, "lon": -1.18298, "price": 205, "sales": 428}, "Middlesbrough (TS1)": {"borough": "Middlesbrough", "crime": 0, "lat": 54.57192, "lon": -1.23935, "price": 70, "sales": 365}, "Middlesbrough (TS3)": {"borough": "Middlesbrough", "crime": 0, "lat": 54.56048, "lon": -1.19686, "price": 80, "sales": 412}, "Middlesbrough (TS4)": {"borough": "Middlesbrough", "crime": 0, "lat": 54.55578, "lon": -1.22278, "price": 120, "sales": 254}, "Middlesbrough (TS5)": {"borough": "Middlesbrough", "crime": 0, "lat": 54.55036, "lon": -1.25248, "price": 152, "sales": 766}, "Middlesbrough (TS6)": {"borough": "Redcar and Cleveland", "crime": 0, "lat": 54.56548, "lon": -1.15366, "price": 135, "sales": 539}, "Redcar (TS10)": {"borough": "Redcar and Cleveland", "crime": 0, "lat": 54.6066, "lon": -1.06948, "price": 155, "sales": 606}, "Skelton In Cleveland (TS12)": {"borough": "Redcar and Cleveland", "crime": 0, "lat": 54.56286, "lon": -0.96715, "price": 165, "sales": 399}, "Stockton-On-Tees (TS18)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.56102, "lon": -1.32413, "price": 152, "sales": 530}, "Stockton-On-Tees (TS19)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.57724, "lon": -1.34324, "price": 134, "sales": 564}, "Stockton-On-Tees (TS20)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.58677, "lon": -1.31385, "price": 140, "sales": 380}, "Stockton-On-Tees (TS21)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.62601, "lon": -1.42676, "price": 225, "sales": 179}, "Wynyard (TS22)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.62719, "lon": -1.32499, "price": 325, "sales": 273}, "Yarm (TS15)": {"borough": "Stockton-on-Tees", "crime": 0, "lat": 54.48728, "lon": -1.33516, "price": 275, "sales": 258}});
+      /* TEESSIDE-NEIGHBOURHOODS:END */
+      const TEESSIDE_STATIONS = [];
+      const TEESSIDE_AIRPORTS = [
+        { code: 'MME', name: 'Teesside International', coords: [-1.42941, 54.509201] },
+      ];
+      const TEESSIDE_FLIGHT_PATHS = [
+        { name: '23 Approach', airport: 'MME', type: 'arrival', freq: 'high', coordinates: [[-1.405, 54.5223], [-1.3937, 54.5284], [-1.3823, 54.5345], [-1.371, 54.5406], [-1.3596, 54.5467], [-1.3483, 54.5528], [-1.3369, 54.5589], [-1.3255, 54.565], [-1.3142, 54.5711], [-1.3028, 54.5772], [-1.2915, 54.5833], [-1.2801, 54.5894], [-1.2688, 54.5955], [-1.2574, 54.6016], [-1.2461, 54.6077], [-1.2347, 54.6138], [-1.2233, 54.6199], [-1.212, 54.626], [-1.2006, 54.6321], [-1.1893, 54.6382]] },
+        { name: '05 Approach', airport: 'MME', type: 'arrival', freq: 'medium', coordinates: [[-1.4538, 54.4961], [-1.4651, 54.49], [-1.4765, 54.4839], [-1.4878, 54.4778], [-1.4992, 54.4717], [-1.5106, 54.4656], [-1.5219, 54.4595], [-1.5333, 54.4534], [-1.5446, 54.4473], [-1.556, 54.4412], [-1.5673, 54.4351], [-1.5787, 54.429], [-1.59, 54.4229], [-1.6014, 54.4168], [-1.6128, 54.4107], [-1.6241, 54.4046], [-1.6355, 54.3985], [-1.6468, 54.3924], [-1.6582, 54.3863], [-1.6695, 54.3802]] },
       ];
 
       const MANCHESTER_AIRPORTS = [
@@ -5980,12 +6078,12 @@
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           autoLabels: true,
           boroughData: () => scoredBoroughs('westmidlands'),
           boroughRaw: () => WESTMIDLANDS_BOROUGH_DATA_RAW,
@@ -6032,12 +6130,12 @@
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           autoLabels: true,
           boroughData: () => scoredBoroughs('westyorkshire'),
           boroughRaw: () => WESTYORKSHIRE_BOROUGH_DATA_RAW,
@@ -6088,8 +6186,8 @@
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           autoLabels: true,
           boroughData: () => scoredBoroughs('southyorkshire'),
           boroughRaw: () => SOUTHYORKSHIRE_BOROUGH_DATA_RAW,
@@ -6136,12 +6234,12 @@
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           autoLabels: true,
           boroughData: () => scoredBoroughs('merseyside'),
           boroughRaw: () => MERSEYSIDE_BOROUGH_DATA_RAW,
@@ -6188,12 +6286,12 @@
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           autoLabels: true,
           boroughData: () => scoredBoroughs('tyneandwear'),
           boroughRaw: () => TYNEANDWEAR_BOROUGH_DATA_RAW,
@@ -6211,6 +6309,130 @@
           stations: () => TYNEANDWEAR_STATIONS,
           features: () => cityBoundaries.tyneandwear || [],
           boundaries: ['/data/tyneandwear-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        // Leicester, 2026-08-11. The city plus all seven Leicestershire
+        // districts: a four-authority cohort spans only 230k-281k, and min-max
+        // over a narrow cohort manufactures affordability spread it has not
+        // measured.
+        //
+        // Progress 8 exists for ONE of the eight. Education is an upper-tier
+        // county function, so DfE publishes it for Leicestershire rather than
+        // for Blaby, Charnwood and the rest - the same structural gap that
+        // keeps Nottingham's outer districts thin. Transport and healthcare
+        // carry them to 3 of 4 measured inputs, well clear of the two-input
+        // floor, and `context.liveResolution` reports `partial` per response
+        // rather than the absence being smoothed over.
+        leicester: {
+          label: 'Leicester',
+          currency: '£',
+          center: [-1.1308, 52.6849],
+          scale: 32500,
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Leicester, Loughborough or Hinckley.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'East Midlands runs one runway on an 087/267 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'LEICESTER · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Leicester, Charnwood or Hinckley and Bosworth) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '27 APPROACH',
+          legendPath2: '09 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'EA FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('leicester'),
+          boroughRaw: () => LEICESTER_BOROUGH_DATA_RAW,
+          boroughExtra: () => LEICESTER_BOROUGH_EXTRA,
+          areaMap: () => LEICESTER_AREA_MAP,
+          neighbourhoodDetail: () => LEICESTER_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'Postcode districts, not named neighbourhoods, so coarser than the London and New York tables. Price is the median of real HM Land Registry sales in the district (' +
+            LEICESTER_NEIGHBOURHOOD_VINTAGE +
+            ', minimum ' +
+            LEICESTER_NEIGHBOURHOOD_MIN_SALES +
+            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+          airports: () => LEICESTER_AIRPORTS,
+          flightPaths: () => LEICESTER_FLIGHT_PATHS,
+          stations: () => LEICESTER_STATIONS,
+          features: () => cityBoundaries.leicester || [],
+          boundaries: ['/data/leicester-boroughs.json'],
+          locator: '/data/uk-locator.json',
+        },
+        // Teesside, 2026-08-11. All five Tees Valley unitaries, and every one of
+        // them publishes Progress 8 - unitary authorities are their own
+        // education authority, so this city-region has 4 of 4 measured
+        // liveability inputs everywhere, which Leicester's two-tier districts
+        // do not.
+        //
+        // It spans TWO police force areas, Cleveland and Durham, so crime needs
+        // an include-list rather than a force lookup.
+        teesside: {
+          label: 'Teesside',
+          currency: '£',
+          center: [-1.249, 54.5892],
+          scale: 44000,
+          country: 'United Kingdom',
+          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
+          searchNotFound: 'Borough not found. Try e.g. Middlesbrough, Stockton or Darlington.',
+          mapLabelFontSize: '7px',
+          noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
+          noiseAuthorityPlain: 'estimated',
+          crimeLiveNote: ' Use the area search for live crime data from data.police.uk.',
+          localDataLabel: 'energy ratings',
+          localDataSources: 'EPC',
+          runwayNote: 'Teesside International runs one runway on a 048/228 alignment',
+          currencyHtml: '&pound;',
+          subtitle: 'TEESSIDE · INDEPENDENT NOISE + LIVABILITY DATA',
+          searchPlaceholder: 'Search a borough',
+          emptyStateHint:
+            'Search by borough (Middlesbrough, Stockton-on-Tees or Redcar and Cleveland) - or click the map - to get noise analysis and a value score.',
+          labelTransport: 'Transport',
+          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          legendPath1: '23 APPROACH',
+          legendPath2: '05 APPROACH',
+          legendHeli: false,
+          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseExplainer:
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Teesside International Airport's runway 05/23 alignment and its extended approach centreline. <strong>DEFRA does not map this airport at all</strong> &mdash; the strategic noise-mapping duty applies to major airports, and Teesside falls below it &mdash; so unlike the other English city-regions here there is no published footprint to scale against. The distance ladder is instead <strong>floored at the smallest footprint DEFRA does publish</strong> (London City), which keeps the estimate on the cautious side without inventing a measurement. Treat as indicative.",
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'EA FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
+          autoLabels: true,
+          boroughData: () => scoredBoroughs('teesside'),
+          boroughRaw: () => TEESSIDE_BOROUGH_DATA_RAW,
+          boroughExtra: () => TEESSIDE_BOROUGH_EXTRA,
+          areaMap: () => TEESSIDE_AREA_MAP,
+          neighbourhoodDetail: () => TEESSIDE_NEIGHBOURHOOD_DETAIL,
+          neighbourhoodNote:
+            'Postcode districts, not named neighbourhoods, so coarser than the London and New York tables. Price is the median of real HM Land Registry sales in the district (' +
+            TEESSIDE_NEIGHBOURHOOD_VINTAGE +
+            ', minimum ' +
+            TEESSIDE_NEIGHBOURHOOD_MIN_SALES +
+            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+          airports: () => TEESSIDE_AIRPORTS,
+          flightPaths: () => TEESSIDE_FLIGHT_PATHS,
+          stations: () => TEESSIDE_STATIONS,
+          features: () => cityBoundaries.teesside || [],
+          boundaries: ['/data/teesside-boroughs.json'],
           locator: '/data/uk-locator.json',
         },
         bristol: {
@@ -6240,12 +6462,12 @@
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           autoLabels: true,
           boroughData: () => scoredBoroughs('bristol'),
           boroughRaw: () => BRISTOL_BOROUGH_DATA_RAW,
@@ -6306,12 +6528,12 @@
           // surface a consumer actually reads.
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Treat these bands as indicative until DEFRA Round 4 is sampled for this city.",
+            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; MAN is 0.589 of Heathrow&rsquo;s &mdash; so the bands do not reach as though every airport were the same size. Treat as indicative until DEFRA Round 4 is sampled per postcode for this city.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
-          legendFlood: 'NO DATA',
-          legendAq: 'NO DATA',
+          legendFlood: 'HIGH',
+          legendAq: 'POOR',
           // These boundaries carry no built-in labels, same as New York.
           autoLabels: true,
           boroughData: () => scoredBoroughs('manchester'),
@@ -10043,6 +10265,8 @@
         Merseyside: 'merseyside',
         'Tyne and Wear': 'tyneandwear',
         Bristol: 'bristol',
+        Leicester: 'leicester',
+        Teesside: 'teesside',
       };
       // Keyed by URL, not a single slot: there is more than one silhouette now,
       // and a lone `locatorData` would serve England & Wales to New York after

@@ -68,16 +68,21 @@ BACKEND_ONLY_CITIES = frozenset({
     # The other six left on 2026-08-10 when p8 landed and they went on the site.
     'cardiff',
     'nottingham',
-    # Leicester and Teesside, added 2026-08-11. Here because the site half is
-    # not built yet, NOT because the data is thin - both score on all four
-    # liveability inputs. Promoting them means a borough-extra entry, a
-    # CITY_DATA entry and an OUTPUT comparison per borough first: the door only
-    # opens one way, and the Manchester incident had matching inputs on both
-    # sides and still diverged by up to 1.5 points because the site never
-    # loaded them.
-    'leicester',
-    'teesside',
+    # Leicester and Teesside LEFT on 2026-08-11, once the site half was built
+    # and all 13 boroughs were output-compared site-vs-Lambda. They were never
+    # here for data reasons: Teesside publishes Progress 8 for all five
+    # unitaries, and Leicester's districts hold 3 of 4 measured liveability
+    # inputs, well clear of the two-input floor.
 })
+
+# Corrected 2026-08-11: Nottingham's outer districts hold TWO measured inputs,
+# not one. The comment above said "1 of 4" and that was true until healthcare
+# landed in v3.7 - Broxtowe, Gedling and Rushcliffe gained transport in v3.6 and
+# healthcare in v3.7, so they now clear the floor and publish a liveability
+# score. Nottingham is therefore promotable on the floor, and stays here on
+# JUDGEMENT rather than on impossibility: `live` of 2.6 on two inputs is thin
+# enough that the site would be claiming more than it knows. Cardiff genuinely
+# cannot leave - Progress 8 is an England measure and Wales has none.
 
 
 def _site_cities():

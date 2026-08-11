@@ -215,6 +215,16 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/bristol-boroughs.json \
 		s3://$(S3_BUCKET)/data/bristol-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
+	# leicester + teesside, added 2026-08-11 when both left BACKEND_ONLY_CITIES.
+	# Both are in SHELL_ASSETS, so the atomic-addAll note applies to them
+	# identically: absent at the origin, the service worker stops installing for
+	# EVERY city, not just these two.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/leicester-boroughs.json \
+		s3://$(S3_BUCKET)/data/leicester-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/teesside-boroughs.json \
+		s3://$(S3_BUCKET)/data/teesside-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
 	# manchester-boroughs.json, added 2026-08-09 with the third city. In
 	# SHELL_ASSETS like the other two, so the atomic-addAll note above applies
 	# to it identically: missing here means the service worker stops installing

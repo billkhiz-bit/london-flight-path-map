@@ -69,6 +69,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import statistics
 import sys
 import urllib.request
@@ -378,15 +379,25 @@ def write_index(city, entries, payload):
     return len(block)
 
 
-DEFAULT_CITIES = [
-    'manchester',
-    'westmidlands',
-    'westyorkshire',
-    'southyorkshire',
-    'merseyside',
-    'tyneandwear',
-    'bristol',
-]
+def _cities_with_markers():
+    """Every city index.html has a <CITY>-NEIGHBOURHOODS block for.
+
+    DERIVED, not listed. This was a hardcoded list of seven, and on 2026-08-11
+    Leicester and Teesside were added to index.html with markers in place and
+    this script reported "448 neighbourhoods across 7 cities" - a confident
+    success that had silently skipped both. The markers ARE the contract, since
+    they are what --write-index rewrites between, so reading them cannot drift
+    from the file being written.
+
+    London and New York are absent by design: their neighbourhood tables are
+    CURATED inline, not generated from Price Paid.
+    """
+    with open('index.html', encoding='utf-8') as fh:
+        src = fh.read()
+    return sorted(m.lower() for m in re.findall(r'([A-Z]+)-NEIGHBOURHOODS:START', src))
+
+
+DEFAULT_CITIES = _cities_with_markers()
 
 
 def build_city(city, keep_by_city, centroids, args):

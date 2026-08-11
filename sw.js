@@ -164,7 +164,17 @@
 // postcodes DEFRA measured - mean absolute error 3.230 -> 1.879. index.html
 // holds both the impact bands and the client-side ramp, so a stale shell would
 // publish different numbers from /v1/score.
-const VERSION = 'v1.0.29';
+// v1.0.30 (2026-08-11): Leicester and Teesside reach the consumer site, taking
+// it from nine cities to eleven and matching the API exactly. Two new boundary
+// files join SHELL_ASSETS, and cache.addAll() is atomic - they must reach the
+// origin BEFORE or WITH this file or the worker stops installing for EVERY
+// city, not just these two. `make data-deploy` covers them.
+//
+// Also here: the city strip's bound and fade moved from the <=900px block to
+// the base rule. Eleven chips ran off the edge at 901px, where the phone fix
+// did not reach, so `Greater Manchester` sat at 806..906px in a 901px window
+// with the map container clipping it and nothing scrollable around it.
+const VERSION = 'v1.0.30';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -213,6 +223,8 @@ const SHELL_ASSETS = [
   '/data/merseyside-boroughs.json',
   '/data/tyneandwear-boroughs.json',
   '/data/bristol-boroughs.json',
+  '/data/leicester-boroughs.json',
+  '/data/teesside-boroughs.json',
   // Self-hosted fonts, 2026-08-05. Only the two families index.html actually
   // uses — Geist is for pricing/changes/api and is not part of the app shell.
   // These are precached rather than left to the runtime because they replaced

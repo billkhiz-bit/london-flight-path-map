@@ -152,6 +152,17 @@ check "prices == HM Land Registry"     python scripts/build_hpi_prices.py --chec
 # across the two files; --check parses all four, and a parser that knew only
 # one silently read every borough as absent.
 check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --check
+# The OUTPUT check the Manchester incident needed and nothing had. Input parity
+# (tests/test_borough_data_parity.py) passed throughout that defect, because
+# both holders HELD the data and the site never loaded it into the object it
+# scores from - all ten boroughs were adrift by up to 1.5 points with nothing
+# raised. This drives the real page and reads the number it renders.
+#
+# Runs against SOURCE, so it gates a deploy; tests/site-api-parity.mjs is the
+# live counterpart and catches a bad one. It is also the gate a city must pass
+# before leaving BACKEND_ONLY_CITIES, which is a one-way door.
+# Proven able to fail: a single site-side band edit reds it at -3.8.
+check "site == Lambda (91 boroughs)"   node tests/borough-score-parity.mjs
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
 check "no em dashes (9 pages)"         sh scripts/check_no_em_dash.sh

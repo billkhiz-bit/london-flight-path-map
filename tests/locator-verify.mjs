@@ -48,16 +48,43 @@ let fail = 0;
 // hidden=true - `country !== 'United Kingdom'` hid it rather than drawing the
 // USA - and now draws the contiguous US with one marker. markers/clickable
 // differ per silhouette, so they are declared here rather than assumed:
-// clickable was 2 until 2026-08-10 and is now 8: six Core Cities regions
-// joined LOCATOR_TO_CITY when they reached the consumer site, so their markers
-// went from a "planned" light disc to a live, clickable one and the caption
-// moved from "2 of 10" to "8 of 10". Cardiff and Nottingham stay planned - they
-// are API-only, Cardiff having no Progress 8 at all (England measure) and
-// Nottingham only 1 of 4.
+// The counts are DERIVED, not declared, and that is a correction. They were
+// hardcoded at markers:10 / clickable:8, under a comment explaining that
+// clickable "was 2 until 2026-08-10 and is now 8" - a number that had already
+// been rewritten once and went stale again the moment Leicester and Teesside
+// were added, failing a tree where the inset was perfectly correct. A count
+// baked into an assertion is scheduled staleness.
+//
+// What actually needs guarding is the RELATIONSHIP: every marker in the
+// silhouette file is drawn, and exactly those whose name is in LOCATOR_TO_CITY
+// are clickable. Cardiff and Nottingham are deliberately NOT - they are
+// API-only, so they draw as planned discs. That still fails on the real defect
+// (a live city whose marker never became clickable) without failing on growth.
+//
+// The expectation is anchored on CITY_DATA LABELS, deliberately NOT on
+// LOCATOR_TO_CITY. Deriving it from LOCATOR_TO_CITY would make the test read
+// its expectation out of the very table it is checking, so deleting a city from
+// that table would lower both sides together and pass - the failure mode this
+// repo has hit five times. A marker is expected to be clickable when a city ON
+// THE SITE carries that display name, which is an independent fact.
+const derived = await page.evaluate(async () => {
+  const labels = new Set(Object.values(CITY_DATA).map((c) => c.label));
+  const out = {};
+  for (const [id, cfg] of Object.entries(CITY_DATA)) {
+    if (!cfg.locator) continue;
+    const res = await fetch(cfg.locator);
+    const data = await res.json();
+    out[id] = {
+      markers: data.cities.length,
+      clickable: data.cities.filter((c) => labels.has(c.name)).length,
+    };
+  }
+  return out;
+});
 const expect = {
-  london: { hidden: false, markers: 10, clickable: 8, highlighted: 1 },
-  nyc: { hidden: false, markers: 1, clickable: 1, highlighted: 1 },
-  manchester: { hidden: false, markers: 10, clickable: 8, highlighted: 1 },
+  london: { hidden: false, ...derived.london, highlighted: 1 },
+  nyc: { hidden: false, ...derived.nyc, highlighted: 1 },
+  manchester: { hidden: false, ...derived.manchester, highlighted: 1 },
 };
 for (const city of ['london', 'nyc', 'manchester']) {
   if (city !== 'london') {
