@@ -1024,13 +1024,53 @@ painted at all** rather than defaulted, the legend title gains a measured
 "(NO DATA)" suffix when a layer paints nothing, and `tests/layer-honesty.mjs`
 fails if a layer paints a different number of boroughs than hold data.
 
-**Flood risk is still curated** for London and New York and **absent elsewhere**.
-There is no Environment Agency integration in this repo yet; the overlay now
-paints nothing where there is no reading rather than defaulting to `low`.
+**Flood risk**, from the Environment Agency's **Risk of Flooding from Rivers and
+Sea** (NAFRA2), banded on the share of a borough's addresses at **Medium or High**
+risk — the 1%-annual-chance line, which is also what defines Flood Zone 3 in
+planning, so it is the conventional cut rather than one invented here:
 
-**Wales is excluded from road noise.** The DEFRA coverage is England's; Natural
-Resources Wales publishes its own Round 4 maps, so Cardiff gets air quality and
-no road band rather than a silently empty one.
+| Band | Condition |
+|---|---|
+| `high` | ≥ 10% of postcodes at Medium or High risk |
+| `medium` | ≥ 2% |
+| `low` | < 2% |
+
+The EA publishes four classes (High / Medium / Low / Very low) and the map has
+three, so they are collapsed **on the planning threshold** rather than averaged.
+
+> **RoFRS is risk AFTER defences, and that is the most likely source of a "your
+> data is wrong" challenge.** It is not the Flood Map for Planning, which shows
+> the natural floodplain and ignores defences. The two answer different
+> questions and disagree most exactly where defences are largest.
+>
+> Replacing London's curated values moved **18 of its 33 boroughs**, almost all
+> in one direction and for one reason: Tower Hamlets, Southwark, Westminster,
+> Hammersmith and Fulham, Lambeth and Kensington and Chelsea fall from
+> high/medium to **low** because the Thames Barrier and the tidal walls protect
+> them, while **Kingston upon Thames rises to `high` (20.0%)** because it sits
+> upstream of the Barrier. The curated values had described the floodplain;
+> RoFRS describes the likelihood of actually being flooded.
+>
+> Both readings are legitimate and a conveyancer may want the other one. What is
+> **not** legitimate is the previous state, where those bands were hand-assigned
+> with no source at all and every borough outside London and New York was
+> defaulted to `low`. Residual risk behind a defence is real — the detail panel
+> says so in as many words rather than leaving "low" to speak for itself.
+
+**How it is obtained is unusual and worth knowing.** This dataset publishes no
+WCS and no WFS, and its postcode-level product is retired, so
+`scripts/fetch_ea_flood_risk.py` renders the WMS and decodes the classes back
+out. Two things make that safe rather than reckless, and both are enforced:
+`format_options=antialias:none` is load-bearing (without it one tile carries
+16,289 blended colours instead of 5), and the colour-to-band mapping was
+**verified against the service's own `risk_band` attribute by point-in-polygon
+containment**, not by reading the legend. `--verify` re-runs that check, and an
+unrecognised colour makes the fetch fail rather than silently reclassify.
+
+**Wales is excluded from road noise and flood risk.** The DEFRA and EA coverages
+are England's; Natural Resources Wales publishes its own, so Cardiff gets air
+quality and neither of the other two rather than silently empty rasters. New
+York keeps its curated FEMA-derived flood bands for the same reason.
 
 ### Data refresh policy
 

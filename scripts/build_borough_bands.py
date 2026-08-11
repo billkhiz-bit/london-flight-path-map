@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Derive borough-level road-noise and air-quality bands from the source data.
+"""Derive borough-level road-noise, air-quality and flood-risk bands.
 
 WHY THIS EXISTS
 ---------------
@@ -15,7 +15,7 @@ London's own values were no better sourced, only better disguised - a hand-
 written `BOROUGH_ROAD_NOISE` literal with no script behind it, the same
 editorial shape as the Ofsted bands that Progress 8 replaced.
 
-So this derives BOTH inputs for EVERY city from published sources, the way
+So this derives ALL THREE for EVERY city from published sources, the way
 build_progress8.py and build_hpi_prices.py already do for schools and prices.
 
 WHAT IT MEASURES, AND WHERE THE THRESHOLDS COME FROM
@@ -70,6 +70,21 @@ a percentile: a band that is defined relative to the other boroughs cannot say
                  moderate   <= 2.5x
                  poor        > 2.5x
 
+  FLOOD RISK   Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2),
+               fetched by scripts/fetch_ea_flood_risk.py. Banded on the SHARE OF
+               ADDRESSES at Medium or High risk - that is the 1%-annual-chance
+               threshold, the same cut that defines Flood Zone 3 in planning, so
+               it is the conventional line rather than one invented here:
+
+                 high    >= 10% of postcodes at Medium or High
+                 medium  >=  2%
+                 low     <   2%
+
+               The app's flood scale has three levels, while the EA publishes
+               four (High / Medium / Low / Very low). Collapsing on the planning
+               threshold keeps the boundary meaningful; averaging the four into
+               three would not.
+
 WHY POSTCODE CENTROIDS RATHER THAN BOROUGH AREA
 ------------------------------------------------
 An area-weighted median is dominated by whatever is empty. Outer boroughs are
@@ -77,10 +92,6 @@ mostly parks, reservoir and farmland, so an area median reports the quiet of
 places nobody lives at. Sampling at NSPL postcode centroids weights toward where
 addresses actually are, and it is the same idiom load_defra_raster.py uses to
 populate the per-postcode table.
-
-FLOOD IS NOT DERIVED HERE. There is no Environment Agency machinery in this repo
-yet; `plannedComponents.flood` still says planned. It is left untouched rather
-than defaulted, and the renderer no longer invents a value for it.
 
   pip install rasterio pyproj numpy
   python scripts/build_borough_bands.py                 # report, change nothing
@@ -115,13 +126,25 @@ WHO_PM25_UGM3 = 5.0  # WHO 2021 global air quality guidelines, annual mean
 ROAD_HIGH_SHARE = 200.0 / 3.0  # two-thirds
 ROAD_MODERATE_SHARE = 50.0
 
+# Share of a borough's addresses at Medium or High flood risk (>= 1% annual
+# chance), which is the Flood Zone 3 planning threshold.
+FLOOD_HIGH_SHARE = 10.0
+FLOOD_MEDIUM_SHARE = 2.0
+# Codes written by fetch_ea_flood_risk.py, ordered by severity.
+FLOOD_MEDIUM_OR_HIGH = (3, 4)
+FLOOD_UNAVAILABLE = 255
+
 ROAD_VINTAGE = 'DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden'
 AQ_VINTAGE = 'DEFRA background pollution maps, 2022 annual mean, 1 km grid'
+FLOOD_VINTAGE = 'Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)'
 
 # Wales is not in the England road-noise coverage; Natural Resources Wales
 # publishes its own. A city here gets air quality (the DEFRA grid is UK-wide)
 # and no road band, rather than a silently empty one.
 NO_ROAD_COVERAGE = {'cardiff'}
+# Same reason: RoFRS is an Environment Agency (England) product, and New York
+# keeps its curated FEMA-derived bands.
+NO_FLOOD_COVERAGE = {'cardiff', 'nyc'}
 
 
 def load_lad_map():
@@ -204,6 +227,36 @@ def sample_raster(tif_path, points):
     return vals[good], int(inside.sum())
 
 
+def sample_codes(tif_path, points):
+    """Sample a classified GeoTIFF at (lat, lon) points. Returns raw codes.
+
+    Deliberately NOT sample_raster(): that drops values of 0, because for the
+    Lden rasters 0 means 'below the lowest mapped band'. For flood, 0 is a real
+    class - not in any modelled risk polygon - and dropping it would compute the
+    share of at-risk addresses among the at-risk addresses, which is 100% by
+    construction.
+    """
+    import numpy as np
+    import rasterio
+    from pyproj import Transformer
+
+    with rasterio.open(tif_path) as ds:
+        band = ds.read(1)
+        transform = ds.transform
+        crs = ds.crs
+        height, width = band.shape
+
+    tr = Transformer.from_crs('EPSG:4326', crs, always_xy=True)
+    xs, ys = tr.transform(np.array([p[1] for p in points]), np.array([p[0] for p in points]))
+    cols, rows = ~transform * (xs, ys)
+    cols = np.floor(cols).astype(int)
+    rows = np.floor(rows).astype(int)
+    inside = (rows >= 0) & (rows < height) & (cols >= 0) & (cols < width)
+    codes = np.full(len(points), FLOOD_UNAVAILABLE, dtype='uint8')
+    codes[inside] = band[rows[inside], cols[inside]]
+    return codes, int(inside.sum())
+
+
 def load_aq_grid():
     """DEFRA 1 km background grids as {(easting_km, northing_km): value}.
 
@@ -253,6 +306,17 @@ def sample_aq(grids, points):
     }, counts
 
 
+def flood_band(medium_or_high_pct):
+    """Band from the share of addresses at or above the 1% annual chance line."""
+    if medium_or_high_pct is None:
+        return None
+    if medium_or_high_pct >= FLOOD_HIGH_SHARE:
+        return 'high'
+    if medium_or_high_pct >= FLOOD_MEDIUM_SHARE:
+        return 'medium'
+    return 'low'
+
+
 def road_band(exposed_pct):
     """Band from the share of addresses at or above the WHO guideline."""
     if exposed_pct is None:
@@ -300,6 +364,8 @@ def derive(limit=None):
     for city in sorted(by_city):
         tif = DATA / f'defra_road_lden_{city}.tif'
         have_road = tif.exists() and city not in NO_ROAD_COVERAGE
+        flood_tif = DATA / f'ea_flood_risk_{city}.tif'
+        have_flood = flood_tif.exists() and city not in NO_FLOOD_COVERAGE
         city_out = {}
         for borough, points in sorted(by_city[city].items()):
             rec = {'postcodes': len(points)}
@@ -313,6 +379,17 @@ def derive(limit=None):
                     rec['roadNoise'] = road_band(exposed)
                     rec['roadNoiseCoverage'] = round(100 * vals.size / len(points), 1)
                     rec['roadNoiseVintage'] = ROAD_VINTAGE
+
+            if have_flood:
+                codes, _inside = sample_codes(flood_tif, points)
+                known = codes[codes != FLOOD_UNAVAILABLE]
+                if known.size:
+                    at_risk = int(np.isin(known, FLOOD_MEDIUM_OR_HIGH).sum())
+                    pct = 100.0 * at_risk / known.size
+                    rec['floodMediumOrHighPct'] = round(pct, 2)
+                    rec['flood'] = flood_band(pct)
+                    rec['floodCoverage'] = round(100 * known.size / len(points), 1)
+                    rec['floodVintage'] = FLOOD_VINTAGE
 
             aq, counts = sample_aq(grids, points)
             band, worst = aq_band(aq['no2'], aq['pm25'])
@@ -345,7 +422,12 @@ def report(results):
                 if 'airQuality' in r
                 else 'NO AQ DATA'
             )
-            print(f'  {borough:28s} {r["postcodes"]:6,d} pc  {road}  {aq}')
+            fl = (
+                f"flood {r['flood']:6s} {r['floodMediumOrHighPct']:5.2f}% >=1%/yr"
+                if 'flood' in r
+                else 'flood NO DATA           '
+            )
+            print(f'  {borough:28s} {r["postcodes"]:6,d} pc  {road}  {aq}  {fl}')
 
 
 DERIVED_KEYS = (
@@ -359,6 +441,10 @@ DERIVED_KEYS = (
     'airQuality',
     'airQualityWhoRatio',
     'airQualityVintage',
+    'flood',
+    'floodMediumOrHighPct',
+    'floodCoverage',
+    'floodVintage',
 )
 
 

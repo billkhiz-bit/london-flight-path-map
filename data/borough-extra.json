@@ -44,14 +44,17 @@
       "no2AnnualMeanUgm3": 20.9,
       "pm25AnnualMeanUgm3": 9.4,
       "airQualityWhoRatio": 2.09,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.23,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Hillingdon": {
       "crime": "low",
       "crimeRate": 91.6,
       "schools": "good",
       "schoolNote": "Good school provision including several Outstanding primaries. Vyners School well-regarded. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "low",
+      "flood": "medium",
       "floodNote": "Generally low flood risk. Some surface water risk in lower-lying areas.",
       "airQuality": "moderate",
       "aqNote": "Air quality affected by Heathrow and M4/M25. Northern areas noticeably better.",
@@ -90,14 +93,17 @@
       "no2AnnualMeanUgm3": 19.8,
       "pm25AnnualMeanUgm3": 9.4,
       "airQualityWhoRatio": 1.98,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 2.72,
+      "floodCoverage": 98.3,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Richmond upon Thames": {
       "crime": "low",
       "crimeRate": 57.3,
       "schools": "excellent",
       "schoolNote": "Multiple Outstanding primaries. Strong grammar school presence in neighbouring Kingston. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Medium flood risk along Thames corridor. Parts of Twickenham, Teddington, and Richmond town at risk.",
       "airQuality": "moderate",
       "aqNote": "Generally good air quality. Large green spaces help. Some road pollution along A316.",
@@ -136,7 +142,10 @@
       "no2AnnualMeanUgm3": 19.2,
       "pm25AnnualMeanUgm3": 9.1,
       "airQualityWhoRatio": 1.92,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.14,
+      "floodCoverage": 96.2,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Ealing": {
       "crime": "medium",
@@ -182,7 +191,10 @@
       "no2AnnualMeanUgm3": 21.1,
       "pm25AnnualMeanUgm3": 9.7,
       "airQualityWhoRatio": 2.11,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.43,
+      "floodCoverage": 94.3,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Wandsworth": {
       "crime": "medium",
@@ -228,14 +240,17 @@
       "no2AnnualMeanUgm3": 23.0,
       "pm25AnnualMeanUgm3": 9.7,
       "airQualityWhoRatio": 2.3,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 7.04,
+      "floodCoverage": 97.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Lambeth": {
       "crime": "high",
       "crimeRate": 114.4,
       "schools": "good",
       "schoolNote": "Dunraven School Outstanding. Several good primaries in Streatham and Clapham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Thames flood risk along northern boundary. Parts of Vauxhall and Waterloo in flood zone.",
       "airQuality": "moderate",
       "aqNote": "Poor air quality in northern Lambeth (Brixton Road, Vauxhall). Better in southern residential areas.",
@@ -274,14 +289,17 @@
       "no2AnnualMeanUgm3": 23.8,
       "pm25AnnualMeanUgm3": 9.9,
       "airQualityWhoRatio": 2.38,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.18,
+      "floodCoverage": 98.3,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Lewisham": {
       "crime": "medium",
       "crimeRate": 94.2,
       "schools": "good",
       "schoolNote": "Prendergast and Haberdashers' well-regarded. Several Outstanding primaries in Blackheath area. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Flood risk along Ravensbourne and Quaggy rivers. Lewisham town centre has had historic flooding.",
       "airQuality": "moderate",
       "aqNote": "South Circular is a hotspot. Residential areas like Blackheath and Lee have good air quality.",
@@ -320,14 +338,17 @@
       "no2AnnualMeanUgm3": 21.1,
       "pm25AnnualMeanUgm3": 9.4,
       "airQualityWhoRatio": 2.11,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.61,
+      "floodCoverage": 97.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Greenwich": {
       "crime": "medium",
       "crimeRate": 90.3,
       "schools": "good",
       "schoolNote": "Thomas Tallis well-regarded. Several Outstanding primaries in Blackheath and Eltham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "high",
+      "flood": "low",
       "floodNote": "High flood risk in riverside areas. Thames Barrier protects but residual risk remains. Woolwich and Thamesmead particularly exposed.",
       "airQuality": "moderate",
       "aqNote": "A2/A102 Blackwall Tunnel approach is poor. Blackheath has good air quality.",
@@ -366,14 +387,17 @@
       "no2AnnualMeanUgm3": 21.2,
       "pm25AnnualMeanUgm3": 9.3,
       "airQualityWhoRatio": 2.12,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.96,
+      "floodCoverage": 98.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Tower Hamlets": {
       "crime": "high",
       "crimeRate": 106.6,
       "schools": "good",
       "schoolNote": "Mulberry Academy Outstanding. Several strong primaries despite deprivation challenges. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "high",
+      "flood": "low",
       "floodNote": "Significant Thames flood risk. Isle of Dogs, Canary Wharf, Wapping in flood zones. Thames Barrier provides protection.",
       "airQuality": "poor",
       "aqNote": "Poor air quality along Commercial Road, Mile End Road, and around Canary Wharf.",
@@ -412,7 +436,10 @@
       "no2AnnualMeanUgm3": 27.6,
       "pm25AnnualMeanUgm3": 10.7,
       "airQualityWhoRatio": 2.76,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.24,
+      "floodCoverage": 98.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Camden": {
       "crime": "high",
@@ -458,7 +485,10 @@
       "no2AnnualMeanUgm3": 29.8,
       "pm25AnnualMeanUgm3": 10.8,
       "airQualityWhoRatio": 2.98,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.33,
+      "floodCoverage": 99.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Islington": {
       "crime": "high",
@@ -504,14 +534,17 @@
       "no2AnnualMeanUgm3": 28.8,
       "pm25AnnualMeanUgm3": 10.9,
       "airQualityWhoRatio": 2.88,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.0,
+      "floodCoverage": 99.9,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Hackney": {
       "crime": "high",
       "crimeRate": 116.5,
       "schools": "good",
       "schoolNote": "Mossbourne Academy Outstanding. Schools have improved significantly in recent years. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "low",
+      "flood": "medium",
       "floodNote": "Low flood risk overall. River Lea corridor has localised risk.",
       "airQuality": "poor",
       "aqNote": "Kingsland Road and Mare Street corridors are worse. Parks and quieter streets are good.",
@@ -550,7 +583,10 @@
       "no2AnnualMeanUgm3": 25.6,
       "pm25AnnualMeanUgm3": 10.7,
       "airQualityWhoRatio": 2.56,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 2.69,
+      "floodCoverage": 94.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Barnet": {
       "crime": "low",
@@ -596,7 +632,10 @@
       "no2AnnualMeanUgm3": 19.3,
       "pm25AnnualMeanUgm3": 9.7,
       "airQualityWhoRatio": 1.94,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.64,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Croydon": {
       "crime": "medium",
@@ -642,7 +681,10 @@
       "no2AnnualMeanUgm3": 18.1,
       "pm25AnnualMeanUgm3": 8.8,
       "airQualityWhoRatio": 1.81,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.29,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Bromley": {
       "crime": "low",
@@ -688,14 +730,17 @@
       "no2AnnualMeanUgm3": 16.5,
       "pm25AnnualMeanUgm3": 8.3,
       "airQualityWhoRatio": 1.66,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.17,
+      "floodCoverage": 98.9,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Newham": {
       "crime": "high",
       "crimeRate": 104.0,
       "schools": "good",
       "schoolNote": "Brampton Manor sends many students to Oxbridge. Several new academies improving rapidly.",
-      "flood": "high",
+      "flood": "medium",
       "floodNote": "Royal Docks, Beckton, and areas near Thames in flood zones. Thames Barrier provides protection.",
       "airQuality": "moderate",
       "aqNote": "A13, Newham Way, and industrial areas contribute to poor air quality. Stratford area affected by traffic.",
@@ -734,14 +779,17 @@
       "no2AnnualMeanUgm3": 23.1,
       "pm25AnnualMeanUgm3": 10.1,
       "airQualityWhoRatio": 2.31,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 2.05,
+      "floodCoverage": 97.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Southwark": {
       "crime": "high",
       "crimeRate": 120.8,
       "schools": "good",
       "schoolNote": "Harris Academy group has multiple Outstanding academies. Charter School popular. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Thames flood risk along northern boundary. Bermondsey, Rotherhithe, Borough in flood zones.",
       "airQuality": "poor",
       "aqNote": "Old Kent Road, Elephant and Castle are hotspots. Dulwich has much better air quality.",
@@ -780,14 +828,17 @@
       "no2AnnualMeanUgm3": 25.8,
       "pm25AnnualMeanUgm3": 10.3,
       "airQualityWhoRatio": 2.58,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.02,
+      "floodCoverage": 96.5,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
       "crimeRate": 107.0,
       "schools": "excellent",
       "schoolNote": "Lady Margaret, Sacred Heart Outstanding. Strong primary provision throughout. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "high",
+      "flood": "low",
       "floodNote": "High flood risk along Thames. Hammersmith riverside and parts of Shepherd's Bush in flood zones.",
       "airQuality": "poor",
       "aqNote": "A4/Talgarth Road is a major pollution corridor. Side streets and Fulham residential areas better.",
@@ -826,14 +877,17 @@
       "no2AnnualMeanUgm3": 25.0,
       "pm25AnnualMeanUgm3": 10.0,
       "airQualityWhoRatio": 2.5,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.01,
+      "floodCoverage": 97.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Kensington and Chelsea": {
       "crime": "medium",
       "crimeRate": 145.8,
       "schools": "excellent",
       "schoolNote": "Holland Park School Outstanding. Very high private school density. Excellent state and independent options. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Thames flood risk along Chelsea Embankment. Basement flooding a known issue in some streets.",
       "airQuality": "poor",
       "aqNote": "Cromwell Road and major routes are poor. Residential squares and side streets are much better.",
@@ -872,7 +926,10 @@
       "no2AnnualMeanUgm3": 27.7,
       "pm25AnnualMeanUgm3": 10.3,
       "airQualityWhoRatio": 2.77,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.03,
+      "floodCoverage": 99.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Brent": {
       "crime": "medium",
@@ -918,7 +975,10 @@
       "no2AnnualMeanUgm3": 22.1,
       "pm25AnnualMeanUgm3": 10.0,
       "airQualityWhoRatio": 2.21,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.8,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Haringey": {
       "crime": "medium",
@@ -964,7 +1024,10 @@
       "no2AnnualMeanUgm3": 21.4,
       "pm25AnnualMeanUgm3": 9.9,
       "airQualityWhoRatio": 2.14,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.36,
+      "floodCoverage": 97.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Waltham Forest": {
       "crime": "medium",
@@ -1010,7 +1073,10 @@
       "no2AnnualMeanUgm3": 20.8,
       "pm25AnnualMeanUgm3": 9.9,
       "airQualityWhoRatio": 2.08,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.36,
+      "floodCoverage": 96.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Merton": {
       "crime": "low",
@@ -1056,14 +1122,17 @@
       "no2AnnualMeanUgm3": 19.8,
       "pm25AnnualMeanUgm3": 9.2,
       "airQualityWhoRatio": 1.98,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.04,
+      "floodCoverage": 98.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Redbridge": {
       "crime": "medium",
       "crimeRate": 74.3,
       "schools": "excellent",
       "schoolNote": "Ilford County High is a top grammar school. Several Outstanding primaries. Strong academic culture. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "low",
+      "flood": "medium",
       "floodNote": "Low flood risk in most areas. Some risk along Roding Valley in the west.",
       "airQuality": "moderate",
       "aqNote": "A12 corridor is worse. Residential areas in Wanstead and South Woodford are good.",
@@ -1102,14 +1171,17 @@
       "no2AnnualMeanUgm3": 20.6,
       "pm25AnnualMeanUgm3": 9.7,
       "airQualityWhoRatio": 2.06,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 3.29,
+      "floodCoverage": 98.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Enfield": {
       "crime": "medium",
       "crimeRate": 85.2,
       "schools": "good",
       "schoolNote": "Latymer School is a selective grammar. Several Outstanding primaries. Edmonton improving. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "low",
+      "flood": "medium",
       "floodNote": "Low flood risk in most areas. Some localised risk along Turkey Brook and Pymmes Brook.",
       "airQuality": "moderate",
       "aqNote": "Good air quality in most areas. A10 corridor is worse. Large green spaces help.",
@@ -1148,14 +1220,17 @@
       "no2AnnualMeanUgm3": 18.4,
       "pm25AnnualMeanUgm3": 9.6,
       "airQualityWhoRatio": 1.91,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 3.42,
+      "floodCoverage": 97.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Kingston upon Thames": {
       "crime": "low",
       "crimeRate": 66.8,
       "schools": "excellent",
       "schoolNote": "Tiffin Boys' and Tiffin Girls' are top grammar schools. Multiple Outstanding primaries. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "high",
       "floodNote": "Medium flood risk along Thames. Kingston town centre and Surbiton riverside at risk.",
       "airQuality": "moderate",
       "aqNote": "Good air quality. Limited through-traffic compared to inner boroughs. Parks and riverside help.",
@@ -1194,7 +1269,10 @@
       "no2AnnualMeanUgm3": 18.9,
       "pm25AnnualMeanUgm3": 9.0,
       "airQualityWhoRatio": 1.89,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 20.02,
+      "floodCoverage": 96.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Sutton": {
       "crime": "low",
@@ -1240,14 +1318,17 @@
       "no2AnnualMeanUgm3": 16.7,
       "pm25AnnualMeanUgm3": 8.6,
       "airQualityWhoRatio": 1.72,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.22,
+      "floodCoverage": 97.5,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Westminster": {
       "crime": "high",
       "crimeRate": 355.5,
       "schools": "good",
       "schoolNote": "Grey Coat Hospital Outstanding. Very competitive for school places due to small residential population. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Thames flood risk along Embankment and Pimlico. Good flood defences in place.",
       "airQuality": "poor",
       "aqNote": "Oxford Street, Park Lane have some of London's worst pollution. Side streets and parks are better.",
@@ -1286,14 +1367,17 @@
       "no2AnnualMeanUgm3": 31.7,
       "pm25AnnualMeanUgm3": 11.0,
       "airQualityWhoRatio": 3.17,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.04,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "City of London": {
       "crime": "high",
       "crimeRate": 190,
       "schools": "good",
       "schoolNote": "Very limited provision. City of London School and Guildhall School well-regarded.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Thames flood risk along southern boundary. Major flood defences in place.",
       "airQuality": "poor",
       "aqNote": "Poor air quality during business hours due to traffic. Weekends and evenings much better.",
@@ -1309,14 +1393,17 @@
       "no2AnnualMeanUgm3": 33.9,
       "pm25AnnualMeanUgm3": 11.3,
       "airQualityWhoRatio": 3.39,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.62,
+      "floodCoverage": 98.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Barking": {
       "crime": "high",
       "crimeRate": 84.2,
       "schools": "good",
       "schoolNote": "Sydney Russell Academy improved. Jo Richardson Community School is popular. Some primaries Outstanding. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Barking Riverside and Thames-side areas have flood risk. Inland areas are generally safe.",
       "airQuality": "moderate",
       "aqNote": "A13 corridor is a pollution hotspot. Residential areas away from major roads are better.",
@@ -1355,7 +1442,10 @@
       "no2AnnualMeanUgm3": 19.9,
       "pm25AnnualMeanUgm3": 9.5,
       "airQualityWhoRatio": 1.99,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.16,
+      "floodCoverage": 97.2,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Havering": {
       "crime": "low",
@@ -1401,14 +1491,17 @@
       "no2AnnualMeanUgm3": 16.8,
       "pm25AnnualMeanUgm3": 8.6,
       "airQualityWhoRatio": 1.73,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.79,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Bexley": {
       "crime": "low",
       "crimeRate": 60.2,
       "schools": "good",
       "schoolNote": "Townley Grammar and Bexley Grammar are selective. Several good primaries across the borough.",
-      "flood": "medium",
+      "flood": "low",
       "floodNote": "Thames-side areas (Erith, Thamesmead) have significant flood risk. Inland areas are safe.",
       "airQuality": "moderate",
       "aqNote": "Good air quality across most of the borough. Lower traffic density than inner boroughs.",
@@ -1447,7 +1540,10 @@
       "no2AnnualMeanUgm3": 17.8,
       "pm25AnnualMeanUgm3": 8.7,
       "airQualityWhoRatio": 1.78,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 0.76,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Harrow": {
       "crime": "low",
@@ -1493,7 +1589,10 @@
       "no2AnnualMeanUgm3": 17.7,
       "pm25AnnualMeanUgm3": 9.4,
       "airQualityWhoRatio": 1.89,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "floodMediumOrHighPct": 1.35,
+      "floodCoverage": 92.5,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "nyc": {
@@ -1593,7 +1692,11 @@
       "pm25AnnualMeanUgm3": 8.2,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.77,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.87,
+      "floodCoverage": 97.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Salford": {
       "p8": -0.49,
@@ -1609,7 +1712,11 @@
       "pm25AnnualMeanUgm3": 8.0,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.71,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.98,
+      "floodCoverage": 98.4,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Stockport": {
       "p8": -0.04,
@@ -1625,7 +1732,11 @@
       "pm25AnnualMeanUgm3": 7.8,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.56,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.39,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Trafford": {
       "p8": 0.24,
@@ -1641,7 +1752,11 @@
       "pm25AnnualMeanUgm3": 7.5,
       "airQuality": "good",
       "airQualityWhoRatio": 1.49,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.21,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Tameside": {
       "p8": -0.21,
@@ -1657,7 +1772,11 @@
       "pm25AnnualMeanUgm3": 8.0,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.6,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.35,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Oldham": {
       "p8": -0.18,
@@ -1673,7 +1792,11 @@
       "pm25AnnualMeanUgm3": 7.9,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.58,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.16,
+      "floodCoverage": 99.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Rochdale": {
       "p8": -0.28,
@@ -1689,7 +1812,11 @@
       "pm25AnnualMeanUgm3": 7.7,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.53,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.59,
+      "floodCoverage": 99.4,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Bury": {
       "p8": -0.14,
@@ -1705,7 +1832,11 @@
       "pm25AnnualMeanUgm3": 7.6,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.52,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "medium",
+      "floodMediumOrHighPct": 8.51,
+      "floodCoverage": 98.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Bolton": {
       "p8": -0.08,
@@ -1721,7 +1852,11 @@
       "pm25AnnualMeanUgm3": 7.8,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.56,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.16,
+      "floodCoverage": 99.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Wigan": {
       "p8": -0.39,
@@ -1737,7 +1872,11 @@
       "pm25AnnualMeanUgm3": 8.1,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.62,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.5,
+      "floodCoverage": 98.4,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "westmidlands": {
@@ -1753,7 +1892,11 @@
       "pm25AnnualMeanUgm3": 8.6,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.73,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.08,
+      "floodCoverage": 99.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Coventry": {
       "crimeRate": 88.4,
@@ -1767,7 +1910,11 @@
       "pm25AnnualMeanUgm3": 8.1,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.62,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.37,
+      "floodCoverage": 98.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Dudley": {
       "crimeRate": 74.5,
@@ -1781,7 +1928,11 @@
       "pm25AnnualMeanUgm3": 7.8,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.55,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.28,
+      "floodCoverage": 99.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Sandwell": {
       "crimeRate": 95.9,
@@ -1795,7 +1946,11 @@
       "pm25AnnualMeanUgm3": 9.1,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.81,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.38,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Solihull": {
       "crimeRate": 79.5,
@@ -1809,7 +1964,11 @@
       "pm25AnnualMeanUgm3": 7.9,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.59,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.2,
+      "floodCoverage": 99.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Walsall": {
       "crimeRate": 92.9,
@@ -1823,7 +1982,11 @@
       "pm25AnnualMeanUgm3": 8.5,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.71,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.91,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
@@ -1837,7 +2000,11 @@
       "pm25AnnualMeanUgm3": 7.8,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.57,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.1,
+      "floodCoverage": 99.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "westyorkshire": {
@@ -1853,7 +2020,11 @@
       "pm25AnnualMeanUgm3": 7.3,
       "airQuality": "good",
       "airQualityWhoRatio": 1.45,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "medium",
+      "floodMediumOrHighPct": 4.12,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Calderdale": {
       "crimeRate": 103.4,
@@ -1867,7 +2038,11 @@
       "pm25AnnualMeanUgm3": 7.0,
       "airQuality": "good",
       "airQualityWhoRatio": 1.39,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "medium",
+      "floodMediumOrHighPct": 3.79,
+      "floodCoverage": 95.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Kirklees": {
       "crimeRate": 87.6,
@@ -1881,7 +2056,11 @@
       "pm25AnnualMeanUgm3": 7.0,
       "airQuality": "good",
       "airQualityWhoRatio": 1.41,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.48,
+      "floodCoverage": 96.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Leeds": {
       "crimeRate": 114.6,
@@ -1895,7 +2074,11 @@
       "pm25AnnualMeanUgm3": 7.6,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.53,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.65,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Wakefield": {
       "crimeRate": 105.8,
@@ -1909,7 +2092,11 @@
       "pm25AnnualMeanUgm3": 7.1,
       "airQuality": "good",
       "airQualityWhoRatio": 1.41,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.26,
+      "floodCoverage": 98.3,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "southyorkshire": {
@@ -1925,7 +2112,11 @@
       "pm25AnnualMeanUgm3": 6.5,
       "airQuality": "good",
       "airQualityWhoRatio": 1.29,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "medium",
+      "floodMediumOrHighPct": 4.49,
+      "floodCoverage": 96.9,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Doncaster": {
       "crimeRate": 117.3,
@@ -1939,7 +2130,11 @@
       "pm25AnnualMeanUgm3": 6.3,
       "airQuality": "good",
       "airQualityWhoRatio": 1.26,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "high",
+      "floodMediumOrHighPct": 24.38,
+      "floodCoverage": 92.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Rotherham": {
       "crimeRate": 93.1,
@@ -1953,7 +2148,11 @@
       "pm25AnnualMeanUgm3": 6.9,
       "airQuality": "good",
       "airQualityWhoRatio": 1.38,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.28,
+      "floodCoverage": 99.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Sheffield": {
       "crimeRate": 96.9,
@@ -1967,7 +2166,11 @@
       "pm25AnnualMeanUgm3": 6.9,
       "airQuality": "good",
       "airQualityWhoRatio": 1.39,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.86,
+      "floodCoverage": 97.2,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "merseyside": {
@@ -1983,7 +2186,11 @@
       "pm25AnnualMeanUgm3": 8.8,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.76,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.16,
+      "floodCoverage": 99.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Liverpool": {
       "crimeRate": 124.1,
@@ -1997,7 +2204,11 @@
       "pm25AnnualMeanUgm3": 7.9,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.65,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.31,
+      "floodCoverage": 99.3,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "St Helens": {
       "crimeRate": 86.4,
@@ -2011,7 +2222,11 @@
       "pm25AnnualMeanUgm3": 8.0,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.6,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.29,
+      "floodCoverage": 99.5,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Sefton": {
       "crimeRate": 75.5,
@@ -2025,7 +2240,11 @@
       "pm25AnnualMeanUgm3": 8.7,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.75,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "high",
+      "floodMediumOrHighPct": 31.39,
+      "floodCoverage": 98.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Wirral": {
       "crimeRate": 71.1,
@@ -2039,7 +2258,11 @@
       "pm25AnnualMeanUgm3": 6.7,
       "airQuality": "good",
       "airQualityWhoRatio": 1.35,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.47,
+      "floodCoverage": 99.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "tyneandwear": {
@@ -2055,7 +2278,11 @@
       "pm25AnnualMeanUgm3": 7.3,
       "airQuality": "good",
       "airQualityWhoRatio": 1.46,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "medium",
+      "floodMediumOrHighPct": 4.65,
+      "floodCoverage": 98.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
@@ -2069,7 +2296,11 @@
       "pm25AnnualMeanUgm3": 7.8,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.57,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.6,
+      "floodCoverage": 97.9,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "North Tyneside": {
       "crimeRate": 81.8,
@@ -2083,7 +2314,11 @@
       "pm25AnnualMeanUgm3": 8.2,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.64,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.85,
+      "floodCoverage": 98.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "South Tyneside": {
       "crimeRate": 96.6,
@@ -2097,7 +2332,11 @@
       "pm25AnnualMeanUgm3": 8.2,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.64,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "high",
+      "floodMediumOrHighPct": 10.94,
+      "floodCoverage": 97.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Sunderland": {
       "crimeRate": 93.6,
@@ -2111,7 +2350,11 @@
       "pm25AnnualMeanUgm3": 8.0,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.6,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.18,
+      "floodCoverage": 99.1,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "bristol": {
@@ -2127,7 +2370,11 @@
       "pm25AnnualMeanUgm3": 7.7,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.54,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.05,
+      "floodCoverage": 96.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
@@ -2141,7 +2388,11 @@
       "pm25AnnualMeanUgm3": 6.8,
       "airQuality": "good",
       "airQualityWhoRatio": 1.36,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.77,
+      "floodCoverage": 96.7,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "North Somerset": {
       "crimeRate": 81.8,
@@ -2155,7 +2406,11 @@
       "pm25AnnualMeanUgm3": 6.5,
       "airQuality": "good",
       "airQualityWhoRatio": 1.29,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.14,
+      "floodCoverage": 94.5,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
@@ -2169,7 +2424,11 @@
       "pm25AnnualMeanUgm3": 7.5,
       "airQuality": "moderate",
       "airQualityWhoRatio": 1.5,
-      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
+      "flood": "medium",
+      "floodMediumOrHighPct": 5.27,
+      "floodCoverage": 95.9,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   }
 }

@@ -139,7 +139,10 @@
 // no-cache, but index.html is cache-first, so without this bump a returning
 // visitor keeps a build that reads fields the new data file no longer arranges
 // the same way.
-const VERSION = 'v1.0.24';
+// v1.0.25 (2026-08-11): flood risk derived from the Environment Agency for all
+// 73 UK boroughs, completing the three fill layers. index.html and
+// data/borough-extra.json both change; index.html is cache-first.
+const VERSION = 'v1.0.25';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

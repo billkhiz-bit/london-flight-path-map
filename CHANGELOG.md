@@ -6,7 +6,35 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-11 (evening, latest) - The map layers were inventing data; now they measure it
+### 2026-08-11 (night, latest) - Flood risk gets a source, and London moves
+
+- **Flood risk is now derived from the Environment Agency** for all 73 UK
+  boroughs, closing the last of the three fill layers. It was curated for London
+  and New York and absent everywhere else.
+- **Banded on the share of a borough's addresses at Medium or High risk** - the
+  1%-annual-chance line, which is also what defines Flood Zone 3 in planning.
+  Sefton 31.4%, Doncaster 24.4% and Kingston upon Thames 20.0% are the highest;
+  60 of 77 boroughs band `low`.
+- **This moved 18 of London's 33 boroughs, almost all for one reason.** RoFRS
+  measures risk AFTER existing defences, so Tower Hamlets, Southwark,
+  Westminster, Hammersmith and Fulham, Lambeth and Kensington and Chelsea fall
+  to `low` behind the Thames Barrier and the tidal walls, while Kingston upon
+  Thames rises to `high` because it sits upstream of the Barrier. The curated
+  values had described the floodplain; this describes the likelihood of being
+  flooded. **The detail panel now says so in as many words**, because "low" for
+  a riverside borough is surprising without it.
+- **How it is fetched is unusual, and every dead end is recorded.** The dataset
+  publishes no WCS and no WFS, and its postcode-level product is retired, so
+  `scripts/fetch_ea_flood_risk.py` renders the WMS and decodes the classes.
+  `format_options=antialias:none` is load-bearing - without it a tile carries
+  16,289 blended colours instead of 5 - and the colour-to-band mapping was
+  verified against the service's own `risk_band` attribute by point-in-polygon
+  containment, not by reading the legend. An unrecognised colour fails the fetch
+  rather than silently reclassifying, and `--verify` re-runs the check.
+- New York keeps its curated FEMA-derived bands and Cardiff is skipped: both
+  coverages are England's.
+
+### 2026-08-11 (evening) - The map layers were inventing data; now they measure it
 
 - **Fixed: three map layers were painting a value nobody had measured.** Road
   noise, flood risk and air quality each ended their lookup with a fallback, and

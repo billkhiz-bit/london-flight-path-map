@@ -5910,7 +5910,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -5958,7 +5958,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -6006,7 +6006,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> <strong>No commercial airport operates in South Yorkshire.</strong> Doncaster Sheffield closed to commercial flights in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is banded quiet on aircraft noise. That is a measured absence of a noise source, not an unmeasured city.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -6054,7 +6054,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -6102,7 +6102,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -6150,7 +6150,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -6212,7 +6212,7 @@
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Treat these bands as indicative until DEFRA Round 4 is sampled for this city.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
-          legendFloodTitle: 'FLOOD RISK',
+          legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
@@ -7831,8 +7831,18 @@
           'Flood Risk',
           extra.flood,
           extra.flood,
-          extra.floodNote,
-          'TOGGLE "FLOOD RISK ZONES" ON MAP · BOROUGH-LEVEL RATING (CURATED)'
+          // The defence caveat is not a footnote, it is the reason the number
+          // often surprises. RoFRS is the Environment Agency's assessment of
+          // risk AFTER existing defences, so heavily defended Thames-side
+          // boroughs read low while the natural floodplain beneath them does
+          // not. A reader who expects "by the river therefore high" needs that
+          // sentence in front of them, not in METHODOLOGY.md.
+          extra.floodMediumOrHighPct !== undefined
+            ? `${extra.floodMediumOrHighPct}% of this borough's postcodes sit at Medium or High risk, meaning a 1% or greater chance of flooding from rivers or the sea in any year. This is risk <em>after</em> existing flood defences, so a defended riverside area can read low while still sitting on a floodplain.`
+            : extra.floodNote,
+          extra.floodVintage
+            ? `SOURCE: ${extra.floodVintage}`
+            : 'TOGGLE "FLOOD RISK ZONES" ON MAP · BOROUGH-LEVEL RATING (CURATED)'
         );
         add(
           'aq',
