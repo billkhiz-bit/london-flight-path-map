@@ -142,7 +142,11 @@
 // v1.0.25 (2026-08-11): flood risk derived from the Environment Agency for all
 // 73 UK boroughs, completing the three fill layers. index.html and
 // data/borough-extra.json both change; index.html is cache-first.
-const VERSION = 'v1.0.25';
+// v1.0.26 (2026-08-11): 448 neighbourhoods across seven UK cities, up from 85,
+// plus two search fixes that had never worked - generated-city area keys were
+// unreachable by search, and every South Yorkshire search threw on a city with
+// no airport. All inline in index.html, which is cache-first.
+const VERSION = 'v1.0.26';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

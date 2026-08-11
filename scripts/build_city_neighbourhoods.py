@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build Greater Manchester neighbourhood entries for the consumer-site ranking.
+"""Build a city's neighbourhood entries for the consumer-site ranking.
 
 WHY THIS SCRIPT EXISTS RATHER THAN A HAND-WRITTEN TABLE.
 
 London's and NYC's neighbourhood entries in `index.html` carry a curated
 median price (LONDON_NEIGHBOURHOOD_DETAIL: `price`, in GBP thousands) and a
 hand-assigned `crime` modifier on a -2..+1 scale. Those numbers are editorial.
-Writing forty more of them for Greater Manchester would repeat the defect this
+Writing four hundred more of them by hand would repeat the defect this
 project has already removed twice: the Ofsted school bands, which turned out
 not to reproduce from any published threshold, and the prototype's invented
 decibel readings at named locations.
@@ -19,10 +19,10 @@ So every number this emits is sourced or absent:
              National Statistics Postcode Lookup already on disk for the
              score Lambda's postcode table.
   borough    The Land Registry `district` field on the transactions themselves,
-             checked against the ten GM metropolitan boroughs.
+             checked against the city's boroughs in LAD_TO_BOROUGH.
   crime      0 for every entry, and NOT a measurement. There is no honest
              sub-borough crime source: ONS Table C4 publishes at Community
-             Safety Partnership level, which for Greater Manchester is the
+             Safety Partnership level, which for these cities is the
              borough. A modifier invented per neighbourhood would be exactly
              the editorial number this script exists to avoid. The site
              discloses this rather than printing a silent zero.
@@ -49,12 +49,17 @@ SOURCES
     (C) Royal Mail copyright and database right; ONS data (C) Crown copyright.
     Open Government Licence v3.0.
 
-USAGE
-    python scripts/build_manchester_neighbourhoods.py
-    python scripts/build_manchester_neighbourhoods.py --years 2025 2026
-    python scripts/build_manchester_neighbourhoods.py --min-sales 40
+GENERALISED 2026-08-11 from build_manchester_neighbourhoods.py. Greater
+Manchester was the only generated city for two days; six more now use the same
+path, which produced 448 districts across seven cities in one pass. Its output
+for GM is byte-identical to the hand-run it replaced.
 
-Writes data/manchester-neighbourhoods.json. Re-run when a new PPD year lands;
+USAGE
+    python scripts/build_city_neighbourhoods.py --write-index
+    python scripts/build_city_neighbourhoods.py --city bristol --write-index
+    python scripts/build_city_neighbourhoods.py --years 2025 2026 --min-sales 40
+
+Writes data/<city>-neighbourhoods.json. Re-run when a new PPD year lands;
 the output records its own vintage and the site prints it beside the figures,
 because a median price with no date is unreadable and a stale one is worse
 than none.
@@ -73,21 +78,47 @@ PPD_URL = (
     'http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}.csv'
 )
 
-# The ten GM metropolitan boroughs as Land Registry spells them in the
-# `district` column (upper case). Checked against CITIES['manchester'] in
-# backend/lambdas/score/app.py by the assertion at the end of main().
-GM_BOROUGHS = {
-    'BOLTON': 'Bolton',
-    'BURY': 'Bury',
-    'MANCHESTER': 'Manchester',
-    'OLDHAM': 'Oldham',
-    'ROCHDALE': 'Rochdale',
-    'SALFORD': 'Salford',
-    'STOCKPORT': 'Stockport',
-    'TAMESIDE': 'Tameside',
-    'TRAFFORD': 'Trafford',
-    'WIGAN': 'Wigan',
-}
+# Boroughs come from the score Lambda's LAD_TO_BOROUGH, not from a table here.
+#
+# This replaced a hardcoded ten-entry GM_BOROUGHS dict when the script was
+# generalised on 2026-08-11. A second copy of the borough list is the exact
+# defect that took six cities off the map that morning - CITY_DATA held nine
+# and a second registry held three - so the list is imported rather than
+# retyped, and a city added to the Lambda is buildable here with no edit.
+#
+# Land Registry spells districts its own way in the `district` column, so the
+# match is NORMALISED rather than exact. Measured against pp-2025 before being
+# written: every borough of every city on the site matches, including
+# `Westminster` -> `CITY OF WESTMINSTER`, `St Helens` -> `ST HELENS` and
+# `City of Bristol` -> `CITY OF BRISTOL`. A borough that matches NOTHING is
+# reported loudly by main() rather than quietly contributing no districts,
+# because a silent miss reads as "this borough has no neighbourhoods".
+def _norm_district(name):
+    """Normalise a district name for matching across ONS and Land Registry."""
+    import re
+
+    s = (name or '').upper().replace('.', '').replace('-', ' ')
+    s = re.sub(r'^THE\s+', '', s)
+    s = re.sub(r'^(CITY OF|COUNTY OF)\s+', '', s)
+    s = re.sub(r'\s+(CITY|DISTRICT|BOROUGH)$', '', s)
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+def boroughs_for_city(city):
+    """{normalised Land Registry district: our borough name} for one city."""
+    import importlib.util
+
+    path = os.path.join(REPO, 'backend', 'lambdas', 'score', 'app.py')
+    spec = importlib.util.spec_from_file_location('score_app_nbhd', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    out = {}
+    for _code, (city_id, borough) in module.LAD_TO_BOROUGH.items():
+        if city_id == city:
+            out[_norm_district(borough)] = borough
+    if not out:
+        sys.exit(f'no boroughs registered for city {city!r} in LAD_TO_BOROUGH')
+    return out
 
 # PPD column indices. The bulk CSV has no header row.
 C_PRICE, C_DATE, C_POSTCODE, C_LOCALITY, C_TOWN, C_DISTRICT = 1, 2, 3, 10, 11, 12
@@ -105,7 +136,13 @@ C_PRICE, C_DATE, C_POSTCODE, C_LOCALITY, C_TOWN, C_DISTRICT = 1, 2, 3, 10, 11, 1
 # recognised - most of the Bolton, Wigan, Oldham and Rochdale ones - because
 # inventing a plausible-sounding name is the same failure as inventing a
 # plausible-sounding number.
-NAME_OVERRIDES = {
+# Keyed by CITY. Only Greater Manchester has any, because GM was the only
+# generated city when these were written. The other six are left to their Royal
+# Mail locality: inventing a plausible-sounding area name is the same failure as
+# inventing a plausible-sounding number, so an empty dict is the honest default
+# rather than a gap waiting to be filled.
+NAME_OVERRIDES_BY_CITY = {}
+NAME_OVERRIDES_BY_CITY['manchester'] = {
     'M1': 'Manchester City Centre',
     'M3': 'Salford Central',
     'M4': 'Ancoats & Northern Quarter',
@@ -181,12 +218,29 @@ def fetch_ppd(year, cache_dir):
     return path
 
 
-def collect_sales(paths):
-    """Stream the PPD CSVs, keeping only Greater Manchester rows.
+def collect_sales(paths, borough_maps):
+    """Stream the PPD CSVs once, bucketing rows by city.
 
-    Returns {outward: {'prices': [...], 'borough': str, 'localities': {name: n}}}
+    ONE pass for every city, not one per city. The bulk CSV is 162 MB and the
+    NSPL scan below is 806 MB; doing both per city turned a three-minute build
+    into a twenty-minute one when this went from Greater Manchester alone to
+    seven cities. `borough_maps` is {city: {normalised district: borough}}.
+
+    Returns {city: {outward: {'prices': [...], 'boroughs': {...}, 'localities': {...}}}}
     """
-    acc = defaultdict(lambda: {'prices': [], 'boroughs': defaultdict(int), 'localities': defaultdict(int)})
+    lookup = {}
+    for city, boroughs in borough_maps.items():
+        for norm, borough in boroughs.items():
+            # A district belongs to exactly one of our cities, so a collision
+            # here is a registry error worth failing on rather than resolving
+            # arbitrarily.
+            if norm in lookup:
+                sys.exit(f'district {norm!r} claimed by both {lookup[norm][0]} and {city}')
+            lookup[norm] = (city, borough)
+
+    per_city = {city: defaultdict(
+        lambda: {'prices': [], 'boroughs': defaultdict(int), 'localities': defaultdict(int)}
+    ) for city in borough_maps}
     seen = kept = 0
     for path in paths:
         with open(path, newline='', encoding='utf-8', errors='replace') as fh:
@@ -194,9 +248,10 @@ def collect_sales(paths):
                 seen += 1
                 if len(row) <= C_DISTRICT:
                     continue
-                borough = GM_BOROUGHS.get(row[C_DISTRICT].strip().upper())
-                if not borough:
+                hit = lookup.get(_norm_district(row[C_DISTRICT]))
+                if not hit:
                     continue
+                city, borough = hit
                 out = outward(row[C_POSTCODE])
                 if not out:
                     continue
@@ -206,7 +261,7 @@ def collect_sales(paths):
                     continue
                 if price <= 0:
                     continue
-                rec = acc[out]
+                rec = per_city[city][out]
                 rec['prices'].append(price)
                 rec['boroughs'][borough] += 1
                 loc = (row[C_LOCALITY] or '').strip().title()
@@ -215,8 +270,9 @@ def collect_sales(paths):
                 if name:
                     rec['localities'][name] += 1
                 kept += 1
-    print(f'  scanned {seen:,} transactions, kept {kept:,} in Greater Manchester')
-    return acc
+    total = sum(len(v) for v in per_city.values())
+    print(f'  scanned {seen:,} transactions, kept {kept:,} across {total} districts in {len(per_city)} cities')
+    return per_city
 
 
 def collect_centroids(wanted):
@@ -262,23 +318,34 @@ def collect_centroids(wanted):
 
 
 INDEX_PATH = os.path.join(REPO, 'index.html')
-MARK_START = '/* GM-NEIGHBOURHOODS:START */'
-MARK_END = '/* GM-NEIGHBOURHOODS:END */'
 
 
-def write_index(entries, payload):
-    """Rewrite index.html between the GM-NEIGHBOURHOODS markers.
+def markers(city):
+    """Marker pair delimiting one city's generated block in index.html.
+
+    Uniform per city. Greater Manchester's were `GM-NEIGHBOURHOODS` while it was
+    the only generated city; a one-off name is the kind of special case that
+    bites the day a second city arrives, which is today.
+    """
+    tag = city.upper()
+    return f'/* {tag}-NEIGHBOURHOODS:START */', f'/* {tag}-NEIGHBOURHOODS:END */'
+
+
+def write_index(city, entries, payload):
+    """Rewrite index.html between this city's NEIGHBOURHOODS markers.
 
     Inline rather than fetched, because London's and NYC's neighbourhood tables
     are inline too and a fourth network request on first paint is not worth
     ~11 KB. Marker-delimited so a rebuild cannot drift from the JSON: this is
     the file `data/*` gitignore taught us to distrust hand-syncing.
     """
+    mark_start, mark_end = markers(city)
+    prefix = city.upper()
     with open(INDEX_PATH, encoding='utf-8') as fh:
         src = fh.read()
-    a, b = src.find(MARK_START), src.find(MARK_END)
+    a, b = src.find(mark_start), src.find(mark_end)
     if a < 0 or b < 0:
-        sys.exit(f'markers not found in index.html - expected {MARK_START} ... {MARK_END}')
+        sys.exit(f'markers not found in index.html - expected {mark_start} ... {mark_end}')
 
     area, detail = {}, {}
     for label, e in entries.items():
@@ -292,17 +359,17 @@ def write_index(entries, payload):
             'sales': e['sales'],
         }
     block = (
-        f'{MARK_START}\n'
-        f'      // GENERATED by scripts/build_manchester_neighbourhoods.py - do not hand-edit.\n'
+        f'{mark_start}\n'
+        f'      // GENERATED by scripts/build_city_neighbourhoods.py - do not hand-edit.\n'
         f'      // {len(entries)} postcode districts. price = MEDIAN of real HM Land Registry\n'
         f'      // Price Paid transactions ({payload["priceVintage"]}), sales = how many that median rests on,\n'
         f'      // coordinates = mean of live ONS NSPL postcodes in the district.\n'
         f'      // crime is 0 for every entry and is NOT a measurement - sub-borough crime\n'
-        f'      // is not published for Greater Manchester. renderGroup discloses this.\n'
-        f'      const MANCHESTER_NEIGHBOURHOOD_VINTAGE = {json.dumps(payload["priceVintage"])};\n'
-        f'      const MANCHESTER_NEIGHBOURHOOD_MIN_SALES = {payload["minSales"]};\n'
-        f'      Object.assign(MANCHESTER_AREA_MAP, {json.dumps(area, sort_keys=True)});\n'
-        f'      Object.assign(MANCHESTER_NEIGHBOURHOOD_DETAIL, {json.dumps(detail, sort_keys=True)});\n'
+        f'      // is not published at this geography. renderGroup discloses this.\n'
+        f'      const {prefix}_NEIGHBOURHOOD_VINTAGE = {json.dumps(payload["priceVintage"])};\n'
+        f'      const {prefix}_NEIGHBOURHOOD_MIN_SALES = {payload["minSales"]};\n'
+        f'      Object.assign({prefix}_AREA_MAP, {json.dumps(area, sort_keys=True)});\n'
+        f'      Object.assign({prefix}_NEIGHBOURHOOD_DETAIL, {json.dumps(detail, sort_keys=True)});\n'
         f'      '
     )
     out = src[:a] + block + src[b:]
@@ -311,46 +378,23 @@ def write_index(entries, payload):
     return len(block)
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--years', nargs='+', type=int, default=[2025])
-    ap.add_argument('--min-sales', type=int, default=DEFAULT_MIN_SALES)
-    ap.add_argument('--out', default=OUT_PATH)
-    ap.add_argument(
-        '--write-index',
-        action='store_true',
-        help='also rewrite index.html between the GM-NEIGHBOURHOODS markers',
-    )
-    args = ap.parse_args()
+DEFAULT_CITIES = [
+    'manchester',
+    'westmidlands',
+    'westyorkshire',
+    'southyorkshire',
+    'merseyside',
+    'tyneandwear',
+    'bristol',
+]
 
-    print('Greater Manchester neighbourhoods, from HM Land Registry Price Paid')
-    print(f'  vintage: {", ".join(str(y) for y in args.years)}')
-    paths = [fetch_ppd(y, CACHE_DIR) for y in args.years]
 
-    acc = collect_sales(paths)
-    if not acc:
-        sys.exit('FAIL: no Greater Manchester transactions found. Check the district names.')
-
-    # Threshold BEFORE the NSPL scan, so we only look up coordinates we will use.
-    keep, dropped = {}, []
-    for out, rec in acc.items():
-        n = len(rec['prices'])
-        if n < args.min_sales:
-            dropped.append((out, n))
-            continue
-        keep[out] = rec
-    print(f'  {len(keep)} districts at or above {args.min_sales} sales; {len(dropped)} dropped')
-    for out, n in sorted(dropped, key=lambda x: -x[1])[:15]:
-        print(f'     dropped {out}: {n} sales')
-    if len(dropped) > 15:
-        print(f'     ... and {len(dropped) - 15} more below the threshold')
-
-    print('  scanning NSPL for coordinates (this is the slow part) ...')
-    centroids = collect_centroids(set(keep))
-
+def build_city(city, keep_by_city, centroids, args):
+    """Turn one city's kept districts into entries, JSON and an index block."""
+    name_overrides = NAME_OVERRIDES_BY_CITY.get(city, {})
     entries = {}
     no_coords = []
-    for out, rec in sorted(keep.items()):
+    for out, rec in sorted(keep_by_city[city].items()):
         if out not in centroids:
             no_coords.append(out)
             continue
@@ -361,7 +405,7 @@ def main():
         # recognised, else the Royal Mail locality most transactions use, else
         # the outward code itself rather than a name we invent.
         locality = max(rec['localities'].items(), key=lambda kv: kv[1])[0] if rec['localities'] else out
-        label = f'{NAME_OVERRIDES.get(out, locality)} ({out})'
+        label = f'{name_overrides.get(out, locality)} ({out})'
         entries[label] = {
             'outward': out,
             'borough': borough,
@@ -379,38 +423,99 @@ def main():
         print(f'  {len(no_coords)} districts had sales but no NSPL coordinates: {", ".join(sorted(no_coords))}')
 
     payload = {
-        'generatedBy': 'scripts/build_manchester_neighbourhoods.py',
+        'generatedBy': 'scripts/build_city_neighbourhoods.py',
+        'city': city,
         'priceSource': 'HM Land Registry Price Paid Data',
         'priceVintage': ', '.join(str(y) for y in args.years),
         'priceBasis': 'median sale price per postcode district',
         'coordinateSource': 'ONS National Statistics Postcode Lookup (live postcodes, mean centroid)',
         'crimeSourced': False,
         'crimeNote': (
-            'Sub-borough crime is not published for Greater Manchester; ONS Table C4 '
-            'is Community Safety Partnership level, which here is the borough. No '
+            'Sub-borough crime is not published at this geography; ONS Table C4 is '
+            'Community Safety Partnership level, which here is the borough. No '
             'per-neighbourhood crime modifier is applied.'
         ),
         'minSales': args.min_sales,
         'licence': 'Open Government Licence v3.0',
         'neighbourhoods': entries,
     }
-    with open(args.out, 'w', encoding='utf-8') as fh:
+    out_path = os.path.join(REPO, 'data', f'{city}-neighbourhoods.json')
+    with open(out_path, 'w', encoding='utf-8') as fh:
         json.dump(payload, fh, indent=1, sort_keys=False)
         fh.write('\n')
-
-    print(f'\n  wrote {len(entries)} neighbourhoods to {args.out}')
+    print(f'  wrote {len(entries)} neighbourhoods to {os.path.basename(out_path)}')
 
     if args.write_index:
-        n = write_index(entries, payload)
-        print(f'  rewrote {n} bytes between the markers in index.html')
-    boroughs = defaultdict(int)
+        n = write_index(city, entries, payload)
+        print(f'  rewrote {n} bytes between the {city.upper()}-NEIGHBOURHOODS markers')
+
+    # Every borough must contribute at least one district. A borough with none
+    # is nearly always a district-name mismatch rather than a real absence, and
+    # a silent miss reads as "this borough has no neighbourhoods".
+    counts = defaultdict(int)
     for e in entries.values():
-        boroughs[e['borough']] += 1
-    missing = sorted(set(GM_BOROUGHS.values()) - set(boroughs))
-    for b in sorted(boroughs):
-        print(f'     {b:<12} {boroughs[b]}')
+        counts[e['borough']] += 1
+    expected = set(boroughs_for_city(city).values())
+    missing = sorted(expected - set(counts))
+    for b in sorted(counts):
+        print(f'     {b:<28} {counts[b]}')
     if missing:
         print(f'  BOROUGHS WITH NO NEIGHBOURHOOD: {", ".join(missing)}')
+    return len(entries), missing
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--years', nargs='+', type=int, default=[2025])
+    ap.add_argument('--min-sales', type=int, default=DEFAULT_MIN_SALES)
+    ap.add_argument('--city', help='one city key; default is every generated city')
+    ap.add_argument(
+        '--write-index',
+        action='store_true',
+        help="also rewrite index.html between each city's NEIGHBOURHOODS markers",
+    )
+    args = ap.parse_args()
+
+    cities = [args.city] if args.city else list(DEFAULT_CITIES)
+    print(f'Neighbourhoods from HM Land Registry Price Paid for: {", ".join(cities)}')
+    print(f'  vintage: {", ".join(str(y) for y in args.years)}')
+
+    borough_maps = {c: boroughs_for_city(c) for c in cities}
+    paths = [fetch_ppd(y, CACHE_DIR) for y in args.years]
+    per_city = collect_sales(paths, borough_maps)
+
+    # Threshold BEFORE the NSPL scan, so we only look up coordinates we use.
+    keep_by_city = {}
+    wanted = set()
+    for city in cities:
+        keep, dropped = {}, []
+        for out, rec in per_city[city].items():
+            if len(rec['prices']) < args.min_sales:
+                dropped.append((out, len(rec['prices'])))
+                continue
+            keep[out] = rec
+        keep_by_city[city] = keep
+        wanted |= set(keep)
+        print(f'  {city}: {len(keep)} districts at or above {args.min_sales} sales; {len(dropped)} dropped')
+
+    if not wanted:
+        sys.exit('FAIL: no districts met the threshold for any city. Check the district names.')
+
+    # ONE NSPL pass for every city. It is 806 MB.
+    print('  scanning NSPL for coordinates (this is the slow part) ...')
+    centroids = collect_centroids(wanted)
+
+    total = 0
+    any_missing = []
+    for city in cities:
+        print(f'\n{city}')
+        n, missing = build_city(city, keep_by_city, centroids, args)
+        total += n
+        any_missing += [f'{city}.{b}' for b in missing]
+
+    print(f'\n{total} neighbourhoods across {len(cities)} cities')
+    if any_missing:
+        print(f'BOROUGHS WITH NO NEIGHBOURHOOD: {", ".join(any_missing)}')
     return 0
 
 

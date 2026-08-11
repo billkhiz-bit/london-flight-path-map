@@ -6,6 +6,31 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-11 (late) - Area search for every city, and it had never worked for Greater Manchester
+
+- **448 neighbourhoods across seven UK city-regions**, up from Greater
+  Manchester's 85. `scripts/build_manchester_neighbourhoods.py` is now
+  `build_city_neighbourhoods.py` and takes `--city` / all: West Midlands 94,
+  West Yorkshire 83, Merseyside 59, South Yorkshire 46, Tyne and Wear 43,
+  Bristol 38. One Price Paid pass and one NSPL pass cover every city, and the
+  borough list is imported from the score Lambda rather than retyped.
+- **Area search had never reached a generated city.** `triggerSearch` strips a
+  trailing bracket to parse the saved-item format "Name (Postcode)", and every
+  generated city keys on the postcode district - "Altrincham (WA14)" - so
+  typing the full key became "Altrincham" and matched nothing, while typing
+  "Altrincham" matched nothing either. Greater Manchester's 85 entries were
+  unreachable by search from the day they shipped, with autocomplete offering
+  them the whole time because it matches on startsWith. Both forms now resolve,
+  and an explicit "Bolton (BL2)" beats the borough of the same name.
+- **Fixed: every search in South Yorkshire threw.** `airportDists[0].dist` with
+  no airport - Doncaster Sheffield closed to commercial flights in 2022 - took
+  down area AND postcode search for the whole city. The score Lambda met the
+  identical case as min() over an empty sequence and 500'd on every South
+  Yorkshire postcode when scoring was un-gated; this was its twin on the front
+  end, and it was found by searching rather than by reading.
+- Nearest airport now reads "None in this area" rather than being absent, and
+  the noise summary says so in words.
+
 ### 2026-08-11 (night, latest) - Flood risk gets a source, and London moves
 
 - **Flood risk is now derived from the Environment Agency** for all 73 UK
