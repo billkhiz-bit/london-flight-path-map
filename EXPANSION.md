@@ -22,7 +22,7 @@ national.** The nation, not the city, is the unit of work.
 | DEFRA noise mapping Round 4 (road) | roadNoise | **England only** | 2026-08-11 |
 | DEFRA noise mapping Round 4 (aircraft) | aircraft Lden | **England, 16 airports** | 2026-08-11 |
 | EA Risk of Flooding from Rivers and Sea | flood | **England only** | 2026-08-11 |
-| NaPTAN | transport (not yet built) | **Great Britain** | endpoint 2026-08-11 |
+| NaPTAN | transport | **Great Britain** | in use since v3.6 |
 
 So an **English** city-region needs no new data integration at all. A Welsh one
 loses schools, road noise and flood. Scotland and Northern Ireland change the
@@ -126,21 +126,30 @@ Ranked by how close each is to having one:
    prices are county-level and fragmented. The existing NYC entry is curated and
    does not generalise.
 
-**None of these should start before transport and healthcare are closed for the
-UK cities we already have.** Depth beats breadth here: a ninth city with 2 of 4
-liveability inputs is worth less than closing the two missing inputs across all
-eight.
+**None of these should start before healthcare is closed for the UK cities we
+already have** — transport was closed on 2026-08-11, leaving one input of four.
+Depth beats breadth here: a ninth city with 3 of 4 liveability inputs is worth
+less than closing the last one across all eight.
 
 ## What to do next, in order
 
-1. **Transport, from NaPTAN.** 0.25 of the liveability weight, affects every
-   borough of every city, one national source, endpoint verified. **This changes
-   live scores** and needs a methodology version bump.
-2. **Healthcare.** 0.10 of the weight. NHS ODS `epraccur` returned 403 even with
-   a browser User-Agent and needs another route; OSM Overpass already works in
-   the `nhs` Lambda and is the fallback (ODbL, attribution required).
-3. **Nottingham to the site.** Already scored, already in the registry, blocked
-   only on its outer districts being districts rather than local authorities.
+1. ~~Transport, from NaPTAN.~~ **DONE 2026-08-11 as methodology v3.6.** All 81
+   boroughs; 52 of 86 moved by more than 0.05; Cardiff became scoreable for the
+   first time. The UK city-regions went from 2 of 4 liveability inputs to 3.
+2. **Healthcare** is now the ONLY remaining liveability gap. 0.10 of the weight.
+   NHS ODS `epraccur` returned 403 even with a browser User-Agent and needs
+   another route; OSM Overpass already works in the `nhs` Lambda and is the
+   fallback, but it is **ODbL** (share-alike) rather than OGL, so the licence is
+   as much of the decision as the code.
+3. **Cardiff to the site — newly possible as of v3.6.** Its four boroughs held
+   `crimeRate` alone, one input, below the two-input floor. Transport made it
+   two, so all four now publish a liveability score. Leaving `BACKEND_ONLY` is a
+   ONE-WAY DOOR: every borough must be output-compared site-vs-Lambda first, and
+   the road-noise and flood layers will read "NO DATA" there because both
+   coverages are England's. **Nottingham did NOT move** — Broxtowe, Gedling and
+   Rushcliffe gained transport but hold nothing else, so three of its four are
+   still on one input. Education is an upper-tier county function, so Progress 8
+   is published for Nottinghamshire rather than for them.
 4. **Then** the ranked English city-regions above, cheapest first.
 5. **Not yet:** Scotland, Wales-in-full, or any second country.
 
