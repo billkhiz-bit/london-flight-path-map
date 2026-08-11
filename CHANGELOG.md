@@ -6,6 +6,60 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-11 (latest) - Leicester and Teesside on the consumer site
+
+**The site and the API now carry the same eleven cities, 91 boroughs.** No
+scoring change: this is the site half of two city-regions `/v1/score` has
+answered for since earlier the same day.
+
+- **Neither was ever held back by data.** Teesside's five unitaries are their own
+  education authority so all five measure 4 of 4 liveability inputs; Leicester's
+  districts hold 3 of 4 (Progress 8 covers 1 of 8, education being an upper-tier
+  county function). Both clear the two-input floor comfortably.
+- **The one-way-door gate now exists.** `tests/borough-score-parity.mjs` serves
+  the repo, drives the real page and compares the score it **renders** against
+  the Lambda's `calc_score` for all 91 boroughs of all 11 cities. Input parity
+  passed throughout the Manchester incident because both holders held the data
+  and the site never loaded it — only reading the rendered number can see that.
+  Proven red at −3.8 on a one-sided band edit; blocking in preflight.
+- **Nottingham's entry is corrected rather than moved.** It was recorded as "1 of
+  4 inputs" and could not leave; healthcare (v3.7) made that stale, and its outer
+  districts now hold two. It stays back on judgement — `live` of 2.6 on two
+  inputs is thinner than the site should claim — not on impossibility. Cardiff
+  genuinely cannot leave: Progress 8 is an England measure.
+
+**Three pre-existing defects surfaced while wiring it up.**
+
+- **The flood and air-quality legends said "NO DATA" over real data.**
+  `legendFlood` and `legendAq` label the *first swatch* of each legend — the High
+  and Poor bands — and all seven UK cities still carried `'NO DATA'` there while
+  the map painted measured EA and DEFRA readings underneath. The layer-coverage
+  work had already warned that a hardcoded availability string "is wrong in the
+  other direction the moment data arrives"; it arrived on 2026-08-11 and these
+  did not move with it.
+- **Five legend explainers still described the pre-v3.8 ladder**, telling users
+  "the ladder is calibrated on Heathrow, which is far larger, so these bands
+  reach further than the airport really does" — false since the previous
+  release. Each now names its own airport's measured footprint ratio.
+- **The city strip ran off the viewport at 901px.** Its bound and edge fade lived
+  only in the `<=900px` block, so an eleven-chip row sized to content just above
+  the breakpoint: `Greater Manchester` at 806..906px in a 901px window, clipped
+  by the map container with nothing scrollable around it. The phone fix is now
+  the base rule at every width. Caught by `tests/responsive.mjs`.
+
+**Two hardcoded enumerations became derived.** The neighbourhood builder now
+reads the `<CITY>-NEIGHBOURHOODS` markers it writes between — it had reported
+"448 neighbourhoods across 7 cities", a confident success that silently skipped
+both new cities. `tests/locator-verify.mjs` derives its marker counts from
+`CITY_DATA` labels; they were hardcoded at 10/8 under a comment noting the
+number had already gone stale once. Deriving them from `LOCATOR_TO_CITY` was
+rejected — that would read the expectation out of the table under test.
+
+**New: `scripts/build_city_frontend_block.py`** generates a city's frontend
+constants from the Lambda, so the `coords`→`coordinates` rename and the
+`(lat, lon)`→`[lon, lat]` swap cannot be got wrong by hand again. Both have
+caused production defects.
+
 ### 2026-08-11 (later) - Methodology v3.8: the aircraft ladder is weighted by airport
 
 **Scores move for 31 boroughs across 11 city-regions, every one of them upward,

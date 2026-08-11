@@ -4,9 +4,9 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability (growth is weighted for the `investor` persona only since methodology v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.3 · API v1.0 · Live in production · **13 cities on `/v1/score`, 9 on the consumer site** · 33 London + 5 NYC + 10 Greater Manchester boroughs on both, plus 10 UK city-regions, 4 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v3.8 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus 11 UK city-regions, 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
-> **The eight UK city-regions outside London are thinner than London on purpose,
+> **The UK city-regions outside London are thinner than London on purpose,
 > and the gap is now four datasets rather than seven.** Road noise, flood risk
 > and air quality were derived for every borough on 2026-08-11 — DEFRA Round 4
 > road Lden, the Environment Agency's Risk of Flooding from Rivers and Sea, and
@@ -14,7 +14,8 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 > everywhere instead of curated for London and defaulted elsewhere. What is
 > still missing outside London and New York is **DEFRA-sampled aircraft noise**;
 > transport (v3.6, NaPTAN) and healthcare (v3.7, NHS ODS) are both derived
-> nationally now, and neighbourhood area search covers all seven city-regions.
+> nationally now, and neighbourhood area search covers all nine generated
+> city-regions.
 > Aircraft bands
 > remain an estimate from runway geometry and the map legend says so rather than
 > borrowing London's DEFRA labelling — but since **v3.8** that estimate is

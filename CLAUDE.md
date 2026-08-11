@@ -63,16 +63,29 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-**ELEVEN cities on `/v1/score` as of 2026-08-10; NINE on the consumer site.**
-That split is the single most important fact about the current state.
+**THIRTEEN cities on `/v1/score`; ELEVEN on the consumer site, as of 2026-08-11.**
 
-- **On both site and API (9):** London (33), NYC (5), Greater Manchester (10),
+- **On both site and API (11):** London (33), NYC (5), Greater Manchester (10),
   West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5),
-  Tyne and Wear (5), Bristol (4)
+  Tyne and Wear (5), Bristol (4), **Leicester (8)**, **Teesside (5)**. That is
+  **91 boroughs**, and `tests/borough-score-parity.mjs` compares the score the
+  site RENDERS against the Lambda's for every one of them.
 - **API only, declared in `BACKEND_ONLY_CITIES` (2):** Cardiff (4), Nottingham (4).
-  Neither can leave on current data - Progress 8 is an ENGLAND measure so Cardiff
-  has none, and Nottingham has 1 of 4 because Broxtowe, Gedling and Rushcliffe are
-  districts inside Nottinghamshire. ONS crime has the identical gap for both.
+  **Cardiff cannot leave**: Progress 8 is an ENGLAND measure, so Wales has none.
+  **Nottingham now could and does not** - the "1 of 4 inputs" recorded here for
+  months stopped being true when healthcare landed in v3.7. Broxtowe, Gedling and
+  Rushcliffe gained transport (v3.6) then healthcare (v3.7), so they clear the
+  two-input floor and publish a liveability score. It stays on JUDGEMENT: `live`
+  of 2.6 on two inputs is thinner than the site should claim.
+
+**Leicester and Teesside went through the one-way door on 2026-08-11.** Leicester
+is the city plus all seven Leicestershire districts (a four-authority cohort
+spans only 230k-281k, and min-max over a narrow cohort manufactures spread it
+has not measured). Progress 8 covers **1 of Leicester's 8** - education is an
+upper-tier county function, the same gap as Nottingham - but transport and
+healthcare carry them to 3 of 4. Teesside's five unitaries are their own
+education authority, so all five are 4 of 4; it spans **two police forces**
+(Cleveland and Durham) so crime needs an include-list.
 
 Every field of the eight is **script-derived and independently verified**, and
 each has a `--check` that can go red:
@@ -162,7 +175,9 @@ without an airport needs that path to stay intact.
 
 **Adding a city — the things that bite. Points 1-3 were found doing the third city and all still apply; the scripts in the table above now handle the DATA half, so what is left is the wiring.**
 1. **`data/*` is gitignored**, un-ignored file by file, so a new city's boundaries are invisible to git BY DEFAULT. It works on your machine, every gate passes, and the deploy serves "outlines could not be loaded". Add a `!data/<city>-boroughs.json` line, a `SHELL_ASSETS` entry, and a `make data-deploy` line — `cache.addAll()` is atomic, so a precached file missing at the origin stops the service worker installing for **every** city.
-2. **Three places still enumerate cities by name**: `hydrateBoroughExtra()`, `recalcAllScores()` and `data/borough-extra.json`. Miss any and the site scores from an empty object while the API scores properly — all ten Manchester boroughs disagreed by up to 1.5 points that way, with nothing raised, because both holders *had* the data and the site never loaded it.
+2. **`data/borough-extra.json` is the enumeration that still bites.** `hydrateBoroughExtra()` and `recalcAllScores()` are now registry-driven and name no city, but a city absent from borough-extra scores from an empty object while the API scores properly — all ten Manchester boroughs disagreed by up to 1.5 points that way, with nothing raised, because both holders *had* the data and the site never loaded it. **The gate for this now exists**: `tests/borough-score-parity.mjs` drives the real page and compares the RENDERED score against the Lambda's for all 91 boroughs. Seed a new city's entry from the Lambda (`crimeRate`/`p8` only), then `python scripts/build_borough_bands.py --write` derives the other five fields — it SKIPS any city with no borough-extra entry, so the seed comes first.
+
+2a. **Generate the frontend constants, do not copy them.** `python scripts/build_city_frontend_block.py --city <key> --insert` writes `<CITY>_BOROUGH_DATA_RAW`, the airports, the corridors and the neighbourhood markers from the Lambda. It exists because the two holders use different dialects for the same geometry — `coords` vs `coordinates`, `(lat, lon)` vs `[lon, lat]`, `avgPrice` vs `avg_price` — and each has already caused a production defect. The `CITY_DATA` entry itself is still written by hand: legend copy is a provenance claim.
 3. **Map chrome comes from the registry** via `applyCityChrome()`. Do not add an `if (city === 'x')` branch; add registry fields. The legend copy in particular is a provenance claim — NYC shipped a DEFRA/LHR explainer under a "BTS AIRCRAFT NOISE" heading for months because that block had no id. Adding a registry field means adding it to **all** cities: `tests/smoke-local.mjs` asserts key parity, so a field on one city and not the others fails the build.
 
 4. **The city switcher is TWO TIERS** (country tabs above city chips) and both are **generated from `CITY_DATA`** by `renderCitySelector()` / `renderCountrySelector()` — there is no city markup to edit. A new country needs a `COUNTRY_SHORT` entry or its tab shows the full name. The **locator inset** (`data/uk-locator.json` and `data/usa-locator.json`, both checked in; `scripts/build_locator.py` generates them from a boundary GeoJSON - the UK file predates it and has not been regenerated) draws the ten UK core-city markers, and the USA file draws New York alone: add the city to `LOCATOR_TO_CITY` or it stays a "planned" light disc. The file is deliberately **not** in `SHELL_ASSETS` — decorations must not be able to stop an atomic `cache.addAll()` — but it does have a `data-deploy` line. Guarded by `tests/locator-verify.mjs` and `tests/selector-widths.mjs`, both in preflight.
@@ -177,7 +192,7 @@ without an airport needs that path to stay intact.
 - **All three layers are derived for every city** by `python scripts/build_borough_bands.py --write`, anchored on published thresholds (road: share of addresses over WHO 53 dB Lden; air: worse of NO₂/PM2.5 against WHO 2021; flood: share at EA Medium-or-High, the 1%-annual-chance Flood Zone 3 line). See `METHODOLOGY.md` §7.1. The nine `*_BOROUGH_ROAD_NOISE` constants and the `roadNoise()` registry accessor are **deleted** — `borough-extra.json` is the single holder for all three layers.
 - **Flood risk comes out of a WMS by decoding rendered colours, and that is deliberate.** The EA's RoFRS dataset publishes **no WCS and no WFS** (both 404), and its postcode-level product is **retired** — `scripts/fetch_ea_flood_risk.py` records every dead route so they are not retried. Two things keep it honest: `format_options=antialias:none` is **load-bearing** (without it one tile carries 16,289 blended colours instead of 5), and the colour→band map was **verified against the service's own `risk_band` by point-in-polygon containment** — an earlier check that trusted `features[0]` made High and Medium look interchangeable, because a 200 m query box spans several 50 m polygons. Re-run `--verify` after any upstream restyle; an unrecognised colour **fails the fetch** rather than silently reclassifying. Rendering is scale-dependent: nothing draws above ~10 m/px.
 - **`scripts/fetch_defra_road_noise.py` was London-only by a single hardcoded bbox** while pointing at a coverage id ending `England_Round_4_All`. It now derives the bbox from each city's boundary file. **Wales is excluded by name** (`NO_ROAD_COVERAGE`) — the coverage is England's, and a Cardiff fetch would otherwise "succeed" and read as no-noise-anywhere.
-- **Legend "(NO DATA)" is now MEASURED**, appended by `markLayerCoverage()` from what the render produced. It used to be a hardcoded registry string per city, which has to be remembered when data arrives and is wrong in the other direction the moment it does.
+- **Legend "(NO DATA)" is now MEASURED**, appended by `markLayerCoverage()` from what the render produced. It used to be a hardcoded registry string per city, which has to be remembered when data arrives and is wrong in the other direction the moment it does. **That prediction came true within a day, in a slot the fix did not cover**: `legendFlood` and `legendAq` label the *first swatch* of each legend, not the title, and all seven UK cities still said `'NO DATA'` there — so the High and Poor swatches were labelled "NO DATA" while the map painted real EA and DEFRA readings beneath them. Corrected 2026-08-11 to `'HIGH'` / `'POOR'`. **Any registry string that describes data availability is a liability**; prefer measuring it.
 - **Cardiff and NYC are excluded from road noise and flood by name** (`NO_ROAD_COVERAGE` / `NO_FLOOD_COVERAGE`) — both coverages are England's, and NYC keeps curated FEMA-derived flood bands. A Welsh fetch would otherwise "succeed" and read as no-risk-anywhere.
 - Guarded by **`tests/layer-honesty.mjs`** (in preflight), which fails in both directions: over-painting is an invented default, under-painting is a borough whose data the map cannot find.
 
