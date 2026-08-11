@@ -12,13 +12,13 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 > road Lden, the Environment Agency's Risk of Flooding from Rivers and Sea, and
 > DEFRA background pollution maps — so all three map layers are measured
 > everywhere instead of curated for London and defaulted elsewhere. What is
-> still missing outside London and New York is **healthcare and DEFRA-sampled
-> aircraft noise** - transport was derived nationally from NaPTAN in v3.6 and
-> neighbourhood area search now covers all seven city-regions; aircraft bands
+> still missing outside London and New York is **DEFRA-sampled aircraft noise**
+> - transport (v3.6, NaPTAN) and healthcare (v3.7, NHS ODS) are both derived
+> nationally now, and neighbourhood area search covers all seven city-regions;
+> aircraft bands
 > remain an estimate from runway geometry and the map legend says so rather than
-> borrowing London's DEFRA labelling. Liveability therefore rests on three
-> measured inputs (DfE Progress 8, ONS recorded crime, NaPTAN transport) where
-> London has four,
+> borrowing London's DEFRA labelling. Liveability now rests on **all four
+> measured inputs** for 78 of 86 boroughs,
 > with `context.liveResolution` reporting that per response and the absent
 > inputs having their weight **redistributed** rather than filled with a
 > placeholder. Postcode resolution works for **every** city since 2026-08-10.
@@ -165,7 +165,7 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 | **Quiet** | **Aircraft noise only.** Road noise is a map overlay and a reported measurement, and is **not** a score input | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
 | **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
 | **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
-| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2022/23); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram access within 800 m (v3.6, national, **not** PTAL); curated healthcare tiers |
+| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2022/23); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
 
 The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and the persona weights in §5.1, against the current data snapshot.
 
@@ -199,7 +199,7 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 | On the consumer site | yes | yes | yes | **no - API only** |
 | Lookup | postcode or borough | ZIP or borough | postcode or borough | **borough only** |
 | Aircraft noise | DEFRA raster where covered, else geometry | curated bands from approach geometry | **runway geometry only, not DEFRA** | **runway geometry only, not DEFRA** |
-| Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **3 of 4** (schools, crime, transport) | **2 of 4** (crime, transport); Cardiff has no Progress 8, Wales having no England measure |
+| Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **4 of 4** | **3 of 4**; Cardiff has no Progress 8, Wales having no England measure |
 | Quarterly comparison | yes | yes | **declines** — no prior vintage exists | **declines** — no prior vintage |
 
 ### Exactly what the other UK cities are missing, against London
@@ -217,17 +217,16 @@ everywhere; the gap is the remaining five.
 | Air quality | DEFRA background maps | yes | curated | **yes** (2026-08-11) |
 | Flood risk | EA Risk of Flooding from Rivers and Sea | yes | curated | **yes** (2026-08-11) |
 | Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11) |
-| **Healthcare** | curated NHS proximity | yes | yes | **no** |
+| Healthcare | **NHS ODS** GP practices within 500 m | yes | curated | **yes** (2026-08-11) |
 | Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 448 districts** (2026-08-11) |
 | **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **no — estimated from runway geometry** |
 | **Crime breakdown (top offences)** | ONS | yes | no | **no** |
 
 Two of those five carry weight in the score. Liveability weights are schools
-0.35, crime 0.30, transport 0.25, **healthcare 0.10** — so outside London and
-New York, **10% of the liveability weight has no input** and is redistributed
-across the three that do, rather than estimated. That was 35% until v3.6 added
-transport. The remaining gaps (measured aircraft noise, crime breakdown) affect
-what the site can *show*, not what it scores.
+0.35, crime 0.30, transport 0.25, healthcare 0.10 — and as of v3.7 **all four
+are measured for 78 of 86 boroughs**, up from 38. That was 35% of the weight
+unmeasured before v3.6. The remaining gaps (measured aircraft noise, crime
+breakdown) affect what the site can *show*, not what it scores.
 
 **The largest single win left is DEFRA aircraft sampling.** Round 4 covers all
 16 English airports including every one of ours — measured 2026-08-10 — so the

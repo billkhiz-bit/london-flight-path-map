@@ -23,6 +23,7 @@ national.** The nation, not the city, is the unit of work.
 | DEFRA noise mapping Round 4 (aircraft) | aircraft Lden | **England, 16 airports** | 2026-08-11 |
 | EA Risk of Flooding from Rivers and Sea | flood | **England only** | 2026-08-11 |
 | NaPTAN | transport | **Great Britain** | in use since v3.6 |
+| NHS Organisation Data Service | healthcare | **UK** | in use since v3.7 |
 
 So an **English** city-region needs no new data integration at all. A Welsh one
 loses schools, road noise and flood. Scotland and Northern Ireland change the
@@ -126,21 +127,20 @@ Ranked by how close each is to having one:
    prices are county-level and fragmented. The existing NYC entry is curated and
    does not generalise.
 
-**None of these should start before healthcare is closed for the UK cities we
-already have** — transport was closed on 2026-08-11, leaving one input of four.
-Depth beats breadth here: a ninth city with 3 of 4 liveability inputs is worth
-less than closing the last one across all eight.
+**The liveability component is now fully measured**, so depth is no longer the
+blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.
+Breadth is now the reasonable next move - the ranked English city-regions above
+inherit all four inputs with no new integration.
 
 ## What to do next, in order
 
 1. ~~Transport, from NaPTAN.~~ **DONE 2026-08-11 as methodology v3.6.** All 81
    boroughs; 52 of 86 moved by more than 0.05; Cardiff became scoreable for the
    first time. The UK city-regions went from 2 of 4 liveability inputs to 3.
-2. **Healthcare** is now the ONLY remaining liveability gap. 0.10 of the weight.
-   NHS ODS `epraccur` returned 403 even with a browser User-Agent and needs
-   another route; OSM Overpass already works in the `nhs` Lambda and is the
-   fallback, but it is **ODbL** (share-alike) rather than OGL, so the licence is
-   as much of the decision as the code.
+2. ~~Healthcare.~~ **DONE 2026-08-11 as methodology v3.7.** `epraccur.zip` 403s,
+   but the **ODS syndication API** works and needs no key. **All four liveability
+   inputs are now measured for 78 of 86 boroughs**, up from 38. OSM Overpass was
+   not needed, so no ODbL share-alike obligation was taken on.
 3. **Cardiff to the site — newly possible as of v3.6.** Its four boroughs held
    `crimeRate` alone, one input, below the two-input floor. Transport made it
    two, so all four now publish a liveability score. Leaving `BACKEND_ONLY` is a
