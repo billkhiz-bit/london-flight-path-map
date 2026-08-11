@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability (growth is weighted for the `investor` persona only since methodology v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.3 · API v1.0 · Live in production · **11 cities on `/v1/score`, 9 on the consumer site** · 33 London + 5 NYC + 10 Greater Manchester boroughs on both, plus 8 UK city-regions API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v3.3 · API v1.0 · Live in production · **13 cities on `/v1/score`, 9 on the consumer site** · 33 London + 5 NYC + 10 Greater Manchester boroughs on both, plus 10 UK city-regions, 4 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **The eight UK city-regions outside London are thinner than London on purpose,
 > and the gap is now four datasets rather than seven.** Road noise, flood risk

@@ -6,6 +6,34 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-11 (late) - Leicester and Teesside on /v1/score
+
+- **Two new city-regions, 13 boroughs, API-only for now** exactly as Cardiff and
+  Nottingham were. Leicester is the city plus all seven Leicestershire
+  districts; Teesside is the five Tees Valley unitaries.
+- **Both score on all four liveability inputs.** Teesside's unitaries each
+  publish Progress 8; Leicestershire's districts do not, education being an
+  upper-tier county function, but transport and healthcare carry them over the
+  floor - a two-tier district was unscoreable before v3.6/v3.7.
+- **Cohorts sized on evidence.** The obvious Leicester grouping (city plus three
+  contiguous boroughs) spans only 230k-281k, and min-max over a narrow cohort
+  manufactures spread it has not measured. All eight span 230k-346k.
+- **Bournemouth was NOT added, and the number is the reason.** BCP and Dorset
+  are the only two authorities in that region, at 315,473 and 326,381 - a 3.5%
+  difference that min-max over two items would render as a 10-point
+  affordability spread, and affordability is 31% of the balanced persona.
+- **Provenance is now COMPUTED rather than declared.** Eight cities carried
+  'Schools, transport and healthcare: not sourced' and 'UNAVAILABLE, 1 of 4
+  inputs measured' - written beside the data rather than read from it, and made
+  false by v3.6 and v3.7 hours earlier. Bristol now reports 4 of 4 and Cardiff
+  3 of 4 without anyone remembering to update a string.
+- **Fixed: CORRIDOR_STEP_KM was 2.0** while every shipped corridor measures
+  0.85-1.00 km. Corridor distance is measured to the nearest waypoint, so a
+  coarser polyline reads as further away and therefore QUIETER; any city added
+  with it would have been systematically and invisibly quieter than the nine
+  already live.
+
+
 ### 2026-08-11 (late night) - Methodology v3.7: the last liveability input
 
 - **`healthcare` is now derived for all 81 boroughs** from the NHS Organisation

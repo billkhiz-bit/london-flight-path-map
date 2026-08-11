@@ -31,7 +31,7 @@ publisher for almost everything.
 
 ## Where we are
 
-81 local authorities across 11 cities. Measured against HM Land Registry's 2025
+94 local authorities across 13 cities. Measured against HM Land Registry's 2025
 transactions, that is **34.6% of all residential sales in England and Wales**,
 from 318 districts of which we cover 81.
 
@@ -45,9 +45,9 @@ new sources.
 | # | City-region | Likely LADs | 2025 sales | Notes |
 |---|---|---|---|---|
 | 1 | **Nottingham** | already in `LAD_TO_BOROUGH` | ~20k | **Already API-only.** Needs the outer districts resolved to reach the site |
-| 2 | **Leicester** | Leicester, Blaby, Charnwood, Oadby & Wigston | ~15k | East Midlands Airport has a DEFRA surface |
-| 3 | **Bournemouth + Poole** | BCP, Dorset | ~14k | Bournemouth Airport has a DEFRA surface |
-| 4 | **Teesside** | Stockton, Middlesbrough, Redcar, Darlington, Hartlepool | ~13k | Contiguous with Tyne and Wear's data path |
+| ~~2~~ | ~~**Leicester**~~ | **DONE 2026-08-11, API-only.** City plus all 7 Leicestershire districts | ~15k | Widened from 4 to 8: a 4-authority cohort spans only 230k-281k |
+| 3 | **Bournemouth + Poole** | BCP, Dorset | ~14k | **NOT VIABLE as a 2-authority cohort.** 315,473 vs 326,381 is 3.5%, which min-max over two items renders as a 10-point affordability spread. Needs a wider grouping (a Solent region of 5) or leave out |
+| ~~4~~ | ~~**Teesside**~~ | **DONE 2026-08-11, API-only.** All 5 Tees Valley unitaries | ~13k | Spans Cleveland and Durham forces, so needs a crime include-list |
 | 5 | **Stoke + Staffordshire** | Stoke-on-Trent, Newcastle-under-Lyme, Staffs Moorlands | ~9k | |
 | 6 | **Hull + East Riding** | Hull, East Riding | ~11k | Large but two-unit |
 | 7 | **Derby** | Derby, Amber Valley, Erewash, South Derbyshire | ~11k | Shares East Midlands Airport |
