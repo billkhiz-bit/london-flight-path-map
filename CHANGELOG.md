@@ -6,7 +6,43 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-10 (evening, latest) - Six regions reach the website, and postcode scoring leaves London
+### 2026-08-11 (latest) - Six of the nine cities were unusable, and the phone could not reach them
+
+- **Fixed: six of nine cities threw on selection.** West Midlands, West
+  Yorkshire, South Yorkshire, Merseyside, Tyne and Wear and Bristol raised
+  `Cannot read properties of undefined (reading 'center')` the moment they were
+  chosen, so the map title changed and the geography did not. The projection's
+  `center` and `scale` lived in a **second city registry** holding three cities
+  while `CITY_DATA` held nine. Live since the six regions shipped on 2026-08-10.
+- **Fixed: a second throw hidden behind the first.** The new cities' flight
+  corridors were ported from the score Lambda, which names that key `coords`,
+  while the frontend renderer reads `.coordinates` - so no corridors drew. It
+  was only reachable once the first fault was cleared. South Yorkshire was the
+  one new city unaffected, because it has no airports.
+- **Resolved by removal, not by syncing two holders.** `center` and `scale` are
+  now `CITY_DATA` fields and the second registry is deleted, which puts them
+  under the key-parity assertion that already guards every other city field.
+  `scripts/fit_city_projection.py` derives a new city's pair from its boundary
+  file instead of having someone choose numbers by eye.
+- **Fixed: the city switcher was unreachable on phones.** Nine cities made the
+  chip row 453px wide against a 375px viewport, and it was absolutely positioned
+  with no bound, so the map container simply clipped it: **three of eight UK
+  cities could not be tapped at 320px**, two at 375 and 390. It is now a
+  horizontal scroll strip with a measured edge fade, scroll-snap, and the active
+  chip scrolled into view.
+- **Country tabs met the WCAG 2.5.8 target minimum.** 14x24 and 22x24 became
+  26x24 and 34x24 on touch, with the row's offset and gap absorbing the padding
+  so nothing moves.
+- **Three gates that could not see any of this were strengthened.** The
+  responsive audit had always built a list of clipped elements and only printed
+  it when the page itself scrolled sideways, so it read "ok" at all ten
+  viewports throughout; it now fails on a control past the edge with no
+  scrollable ancestor, and runs against source as well as against the live site.
+  `tests/city-switch.mjs` is new and clicks every chip - nothing in the suite
+  ever had. The local smoke stage now enumerates the registry rather than naming
+  three cities while the app carried nine.
+
+### 2026-08-10 (evening) - Six regions reach the website, and postcode scoring leaves London
 
 - **The consumer site goes from 3 cities to 9.** West Midlands, West Yorkshire,
   South Yorkshire, Merseyside, Tyne and Wear and Bristol. Verified as an OUTPUT

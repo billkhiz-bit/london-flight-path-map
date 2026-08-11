@@ -74,6 +74,53 @@ for (const vp of VIEWPORTS) {
       }
     }
 
+    // UNREACHABLE CONTROLS. Added 2026-08-11, and the reason is that this file
+    // computed `wide` above and only ever PRINTED it when the page itself
+    // scrolled sideways — so anything clipped by an `overflow: hidden` ancestor
+    // was invisible to the audit by construction.
+    //
+    // That is not hypothetical. The city switcher grew from three chips to
+    // eight and became a 453px row inside the map container, which hides its
+    // overflow. The page never scrolled, this audit read "ok" at all ten
+    // viewports, and three of eight UK cities could not be tapped at 320px.
+    //
+    // A control past the edge is only a DEFECT if nothing can bring it back.
+    // A horizontal scroll strip legitimately parks its later items off-screen,
+    // so walk up for an ancestor that actually scrolls on x. That distinction
+    // is what keeps this check honest in both directions: it fails on the bug
+    // it was written for, and passes the scroll strip that fixed it.
+    const scrollableOnX = (node) => {
+      for (let el = node.parentElement; el && el !== document.body; el = el.parentElement) {
+        const s = getComputedStyle(el);
+        if (
+          (s.overflowX === 'auto' || s.overflowX === 'scroll') &&
+          el.scrollWidth > el.clientWidth + 1
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const unreachable = [];
+    for (const node of document.querySelectorAll(
+      'button, a[href], input, select, [role="button"]'
+    )) {
+      const r = node.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const s = getComputedStyle(node);
+      if (s.visibility === 'hidden' || s.display === 'none') continue;
+      if (r.right <= doc.clientWidth + 1 && r.left >= -1) continue;
+      if (scrollableOnX(node)) continue;
+      unreachable.push({
+        tag: node.tagName.toLowerCase(),
+        cls: (node.className || '').toString().slice(0, 34),
+        text: (node.textContent || '').trim().slice(0, 24),
+        left: Math.round(r.left),
+        right: Math.round(r.right),
+      });
+    }
+
     // Tap targets. WCAG 2.5.8 asks for 24x24 CSS px minimum; below that a
     // control is genuinely hard to hit on a touchscreen.
     //
@@ -112,6 +159,8 @@ for (const vp of VIEWPORTS) {
       overflowBy,
       offenders: wide.slice(0, 5),
       offenderCount: wide.length,
+      unreachable: unreachable.slice(0, 8),
+      unreachableCount: unreachable.length,
       smallTargets: small.slice(0, 5),
       smallCount: small.length,
       bodyFontPx: parseFloat(getComputedStyle(document.body).fontSize),
@@ -129,12 +178,21 @@ console.log(`\nResponsive audit: ${TARGET}\n`);
 let failures = 0;
 for (const { vp, audit, consoleErrors } of results) {
   const overflow = audit.overflowBy > 1;
-  const flag = overflow ? 'OVERFLOW' : 'ok      ';
-  if (overflow) failures += 1;
+  const stranded = audit.unreachableCount > 0;
+  const flag = overflow ? 'OVERFLOW' : stranded ? 'STRANDED' : 'ok      ';
+  if (overflow || stranded) failures += 1;
 
   console.log(
     `${flag} ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} ${vp.name}`
   );
+  if (stranded) {
+    console.log(
+      `         ${audit.unreachableCount} control(s) past the viewport edge with no way to scroll to them:`
+    );
+    for (const u of audit.unreachable) {
+      console.log(`           <${u.tag} class="${u.cls}"> "${u.text}" ${u.left}..${u.right}`);
+    }
+  }
   if (overflow) {
     console.log(`         page is ${audit.overflowBy}px wider than the viewport`);
     for (const o of audit.offenders) {
@@ -157,7 +215,7 @@ for (const { vp, audit, consoleErrors } of results) {
 
 console.log(
   failures === 0
-    ? `\nNo horizontal overflow at any of ${VIEWPORTS.length} viewports.`
-    : `\n${failures} of ${VIEWPORTS.length} viewports overflow horizontally.`
+    ? `\nNo horizontal overflow and no stranded controls at any of ${VIEWPORTS.length} viewports.`
+    : `\n${failures} of ${VIEWPORTS.length} viewports overflow horizontally or strand a control.`
 );
 process.exit(failures === 0 ? 0 : 1);

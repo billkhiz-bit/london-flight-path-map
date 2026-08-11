@@ -124,7 +124,15 @@
 // shipping the Lambda's densified geometry without the site's would make the
 // two disagree on every neighbourhood quiet score. index.html is in
 // SHELL_ASSETS and v1.0.21 has already shipped.
-const VERSION = 'v1.0.22';
+// v1.0.23 (2026-08-11): index.html only, and the bump is what makes the fix
+// REACH anyone. Six of nine cities threw on selection (a second city registry
+// held center/scale for three of them) and the city chips overflowed the
+// viewport unreachably on every phone. index.html is in SHELL_ASSETS and served
+// CACHE-FIRST, so without this bump a returning visitor or an installed PWA
+// keeps the broken copy indefinitely - the deploy would look done and change
+// nothing for exactly the people who use the site most. No SHELL_ASSETS entries
+// added, so there is no deploy-order hazard this time.
+const VERSION = 'v1.0.23';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

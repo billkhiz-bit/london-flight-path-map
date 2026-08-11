@@ -208,17 +208,27 @@ const registry = await page.evaluate(() => {
   const out = {
     known: [],
     throwsOnUnknown: false,
-    londonOk: false,
-    nycOk: false,
-    manchesterOk: false,
+    // Was three named booleans - londonOk / nycOk / manchesterOk - and the
+    // preflight stage that runs this file was labelled "3 cities" while the app
+    // carried NINE. Six cities were therefore outside the only pre-deploy gate
+    // that touches the registry, which is where the 2026-08-11 defects lived.
+    // Enumerated from CITY_DATA instead, so the coverage cannot fall behind the
+    // registry again and there is no count to remember to update.
+    resolves: [],
+    unresolved: [],
     keysMatch: false,
     missing: [],
   };
   try {
     out.known = Object.keys(CITY_DATA);
-    out.londonOk = typeof cityOf('london').boroughData() === 'object';
-    out.nycOk = typeof cityOf('nyc').boroughData() === 'object';
-    out.manchesterOk = typeof cityOf('manchester').boroughData() === 'object';
+    for (const city of out.known) {
+      const data = cityOf(city).boroughData();
+      // `typeof === 'object'` alone passes on null, and a city whose borough
+      // data is null renders an empty map under a correct-looking title -
+      // exactly the shape of failure this session found twice.
+      if (data && typeof data === 'object') out.resolves.push(city);
+      else out.unresolved.push(city);
+    }
 
     // Every city must declare the SAME keys. Added 2026-08-09 with the prose
     // fields (healthSource, searchNotFound, noiseAuthority and the rest), which
@@ -256,9 +266,10 @@ const registry = await page.evaluate(() => {
 console.log('');
 console.log('--- city registry ---');
 console.log('registered cities:        ', registry.known.join(', '));
-console.log('london resolves:          ', registry.londonOk);
-console.log('nyc resolves:             ', registry.nycOk);
-console.log('manchester resolves:      ', registry.manchesterOk);
+console.log(
+  `borough data resolves:     ${registry.resolves.length}/${registry.known.length}`,
+  registry.unresolved.length ? `  UNRESOLVED: ${registry.unresolved.join(', ')}` : ''
+);
 console.log('unknown city throws:      ', registry.throwsOnUnknown, '(must be true)');
 console.log('every city declares same keys:', registry.keysMatch);
 if (registry.missing.length) console.log('  MISSING:', registry.missing.join(', '));
@@ -282,9 +293,8 @@ const ok =
   manNamesOk &&
   manAskedLocalGeo &&
   !manAskedGithub &&
-  registry.londonOk &&
-  registry.nycOk &&
-  registry.manchesterOk &&
+  registry.known.length > 0 &&
+  registry.unresolved.length === 0 &&
   registry.throwsOnUnknown &&
   registry.keysMatch;
 

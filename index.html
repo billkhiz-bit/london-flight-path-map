@@ -2120,6 +2120,90 @@
           justify-content: center;
           padding: 0;
         }
+
+        /* Country tabs measured 14x24 ("UK") and 22x24 ("USA") on every phone -
+           they meet WCAG 2.5.8's 24px minimum vertically and fail it
+           horizontally, which is the axis nobody checks on a text control.
+           6px of side padding takes them to 26x24 and 34x24.
+
+           NOT bumped to the 44x44 the chips use, and that is a constraint
+           rather than a preference: this tier sits in a 26px band between the
+           map title (ends 71px) and the city chips (start 96px), so a 44px box
+           would put its invisible padding over the title, and a tap on the
+           heading would switch country. Reaching 44 here means re-spacing the
+           whole two-tier header, not padding a button.
+
+           left and gap absorb the padding exactly - 32-6 and 14-12 - so the
+           labels sit where they always have and only the target grows. */
+        .country-selector {
+          left: 26px;
+          gap: 2px;
+        }
+        .country-btn {
+          padding: 0 6px 3px;
+        }
+
+        /* City switcher as a horizontal scroll strip.
+           ------------------------------------------
+           The row is `position: absolute` with only `left` set, so it sized to
+           its content: 453px of chips against a 375px viewport. The map
+           container clips the overflow, which meant the page never scrolled
+           sideways and tests/responsive.mjs read "ok" at all ten viewports
+           while Bristol and Greater Manchester were simply unreachable on a
+           phone (three of eight cities at 320px). Bounding it with `right`
+           gives the flex row a definite width to scroll inside.
+
+           `right: 60px` clears the .map-controls column, which is 44px wide at
+           an 8px inset and shares this vertical band - the chips ran underneath
+           the reset button before. */
+        .city-selector {
+          right: 60px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x proximity;
+          /* The strip is chrome over a map; a scrollbar gutter here would eat
+             into the map and read as a UI seam. The fade below is the
+             affordance instead. */
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+        }
+        .city-selector::-webkit-scrollbar {
+          display: none;
+        }
+        /* Without this the chips shrink to fit instead of scrolling, and the
+           labels truncate rather than the row moving. */
+        .city-btn {
+          flex: 0 0 auto;
+          scroll-snap-align: start;
+        }
+
+        /* THE FADE IS THE FEATURE, not decoration. This app has already retired
+           one horizontal scroll strip for exactly this reason: the layer
+           toggles were a strip, "clipped toggles past the visible edge with no
+           scroll affordance, so hidden controls were effectively invisible"
+           (see .layers-trigger above), and were replaced by a popover. A strip
+           that does not say it continues is the same defect wearing a different
+           class name.
+
+           data-scroll is written by updateCityStripFade() on render, scroll and
+           resize, so the fade appears on the side that actually has more chips
+           and disappears at each end - a permanent fade would claim there is
+           always more to see. */
+        .city-selector[data-scroll='right'] {
+          mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+        }
+        .city-selector[data-scroll='left'] {
+          mask-image: linear-gradient(to right, transparent, #000 28px);
+        }
+        .city-selector[data-scroll='both'] {
+          mask-image: linear-gradient(
+            to right,
+            transparent,
+            #000 28px,
+            #000 calc(100% - 28px),
+            transparent
+          );
+        }
       }
       @media (max-width: 480px) {
         /* Compress UI on small phones. Keep the default control positions
@@ -3754,8 +3838,8 @@
         { code: 'BHX', name: 'Birmingham', coords: [-1.748, 52.4539] },
       ];
       const WESTMIDLANDS_FLIGHT_PATHS = [
-        { name: '33 Approach', airport: 'BHX', type: 'arrival', freq: 'high', coords: [[-1.9267, 52.6142], [-1.9184, 52.6068], [-1.9102, 52.5994], [-1.9019, 52.5919], [-1.8936, 52.5845], [-1.8853, 52.5771], [-1.8771, 52.5696], [-1.8688, 52.5622], [-1.8605, 52.5548], [-1.8522, 52.5474], [-1.8439, 52.54], [-1.8356, 52.5325], [-1.8273, 52.5251], [-1.819, 52.5177], [-1.8108, 52.5102], [-1.8025, 52.5027], [-1.7942, 52.4953], [-1.7865, 52.4884], [-1.7788, 52.4815], [-1.7711, 52.4746], [-1.7634, 52.4677], [-1.7557, 52.4608], [-1.748, 52.4539]] },
-        { name: '15 Approach', airport: 'BHX', type: 'arrival', freq: 'medium', coords: [[-1.5703, 52.2943], [-1.5786, 52.3017], [-1.5869, 52.3092], [-1.5951, 52.3166], [-1.6034, 52.324], [-1.61, 52.33], [-1.6166, 52.3359], [-1.6233, 52.3419], [-1.6299, 52.3478], [-1.6365, 52.3538], [-1.6448, 52.3612], [-1.6531, 52.3687], [-1.6614, 52.3761], [-1.6697, 52.3835], [-1.678, 52.3909], [-1.6863, 52.3984], [-1.6945, 52.4058], [-1.7028, 52.4132], [-1.7103, 52.42], [-1.7179, 52.4268], [-1.7254, 52.4335], [-1.7329, 52.4403], [-1.7405, 52.4471], [-1.748, 52.4539]] },
+        { name: '33 Approach', airport: 'BHX', type: 'arrival', freq: 'high', coordinates: [[-1.9267, 52.6142], [-1.9184, 52.6068], [-1.9102, 52.5994], [-1.9019, 52.5919], [-1.8936, 52.5845], [-1.8853, 52.5771], [-1.8771, 52.5696], [-1.8688, 52.5622], [-1.8605, 52.5548], [-1.8522, 52.5474], [-1.8439, 52.54], [-1.8356, 52.5325], [-1.8273, 52.5251], [-1.819, 52.5177], [-1.8108, 52.5102], [-1.8025, 52.5027], [-1.7942, 52.4953], [-1.7865, 52.4884], [-1.7788, 52.4815], [-1.7711, 52.4746], [-1.7634, 52.4677], [-1.7557, 52.4608], [-1.748, 52.4539]] },
+        { name: '15 Approach', airport: 'BHX', type: 'arrival', freq: 'medium', coordinates: [[-1.5703, 52.2943], [-1.5786, 52.3017], [-1.5869, 52.3092], [-1.5951, 52.3166], [-1.6034, 52.324], [-1.61, 52.33], [-1.6166, 52.3359], [-1.6233, 52.3419], [-1.6299, 52.3478], [-1.6365, 52.3538], [-1.6448, 52.3612], [-1.6531, 52.3687], [-1.6614, 52.3761], [-1.6697, 52.3835], [-1.678, 52.3909], [-1.6863, 52.3984], [-1.6945, 52.4058], [-1.7028, 52.4132], [-1.7103, 52.42], [-1.7179, 52.4268], [-1.7254, 52.4335], [-1.7329, 52.4403], [-1.7405, 52.4471], [-1.748, 52.4539]] },
       ];
 
       // West Yorkshire. API-derived; every value has a script that re-derives it.
@@ -3775,8 +3859,8 @@
         { code: 'LBA', name: 'Leeds Bradford', coords: [-1.6606, 53.8659] },
       ];
       const WESTYORKSHIRE_FLIGHT_PATHS = [
-        { name: '32 Approach', airport: 'LBA', type: 'arrival', freq: 'high', coords: [[-1.8764, 54.0067], [-1.8662, 54.0], [-1.8559, 53.9933], [-1.8457, 53.9867], [-1.8355, 53.98], [-1.8253, 53.9733], [-1.8151, 53.9667], [-1.8049, 53.9601], [-1.7947, 53.9534], [-1.7845, 53.9467], [-1.7742, 53.94], [-1.764, 53.9334], [-1.7538, 53.9267], [-1.7436, 53.92], [-1.7334, 53.9134], [-1.7231, 53.9068], [-1.7129, 53.9001], [-1.7042, 53.8944], [-1.6955, 53.8887], [-1.6867, 53.883], [-1.678, 53.8773], [-1.6693, 53.8716], [-1.6606, 53.8659]] },
-        { name: '14 Approach', airport: 'LBA', type: 'arrival', freq: 'medium', coords: [[-1.4448, 53.7251], [-1.453, 53.7304], [-1.4611, 53.7358], [-1.4693, 53.7411], [-1.4774, 53.7465], [-1.4856, 53.7518], [-1.4958, 53.7585], [-1.5061, 53.7651], [-1.5163, 53.7717], [-1.5265, 53.7784], [-1.5367, 53.7851], [-1.5469, 53.7918], [-1.5571, 53.7984], [-1.5673, 53.8051], [-1.5775, 53.8118], [-1.5877, 53.8184], [-1.598, 53.825], [-1.6082, 53.8317], [-1.6169, 53.8374], [-1.6257, 53.8431], [-1.6344, 53.8488], [-1.6431, 53.8545], [-1.6519, 53.8602], [-1.6606, 53.8659]] },
+        { name: '32 Approach', airport: 'LBA', type: 'arrival', freq: 'high', coordinates: [[-1.8764, 54.0067], [-1.8662, 54.0], [-1.8559, 53.9933], [-1.8457, 53.9867], [-1.8355, 53.98], [-1.8253, 53.9733], [-1.8151, 53.9667], [-1.8049, 53.9601], [-1.7947, 53.9534], [-1.7845, 53.9467], [-1.7742, 53.94], [-1.764, 53.9334], [-1.7538, 53.9267], [-1.7436, 53.92], [-1.7334, 53.9134], [-1.7231, 53.9068], [-1.7129, 53.9001], [-1.7042, 53.8944], [-1.6955, 53.8887], [-1.6867, 53.883], [-1.678, 53.8773], [-1.6693, 53.8716], [-1.6606, 53.8659]] },
+        { name: '14 Approach', airport: 'LBA', type: 'arrival', freq: 'medium', coordinates: [[-1.4448, 53.7251], [-1.453, 53.7304], [-1.4611, 53.7358], [-1.4693, 53.7411], [-1.4774, 53.7465], [-1.4856, 53.7518], [-1.4958, 53.7585], [-1.5061, 53.7651], [-1.5163, 53.7717], [-1.5265, 53.7784], [-1.5367, 53.7851], [-1.5469, 53.7918], [-1.5571, 53.7984], [-1.5673, 53.8051], [-1.5775, 53.8118], [-1.5877, 53.8184], [-1.598, 53.825], [-1.6082, 53.8317], [-1.6169, 53.8374], [-1.6257, 53.8431], [-1.6344, 53.8488], [-1.6431, 53.8545], [-1.6519, 53.8602], [-1.6606, 53.8659]] },
       ];
 
       // South Yorkshire. API-derived; every value has a script that re-derives it.
@@ -3811,8 +3895,8 @@
         { code: 'LPL', name: 'Liverpool John Lennon', coords: [-2.8496, 53.3349] },
       ];
       const MERSEYSIDE_FLIGHT_PATHS = [
-        { name: '27 Approach', airport: 'LPL', type: 'arrival', freq: 'high', coords: [[-3.1669, 53.319], [-3.1519, 53.3197], [-3.1369, 53.3204], [-3.1219, 53.3211], [-3.1069, 53.3218], [-3.0919, 53.3225], [-3.0769, 53.3232], [-3.0619, 53.3239], [-3.0469, 53.3246], [-3.0319, 53.3253], [-3.0169, 53.3259], [-3.0019, 53.3266], [-2.9869, 53.3273], [-2.9719, 53.328], [-2.9569, 53.3287], [-2.9419, 53.3294], [-2.9269, 53.3301], [-2.914, 53.3309], [-2.9011, 53.3317], [-2.8883, 53.3325], [-2.8754, 53.3333], [-2.8625, 53.3341], [-2.8496, 53.3349]] },
-        { name: '09 Approach', airport: 'LPL', type: 'arrival', freq: 'medium', coords: [[-2.5327, 53.3482], [-2.5477, 53.3475], [-2.5627, 53.3469], [-2.5777, 53.3462], [-2.5927, 53.3455], [-2.6077, 53.3448], [-2.6227, 53.3441], [-2.6377, 53.3434], [-2.6527, 53.3427], [-2.6677, 53.342], [-2.6827, 53.3413], [-2.6977, 53.3406], [-2.7127, 53.3399], [-2.7277, 53.3392], [-2.7427, 53.3385], [-2.7577, 53.3379], [-2.7727, 53.3372], [-2.7855, 53.3368], [-2.7983, 53.3364], [-2.8112, 53.3361], [-2.824, 53.3357], [-2.8368, 53.3353], [-2.8496, 53.3349]] },
+        { name: '27 Approach', airport: 'LPL', type: 'arrival', freq: 'high', coordinates: [[-3.1669, 53.319], [-3.1519, 53.3197], [-3.1369, 53.3204], [-3.1219, 53.3211], [-3.1069, 53.3218], [-3.0919, 53.3225], [-3.0769, 53.3232], [-3.0619, 53.3239], [-3.0469, 53.3246], [-3.0319, 53.3253], [-3.0169, 53.3259], [-3.0019, 53.3266], [-2.9869, 53.3273], [-2.9719, 53.328], [-2.9569, 53.3287], [-2.9419, 53.3294], [-2.9269, 53.3301], [-2.914, 53.3309], [-2.9011, 53.3317], [-2.8883, 53.3325], [-2.8754, 53.3333], [-2.8625, 53.3341], [-2.8496, 53.3349]] },
+        { name: '09 Approach', airport: 'LPL', type: 'arrival', freq: 'medium', coordinates: [[-2.5327, 53.3482], [-2.5477, 53.3475], [-2.5627, 53.3469], [-2.5777, 53.3462], [-2.5927, 53.3455], [-2.6077, 53.3448], [-2.6227, 53.3441], [-2.6377, 53.3434], [-2.6527, 53.3427], [-2.6677, 53.342], [-2.6827, 53.3413], [-2.6977, 53.3406], [-2.7127, 53.3399], [-2.7277, 53.3392], [-2.7427, 53.3385], [-2.7577, 53.3379], [-2.7727, 53.3372], [-2.7855, 53.3368], [-2.7983, 53.3364], [-2.8112, 53.3361], [-2.824, 53.3357], [-2.8368, 53.3353], [-2.8496, 53.3349]] },
       ];
 
       // Tyne and Wear. API-derived; every value has a script that re-derives it.
@@ -3832,8 +3916,8 @@
         { code: 'NCL', name: 'Newcastle', coords: [-1.6896, 55.038] },
       ];
       const TYNEANDWEAR_FLIGHT_PATHS = [
-        { name: '25 Approach', airport: 'NCL', type: 'arrival', freq: 'high', coords: [[-1.9907, 54.9578], [-1.9793, 54.9608], [-1.9679, 54.9639], [-1.9566, 54.9669], [-1.9452, 54.97], [-1.9338, 54.973], [-1.9196, 54.9768], [-1.9054, 54.9806], [-1.8912, 54.9843], [-1.877, 54.9881], [-1.8628, 54.9919], [-1.8485, 54.9956], [-1.8343, 54.9994], [-1.8201, 55.0032], [-1.8087, 55.0062], [-1.7973, 55.0093], [-1.786, 55.0123], [-1.7746, 55.0154], [-1.7632, 55.0184], [-1.7509, 55.0217], [-1.7387, 55.0249], [-1.7264, 55.0282], [-1.7141, 55.0315], [-1.7019, 55.0347], [-1.6896, 55.038]] },
-        { name: '07 Approach', airport: 'NCL', type: 'arrival', freq: 'medium', coords: [[-1.3889, 55.118], [-1.4031, 55.1142], [-1.4173, 55.1104], [-1.4316, 55.1066], [-1.4458, 55.1028], [-1.46, 55.099], [-1.4743, 55.0953], [-1.4885, 55.0915], [-1.5027, 55.0877], [-1.5169, 55.0839], [-1.5311, 55.0802], [-1.5453, 55.0764], [-1.5595, 55.0726], [-1.5737, 55.0688], [-1.588, 55.065], [-1.6022, 55.0612], [-1.6164, 55.0574], [-1.6286, 55.0542], [-1.6408, 55.0509], [-1.653, 55.0477], [-1.6652, 55.0445], [-1.6774, 55.0412], [-1.6896, 55.038]] },
+        { name: '25 Approach', airport: 'NCL', type: 'arrival', freq: 'high', coordinates: [[-1.9907, 54.9578], [-1.9793, 54.9608], [-1.9679, 54.9639], [-1.9566, 54.9669], [-1.9452, 54.97], [-1.9338, 54.973], [-1.9196, 54.9768], [-1.9054, 54.9806], [-1.8912, 54.9843], [-1.877, 54.9881], [-1.8628, 54.9919], [-1.8485, 54.9956], [-1.8343, 54.9994], [-1.8201, 55.0032], [-1.8087, 55.0062], [-1.7973, 55.0093], [-1.786, 55.0123], [-1.7746, 55.0154], [-1.7632, 55.0184], [-1.7509, 55.0217], [-1.7387, 55.0249], [-1.7264, 55.0282], [-1.7141, 55.0315], [-1.7019, 55.0347], [-1.6896, 55.038]] },
+        { name: '07 Approach', airport: 'NCL', type: 'arrival', freq: 'medium', coordinates: [[-1.3889, 55.118], [-1.4031, 55.1142], [-1.4173, 55.1104], [-1.4316, 55.1066], [-1.4458, 55.1028], [-1.46, 55.099], [-1.4743, 55.0953], [-1.4885, 55.0915], [-1.5027, 55.0877], [-1.5169, 55.0839], [-1.5311, 55.0802], [-1.5453, 55.0764], [-1.5595, 55.0726], [-1.5737, 55.0688], [-1.588, 55.065], [-1.6022, 55.0612], [-1.6164, 55.0574], [-1.6286, 55.0542], [-1.6408, 55.0509], [-1.653, 55.0477], [-1.6652, 55.0445], [-1.6774, 55.0412], [-1.6896, 55.038]] },
       ];
 
       // Bristol. API-derived; every value has a script that re-derives it.
@@ -3852,8 +3936,8 @@
         { code: 'BRS', name: 'Bristol', coords: [-2.7165, 51.3823] },
       ];
       const BRISTOL_FLIGHT_PATHS = [
-        { name: '27 Approach', airport: 'BRS', type: 'arrival', freq: 'high', coords: [[-3.0208, 51.3711], [-3.0065, 51.3717], [-2.9921, 51.3722], [-2.9777, 51.3727], [-2.9634, 51.3733], [-2.949, 51.3739], [-2.9346, 51.3744], [-2.9203, 51.3749], [-2.9059, 51.3755], [-2.8915, 51.376], [-2.8771, 51.3766], [-2.8628, 51.3772], [-2.8484, 51.3777], [-2.834, 51.3782], [-2.8197, 51.3788], [-2.8053, 51.3794], [-2.791, 51.3799], [-2.7786, 51.3803], [-2.7662, 51.3807], [-2.7538, 51.3811], [-2.7413, 51.3815], [-2.7289, 51.3819], [-2.7165, 51.3823]] },
-        { name: '09 Approach', airport: 'BRS', type: 'arrival', freq: 'medium', coords: [[-2.4173, 51.3942], [-2.4317, 51.3937], [-2.4461, 51.3931], [-2.4604, 51.3925], [-2.4748, 51.392], [-2.4892, 51.3915], [-2.5036, 51.3909], [-2.5179, 51.3903], [-2.5323, 51.3898], [-2.5467, 51.3893], [-2.561, 51.3887], [-2.5754, 51.3881], [-2.5897, 51.3876], [-2.6041, 51.3871], [-2.6185, 51.3865], [-2.6328, 51.3859], [-2.6472, 51.3854], [-2.6611, 51.3848], [-2.6749, 51.3842], [-2.6888, 51.3835], [-2.7026, 51.3829], [-2.7165, 51.3823]] },
+        { name: '27 Approach', airport: 'BRS', type: 'arrival', freq: 'high', coordinates: [[-3.0208, 51.3711], [-3.0065, 51.3717], [-2.9921, 51.3722], [-2.9777, 51.3727], [-2.9634, 51.3733], [-2.949, 51.3739], [-2.9346, 51.3744], [-2.9203, 51.3749], [-2.9059, 51.3755], [-2.8915, 51.376], [-2.8771, 51.3766], [-2.8628, 51.3772], [-2.8484, 51.3777], [-2.834, 51.3782], [-2.8197, 51.3788], [-2.8053, 51.3794], [-2.791, 51.3799], [-2.7786, 51.3803], [-2.7662, 51.3807], [-2.7538, 51.3811], [-2.7413, 51.3815], [-2.7289, 51.3819], [-2.7165, 51.3823]] },
+        { name: '09 Approach', airport: 'BRS', type: 'arrival', freq: 'medium', coordinates: [[-2.4173, 51.3942], [-2.4317, 51.3937], [-2.4461, 51.3931], [-2.4604, 51.3925], [-2.4748, 51.392], [-2.4892, 51.3915], [-2.5036, 51.3909], [-2.5179, 51.3903], [-2.5323, 51.3898], [-2.5467, 51.3893], [-2.561, 51.3887], [-2.5754, 51.3881], [-2.5897, 51.3876], [-2.6041, 51.3871], [-2.6185, 51.3865], [-2.6328, 51.3859], [-2.6472, 51.3854], [-2.6611, 51.3848], [-2.6749, 51.3842], [-2.6888, 51.3835], [-2.7026, 51.3829], [-2.7165, 51.3823]] },
       ];
 
       const MANCHESTER_AIRPORTS = [
@@ -3995,11 +4079,16 @@
       Object.assign(MANCHESTER_NEIGHBOURHOOD_DETAIL, {"Altrincham (WA14)": {"borough": "Trafford", "crime": 0, "lat": 53.38787, "lon": -2.36095, "price": 403, "sales": 577}, "Ancoats & Northern Quarter (M4)": {"borough": "Manchester", "crime": 0, "lat": 53.48502, "lon": -2.23011, "price": 250, "sales": 528}, "Ardwick & Longsight (M12)": {"borough": "Manchester", "crime": 0, "lat": 53.4644, "lon": -2.20195, "price": 195, "sales": 115}, "Ashton In Makerfield (WN4)": {"borough": "Wigan", "crime": 0, "lat": 53.49368, "lon": -2.64439, "price": 182, "sales": 386}, "Ashton-Under-Lyne (OL6)": {"borough": "Tameside", "crime": 0, "lat": 53.49469, "lon": -2.08584, "price": 200, "sales": 430}, "Ashton-Under-Lyne (OL7)": {"borough": "Tameside", "crime": 0, "lat": 53.4907, "lon": -2.10725, "price": 180, "sales": 213}, "Atherton (M46)": {"borough": "Wigan", "crime": 0, "lat": 53.52586, "lon": -2.49233, "price": 180, "sales": 446}, "Blackley & Harpurhey (M9)": {"borough": "Manchester", "crime": 0, "lat": 53.52201, "lon": -2.21389, "price": 180, "sales": 463}, "Bolton (BL1)": {"borough": "Bolton", "crime": 0, "lat": 53.59051, "lon": -2.44497, "price": 170, "sales": 1005}, "Bolton (BL2)": {"borough": "Bolton", "crime": 0, "lat": 53.5885, "lon": -2.39504, "price": 192, "sales": 741}, "Bolton (BL3)": {"borough": "Bolton", "crime": 0, "lat": 53.5646, "lon": -2.43212, "price": 175, "sales": 705}, "Bromley Cross (BL7)": {"borough": "Bolton", "crime": 0, "lat": 53.63174, "lon": -2.42237, "price": 256, "sales": 235}, "Broughton (M7)": {"borough": "Salford", "crime": 0, "lat": 53.50554, "lon": -2.26283, "price": 240, "sales": 326}, "Bury (BL8)": {"borough": "Bury", "crime": 0, "lat": 53.60499, "lon": -2.32781, "price": 240, "sales": 623}, "Bury (BL9)": {"borough": "Bury", "crime": 0, "lat": 53.59221, "lon": -2.28708, "price": 205, "sales": 839}, "Chadderton (OL9)": {"borough": "Oldham", "crime": 0, "lat": 53.53919, "lon": -2.14443, "price": 185, "sales": 513}, "Cheadle Hulme (SK8)": {"borough": "Stockport", "crime": 0, "lat": 53.37936, "lon": -2.209, "price": 365, "sales": 1053}, "Cheetham Hill & Crumpsall (M8)": {"borough": "Manchester", "crime": 0, "lat": 53.50871, "lon": -2.24013, "price": 184, "sales": 275}, "Chorlton-cum-Hardy (M21)": {"borough": "Manchester", "crime": 0, "lat": 53.438, "lon": -2.27291, "price": 415, "sales": 414}, "Chorlton-on-Medlock (M13)": {"borough": "Manchester", "crime": 0, "lat": 53.46048, "lon": -2.21547, "price": 225, "sales": 113}, "Denton (M34)": {"borough": "Tameside", "crime": 0, "lat": 53.4566, "lon": -2.11856, "price": 215, "sales": 768}, "Didsbury & Withington (M20)": {"borough": "Manchester", "crime": 0, "lat": 53.42419, "lon": -2.23271, "price": 342, "sales": 813}, "Droylsden (M43)": {"borough": "Tameside", "crime": 0, "lat": 53.48349, "lon": -2.14914, "price": 210, "sales": 331}, "Dukinfield (SK16)": {"borough": "Tameside", "crime": 0, "lat": 53.4746, "lon": -2.08251, "price": 205, "sales": 268}, "Eccles (M30)": {"borough": "Salford", "crime": 0, "lat": 53.48432, "lon": -2.35515, "price": 221, "sales": 577}, "Edgeley & Cheadle Heath (SK3)": {"borough": "Stockport", "crime": 0, "lat": 53.39846, "lon": -2.17207, "price": 250, "sales": 486}, "Failsworth (M35)": {"borough": "Oldham", "crime": 0, "lat": 53.50721, "lon": -2.155, "price": 197, "sales": 383}, "Fallowfield & Rusholme (M14)": {"borough": "Manchester", "crime": 0, "lat": 53.44853, "lon": -2.22591, "price": 236, "sales": 445}, "Farnworth (BL4)": {"borough": "Bolton", "crime": 0, "lat": 53.54646, "lon": -2.40218, "price": 175, "sales": 487}, "Gorton (M18)": {"borough": "Manchester", "crime": 0, "lat": 53.46113, "lon": -2.17078, "price": 165, "sales": 281}, "Greenfield (OL3)": {"borough": "Oldham", "crime": 0, "lat": 53.5533, "lon": -2.01153, "price": 325, "sales": 307}, "Hazel Grove (SK7)": {"borough": "Stockport", "crime": 0, "lat": 53.36837, "lon": -2.14363, "price": 408, "sales": 848}, "Heywood (OL10)": {"borough": "Rochdale", "crime": 0, "lat": 53.59021, "lon": -2.22319, "price": 182, "sales": 524}, "Hindley (WN2)": {"borough": "Wigan", "crime": 0, "lat": 53.53596, "lon": -2.58247, "price": 169, "sales": 911}, "Horwich (BL6)": {"borough": "Bolton", "crime": 0, "lat": 53.59182, "lon": -2.54081, "price": 225, "sales": 693}, "Hulme (M15)": {"borough": "Manchester", "crime": 0, "lat": 53.46773, "lon": -2.25172, "price": 220, "sales": 365}, "Hyde (SK14)": {"borough": "Tameside", "crime": 0, "lat": 53.45202, "lon": -2.05608, "price": 215, "sales": 869}, "Irlam (M44)": {"borough": "Salford", "crime": 0, "lat": 53.44079, "lon": -2.4272, "price": 227, "sales": 329}, "Leigh (WN7)": {"borough": "Wigan", "crime": 0, "lat": 53.49809, "lon": -2.51845, "price": 164, "sales": 876}, "Levenshulme & Burnage (M19)": {"borough": "Manchester", "crime": 0, "lat": 53.43641, "lon": -2.19623, "price": 273, "sales": 465}, "Little Hulton (M38)": {"borough": "Salford", "crime": 0, "lat": 53.53267, "lon": -2.42325, "price": 163, "sales": 151}, "Littleborough (OL15)": {"borough": "Rochdale", "crime": 0, "lat": 53.64486, "lon": -2.09987, "price": 215, "sales": 286}, "Lowton (WA3)": {"borough": "Wigan", "crime": 0, "lat": 53.45656, "lon": -2.54792, "price": 233, "sales": 488}, "Manchester City Centre (M1)": {"borough": "Manchester", "crime": 0, "lat": 53.47754, "lon": -2.23616, "price": 250, "sales": 244}, "Marple (SK6)": {"borough": "Stockport", "crime": 0, "lat": 53.40517, "lon": -2.08021, "price": 310, "sales": 922}, "Middleton (M24)": {"borough": "Rochdale", "crime": 0, "lat": 53.55174, "lon": -2.19814, "price": 210, "sales": 843}, "Mossley (OL5)": {"borough": "Tameside", "crime": 0, "lat": 53.51806, "lon": -2.03842, "price": 199, "sales": 236}, "Newton Heath & Moston (M40)": {"borough": "Manchester", "crime": 0, "lat": 53.50405, "lon": -2.19114, "price": 195, "sales": 508}, "Oldham (OL1)": {"borough": "Oldham", "crime": 0, "lat": 53.54986, "lon": -2.10693, "price": 162, "sales": 248}, "Oldham (OL4)": {"borough": "Oldham", "crime": 0, "lat": 53.54242, "lon": -2.0734, "price": 191, "sales": 548}, "Oldham (OL8)": {"borough": "Oldham", "crime": 0, "lat": 53.52584, "lon": -2.11685, "price": 170, "sales": 433}, "Openshaw & Clayton (M11)": {"borough": "Manchester", "crime": 0, "lat": 53.47881, "lon": -2.181, "price": 160, "sales": 215}, "Ordsall & Seedley (M5)": {"borough": "Salford", "crime": 0, "lat": 53.47902, "lon": -2.28291, "price": 200, "sales": 393}, "Partington (M31)": {"borough": "Trafford", "crime": 0, "lat": 53.41911, "lon": -2.42465, "price": 240, "sales": 129}, "Pendleton (M6)": {"borough": "Salford", "crime": 0, "lat": 53.49281, "lon": -2.29847, "price": 210, "sales": 535}, "Prestwich (M25)": {"borough": "Bury", "crime": 0, "lat": 53.5283, "lon": -2.27577, "price": 296, "sales": 428}, "Radcliffe (M26)": {"borough": "Bury", "crime": 0, "lat": 53.56237, "lon": -2.33464, "price": 180, "sales": 592}, "Ramsbottom (BL0)": {"borough": "Bury", "crime": 0, "lat": 53.64863, "lon": -2.31685, "price": 262, "sales": 251}, "Reddish (SK5)": {"borough": "Stockport", "crime": 0, "lat": 53.43527, "lon": -2.15246, "price": 212, "sales": 523}, "Rochdale (OL11)": {"borough": "Rochdale", "crime": 0, "lat": 53.60569, "lon": -2.17667, "price": 185, "sales": 660}, "Rochdale (OL12)": {"borough": "Rochdale", "crime": 0, "lat": 53.63658, "lon": -2.16545, "price": 190, "sales": 481}, "Rochdale (OL16)": {"borough": "Rochdale", "crime": 0, "lat": 53.61241, "lon": -2.13128, "price": 180, "sales": 479}, "Royton (OL2)": {"borough": "Oldham", "crime": 0, "lat": 53.57317, "lon": -2.11, "price": 210, "sales": 738}, "Sale (M33)": {"borough": "Trafford", "crime": 0, "lat": 53.421, "lon": -2.32636, "price": 370, "sales": 939}, "Salford Central (M3)": {"borough": "Salford", "crime": 0, "lat": 53.48375, "lon": -2.25293, "price": 273, "sales": 1224}, "Salford Quays (M50)": {"borough": "Salford", "crime": 0, "lat": 53.47488, "lon": -2.29442, "price": 200, "sales": 243}, "Stalybridge (SK15)": {"borough": "Tameside", "crime": 0, "lat": 53.48709, "lon": -2.047, "price": 200, "sales": 388}, "Standish (WN6)": {"borough": "Wigan", "crime": 0, "lat": 53.57551, "lon": -2.67149, "price": 195, "sales": 735}, "Stockport (SK2)": {"borough": "Stockport", "crime": 0, "lat": 53.39435, "lon": -2.1322, "price": 278, "sales": 499}, "Stockport Town Centre (SK1)": {"borough": "Stockport", "crime": 0, "lat": 53.40763, "lon": -2.15166, "price": 207, "sales": 256}, "Stretford (M32)": {"borough": "Trafford", "crime": 0, "lat": 53.451, "lon": -2.30941, "price": 285, "sales": 370}, "Swinton (M27)": {"borough": "Salford", "crime": 0, "lat": 53.5121, "lon": -2.33636, "price": 225, "sales": 669}, "The Heatons (SK4)": {"borough": "Stockport", "crime": 0, "lat": 53.41945, "lon": -2.18189, "price": 331, "sales": 559}, "Timperley (WA15)": {"borough": "Trafford", "crime": 0, "lat": 53.38443, "lon": -2.32557, "price": 495, "sales": 727}, "Tyldesley (M29)": {"borough": "Wigan", "crime": 0, "lat": 53.50839, "lon": -2.45807, "price": 235, "sales": 461}, "Urmston (M41)": {"borough": "Trafford", "crime": 0, "lat": 53.45096, "lon": -2.3655, "price": 336, "sales": 596}, "Westhoughton (BL5)": {"borough": "Bolton", "crime": 0, "lat": 53.54819, "lon": -2.51545, "price": 225, "sales": 613}, "Whalley Range & Old Trafford (M16)": {"borough": "Manchester", "crime": 0, "lat": 53.45518, "lon": -2.26471, "price": 283, "sales": 387}, "Whitefield (M45)": {"borough": "Bury", "crime": 0, "lat": 53.54763, "lon": -2.29038, "price": 260, "sales": 335}, "Wigan (WN1)": {"borough": "Wigan", "crime": 0, "lat": 53.55353, "lon": -2.62791, "price": 183, "sales": 361}, "Wigan (WN3)": {"borough": "Wigan", "crime": 0, "lat": 53.52892, "lon": -2.64616, "price": 181, "sales": 476}, "Wigan (WN5)": {"borough": "Wigan", "crime": 0, "lat": 53.53185, "lon": -2.68761, "price": 165, "sales": 590}, "Worsley (M28)": {"borough": "Salford", "crime": 0, "lat": 53.51478, "lon": -2.40002, "price": 274, "sales": 853}, "Wythenshawe North (M22)": {"borough": "Manchester", "crime": 0, "lat": 53.38574, "lon": -2.26012, "price": 240, "sales": 460}, "Wythenshawe South (M23)": {"borough": "Manchester", "crime": 0, "lat": 53.39961, "lon": -2.2888, "price": 260, "sales": 369}});
       /* GM-NEIGHBOURHOODS:END */
 
-      const CITIES = {
-        london: { center: [-0.1278, 51.5074], scale: 48000, name: 'London' },
-        nyc: { center: [-73.97, 40.75], scale: 55000, name: 'New York' },
-        manchester: { center: [-2.32, 53.52], scale: 47000, name: 'Greater Manchester' },
-      };
+      // The map projection's centre and scale used to live here, in a SECOND
+      // city registry alongside CITY_DATA. It held three cities and CITY_DATA
+      // held nine, so selecting any of the six added on 2026-08-10 threw
+      // "Cannot read properties of undefined (reading 'center')" inside
+      // switchCity() and the map never redrew - the title changed and the
+      // outlines did not. Both holders had to be edited to add a city and only
+      // one of them was, which is the same class as audit I4 (borough metadata
+      // in two places) and is resolved the same way: by REMOVAL. `center` and
+      // `scale` are now CITY_DATA fields, so tests/smoke-local.mjs's key-parity
+      // assertion covers them and city #10 cannot repeat this.
 
       // --- New York Data ---
       const NYC_AIRPORTS = [
@@ -5653,7 +5742,17 @@
         london: {
           label: 'London',
           currency: '£',
-          // Mirrors CITIES[...]['country'] in the score Lambda. Drives which
+          // geoMercator centre + scale. London, New York and Greater Manchester
+          // keep the hand-tuned numbers they have always rendered at; the six
+          // Core Cities regions are FITTED, by scripts/fit_city_projection.py,
+          // into the same on-screen box London occupies at scale 48000, so no
+          // region needs a number picked by eye. Read by switchCity(), the
+          // initial draw and redrawForViewport().
+          center: [-0.1278, 51.5074],
+          scale: 48000,
+          // Mirrors the score Lambda's own CITIES[...]['country'] (a separate,
+          // backend dict; the frontend has one registry and this is it).
+          // Drives which
           // schools source counts: an English borough's input is Progress 8,
           // while New York has neither Ofsted nor DfE and its curated tier IS
           // the input. Declared here rather than tested as `city === 'nyc'`,
@@ -5736,6 +5835,8 @@
         nyc: {
           label: 'New York City',
           currency: '$',
+          center: [-73.97, 40.75],
+          scale: 55000,
           country: 'United States',
           healthSource: 'NYC HEALTH+HOSPITALS DATA (CURATED)',
           searchNotFound: 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.',
@@ -5791,6 +5892,8 @@
         westmidlands: {
           label: 'West Midlands',
           currency: '£',
+          center: [-1.8154, 52.5052],
+          scale: 52000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Solihull, Coventry or Dudley.',
@@ -5838,6 +5941,8 @@
         westyorkshire: {
           label: 'West Yorkshire',
           currency: '£',
+          center: [-1.6861, 53.7415],
+          scale: 41500,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Leeds, Bradford or Wakefield.',
@@ -5885,6 +5990,8 @@
         southyorkshire: {
           label: 'South Yorkshire',
           currency: '£',
+          center: [-1.344, 53.4814],
+          scale: 42500,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Sheffield, Doncaster or Barnsley.',
@@ -5932,6 +6039,8 @@
         merseyside: {
           label: 'Merseyside',
           currency: '£',
+          center: [-2.9029, 53.4973],
+          scale: 46000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Liverpool, Wirral or Sefton.',
@@ -5979,6 +6088,8 @@
         tyneandwear: {
           label: 'Tyne and Wear',
           currency: '£',
+          center: [-1.6, 54.9392],
+          scale: 64000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Newcastle, Gateshead or Sunderland.',
@@ -6026,6 +6137,8 @@
         bristol: {
           label: 'Bristol',
           currency: '£',
+          center: [-2.6836, 51.4752],
+          scale: 47000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Bristol, Bath or Weston.',
@@ -6079,6 +6192,8 @@
         manchester: {
           label: 'Greater Manchester',
           currency: '£',
+          center: [-2.32, 53.52],
+          scale: 47000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (CURATED)',
           searchNotFound: 'Borough not found. Try e.g. Trafford, Stockport, or Wigan.',
@@ -9568,6 +9683,49 @@
             box.appendChild(b);
           });
         renderCountrySelector(country);
+
+        // Bound once on the container, which survives every re-render (only its
+        // children are replaced above), so this cannot stack listeners as
+        // cities are switched.
+        if (!box.dataset.fadeBound) {
+          box.dataset.fadeBound = '1';
+          box.addEventListener('scroll', updateCityStripFade, { passive: true });
+        }
+        // Bring the active chip into view. It can be the LAST one - Greater
+        // Manchester is eighth of eight - so on a phone a fresh load would
+        // otherwise open the strip scrolled away from the city on screen,
+        // with no chip marked active anywhere the user can see.
+        const active = box.querySelector('.city-btn.active');
+        if (active) {
+          box.scrollLeft = Math.max(0, active.offsetLeft - (box.clientWidth - active.offsetWidth) / 2);
+        }
+        updateCityStripFade();
+      }
+
+      /**
+       * Mark which edge of the city strip has chips beyond it, for the fade in
+       * the mobile stylesheet.
+       *
+       * Deliberately driven by measurement rather than by "is this a phone":
+       * the strip overflows when the chips are wider than the space, which is a
+       * function of how many cities exist as much as of viewport width. City
+       * ten will overflow a viewport that city nine did not, and this needs no
+       * edit for that.
+       */
+      function updateCityStripFade() {
+        const box = document.getElementById('city-selector');
+        if (!box) return;
+        const overflow = box.scrollWidth - box.clientWidth;
+        // No fade when everything fits: a permanent fade would claim there is
+        // always more to scroll to, which is the same lie in the other
+        // direction.
+        if (overflow <= 1) {
+          box.removeAttribute('data-scroll');
+          return;
+        }
+        const atStart = box.scrollLeft <= 1;
+        const atEnd = box.scrollLeft >= overflow - 1;
+        box.dataset.scroll = atStart ? 'right' : atEnd ? 'left' : 'both';
       }
 
       function switchCountry(country) {
@@ -9784,7 +9942,7 @@
         const container = document.getElementById('map-container');
         const w = container.clientWidth,
           h = container.clientHeight;
-        const cityData = CITIES[city];
+        const cityData = cityOf(city);
         projection
           .center(cityData.center)
           .scale(w < 600 ? cityData.scale * 0.625 : cityData.scale)
@@ -10339,7 +10497,7 @@
         const w = container.clientWidth;
         const h = container.clientHeight;
 
-        const cityData = CITIES[currentCity];
+        const cityData = cityOf(currentCity);
         projection = d3
           .geoMercator()
           .center(cityData.center)
@@ -10627,7 +10785,7 @@
         function redrawForViewport() {
           const nw = container.clientWidth;
           const nh = container.clientHeight;
-          const baseScale = CITIES[currentCity].scale;
+          const baseScale = cityOf(currentCity).scale;
           projection.scale(nw < 600 ? baseScale * 0.625 : baseScale).translate([nw / 2, nh / 2]);
           // interrupt() before remove() - see the matching call in switchCity.
           g.selectAll('*').interrupt().remove();
@@ -10662,6 +10820,12 @@
         window.addEventListener('resize', () => {
           clearTimeout(resizeTimer);
           resizeTimer = setTimeout(redrawForViewport, 160);
+          // Not debounced with the redraw: this reads two numbers off one
+          // element and writes an attribute, so it is cheap enough to keep the
+          // fade honest DURING a drag. Rotating a phone to landscape can stop
+          // the strip overflowing entirely, and a fade left behind on a row
+          // that now fits points at nothing.
+          updateCityStripFade();
         });
       }
 

@@ -199,17 +199,37 @@ else
   # --headless=new itself.
   check "extension e2e"                 node tests/extension-e2e.mjs
 
-  # Loads the live site at ten viewports, 320px to 1920px, and fails ONLY on
-  # horizontal overflow. That is the failure that matters on a phone and the one
-  # least likely to be noticed otherwise: the page still works, it just drifts
-  # sideways, and nobody testing at 1440px will ever see it.
+  # Loads the live site at ten viewports, 320px to 1920px, and fails on
+  # horizontal overflow OR on a control stranded past the viewport edge with no
+  # scrollable ancestor. The first is the failure that matters on a phone and
+  # the one least likely to be noticed otherwise: the page still works, it just
+  # drifts sideways, and nobody testing at 1440px will ever see it.
+  #
+  # The second was added 2026-08-11 because the first could not see it. The
+  # audit had always BUILT a list of clipped elements and only PRINTED it when
+  # the page itself scrolled sideways — so the city chips, clipped by the map
+  # container's overflow:hidden, left this stage reading "ok" at all ten
+  # viewports while three of eight UK cities could not be tapped at 320px.
+  # Proven red against the pre-fix live site (5 of 10 viewports) and green
+  # against the fixed source.
   #
   # Tap-target findings are printed but do not fail the run. They need judgement
   # rather than a threshold — the site footer is 8px uppercase chrome, hidden
   # entirely below 900px, and forcing it to 24px would triple its height to fix
   # a desktop-only mouse target. A gate that demanded that would be overruled
   # every time it fired, which is how a gate stops being read.
-  check "responsive (10 viewports)"     node tests/responsive.mjs
+  #
+  # SPLIT ACROSS SOURCE AND LIVE on 2026-08-11, the same split a11y already
+  # makes (tests/a11y-source.mjs blocking, the CloudFront spec catching a bad
+  # deploy). The BLOCKING run is against the working tree and lives in the
+  # local-server block below; the live run is ADVISORY, at the bottom.
+  #
+  # The reason is not convenience. Pointed at live, this stage goes red on a
+  # tree that has ALREADY FIXED the defect and stays red until a deploy, so
+  # "do not commit past a red gate" would forbid committing the fix for the
+  # very thing it is complaining about. Blocking on source gates the deploy;
+  # the advisory live run keeps reporting production's real state, which is
+  # exactly what `deployed == source` is already advisory for.
 
   # LOCAL smoke, and the distinction from every other e2e stage here is the
   # point: those hit the DEPLOYED site, so a broken index.html in the working
@@ -217,15 +237,17 @@ else
   # 2026-07-30 vendoring work and was in no gate at all — the one test that
   # could catch a regression before it shipped was the one nothing ran.
   #
-  # It loads the working tree over a throwaway static server, paints ALL THREE
-  # cities, and asserts the CITY_DATA registry rejects an unknown city instead
-  # of silently serving London's data under its name.
+  # It loads the working tree over a throwaway static server, paints London, NYC
+  # and Greater Manchester in detail, and asserts the CITY_DATA registry rejects
+  # an unknown city instead of silently serving London's data under its name.
   #
-  # The count in this label is load-bearing, not decoration: it read "both
-  # cities" for the whole session in which Greater Manchester became the third,
-  # and a stage that names a smaller number than the app carries is how a new
-  # city goes unexercised. If a fourth is added, this label and the test move
-  # together.
+  # The count that used to be in this label was load-bearing and went stale
+  # anyway: it read "both cities" through the session in which Greater
+  # Manchester became the third, then "3 cities" while the app carried NINE, so
+  # six cities sat outside the only pre-deploy registry gate. The registry
+  # assertions inside now ENUMERATE CITY_DATA rather than naming three cities,
+  # and "every city switches" below covers rendering, so there is no longer a
+  # number here to fall behind.
   smoke_port=8123
   python -m http.server "$smoke_port" --bind 127.0.0.1 >/dev/null 2>&1 &
   smoke_pid=$!
@@ -236,13 +258,27 @@ else
     [ "$smoke_tries" -gt 30 ] && break
     sleep 1
   done
-  check "local smoke (3 cities)"        node tests/smoke-local.mjs
+  check "local smoke + registry"        node tests/smoke-local.mjs
   # Both ported from the core-cities spike branch with the country tier, and
   # both serve the repo themselves rather than reusing the server above.
   # locator-verify is proven able to fail: remove data/uk-locator.json and
   # London and Manchester report markers=0 land=0.
   check "locator inset"                 node tests/locator-verify.mjs
   check "selector tiers do not overlap" node tests/selector-widths.mjs
+  # Clicks EVERY chip in CITY_DATA and asserts the city renders the number of
+  # outlines its own boundary file declares, with no page error. Added
+  # 2026-08-11: nothing in the suite had ever clicked a city chip, and two
+  # defects were living in that gap on the LIVE site — a second registry that
+  # held three cities while CITY_DATA held nine, and corridors ported from the
+  # Lambda under its `coords` key when the renderer reads `.coordinates`.
+  # Six of nine cities threw on selection and every gate was green.
+  #
+  # Deliberately data-driven, unlike the stage above: no count to keep in step,
+  # so city ten is covered the day it is added. Both defects re-proven red.
+  check "every city switches"           node tests/city-switch.mjs
+  # The blocking half of the responsive audit, against the working tree over the
+  # server started above. See the long note on the advisory live run further up.
+  check "responsive, source (10 vp)"    node tests/responsive.mjs "http://127.0.0.1:$smoke_port/index.html"
   # WCAG over the SOURCE tree, on its own server on 8923 with the CloudFront
   # extensionless rewrite reproduced, so /pricing resolves the way the origin
   # resolves it.
@@ -311,6 +347,13 @@ if [ "$SKIP_E2E" -eq 0 ]; then
   # only on a MEASURED disagreement, and to fail loudly rather than pass quietly
   # if too few probes return.
   advise "site == /v1/score (6 postcodes)" node tests/site-api-parity.mjs
+
+  # The live half of the responsive audit. Reports what visitors actually get at
+  # ten viewports; the blocking half runs the same file against the working tree.
+  # Advisory for the same reason as the drift check above: it is describing
+  # production, not the commit in hand, so it stays red between fixing a layout
+  # defect and deploying the fix.
+  advise "responsive, live (10 vp)"      node tests/responsive.mjs
 fi
 
 echo
