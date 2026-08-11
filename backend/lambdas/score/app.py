@@ -13,6 +13,7 @@ thresholds, or component formulas should bump METHODOLOGY_VERSION and be
 documented in the methodology changelog.
 """
 
+import inspect
 import json
 import logging
 import math
@@ -1320,6 +1321,40 @@ CARDIFF_BOROUGHS = {
 }
 
 
+# Leicester and Leicestershire: the city plus all seven county districts.
+# The whole county rather than the three contiguous boroughs, because a
+# four-authority cohort spans only 230k-281k and min-max scaling over a narrow
+# cohort manufactures spread it has not measured.
+#
+# p8 is present for the CITY ONLY, and that is structural rather than a gap to
+# fill: education is an UPPER-TIER function, so DfE publishes Progress 8 for
+# Leicestershire, not for Blaby or Charnwood. crimeRate IS present for all
+# eight - unlike Nottingham, every one has its own ONS Community Safety
+# Partnership row - and transport and healthcare carry every borough over the
+# two-input floor regardless.
+LEICESTER_BOROUGHS = {
+    'Leicester': {'impact': 'low', 'avgPrice': 230107, 'trend': 2.0, 'crimeRate': 110.0, 'p8': 0.14, 'transport': 'moderate', 'healthcare': 'good'},
+    'Blaby': {'impact': 'low', 'avgPrice': 281459, 'trend': -0.5, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Charnwood': {'impact': 'low-moderate', 'avgPrice': 278883, 'trend': 5.1, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Harborough': {'impact': 'low', 'avgPrice': 346278, 'trend': 7.1, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Hinckley and Bosworth': {'impact': 'low-moderate', 'avgPrice': 260282, 'trend': 2.0, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Melton': {'impact': 'low', 'avgPrice': 288513, 'trend': 0.9, 'crimeRate': 56.8, 'transport': 'poor', 'healthcare': 'moderate'},
+    'North West Leicestershire': {'impact': 'moderate', 'avgPrice': 286826, 'trend': 6.0, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Oadby and Wigston': {'impact': 'low', 'avgPrice': 263380, 'trend': -0.9, 'crimeRate': 53.6, 'transport': 'poor', 'healthcare': 'moderate'},
+}
+
+# Teesside: the five Tees Valley unitaries. Darlington is included because it
+# is in the Tees Valley Combined Authority and travel-to-work area, which costs
+# an include-list in the crime loader - Darlington is Durham Constabulary while
+# the other four are Cleveland.
+TEESSIDE_BOROUGHS = {
+    'Hartlepool': {'impact': 'low-moderate', 'avgPrice': 131342, 'trend': 2.8, 'crimeRate': 134.2, 'p8': -0.46, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Middlesbrough': {'impact': 'moderate', 'avgPrice': 138122, 'trend': 1.4, 'crimeRate': 150.0, 'p8': -0.47, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 154696, 'trend': 8.7, 'crimeRate': 108.9, 'p8': -0.33, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Stockton-on-Tees': {'impact': 'severe', 'avgPrice': 169010, 'trend': 2.6, 'crimeRate': 107.9, 'p8': -0.18, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Darlington': {'impact': 'high', 'avgPrice': 157239, 'trend': 1.9, 'crimeRate': 91.0, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate'},
+}
+
 # Nottingham (Greater Nottingham: the city plus the three boroughs of its
 # conurbation, so the cohort is not a single authority scoring afford 5.0 flat).
 #
@@ -1476,6 +1511,32 @@ CITIES = {
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
         # must decline rather than report a fabricated zero change.
+    },
+    'leicester': {
+        'boroughs': LEICESTER_BOROUGHS,
+        'currency': 'GBP',
+        'name': 'Leicester',
+        'country': 'United Kingdom',
+        'postcodeFormat': 'UK postcode (e.g. LE1 1AA)',
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
+        # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
+        # must decline rather than report a fabricated zero change.
+    },
+    'teesside': {
+        'boroughs': TEESSIDE_BOROUGHS,
+        'currency': 'GBP',
+        'name': 'Teesside',
+        'country': 'United Kingdom',
+        'postcodeFormat': 'UK postcode (e.g. TS1 1AA)',
+        'postcodeResolver': lambda: (
+            'ONS NSPL local table by LAD code, postcodes.io fallback'
+            if _LOCAL_POSTCODE_SERVED
+            else 'postcodes.io'
+        ),
     },
     'bristol': {
         'boroughs': BRISTOL_BOROUGHS,
@@ -2939,6 +3000,136 @@ FLIGHT_PATHS_NOTTINGHAM = [
     },
 ]
 
+AIRPORTS_LEICESTER = [
+    {'code': 'EMA', 'name': 'East Midlands', 'lat': 52.8311, 'lon': -1.32806},
+]
+
+# East Midlands runway 09/27, from OurAirports. Geometry, not measurement.
+# Waypoints at 1 km, the common interval every corridor here uses.
+FLIGHT_PATHS_LEICESTER = [
+    {
+        'name': '27 Approach',
+        'airport': 'EMA',
+        'type': 'arrival',
+        'freq': 'high',
+        'coords': [
+            (52.8317, -1.2918),
+            (52.832, -1.2769),
+            (52.8322, -1.2621),
+            (52.8325, -1.2472),
+            (52.8328, -1.2324),
+            (52.8331, -1.2175),
+            (52.8333, -1.2026),
+            (52.8336, -1.1878),
+            (52.8339, -1.1729),
+            (52.8342, -1.1581),
+            (52.8345, -1.1432),
+            (52.8347, -1.1283),
+            (52.835, -1.1135),
+            (52.8353, -1.0986),
+            (52.8356, -1.0837),
+            (52.8358, -1.0689),
+            (52.8361, -1.054),
+            (52.8364, -1.0392),
+            (52.8367, -1.0243),
+            (52.837, -1.0094),
+        ],
+    },
+    {
+        'name': '09 Approach',
+        'airport': 'EMA',
+        'type': 'arrival',
+        'freq': 'medium',
+        'coords': [
+            (52.8303, -1.3644),
+            (52.83, -1.3793),
+            (52.8298, -1.3942),
+            (52.8295, -1.409),
+            (52.8292, -1.4239),
+            (52.8289, -1.4387),
+            (52.8287, -1.4536),
+            (52.8284, -1.4685),
+            (52.8281, -1.4833),
+            (52.8278, -1.4982),
+            (52.8275, -1.513),
+            (52.8273, -1.5279),
+            (52.827, -1.5428),
+            (52.8267, -1.5576),
+            (52.8264, -1.5725),
+            (52.8262, -1.5874),
+            (52.8259, -1.6022),
+            (52.8256, -1.6171),
+            (52.8253, -1.6319),
+            (52.8251, -1.6468),
+        ],
+    },
+]
+
+AIRPORTS_TEESSIDE = [
+    {'code': 'MME', 'name': 'Teesside International', 'lat': 54.509201, 'lon': -1.42941},
+]
+
+# Teesside International runway 05/23, from OurAirports. Geometry, not measurement.
+# Waypoints at 1 km, the common interval every corridor here uses.
+FLIGHT_PATHS_TEESSIDE = [
+    {
+        'name': '23 Approach',
+        'airport': 'MME',
+        'type': 'arrival',
+        'freq': 'high',
+        'coords': [
+            (54.5223, -1.405),
+            (54.5284, -1.3937),
+            (54.5345, -1.3823),
+            (54.5406, -1.371),
+            (54.5467, -1.3596),
+            (54.5528, -1.3483),
+            (54.5589, -1.3369),
+            (54.565, -1.3255),
+            (54.5711, -1.3142),
+            (54.5772, -1.3028),
+            (54.5833, -1.2915),
+            (54.5894, -1.2801),
+            (54.5955, -1.2688),
+            (54.6016, -1.2574),
+            (54.6077, -1.2461),
+            (54.6138, -1.2347),
+            (54.6199, -1.2233),
+            (54.626, -1.212),
+            (54.6321, -1.2006),
+            (54.6382, -1.1893),
+        ],
+    },
+    {
+        'name': '05 Approach',
+        'airport': 'MME',
+        'type': 'arrival',
+        'freq': 'medium',
+        'coords': [
+            (54.4961, -1.4538),
+            (54.49, -1.4651),
+            (54.4839, -1.4765),
+            (54.4778, -1.4878),
+            (54.4717, -1.4992),
+            (54.4656, -1.5106),
+            (54.4595, -1.5219),
+            (54.4534, -1.5333),
+            (54.4473, -1.5446),
+            (54.4412, -1.556),
+            (54.4351, -1.5673),
+            (54.429, -1.5787),
+            (54.4229, -1.59),
+            (54.4168, -1.6014),
+            (54.4107, -1.6128),
+            (54.4046, -1.6241),
+            (54.3985, -1.6355),
+            (54.3924, -1.6468),
+            (54.3863, -1.6582),
+            (54.3802, -1.6695),
+        ],
+    },
+]
+
 CITY_GEOMETRY = {
     'london': {
         'airports': AIRPORTS_LONDON,
@@ -3010,6 +3201,26 @@ CITY_GEOMETRY = {
         # Distance ladder calibrated on Heathrow, so it reaches further than
         # this airport does: the estimate is PESSIMISTIC. See the West Midlands
         # note above and Core Cities finding 7.
+        'secondary_airport': None,
+    },
+    'leicester': {
+        'airports': AIRPORTS_LEICESTER,
+        'paths': FLIGHT_PATHS_LEICESTER,
+        'heliports': [],
+        'major_airport': 'EMA',
+        # East Midlands sits INSIDE North West Leicestershire, so unlike the
+        # other cities here the airport is within its own cohort rather than
+        # beyond it. Ladder still calibrated on Heathrow, so still pessimistic.
+        'secondary_airport': None,
+    },
+    'teesside': {
+        'airports': AIRPORTS_TEESSIDE,
+        'paths': FLIGHT_PATHS_TEESSIDE,
+        'heliports': [],
+        'major_airport': 'MME',
+        # Distance ladder calibrated on Heathrow, so it reaches further than
+        # this airport does: the estimate is PESSIMISTIC. Teesside International
+        # handles a fraction of Heathrow's traffic.
         'secondary_airport': None,
     },
     'bristol': {
@@ -4021,6 +4232,73 @@ def _postcode_source_line(local_served):
 _BOROUGH_METADATA_SENTINEL = object()
 
 # Entries may be callables where the line depends on runtime state.
+def _takes_city(func):
+    """Does this provenance callable accept a city argument?"""
+    try:
+        return len(inspect.signature(func).parameters) >= 1
+    except (TypeError, ValueError):  # builtins without signatures
+        return False
+
+
+# Provenance for the liveability inputs, COMPUTED from what the city's boroughs
+# actually carry rather than written down beside them.
+#
+# It was written down, and it went stale the moment the data improved. Eight
+# cities carried the sentence "Schools, transport and healthcare: not sourced"
+# and a breakdown reading "UNAVAILABLE, 1 of 4 inputs measured" while v3.6 and
+# v3.7 had given every one of them transport and healthcare - so the trust
+# surface was understating the product to the exact audience it exists for.
+# A static claim about data is a claim that has to be remembered; this one
+# cannot be wrong because it reads the data.
+_LIVE_INPUT_SOURCES = {
+    'p8': 'DfE Key Stage 4 Progress 8, 2022/23 Revised',
+    'schools': 'curated tier (no DfE equivalent for this city)',
+    'crimeRate': 'ONS Crime in England and Wales, Table C4',
+    'transport': 'NaPTAN rail, metro and tram access within 800 m',
+    'healthcare': 'NHS Organisation Data Service GP practices within 500 m',
+}
+
+
+def _live_inputs_present(city):
+    """Which liveability inputs any borough of `city` actually holds."""
+    cfg = CITIES.get(city)
+    if not cfg:
+        return []
+    present = []
+    for field in ('p8', 'schools', 'crimeRate', 'transport', 'healthcare'):
+        if any(bd.get(field) is not None for bd in cfg['boroughs'].values()):
+            present.append(field)
+    return present
+
+
+def _live_sources_line(city):
+    """One sentence naming the liveability inputs this city measures."""
+    present = _live_inputs_present(city)
+    named = [f'{_LIVE_INPUT_SOURCES[f]}' for f in present]
+    # schools is one COMPONENT fed by either p8 or the curated tier, so the
+    # denominator is four however many raw fields are present.
+    measured = len({{'p8': 'schools', 'schools': 'schools'}.get(f, f) for f in present})
+    if not named:
+        return ('Liveability: no inputs sourced. Weight is redistributed, not '
+                'defaulted, see sourceBreakdown.live')
+    return (f'Liveability ({measured} of 4 inputs): ' + '; '.join(named)
+            + '. Any absent input has its weight redistributed, not defaulted')
+
+
+def _live_breakdown_line(city):
+    """The sourceBreakdown.live sentence, counted rather than asserted."""
+    present = _live_inputs_present(city)
+    measured = len({{'p8': 'schools', 'schools': 'schools'}.get(f, f) for f in present})
+    if measured < _LIVE_MIN_FIELDS:
+        return (f'UNAVAILABLE, {measured} of 4 inputs measured, and '
+                'context.liveResolution says so per response.')
+    named = '; '.join(_LIVE_INPUT_SOURCES[f] for f in present)
+    return (f'{measured} of 4 inputs measured. {named}. Absent inputs have their '
+            'weight redistributed across the measured ones rather than being '
+            'defaulted to a mid value, and context.liveResolution reports the '
+            'count per response.')
+
+
 CITY_PROVENANCE = {
     'london': {
         'sources': [
@@ -4064,13 +4342,13 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Birmingham Airport runway geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': 'PROVISIONAL ESTIMATE derived from Birmingham Airport (BHX) runway 15/33 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced for this city. The distance ladder is calibrated on Heathrow, which is several times Birmingham\'s size, so these bands reach further than the airport really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London and Greater Manchester, but scaled WITHIN the West Midlands cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. The West Midlands has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, all seven matched, same release and period as London. Schools, transport and healthcare are NOT sourced - there is no Progress 8 pipeline in this codebase for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is therefore DROPPED and its weight redistributed across quiet, afford and growth rather than filled with a placeholder. This city is thinner than Greater Manchester and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
         },
     },
     'westyorkshire': {
@@ -4078,13 +4356,56 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Leeds Bradford Airport (LBA) runway 14/32 geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Leeds Bradford Airport (LBA) runway 14/32 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from West Yorkshire Police, all 5 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
+        },
+    },
+    'leicester': {
+        'sources': [
+            'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
+            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
+            _live_sources_line,
+        ],
+        'breakdown': {
+            'quiet': (
+                'PROVISIONAL ESTIMATE derived from East Midlands Airport (EMA) runway 09/27 '
+                'alignment and its extended approach centreline, sampled at 1 km. NOT sampled '
+                'from the DEFRA Round 4 raster, which does publish an EMA surface: that surface '
+                'covers a 35 x 10 km lobe around the runway and reaches a small minority of this '
+                "city's addresses, so it cannot replace a borough-level estimate. The distance "
+                'ladder is calibrated on Heathrow, several times EMA in size, so these bands '
+                'reach further than the airport really does and the estimate is PESSIMISTIC.'
+            ),
+            'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. The cohort is Leicester plus all seven Leicestershire districts rather than the city and its three contiguous boroughs, because a four-authority cohort spans only 230k-281k and min-max over a narrow cohort manufactures spread it has not measured. Not comparable across cities; compare context.avgPriceGbp directly.',
+            'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting a fabricated zero change.',
+            'live': _live_breakdown_line,
+        },
+    },
+    'teesside': {
+        'sources': [
+            'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
+            'Aviation noise context: ESTIMATED from Teesside International Airport (MME) runway 05/23 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0. Cleveland for four authorities and Durham for Darlington, this city region spanning two forces',
+            _live_sources_line,
+        ],
+        'breakdown': {
+            'quiet': (
+                'PROVISIONAL ESTIMATE derived from Teesside International Airport (MME) runway '
+                '05/23 alignment and its extended approach centreline, sampled at 1 km. NOT '
+                'sampled from DEFRA, which publishes no Round 4 surface for this airport. The '
+                'distance ladder is calibrated on Heathrow, which handles many times MME traffic, '
+                'so these bands reach further than the airport really does and the estimate is '
+                'PESSIMISTIC - Stockton-on-Tees reads `severe` on approach geometry alone.'
+            ),
+            'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling across the five Tees Valley unitaries. Not comparable across cities; compare context.avgPriceGbp directly.',
+            'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting a fabricated zero change.',
+            'live': _live_breakdown_line,
         },
     },
     'southyorkshire': {
@@ -4092,13 +4413,13 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: NO operating commercial airport in the city region; Doncaster Sheffield closed to commercial flights in 2022',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "NO OPERATING COMMERCIAL AIRPORT. Doncaster Sheffield Airport is listed `type=closed` by OurAirports, commercial flights having ceased in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is therefore banded `low`. That is a MEASURED ABSENCE of a noise source rather than an unmeasured city, and it is stated so that a flat band cannot be read as a survey result. NOT a DEFRA sample.",
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from South Yorkshire Police, all 4 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
         },
     },
     'merseyside': {
@@ -4106,13 +4427,13 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Liverpool John Lennon Airport (LPL) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Liverpool John Lennon Airport (LPL) runway 09/27 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from Merseyside Police, all 5 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
         },
     },
     'tyneandwear': {
@@ -4120,13 +4441,13 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Newcastle Airport (NCL) runway 07/25 geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Newcastle Airport (NCL) runway 07/25 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from Northumbria Police, filtered to the five Tyne and Wear partnerships, all 5 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
         },
     },
     'bristol': {
@@ -4134,13 +4455,13 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Bristol Airport (BRS) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Bristol Airport (BRS) runway 09/27 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from Avon and Somerset Police, filtered to the four West of England partnerships, all 4 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
         },
     },
     'cardiff': {
@@ -4148,13 +4469,13 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Cardiff Airport (CWL) runway 12/30 geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Cardiff Airport (CWL) runway 12/30 alignment and its extended approach centreline. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'UNAVAILABLE, 1 of 4 inputs measured, and context.liveResolution says so per response. Crime: ONS Crime in England and Wales, Table C4 Community Safety Partnership rows from South Wales Police and Gwent Police, filtered to the four partnerships of the city region, all 4 matched, same release and period as London. Schools, transport and healthcare are NOT sourced: this repo has no Progress 8 pipeline for any city, so unlike Greater Manchester this city cannot reach the two-input floor. The component is DROPPED and its weight redistributed rather than filled with a placeholder. Thinner than Greater Manchester, and the response says so rather than implying parity.',
+            'live': _live_breakdown_line,
         },
     },
     'nottingham': {
@@ -4162,7 +4483,7 @@ CITY_PROVENANCE = {
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, CITY OF NOTTINGHAM ONLY, Open Government Licence v3.0',
-            'Schools, transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            _live_sources_line,
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from East Midlands Airport (EMA) runway 09/27 alignment and its extended approach centreline. The airport lies OUTSIDE the city region, in Leicestershire, so no borough here is nearer than 16 km and none is banded above low-moderate. NOT sampled from the DEFRA Round 4 raster, so the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The ladder is calibrated on Heathrow and is therefore PESSIMISTIC rather than optimistic. Indicative only.",
@@ -4252,7 +4573,14 @@ def build_sources(city='london', bd=None):
     out = []
     for line in prov['sources']:
         if callable(line):
-            out.append(line())
+            # Some provenance callables need the city (the computed liveability
+            # line) and some do not (the postcode-resolver line, which reads a
+            # module-level flag). The SIGNATURE decides, not a try/except: a
+            # bare `except TypeError` around a call also swallows TypeErrors
+            # raised INSIDE the callable, and it did - a len()-over-generator
+            # bug surfaced as "missing argument" from the fallback path rather
+            # than as itself.
+            out.append(line(city) if _takes_city(line) else line())
         elif line is _BOROUGH_METADATA_SENTINEL:
             out.append(_london_borough_metadata_line(bd))
         else:
@@ -4265,7 +4593,12 @@ def build_source_breakdown(city='london'):
     prov = CITY_PROVENANCE.get(city)
     if prov is None:
         return {}
-    return dict(prov['breakdown'])
+    # Callables are resolved here for the same reason build_sources resolves
+    # them: a value that depends on the data must be read at response time.
+    return {
+        key: (value(city) if callable(value) else value)
+        for key, value in prov['breakdown'].items()
+    }
 
 
 def build_batch_sources(cities):
@@ -5057,6 +5390,19 @@ LAD_TO_BOROUGH = {
     'E08000022': ('tyneandwear', 'North Tyneside'),
     'E08000023': ('tyneandwear', 'South Tyneside'),
     'E08000024': ('tyneandwear', 'Sunderland'),
+    'E06000016': ('leicester', 'Leicester'),
+    'E07000129': ('leicester', 'Blaby'),
+    'E07000130': ('leicester', 'Charnwood'),
+    'E07000131': ('leicester', 'Harborough'),
+    'E07000132': ('leicester', 'Hinckley and Bosworth'),
+    'E07000133': ('leicester', 'Melton'),
+    'E07000134': ('leicester', 'North West Leicestershire'),
+    'E07000135': ('leicester', 'Oadby and Wigston'),
+    'E06000001': ('teesside', 'Hartlepool'),
+    'E06000002': ('teesside', 'Middlesbrough'),
+    'E06000003': ('teesside', 'Redcar and Cleveland'),
+    'E06000004': ('teesside', 'Stockton-on-Tees'),
+    'E06000005': ('teesside', 'Darlington'),
     'E06000023': ('bristol', 'City of Bristol'),
     'E06000022': ('bristol', 'Bath and North East Somerset'),
     'E06000024': ('bristol', 'North Somerset'),

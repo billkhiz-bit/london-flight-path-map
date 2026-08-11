@@ -68,6 +68,15 @@ BACKEND_ONLY_CITIES = frozenset({
     # The other six left on 2026-08-10 when p8 landed and they went on the site.
     'cardiff',
     'nottingham',
+    # Leicester and Teesside, added 2026-08-11. Here because the site half is
+    # not built yet, NOT because the data is thin - both score on all four
+    # liveability inputs. Promoting them means a borough-extra entry, a
+    # CITY_DATA entry and an OUTPUT comparison per borough first: the door only
+    # opens one way, and the Manchester incident had matching inputs on both
+    # sides and still diverged by up to 1.5 points because the site never
+    # loaded them.
+    'leicester',
+    'teesside',
 })
 
 
