@@ -339,7 +339,11 @@ advise "npm audit"                      npm audit
 #
 # Skipped with --skip-e2e: it hits the network, same as the Playwright stage.
 if [ "$SKIP_E2E" -eq 0 ]; then
-  advise "deployed == source (14 pages)" sh scripts/check_deploy_drift.sh
+  # No count in the label. It read "14 pages" while the script checked 16, which
+  # is the same scheduled-staleness bug the local-smoke stage carried as
+  # "3 cities" against a nine-city app. The script prints its own denominator
+  # when it fails; a number here can only ever go stale.
+  advise "deployed == source"            sh scripts/check_deploy_drift.sh
 
   # Compares the score the LIVE SITE renders against what /v1/score returns for
   # the same postcode — the only check that reads the OUTPUT rather than the
