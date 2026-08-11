@@ -3833,7 +3833,6 @@
       const WESTMIDLANDS_AREA_MAP = {};
       const WESTMIDLANDS_NEIGHBOURHOOD_DETAIL = {};
       const WESTMIDLANDS_STATIONS = [];
-      const WESTMIDLANDS_BOROUGH_ROAD_NOISE = {};
       const WESTMIDLANDS_AIRPORTS = [
         { code: 'BHX', name: 'Birmingham', coords: [-1.748, 52.4539] },
       ];
@@ -3854,7 +3853,6 @@
       const WESTYORKSHIRE_AREA_MAP = {};
       const WESTYORKSHIRE_NEIGHBOURHOOD_DETAIL = {};
       const WESTYORKSHIRE_STATIONS = [];
-      const WESTYORKSHIRE_BOROUGH_ROAD_NOISE = {};
       const WESTYORKSHIRE_AIRPORTS = [
         { code: 'LBA', name: 'Leeds Bradford', coords: [-1.6606, 53.8659] },
       ];
@@ -3874,7 +3872,6 @@
       const SOUTHYORKSHIRE_AREA_MAP = {};
       const SOUTHYORKSHIRE_NEIGHBOURHOOD_DETAIL = {};
       const SOUTHYORKSHIRE_STATIONS = [];
-      const SOUTHYORKSHIRE_BOROUGH_ROAD_NOISE = {};
       const SOUTHYORKSHIRE_AIRPORTS = [];
       const SOUTHYORKSHIRE_FLIGHT_PATHS = [];
 
@@ -3890,7 +3887,6 @@
       const MERSEYSIDE_AREA_MAP = {};
       const MERSEYSIDE_NEIGHBOURHOOD_DETAIL = {};
       const MERSEYSIDE_STATIONS = [];
-      const MERSEYSIDE_BOROUGH_ROAD_NOISE = {};
       const MERSEYSIDE_AIRPORTS = [
         { code: 'LPL', name: 'Liverpool John Lennon', coords: [-2.8496, 53.3349] },
       ];
@@ -3911,7 +3907,6 @@
       const TYNEANDWEAR_AREA_MAP = {};
       const TYNEANDWEAR_NEIGHBOURHOOD_DETAIL = {};
       const TYNEANDWEAR_STATIONS = [];
-      const TYNEANDWEAR_BOROUGH_ROAD_NOISE = {};
       const TYNEANDWEAR_AIRPORTS = [
         { code: 'NCL', name: 'Newcastle', coords: [-1.6896, 55.038] },
       ];
@@ -3931,7 +3926,6 @@
       const BRISTOL_AREA_MAP = {};
       const BRISTOL_NEIGHBOURHOOD_DETAIL = {};
       const BRISTOL_STATIONS = [];
-      const BRISTOL_BOROUGH_ROAD_NOISE = {};
       const BRISTOL_AIRPORTS = [
         { code: 'BRS', name: 'Bristol', coords: [-2.7165, 51.3823] },
       ];
@@ -5800,7 +5794,7 @@
             "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. These contours therefore understate a typical year, most at the airports worst affected. Round 4 is still the latest official round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
-          legendAqTitle: 'BOROUGH AIR QUALITY',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'FLOOD ZONE',
           legendAq: 'POOR AIR',
           autoLabels: false,
@@ -5819,7 +5813,6 @@
           airports: () => AIRPORTS,
           flightPaths: () => FLIGHT_PATHS,
           stations: () => STATIONS,
-          roadNoise: () => BOROUGH_ROAD_NOISE,
           features: () => boroughFeatures,
           // Declared for key parity and for documentation. London does NOT go
           // through loadCityBoundaries: loadGeoJson() fetches it at init with a
@@ -5879,7 +5872,6 @@
           airports: () => NYC_AIRPORTS,
           flightPaths: () => NYC_FLIGHT_PATHS,
           stations: () => NYC_STATIONS,
-          roadNoise: () => NYC_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.nyc || [],
           // Same-origin first, remote as a fallback for a missing asset
           // mid-deploy. The remote is 2.67 MB against our 238 KB build.
@@ -5917,9 +5909,9 @@
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           autoLabels: true,
@@ -5933,7 +5925,6 @@
           airports: () => WESTMIDLANDS_AIRPORTS,
           flightPaths: () => WESTMIDLANDS_FLIGHT_PATHS,
           stations: () => WESTMIDLANDS_STATIONS,
-          roadNoise: () => WESTMIDLANDS_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.westmidlands || [],
           boundaries: ['/data/westmidlands-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -5966,9 +5957,9 @@
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           autoLabels: true,
@@ -5982,7 +5973,6 @@
           airports: () => WESTYORKSHIRE_AIRPORTS,
           flightPaths: () => WESTYORKSHIRE_FLIGHT_PATHS,
           stations: () => WESTYORKSHIRE_STATIONS,
-          roadNoise: () => WESTYORKSHIRE_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.westyorkshire || [],
           boundaries: ['/data/westyorkshire-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -6015,9 +6005,9 @@
           legendNoiseTitle: 'AIRCRAFT NOISE (NO AIRPORT)',
           legendNoiseExplainer:
             "<strong>What this is:</strong> <strong>No commercial airport operates in South Yorkshire.</strong> Doncaster Sheffield closed to commercial flights in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is banded quiet on aircraft noise. That is a measured absence of a noise source, not an unmeasured city.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           autoLabels: true,
@@ -6031,7 +6021,6 @@
           airports: () => SOUTHYORKSHIRE_AIRPORTS,
           flightPaths: () => SOUTHYORKSHIRE_FLIGHT_PATHS,
           stations: () => SOUTHYORKSHIRE_STATIONS,
-          roadNoise: () => SOUTHYORKSHIRE_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.southyorkshire || [],
           boundaries: ['/data/southyorkshire-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -6064,9 +6053,9 @@
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           autoLabels: true,
@@ -6080,7 +6069,6 @@
           airports: () => MERSEYSIDE_AIRPORTS,
           flightPaths: () => MERSEYSIDE_FLIGHT_PATHS,
           stations: () => MERSEYSIDE_STATIONS,
-          roadNoise: () => MERSEYSIDE_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.merseyside || [],
           boundaries: ['/data/merseyside-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -6113,9 +6101,9 @@
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           autoLabels: true,
@@ -6129,7 +6117,6 @@
           airports: () => TYNEANDWEAR_AIRPORTS,
           flightPaths: () => TYNEANDWEAR_FLIGHT_PATHS,
           stations: () => TYNEANDWEAR_STATIONS,
-          roadNoise: () => TYNEANDWEAR_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.tyneandwear || [],
           boundaries: ['/data/tyneandwear-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -6162,9 +6149,9 @@
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, which is far larger, so these bands reach further than the airport really does. Treat as indicative.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           autoLabels: true,
@@ -6178,7 +6165,6 @@
           airports: () => BRISTOL_AIRPORTS,
           flightPaths: () => BRISTOL_FLIGHT_PATHS,
           stations: () => BRISTOL_STATIONS,
-          roadNoise: () => BRISTOL_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.bristol || [],
           boundaries: ['/data/bristol-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -6225,9 +6211,9 @@
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Treat these bands as indicative until DEFRA Round 4 is sampled for this city.",
-          legendRoadTitle: 'ROAD NOISE (NO DATA)',
-          legendFloodTitle: 'FLOOD RISK (NO DATA)',
-          legendAqTitle: 'AIR QUALITY (NO DATA)',
+          legendRoadTitle: 'DEFRA ROAD NOISE',
+          legendFloodTitle: 'FLOOD RISK',
+          legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
           legendFlood: 'NO DATA',
           legendAq: 'NO DATA',
           // These boundaries carry no built-in labels, same as New York.
@@ -6246,7 +6232,6 @@
           airports: () => MANCHESTER_AIRPORTS,
           flightPaths: () => MANCHESTER_FLIGHT_PATHS,
           stations: () => MANCHESTER_STATIONS,
-          roadNoise: () => MANCHESTER_BOROUGH_ROAD_NOISE,
           features: () => cityBoundaries.manchester || [],
           boundaries: ['/data/manchester-boroughs.json'],
           locator: '/data/uk-locator.json',
@@ -6567,6 +6552,13 @@
           // Re-score now that the real crime/schools/transport/healthcare
           // attributes are available.
           recalcAllScores();
+          // Repaint the borough fill layers for the same reason. They read
+          // road noise, flood and air quality out of this file, and the first
+          // map render happens before it arrives - so without this the LANDING
+          // city shows empty road/flood/air-quality overlays while every city
+          // reached by the switcher shows them correctly. That asymmetry is
+          // invisible to any test that switches city before looking.
+          repaintFillLayers();
           // Refresh any visible sidebar + ranking so default scores are
           // replaced with real ones. These functions check their own
           // preconditions (selectedBorough may be null, etc.).
@@ -6839,48 +6831,6 @@
       let BOROUGH_EXTRA = {};
 
       // Borough-level road noise classifications (high/moderate/low), used for borough fill overlay
-      const BOROUGH_ROAD_NOISE = {
-        Hounslow: 'high',
-        Hillingdon: 'high',
-        Ealing: 'high',
-        'Hammersmith and Fulham': 'high',
-        Westminster: 'high',
-        'City of London': 'high',
-        Camden: 'high',
-        Islington: 'high',
-        'Tower Hamlets': 'high',
-        Newham: 'high',
-        Southwark: 'high',
-        Lambeth: 'high',
-        Wandsworth: 'moderate',
-        Greenwich: 'moderate',
-        Lewisham: 'moderate',
-        Hackney: 'moderate',
-        Barnet: 'moderate',
-        Haringey: 'moderate',
-        Brent: 'moderate',
-        'Waltham Forest': 'moderate',
-        Redbridge: 'moderate',
-        Croydon: 'moderate',
-        'Kensington and Chelsea': 'moderate',
-        Barking: 'moderate',
-        Bexley: 'moderate',
-        Merton: 'low',
-        'Richmond upon Thames': 'low',
-        Bromley: 'low',
-        'Kingston upon Thames': 'low',
-        Sutton: 'low',
-        Harrow: 'low',
-        Havering: 'low',
-        Enfield: 'low',
-      };
-      const NYC_BOROUGH_ROAD_NOISE = {
-        Manhattan: 'high',
-        Bronx: 'high',
-        Brooklyn: 'moderate',
-        Queens: 'moderate',
-        'Staten Island': 'low',
-      };
 
       const STATIONS = [
         { name: "King's Cross", coords: [-0.1238, 51.5308], zone: 1, type: 'hub' },
@@ -7043,7 +6993,6 @@
       // the registry key-parity check in tests/smoke-local.mjs still passes -
       // that check asserts a field is DEFINED, not that it has substance, which
       // is a real limit worth knowing when reading it.
-      const MANCHESTER_BOROUGH_ROAD_NOISE = {};
       let projection, pathGenerator, svg, g, zoom;
       let layers = {
         paths: true,
@@ -7388,10 +7337,20 @@
           // NYC still uses XYZ slippy tiles, which DO need re-rendering on
           // pan/zoom for new tiles to load at the current viewport.
           renderTileGrid('us-aircraft-tiles', US_MAP_SERVICES.aircraft.url, minLat, minLon, maxLat, maxLon);
-        } else {
-          // London: idempotent - only fetch on first show / after city
-          // switch / after window resize. Per-pan calls hit this guard
-          // and return immediately. visual fix-DEFRA-1.
+        } else if (currentCity === 'london') {
+          // LONDON ONLY, and the guard is new (2026-08-11). This branch used to
+          // be a bare `else`, so every non-NYC city fetched
+          // /data/aircraft-noise-london-lden.png and positioned it at
+          // LONDON_AIRCRAFT_BBOX - projected through the CURRENT city's
+          // projection, which puts London roughly 2,000 px off the side of a
+          // Merseyside canvas. A 1.4 MB download, on every city switch, to
+          // render nothing. The DEFRA Round 4 surfaces for the other cities'
+          // airports exist and have not been sampled yet; until they are, those
+          // cities show the geometry-derived corridors and their legend says so.
+          //
+          // Idempotent: only fetch on first show / after city switch / after
+          // window resize. Per-pan calls hit this guard and return immediately.
+          // visual fix-DEFRA-1.
           if (aircraftRasterLoadedFor !== 'london') {
             const lb = LONDON_AIRCRAFT_BBOX;
             // visual fix-DEFRA-5: PNG is now self-hosted on our CloudFront
@@ -7823,56 +7782,98 @@
       function buildOptionalSections(extra, sectionId) {
         if (!extra) return '';
         const id = sectionId || 'opt-' + Math.random().toString(36).slice(2, 8);
+
+        // EVERY CARD IS CONDITIONAL NOW, and the reason is what the
+        // unconditional ones printed. `${extra.flood}` on a borough with no
+        // flood data interpolates the literal string "undefined", which
+        // .metric-card-value uppercases into a confident "UNDEFINED" sitting in
+        // the same grid as a neighbouring borough's "LOW". Measured 2026-08-11:
+        // Liverpool and Birmingham both rendered FLOOD RISK UNDEFINED and AIR
+        // QUALITY UNDEFINED. Healthcare was already guarded; the other three
+        // were not, and only London and NYC carry all of them.
+        //
+        // The badge text is DERIVED from the record rather than hardcoded to
+        // "(CURATED)": air quality is now script-derived from DEFRA for every
+        // UK borough, so a fixed "CURATED" caption would understate it, exactly
+        // as the fixed one overstated the boroughs that had nothing.
+        const cards = [];
+        const details = [];
+
+        const add = (key, label, value, badge, note, source) => {
+          if (!value) return;
+          cards.push(`
+        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-${key}" onclick="toggleMetricDetail('${id}-${key}')">
+          <div class="metric-card-label">${label}</div>
+          <div class="metric-card-value" style="color:${metricColor(value)}">${value}</div>
+        </button>`);
+          details.push(`
+      <div class="metric-detail" id="${id}-${key}">
+        <span class="rating-badge ${ratingBadgeClass(badge)}">${value}</span>
+        ${note ? `<p class="info-note">${note}</p>` : ''}
+        <div class="defra-badge" style="margin-top:8px;">${source}</div>
+      </div>`);
+        };
+
+        add(
+          'road',
+          'Road Noise',
+          extra.roadNoise,
+          extra.roadNoise === 'high' ? 'high' : extra.roadNoise === 'moderate' ? 'medium' : 'low',
+          extra.roadNoiseLdenMedian
+            ? `Median ${extra.roadNoiseLdenMedian} dB Lden across this borough's postcodes. The WHO guideline for road traffic is 53 dB Lden.`
+            : '',
+          extra.roadNoiseVintage
+            ? `SOURCE: ${extra.roadNoiseVintage}`
+            : 'TOGGLE "ROAD NOISE" ON MAP · BOROUGH-LEVEL RATING'
+        );
+        add(
+          'flood',
+          'Flood Risk',
+          extra.flood,
+          extra.flood,
+          extra.floodNote,
+          'TOGGLE "FLOOD RISK ZONES" ON MAP · BOROUGH-LEVEL RATING (CURATED)'
+        );
+        add(
+          'aq',
+          'Air Quality',
+          extra.airQuality,
+          extra.airQuality,
+          extra.aqNote ||
+            (extra.no2AnnualMeanUgm3
+              ? `NO2 ${extra.no2AnnualMeanUgm3} and PM2.5 ${extra.pm25AnnualMeanUgm3} ug/m3 annual mean. WHO 2021 guidelines are 10 and 5.`
+              : ''),
+          extra.airQualityVintage
+            ? `SOURCE: ${extra.airQualityVintage}`
+            : 'TOGGLE "AIR QUALITY" ON MAP · BOROUGH-LEVEL RATING (CURATED)'
+        );
+        add(
+          'transport',
+          'Transport',
+          extra.transport,
+          extra.transport === 'excellent' ? 'low' : extra.transport === 'good' ? 'medium' : 'high',
+          extra.transportNote,
+          'TOGGLE "TRANSPORT" ON MAP TO SEE STATIONS'
+        );
+        add(
+          'nhs',
+          'Healthcare',
+          extra.healthcare,
+          extra.healthcare === 'excellent' ? 'low' : extra.healthcare === 'good' ? 'medium' : 'high',
+          extra.healthcareNote,
+          `SOURCE: ${cityOf(currentCity).healthSource}`
+        );
+
+        // A borough with none of these gets no section at all, rather than an
+        // "ADDITIONAL INSIGHTS" heading over an empty grid.
+        if (!cards.length) return '';
+
         return `
     <div class="sidebar-section">
       <h3>ADDITIONAL INSIGHTS</h3>
       <p class="info-note" style="margin-top:0;margin-bottom:8px;">Click any card to expand details.</p>
-      <div class="metric-cards" style="grid-template-columns:1fr 1fr;">
-        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-flood" onclick="toggleMetricDetail('${id}-flood')">
-          <div class="metric-card-label">Flood Risk</div>
-          <div class="metric-card-value" style="color:${metricColor(extra.flood)}">${extra.flood}</div>
-        </button>
-        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-aq" onclick="toggleMetricDetail('${id}-aq')">
-          <div class="metric-card-label">Air Quality</div>
-          <div class="metric-card-value" style="color:${metricColor(extra.airQuality)}">${extra.airQuality}</div>
-        </button>
-        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-transport" onclick="toggleMetricDetail('${id}-transport')">
-          <div class="metric-card-label">Transport</div>
-          <div class="metric-card-value" style="color:${metricColor(extra.transport === 'excellent' || extra.transport === 'good' ? 'good' : 'moderate')}">${extra.transport}</div>
-        </button>
-        ${
-          extra.healthcare
-            ? `<button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-nhs" onclick="toggleMetricDetail('${id}-nhs')">
-          <div class="metric-card-label">Healthcare</div>
-          <div class="metric-card-value" style="color:${metricColor(extra.healthcare === 'excellent' || extra.healthcare === 'good' ? 'good' : 'moderate')}">${extra.healthcare}</div>
-        </button>`
-            : ''
-        }
-      </div>
-      <div class="metric-detail" id="${id}-flood">
-        <span class="rating-badge ${ratingBadgeClass(extra.flood)}">${extra.flood} RISK</span>
-        <p class="info-note">${extra.floodNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">TOGGLE "FLOOD RISK ZONES" ON MAP · BOROUGH-LEVEL RATING (CURATED)</div>
-      </div>
-      <div class="metric-detail" id="${id}-aq">
-        <span class="rating-badge ${ratingBadgeClass(extra.airQuality)}">${extra.airQuality}</span>
-        <p class="info-note">${extra.aqNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">TOGGLE "AIR QUALITY" ON MAP · BOROUGH-LEVEL RATING (CURATED)</div>
-      </div>
-      <div class="metric-detail" id="${id}-transport">
-        <span class="rating-badge ${ratingBadgeClass(extra.transport === 'excellent' ? 'low' : extra.transport === 'good' ? 'medium' : 'high')}">${extra.transport}</span>
-        <p class="info-note">${extra.transportNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">TOGGLE "TRANSPORT" ON MAP TO SEE STATIONS</div>
-      </div>
-      ${
-        extra.healthcare
-          ? `<div class="metric-detail" id="${id}-nhs">
-        <span class="rating-badge ${ratingBadgeClass(extra.healthcare === 'excellent' ? 'low' : extra.healthcare === 'good' ? 'medium' : 'high')}">${extra.healthcare}</span>
-        <p class="info-note">${extra.healthcareNote}</p>
-        <div class="defra-badge" style="margin-top:8px;">SOURCE: ${cityOf(currentCity).healthSource}</div>
-      </div>`
-          : ''
-      }
+      <div class="metric-cards" style="grid-template-columns:1fr 1fr;">${cards.join('')}
+      </div>${details.join('')}
     </div>`;
       }
 
@@ -8614,6 +8615,70 @@
           });
       }
 
+      /**
+       * Paint one borough-level choropleth layer, skipping boroughs with no
+       * reading. Returns how many were painted.
+       *
+       * THE SKIP IS THE WHOLE POINT. Each of the three fill layers used to end
+       * its lookup with a fallback - `|| 'moderate'` for road noise and air
+       * quality, `|| 'low'` for flood - so a borough with no data was painted
+       * the SAME confident colour that means "moderate" or "low" for a borough
+       * that has one. Measured on 2026-08-11: every borough of all seven
+       * non-London UK cities carried one distinct fill colour per layer, and
+       * the legend above it already said "(NO DATA)". The label said no data,
+       * the map drew a value, and the map is louder.
+       *
+       * An absent reading now draws nothing. That is legible - the boroughs
+       * underneath stay their normal colour - and it cannot be mistaken for a
+       * measurement.
+       */
+      function paintBoroughLayer(group, valueOf, colours, stroke) {
+        let painted = 0;
+        cityOf(currentCity)
+          .features()
+          .forEach((f) => {
+            const value = valueOf(getName(f));
+            // Unknown values are skipped too, not coerced to a default: a band
+            // this build does not recognise is a data problem, and painting it
+            // as "moderate" is how a data problem becomes a false claim.
+            if (!value || !colours[value]) return;
+            group
+              .append('path')
+              .attr('d', pathGenerator(f))
+              .attr('fill', colours[value])
+              .attr('stroke', stroke)
+              .attr('stroke-width', 0.5)
+              .style('pointer-events', 'none');
+            painted += 1;
+          });
+        return painted;
+      }
+
+      /**
+       * Suffix each fill layer's legend title with "(NO DATA)" when nothing was
+       * painted.
+       *
+       * Derived from what the render actually produced rather than declared per
+       * city in CITY_DATA, which is how it was until 2026-08-11: seven cities
+       * carried a hardcoded 'ROAD NOISE (NO DATA)' string. A declared claim has
+       * to be remembered when the data arrives, and the same string is wrong in
+       * the other direction the moment it does.
+       */
+      function markLayerCoverage(painted) {
+        const cfg = cityOf(currentCity);
+        const rows = [
+          ['legend-road-title', cfg.legendRoadTitle, painted.road],
+          ['legend-flood-title', cfg.legendFloodTitle, painted.flood],
+          ['legend-aq-title', cfg.legendAqTitle, painted.aq],
+        ];
+        for (const [id, title, count] of rows) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          const base = (title || '').replace(/\s*\(NO DATA\)\s*$/, '');
+          el.textContent = count > 0 ? base : `${base} (NO DATA)`;
+        }
+      }
+
       function renderDefraTiles() {
         // Aircraft noise overlay
         // visual fix-DEFRA-2 / -3 / -4: the DEFRA WMS PNG renders with
@@ -8655,21 +8720,6 @@
           .style('opacity', 0.4)
           .style('mix-blend-mode', 'multiply');
         if (!layers['defra-road']) roadG.style('display', 'none');
-        // Borough-level road noise fill
-        const roadNoiseColors = { high: '#7c3aed', moderate: '#a78bfa', low: '#ddd6fe' };
-        const roadNoiseData = cityOf(currentCity).roadNoise();
-        const roadFeatures = cityOf(currentCity).features();
-        roadFeatures.forEach((f) => {
-          const n = getName(f);
-          const level = roadNoiseData[n] || 'moderate';
-          roadG
-            .append('path')
-            .attr('d', pathGenerator(f))
-            .attr('fill', roadNoiseColors[level] || roadNoiseColors.moderate)
-            .attr('stroke', '#5b21b6')
-            .attr('stroke-width', 0.5)
-            .style('pointer-events', 'none');
-        });
         // visual fix-LAYER-LABELS: in-map SVG captions removed (used to be a
         // 9px purple "DEFRA ROAD NOISE BY BOROUGH" at x=10 y=20, alongside
         // sibling captions for flood + AQ). Two problems: (1) at default
@@ -8684,44 +8734,62 @@
         // Flood risk overlay, borough-level coloring (visible at all zoom levels) + WMS detail when zoomed in
         const floodG = g.append('g').attr('class', 'layer-flood').style('opacity', 0.55);
         if (!layers.flood) floodG.style('display', 'none');
-        // Borough-level flood risk fill
-        const floodColors = { high: '#1e3a8a', medium: '#3b82f6', low: '#93c5fd' };
-        const floodFeatures = cityOf(currentCity).features();
-        floodFeatures.forEach((f) => {
-          const n = getName(f);
-          const extra = getExtraData(n);
-          const risk = extra?.flood || 'low';
-          floodG
-            .append('path')
-            .attr('d', pathGenerator(f))
-            .attr('fill', floodColors[risk] || floodColors.low)
-            .attr('stroke', '#1e40af')
-            .attr('stroke-width', 0.5)
-            .style('pointer-events', 'none');
-        });
         // (visual fix-LAYER-LABELS: in-map flood caption removed - see comment above renderDefraTiles roadG.)
 
         // Air quality overlay, borough-level coloring (visible at all zoom levels) + WMS detail
         const aqG = g.append('g').attr('class', 'layer-air-quality').style('opacity', 0.55);
         if (!layers['air-quality']) aqG.style('display', 'none');
-        // Borough-level air quality fill
-        const aqColors = { poor: '#dc2626', moderate: '#f59e0b', good: '#22c55e', excellent: '#16a34a' };
-        const aqFeatures = cityOf(currentCity).features();
-        aqFeatures.forEach((f) => {
-          const n = getName(f);
-          const extra = getExtraData(n);
-          const aq = extra?.airQuality || 'moderate';
-          aqG
-            .append('path')
-            .attr('d', pathGenerator(f))
-            .attr('fill', aqColors[aq] || aqColors.moderate)
-            .attr('stroke', '#991b1b')
-            .attr('stroke-width', 0.5)
-            .style('pointer-events', 'none');
-        });
         // (visual fix-LAYER-LABELS: in-map air-quality caption removed - see comment above renderDefraTiles roadG.)
 
+        // The three groups above are created here, once, so their z-order among
+        // the map's other layers is fixed. Their CONTENTS are painted by the
+        // call below, which can be re-run.
+        repaintFillLayers();
+
         updateDefraTiles();
+      }
+
+      /**
+       * Paint (or repaint) the three borough fill layers into groups that
+       * already exist.
+       *
+       * WHY IT IS SEPARABLE. `borough-extra.json` is lazy-loaded by
+       * hydrateBoroughExtra(), which arrives AFTER the first map render. Flood
+       * and air quality have always read from it, so on first paint of the
+       * landing city they saw an empty object - and the `|| 'low'` /
+       * `|| 'moderate'` fallbacks quietly filled the gap, which is part of why
+       * nobody noticed the fallbacks existed. Removing them on 2026-08-11 turned
+       * that latent race into a visible one: London rendered with no fills at all
+       * and a legend reading "(NO DATA)", while every other city was fine
+       * because switching to one happens after hydration.
+       *
+       * Hydration now calls this. Contents are replaced rather than the groups
+       * themselves, so the layers keep their position in the SVG stacking order.
+       */
+      function repaintFillLayers() {
+        if (!g) return;
+        const roadG = g.select('.layer-defra-road');
+        const floodG = g.select('.layer-flood');
+        const aqG = g.select('.layer-air-quality');
+        // Nothing to repaint before the first render; hydration can land first.
+        if (roadG.empty() || floodG.empty() || aqG.empty()) return;
+
+        roadG.selectAll('path').remove();
+        floodG.selectAll('path').remove();
+        aqG.selectAll('path').remove();
+
+        const roadNoiseColors = { high: '#7c3aed', moderate: '#a78bfa', low: '#ddd6fe' };
+        const floodColors = { high: '#1e3a8a', medium: '#3b82f6', low: '#93c5fd' };
+        const aqColors = { poor: '#dc2626', moderate: '#f59e0b', good: '#22c55e', excellent: '#16a34a' };
+
+        const road = paintBoroughLayer(roadG, (n) => getExtraData(n)?.roadNoise, roadNoiseColors, '#5b21b6');
+        const flood = paintBoroughLayer(floodG, (n) => getExtraData(n)?.flood, floodColors, '#1e40af');
+        const aq = paintBoroughLayer(aqG, (n) => getExtraData(n)?.airQuality, aqColors, '#991b1b');
+
+        // Tell the legend how many boroughs actually carry a reading, so its
+        // "(NO DATA)" suffix is MEASURED rather than a registry string that
+        // goes stale the day the data lands.
+        markLayerCoverage({ road, flood, aq });
       }
 
       function renderTransport() {

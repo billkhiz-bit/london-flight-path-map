@@ -276,6 +276,15 @@ else
   # Deliberately data-driven, unlike the stage above: no count to keep in step,
   # so city ten is covered the day it is added. Both defects re-proven red.
   check "every city switches"           node tests/city-switch.mjs
+  # A borough choropleth must paint exactly the boroughs that hold a reading.
+  # Added 2026-08-11: all three fill layers ended their lookup with `|| 'moderate'`
+  # or `|| 'low'`, so every borough of the seven non-London UK cities was painted
+  # one confident colour for data nobody had. Nothing caught it because nothing
+  # compared the RENDER to the DATA - pytest never opens index.html and the
+  # Playwright specs assert the site against itself, so a fabricated fill is
+  # self-consistent. Fails in BOTH directions: over-painting is an invented
+  # default, under-painting is a borough whose data the map cannot find.
+  check "layers paint only real data"   node tests/layer-honesty.mjs
   # The blocking half of the responsive audit, against the working tree over the
   # server started above. See the long note on the advisory live run further up.
   check "responsive, source (10 vp)"    node tests/responsive.mjs "http://127.0.0.1:$smoke_port/index.html"

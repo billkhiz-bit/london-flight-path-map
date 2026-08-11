@@ -132,7 +132,14 @@
 // keeps the broken copy indefinitely - the deploy would look done and change
 // nothing for exactly the people who use the site most. No SHELL_ASSETS entries
 // added, so there is no deploy-order hazard this time.
-const VERSION = 'v1.0.23';
+// v1.0.24 (2026-08-11): the three borough fill layers stopped inventing values
+// for cities with no reading, and road noise + air quality are now DERIVED from
+// DEFRA for every city. index.html and data/borough-extra.json both change.
+// borough-extra.json is deliberately NOT in SHELL_ASSETS and is served
+// no-cache, but index.html is cache-first, so without this bump a returning
+// visitor keeps a build that reads fields the new data file no longer arranges
+// the same way.
+const VERSION = 'v1.0.24';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

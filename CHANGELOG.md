@@ -6,7 +6,54 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-11 (latest) - Six of the nine cities were unusable, and the phone could not reach them
+### 2026-08-11 (evening, latest) - The map layers were inventing data; now they measure it
+
+- **Fixed: three map layers were painting a value nobody had measured.** Road
+  noise, flood risk and air quality each ended their lookup with a fallback, and
+  `borough-extra.json` carried those fields for London and New York only. So
+  every borough of the other seven UK cities was painted one confident colour -
+  "moderate" road noise, "low" flood risk, "moderate" air quality - in the same
+  purple, blue and amber those words mean where a reading exists. The legend
+  title above already said "(NO DATA)". The label said no data, the map drew a
+  value, and the map is louder.
+- **Road noise and air quality are now DERIVED for every city**, from DEFRA
+  Strategic Noise Mapping Round 4 and the DEFRA background pollution maps, by
+  `scripts/build_borough_bands.py`. 711 fields written across 73 boroughs.
+  Sampling is at NSPL postcode centroids rather than over borough area, because
+  an area figure is dominated by parks and farmland and reports the quiet of
+  places nobody lives.
+- **The data was one bounding box away the whole time.**
+  `scripts/fetch_defra_road_noise.py` already pointed at a coverage id ending
+  `England_Round_4_All`; the only London-specific thing in it was a hardcoded
+  bbox. It now derives the bbox from each city's boundary file. Measured before
+  generalising: 79-98% of cells over each city centre carry a reading.
+- **London's values were replaced too.** Its road-noise bands were a hand-written
+  literal with no script behind them - the same editorial shape as the Ofsted
+  bands Progress 8 replaced - and several were assigned by airport proximity
+  rather than roads. Hillingdon moves from "high" to "low" on the road layer for
+  that reason. No score changes: flood and air quality are `plannedComponents`,
+  and road noise reaches the score through the per-postcode path, not these bands.
+- **Bands are anchored on WHO guidelines, never on percentiles.** Road noise is
+  the share of a borough's addresses at or above WHO 53 dB Lden (high >= 2/3,
+  moderate >= 1/2); air quality is the worse of NO2 and PM2.5 against the WHO
+  2021 annual means. A first attempt banded on the borough median and put 30 of
+  London's 33 boroughs in one band with "low" never occurring - true, and a
+  useless map. Recorded in the script so it is not retried.
+- **A borough with no reading is no longer painted at all**, the legend's
+  "(NO DATA)" suffix is measured from the render rather than declared per city,
+  and the detail panel no longer prints the literal word "UNDEFINED" for
+  boroughs missing a field. Flood remains curated for London and New York and
+  genuinely absent elsewhere - there is no Environment Agency integration yet.
+- **Stopped fetching London's aircraft raster for cities it does not cover.**
+  Every non-New-York city loaded `aircraft-noise-london-lden.png` and positioned
+  it at London's bbox, which lands roughly 2,000px off the side of a Merseyside
+  canvas: a 1.4 MB download on every city switch to render nothing.
+- **New gate: `tests/layer-honesty.mjs`**, in preflight. A layer must paint
+  exactly the boroughs that hold a reading. Fails in both directions - over-
+  painting is an invented default, under-painting is a borough whose data the
+  map cannot find. Proven red by reintroducing the fallback.
+
+### 2026-08-11 - Six of the nine cities were unusable, and the phone could not reach them
 
 - **Fixed: six of nine cities threw on selection.** West Midlands, West
   Yorkshire, South Yorkshire, Merseyside, Tyne and Wear and Bristol raised

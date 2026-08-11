@@ -35,7 +35,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.8,
+      "roadNoiseAboveWhoPct": 60.4,
+      "roadNoiseCoverage": 99.9,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 20.9,
+      "pm25AnnualMeanUgm3": 9.4,
+      "airQualityWhoRatio": 2.09,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Hillingdon": {
       "crime": "low",
@@ -72,7 +81,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.6,
+      "roadNoiseAboveWhoPct": 47.2,
+      "roadNoiseCoverage": 98.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 19.8,
+      "pm25AnnualMeanUgm3": 9.4,
+      "airQualityWhoRatio": 1.98,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Richmond upon Thames": {
       "crime": "low",
@@ -81,7 +99,7 @@
       "schoolNote": "Multiple Outstanding primaries. Strong grammar school presence in neighbouring Kingston. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Medium flood risk along Thames corridor. Parts of Twickenham, Teddington, and Richmond town at risk.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Generally good air quality. Large green spaces help. Some road pollution along A316.",
       "transport": "good",
       "transportNote": "District Line, South West Railway, London Overground. Cycling infrastructure improving.",
@@ -109,7 +127,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 56.1,
+      "roadNoiseAboveWhoPct": 68.6,
+      "roadNoiseCoverage": 99.6,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 19.2,
+      "pm25AnnualMeanUgm3": 9.1,
+      "airQualityWhoRatio": 1.92,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Ealing": {
       "crime": "medium",
@@ -146,7 +173,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.8,
+      "roadNoiseAboveWhoPct": 55.0,
+      "roadNoiseCoverage": 99.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 21.1,
+      "pm25AnnualMeanUgm3": 9.7,
+      "airQualityWhoRatio": 2.11,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Wandsworth": {
       "crime": "medium",
@@ -183,7 +219,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.9,
+      "roadNoiseAboveWhoPct": 55.3,
+      "roadNoiseCoverage": 99.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 23.0,
+      "pm25AnnualMeanUgm3": 9.7,
+      "airQualityWhoRatio": 2.3,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Lambeth": {
       "crime": "high",
@@ -192,7 +237,7 @@
       "schoolNote": "Dunraven School Outstanding. Several good primaries in Streatham and Clapham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Thames flood risk along northern boundary. Parts of Vauxhall and Waterloo in flood zone.",
-      "airQuality": "poor",
+      "airQuality": "moderate",
       "aqNote": "Poor air quality in northern Lambeth (Brixton Road, Vauxhall). Better in southern residential areas.",
       "transport": "excellent",
       "transportNote": "Victoria, Northern, Bakerloo Lines. Major rail hubs at Waterloo and Vauxhall.",
@@ -220,7 +265,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.5,
+      "roadNoiseAboveWhoPct": 52.4,
+      "roadNoiseCoverage": 99.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 23.8,
+      "pm25AnnualMeanUgm3": 9.9,
+      "airQualityWhoRatio": 2.38,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Lewisham": {
       "crime": "medium",
@@ -257,7 +311,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.5,
+      "roadNoiseAboveWhoPct": 58.4,
+      "roadNoiseCoverage": 98.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 21.1,
+      "pm25AnnualMeanUgm3": 9.4,
+      "airQualityWhoRatio": 2.11,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Greenwich": {
       "crime": "medium",
@@ -294,7 +357,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.3,
+      "roadNoiseAboveWhoPct": 58.0,
+      "roadNoiseCoverage": 99.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 21.2,
+      "pm25AnnualMeanUgm3": 9.3,
+      "airQualityWhoRatio": 2.12,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Tower Hamlets": {
       "crime": "high",
@@ -331,7 +403,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 58.0,
+      "roadNoiseAboveWhoPct": 81.1,
+      "roadNoiseCoverage": 100.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 27.6,
+      "pm25AnnualMeanUgm3": 10.7,
+      "airQualityWhoRatio": 2.76,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Camden": {
       "crime": "high",
@@ -368,7 +449,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 60.2,
+      "roadNoiseAboveWhoPct": 73.8,
+      "roadNoiseCoverage": 99.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 29.8,
+      "pm25AnnualMeanUgm3": 10.8,
+      "airQualityWhoRatio": 2.98,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Islington": {
       "crime": "high",
@@ -405,7 +495,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 60.5,
+      "roadNoiseAboveWhoPct": 75.3,
+      "roadNoiseCoverage": 99.9,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 28.8,
+      "pm25AnnualMeanUgm3": 10.9,
+      "airQualityWhoRatio": 2.88,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Hackney": {
       "crime": "high",
@@ -414,7 +513,7 @@
       "schoolNote": "Mossbourne Academy Outstanding. Schools have improved significantly in recent years. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk overall. River Lea corridor has localised risk.",
-      "airQuality": "moderate",
+      "airQuality": "poor",
       "aqNote": "Kingsland Road and Mare Street corridors are worse. Parks and quieter streets are good.",
       "transport": "excellent",
       "transportNote": "Overground, National Rail. No tube but excellent bus network. London's best cycling infrastructure.",
@@ -442,7 +541,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 55.3,
+      "roadNoiseAboveWhoPct": 64.4,
+      "roadNoiseCoverage": 99.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 25.6,
+      "pm25AnnualMeanUgm3": 10.7,
+      "airQualityWhoRatio": 2.56,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Barnet": {
       "crime": "low",
@@ -451,7 +559,7 @@
       "schoolNote": "Queen Elizabeth's Boys' and Henrietta Barnett are top grammar schools. Strong primary provision.",
       "flood": "low",
       "floodNote": "Low flood risk. Mostly elevated terrain. Some localised risk along Dollis Brook.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Good air quality in most areas. A1/A41 corridors are worse. Residential areas enjoy clean air.",
       "transport": "good",
       "transportNote": "Northern Line (High Barnet/Edgware branches). Thameslink serves New Barnet, Oakleigh Park.",
@@ -479,7 +587,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.6,
+      "roadNoiseAboveWhoPct": 63.1,
+      "roadNoiseCoverage": 99.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 19.3,
+      "pm25AnnualMeanUgm3": 9.7,
+      "airQualityWhoRatio": 1.94,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Croydon": {
       "crime": "medium",
@@ -516,7 +633,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.9,
+      "roadNoiseAboveWhoPct": 54.6,
+      "roadNoiseCoverage": 98.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 18.1,
+      "pm25AnnualMeanUgm3": 8.8,
+      "airQualityWhoRatio": 1.81,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Bromley": {
       "crime": "low",
@@ -525,7 +651,7 @@
       "schoolNote": "Grammar school system (Newstead Wood, St Olave's nearby). Strong primary provision throughout.",
       "flood": "low",
       "floodNote": "Low flood risk across most of the borough. Some localised risk along River Cray.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "One of London's greenest boroughs. Low traffic density in residential areas.",
       "transport": "moderate",
       "transportNote": "National Rail to London Bridge/Victoria. No tube. Bus network adequate but car-dependent in outer areas.",
@@ -553,7 +679,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.4,
+      "roadNoiseAboveWhoPct": 52.0,
+      "roadNoiseCoverage": 98.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 16.5,
+      "pm25AnnualMeanUgm3": 8.3,
+      "airQualityWhoRatio": 1.66,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Newham": {
       "crime": "high",
@@ -562,7 +697,7 @@
       "schoolNote": "Brampton Manor sends many students to Oxbridge. Several new academies improving rapidly.",
       "flood": "high",
       "floodNote": "Royal Docks, Beckton, and areas near Thames in flood zones. Thames Barrier provides protection.",
-      "airQuality": "poor",
+      "airQuality": "moderate",
       "aqNote": "A13, Newham Way, and industrial areas contribute to poor air quality. Stratford area affected by traffic.",
       "transport": "excellent",
       "transportNote": "Elizabeth Line, Jubilee, DLR, Central Line. Stratford is a major interchange.",
@@ -590,7 +725,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.3,
+      "roadNoiseAboveWhoPct": 62.2,
+      "roadNoiseCoverage": 99.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 23.1,
+      "pm25AnnualMeanUgm3": 10.1,
+      "airQualityWhoRatio": 2.31,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Southwark": {
       "crime": "high",
@@ -627,7 +771,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.6,
+      "roadNoiseAboveWhoPct": 55.0,
+      "roadNoiseCoverage": 99.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 25.8,
+      "pm25AnnualMeanUgm3": 10.3,
+      "airQualityWhoRatio": 2.58,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
@@ -636,7 +789,7 @@
       "schoolNote": "Lady Margaret, Sacred Heart Outstanding. Strong primary provision throughout. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "high",
       "floodNote": "High flood risk along Thames. Hammersmith riverside and parts of Shepherd's Bush in flood zones.",
-      "airQuality": "moderate",
+      "airQuality": "poor",
       "aqNote": "A4/Talgarth Road is a major pollution corridor. Side streets and Fulham residential areas better.",
       "transport": "excellent",
       "transportNote": "Hammersmith, District, Piccadilly, Central Lines. Hammersmith is a major interchange.",
@@ -664,7 +817,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.3,
+      "roadNoiseAboveWhoPct": 66.1,
+      "roadNoiseCoverage": 100.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 25.0,
+      "pm25AnnualMeanUgm3": 10.0,
+      "airQualityWhoRatio": 2.5,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Kensington and Chelsea": {
       "crime": "medium",
@@ -673,7 +835,7 @@
       "schoolNote": "Holland Park School Outstanding. Very high private school density. Excellent state and independent options. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Thames flood risk along Chelsea Embankment. Basement flooding a known issue in some streets.",
-      "airQuality": "moderate",
+      "airQuality": "poor",
       "aqNote": "Cromwell Road and major routes are poor. Residential squares and side streets are much better.",
       "transport": "excellent",
       "transportNote": "District, Circle, Central, Piccadilly Lines. Multiple stations. Among the best-connected boroughs.",
@@ -701,7 +863,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 57.7,
+      "roadNoiseAboveWhoPct": 77.9,
+      "roadNoiseCoverage": 100.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 27.7,
+      "pm25AnnualMeanUgm3": 10.3,
+      "airQualityWhoRatio": 2.77,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Brent": {
       "crime": "medium",
@@ -738,7 +909,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 55.2,
+      "roadNoiseAboveWhoPct": 63.3,
+      "roadNoiseCoverage": 99.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 22.1,
+      "pm25AnnualMeanUgm3": 10.0,
+      "airQualityWhoRatio": 2.21,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Haringey": {
       "crime": "medium",
@@ -775,7 +955,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 55.7,
+      "roadNoiseAboveWhoPct": 64.1,
+      "roadNoiseCoverage": 99.6,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 21.4,
+      "pm25AnnualMeanUgm3": 9.9,
+      "airQualityWhoRatio": 2.14,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Waltham Forest": {
       "crime": "medium",
@@ -812,7 +1001,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.9,
+      "roadNoiseAboveWhoPct": 65.1,
+      "roadNoiseCoverage": 99.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 20.8,
+      "pm25AnnualMeanUgm3": 9.9,
+      "airQualityWhoRatio": 2.08,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Merton": {
       "crime": "low",
@@ -849,7 +1047,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.2,
+      "roadNoiseAboveWhoPct": 45.2,
+      "roadNoiseCoverage": 99.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 19.8,
+      "pm25AnnualMeanUgm3": 9.2,
+      "airQualityWhoRatio": 1.98,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Redbridge": {
       "crime": "medium",
@@ -886,7 +1093,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 56.8,
+      "roadNoiseAboveWhoPct": 72.1,
+      "roadNoiseCoverage": 99.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 20.6,
+      "pm25AnnualMeanUgm3": 9.7,
+      "airQualityWhoRatio": 2.06,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Enfield": {
       "crime": "medium",
@@ -895,7 +1111,7 @@
       "schoolNote": "Latymer School is a selective grammar. Several Outstanding primaries. Edmonton improving. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk in most areas. Some localised risk along Turkey Brook and Pymmes Brook.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Good air quality in most areas. A10 corridor is worse. Large green spaces help.",
       "transport": "moderate",
       "transportNote": "Piccadilly Line to Arnos Grove/Southgate. Overground to Enfield Town. Some areas car-dependent.",
@@ -923,7 +1139,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 56.9,
+      "roadNoiseAboveWhoPct": 68.0,
+      "roadNoiseCoverage": 99.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 18.4,
+      "pm25AnnualMeanUgm3": 9.6,
+      "airQualityWhoRatio": 1.91,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Kingston upon Thames": {
       "crime": "low",
@@ -932,7 +1157,7 @@
       "schoolNote": "Tiffin Boys' and Tiffin Girls' are top grammar schools. Multiple Outstanding primaries. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
       "floodNote": "Medium flood risk along Thames. Kingston town centre and Surbiton riverside at risk.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Good air quality. Limited through-traffic compared to inner boroughs. Parks and riverside help.",
       "transport": "good",
       "transportNote": "South West Railway to Waterloo (fast trains). Good buses and cycling. No tube but rail is efficient.",
@@ -960,7 +1185,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.2,
+      "roadNoiseAboveWhoPct": 51.1,
+      "roadNoiseCoverage": 99.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 18.9,
+      "pm25AnnualMeanUgm3": 9.0,
+      "airQualityWhoRatio": 1.89,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Sutton": {
       "crime": "low",
@@ -969,7 +1203,7 @@
       "schoolNote": "Sutton Grammar, Nonsuch, Wilson's are top selective schools. Outstanding primaries throughout. Best state schools in London. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk throughout. Mostly elevated terrain away from major rivers.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Low traffic density. One of the cleanest boroughs in London for air quality.",
       "transport": "moderate",
       "transportNote": "National Rail to London Bridge/Victoria. Tramlink connection. No tube. Some areas car-dependent.",
@@ -997,7 +1231,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.0,
+      "roadNoiseAboveWhoPct": 50.2,
+      "roadNoiseCoverage": 99.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 16.7,
+      "pm25AnnualMeanUgm3": 8.6,
+      "airQualityWhoRatio": 1.72,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Westminster": {
       "crime": "high",
@@ -1034,7 +1277,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 59.7,
+      "roadNoiseAboveWhoPct": 91.1,
+      "roadNoiseCoverage": 100.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 31.7,
+      "pm25AnnualMeanUgm3": 11.0,
+      "airQualityWhoRatio": 3.17,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "City of London": {
       "crime": "high",
@@ -1048,7 +1300,16 @@
       "transport": "excellent",
       "transportNote": "Central, Circle, District, Metropolitan, Northern, Hammersmith, Elizabeth Lines. Bank, Liverpool St, Moorgate.",
       "healthcare": "good",
-      "healthcareNote": "St Bartholomew's Hospital (Barts). Royal London nearby. Limited GP due to small residential population."
+      "healthcareNote": "St Bartholomew's Hospital (Barts). Royal London nearby. Limited GP due to small residential population.",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 63.4,
+      "roadNoiseAboveWhoPct": 95.6,
+      "roadNoiseCoverage": 100.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 33.9,
+      "pm25AnnualMeanUgm3": 11.3,
+      "airQualityWhoRatio": 3.39,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Barking": {
       "crime": "high",
@@ -1085,7 +1346,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 55.2,
+      "roadNoiseAboveWhoPct": 68.1,
+      "roadNoiseCoverage": 99.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 19.9,
+      "pm25AnnualMeanUgm3": 9.5,
+      "airQualityWhoRatio": 1.99,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Havering": {
       "crime": "low",
@@ -1094,7 +1364,7 @@
       "schoolNote": "Several Outstanding primaries. Coopers' Company school well-regarded. Grammar schools nearby in Essex. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
       "floodNote": "Low flood risk in most areas. Some risk along Thames in Rainham Marshes area.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Good air quality in most residential areas. A12/A13 corridors are worse.",
       "transport": "moderate",
       "transportNote": "Elizabeth Line at Romford. District Line at Upminster. c2c to Fenchurch Street. Some areas car-dependent.",
@@ -1122,7 +1392,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.0,
+      "roadNoiseAboveWhoPct": 56.6,
+      "roadNoiseCoverage": 98.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 16.8,
+      "pm25AnnualMeanUgm3": 8.6,
+      "airQualityWhoRatio": 1.73,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Bexley": {
       "crime": "low",
@@ -1131,7 +1410,7 @@
       "schoolNote": "Townley Grammar and Bexley Grammar are selective. Several good primaries across the borough.",
       "flood": "medium",
       "floodNote": "Thames-side areas (Erith, Thamesmead) have significant flood risk. Inland areas are safe.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Good air quality across most of the borough. Lower traffic density than inner boroughs.",
       "transport": "moderate",
       "transportNote": "Elizabeth Line at Abbey Wood. National Rail to London Bridge. Limited tube access. Some areas car-dependent.",
@@ -1159,7 +1438,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.0,
+      "roadNoiseAboveWhoPct": 63.0,
+      "roadNoiseCoverage": 99.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 17.8,
+      "pm25AnnualMeanUgm3": 8.7,
+      "airQualityWhoRatio": 1.78,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Harrow": {
       "crime": "low",
@@ -1168,7 +1456,7 @@
       "schoolNote": "Harrow School (private, historic). Nower Hill High School is popular. Several Outstanding primaries.",
       "flood": "low",
       "floodNote": "Low flood risk throughout. Mostly elevated terrain.",
-      "airQuality": "good",
+      "airQuality": "moderate",
       "aqNote": "Good air quality in residential areas. Main roads through Harrow town centre are worse.",
       "transport": "good",
       "transportNote": "Metropolitan Line (fast to Baker Street). Bakerloo to Harrow & Wealdstone. Good bus network.",
@@ -1196,7 +1484,16 @@
         }
       ],
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.3,
+      "roadNoiseAboveWhoPct": 38.7,
+      "roadNoiseCoverage": 98.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 17.7,
+      "pm25AnnualMeanUgm3": 9.4,
+      "airQualityWhoRatio": 1.89,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "nyc": {
@@ -1212,7 +1509,9 @@
       "transport": "excellent",
       "transportNote": "7 train, E/F/M/R, LIRR, JFK AirTrain. Flushing is a major hub.",
       "healthcare": "good",
-      "healthcareNote": "Queens Hospital Center, Long Island Jewish Medical Center, NYC Health+Hospitals."
+      "healthcareNote": "Queens Hospital Center, Long Island Jewish Medical Center, NYC Health+Hospitals.",
+      "roadNoise": "moderate",
+      "roadNoiseVintage": "Curated borough rating (NYC DOT; not DEFRA, which is England only)"
     },
     "Brooklyn": {
       "crime": "medium",
@@ -1226,7 +1525,9 @@
       "transport": "excellent",
       "transportNote": "Multiple subway lines (2/3/4/5/B/D/F/G/N/Q/R), LIRR Atlantic Terminal. Among the best-connected.",
       "healthcare": "excellent",
-      "healthcareNote": "Brooklyn Methodist, Maimonides, NYU Langone Brooklyn, Kings County Hospital."
+      "healthcareNote": "Brooklyn Methodist, Maimonides, NYU Langone Brooklyn, Kings County Hospital.",
+      "roadNoise": "moderate",
+      "roadNoiseVintage": "Curated borough rating (NYC DOT; not DEFRA, which is England only)"
     },
     "Manhattan": {
       "crime": "medium",
@@ -1240,7 +1541,9 @@
       "transport": "excellent",
       "transportNote": "Every subway line serves Manhattan. PATH to NJ. Metro-North at Grand Central. Unrivalled connectivity.",
       "healthcare": "excellent",
-      "healthcareNote": "NYU Langone, Mount Sinai, NewYork-Presbyterian, Memorial Sloan Kettering. World-class healthcare."
+      "healthcareNote": "NYU Langone, Mount Sinai, NewYork-Presbyterian, Memorial Sloan Kettering. World-class healthcare.",
+      "roadNoise": "high",
+      "roadNoiseVintage": "Curated borough rating (NYC DOT; not DEFRA, which is England only)"
     },
     "Bronx": {
       "crime": "high",
@@ -1254,7 +1557,9 @@
       "transport": "good",
       "transportNote": "4/5/6, B/D, Metro-North. South Bronx well-connected. Northern areas more car-dependent.",
       "healthcare": "good",
-      "healthcareNote": "Montefiore Medical Center (major), Lincoln Hospital, Jacobi Medical Center."
+      "healthcareNote": "Montefiore Medical Center (major), Lincoln Hospital, Jacobi Medical Center.",
+      "roadNoise": "high",
+      "roadNoiseVintage": "Curated borough rating (NYC DOT; not DEFRA, which is England only)"
     },
     "Staten Island": {
       "crime": "low",
@@ -1268,7 +1573,9 @@
       "transport": "poor",
       "transportNote": "Staten Island Railway, free ferry to Manhattan. Very car-dependent. No subway connection.",
       "healthcare": "moderate",
-      "healthcareNote": "Staten Island University Hospital. Limited compared to other boroughs."
+      "healthcareNote": "Staten Island University Hospital. Limited compared to other boroughs.",
+      "roadNoise": "low",
+      "roadNoiseVintage": "Curated borough rating (NYC DOT; not DEFRA, which is England only)"
     }
   },
   "manchester": {
@@ -1276,193 +1583,593 @@
       "p8": -0.02,
       "crimeRate": 142.7,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.9,
+      "roadNoiseAboveWhoPct": 64.7,
+      "roadNoiseCoverage": 99.3,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 17.7,
+      "pm25AnnualMeanUgm3": 8.2,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.77,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Salford": {
       "p8": -0.49,
       "crimeRate": 105.8,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "high",
+      "roadNoiseLdenMedian": 55.0,
+      "roadNoiseAboveWhoPct": 67.0,
+      "roadNoiseCoverage": 99.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 17.1,
+      "pm25AnnualMeanUgm3": 8.0,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.71,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Stockport": {
       "p8": -0.04,
       "crimeRate": 74.8,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.5,
+      "roadNoiseAboveWhoPct": 54.4,
+      "roadNoiseCoverage": 98.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.7,
+      "pm25AnnualMeanUgm3": 7.8,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.56,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Trafford": {
       "p8": 0.24,
       "crimeRate": 74.9,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.9,
+      "roadNoiseAboveWhoPct": 49.3,
+      "roadNoiseCoverage": 99.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.4,
+      "pm25AnnualMeanUgm3": 7.5,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.49,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Tameside": {
       "p8": -0.21,
       "crimeRate": 96.4,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.0,
+      "roadNoiseAboveWhoPct": 58.6,
+      "roadNoiseCoverage": 98.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 15.2,
+      "pm25AnnualMeanUgm3": 8.0,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.6,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Oldham": {
       "p8": -0.18,
       "crimeRate": 106.6,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.2,
+      "roadNoiseAboveWhoPct": 59.8,
+      "roadNoiseCoverage": 98.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.8,
+      "pm25AnnualMeanUgm3": 7.9,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.58,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Rochdale": {
       "p8": -0.28,
       "crimeRate": 104.6,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.4,
+      "roadNoiseAboveWhoPct": 59.2,
+      "roadNoiseCoverage": 98.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.8,
+      "pm25AnnualMeanUgm3": 7.7,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.53,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Bury": {
       "p8": -0.14,
       "crimeRate": 92.1,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.9,
+      "roadNoiseAboveWhoPct": 55.7,
+      "roadNoiseCoverage": 98.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 15.1,
+      "pm25AnnualMeanUgm3": 7.6,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.52,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Bolton": {
       "p8": -0.08,
       "crimeRate": 98.0,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.4,
+      "roadNoiseAboveWhoPct": 53.7,
+      "roadNoiseCoverage": 98.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.1,
+      "pm25AnnualMeanUgm3": 7.8,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.56,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Wigan": {
       "p8": -0.39,
       "crimeRate": 91.0,
       "crimeVintage": "ONS Table C4, year ending March 2026",
-      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23"
+      "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.7,
+      "roadNoiseAboveWhoPct": 45.9,
+      "roadNoiseCoverage": 98.6,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 12.6,
+      "pm25AnnualMeanUgm3": 8.1,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.62,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "westmidlands": {
     "Birmingham": {
       "crimeRate": 114.2,
-      "p8": 0.03
+      "p8": 0.03,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.7,
+      "roadNoiseAboveWhoPct": 55.9,
+      "roadNoiseCoverage": 96.6,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 17.2,
+      "pm25AnnualMeanUgm3": 8.6,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.73,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Coventry": {
       "crimeRate": 88.4,
-      "p8": -0.05
+      "p8": -0.05,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.7,
+      "roadNoiseAboveWhoPct": 63.6,
+      "roadNoiseCoverage": 98.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.6,
+      "pm25AnnualMeanUgm3": 8.1,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.62,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Dudley": {
       "crimeRate": 74.5,
-      "p8": -0.11
+      "p8": -0.11,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 53.0,
+      "roadNoiseAboveWhoPct": 49.7,
+      "roadNoiseCoverage": 97.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.0,
+      "pm25AnnualMeanUgm3": 7.8,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.55,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Sandwell": {
       "crimeRate": 95.9,
-      "p8": -0.07
+      "p8": -0.07,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.2,
+      "roadNoiseAboveWhoPct": 61.2,
+      "roadNoiseCoverage": 99.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 17.3,
+      "pm25AnnualMeanUgm3": 9.1,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.81,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Solihull": {
       "crimeRate": 79.5,
-      "p8": -0.11
+      "p8": -0.11,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.4,
+      "roadNoiseAboveWhoPct": 45.7,
+      "roadNoiseCoverage": 88.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.7,
+      "pm25AnnualMeanUgm3": 7.9,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.59,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Walsall": {
       "crimeRate": 92.9,
-      "p8": -0.2
+      "p8": -0.2,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.9,
+      "roadNoiseAboveWhoPct": 58.0,
+      "roadNoiseCoverage": 98.9,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 15.8,
+      "pm25AnnualMeanUgm3": 8.5,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.71,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
-      "p8": -0.02
+      "p8": -0.02,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.2,
+      "roadNoiseAboveWhoPct": 43.4,
+      "roadNoiseCoverage": 98.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.8,
+      "pm25AnnualMeanUgm3": 7.8,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.57,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "westyorkshire": {
     "Bradford": {
       "crimeRate": 117.0,
-      "p8": -0.26
+      "p8": -0.26,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.6,
+      "roadNoiseAboveWhoPct": 54.0,
+      "roadNoiseCoverage": 97.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.1,
+      "pm25AnnualMeanUgm3": 7.3,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.45,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Calderdale": {
       "crimeRate": 103.4,
-      "p8": -0.03
+      "p8": -0.03,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.9,
+      "roadNoiseAboveWhoPct": 63.2,
+      "roadNoiseCoverage": 96.3,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 10.5,
+      "pm25AnnualMeanUgm3": 7.0,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.39,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Kirklees": {
       "crimeRate": 87.6,
-      "p8": 0.11
+      "p8": 0.11,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.2,
+      "roadNoiseAboveWhoPct": 58.3,
+      "roadNoiseCoverage": 96.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 12.7,
+      "pm25AnnualMeanUgm3": 7.0,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.41,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Leeds": {
       "crimeRate": 114.6,
-      "p8": 0.12
+      "p8": 0.12,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.0,
+      "roadNoiseAboveWhoPct": 57.2,
+      "roadNoiseCoverage": 98.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 15.3,
+      "pm25AnnualMeanUgm3": 7.6,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.53,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Wakefield": {
       "crimeRate": 105.8,
-      "p8": 0.12
+      "p8": 0.12,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.4,
+      "roadNoiseAboveWhoPct": 53.3,
+      "roadNoiseCoverage": 98.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 12.4,
+      "pm25AnnualMeanUgm3": 7.1,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.41,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "southyorkshire": {
     "Barnsley": {
       "crimeRate": 95.1,
-      "p8": -0.16
+      "p8": -0.16,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.4,
+      "roadNoiseAboveWhoPct": 44.5,
+      "roadNoiseCoverage": 97.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 10.4,
+      "pm25AnnualMeanUgm3": 6.5,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.29,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Doncaster": {
       "crimeRate": 117.3,
-      "p8": 0.01
+      "p8": 0.01,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.8,
+      "roadNoiseAboveWhoPct": 39.0,
+      "roadNoiseCoverage": 97.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 11.3,
+      "pm25AnnualMeanUgm3": 6.3,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.26,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Rotherham": {
       "crimeRate": 93.1,
-      "p8": -0.15
+      "p8": -0.15,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.3,
+      "roadNoiseAboveWhoPct": 43.6,
+      "roadNoiseCoverage": 97.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 12.9,
+      "pm25AnnualMeanUgm3": 6.9,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.38,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Sheffield": {
       "crimeRate": 96.9,
-      "p8": -0.09
+      "p8": -0.09,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.7,
+      "roadNoiseAboveWhoPct": 47.3,
+      "roadNoiseCoverage": 97.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 12.9,
+      "pm25AnnualMeanUgm3": 6.9,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.39,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "merseyside": {
     "Knowsley": {
       "crimeRate": 81.8,
-      "p8": -0.9
+      "p8": -0.9,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.5,
+      "roadNoiseAboveWhoPct": 45.2,
+      "roadNoiseCoverage": 99.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.6,
+      "pm25AnnualMeanUgm3": 8.8,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.76,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Liverpool": {
       "crimeRate": 124.1,
-      "p8": -0.43
+      "p8": -0.43,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.3,
+      "roadNoiseAboveWhoPct": 59.5,
+      "roadNoiseCoverage": 98.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 16.5,
+      "pm25AnnualMeanUgm3": 7.9,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.65,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "St Helens": {
       "crimeRate": 86.4,
-      "p8": -0.35
+      "p8": -0.35,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.1,
+      "roadNoiseAboveWhoPct": 51.2,
+      "roadNoiseCoverage": 98.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.2,
+      "pm25AnnualMeanUgm3": 8.0,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.6,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Sefton": {
       "crimeRate": 75.5,
-      "p8": -0.48
+      "p8": -0.48,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.2,
+      "roadNoiseAboveWhoPct": 43.1,
+      "roadNoiseCoverage": 97.3,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 11.8,
+      "pm25AnnualMeanUgm3": 8.7,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.75,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Wirral": {
       "crimeRate": 71.1,
-      "p8": -0.11
+      "p8": -0.11,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.5,
+      "roadNoiseAboveWhoPct": 53.6,
+      "roadNoiseCoverage": 98.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 10.9,
+      "pm25AnnualMeanUgm3": 6.7,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.35,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "tyneandwear": {
     "Gateshead": {
       "crimeRate": 87.8,
-      "p8": -0.11
+      "p8": -0.11,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.5,
+      "roadNoiseAboveWhoPct": 65.6,
+      "roadNoiseCoverage": 98.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 11.3,
+      "pm25AnnualMeanUgm3": 7.3,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.46,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
-      "p8": -0.4
+      "p8": -0.4,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.7,
+      "roadNoiseAboveWhoPct": 66.0,
+      "roadNoiseCoverage": 99.6,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.1,
+      "pm25AnnualMeanUgm3": 7.8,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.57,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "North Tyneside": {
       "crimeRate": 81.8,
-      "p8": -0.09
+      "p8": -0.09,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.7,
+      "roadNoiseAboveWhoPct": 55.5,
+      "roadNoiseCoverage": 99.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.5,
+      "pm25AnnualMeanUgm3": 8.2,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.64,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "South Tyneside": {
       "crimeRate": 96.6,
-      "p8": -0.27
+      "p8": -0.27,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.4,
+      "roadNoiseAboveWhoPct": 53.5,
+      "roadNoiseCoverage": 99.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 13.4,
+      "pm25AnnualMeanUgm3": 8.2,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.64,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Sunderland": {
       "crimeRate": 93.6,
-      "p8": -0.5
+      "p8": -0.5,
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.2,
+      "roadNoiseAboveWhoPct": 60.1,
+      "roadNoiseCoverage": 99.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 11.3,
+      "pm25AnnualMeanUgm3": 8.0,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.6,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   },
   "bristol": {
     "City of Bristol": {
       "crimeRate": 131.0,
-      "p8": -0.03
+      "p8": -0.03,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.5,
+      "roadNoiseAboveWhoPct": 47.2,
+      "roadNoiseCoverage": 97.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 14.2,
+      "pm25AnnualMeanUgm3": 7.7,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.54,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
-      "p8": 0.26
+      "p8": 0.26,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 50.6,
+      "roadNoiseAboveWhoPct": 34.0,
+      "roadNoiseCoverage": 93.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 8.5,
+      "pm25AnnualMeanUgm3": 6.8,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.36,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "North Somerset": {
       "crimeRate": 81.8,
-      "p8": -0.02
+      "p8": -0.02,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 50.8,
+      "roadNoiseAboveWhoPct": 32.3,
+      "roadNoiseCoverage": 92.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 8.3,
+      "pm25AnnualMeanUgm3": 6.5,
+      "airQuality": "good",
+      "airQualityWhoRatio": 1.29,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
-      "p8": 0.02
+      "p8": 0.02,
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.3,
+      "roadNoiseAboveWhoPct": 36.9,
+      "roadNoiseCoverage": 95.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "no2AnnualMeanUgm3": 11.2,
+      "pm25AnnualMeanUgm3": 7.5,
+      "airQuality": "moderate",
+      "airQualityWhoRatio": 1.5,
+      "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid"
     }
   }
 }

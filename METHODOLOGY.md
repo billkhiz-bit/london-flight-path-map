@@ -936,7 +936,8 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
-| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England (the road dataset is published too and is used only for the consumer-site map overlay, never for the score — see §3) | Open Government Licence v3.0 | 5-yearly (next: 2027) |
+| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England. The **road** Lden surface is published in the same round and drives the consumer-site road-noise overlay and the `roadNoise` borough band, never the score — see §3 and §7.1 | Open Government Licence v3.0 | 5-yearly (next: 2027) |
+| **DEFRA background pollution maps (2022 annual mean, 1 km grid)** | NO₂ and PM2.5 concentrations behind the `airQuality` borough band and the `/v1/environment` measurements. **Not** the Daily Air Quality Index, which is a daily station reading and describes today's weather as much as the place | Open Government Licence v3.0 | Annual |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **MHCLG Energy Performance Certificates** (new "Get energy performance of buildings data" service from 2026-05-30) | Per-property EPC bands | Open Government Licence v3.0 | Quarterly |
 | **TfL Open Data** | Transport accessibility, station and live line status | TfL Open Data terms, commercial use permitted with attribution | Real-time |
@@ -965,6 +966,71 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 > the table listed only Price Paid Data, which serves the sold-price panel. This is the table a
 > diligence process starts from, so a supplier list that is three-quarters out of date on the
 > `live` component is a procurement problem, not a tidiness one.
+
+### 7.1 Borough road-noise and air-quality bands (added 2026-08-11)
+
+These two bands drive **map overlays and the borough detail panel only**. Neither
+is a scoring component: `flood` and `airQuality` remain declared in
+`plannedComponents` on `/v1/score`, and road noise reaches the score through the
+per-postcode Lden path in §4.6, not through these bands.
+
+They exist because the alternative was worse than nothing. Until 2026-08-11 the
+road-noise, flood and air-quality overlays were **curated for London and New York
+and absent for the other seven UK cities** — and absent did not render as absent.
+The renderer fell back to `'moderate'` and `'low'`, so every borough of Greater
+Manchester, the West Midlands, Merseyside, both Yorkshires, Tyne and Wear and
+Bristol was painted a single confident colour for a reading nobody had taken.
+London's own values were no better sourced, only better disguised: a hand-written
+literal with no script behind it, the same editorial shape as the Ofsted bands
+that Progress 8 replaced in v3.5.
+
+Both are now derived for **every** city by `scripts/build_borough_bands.py`, from
+published sources, with a `--check` that re-derives and fails on disagreement.
+
+**Sampling.** Each band is measured at the borough's **NSPL postcode centroids**,
+not over its area. An area-weighted figure is dominated by whatever is empty —
+parks, reservoir, farmland — so it reports the quiet of places nobody lives at.
+
+**Road noise**, from the DEFRA Round 4 road Lden surface for England, banded on
+the borough's **median** Lden against the WHO 2018 guideline for road traffic,
+**53 dB Lden**:
+
+| Band | Condition |
+|---|---|
+| `high` | median ≥ 53 dB — the typical address is over the WHO guideline |
+| `moderate` | median 48–53 dB — under it, within one DEFRA band |
+| `low` | median < 48 dB |
+
+The 5 dB step is the data's own granularity; DEFRA publishes Lden in 5 dB bands.
+
+**Air quality**, from the DEFRA background pollution maps. Each borough's mean
+NO₂ and PM2.5 is expressed as a ratio to its **WHO 2021** annual-mean guideline
+(NO₂ 10 µg/m³, PM2.5 5 µg/m³) and the **worse of the two** decides the band — the
+limiting pollutant, rather than an average of unlike quantities:
+
+| Band | Condition |
+|---|---|
+| `excellent` | ≤ 1.0× — meets the WHO guideline |
+| `good` | ≤ 1.5× |
+| `moderate` | ≤ 2.5× |
+| `poor` | > 2.5× |
+
+**No band is a percentile or a tertile.** A band defined relative to the other
+boroughs cannot return "all of them are loud", which is the answer that would
+matter most.
+
+**Coverage is honest in both directions.** A borough with no reading is **not
+painted at all** rather than defaulted, the legend title gains a measured
+"(NO DATA)" suffix when a layer paints nothing, and `tests/layer-honesty.mjs`
+fails if a layer paints a different number of boroughs than hold data.
+
+**Flood risk is still curated** for London and New York and **absent elsewhere**.
+There is no Environment Agency integration in this repo yet; the overlay now
+paints nothing where there is no reading rather than defaulting to `low`.
+
+**Wales is excluded from road noise.** The DEFRA coverage is England's; Natural
+Resources Wales publishes its own Round 4 maps, so Cardiff gets air quality and
+no road band rather than a silently empty one.
 
 ### Data refresh policy
 
