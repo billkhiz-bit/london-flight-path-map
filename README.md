@@ -6,17 +6,20 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 
 > Methodology v3.3 · API v1.0 · Live in production · **11 cities on `/v1/score`, 9 on the consumer site** · 33 London + 5 NYC + 10 Greater Manchester boroughs on both, plus 8 UK city-regions API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
-> **Greater Manchester is live on both the site and the API, and is thinner than
-> the other two on purpose.** Added 2026-08-09. Its aircraft-noise bands are
-> estimated from runway geometry rather than sampled from DEFRA — the map legend
-> says so rather than borrowing London's DEFRA labelling — and liveability rests
-> on two measured inputs (DfE Progress 8, ONS recorded crime) where London has
-> four, with `context.liveResolution` reporting that per response and the absent
-> inputs having their weight redistributed rather than filled with a placeholder.
-> Road noise, flood risk, air quality, area search and station data do not exist
-> for this city and are shown as "NO DATA" rather than left to look sourced.
-> Query it with `?borough=Trafford&city=manchester`; **postcode resolution is
-> London-only**.
+> **The eight UK city-regions outside London are thinner than London on purpose,
+> and the gap is now four datasets rather than seven.** Road noise, flood risk
+> and air quality were derived for every borough on 2026-08-11 — DEFRA Round 4
+> road Lden, the Environment Agency's Risk of Flooding from Rivers and Sea, and
+> DEFRA background pollution maps — so all three map layers are measured
+> everywhere instead of curated for London and defaulted elsewhere. What is
+> still missing outside London and New York is **transport, healthcare,
+> neighbourhood area search, and DEFRA-sampled aircraft noise**; aircraft bands
+> remain an estimate from runway geometry and the map legend says so rather than
+> borrowing London's DEFRA labelling. Liveability therefore rests on two
+> measured inputs (DfE Progress 8, ONS recorded crime) where London has four,
+> with `context.liveResolution` reporting that per response and the absent
+> inputs having their weight **redistributed** rather than filled with a
+> placeholder. Postcode resolution works for **every** city since 2026-08-10.
 
 ## Try it in 30 seconds
 
@@ -157,7 +160,7 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 
 | Component | Description | Anchored to |
 |---|---|---|
-| **Quiet** | **Aircraft noise only.** Road noise is a map overlay on the consumer site and is **not** a score input | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. **Live tier is Haversine to airports + flight-path geometry** — the direct raster tier is quarantined, see [METHODOLOGY §4.5](./METHODOLOGY.md) |
+| **Quiet** | **Aircraft noise only.** Road noise is a map overlay and a reported measurement, and is **not** a score input | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
 | **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
 | **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
 | **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2022/23); ONS *Crime in England and Wales* PFA tables, Table C4; TfL PTAL approximation; curated healthcare tiers |
@@ -173,9 +176,10 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 - **Greater Manchester**: 10 boroughs, by postcode or borough name.
 - **Six further UK city-regions, on the site and the API** (2026-08-10): West
   Midlands, West Yorkshire, South Yorkshire, Merseyside, Tyne and Wear and
-  Bristol, by postcode or borough name. Prices, trends, crime, Progress 8 and
-  boundaries are all script-derived and verified against the publishing body;
-  aircraft bands are an **estimate from runway geometry, not DEFRA**.
+  Bristol, by postcode or borough name. Prices, trends, crime, Progress 8,
+  boundaries and — since 2026-08-11 — road noise, flood risk and air quality are
+  all script-derived and verified against the publishing body; aircraft bands
+  are an **estimate from runway geometry, not DEFRA**.
 - **Cardiff and Nottingham, on `/v1/score` only.** Progress 8 is an England
   measure so Cardiff has none, and Nottingham has 1 of 4 because Broxtowe,
   Gedling and Rushcliffe are districts inside Nottinghamshire rather than
@@ -188,13 +192,46 @@ The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and t
 
 **What "supported" means per city**, because it is not uniform:
 
-| | London | NYC | Greater Manchester | Cardiff + Nottingham |
+| | London | NYC | The 7 other UK city-regions | Cardiff + Nottingham |
 |---|---|---|---|---|
 | On the consumer site | yes | yes | yes | **no - API only** |
 | Lookup | postcode or borough | ZIP or borough | postcode or borough | **borough only** |
 | Aircraft noise | DEFRA raster where covered, else geometry | curated bands from approach geometry | **runway geometry only, not DEFRA** | **runway geometry only, not DEFRA** |
 | Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **2 of 4** (schools, crime) | **2 of 4**, except Cardiff **1 of 4** (no Progress 8 in Wales) |
 | Quarterly comparison | yes | yes | **declines** — no prior vintage exists | **declines** — no prior vintage |
+
+### Exactly what the other UK cities are missing, against London
+
+Measured 2026-08-11. Seven of the twelve per-city datasets are now complete
+everywhere; the gap is the remaining five.
+
+| Dataset | Source | London | NYC | Other 7 UK |
+|---|---|---|---|---|
+| Boundaries | ONS | yes | yes | **yes** |
+| Prices + trend | HM Land Registry HPI | yes | yes | **yes** |
+| Crime rate | ONS Table C4 | yes | yes | **yes** |
+| Schools (Progress 8) | DfE KS4 | yes | n/a | **yes** |
+| Road noise | DEFRA Round 4 road Lden | yes | curated | **yes** (2026-08-11) |
+| Air quality | DEFRA background maps | yes | curated | **yes** (2026-08-11) |
+| Flood risk | EA Risk of Flooding from Rivers and Sea | yes | curated | **yes** (2026-08-11) |
+| **Transport / stations** | TfL PTAL + station list | yes (18) | yes (16) | **no (0)** |
+| **Healthcare** | curated NHS proximity | yes | yes | **no** |
+| **Neighbourhood area search** | Land Registry PPD + NSPL | yes (152) | yes (127) | **only Greater Manchester (85)** |
+| **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **no — estimated from runway geometry** |
+| **Crime breakdown (top offences)** | ONS | yes | no | **no** |
+
+Two of those five carry weight in the score. Liveability weights are schools
+0.35, crime 0.30, **transport 0.25, healthcare 0.10** — so outside London and
+New York, **35% of the liveability weight has no input** and is redistributed
+across the two that do, rather than estimated. The other three gaps
+(neighbourhood search, measured aircraft noise, crime breakdown) affect what the
+site can *show*, not what it scores.
+
+**The largest single win left is DEFRA aircraft sampling.** Round 4 covers all
+16 English airports including every one of ours — measured 2026-08-10 — so the
+data exists and has simply not been sampled; until it is, those cities' quiet
+scores are modelled from runway geometry and calibrated on Heathrow, which is
+far larger, so the bands reach further than the airport really does.
 
 Absent liveability inputs are **not** estimated: their weight is redistributed
 across the measured ones, and `context.liveResolution` states how many were
@@ -213,7 +250,7 @@ grids contain:
 |---|---|---|
 | Aircraft Lden | ~9% of London postcodes | DEFRA's contours are localised lobes around airports. Outside them there is no reading, and the endpoint **omits the key** rather than returning a default |
 | Road Lden | Complete across the London raster | Finished 2026-08-08. Was missing everything from `UB6` onward — `W`, `WC`, `WD` — for two days before that |
-| NO₂ / PM2.5 | **Loading; London not yet reached** | The pass runs in postcode-alphabetical order over the whole UK, so early-alphabet regions have figures well before London does |
+| NO₂ / PM2.5 | **Loading, ~57% of UK postcodes as at 2026-08-11** | The pass runs in postcode-alphabetical order over the whole UK, so early-alphabet regions have figures well before London does. **The borough-level `airQuality` band does not depend on this** - it is computed from the DEFRA grid CSVs directly and is complete for every city |
 
 A missing key means "not measured here", never "measured and fine" — the
 distinction is deliberate, and it is also what let an unrun loader look
