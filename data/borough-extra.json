@@ -49,7 +49,9 @@
       "floodCoverage": 99.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 67.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 53.6,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Hillingdon": {
       "crime": "low",
@@ -62,7 +64,7 @@
       "aqNote": "Air quality affected by Heathrow and M4/M25. Northern areas noticeably better.",
       "transport": "moderate",
       "transportNote": "Metropolitan and Piccadilly Lines, Elizabeth Line at West Drayton. M40/M4/M25 access.",
-      "healthcare": "good",
+      "healthcare": "moderate",
       "healthcareNote": "Hillingdon Hospital (A&E), Mount Vernon Hospital. Good GP coverage.",
       "p8": 0.24,
       "crimeTop": [
@@ -100,7 +102,9 @@
       "floodCoverage": 98.3,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 46.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 45.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Richmond upon Thames": {
       "crime": "low",
@@ -151,7 +155,9 @@
       "floodCoverage": 96.2,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 79.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 69.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Ealing": {
       "crime": "medium",
@@ -202,7 +208,9 @@
       "floodCoverage": 94.3,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 77.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 71.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wandsworth": {
       "crime": "medium",
@@ -215,7 +223,7 @@
       "aqNote": "South Circular and major roads are pollution hotspots. Residential areas generally acceptable.",
       "transport": "excellent",
       "transportNote": "Northern Line, Overground, National Rail. Battersea Power Station has Northern Line extension.",
-      "healthcare": "good",
+      "healthcare": "excellent",
       "healthcareNote": "St George's Hospital (major A&E and trauma centre). Excellent healthcare provision.",
       "p8": 0.33,
       "crimeTop": [
@@ -253,7 +261,9 @@
       "floodCoverage": 97.7,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 83.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 84.2,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Lambeth": {
       "crime": "high",
@@ -266,7 +276,7 @@
       "aqNote": "Poor air quality in northern Lambeth (Brixton Road, Vauxhall). Better in southern residential areas.",
       "transport": "excellent",
       "transportNote": "Victoria, Northern, Bakerloo Lines. Major rail hubs at Waterloo and Vauxhall.",
-      "healthcare": "good",
+      "healthcare": "excellent",
       "healthcareNote": "St Thomas' Hospital and King's College Hospital (both major A&E). Excellent tertiary care.",
       "p8": 0.01,
       "crimeTop": [
@@ -304,7 +314,9 @@
       "floodCoverage": 98.3,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 84.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 81.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Lewisham": {
       "crime": "medium",
@@ -355,7 +367,9 @@
       "floodCoverage": 97.6,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 87.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 58.0,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Greenwich": {
       "crime": "medium",
@@ -406,7 +420,9 @@
       "floodCoverage": 98.1,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 67.4,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 64.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Tower Hamlets": {
       "crime": "high",
@@ -457,7 +473,9 @@
       "floodCoverage": 98.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 98.1,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 91.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Camden": {
       "crime": "high",
@@ -508,7 +526,9 @@
       "floodCoverage": 99.6,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 98.5,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 89.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Islington": {
       "crime": "high",
@@ -521,7 +541,7 @@
       "aqNote": "Upper Street, Holloway Road are hotspots. Residential streets off main roads are better.",
       "transport": "excellent",
       "transportNote": "Victoria, Northern, Piccadilly Lines. King's Cross hub nearby. Excellent bus routes.",
-      "healthcare": "good",
+      "healthcare": "excellent",
       "healthcareNote": "Whittington Hospital (A&E). Good GP provision. UCH nearby.",
       "p8": -0.03,
       "crimeTop": [
@@ -559,7 +579,9 @@
       "floodCoverage": 99.9,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 99.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 90.8,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Hackney": {
       "crime": "high",
@@ -572,7 +594,7 @@
       "aqNote": "Kingsland Road and Mare Street corridors are worse. Parks and quieter streets are good.",
       "transport": "excellent",
       "transportNote": "Overground, National Rail. No tube but excellent bus network. London's best cycling infrastructure.",
-      "healthcare": "good",
+      "healthcare": "excellent",
       "healthcareNote": "Homerton University Hospital (A&E). Good GP coverage. Improving services.",
       "p8": 0.34,
       "crimeTop": [
@@ -610,7 +632,9 @@
       "floodCoverage": 94.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 92.4,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 75.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Barnet": {
       "crime": "low",
@@ -661,7 +685,9 @@
       "floodCoverage": 99.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 70.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 63.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Croydon": {
       "crime": "medium",
@@ -712,7 +738,9 @@
       "floodCoverage": 98.6,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 74.7,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 55.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bromley": {
       "crime": "low",
@@ -725,7 +753,7 @@
       "aqNote": "One of London's greenest boroughs. Low traffic density in residential areas.",
       "transport": "good",
       "transportNote": "National Rail to London Bridge/Victoria. No tube. Bus network adequate but car-dependent in outer areas.",
-      "healthcare": "good",
+      "healthcare": "moderate",
       "healthcareNote": "Princess Royal University Hospital (A&E). Good GP coverage.",
       "p8": 0.04,
       "crimeTop": [
@@ -763,7 +791,9 @@
       "floodCoverage": 98.9,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 62.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 43.8,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Newham": {
       "crime": "high",
@@ -814,7 +844,9 @@
       "floodCoverage": 97.1,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 78.7,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 60.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Southwark": {
       "crime": "high",
@@ -865,7 +897,9 @@
       "floodCoverage": 96.5,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 62.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 83.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
@@ -916,7 +950,9 @@
       "floodCoverage": 97.8,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 92.7,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 71.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Kensington and Chelsea": {
       "crime": "medium",
@@ -967,7 +1003,9 @@
       "floodCoverage": 99.7,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 87.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 90.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Brent": {
       "crime": "medium",
@@ -980,7 +1018,7 @@
       "aqNote": "North Circular and A5 are pollution corridors. Wembley area affected by event traffic.",
       "transport": "excellent",
       "transportNote": "Jubilee, Bakerloo, Metropolitan Lines. Wembley Park and Kilburn well-connected.",
-      "healthcare": "good",
+      "healthcare": "excellent",
       "healthcareNote": "Northwick Park Hospital nearby. Central Middlesex Hospital. Good GP coverage.",
       "p8": 0.61,
       "crimeTop": [
@@ -1018,7 +1056,9 @@
       "floodCoverage": 99.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 84.1,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 76.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Haringey": {
       "crime": "medium",
@@ -1031,7 +1071,7 @@
       "aqNote": "A1/A10 corridors are worse. Crouch End, Muswell Hill enjoy good air quality.",
       "transport": "excellent",
       "transportNote": "Victoria Line, Piccadilly Line, Overground. No tube in Crouch End/Muswell Hill (bus only).",
-      "healthcare": "moderate",
+      "healthcare": "excellent",
       "healthcareNote": "North Middlesex Hospital (A&E). Some GP capacity pressures in east of the borough.",
       "p8": 0.21,
       "crimeTop": [
@@ -1069,7 +1109,9 @@
       "floodCoverage": 97.8,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 77.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 80.0,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Waltham Forest": {
       "crime": "medium",
@@ -1082,7 +1124,7 @@
       "aqNote": "A12 and North Circular are worst. Mini-Holland cycling scheme improving some areas.",
       "transport": "excellent",
       "transportNote": "Victoria Line to Walthamstow. Central Line at Leytonstone/Leyton. Overground.",
-      "healthcare": "moderate",
+      "healthcare": "good",
       "healthcareNote": "Whipps Cross Hospital (A&E, being rebuilt). Some areas underserved for GPs.",
       "p8": -0.06,
       "crimeTop": [
@@ -1120,7 +1162,9 @@
       "floodCoverage": 96.6,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 76.5,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 55.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Merton": {
       "crime": "low",
@@ -1171,7 +1215,9 @@
       "floodCoverage": 98.1,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 82.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 65.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Redbridge": {
       "crime": "medium",
@@ -1222,7 +1268,9 @@
       "floodCoverage": 98.1,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 71.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 68.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Enfield": {
       "crime": "medium",
@@ -1235,7 +1283,7 @@
       "aqNote": "Good air quality in most areas. A10 corridor is worse. Large green spaces help.",
       "transport": "excellent",
       "transportNote": "Piccadilly Line to Arnos Grove/Southgate. Overground to Enfield Town. Some areas car-dependent.",
-      "healthcare": "moderate",
+      "healthcare": "good",
       "healthcareNote": "North Middlesex Hospital, Chase Farm Hospital (being redeveloped). GP coverage varies.",
       "p8": 0.21,
       "crimeTop": [
@@ -1273,7 +1321,9 @@
       "floodCoverage": 97.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 76.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 56.8,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Kingston upon Thames": {
       "crime": "low",
@@ -1286,7 +1336,7 @@
       "aqNote": "Good air quality. Limited through-traffic compared to inner boroughs. Parks and riverside help.",
       "transport": "good",
       "transportNote": "South West Railway to Waterloo (fast trains). Good buses and cycling. No tube but rail is efficient.",
-      "healthcare": "good",
+      "healthcare": "moderate",
       "healthcareNote": "Kingston Hospital (A&E). Good GP provision. Surbiton health centre.",
       "p8": 0.58,
       "crimeTop": [
@@ -1324,7 +1374,9 @@
       "floodCoverage": 96.7,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 58.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 48.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sutton": {
       "crime": "low",
@@ -1375,7 +1427,9 @@
       "floodCoverage": 97.5,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 70.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 60.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Westminster": {
       "crime": "high",
@@ -1426,7 +1480,9 @@
       "floodCoverage": 99.0,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 99.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 78.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "City of London": {
       "crime": "high",
@@ -1439,7 +1495,7 @@
       "aqNote": "Poor air quality during business hours due to traffic. Weekends and evenings much better.",
       "transport": "excellent",
       "transportNote": "Central, Circle, District, Metropolitan, Northern, Hammersmith, Elizabeth Lines. Bank, Liverpool St, Moorgate.",
-      "healthcare": "good",
+      "healthcare": "moderate",
       "healthcareNote": "St Bartholomew's Hospital (Barts). Royal London nearby. Limited GP due to small residential population.",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 63.4,
@@ -1454,7 +1510,9 @@
       "floodCoverage": 98.8,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 100.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 30.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Barking": {
       "crime": "high",
@@ -1467,7 +1525,7 @@
       "aqNote": "A13 corridor is a pollution hotspot. Residential areas away from major roads are better.",
       "transport": "moderate",
       "transportNote": "District Line, Hammersmith & City, c2c to Fenchurch Street. Overground. Barking station is a major hub.",
-      "healthcare": "moderate",
+      "healthcare": "good",
       "healthcareNote": "Queen's Hospital (A&E) in Romford. King George Hospital. Some GP capacity pressures.",
       "p8": 0.24,
       "crimeTop": [
@@ -1505,7 +1563,9 @@
       "floodCoverage": 97.2,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 47.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 70.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Havering": {
       "crime": "low",
@@ -1518,7 +1578,7 @@
       "aqNote": "Good air quality in most residential areas. A12/A13 corridors are worse.",
       "transport": "moderate",
       "transportNote": "Elizabeth Line at Romford. District Line at Upminster. c2c to Fenchurch Street. Some areas car-dependent.",
-      "healthcare": "good",
+      "healthcare": "moderate",
       "healthcareNote": "Queen's Hospital (A&E). Good GP coverage in residential areas.",
       "p8": -0.09,
       "crimeTop": [
@@ -1556,7 +1616,9 @@
       "floodCoverage": 98.6,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 37.4,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 44.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bexley": {
       "crime": "low",
@@ -1607,7 +1669,9 @@
       "floodCoverage": 98.6,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 51.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 57.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Harrow": {
       "crime": "low",
@@ -1620,7 +1684,7 @@
       "aqNote": "Good air quality in residential areas. Main roads through Harrow town centre are worse.",
       "transport": "good",
       "transportNote": "Metropolitan Line (fast to Baker Street). Bakerloo to Harrow & Wealdstone. Good bus network.",
-      "healthcare": "good",
+      "healthcare": "moderate",
       "healthcareNote": "Northwick Park Hospital (A&E). Good GP coverage. Several health centres.",
       "p8": 0.45,
       "crimeTop": [
@@ -1658,7 +1722,9 @@
       "floodCoverage": 92.5,
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 74.4,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcareWithin1kmPct": 48.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "nyc": {
@@ -1765,7 +1831,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 63.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 55.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Salford": {
       "p8": -0.49,
@@ -1788,7 +1857,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 48.4,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 51.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Stockport": {
       "p8": -0.04,
@@ -1811,7 +1883,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 52.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 42.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Trafford": {
       "p8": 0.24,
@@ -1834,7 +1909,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 60.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 34.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Tameside": {
       "p8": -0.21,
@@ -1857,7 +1935,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 51.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 51.0,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Oldham": {
       "p8": -0.18,
@@ -1880,7 +1961,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 46.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 45.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Rochdale": {
       "p8": -0.28,
@@ -1903,7 +1987,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 38.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 45.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bury": {
       "p8": -0.14,
@@ -1926,7 +2013,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 45.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 38.6,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bolton": {
       "p8": -0.08,
@@ -1949,7 +2039,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 23.4,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 49.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wigan": {
       "p8": -0.39,
@@ -1972,7 +2065,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 25.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 45.2,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "westmidlands": {
@@ -1995,7 +2091,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 44.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 51.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Coventry": {
       "crimeRate": 88.4,
@@ -2016,7 +2115,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 9.5,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 60.6,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Dudley": {
       "crimeRate": 74.5,
@@ -2037,7 +2139,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 30.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 40.8,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sandwell": {
       "crimeRate": 95.9,
@@ -2058,7 +2163,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 49.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 56.8,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Solihull": {
       "crimeRate": 79.5,
@@ -2079,7 +2187,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 15.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 38.0,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Walsall": {
       "crimeRate": 92.9,
@@ -2100,7 +2211,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 29.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 48.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
@@ -2121,7 +2235,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 33.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 43.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "westyorkshire": {
@@ -2144,7 +2261,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 32.7,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 51.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Calderdale": {
       "crimeRate": 103.4,
@@ -2165,7 +2285,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 30.7,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 36.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Kirklees": {
       "crimeRate": 87.6,
@@ -2186,7 +2309,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 25.1,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 41.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Leeds": {
       "crimeRate": 114.6,
@@ -2207,7 +2333,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 16.1,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 45.1,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wakefield": {
       "crimeRate": 105.8,
@@ -2228,7 +2357,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 34.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 37.6,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "southyorkshire": {
@@ -2251,7 +2383,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 26.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 40.2,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Doncaster": {
       "crimeRate": 117.3,
@@ -2272,7 +2407,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 14.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 32.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Rotherham": {
       "crimeRate": 93.1,
@@ -2293,7 +2431,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 14.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 38.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sheffield": {
       "crimeRate": 96.9,
@@ -2314,7 +2455,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 42.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 55.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "merseyside": {
@@ -2337,7 +2481,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 41.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 47.0,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Liverpool": {
       "crimeRate": 124.1,
@@ -2358,7 +2505,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 46.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 54.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "St Helens": {
       "crimeRate": 86.4,
@@ -2379,7 +2529,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 39.1,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 38.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sefton": {
       "crimeRate": 75.5,
@@ -2400,7 +2553,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 50.1,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 37.7,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wirral": {
       "crimeRate": 71.1,
@@ -2421,7 +2577,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 41.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 42.6,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "tyneandwear": {
@@ -2444,7 +2603,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 27.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 42.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
@@ -2465,7 +2627,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 51.2,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 45.4,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "North Tyneside": {
       "crimeRate": 81.8,
@@ -2486,7 +2651,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 46.0,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 37.3,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "South Tyneside": {
       "crimeRate": 96.6,
@@ -2507,7 +2675,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "good",
       "transportWithin800mPct": 56.6,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 44.2,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sunderland": {
       "crimeRate": 93.6,
@@ -2528,7 +2699,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 26.3,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 34.8,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
   "bristol": {
@@ -2551,7 +2725,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 40.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "good",
+      "healthcareWithin1kmPct": 53.6,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
@@ -2572,7 +2749,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "moderate",
       "transportWithin800mPct": 25.8,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 41.9,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "North Somerset": {
       "crimeRate": 81.8,
@@ -2593,7 +2773,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 12.7,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 36.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
@@ -2614,7 +2797,10 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transport": "poor",
       "transportWithin800mPct": 11.9,
-      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
+      "healthcare": "moderate",
+      "healthcareWithin1kmPct": 28.5,
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   }
 }

@@ -557,9 +557,16 @@ class CalcScoreTests(unittest.TestCase):
         # (SCHOOL_SCORE 9) but measures P8 +0.33 against a London median of
         # +0.30 -- a shade above average, not exceptional. The drop is the
         # correction the metric change exists to make, not a regression.
+        # 6.4 -> 6.5 and live 7.9 -> 8.3 in v3.6/v3.7, when transport and
+        # healthcare stopped being curated and became derived. Wandsworth is
+        # 83.0% within 800 m of a rail/metro/tram node and over three-quarters
+        # within 500 m of a GP, so both land on the top band where the curated
+        # table had transport at `good`. The headline barely moves because
+        # liveability is 31% of the balanced persona and the two inputs are
+        # 0.25 and 0.10 of that.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.4)
+        self.assertEqual(result['score'], 6.5)
         self.assertEqual(result['components']['quiet'], 5.0)
         self.assertEqual(result['components']['afford'], 6.7)
         # 4.3 until 2026-08-10: Wandsworth's trend was -4.2%, and correcting
@@ -575,7 +582,11 @@ class CalcScoreTests(unittest.TestCase):
         # 0.11. 29 of 33 boroughs moved; Wandsworth's was among the smaller
         # corrections. Not a regression — the previous figure was never in the
         # source it cited.
-        self.assertEqual(result['components']['live'], 8.0)
+        # 8.0 -> 8.3 in v3.6/v3.7. Transport and healthcare were curated `good`
+        # and `good`; measured, Wandsworth is 83.0% within 800 m of a rail node
+        # and over three-quarters within 500 m of a GP, so both reach the top
+        # band. Together they are 35% of the liveability composite.
+        self.assertEqual(result['components']['live'], 8.3)
         self.assertEqual(result['context']['avgPriceGbp'], 660000)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
 
@@ -2068,11 +2079,26 @@ class CoreCitiesAuditTests(unittest.TestCase):
         # an absent input has its weight redistributed instead, and a borough
         # with fewer than two inputs declines to score rather than inventing
         # one. The resolution field still carries the explanation.
+        #
+        # The assertion here WAS `min(london_live) > 5.0`, which was a proxy for
+        # "no borough is sitting on the 5.0 placeholder" and worked only while
+        # London's observed range happened to start above it. v3.7 broke the
+        # proxy without touching the property: City of London now scores 4.8 on
+        # three real inputs, because its crime RATE per resident is enormous in a
+        # square mile with almost no residents. Re-baselining the number to 4.7
+        # would have kept a test that passes for the wrong reason, so the
+        # property itself is asserted instead - every borough scores from real
+        # inputs, and the scores are not all the same constant.
         london_live = [
             app.get_live_score(bd) for bd in app.CITIES['london']['boroughs'].values()
         ]
         self.assertTrue(all(v is not None for v in london_live))
-        self.assertGreater(min(london_live), 5.0)
+        self.assertGreater(len(set(london_live)), 1, 'live scores must vary, not be one constant')
+        for name, bd in app.CITIES['london']['boroughs'].items():
+            measured = app.live_component_scores(bd)
+            self.assertGreaterEqual(
+                len(measured), app._LIVE_MIN_FIELDS, f'{name} scores on fewer inputs than the floor'
+            )
 
         sourced = app.CITIES['london']['boroughs']['Hounslow']
         self.assertEqual(app.live_resolution(sourced), 'measured')

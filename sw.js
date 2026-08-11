@@ -150,7 +150,11 @@
 // 81 boroughs, a SCORING input at 0.25 of liveability. 52 of 86 boroughs move.
 // index.html carries the version string and data/borough-extra.json carries the
 // values, so both change and this bump is required by the rule at the top.
-const VERSION = 'v1.0.27';
+// v1.0.28 (2026-08-11): methodology v3.7 - healthcare derived from the NHS ODS
+// register for all 81 boroughs. 78 of 86 boroughs now score on all four
+// liveability inputs, up from 38. index.html carries the version string and
+// borough-extra.json the values, so both change.
+const VERSION = 'v1.0.28';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

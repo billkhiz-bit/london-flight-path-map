@@ -6,6 +6,33 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-11 (late night) - Methodology v3.7: the last liveability input
+
+- **`healthcare` is now derived for all 81 boroughs** from the NHS Organisation
+  Data Service register (10,173 active GP practices and branch surgeries), as
+  the share of a borough's postcodes within 500 m of one. It existed for London
+  and New York only.
+- **78 of 86 boroughs now score on ALL FOUR liveability inputs, up from 38.**
+  The remainder are Cardiff (no Progress 8 in Wales) and Nottingham's outer
+  districts, where education is an upper-tier county function.
+- **The radius was chosen by measurement.** At 1 km, 68 of 81 boroughs came out
+  `excellent` and none `moderate` - true about GP density, useless as a score
+  input. 500 m has the widest measured spread (24.0-91.5 against 42.8-100.0 at
+  800 m) and is the standard walkable-neighbourhood distance.
+- **Scores moved: 54 of 86 boroughs by more than 0.05**, mean 0.22, max 0.60 -
+  gentler than v3.6 because healthcare carries 0.10 of the weight to
+  transport's 0.25. This entry is the notice record.
+- **Two accuracy traps, both hit before the data was written.** The ODS role for
+  a GP practice is `RO76`; `RO177` is PRESCRIBING COST CENTRE and also covers
+  hospices, care homes, courts and prisons. And a GP practice's PRIMARY role is
+  RO177, so `PrimaryRoleId=RO76` returns zero organisations - a well-formed
+  query that answers 200 and is silently empty. `Roles=RO76` is correct, and the
+  role codes are now asserted against the live list before every fetch.
+- The fetcher also refuses a partial register: fewer surgeries would produce
+  better-looking distance scores, so under-fetching flatters the data in the
+  direction nobody would question. It compares against `X-Total-Count`.
+
+
 ### 2026-08-11 (night) - Methodology v3.6: transport is measured everywhere
 
 - **`transport` is now derived for all 81 boroughs** from NaPTAN, the DfT

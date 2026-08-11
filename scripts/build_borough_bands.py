@@ -95,6 +95,23 @@ a percentile: a band that is defined relative to the other boroughs cannot say
                this cohort they happen to split it fairly evenly, which is a
                property of this cohort and not the definition.
 
+  HEALTHCARE   NHS Organisation Data Service, active GP practices and branch
+               surgeries. Banded on the SHARE OF ADDRESSES within 500 m of one:
+
+                 excellent  >= 3/4 of postcodes within 500 m
+                 good       >= 1/2
+                 moderate   <  1/2
+
+               Only three bands because HEALTH_SCORE has three; there is no
+               `poor` tier to assign.
+
+               500 m rather than the 800 m used for transport, and the reason is
+               measured rather than aesthetic: surgeries are dense enough that a
+               1 km radius put 68 of 81 boroughs in `excellent` and none in
+               `moderate`. Branch surgeries are included, because the question
+               is whether a resident can reach a GP and a branch is a place you
+               can attend.
+
   FLOOD RISK   Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2),
                fetched by scripts/fetch_ea_flood_risk.py. Banded on the SHARE OF
                ADDRESSES at Medium or High risk - that is the 1%-annual-chance
@@ -163,6 +180,21 @@ ROAD_VINTAGE = 'DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lde
 AQ_VINTAGE = 'DEFRA background pollution maps, 2022 annual mean, 1 km grid'
 FLOOD_VINTAGE = 'Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)'
 TRANSPORT_VINTAGE = 'NaPTAN (DfT) rail, metro and tram access nodes'
+HEALTH_VINTAGE = 'NHS Organisation Data Service, active GP practices and branch surgeries'
+
+GP_JSON = DATA / 'nhs-gp-practices.json'
+# 500 m, the standard walkable-neighbourhood distance, CHOSEN BY MEASUREMENT.
+# GP surgeries are dense, so a generous radius stops discriminating: at 1 km,
+# 68 of 81 boroughs came out `excellent` and NONE came out `moderate`, which is
+# a true statement about GP density and a useless input to a score. Measured
+# spread of the borough share across five radii:
+#     300 m  8.9-58.5   400 m 17.5-79.6   500 m 24.0-91.5
+#     600 m 30.8-97.5   800 m 42.8-100.0
+# 500 m has the widest spread (67.5 points) and a median near the middle of the
+# range, so the three bands each carry boroughs.
+GP_RADIUS_M = 500.0
+HEALTH_EXCELLENT_SHARE = 75.0
+HEALTH_GOOD_SHARE = 50.0
 
 NAPTAN_CSV = DATA / 'naptan.csv'
 # Rail station access areas and entrances, metro/underground entrances, tram and
@@ -197,8 +229,13 @@ def load_lad_map():
     return dict(module.LAD_TO_BOROUGH)
 
 
-def collect_postcodes(lad_map, limit=None):
+def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
     """One pass over NSPL: {city: {borough: [(lat, lon), ...]}}.
+
+    `extra_postcodes` is a set of postcodes whose coordinates are also wanted -
+    the GP surgeries. Collected in the SAME pass because the file is 806 MB and
+    a second scan to geocode ten thousand postcodes would cost as much as the
+    first.
 
     One pass, not one per city. The file is 806 MB and re-reading it per city
     would turn a two-minute job into a twenty-minute one for no benefit.
@@ -206,11 +243,19 @@ def collect_postcodes(lad_map, limit=None):
     if not NSPL_CSV.exists():
         raise SystemExit(f'NSPL not found at {NSPL_CSV}')
     out = defaultdict(lambda: defaultdict(list))
+    extra_coords = {}
     seen = 0
     with NSPL_CSV.open(newline='', encoding='utf-8-sig') as fh:
         for idx, row in enumerate(csv.DictReader(fh)):
             if limit and idx >= limit:
                 break
+            if extra_postcodes:
+                pc = (row.get('pcds') or '').replace(' ', '').upper()
+                if pc in extra_postcodes:
+                    try:
+                        extra_coords[pc] = (float(row['lat']), float(row['long']))
+                    except (KeyError, ValueError):
+                        pass
             entry = lad_map.get(row.get('lad25cd', ''))
             if not entry:
                 continue
@@ -225,7 +270,9 @@ def collect_postcodes(lad_map, limit=None):
             out[city][borough].append((lat, lon))
             seen += 1
     print(f'  {seen:,} postcodes across {len(out)} cities')
-    return out
+    if extra_postcodes:
+        print(f'  {len(extra_coords):,}/{len(extra_postcodes):,} GP postcodes geocoded')
+    return out, extra_coords
 
 
 def sample_raster(tif_path, points):
@@ -342,6 +389,31 @@ def sample_aq(grids, points):
     }, counts
 
 
+def load_gp_postcodes():
+    """{normalised postcode: None} for every active GP practice / branch."""
+    if not GP_JSON.exists():
+        raise SystemExit(
+            f'{GP_JSON} not found. Build it with:\n'
+            '  python scripts/fetch_nhs_gp_practices.py'
+        )
+    with GP_JSON.open(encoding='utf-8') as fh:
+        doc = json.load(fh)
+    out = {p['postcode'].replace(' ', '').upper() for p in doc['practices'].values()}
+    print(f'  {len(out):,} distinct GP postcodes ({doc["count"]:,} practices)')
+    return out
+
+
+def health_band(share):
+    """Three bands, because HEALTH_SCORE has three. There is no `poor` tier."""
+    if share is None:
+        return None
+    if share >= HEALTH_EXCELLENT_SHARE:
+        return 'excellent'
+    if share >= HEALTH_GOOD_SHARE:
+        return 'good'
+    return 'moderate'
+
+
 def load_naptan_grid():
     """Rail/metro/tram nodes indexed into 1 km British National Grid cells.
 
@@ -373,6 +445,11 @@ def load_naptan_grid():
 
 def transport_share(grid, points):
     """Share of points within WALK_RADIUS_M of any indexed node."""
+    return points_within(grid, points, WALK_RADIUS_M)
+
+
+def points_within(grid, points, radius_m):
+    """Share of points within radius_m of anything in a 1 km-cell grid."""
     import numpy as np
     from pyproj import Transformer
 
@@ -380,7 +457,7 @@ def transport_share(grid, points):
     xs, ys = tr.transform(
         np.array([p[1] for p in points]), np.array([p[0] for p in points])
     )
-    r2 = WALK_RADIUS_M * WALK_RADIUS_M
+    r2 = radius_m * radius_m
     near = 0
     for x, y in zip(xs, ys, strict=True):
         cx, cy = int(x // 1000), int(y // 1000)
@@ -457,8 +534,20 @@ def derive(limit=None):
     lad_map = load_lad_map()
     print(f'  {len(lad_map)} LAD codes')
 
+    print('loading NHS GP register...')
+    gp_postcodes = load_gp_postcodes()
+
     print('scanning NSPL...')
-    by_city = collect_postcodes(lad_map, limit=limit)
+    by_city, gp_coords = collect_postcodes(lad_map, limit=limit, extra_postcodes=gp_postcodes)
+
+    # Same 1 km-cell grid trick as NaPTAN, over the geocoded surgeries.
+    from pyproj import Transformer as _T
+
+    _tr = _T.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
+    gp_grid = defaultdict(list)
+    for lat, lon in gp_coords.values():
+        e, n = _tr.transform(lon, lat)
+        gp_grid[(int(e // 1000), int(n // 1000))].append((e, n))
 
     print('loading DEFRA air-quality grids...')
     grids = load_aq_grid()
@@ -498,6 +587,12 @@ def derive(limit=None):
                     rec['flood'] = flood_band(pct)
                     rec['floodCoverage'] = round(100 * known.size / len(points), 1)
                     rec['floodVintage'] = FLOOD_VINTAGE
+
+            gp_share = points_within(gp_grid, points, GP_RADIUS_M)
+            if gp_share is not None:
+                rec['healthcareWithin1kmPct'] = round(gp_share, 1)
+                rec['healthcare'] = health_band(gp_share)
+                rec['healthcareVintage'] = HEALTH_VINTAGE
 
             share = transport_share(naptan, points)
             if share is not None:
@@ -546,7 +641,12 @@ def report(results):
                 if 'transport' in r
                 else 'tr NO DATA            '
             )
-            print(f'  {borough:28s} {r["postcodes"]:6,d} pc  {road}  {aq}  {fl}  {tr_}')
+            hc = (
+                f"hc {r['healthcare']:9s} {r['healthcareWithin1kmPct']:5.1f}% <1km"
+                if 'healthcare' in r
+                else 'hc NO DATA           '
+            )
+            print(f'  {borough:28s} {r["postcodes"]:6,d} pc  {road}  {aq}  {fl}  {tr_}  {hc}')
 
 
 DERIVED_KEYS = (
@@ -563,6 +663,9 @@ DERIVED_KEYS = (
     'transport',
     'transportWithin800mPct',
     'transportVintage',
+    'healthcare',
+    'healthcareWithin1kmPct',
+    'healthcareVintage',
     'flood',
     'floodMediumOrHighPct',
     'floodCoverage',
@@ -627,7 +730,7 @@ def apply_to_extra(results, write):
     return diffs
 
 
-LAMBDA_FIELDS = ('transport',)
+LAMBDA_FIELDS = ('transport', 'healthcare')
 
 
 def write_lambda(results, write):

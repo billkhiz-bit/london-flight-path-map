@@ -967,6 +967,48 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 > diligence process starts from, so a supplier list that is three-quarters out of date on the
 > `live` component is a procurement problem, not a tidiness one.
 
+### 7.3 Healthcare, derived nationally (v3.7, 2026-08-11)
+
+**`healthcare` is weighted 0.10 of liveability** and, like transport, existed
+for London and New York only. It is now derived for **all 81 boroughs** from the
+**NHS Organisation Data Service** register of active GP practices and branch
+surgeries (10,173 of them), as the **share of a borough's postcodes within 500 m
+of one**.
+
+| Band | Condition |
+|---|---|
+| `excellent` | >= 3/4 of postcodes within 500 m |
+| `good` | >= 1/2 |
+| `moderate` | < 1/2 |
+
+Three bands because the scoring table has three; there is no `poor` tier.
+
+**The radius was chosen by measurement, not by taste.** GP surgeries are dense,
+so a generous catchment stops discriminating: at 1 km, 68 of 81 boroughs came
+out `excellent` and none came out `moderate` - a true statement about GP density
+and a useless score input. Measured borough-share range across five radii:
+300 m 8.9-58.5, 400 m 17.5-79.6, **500 m 24.0-91.5**, 600 m 30.8-97.5, 800 m
+42.8-100.0. 500 m has the widest spread and is the standard
+walkable-neighbourhood distance.
+
+**Branch surgeries are included**, because the question is whether a resident
+can reach a GP and a branch is a place you can attend.
+
+> **Two accuracy traps, both hit and both recorded in
+> `scripts/fetch_nhs_gp_practices.py`.** The ODS role for a GP practice is
+> `RO76`; a first attempt used `RO177`, which is PRESCRIBING COST CENTRE - a
+> financial construct that also covers hospices, care homes, courts, prisons and
+> optometry services. And an English GP practice's PRIMARY role is RO177, so
+> `PrimaryRoleId=RO76` returns **zero organisations**: a well-formed query that
+> answers 200 and is silently empty. The correct filter is `Roles=RO76`. The
+> role codes are asserted against the live role list before each fetch.
+
+**What moved.** 54 of 86 boroughs changed liveability by more than 0.05, mean
+0.22 and maximum 0.60 - gentler than v3.6 because healthcare carries 0.10 of the
+weight against transport's 0.25. **78 of 86 boroughs now score on all four
+liveability inputs, up from 38.** The remainder are Cardiff (no Progress 8 in
+Wales) and Nottingham's outer districts.
+
 ### 7.2 Transport, derived nationally (v3.6, 2026-08-11)
 
 **`transport` is a SCORING input, weighted 0.25 of liveability**, and until
