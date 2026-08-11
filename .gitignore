@@ -135,3 +135,9 @@ data/*
 # which is a deliberate act.
 tests/fixtures/*
 !tests/fixtures/rightmove-*.html
+
+# stderr from the detached DEFRA air-quality loader (see scripts/load_status.sh)
+aqload.err
+aqload.log
+roadfetch.log
+floodfetch.log
