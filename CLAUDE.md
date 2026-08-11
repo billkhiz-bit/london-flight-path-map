@@ -81,6 +81,7 @@ each has a `--check` that can go red:
 |---|---|---|
 | avgPrice / trend | `build_hpi_prices.py --check --all` | HPI 2026-05, **blocking preflight stage**, all agree |
 | roadNoise / airQuality / flood bands | `build_borough_bands.py --check` | DEFRA Round 4 road Lden + DEFRA background maps + EA RoFRS, **all three derived for every city 2026-08-11** |
+| transport | `build_borough_bands.py --write --write-lambda` | **NaPTAN, share of postcodes within 800 m of a rail/metro/tram node. A SCORING input (0.25 of liveability), so it lives in BOTH holders — `tests/test_borough_data_parity.py` fails the build on drift. Methodology v3.6, 2026-08-11.** |
 | crimeRate | `refresh_crime_from_ons.py --check --city X` | ONS Table C4, 0 differ everywhere |
 | p8 | `build_progress8.py --check` | DfE KS4 2022/23 **Revised**, 0 differ |
 | impact | `build_aircraft_bands.py --city X` | ESTIMATE from runway geometry, NOT DEFRA |

@@ -47,7 +47,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.23,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 67.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Hillingdon": {
       "crime": "low",
@@ -58,7 +60,7 @@
       "floodNote": "Generally low flood risk. Some surface water risk in lower-lying areas.",
       "airQuality": "moderate",
       "aqNote": "Air quality affected by Heathrow and M4/M25. Northern areas noticeably better.",
-      "transport": "good",
+      "transport": "moderate",
       "transportNote": "Metropolitan and Piccadilly Lines, Elizabeth Line at West Drayton. M40/M4/M25 access.",
       "healthcare": "good",
       "healthcareNote": "Hillingdon Hospital (A&E), Mount Vernon Hospital. Good GP coverage.",
@@ -96,7 +98,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 2.72,
       "floodCoverage": 98.3,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 46.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Richmond upon Thames": {
       "crime": "low",
@@ -107,7 +111,7 @@
       "floodNote": "Medium flood risk along Thames corridor. Parts of Twickenham, Teddington, and Richmond town at risk.",
       "airQuality": "moderate",
       "aqNote": "Generally good air quality. Large green spaces help. Some road pollution along A316.",
-      "transport": "good",
+      "transport": "excellent",
       "transportNote": "District Line, South West Railway, London Overground. Cycling infrastructure improving.",
       "healthcare": "good",
       "healthcareNote": "Kingston Hospital nearby. West Middlesex nearby. Good GP coverage in Richmond and Twickenham.",
@@ -145,7 +149,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.14,
       "floodCoverage": 96.2,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 79.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Ealing": {
       "crime": "medium",
@@ -194,7 +200,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.43,
       "floodCoverage": 94.3,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 77.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Wandsworth": {
       "crime": "medium",
@@ -243,7 +251,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 7.04,
       "floodCoverage": 97.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 83.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Lambeth": {
       "crime": "high",
@@ -292,7 +302,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.18,
       "floodCoverage": 98.3,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 84.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Lewisham": {
       "crime": "medium",
@@ -303,7 +315,7 @@
       "floodNote": "Flood risk along Ravensbourne and Quaggy rivers. Lewisham town centre has had historic flooding.",
       "airQuality": "moderate",
       "aqNote": "South Circular is a hotspot. Residential areas like Blackheath and Lee have good air quality.",
-      "transport": "good",
+      "transport": "excellent",
       "transportNote": "DLR, National Rail, Overground. Lewisham station is a major hub. Bakerloo Line extension planned.",
       "healthcare": "good",
       "healthcareNote": "Lewisham Hospital (A&E). Good GP and pharmacy coverage.",
@@ -341,7 +353,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.61,
       "floodCoverage": 97.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 87.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Greenwich": {
       "crime": "medium",
@@ -390,7 +404,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.96,
       "floodCoverage": 98.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 67.4,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Tower Hamlets": {
       "crime": "high",
@@ -439,7 +455,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.24,
       "floodCoverage": 98.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 98.1,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Camden": {
       "crime": "high",
@@ -488,7 +506,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.33,
       "floodCoverage": 99.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 98.5,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Islington": {
       "crime": "high",
@@ -537,7 +557,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.0,
       "floodCoverage": 99.9,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 99.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Hackney": {
       "crime": "high",
@@ -586,7 +608,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 2.69,
       "floodCoverage": 94.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 92.4,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Barnet": {
       "crime": "low",
@@ -635,7 +659,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.64,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 70.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Croydon": {
       "crime": "medium",
@@ -684,7 +710,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.29,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 74.7,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Bromley": {
       "crime": "low",
@@ -695,7 +723,7 @@
       "floodNote": "Low flood risk across most of the borough. Some localised risk along River Cray.",
       "airQuality": "moderate",
       "aqNote": "One of London's greenest boroughs. Low traffic density in residential areas.",
-      "transport": "moderate",
+      "transport": "good",
       "transportNote": "National Rail to London Bridge/Victoria. No tube. Bus network adequate but car-dependent in outer areas.",
       "healthcare": "good",
       "healthcareNote": "Princess Royal University Hospital (A&E). Good GP coverage.",
@@ -733,7 +761,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.17,
       "floodCoverage": 98.9,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 62.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Newham": {
       "crime": "high",
@@ -782,7 +812,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 2.05,
       "floodCoverage": 97.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 78.7,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Southwark": {
       "crime": "high",
@@ -793,7 +825,7 @@
       "floodNote": "Thames flood risk along northern boundary. Bermondsey, Rotherhithe, Borough in flood zones.",
       "airQuality": "poor",
       "aqNote": "Old Kent Road, Elephant and Castle are hotspots. Dulwich has much better air quality.",
-      "transport": "excellent",
+      "transport": "good",
       "transportNote": "Jubilee, Northern, Bakerloo Lines. London Bridge and Elephant & Castle major hubs.",
       "healthcare": "excellent",
       "healthcareNote": "Guy's and St Thomas' Hospital. King's College Hospital. World-class tertiary care.",
@@ -831,7 +863,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.02,
       "floodCoverage": 96.5,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 62.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
@@ -880,7 +914,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.01,
       "floodCoverage": 97.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 92.7,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Kensington and Chelsea": {
       "crime": "medium",
@@ -929,7 +965,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.03,
       "floodCoverage": 99.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 87.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Brent": {
       "crime": "medium",
@@ -940,7 +978,7 @@
       "floodNote": "Low flood risk overall. Some localised risk along River Brent.",
       "airQuality": "moderate",
       "aqNote": "North Circular and A5 are pollution corridors. Wembley area affected by event traffic.",
-      "transport": "good",
+      "transport": "excellent",
       "transportNote": "Jubilee, Bakerloo, Metropolitan Lines. Wembley Park and Kilburn well-connected.",
       "healthcare": "good",
       "healthcareNote": "Northwick Park Hospital nearby. Central Middlesex Hospital. Good GP coverage.",
@@ -978,7 +1016,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.8,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 84.1,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Haringey": {
       "crime": "medium",
@@ -989,7 +1029,7 @@
       "floodNote": "Low flood risk. Moselle Brook has caused localised flooding historically.",
       "airQuality": "moderate",
       "aqNote": "A1/A10 corridors are worse. Crouch End, Muswell Hill enjoy good air quality.",
-      "transport": "good",
+      "transport": "excellent",
       "transportNote": "Victoria Line, Piccadilly Line, Overground. No tube in Crouch End/Muswell Hill (bus only).",
       "healthcare": "moderate",
       "healthcareNote": "North Middlesex Hospital (A&E). Some GP capacity pressures in east of the borough.",
@@ -1027,7 +1067,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.36,
       "floodCoverage": 97.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 77.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Waltham Forest": {
       "crime": "medium",
@@ -1038,7 +1080,7 @@
       "floodNote": "Low flood risk in most areas. Some risk along River Lea corridor in the west.",
       "airQuality": "moderate",
       "aqNote": "A12 and North Circular are worst. Mini-Holland cycling scheme improving some areas.",
-      "transport": "good",
+      "transport": "excellent",
       "transportNote": "Victoria Line to Walthamstow. Central Line at Leytonstone/Leyton. Overground.",
       "healthcare": "moderate",
       "healthcareNote": "Whipps Cross Hospital (A&E, being rebuilt). Some areas underserved for GPs.",
@@ -1076,7 +1118,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.36,
       "floodCoverage": 96.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 76.5,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Merton": {
       "crime": "low",
@@ -1087,7 +1131,7 @@
       "floodNote": "Low flood risk overall. Some localised risk along River Wandle through Colliers Wood.",
       "airQuality": "moderate",
       "aqNote": "A24 and South Wimbledon areas affected. Wimbledon Common has excellent air quality.",
-      "transport": "good",
+      "transport": "excellent",
       "transportNote": "District, Northern Lines. Tramlink serves eastern areas. Wimbledon is a major rail interchange.",
       "healthcare": "good",
       "healthcareNote": "St George's Hospital nearby. St Helier Hospital nearby. Good GP coverage in Wimbledon.",
@@ -1125,7 +1169,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.04,
       "floodCoverage": 98.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 82.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Redbridge": {
       "crime": "medium",
@@ -1174,7 +1220,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 3.29,
       "floodCoverage": 98.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 71.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Enfield": {
       "crime": "medium",
@@ -1185,7 +1233,7 @@
       "floodNote": "Low flood risk in most areas. Some localised risk along Turkey Brook and Pymmes Brook.",
       "airQuality": "moderate",
       "aqNote": "Good air quality in most areas. A10 corridor is worse. Large green spaces help.",
-      "transport": "moderate",
+      "transport": "excellent",
       "transportNote": "Piccadilly Line to Arnos Grove/Southgate. Overground to Enfield Town. Some areas car-dependent.",
       "healthcare": "moderate",
       "healthcareNote": "North Middlesex Hospital, Chase Farm Hospital (being redeveloped). GP coverage varies.",
@@ -1223,7 +1271,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 3.42,
       "floodCoverage": 97.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 76.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Kingston upon Thames": {
       "crime": "low",
@@ -1272,7 +1322,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 20.02,
       "floodCoverage": 96.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 58.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Sutton": {
       "crime": "low",
@@ -1283,7 +1335,7 @@
       "floodNote": "Low flood risk throughout. Mostly elevated terrain away from major rivers.",
       "airQuality": "moderate",
       "aqNote": "Low traffic density. One of the cleanest boroughs in London for air quality.",
-      "transport": "moderate",
+      "transport": "good",
       "transportNote": "National Rail to London Bridge/Victoria. Tramlink connection. No tube. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "St Helier Hospital (A&E), Epsom Hospital nearby. Good GP coverage.",
@@ -1321,7 +1373,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.22,
       "floodCoverage": 97.5,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 70.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Westminster": {
       "crime": "high",
@@ -1370,7 +1424,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.04,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 99.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "City of London": {
       "crime": "high",
@@ -1396,7 +1452,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.62,
       "floodCoverage": 98.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 100.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Barking": {
       "crime": "high",
@@ -1407,7 +1465,7 @@
       "floodNote": "Barking Riverside and Thames-side areas have flood risk. Inland areas are generally safe.",
       "airQuality": "moderate",
       "aqNote": "A13 corridor is a pollution hotspot. Residential areas away from major roads are better.",
-      "transport": "good",
+      "transport": "moderate",
       "transportNote": "District Line, Hammersmith & City, c2c to Fenchurch Street. Overground. Barking station is a major hub.",
       "healthcare": "moderate",
       "healthcareNote": "Queen's Hospital (A&E) in Romford. King George Hospital. Some GP capacity pressures.",
@@ -1445,7 +1503,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.16,
       "floodCoverage": 97.2,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 47.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Havering": {
       "crime": "low",
@@ -1494,7 +1554,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.79,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 37.4,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Bexley": {
       "crime": "low",
@@ -1505,7 +1567,7 @@
       "floodNote": "Thames-side areas (Erith, Thamesmead) have significant flood risk. Inland areas are safe.",
       "airQuality": "moderate",
       "aqNote": "Good air quality across most of the borough. Lower traffic density than inner boroughs.",
-      "transport": "moderate",
+      "transport": "good",
       "transportNote": "Elizabeth Line at Abbey Wood. National Rail to London Bridge. Limited tube access. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "Queen Elizabeth Hospital (Woolwich) nearby. Darent Valley Hospital. Good GP coverage.",
@@ -1543,7 +1605,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 0.76,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 51.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Harrow": {
       "crime": "low",
@@ -1592,7 +1656,9 @@
       "airQualityVintage": "DEFRA background pollution maps, 2022 annual mean, 1 km grid",
       "floodMediumOrHighPct": 1.35,
       "floodCoverage": 92.5,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transportWithin800mPct": 74.4,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "nyc": {
@@ -1696,7 +1762,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.87,
       "floodCoverage": 97.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 63.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Salford": {
       "p8": -0.49,
@@ -1716,7 +1785,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.98,
       "floodCoverage": 98.4,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 48.4,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Stockport": {
       "p8": -0.04,
@@ -1736,7 +1808,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.39,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 52.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Trafford": {
       "p8": 0.24,
@@ -1756,7 +1831,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.21,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 60.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Tameside": {
       "p8": -0.21,
@@ -1776,7 +1854,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.35,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 51.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Oldham": {
       "p8": -0.18,
@@ -1796,7 +1877,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.16,
       "floodCoverage": 99.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 46.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Rochdale": {
       "p8": -0.28,
@@ -1816,7 +1900,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.59,
       "floodCoverage": 99.4,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 38.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Bury": {
       "p8": -0.14,
@@ -1836,7 +1923,10 @@
       "flood": "medium",
       "floodMediumOrHighPct": 8.51,
       "floodCoverage": 98.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 45.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Bolton": {
       "p8": -0.08,
@@ -1856,7 +1946,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.16,
       "floodCoverage": 99.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 23.4,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Wigan": {
       "p8": -0.39,
@@ -1876,7 +1969,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.5,
       "floodCoverage": 98.4,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 25.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "westmidlands": {
@@ -1896,7 +1992,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.08,
       "floodCoverage": 99.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 44.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Coventry": {
       "crimeRate": 88.4,
@@ -1914,7 +2013,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.37,
       "floodCoverage": 98.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 9.5,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Dudley": {
       "crimeRate": 74.5,
@@ -1932,7 +2034,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.28,
       "floodCoverage": 99.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 30.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Sandwell": {
       "crimeRate": 95.9,
@@ -1950,7 +2055,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.38,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 49.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Solihull": {
       "crimeRate": 79.5,
@@ -1968,7 +2076,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.2,
       "floodCoverage": 99.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 15.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Walsall": {
       "crimeRate": 92.9,
@@ -1986,7 +2097,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.91,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 29.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
@@ -2004,7 +2118,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.1,
       "floodCoverage": 99.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 33.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "westyorkshire": {
@@ -2024,7 +2141,10 @@
       "flood": "medium",
       "floodMediumOrHighPct": 4.12,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 32.7,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Calderdale": {
       "crimeRate": 103.4,
@@ -2042,7 +2162,10 @@
       "flood": "medium",
       "floodMediumOrHighPct": 3.79,
       "floodCoverage": 95.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 30.7,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Kirklees": {
       "crimeRate": 87.6,
@@ -2060,7 +2183,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.48,
       "floodCoverage": 96.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 25.1,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Leeds": {
       "crimeRate": 114.6,
@@ -2078,7 +2204,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.65,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 16.1,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Wakefield": {
       "crimeRate": 105.8,
@@ -2096,7 +2225,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.26,
       "floodCoverage": 98.3,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 34.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "southyorkshire": {
@@ -2116,7 +2248,10 @@
       "flood": "medium",
       "floodMediumOrHighPct": 4.49,
       "floodCoverage": 96.9,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 26.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Doncaster": {
       "crimeRate": 117.3,
@@ -2134,7 +2269,10 @@
       "flood": "high",
       "floodMediumOrHighPct": 24.38,
       "floodCoverage": 92.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 14.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Rotherham": {
       "crimeRate": 93.1,
@@ -2152,7 +2290,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.28,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 14.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Sheffield": {
       "crimeRate": 96.9,
@@ -2170,7 +2311,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.86,
       "floodCoverage": 97.2,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 42.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "merseyside": {
@@ -2190,7 +2334,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.16,
       "floodCoverage": 99.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 41.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Liverpool": {
       "crimeRate": 124.1,
@@ -2208,7 +2355,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.31,
       "floodCoverage": 99.3,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 46.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "St Helens": {
       "crimeRate": 86.4,
@@ -2226,7 +2376,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.29,
       "floodCoverage": 99.5,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 39.1,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Sefton": {
       "crimeRate": 75.5,
@@ -2244,7 +2397,10 @@
       "flood": "high",
       "floodMediumOrHighPct": 31.39,
       "floodCoverage": 98.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 50.1,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Wirral": {
       "crimeRate": 71.1,
@@ -2262,7 +2418,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.47,
       "floodCoverage": 99.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 41.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "tyneandwear": {
@@ -2282,7 +2441,10 @@
       "flood": "medium",
       "floodMediumOrHighPct": 4.65,
       "floodCoverage": 98.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 27.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
@@ -2300,7 +2462,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.6,
       "floodCoverage": 97.9,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 51.2,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "North Tyneside": {
       "crimeRate": 81.8,
@@ -2318,7 +2483,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.85,
       "floodCoverage": 98.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 46.0,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "South Tyneside": {
       "crimeRate": 96.6,
@@ -2336,7 +2504,10 @@
       "flood": "high",
       "floodMediumOrHighPct": 10.94,
       "floodCoverage": 97.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "good",
+      "transportWithin800mPct": 56.6,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Sunderland": {
       "crimeRate": 93.6,
@@ -2354,7 +2525,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.18,
       "floodCoverage": 99.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 26.3,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   },
   "bristol": {
@@ -2374,7 +2548,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.05,
       "floodCoverage": 96.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 40.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
@@ -2392,7 +2569,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.77,
       "floodCoverage": 96.7,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "moderate",
+      "transportWithin800mPct": 25.8,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "North Somerset": {
       "crimeRate": 81.8,
@@ -2410,7 +2590,10 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.14,
       "floodCoverage": 94.5,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 12.7,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
@@ -2428,7 +2611,10 @@
       "flood": "medium",
       "floodMediumOrHighPct": 5.27,
       "floodCoverage": 95.9,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "transport": "poor",
+      "transportWithin800mPct": 11.9,
+      "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes"
     }
   }
 }

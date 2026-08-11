@@ -3156,7 +3156,7 @@
             target="_blank"
             rel="noopener"
           >
-            Methodology v3.5
+            Methodology v3.6
           </a>
           <span class="sep">·</span>
           <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -5722,7 +5722,7 @@
       // Convert text ratings to numeric scores for liveability
       const SCHOOL_SCORE = { outstanding: 10, excellent: 9, good: 6, mixed: 3 };
       const CRIME_TO_SCORE = (rate) => Math.max(0, Math.min(10, 10 - (rate - 50) / 15));
-      // Methodology v3.5. Mirrors school_score() in backend/lambdas/score/app.py
+      // Methodology v3.6. Mirrors school_score() in backend/lambdas/score/app.py
       // - this file computes its own scores from data/borough-extra.json, so any
       // divergence here means the site and /v1/score publish different numbers
       // for the same borough. DfE Progress 8: 0.0 is the national average and

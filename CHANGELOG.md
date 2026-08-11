@@ -6,6 +6,34 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-11 (night) - Methodology v3.6: transport is measured everywhere
+
+- **`transport` is now derived for all 81 boroughs** from NaPTAN, the DfT
+  national access node register, as the share of a borough's postcodes within
+  800 m of a rail, metro or tram node. It existed for London and New York only;
+  the other cities scored liveability on two inputs of four.
+- **Rail, metro and tram only, not bus.** 416,539 of NaPTAN's 435,298 nodes are
+  bus stops, and including them puts essentially every urban postcode within
+  800 m of one. **It is not PTAL** and is not described as such - PTAL is an
+  all-modes London-only calculation that cannot be reproduced elsewhere.
+- **SCORES MOVED. 52 of 86 boroughs changed liveability by more than 0.05**,
+  mean 0.64, maximum 1.50 (Enfield, curated `moderate` against a measured 76.2%
+  within 800 m). London mostly rose and the other cities mostly fell, because
+  the derived measure says London's rail access genuinely is better. This entry
+  is the notice record, as it was for v3.5.
+- **Cardiff became scoreable for the first time.** Its four boroughs held only
+  `crimeRate`, one input, below the two-input floor; with transport they reach
+  two and now publish a liveability score. Still API-only for other reasons.
+- Written into BOTH holders by `build_borough_bands.py --write --write-lambda`,
+  with `tests/test_borough_data_parity.py` failing the build on drift.
+- **A near-miss worth recording:** the first version of the Lambda writer
+  searched the whole file for `'Hillingdon': {` and found `LONDON_PREVIOUS_PT`
+  at line 183 rather than `LONDON_BOROUGHS` at line 782, silently writing a
+  scoring field into the previous-vintage price table that `?compare=previous`
+  reads. Caught by inspecting the diff against a backup rather than by any test.
+  The writer now scopes its search to the city's own dict.
+
+
 ### 2026-08-11 (late) - Area search for every city, and it had never worked for Greater Manchester
 
 - **448 neighbourhoods across seven UK city-regions**, up from Greater

@@ -70,6 +70,31 @@ a percentile: a band that is defined relative to the other boroughs cannot say
                  moderate   <= 2.5x
                  poor        > 2.5x
 
+  TRANSPORT    NaPTAN, the DfT national public transport access node register.
+               Banded on the SHARE OF ADDRESSES within 800 m of a rail, metro
+               or tram access node - 800 m being the standard ten-minute-walk
+               planning threshold:
+
+                 excellent  >= 3/4 of postcodes within 800 m
+                 good       >= 1/2
+                 moderate   >= 1/4
+                 poor       <  1/4
+
+               RAIL/METRO/TRAM ONLY, NOT BUS, and that is the load-bearing
+               choice. 416,539 of NaPTAN's 435,298 nodes are bus stops; include
+               them and essentially every urban postcode is within 800 m of one,
+               which measures nothing. This is accessibility to the HIGH-CAPACITY
+               network and must be described as that. It is NOT PTAL, which is
+               an all-modes, London-only calculation that cannot be reproduced
+               for the other cities - using the PTAL name for this would be the
+               same overclaim as calling an estimate a DEFRA sample.
+
+               MEASURED SPREAD across all 81 boroughs: 9.5% (Coventry) to 100%,
+               median 49.8%. The quarter boundaries are round fractions of
+               addresses chosen for being sayable in words, not percentiles; on
+               this cohort they happen to split it fairly evenly, which is a
+               property of this cohort and not the definition.
+
   FLOOD RISK   Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2),
                fetched by scripts/fetch_ea_flood_risk.py. Banded on the SHARE OF
                ADDRESSES at Medium or High risk - that is the 1%-annual-chance
@@ -137,6 +162,17 @@ FLOOD_UNAVAILABLE = 255
 ROAD_VINTAGE = 'DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden'
 AQ_VINTAGE = 'DEFRA background pollution maps, 2022 annual mean, 1 km grid'
 FLOOD_VINTAGE = 'Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)'
+TRANSPORT_VINTAGE = 'NaPTAN (DfT) rail, metro and tram access nodes'
+
+NAPTAN_CSV = DATA / 'naptan.csv'
+# Rail station access areas and entrances, metro/underground entrances, tram and
+# metro access points, and platforms. Deliberately excludes BCT (bus stop on
+# street), which is 96% of the register.
+NAPTAN_RAIL_TYPES = {'RLY', 'RSE', 'PLT', 'TMU', 'MET'}
+WALK_RADIUS_M = 800.0
+TRANSPORT_EXCELLENT_SHARE = 75.0
+TRANSPORT_GOOD_SHARE = 50.0
+TRANSPORT_MODERATE_SHARE = 25.0
 
 # Wales is not in the England road-noise coverage; Natural Resources Wales
 # publishes its own. A city here gets air quality (the DEFRA grid is UK-wide)
@@ -306,6 +342,75 @@ def sample_aq(grids, points):
     }, counts
 
 
+def load_naptan_grid():
+    """Rail/metro/tram nodes indexed into 1 km British National Grid cells.
+
+    A grid, not a spatial library: the search radius is 800 m, so a 3x3 block of
+    1 km cells always contains every candidate and the whole lookup stays in the
+    standard library.
+    """
+    if not NAPTAN_CSV.exists():
+        raise SystemExit(
+            f'NaPTAN not found at {NAPTAN_CSV}. Fetch with:\n'
+            '  curl -o data/naptan.csv '
+            '"https://naptan.api.dft.gov.uk/v1/access-nodes?dataFormat=csv"'
+        )
+    grid = defaultdict(list)
+    kept = 0
+    with NAPTAN_CSV.open(newline='', encoding='utf-8-sig', errors='replace') as fh:
+        for row in csv.DictReader(fh):
+            if row.get('StopType') not in NAPTAN_RAIL_TYPES:
+                continue
+            try:
+                e, n = float(row['Easting']), float(row['Northing'])
+            except (KeyError, ValueError):
+                continue
+            grid[(int(e // 1000), int(n // 1000))].append((e, n))
+            kept += 1
+    print(f'  {kept:,} rail/metro/tram access nodes indexed')
+    return grid
+
+
+def transport_share(grid, points):
+    """Share of points within WALK_RADIUS_M of any indexed node."""
+    import numpy as np
+    from pyproj import Transformer
+
+    tr = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
+    xs, ys = tr.transform(
+        np.array([p[1] for p in points]), np.array([p[0] for p in points])
+    )
+    r2 = WALK_RADIUS_M * WALK_RADIUS_M
+    near = 0
+    for x, y in zip(xs, ys, strict=True):
+        cx, cy = int(x // 1000), int(y // 1000)
+        hit = False
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for sx, sy in grid.get((cx + dx, cy + dy), ()):
+                    if (sx - x) ** 2 + (sy - y) ** 2 <= r2:
+                        hit = True
+                        break
+                if hit:
+                    break
+            if hit:
+                break
+        near += hit
+    return 100.0 * near / len(points) if points else None
+
+
+def transport_band(share):
+    if share is None:
+        return None
+    if share >= TRANSPORT_EXCELLENT_SHARE:
+        return 'excellent'
+    if share >= TRANSPORT_GOOD_SHARE:
+        return 'good'
+    if share >= TRANSPORT_MODERATE_SHARE:
+        return 'moderate'
+    return 'poor'
+
+
 def flood_band(medium_or_high_pct):
     """Band from the share of addresses at or above the 1% annual chance line."""
     if medium_or_high_pct is None:
@@ -358,6 +463,9 @@ def derive(limit=None):
     print('loading DEFRA air-quality grids...')
     grids = load_aq_grid()
 
+    print('loading NaPTAN...')
+    naptan = load_naptan_grid()
+
     import numpy as np
 
     results = {}
@@ -390,6 +498,12 @@ def derive(limit=None):
                     rec['flood'] = flood_band(pct)
                     rec['floodCoverage'] = round(100 * known.size / len(points), 1)
                     rec['floodVintage'] = FLOOD_VINTAGE
+
+            share = transport_share(naptan, points)
+            if share is not None:
+                rec['transportWithin800mPct'] = round(share, 1)
+                rec['transport'] = transport_band(share)
+                rec['transportVintage'] = TRANSPORT_VINTAGE
 
             aq, counts = sample_aq(grids, points)
             band, worst = aq_band(aq['no2'], aq['pm25'])
@@ -427,7 +541,12 @@ def report(results):
                 if 'flood' in r
                 else 'flood NO DATA           '
             )
-            print(f'  {borough:28s} {r["postcodes"]:6,d} pc  {road}  {aq}  {fl}')
+            tr_ = (
+                f"tr {r['transport']:9s} {r['transportWithin800mPct']:5.1f}% <800m"
+                if 'transport' in r
+                else 'tr NO DATA            '
+            )
+            print(f'  {borough:28s} {r["postcodes"]:6,d} pc  {road}  {aq}  {fl}  {tr_}')
 
 
 DERIVED_KEYS = (
@@ -441,6 +560,9 @@ DERIVED_KEYS = (
     'airQuality',
     'airQualityWhoRatio',
     'airQualityVintage',
+    'transport',
+    'transportWithin800mPct',
+    'transportVintage',
     'flood',
     'floodMediumOrHighPct',
     'floodCoverage',
@@ -505,10 +627,106 @@ def apply_to_extra(results, write):
     return diffs
 
 
+LAMBDA_FIELDS = ('transport',)
+
+
+def write_lambda(results, write):
+    """Put the derived SCORING fields into the score Lambda's borough dicts.
+
+    WHY THIS EXISTS AND THE OTHERS DO NOT. Road noise, air quality and flood are
+    display-only, so borough-extra.json is their single holder. `transport` is a
+    SCORING input, weighted 0.25 of liveability, and the Lambda scores from its
+    own CITIES dict - so leaving it in one holder would put the site and the API
+    on different numbers, which is the divergence class this repo has shipped
+    three times.
+
+    tests/test_borough_data_parity.py compares the two holders and is the guard
+    that this stayed honest; validate_borough_vocabulary() at Lambda import is
+    the guard that the values are legal.
+
+    Handles both source shapes: London's multi-line borough dicts and the newer
+    cities' single-line ones.
+    """
+    import re
+
+    def block_extent(text, opening_index):
+        """(start, end) of a brace-delimited literal, by matching depth."""
+        depth = 0
+        for i in range(opening_index, len(text)):
+            if text[i] == '{':
+                depth += 1
+            elif text[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    return opening_index, i
+        raise SystemExit('unbalanced braces in the Lambda source')
+
+    src = SCORE_APP.read_text(encoding='utf-8')
+    changed = 0
+    for city, boroughs in results.items():
+        # SCOPE THE SEARCH TO THIS CITY'S OWN DICT. A global search for
+        # "'Hillingdon': {" finds LONDON_PREVIOUS_PT at line 183 long before
+        # LONDON_BOROUGHS at line 782, and writes the scoring field into the
+        # previous-vintage price table that ?compare=previous reads. Measured:
+        # it silently patched 81 lines of the wrong dict on the first run.
+        anchor = f'{city.upper()}_BOROUGHS = {{'
+        if src.find(anchor) < 0:
+            print(f'    {city}: no {anchor.rstrip(" ={")} in the Lambda source')
+            continue
+
+        for borough, rec in boroughs.items():
+            # Relocated per borough: every edit shifts every later offset, so a
+            # block range computed once goes stale after the first write.
+            at = src.find(anchor)
+            city_start, city_end = block_extent(src, src.index('{', at))
+            for field in LAMBDA_FIELDS:
+                value = rec.get(field)
+                if value is None:
+                    continue
+                # Locate this borough's dict literal, then its extent by brace
+                # matching. Regex alone cannot find the end of a nested dict.
+                key = re.escape(f"'{borough}': {{")
+                mo = re.search(key, src[city_start : city_end + 1])
+                if not mo:
+                    print(f'    {city}/{borough}: not found inside {anchor.rstrip(" ={")}')
+                    continue
+                start, end = block_extent(src, city_start + mo.end() - 1)
+                body = src[start : end + 1]
+                existing = re.search(rf"'{field}': '([a-z-]+)'", body)
+                if existing:
+                    if existing.group(1) == value:
+                        continue
+                    new_body = body[: existing.start()] + f"'{field}': '{value}'" + body[existing.end() :]
+                else:
+                    # Insert before the closing brace, matching the local style:
+                    # multi-line dicts get their own indented line.
+                    if '\n' in body:
+                        indent = ' ' * 8
+                        new_body = body[:-1].rstrip()
+                        if not new_body.endswith(','):
+                            new_body += ','
+                        new_body += f"\n{indent}'{field}': '{value}',\n    }}"
+                    else:
+                        new_body = body[:-1].rstrip()
+                        if not new_body.endswith(','):
+                            new_body += ','
+                        new_body += f" '{field}': '{value}'}}"
+                src = src[:start] + new_body + src[end + 1 :]
+                changed += 1
+    if changed and write:
+        SCORE_APP.write_text(src, encoding='utf-8', newline='')
+    return changed
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--check', action='store_true', help='exit 1 if the holder disagrees')
     ap.add_argument('--write', action='store_true', help='update data/borough-extra.json')
+    ap.add_argument(
+        '--write-lambda',
+        action='store_true',
+        help="also put scoring fields into the score Lambda's borough dicts",
+    )
     ap.add_argument('--limit', type=int, help='only read N NSPL rows (smoke test)')
     args = ap.parse_args()
 
@@ -518,6 +736,10 @@ def main():
     if not (args.check or args.write):
         print('\n(report only; pass --write to update borough-extra.json)')
         return 0
+
+    if args.write_lambda:
+        n = write_lambda(results, write=True)
+        print(f'\n{n} field(s) written into {SCORE_APP.name}')
 
     diffs = apply_to_extra(results, write=args.write)
     if args.check:

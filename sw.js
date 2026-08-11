@@ -146,7 +146,11 @@
 // plus two search fixes that had never worked - generated-city area keys were
 // unreachable by search, and every South Yorkshire search threw on a city with
 // no airport. All inline in index.html, which is cache-first.
-const VERSION = 'v1.0.26';
+// v1.0.27 (2026-08-11): methodology v3.6 - transport derived from NaPTAN for all
+// 81 boroughs, a SCORING input at 0.25 of liveability. 52 of 86 boroughs move.
+// index.html carries the version string and data/borough-extra.json carries the
+// values, so both change and this bump is required by the rule at the top.
+const VERSION = 'v1.0.27';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

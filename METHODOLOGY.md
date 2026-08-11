@@ -967,6 +967,57 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 > diligence process starts from, so a supplier list that is three-quarters out of date on the
 > `live` component is a procurement problem, not a tidiness one.
 
+### 7.2 Transport, derived nationally (v3.6, 2026-08-11)
+
+**`transport` is a SCORING input, weighted 0.25 of liveability**, and until
+v3.6 it existed for London and New York only. London's values were curated and
+PTAL-informed; the other cities had none, so their liveability rested on two
+inputs of four and the missing weight was redistributed.
+
+It is now derived for **all 81 boroughs** from **NaPTAN**, the Department for
+Transport's national public transport access node register, as the **share of a
+borough's postcodes within 800 m of a rail, metro or tram access node**. 800 m
+is the standard ten-minute-walk planning threshold.
+
+| Band | Condition |
+|---|---|
+| `excellent` | >= 3/4 of postcodes within 800 m |
+| `good` | >= 1/2 |
+| `moderate` | >= 1/4 |
+| `poor` | < 1/4 |
+
+**Rail, metro and tram only, not bus, and the distinction is load-bearing.**
+416,539 of NaPTAN's 435,298 nodes are bus stops. Include them and essentially
+every urban postcode falls within 800 m of one, which measures nothing. This is
+accessibility to the **high-capacity network** and is described as that.
+
+> **It is NOT PTAL.** PTAL is an all-modes, London-only calculation from
+> Transport for London that cannot be reproduced for the other cities. Calling
+> this PTAL would be the same overclaim as calling a runway-geometry estimate a
+> DEFRA sample, which this document already refuses to do.
+
+**Measured spread across all 81 boroughs:** 9.5% (Coventry) to 100% (City of
+London), median 49.8%. The quarter boundaries are round fractions of addresses,
+chosen for being sayable in words rather than fitted; on this cohort they happen
+to split it fairly evenly, which is a property of the cohort and not of the
+definition.
+
+**What moved.** 52 of 86 scored boroughs changed liveability by more than 0.05,
+mean 0.64 and maximum 1.50 (Enfield, +1.50, which the curated table had as
+`moderate` against a measured 76.2% within 800 m). London's boroughs mostly rose
+and the other cities' mostly fell, because the derived measure says London's
+rail access genuinely is better - the curated values had understated London's
+outer boroughs and the absent values had let the other cities score on their two
+strongest inputs alone.
+
+**Cardiff became scoreable for the first time.** Its four boroughs had only
+`crimeRate`, one input, below the two-input floor; with transport they reach two
+and now publish a liveability score. They remain API-only for other reasons.
+
+Both holders are written together by `scripts/build_borough_bands.py
+--write --write-lambda`, and `tests/test_borough_data_parity.py` fails the build
+if they drift.
+
 ### 7.1 Borough road-noise and air-quality bands (added 2026-08-11)
 
 These two bands drive **map overlays and the borough detail panel only**. Neither
