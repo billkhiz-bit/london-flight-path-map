@@ -6576,6 +6576,54 @@
       // a mismatched file is refused rather than trusted.
       const AIRCRAFT_QUIET_METHODOLOGY = '3.6';
 
+      // Methodology v3.8. MUST MATCH AIRPORT_NOISE_SCALE in
+      // backend/lambdas/score/app.py - this page computes quiet client-side
+      // from the same geometry, so a value here that differs from the Lambda's
+      // is the site/API divergence this repo keeps rediscovering.
+      //
+      // Each airport's noise footprint relative to Heathrow's, as an equivalent
+      // radius: sqrt(area above 55 dB Lden / pi) from that airport's DEFRA
+      // Round 4 surface, over Heathrow's 4.91 km. The distance ramps below are
+      // Heathrow-calibrated, so dividing a real distance by this gives the
+      // distance from Heathrow that would carry the same exposure.
+      //
+      // Validated: across the 35,352 London postcodes DEFRA actually measured,
+      // scaling cuts mean absolute error against the measurement from 3.230 to
+      // 1.879, with 14,730 postcodes closer and 20 further.
+      const AIRPORT_NOISE_SCALE = {
+        LHR: 1.0, STN: 0.741, EMA: 0.705, MAN: 0.589, LTN: 0.547,
+        LGW: 0.475, BHX: 0.449, BRS: 0.365, NCL: 0.346, LPL: 0.312,
+        LBA: 0.275, LCY: 0.19,
+      };
+      // Airports DEFRA does not map (CWL, MME today) are below the threshold at
+      // which the mapping duty applies, so they are smaller than the smallest
+      // mapped one. Takes London City's value rather than extrapolating below
+      // it. New York is not DEFRA territory and is deliberately unscaled at 1.0.
+      const UNMAPPED_AIRPORT_SCALE = 0.19;
+      // Derived from NYC_AIRPORTS above rather than re-listed: a second literal
+      // list of the same four codes is one more thing to keep in step, and the
+      // first draft of this shadowed that constant outright - a duplicate
+      // `const` in one scope is a parse error, so the whole page would have
+      // failed to load. ESLint caught it; nothing else would have.
+      function airportNoiseScale(code) {
+        if (NYC_AIRPORTS.some((ap) => ap.code === code)) return 1.0;
+        return AIRPORT_NOISE_SCALE[code] ?? UNMAPPED_AIRPORT_SCALE;
+      }
+
+      // Mirrors major_airport / secondary_airport in CITY_GEOMETRY in the score
+      // Lambda. Until 2026-08-11 both ramps below hardcoded `JFK` for New York
+      // and `LHR` for everything else, so the +2 major-airport bonus could not
+      // fire in ANY of the seven single-airport cities while the Lambda applied
+      // it - the site scored them 2 noise points quieter than /v1/score for
+      // every postcode within 15 km of their airport.
+      const MAJOR_AIRPORT = {
+        london: 'LHR', nyc: 'JFK', westmidlands: 'BHX', westyorkshire: 'LBA',
+        southyorkshire: null, merseyside: 'LPL', tyneandwear: 'NCL',
+        leicester: 'EMA', teesside: 'MME', bristol: 'BRS', cardiff: 'CWL',
+        nottingham: 'EMA', manchester: 'MAN',
+      };
+      const SECONDARY_AIRPORT = { nyc: 'LGA' };
+
       async function hydrateAircraftQuiet() {
         try {
           const resp = await fetch('/data/aircraft-quiet-london.json', { cache: 'no-cache' });
@@ -6774,9 +6822,13 @@
 
           // 1. QUIET SCORE - computed from actual distance to airports + flight paths
           let noiseScore = 0;
+          // Distances are divided by AIRPORT_NOISE_SCALE before laddering, so
+          // every comparison below is in Heathrow-equivalent km (v3.8). Keep in
+          // step with calc_postcode_quiet in the score Lambda AND with the
+          // second copy of this ramp in analysePostcode.
           const apDists = airports.map((ap) => ({
             code: ap.code,
-            dist: _quickDist(lat, lon, ap.coords[1], ap.coords[0]),
+            dist: _quickDist(lat, lon, ap.coords[1], ap.coords[0]) / airportNoiseScale(ap.code),
           }));
           const nearestApDist = Math.min(...apDists.map((a) => a.dist));
           if (nearestApDist < 3) noiseScore += 5;
@@ -6787,8 +6839,9 @@
 
           let minPathDist = Infinity;
           paths.forEach((fp) => {
+            const pathScale = airportNoiseScale(fp.airport);
             fp.coordinates.forEach((c) => {
-              const d = _quickDist(lat, lon, c[1], c[0]);
+              const d = _quickDist(lat, lon, c[1], c[0]) / pathScale;
               if (d < minPathDist) minPathDist = d;
             });
           });
@@ -6797,16 +6850,13 @@
           else if (minPathDist < 4) noiseScore += 2;
           else if (minPathDist < 6) noiseScore += 1;
 
-          // Major airport bonus
-          if (city === 'nyc') {
-            const jfk = apDists.find((a) => a.code === 'JFK');
-            if (jfk && jfk.dist < 15) noiseScore += 2;
-            const lga = apDists.find((a) => a.code === 'LGA');
-            if (lga && lga.dist < 10) noiseScore += 1;
-          } else {
-            const lhr = apDists.find((a) => a.code === 'LHR');
-            if (lhr && lhr.dist < 15) noiseScore += 2;
-          }
+          // Major airport bonus, from the registry rather than a hardcoded code
+          const majorCode = MAJOR_AIRPORT[city];
+          const major = majorCode && apDists.find((a) => a.code === majorCode);
+          if (major && major.dist < 15) noiseScore += 2;
+          const secondCode = SECONDARY_AIRPORT[city];
+          const second = secondCode && apDists.find((a) => a.code === secondCode);
+          if (second && second.dist < 10) noiseScore += 1;
 
           // Rotary noise. Added here 2026-08-03: analysePostcode() has applied this
           // since the heliport term existed, and this scorer never did - so the same
@@ -7578,24 +7628,33 @@
         const lon = result.longitude;
         const borough = result.admin_district;
 
-        // Distance to each airport
+        // Distance to each airport.
+        //
+        // `dist` stays in REAL km because the panel prints it ("6.2 km from
+        // Heathrow"); `scaledDist` is the same distance in Heathrow-equivalent
+        // km and is what the noise ladder reads (v3.8). Sorting stays on the
+        // real distance so "nearest airport" still means nearest.
         const airportDists = getActiveAirports()
-          .map((ap) => ({
-            ...ap,
-            dist: distanceTo(lat, lon, ap.coords[1], ap.coords[0]),
-          }))
+          .map((ap) => {
+            const d = distanceTo(lat, lon, ap.coords[1], ap.coords[0]);
+            return { ...ap, dist: d, scaledDist: d / airportNoiseScale(ap.code) };
+          })
           .sort((a, b) => a.dist - b.dist);
 
-        // Find nearest flight path point
+        // Find nearest flight path point. Same split: `minPathDist` is real km
+        // and names the corridor in the panel, `minPathScaled` drives the ladder.
         let minPathDist = Infinity;
+        let minPathScaled = Infinity;
         let nearestPath = null;
         getActiveFlightPaths().forEach((fp) => {
+          const pathScale = airportNoiseScale(fp.airport);
           fp.coordinates.forEach((c) => {
             const d = distanceTo(lat, lon, c[1], c[0]);
             if (d < minPathDist) {
               minPathDist = d;
               nearestPath = fp;
             }
+            if (d / pathScale < minPathScaled) minPathScaled = d / pathScale;
           });
         });
 
@@ -7614,7 +7673,12 @@
         // front end. Infinity is the honest value - every distance test below
         // then fails, which is what "no airport nearby" should mean, whereas 0
         // would score the whole city as if it sat on a runway.
-        const nearestAirportDist = airportDists.length ? airportDists[0].dist : Infinity;
+        // The LOUDEST airport in Heathrow-equivalent km, not the nearest in real
+        // km - with per-airport scales those differ, and a point 8 km from
+        // London City is a quieter place than one 8 km from Heathrow.
+        const nearestAirportDist = airportDists.length
+          ? Math.min(...airportDists.map((a) => a.scaledDist))
+          : Infinity;
         if (nearestAirportDist < 3) {
           noiseScore += 5;
         } else if (nearestAirportDist < 6) {
@@ -7627,35 +7691,28 @@
           noiseScore += 1;
         }
 
-        // Flight path proximity
-        if (minPathDist < 1) {
+        // Flight path proximity, in Heathrow-equivalent km
+        if (minPathScaled < 1) {
           noiseScore += 4;
-        } else if (minPathDist < 2) {
+        } else if (minPathScaled < 2) {
           noiseScore += 3;
-        } else if (minPathDist < 4) {
+        } else if (minPathScaled < 4) {
           noiseScore += 2;
-        } else if (minPathDist < 6) {
+        } else if (minPathScaled < 6) {
           noiseScore += 1;
         }
 
-        // Major airport proximity bonus
-        if (currentCity === 'nyc') {
-          const jfkEntry = airportDists.find((a) => a.code === 'JFK');
-          const jfkDist = jfkEntry ? jfkEntry.dist : 999;
-          if (jfkDist < 15) {
-            noiseScore += 2;
-          }
-          const lgaEntry = airportDists.find((a) => a.code === 'LGA');
-          const lgaDist = lgaEntry ? lgaEntry.dist : 999;
-          if (lgaDist < 10) {
-            noiseScore += 1;
-          }
-        } else {
-          const lhrEntry = airportDists.find((a) => a.code === 'LHR');
-          const lhrDist = lhrEntry ? lhrEntry.dist : 999;
-          if (lhrDist < 15) {
-            noiseScore += 2;
-          }
+        // Major airport proximity bonus, from the registry rather than a
+        // hardcoded code - see MAJOR_AIRPORT for what the hardcoding cost.
+        const majorCode = MAJOR_AIRPORT[currentCity];
+        const majorEntry = majorCode && airportDists.find((a) => a.code === majorCode);
+        if (majorEntry && majorEntry.scaledDist < 15) {
+          noiseScore += 2;
+        }
+        const secondCode = SECONDARY_AIRPORT[currentCity];
+        const secondEntry = secondCode && airportDists.find((a) => a.code === secondCode);
+        if (secondEntry && secondEntry.scaledDist < 10) {
+          noiseScore += 1;
         }
 
         if (noiseScore >= 7) noiseEstimate = 'High';

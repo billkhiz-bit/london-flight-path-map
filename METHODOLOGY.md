@@ -1028,10 +1028,63 @@ City, 0.93 km) rather than extrapolated below it, and their provenance says
 `floored ... because this airport is below the threshold DEFRA maps at all`
 rather than claiming a measurement.
 
-**Effect.** 31 boroughs across 11 city-regions moved, all upward, by +0.30 to
-+1.60. No London or New York borough moved. Reproduce with
+**Effect on the borough tier.** 31 boroughs across 11 city-regions moved, all
+upward, by +0.30 to +1.60. No London or New York borough moved. Reproduce with
 `python scripts/build_aircraft_bands.py --check`, which is blocking in preflight
 and reads both the site and the Lambda.
+
+#### 7.4.1 The postcode tier carries the same scaling
+
+The borough band is the **fallback**. A postcode query resolves through the
+per-postcode Haversine tier of §4.5, which runs its own Heathrow-calibrated
+ladder — `<3 km +5, <6 km +4, <10 km +3, <15 km +2, <20 km +1`, plus a +2
+major-airport bonus and a flight-corridor term. Correcting the borough band
+alone would have left the two tiers **contradicting each other by up to 4.0
+points**, with the postcode tier overriding the corrected one: Stockton-on-Tees
+`moderate` as a borough and 1.0 at every postcode inside it.
+
+**Every distance in that tier is now divided by its airport's scale before being
+laddered**, so each threshold is read in *Heathrow-equivalent kilometres*. This
+applies per corridor as well as per airport — an approach into London City is no
+longer worth the same overhead as one into Heathrow.
+
+**No floor is applied here, and the asymmetry with §7.4 is deliberate.** A
+borough is a single centroid, so dividing by 0.19 could push a borough
+*containing* an airport out of the top band entirely — hence the near-field
+floor. A postcode carries a real distance: a point 500 m from the Teesside
+runway is 2.6 effective km and still scores the maximum, so the near field
+cannot be erased.
+
+**This was validated against DEFRA rather than argued for.**
+`data/aircraft-quiet-london.json` holds raster-derived quiet for **35,352 London
+postcodes**. The geometry tier only ever stands in for that raster where it has
+no coverage, so the better model is whichever reproduces it more closely:
+
+| | mean absolute error vs DEFRA | mean signed error |
+|---|---|---|
+| Unscaled (pre-v3.8) | 3.230 | −3.217 |
+| Scaled (v3.8) | **1.879** | **−1.742** |
+
+14,730 postcodes moved closer to the measurement and **20 moved further**. The
+signed error stays negative in both, meaning the model still reads noisier than
+DEFRA measured — the correction moves toward the measurement without crossing to
+the optimistic side.
+
+**London moves at postcode level** as a result: 65% of sampled postcodes, mean
++1.75 quiet. Heathrow is unscaled, so this is movement around Gatwick, Stansted,
+Luton and above all **London City, whose measured footprint is 2.7 km² against
+Heathrow's 75.6**. Within-city discrimination was checked before shipping —
+London retains all 11 distinct quiet values across the full 0.0–10.0 range, and
+no city collapsed to a single value.
+
+**Site/API parity.** The consumer site computes this tier client-side, so the
+scale table and the major-airport registry exist in `index.html` as well as in
+the Lambda and are compared by `test_airport_noise_scale_matches_the_site` and
+`test_major_airport_registry_matches_the_site`. The second of those was written
+after finding that **both client-side ramps hardcoded `JFK` for New York and
+`LHR` for everything else**, so the +2 major-airport bonus could not fire in any
+of the seven single-airport cities — the site had been scoring them 2 noise
+points quieter than `/v1/score` within 15 km of their own airport.
 
 ### 7.3 Healthcare, derived nationally (v3.7, 2026-08-11)
 

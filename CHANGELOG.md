@@ -50,6 +50,48 @@ entry is the notice record for that change.
   `--check` is now blocking in preflight. It was proven red on the real defect
   (89 disagreements) before being wired in.
 
+**The same defect lived in a second, higher-precedence code path, and fixing
+only the first would have made things worse.**
+
+- **The postcode tier had its own unscaled ramp.** Borough bands are the
+  *fallback*; a postcode query resolves through `calc_postcode_quiet`, which
+  runs its own Heathrow-calibrated ladder (`<3 km +5, <6 km +4 …` plus a +2
+  major-airport bonus). Scaling only the borough band left the two tiers
+  **contradicting each other by up to 4.0 points** - Stockton-on-Tees would have
+  read `moderate` as a borough while every postcode inside it scored 1.0, worse
+  than `high`.
+- **All four ramps now read Heathrow-equivalent kilometres**, each distance
+  divided by its own airport's footprint scale, including per-corridor: an
+  approach into London City is no longer worth the same overhead as one into
+  Heathrow. No floor is applied here, and unlike the borough case none is
+  needed - a borough is one centroid, but a postcode carries a real distance, so
+  a point 500 m from the Teesside runway is still 2.6 effective km and still
+  scores the maximum.
+- **Validated against DEFRA, not argued for.** `data/aircraft-quiet-london.json`
+  holds raster-measured quiet for **35,352 London postcodes**, so the better
+  model is simply the one that reproduces the measurement. Mean absolute error
+  falls from **3.230 to 1.879**; **14,730 postcodes move closer to DEFRA and 20
+  move further**. Both models still read noisier than DEFRA measured (signed
+  error −3.217 → −1.742), so the correction moves toward the measurement while
+  staying on the pessimistic side.
+- **London does move at postcode level**, by design and by that evidence: 65% of
+  sampled postcodes, mean +1.75 quiet. Heathrow is unscaled, so the movement is
+  around Gatwick, Stansted, Luton and especially **London City, whose footprint
+  is 2.7 km² against Heathrow's 75.6**. Within-city discrimination was checked
+  before shipping - London keeps all 11 distinct quiet values over its full
+  0.0-10.0 range, and no city collapsed to a single value.
+- **Fixed while in there: the site's major-airport bonus could never fire
+  outside London and New York.** Both client-side ramps hardcoded `JFK` for New
+  York and `LHR` for everything else, so in all **seven single-airport cities**
+  the site scored 2 noise points quieter than `/v1/score` for every postcode
+  within 15 km of that city's own airport. Now registry-driven on both sides.
+- **Two new guards, both proven red then green.**
+  `test_airport_noise_scale_matches_the_site` and
+  `test_major_airport_registry_matches_the_site` compare `index.html` against
+  the Lambda, because the site computes quiet client-side and a value on one
+  side only is invisible to every other test - the unit suites read only the
+  Lambda and Playwright reads only the site.
+
 ### 2026-08-11 (late) - Leicester and Teesside on /v1/score
 
 - **Two new city-regions, 13 boroughs, API-only for now** exactly as Cardiff and

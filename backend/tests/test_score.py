@@ -2237,6 +2237,50 @@ class SiteApiGeometryParityTests(unittest.TestCase):
     This test is the only thing that looks at both.
     """
 
+    def test_airport_noise_scale_matches_the_site(self):
+        """The v3.8 footprint scales are duplicated in index.html and here.
+
+        Both surfaces compute quiet from the same geometry, so a scale present
+        on one side and not the other reproduces exactly the divergence this
+        class exists to catch - and silently, because each side stays
+        self-consistent. A Lambda cannot import from a script or an HTML file,
+        so the copies are compared instead.
+        """
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        i = src.index('const AIRPORT_NOISE_SCALE = {')
+        blk = src[i:src.index('};', i)]
+        site = {m.group(1): float(m.group(2))
+                for m in re.finditer(r"(\w+): ([\d.]+)", blk)}
+        self.assertTrue(site, 'could not parse AIRPORT_NOISE_SCALE out of index.html')
+        self.assertEqual(
+            site, app.AIRPORT_NOISE_SCALE,
+            'index.html and the Lambda disagree on airport noise scales; '
+            'the site and /v1/score will publish different quiet values',
+        )
+
+        m = re.search(r'const UNMAPPED_AIRPORT_SCALE = ([\d.]+);', src)
+        self.assertIsNotNone(m, 'UNMAPPED_AIRPORT_SCALE missing from index.html')
+        self.assertEqual(float(m.group(1)), app.UNMAPPED_AIRPORT_SCALE)
+
+    def test_major_airport_registry_matches_the_site(self):
+        """Site and Lambda must agree which airport earns the +2 bonus.
+
+        They did not until 2026-08-11: the site hardcoded `JFK` for New York and
+        `LHR` for everything else, so the bonus could not fire in ANY of the
+        seven single-airport cities while CITY_GEOMETRY applied it - the site
+        scored them 2 noise points quieter than the API within 15 km of their
+        own airport.
+        """
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        i = src.index('const MAJOR_AIRPORT = {')
+        blk = src[i:src.index('};', i)]
+        site = {m.group(1): (None if m.group(2) == 'null' else m.group(2).strip("'"))
+                for m in re.finditer(r"(\w+): (null|'[A-Z]{3}')", blk)}
+        lam = {c: g['major_airport'] for c, g in app.CITY_GEOMETRY.items()}
+        self.assertEqual(site, lam, 'major-airport registries disagree')
+
     @staticmethod
     def _site_flight_paths():
         """Parse FLIGHT_PATHS out of index.html. Site stores [lon, lat]."""

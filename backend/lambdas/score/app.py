@@ -122,6 +122,37 @@ IMPACT_TO_QUIET = {
     'severe': 0.0,
 }
 
+# Methodology v3.8 (2026-08-11). Each airport's noise footprint relative to
+# Heathrow's, as an equivalent radius: sqrt(area above 55 dB Lden / pi) taken
+# from that airport's own DEFRA Round 4 surface and divided by Heathrow's
+# 4.91 km. Heathrow is 1.000 by construction.
+#
+# The DISTANCE RAMPS in calc_postcode_quiet are calibrated on Heathrow, exactly
+# as the borough band ladder was, and applying them unweighted asserted that
+# every airport was Heathrow-sized. Scaling the borough ladder alone would have
+# left the two tiers contradicting each other by up to 4.0 points - the postcode
+# tier OVERRIDES the borough band, so Stockton-on-Tees would have read `moderate`
+# as a borough and 1.0 (worse than `high`) at every postcode inside it.
+#
+# THIS TABLE IS DUPLICATED in scripts/build_aircraft_bands.py, which is where it
+# was measured. `test_airport_noise_scale_matches_the_generator` compares them,
+# because a Lambda cannot import from scripts/ and two silently drifting copies
+# is the two-holder failure this repo keeps rediscovering.
+AIRPORT_NOISE_SCALE = {
+    'LHR': 1.000, 'STN': 0.741, 'EMA': 0.705, 'MAN': 0.589, 'LTN': 0.547,
+    'LGW': 0.475, 'BHX': 0.449, 'BRS': 0.365, 'NCL': 0.346, 'LPL': 0.312,
+    'LBA': 0.275, 'LCY': 0.190,
+}
+# An airport DEFRA does not map is below the threshold at which the mapping duty
+# applies, so it is smaller than the smallest mapped one. This takes London
+# City's value rather than extrapolating below it - pessimistic, and not a
+# number pretending to be a measurement. Covers CWL and MME today.
+UNMAPPED_AIRPORT_SCALE = 0.190
+
+
+def airport_noise_scale(code):
+    return AIRPORT_NOISE_SCALE.get(code, UNMAPPED_AIRPORT_SCALE)
+
 # Methodology v3.3 (2026-07-30): growth is now weighted ONLY for the investor
 # persona. Every other persona carries 0.00.
 #
@@ -4080,7 +4111,26 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None, raster_lden=_RASTER
     if not geo['airports']:
         return None
 
-    airport_dists = [(ap['code'], haversine_km(lat, lon, ap['lat'], ap['lon'])) for ap in geo['airports']]
+    # Every distance below is divided by that airport's AIRPORT_NOISE_SCALE
+    # before being laddered - the ramps are Heathrow-calibrated, so an
+    # "effective km" is how far this would be from Heathrow for the same
+    # exposure. v3.8; before it, all four ramps ran on raw kilometres and every
+    # airport was implicitly Heathrow-sized.
+    #
+    # The near field survives scaling here in a way it did NOT at borough level,
+    # and the reason is resolution: a borough is one centroid, so dividing by
+    # 0.19 could push a borough containing an airport out of the top band
+    # entirely, which is why that path needed a floor. A postcode carries a real
+    # distance, so a point 500 m from the Teesside runway is still 2.6 effective
+    # km and still scores the maximum. No floor is needed and none is applied.
+    airport_dists = [
+        (ap['code'], haversine_km(lat, lon, ap['lat'], ap['lon']) / airport_noise_scale(ap['code']))
+        for ap in geo['airports']
+    ]
+    # The LOUDEST airport, not the nearest one. With per-airport scales those can
+    # differ: a point 8 km from London City (42 effective km) and 20 km from
+    # Heathrow (20 effective km) is a Heathrow location, and taking the nearest
+    # would have scored it as neither.
     nearest_ap_dist = min(d for _, d in airport_dists)
 
     noise_score = 0.0
@@ -4095,11 +4145,14 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None, raster_lden=_RASTER
     elif nearest_ap_dist < 20:
         noise_score += 1
 
-    # 2. Distance to nearest flight path waypoint
+    # 2. Distance to nearest flight path waypoint, scaled by the airport that
+    #    corridor serves - an approach into London City is not an approach into
+    #    Heathrow, and until v3.8 the two were worth the same overhead.
     min_path_dist = float('inf')
     for path in geo['paths']:
+        path_scale = airport_noise_scale(path.get('airport'))
         for plat, plon in path['coords']:
-            d = haversine_km(lat, lon, plat, plon)
+            d = haversine_km(lat, lon, plat, plon) / path_scale
             if d < min_path_dist:
                 min_path_dist = d
 

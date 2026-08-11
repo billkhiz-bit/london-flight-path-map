@@ -156,9 +156,14 @@
 // borough-extra.json the values, so both change.
 // v1.0.29 (2026-08-11): methodology v3.8 - the aircraft distance ladder is
 // scaled by each airport's measured DEFRA 55 dB Lden footprint instead of being
-// applied at Heathrow's size everywhere. 31 boroughs move, all upward; no London
-// borough moves, Heathrow being 1.000 by construction. index.html holds the
-// impact bands inline, so the shell must be re-fetched.
+// applied at Heathrow's size everywhere. 31 borough bands move, all upward.
+//
+// The POSTCODE tier moves too, London included: it runs its own copy of the
+// ramp client-side, and leaving it unscaled would have contradicted the
+// corrected borough band by up to 4.0 points. Validated on the 35,352 London
+// postcodes DEFRA measured - mean absolute error 3.230 -> 1.879. index.html
+// holds both the impact bands and the client-side ramp, so a stale shell would
+// publish different numbers from /v1/score.
 const VERSION = 'v1.0.29';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
