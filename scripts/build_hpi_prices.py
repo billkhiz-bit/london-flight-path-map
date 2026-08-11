@@ -173,6 +173,31 @@ CITY_LADS = {
         "Gedling": "E07000173",
         "Rushcliffe": "E07000176",
     },
+    # Leicester and Leicestershire: the city plus all seven county districts.
+    # The whole county rather than just the three contiguous boroughs, because a
+    # four-authority cohort of Leicester/Blaby/Charnwood/Oadby spans only
+    # 230k-281k and min-max scaling over a narrow cohort manufactures spread it
+    # has not measured. All eight span 230k-346k, 1.50x.
+    "leicester": {
+        "Leicester": "E06000016",
+        "Blaby": "E07000129",
+        "Charnwood": "E07000130",
+        "Harborough": "E07000131",
+        "Hinckley and Bosworth": "E07000132",
+        "Melton": "E07000133",
+        "North West Leicestershire": "E07000134",
+        "Oadby and Wigston": "E07000135",
+    },
+    # Teesside: the five Tees Valley unitaries. Darlington is included because
+    # it is part of the Tees Valley Combined Authority and its travel-to-work
+    # area, not because it is on the river.
+    "teesside": {
+        "Hartlepool": "E06000001",
+        "Middlesbrough": "E06000002",
+        "Redcar and Cleveland": "E06000003",
+        "Stockton-on-Tees": "E06000004",
+        "Darlington": "E06000005",
+    },
     # Cardiff spans TWO police forces (South Wales, Gwent), which matters for
     # the crime loader rather than here - noted so the composition is not
     # re-derived differently in two places.

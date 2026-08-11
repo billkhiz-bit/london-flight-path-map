@@ -84,6 +84,15 @@ CITY_PFA = {
     # Gwent). Those need an include-list rather than an exclude-list, which this
     # script does not have yet.
     'westmidlands': ('West Midlands',),
+    # Leicestershire Police also covers Rutland, which is not ours - hence the
+    # include-list below. Every one of the eight authorities has its OWN CSP row,
+    # unlike Nottingham, where Broxtowe, Gedling and Rushcliffe share a single
+    # 'South Nottinghamshire' partnership and therefore cannot be separated.
+    'leicester': ('Leicestershire',),
+    # Teesside spans TWO forces: Cleveland covers the four Tees unitaries and
+    # Darlington is Durham. Durham also publishes a 'County Durham' row that is
+    # not ours, so this needs the include-list as Cardiff does.
+    'teesside': ('Cleveland', 'Durham'),
     'westyorkshire': ('West Yorkshire',),
     'southyorkshire': ('South Yorkshire',),
     'merseyside': ('Merseyside',),
@@ -128,6 +137,14 @@ CSP_INCLUDE = {
     'cardiff': frozenset({
         'Cardiff', 'Vale of Glamorgan', 'Newport', 'Caerphilly',
     }),  # spans TWO forces: South Wales and Gwent
+    'leicester': frozenset({
+        'Leicester', 'Blaby', 'Charnwood', 'Harborough', 'Hinckley and Bosworth',
+        'Melton', 'North West Leicestershire', 'Oadby and Wigston',
+    }),  # Leicestershire Police also covers Rutland
+    'teesside': frozenset({
+        'Hartlepool', 'Middlesbrough', 'Redcar and Cleveland', 'Stockton-on-Tees',
+        'Darlington',
+    }),  # spans Cleveland and Durham; Durham also publishes a County Durham row
 }
 
 # ONS CSP name -> the name the registry holds.

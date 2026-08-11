@@ -85,6 +85,22 @@ AIRPORTS = {
         "lat": 52.8311, "lon": -1.32806,
         "le": (52.830601, -1.34957), "he": (52.831402, -1.30667), "runway": "09/27",
     },
+    # East Midlands, shared with Nottingham. EMA sits IN North West
+    # Leicestershire, which is part of this cohort, so Leicester is one of the
+    # few cities here whose airport is inside its own boundary rather than
+    # beyond it.
+    "leicester": {
+        "code": "EMA", "name": "East Midlands", "icao": "EGNX",
+        "lat": 52.8311, "lon": -1.32806,
+        "le": (52.830601, -1.34957), "he": (52.831402, -1.30667), "runway": "09/27",
+    },
+    # Teesside International, the former Durham Tees Valley. Verified from
+    # OurAirports: single 05/23 runway, 7,516 ft, open.
+    "teesside": {
+        "code": "MME", "name": "Teesside International", "icao": "EGNV",
+        "lat": 54.509201, "lon": -1.42941,
+        "le": (54.502201, -1.442430), "he": (54.516201, -1.416380), "runway": "05/23",
+    },
     "cardiff": {
         "code": "CWL", "name": "Cardiff", "icao": "EGFF",
         "lat": 51.396702, "lon": -3.34333,
@@ -122,7 +138,16 @@ ORDER = ["low", "low-moderate", "moderate", "moderate-high", "high", "severe"]
 CORRIDOR_LATERAL_KM = 5.0
 CORRIDOR_MAX_RANGE_KM = 25.0
 CORRIDOR_KM = 20.0  # how far out along the centreline approaches are modelled
-CORRIDOR_STEP_KM = 2.0  # finer than Manchester's ~5 km, which its own note flags
+# 1.0 km, and this is a CORRECTION rather than a preference. It read 2.0 until
+# 2026-08-11, while every corridor actually shipped in the Lambda measures
+# 0.85-1.00 km spacing - they were resampled to a common 1 km interval on
+# 2026-08-10 and this constant was never brought with them. Corridor distance is
+# measured to the NEAREST WAYPOINT, so a coarser polyline reads as further from
+# the corridor and therefore QUIETER: the next city added with 2.0 would have
+# been systematically and invisibly quieter than the nine already here.
+# CLAUDE.md states the rule as "regenerate at 1 km if any corridor is ever
+# re-derived"; this makes the code obey it instead of relying on the reader.
+CORRIDOR_STEP_KM = 1.0
 
 
 def hav(lat1, lon1, lat2, lon2):
