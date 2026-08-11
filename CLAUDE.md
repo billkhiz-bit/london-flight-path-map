@@ -84,7 +84,7 @@ each has a `--check` that can go red:
 | transport | `build_borough_bands.py --write --write-lambda` | **NaPTAN, share of postcodes within 800 m of a rail/metro/tram node. A SCORING input (0.25 of liveability), so it lives in BOTH holders — `tests/test_borough_data_parity.py` fails the build on drift. Methodology v3.6, 2026-08-11.** |
 | crimeRate | `refresh_crime_from_ons.py --check --city X` | ONS Table C4, 0 differ everywhere |
 | p8 | `build_progress8.py --check` | DfE KS4 2022/23 **Revised**, 0 differ |
-| impact | `build_aircraft_bands.py --city X` | ESTIMATE from runway geometry, NOT DEFRA |
+| impact | `build_aircraft_bands.py --check` | geometry ESTIMATE, ladder scaled by DEFRA footprint |
 | boundaries | `build_city_boroughs.py --all` | ONS codes, counts asserted |
 
 **Leaving `BACKEND_ONLY_CITIES` is a ONE-WAY DOOR.** The moment a city drops
@@ -129,6 +129,30 @@ Measuring first also corrected a claim this file used to make: **London was
 3.34 km median, not "~1 km"**, so the gap against the new cities' 4.00 km was
 about 20% rather than 4x. Everything is now <=1.01 km. Regenerate at 1 km if
 any corridor is ever re-derived.
+
+**The aircraft ladder is scaled per airport, and the fix had to be made TWICE
+(v3.8, 2026-08-11).** The distance ladder is calibrated on Heathrow and was
+applied unweighted everywhere, so Stockton-on-Tees was published `severe` — the
+same band as Hounslow — off an airport carrying 173,006 passengers a year. Each
+airport's ladder is now divided by its **measured DEFRA 55 dB Lden footprint**
+relative to Heathrow's; Heathrow is 1.000 so London bands cannot move. **Do not
+reach for passenger numbers**: East Midlands has the second-largest footprint of
+the twelve on 3.2M passengers because it flies freight at night, Gatwick 0.475 on
+40.9M.
+
+The important half is that **`calc_postcode_quiet` runs its OWN copy of the
+ramp** and takes precedence over the borough band, so fixing only the band left
+the two tiers contradicting each other by 4.0 points. **When correcting any
+scoring input here, ask which tier answers first.** The borough path needs a
+near-field floor (scaling alone moved 29 boroughs and moved all 29 *down*,
+putting Vale of Glamorgan on `low` with Cardiff Airport inside it); the postcode
+path does not, because a postcode carries a real distance.
+
+**There is a validation set for quiet geometry — use it.**
+`data/aircraft-quiet-london.json` holds DEFRA raster-measured quiet for 35,352
+London postcodes, and the geometry tier only ever stands in for that raster, so
+any change to it can be scored rather than argued: v3.8 cut mean absolute error
+from 3.230 to 1.879, 14,730 postcodes closer and 20 further.
 
 **A city with NO airports is a real case.** South Yorkshire has none (Doncaster
 Sheffield closed to commercial flights in 2022), and un-gating turned that into

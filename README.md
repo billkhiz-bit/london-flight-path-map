@@ -12,12 +12,17 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 > road Lden, the Environment Agency's Risk of Flooding from Rivers and Sea, and
 > DEFRA background pollution maps — so all three map layers are measured
 > everywhere instead of curated for London and defaulted elsewhere. What is
-> still missing outside London and New York is **DEFRA-sampled aircraft noise**
-> - transport (v3.6, NaPTAN) and healthcare (v3.7, NHS ODS) are both derived
-> nationally now, and neighbourhood area search covers all seven city-regions;
-> aircraft bands
+> still missing outside London and New York is **DEFRA-sampled aircraft noise**;
+> transport (v3.6, NaPTAN) and healthcare (v3.7, NHS ODS) are both derived
+> nationally now, and neighbourhood area search covers all seven city-regions.
+> Aircraft bands
 > remain an estimate from runway geometry and the map legend says so rather than
-> borrowing London's DEFRA labelling. Liveability now rests on **all four
+> borrowing London's DEFRA labelling — but since **v3.8** that estimate is
+> **scaled per airport by its measured DEFRA 55 dB Lden footprint**, so a small
+> airport no longer scores like a large one (Heathrow 1.000, Manchester 0.589,
+> Teesside 0.190). Validated against the 35,352 London postcodes DEFRA did
+> measure: mean absolute error against the measurement falls from 3.230 to
+> 1.879. Liveability now rests on **all four
 > measured inputs** for 78 of 86 boroughs,
 > with `context.liveResolution` reporting that per response and the absent
 > inputs having their weight **redistributed** rather than filled with a
