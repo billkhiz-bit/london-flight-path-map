@@ -37,6 +37,13 @@
  * that number was three while the app had nine. City ten needs no edit here.
  *
  *   node tests/city-switch.mjs
+ *   node tests/city-switch.mjs https://skyscore.co.uk/   (verify a deploy)
+ *
+ * With no argument it serves the working tree, which is what preflight runs and
+ * what gates a deploy. Given a URL it checks that URL instead, so the same
+ * assertions confirm production afterwards — the defects this file exists for
+ * were LIVE for a day, and "the upload succeeded" is not evidence that the
+ * cities work.
  */
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
@@ -60,6 +67,8 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
+const TARGET = process.argv[2] || null;
+
 const server = createServer(async (req, res) => {
   const raw = decodeURIComponent(req.url.split('?')[0]);
   const p = join(ROOT, normalize(raw === '/' ? '/index.html' : raw));
@@ -75,7 +84,11 @@ const server = createServer(async (req, res) => {
     res.writeHead(404).end();
   }
 });
-await new Promise((r) => server.listen(PORT, r));
+// Only bind the local server when it is the thing being tested. Starting it
+// against a remote target would be a port collision waiting to happen for no
+// benefit.
+if (!TARGET) await new Promise((r) => server.listen(PORT, r));
+const url = TARGET || `http://localhost:${PORT}/index.html`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -86,7 +99,7 @@ page.on('console', (m) => {
   if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 140));
 });
 
-await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
+await page.goto(url, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(3000);
 
 // The expected borough count comes from the city's own boundary file, fetched
@@ -121,7 +134,7 @@ const cities = await page.evaluate(async () => {
   return out;
 });
 
-console.log(`\nCity switch: ${cities.length} cities from CITY_DATA\n`);
+console.log(`\nCity switch: ${cities.length} cities from CITY_DATA at ${url}\n`);
 
 let fail = 0;
 for (const city of cities) {
@@ -170,7 +183,7 @@ for (const city of cities) {
 }
 
 await browser.close();
-server.close();
+if (!TARGET) server.close();
 
 console.log(
   fail === 0
