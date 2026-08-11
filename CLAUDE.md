@@ -22,6 +22,7 @@ If a future session lands you back in `OneDrive\Desktop\london-flight-path-map`,
 
 Two project-level planning docs live alongside this file. Read them when picking up work between sessions:
 - **`ROADMAP.md`**, the broader rolling plan: vision, three parallel tracks (consumer site, B2B API, competitions/outreach), near-term task list with deadlines, open decisions. The source of truth for "what next".
+- **`EXPANSION.md`**, which cities and countries are reachable and what each costs. Read before proposing a new city: the NATION is the unit of work, not the city. Every source behind an English city-region is already national (NSPL, HPI, Price Paid, ONS crime, DEFRA air/road/aircraft, EA flood), so England is nearly free; Wales loses schools, road noise and flood to different publishers, and Scotland changes publisher for five of six components. Ranked on measured 2025 transaction volume - we currently cover 34.6% of English and Welsh sales.
 - **`BUILDATHON_PLAN.md`**, focused single-purpose doc for the Shared Futures Buildathon (deadline 2026-05-15, event 2026-06-07). Will be archived after the event.
 
 When a task ships or a decision lands, update the relevant doc rather than relying on chat memory.

@@ -14,6 +14,8 @@ Android side: keystore generated at `~/.keystores/sky-score-release.jks` (upload
 
 ---
 
+- **`EXPANSION.md`** (new 2026-08-11): which cities and countries are reachable and what each costs, ranked on measured 2025 transaction volume. The key finding is that the NATION is the unit of work, not the city: every source behind an English city-region is already national, so England is nearly free, while Wales loses schools/road/flood to different publishers and Scotland changes publisher for five of six components.
+
 ## Vision
 
 Sky Score is the noise + livability layer for UK property data, designed to be honest about hidden harms (aviation noise, road noise, air quality, crime) that listings sites have a financial incentive to hide. Two surfaces: a consumer site that informs renters/buyers, and a B2B API that puts the same data inside the workflows of conveyancers, property data aggregators, and Islamic-finance providers. Aligned with Maqasid al-Shariah (protecting buyers from harm) and explicitly riba-free in customer targeting.
