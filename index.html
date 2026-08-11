@@ -3821,12 +3821,12 @@
       //                    sample. Provisional; see app.py for the full note.
       // West Midlands. API-derived; every value has a script that re-derives it.
       const WESTMIDLANDS_BOROUGH_DATA_RAW = {
-          'Birmingham': { impact: 'severe', avg_price: 232657, trend: -0.3 },
-          'Coventry': { impact: 'low-moderate', avg_price: 220410, trend: 1.3 },
-          'Dudley': { impact: 'low-moderate', avg_price: 229616, trend: 4.5 },
-          'Sandwell': { impact: 'low-moderate', avg_price: 209354, trend: 2.9 },
-          'Solihull': { impact: 'severe', avg_price: 336572, trend: 4.0 },
-          'Walsall': { impact: 'moderate', avg_price: 214032, trend: 1.6 },
+          'Birmingham': { impact: 'moderate-high', avg_price: 232657, trend: -0.3 },
+          'Coventry': { impact: 'low', avg_price: 220410, trend: 1.3 },
+          'Dudley': { impact: 'low', avg_price: 229616, trend: 4.5 },
+          'Sandwell': { impact: 'low', avg_price: 209354, trend: 2.9 },
+          'Solihull': { impact: 'moderate-high', avg_price: 336572, trend: 4.0 },
+          'Walsall': { impact: 'low', avg_price: 214032, trend: 1.6 },
           'Wolverhampton': { impact: 'low', avg_price: 216339, trend: 8.0 },
       };
       let WESTMIDLANDS_BOROUGH_EXTRA = {};
@@ -3855,10 +3855,10 @@
 
       // West Yorkshire. API-derived; every value has a script that re-derives it.
       const WESTYORKSHIRE_BOROUGH_DATA_RAW = {
-          'Bradford': { impact: 'moderate', avg_price: 187452, trend: 5.6 },
+          'Bradford': { impact: 'low', avg_price: 187452, trend: 5.6 },
           'Calderdale': { impact: 'low', avg_price: 189509, trend: 5.1 },
           'Kirklees': { impact: 'low', avg_price: 205971, trend: 4.1 },
-          'Leeds': { impact: 'moderate-high', avg_price: 246699, trend: 3.7 },
+          'Leeds': { impact: 'moderate', avg_price: 246699, trend: 3.7 },
           'Wakefield': { impact: 'low', avg_price: 197140, trend: 2.7 },
       };
       let WESTYORKSHIRE_BOROUGH_EXTRA = {};
@@ -3914,10 +3914,10 @@
       // Merseyside. API-derived; every value has a script that re-derives it.
       const MERSEYSIDE_BOROUGH_DATA_RAW = {
           'Knowsley': { impact: 'moderate', avg_price: 188727, trend: 3.0 },
-          'Liverpool': { impact: 'high', avg_price: 184670, trend: 4.8 },
-          'St Helens': { impact: 'low-moderate', avg_price: 182923, trend: 8.8 },
+          'Liverpool': { impact: 'moderate', avg_price: 184670, trend: 4.8 },
+          'St Helens': { impact: 'low', avg_price: 182923, trend: 8.8 },
           'Sefton': { impact: 'low', avg_price: 222406, trend: 3.5 },
-          'Wirral': { impact: 'moderate-high', avg_price: 217407, trend: 6.5 },
+          'Wirral': { impact: 'low', avg_price: 217407, trend: 6.5 },
       };
       let MERSEYSIDE_BOROUGH_EXTRA = {};
       const MERSEYSIDE_AREA_MAP = {};
@@ -3945,11 +3945,11 @@
 
       // Tyne and Wear. API-derived; every value has a script that re-derives it.
       const TYNEANDWEAR_BOROUGH_DATA_RAW = {
-          'Gateshead': { impact: 'moderate', avg_price: 158765, trend: 6.3 },
-          'Newcastle upon Tyne': { impact: 'severe', avg_price: 207029, trend: 3.7 },
-          'North Tyneside': { impact: 'moderate', avg_price: 200392, trend: 3.8 },
-          'South Tyneside': { impact: 'low-moderate', avg_price: 159318, trend: 3.8 },
-          'Sunderland': { impact: 'low-moderate', avg_price: 145921, trend: 6.9 },
+          'Gateshead': { impact: 'low', avg_price: 158765, trend: 6.3 },
+          'Newcastle upon Tyne': { impact: 'moderate-high', avg_price: 207029, trend: 3.7 },
+          'North Tyneside': { impact: 'low', avg_price: 200392, trend: 3.8 },
+          'South Tyneside': { impact: 'low', avg_price: 159318, trend: 3.8 },
+          'Sunderland': { impact: 'low', avg_price: 145921, trend: 6.9 },
       };
       let TYNEANDWEAR_BOROUGH_EXTRA = {};
       const TYNEANDWEAR_AREA_MAP = {};
@@ -3977,9 +3977,9 @@
 
       // Bristol. API-derived; every value has a script that re-derives it.
       const BRISTOL_BOROUGH_DATA_RAW = {
-          'City of Bristol': { impact: 'moderate', avg_price: 354924, trend: 2.2 },
+          'City of Bristol': { impact: 'low', avg_price: 354924, trend: 2.2 },
           'Bath and North East Somerset': { impact: 'moderate', avg_price: 406169, trend: 0.9 },
-          'North Somerset': { impact: 'severe', avg_price: 312303, trend: 6.4 },
+          'North Somerset': { impact: 'moderate-high', avg_price: 312303, trend: 6.4 },
           'South Gloucestershire': { impact: 'low', avg_price: 340401, trend: 2.1 },
       };
       let BRISTOL_BOROUGH_EXTRA = {};
@@ -4077,13 +4077,13 @@
 
       const MANCHESTER_BOROUGH_DATA_RAW = {
         Manchester: {
-          impact: 'severe',
+          impact: 'moderate',
           avg_price: 247469,
           trend: 0.5,
           note: 'Manchester Airport sits inside the city boundary at Wythenshawe. Noise is concentrated in the south of the borough; the city centre and the north are a long way from the runways.',
         },
         Stockport: {
-          impact: 'high',
+          impact: 'moderate-high',
           avg_price: 318163,
           trend: 5.4,
           note: 'Directly beneath the 23 approach, the prevailing arrival configuration. Prices are the second highest in the city-region and rising.',
@@ -4095,13 +4095,13 @@
           note: 'The dearest and fastest-rising borough in Greater Manchester. West of the airport and off the main approach axis.',
         },
         Tameside: {
-          impact: 'moderate',
+          impact: 'low',
           avg_price: 209691,
           trend: 2.3,
           note: 'North-east of the airport under the extended 23 approach, but far enough out that aircraft are high overhead.',
         },
         Salford: {
-          impact: 'low-moderate',
+          impact: 'low',
           avg_price: 231153,
           trend: -6.1,
           note: 'The only borough in the city-region with falling prices. Off the approach axis, north of the airport.',

@@ -154,7 +154,12 @@
 // register for all 81 boroughs. 78 of 86 boroughs now score on all four
 // liveability inputs, up from 38. index.html carries the version string and
 // borough-extra.json the values, so both change.
-const VERSION = 'v1.0.28';
+// v1.0.29 (2026-08-11): methodology v3.8 - the aircraft distance ladder is
+// scaled by each airport's measured DEFRA 55 dB Lden footprint instead of being
+// applied at Heathrow's size everywhere. 31 boroughs move, all upward; no London
+// borough moves, Heathrow being 1.000 by construction. index.html holds the
+// impact bands inline, so the shell must be re-fetched.
+const VERSION = 'v1.0.29';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

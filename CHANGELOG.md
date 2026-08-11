@@ -6,6 +6,50 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
+### 2026-08-11 (later) - Methodology v3.8: the aircraft ladder is weighted by airport
+
+**Scores move for 31 boroughs across 11 city-regions, every one of them upward,
+by between +0.30 and +1.60. No London or New York borough moves at all.** This
+entry is the notice record for that change.
+
+- **The defect.** The per-borough aircraft `impact` band came from a distance
+  ladder calibrated on Heathrow and then applied, unweighted, to every other
+  airport. Distance from an airport was measured correctly; the ladder simply
+  asserted that every airport was Heathrow-sized. So **Stockton-on-Tees was
+  published `severe` - the same band as Hounslow - on the strength of Teesside
+  International, which handles 173,006 passengers a year against Heathrow's
+  83.9 million.** That drove a borough-wide quiet of 0.0 and an overall score of
+  2.6. Liverpool, Leeds, Birmingham, Newcastle and Cardiff carried smaller
+  versions of the same penalty.
+- **Rejected: scaling by passenger numbers.** It was the obvious fix and it was
+  wrong twice over. It stopped discriminating exactly where these cities are -
+  Birmingham, Bristol, Newcastle, Liverpool, Leeds Bradford and East Midlands
+  all collapsed onto one value - and it measures demand rather than emission.
+  **East Midlands has the second-largest noise footprint of the twelve airports
+  measured, on 3.2 million passengers, because it is a freight hub flying at
+  night; Gatwick is less than half that on 40.9 million.**
+- **Shipped: scaling by the published contour.** Each airport's ladder is scaled
+  by the area above 55 dB Lden in its own DEFRA Round 4 surface, expressed as an
+  equivalent radius against Heathrow's. Heathrow is 1.000 by construction, which
+  is why London cannot move. Measured on the day, not recalled.
+- **A near-field floor, because the first version overshot.** Scaling every rung
+  moved 29 boroughs and moved all 29 *down*, putting **Vale of Glamorgan on
+  `low`** - the band for a borough with no airport within 50 km - when Cardiff
+  Airport sits inside it. Liverpool and Leeds did the same. A borough holding
+  any part of a published 55 dB contour now cannot fall below `moderate`, with
+  distance measured to the borough polygon rather than its centroid.
+- **Cardiff and Teesside are honest about being unmapped.** DEFRA does not map
+  either airport, so their ladders are floored at the smallest published
+  footprint rather than scaled by a measurement, and their provenance now says
+  so instead of claiming a DEFRA figure that does not exist.
+- **Greater Manchester's bands were hand-assigned and are now derived.** It was
+  city #3, added before the generator existed, and was the only site city whose
+  aircraft input no script could reproduce. Four of its ten boroughs moved.
+- **`impact` was the last score input with no gate.** `build_aircraft_bands.py`
+  gained `--check` and `--write`, both covering the site and the Lambda, and
+  `--check` is now blocking in preflight. It was proven red on the real defect
+  (89 disagreements) before being wired in.
+
 ### 2026-08-11 (late) - Leicester and Teesside on /v1/score
 
 - **Two new city-regions, 13 boroughs, API-only for now** exactly as Cardiff and

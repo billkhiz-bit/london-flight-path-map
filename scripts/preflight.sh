@@ -140,6 +140,18 @@ check "score sanity (live API)"        python scripts/check_score_sanity.py
 # Proven able to fail: it went red on exactly that defect, 0/33 trends agreeing,
 # which is why it was not wired in here until the data agreed.
 check "prices == HM Land Registry"     python scripts/build_hpi_prices.py --check --all
+# Aircraft `impact` was the last score input with NO script behind it, and it
+# was wrong: a Heathrow-calibrated distance ladder applied unweighted to
+# airports up to 485x smaller, which banded Stockton-on-Tees `severe` off an
+# airport carrying 173,006 passengers a year. Greater Manchester's ten bands
+# were hand-assigned and no script could even reproduce them.
+#
+# Proven able to fail in BOTH holders: it reported 89 disagreements before the
+# correction and 0 after, and it reads the site and the Lambda separately so a
+# one-sided edit reds it. Four different spellings of the same record exist
+# across the two files; --check parses all four, and a parser that knew only
+# one silently read every borough as absent.
+check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --check
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
 check "no em dashes (9 pages)"         sh scripts/check_no_em_dash.sh

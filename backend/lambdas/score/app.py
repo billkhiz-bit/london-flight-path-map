@@ -102,7 +102,7 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2022/23), scored
 #            continuously by school_score() on absolute anchors. London goes
 #            from 2 distinct schools sub-scores to 25.
-METHODOLOGY_VERSION = '3.7'
+METHODOLOGY_VERSION = '3.8'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -1225,11 +1225,11 @@ NYC_BOROUGHS = {
 #                     Before that change a partial city scored WORSE than an
 #                     empty one, which is why this data sat unported for a week.
 MANCHESTER_BOROUGHS = {
-    'Manchester': {'impact': 'severe', 'avgPrice': 247469, 'trend': 0.5, 'p8': -0.02, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good'},
-    'Salford': {'impact': 'low-moderate', 'avgPrice': 231153, 'trend': -6.1, 'p8': -0.49, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'good'},
-    'Stockport': {'impact': 'high', 'avgPrice': 318163, 'trend': 5.4, 'p8': -0.04, 'crimeRate': 74.8, 'transport': 'good', 'healthcare': 'moderate'},
+    'Manchester': {'impact': 'moderate', 'avgPrice': 247469, 'trend': 0.5, 'p8': -0.02, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good'},
+    'Salford': {'impact': 'low', 'avgPrice': 231153, 'trend': -6.1, 'p8': -0.49, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'good'},
+    'Stockport': {'impact': 'moderate-high', 'avgPrice': 318163, 'trend': 5.4, 'p8': -0.04, 'crimeRate': 74.8, 'transport': 'good', 'healthcare': 'moderate'},
     'Trafford': {'impact': 'moderate', 'avgPrice': 393244, 'trend': 6.2, 'p8': 0.24, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate'},
-    'Tameside': {'impact': 'moderate', 'avgPrice': 209691, 'trend': 2.3, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'good', 'healthcare': 'good'},
+    'Tameside': {'impact': 'low', 'avgPrice': 209691, 'trend': 2.3, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'good', 'healthcare': 'good'},
     'Oldham': {'impact': 'low', 'avgPrice': 212997, 'trend': 3.0, 'p8': -0.18, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Rochdale': {'impact': 'low', 'avgPrice': 208286, 'trend': 4.3, 'p8': -0.28, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.0, 'p8': -0.14, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate'},
@@ -1266,20 +1266,20 @@ MANCHESTER_BOROUGHS = {
 #                     response. This city is thinner than Greater Manchester and
 #                     says so.
 WESTMIDLANDS_BOROUGHS = {
-    'Birmingham': {'impact': 'severe', 'avgPrice': 232657, 'trend': -0.3, 'crimeRate': 114.2, 'p8': 0.03, 'transport': 'moderate', 'healthcare': 'good'},
-    'Coventry': {'impact': 'low-moderate', 'avgPrice': 220410, 'trend': 1.3, 'crimeRate': 88.4, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'good'},
-    'Dudley': {'impact': 'low-moderate', 'avgPrice': 229616, 'trend': 4.5, 'crimeRate': 74.5, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'Sandwell': {'impact': 'low-moderate', 'avgPrice': 209354, 'trend': 2.9, 'crimeRate': 95.9, 'p8': -0.07, 'transport': 'moderate', 'healthcare': 'good'},
-    'Solihull': {'impact': 'severe', 'avgPrice': 336572, 'trend': 4.0, 'crimeRate': 79.5, 'p8': -0.11, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Walsall': {'impact': 'moderate', 'avgPrice': 214032, 'trend': 1.6, 'crimeRate': 92.9, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 232657, 'trend': -0.3, 'crimeRate': 114.2, 'p8': 0.03, 'transport': 'moderate', 'healthcare': 'good'},
+    'Coventry': {'impact': 'low', 'avgPrice': 220410, 'trend': 1.3, 'crimeRate': 88.4, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'good'},
+    'Dudley': {'impact': 'low', 'avgPrice': 229616, 'trend': 4.5, 'crimeRate': 74.5, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Sandwell': {'impact': 'low', 'avgPrice': 209354, 'trend': 2.9, 'crimeRate': 95.9, 'p8': -0.07, 'transport': 'moderate', 'healthcare': 'good'},
+    'Solihull': {'impact': 'moderate-high', 'avgPrice': 336572, 'trend': 4.0, 'crimeRate': 79.5, 'p8': -0.11, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Walsall': {'impact': 'low', 'avgPrice': 214032, 'trend': 1.6, 'crimeRate': 92.9, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.0, 'crimeRate': 92.0, 'p8': -0.02, 'transport': 'moderate', 'healthcare': 'moderate'},
 }
 
 WESTYORKSHIRE_BOROUGHS = {
-    'Bradford': {'impact': 'moderate', 'avgPrice': 187452, 'trend': 5.6, 'crimeRate': 117.0, 'p8': -0.26, 'transport': 'moderate', 'healthcare': 'good'},
+    'Bradford': {'impact': 'low', 'avgPrice': 187452, 'trend': 5.6, 'crimeRate': 117.0, 'p8': -0.26, 'transport': 'moderate', 'healthcare': 'good'},
     'Calderdale': {'impact': 'low', 'avgPrice': 189509, 'trend': 5.1, 'crimeRate': 103.4, 'p8': -0.03, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 4.1, 'crimeRate': 87.6, 'p8': 0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'Leeds': {'impact': 'moderate-high', 'avgPrice': 246699, 'trend': 3.7, 'crimeRate': 114.6, 'p8': 0.12, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Leeds': {'impact': 'moderate', 'avgPrice': 246699, 'trend': 3.7, 'crimeRate': 114.6, 'p8': 0.12, 'transport': 'poor', 'healthcare': 'moderate'},
     'Wakefield': {'impact': 'low', 'avgPrice': 197140, 'trend': 2.7, 'crimeRate': 105.8, 'p8': 0.12, 'transport': 'moderate', 'healthcare': 'moderate'},
 }
 
@@ -1292,30 +1292,30 @@ SOUTHYORKSHIRE_BOROUGHS = {
 
 MERSEYSIDE_BOROUGHS = {
     'Knowsley': {'impact': 'moderate', 'avgPrice': 188727, 'trend': 3.0, 'crimeRate': 81.8, 'p8': -0.9, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'Liverpool': {'impact': 'high', 'avgPrice': 184670, 'trend': 4.8, 'crimeRate': 124.1, 'p8': -0.43, 'transport': 'moderate', 'healthcare': 'good'},
-    'St Helens': {'impact': 'low-moderate', 'avgPrice': 182923, 'trend': 8.8, 'crimeRate': 86.4, 'p8': -0.35, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Liverpool': {'impact': 'moderate', 'avgPrice': 184670, 'trend': 4.8, 'crimeRate': 124.1, 'p8': -0.43, 'transport': 'moderate', 'healthcare': 'good'},
+    'St Helens': {'impact': 'low', 'avgPrice': 182923, 'trend': 8.8, 'crimeRate': 86.4, 'p8': -0.35, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Sefton': {'impact': 'low', 'avgPrice': 222406, 'trend': 3.5, 'crimeRate': 75.5, 'p8': -0.48, 'transport': 'good', 'healthcare': 'moderate'},
-    'Wirral': {'impact': 'moderate-high', 'avgPrice': 217407, 'trend': 6.5, 'crimeRate': 71.1, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Wirral': {'impact': 'low', 'avgPrice': 217407, 'trend': 6.5, 'crimeRate': 71.1, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
 }
 
 TYNEANDWEAR_BOROUGHS = {
-    'Gateshead': {'impact': 'moderate', 'avgPrice': 158765, 'trend': 6.3, 'crimeRate': 87.8, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'Newcastle upon Tyne': {'impact': 'severe', 'avgPrice': 207029, 'trend': 3.7, 'crimeRate': 107.4, 'p8': -0.4, 'transport': 'good', 'healthcare': 'moderate'},
-    'North Tyneside': {'impact': 'moderate', 'avgPrice': 200392, 'trend': 3.8, 'crimeRate': 81.8, 'p8': -0.09, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'South Tyneside': {'impact': 'low-moderate', 'avgPrice': 159318, 'trend': 3.8, 'crimeRate': 96.6, 'p8': -0.27, 'transport': 'good', 'healthcare': 'moderate'},
-    'Sunderland': {'impact': 'low-moderate', 'avgPrice': 145921, 'trend': 6.9, 'crimeRate': 93.6, 'p8': -0.5, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Gateshead': {'impact': 'low', 'avgPrice': 158765, 'trend': 6.3, 'crimeRate': 87.8, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 207029, 'trend': 3.7, 'crimeRate': 107.4, 'p8': -0.4, 'transport': 'good', 'healthcare': 'moderate'},
+    'North Tyneside': {'impact': 'low', 'avgPrice': 200392, 'trend': 3.8, 'crimeRate': 81.8, 'p8': -0.09, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'South Tyneside': {'impact': 'low', 'avgPrice': 159318, 'trend': 3.8, 'crimeRate': 96.6, 'p8': -0.27, 'transport': 'good', 'healthcare': 'moderate'},
+    'Sunderland': {'impact': 'low', 'avgPrice': 145921, 'trend': 6.9, 'crimeRate': 93.6, 'p8': -0.5, 'transport': 'moderate', 'healthcare': 'moderate'},
 }
 
 BRISTOL_BOROUGHS = {
-    'City of Bristol': {'impact': 'moderate', 'avgPrice': 354924, 'trend': 2.2, 'crimeRate': 131.0, 'p8': -0.03, 'transport': 'moderate', 'healthcare': 'good'},
+    'City of Bristol': {'impact': 'low', 'avgPrice': 354924, 'trend': 2.2, 'crimeRate': 131.0, 'p8': -0.03, 'transport': 'moderate', 'healthcare': 'good'},
     'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 406169, 'trend': 0.9, 'crimeRate': 79.0, 'p8': 0.26, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'North Somerset': {'impact': 'severe', 'avgPrice': 312303, 'trend': 6.4, 'crimeRate': 81.8, 'p8': -0.02, 'transport': 'poor', 'healthcare': 'moderate'},
+    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 312303, 'trend': 6.4, 'crimeRate': 81.8, 'p8': -0.02, 'transport': 'poor', 'healthcare': 'moderate'},
     'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.1, 'crimeRate': 73.8, 'p8': 0.02, 'transport': 'poor', 'healthcare': 'moderate'},
 }
 
 CARDIFF_BOROUGHS = {
-    'Cardiff': {'impact': 'moderate', 'avgPrice': 272866, 'trend': 2.9, 'crimeRate': 93.8, 'transport': 'good', 'healthcare': 'moderate'},
-    'Vale of Glamorgan': {'impact': 'severe', 'avgPrice': 292677, 'trend': 2.9, 'crimeRate': 60.8, 'transport': 'good', 'healthcare': 'moderate'},
+    'Cardiff': {'impact': 'low', 'avgPrice': 272866, 'trend': 2.9, 'crimeRate': 93.8, 'transport': 'good', 'healthcare': 'moderate'},
+    'Vale of Glamorgan': {'impact': 'moderate', 'avgPrice': 292677, 'trend': 2.9, 'crimeRate': 60.8, 'transport': 'good', 'healthcare': 'moderate'},
     'Newport': {'impact': 'low', 'avgPrice': 231830, 'trend': 5.8, 'crimeRate': 109.4, 'transport': 'poor', 'healthcare': 'moderate'},
     'Caerphilly': {'impact': 'low', 'avgPrice': 198809, 'trend': 9.2, 'crimeRate': 85.3, 'transport': 'moderate', 'healthcare': 'moderate'},
 }
@@ -1337,7 +1337,7 @@ LEICESTER_BOROUGHS = {
     'Blaby': {'impact': 'low', 'avgPrice': 281459, 'trend': -0.5, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate'},
     'Charnwood': {'impact': 'low-moderate', 'avgPrice': 278883, 'trend': 5.1, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate'},
     'Harborough': {'impact': 'low', 'avgPrice': 346278, 'trend': 7.1, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Hinckley and Bosworth': {'impact': 'low-moderate', 'avgPrice': 260282, 'trend': 2.0, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Hinckley and Bosworth': {'impact': 'low', 'avgPrice': 260282, 'trend': 2.0, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate'},
     'Melton': {'impact': 'low', 'avgPrice': 288513, 'trend': 0.9, 'crimeRate': 56.8, 'transport': 'poor', 'healthcare': 'moderate'},
     'North West Leicestershire': {'impact': 'moderate', 'avgPrice': 286826, 'trend': 6.0, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate'},
     'Oadby and Wigston': {'impact': 'low', 'avgPrice': 263380, 'trend': -0.9, 'crimeRate': 53.6, 'transport': 'poor', 'healthcare': 'moderate'},
@@ -1348,11 +1348,11 @@ LEICESTER_BOROUGHS = {
 # an include-list in the crime loader - Darlington is Durham Constabulary while
 # the other four are Cleveland.
 TEESSIDE_BOROUGHS = {
-    'Hartlepool': {'impact': 'low-moderate', 'avgPrice': 131342, 'trend': 2.8, 'crimeRate': 134.2, 'p8': -0.46, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Middlesbrough': {'impact': 'moderate', 'avgPrice': 138122, 'trend': 1.4, 'crimeRate': 150.0, 'p8': -0.47, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Hartlepool': {'impact': 'low', 'avgPrice': 131342, 'trend': 2.8, 'crimeRate': 134.2, 'p8': -0.46, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Middlesbrough': {'impact': 'low', 'avgPrice': 138122, 'trend': 1.4, 'crimeRate': 150.0, 'p8': -0.47, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 154696, 'trend': 8.7, 'crimeRate': 108.9, 'p8': -0.33, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Stockton-on-Tees': {'impact': 'severe', 'avgPrice': 169010, 'trend': 2.6, 'crimeRate': 107.9, 'p8': -0.18, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'Darlington': {'impact': 'high', 'avgPrice': 157239, 'trend': 1.9, 'crimeRate': 91.0, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 169010, 'trend': 2.6, 'crimeRate': 107.9, 'p8': -0.18, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Darlington': {'impact': 'moderate', 'avgPrice': 157239, 'trend': 1.9, 'crimeRate': 91.0, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate'},
 }
 
 # Nottingham (Greater Nottingham: the city plus the three boroughs of its
@@ -1372,10 +1372,10 @@ TEESSIDE_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low-moderate', 'avgPrice': 190806, 'trend': -0.7, 'crimeRate': 124.9, 'p8': -0.23, 'transport': 'good', 'healthcare': 'good'},
+    'City of Nottingham': {'impact': 'low', 'avgPrice': 190806, 'trend': -0.7, 'crimeRate': 124.9, 'p8': -0.23, 'transport': 'good', 'healthcare': 'good'},
     'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253567, 'trend': 1.9, 'transport': 'moderate', 'healthcare': 'moderate'},
     'Gedling': {'impact': 'low', 'avgPrice': 246120, 'trend': 3.1, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Rushcliffe': {'impact': 'low-moderate', 'avgPrice': 338301, 'trend': 3.5, 'transport': 'poor', 'healthcare': 'moderate'},
+    'Rushcliffe': {'impact': 'low', 'avgPrice': 338301, 'trend': 3.5, 'transport': 'poor', 'healthcare': 'moderate'},
 }
 
 CITIES = {
@@ -4340,7 +4340,7 @@ CITY_PROVENANCE = {
     'westmidlands': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Birmingham Airport runway geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Birmingham Airport runway geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4354,7 +4354,7 @@ CITY_PROVENANCE = {
     'westyorkshire': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Leeds Bradford Airport (LBA) runway 14/32 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Leeds Bradford Airport (LBA) runway 14/32 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4368,7 +4368,7 @@ CITY_PROVENANCE = {
     'leicester': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4390,7 +4390,7 @@ CITY_PROVENANCE = {
     'teesside': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Teesside International Airport (MME) runway 05/23 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Teesside International Airport (MME) runway 05/23 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0. Cleveland for four authorities and Durham for Darlington, this city region spanning two forces',
             _live_sources_line,
         ],
@@ -4425,7 +4425,7 @@ CITY_PROVENANCE = {
     'merseyside': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Liverpool John Lennon Airport (LPL) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Liverpool John Lennon Airport (LPL) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4439,7 +4439,7 @@ CITY_PROVENANCE = {
     'tyneandwear': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Newcastle Airport (NCL) runway 07/25 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Newcastle Airport (NCL) runway 07/25 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4453,7 +4453,7 @@ CITY_PROVENANCE = {
     'bristol': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Bristol Airport (BRS) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Bristol Airport (BRS) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4467,7 +4467,7 @@ CITY_PROVENANCE = {
     'cardiff': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Cardiff Airport (CWL) runway 12/30 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Cardiff Airport (CWL) runway 12/30 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4481,7 +4481,7 @@ CITY_PROVENANCE = {
     'nottingham': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, CITY OF NOTTINGHAM ONLY, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -4495,7 +4495,7 @@ CITY_PROVENANCE = {
     'manchester': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
-            'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, NOT sampled from DEFRA strategic noise mapping',
+            'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Schools: Department for Education, Key Stage 4 Progress 8, 2022/23, Open Government Licence v3.0',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             'Transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
