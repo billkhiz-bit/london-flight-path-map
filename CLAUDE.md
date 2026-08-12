@@ -229,6 +229,33 @@ without an airport needs that path to stay intact.
 
 **Neighbourhood ranking data.** London and NYC hold *curated* medians and a hand-assigned `crime` modifier inline. **All nine UK city-regions' 485 entries are generated** (2026-08-11; was Greater Manchester's 85 alone) — `python scripts/build_city_neighbourhoods.py --write-index` rewrites `index.html` between each city's `<CITY>-NEIGHBOURHOODS:START/END` markers from HM Land Registry's **bulk** Price Paid CSV (the linked-data API returns **HTTP 200 with an empty list** for a district query, so it cannot be used) plus NSPL for coordinates. A "neighbourhood" is a **postcode district**, districts under 30 sales are dropped rather than estimated, and `crime` is 0 everywhere because sub-borough crime is not published at that geography. **Boroughs come from the Lambda's `LAD_TO_BOROUGH`, matched to Land Registry's own district spelling by normalisation** (`Westminster` → `CITY OF WESTMINSTER`); a borough matching nothing is reported loudly, because a silent miss reads as "this borough has no neighbourhoods". One PPD pass and one NSPL pass cover every city. Do not hand-edit inside the markers; re-run the script. The 155 MB PPD cache and the JSON by-product both land in gitignored `data/`.
 
+**The transport MAP LAYER is DELETED; stations live in the PANEL (2026-08-12).**
+Bill: "still messy for the other core cities - I can't click on them because it
+will click on the borough instead." Both true, and together fatal: the markers
+cluttered the thing you *can* click, could not be clicked themselves (the borough
+path takes the event), and duplicated a signal already in the score. Toggle,
+flag, renderer, `.layer-transport` selector entry and the `labelTransport`
+registry field on all eleven cities are **removed**.
+
+The DATA moved to where it is readable: the detail panel's nearest-stations
+section, which is fed by `/transport` = **TfL**, and which had been telling ten
+of eleven cities **"No stations found within 1.5km."** That is not what TfL
+meant - it meant "TfL does not cover Manchester" - and the panel rendered a
+confident absence in its place. **Third instance of that shape in one day**,
+after the `-0.4` penalty and the `|| 'moderate'` fill layers. NaPTAN now backs
+it: four nearest rail/metro/tram, straight-line distance, source named.
+
+**Three stale references survived the removal and Bill found the first**: the
+metric card still said `TOGGLE "TRANSPORT" ON MAP TO SEE STATIONS`, the layer
+selector map still listed `.layer-transport`, and the map's `aria-label` still
+advertised the overlay (while naming three cities out of eleven). **When you
+delete a feature, grep for its NAME, not just its function.**
+
+The e2e asserted `toHaveCount(7)` on the toggles and went red - the gate working,
+but the fix it invited was to edit the number. It now asserts the **set**, so a
+removed layer fails with its own name in the diff. **Any count in an assertion is
+scheduled staleness.**
+
 **Stations are DISPLAY-ONLY, and the transport nudge is gone (2026-08-12).**
 `scripts/build_city_stations.py` fills `<CITY>_STATIONS` from NaPTAN - 1,771
 stations across ten cities - which draws the map's **transport layer, previously

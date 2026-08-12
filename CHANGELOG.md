@@ -6,7 +6,33 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-12 (latest) - Stations for the map, and a ranking that says what it measures
+### 2026-08-12 (latest) - Stations move off the map and into the panel
+
+**The transport map layer is deleted.** Its markers could not be clicked - the
+borough path underneath takes the event - so it cluttered the thing that is
+interactive while not being interactive itself, and it duplicated a signal
+already in the liveability score. Toggle, flag, renderer, selector entry and the
+`labelTransport` field on all eleven cities are gone.
+
+- **The panel gains what the map lost, for every UK city.** The nearest-stations
+  section is fed by `/transport`, which is TfL, so it had been showing
+  **"No stations found within 1.5km" to ten of eleven cities**. That was never
+  what TfL meant - it meant "TfL does not cover Manchester" - and the panel
+  rendered a confident absence in its place, the third instance of that shape in
+  one day. NaPTAN now backs it: four nearest rail, metro or tram stations,
+  straight-line distance, source named.
+- **Three stale references outlived the removal**, and the first was reported
+  rather than found: the metric card still read `TOGGLE "TRANSPORT" ON MAP TO
+  SEE STATIONS`, the layer selector still listed `.layer-transport`, and the
+  map's accessible name still advertised the overlay - while naming three cities
+  out of eleven, a separate audit finding now closed. When deleting a feature,
+  grep for its NAME as well as its function.
+- **A count-based test went red and was replaced with a set-based one.**
+  `toHaveCount(7)` on the layer toggles told us a number changed; it could not
+  say which layer vanished, and the fix it invited was to edit the number. It
+  now asserts the exact set of layer names.
+
+### 2026-08-12 - Stations for the map, and a ranking that says what it measures
 
 **The map's transport layer was empty for nine of eleven cities**, and the
 neighbourhood ranking read as a recommendation when it was largely a price sort.
