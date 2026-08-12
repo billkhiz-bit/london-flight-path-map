@@ -372,8 +372,18 @@ def _block(text, marker, end):
 
 
 def _slurp(path):
+    # NORMALISE LINE ENDINGS. `newline=""` preserves whatever is on disk, and
+    # every block scan below matches on the literal "\n}\n" - so the moment a
+    # file arrives as CRLF this gate stops finding ANY block and dies with
+    # `ValueError: substring not found` for all eleven cities at once.
+    #
+    # That is not hypothetical: on 2026-08-12 a `git restore` of
+    # backend/lambdas/score/app.py applied core.autocrlf and flipped the file
+    # from LF to CRLF, and this gate went from green to a traceback with no
+    # data change whatsoever. A gate that depends on a checkout artefact is
+    # reporting on the checkout, not on the data.
     with open(path, encoding="utf-8", newline="") as fh:
-        return fh.read()
+        return fh.read().replace("\r\n", "\n")
 
 
 def read_lambda(city):

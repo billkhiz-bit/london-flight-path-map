@@ -115,6 +115,32 @@
            darkening cannot reduce contrast anywhere else. */
         --yellow: #8e6b00;
         --green: #0a7a3e;
+        /* TEXT variants, added 2026-08-12. The three above are safe as fills,
+           borders and swatches; as TEXT they fail WCAG 1.4.3 on one or both of
+           our backgrounds. Measured against --white #fafaf9 and the darker
+           --bg #e4e3e0 that .metric-card uses:
+
+             --orange  2.60 : 1   /  2.11 : 1     both fail
+             --yellow  4.73 : 1   /  3.85 : 1     fails on the card
+             --green   5.20 : 1   /  4.23 : 1     fails on the card
+
+           The 2026-08-03 --yellow correction computed 4.73 against --white and
+           its comment reasoned that "all seven uses are on light backgrounds";
+           it did not account for .metric-card, where the same colour is 3.85.
+           So the readouts those cards exist to deliver - ROAD NOISE, FLOOD
+           RISK, AIR QUALITY - were the least legible text in the panel.
+
+           These three values are not new: scoreTextColor() has returned them
+           since the score number was corrected, and they were simply never
+           applied anywhere else. Now they are tokens so the next use inherits
+           the fix instead of repeating the defect.
+
+             --orange-text  5.65 : 1  /  4.60 : 1
+             --yellow-text  5.67 : 1  /  4.62 : 1
+             --green-text   6.35 : 1  /  5.17 : 1  */
+        --orange-text: #a04d00;
+        --yellow-text: #8a5a00;
+        --green-text: #076b36;
         --red: #f22626;
         --font-mono: 'JetBrains Mono', monospace;
         --font-sans: 'Inter', sans-serif;
@@ -778,15 +804,15 @@
         border: 1px solid;
       }
       .noise-high {
-        color: var(--orange);
+        color: var(--orange-text);
         border-color: var(--orange);
       }
       .noise-moderate {
-        color: var(--yellow);
+        color: var(--yellow-text);
         border-color: var(--yellow);
       }
       .noise-low {
-        color: var(--green);
+        color: var(--green-text);
         border-color: var(--green);
       }
       .property-note {
@@ -1160,15 +1186,15 @@
         text-transform: uppercase;
       }
       .rank-tag-green {
-        color: var(--green);
+        color: var(--green-text);
         border-color: var(--green);
       }
       .rank-tag-yellow {
-        color: var(--yellow);
+        color: var(--yellow-text);
         border-color: var(--yellow);
       }
       .rank-tag-orange {
-        color: var(--orange);
+        color: var(--orange-text);
         border-color: var(--orange);
       }
 
@@ -1504,7 +1530,7 @@
       }
       .rating-high,
       .rating-poor {
-        color: var(--orange);
+        color: var(--orange-text);
         border-color: var(--orange);
       }
 
@@ -8219,9 +8245,9 @@
 
       function metricColor(rating) {
         const r = (rating || '').toLowerCase();
-        if (r === 'low' || r === 'good' || r === 'excellent') return 'var(--green)';
-        if (r === 'medium' || r === 'moderate') return 'var(--yellow)';
-        return 'var(--orange)';
+        if (r === 'low' || r === 'good' || r === 'excellent') return 'var(--green-text)';
+        if (r === 'medium' || r === 'moderate') return 'var(--yellow-text)';
+        return 'var(--orange-text)';
       }
 
       function buildOptionalSections(extra, sectionId) {

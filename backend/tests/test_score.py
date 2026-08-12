@@ -980,15 +980,37 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(body['location']['borough'], 'City of London')
 
-    def test_resolve_query_404_unchanged_for_non_london(self):
-        # postcodes.io returns admin_district='Manchester' -> normalise ->
-        # None; the local table returns admin_district=None -> normalise ->
-        # None. Same 404, same attemptedBorough, byte-identical body.
+    def test_resolve_query_derives_the_city_for_a_non_london_postcode(self):
+        # REPLACES test_resolve_query_404_unchanged_for_non_london, which
+        # asserted that M1 1AE returns 404 with
+        # "Borough not currently supported in london."
+        #
+        # That test was correct when it was written: postcode scoring was
+        # gated to London, and it existed to prove the local NSPL tier stayed
+        # byte-identical to the postcodes.io behaviour it replaced. But the
+        # gate was lifted on 2026-08-10 and this assertion was not revisited,
+        # so it went on encoding the OLD behaviour as the expected one - and
+        # because it passed, it read as evidence the endpoint was working.
+        #
+        # A Manchester postcode must now resolve to Manchester. The row the
+        # stub returns carries `lad` E08000003 and no `b`, which is exactly
+        # what the live table holds.
         self._stub_ddb(_NSPL_M1_1AE)
         body, status = app.resolve_query({'postcode': 'M1 1AE'})
+        self.assertEqual(status, 200)
+        self.assertEqual(body['location']['city'], 'manchester')
+        self.assertEqual(body['location']['borough'], 'Manchester')
+
+    def test_explicit_city_wins_and_the_404_path_survives(self):
+        # The 404 wording is a public API surface that score-demo/openapi.yaml
+        # documents, so it must still be reachable. Forcing city=london on a
+        # Manchester postcode is the case that proves both halves at once: the
+        # caller's explicit city is respected rather than overridden by the new
+        # derivation, and the borough lookup then fails exactly as before.
+        self._stub_ddb(_NSPL_M1_1AE)
+        body, status = app.resolve_query({'postcode': 'M1 1AE', 'city': 'london'})
         self.assertEqual(status, 404)
         self.assertEqual(body['error'], 'Borough not currently supported in london.')
-        self.assertIsNone(body['attemptedBorough'])
 
     def test_resolve_query_surfaces_terminated_status(self):
         self._stub_ddb(_NSPL_BR1_1HB)
@@ -2531,3 +2553,74 @@ class AirQualityReportingTests(unittest.TestCase):
         body, status = app.resolve_query({'borough': 'Camden', 'city': 'london'})
         self.assertEqual(status, 200)
         self.assertEqual(set(body['components']), {'quiet', 'afford', 'growth', 'live'})
+
+
+class PostcodeCityDerivationTests(unittest.TestCase):
+    """A postcode alone must reach its own city, not default to London.
+
+    WHY THIS EXISTS. `/v1/score?postcode=M1 1AE` answered
+    "Borough not currently supported in london." in production for two days
+    while CLAUDE.md, ROADMAP and METHODOLOGY all recorded postcode-level
+    scoring as un-gated since 2026-08-10. The un-gating was real -
+    `?city=manchester` with the same postcode scored 7.7 - but `city`
+    defaulted to 'london' and nothing derived it from the resolved LAD, so
+    the capability could not be reached without already knowing the answer.
+
+    Nothing could catch it: check_score_sanity.py probes 16 LONDON postcodes,
+    borough-score-parity compares boroughs by NAME, and every unit test that
+    touched a postcode passed a city alongside it. This class is the guard,
+    and it asserts on the DERIVED CITY rather than on "a score came back",
+    because a London default returns a perfectly well-formed error.
+    """
+
+    # One postcode per city LAD_TO_BOROUGH covers. Deliberately central
+    # postcodes: the point is the city join, not edge geography.
+    PROBES = [
+        ('N1 7SX', 'london'),
+        ('M1 1AE', 'manchester'),
+        ('B15 2TT', 'westmidlands'),
+        ('LS1 4DY', 'westyorkshire'),
+        ('S1 2HH', 'southyorkshire'),
+        ('L1 8JQ', 'merseyside'),
+        ('NE1 4ST', 'tyneandwear'),
+        ('BS1 4DJ', 'bristol'),
+        ('LE1 5WW', 'leicester'),
+        ('TS1 2AZ', 'teesside'),
+        ('NG1 5FS', 'nottingham'),
+        ('CF10 1EP', 'cardiff'),
+    ]
+
+    def test_every_city_resolves_from_a_postcode_alone(self):
+        for postcode, expected_city in self.PROBES:
+            with self.subTest(postcode=postcode):
+                result = app.resolve_query({'postcode': postcode})
+                body = result[0] if isinstance(result, tuple) else result
+                self.assertNotIn(
+                    'error',
+                    body,
+                    f'{postcode} did not resolve: {body.get("error")}',
+                )
+                self.assertEqual(
+                    body['location']['city'],
+                    expected_city,
+                    f'{postcode} resolved to the wrong city',
+                )
+
+    def test_explicit_city_still_wins_over_the_derived_one(self):
+        # The derivation must not take a choice away from the caller: a client
+        # scoring a postcode against a named cohort keeps doing so.
+        result = app.resolve_query({'postcode': 'M1 1AE', 'city': 'manchester'})
+        body = result[0] if isinstance(result, tuple) else result
+        self.assertEqual(body['location']['city'], 'manchester')
+
+    def test_qualifier_inversion_is_absorbed_both_ways(self):
+        # ONS and postcodes.io invert the qualifier, so the same authority
+        # arrives as "City of Bristol" and "Bristol, City of". Bristol was the
+        # single city the first version of the derivation still missed.
+        self.assertEqual(
+            app._norm_borough_key('Bristol, City of'),
+            app._norm_borough_key('City of Bristol'),
+        )
+        self.assertEqual(
+            app.normalise_borough('Bristol, City of', 'bristol'), 'City of Bristol'
+        )

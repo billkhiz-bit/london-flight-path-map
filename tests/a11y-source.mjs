@@ -110,13 +110,52 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
 
+// TWO VIEWPORTS, not one (2026-08-12).
+//
+// This scanned 1440x900 only, so nothing inside `@media (max-width:900px)` had
+// ever been audited. That is not a hypothetical gap: the mobile legend pill
+// paints near-black and its group headings carry an INLINE
+// `style="color: var(--dark)"`, giving 1.19:1 - invisible on every phone, and
+// live for as long as the layer legends have existed. A desktop-only scan
+// reports the page clean because those rules never apply.
+//
+// 390x844 is a current iPhone; 1440x900 is the desktop the audit already used.
+const VIEWPORTS = [
+  { label: 'desktop', width: 1440, height: 900 },
+  { label: 'mobile', width: 390, height: 844 },
+];
+
+// Moderate-impact rules that MUST fail the build.
+//
+// The filter below keeps `critical|serious`, which is the right default - but
+// axe rates these four moderate, so before today they could not fail this gate
+// at any viewport no matter how badly they broke. They are structural: a
+// missing <main>, a broken heading order or a role applied to the wrong element
+// is what a screen-reader user navigates BY.
+const FAIL_MODERATE = new Set([
+  'heading-order',
+  'landmark-one-main',
+  'region',
+  'aria-allowed-role',
+]);
+
+function failing(results) {
+  return results.violations.filter(
+    (v) => v.impact === 'critical' || v.impact === 'serious' || FAIL_MODERATE.has(v.id)
+  );
+}
+
 const browser = await chromium.launch();
-// axe-core/playwright rejects the implicit context browser.newPage() creates.
-const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-const page = await context.newPage();
 
 let failed = 0;
-for (const { path, name, waitFor, disableRules } of PAGES) {
+for (const viewport of VIEWPORTS) {
+  // axe-core/playwright rejects the implicit context browser.newPage() creates.
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+  });
+  const page = await context.newPage();
+  console.log(`\n--- ${viewport.label} (${viewport.width}x${viewport.height}) ---`);
+  for (const { path, name, waitFor, disableRules } of PAGES) {
   let violations = [];
   let note = '';
   try {
@@ -143,9 +182,7 @@ for (const { path, name, waitFor, disableRules } of PAGES) {
     ]);
     if (disableRules) builder = builder.disableRules(disableRules);
     const results = await builder.analyze();
-    violations = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
-    );
+    violations = failing(results);
   } catch (e) {
     // A page that cannot be loaded or scanned is a FAILURE, not a skip. A
     // swallowed error here would be a check that cannot go red.
@@ -166,9 +203,51 @@ for (const { path, name, waitFor, disableRules } of PAGES) {
     }
     if (v.nodes.length > 3) console.log(`      ... and ${v.nodes.length - 3} more`);
   }
+  }
+
+  // THE POST-INTERACTION STATE, which had never been scanned at all.
+  //
+  // Every scan above runs on the landing state. But `updateSidebar()` injects
+  // roughly 400 lines - score bars, the tooltip, metric cards, rating badges,
+  // the EPC/crime/sold blocks - and that is the bulk of what a user actually
+  // reads. A gate that only ever sees the empty shell is inspecting one
+  // keystroke short of the product, which is the same criticism this file
+  // already makes of scanning before the locator renders.
+  try {
+    await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#app', { state: 'visible', timeout: 30000 });
+    await page.evaluate(() => {
+      const el = document.querySelector('.borough-list-item, .rank-table tbody tr');
+      if (el) el.click();
+    });
+    await page.waitForTimeout(1200);
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    const v = failing(results);
+    if (v.length) failed++;
+    console.log(
+      `${'/ (borough selected)'.padEnd(28)} ${v.length ? 'FAIL' : 'OK  '} rendered detail panel` +
+        (v.length ? ` — ${v.length} blocking` : '')
+    );
+    for (const item of v) {
+      console.log(`    [${item.impact.toUpperCase()}] ${item.id}: ${item.help}`);
+      for (const node of item.nodes.slice(0, 3)) {
+        console.log(`      - ${node.target.join(' > ')}`);
+      }
+    }
+  } catch (e) {
+    console.log(`${'/ (borough selected)'.padEnd(28)} ERROR ${e.message.split('\n')[0]}`);
+    failed++;
+  }
+
+  await context.close();
 }
 
 await browser.close();
 server.close();
-console.log(`\nRESULT: ${failed === 0 ? 'PASS' : 'FAIL'} (${PAGES.length} pages scanned)`);
+console.log(
+  `\nRESULT: ${failed === 0 ? 'PASS' : 'FAIL'} ` +
+    `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection state)`
+);
 process.exit(failed === 0 ? 0 : 1);

@@ -5386,6 +5386,24 @@ def reverse_geocode(lat, lon):
 # M1 1AE carries lad=E08000003 with b absent, B1 1AA lad=E08000025, LS1 1AA
 # lad=E08000035. The gap was a lookup, not missing data, so the two blockers
 # recorded in CITY_PROVENANCE were really one.
+def _norm_borough_key(name):
+    """Loose key for matching a resolver's borough spelling to ours."""
+    s = (name or '').lower().replace('.', '').replace('-', ' ')
+    # ONS inverts the qualifier and postcodes.io passes it through, so the same
+    # authority arrives as "City of Bristol" from LAD_TO_BOROUGH and
+    # "Bristol, City of" from the fallback resolver.
+    for tail in (', city of', ', county of'):
+        if s.endswith(tail):
+            s = s[: -len(tail)]
+    for prefix in ('city of ', 'county of ', 'the '):
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+    for suffix in (' city', ' borough', ' district'):
+        if s.endswith(suffix):
+            s = s[: -len(suffix)]
+    return ' '.join(s.split())
+
+
 LAD_TO_BOROUGH = {
     'E09000018': ('london', 'Hounslow'),
     'E09000017': ('london', 'Hillingdon'),
@@ -5531,6 +5549,17 @@ def normalise_borough(name, city):
     aliased = BOROUGH_ALIASES.get(name)
     if aliased and aliased in boroughs:
         return aliased
+    # Last resort: match on the loose key, which absorbs the qualifier
+    # inversion ONS and postcodes.io use. "Bristol, City of" and "Nottingham"
+    # both arrive here and must reach "City of Bristol" and "City of
+    # Nottingham". Before 2026-08-12 they returned None and the caller 404'd
+    # with "Borough not currently supported", having already resolved the right
+    # city. BOROUGH_ALIASES stays the explicit path; this only catches
+    # spellings nobody has had to enumerate yet.
+    key = _norm_borough_key(name)
+    for candidate in boroughs:
+        if _norm_borough_key(candidate) == key:
+            return candidate
     return None
 
 
@@ -5692,6 +5721,16 @@ def parse_str_param(raw, default=''):
     return default
 
 
+# Borough NAME -> (city, borough), the name-keyed twin of LAD_TO_BOROUGH.
+# Needed because the postcodes.io fallback tier returns a borough name and no
+# LAD code, so a code-only derivation would fix the local NSPL tier and leave
+# the fallback still defaulting to london.
+_CITY_BY_BOROUGH_NAME = {
+    _norm_borough_key(borough): (city, borough)
+    for city, borough in LAD_TO_BOROUGH.values()
+}
+
+
 def resolve_query(query):
     """Run a single score query. Returns the response body or an error dict."""
     postcode = parse_str_param(query.get('postcode'))
@@ -5777,6 +5816,39 @@ def resolve_query(query):
                 return {
                     'error': f'Postcode not recognised by postcodes.io: {postcode}',
                 }, 404
+            # DERIVE THE CITY FROM THE RESOLVED LAD when the caller did not
+            # name one (2026-08-12).
+            #
+            # `city` defaults to 'london', so a postcode-only query - the
+            # natural call, and the one score-demo and api/index.html both
+            # document - resolved its borough correctly and then looked that
+            # borough up in LONDON_BOROUGHS. M1 1AE answered
+            # "Borough not currently supported in london.", naming a city the
+            # caller never mentioned; B15, LS1, S1, BS1 and NG1 did the same.
+            #
+            # So postcode-level scoring was LONDON-ONLY in production for any
+            # caller who did not already know which city to ask for, while
+            # CLAUDE.md, ROADMAP and METHODOLOGY all recorded it as un-gated
+            # since 2026-08-10. The un-gating was real - `?city=manchester`
+            # with the same postcode scores 7.7 - it simply could not be
+            # reached without supplying the answer in the question. The LAD
+            # code was on every row the whole time; nothing read it to pick a
+            # city.
+            #
+            # Keyed on the LAD CODE first and the borough NAME second, because
+            # the two resolver tiers carry different fields: the local NSPL row
+            # has `_ladCode`, the postcodes.io fallback has only
+            # `admin_district`. An explicit `city=` still wins, so a caller can
+            # still force a cohort. Guarded by PostcodeCityDerivationTests.
+            if not parse_str_param(query.get('city')):
+                derived = LAD_TO_BOROUGH.get(pc.get('_ladCode'))
+                if not derived:
+                    derived = _CITY_BY_BOROUGH_NAME.get(
+                        _norm_borough_key(pc.get('admin_district'))
+                    )
+                if derived and derived[0] in CITIES:
+                    city = derived[0]
+                    location_meta['city'] = city
             borough = normalise_borough(pc.get('admin_district'), city)
             location_meta.update(
                 {

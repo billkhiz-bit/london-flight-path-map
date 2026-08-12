@@ -243,7 +243,11 @@
 
   <section>
     <h2>30-second sample</h2>
-    <pre>curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=N1+7SX&amp;persona=family' \
+    <!-- tabindex + role make the horizontally scrollable code block reachable
+         by keyboard (WCAG 2.1.1). It scrolls on any narrow viewport, and a
+         keyboard user could not scroll it at all - caught once the a11y gate
+         started scanning a phone viewport on 2026-08-12. -->
+    <pre tabindex="0" role="region" aria-label="Example request">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=N1+7SX&amp;persona=family' \
   -H 'X-Api-Key: YOUR_KEY' \
   -H 'Accept: application/json'
 
