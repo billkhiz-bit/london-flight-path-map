@@ -6,7 +6,43 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-12 (latest) - Postcode scoring reaches every city, not just London
+### 2026-08-12 (latest) - Stations for the map, and a ranking that says what it measures
+
+**The map's transport layer was empty for nine of eleven cities**, and the
+neighbourhood ranking read as a recommendation when it was largely a price sort.
+
+- **1,771 stations across ten cities, from NaPTAN, for DISPLAY only.** The
+  `<CITY>_STATIONS` arrays were empty everywhere outside London and NYC, so the
+  transport layer drew nothing. They also fed a +/-0.4 liveability nudge, which
+  is **removed rather than filled**: liveability has scored transport from the
+  same NaPTAN register since v3.6 (share of a borough's postcodes within 800 m
+  of a rail/metro/tram node, 0.25 of the component), so filling the arrays would
+  have counted one measurement twice. London's list was also 18 hand-picked
+  interchanges against a derived list of every station, so "filling the gap"
+  would have made London incomparable while looking like consistency.
+- **Two bugs found getting the stations right, both the same defect as the
+  borough collision earlier the same day.** A bounding box is not containment:
+  Leicester's and Nottingham's boxes overlap, and first-match-wins filed
+  Attenborough, Beeston, Basford and Bingham - all Nottinghamshire - under
+  Leicester, giving it 104 stations against Nottingham's 16. Point-in-polygon
+  gives 19 and 69. And stripping a descriptor anywhere in a name edits the name:
+  "Station Approach" became "Approach", and Manchester carried four Altrinchams
+  because NaPTAN lists platform, entrance, interchange and Metrolink stop
+  separately. Anchored to the end, Manchester goes 364 -> 246.
+- **The neighbourhood ranking now says "best value" where price leads it.**
+  Measured over the rendered rows, rank-to-price correlation is 0.67 to 0.89 for
+  every generated city against **-0.23 for London** and -0.06 for NYC - so nine
+  of eleven lists are largely cheapest-first, which is why each puts Bradford
+  City Centre, Middlesbrough Town Centre, Chopwell or Bootle at number one. The
+  cause is structural: a generated city's "neighbourhood" is a postcode district
+  with `crime: 0` (not published at that geography) and a liveability inherited
+  from its borough, so districts differ mainly by price and aircraft quiet.
+  Nothing is miscomputed - the LABEL over-claims, the same distinction as WA8
+  publishing a Knowsley median under the name "Widnes". The threshold is
+  measured at render time, not written per city, so a city that gains a
+  differentiating input drops the disclosure by itself.
+
+### 2026-08-12 - Postcode scoring reaches every city, not just London
 
 **`/v1/score?postcode=M1+1AE` answered "Borough not currently supported in
 london."** - naming a city the caller never mentioned. B15, LS1, S1, BS1 and NG1

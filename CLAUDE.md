@@ -229,6 +229,35 @@ without an airport needs that path to stay intact.
 
 **Neighbourhood ranking data.** London and NYC hold *curated* medians and a hand-assigned `crime` modifier inline. **All nine UK city-regions' 485 entries are generated** (2026-08-11; was Greater Manchester's 85 alone) — `python scripts/build_city_neighbourhoods.py --write-index` rewrites `index.html` between each city's `<CITY>-NEIGHBOURHOODS:START/END` markers from HM Land Registry's **bulk** Price Paid CSV (the linked-data API returns **HTTP 200 with an empty list** for a district query, so it cannot be used) plus NSPL for coordinates. A "neighbourhood" is a **postcode district**, districts under 30 sales are dropped rather than estimated, and `crime` is 0 everywhere because sub-borough crime is not published at that geography. **Boroughs come from the Lambda's `LAD_TO_BOROUGH`, matched to Land Registry's own district spelling by normalisation** (`Westminster` → `CITY OF WESTMINSTER`); a borough matching nothing is reported loudly, because a silent miss reads as "this borough has no neighbourhoods". One PPD pass and one NSPL pass cover every city. Do not hand-edit inside the markers; re-run the script. The 155 MB PPD cache and the JSON by-product both land in gitignored `data/`.
 
+**Stations are DISPLAY-ONLY, and the transport nudge is gone (2026-08-12).**
+`scripts/build_city_stations.py` fills `<CITY>_STATIONS` from NaPTAN - 1,771
+stations across ten cities - which draws the map's **transport layer, previously
+empty for nine of eleven cities**. The `+/-0.4` liveability nudge those arrays
+fed is **removed, not filled**: transport is already scored from the same NaPTAN
+register at borough level since v3.6 (0.25 of liveability), so filling them would
+count one measurement twice, and London's 18 hand-picked interchanges mean
+something different from "every station". Two traps, both the bbox/first-match
+family: **a bounding box is not containment** (Leicester's and Nottingham's
+overlap - first-match-wins gave Leicester 104 stations and Nottingham 16; point-
+in-polygon gives 19 and 69), and **stripping a descriptor anywhere in a name
+edits the name** ("Station Approach" -> "Approach"; four Altrinchams). NYC is
+untouched - NaPTAN is UK-only and correctly yields zero.
+
+**The neighbourhood ranking says "best value" where price leads it (2026-08-12).**
+Rank-to-price correlation, measured over the rendered rows: **-0.23 London,
+-0.06 NYC, 0.67-0.89 every generated city**. So nine of eleven lists are largely
+cheapest-first - each puts Bradford City Centre, Middlesbrough Town Centre,
+Chopwell or Bootle at #1. Structural, not a fault: a generated "neighbourhood" is
+a postcode district with `crime: 0` (not published at that geography) and a
+liveability inherited from its borough, so districts differ mainly by price and
+aircraft quiet while affordability is ~31% of the score. **Nothing is
+miscomputed; the LABEL over-claims** - the same distinction as WA8 publishing a
+Knowsley median as "Widnes". **The threshold is MEASURED at render time, never a
+per-city string**, so a city that gains a differentiating input drops the
+disclosure by itself - the `markLayerCoverage()` principle, applied before the
+stale-string version could be written. 0.6 is the line and nothing sits between
+-0.23 and 0.67.
+
 **The 285 curated area labels are CORROBORATED, not recalled (2026-08-12).** Until then only Greater Manchester had any, so **273 of 503 districts rendered under a repeated post town** — Birmingham ×35, Liverpool ×29, Leeds ×16, Sheffield ×15. Nothing was false (the outward code is always beside the label) but a ranked list of thirty-five "Birmingham" rows says nothing. `NAME_OVERRIDES_BY_CITY` now covers all nine cities, and **`--check-names` asserts every label against that district's own House of Commons Library MSOA name**, evidence checked in at `data/district-msoa-names.json` so the gate needs neither NSPL nor a network. Blocking in preflight. **273 → 5**, the five being Bath ×2 and Darlington ×3, left as post towns on purpose.
 
 **A district is published only if it is MAJORITY INSIDE the city publishing it (2026-08-12).** Transactions are bucketed by the Land Registry `district` field, a LOCAL AUTHORITY, but an entry is published as a POSTCODE DISTRICT, Royal Mail's — and those do not nest. **WA8 was 4% inside Knowsley and 94% inside Halton, which we do not cover**, so it published a Knowsley median of £345k off 32 sales — Merseyside's *fourth priciest* entry — under the label "Widnes", at a centroid averaged over all 1,591 postcodes and therefore sitting in Halton. Every step was arithmetically correct; the join was wrong. 34 of 501 were under 75% contained, 8 under 20%. **18 dropped**, 503 → 485.

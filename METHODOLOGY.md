@@ -78,6 +78,20 @@ moved 43 retained markers, Darlington's by 4.4 km), and a district belongs to
 exactly one city — WN4 and WN5 had been published twice, WN5 as both
 "Pemberton & Orrell" at £165k and "Billinge" at £235k on identical coordinates.
 
+**The neighbourhood ranking is BEST VALUE outside London and New York, and the
+site now says so (2026-08-12).** Measured over the rendered ordering, the
+correlation between rank position and price is **0.67 to 0.89 for every
+generated city**, against **-0.23 for London** and -0.06 for New York. The cause
+is structural: a generated city's neighbourhood is a postcode district carrying
+`crime: 0` - sub-borough crime is not published at that geography - and a
+liveability inherited from its borough, so districts within a city differ mainly
+by price and aircraft quiet, while affordability is ~31% of the balanced score.
+No figure is miscomputed; the ordering is exactly what §5.1's weights produce.
+What over-claimed was the label, so where price leads the heading reads "best
+value" and the note states plainly what the ordering rests on. The threshold is
+measured at render time rather than declared per city, so a city that gains a
+differentiating input stops being labelled this way without an edit.
+
 **A district's displayed NAME is a label, not a measurement, and it is
 corroborated.** 285 of the 485 carry a curated postal-district name; the rest
 show the Royal Mail locality most of their transactions use. The outward code
