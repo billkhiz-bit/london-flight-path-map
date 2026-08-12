@@ -167,6 +167,17 @@ for (const city of cities) {
 
   const problems = [];
   if (state.current !== city.id) problems.push(`currentCity is ${state.current}`);
+  // A FLOOR, because `expected` is derived by fetching the city's own boundary
+  // sources IN THE PAGE, and loadCityBoundaries() swallows an unparseable
+  // source with console.warn and returns []. So when a boundary file is served
+  // as 200 + non-JSON - the shape a CloudFront error page takes, and the exact
+  // gitignore trap CLAUDE.md names as the #1 hazard when adding a city - both
+  // sides collapse to 0 together and 0 === 0 passes. Proven: a city whose map
+  // drew nothing reported `ok`. An expectation read from the thing under test
+  // cannot disagree with it; a floor can.
+  if (!city.expected) {
+    problems.push('boundary file resolved to 0 outlines - source missing or unparseable');
+  }
   if (state.boroughs !== city.expected) {
     problems.push(`${state.boroughs} outlines drawn, boundary file has ${city.expected}`);
   }

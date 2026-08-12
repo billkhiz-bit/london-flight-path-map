@@ -1,5 +1,34 @@
 # Audit Report, Sky Score
-**Date:** 2026-08-03 (full audit — see below) · 2026-07-27 (targeted) · 2026-07-24 (full audit)
+**Date:** 2026-08-12 (full audit) · 2026-08-03 (full audit — see below) · 2026-07-27 (targeted) · 2026-07-24 (full audit)
+
+## 2026-08-12 — full audit
+
+**Full report: [`AUDIT_REPORT_2026-08-12.md`](./AUDIT_REPORT_2026-08-12.md).**
+163 commits since the 2026-08-03 audit. Four parallel dimension agents; every
+finding acted on was re-verified by hand before it was fixed.
+
+**4 Critical fixed, 3 Critical open, 6 Important fixed, 14 Important open.**
+
+The four Critical fixes were all *confident wrong numbers* rather than errors:
+North West Leicestershire served Leicester's crime rate (110.0 against 59.2);
+every neighbourhood outside London carried a −0.4 liveability penalty meaning
+"no station file was built"; NYC sold-price links resolved to English villages
+(ZIP 10001 → "House Prices in Fishpond, Dorset"); and the public API demo had
+returned `Limit Exceeded` for **five days** because the status page spent the
+funnel's key at 1,152 requests/day per open tab.
+
+Two blocking gates were proven to pass with **zero data** — `layer-honesty.mjs`
+and `city-switch.mjs` both derived their expectation from the same fetch they
+were checking. Both now have a floor, red proven.
+
+Still open and worth reading first: `/v1/environment` computes aircraft noise
+with London geometry for every UK coordinate (code confirmed, live repro
+inconclusive); three WCAG contrast failures including mobile legend headings at
+1.19:1; and the demo key is authorised on `/v1/score/batch`, worth 20× the free
+tier's stated ceiling.
+
+---
+
 **Files scanned:** 7 active Python Lambdas, `template.yaml`, `iam-policy.json`, `index.html` (8.2k lines), `js/api-base.js`, `sw.js`, `score-demo/*`, `api/index.html`, `pricing.html`, `privacy.html`, `tests/`, `backend/tests/`, `.github/workflows/`, live-site parity vs skyscore.co.uk
 **Audit performed by:** 6 parallel dimension agents (security backend/frontend, code backend/frontend, a11y/design, deps + live parity) with per-finding adversarial verification. Verification was cut short by the account's monthly spend limit — see the 2026-07-24 section for what that means.
 **Previous audits:** 2026-05-21 (website, post-launch), 2026-05-07, 2026-05-06 (39-finding baseline; triage table below)

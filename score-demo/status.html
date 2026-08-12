@@ -240,14 +240,47 @@
     },
   ];
 
-  async function check(endpoint) {
+  // AUTHENTICATED ONLY ON THE FIRST SWEEP. An idle tab must cost nothing.
+  //
+  // This page polled four key-gated endpoints every 5 minutes on the SHARED
+  // PUBLIC DEMO KEY: 48 requests/hour per open tab, 1,152/day, which drains the
+  // 2,000/month SkyScoreDemoTier plan in 1.7 days. It did exactly that - the
+  // key hit zero on 2026-08-07 and the public "Try the API" form on
+  // /score-demo returned {"message":"Limit Exceeded"} for FIVE DAYS, with no
+  // alarm, while this status page reported the API healthy.
+  //
+  // The comment below already reasoned about "exhaustion time" and re-tuned the
+  // interval when the quota moved. Tuning the interval treats the symptom: any
+  // interval leaves an abandoned tab spending a customer-facing consumable.
+  //
+  // So the cost model is now: one authenticated sweep per genuine page load
+  // (4 requests, which is what a visitor is worth), and every automatic sweep
+  // afterwards is KEYLESS. API Gateway does not meter a request that fails
+  // authorisation, so keyless probes are free - and a 403 is still a real
+  // liveness signal: it proves the route exists and its authorizer is running.
+  // Only a 5xx, a timeout or a network error means down.
+  function isAuthed(endpoint) {
+    return Boolean(endpoint.headers && endpoint.headers['X-Api-Key']);
+  }
+
+  async function check(endpoint, useKey) {
     const t0 = performance.now();
+    const keyless = isAuthed(endpoint) && !useKey;
     try {
-      const opts = { method: endpoint.method, headers: endpoint.headers || {} };
+      let headers = endpoint.headers || {};
+      if (keyless) {
+        headers = Object.fromEntries(
+          Object.entries(headers).filter(([h]) => h.toLowerCase() !== 'x-api-key')
+        );
+      }
+      const opts = { method: endpoint.method, headers };
       if (endpoint.body) opts.body = endpoint.body;
       const r = await fetch(endpoint.url, opts);
       const elapsed = Math.round(performance.now() - t0);
-      const ok = r.status >= 200 && r.status < 400;
+      // 403 on a keyless probe is the AUTHORIZER WORKING, not a failure.
+      const ok = keyless
+        ? (r.status === 403 || (r.status >= 200 && r.status < 400))
+        : r.status >= 200 && r.status < 400;
       let data = null;
       if (endpoint.captureBody && ok) {
         try { data = await r.json(); } catch {}
@@ -258,16 +291,17 @@
         data,
         status: r.status,
         elapsed,
-        statusText: ok ? 'Up' : `${r.status}`,
+        keyless,
+        statusText: ok ? (keyless && r.status === 403 ? 'Up (auth enforced)' : 'Up') : `${r.status}`,
       };
     } catch (err) {
       return { ...endpoint, ok: false, status: 0, elapsed: 0, statusText: 'Error' };
     }
   }
 
-  async function runAllChecks() {
+  async function runAllChecks(useKey) {
     document.getElementById('lastChecked').textContent = new Date().toISOString().replace('T', ' ').replace('Z', ' UTC').slice(0, 23);
-    const results = await Promise.all(ENDPOINTS.map(check));
+    const results = await Promise.all(ENDPOINTS.map((e) => check(e, useKey)));
     renderEndpoints(results);
     const allUp = results.every(r => r.ok);
     const pulse = document.getElementById('overallPulse');
@@ -321,10 +355,13 @@
   // name is now stated instead of a quota that has already moved once.
   const CHECK_INTERVAL_MS = 300_000;
   let lastRun = 0;
+  // The FIRST sweep of a page load is authenticated; every later one is not.
+  let firstSweep = true;
   function runIfVisible() {
     if (document.hidden) return;
     lastRun = Date.now();
-    runAllChecks();
+    runAllChecks(firstSweep);
+    firstSweep = false;
   }
   runIfVisible();
   setInterval(runIfVisible, CHECK_INTERVAL_MS);

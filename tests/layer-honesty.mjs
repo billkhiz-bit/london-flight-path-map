@@ -90,6 +90,7 @@ console.log(`${'city'.padEnd(20)} ${'road noise'.padEnd(16)} ${'flood'.padEnd(16
 console.log('-'.repeat(74));
 
 let fail = 0;
+let totalExpected = 0;
 
 // THE LANDING CITY, MEASURED WITHOUT SWITCHING TO IT.
 //
@@ -165,9 +166,32 @@ for (const city of cities) {
     const m = measured[l.key];
     const ok = m.painted === m.expected;
     if (!ok) fail += 1;
+    totalExpected += m.expected;
     cells.push(`${ok ? ' ' : '!'}${m.painted}/${m.expected}`.padEnd(16));
   }
   console.log(`${city.label.padEnd(20)} ${cells.join(' ')}`);
+}
+
+// A FLOOR ON THE EXPECTATION ITSELF.
+//
+// `expected` is computed through getExtraData() - deliberately the same lookup
+// the renderer uses, so a borough-name mismatch shows as a shortfall rather
+// than being excused on both sides. The cost of that choice is that when
+// data/borough-extra.json does not PARSE, both sides collapse to 0 together:
+// every city prints 0/0, `fail` stays 0, and this gate reports "Every layer
+// paints exactly the boroughs that hold a reading" while the map is blank.
+// Proven by serving that one file as 200 + a non-JSON body, which is the shape
+// a CloudFront custom error page takes.
+//
+// This is the only gate covering roadNoise/flood/airQuality - they are not
+// scoring inputs, so borough-score-parity.mjs cannot see them either. A total
+// of zero is therefore never a pass.
+if (totalExpected === 0) {
+  console.log(
+    '\nFAIL: every city expected 0 boroughs with a reading. borough-extra.json ' +
+      'is missing or unparseable, so the comparison ran against nothing.'
+  );
+  process.exit(1);
 }
 
 await browser.close();

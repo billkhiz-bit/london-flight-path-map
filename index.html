@@ -7142,9 +7142,25 @@
             const d = _quickDist(lat, lon, st.coords[1], st.coords[0]);
             if (d < minStDist) minStDist = d;
           });
-          // Transport bonus/penalty baked into liveability
+          // Transport bonus/penalty baked into liveability.
+          //
+          // NO STATION LIST MEANS NO ADJUSTMENT, not the maximum penalty.
+          // `scripts/build_city_frontend_block.py` emits `const <CITY>_STATIONS
+          // = [];` for every generated city, so `stations` is empty for all
+          // nine of them and `minStDist` stayed `Infinity`. `Infinity > 5` is
+          // true, so EVERY neighbourhood outside London carried `-0.4` - a
+          // penalty whose actual meaning was "nobody has built this file yet".
+          // Absence rendered as a measurement, in the penalising direction,
+          // which is the same defect as the 35.0 raster fill pointed the other
+          // way. `tests/borough-score-parity.mjs` compares BOROUGH scores and
+          // is structurally blind to a neighbourhood-level adjustment.
+          //
+          // Transport is already a measured liveability input since v3.6
+          // (NaPTAN, in borough-extra), so a city with no station list is not
+          // missing the signal - it is missing this second, finer one.
           let transportAdj = 0;
-          if (minStDist < 0.5) transportAdj = 0.4;
+          if (minStDist === Infinity) transportAdj = 0;
+          else if (minStDist < 0.5) transportAdj = 0.4;
           else if (minStDist < 1) transportAdj = 0.2;
           else if (minStDist > 5) transportAdj = -0.4;
           else if (minStDist > 3) transportAdj = -0.2;
@@ -8042,9 +8058,31 @@
         if (!boroughName) return null;
         const c = boroughName.toLowerCase().trim();
         const extraData = cityOf(currentCity).boroughExtra();
+
+        // EXACT MATCH FIRST. This loop used to be substring-only and returned on
+        // the first hit, so a borough whose name CONTAINS another borough's was
+        // served the wrong record entirely - whichever key happened to come
+        // first in the file.
+        //
+        // It was live: `Leicester` is key #1 in the leicester block, and
+        // 'north west leicestershire'.includes('leicester') is true, so North
+        // West Leicestershire rendered Leicester's crime rate of 110.0 per
+        // 1,000 against its true 59.2, a Progress 8 schools badge of 0.14 for a
+        // district that publishes none, transport `moderate` for `poor` and
+        // healthcare `good` for `moderate`. Not a missing value - a confident
+        // wrong one, and the detail panel showed no sign anything was amiss.
+        //
+        // The substring pass is KEPT because it is load-bearing for the
+        // ONS/Land-Registry spelling drift it was written for (`Westminster` vs
+        // `City of Westminster`, `St Helens` vs `St. Helens`). It just must not
+        // outrank an exact name. Measured over all 91 boroughs: one collision
+        // today, and any future city with a "North X"/"X" pair adds another.
+        for (const [key, val] of Object.entries(extraData)) {
+          if (c === key.toLowerCase()) return { name: key, ...val };
+        }
         for (const [key, val] of Object.entries(extraData)) {
           const k = key.toLowerCase();
-          if (c === k || c.includes(k) || k.includes(c)) return { name: key, ...val };
+          if (c.includes(k) || k.includes(c)) return { name: key, ...val };
         }
         return null;
       }
@@ -8580,15 +8618,41 @@
         if (!el) return;
         const pc = encodeURIComponent((postcode || '').replace(/\s+/g, '-'));
         if (soldData === 'cors-blocked' || !soldData) {
-          el.innerHTML = `<p class="info-note" style="margin-top:0;">
-      Sold prices cannot be loaded directly due to browser security restrictions.
-      View sold prices for this area on these official sources:</p>
+          // BRANCH ON CITY. buildPropertyLinks() has always done this; this
+          // function never did, so every NYC visitor whose sold prices failed
+          // to load was handed a Rightmove link built from a US ZIP.
+          //
+          // That is not a dead link, which is the failure it looks like. It is
+          // a WRONG one: Rightmove resolves a five-digit string as a UK place
+          // identifier and serves a real page for somewhere else. 10001
+          // (Manhattan) returns "House Prices in Fishpond", a hamlet in Dorset;
+          // 11201 (Brooklyn) returns Great Fransham in Norfolk. A user in New
+          // York clicking "Rightmove Sold Prices" got English village prices
+          // under their own neighbourhood's heading, with no error anywhere -
+          // this project's standing failure mode, a confident wrong answer
+          // rather than a visible absence.
+          //
+          // Reported by Bill 2026-08-12 as "a dead link", which is how it
+          // presents until you read the page title.
+          const nycLinks = `
+      <div class="property-links" style="margin-top:6px;">
+        <a class="property-link" href="https://www.redfin.com/zipcode/${encodeURIComponent(((postcode || '').match(/\d{5}/) || ['10001'])[0])}" target="_blank" rel="noopener">
+          Redfin - Sold Prices<span class="link-arrow">&#8599;</span></a>
+        <a class="property-link" href="https://a836-acris.nyc.gov/DS/DocumentSearch/Index" target="_blank" rel="noopener">
+          NYC ACRIS Property Records<span class="link-arrow">&#8599;</span></a>
+      </div>`;
+          const ukLinks = `
       <div class="property-links" style="margin-top:6px;">
         <a class="property-link" href="https://www.rightmove.co.uk/house-prices/${pc}.html" target="_blank" rel="noopener">
           Rightmove Sold Prices<span class="link-arrow">&#8599;</span></a>
         <a class="property-link" href="https://landregistry.data.gov.uk/app/ppd" target="_blank" rel="noopener">
           HM Land Registry Search<span class="link-arrow">&#8599;</span></a>
       </div>`;
+          el.innerHTML = `<p class="info-note" style="margin-top:0;">
+      Sold prices cannot be loaded directly due to browser security restrictions.
+      View sold prices for this area on these official sources:</p>${
+        currentCity === 'nyc' ? nycLinks : ukLinks
+      }`;
           return;
         }
         el.innerHTML =

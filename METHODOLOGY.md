@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.5, last updated 2026-08-03.
+> Version 3.8, last updated 2026-08-12.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -705,7 +705,7 @@ When correctly populated, the v3.1 raster tier replaces Haversine with direct sa
 **The dB → quiet curve (v3.6, re-derived 2026-08-04).** A continuous linear ramp between two
 published thresholds, replacing the six-value band table §4.1 documents for boroughs.
 
-> **`METHODOLOGY_VERSION` is still `3.5`, and that is correct.** "v3.6" names the curve, not the
+> **Superseded.** This paragraph argued `METHODOLOGY_VERSION` should stay `3.5` while the curve was called "v3.6". The constant has since moved to `3.8` (v3.6 transport, v3.7 healthcare, v3.8 the per-airport aircraft scale), so the reasoning below is kept only as the record of why the two were briefly allowed to differ. **The live value is `3.8`.** Historic note follows. "v3.6" names the curve, not the
 > live methodology. The raster tier is quarantined, so **no request reaches this function** and no
 > published score has changed; the version bumps to 3.6 on the deploy that unquarantines the tier,
 > not before. Same reasoning as the 2026-08-03 quarantine entry, which also changed which
@@ -1505,7 +1505,7 @@ A score component sits alongside Affordability and Growth, where higher is bette
 | `TRANSPORT_SCORE` 4-tier categorisation | Approximates TfL PTAL bands (PTAL 0-6b reduced to 4 tiers) for interpretability. Direct PTAL integration is on the v2.1 roadmap. |
 | `HEALTH_SCORE` 3-tier and 10% liveability weight | Healthcare has lower variance across London (most boroughs within 5 km of full A&E per NHS England target), so finer resolution would over-discriminate. Lower weight reflects lower variance. |
 | Liveability sub-weights 35/30/25/10 | Editorial, informed by Rightmove/Zoopla buyer-priority research showing schools and crime as top-2 factors, transport material in London, healthcare lower-variance. Customers wanting different sub-weights should use `?weights=` at the score-component level. |
-| Default component weights 30/25/20/25 | Editorial, quiet weighted prominently because it is Sky Score's distinctive value (other tools underweight it). Customers wanting different defaults should use a persona preset or `?weights=`. |
+| Default component weights **38/31/0/31** (`balanced`, `app.py` `PERSONA_WEIGHTS`; growth is 0.00 outside the `investor` persona since v3.3) | Editorial, quiet weighted prominently because it is Sky Score's distinctive value (other tools underweight it). Customers wanting different defaults should use a persona preset or `?weights=`. |
 | Persona preset weights | Each preset reflects typical-segment priority research (family ↔ schools-dominant; investor ↔ growth-and-affordability-dominant; etc.). Specific values are convention; customers should use `?weights=` for tailored profiles. |
 
 ### What we don't claim

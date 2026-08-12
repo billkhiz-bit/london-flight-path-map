@@ -221,7 +221,7 @@
     <div class="three-up">
       <div class="card">
         <h3>0-10 score per postcode</h3>
-        <p>UK postcodes (33 London boroughs), Greater Manchester's 10 boroughs by name, and NYC ZIPs (~182 residential). Single composite + four components: quiet, affordability, growth, liveability. Coverage is not uniform across cities and each response says what it rests on.</p>
+        <p>UK postcodes across <strong>12 city-regions and 94 boroughs</strong> - London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4) and Nottingham (4) - plus NYC ZIPs (~182 residential). Single composite + four components: quiet, affordability, growth, liveability. Coverage is not uniform across cities and each response says what it rests on.</p>
       </div>
       <div class="card">
         <h3>Methodology fully published</h3>
@@ -230,7 +230,7 @@
       <div class="card">
         <h3>Per-postcode noise resolution</h3>
         <p>Quiet is scored per postcode from Haversine proximity to airports and flight-path geometry, at the postcode centroid rather than a borough average. The response reports which tier answered in <code>context.quietResolution</code>.</p>
-        <p><strong>Note (updated 4 August 2026):</strong> the DEFRA Lden raster tier described in our methodology is currently bypassed, and <code>quietResolution</code> therefore returns <code>postcode</code>, never <code>raster</code>. Three separate reasons, stated plainly because two of them were understood only after the first was published:</p>
+        <p><strong>Note (updated 12 August 2026):</strong> the DEFRA Lden raster tier is <strong>live</strong>. <code>quietResolution</code> returns <code>raster</code> wherever DEFRA published a contour and the sampled reading is on file, and <code>postcode</code> elsewhere. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same measurements, so the two surfaces cannot disagree. Three separate reasons, stated plainly because two of them were understood only after the first was published:</p>
         <ul style="margin:8px 0 0 18px;padding:0;font-size:14px;line-height:1.55;">
           <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
           <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
@@ -256,7 +256,7 @@
 #   "location": { "city": "london", "postcode": "N1 7SX", "borough": "Hackney", ... },
 #   "persona": "family",
 #   "weights": { "quiet": 0.22, "afford": 0.22, "growth": 0.0, "live": 0.56 },
-#   "methodologyVersion": "3.5",
+#   "methodologyVersion": "3.8",
 #   "sources": [...]
 # }</pre>
     <p style="margin-top:12px;">More examples in the <a href="/score-demo/api-docs.html" style="color:var(--amber);">Swagger UI reference</a>.</p>

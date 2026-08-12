@@ -25,13 +25,23 @@ only, verified 2026-07-23).
 >
 > **Why our current use is very likely outside the share-alike trigger,
 > stated so it can be re-checked rather than assumed:**
-> 1. OSM is reached through Overpass **per request, as a transient
+> 1. ~~OSM is reached through Overpass **per request, as a transient
 >    passthrough** for the `/nhs` nearby-facilities panel. Nothing is
->    stored, so there is no database of ours for the term to attach to.
+>    stored, so there is no database of ours for the term to attach to.~~
+>    **NO LONGER TRUE, corrected 2026-08-12.** `backend/lambdas/nhs/london_healthcare.json`
+>    is a **stored 3,224-element OSM extract (458 KB) bundled inside the
+>    deployed Lambda** and read on the hot path (`nhs/app.py:112`), built by
+>    `scripts/fetch_london_healthcare.py`. The re-open trigger below ("if OSM
+>    output is ever cached, stored") fired when that snapshot landed and was
+>    not actioned. **This is a stored extract of an ODbL database**, so the
+>    share-alike question is live and needs an actual answer rather than the
+>    assumption above. Point 2 still holds and is what limits the exposure.
 > 2. **The healthcare component of the liveability score does not come
->    from OSM.** It comes from `data/borough-extra.json`, which this file
->    records as our own editorial work. That separation is what keeps the
->    score itself clear of ODbL, and it is load-bearing.
+>    from OSM**, and that is the load-bearing separation. It comes from
+>    `data/borough-extra.json`, derived from the **NHS Organisation Data
+>    Service** register since methodology v3.7 (`scripts/fetch_nhs_gp_practices.py`)
+>    — OGL, not ODbL. (This file used to describe that field as our own
+>    editorial work; see the corrected row in the table below.)
 > 3. Attribution is emitted in the `/nhs` response, which ODbL requires
 >    regardless.
 >
@@ -60,6 +70,11 @@ These appear in the `sources` array of every `/v1/score` response.
 | **ONS** (population, deprivation, recorded crime) | OGL v3.0 | Liveability composite + crime score normalisation. **Primary crime rate since 2026-08-02**: *Crime in England and Wales*, Police Force Area data tables, year ending March 2026, **Table C4**, offences per 1,000 residents on mid-2024 population. | OGL boilerplate | ✅ Commercial use OK |
 | **Department for Education** (Key Stage 4 Progress 8) | OGL v3.0 | Liveability "schools" sub-score. **Re-sourced 2026-08-02** (methodology v3.5): was Ofsted overall-effectiveness grades, which Ofsted abolished in September 2024 and which never reproduced from the published distribution anyway. Now Progress 8, 2022/23, local-authority level — the **terminal vintage until 2026/27 publishes**, because the 2024/25 and 2025/26 cohorts lost their KS2 baseline to the cancelled 2020/2021 test windows. | OGL boilerplate | ✅ Commercial use OK |
 | **Home Office** (recorded crime statistics) | OGL v3.0 | **Superseded 2026-08-02** — the crime sub-score now reads ONS *Crime in England and Wales* Table C4 (row above). Listed here because scores published before that date used it. | OGL boilerplate | ✅ Commercial use OK |
+| **NaPTAN** (DfT National Public Transport Access Nodes) | OGL v3.0 | Liveability **`transport`** sub-score for every borough since methodology v3.6 — share of a borough's postcodes within 800 m of a rail/metro/tram node. This is a **scored input at 0.25 of liveability**, not a display field. | OGL boilerplate | ✅ Commercial use OK |
+| **NHS Organisation Data Service** (ODS) | OGL v3.0 | Liveability **`healthcare`** sub-score since methodology v3.7 — share of postcodes within 500 m of a GP practice (role RO76). **Scored input at 0.10 of liveability.** Deliberately NOT OpenStreetMap: that choice is what keeps the score clear of ODbL share-alike. | OGL boilerplate | ✅ Commercial use OK |
+| **Environment Agency** — Risk of Flooding from Rivers and Sea (RoFRS/NAFRA2) | OGL v3.0 | Borough `flood` band, via the published WMS (no WCS/WFS exists). Currently a **displayed layer, not a scored component**. | OGL boilerplate | ✅ Commercial use OK |
+| **DEFRA background air-quality maps** (modelled annual mean NO₂ / PM2.5) | OGL v3.0 | Borough `airQuality` band and the per-postcode NO₂/PM2.5 figures returned by `/v1/environment`. | OGL boilerplate | ✅ Commercial use OK |
+| **OurAirports** | Public domain (CC0 dedication) | Runway coordinates and geometry behind every non-London `impact` band (`scripts/build_aircraft_bands.py`). | None required; credited anyway | ✅ Commercial use OK |
 | **TfL Open Data** (`/transport`) | [TfL Open Data licence](https://tfl.gov.uk/info-for/open-data-users/our-open-data) | Liveability "transport" sub-score; nearby stations | "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights..." | ✅ Commercial use OK |
 
 **Conclusion for the B2B API**: every data source is commercial-use-OK
@@ -79,7 +94,7 @@ These are visible to consumer-site visitors but NOT exposed via the B2B API.
 | **Office for National Statistics** (NSPL via Geoportal — offline uses) | OGL v3.0 | Postcode lat/lon for the v3.1 raster sampler, **and** the source loaded by `scripts/load_nspl.py` into the live resolver table (see the primary table above). The same on-disk `data/nspl.csv` now feeds both. | OGL boilerplate | ✅ Commercial use OK |
 | **DEFRA GeoTIFF (Round 4, 2022)** | OGL v3.0 | Sampled offline by `scripts/load_defra_raster.py`. v2 (with below-threshold sentinel) shipped 2026-05-06; loader running 2026-05-07 against the full ~2.5M NSPL postcode list. Same source as the live noise mapping. | Same OGL boilerplate | ✅ Commercial use OK |
 | **House of Commons Library MSOA Names v2.1** (2021 MSOAs) | [OGL v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) | **Verification only, never displayed and never scored.** `scripts/build_city_neighbourhoods.py --check-names` corroborates each of the 285 curated postcode-district labels against that district's own published MSOA names, so a label cannot claim a place no source puts there. The derived join lives in `data/district-msoa-names.json`; the 663 KB source CSV stays local. | OGL boilerplate; not surfaced to users because nothing derived from it reaches a page | ✅ Commercial use OK |
-| **Curated borough classifications** (`data/borough-extra.json`) | Own editorial work (informed by public sources) | Borough-level air-quality, flood-risk, schools, crime, transport and healthcare ratings + prose notes shown in the detail panel; also drive the air-quality and flood map fills (the map layers colour boroughs from this file, not from live DEFRA/EA/EPA/FEMA services) | UI badges label these "borough-level rating (curated)" since 2026-07-23 | ✅ No third-party licence involved; must never be presented as official agency data |
+| **`data/borough-extra.json`** — **mostly third-party derived since 2026-08-11, not editorial** | Third-party, all OGL v3.0 (see the five rows added above); the residual `crime`/`schools` PROSE tiers on 38 boroughs remain own editorial work | Borough-level air-quality, flood-risk, schools, crime, transport and healthcare ratings + prose notes shown in the detail panel; also drive the air-quality and flood map fills (the map layers colour boroughs from this file, not from live DEFRA/EA/EPA/FEMA services) | UI badges label these "borough-level rating (curated)" since 2026-07-23 | ✅ No third-party licence involved; must never be presented as official agency data |
 
 ---
 
