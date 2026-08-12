@@ -525,12 +525,39 @@ This is a material improvement in within-borough accuracy. Some postcodes go up 
 
 **Resolution chain (v3.1).** As of methodology v3.1, the score Lambda checks three resolution tiers in order, using the highest available:
 
-1. **Raster**, direct DEFRA Lden sample at the postcode centroid via DynamoDB lookup. Intended as the gold standard. **Quarantined since 2026-08-03 — see the warning below. This tier does not currently run.**
-2. **Postcode (Haversine)**, distance to airports + flight-path geometry (this section, §4.5). **Currently the top live tier for any postcode with a centroid.**
+1. **Raster**, direct DEFRA Lden sample at the postcode centroid via DynamoDB lookup. The gold standard, and **LIVE since 2026-08-06** — the quarantine described below was lifted once `data/aircraft-quiet-london.json` gave the consumer site the same measurements the API reads, so the two surfaces could no longer diverge. **Extended beyond London on 2026-08-12** to Birmingham, Bristol, East Midlands, Leeds Bradford, Liverpool, Manchester and Newcastle, via DEFRA's per-airport coverages.
+2. **Postcode (Haversine)**, distance to airports + flight-path geometry (this section, §4.5). The top tier for the ~97% of postcodes in each city that DEFRA publishes no contour for.
 3. **Borough (Lden band)**, borough-aggregate IMPACT_TO_QUIET lookup. Used when postcode lat/lon is not available.
 
-The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode' | 'borough'`) so integrators can verify which tier produced the response. While the quarantine holds, `'raster'` is never returned.
+The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode' | 'borough'`) so integrators can verify which tier produced the response. Since 2026-08-06 `'raster'` is returned wherever DEFRA published a contour and the table holds the row.
 
+> **The quarantine below is HISTORY, lifted 2026-08-06.** It is kept because it
+> records the failure mode — absence of measurement rendered as a favourable
+> measurement — and the conditions that had to be met before the tier could
+> return. Read it before re-enabling anything raster-shaped.
+>
+> **Extended to seven more airports on 2026-08-12, and the scope was measured
+> rather than assumed.** DEFRA publishes a coverage per airport; twelve are on
+> disk and only **seven** are loaded. Heathrow's and London City's are excluded
+> because London's region export already covers London *better* — 35,352
+> postcodes against their 17,330, so loading them would replace good coverage
+> with less of it. Gatwick's, Luton's and Stansted's are excluded because all
+> 3,704 of their readings fall outside `LAD_TO_BOROUGH` (Surrey, Beds, Essex),
+> where `/v1/score` cannot resolve a city at all. The seven that remain carry
+> **7,339 postcodes**, which is 0.6%–3.9% of each city — these are contour
+> strips, not city rectangles.
+>
+> **What it corrects, measured against the geometry tier it replaces:** mean
+> absolute difference **2.224 score points**, signed **−2.104**, meaning the
+> geometry estimate reads those postcodes *louder* than DEFRA measured. London
+> already received a correction of the same size (2.070) from its own raster, so
+> before this change the product was ranking London postcodes measured one way
+> against eight cities' measured another. **Caveat that must travel with these
+> numbers: DEFRA Round 4 maps 2021, which DEFRA itself flags as atypical
+> traffic.** Some share of the −2.1 is a real COVID-year reduction rather than
+> estimator error. The change was made on *consistency* grounds — London was
+> already on this basis — not on a claim that 2021 is representative.
+>
 > **⚠ Raster tier quarantined, 2026-08-03.** Tier 1 is bypassed in favour of tier 2.
 > **The raster is not faulty and neither is the loader** — an earlier version of
 > this note said otherwise, on the strength of an eight-postcode sample, and was

@@ -194,6 +194,16 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-quiet-london.json \
 		s3://$(S3_BUCKET)/data/aircraft-quiet-london.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# aircraft-quiet-regions.json, added 2026-08-12. 7,339 measured postcodes
+	# across the other eight cities, from DEFRA's per-airport coverages. Same
+	# correctness role as the London file above, and the same ordering hazard in
+	# the other direction: this file may only be served once the matching rows
+	# exist in the noise-raster table, or the SITE scores those postcodes on
+	# DEFRA while /v1/score still answers from geometry — about 2.2 score points
+	# apart, measured.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-quiet-regions.json \
+		s3://$(S3_BUCKET)/data/aircraft-quiet-regions.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)

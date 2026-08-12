@@ -6846,9 +6846,31 @@
       };
       const SECONDARY_AIRPORT = { nyc: 'LGA' };
 
+      // TWO FILES, and they are split by SOURCE rather than by city.
+      //
+      // London comes from DEFRA's London-region export; every other city comes
+      // from the per-airport coverages, which are separate downloads with a
+      // different nodata sentinel. Keeping them apart means London's 35,352
+      // measured postcodes are never replaced by the 17,330 the Heathrow and
+      // London City strips would give - the region export is simply better
+      // coverage for the same place.
+      //
+      // Both merge into one flat AIRCRAFT_QUIET map because postcodes are
+      // globally unique, so no city switching is needed. A failure of either is
+      // survivable on its own: the postcodes it would have covered fall back to
+      // flight-path geometry, which is what served all of them before 2026-08-06.
+      const AIRCRAFT_QUIET_FILES = [
+        '/data/aircraft-quiet-london.json',
+        '/data/aircraft-quiet-regions.json',
+      ];
+
       async function hydrateAircraftQuiet() {
+        await Promise.all(AIRCRAFT_QUIET_FILES.map(hydrateAircraftQuietFile));
+      }
+
+      async function hydrateAircraftQuietFile(url) {
         try {
-          const resp = await fetch('/data/aircraft-quiet-london.json', { cache: 'no-cache' });
+          const resp = await fetch(url, { cache: 'no-cache' });
           if (!resp.ok) throw new Error('aircraft-quiet HTTP ' + resp.status);
           const data = await resp.json();
 

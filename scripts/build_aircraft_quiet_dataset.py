@@ -39,6 +39,39 @@ GEOTIFF = ROOT / 'data' / 'defra_lden_2022.tif'
 NSPL = ROOT / 'data' / 'nspl.csv'
 OUT = ROOT / 'data' / 'aircraft-quiet-london.json'
 
+# --- Everywhere else (2026-08-12) -------------------------------------------
+#
+# The London file above comes from a single London-REGION export. DEFRA also
+# publishes a separate coverage per airport, and those are what the other eight
+# cities need. They are narrow contour strips, not city rectangles - Heathrow's
+# is 41 km by 10.4 km - so coverage is thin by nature: measured across all of
+# NSPL, they reach 0.6% to 3.9% of each city's postcodes.
+#
+# ONLY SEVEN OF THE TWELVE ARE USED, and the exclusions are measured rather than
+# assumed (scripts/probe_aircraft_raster_coverage.py):
+#
+#   heathrow, londoncity  EXCLUDED - London is already covered, and better. The
+#                         region export gives London 35,352 postcodes; these two
+#                         give 17,330. Loading them would REPLACE good coverage
+#                         with less of it.
+#   gatwick, luton,       EXCLUDED - between them 3,704 readings, every one of
+#   stansted              which lands outside LAD_TO_BOROUGH (Surrey, Beds,
+#                         Essex). /v1/score cannot resolve those postcodes to a
+#                         city at all, so the rows would be written and read by
+#                         nobody.
+#
+# The remaining seven carry 7,339 postcodes inside cities we serve.
+REGION_RASTERS = [
+    'birmingham', 'bristol', 'eastmidlands', 'leedsbradford',
+    'liverpool', 'manchester', 'newcastle',
+]
+REGION_OUT = ROOT / 'data' / 'aircraft-quiet-regions.json'
+
+# Per-airport coverages declare nodata as -3.4e38, where the London region
+# export uses +3.4e38. A one-sided test catches one and writes the other as a
+# decibel reading, so absence is tested by MAGNITUDE here.
+SENTINEL_MAGNITUDE = 1e30
+
 # Mirrors backend/lambdas/score/app.py. Kept as constants rather than inlined so
 # a future change is a two-line edit with a visible diff.
 QUIET_CEILING_DB = 45.0
@@ -74,6 +107,112 @@ def lden_db_to_quiet(lden):
     return round(10.0 * (QUIET_FLOOR_DB - lden) / span, 1)
 
 
+def serviceable_lads():
+    """LAD codes /v1/score can actually resolve to a city.
+
+    Filtering on this is what keeps the regions file free of the Surrey, Beds
+    and Essex postcodes around Gatwick, Luton and Stansted: they carry a real
+    DEFRA reading and no city, so shipping them would grow the file for
+    postcodes the API answers with a 400.
+    """
+    import importlib.util
+
+    path = ROOT / 'backend' / 'lambdas' / 'score' / 'app.py'
+    spec = importlib.util.spec_from_file_location('score_app_quiet', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return set(module.LAD_TO_BOROUGH)
+
+
+def build_regions():
+    """Per-airport coverages for every city except London. One NSPL pass."""
+    import rasterio
+    from pyproj import Transformer
+
+    rasters = []
+    for name in REGION_RASTERS:
+        path = ROOT / 'data' / f'defra_aircraft_lden_{name}.tif'
+        if not path.exists():
+            print(f'ERROR: {path} not found')
+            return 1
+        with rasterio.open(path) as r:
+            rasters.append({'name': name, 'array': r.read(1), 'bounds': r.bounds,
+                            'res_x': r.transform.a, 'res_y': -r.transform.e,
+                            'w': r.width, 'h': r.height, 'nodata': r.nodata})
+
+    lads = serviceable_lads()
+    to_bng = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
+    quiet = {}
+    per_raster = {r['name']: 0 for r in rasters}
+
+    with NSPL.open(encoding='utf-8', errors='replace') as fh:
+        reader = csv.DictReader(fh)
+        cols = {c.lower(): c for c in reader.fieldnames}
+        c_lad = cols.get('lad25cd')
+        c_term = cols.get('doterm')
+        for row in reader:
+            if c_term and row[c_term].strip():
+                continue
+            if not c_lad or row[c_lad].strip() not in lads:
+                continue
+            try:
+                lat, lon = float(row['lat']), float(row['long'])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if lat > 90 or lat < 49:
+                continue
+            x, y = to_bng.transform(lon, lat)
+            best = None
+            for r in rasters:
+                b = r['bounds']
+                if not (b.left <= x < b.right and b.bottom < y <= b.top):
+                    continue
+                col = int((x - b.left) / r['res_x'])
+                rr = int((b.top - y) / r['res_y'])
+                if not (0 <= rr < r['h'] and 0 <= col < r['w']):
+                    continue
+                v = float(r['array'][rr, col])
+                if abs(v) > SENTINEL_MAGNITUDE:
+                    continue
+                if r['nodata'] is not None and v == r['nodata']:
+                    continue
+                if not (LDEN_MIN <= v <= LDEN_MAX):
+                    continue
+                # Louder wins. No postcode currently falls inside two of these
+                # coverages - measured, not assumed - but if a future round
+                # overlaps them, the quieter of two real readings is the wrong
+                # one to publish for a noise product.
+                if best is None or v > best[1]:
+                    best = (r['name'], v)
+            if best is None:
+                continue
+            per_raster[best[0]] += 1
+            # Round to 1 dp BEFORE the ramp, matching what the loader stores;
+            # see the note in main(). Feeding full precision here reproduces the
+            # 0.1-point divergence this file exists to prevent.
+            quiet[row['pcds'].replace(' ', '').upper()] = lden_db_to_quiet(round(best[1], 1))
+
+    payload = {
+        'methodologyVersion': METHODOLOGY_VERSION,
+        'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden, per-airport coverages',
+        'note': (
+            'Quiet scores for the postcodes DEFRA measured around Birmingham, '
+            'Bristol, East Midlands, Leeds Bradford, Liverpool, Manchester and '
+            'Newcastle airports. London is in aircraft-quiet-london.json. '
+            'Postcodes absent from both have no aircraft contour and fall back '
+            'to flight-path geometry.'
+        ),
+        'count': len(quiet),
+        'quiet': quiet,
+    }
+    REGION_OUT.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')
+    for name in REGION_RASTERS:
+        print(f'  {name:14} {per_raster[name]:6,} postcodes')
+    print(f'  wrote {REGION_OUT} ({REGION_OUT.stat().st_size / 1024:.0f} KB, '
+          f'{len(quiet):,} postcodes)')
+    return 0
+
+
 def main():
     try:
         import rasterio
@@ -81,6 +220,9 @@ def main():
     except ImportError:
         print('Install with: pip install rasterio pyproj')
         return 1
+
+    if '--regions' in sys.argv:
+        return build_regions()
 
     for path in (GEOTIFF, NSPL):
         if not path.exists():

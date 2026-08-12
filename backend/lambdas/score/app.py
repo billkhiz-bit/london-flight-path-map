@@ -3679,6 +3679,19 @@ _RASTER_NODATA_FILL = 35.0
 # is a sentinel or a corrupt row, never a reading.
 _RASTER_MIN_PLAUSIBLE_DB = 40.0
 
+# CEILING ADDED 2026-08-12. The guard below described itself as "a range, not a
+# value" while implementing only a floor, and the two sentinels in play have
+# OPPOSITE SIGNS: the London region export declares nodata as +3.4e38, every
+# per-airport coverage as -3.4e38. So the floor catches the per-airport form and
+# lets the London form through, where lden_db_to_quiet scores it 0.0 - a whole
+# area reading maximally LOUD off a cell that holds no measurement at all. Same
+# defect as the 35.0 fill, mirrored: absence rendered as a measurement, only in
+# the pessimistic direction rather than the favourable one.
+#
+# 120 dB is chosen to be unreachable by any real Lden while catching every
+# sentinel: the loudest cell across all 13 rasters on disk is 88.9 dB.
+_RASTER_MAX_PLAUSIBLE_DB = 120.0
+
 
 def _lookup_lden_raster(postcode_clean):
     """v3.1, Look up DEFRA Lden raster sample for a postcode in DynamoDB.
@@ -3771,7 +3784,7 @@ def _lookup_lden_raster(postcode_clean):
     # [SCORE_RASTER_DEGRADED] prefix is what the tier's alarms already key on.
     # REVISIT when the raster vintage rolls: if DEFRA Round 5 maps below 40 dB,
     # this floor would discard genuine quiet samples.
-    if value < _RASTER_MIN_PLAUSIBLE_DB:
+    if value < _RASTER_MIN_PLAUSIBLE_DB or value > _RASTER_MAX_PLAUSIBLE_DB:
         if value != _RASTER_NODATA_FILL:
             logger.warning(
                 '[SCORE_RASTER_DEGRADED] postcode=%s err=implausible-lden value=%s',
@@ -3876,7 +3889,7 @@ def lden_from_row(row, postcode_clean=''):
     value = (row or {}).get('lden')
     if value is None:
         return None
-    if value < _RASTER_MIN_PLAUSIBLE_DB:
+    if value < _RASTER_MIN_PLAUSIBLE_DB or value > _RASTER_MAX_PLAUSIBLE_DB:
         if value != _RASTER_NODATA_FILL:
             logger.warning(
                 '[SCORE_RASTER_DEGRADED] postcode=%s err=implausible-lden value=%s',

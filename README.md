@@ -225,7 +225,7 @@ everywhere; the gap is the remaining five.
 | Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11) |
 | Healthcare | **NHS ODS** GP practices within 500 m | yes | curated | **yes** (2026-08-11) |
 | Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 485 districts** (2026-08-12); 285 carry a curated area name corroborated against published MSOA names, and every district is majority inside the city publishing it |
-| **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **no — estimated from runway geometry** |
+| **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **yes where DEFRA published a contour** (2026-08-12): 7 per-airport coverages, 7,339 postcodes = 0.6–3.9% per city; the rest estimated from runway geometry |
 | **Crime breakdown (top offences)** | ONS | yes | no | **no** |
 
 Two of those five carry weight in the score. Liveability weights are schools

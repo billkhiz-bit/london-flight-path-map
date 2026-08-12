@@ -6,7 +6,45 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-12 (latest) - Districts that were mostly somewhere else
+### 2026-08-12 (latest) - The DEFRA raster tier reaches eight more cities
+
+**`impact` was the last score input still an estimate outside London.** DEFRA
+publishes a measured Lden coverage per airport; twelve were on disk, and seven
+are now loaded, covering 7,339 postcodes across Birmingham, Bristol, East
+Midlands, Leeds Bradford, Liverpool, Manchester and Newcastle.
+
+- **The scope was measured, not assumed.** `scripts/probe_aircraft_raster_coverage.py`
+  samples every raster at all 2.7M NSPL centroids without touching DynamoDB.
+  Heathrow's and London City's coverages are EXCLUDED because London's region
+  export covers London better - 35,352 postcodes against their 17,330, so
+  loading them would replace good coverage with less of it. Gatwick's, Luton's
+  and Stansted's are EXCLUDED because all 3,704 of their readings land outside
+  `LAD_TO_BOROUGH` - Surrey, Beds, Essex - where `/v1/score` cannot resolve a
+  city at all.
+- **Coverage is thin by nature: 0.6% to 3.9% of each city.** These are contour
+  strips, not city rectangles; Heathrow's is 41 km by 10.4 km. The other ~97% of
+  each city still answers from flight-path geometry, as it always has.
+- **What it corrects: mean 2.224 score points, signed -2.104** - the geometry
+  estimate reads these postcodes LOUDER than DEFRA measured. London already
+  received a correction of the same size (2.070) from its own raster, so the
+  product had been ranking London postcodes measured one way against eight
+  cities' measured another. That inconsistency is the argument, not accuracy.
+- **Caveat carried in every doc that quotes those numbers:** Round 4 maps 2021,
+  which DEFRA flags as atypical traffic. Some share of the -2.1 is a real
+  COVID-year reduction rather than estimator error.
+- **A plausibility guard that described itself as a range was a floor.** The two
+  nodata sentinels have opposite signs - London's export declares +3.4e38, every
+  per-airport coverage -3.4e38 - so the floor caught one and let the other
+  through to score 0.0, maximally loud, off a cell holding no measurement.
+  `_RASTER_MAX_PLAUSIBLE_DB = 120.0` added and proven to fire both ways.
+- `scripts/load_aircraft_rasters.sh` chains the work: it waits for the
+  air-quality loader (same table, same write path), loads the seven, and gates
+  the frontend deploy on all seven succeeding. Load-then-deploy is deliberate -
+  loading flips `/v1/score` while the site keeps its status-quo geometry, where
+  deploying first would flip the surface users actually look at onto readings
+  the API cannot yet reproduce.
+
+### 2026-08-12 - Districts that were mostly somewhere else
 
 **A postcode district is now published only if it is majority inside the city
 publishing it.** Transactions are bucketed by the Land Registry `district`

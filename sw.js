@@ -187,7 +187,16 @@
 // median. A returning visitor on the v1.0.31 shell would keep all 18, so this
 // bump is what actually removes them. 43 retained markers also moved, now that
 // a centroid covers only the part of a district we price.
-const VERSION = 'v1.0.32';
+// v1.0.33 (2026-08-12): the page now hydrates quiet scores from TWO DEFRA
+// files - London's region export plus aircraft-quiet-regions.json, the
+// per-airport coverages for the other eight cities (7,339 postcodes). index.html
+// is in SHELL_ASSETS, so without this bump a returning visitor keeps a shell
+// that only ever fetches the London file, and the site would answer from
+// geometry for postcodes /v1/score now measures - about 2.2 score points apart.
+// The new data file is deliberately NOT in SHELL_ASSETS: cache.addAll() is
+// atomic, and a decoration-grade fetch failure must not stop the worker
+// installing for every city.
+const VERSION = 'v1.0.33';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
