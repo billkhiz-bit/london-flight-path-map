@@ -181,7 +181,13 @@
 // actually delivers the labels. No new SHELL_ASSETS entries: the corroboration
 // evidence (data/district-msoa-names.json) is a build-time artefact and is
 // never fetched by the page.
-const VERSION = 'v1.0.31';
+// v1.0.32 (2026-08-12): 18 postcode districts left the ranking - each was
+// majority OUTSIDE the city publishing it, WA8 "Widnes" being 4% inside
+// Knowsley and 94% inside Halton while showing Merseyside's fourth-priciest
+// median. A returning visitor on the v1.0.31 shell would keep all 18, so this
+// bump is what actually removes them. 43 retained markers also moved, now that
+// a centroid covers only the part of a district we price.
+const VERSION = 'v1.0.32';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

@@ -35,9 +35,22 @@ MSOA, and not a conservation-area boundary. METHODOLOGY's standing rule is to
 say what a number is rather than dress a coarse figure as a fine one, so the
 site labels these as postcode districts and names the source.
 
-A district is DROPPED, not estimated, when it has fewer than MIN_SALES
-transactions - a median drawn from four sales is noise wearing a statistic's
-clothing. Every drop is printed, because a silent cap reads as full coverage.
+A district is DROPPED, not estimated, on either of two floors. Every drop is
+printed, because a silent cap reads as full coverage.
+
+  MIN_SALES        fewer than 30 transactions - a median drawn from four sales
+                   is noise wearing a statistic's clothing.
+  MIN_CONTAINMENT  less than half of its live postcodes inside the city
+                   publishing it. Transactions are bucketed by Land Registry
+                   DISTRICT (a local authority) but published as a POSTCODE
+                   DISTRICT (Royal Mail), and those do not nest. WA8 is 4%
+                   inside Knowsley and 94% inside Halton, which we do not
+                   cover, so it published a Knowsley median under the name
+                   "Widnes" at a centroid in Halton - Merseyside's fourth
+                   priciest entry, off 32 sales. See DEFAULT_MIN_CONTAINMENT.
+
+`lat/lon` and `postcodes` are computed over the COVERED part of a district
+only, so the marker sits in the part the price describes.
 
 SOURCES
   HM Land Registry Price Paid Data (bulk CSV, per calendar year)
@@ -496,6 +509,35 @@ NAME_OVERRIDES_BY_CITY['teesside'] = {
 # data at build time and printed in the summary.
 DEFAULT_MIN_SALES = 30
 
+# A district less than half inside the city publishing it is dropped, not
+# published (2026-08-12).
+#
+# WHY THIS EXISTS. Transactions are bucketed by the LAND REGISTRY `district`
+# field, which is a LOCAL AUTHORITY, but an entry is published as a POSTCODE
+# DISTRICT, which is Royal Mail. Those two geographies do not nest, and until
+# today nothing asked how much of a postcode district we actually held.
+#
+# WA8 was the case that exposed it. **4%** of its 1,591 live postcodes are in
+# Knowsley; 1,500 are in Halton, which Sky Score does not cover at all. So the
+# entry carried the label "Widnes" (the post town of the 94% we do not price),
+# the borough Knowsley (true of the 4%), a median of GBP345k resting on 32
+# sales from that 4% - which made it Merseyside's FOURTH PRICIEST entry - and a
+# centroid averaged over all 1,591 postcodes, placing the marker in the middle
+# of Widnes, in Halton. Every step was arithmetically right; the join was wrong.
+#
+# 34 of 501 districts were under 75% contained, 8 under 20%.
+#
+# The floor is 50% so the claim is checkable and worth stating: every district
+# published is MAJORITY INSIDE the city publishing it. Same spirit as
+# DEFAULT_MIN_SALES - drop rather than estimate, and print every drop, because a
+# silent cap reads as full coverage.
+#
+# Note this cannot be fixed by better maths. The price and the centroid are both
+# repaired below by restricting them to covered postcodes, but the LABEL cannot
+# be: the covered slice of WA8 has no name of its own, and "Widnes" is the only
+# name the district has.
+DEFAULT_MIN_CONTAINMENT = 0.50
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NSPL_PATH = os.path.join(REPO, 'data', 'nspl.csv')
 OUT_PATH = os.path.join(REPO, 'data', 'manchester-neighbourhoods.json')
@@ -614,6 +656,9 @@ def collect_centroids(wanted):
             'It is gitignored and local-only. Without it there are no coordinates,\n'
             'and a neighbourhood with no lat/lon cannot be scored for quiet at all.'
         )
+    # Keyed by (district, LAD) rather than district alone, so a centroid can be
+    # taken over the covered part only. Blending the whole district put WA8's
+    # marker in Halton while its price described Knowsley.
     sums = defaultdict(lambda: [0.0, 0.0, 0])
     msoa = defaultdict(lambda: defaultdict(int))
     with open(NSPL_PATH, newline='', encoding='utf-8', errors='replace') as fh:
@@ -623,8 +668,16 @@ def collect_centroids(wanted):
         c_lat, c_long = cols.get('lat'), cols.get('long')
         c_term = cols.get('doterm')
         c_msoa = cols.get('msoa21cd')
+        c_lad = cols.get('lad25cd') or next(
+            (cols[c] for c in cols if re.fullmatch(r'lad\d\dcd', c)), None
+        )
         if not (c_pcds and c_lat and c_long):
             sys.exit(f'NSPL columns not as expected: {reader.fieldnames[:12]}')
+        if not c_lad:
+            sys.exit(
+                'NSPL has no lad**cd column, so district containment cannot be\n'
+                'measured and a district 4% inside its city would publish silently.'
+            )
         if not c_msoa:
             sys.exit(
                 'NSPL has no msoa21cd column, so the curated area names cannot be\n'
@@ -647,12 +700,48 @@ def collect_centroids(wanted):
             # NSPL uses 99.999999 for postcodes with no grid reference.
             if lat > 90 or lat < 49:
                 continue
-            s = sums[out]
+            s = sums[(out, (row.get(c_lad) or '').strip())]
             s[0] += lat
             s[1] += lon
             s[2] += 1
-    centroids = {k: (v[0] / v[2], v[1] / v[2], v[2]) for k, v in sums.items() if v[2]}
-    return centroids, msoa
+    by_lad = defaultdict(dict)
+    for (out, lad), v in sums.items():
+        by_lad[out][lad] = v
+    return by_lad, msoa
+
+
+def lad_codes_for_city(city):
+    """{LAD code: borough} for one city, from the score Lambda's registry."""
+    import importlib.util
+
+    path = os.path.join(REPO, 'backend', 'lambdas', 'score', 'app.py')
+    spec = importlib.util.spec_from_file_location('score_app_lads', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return {code: borough for code, (c, borough) in module.LAD_TO_BOROUGH.items() if c == city}
+
+
+def containment(by_lad, out, city_lads):
+    """(share inside the city, covered centroid, covered count, total count).
+
+    The centroid is the mean of the COVERED postcodes only. A district we hold
+    part of should be plotted where we hold it, not at the middle of a town we
+    do not cover.
+    """
+    per_lad = by_lad.get(out) or {}
+    total = sum(v[2] for v in per_lad.values())
+    if not total:
+        return 0.0, None, 0, 0
+    lat = lon = 0.0
+    n = 0
+    for lad, v in per_lad.items():
+        if lad in city_lads:
+            lat += v[0]
+            lon += v[1]
+            n += v[2]
+    if not n:
+        return 0.0, None, 0, total
+    return n / total, (lat / n, lon / n), n, total
 
 
 # The evidence the curated labels are checked against.
@@ -891,16 +980,21 @@ def _cities_with_markers():
 DEFAULT_CITIES = _cities_with_markers()
 
 
-def build_city(city, keep_by_city, centroids, args):
+def build_city(city, keep_by_city, placement, dropped_thin, args):
     """Turn one city's kept districts into entries, JSON and an index block."""
     name_overrides = NAME_OVERRIDES_BY_CITY.get(city, {})
     entries = {}
     no_coords = []
     for out, rec in sorted(keep_by_city[city].items()):
-        if out not in centroids:
-            no_coords.append(out)
+        placed = placement.get((city, out))
+        if not placed:
+            # Separate causes, separate messages. A containment drop is already
+            # reported by main() with its share; lumping it in here as "no NSPL
+            # coordinates" would describe a district that has plenty of them.
+            if out not in dropped_thin:
+                no_coords.append(out)
             continue
-        lat, lon, pc_count = centroids[out]
+        (lat, lon), pc_count, share = placed
         prices = rec['prices']
         borough = max(rec['boroughs'].items(), key=lambda kv: kv[1])[0]
         # Display name: a curated postal-district label where one is widely
@@ -915,7 +1009,12 @@ def build_city(city, keep_by_city, centroids, args):
             'sales': len(prices),
             'lat': round(lat, 5),
             'lon': round(lon, 5),
+            # Both counted over the COVERED part of the district only, which is
+            # the part the price describes. `postcodes` used to count the whole
+            # district, so WA8 reported 1,591 against a median drawn from 32
+            # sales in the 4% of it we hold.
             'postcodes': pc_count,
+            'containment': round(share, 3),
             # Sub-borough crime is NOT SOURCED. Zero here means "no modifier
             # applied", never "average crime". The site says so.
             'crime': 0,
@@ -982,6 +1081,13 @@ def main():
         help="also rewrite index.html between each city's NEIGHBOURHOODS markers",
     )
     ap.add_argument(
+        '--min-containment',
+        type=float,
+        default=DEFAULT_MIN_CONTAINMENT,
+        metavar='SHARE',
+        help='drop a district less than this share inside the publishing city',
+    )
+    ap.add_argument(
         '--check-names',
         action='store_true',
         help='corroborate the curated area labels against published MSOA names and exit',
@@ -1028,8 +1134,56 @@ def main():
         sys.exit('FAIL: no districts met the threshold for any city. Check the district names.')
 
     # ONE NSPL pass for every city. It is 806 MB.
-    print('  scanning NSPL for coordinates and MSOAs (this is the slow part) ...')
-    centroids, msoa_counts = collect_centroids(wanted)
+    print('  scanning NSPL for coordinates, LADs and MSOAs (this is the slow part) ...')
+    by_lad, msoa_counts = collect_centroids(wanted)
+
+    # How much of each district do we actually hold, and where is that part?
+    print(f'\n  containment (floor {args.min_containment:.0%} of live postcodes)')
+    placement = {}
+    shares = {}
+    dropped_thin = []
+    for city in cities:
+        city_lads = lad_codes_for_city(city)
+        for out in keep_by_city[city]:
+            share, centre, covered, total = containment(by_lad, out, city_lads)
+            shares[(city, out)] = share
+            if centre is None:
+                continue
+            if share < args.min_containment:
+                dropped_thin.append((share, city, out, total))
+                continue
+            placement[(city, out)] = (centre, covered, share)
+
+    # A postcode district belongs to exactly ONE city. WN4 and WN5 straddle the
+    # Wigan/St Helens line and were published TWICE - same coordinates, and for
+    # WN5 two different names GBP70k apart ("Pemberton & Orrell" at GBP165k in
+    # Greater Manchester, "Billinge" at GBP235k in Merseyside). Whichever city
+    # holds more of it wins; the loser is dropped and printed.
+    #
+    # At the DEFAULT floor this cannot fire, because two cities cannot each hold
+    # a majority of the same district - the floor already resolves it, and WN4
+    # and WN5 leave Merseyside at 15% and 13% while staying in Wigan at 85% and
+    # 87%. It is kept because --min-containment can be lowered below 0.5, where
+    # the ambiguity returns and would otherwise publish two prices for one point.
+    by_out = defaultdict(list)
+    for (city, out) in placement:
+        by_out[out].append(city)
+    for out, owners in sorted(by_out.items()):
+        if len(owners) < 2:
+            continue
+        winner = max(owners, key=lambda c: shares[(c, out)])
+        for city in owners:
+            if city != winner:
+                del placement[(city, out)]
+                print(f'    {out} claimed by {city} ({shares[(city, out)]:.0%}) and '
+                      f'{winner} ({shares[(winner, out)]:.0%}); kept in {winner}')
+
+    thin_by_city = defaultdict(set)
+    for share, city, out, total in sorted(dropped_thin):
+        thin_by_city[city].add(out)
+        print(f'    DROPPED {out:6} {share:4.0%} inside {city} '
+              f'({total:,} live postcodes) - majority lies outside')
+    print(f'    {len(placement)} districts placed, {len(dropped_thin)} below the floor')
 
     # Post town per district, the one label word a curated name may use without
     # MSOA corroboration. Same modal locality `build_city` labels with.
@@ -1071,7 +1225,7 @@ def main():
     any_missing = []
     for city in cities:
         print(f'\n{city}')
-        n, missing = build_city(city, keep_by_city, centroids, args)
+        n, missing = build_city(city, keep_by_city, placement, thin_by_city[city], args)
         total += n
         any_missing += [f'{city}.{b}' for b in missing]
 

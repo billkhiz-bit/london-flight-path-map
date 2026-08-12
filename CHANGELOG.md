@@ -6,7 +6,37 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-12 (latest) - Area names, corroborated against a published source
+### 2026-08-12 (latest) - Districts that were mostly somewhere else
+
+**A postcode district is now published only if it is majority inside the city
+publishing it.** Transactions are bucketed by the Land Registry `district`
+field, which is a LOCAL AUTHORITY, but an entry is published as a POSTCODE
+DISTRICT, which is Royal Mail's - and those two geographies do not nest.
+Nothing had ever asked how much of a district we actually held.
+
+- **WA8 was the case that exposed it.** 4% of its 1,591 live postcodes are in
+  Knowsley; 1,500 are in Halton, which Sky Score does not cover at all. So it
+  published a Knowsley median of GBP345k resting on 32 sales - **Merseyside's
+  fourth priciest entry** - under the label "Widnes" (the post town of the 94%
+  we do not price), at a centroid averaged over the whole district and therefore
+  plotted in the middle of Widnes, in Halton. Every step was arithmetically
+  correct; the join was wrong.
+- **34 of 501 districts were under 75% contained, 8 under 20%.** 18 are now
+  dropped at a 50% floor, 503 -> 485, each drop printed with its share. Same
+  spirit as the existing minimum-30-sales rule: drop rather than estimate.
+- **`lat/lon` and `postcodes` are computed over the covered part only**, so a
+  marker sits in the part the price describes. This moved 43 retained markers,
+  Darlington (DL2, 64% contained) by 4.4 km.
+- **A district belongs to exactly one city.** WN4 and WN5 straddle the
+  Wigan/St Helens line and were each published TWICE at identical coordinates -
+  WN5 as "Pemberton & Orrell" at GBP165k in Greater Manchester *and* "Billinge"
+  at GBP235k in Merseyside. Both prices were real; they were different slices of
+  one district.
+- The label is the part no arithmetic can repair: the covered slice of WA8 has
+  no name of its own, and "Widnes" is the only name the district has. That is
+  why the floor drops rather than relabels.
+
+### 2026-08-12 - Area names, corroborated against a published source
 
 **273 of 503 neighbourhood labels were a repeated post town; now 5 are.**
 Birmingham appeared 35 times in one ranked list, Liverpool 29, Leeds 16,

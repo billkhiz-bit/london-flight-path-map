@@ -55,15 +55,31 @@ The product exists to address a structural information asymmetry in UK property:
 **Sub-borough granularity differs by city, and the consumer-site ranking says
 so per city.** London and New York rank *named areas* whose median prices are
 indicative and whose crime figure is a relative modifier rather than a measured
-rate. The nine UK city-regions rank **503 postcode districts** whose price is
+rate. The nine UK city-regions rank **485 postcode districts** whose price is
 the **median of real HM Land Registry transactions** in that district (built by
-`scripts/build_city_neighbourhoods.py`, minimum 30 sales or the district is
-omitted rather than estimated) and which carry **no crime modifier at all**,
-because sub-borough crime is not published at that geography. None of this
-enters `/v1/score`, which is borough-level for every city.
+`scripts/build_city_neighbourhoods.py`, on **two** floors, either of which omits
+the district rather than estimating it: minimum 30 sales, and minimum **50% of
+its live postcodes inside the city publishing it**) and which carry **no crime
+modifier at all**, because sub-borough crime is not published at that geography.
+None of this enters `/v1/score`, which is borough-level for every city.
+
+**Containment is measured, and 18 districts were dropped for it (2026-08-12).**
+Transactions are bucketed by the Land Registry **district** field, which is a
+local authority, but an entry is published as a **postcode district**, which is
+Royal Mail. Those geographies do not nest, and nothing had asked how much of a
+postcode district we actually held. WA8 was 4% inside Knowsley and 94% inside
+Halton, which Sky Score does not cover, so it published a Knowsley median of
+£345k — Merseyside's fourth priciest entry, resting on 32 sales — under the
+label "Widnes", at a centroid averaged over the whole district and therefore
+sitting in Halton. 34 of 501 districts were under 75% contained and 8 under 20%.
+Every published district is now **majority inside the city publishing it**, its
+`lat/lon` and postcode count are computed over the **covered part only** (which
+moved 43 retained markers, Darlington's by 4.4 km), and a district belongs to
+exactly one city — WN4 and WN5 had been published twice, WN5 as both
+"Pemberton & Orrell" at £165k and "Billinge" at £235k on identical coordinates.
 
 **A district's displayed NAME is a label, not a measurement, and it is
-corroborated.** 285 of the 503 carry a curated postal-district name; the rest
+corroborated.** 285 of the 485 carry a curated postal-district name; the rest
 show the Royal Mail locality most of their transactions use. The outward code
 is printed beside every one, so a label can never claim more precision than the
 data. Since 2026-08-12 each curated name is asserted against that district's own

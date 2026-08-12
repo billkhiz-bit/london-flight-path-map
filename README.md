@@ -224,7 +224,7 @@ everywhere; the gap is the remaining five.
 | Flood risk | EA Risk of Flooding from Rivers and Sea | yes | curated | **yes** (2026-08-11) |
 | Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11) |
 | Healthcare | **NHS ODS** GP practices within 500 m | yes | curated | **yes** (2026-08-11) |
-| Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 503 districts** (2026-08-11); 285 carry a curated area name corroborated against published MSOA names (2026-08-12) |
+| Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 485 districts** (2026-08-12); 285 carry a curated area name corroborated against published MSOA names, and every district is majority inside the city publishing it |
 | **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **no — estimated from runway geometry** |
 | **Crime breakdown (top offences)** | ONS | yes | no | **no** |
 
