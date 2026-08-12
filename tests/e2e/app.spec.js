@@ -24,12 +24,31 @@ test.describe('Core loading', () => {
     await expect(page.locator('#map-title-text')).toHaveText('Sky Score');
   });
 
-  test('all 7 layer toggle buttons exist', async ({ page }) => {
-    // 7 since May 2026: the "live flights" toggle was removed with the
-    // live_flights Lambda (OpenSky licensing) — see ROADMAP open decisions.
+  test('the layer toggles are exactly the layers that render', async ({ page }) => {
+    // ASSERTS THE SET, NOT A COUNT. This was `toHaveCount(7)` and went red on
+    // 2026-08-12 when the transport layer was removed — its markers could not
+    // be clicked, because the borough path underneath took the event. A bare
+    // count tells you a number changed; it does not say WHICH layer appeared
+    // or vanished, and the fix it invites is to edit the number, which is the
+    // least informative thing a failing test can ask for.
+    //
+    // Naming them means a removed layer fails with its own name in the diff,
+    // and a new toggle added without a renderer fails too.
+    //
+    // History: the "live flights" toggle went with the live_flights Lambda in
+    // May 2026 (OpenSky licensing); transport went on 2026-08-12.
     await expect(page.locator('#loading')).toBeHidden({ timeout: 15_000 });
-    const toggles = page.locator('.layer-toggle');
-    await expect(toggles).toHaveCount(7);
+    const layers = await page
+      .locator('.layer-toggle')
+      .evaluateAll((els) => els.map((e) => e.dataset.layer).sort());
+    expect(layers).toEqual([
+      'air-quality',
+      'defra-aircraft',
+      'defra-road',
+      'flood',
+      'labels',
+      'paths',
+    ]);
   });
 
   test('search input is visible', async ({ page }) => {
