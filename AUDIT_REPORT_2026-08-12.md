@@ -23,9 +23,9 @@ wrong on first attempt (99 vs 94 boroughs) and caught by re-deriving it from
 
 | | Count |
 |---|---|
-| Critical, verified and **FIXED** | 4 |
-| Critical, verified, **open** | 3 |
-| Important, **FIXED** | 6 |
+| Critical, verified and **FIXED** | 6 |
+| Critical, verified, **open** | 2 (+1 partly fixed) |
+| Important, **FIXED** | 7 |
 | Important, **open** | 14 |
 | Minor / recorded | 9 |
 | Verified clean | see §6 |
@@ -36,6 +36,12 @@ correct when a station list exists. `layer-honesty.mjs` is correct when
 `borough-extra.json` parses. Each failed only in a *relationship* — with a
 neighbouring key, a missing generator, or its own expectation source. That is
 why 495 passing tests coexisted with four confident wrong numbers.
+
+**Two more were found while fixing those** (§1a), and the sharper of the two is
+the same shape again: postcode scoring had been London-only in production for two
+days while three documents recorded it as working, because nothing joined a
+correct LAD table to a correct city registry. The test that should have caught it
+was asserting the old behaviour and passing.
 
 ---
 
@@ -119,6 +125,56 @@ CI spending a shared key; this time a status page spent the funnel's key.
 
 ---
 
+## 1a. Critical — found while fixing the audit's own findings
+
+### A-0812-25 — postcode scoring was London-only in production, and three docs said otherwise
+`backend/lambdas/score/app.py:5699` · **FIXED + DEPLOYED**
+
+`/v1/score?postcode=M1 1AE` returned **"Borough not currently supported in
+london."** — a city the caller never mentioned. B15 2TT, LS1 4DY, S1 2HH,
+BS1 4DJ and NG1 5FS behaved identically. CLAUDE.md, ROADMAP and METHODOLOGY all
+recorded postcode-level scoring as un-gated since 2026-08-10.
+
+**The un-gating was real and unreachable.** `?city=manchester` on the same
+postcode scored 7.7 the whole time. `city` defaults to `'london'` and nothing
+derived it from the resolved LAD, so the feature required the caller to supply
+the answer in the question — which no documented caller does.
+
+**Every component was correct**: the un-gating commit, `LAD_TO_BOROUGH`, and the
+postcode table, whose `M1 1AE` row CLAUDE.md records verifying by hand. Nothing
+joined them. Fixed in three parts — derive from `_ladCode`; fall back to a
+borough-NAME index (the postcodes.io tier carries no LAD code, so a code-only fix
+repairs the loaded tier and leaves the fallback answering london); and absorb the
+`City of Bristol` / `Bristol, City of` qualifier inversion in **both** the
+derivation and `normalise_borough`. **12/12 cities verified live.**
+
+**A passing test asserted the defect.**
+`test_resolve_query_404_unchanged_for_non_london` was correct when written, was
+never revisited when the gate lifted, and spent two days reporting the bug as
+expected behaviour — reading as evidence the endpoint worked. This is the
+inverse of finding A-0812-5: there a gate could not fail; here one could not
+fail *because it had been told the wrong answer*. Replaced by
+`PostcodeCityDerivationTests`, which asserts the **derived city** rather than
+that a score came back, and is proven red.
+
+**Directly caused by A-0812-19** (`check_score_sanity.py` probes London only).
+Widening those probes is now the highest-value open item in this report.
+
+### A-0812-26 — a blocking gate died on a line-ending change
+`scripts/build_aircraft_bands.py:374` · **FIXED**
+
+`_slurp` reads with `newline=""` and every block scan matches the literal
+`"
+}
+"`, so when a `git restore` applied `core.autocrlf` and flipped
+`app.py` from LF to CRLF, the gate stopped finding **any** block and died with
+`ValueError: substring not found` for all eleven cities — with no data change
+whatsoever. A gate that depends on a checkout artefact is reporting on the
+checkout, not on the data. `_slurp` now normalises; verified green with the file
+in both encodings.
+
+---
+
 ## 2. Critical — verified, still open
 
 ### A-0812-U1 — `/v1/environment` computes aircraft noise with London geometry for every UK coordinate
@@ -137,8 +193,19 @@ real and the consequence is plausible, but the specific figures are unconfirmed.
 **Reproduce properly before fixing** — pass a coordinate that reverse-geocodes,
 and compare `'london'` against the resolved city.
 
-### A-0812-U2 — three WCAG contrast failures, one invisible on every phone
-`index.html:2277`, `:108`, `:1613` · **OPEN**
+### A-0812-U2 — three WCAG contrast failures
+`index.html:2277`, `:108`, `:1613` · **PARTLY FIXED 2026-08-12**
+
+**Fixed:** items 2 and 3, systemically. `--orange-text` / `--yellow-text` /
+`--green-text` tokens now clear 4.5:1 on the metric card's darker background as
+well as the sidebar (the 2026-08-03 `--yellow` correction had checked only the
+sidebar), applied to the noise indicators, metric-card values, rank tags and
+rating badges. The hardened a11y gate caught `.noise-indicator` itself.
+
+**Still open:** item 1, the mobile legend headings at 1.19:1. The hardened gate
+now scans a phone viewport but did **not** flag them, because the legend is
+collapsed until tapped — so the gate needs to open it before scanning, or the
+inline `style` attributes need removing so `applyCityChrome()` can win.
 
 1. **Mobile legend headings at 1.19:1.** `@media (max-width:900px)` paints the
    legend pill near-black; the author wrote an override at `:2289` to whiten the

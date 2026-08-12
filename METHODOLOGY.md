@@ -50,7 +50,7 @@ The product exists to address a structural information asymmetry in UK property:
 **Currently supported:**
 - 33 London boroughs (32 boroughs plus the City of London), UK postcode resolution
 - 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island), borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
-- 10 Greater Manchester metropolitan boroughs, **borough-name lookup only** — postcode resolution is London-only, because `resolve_query()` gates it there *and* the NSPL loader writes the borough attribute for London local authorities alone. Two separate blockers, not one.
+- **12 UK city-regions, 94 boroughs, by postcode or by borough name.** London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4), Nottingham (4). The "postcode resolution is London-only, two separate blockers" note that stood here was retired in stages: the `resolve_query()` gate was lifted 2026-08-10, and on **2026-08-12** the last of it went — `city` had still defaulted to `london` because nothing derived it from the resolved LAD, so a postcode-only query for any other city returned "Borough not currently supported in london". Verified live across all 12.
 
 **Sub-borough granularity differs by city, and the consumer-site ranking says
 so per city.** London and New York rank *named areas* whose median prices are

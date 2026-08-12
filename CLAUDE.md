@@ -127,13 +127,44 @@ and is corrected. We have not SAMPLED it. Use the **per-airport** coverages
 which is 26,097 x 48,046 - 1.25 billion cells. The host needs a browser
 User-Agent; without one it answers 403 and looks bot-blocked.
 
-**Postcode-level scoring works for every city (un-gated 2026-08-10).** It was
-`if city != 'london': return 400`, and the recorded reason - that NSPL writes
-the borough attribute for London LADs alone - was half the story. NSPL writes
-the LAD **code** for all 2.7M rows, so `LAD_TO_BOROUGH` in the Lambda resolves
-the rest and **no reload was needed**. Verified against the live table: M1 1AE
-carries `lad=E08000003` with `b` absent. The "two blockers, not one" recorded
-here for months were really one, and it was a lookup rather than missing data.
+**Postcode-level scoring works for every city — REALLY, since 2026-08-12.** The
+gate was `if city != 'london': return 400` and was lifted on 2026-08-10, and the
+recorded reason for it — that NSPL writes the borough attribute for London LADs
+alone — was half the story. NSPL writes the LAD **code** for all 2.7M rows, so
+`LAD_TO_BOROUGH` resolves the rest and **no reload was needed**. Verified against
+the live table: M1 1AE carries `lad=E08000003` with `b` absent.
+
+**But it did not actually work until 2026-08-12, and this file said it did for
+two days.** `city` defaults to `'london'` and **nothing derived it from the
+resolved LAD**, so `/v1/score?postcode=M1+1AE` answered *"Borough not currently
+supported in london."* — naming a city the caller never mentioned. B15, LS1, S1,
+BS1 and NG1 all did the same. The un-gating was genuine (`?city=manchester` with
+that postcode scores 7.7); it simply could not be reached without supplying the
+answer in the question, which no documented caller does.
+
+- **Every piece was correct and the feature still did not exist.** The un-gating
+  commit, `LAD_TO_BOROUGH`, and the postcode table were all right — the row for
+  M1 1AE was verified by hand and written up above. Nothing joined them. **When
+  a capability lands, exercise it the way a caller would**, not the way the code
+  is organised.
+- **The fix is three parts and one was not enough.** Derive the city from
+  `_ladCode`; fall back to a borough-NAME index because the postcodes.io tier
+  carries no LAD code (a code-only fix repairs the loaded tier and leaves the
+  fallback answering london); and absorb the qualifier inversion — ONS writes
+  `City of Bristol`, postcodes.io returns `Bristol, City of` — in **both** the
+  derivation and `normalise_borough`, or Bristol and Nottingham resolve the right
+  city and then 404 one step later on the borough.
+- **A passing test asserted the defect.**
+  `test_resolve_query_404_unchanged_for_non_london` was correct when written, was
+  never revisited when the gate lifted, and so spent two days reporting the bug as
+  expected behaviour — reading as evidence the endpoint worked.
+  `PostcodeCityDerivationTests` replaces it, asserts the **derived city** rather
+  than that a score came back (a London default returns a well-formed error), and
+  is proven red.
+- **Nothing else could have caught it**: `check_score_sanity.py` probes 16 LONDON
+  postcodes, `borough-score-parity` compares boroughs by NAME, and every other
+  unit test passed a `city` alongside the postcode. Widening the sanity probes
+  beyond London is the open follow-up.
 
 **Corridors are on a common 1 km interval.** Corridor distance is measured to
 the nearest waypoint, so a coarse polyline reads as further from the corridor

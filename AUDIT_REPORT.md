@@ -7,7 +7,16 @@
 163 commits since the 2026-08-03 audit. Four parallel dimension agents; every
 finding acted on was re-verified by hand before it was fixed.
 
-**4 Critical fixed, 3 Critical open, 6 Important fixed, 14 Important open.**
+**6 Critical fixed, 2 Critical open (1 partly), 7 Important fixed, 14 Important open.**
+
+**The audit's own fixes surfaced the worst finding.** Verifying one agent's
+claim about `/v1/environment` turned up that `/v1/score?postcode=M1+1AE`
+answered "Borough not currently supported in london" - a city the caller never
+named - and that B15, LS1, S1, BS1 and NG1 did the same. Postcode scoring had
+been **London-only in production for two days** while CLAUDE.md, ROADMAP and
+METHODOLOGY all recorded it as un-gated. The un-gating was real; nothing derived
+the city from the resolved LAD, so it could not be reached without supplying the
+answer in the question. 12/12 cities now verified live.
 
 The four Critical fixes were all *confident wrong numbers* rather than errors:
 North West Leicestershire served Leicester's crime rate (110.0 against 59.2);

@@ -6,7 +6,52 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-12 (latest) - The DEFRA raster tier reaches eight more cities
+### 2026-08-12 (latest) - Postcode scoring reaches every city, not just London
+
+**`/v1/score?postcode=M1+1AE` answered "Borough not currently supported in
+london."** - naming a city the caller never mentioned. B15, LS1, S1, BS1 and NG1
+did the same, while CLAUDE.md, ROADMAP and METHODOLOGY all recorded
+postcode-level scoring as un-gated since 2026-08-10.
+
+- **The un-gating was real; it just could not be reached.** `?city=manchester`
+  with that same postcode scored 7.7 throughout. `city` defaults to `'london'`
+  and nothing derived it from the resolved LAD, so the capability required the
+  caller to already know the answer - which no documented caller does.
+- **Every piece was correct.** The un-gating commit, `LAD_TO_BOROUGH` and the
+  postcode table were all right; CLAUDE.md even records verifying M1 1AE's row
+  by hand. Nothing joined them.
+- **Three parts, because one was not enough**: derive the city from `_ladCode`;
+  fall back to a borough-NAME index, because the postcodes.io tier carries no LAD
+  code and a code-only fix would leave the fallback answering london; and absorb
+  the ONS/postcodes.io qualifier inversion (`City of Bristol` vs
+  `Bristol, City of`) in both the derivation and `normalise_borough`, or Bristol
+  and Nottingham resolve the right city and 404 one step later.
+- **12 of 12 cities verified live.** An explicit `city=` still wins.
+- **A passing test asserted the defect.**
+  `test_resolve_query_404_unchanged_for_non_london` was correct when written and
+  never revisited when the gate lifted, so it spent two days reporting the bug as
+  expected behaviour. `PostcodeCityDerivationTests` replaces it and asserts the
+  derived city rather than that a score came back.
+
+Also in this release, both found while fixing the above:
+
+- **The accessibility gate scanned one desktop viewport and the landing state
+  only.** It now scans a phone viewport as well, fails on four structural
+  moderate rules that could not previously fail it at any size, and scans the
+  post-selection state where `updateSidebar()` injects ~400 lines. It immediately
+  caught a keyboard-inaccessible scrollable `<pre>` on `/api/` and a contrast
+  failure on `.noise-indicator`. The contrast fix is systemic:
+  `--orange-text` / `--yellow-text` / `--green-text` clear 4.5:1 on the metric
+  card's darker background as well as the sidebar, which `--yellow` and `--green`
+  did not.
+- **`build_aircraft_bands.py --check` died for all eleven cities** with
+  "substring not found" after a `git restore` flipped a file from LF to CRLF. It
+  matches on a literal `"
+}
+"`, so a checkout artefact took a blocking gate
+  from green to a traceback with no data change at all. `_slurp` now normalises.
+
+### 2026-08-12 - The DEFRA raster tier reaches eight more cities
 
 **`impact` was the last score input still an estimate outside London.** DEFRA
 publishes a measured Lden coverage per airport; twelve were on disk, and seven
