@@ -4558,19 +4558,35 @@ CITY_PROVENANCE = {
             'live': 'UNAVAILABLE, and doubly so. Crime is published by ONS for the CITY OF NOTTINGHAM ONLY: Table C4 carries `Nottingham` and `South Nottinghamshire`, and Broxtowe, Gedling and Rushcliffe sit inside that one combined partnership row rather than being published separately. Their crimeRate is therefore ABSENT rather than filled with the combined figure, which would render one measurement as three. Schools, transport and healthcare are not sourced for any city added after Greater Manchester. With at most one input, `live` falls below its two-input floor and is DROPPED with its weight redistributed. The thinnest city in the registry, and the response says so.',
         },
     },
+    # CORRECTED 2026-08-12. `breakdown.live` here read "PARTIAL, 2 of 4 inputs
+    # measured ... Transport and healthcare are NOT sourced" - true when written,
+    # false from 2026-08-11, when transport landed in methodology v3.6 and
+    # healthcare in v3.7. Two days of API responses told customers their
+    # liveability rested on two inputs when it rested on four.
+    #
+    # Found only by widening scripts/check_score_sanity.py past London, whose
+    # sixteen probes could never reach it. Provenance strings are hand-written
+    # per city and nothing derives them from the data they describe, so this
+    # class of staleness will recur - the same liability as the legend strings
+    # that printed "NO DATA" over live readings. Prefer deriving; where a
+    # string must be hand-written, give it a probe.
+    #
+    # NOTE the word PARTIAL must not appear in a live-breakdown string that is
+    # not partial: the gate substring-matches on it, and quoting the old text
+    # inside the new one reds the gate on a correct value.
     'manchester': {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Schools: Department for Education, Key Stage 4 Progress 8, 2022/23, Open Government Licence v3.0',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
-            'Transport and healthcare: not sourced. Their weight is redistributed, not defaulted, see sourceBreakdown.live',
+            'Transport: NaPTAN (DfT National Public Transport Access Nodes), Open Government Licence v3.0', 'Healthcare: NHS Organisation Data Service, Open Government Licence v3.0',
         ],
         'breakdown': {
             'quiet': 'PROVISIONAL ESTIMATE derived from Manchester Airport (MAN) runway alignment and approach geometry. NOT sampled from the DEFRA Round 4 raster. DEFRA HAS published a Round 4 Lden surface for this airport; we have not yet sampled it, so the gap is in our pipeline and not in the coverage published by the regulator. So the dB Lden thresholds in METHODOLOGY §3 are not evidenced for this city. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN the Greater Manchester cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs, and Trafford at GBP 393k scores as London\'s most expensive borough does at several times that. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. Greater Manchester has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'PARTIAL, 2 of 4 inputs measured, and context.liveResolution says so per response. Schools: DfE Key Stage 4 Progress 8, 2022/23, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport and healthcare are NOT sourced; since 2026-08-09 their weight is REDISTRIBUTED across schools and crime in proportion rather than filled with a placeholder, so their absence does not depress the score. It does mean liveability here rests on two inputs where London rests on four.',
+            'live': 'MEASURED on all four inputs, matching London. Schools: DfE Key Stage 4 Progress 8, 2022/23, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (methodology v3.6). Healthcare: NHS Organisation Data Service, share of postcodes within 500 m of a GP practice (v3.7).',
         },
     },
 }

@@ -74,7 +74,52 @@ PROBES = [
     ('UB9 6JH', 'Harefield, Hillingdon near Denham'),
     ('CR0 1LH', 'Croydon'),
     ('E17 4JB', 'Walthamstow'),
+    # ONE PROBE PER CITY, added 2026-08-12, and the reason is specific.
+    #
+    # Every probe above is a LONDON postcode. This is described in CLAUDE.md as
+    # "the only stage that can catch a DATA defect" - the pytest suites never
+    # reach DynamoDB and Playwright asserts the site against itself - and it was
+    # blind to eleven of twelve cities.
+    #
+    # That is not theoretical. On 2026-08-10 postcode scoring was un-gated for
+    # every city, and it did not work: `city` defaulted to 'london' and nothing
+    # derived it from the resolved LAD, so `/v1/score?postcode=M1+1AE` answered
+    # "Borough not currently supported in london." for two days while CLAUDE.md,
+    # ROADMAP and METHODOLOGY all recorded the capability as live. A single
+    # non-London probe here would have caught it the same day.
+    #
+    # Central postcodes deliberately: the point is that the CITY resolves, not
+    # edge geography. `expect_city` below is what makes them worth having - a
+    # probe that only checked for a 200 would have passed throughout the defect,
+    # because a London default returns a perfectly well-formed error.
+    ('M1 1AE', 'Manchester city centre'),
+    ('B15 2TT', 'Birmingham, Edgbaston'),
+    ('LS1 4DY', 'Leeds city centre'),
+    ('S1 2HH', 'Sheffield city centre'),
+    ('L1 8JQ', 'Liverpool city centre'),
+    ('NE1 4ST', 'Newcastle city centre'),
+    ('BS1 4DJ', 'Bristol city centre'),
+    ('LE1 5WW', 'Leicester city centre'),
+    ('TS1 2AZ', 'Middlesbrough town centre'),
+    ('NG1 5FS', 'Nottingham city centre'),
+    ('CF10 1EP', 'Cardiff city centre'),
 ]
+
+# The city each probe must resolve to. London postcodes are not listed - they
+# are the historic set and already pass - so this maps only the additions.
+EXPECT_CITY = {
+    'M1 1AE': 'manchester',
+    'B15 2TT': 'westmidlands',
+    'LS1 4DY': 'westyorkshire',
+    'S1 2HH': 'southyorkshire',
+    'L1 8JQ': 'merseyside',
+    'NE1 4ST': 'tyneandwear',
+    'BS1 4DJ': 'bristol',
+    'LE1 5WW': 'leicester',
+    'TS1 2AZ': 'teesside',
+    'NG1 5FS': 'nottingham',
+    'CF10 1EP': 'cardiff',
+}
 
 COMPONENTS = ('quiet', 'afford', 'growth', 'live')
 
@@ -156,6 +201,37 @@ def main():
         print(f'  {name:<46}{"PASS" if ok else "FAIL"}')
         if not ok:
             failures.append((name, detail))
+
+    # 0. EVERY CITY RESOLVES FROM A POSTCODE ALONE.
+    #
+    #    Deliberately first, and deliberately asserting the resolved CITY rather
+    #    than that a score came back. On 2026-08-10 postcode scoring was
+    #    un-gated for all twelve cities and did not work: `city` defaulted to
+    #    'london', nothing derived it from the resolved LAD, and
+    #    /v1/score?postcode=M1+1AE answered "Borough not currently supported in
+    #    london." for two days while three documents recorded it as live.
+    #
+    #    A probe asserting only HTTP 200 would have passed throughout, because
+    #    that error is well-formed. A probe asserting the city could not.
+    #
+    #    Hoisted above the distribution checks for the reason recorded below on
+    #    the airport assertion: an assertion inside a loop over rows disappears
+    #    silently when its own probe drops out.
+    seen_city = {}
+    for pc, _label, body in rows:
+        loc = body.get('location') or {}
+        seen_city[pc] = loc.get('city')
+    wrong_city = [
+        f'{pc} -> {seen_city.get(pc)!r}, expected {want!r}'
+        for pc, want in EXPECT_CITY.items()
+        if seen_city.get(pc) != want
+    ]
+    missing_probe = [pc for pc in EXPECT_CITY if pc not in seen_city]
+    check(
+        f'every city resolves from a postcode ({len(EXPECT_CITY)})',
+        not wrong_city and not missing_probe,
+        '; '.join(wrong_city + [f'{pc} returned nothing' for pc in missing_probe]),
+    )
 
     # 1. An airport must never score as a quiet place. This is the exact
     #    assertion the raster defect violated, at 7.5/10.
