@@ -3004,16 +3004,6 @@
           <button
             type="button"
             class="layer-toggle"
-            data-layer="transport"
-            aria-pressed="false"
-            title="Tube and rail stations within range"
-          >
-            <div class="indicator" aria-hidden="true"></div>
-            <span id="label-transport">Transport</span>
-          </button>
-          <button
-            type="button"
-            class="layer-toggle"
             data-layer="flood"
             aria-pressed="false"
             title="Environment Agency flood-risk zones"
@@ -5980,7 +5970,6 @@
           searchPlaceholder: 'Search area, neighbourhood or borough',
           emptyStateHint:
             'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LHR PATHS',
           legendPath2: 'LCY PATHS',
@@ -6041,7 +6030,6 @@
           searchPlaceholder: 'Search area, neighbourhood or borough',
           emptyStateHint:
             'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.',
-          labelTransport: 'Subway / rail',
           contourBadge: 'ZOOM INTO MAP TO SEE CURATED FAA/BTS NOISE CONTOURS',
           legendPath1: 'JFK PATHS',
           legendPath2: 'LGA PATHS',
@@ -6097,7 +6085,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Solihull, Coventry or Dudley) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '33 APPROACH',
           legendPath2: '15 APPROACH',
@@ -6149,7 +6136,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Leeds, Bradford or Wakefield) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '32 APPROACH',
           legendPath2: '14 APPROACH',
@@ -6201,7 +6187,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Sheffield, Doncaster or Barnsley) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'NO COMMERCIAL AIRPORT IN THIS CITY REGION',
           legendPath1: 'NO PATHS',
           legendPath2: 'NO PATHS',
@@ -6253,7 +6238,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Liverpool, Wirral or Sefton) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '27 APPROACH',
           legendPath2: '09 APPROACH',
@@ -6305,7 +6289,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Newcastle, Gateshead or Sunderland) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '25 APPROACH',
           legendPath2: '07 APPROACH',
@@ -6369,7 +6352,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Leicester, Charnwood or Hinckley and Bosworth) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '27 APPROACH',
           legendPath2: '09 APPROACH',
@@ -6429,7 +6411,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Middlesbrough, Stockton-on-Tees or Redcar and Cleveland) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '23 APPROACH',
           legendPath2: '05 APPROACH',
@@ -6481,7 +6462,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Bristol, Bath or Weston) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '27 APPROACH',
           legendPath2: '09 APPROACH',
@@ -6543,7 +6523,6 @@
           searchPlaceholder: 'Search a borough',
           emptyStateHint:
             'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
-          labelTransport: 'Transport',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: '23 APPROACH',
           legendPath2: '05 APPROACH',
@@ -7391,7 +7370,6 @@
         paths: true,
         'defra-aircraft': true,
         'defra-road': false,
-        transport: false,
         flood: false,
         'air-quality': false,
         labels: false,
@@ -8370,12 +8348,31 @@
       async function fetchTransportData(lat, lon, signal) {
         try {
           const resp = await fetch(`${API_BASE}/transport?lat=${lat}&lon=${lon}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
-          if (!resp.ok) return null;
-          return await resp.json();
+          if (!resp.ok) return { available: true, stations: [], _lat: lat, _lon: lon };
+          const body = await resp.json();
+          // Carry the query point so the NaPTAN fallback below knows where
+          // "nearest" is measured from. TfL's response does not echo it.
+          return Object.assign({ _lat: lat, _lon: lon }, body);
         } catch (e) {
           if (!isAbortError(e)) console.warn('Transport API failed:', e);
           return null;
         }
+      }
+
+      // Nearest NaPTAN stations to a point, straight-line, nearest first.
+      // Rail ranks above metro/tram at equal distance, because "your nearest
+      // station" means the rail one to most readers.
+      function nearestStations(lat, lon, limit) {
+        if (typeof lat !== 'number' || typeof lon !== 'number') return [];
+        const list = cityOf(currentCity).stations() || [];
+        return list
+          .map((s) => ({
+            name: s.name,
+            type: s.type,
+            km: _quickDist(lat, lon, s.coords[1], s.coords[0]),
+          }))
+          .sort((a, b) => a.km - b.km || (a.type === 'rail' ? -1 : 1))
+          .slice(0, limit || 4);
       }
 
       function renderTransportData(containerId, data) {
@@ -8388,6 +8385,32 @@
           return;
         }
         if ((!data.stations || data.stations.length === 0) && (!data.lineStatus || data.lineStatus.length === 0)) {
+          // FALL BACK TO NaPTAN before saying there is nothing.
+          //
+          // This panel is fed by /transport, which is TfL - so outside London
+          // it returned no stations and this line said "No stations found
+          // within 1.5km" for ten of eleven cities. That is not what TfL
+          // meant: it meant "TfL does not cover Manchester", and the panel
+          // rendered a confident absence in its place.
+          //
+          // NaPTAN covers all of them, is already on the page for the map, and
+          // is the same register the borough transport score uses. Distances
+          // are straight-line, and the panel says so rather than implying a
+          // walking route.
+          const near = nearestStations(data._lat, data._lon, 4);
+          if (near.length) {
+            el.innerHTML =
+              near
+                .map(
+                  (s) =>
+                    `<div class="transport-row"><span class="station-name">${escapeHtml(
+                      s.name
+                    )}</span><span class="station-dist">${s.km.toFixed(1)} km</span></div>`
+                )
+                .join('') +
+              '<p class="info-note" style="margin-top:6px;font-size:10px;">Nearest rail, metro and tram stations, straight-line distance. Source: NaPTAN (DfT), Open Government Licence v3.0.</p>';
+            return;
+          }
           el.innerHTML = '<p class="info-note">No stations found within 1.5km.</p>';
           return;
         }
@@ -9302,60 +9325,6 @@
         markLayerCoverage({ road, flood, aq });
       }
 
-      function renderTransport() {
-        const tg = g.append('g').attr('class', 'layer-transport');
-        if (!layers.transport) tg.style('display', 'none');
-        const stations = cityOf(currentCity).stations();
-
-        // LABEL RAIL, DOT THE REST. Every station used to get a 7px name label,
-        // which was survivable at London's 18 curated hubs and unreadable at the
-        // 708 NaPTAN stations that replaced them - 268 in South Yorkshire and
-        // 246 in Manchester, because a tram network is mostly stops. The markers
-        // were never the problem; 700 overlapping labels were.
-        //
-        // Rail stations are the ones a reader is orienting by, and NaPTAN's
-        // StopType distinguishes them (RLY/RSE/PLT) from tram and metro
-        // (TMU/MET). Metro and tram still draw, smaller and unlabelled, so the
-        // network's shape is visible without the text.
-        //
-        // Deliberately NOT solved by dropping stations: the data is right, and
-        // thinning it would make the layer lie about coverage. This is a
-        // rendering decision, so it belongs in the renderer.
-        const labelled = stations.filter((s) => s.type !== 'metro');
-        const tooManyLabels = labelled.length > 90;
-
-        stations.forEach((s) => {
-          const [x, y] = projection(s.coords);
-          const isRail = s.type !== 'metro';
-          const col = isRail ? '#141414' : '#7a7a7a';
-          const sz = isRail ? 2 : 1.2;
-          tg.append('rect')
-            .attr('x', x - sz)
-            .attr('y', y - sz)
-            .attr('width', sz * 2)
-            .attr('height', sz * 2)
-            .attr('fill', 'none')
-            .attr('stroke', col)
-            .attr('stroke-width', isRail ? 1 : 0.8)
-            .attr('opacity', isRail ? 1 : 0.55)
-            .attr('transform', `rotate(45,${x},${y})`);
-          // Even rail labels are dropped where a city has so many that they
-          // would collide - London and South Yorkshire both do. The markers
-          // stay; the names move to the hover tooltip.
-          if (!isRail || tooManyLabels) {
-            tg.append('title').text(s.name);
-            return;
-          }
-          tg.append('text')
-            .attr('x', x + 6)
-            .attr('y', y + 3)
-            .text(s.name)
-            .attr('font-size', '7px')
-            .attr('font-family', 'var(--font-mono)')
-            .attr('fill', col)
-            .attr('opacity', 0.7);
-        });
-      }
 
       function renderLabels() {
         const lg = g.append('g').attr('class', 'layer-labels');
@@ -10491,7 +10460,6 @@
         // the tooltip and the methodology link.
         set('label-aircraft', 'Aircraft noise');
         set('label-road', 'Road noise');
-        set('label-transport', cfg.labelTransport);
         set('label-flood', 'Flood risk');
         set('label-aq', 'Air quality');
 
@@ -10597,7 +10565,6 @@
         renderDefraTiles();
         renderCityFlightPaths();
         renderCityAirports();
-        renderTransport();
         renderLabels();
         renderBoroughRanking();
 
@@ -11220,7 +11187,6 @@
         renderDefraTiles();
         renderCityFlightPaths();
         renderCityAirports();
-        renderTransport();
         renderLabels();
         renderBoroughRanking();
         initPersonaSelector();
@@ -11466,7 +11432,6 @@
           renderDefraTiles();
           renderCityFlightPaths();
           renderCityAirports();
-          renderTransport();
           renderLabels();
         }
         // Audit I-0521-5: redrawForViewport() tears down and rebuilds every
