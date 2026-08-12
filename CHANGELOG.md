@@ -6,7 +6,42 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-11 (latest) - Leicester and Teesside on the consumer site
+### 2026-08-12 (latest) - Area names, corroborated against a published source
+
+**273 of 503 neighbourhood labels were a repeated post town; now 5 are.**
+Birmingham appeared 35 times in one ranked list, Liverpool 29, Leeds 16,
+Sheffield 15, Bristol 16 - because only Greater Manchester had entries in
+`NAME_OVERRIDES_BY_CITY`. Nothing shipped was false, the outward code being
+printed beside every label, but thirty-five "Birmingham" rows tell a user
+nothing.
+
+- **285 curated names across all nine city-regions**, and every one is checked.
+  `build_city_neighbourhoods.py --check-names` asserts each label against that
+  district's own **House of Commons Library MSOA name** (v2.1, OGL v3.0). The
+  evidence is checked in at `data/district-msoa-names.json` so the gate runs in
+  preflight with neither the 806 MB NSPL nor a network. Blocking, and proven red
+  on both a transplanted name and an unknown city key.
+- **Deriving the names was tried first and rejected on measurement.** A postcode
+  district spans 4-13 MSOAs, so the modal MSOA name carries only 15-33% of it
+  and names a sub-area: BS8 came out `Clifton East`, SK5 came out `Brinnington`
+  when the district is Reddish, and a shared-token variant gave `Five` for B16
+  (from *Five Ways*), `Quays` for M50 and `Mossley` for **both** L17 and L18 -
+  recreating the duplicate it was meant to fix. Manchester's 26 hand-written
+  names were the answer key. The MSOA data is a poor author and a good verifier.
+- **Six labels were wrong, four of them shipped for months.**
+  `Chorlton-on-Medlock` (M13 is Ardwick and Victoria Park), `Chorlton-cum-Hardy`,
+  `Ancoats & Northern Quarter`, `The Heatons`, plus `West Derby` and
+  `Kelham Island`. No published source places any of them in those districts.
+- **Two ways this nearly shipped green.** Four of the eight dicts were keyed
+  `west_midlands` / `south_yorkshire` when the builder's keys are `westmidlands`
+  / `southyorkshire`: they corroborated perfectly and reached nothing, leaving
+  163 of 285 names dead under an all-green check. And a `--city` run wrote its
+  own 59 districts over the 501-district evidence file, reddening 239 good
+  names. Both are now guarded.
+- The 5 remaining duplicates are Bath x2 and Darlington x3, left as post towns
+  because no single area name is widely recognised for any of them.
+
+### 2026-08-11 - Leicester and Teesside on the consumer site
 
 **The site and the API now carry the same eleven cities, 91 boroughs.** No
 scoring change: this is the site half of two city-regions `/v1/score` has

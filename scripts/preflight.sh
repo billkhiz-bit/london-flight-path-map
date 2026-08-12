@@ -163,6 +163,20 @@ check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --
 # before leaving BACKEND_ONLY_CITIES, which is a one-way door.
 # Proven able to fail: a single site-side band edit reds it at -3.8.
 check "site == Lambda (91 boroughs)"   node tests/borough-score-parity.mjs
+# The 285 curated postcode-district labels are the one output of the
+# neighbourhood builder that nothing downstream can contradict: a wrong price
+# reds "prices == HM Land Registry", a wrong borough shows up as a borough with
+# no neighbourhoods, but "L8: Chelsea" would simply render. This asserts every
+# label against that district's own published MSOA names, so a name that
+# belongs somewhere else cannot ship.
+#
+# Reads data/district-msoa-names.json, which is checked in for this reason -
+# the check needs neither the 806 MB NSPL nor a network.
+#
+# Proven able to fail in both directions: a transplanted name ("BS8: Didsbury")
+# reds it, and so does a dict keyed to a city nobody looks up, which is how 163
+# of the names were dead on arrival while the check still read all-green.
+check "area names == MSOA names"       python scripts/build_city_neighbourhoods.py --check-names
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
 check "no em dashes (9 pages)"         sh scripts/check_no_em_dash.sh

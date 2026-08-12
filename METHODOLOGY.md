@@ -55,12 +55,23 @@ The product exists to address a structural information asymmetry in UK property:
 **Sub-borough granularity differs by city, and the consumer-site ranking says
 so per city.** London and New York rank *named areas* whose median prices are
 indicative and whose crime figure is a relative modifier rather than a measured
-rate. Greater Manchester ranks **85 postcode districts** whose price is the
-**median of real HM Land Registry transactions** in that district (built by
-`scripts/build_manchester_neighbourhoods.py`, minimum 30 sales or the district
-is omitted rather than estimated) and which carry **no crime modifier at all**,
-because sub-borough crime is not published for Greater Manchester. None of this
-enters `/v1/score`, which is borough-level for all three cities.
+rate. The nine UK city-regions rank **503 postcode districts** whose price is
+the **median of real HM Land Registry transactions** in that district (built by
+`scripts/build_city_neighbourhoods.py`, minimum 30 sales or the district is
+omitted rather than estimated) and which carry **no crime modifier at all**,
+because sub-borough crime is not published at that geography. None of this
+enters `/v1/score`, which is borough-level for every city.
+
+**A district's displayed NAME is a label, not a measurement, and it is
+corroborated.** 285 of the 503 carry a curated postal-district name; the rest
+show the Royal Mail locality most of their transactions use. The outward code
+is printed beside every one, so a label can never claim more precision than the
+data. Since 2026-08-12 each curated name is asserted against that district's own
+**House of Commons Library MSOA name** (v2.1, OGL v3.0) by
+`build_city_neighbourhoods.py --check-names`, blocking in preflight: a name no
+published source places in the district fails the build. Deriving the name from
+the MSOA data outright was tried and rejected on measurement — a district spans
+4–13 MSOAs, so the modal name carries only 15–33% of it and names a sub-area.
 
 **Coverage is not uniform, and every response says which inputs it rests on**
 via `context.liveResolution`. Greater Manchester's

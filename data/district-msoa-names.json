@@ -1,0 +1,7127 @@
+{
+ "districts": {
+  "B1": {
+   "msoa": [
+    "Ladywood - Summer Hill",
+    "Digbeth",
+    "Central",
+    "Attwood Green & Park Central",
+    "Five Ways North",
+    "North Central & Dartmouth Circus"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 318
+  },
+  "B10": {
+   "msoa": [
+    "Small Heath Park",
+    "Bordesley",
+    "Sparkbrook North",
+    "Little Bromwich",
+    "Yardley Fields"
+   ],
+   "postTown": "Small Heath",
+   "postcodes": 314
+  },
+  "B11": {
+   "msoa": [
+    "Greet & Mid Sparkhill",
+    "Acocks Green West",
+    "Sparkhill North",
+    "Sparkbrook South",
+    "Sparkhill South",
+    "Sparkbrook North",
+    "Hay Mills & Tyseley",
+    "Moseley",
+    "Balsall Heath East",
+    "Springfield & Hall Green West",
+    "Acocks Green East"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 597
+  },
+  "B12": {
+   "msoa": [
+    "Balsall Heath East",
+    "Balsall Heath West & Kingswood Road",
+    "Digbeth",
+    "Sparkbrook North",
+    "Moor Green & Cannon Hill",
+    "Sparkbrook South",
+    "Moseley Village",
+    "Bordesley",
+    "Greet & Mid Sparkhill",
+    "Hay Mills & Tyseley"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 478
+  },
+  "B13": {
+   "msoa": [
+    "Moseley Village",
+    "Billesley Common",
+    "Wake Green East & Moseley Bog",
+    "Moseley",
+    "Moor Green & Cannon Hill",
+    "Springfield & Hall Green West",
+    "Kings Heath",
+    "Brandwood North",
+    "Balsall Heath West & Kingswood Road",
+    "Yardley Wood West",
+    "Balsall Heath East",
+    "Brandwood East",
+    "Kings Heath Park & Stirchley East",
+    "Sparkhill South"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 657
+  },
+  "B14": {
+   "msoa": [
+    "Druids Heath",
+    "Highter's Heath & Maypole",
+    "Kings Heath",
+    "Brandwood North",
+    "Brandwood East",
+    "Brandwood End",
+    "Yardley Wood West",
+    "Kings Heath Park & Stirchley East",
+    "Billesley Common",
+    "Moseley Village",
+    "Wythall & Gay Hill",
+    "Solihull Lodge",
+    "Hollywood & Drakes Cross",
+    "Lifford & Walkers Heath"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 769
+  },
+  "B15": {
+   "msoa": [
+    "Edgbaston South & University",
+    "Edgbaston North",
+    "Attwood Green & Park Central",
+    "Five Ways South & Calthorpe Park",
+    "Five Ways North",
+    "Metchley",
+    "Digbeth",
+    "Selly Oak",
+    "Harborne East"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 484
+  },
+  "B16": {
+   "msoa": [
+    "Five Ways North",
+    "Edgbaston North",
+    "Rotton Park",
+    "Summerfield",
+    "Ladywood - Summer Hill",
+    "Smethwick South East",
+    "Five Ways South & Calthorpe Park"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 489
+  },
+  "B17": {
+   "msoa": [
+    "Harborne East",
+    "Harborne West",
+    "Metchley",
+    "Rotton Park",
+    "California",
+    "Quinton Ridgacre",
+    "Edgbaston South & University",
+    "Edgbaston North"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 555
+  },
+  "B18": {
+   "msoa": [
+    "Winson Green & Gib Heath",
+    "Hockley & Jewellery Quarter",
+    "Summerfield",
+    "Ladywood - Summer Hill",
+    "Central",
+    "Smethwick East"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 460
+  },
+  "B19": {
+   "msoa": [
+    "North Central & Dartmouth Circus",
+    "Hockley & Jewellery Quarter",
+    "Lozells West",
+    "Lozells East",
+    "Birchfield West",
+    "Handsworth South",
+    "Central",
+    "Winson Green & Gib Heath"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 449
+  },
+  "B20": {
+   "msoa": [
+    "Handsworth Wood",
+    "Handsworth East",
+    "Birchfield West",
+    "Birchfield East",
+    "Handsworth South",
+    "Lozells West",
+    "Handsworth West"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 533
+  },
+  "B21": {
+   "msoa": [
+    "Middlemore",
+    "Handsworth South",
+    "Handsworth West",
+    "Winson Green & Gib Heath",
+    "Handsworth East",
+    "West Bromwich East & Kenrick Park",
+    "Handsworth Wood"
+   ],
+   "postTown": "Handsworth",
+   "postcodes": 437
+  },
+  "B23": {
+   "msoa": [
+    "Erdington Town",
+    "Short Heath",
+    "Brookvale",
+    "Stockland Green - Marsh Hill",
+    "Perry Common - College Road",
+    "Upper Witton",
+    "Gravelly Hill & South Erdington",
+    "Chester Road",
+    "New Oscott"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 823
+  },
+  "B24": {
+   "msoa": [
+    "Pype Hayes Park",
+    "Birches Green & Bromford East",
+    "Gravelly Hill & South Erdington",
+    "Erdington Town",
+    "Chester Road",
+    "Castle Vale",
+    "Ward End & Bromford West",
+    "Wylde Green"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 577
+  },
+  "B25": {
+   "msoa": [
+    "Hay Mills & Tyseley",
+    "Yardley",
+    "Yardley Fields",
+    "Yardley South",
+    "Acocks Green East"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 273
+  },
+  "B26": {
+   "msoa": [
+    "Sheldon South",
+    "Lyndon Green",
+    "Sheldon North",
+    "Yardley South",
+    "Kent's Moat",
+    "Yardley",
+    "Acocks Green East",
+    "Marston Green & Airport",
+    "Hay Mills & Tyseley",
+    "Elmdon Park",
+    "Lyndon North"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 574
+  },
+  "B27": {
+   "msoa": [
+    "Acocks Green East",
+    "Fox Hollies",
+    "Hall Green East",
+    "Acocks Green West",
+    "Hay Mills & Tyseley",
+    "Olton & Kineton Green",
+    "Lyndon North"
+   ],
+   "postTown": "Acocks Green",
+   "postcodes": 430
+  },
+  "B28": {
+   "msoa": [
+    "Hall Green Central",
+    "Yardley Wood East",
+    "Springfield & Hall Green West",
+    "Wake Green East & Moseley Bog",
+    "Hall Green East",
+    "Fox Hollies",
+    "Yardley Wood West",
+    "Acocks Green West",
+    "Olton & Kineton Green",
+    "Sparkhill South",
+    "Ulverley Green & Langley"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 605
+  },
+  "B29": {
+   "msoa": [
+    "Selly Oak",
+    "Stirchley North & Selly Park",
+    "Weoley Castle",
+    "Selly Oak Park & Lodge Hill",
+    "Shenley Lane",
+    "California",
+    "Edgbaston South & University",
+    "Bournville West",
+    "Metchley",
+    "Bartley Green & Shenley Fields"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 805
+  },
+  "B3": {
+   "msoa": [
+    "Central",
+    "North Central & Dartmouth Circus",
+    "Ladywood - Summer Hill"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 188
+  },
+  "B30": {
+   "msoa": [
+    "Bournville East & Stirchley West",
+    "Cotteridge",
+    "Kings Heath Park & Stirchley East",
+    "Bournville West",
+    "Lifford & Walkers Heath",
+    "Brandwood End",
+    "Selly Oak Park & Lodge Hill",
+    "Stirchley North & Selly Park",
+    "Druids Heath",
+    "Northfield Victoria Common",
+    "King's Norton"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 608
+  },
+  "B31": {
+   "msoa": [
+    "Longbridge North",
+    "Turves Green",
+    "West Heath",
+    "Northfield Victoria Common",
+    "Allens Cross",
+    "Bartley Green & Shenley Fields",
+    "Longbridge South",
+    "Shenley Lane",
+    "Bournville West",
+    "Frankley",
+    "Cotteridge",
+    "Weoley Castle",
+    "Rubery East",
+    "Alvechurch, Hopwood & Holt End",
+    "King's Norton",
+    "Barnt Green & Lickey Hills",
+    "Dodford, Belbroughton & Romsley"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 1164
+  },
+  "B32": {
+   "msoa": [
+    "Quinton Ridgacre",
+    "Woodgate",
+    "Quinton East",
+    "Woodgate Valley",
+    "Bartley Green & Shenley Fields",
+    "Harborne West",
+    "California",
+    "Dodford, Belbroughton & Romsley",
+    "Harborne East",
+    "Weoley Castle"
+   ],
+   "postTown": "Quinton",
+   "postcodes": 759
+  },
+  "B33": {
+   "msoa": [
+    "Kitts Green",
+    "Glebe Farm",
+    "Stechford",
+    "Sheldon North",
+    "Kent's Moat",
+    "Yardley Fields",
+    "Yardley",
+    "Shard End & Kingfisher",
+    "Sheldon South",
+    "Buckland End"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 689
+  },
+  "B34": {
+   "msoa": [
+    "Buckland End",
+    "Shard End & Kingfisher",
+    "Hodge Hill",
+    "Kitts Green",
+    "Glebe Farm"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 326
+  },
+  "B35": {
+   "msoa": [
+    "Castle Vale"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 292
+  },
+  "B36": {
+   "msoa": [
+    "Castle Bromwich West",
+    "Birches Green & Bromford East",
+    "Castle Bromwich East",
+    "Smith's Wood South",
+    "Smith's Wood North",
+    "Hodge Hill",
+    "Ward End & Bromford West",
+    "Kingshurst",
+    "Castle Vale",
+    "Buckland End"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 574
+  },
+  "B37": {
+   "msoa": [
+    "Marston Green & Airport",
+    "Chelmsley Wood East",
+    "Chelmsley Wood West",
+    "Fordbridge",
+    "Kingshurst",
+    "Smith's Wood South",
+    "Kitts Green",
+    "Sheldon North"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 730
+  },
+  "B38": {
+   "msoa": [
+    "King's Norton",
+    "Hawkesley",
+    "Lifford & Walkers Heath",
+    "Wythall & Gay Hill",
+    "Turves Green",
+    "Alvechurch, Hopwood & Holt End",
+    "Cotteridge",
+    "West Heath"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 472
+  },
+  "B4": {
+   "msoa": [
+    "North Central & Dartmouth Circus",
+    "Central",
+    "Saltley West",
+    "Sutton Coldfield North & Park"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 200
+  },
+  "B42": {
+   "msoa": [
+    "Perry Barr & South Hamstead",
+    "Perry Beeches West",
+    "Perry Beeches East",
+    "Birchfield East",
+    "Kingstanding South West",
+    "Hamstead East",
+    "Queslett",
+    "Handsworth Wood"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 436
+  },
+  "B43": {
+   "msoa": [
+    "Great Barr",
+    "Pheasey & Sutton Road",
+    "Hamstead West",
+    "Hamstead East",
+    "Charlemont",
+    "Perry Beeches West",
+    "Old Oscott",
+    "Queslett",
+    "Walsall South East"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 547
+  },
+  "B44": {
+   "msoa": [
+    "Kingstanding South East",
+    "Kingstanding South West",
+    "Old Oscott",
+    "Queslett",
+    "Perry Common - College Road",
+    "Upper Witton",
+    "Kingstanding North",
+    "Perry Beeches East",
+    "Birchfield East",
+    "New Oscott"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 637
+  },
+  "B45": {
+   "msoa": [
+    "Barnt Green & Lickey Hills",
+    "Frankley",
+    "Rubery West",
+    "Rubery East",
+    "Longbridge South",
+    "Allens Cross",
+    "Marlbrook & Lickey End",
+    "Alvechurch, Hopwood & Holt End",
+    "Dodford, Belbroughton & Romsley"
+   ],
+   "postTown": "Rednal",
+   "postcodes": 709
+  },
+  "B5": {
+   "msoa": [
+    "Digbeth",
+    "Attwood Green & Park Central",
+    "Five Ways South & Calthorpe Park",
+    "Edgbaston South & University",
+    "North Central & Dartmouth Circus",
+    "Bordesley",
+    "Central",
+    "Sparkbrook North",
+    "Five Ways North"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 428
+  },
+  "B6": {
+   "msoa": [
+    "Aston Park",
+    "North Central & Dartmouth Circus",
+    "Lozells East",
+    "Birchfield East",
+    "Brookvale",
+    "Nechells",
+    "Upper Witton",
+    "Birchfield West",
+    "Lozells West"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 419
+  },
+  "B62": {
+   "msoa": [
+    "Shell Corner & Hurst Green",
+    "Halesowen East",
+    "Quinton West",
+    "Dodford, Belbroughton & Romsley",
+    "Hawne",
+    "Woodgate Valley",
+    "Halesowen Town",
+    "Old Hill",
+    "Hayley Green"
+   ],
+   "postTown": "Halesowen",
+   "postcodes": 576
+  },
+  "B63": {
+   "msoa": [
+    "Halesowen Town",
+    "Cradley East",
+    "Hayley Green",
+    "Hawne",
+    "Cradley West & Hayes Lane",
+    "Shell Corner & Hurst Green",
+    "Halesowen East"
+   ],
+   "postTown": "Halesowen",
+   "postcodes": 784
+  },
+  "B64": {
+   "msoa": [
+    "Old Hill",
+    "Cradley Heath",
+    "Rowley West",
+    "Blackheath",
+    "Netherton",
+    "Shell Corner & Hurst Green"
+   ],
+   "postTown": "Cradley Heath",
+   "postcodes": 475
+  },
+  "B65": {
+   "msoa": [
+    "Blackheath",
+    "Rowley East",
+    "Rowley West",
+    "Whiteheath",
+    "Tividale",
+    "Old Hill",
+    "Shell Corner & Hurst Green",
+    "Langley Green",
+    "Brandhall"
+   ],
+   "postTown": "Rowley Regis",
+   "postcodes": 517
+  },
+  "B66": {
+   "msoa": [
+    "Smethwick East",
+    "Smethwick North & West",
+    "Smethwick South East",
+    "Bearwood & Warley Woods",
+    "Smethwick South",
+    "Middlemore",
+    "Summerfield",
+    "Warley East"
+   ],
+   "postTown": "Smethwick",
+   "postcodes": 567
+  },
+  "B67": {
+   "msoa": [
+    "Bearwood & Warley Woods",
+    "Smethwick South",
+    "Warley East",
+    "Smethwick North & West",
+    "Warley South",
+    "Oldbury & Rood End",
+    "Warley West"
+   ],
+   "postTown": "Smethwick",
+   "postcodes": 524
+  },
+  "B68": {
+   "msoa": [
+    "Brandhall",
+    "Warley West",
+    "Langley Green",
+    "Warley South",
+    "Oldbury & Rood End",
+    "Warley East",
+    "Whiteheath",
+    "Bearwood & Warley Woods",
+    "Smethwick North & West"
+   ],
+   "postTown": "Oldbury",
+   "postcodes": 588
+  },
+  "B69": {
+   "msoa": [
+    "North Tividale",
+    "Oldbury & Rood End",
+    "Tividale",
+    "Whiteheath",
+    "Langley Green",
+    "Rowley West",
+    "Great Bridge & Dudley Port"
+   ],
+   "postTown": "Tividale",
+   "postcodes": 728
+  },
+  "B7": {
+   "msoa": [
+    "Nechells",
+    "Saltley West",
+    "North Central & Dartmouth Circus",
+    "Gravelly Hill & South Erdington"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 274
+  },
+  "B70": {
+   "msoa": [
+    "West Bromwich East & Kenrick Park",
+    "Greets Green West",
+    "Greets Green East",
+    "Wednesbury South",
+    "West Bromwich North",
+    "Great Bridge & Dudley Port",
+    "Stone Cross & Hateley Heath"
+   ],
+   "postTown": "West Bromwich",
+   "postcodes": 830
+  },
+  "B71": {
+   "msoa": [
+    "Stone Cross & Hateley Heath",
+    "West Bromwich North",
+    "Charlemont",
+    "Wednesbury South",
+    "Smethwick North & West",
+    "West Bromwich East & Kenrick Park",
+    "Greets Green East",
+    "Yew Tree & Tamebridge"
+   ],
+   "postTown": "West Bromwich",
+   "postcodes": 687
+  },
+  "B72": {
+   "msoa": [
+    "Sutton Coldfield South & Central",
+    "Wylde Green",
+    "Sutton Coldfield North & Park",
+    "Chester Road",
+    "Rectory Park & New Hall Valley",
+    "Pype Hayes Park"
+   ],
+   "postTown": "Sutton Coldfield",
+   "postcodes": 240
+  },
+  "B73": {
+   "msoa": [
+    "New Oscott",
+    "Sutton Coldfield North & Park",
+    "Chester Road",
+    "Sutton Coldfield South & Central",
+    "Kingstanding North",
+    "Wylde Green",
+    "Erdington Town"
+   ],
+   "postTown": "Sutton Coldfield",
+   "postcodes": 541
+  },
+  "B74": {
+   "msoa": [
+    "Sutton Coldfield North & Park",
+    "Streetly North",
+    "Streetly South",
+    "Hill Hook",
+    "Four Oaks",
+    "Shenstone, Stonnall & Little Aston",
+    "Kingstanding North",
+    "Aldridge South",
+    "Little Sutton & Roughley"
+   ],
+   "postTown": "Sutton Coldfield",
+   "postcodes": 759
+  },
+  "B75": {
+   "msoa": [
+    "Little Sutton & Roughley",
+    "Reddicap Heath",
+    "Four Oaks",
+    "Sutton Coldfield North & Park",
+    "Rectory Park & New Hall Valley",
+    "Fazeley, Mile Oak & Drayton Basset",
+    "Walmley",
+    "Kingsbury & Curdworth",
+    "Hill Hook",
+    "Sutton Coldfield South & Central"
+   ],
+   "postTown": "Sutton Coldfield",
+   "postcodes": 655
+  },
+  "B76": {
+   "msoa": [
+    "Walmley",
+    "Minworth",
+    "Rectory Park & New Hall Valley",
+    "Kingsbury & Curdworth",
+    "Reddicap Heath",
+    "Wylde Green",
+    "Sutton Coldfield North & Park",
+    "Sutton Coldfield South & Central",
+    "Castle Vale",
+    "Coleshill & Water Orton"
+   ],
+   "postTown": "Sutton Coldfield",
+   "postcodes": 529
+  },
+  "B8": {
+   "msoa": [
+    "Saltley East",
+    "Washwood Heath",
+    "Ward End & Bromford West",
+    "Saltley West",
+    "Belchers Lane & Eastfield Road",
+    "Bordesley Green North",
+    "Hodge Hill"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 577
+  },
+  "B9": {
+   "msoa": [
+    "Bordesley",
+    "Bordesley Green North",
+    "Belchers Lane & Eastfield Road",
+    "Saltley West",
+    "Little Bromwich",
+    "Yardley Fields",
+    "Saltley East",
+    "North Central & Dartmouth Circus"
+   ],
+   "postTown": "Birmingham",
+   "postcodes": 393
+  },
+  "B90": {
+   "msoa": [
+    "Dickens Heath, Cheswick Green & Hockley Heath",
+    "Shirley East",
+    "Blossomfield",
+    "Shirley West",
+    "Solihull Lodge",
+    "Monkspath South",
+    "Shirley Heath",
+    "Wythall & Gay Hill",
+    "Monkspath North",
+    "Ulverley Green & Langley",
+    "Olton & Kineton Green"
+   ],
+   "postTown": "Shirley",
+   "postcodes": 1088
+  },
+  "B91": {
+   "msoa": [
+    "Central Solihull & Sharmans Cross",
+    "Lode Heath",
+    "Monkspath North",
+    "Blossomfield",
+    "Elmdon Heath & Catherine-de-Barnes",
+    "Ulverley Green & Langley",
+    "Knowle",
+    "Monkspath South",
+    "Shirley East",
+    "Elmdon Park"
+   ],
+   "postTown": "Solihull",
+   "postcodes": 852
+  },
+  "B92": {
+   "msoa": [
+    "Lyndon South",
+    "Elmdon Park",
+    "Elmdon Heath & Catherine-de-Barnes",
+    "Olton & Kineton Green",
+    "Lyndon North",
+    "Meriden, Hampton-in-Arden & Temple Balsall",
+    "Ulverley Green & Langley",
+    "Balsall Common",
+    "Marston Green & Airport",
+    "Central Solihull & Sharmans Cross",
+    "Sheldon South",
+    "Lode Heath"
+   ],
+   "postTown": "Solihull",
+   "postcodes": 733
+  },
+  "B93": {
+   "msoa": [
+    "Dorridge",
+    "Knowle",
+    "Meriden, Hampton-in-Arden & Temple Balsall",
+    "Kingswood & Leek Wootton",
+    "Elmdon Heath & Catherine-de-Barnes"
+   ],
+   "postTown": "Knowle",
+   "postcodes": 515
+  },
+  "B94": {
+   "msoa": [
+    "Earlswood, Tanworth-in-Arden & Sambourne",
+    "Kingswood & Leek Wootton",
+    "Dickens Heath, Cheswick Green & Hockley Heath",
+    "Dorridge",
+    "Knowle"
+   ],
+   "postTown": "Hockley Heath",
+   "postcodes": 341
+  },
+  "BA1": {
+   "msoa": [
+    "Central Bath & Lansdown",
+    "Bathavon North & South",
+    "Kingsmead",
+    "Lambridge & Fairfield Park",
+    "Walcot",
+    "Weston",
+    "Newbridge",
+    "Marshfield, Wick & Hawkesbury"
+   ],
+   "postTown": "Bath",
+   "postcodes": 1529
+  },
+  "BA2": {
+   "msoa": [
+    "Widcombe, Bathwick Hill & Claverton Down",
+    "Peasedown & Bathavon West",
+    "Bathavon North & South",
+    "Saltford, Farmborough & Timsbury",
+    "Combe Down",
+    "Oldfield Park West",
+    "Bloomfield",
+    "Odd Down",
+    "Twerton",
+    "Oldfield Park East",
+    "Southdown",
+    "Central Bath & Lansdown",
+    "Rode, Mells & Woodlands",
+    "Winsley, Westwood & Holt",
+    "Walcot"
+   ],
+   "postTown": "Bath",
+   "postcodes": 2208
+  },
+  "BA3": {
+   "msoa": [
+    "Stratton, Holcombe & Highbury",
+    "Radstock",
+    "Oakhill, Horrington & Chewton Mendip",
+    "Midsomer Norton North",
+    "Westfield",
+    "Midsomer Norton Redfield",
+    "Evercreech & Nunney",
+    "Rode, Mells & Woodlands",
+    "Chew, Bishop Sutton & East Harptree",
+    "High Littleton & Paulton"
+   ],
+   "postTown": "Midsomer Norton",
+   "postcodes": 1285
+  },
+  "BD1": {
+   "msoa": [
+    "Central Bradford",
+    "Barkerend West & Little Germany",
+    "Shearbridge & University",
+    "Brown Royd",
+    "Broomfields & East Bowling",
+    "Undercliffe",
+    "Bolton Road & Kings Road"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 473
+  },
+  "BD10": {
+   "msoa": [
+    "Idle",
+    "Thackley & Esholt",
+    "Eccleshill",
+    "Ravenscliffe",
+    "Horsforth South & Rawdon",
+    "Wrose & Bolton Woods",
+    "Calverley & Farsley North",
+    "Windhill"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 715
+  },
+  "BD11": {
+   "msoa": [
+    "Drighlington & Gildersome West",
+    "Birkenshaw",
+    "Bierley & Tong"
+   ],
+   "postTown": "Drighlington",
+   "postcodes": 310
+  },
+  "BD12": {
+   "msoa": [
+    "Wyke",
+    "Low Moor",
+    "Scholes & Hunsworth",
+    "Buttershaw",
+    "Bierley & Tong"
+   ],
+   "postTown": "Wyke",
+   "postcodes": 607
+  },
+  "BD13": {
+   "msoa": [
+    "Queensbury",
+    "Cullingworth & Denholme",
+    "Thornton",
+    "Scholemoor",
+    "Barkerend West & Little Germany",
+    "Illingworth & Ogden",
+    "Northowram & Shelf",
+    "Clayton"
+   ],
+   "postTown": "Queensbury",
+   "postcodes": 965
+  },
+  "BD14": {
+   "msoa": [
+    "Clayton",
+    "Scholemoor",
+    "Queensbury",
+    "Thornton"
+   ],
+   "postTown": "Clayton",
+   "postcodes": 240
+  },
+  "BD15": {
+   "msoa": [
+    "Allerton",
+    "Cottingley, Harden & Wilsden",
+    "Thornton",
+    "Fairweather Green",
+    "Cullingworth & Denholme",
+    "Chellow Heights"
+   ],
+   "postTown": "Allerton",
+   "postcodes": 443
+  },
+  "BD16": {
+   "msoa": [
+    "Crossflatts & Eldwick",
+    "Bingley Town",
+    "Cottingley, Harden & Wilsden",
+    "Saltaire & Baildon West",
+    "Barkerend West & Little Germany",
+    "Baildon North",
+    "Cullingworth & Denholme",
+    "Keighley Central & East",
+    "Riddlesden & East Morton"
+   ],
+   "postTown": "Bingley",
+   "postcodes": 833
+  },
+  "BD17": {
+   "msoa": [
+    "Baildon South",
+    "Baildon North",
+    "Saltaire & Baildon West",
+    "Shipley Town",
+    "Thackley & Esholt",
+    "Crossflatts & Eldwick",
+    "Barkerend West & Little Germany",
+    "Windhill"
+   ],
+   "postTown": "Baildon",
+   "postcodes": 629
+  },
+  "BD18": {
+   "msoa": [
+    "Shipley Town",
+    "Windhill",
+    "Saltaire & Baildon West",
+    "Frizinghall & Heaton Grove",
+    "Wrose & Bolton Woods",
+    "Barkerend West & Little Germany",
+    "Cottingley, Harden & Wilsden",
+    "Thackley & Esholt",
+    "Heaton Highgate"
+   ],
+   "postTown": "Shipley",
+   "postcodes": 732
+  },
+  "BD19": {
+   "msoa": [
+    "Cleckheaton",
+    "Scholes & Hunsworth",
+    "Gomersal",
+    "Hightown & Hartshead Moor",
+    "Liversedge, Littletown & Millbridge",
+    "Birkenshaw",
+    "Clifton & Bailiff Bridge"
+   ],
+   "postTown": "Cleckheaton",
+   "postcodes": 702
+  },
+  "BD2": {
+   "msoa": [
+    "Haigh Fold",
+    "Bolton Road & Kings Road",
+    "Eccleshill",
+    "Wrose & Bolton Woods",
+    "Undercliffe",
+    "Ravenscliffe",
+    "Manningham & Lister Park",
+    "Thornbury",
+    "Barkerend West & Little Germany",
+    "Frizinghall & Heaton Grove",
+    "Windhill"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 732
+  },
+  "BD20": {
+   "msoa": [
+    "Sutton & Crosshills",
+    "Steeton & Silsden Rural",
+    "Riddlesden & East Morton",
+    "Silsden",
+    "Keighley Utley",
+    "Carleton, Cowling & Cononley",
+    "Keighley Central & East",
+    "Oakworth & Laycock",
+    "Keighley Oakworth Road & West Lane"
+   ],
+   "postTown": "Silsden",
+   "postcodes": 1381
+  },
+  "BD21": {
+   "msoa": [
+    "Keighley Central & East",
+    "Keighley South",
+    "Keighley Oakworth Road & West Lane",
+    "Keighley Utley",
+    "Keighley Exley Head",
+    "Riddlesden & East Morton",
+    "Cullingworth & Denholme",
+    "Haworth & Oxenhope",
+    "Bingley Town"
+   ],
+   "postTown": "Keighley",
+   "postcodes": 948
+  },
+  "BD22": {
+   "msoa": [
+    "Haworth & Oxenhope",
+    "Oakworth & Laycock",
+    "Keighley Exley Head",
+    "Keighley Oakworth Road & West Lane",
+    "Carleton, Cowling & Cononley",
+    "Keighley South",
+    "Sutton & Crosshills",
+    "Cullingworth & Denholme"
+   ],
+   "postTown": "Keighley",
+   "postcodes": 1069
+  },
+  "BD3": {
+   "msoa": [
+    "Barkerend East",
+    "Thornbury",
+    "Barkerend West & Little Germany",
+    "Undercliffe",
+    "Broomfields & East Bowling",
+    "New Pudsey",
+    "Laisterdyke & Bowling"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 578
+  },
+  "BD4": {
+   "msoa": [
+    "Bierley & Tong",
+    "Laisterdyke & Bowling",
+    "Holme Wood",
+    "Broomfields & East Bowling",
+    "Pudsey South West",
+    "Birkenshaw",
+    "Bowling Park",
+    "Barkerend East",
+    "Holme Top",
+    "Low Moor",
+    "Drighlington & Gildersome West"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 962
+  },
+  "BD5": {
+   "msoa": [
+    "Holme Top",
+    "Canterbury",
+    "Bowling Park",
+    "Bankfoot",
+    "Broomfields & East Bowling",
+    "Wibsey St Enoch's",
+    "Shearbridge & University",
+    "Bierley & Tong",
+    "Great Horton & Brackenhill",
+    "Low Moor"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 625
+  },
+  "BD6": {
+   "msoa": [
+    "Buttershaw",
+    "Wibsey St Enoch's",
+    "Bankfoot",
+    "Horton Bank",
+    "Low Moor",
+    "Scholemoor",
+    "Queensbury",
+    "Great Horton & Brackenhill"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 737
+  },
+  "BD7": {
+   "msoa": [
+    "Shearbridge & University",
+    "Great Horton & Brackenhill",
+    "Scholemoor",
+    "Brown Royd",
+    "Horton Bank",
+    "Holme Top",
+    "Canterbury"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 630
+  },
+  "BD8": {
+   "msoa": [
+    "Fairweather Green",
+    "Manningham & Lister Park",
+    "Girlington",
+    "Brown Royd",
+    "Central Bradford",
+    "Barkerend West & Little Germany",
+    "Toller Lane & Infirmary",
+    "Chellow Heights",
+    "Thornton"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 629
+  },
+  "BD9": {
+   "msoa": [
+    "Heaton Highgate",
+    "Chellow Heights",
+    "Toller Lane & Infirmary",
+    "Frizinghall & Heaton Grove",
+    "Manningham & Lister Park",
+    "Girlington",
+    "Cottingley, Harden & Wilsden",
+    "Saltaire & Baildon West",
+    "Shipley Town"
+   ],
+   "postTown": "Bradford",
+   "postcodes": 540
+  },
+  "BL0": {
+   "msoa": [
+    "Ramsbottom",
+    "Townsend Fold & Edenfield",
+    "Summerseat",
+    "Nuttall & Tottington",
+    "Radcliffe",
+    "Whitehead Park"
+   ],
+   "postTown": "Ramsbottom",
+   "postcodes": 563
+  },
+  "BL1": {
+   "msoa": [
+    "Central Bolton",
+    "Halliwell & Brownlow Fold",
+    "Astley Bridge & Waters Meeting",
+    "Gilnow & Victory",
+    "Doffcocker & Moss Bank",
+    "Smithills",
+    "Eagley & Sharples",
+    "Heaton & Deane",
+    "Lostock & Ladybridge",
+    "Burnden & Great Lever",
+    "Hall I' th' Wood",
+    "Dunscar & Egerton",
+    "Horwich South & Middlebrook"
+   ],
+   "postTown": "Bolton",
+   "postcodes": 1855
+  },
+  "BL2": {
+   "msoa": [
+    "Harwood",
+    "Tonge",
+    "Breightmet North",
+    "Breightmet South & Darcy Lever",
+    "Hall I' th' Wood",
+    "Ainsworth & Bradley Fold",
+    "Bromley Cross & Bradshaw",
+    "Burnden & Great Lever",
+    "Central Bolton"
+   ],
+   "postTown": "Bolton",
+   "postcodes": 1152
+  },
+  "BL3": {
+   "msoa": [
+    "Little Lever",
+    "Rumworth North",
+    "Burnden & Great Lever",
+    "Daubhill & Fernhill Gate",
+    "Rumworth South",
+    "Lever Edge",
+    "Lostock & Ladybridge",
+    "Central Bolton",
+    "Heaton & Deane",
+    "Breightmet South & Darcy Lever",
+    "Over Hulton",
+    "Farnworth North",
+    "Harper Green",
+    "Westhoughton East",
+    "Outwood Gate"
+   ],
+   "postTown": "Bolton",
+   "postcodes": 1380
+  },
+  "BL4": {
+   "msoa": [
+    "Farnworth South",
+    "Kearsley & Stoneclough",
+    "Highfield & New Bury",
+    "Farnworth North",
+    "Harper Green",
+    "Daubhill & Fernhill Gate",
+    "Horwich South & Middlebrook"
+   ],
+   "postTown": "Farnworth",
+   "postcodes": 850
+  },
+  "BL5": {
+   "msoa": [
+    "Westhoughton West",
+    "Westhoughton East",
+    "Westhoughton Daisy Hill",
+    "Over Hulton",
+    "Daubhill & Fernhill Gate",
+    "Horwich East",
+    "Horwich South & Middlebrook",
+    "Farnworth South",
+    "Halliwell & Brownlow Fold"
+   ],
+   "postTown": "Westhoughton",
+   "postcodes": 702
+  },
+  "BL6": {
+   "msoa": [
+    "Horwich South & Middlebrook",
+    "Horwich North",
+    "Blackrod & Butterwick Fields",
+    "Horwich East",
+    "Lostock & Ladybridge",
+    "Westhoughton East",
+    "Adlington & Rivington",
+    "Doffcocker & Moss Bank"
+   ],
+   "postTown": "Horwich",
+   "postcodes": 1014
+  },
+  "BL7": {
+   "msoa": [
+    "Tockholes, Edgworth & Hoddlesden",
+    "Dunscar & Egerton",
+    "Bromley Cross & Bradshaw",
+    "Eagley & Sharples",
+    "Harwood"
+   ],
+   "postTown": "Bromley Cross",
+   "postcodes": 507
+  },
+  "BL8": {
+   "msoa": [
+    "Whitehead Park",
+    "Walshaw & Woolfold",
+    "Elton Vale",
+    "Nuttall & Tottington",
+    "Higher Woodhill",
+    "Summerseat",
+    "Ramsbottom",
+    "Buckley Wells & Fishpool",
+    "Ainsworth & Bradley Fold",
+    "Helmshore",
+    "Tockholes, Edgworth & Hoddlesden",
+    "Harwood"
+   ],
+   "postTown": "Bury",
+   "postcodes": 1015
+  },
+  "BL9": {
+   "msoa": [
+    "Fernhill & Pimhole",
+    "Buckley Wells & Fishpool",
+    "Walmersley & Limefield",
+    "Fairfield & Jericho",
+    "Redvales & Hollins",
+    "Unsworth",
+    "Nuttall & Tottington",
+    "Heywood Heap Bridge & Darnhill",
+    "Hooley Bridge & Norden West",
+    "Whitefield West & Park Lane",
+    "Townsend Fold & Edenfield",
+    "Whitehead Park",
+    "Whitefield East",
+    "Ramsbottom",
+    "Bank Top & Radcliffe Ees",
+    "Summerseat"
+   ],
+   "postTown": "Bury",
+   "postcodes": 1327
+  },
+  "BS1": {
+   "msoa": [
+    "City Centre & Harbourside",
+    "Temple Meads",
+    "University & Brandon Hill",
+    "Kingsdown",
+    "St Pauls",
+    "Barton Hill"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 808
+  },
+  "BS10": {
+   "msoa": [
+    "Henbury & Brentry",
+    "Southmead",
+    "Almondsbury, Pilning & Severn Beach",
+    "Monks Park",
+    "Westbury Village",
+    "Westbury-on-Trym",
+    "Horfield",
+    "Lawrence Weston"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 775
+  },
+  "BS11": {
+   "msoa": [
+    "Shirehampton & Avonmouth",
+    "Lawrence Weston",
+    "Sea Mills"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 575
+  },
+  "BS13": {
+   "msoa": [
+    "Hartcliffe",
+    "Headley Park",
+    "Withywood",
+    "Bishopsworth",
+    "Highridge",
+    "Wrington, Felton & Dundry",
+    "Bedminster",
+    "Whitchurch Park"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 775
+  },
+  "BS14": {
+   "msoa": [
+    "Stockwood",
+    "Hengrove",
+    "Whitchurch Park",
+    "Pensford, Clutton & Temple Cloud",
+    "Hartcliffe",
+    "Knowle Park",
+    "Chew, Bishop Sutton & East Harptree",
+    "Keynsham North"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 724
+  },
+  "BS15": {
+   "msoa": [
+    "Kingswood South",
+    "Hanham",
+    "Kingswood North East",
+    "Two Mile Hill",
+    "Staple Hill South & Kingswood North West",
+    "Cadbury Heath North & Bridgeyate",
+    "Staple Hill North",
+    "Speedwell",
+    "Hillfields",
+    "Pucklechurch & Westerleigh",
+    "St George",
+    "Crews Hole",
+    "Longwell Green & Oldland Common"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 1161
+  },
+  "BS16": {
+   "msoa": [
+    "Fishponds",
+    "Emersons Green",
+    "Pucklechurch & Westerleigh",
+    "Stapleton",
+    "Downend South",
+    "Mangotsfield",
+    "Downend North",
+    "Staple Hill South & Kingswood North West",
+    "Hillfields",
+    "Frenchay & Stoke Gifford East",
+    "Speedwell",
+    "Staple Hill North",
+    "Eastville",
+    "Great Stoke & Stoke Park",
+    "Winterbourne",
+    "Lockleaze",
+    "Bradley Stoke North East",
+    "Marshfield, Wick & Hawkesbury",
+    "Westbury Village"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 2038
+  },
+  "BS2": {
+   "msoa": [
+    "Temple Meads",
+    "St Pauls",
+    "St Werburghs",
+    "Kingsdown",
+    "University & Brandon Hill",
+    "Barton Hill",
+    "City Centre & Harbourside",
+    "Redland & St Andrew's",
+    "Lockleaze"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 658
+  },
+  "BS20": {
+   "msoa": [
+    "Portishead Central",
+    "Portishead South",
+    "Pill & Easton",
+    "Portishead Redcliffe",
+    "Long Ashton & Gordano"
+   ],
+   "postTown": "Portishead",
+   "postcodes": 862
+  },
+  "BS21": {
+   "msoa": [
+    "Clevedon Central",
+    "Clevedon South & Yeo",
+    "Clevedon North & Walton",
+    "Long Ashton & Gordano",
+    "Yatton & Cleeve"
+   ],
+   "postTown": "Clevedon",
+   "postcodes": 696
+  },
+  "BS22": {
+   "msoa": [
+    "Mid Worle",
+    "Weston Milton",
+    "North Worle",
+    "South Worle, West Wick & St Georges",
+    "Congresbury & Kewstoke",
+    "Weston Winterstoke",
+    "Weston Hillside",
+    "Weston Town"
+   ],
+   "postTown": "Weston-Super-Mare",
+   "postcodes": 946
+  },
+  "BS23": {
+   "msoa": [
+    "Weston Town",
+    "Weston Hillside",
+    "Weston Bournville",
+    "Weston Clarence",
+    "Weston Uphill",
+    "Weston Winterstoke",
+    "Weston Milton",
+    "Hutton, Locking & Banwell"
+   ],
+   "postTown": "Weston-Super-Mare",
+   "postcodes": 1027
+  },
+  "BS24": {
+   "msoa": [
+    "Hutton, Locking & Banwell",
+    "Weston Winterstoke",
+    "Weston Uphill",
+    "South Worle, West Wick & St Georges",
+    "Berrow & Brent Knoll",
+    "Congresbury & Kewstoke",
+    "Weston Bournville",
+    "Winscombe, Langford & Blagdon"
+   ],
+   "postTown": "Weston-Super-Mare",
+   "postcodes": 691
+  },
+  "BS25": {
+   "msoa": [
+    "Winscombe, Langford & Blagdon",
+    "Cheddar & Axbridge",
+    "Wedmore & Mark"
+   ],
+   "postTown": "Winscombe",
+   "postcodes": 283
+  },
+  "BS29": {
+   "msoa": [
+    "Hutton, Locking & Banwell",
+    "South Worle, West Wick & St Georges"
+   ],
+   "postTown": "Banwell",
+   "postcodes": 135
+  },
+  "BS3": {
+   "msoa": [
+    "Bedminster",
+    "Southville",
+    "Ashton",
+    "Windmill Hill",
+    "Totterdown",
+    "Knowle",
+    "Bishopsworth",
+    "Knowle West",
+    "Knowle Park",
+    "Long Ashton & Gordano"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 974
+  },
+  "BS30": {
+   "msoa": [
+    "Longwell Green & Oldland Common",
+    "Cadbury Heath South & North Common",
+    "Marshfield, Wick & Hawkesbury",
+    "Cadbury Heath North & Bridgeyate",
+    "Pucklechurch & Westerleigh"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 758
+  },
+  "BS31": {
+   "msoa": [
+    "Keynsham North",
+    "Keynsham East",
+    "Keynsham South",
+    "Saltford, Farmborough & Timsbury",
+    "Marshfield, Wick & Hawkesbury",
+    "Brislington",
+    "Broom Hill"
+   ],
+   "postTown": "Keynsham",
+   "postcodes": 688
+  },
+  "BS32": {
+   "msoa": [
+    "Bradley Stoke North East",
+    "Bradley Stoke Central",
+    "Almondsbury, Pilning & Severn Beach",
+    "Alveston, Olveston & Oldbury",
+    "Patchway",
+    "Stoke Gifford West & Little Stoke"
+   ],
+   "postTown": "Bradley Stoke",
+   "postcodes": 429
+  },
+  "BS34": {
+   "msoa": [
+    "Patchway",
+    "Filton",
+    "Stoke Gifford West & Little Stoke",
+    "Charlton Hayes",
+    "Frenchay & Stoke Gifford East",
+    "Great Stoke & Stoke Park",
+    "Almondsbury, Pilning & Severn Beach",
+    "Bradley Stoke Central",
+    "Bradley Stoke North East"
+   ],
+   "postTown": "Patchway",
+   "postcodes": 914
+  },
+  "BS35": {
+   "msoa": [
+    "Alveston, Olveston & Oldbury",
+    "Thornbury North",
+    "Thornbury South",
+    "Almondsbury, Pilning & Severn Beach",
+    "Charfield, Wickwar & Iron Acton"
+   ],
+   "postTown": "Thornbury",
+   "postcodes": 757
+  },
+  "BS36": {
+   "msoa": [
+    "Frampton Cotterell",
+    "Winterbourne",
+    "Pucklechurch & Westerleigh",
+    "Frenchay & Stoke Gifford East",
+    "Emersons Green"
+   ],
+   "postTown": "Frampton Cotterell",
+   "postcodes": 507
+  },
+  "BS37": {
+   "msoa": [
+    "Yate North",
+    "Chipping Sodbury",
+    "Yate Kingsgate",
+    "Charfield, Wickwar & Iron Acton",
+    "Yate West",
+    "Yate South",
+    "Marshfield, Wick & Hawkesbury",
+    "Pucklechurch & Westerleigh"
+   ],
+   "postTown": "Yate",
+   "postcodes": 1060
+  },
+  "BS39": {
+   "msoa": [
+    "High Littleton & Paulton",
+    "Pensford, Clutton & Temple Cloud",
+    "Chew, Bishop Sutton & East Harptree",
+    "Saltford, Farmborough & Timsbury",
+    "Oakhill, Horrington & Chewton Mendip",
+    "Midsomer Norton North"
+   ],
+   "postTown": "Paulton",
+   "postcodes": 625
+  },
+  "BS4": {
+   "msoa": [
+    "St Annes",
+    "Broom Hill",
+    "Knowle Park",
+    "Brislington",
+    "Knowle West",
+    "Knowle",
+    "Totterdown",
+    "Bedminster",
+    "Stockwood"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 1103
+  },
+  "BS40": {
+   "msoa": [
+    "Chew, Bishop Sutton & East Harptree",
+    "Wrington, Felton & Dundry",
+    "Winscombe, Langford & Blagdon",
+    "Draycott, Westbury & Wookey",
+    "Congresbury & Kewstoke",
+    "Backwell & Flax Bourton",
+    "Cheddar & Axbridge",
+    "Yatton & Cleeve"
+   ],
+   "postTown": "Wrington",
+   "postcodes": 720
+  },
+  "BS41": {
+   "msoa": [
+    "Long Ashton & Gordano",
+    "Wrington, Felton & Dundry",
+    "Chew, Bishop Sutton & East Harptree"
+   ],
+   "postTown": "Long Ashton",
+   "postcodes": 196
+  },
+  "BS48": {
+   "msoa": [
+    "Nailsea West",
+    "Backwell & Flax Bourton",
+    "Nailsea East",
+    "Long Ashton & Gordano",
+    "Wrington, Felton & Dundry"
+   ],
+   "postTown": "Nailsea",
+   "postcodes": 769
+  },
+  "BS49": {
+   "msoa": [
+    "Yatton & Cleeve",
+    "Congresbury & Kewstoke"
+   ],
+   "postTown": "Yatton",
+   "postcodes": 345
+  },
+  "BS5": {
+   "msoa": [
+    "Redfield",
+    "St George",
+    "Lower Easton",
+    "Upper Easton",
+    "Barton Hill",
+    "Crews Hole",
+    "Eastville",
+    "Speedwell",
+    "Lockleaze",
+    "Two Mile Hill",
+    "Temple Meads"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 1307
+  },
+  "BS6": {
+   "msoa": [
+    "Cotham",
+    "Westbury Park",
+    "Redland & St Andrew's",
+    "Kingsdown",
+    "St Pauls",
+    "St Werburghs",
+    "Henleaze",
+    "University & Brandon Hill",
+    "Bishopston"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 784
+  },
+  "BS7": {
+   "msoa": [
+    "Bishopston",
+    "Upper Horfield",
+    "Horfield",
+    "Lockleaze",
+    "Redland & St Andrew's",
+    "Filton",
+    "Monks Park",
+    "Westbury Park",
+    "St Werburghs",
+    "Great Stoke & Stoke Park"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 791
+  },
+  "BS8": {
+   "msoa": [
+    "Clifton East",
+    "Clifton Village",
+    "Hotwells",
+    "University & Brandon Hill",
+    "Pill & Easton",
+    "Long Ashton & Gordano",
+    "Cotham",
+    "City Centre & Harbourside",
+    "Stoke Bishop"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 828
+  },
+  "BS9": {
+   "msoa": [
+    "Stoke Bishop",
+    "Westbury Village",
+    "Westbury-on-Trym",
+    "Sea Mills",
+    "Henleaze",
+    "Westbury Park",
+    "Monks Park",
+    "Southmead"
+   ],
+   "postTown": "Bristol",
+   "postcodes": 886
+  },
+  "CH41": {
+   "msoa": [
+    "Birkenhead Central",
+    "Birkenhead South",
+    "Poulton",
+    "Bidston Hill",
+    "Claughton North",
+    "Oxton South",
+    "Tranmere",
+    "Seacombe",
+    "Claughton South & Oxton North"
+   ],
+   "postTown": "Birkenhead",
+   "postcodes": 789
+  },
+  "CH42": {
+   "msoa": [
+    "Tranmere",
+    "Egerton Park",
+    "Birkenhead South",
+    "Oxton South",
+    "Prenton",
+    "Bebington New Ferry",
+    "Noctorum South",
+    "Woodhey"
+   ],
+   "postTown": "Birkenhead",
+   "postcodes": 688
+  },
+  "CH43": {
+   "msoa": [
+    "Claughton South & Oxton North",
+    "Noctorum South",
+    "Claughton North",
+    "Noctorum North & Upton East",
+    "Bidston Hill",
+    "Prenton",
+    "Oxton South",
+    "Birkenhead Central"
+   ],
+   "postTown": "Prenton",
+   "postcodes": 934
+  },
+  "CH44": {
+   "msoa": [
+    "Seacombe",
+    "Liscard",
+    "Egremont",
+    "Poulton",
+    "Wallasey Central",
+    "Wallasey East",
+    "Wallasey Village",
+    "Bidston Hill",
+    "Leasowe"
+   ],
+   "postTown": "Wallasey",
+   "postcodes": 771
+  },
+  "CH45": {
+   "msoa": [
+    "New Brighton",
+    "Wallasey Village",
+    "Wallasey East",
+    "Wallasey Central",
+    "Liscard",
+    "Leasowe",
+    "Egremont"
+   ],
+   "postTown": "Wallasey",
+   "postcodes": 758
+  },
+  "CH46": {
+   "msoa": [
+    "Moreton West",
+    "Leasowe South & Moreton East",
+    "Leasowe",
+    "Saughall Massie",
+    "Great Meols"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 593
+  },
+  "CH47": {
+   "msoa": [
+    "Hoylake",
+    "Great Meols",
+    "West Kirby"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 343
+  },
+  "CH48": {
+   "msoa": [
+    "Caldy & Newton",
+    "West Kirby",
+    "Greasby",
+    "Great Meols",
+    "Hoylake",
+    "Thurstaston & Irby"
+   ],
+   "postTown": "West Kirby",
+   "postcodes": 502
+  },
+  "CH49": {
+   "msoa": [
+    "Upton West",
+    "Greasby",
+    "Woodchurch",
+    "Saughall Massie",
+    "Noctorum North & Upton East",
+    "Moreton West",
+    "Pensby & Thingwall",
+    "Thurstaston & Irby"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 673
+  },
+  "CH60": {
+   "msoa": [
+    "Gayton & Lower Heswall",
+    "Heswall",
+    "Poulton, Raby Mere & Thornton Hough",
+    "Pensby & Thingwall"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 461
+  },
+  "CH61": {
+   "msoa": [
+    "Pensby & Thingwall",
+    "Thurstaston & Irby",
+    "Heswall",
+    "Gayton & Lower Heswall",
+    "Higher Bebington"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 418
+  },
+  "CH62": {
+   "msoa": [
+    "Bromborough North",
+    "Eastham",
+    "Lower Bebington & Bromborough Pool",
+    "Bebington New Ferry",
+    "Bromborough South",
+    "Hooton, Willaston & Ness"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 821
+  },
+  "CH63": {
+   "msoa": [
+    "Poulton, Raby Mere & Thornton Hough",
+    "Higher Bebington",
+    "Woodhey",
+    "Lower Bebington & Bromborough Pool",
+    "Bromborough South",
+    "Bebington New Ferry",
+    "Egerton Park"
+   ],
+   "postTown": "Wirral",
+   "postcodes": 822
+  },
+  "CV1": {
+   "msoa": [
+    "Central Coventry",
+    "Hillfields",
+    "Naul's Mill & Bishopsgate Green",
+    "Lower Stoke & Gosford Park",
+    "Foleshill East",
+    "Willenhall",
+    "Chapelfields",
+    "Foleshill West",
+    "Sherbourne",
+    "Whitley & Tollbar End"
+   ],
+   "postTown": "Coventry",
+   "postcodes": 762
+  },
+  "CV13": {
+   "msoa": [
+    "Market Bosworth, Barlestone & Sheepy Magna",
+    "Stoke Golding, Higham & Fenny Drayton",
+    "Nuneaton Town Centre",
+    "Markfield & Thornton"
+   ],
+   "postTown": "Barlestone",
+   "postcodes": 367
+  },
+  "CV2": {
+   "msoa": [
+    "Henley Green & Wood End",
+    "Walsgrave & Woodway Park",
+    "Clifford Park",
+    "Ravensdale",
+    "Stoke Heath",
+    "Wyken Croft",
+    "Barras Heath",
+    "Copsewood",
+    "Bell Green",
+    "Hillfields",
+    "Lower Stoke & Gosford Park",
+    "Longford",
+    "Binley",
+    "Brinklow, Wolvey & Churchover",
+    "Bulkington"
+   ],
+   "postTown": "Coventry",
+   "postcodes": 1239
+  },
+  "CV3": {
+   "msoa": [
+    "Willenhall",
+    "Ernesford Grange & Stoke Aldermoor",
+    "Whitley & Tollbar End",
+    "Binley",
+    "Stivichall & Finham",
+    "Cheylesmore Daventry Road",
+    "Finham Park",
+    "Copsewood",
+    "Wolston, Binley Woods & Ryton",
+    "Central Coventry",
+    "Cubbington, Stoneleigh & Radford Semele",
+    "Cannon Park & University",
+    "Clifford Park",
+    "Earlsdon & Canley Gardens",
+    "Lower Stoke & Gosford Park",
+    "Brinklow, Wolvey & Churchover"
+   ],
+   "postTown": "Coventry",
+   "postcodes": 1360
+  },
+  "CV4": {
+   "msoa": [
+    "Canley & Westwood Heath",
+    "Tile Hill",
+    "Cannon Park & University",
+    "Earl Place & Lime Tree Park",
+    "Eastern Green & Tanyard Farm",
+    "Kenilworth West",
+    "Willenhall",
+    "Whoberley",
+    "Earlsdon & Canley Gardens",
+    "Balsall Common",
+    "Cubbington, Stoneleigh & Radford Semele"
+   ],
+   "postTown": "Coventry",
+   "postcodes": 686
+  },
+  "CV5": {
+   "msoa": [
+    "Earlsdon & Canley Gardens",
+    "Brownshill Green",
+    "Whoberley",
+    "Allesley Green & Lower Eastern Green",
+    "Chapelfields",
+    "Allesley Park",
+    "Eastern Green & Tanyard Farm",
+    "Sherbourne",
+    "Tile Hill",
+    "Meriden, Hampton-in-Arden & Temple Balsall",
+    "Central Coventry",
+    "Earl Place & Lime Tree Park",
+    "Cannon Park & University",
+    "Willenhall"
+   ],
+   "postTown": "Coventry",
+   "postcodes": 906
+  },
+  "CV6": {
+   "msoa": [
+    "Foleshill West",
+    "Foleshill East",
+    "Longford",
+    "Holbrooks",
+    "Sherbourne",
+    "Little Heath",
+    "Radford West",
+    "Radford East",
+    "Keresley",
+    "Coundon",
+    "Whitmore Park",
+    "Bell Green",
+    "Naul's Mill & Bishopsgate Green",
+    "Stoke Heath",
+    "Bedworth Coalpit Field & Exhall",
+    "Brownshill Green",
+    "Ash Green & Keresley End",
+    "Wyken Croft"
+   ],
+   "postTown": "Coventry",
+   "postcodes": 1538
+  },
+  "CV7": {
+   "msoa": [
+    "Balsall Common",
+    "Ash Green & Keresley End",
+    "New Arley & Fillongley",
+    "Meriden, Hampton-in-Arden & Temple Balsall",
+    "Keresley",
+    "Brinklow, Wolvey & Churchover",
+    "Bedworth Coalpit Field & Exhall",
+    "Hartshill & Ansley",
+    "Brownshill Green",
+    "Bedworth Heath",
+    "Foleshill West",
+    "Marston Green & Airport"
+   ],
+   "postTown": "Balsall Common",
+   "postcodes": 788
+  },
+  "CV9": {
+   "msoa": [
+    "Atherstone",
+    "Dordon, Hurley & Wood End",
+    "Hartshill & Ansley",
+    "Market Bosworth, Barlestone & Sheepy Magna",
+    "Polesworth, Warton & Austrey",
+    "Stoke Golding, Higham & Fenny Drayton",
+    "New Arley & Fillongley"
+   ],
+   "postTown": "Sheepy Magna",
+   "postcodes": 679
+  },
+  "DE11": {
+   "msoa": [
+    "Swadlincote Central",
+    "Swadlincote South",
+    "Swadlincote West",
+    "Swadlincote East",
+    "Swadlincote North",
+    "Donisthope & Blackfordby",
+    "Castle Gresley, Overseal & Coton",
+    "Melbourne, Ticknall & Hartshorne",
+    "Willington South & Repton"
+   ],
+   "postTown": "Blackfordby",
+   "postcodes": 1081
+  },
+  "DE12": {
+   "msoa": [
+    "Castle Gresley, Overseal & Coton",
+    "Measham & Appleby Magna",
+    "Donisthope & Blackfordby",
+    "Market Bosworth, Barlestone & Sheepy Magna",
+    "Swadlincote South"
+   ],
+   "postTown": "Measham",
+   "postcodes": 567
+  },
+  "DE74": {
+   "msoa": [
+    "Castle Donington",
+    "Kegworth & Belton",
+    "Ratcliffe, Sutton Bonington & Gotham",
+    "Rose Hill & Castleward"
+   ],
+   "postTown": "Castle Donington",
+   "postcodes": 340
+  },
+  "DH3": {
+   "msoa": [
+    "Birtley South",
+    "Great Lumley & Bournmoor",
+    "Chester-le-Street North",
+    "Birtley North & Kibblesworth",
+    "Chester-le-Street South & East",
+    "Chester-le-Street Town & Pelton Fell",
+    "Newton Hall & Brasside",
+    "Sacriston",
+    "Albany and Blackfell"
+   ],
+   "postTown": "Birtley",
+   "postcodes": 769
+  },
+  "DH4": {
+   "msoa": [
+    "Newbottle & Penshaw",
+    "Shiney Row",
+    "Houghton West",
+    "Houghton Town",
+    "Great Lumley & Bournmoor",
+    "Sherburn & West Rainton",
+    "Harraton, Rickleton & Fatfield",
+    "Hetton-le-Hole North",
+    "Hetton-le-Hole South",
+    "Newton Hall & Brasside"
+   ],
+   "postTown": "Houghton Le Spring",
+   "postcodes": 962
+  },
+  "DH5": {
+   "msoa": [
+    "Hetton-le-Hole North",
+    "Hetton-le-Hole South",
+    "Houghton Town",
+    "Newbottle & Penshaw",
+    "Sherburn & West Rainton"
+   ],
+   "postTown": "Hetton Le Hole",
+   "postcodes": 552
+  },
+  "DL1": {
+   "msoa": [
+    "Central Darlington & Pierremont",
+    "Albert Hill & Red Hall",
+    "Bank Top",
+    "Whinfield",
+    "Haughton Le Skerne",
+    "Park East",
+    "Firthmoor",
+    "Rise Carr",
+    "Harrowgate Hill",
+    "Faverdale, Heighington & Sadberge",
+    "College & Park West",
+    "Newton Aycliffe South",
+    "Sedgefield & Bishop Middleham",
+    "Hummersknott"
+   ],
+   "postTown": "Darlington",
+   "postcodes": 1410
+  },
+  "DL2": {
+   "msoa": [
+    "Middleton & Hurworth",
+    "Faverdale, Heighington & Sadberge",
+    "Evenwood, Cockfield & Staindrop",
+    "North Richmondshire",
+    "Billingham West, Stillington & Longnewton",
+    "Brompton, Appleton & Thimbleby",
+    "Firthmoor",
+    "Barnard Castle & Upper Teesdale",
+    "Park East"
+   ],
+   "postTown": "Darlington",
+   "postcodes": 840
+  },
+  "DL3": {
+   "msoa": [
+    "Central Darlington & Pierremont",
+    "Hummersknott",
+    "Cockerton & Hopetown",
+    "College & Park West",
+    "Harrowgate Hill",
+    "Rise Carr",
+    "Faverdale, Heighington & Sadberge",
+    "Park East",
+    "Middleton & Hurworth"
+   ],
+   "postTown": "Darlington",
+   "postcodes": 1152
+  },
+  "DL5": {
+   "msoa": [
+    "Newton Aycliffe South",
+    "Newton Aycliffe North",
+    "Newton Aycliffe East",
+    "Newton Aycliffe West",
+    "Faverdale, Heighington & Sadberge",
+    "Sedgefield & Bishop Middleham"
+   ],
+   "postTown": "Heighington Village",
+   "postcodes": 799
+  },
+  "DN1": {
+   "msoa": [
+    "Central Doncaster & Hyde Park",
+    "Belle Vue & Town Fields",
+    "Hexthorpe & Balby North",
+    "Balby Carr",
+    "Edlington",
+    "Wheatley Hills"
+   ],
+   "postTown": "Doncaster",
+   "postcodes": 479
+  },
+  "DN10": {
+   "msoa": [
+    "Clarborough, Beckingham & Misterton",
+    "Ranskill, Everton & Gringley",
+    "Bawtry, Austerfield & Hayfield",
+    "Harworth, Bircotes & Blyth",
+    "Rossington",
+    "Westwoodside, Haxey & Owston Ferry"
+   ],
+   "postTown": "Bawtry",
+   "postcodes": 564
+  },
+  "DN11": {
+   "msoa": [
+    "Harworth, Bircotes & Blyth",
+    "Tickhill & Wadworth",
+    "New Rossington",
+    "Rossington",
+    "Warmsworth, Braithwell & Stainton",
+    "Bawtry, Austerfield & Hayfield",
+    "Edlington",
+    "Maltby East"
+   ],
+   "postTown": "New Rossington",
+   "postcodes": 832
+  },
+  "DN12": {
+   "msoa": [
+    "Conisbrough North",
+    "Conisbrough South",
+    "Edlington",
+    "Cadeby, Hickleton & Hampole",
+    "Warmsworth, Braithwell & Stainton",
+    "Thrybergh & Hooton Roberts"
+   ],
+   "postTown": "Conisbrough",
+   "postcodes": 627
+  },
+  "DN2": {
+   "msoa": [
+    "Wheatley Hills",
+    "Intake",
+    "Belle Vue & Town Fields",
+    "Central Doncaster & Hyde Park",
+    "Edenthorpe & Mere Lane",
+    "Kirk Sandall & Barnby Dun"
+   ],
+   "postTown": "Doncaster",
+   "postcodes": 575
+  },
+  "DN3": {
+   "msoa": [
+    "Kirk Sandall & Barnby Dun",
+    "Edenthorpe & Mere Lane",
+    "Armthorpe North",
+    "Armthorpe South",
+    "Old Cantley, Auckley & Finningley",
+    "Central Doncaster & Hyde Park",
+    "Hatfield East"
+   ],
+   "postTown": "Armthorpe",
+   "postcodes": 736
+  },
+  "DN4": {
+   "msoa": [
+    "Balby Carr",
+    "Bessacarr Bawtry Road",
+    "Balby South",
+    "Bessacarr Grange & Lakeside",
+    "Central Doncaster & Hyde Park",
+    "Cantley Park",
+    "Hexthorpe & Balby North",
+    "Warmsworth, Braithwell & Stainton",
+    "Belle Vue & Town Fields",
+    "Old Cantley, Auckley & Finningley",
+    "Rossington"
+   ],
+   "postTown": "Doncaster",
+   "postcodes": 1317
+  },
+  "DN5": {
+   "msoa": [
+    "Bentley & Toll Bar",
+    "Sprotbrough",
+    "Cusworth",
+    "Scawthorpe",
+    "Cadeby, Hickleton & Hampole",
+    "Bentley Rise",
+    "Askern, Campsall & Norton",
+    "Central Doncaster & Hyde Park",
+    "Adwick le Street & Woodlands",
+    "Goldthorpe",
+    "Carcroft"
+   ],
+   "postTown": "Doncaster",
+   "postcodes": 972
+  },
+  "DN6": {
+   "msoa": [
+    "Askern, Campsall & Norton",
+    "Adwick le Street & Woodlands",
+    "Carcroft",
+    "Eggborough, Kellington & Smeaton",
+    "Cadeby, Hickleton & Hampole"
+   ],
+   "postTown": "Askern",
+   "postcodes": 855
+  },
+  "DN7": {
+   "msoa": [
+    "Hatfield East",
+    "Stainforth",
+    "Hatfield West",
+    "Askern, Campsall & Norton",
+    "Kirk Sandall & Barnby Dun",
+    "Old Cantley, Auckley & Finningley"
+   ],
+   "postTown": "Hatfield",
+   "postcodes": 662
+  },
+  "DN8": {
+   "msoa": [
+    "Thorne",
+    "Moorends",
+    "Hatfield East",
+    "Epworth & Bracon",
+    "Crowle & Keadby",
+    "Snaith",
+    "Stainforth"
+   ],
+   "postTown": "Thorne",
+   "postcodes": 492
+  },
+  "DN9": {
+   "msoa": [
+    "Westwoodside, Haxey & Owston Ferry",
+    "Epworth & Bracon",
+    "Old Cantley, Auckley & Finningley",
+    "Bawtry, Austerfield & Hayfield",
+    "Ranskill, Everton & Gringley",
+    "Clarborough, Beckingham & Misterton"
+   ],
+   "postTown": "Auckley",
+   "postcodes": 685
+  },
+  "DY1": {
+   "msoa": [
+    "New Dock & Eve Hill",
+    "Dudley Priory & Wrens Nest",
+    "Dibdale",
+    "Russell's Hall",
+    "Woodsetton",
+    "West Coseley",
+    "Kates Hill",
+    "Dixons Green",
+    "Upper Gornal & Ruiton",
+    "Brockmoor & Woodside",
+    "Netherton"
+   ],
+   "postTown": "Dudley",
+   "postcodes": 798
+  },
+  "DY2": {
+   "msoa": [
+    "Dixons Green",
+    "Netherton",
+    "Dudley Wood & Saltwells",
+    "Kates Hill",
+    "New Dock & Eve Hill",
+    "Quarry Bank",
+    "Brockmoor & Woodside",
+    "Russell's Hall",
+    "Brierley Hill"
+   ],
+   "postTown": "Dudley",
+   "postcodes": 754
+  },
+  "DY3": {
+   "msoa": [
+    "Lower Gornal & The Straits",
+    "Sedgley West",
+    "Sedgley East",
+    "Upper Gornal & Ruiton",
+    "Woodsetton",
+    "Wombourne Outer, Swindon & Seisdon",
+    "Dibdale",
+    "West Coseley",
+    "New Dock & Eve Hill",
+    "Wombourne Inner",
+    "Woodcross"
+   ],
+   "postTown": "Dudley",
+   "postcodes": 814
+  },
+  "DY4": {
+   "msoa": [
+    "Great Bridge & Dudley Port",
+    "Tipton",
+    "Tibbington",
+    "Ocker Hill",
+    "Princes End & Willingsworth",
+    "North Tividale",
+    "Wednesbury",
+    "Dudley Priory & Wrens Nest",
+    "Coseley Wallbrook",
+    "Wednesbury South",
+    "Greets Green West"
+   ],
+   "postTown": "Tipton",
+   "postcodes": 972
+  },
+  "DY5": {
+   "msoa": [
+    "Brierley Hill",
+    "Brockmoor & Woodside",
+    "Quarry Bank",
+    "Amblecote East",
+    "Withymoor Village",
+    "Hawbush",
+    "Pensett & Kingswinford East",
+    "Russell's Hall",
+    "Dudley Wood & Saltwells",
+    "Lower Gornal & The Straits",
+    "Cradley West & Hayes Lane",
+    "Amblecote West & Stambermill",
+    "Dibdale",
+    "Wordsley & Buckpool"
+   ],
+   "postTown": "Brierley Hill",
+   "postcodes": 951
+  },
+  "DY6": {
+   "msoa": [
+    "Kingswinford North",
+    "Wall Heath",
+    "Kingswinford South",
+    "Wordsley & Buckpool",
+    "Pensett & Kingswinford East",
+    "Wombourne Outer, Swindon & Seisdon",
+    "Kinver"
+   ],
+   "postTown": "Kingswinford",
+   "postcodes": 752
+  },
+  "DY8": {
+   "msoa": [
+    "Stourbridge Town & Old Quarter",
+    "Norton South",
+    "Wordsley & Buckpool",
+    "Norton North",
+    "Hawbush",
+    "Amblecote West & Stambermill",
+    "Wollaston",
+    "Ashwood",
+    "Oldswinford & Pedmore",
+    "Kingswinford South",
+    "Hagley",
+    "Withymoor Village",
+    "Kinver",
+    "Wolverley, Cookley & Blakedown"
+   ],
+   "postTown": "Stourbridge",
+   "postcodes": 1200
+  },
+  "DY9": {
+   "msoa": [
+    "Hagley",
+    "Lye & Wynall",
+    "Dodford, Belbroughton & Romsley",
+    "Pedmore Fields",
+    "Cradley West & Hayes Lane",
+    "Oldswinford & Pedmore",
+    "Wolverley, Cookley & Blakedown",
+    "Amblecote West & Stambermill",
+    "Cradley East",
+    "Stourbridge Town & Old Quarter",
+    "Quarry Bank"
+   ],
+   "postTown": "Stourbridge",
+   "postcodes": 850
+  },
+  "GL12": {
+   "msoa": [
+    "Wotton-under-Edge & Kingswood",
+    "Charfield, Wickwar & Iron Acton",
+    "Thornbury North",
+    "Thornbury South",
+    "Tetbury",
+    "Berkeley & Sharpness"
+   ],
+   "postTown": "Charfield",
+   "postcodes": 470
+  },
+  "HD1": {
+   "msoa": [
+    "Huddersfield Leeds Road & Fartown",
+    "Edgerton & Marsh",
+    "Paddock & Greenhead",
+    "Aspley, Longley & University",
+    "Lockwood",
+    "Birkby",
+    "Primrose Hill, Newsome & Berry Brow",
+    "Oakes & South Lindley",
+    "Crosland Moor"
+   ],
+   "postTown": "Huddersfield",
+   "postcodes": 844
+  },
+  "HD2": {
+   "msoa": [
+    "Bradley & North Fixby",
+    "Deighton & Brackenhall",
+    "Cowcliffe & South Fixby",
+    "Huddersfield Leeds Road & Fartown",
+    "Birkby",
+    "Edgerton & Marsh",
+    "Oakes & South Lindley",
+    "Elland",
+    "Rastrick West"
+   ],
+   "postTown": "Huddersfield",
+   "postcodes": 632
+  },
+  "HD3": {
+   "msoa": [
+    "North Lindley & Birchencliffe",
+    "Oakes & South Lindley",
+    "Longwood & Quarmby",
+    "Cowlersley & Milnsbridge",
+    "Scapegoat Hill, Outlane & West Golcar",
+    "Cowcliffe & South Fixby",
+    "Golcar",
+    "Edgerton & Marsh",
+    "Greetland & Stainland",
+    "Elland",
+    "Paddock & Greenhead",
+    "Marsden & Pole Moor",
+    "Ripponden, Rishworth & Barkisland"
+   ],
+   "postTown": "Huddersfield",
+   "postcodes": 723
+  },
+  "HD4": {
+   "msoa": [
+    "Netherton & South Crosland",
+    "Primrose Hill, Newsome & Berry Brow",
+    "Crosland Moor",
+    "Aspley, Longley & University",
+    "Cowlersley & Milnsbridge",
+    "Kirkburton & Farnley Tyas",
+    "Lockwood",
+    "Almondbury & Waterloo",
+    "Honley & Brockholes",
+    "Meltham",
+    "Shelley & Shepley",
+    "Paddock & Greenhead"
+   ],
+   "postTown": "Huddersfield",
+   "postcodes": 730
+  },
+  "HD5": {
+   "msoa": [
+    "Kirkheaton",
+    "Dalton Long Lane",
+    "Rawthorpe",
+    "Almondbury & Waterloo",
+    "Moldgreen & Ravensknowle Park",
+    "Aspley, Longley & University",
+    "Huddersfield Leeds Road & Fartown",
+    "Bradley & North Fixby",
+    "Deighton & Brackenhall",
+    "Clifton & Bailiff Bridge",
+    "Mirfield Central & Hopton"
+   ],
+   "postTown": "Huddersfield",
+   "postcodes": 719
+  },
+  "HD6": {
+   "msoa": [
+    "Brighouse",
+    "Clifton & Bailiff Bridge",
+    "Rastrick West",
+    "Rastrick East",
+    "Hipperholme",
+    "Bradley & North Fixby",
+    "Cowcliffe & South Fixby"
+   ],
+   "postTown": "Brighouse",
+   "postcodes": 797
+  },
+  "HD7": {
+   "msoa": [
+    "Slaithwaite & Linthwaite",
+    "Marsden & Pole Moor",
+    "Golcar",
+    "Scapegoat Hill, Outlane & West Golcar",
+    "Cowlersley & Milnsbridge",
+    "Longwood & Quarmby",
+    "Meltham"
+   ],
+   "postTown": "Golcar",
+   "postcodes": 602
+  },
+  "HD8": {
+   "msoa": [
+    "Denby Dale, Cumberworth & Clayton West",
+    "Emley & Skelmanthorpe",
+    "Shelley & Shepley",
+    "Kirkburton & Farnley Tyas",
+    "Lepton, Grange Moor & Flockton",
+    "Kirkheaton",
+    "Holmfirth, New Mill & Hepworth",
+    "Almondbury & Waterloo",
+    "Ingbirchworth, Dunford Bridge & Thurgoland"
+   ],
+   "postTown": "Skelmanthorpe",
+   "postcodes": 939
+  },
+  "HD9": {
+   "msoa": [
+    "Holmfirth, New Mill & Hepworth",
+    "Honley & Brockholes",
+    "Meltham",
+    "Upperthong & Holmbridge",
+    "Ingbirchworth, Dunford Bridge & Thurgoland",
+    "Netherton & South Crosland"
+   ],
+   "postTown": "Honley",
+   "postcodes": 1204
+  },
+  "HX1": {
+   "msoa": [
+    "Central Halifax & Boothtown",
+    "Pellon East",
+    "King Cross",
+    "Savile Park",
+    "Pellon West & Highroad Well",
+    "Southowram & Siddal",
+    "Skircoat Green"
+   ],
+   "postTown": "Halifax",
+   "postcodes": 902
+  },
+  "HX2": {
+   "msoa": [
+    "Illingworth & Ogden",
+    "Mytholmroyd & Cragg Vale",
+    "Norton Tower & Mount Tabor",
+    "Wheatley & Ovenden West",
+    "Mixenden",
+    "Pellon West & Highroad Well",
+    "Sowerby & Luddendenfoot",
+    "Sowerby Bridge",
+    "Savile Park",
+    "Ovenden East",
+    "King Cross",
+    "Hebden Bridge",
+    "Central Halifax & Boothtown"
+   ],
+   "postTown": "Halifax",
+   "postcodes": 1125
+  },
+  "HX3": {
+   "msoa": [
+    "Northowram & Shelf",
+    "Southowram & Siddal",
+    "Central Halifax & Boothtown",
+    "Hipperholme",
+    "Skircoat Green",
+    "Ovenden East",
+    "Wheatley & Ovenden West",
+    "Clifton & Bailiff Bridge",
+    "Savile Park",
+    "Brighouse",
+    "Elland",
+    "Pellon East",
+    "Illingworth & Ogden",
+    "Queensbury"
+   ],
+   "postTown": "Halifax",
+   "postcodes": 1441
+  },
+  "HX4": {
+   "msoa": [
+    "Greetland & Stainland",
+    "Ripponden, Rishworth & Barkisland",
+    "Elland",
+    "Marsden & Pole Moor",
+    "Southowram & Siddal"
+   ],
+   "postTown": "Greetland",
+   "postcodes": 439
+  },
+  "HX5": {
+   "msoa": [
+    "Elland",
+    "Rastrick West",
+    "Brighouse",
+    "Central Halifax & Boothtown"
+   ],
+   "postTown": "Elland",
+   "postcodes": 296
+  },
+  "HX6": {
+   "msoa": [
+    "Sowerby Bridge",
+    "Ripponden, Rishworth & Barkisland",
+    "Sowerby & Luddendenfoot",
+    "Savile Park",
+    "Norton Tower & Mount Tabor"
+   ],
+   "postTown": "Sowerby Bridge",
+   "postcodes": 792
+  },
+  "HX7": {
+   "msoa": [
+    "Hebden Bridge",
+    "Mytholmroyd & Cragg Vale"
+   ],
+   "postTown": "Hebden Bridge",
+   "postcodes": 709
+  },
+  "L1": {
+   "msoa": [
+    "Central & Islington",
+    "Albert Dock & Queen's Dock",
+    "Chinatown, St James & Georgian Quarter",
+    "Dingle"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 465
+  },
+  "L10": {
+   "msoa": [
+    "Fazakerley North",
+    "Aintree East & Waddicar",
+    "Kirkby South West & Field Lane",
+    "Aintree West & Old Roan",
+    "Croxteth West & Gillmoss",
+    "Fazakerley South",
+    "Hightown & Thornton"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 293
+  },
+  "L11": {
+   "msoa": [
+    "Croxteth West & Gillmoss",
+    "Norris Green East",
+    "Norris Green West",
+    "Fazakerley South",
+    "Muirhead Avenue",
+    "Walton East",
+    "Croxteth East",
+    "Sandfield Park & Holly Lodge",
+    "Fazakerley North"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 549
+  },
+  "L12": {
+   "msoa": [
+    "Sandfield Park & Holly Lodge",
+    "Croxteth East",
+    "Croxteth Park",
+    "Muirhead Avenue",
+    "Yewtree",
+    "Dovecot",
+    "Croxteth West & Gillmoss",
+    "Norris Green East",
+    "Stoneycroft"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 589
+  },
+  "L13": {
+   "msoa": [
+    "Fairfield East",
+    "Tuebrook",
+    "Stoneycroft",
+    "Wavertree East",
+    "Muirhead Avenue",
+    "Sandfield Park & Holly Lodge",
+    "Broad Green",
+    "Wavertree South",
+    "Dovecot",
+    "Fairfield West & Newsham Park",
+    "Wavertree West",
+    "Anfield East",
+    "Norris Green West"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 560
+  },
+  "L14": {
+   "msoa": [
+    "Court Hey & Swanside",
+    "Knotty Ash",
+    "Dovecot",
+    "Yewtree",
+    "Page Moss & Fincham",
+    "Broad Green",
+    "Stoneycroft",
+    "Sandfield Park & Holly Lodge",
+    "Childwall East",
+    "Huyton Farm"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 479
+  },
+  "L15": {
+   "msoa": [
+    "Wavertree South",
+    "Wavertree West",
+    "Wavertree East",
+    "Wavertree Penny Lane",
+    "Childwall West & Wavertree Green",
+    "Broad Green",
+    "Mossley Hill West & Sefton Park"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 474
+  },
+  "L16": {
+   "msoa": [
+    "Childwall East",
+    "Broad Green",
+    "Calderstones",
+    "Childwall West & Wavertree Green",
+    "Court Hey & Swanside",
+    "Huyton West & Roby",
+    "Belle Vale",
+    "Wavertree South"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 245
+  },
+  "L17": {
+   "msoa": [
+    "Mossley Hill West & Sefton Park",
+    "St Michael's & Otterspool",
+    "Dingle",
+    "Princes Park",
+    "Aigburth & Grassendale",
+    "West Allerton",
+    "Mossley Hill East",
+    "Wavertree South"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 459
+  },
+  "L18": {
+   "msoa": [
+    "Mossley Hill East",
+    "Calderstones",
+    "Childwall West & Wavertree Green",
+    "Wavertree Penny Lane",
+    "West Allerton",
+    "Allerton",
+    "Mossley Hill West & Sefton Park",
+    "Wavertree South"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 551
+  },
+  "L19": {
+   "msoa": [
+    "Aigburth & Grassendale",
+    "Garston",
+    "Allerton",
+    "Speke West & Airport",
+    "West Allerton"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 492
+  },
+  "L2": {
+   "msoa": [
+    "Pier Head",
+    "Central & Islington",
+    "Albert Dock & Queen's Dock",
+    "Dingle"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 174
+  },
+  "L20": {
+   "msoa": [
+    "Bootle South",
+    "Bootle East",
+    "Orrell",
+    "Bootle North",
+    "Kirkdale North",
+    "Seaforth South",
+    "Litherland South",
+    "Kirkdale South & Vauxhall"
+   ],
+   "postTown": "Bootle",
+   "postcodes": 989
+  },
+  "L21": {
+   "msoa": [
+    "Seaforth South",
+    "Litherland North",
+    "Seaforth North",
+    "Litherland South",
+    "Ford",
+    "Bootle North",
+    "Orrell"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 572
+  },
+  "L22": {
+   "msoa": [
+    "Waterloo",
+    "Seaforth North",
+    "Brighton le Sands & Crosby West",
+    "Crosby East"
+   ],
+   "postTown": "Waterloo",
+   "postcodes": 281
+  },
+  "L23": {
+   "msoa": [
+    "Blundellsands",
+    "Crosby East",
+    "Hightown & Thornton",
+    "Brighton le Sands & Crosby West",
+    "Ford",
+    "Waterloo",
+    "Formby South East & Ince Blundell"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 701
+  },
+  "L24": {
+   "msoa": [
+    "Speke East",
+    "Speke West & Airport",
+    "Hale Bank",
+    "Hunts Cross",
+    "Halewood South",
+    "Allerton"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 403
+  },
+  "L25": {
+   "msoa": [
+    "Woolton",
+    "Belle Vale",
+    "Gateacre",
+    "Hunts Cross",
+    "Halewood North",
+    "Calderstones",
+    "Halewood South",
+    "Netherley",
+    "Allerton"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 857
+  },
+  "L26": {
+   "msoa": [
+    "Halewood South",
+    "Halewood Central",
+    "Halsnead, Cronton & Halewood East",
+    "Halewood North",
+    "Woolton"
+   ],
+   "postTown": "Halewood",
+   "postcodes": 359
+  },
+  "L27": {
+   "msoa": [
+    "Netherley",
+    "Belle Vale"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 156
+  },
+  "L28": {
+   "msoa": [
+    "Stockbridge Village",
+    "Yewtree",
+    "Croxteth Park"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 115
+  },
+  "L3": {
+   "msoa": [
+    "Pier Head",
+    "Central & Islington",
+    "Kirkdale South & Vauxhall",
+    "Everton West",
+    "Albert Dock & Queen's Dock",
+    "Dingle",
+    "Edge Hill"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 581
+  },
+  "L30": {
+   "msoa": [
+    "Netherton South",
+    "Netherton North",
+    "Aintree West & Old Roan",
+    "Ford",
+    "Litherland South",
+    "Orrell",
+    "Hightown & Thornton"
+   ],
+   "postTown": "Bootle",
+   "postcodes": 459
+  },
+  "L31": {
+   "msoa": [
+    "Maghull North West & Lydiate",
+    "Maghull South East",
+    "Maghull South West",
+    "Maghull North East",
+    "Aintree East & Waddicar",
+    "Scarisbrick, Halsall & Haskayne",
+    "Kirkby North West",
+    "Bickerstaffe & Newburgh"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 790
+  },
+  "L32": {
+   "msoa": [
+    "Kirkby South West & Field Lane",
+    "Knowsley Village & Southdene",
+    "Kirkby South East",
+    "Kirkby North West",
+    "Kirkby North East"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 543
+  },
+  "L33": {
+   "msoa": [
+    "Kirkby North East",
+    "Kirkby North West",
+    "Knowsley Village & Southdene",
+    "Kirkby South East",
+    "Bickerstaffe & Newburgh"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 546
+  },
+  "L34": {
+   "msoa": [
+    "Prescot",
+    "Knowsley Village & Southdene",
+    "Eccleston Park",
+    "Whiston North",
+    "Mosscroft & Bakers Green",
+    "Longview & Knowsley Park",
+    "Eccleston",
+    "Stockbridge Village",
+    "Windle & Denton's Green"
+   ],
+   "postTown": "Prescot",
+   "postcodes": 473
+  },
+  "L35": {
+   "msoa": [
+    "Rainhill South",
+    "Whiston South",
+    "Whiston North",
+    "Rainhill North",
+    "Halsnead, Cronton & Halewood East",
+    "Prescot",
+    "Eccleston Park",
+    "Nutgrove & Lea Green",
+    "Bold & Clock Face",
+    "Farnworth"
+   ],
+   "postTown": "Rainhill",
+   "postcodes": 740
+  },
+  "L36": {
+   "msoa": [
+    "Huyton East",
+    "Huyton West & Roby",
+    "Longview & Knowsley Park",
+    "Mosscroft & Bakers Green",
+    "Huyton Farm",
+    "Page Moss & Fincham",
+    "Stockbridge Village",
+    "Court Hey & Swanside",
+    "Halsnead, Cronton & Halewood East",
+    "Whiston South",
+    "Netherley",
+    "Prescot"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 970
+  },
+  "L37": {
+   "msoa": [
+    "Formby West & Freshfield North",
+    "Formby Central & Freshfield South",
+    "Formby South East & Ince Blundell",
+    "Formby South West",
+    "Scarisbrick, Halsall & Haskayne"
+   ],
+   "postTown": "Formby",
+   "postcodes": 687
+  },
+  "L38": {
+   "msoa": [
+    "Hightown & Thornton",
+    "Formby South East & Ince Blundell"
+   ],
+   "postTown": "Hightown",
+   "postcodes": 99
+  },
+  "L4": {
+   "msoa": [
+    "Kirkdale North",
+    "Walton Hall",
+    "Walton South",
+    "Anfield North",
+    "Anfield East",
+    "Walton East",
+    "Anfield West",
+    "Norris Green West",
+    "Kirkdale South & Vauxhall",
+    "Tuebrook",
+    "Everton West",
+    "Walton North"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 797
+  },
+  "L5": {
+   "msoa": [
+    "Kirkdale South & Vauxhall",
+    "Everton West",
+    "Anfield West",
+    "Kirkdale North",
+    "Everton East"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 436
+  },
+  "L6": {
+   "msoa": [
+    "Everton East",
+    "Kensington",
+    "Fairfield West & Newsham Park",
+    "Anfield East",
+    "Everton West",
+    "Edge Hill",
+    "Anfield North",
+    "Central & Islington",
+    "Tuebrook"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 505
+  },
+  "L7": {
+   "msoa": [
+    "Edge Hill",
+    "Fairfield West & Newsham Park",
+    "Wavertree West",
+    "Kensington",
+    "Chinatown, St James & Georgian Quarter",
+    "Central & Islington",
+    "Toxteth Park"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 463
+  },
+  "L8": {
+   "msoa": [
+    "Toxteth",
+    "Toxteth Park",
+    "Chinatown, St James & Georgian Quarter",
+    "Dingle",
+    "Princes Park",
+    "Albert Dock & Queen's Dock",
+    "Edge Hill",
+    "Wavertree West"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 699
+  },
+  "L9": {
+   "msoa": [
+    "Walton Vale",
+    "Orrell Park",
+    "Walton North",
+    "Fazakerley South",
+    "Fazakerley North",
+    "Walton East",
+    "Aintree West & Old Roan",
+    "Orrell",
+    "Walton Hall"
+   ],
+   "postTown": "Liverpool",
+   "postcodes": 627
+  },
+  "LE1": {
+   "msoa": [
+    "Leicester City Centre",
+    "Leicester City South",
+    "St Matthews & Highfields North",
+    "Abbey Park",
+    "Thorpe Astley",
+    "Belgrave South",
+    "Clarendon Park & Stoneygate South"
+   ],
+   "postTown": "Leicester",
+   "postcodes": 720
+  },
+  "LE10": {
+   "msoa": [
+    "Hinckley Central",
+    "Burbage Sketchley & Stretton",
+    "Hinckley West",
+    "Hinckley Clarendon Park",
+    "Hinckley East",
+    "Burbage St Catherines",
+    "Brinklow, Wolvey & Churchover",
+    "Stoke Golding, Higham & Fenny Drayton",
+    "Stoney Stanton, Sapcote & Sharnford",
+    "Cosby, Croft & Elmesthorpe"
+   ],
+   "postTown": "Hinckley",
+   "postcodes": 1182
+  },
+  "LE11": {
+   "msoa": [
+    "Loughborough Lemyngton & Hastings",
+    "Loughborough - Shelthorpe & Woodthorpe",
+    "Loughborough - Outwoods",
+    "Loughborough Storer & Queen's Park",
+    "Loughborough - University",
+    "Loughborough Garendon",
+    "Loughborough Dishley & Hathern",
+    "Shepshed West"
+   ],
+   "postTown": "Loughborough",
+   "postcodes": 1210
+  },
+  "LE12": {
+   "msoa": [
+    "Quorn & Mountsorrel Castle",
+    "East Leake",
+    "Shepshed West",
+    "Sileby",
+    "Barrow upon Soar",
+    "Mountsorrel & Rothley",
+    "Shepshed East",
+    "Wymeswold, Rearsby & Cossington",
+    "Ratcliffe, Sutton Bonington & Gotham",
+    "Thurcaston, Woodhouse & Bradgate",
+    "Loughborough Dishley & Hathern",
+    "Kegworth & Belton",
+    "Keyworth North, Tollerton & Willoughby",
+    "Packington, Ravenstone & Coleorton",
+    "Agar Nook",
+    "Loughborough - Shelthorpe & Woodthorpe",
+    "Loughborough Lemyngton & Hastings"
+   ],
+   "postTown": "Shepshed",
+   "postcodes": 1601
+  },
+  "LE13": {
+   "msoa": [
+    "Melton Mowbray North",
+    "Melton Mowbray West",
+    "Melton Mowbray South"
+   ],
+   "postTown": "Melton Mowbray",
+   "postcodes": 648
+  },
+  "LE14": {
+   "msoa": [
+    "Asfordby, Frisby & Old Dalby",
+    "Waltham, Wymondham & Great Dalby",
+    "Bottesford, Harby & Croxton Kerrial",
+    "Cropwell Bishop, Kinoulton & Upper Broughton",
+    "Melton Mowbray West",
+    "Melton Mowbray North",
+    "Wymeswold, Rearsby & Cossington",
+    "Tilton, Billesdon & Great Easton",
+    "Keyworth North, Tollerton & Willoughby"
+   ],
+   "postTown": "Asfordby",
+   "postcodes": 683
+  },
+  "LE16": {
+   "msoa": [
+    "Market Harborough West, Great Bowden & Lubenham",
+    "Market Harborough Central",
+    "Market Harborough South & Little Bowden",
+    "Tilton, Billesdon & Great Easton",
+    "Geddington, Rushton & Stoke Albany",
+    "Clipston, Naseby & Yelvertoft",
+    "Fleckney, Kilworth & Foxton",
+    "Rowlett, Gretton & Cottingham",
+    "Uppingham, Lyddington & Braunston"
+   ],
+   "postTown": "Market Harborough",
+   "postcodes": 1074
+  },
+  "LE17": {
+   "msoa": [
+    "Dunton Bassett, Claybrooke & Swinford",
+    "Lutterworth",
+    "Fleckney, Kilworth & Foxton",
+    "Brinklow, Wolvey & Churchover",
+    "Market Harborough West, Great Bowden & Lubenham",
+    "Clipston, Naseby & Yelvertoft",
+    "Stoney Stanton, Sapcote & Sharnford"
+   ],
+   "postTown": "Lutterworth",
+   "postcodes": 821
+  },
+  "LE18": {
+   "msoa": [
+    "Wigston Town",
+    "Wigston Harcourt & Little Hill",
+    "South Wigston",
+    "Wigston North",
+    "Countesthorpe & Kilby"
+   ],
+   "postTown": "Wigston",
+   "postcodes": 745
+  },
+  "LE19": {
+   "msoa": [
+    "Narborough",
+    "Enderby & Glen Parva",
+    "Thorpe Astley",
+    "Braunstone Town",
+    "Cosby, Croft & Elmesthorpe",
+    "Whetstone"
+   ],
+   "postTown": "Enderby",
+   "postcodes": 506
+  },
+  "LE2": {
+   "msoa": [
+    "Oadby South & West",
+    "Clarendon Park & Stoneygate South",
+    "West Knighton",
+    "Knighton",
+    "Aylestone South",
+    "Eyres Monsell",
+    "Leicester City South",
+    "Aylestone North & Saffron Fields",
+    "Oadby East",
+    "Oadby North",
+    "Saffron Lane",
+    "Stoneygate North",
+    "Highfields South",
+    "Enderby & Glen Parva",
+    "St Matthews & Highfields North",
+    "Blaby Village",
+    "Kibworth & Great Glen",
+    "Leicester City Centre",
+    "Rowley Fields & Faircharm",
+    "Spinney Hill Road",
+    "West End & Westcotes",
+    "Houghton, Thurnby & Scraptoft",
+    "Crown Hills",
+    "Thorpe Astley",
+    "Wigston North",
+    "Evington"
+   ],
+   "postTown": "Leicester",
+   "postcodes": 2065
+  },
+  "LE3": {
+   "msoa": [
+    "Glenfield",
+    "West End & Westcotes",
+    "Braunstone Town",
+    "Thorpe Astley",
+    "Dane Hills & Western Park",
+    "Kirby Frith",
+    "Braunstone Park East",
+    "New Parks & Stokeswood",
+    "Newfoundpool",
+    "Leicester Forest East",
+    "Braunstone Park West",
+    "Rowley Fields & Faircharm",
+    "Abbey Park",
+    "Bradgate Heights & Beaumont Leys",
+    "Kirby Muxloe & Thurlaston",
+    "Aylestone South",
+    "Enderby & Glen Parva",
+    "Groby East"
+   ],
+   "postTown": "Leicester",
+   "postcodes": 1833
+  },
+  "LE4": {
+   "msoa": [
+    "Stocking Farm & Mowmacre",
+    "Birstall Wanlip & Riverside",
+    "Thurmaston",
+    "Abbey Park",
+    "Belgrave North West",
+    "Rushey Mead North",
+    "Bradgate Heights & Beaumont Leys",
+    "Beaumont Park",
+    "Birstall Central",
+    "Belgrave South",
+    "Rushey Mead South",
+    "Belgrave North East",
+    "Northfields & Merrydale",
+    "Newfoundpool",
+    "Thorpe Astley"
+   ],
+   "postTown": "Leicester",
+   "postcodes": 1866
+  },
+  "LE5": {
+   "msoa": [
+    "Thurnby Lodge",
+    "Spinney Hill Road",
+    "Evington",
+    "North Evington & Rowlatts Hill",
+    "Crown Hills",
+    "Humberstone & Hamilton South",
+    "Colchester Road",
+    "Hamilton North",
+    "Northfields & Merrydale",
+    "Stoneygate North",
+    "Highfields South",
+    "Thorpe Astley",
+    "St Matthews & Highfields North",
+    "East Goscote & Queniborough",
+    "Leicester City Centre",
+    "Rushey Mead North",
+    "Houghton, Thurnby & Scraptoft"
+   ],
+   "postTown": "Leicester",
+   "postcodes": 1475
+  },
+  "LE6": {
+   "msoa": [
+    "Groby West & Ratby",
+    "Groby East",
+    "Thurcaston, Woodhouse & Bradgate"
+   ],
+   "postTown": "Ratby",
+   "postcodes": 257
+  },
+  "LE65": {
+   "msoa": [
+    "Ashby de la Zouch North",
+    "Ashby de la Zouch South",
+    "Packington, Ravenstone & Coleorton",
+    "Melbourne, Ticknall & Hartshorne",
+    "Donisthope & Blackfordby"
+   ],
+   "postTown": "Ashby-De-La-Zouch",
+   "postcodes": 468
+  },
+  "LE67": {
+   "msoa": [
+    "Ibstock & Ellistown",
+    "Hugglescote & Bardon Hill",
+    "Coalville",
+    "Markfield & Thornton",
+    "Packington, Ravenstone & Coleorton",
+    "Thringstone & Swannington",
+    "Agar Nook",
+    "Whitwick",
+    "Measham & Appleby Magna",
+    "Thurcaston, Woodhouse & Bradgate",
+    "Kegworth & Belton",
+    "Market Bosworth, Barlestone & Sheepy Magna",
+    "Desford & Newbold Verdon",
+    "Shepshed West"
+   ],
+   "postTown": "Coalville",
+   "postcodes": 1553
+  },
+  "LE7": {
+   "msoa": [
+    "East Goscote & Queniborough",
+    "Houghton, Thurnby & Scraptoft",
+    "Anstey",
+    "Syston West",
+    "Tilton, Billesdon & Great Easton",
+    "Syston East",
+    "Mountsorrel & Rothley",
+    "Wymeswold, Rearsby & Cossington",
+    "Thurcaston, Woodhouse & Bradgate",
+    "Waltham, Wymondham & Great Dalby",
+    "Birstall Wanlip & Riverside",
+    "Bradgate Heights & Beaumont Leys",
+    "Glenfield",
+    "Thurnby Lodge",
+    "Thorpe Astley",
+    "Asfordby, Frisby & Old Dalby",
+    "Thurmaston"
+   ],
+   "postTown": "Syston",
+   "postcodes": 1234
+  },
+  "LE8": {
+   "msoa": [
+    "Kibworth & Great Glen",
+    "Whetstone",
+    "Countesthorpe & Kilby",
+    "Fleckney, Kilworth & Foxton",
+    "Blaby Village",
+    "Dunton Bassett, Claybrooke & Swinford",
+    "Tilton, Billesdon & Great Easton",
+    "Wigston Town"
+   ],
+   "postTown": "Fleckney",
+   "postcodes": 885
+  },
+  "LE9": {
+   "msoa": [
+    "Earl Shilton",
+    "Desford & Newbold Verdon",
+    "Broughton Astley",
+    "Stoney Stanton, Sapcote & Sharnford",
+    "Barwell",
+    "Cosby, Croft & Elmesthorpe",
+    "Kirby Muxloe & Thurlaston",
+    "Whetstone",
+    "Groby West & Ratby",
+    "Markfield & Thornton",
+    "Dunton Bassett, Claybrooke & Swinford",
+    "Hinckley East"
+   ],
+   "postTown": "Earl Shilton",
+   "postcodes": 1277
+  },
+  "LS1": {
+   "msoa": [
+    "Leeds City Centre",
+    "Armley & New Wortley",
+    "University & Little Woodhouse",
+    "Woodhouse & Little London"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 525
+  },
+  "LS10": {
+   "msoa": [
+    "Leeds Dock, Hunslet & Stourton",
+    "Middleton Park Avenue",
+    "Middleton Town Street",
+    "Belle Isle North",
+    "Belle Isle South",
+    "Robin Hood, Lofthouse & Middleton Lane",
+    "Leeds City Centre",
+    "Beeston Hill & Hunslet Moor",
+    "Osmondthorpe & Neville Hill",
+    "Rothwell Outer"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 911
+  },
+  "LS11": {
+   "msoa": [
+    "Holbeck",
+    "Beeston Hill & Hunslet Moor",
+    "Beeston East",
+    "Beeston West & Cottingley",
+    "Cross Flats Park & Garnets",
+    "Leeds City Centre",
+    "Churwell",
+    "Middleton Town Street",
+    "Middleton Park Avenue"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 977
+  },
+  "LS12": {
+   "msoa": [
+    "Armley & New Wortley",
+    "New Farnley & Lower Wortley",
+    "Wortley",
+    "Bramley South & Upper Armley",
+    "Farnley East",
+    "Farnley West & Gamble Hill",
+    "Bramley East",
+    "Holbeck",
+    "Beeston West & Cottingley",
+    "Leeds City Centre"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 1229
+  },
+  "LS13": {
+   "msoa": [
+    "Bramley Park South",
+    "Bramley Park North",
+    "Bramley Fall",
+    "Rodley & Stanningley Park",
+    "Bramley East",
+    "Bramley South & Upper Armley",
+    "Pudsey North East",
+    "Farnley West & Gamble Hill",
+    "Calverley & Farsley North",
+    "Farsley South, Stanningley & Pudsey North West",
+    "Farnley East",
+    "Horsforth South & Rawdon"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 900
+  },
+  "LS14": {
+   "msoa": [
+    "Whinmoor",
+    "Swarcliffe",
+    "Seacroft South",
+    "Seacroft North & Monkswood",
+    "Hollin Park & Fearnville",
+    "Cross Gates West & Killingbeck",
+    "Scarcroft, Shadwell & Scholes",
+    "Aberford, Barwick & Thorner",
+    "Collingham, Rigton & Harewood",
+    "Gipton South & Killingbeck Park"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 1003
+  },
+  "LS15": {
+   "msoa": [
+    "Cross Gates East & Manston",
+    "Temple Newsam & Graveleythorpe",
+    "Colton, Austhorpe & Whitkirk",
+    "Halton Moor",
+    "Aberford, Barwick & Thorner",
+    "Cross Gates West & Killingbeck",
+    "Scarcroft, Shadwell & Scholes",
+    "Garforth South, Swillington & Little Preston",
+    "Swarcliffe",
+    "Seacroft South",
+    "Whinmoor"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 1006
+  },
+  "LS16": {
+   "msoa": [
+    "Adel",
+    "Lawnswood & Ireland Wood",
+    "Far Headingley & Weetwood",
+    "Bramhope & Pool-in-Wharfedale",
+    "Cookridge & Holt Park",
+    "Tinshill",
+    "Hawksworth & West Park",
+    "Alwoodley",
+    "Horsforth West",
+    "Meanwood",
+    "Moor Allerton"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 1028
+  },
+  "LS17": {
+   "msoa": [
+    "Alwoodley",
+    "Primley Park & Wigton Moor",
+    "Moortown",
+    "Collingham, Rigton & Harewood",
+    "Moor Allerton",
+    "Carr Manor",
+    "Scarcroft, Shadwell & Scholes",
+    "Spofforth, Burn Bridge & Huby",
+    "Roundhay Park & Slaid Hill",
+    "Menwith, Beckwithshaw & Denton Moor",
+    "Whinmoor",
+    "Roundhay West"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 1263
+  },
+  "LS18": {
+   "msoa": [
+    "Horsforth East",
+    "Horsforth South & Rawdon",
+    "Horsforth West",
+    "Bramhope & Pool-in-Wharfedale",
+    "Hawksworth & West Park",
+    "Tinshill",
+    "Yeadon West",
+    "Lawnswood & Ireland Wood"
+   ],
+   "postTown": "Horsforth",
+   "postcodes": 531
+  },
+  "LS19": {
+   "msoa": [
+    "Yeadon South",
+    "Yeadon East",
+    "Yeadon West",
+    "Horsforth South & Rawdon",
+    "Bramhope & Pool-in-Wharfedale",
+    "Guiseley East & South",
+    "Thackley & Esholt"
+   ],
+   "postTown": "Yeadon",
+   "postcodes": 566
+  },
+  "LS2": {
+   "msoa": [
+    "Leeds City Centre",
+    "Woodhouse & Little London",
+    "University & Little Woodhouse",
+    "Lincoln Green & St James",
+    "Armley & New Wortley"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 374
+  },
+  "LS20": {
+   "msoa": [
+    "Guiseley East & South",
+    "Guiseley North & West",
+    "Yeadon West",
+    "Bramhope & Pool-in-Wharfedale"
+   ],
+   "postTown": "Guiseley",
+   "postcodes": 351
+  },
+  "LS21": {
+   "msoa": [
+    "Otley South",
+    "Menwith, Beckwithshaw & Denton Moor",
+    "Bramhope & Pool-in-Wharfedale",
+    "Otley North",
+    "Guiseley North & West",
+    "Alwoodley",
+    "Burley-in-Wharfedale"
+   ],
+   "postTown": "Otley",
+   "postcodes": 649
+  },
+  "LS22": {
+   "msoa": [
+    "Wetherby East & Thorp Arch",
+    "Wetherby West",
+    "Collingham, Rigton & Harewood",
+    "Ouseburn, Hammerton & Tockwith",
+    "Spofforth, Burn Bridge & Huby"
+   ],
+   "postTown": "Wetherby",
+   "postcodes": 566
+  },
+  "LS23": {
+   "msoa": [
+    "Boston Spa & Bramham",
+    "Wetherby East & Thorp Arch",
+    "Aberford, Barwick & Thorner",
+    "Collingham, Rigton & Harewood"
+   ],
+   "postTown": "Boston Spa",
+   "postcodes": 368
+  },
+  "LS25": {
+   "msoa": [
+    "Sherburn in Elmet & South Milford",
+    "Garforth West",
+    "Kippax East, Micklefield & Allerton Bywater",
+    "Kippax West",
+    "Garforth East",
+    "Aberford, Barwick & Thorner",
+    "Hambleton, Monk Fryston & Byram",
+    "Garforth South, Swillington & Little Preston",
+    "Church Fenton, Appleton & Wistow",
+    "Cross Gates East & Manston",
+    "Methley"
+   ],
+   "postTown": "Garforth",
+   "postcodes": 1221
+  },
+  "LS26": {
+   "msoa": [
+    "Woodlesford & Oulton",
+    "Rothwell Outer",
+    "Rothwell Inner",
+    "Garforth South, Swillington & Little Preston",
+    "Methley",
+    "Stanley, Moorhouse & Bottomboat",
+    "Leeds Dock, Hunslet & Stourton",
+    "Middleton Town Street"
+   ],
+   "postTown": "Rothwell",
+   "postcodes": 799
+  },
+  "LS27": {
+   "msoa": [
+    "Morley Central",
+    "Morley East",
+    "Churwell",
+    "Morley North & Gildersome East",
+    "Morley Bruntcliffe & Woodkirk",
+    "Drighlington & Gildersome West",
+    "New Farnley & Lower Wortley",
+    "Farnley West & Gamble Hill",
+    "Beeston West & Cottingley"
+   ],
+   "postTown": "Morley",
+   "postcodes": 1112
+  },
+  "LS28": {
+   "msoa": [
+    "Pudsey South East",
+    "Farsley South, Stanningley & Pudsey North West",
+    "Calverley & Farsley North",
+    "Pudsey South West",
+    "New Pudsey",
+    "Pudsey North East",
+    "Rodley & Stanningley Park",
+    "Bramley Park North"
+   ],
+   "postTown": "Pudsey",
+   "postcodes": 1144
+  },
+  "LS29": {
+   "msoa": [
+    "Ilkley & Ben Rhydding",
+    "Addingham & Ilkley Moor",
+    "Menston & Burley Moor",
+    "Burley-in-Wharfedale",
+    "Guiseley North & West",
+    "Menwith, Beckwithshaw & Denton Moor",
+    "Skipton North & Upper Wharfedale",
+    "Otley South"
+   ],
+   "postTown": "Ilkley",
+   "postcodes": 1236
+  },
+  "LS4": {
+   "msoa": [
+    "Burley",
+    "Kirkstall",
+    "Armley & New Wortley"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 208
+  },
+  "LS5": {
+   "msoa": [
+    "Kirkstall",
+    "Hawksworth & West Park",
+    "Bramley East",
+    "Bramley Fall",
+    "Armley & New Wortley"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 208
+  },
+  "LS6": {
+   "msoa": [
+    "Hyde Park Corner & Woodhouse Cliff",
+    "Far Headingley & Weetwood",
+    "Headingley",
+    "Hyde Park",
+    "Meanwood",
+    "Woodhouse & Little London",
+    "Kirkstall",
+    "Burley",
+    "Meanwood South & Sugarwell",
+    "Carr Manor",
+    "University & Little Woodhouse",
+    "Hawksworth & West Park"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 882
+  },
+  "LS7": {
+   "msoa": [
+    "Chapel Allerton North",
+    "Chapel Allerton South & Chapeltown",
+    "Woodhouse & Little London",
+    "Meanwood South & Sugarwell",
+    "Meanwood",
+    "Carr Manor",
+    "Hyde Park Corner & Woodhouse Cliff",
+    "Lincoln Green & St James",
+    "Harehills North",
+    "Moortown"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 688
+  },
+  "LS8": {
+   "msoa": [
+    "Lady Wood & Oakwood",
+    "Harehills North",
+    "Gledhow",
+    "Roundhay Park & Slaid Hill",
+    "Roundhay West",
+    "Gipton North",
+    "Lincoln Green & St James",
+    "Hollin Park & Fearnville",
+    "Harehills South",
+    "Chapel Allerton South & Chapeltown",
+    "Moortown",
+    "Gipton South & Killingbeck Park",
+    "Chapel Allerton North",
+    "Woodhouse & Little London"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 934
+  },
+  "LS9": {
+   "msoa": [
+    "East End Park & Richmond Hill",
+    "Osmondthorpe & Neville Hill",
+    "Burmantofts",
+    "Gipton South & Killingbeck Park",
+    "Lincoln Green & St James",
+    "Harehills South",
+    "Halton Moor",
+    "Temple Newsam & Graveleythorpe",
+    "Cross Gates West & Killingbeck",
+    "Leeds City Centre",
+    "Gipton North",
+    "Whinmoor"
+   ],
+   "postTown": "Leeds",
+   "postcodes": 898
+  },
+  "M1": {
+   "msoa": [
+    "Piccadilly & Ancoats",
+    "University North & Whitworth Street",
+    "Castlefield & Deansgate",
+    "Ardwick",
+    "City Centre North & Collyhurst"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 547
+  },
+  "M11": {
+   "msoa": [
+    "Beswick, Eastlands & Openshaw Park",
+    "Openshaw & Gorton North",
+    "Clayton Vale",
+    "New Islington South & Bradford",
+    "Droylsden West"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 759
+  },
+  "M12": {
+   "msoa": [
+    "Belle Vue & West Gorton",
+    "Ardwick",
+    "Longsight East",
+    "New Islington South & Bradford",
+    "Gorton South",
+    "Levenshulme North & East",
+    "Piccadilly & Ancoats",
+    "Victoria Park & Longsight West"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 506
+  },
+  "M13": {
+   "msoa": [
+    "Ardwick",
+    "Victoria Park & Longsight West",
+    "Rusholme East",
+    "Longsight East",
+    "Hulme & University",
+    "Belle Vue & West Gorton",
+    "Fallowfield Central"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 488
+  },
+  "M14": {
+   "msoa": [
+    "Rusholme West & Moss Side East",
+    "Fallowfield Central",
+    "Ladybarn",
+    "Rusholme East",
+    "Fallowfield West & Whalley Range South",
+    "Moss Side West",
+    "Victoria Park & Longsight West",
+    "Withington North & Old Moat",
+    "Hulme & University"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 1045
+  },
+  "M15": {
+   "msoa": [
+    "Hulme & University",
+    "Hulme Park & St George's",
+    "University North & Whitworth Street",
+    "Castlefield & Deansgate",
+    "Old Trafford",
+    "Moss Side West"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 631
+  },
+  "M16": {
+   "msoa": [
+    "Old Trafford",
+    "Firswood",
+    "Whalley Range North",
+    "Moss Side West",
+    "Fallowfield West & Whalley Range South",
+    "Chorlton North",
+    "Gorse Hill",
+    "Trafford Park East & Sevenways"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 873
+  },
+  "M18": {
+   "msoa": [
+    "Gorton South",
+    "Abbey Hey",
+    "Openshaw & Gorton North",
+    "Belle Vue & West Gorton"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 596
+  },
+  "M19": {
+   "msoa": [
+    "Levenshulme South & Burnage North",
+    "Levenshulme Central",
+    "Burnage South",
+    "Levenshulme North & East",
+    "East Didsbury",
+    "Fallowfield Central",
+    "Withington East",
+    "North Reddish",
+    "Heaton Mersey",
+    "Heaton Chapel & Shaw Road",
+    "Longsight East"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 807
+  },
+  "M20": {
+   "msoa": [
+    "Didsbury Village",
+    "Withington West",
+    "Withington East",
+    "East Didsbury",
+    "Withington North & Old Moat",
+    "West Didsbury",
+    "Merseybank & Barlow Moor",
+    "Ladybarn",
+    "Burnage South",
+    "Fallowfield Central"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 1144
+  },
+  "M21": {
+   "msoa": [
+    "Chorlton North",
+    "Chorlton South",
+    "Beech Road & Chorlton Meadows",
+    "Merseybank & Barlow Moor",
+    "West Didsbury",
+    "Withington North & Old Moat",
+    "Whalley Range North",
+    "Fallowfield West & Whalley Range South",
+    "Stretford East"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 723
+  },
+  "M22": {
+   "msoa": [
+    "Benchill South & Wythenshawe Central",
+    "Benchill North & Sharston",
+    "Woodhouse Park & Airport",
+    "Wythenshawe East & Peel Hall",
+    "Northenden",
+    "Newall Green",
+    "Gatley North",
+    "Mobberley, Plumley & High Legh"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 1210
+  },
+  "M23": {
+   "msoa": [
+    "Northern Moor",
+    "Newall Green",
+    "Baguley West & Brooklands",
+    "Baguley East & Wythenshawe Park",
+    "Timperley North",
+    "Northenden",
+    "Benchill North & Sharston",
+    "Timperley East"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 820
+  },
+  "M24": {
+   "msoa": [
+    "Langley & Wood Side",
+    "Middleton Town & Rhodes",
+    "North Middleton & Stakehill",
+    "Middleton East",
+    "Alkrington",
+    "Middleton Junction",
+    "Kirkhams & Holyrood",
+    "Castleton & Trub",
+    "Crumpsall North & Heaton Park",
+    "Heywood Hopwood & Siddal Moor",
+    "Unsworth"
+   ],
+   "postTown": "Middleton",
+   "postcodes": 1268
+  },
+  "M25": {
+   "msoa": [
+    "Prestwich East",
+    "Prestwich Central",
+    "Sedgley Park",
+    "Prestwich Clough & Rainsough",
+    "Kirkhams & Holyrood",
+    "Crumpsall North & Heaton Park",
+    "Unsworth"
+   ],
+   "postTown": "Prestwich",
+   "postcodes": 786
+  },
+  "M26": {
+   "msoa": [
+    "Radcliffe",
+    "Black Lane",
+    "Outwood Gate",
+    "Bank Top & Radcliffe Ees",
+    "Kearsley & Stoneclough",
+    "Ainsworth & Bradley Fold",
+    "Whitefield West & Park Lane",
+    "Little Lever"
+   ],
+   "postTown": "Radcliffe",
+   "postcodes": 862
+  },
+  "M27": {
+   "msoa": [
+    "Swinton Worsley Road",
+    "Clifton Green & Pendlebury East",
+    "Swinton West",
+    "Swinton Newtown",
+    "Clifton",
+    "Worsley",
+    "Swinton South East & Pendlebury West",
+    "Cromwell Road & Broad Street",
+    "Lightoaks"
+   ],
+   "postTown": "Swinton",
+   "postcodes": 1103
+  },
+  "M28": {
+   "msoa": [
+    "Ellenbrook & Boothstown",
+    "Walkden South",
+    "Worsley",
+    "Walkden North East",
+    "Little Hulton South",
+    "Astley, Blackmoor & Mosley Common",
+    "Swinton West",
+    "Little Hulton North",
+    "Walkden North West",
+    "Winton & Westwood"
+   ],
+   "postTown": "Worsley",
+   "postcodes": 1112
+  },
+  "M29": {
+   "msoa": [
+    "Tyldesley North",
+    "Astley, Blackmoor & Mosley Common",
+    "Tyldesley South",
+    "Atherton South East & Tyldesley West",
+    "Leigh South East",
+    "Leigh East & Higher Folds",
+    "Ellenbrook & Boothstown"
+   ],
+   "postTown": "Tyldesley",
+   "postcodes": 567
+  },
+  "M3": {
+   "msoa": [
+    "Greengate & Blackfriars",
+    "University, Crescent & Adelphi Street",
+    "Castlefield & Deansgate",
+    "City Centre North & Collyhurst",
+    "Strangeways",
+    "Cheetham Hill",
+    "Hulme Park & St George's"
+   ],
+   "postTown": "Salford",
+   "postcodes": 639
+  },
+  "M30": {
+   "msoa": [
+    "Eccles",
+    "Barton upon Irwell",
+    "Patricroft",
+    "Winton & Westwood",
+    "Peel Green",
+    "Higher Irlam",
+    "Swinton Worsley Road",
+    "Weaste & Seedley"
+   ],
+   "postTown": "Eccles",
+   "postcodes": 947
+  },
+  "M31": {
+   "msoa": [
+    "Partington",
+    "Urmston East"
+   ],
+   "postTown": "Partington",
+   "postcodes": 267
+  },
+  "M32": {
+   "msoa": [
+    "Stretford East",
+    "Gorse Hill",
+    "Trafford Park East & Sevenways",
+    "Lostock & Stretford Meadows",
+    "Firswood",
+    "Sale North"
+   ],
+   "postTown": "Stretford",
+   "postcodes": 679
+  },
+  "M33": {
+   "msoa": [
+    "Sale Central",
+    "Sale North",
+    "Ashton upon Mersey South",
+    "Sale East",
+    "Ashton upon Mersey North",
+    "Sale Moor",
+    "West Timperley",
+    "Broadheath & Firsway",
+    "Timperley North",
+    "Baguley West & Brooklands",
+    "Partington"
+   ],
+   "postTown": "Sale",
+   "postcodes": 1561
+  },
+  "M34": {
+   "msoa": [
+    "Denton South",
+    "Denton North",
+    "Guide Bridge",
+    "Dane Bank",
+    "Audenshaw",
+    "Denton West",
+    "Denton East",
+    "Ashton Central",
+    "Droylsden East"
+   ],
+   "postTown": "Denton",
+   "postcodes": 1283
+  },
+  "M35": {
+   "msoa": [
+    "Failsworth West",
+    "Failsworth South",
+    "Failsworth East",
+    "Holt Lane End & Bardsley",
+    "Lime Side & Garden Suburb"
+   ],
+   "postTown": "Failsworth",
+   "postcodes": 531
+  },
+  "M38": {
+   "msoa": [
+    "Little Hulton North",
+    "Walkden North West",
+    "Little Hulton South",
+    "Walkden North East",
+    "Walkden South"
+   ],
+   "postTown": "Little Hulton",
+   "postcodes": 326
+  },
+  "M4": {
+   "msoa": [
+    "City Centre North & Collyhurst",
+    "New Islington South & Bradford",
+    "Miles Platting & New Islington North",
+    "Piccadilly & Ancoats",
+    "Cheetham Hill"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 526
+  },
+  "M40": {
+   "msoa": [
+    "Newton Heath",
+    "New Moston",
+    "Harpurhey South & Monsall",
+    "Moston West",
+    "Miles Platting & New Islington North",
+    "Charlestown",
+    "Clayton Vale",
+    "City Centre North & Collyhurst",
+    "Cheetham Hill",
+    "New Islington South & Bradford",
+    "Chadderton South West",
+    "Beswick, Eastlands & Openshaw Park",
+    "Failsworth South"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 1392
+  },
+  "M41": {
+   "msoa": [
+    "Urmston East",
+    "Davyhulme",
+    "Flixton & Moorside",
+    "Urmston West",
+    "Trafford Park West & Kingsway Park",
+    "Lostock & Stretford Meadows",
+    "Trafford Park East & Sevenways",
+    "Partington"
+   ],
+   "postTown": "Urmston",
+   "postcodes": 1019
+  },
+  "M43": {
+   "msoa": [
+    "Droylsden East",
+    "Droylsden Central",
+    "Droylsden West",
+    "Audenshaw",
+    "Openshaw & Gorton North",
+    "Clayton Vale"
+   ],
+   "postTown": "Droylsden",
+   "postcodes": 624
+  },
+  "M44": {
+   "msoa": [
+    "Lower Irlam & Cadishead",
+    "Higher Irlam"
+   ],
+   "postTown": "Irlam",
+   "postcodes": 478
+  },
+  "M45": {
+   "msoa": [
+    "Besses",
+    "Whitefield West & Park Lane",
+    "Whitefield East",
+    "Kirkhams & Holyrood",
+    "Outwood Gate",
+    "Unsworth",
+    "Prestwich Clough & Rainsough"
+   ],
+   "postTown": "Whitefield",
+   "postcodes": 646
+  },
+  "M46": {
+   "msoa": [
+    "Atherton South West",
+    "Atherton North",
+    "Atherton South East & Tyldesley West",
+    "Over Hulton"
+   ],
+   "postTown": "Atherton",
+   "postcodes": 576
+  },
+  "M5": {
+   "msoa": [
+    "University, Crescent & Adelphi Street",
+    "Ordsall West",
+    "Weaste & Seedley",
+    "Ordsall East",
+    "Pendleton",
+    "Salford Quays",
+    "Langworthy Buile Hill"
+   ],
+   "postTown": "Salford",
+   "postcodes": 633
+  },
+  "M50": {
+   "msoa": [
+    "Salford Quays",
+    "Ordsall West",
+    "Weaste & Seedley",
+    "University, Crescent & Adelphi Street"
+   ],
+   "postTown": "Salford",
+   "postcodes": 203
+  },
+  "M6": {
+   "msoa": [
+    "Cromwell Road & Broad Street",
+    "Weaste & Seedley",
+    "Langworthy Buile Hill",
+    "Lightoaks",
+    "Pendleton",
+    "Swinton South East & Pendlebury West",
+    "University, Crescent & Adelphi Street",
+    "Clifton Green & Pendlebury East"
+   ],
+   "postTown": "Salford",
+   "postcodes": 833
+  },
+  "M7": {
+   "msoa": [
+    "Broughton Park",
+    "Kersal Dale",
+    "Broughton West",
+    "Broughton East",
+    "University, Crescent & Adelphi Street",
+    "Greengate & Blackfriars",
+    "Strangeways",
+    "Prestwich Clough & Rainsough",
+    "Crumpsall North & Heaton Park"
+   ],
+   "postTown": "Salford",
+   "postcodes": 780
+  },
+  "M8": {
+   "msoa": [
+    "Strangeways",
+    "Crumpsall South",
+    "Crumpsall North & Heaton Park",
+    "Cheetham Hill",
+    "Harpurhey North",
+    "Sedgley Park",
+    "Greengate & Blackfriars",
+    "Broughton West"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 802
+  },
+  "M9": {
+   "msoa": [
+    "Blackley",
+    "Boothroyden & Higher Blackley",
+    "Harpurhey South & Monsall",
+    "Harpurhey North",
+    "Charlestown",
+    "Moston West",
+    "Crumpsall North & Heaton Park"
+   ],
+   "postTown": "Manchester",
+   "postcodes": 1082
+  },
+  "NE1": {
+   "msoa": [
+    "Newcastle City Centre",
+    "Shieldfield & Quayside",
+    "Arthur's Hill",
+    "Elswick South",
+    "Heaton Park & Portland Road"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 536
+  },
+  "NE10": {
+   "msoa": [
+    "Pelaw, Felling Shore & Bill Quay",
+    "Heworth",
+    "Windy Nook & Whitehills",
+    "Felling South",
+    "Wardley",
+    "Mount Pleasant & Deckham East",
+    "Gateshead Town",
+    "Fellgate & Hedworth",
+    "Beacon Lough & Wrekenton"
+   ],
+   "postTown": "Gateshead",
+   "postcodes": 742
+  },
+  "NE11": {
+   "msoa": [
+    "Dunston & Teams",
+    "Dunston Hill",
+    "Sunniside & Lobley Hill",
+    "Birtley North & Kibblesworth",
+    "Swalwell"
+   ],
+   "postTown": "Gateshead",
+   "postcodes": 478
+  },
+  "NE12": {
+   "msoa": [
+    "Longbenton",
+    "Holystone & Benton",
+    "Killingworth East",
+    "Forest Hall & West Moor",
+    "Killingworth West & Camperdown",
+    "Fordley",
+    "Wideopen & Seaton Burn",
+    "East Benton"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 854
+  },
+  "NE13": {
+   "msoa": [
+    "Newcastle Great Park & Dinnington",
+    "Wideopen & Seaton Burn",
+    "Woolsington & Airport",
+    "Kingston Park",
+    "Longhorsley, Hepscott & Capheaton",
+    "North Gosforth",
+    "Ponteland"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 478
+  },
+  "NE15": {
+   "msoa": [
+    "Throckley & Newburn",
+    "Lemington",
+    "Scotswood",
+    "Benwell",
+    "Darras Hall, Stamfordham & Heddon",
+    "Wylam & Ovingham",
+    "Elswick North",
+    "Fenham",
+    "Ryton"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 912
+  },
+  "NE16": {
+   "msoa": [
+    "Whickham",
+    "Swalwell",
+    "Sunniside & Lobley Hill",
+    "Burnopfield",
+    "Birtley North & Kibblesworth",
+    "Blaydon North & Winlaton Mill",
+    "Stanley North & East",
+    "Catchgate & Dipton"
+   ],
+   "postTown": "Whickham",
+   "postcodes": 756
+  },
+  "NE17": {
+   "msoa": [
+    "Chopwell & High Spen",
+    "Benfieldside, Hamsterley & Medomsley",
+    "Stocksfield, Riding Mill & Corbridge",
+    "Prudhoe"
+   ],
+   "postTown": "Chopwell",
+   "postcodes": 168
+  },
+  "NE2": {
+   "msoa": [
+    "South Jesmond & Sandyford",
+    "North Jesmond",
+    "Heaton Park & Portland Road",
+    "Newcastle City Centre",
+    "Shieldfield & Quayside",
+    "South Gosforth",
+    "Nunsmoor",
+    "High Heaton",
+    "Coxlodge & West Gosforth"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 512
+  },
+  "NE21": {
+   "msoa": [
+    "Blaydon South",
+    "Blaydon North & Winlaton Mill",
+    "Ryton",
+    "Rowlands Gill & Lockhaugh"
+   ],
+   "postTown": "Blaydon-On-Tyne",
+   "postcodes": 539
+  },
+  "NE23": {
+   "msoa": [
+    "Cramlington Town & Beaconhill",
+    "Cramlington North & East",
+    "Cramlington South",
+    "Fordley",
+    "Seaton Delaval & Seghill",
+    "Killingworth West & Camperdown",
+    "Wideopen & Seaton Burn",
+    "Holywell & Hartley"
+   ],
+   "postTown": "Dudley",
+   "postcodes": 1070
+  },
+  "NE25": {
+   "msoa": [
+    "Seaton Delaval & Seghill",
+    "Monkseaton",
+    "Holywell & Hartley",
+    "West Monkseaton",
+    "Shiremoor North & South Wellfield",
+    "Whitley Bay North",
+    "Whitley Bay Promenade",
+    "Preston Grange",
+    "Whitley Sands",
+    "New York"
+   ],
+   "postTown": "Whitley Bay",
+   "postcodes": 681
+  },
+  "NE26": {
+   "msoa": [
+    "Whitley Bay Promenade",
+    "Whitley Sands",
+    "Holywell & Hartley",
+    "Whitley Bay North",
+    "Monkseaton",
+    "New York"
+   ],
+   "postTown": "Whitley Bay",
+   "postcodes": 539
+  },
+  "NE27": {
+   "msoa": [
+    "Shiremoor South & West Allotment",
+    "Shiremoor North & South Wellfield",
+    "Holystone & Benton",
+    "New York",
+    "Monkseaton",
+    "Fordley",
+    "Holywell & Hartley"
+   ],
+   "postTown": "Shiremoor",
+   "postcodes": 345
+  },
+  "NE28": {
+   "msoa": [
+    "Wallsend West",
+    "Willington Quay",
+    "Wallsend East",
+    "Battle Hill West",
+    "Howdon",
+    "East Benton",
+    "Battle Hill East",
+    "New York",
+    "Percy Main"
+   ],
+   "postTown": "Wallsend",
+   "postcodes": 1054
+  },
+  "NE29": {
+   "msoa": [
+    "Chirton",
+    "North Shields",
+    "Percy Main",
+    "New York",
+    "Preston Billy Mill",
+    "Preston Grange",
+    "Tynemouth West",
+    "Monkseaton",
+    "Cullercoats"
+   ],
+   "postTown": "North Shields",
+   "postcodes": 956
+  },
+  "NE3": {
+   "msoa": [
+    "Coxlodge & West Gosforth",
+    "Fawdon South",
+    "North Gosforth",
+    "Kenton",
+    "South Gosforth",
+    "Kingston Park",
+    "High Heaton",
+    "Woolsington & Airport",
+    "Wideopen & Seaton Burn",
+    "Blakelaw",
+    "Newcastle City Centre",
+    "Newcastle Great Park & Dinnington"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 1190
+  },
+  "NE30": {
+   "msoa": [
+    "Tynemouth Priory",
+    "Cullercoats",
+    "Tynemouth West",
+    "Preston Grange",
+    "North Shields",
+    "Preston Billy Mill",
+    "New York"
+   ],
+   "postTown": "North Shields",
+   "postcodes": 635
+  },
+  "NE31": {
+   "msoa": [
+    "Hebburn South",
+    "Hebburn West",
+    "Hebburn North",
+    "Fellgate & Hedworth",
+    "Jarrow Town",
+    "Primrose"
+   ],
+   "postTown": "Hebburn",
+   "postcodes": 502
+  },
+  "NE32": {
+   "msoa": [
+    "Jarrow Town",
+    "Primrose",
+    "Fellgate & Hedworth",
+    "Brockley Whins",
+    "Hebburn North",
+    "Simonside",
+    "Hebburn South"
+   ],
+   "postTown": "Jarrow",
+   "postcodes": 676
+  },
+  "NE33": {
+   "msoa": [
+    "South Shields West",
+    "South Shields East",
+    "Westoe",
+    "West Park",
+    "Simonside",
+    "Horsley Hill",
+    "West Harton",
+    "Harton West"
+   ],
+   "postTown": "South Shields",
+   "postcodes": 765
+  },
+  "NE34": {
+   "msoa": [
+    "Whiteleas",
+    "Biddick Hill",
+    "Cleadon Park",
+    "Harton West",
+    "Harton East",
+    "West Harton",
+    "Horsley Hill",
+    "Simonside",
+    "West Park",
+    "Brockley Whins",
+    "Whitburn & Marsden",
+    "Westoe",
+    "Cleadon & East Boldon",
+    "Jarrow Town"
+   ],
+   "postTown": "South Shields",
+   "postcodes": 1055
+  },
+  "NE35": {
+   "msoa": [
+    "Boldon Colliery",
+    "West Boldon",
+    "Jarrow Town"
+   ],
+   "postTown": "Boldon Colliery",
+   "postcodes": 132
+  },
+  "NE36": {
+   "msoa": [
+    "West Boldon",
+    "Cleadon & East Boldon",
+    "Boldon Colliery",
+    "Fellgate & Hedworth",
+    "Springwell & Usworth"
+   ],
+   "postTown": "East Boldon",
+   "postcodes": 211
+  },
+  "NE37": {
+   "msoa": [
+    "Concord and Sulgrave",
+    "Albany and Blackfell",
+    "Springwell & Usworth",
+    "Harraton, Rickleton & Fatfield",
+    "Oxclose and Lambton",
+    "Washington Town Centre & Biddick",
+    "Fellgate & Hedworth"
+   ],
+   "postTown": "Washington",
+   "postcodes": 540
+  },
+  "NE38": {
+   "msoa": [
+    "Columbia, Barmston & Teal Farm",
+    "Washington Town Centre & Biddick",
+    "Harraton, Rickleton & Fatfield",
+    "Oxclose and Lambton",
+    "Chester-le-Street North",
+    "Albany and Blackfell"
+   ],
+   "postTown": "Washington",
+   "postcodes": 653
+  },
+  "NE39": {
+   "msoa": [
+    "Rowlands Gill & Lockhaugh",
+    "Chopwell & High Spen",
+    "Benfieldside, Hamsterley & Medomsley",
+    "Burnopfield",
+    "Blaydon North & Winlaton Mill"
+   ],
+   "postTown": "Rowlands Gill",
+   "postcodes": 316
+  },
+  "NE4": {
+   "msoa": [
+    "Arthur's Hill",
+    "Nunsmoor",
+    "Elswick South",
+    "Elswick North",
+    "Fenham",
+    "Benwell",
+    "Cowgate",
+    "Newcastle City Centre"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 803
+  },
+  "NE40": {
+   "msoa": [
+    "Crawcrook & Greenside",
+    "Ryton",
+    "Blaydon North & Winlaton Mill",
+    "Chopwell & High Spen"
+   ],
+   "postTown": "Ryton",
+   "postcodes": 513
+  },
+  "NE5": {
+   "msoa": [
+    "Westerhope",
+    "Denton",
+    "Woolsington & Airport",
+    "Blakelaw",
+    "Fenham",
+    "Kenton",
+    "Cowgate",
+    "Throckley & Newburn"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 1148
+  },
+  "NE6": {
+   "msoa": [
+    "Byker South & St Peters",
+    "Heaton South & Byker North",
+    "Walkergate",
+    "Byker East",
+    "Walker South",
+    "Walker North",
+    "North Heaton",
+    "Heaton Park & Portland Road"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 1063
+  },
+  "NE7": {
+   "msoa": [
+    "High Heaton",
+    "North Heaton",
+    "Holystone & Benton",
+    "South Jesmond & Sandyford",
+    "Longbenton"
+   ],
+   "postTown": "Newcastle Upon Tyne",
+   "postcodes": 279
+  },
+  "NE8": {
+   "msoa": [
+    "Gateshead Town",
+    "Bensham North",
+    "Bensham South & Saltwell",
+    "Dunston & Teams",
+    "Gateshead South",
+    "Mount Pleasant & Deckham East",
+    "Pelaw, Felling Shore & Bill Quay"
+   ],
+   "postTown": "Gateshead",
+   "postcodes": 735
+  },
+  "NE9": {
+   "msoa": [
+    "Low Fell East",
+    "Low Fell West",
+    "Beacon Lough & Wrekenton",
+    "Easedale Gardens",
+    "Springwell & Usworth",
+    "Mount Pleasant & Deckham East",
+    "Gateshead South",
+    "Bensham South & Saltwell",
+    "Albany and Blackfell",
+    "Birtley North & Kibblesworth",
+    "Dunston & Teams",
+    "Felling South",
+    "Windy Nook & Whitehills"
+   ],
+   "postTown": "Gateshead",
+   "postcodes": 833
+  },
+  "NG13": {
+   "msoa": [
+    "Bingham",
+    "East Bridgford & Aslockton",
+    "Bottesford, Harby & Croxton Kerrial",
+    "Cropwell Bishop, Kinoulton & Upper Broughton",
+    "Radcliffe on Trent & Shelford",
+    "Fernwood, Farndon & Fiskerton",
+    "City Centre & Trent Bridge",
+    "Grantham North West",
+    "Long Bennington, Allington & Barrowby"
+   ],
+   "postTown": "Bottesford",
+   "postcodes": 710
+  },
+  "OL1": {
+   "msoa": [
+    "Oldham Town North",
+    "Derker",
+    "Moorside & Sholver",
+    "Oldham Town South",
+    "Busk",
+    "Alexandra Park",
+    "Chadderton North",
+    "Royton South West",
+    "Clough & Shaw Side",
+    "Middleton Junction",
+    "Royton South East",
+    "Diggle, Delph & Denshaw",
+    "Salem"
+   ],
+   "postTown": "Oldham",
+   "postcodes": 781
+  },
+  "OL10": {
+   "msoa": [
+    "Heywood Town",
+    "Heywood Hopwood & Siddal Moor",
+    "Heywood Heap Bridge & Darnhill",
+    "Hooley Bridge & Norden West",
+    "Langley & Wood Side",
+    "Springfield Park"
+   ],
+   "postTown": "Heywood",
+   "postcodes": 819
+  },
+  "OL11": {
+   "msoa": [
+    "Castleton & Trub",
+    "Deeplish",
+    "Balderstone & Kirkholt",
+    "Central Rochdale & Mandale Park",
+    "Springfield Park",
+    "Norden East & Bagslate Moor",
+    "Spotland Bridge",
+    "Hooley Bridge & Norden West",
+    "Kingsway",
+    "Heywood Hopwood & Siddal Moor"
+   ],
+   "postTown": "Rochdale",
+   "postcodes": 1076
+  },
+  "OL12": {
+   "msoa": [
+    "Whitworth",
+    "Healey, Syke & Shawclough",
+    "Central Rochdale & Mandale Park",
+    "Hurstead & Smallbridge",
+    "Spotland Bridge",
+    "Littleborough West & Wardle",
+    "Hooley Bridge & Norden West",
+    "Norden East & Bagslate Moor",
+    "Wardleworth & Newbold Brow",
+    "Littleborough South & Smithy Bridge",
+    "Deeplish"
+   ],
+   "postTown": "Rochdale",
+   "postcodes": 1184
+  },
+  "OL14": {
+   "msoa": [
+    "Todmorden West & Cornholme",
+    "Todmorden East & Walsden",
+    "Hebden Bridge",
+    "Cliviger, Worsthorne & Lane Bottom",
+    "Littleborough North & Calderbook"
+   ],
+   "postTown": "Todmorden",
+   "postcodes": 789
+  },
+  "OL15": {
+   "msoa": [
+    "Littleborough North & Calderbook",
+    "Littleborough South & Smithy Bridge",
+    "Littleborough West & Wardle",
+    "Milnrow East & Newhey",
+    "Deeplish",
+    "Todmorden East & Walsden"
+   ],
+   "postTown": "Littleborough",
+   "postcodes": 540
+  },
+  "OL16": {
+   "msoa": [
+    "Kingsway",
+    "Milnrow East & Newhey",
+    "Milnrow West",
+    "Central Rochdale & Mandale Park",
+    "Wardleworth & Newbold Brow",
+    "Balderstone & Kirkholt",
+    "Deeplish",
+    "Hurstead & Smallbridge",
+    "Littleborough South & Smithy Bridge",
+    "Clough & Shaw Side",
+    "Spotland Bridge"
+   ],
+   "postTown": "Rochdale",
+   "postcodes": 1126
+  },
+  "OL2": {
+   "msoa": [
+    "Clough & Shaw Side",
+    "Royton South East",
+    "Royton South West",
+    "Shaw & Crompton",
+    "Wood End",
+    "Royton East & Cowlishaw",
+    "Royton North",
+    "Alexandra Park",
+    "Balderstone & Kirkholt",
+    "Moorside & Sholver",
+    "Oldham Town North"
+   ],
+   "postTown": "Royton",
+   "postcodes": 1088
+  },
+  "OL3": {
+   "msoa": [
+    "Greenfield & Uppermill",
+    "Diggle, Delph & Denshaw",
+    "New Delph, Dobcross & Austerlands",
+    "Failsworth East",
+    "Royton South West"
+   ],
+   "postTown": "Greenfield",
+   "postcodes": 594
+  },
+  "OL4": {
+   "msoa": [
+    "Waterhead",
+    "Springhead & Grasscroft",
+    "Lees & Hey",
+    "Salem",
+    "Alexandra Park",
+    "Alt",
+    "New Delph, Dobcross & Austerlands",
+    "Moorside & Sholver",
+    "Clough & Shaw Side",
+    "Oldham Town North"
+   ],
+   "postTown": "Oldham",
+   "postcodes": 1046
+  },
+  "OL5": {
+   "msoa": [
+    "Mossley",
+    "Carrbrook & Micklehurst",
+    "Springhead & Grasscroft"
+   ],
+   "postTown": "Mossley",
+   "postcodes": 370
+  },
+  "OL6": {
+   "msoa": [
+    "Ashton Central",
+    "Ashton East",
+    "Hurst Cross",
+    "Smallshaw",
+    "Ashton North",
+    "Alt"
+   ],
+   "postTown": "Ashton-Under-Lyne",
+   "postcodes": 899
+  },
+  "OL7": {
+   "msoa": [
+    "Ashton Central",
+    "Ashton Waterloo",
+    "Ashton North",
+    "Smallshaw",
+    "Droylsden East"
+   ],
+   "postTown": "Ashton-Under-Lyne",
+   "postcodes": 420
+  },
+  "OL8": {
+   "msoa": [
+    "Hathershaw",
+    "Oldham Town South",
+    "Lime Side & Garden Suburb",
+    "Coppice",
+    "Failsworth East",
+    "Alt",
+    "Chadderton South East",
+    "Alexandra Park",
+    "Holt Lane End & Bardsley",
+    "Werneth"
+   ],
+   "postTown": "Oldham",
+   "postcodes": 847
+  },
+  "OL9": {
+   "msoa": [
+    "Chadderton Central",
+    "Chadderton South West",
+    "Busk",
+    "Middleton Junction",
+    "Werneth",
+    "Chadderton South East",
+    "Chadderton North",
+    "Failsworth East",
+    "Oldham Town North",
+    "Alexandra Park"
+   ],
+   "postTown": "Chadderton",
+   "postcodes": 972
+  },
+  "PR8": {
+   "msoa": [
+    "Birkdale",
+    "Southport Kew",
+    "Southport South",
+    "Ainsdale West",
+    "Ainsdale East",
+    "Hillside",
+    "Southport Waterfront",
+    "Meols Cop",
+    "Scarisbrick, Halsall & Haskayne",
+    "Formby West & Freshfield North"
+   ],
+   "postTown": "Southport",
+   "postcodes": 1255
+  },
+  "PR9": {
+   "msoa": [
+    "Southport Waterfront",
+    "Marshside",
+    "Hesketh Park",
+    "Crossens",
+    "Rufford & Banks",
+    "Southport High Park",
+    "Meols Cop",
+    "Scarisbrick, Halsall & Haskayne",
+    "Southport Kew"
+   ],
+   "postTown": "Southport",
+   "postcodes": 945
+  },
+  "S1": {
+   "msoa": [
+    "Cathedral & Kelham",
+    "Devonshire Quarter",
+    "Highfield & Lowfield",
+    "Park Hill & Wybourn",
+    "Sharrow"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 516
+  },
+  "S10": {
+   "msoa": [
+    "Fulwood & Lodge Moor",
+    "Sandygate & Crosspool",
+    "Endcliffe & Ranmoor",
+    "Broomhill & Lower Crookesmoor",
+    "Broomhall",
+    "Crookes",
+    "Springvale & Steel Bank",
+    "Devonshire Quarter",
+    "Walkley",
+    "Sharrow",
+    "Lower Stannington",
+    "Upperthorpe, Netherthorpe & Langsett"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 926
+  },
+  "S11": {
+   "msoa": [
+    "Ecclesall & Greystones",
+    "Brincliffe & Sharrow Vale",
+    "Bents Green & Millhouses",
+    "Sharrow",
+    "Broomhall",
+    "Dore & Whirlow",
+    "Nether Edge",
+    "Endcliffe & Ranmoor",
+    "Fulwood & Lodge Moor",
+    "Hathersage, Bradwell & Tideswell",
+    "Highfield & Lowfield"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 660
+  },
+  "S12": {
+   "msoa": [
+    "Birley",
+    "Intake",
+    "Gleadless",
+    "Charnock & Basegreen",
+    "Hackenthorpe",
+    "Beighton",
+    "Eckington West & Coal Aston",
+    "Richmond & Stradbroke",
+    "Arbourthorne",
+    "Herdings & Gleadless Valley",
+    "Mosborough & Halfway",
+    "Woodthorpe"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 654
+  },
+  "S13": {
+   "msoa": [
+    "Richmond & Stradbroke",
+    "Woodhouse West",
+    "Woodhouse Mill",
+    "Handsworth South",
+    "Littledale & Handsworth North",
+    "Intake",
+    "Catcliffe, Treeton & Waverley"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 590
+  },
+  "S14": {
+   "msoa": [
+    "Herdings & Gleadless Valley",
+    "Heeley & Newfield Green",
+    "Gleadless",
+    "Norton & Norton Lees"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 183
+  },
+  "S17": {
+   "msoa": [
+    "Dore & Whirlow",
+    "Totley & Bradway",
+    "Dronfield Woodhouse & Holmesfield",
+    "Beauchief",
+    "Bents Green & Millhouses"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 365
+  },
+  "S2": {
+   "msoa": [
+    "Park Hill & Wybourn",
+    "Woodthorpe",
+    "Norfolk Park",
+    "Highfield & Lowfield",
+    "Arbourthorne",
+    "Heeley & Newfield Green",
+    "Sharrow",
+    "Darnall",
+    "Meersbrook"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 982
+  },
+  "S20": {
+   "msoa": [
+    "Mosborough & Halfway",
+    "Westfield & Waterthorpe",
+    "Sothall",
+    "Beighton",
+    "Hackenthorpe",
+    "Catcliffe, Treeton & Waverley"
+   ],
+   "postTown": "Mosborough",
+   "postcodes": 632
+  },
+  "S25": {
+   "msoa": [
+    "Laughton & Throapham",
+    "Dinnington",
+    "Anston & Woodsetts",
+    "Thurcroft"
+   ],
+   "postTown": "Dinnington",
+   "postcodes": 501
+  },
+  "S26": {
+   "msoa": [
+    "Kiveton, Todwick & Harthill",
+    "Aston",
+    "Swallownest & Wales",
+    "Thurcroft",
+    "Catcliffe, Treeton & Waverley",
+    "Anston & Woodsetts"
+   ],
+   "postTown": "Kiveton Park",
+   "postcodes": 547
+  },
+  "S3": {
+   "msoa": [
+    "Cathedral & Kelham",
+    "Burngreave & Grimesthorpe",
+    "Upperthorpe, Netherthorpe & Langsett",
+    "Devonshire Quarter",
+    "Shirecliffe & Parkwood Springs",
+    "Highfield & Lowfield",
+    "Park Hill & Wybourn",
+    "Sharrow",
+    "Broomhill & Lower Crookesmoor",
+    "Crabtree & Fir Vale"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 532
+  },
+  "S35": {
+   "msoa": [
+    "Chapeltown",
+    "High Green & Burncross",
+    "Grenoside & Ecclesfield North",
+    "Oughtibridge & Bradfield",
+    "Ingbirchworth, Dunford Bridge & Thurgoland",
+    "Ecclesfield South",
+    "Parson Cross",
+    "Thorpe Hesley",
+    "Upperthorpe, Netherthorpe & Langsett",
+    "Deepcar & Bolsterstone"
+   ],
+   "postTown": "Chapeltown",
+   "postcodes": 890
+  },
+  "S36": {
+   "msoa": [
+    "Penistone",
+    "Stocksbridge",
+    "Deepcar & Bolsterstone",
+    "Ingbirchworth, Dunford Bridge & Thurgoland",
+    "Silkstone, Hoylandswaine & Cawthorne",
+    "Oughtibridge & Bradfield"
+   ],
+   "postTown": "Penistone",
+   "postcodes": 761
+  },
+  "S4": {
+   "msoa": [
+    "Burngreave & Grimesthorpe",
+    "Crabtree & Fir Vale",
+    "Brightside & Wincobank",
+    "Park Hill & Wybourn",
+    "Shirecliffe & Parkwood Springs",
+    "Firth Park"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 297
+  },
+  "S5": {
+   "msoa": [
+    "Southey Green East",
+    "Firth Park",
+    "Shiregreen South",
+    "Parson Cross",
+    "Sheffield Lane Top & Longley Park",
+    "Southey Green West",
+    "Shiregreen North",
+    "Ecclesfield South",
+    "Shirecliffe & Parkwood Springs",
+    "Crabtree & Fir Vale",
+    "Brightside & Wincobank",
+    "Burngreave & Grimesthorpe",
+    "Hillsborough, Owlerton & Wadsley Bridge",
+    "Grenoside & Ecclesfield North"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 1051
+  },
+  "S6": {
+   "msoa": [
+    "Upper Stannington & Loxley",
+    "Upperthorpe, Netherthorpe & Langsett",
+    "Hillsborough, Owlerton & Wadsley Bridge",
+    "Walkley",
+    "Malin Bridge & Wisewood",
+    "Lower Stannington",
+    "Wadsley & Marlcliffe",
+    "Oughtibridge & Bradfield",
+    "Parson Cross",
+    "Southey Green West",
+    "Broomhill & Lower Crookesmoor",
+    "Cathedral & Kelham",
+    "Grenoside & Ecclesfield North",
+    "Crookes",
+    "Fulwood & Lodge Moor",
+    "Sandygate & Crosspool"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 1236
+  },
+  "S60": {
+   "msoa": [
+    "Catcliffe, Treeton & Waverley",
+    "Rotherham South",
+    "Rotherham Central",
+    "Brinsworth",
+    "Wickersley South, Bramley South & Whiston",
+    "Masbrough & Bradgate",
+    "Herringthorpe",
+    "Rawmarsh South",
+    "Tinsley & Carbrook"
+   ],
+   "postTown": "Rotherham",
+   "postcodes": 1111
+  },
+  "S61": {
+   "msoa": [
+    "Greasborough",
+    "Kimberworth Park",
+    "Kimberworth",
+    "Thorpe Hesley",
+    "Masbrough & Bradgate",
+    "Brightside & Wincobank",
+    "Grenoside & Ecclesfield North",
+    "Rotherham Central"
+   ],
+   "postTown": "Rotherham",
+   "postcodes": 869
+  },
+  "S62": {
+   "msoa": [
+    "Rawmarsh South",
+    "Rawmarsh North West",
+    "Rawmarsh North East",
+    "Thorpe Hesley",
+    "Greasborough"
+   ],
+   "postTown": "Rawmarsh",
+   "postcodes": 620
+  },
+  "S63": {
+   "msoa": [
+    "Wath upon Dearne",
+    "Thurnscoe",
+    "Brampton & West Melton",
+    "Goldthorpe",
+    "Bolton-upon-Dearne",
+    "Thorpe Hesley",
+    "Darfield & Great Houghton"
+   ],
+   "postTown": "Wath Upon Dearne",
+   "postcodes": 1157
+  },
+  "S64": {
+   "msoa": [
+    "Mexborough West",
+    "Swinton North",
+    "Mexborough East",
+    "Swinton South",
+    "Rawmarsh North East",
+    "Cadeby, Hickleton & Hampole",
+    "Wath upon Dearne",
+    "Conisbrough North"
+   ],
+   "postTown": "Mexborough",
+   "postcodes": 679
+  },
+  "S65": {
+   "msoa": [
+    "Thrybergh & Hooton Roberts",
+    "Eastwood & East Dene",
+    "East Herringthorpe",
+    "Rotherham Central",
+    "Herringthorpe",
+    "Ravenfield & Bramley North",
+    "Wickersley North",
+    "Laughton & Throapham",
+    "Warmsworth, Braithwell & Stainton"
+   ],
+   "postTown": "Rotherham",
+   "postcodes": 830
+  },
+  "S66": {
+   "msoa": [
+    "Maltby East",
+    "Maltby West & Hellaby",
+    "Thurcroft",
+    "Wickersley South, Bramley South & Whiston",
+    "Wickersley North",
+    "Ravenfield & Bramley North",
+    "Warmsworth, Braithwell & Stainton",
+    "Laughton & Throapham",
+    "Herringthorpe",
+    "Rotherham Central"
+   ],
+   "postTown": "Maltby",
+   "postcodes": 1098
+  },
+  "S7": {
+   "msoa": [
+    "Nether Edge",
+    "Bents Green & Millhouses",
+    "Highfield & Lowfield",
+    "Brincliffe & Sharrow Vale",
+    "Sharrow",
+    "Ecclesall & Greystones",
+    "Woodseats",
+    "Beauchief"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 301
+  },
+  "S70": {
+   "msoa": [
+    "Barnsley Town & Park Road",
+    "Worsbrough",
+    "Worsbrough Common",
+    "Kendray",
+    "Birdwell",
+    "Wilthorpe & Barugh Green",
+    "Ardsley & Stairfoot",
+    "Honeywell",
+    "Lundwood"
+   ],
+   "postTown": "Barnsley",
+   "postcodes": 1289
+  },
+  "S71": {
+   "msoa": [
+    "Athersley",
+    "Monk Bretton",
+    "Royston West",
+    "Lundwood",
+    "Royston East & Carlton",
+    "Ardsley & Stairfoot",
+    "Honeywell",
+    "Barnsley Town & Park Road",
+    "Darfield & Great Houghton",
+    "Walton, Woolley & Bretton",
+    "Shafton & Upper Cudworth",
+    "Worsbrough Common"
+   ],
+   "postTown": "Barnsley",
+   "postcodes": 1222
+  },
+  "S72": {
+   "msoa": [
+    "Grimethorpe & Brierley",
+    "Cudworth Village",
+    "Shafton & Upper Cudworth",
+    "Darfield & Great Houghton",
+    "Ryhill & South Hiendley",
+    "Lundwood",
+    "South Kirkby",
+    "Hemsworth Town"
+   ],
+   "postTown": "Cudworth",
+   "postcodes": 716
+  },
+  "S73": {
+   "msoa": [
+    "Wombwell South",
+    "Wombwell North",
+    "Darfield & Great Houghton",
+    "Brampton & West Melton",
+    "Elsecar",
+    "Ardsley & Stairfoot"
+   ],
+   "postTown": "Wombwell",
+   "postcodes": 755
+  },
+  "S74": {
+   "msoa": [
+    "Hoyland",
+    "Elsecar",
+    "Birdwell",
+    "Thorpe Hesley"
+   ],
+   "postTown": "Hoyland",
+   "postcodes": 521
+  },
+  "S75": {
+   "msoa": [
+    "Wilthorpe & Barugh Green",
+    "Mapplewell & Staincross",
+    "Darton & Kexborough",
+    "Silkstone, Hoylandswaine & Cawthorne",
+    "Dodworth",
+    "Honeywell",
+    "Birdwell",
+    "Barnsley Town & Park Road",
+    "Ingbirchworth, Dunford Bridge & Thurgoland",
+    "Walton, Woolley & Bretton",
+    "Worsbrough"
+   ],
+   "postTown": "Barnsley",
+   "postcodes": 1344
+  },
+  "S8": {
+   "msoa": [
+    "Meersbrook",
+    "Norton & Norton Lees",
+    "Woodseats",
+    "Greenhill & Lowedges",
+    "Beauchief",
+    "Batemoor & Jordanthorpe",
+    "Highfield & Lowfield",
+    "Heeley & Newfield Green",
+    "Nether Edge",
+    "Totley & Bradway",
+    "Bents Green & Millhouses",
+    "Eckington West & Coal Aston",
+    "Herdings & Gleadless Valley"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 853
+  },
+  "S81": {
+   "msoa": [
+    "Carlton & Langold",
+    "Worksop Kilton",
+    "Worksop North",
+    "Worksop West, Shireoaks & Rhodesia",
+    "Harworth, Bircotes & Blyth",
+    "Anston & Woodsetts",
+    "Manton, Clumber & Elkesley",
+    "Laughton & Throapham",
+    "Dinnington",
+    "Maltby East",
+    "Ranskill, Everton & Gringley",
+    "Worksop Cheapside",
+    "Worksop Town & South"
+   ],
+   "postTown": "Woodsetts",
+   "postcodes": 1107
+  },
+  "S9": {
+   "msoa": [
+    "Darnall",
+    "Tinsley & Carbrook",
+    "Brightside & Wincobank",
+    "Littledale & Handsworth North",
+    "Burngreave & Grimesthorpe",
+    "Park Hill & Wybourn",
+    "Handsworth South",
+    "Woodthorpe",
+    "Shiregreen North"
+   ],
+   "postTown": "Sheffield",
+   "postcodes": 706
+  },
+  "SK1": {
+   "msoa": [
+    "Central Stockport, Portwood & Shaw Heath",
+    "Heaviley",
+    "Woodbank Park",
+    "Edgeley",
+    "South Reddish & Heaton Norris"
+   ],
+   "postTown": "Stockport",
+   "postcodes": 505
+  },
+  "SK14": {
+   "msoa": [
+    "Hyde South",
+    "Hyde North",
+    "Hattersley",
+    "Mottram, Hollingworth & Broadbottom",
+    "Cheetham Fold & Gee Cross",
+    "Godley",
+    "Romiley & Compstall",
+    "Stalybridge South",
+    "Dukinfield West",
+    "Hadfield East & Tintwistle",
+    "Woodley"
+   ],
+   "postTown": "Hyde",
+   "postcodes": 1305
+  },
+  "SK15": {
+   "msoa": [
+    "Stalybridge South",
+    "Stalybridge East & Swineshaw",
+    "Stalybridge North",
+    "Carrbrook & Micklehurst",
+    "Dukinfield East & Hough Hill",
+    "Ashton East",
+    "Mossley",
+    "Mottram, Hollingworth & Broadbottom"
+   ],
+   "postTown": "Stalybridge",
+   "postcodes": 670
+  },
+  "SK16": {
+   "msoa": [
+    "Dukinfield West",
+    "Newtonmoor",
+    "Dukinfield East & Hough Hill",
+    "Stalybridge South",
+    "Hyde South"
+   ],
+   "postTown": "Dukinfield",
+   "postcodes": 457
+  },
+  "SK2": {
+   "msoa": [
+    "Woodsmoor & Mile End",
+    "Offerton East & Bosden Farm",
+    "Offerton West",
+    "Heaviley",
+    "Davenport",
+    "Woodbank Park",
+    "Central Stockport, Portwood & Shaw Heath",
+    "Edgeley",
+    "Hazel Grove North"
+   ],
+   "postTown": "Stockport",
+   "postcodes": 591
+  },
+  "SK3": {
+   "msoa": [
+    "Edgeley",
+    "Cheadle Heath",
+    "Adswood",
+    "Davenport",
+    "Central Stockport, Portwood & Shaw Heath",
+    "Woodsmoor & Mile End",
+    "Cheadle East"
+   ],
+   "postTown": "Stockport",
+   "postcodes": 614
+  },
+  "SK4": {
+   "msoa": [
+    "Heaton Mersey",
+    "Heaton Chapel & Shaw Road",
+    "Norris Bank",
+    "Heaton Moor",
+    "South Reddish & Heaton Norris",
+    "Central Reddish",
+    "North Reddish",
+    "Central Stockport, Portwood & Shaw Heath",
+    "Edgeley",
+    "Burnage South"
+   ],
+   "postTown": "Stockport",
+   "postcodes": 821
+  },
+  "SK5": {
+   "msoa": [
+    "Brinnington",
+    "Reddish Vale View",
+    "Central Reddish",
+    "North Reddish",
+    "South Reddish & Heaton Norris",
+    "Central Stockport, Portwood & Shaw Heath",
+    "Edgeley",
+    "Dane Bank"
+   ],
+   "postTown": "Stockport",
+   "postcodes": 619
+  },
+  "SK6": {
+   "msoa": [
+    "Romiley & Compstall",
+    "Bredbury Green",
+    "Marple & Rose Hill",
+    "Bredbury",
+    "Marple & Hawk Green",
+    "Marple Bridge & Mellor",
+    "Woodley",
+    "High Lane",
+    "Disley & Lyme Park",
+    "Offerton East & Bosden Farm"
+   ],
+   "postTown": "Marple",
+   "postcodes": 1274
+  },
+  "SK7": {
+   "msoa": [
+    "Bramhall South & Woodford",
+    "Hazel Grove North",
+    "Bramhall North East",
+    "Bramhall North West",
+    "Hazel Grove West",
+    "Hazel Grove East & South",
+    "Bramhall West",
+    "High Lane",
+    "Woodsmoor & Mile End",
+    "Offerton East & Bosden Farm",
+    "Edgeley",
+    "Handforth & Dean Row"
+   ],
+   "postTown": "Hazel Grove",
+   "postcodes": 1037
+  },
+  "SK8": {
+   "msoa": [
+    "Gatley South & Cheadle West",
+    "Cheadle Hulme Orrishmere",
+    "Cheadle East",
+    "Cheadle Hulme South East",
+    "Gatley North",
+    "Heald Green West",
+    "Heald Green East",
+    "Cheadle Hulme West",
+    "Bramhall West",
+    "Adswood",
+    "Bramhall North West",
+    "Handforth & Dean Row"
+   ],
+   "postTown": "Cheadle Hulme",
+   "postcodes": 1330
+  },
+  "SR1": {
+   "msoa": [
+    "Sunderland Central & Deptford",
+    "Hendon & Docks",
+    "Millfield"
+   ],
+   "postTown": "Sunderland",
+   "postcodes": 290
+  },
+  "SR2": {
+   "msoa": [
+    "Ryhope",
+    "Hendon & Docks",
+    "Hill View & Tunstall",
+    "Grangetown",
+    "Sunderland Central & Deptford",
+    "Hall Farm",
+    "Barnes Park",
+    "Southwick",
+    "Millfield"
+   ],
+   "postTown": "Sunderland",
+   "postcodes": 863
+  },
+  "SR3": {
+   "msoa": [
+    "Thorney Close & Plains Farm",
+    "Herrington & Doxford",
+    "Silksworth",
+    "Lakeside & Farrington",
+    "Hall Farm",
+    "Hill View & Tunstall",
+    "Barnes Park",
+    "Southwick",
+    "Hetton-le-Hole North"
+   ],
+   "postTown": "Sunderland",
+   "postcodes": 929
+  },
+  "SR4": {
+   "msoa": [
+    "Pennywell and Grindon",
+    "South Hylton",
+    "Millfield",
+    "Pallion North",
+    "Pallion South & High Barnes",
+    "Barnes Park",
+    "Sunderland Central & Deptford",
+    "Newbottle & Penshaw",
+    "Hill View & Tunstall",
+    "Southwick"
+   ],
+   "postTown": "Sunderland",
+   "postcodes": 956
+  },
+  "SR5": {
+   "msoa": [
+    "Southwick",
+    "Town End Farm",
+    "Hylton Red House & Marley Pots",
+    "North Hylton",
+    "Fulwell",
+    "Sunderland Central & Deptford",
+    "Monkwearmouth",
+    "Springwell & Usworth",
+    "Columbia, Barmston & Teal Farm",
+    "Herrington & Doxford",
+    "West Boldon"
+   ],
+   "postTown": "Sunderland",
+   "postcodes": 1049
+  },
+  "SR6": {
+   "msoa": [
+    "Monkwearmouth",
+    "Seaburn",
+    "Whitburn & Marsden",
+    "Cleadon & East Boldon",
+    "Fulwell",
+    "West Boldon",
+    "Southwick"
+   ],
+   "postTown": "Sunderland",
+   "postcodes": 736
+  },
+  "TS1": {
+   "msoa": [
+    "Middlesbrough Central",
+    "Ayresome",
+    "Linthorpe West",
+    "Linthorpe East & Albert Park"
+   ],
+   "postTown": "Middlesbrough",
+   "postcodes": 611
+  },
+  "TS10": {
+   "msoa": [
+    "Redcar Town & Coatham",
+    "Redcar East",
+    "Dormanstown",
+    "Redcar Lakes South",
+    "Redcar Lakes North",
+    "Marske",
+    "Eston"
+   ],
+   "postTown": "Redcar",
+   "postcodes": 1104
+  },
+  "TS11": {
+   "msoa": [
+    "Marske",
+    "Dormanstown",
+    "Guisborough Outer & Upleatham",
+    "Redcar Lakes South"
+   ],
+   "postTown": "Marske By The Sea",
+   "postcodes": 360
+  },
+  "TS12": {
+   "msoa": [
+    "Skelton",
+    "Saltburn",
+    "Brotton",
+    "Boosbeck, Lingdale & Easington",
+    "Marske"
+   ],
+   "postTown": "Skelton In Cleveland",
+   "postcodes": 672
+  },
+  "TS13": {
+   "msoa": [
+    "Loftus & Skinningrove",
+    "Esk Valley & Runswick Coast",
+    "Boosbeck, Lingdale & Easington",
+    "Brotton"
+   ],
+   "postTown": "Loftus",
+   "postcodes": 396
+  },
+  "TS14": {
+   "msoa": [
+    "Guisborough North",
+    "Guisborough West",
+    "Guisborough Outer & Upleatham",
+    "Boosbeck, Lingdale & Easington",
+    "Skelton"
+   ],
+   "postTown": "Guisborough",
+   "postcodes": 516
+  },
+  "TS15": {
+   "msoa": [
+    "Yarm",
+    "Rudby & Ingleby",
+    "Brompton, Appleton & Thimbleby",
+    "Ingleby Barwick East & Hilton"
+   ],
+   "postTown": "Yarm",
+   "postcodes": 458
+  },
+  "TS16": {
+   "msoa": [
+    "Eaglescliffe",
+    "Billingham West, Stillington & Longnewton",
+    "Parkfield"
+   ],
+   "postTown": "Eaglescliffe",
+   "postcodes": 347
+  },
+  "TS17": {
+   "msoa": [
+    "Thornaby North",
+    "Thornaby Village",
+    "Thornaby Mandale",
+    "Ingleby Barwick East & Hilton",
+    "Ingleby Barwick West & South",
+    "Thornaby South",
+    "Ingleby Barwick North",
+    "Eastbourne & Newham Grange",
+    "Trimdon",
+    "Central Stockton & Portrack",
+    "Stainton & Hemlington",
+    "Newport & Maze Park"
+   ],
+   "postTown": "Ingleby Barwick",
+   "postcodes": 1031
+  },
+  "TS18": {
+   "msoa": [
+    "Central Stockton & Portrack",
+    "Parkfield",
+    "Hartburn",
+    "Fairfield",
+    "Eastbourne & Newham Grange",
+    "Elm Tree & Grangefield",
+    "Norton South",
+    "Billingham West, Stillington & Longnewton",
+    "Billingham South"
+   ],
+   "postTown": "Stockton-On-Tees",
+   "postcodes": 889
+  },
+  "TS19": {
+   "msoa": [
+    "Hardwick & Salters Lane",
+    "Roseworth",
+    "Eastbourne & Newham Grange",
+    "Elm Tree & Grangefield",
+    "Fairfield",
+    "Rimswell & Bishopsgarth",
+    "Central Stockton & Portrack"
+   ],
+   "postTown": "Stockton-On-Tees",
+   "postcodes": 1080
+  },
+  "TS20": {
+   "msoa": [
+    "Norton South",
+    "Norton High Street",
+    "Norton North",
+    "Central Stockton & Portrack",
+    "Eastbourne & Newham Grange",
+    "Billingham West, Stillington & Longnewton"
+   ],
+   "postTown": "Stockton-On-Tees",
+   "postcodes": 525
+  },
+  "TS21": {
+   "msoa": [
+    "Sedgefield & Bishop Middleham",
+    "Billingham West, Stillington & Longnewton",
+    "Trimdon & Fishburn",
+    "Faverdale, Heighington & Sadberge",
+    "Fairfield",
+    "Eastbourne & Newham Grange",
+    "Hardwick & Salters Lane",
+    "Rimswell & Bishopsgarth",
+    "Roseworth"
+   ],
+   "postTown": "Stockton-On-Tees",
+   "postcodes": 541
+  },
+  "TS22": {
+   "msoa": [
+    "Billingham West, Stillington & Longnewton",
+    "The Fens, Elwick & Hart",
+    "Billingham Central",
+    "Billingham North & Wolviston",
+    "Sedgefield & Bishop Middleham",
+    "Eastbourne & Newham Grange"
+   ],
+   "postTown": "Wynyard",
+   "postcodes": 337
+  },
+  "TS23": {
+   "msoa": [
+    "Billingham East & Haverton Hill",
+    "Billingham North & Wolviston",
+    "Billingham Central",
+    "Billingham South",
+    "Eastbourne & Newham Grange",
+    "The Fens, Elwick & Hart"
+   ],
+   "postTown": "Billingham",
+   "postcodes": 767
+  },
+  "TS24": {
+   "msoa": [
+    "Headland & West View",
+    "Old Town & Grange",
+    "Jesmond",
+    "Clavering",
+    "Harbour, Victoria & Wooler Road"
+   ],
+   "postTown": "Hartlepool",
+   "postcodes": 746
+  },
+  "TS25": {
+   "msoa": [
+    "Owton Manor",
+    "Rossmere & Mill",
+    "Rift House & Summerhill",
+    "Seaton Carew",
+    "Foggy Furze",
+    "The Fens, Elwick & Hart",
+    "Old Town & Grange",
+    "Harbour, Victoria & Wooler Road"
+   ],
+   "postTown": "Hartlepool",
+   "postcodes": 1061
+  },
+  "TS26": {
+   "msoa": [
+    "Harbour, Victoria & Wooler Road",
+    "Old Town & Grange",
+    "The Fens, Elwick & Hart",
+    "Jesmond",
+    "Clavering"
+   ],
+   "postTown": "Hartlepool",
+   "postcodes": 660
+  },
+  "TS27": {
+   "msoa": [
+    "Blackhall",
+    "The Fens, Elwick & Hart",
+    "Wingate & Castle Eden",
+    "Clavering",
+    "Sedgefield & Bishop Middleham"
+   ],
+   "postTown": "Hartlepool",
+   "postcodes": 388
+  },
+  "TS3": {
+   "msoa": [
+    "Thorntree",
+    "Berwick Hills",
+    "North Ormesby & Brambles",
+    "Park End",
+    "Middlesbrough Central",
+    "Ayresome",
+    "Ormesby"
+   ],
+   "postTown": "Middlesbrough",
+   "postcodes": 879
+  },
+  "TS4": {
+   "msoa": [
+    "Beechwood & James Cook",
+    "Park Vale",
+    "Middlesbrough Central",
+    "Easterside",
+    "Nunthorpe & Marton East"
+   ],
+   "postTown": "Middlesbrough",
+   "postcodes": 508
+  },
+  "TS5": {
+   "msoa": [
+    "Linthorpe West",
+    "Acklam",
+    "Newport & Maze Park",
+    "Linthorpe East & Albert Park",
+    "Trimdon",
+    "Kader",
+    "Park Vale",
+    "Ayresome"
+   ],
+   "postTown": "Middlesbrough",
+   "postcodes": 1024
+  },
+  "TS6": {
+   "msoa": [
+    "South Bank & Teesville",
+    "Eston",
+    "Grangetown",
+    "Bankfields",
+    "Dormanstown"
+   ],
+   "postTown": "Middlesbrough",
+   "postcodes": 912
+  },
+  "TS7": {
+   "msoa": [
+    "Nunthorpe & Marton East",
+    "Ormesby",
+    "Marton West",
+    "Easterside",
+    "Thorntree",
+    "Bankfields",
+    "Guisborough North",
+    "Rudby & Ingleby",
+    "Guisborough Outer & Upleatham"
+   ],
+   "postTown": "Marton In Cleveland",
+   "postcodes": 605
+  },
+  "TS8": {
+   "msoa": [
+    "Stainton & Hemlington",
+    "Coulby Newham",
+    "Marton West",
+    "Ingleby Barwick East & Hilton",
+    "Rudby & Ingleby",
+    "Easterside",
+    "Kader",
+    "Nunthorpe & Marton East"
+   ],
+   "postTown": "Coulby Newham",
+   "postcodes": 398
+  },
+  "WA10": {
+   "msoa": [
+    "Town Centre West",
+    "West Park",
+    "Windle & Denton's Green",
+    "Eccleston",
+    "Town Centre East & Fingerpost",
+    "Eccleston Park",
+    "Nutgrove & Lea Green",
+    "Thatto Heath",
+    "Moss Bank",
+    "Knowsley Village & Southdene"
+   ],
+   "postTown": "St Helens",
+   "postcodes": 1277
+  },
+  "WA11": {
+   "msoa": [
+    "Rainford",
+    "Moss Bank",
+    "Blackbrook",
+    "Haydock East",
+    "Haydock West",
+    "Garswood",
+    "Windle & Denton's Green",
+    "Broad Oak",
+    "Bickerstaffe & Newburgh",
+    "Eccleston"
+   ],
+   "postTown": "Haydock",
+   "postcodes": 1028
+  },
+  "WA12": {
+   "msoa": [
+    "Newton-le-Willows",
+    "Earlestown South",
+    "Earlestown North",
+    "Haydock East",
+    "Lowton",
+    "Winwick & Burtonwood"
+   ],
+   "postTown": "Newton-Le-Willows",
+   "postcodes": 647
+  },
+  "WA14": {
+   "msoa": [
+    "Altrincham West, Dunham & Warburton",
+    "Bowdon",
+    "Altrincham East",
+    "Broadheath & Firsway",
+    "West Timperley",
+    "Mobberley, Plumley & High Legh",
+    "Hale"
+   ],
+   "postTown": "Altrincham",
+   "postcodes": 1131
+  },
+  "WA15": {
+   "msoa": [
+    "Hale Barns",
+    "Hale",
+    "Timperley East",
+    "Timperley South",
+    "Altrincham East",
+    "Timperley North",
+    "Mobberley, Plumley & High Legh",
+    "Bowdon",
+    "West Timperley",
+    "Woodhouse Park & Airport",
+    "Baguley West & Brooklands"
+   ],
+   "postTown": "Timperley",
+   "postcodes": 1186
+  },
+  "WA3": {
+   "msoa": [
+    "Lowton",
+    "Culcheth West & Croft",
+    "Golborne",
+    "Culcheth East & Hollins Green",
+    "Lowton Common",
+    "Locking Stumps",
+    "Oakwood & Gorse Covert",
+    "Ashton-in-Makerfield East",
+    "Lower Irlam & Cadishead",
+    "Astley, Blackmoor & Mosley Common",
+    "Woolston",
+    "Abram & Bickershaw",
+    "Earlestown South",
+    "Haydock East",
+    "Newton-le-Willows"
+   ],
+   "postTown": "Lowton",
+   "postcodes": 1518
+  },
+  "WA8": {
+   "msoa": [
+    "Widnes Riverside",
+    "Farnworth",
+    "Upton Rocks",
+    "Halton View",
+    "Victoria Park",
+    "Hale Bank",
+    "Ditton",
+    "Hough Green",
+    "Halsnead, Cronton & Halewood East",
+    "Bold & Clock Face",
+    "Penketh & Cuerdley"
+   ],
+   "postTown": "Widnes",
+   "postcodes": 1591
+  },
+  "WA9": {
+   "msoa": [
+    "Bold & Clock Face",
+    "Sutton Leach",
+    "Town Centre East & Fingerpost",
+    "Thatto Heath",
+    "Derbyshire Hill",
+    "Nutgrove & Lea Green",
+    "Broad Oak",
+    "Eccleston Park",
+    "Winwick & Burtonwood"
+   ],
+   "postTown": "St Helens",
+   "postcodes": 1307
+  },
+  "WF1": {
+   "msoa": [
+    "Wakefield Central",
+    "Agbrigg & Belle Isle",
+    "Outwood West",
+    "Wakefield St John's",
+    "Eastmoor",
+    "Outwood East",
+    "Stanley, Moorhouse & Bottomboat",
+    "Normanton West",
+    "Wrenthorpe & Kirkhamgate",
+    "Crofton",
+    "Thornes"
+   ],
+   "postTown": "Wakefield",
+   "postcodes": 1255
+  },
+  "WF10": {
+   "msoa": [
+    "Castleford Town",
+    "Castleford West",
+    "Glasshoughton",
+    "Airedale",
+    "Ferry Fryston",
+    "Kippax East, Micklefield & Allerton Bywater",
+    "Streethouse & Sharlston Common",
+    "Methley",
+    "Normanton East",
+    "Altofts"
+   ],
+   "postTown": "Castleford",
+   "postcodes": 1254
+  },
+  "WF11": {
+   "msoa": [
+    "Ferrybridge & West Knottingley",
+    "Knottingley",
+    "Hambleton, Monk Fryston & Byram",
+    "Eggborough, Kellington & Smeaton",
+    "Ackworth & Darrington",
+    "Pontefract North West"
+   ],
+   "postTown": "Knottingley",
+   "postcodes": 544
+  },
+  "WF12": {
+   "msoa": [
+    "Earlsheaton & Chickenley",
+    "Dewsbury Savile Town & Thornhill Lees",
+    "Thornhill",
+    "Shaw Cross & Hanging Heaton",
+    "Ravensthorpe",
+    "Upper Batley & Soothill",
+    "Dewsbury Central & Westborough",
+    "Dewsbury Moor Lower & Westtown",
+    "Batley Carr & Mount Pleasant",
+    "Morley Bruntcliffe & Woodkirk",
+    "Ossett West",
+    "Lepton, Grange Moor & Flockton",
+    "Netherton & Middlestown",
+    "Ossett North"
+   ],
+   "postTown": "Dewsbury",
+   "postcodes": 816
+  },
+  "WF13": {
+   "msoa": [
+    "Dewsbury Central & Westborough",
+    "Dewsbury Moor Lower & Westtown",
+    "Ravensthorpe",
+    "Dewsbury Moor Upper",
+    "Staincliffe & Healey",
+    "Dewsbury Savile Town & Thornhill Lees",
+    "Heckmondwike North",
+    "Earlsheaton & Chickenley",
+    "Batley Carr & Mount Pleasant",
+    "Shaw Cross & Hanging Heaton"
+   ],
+   "postTown": "Dewsbury",
+   "postcodes": 739
+  },
+  "WF14": {
+   "msoa": [
+    "Mirfield Central & Hopton",
+    "Northorpe & Crossley",
+    "Battyeford",
+    "Heckmondwike Town, Norristhorpe & Roberttown",
+    "Kirkheaton",
+    "Lepton, Grange Moor & Flockton",
+    "Dewsbury Savile Town & Thornhill Lees",
+    "Clifton & Bailiff Bridge",
+    "Ravensthorpe"
+   ],
+   "postTown": "Mirfield",
+   "postcodes": 584
+  },
+  "WF15": {
+   "msoa": [
+    "Liversedge, Littletown & Millbridge",
+    "Heckmondwike Town, Norristhorpe & Roberttown",
+    "Hightown & Hartshead Moor",
+    "Cleckheaton",
+    "Shaw Cross & Hanging Heaton"
+   ],
+   "postTown": "Liversedge",
+   "postcodes": 511
+  },
+  "WF16": {
+   "msoa": [
+    "Heckmondwike North",
+    "Heckmondwike Town, Norristhorpe & Roberttown",
+    "Liversedge, Littletown & Millbridge",
+    "Staincliffe & Healey",
+    "Shaw Cross & Hanging Heaton",
+    "Birstall",
+    "Wilton Park, Carlinghow & Brookroyd"
+   ],
+   "postTown": "Heckmondwike",
+   "postcodes": 360
+  },
+  "WF17": {
+   "msoa": [
+    "Birstall",
+    "Batley Central",
+    "Wilton Park, Carlinghow & Brookroyd",
+    "Batley Carr & Mount Pleasant",
+    "Upper Batley & Soothill",
+    "Staincliffe & Healey",
+    "Shaw Cross & Hanging Heaton",
+    "Dewsbury Moor Upper",
+    "Gomersal",
+    "Morley Bruntcliffe & Woodkirk",
+    "Birkenshaw"
+   ],
+   "postTown": "Batley",
+   "postcodes": 1112
+  },
+  "WF2": {
+   "msoa": [
+    "Alverthorpe & Flanshaw",
+    "Sandal",
+    "Thornes",
+    "Lupset",
+    "Wrenthorpe & Kirkhamgate",
+    "Walton, Woolley & Bretton",
+    "Kettlethorpe & Chapelthorpe",
+    "Wakefield St John's",
+    "Agbrigg & Belle Isle",
+    "Durkar & Crigglestone",
+    "Wakefield Central",
+    "Tingley West & West Ardsley",
+    "Outwood West"
+   ],
+   "postTown": "Wakefield",
+   "postcodes": 1329
+  },
+  "WF3": {
+   "msoa": [
+    "Tingley East & East Ardsley",
+    "Stanley, Moorhouse & Bottomboat",
+    "Robin Hood, Lofthouse & Middleton Lane",
+    "Tingley West & West Ardsley",
+    "Outwood East",
+    "Morley Bruntcliffe & Woodkirk",
+    "Rothwell Outer",
+    "Outwood West",
+    "Morley East",
+    "Wakefield Central",
+    "Morley Central",
+    "Upper Batley & Soothill"
+   ],
+   "postTown": "East Ardsley",
+   "postcodes": 960
+  },
+  "WF4": {
+   "msoa": [
+    "Horbury",
+    "Netherton & Middlestown",
+    "Crofton",
+    "Durkar & Crigglestone",
+    "Ossett South East & Horbury Bridge",
+    "Ryhill & South Hiendley",
+    "Walton, Woolley & Bretton",
+    "Lepton, Grange Moor & Flockton",
+    "Streethouse & Sharlston Common",
+    "Kettlethorpe & Chapelthorpe",
+    "Kinsley & Fitzwilliam",
+    "Ackworth & Darrington",
+    "Kirkburton & Farnley Tyas",
+    "Emley & Skelmanthorpe",
+    "Wakefield Central",
+    "Silkstone, Hoylandswaine & Cawthorne",
+    "Thornhill"
+   ],
+   "postTown": "Horbury",
+   "postcodes": 1266
+  },
+  "WF5": {
+   "msoa": [
+    "Ossett North",
+    "Ossett West",
+    "Ossett South East & Horbury Bridge",
+    "Alverthorpe & Flanshaw",
+    "Lupset",
+    "Earlsheaton & Chickenley"
+   ],
+   "postTown": "Ossett",
+   "postcodes": 664
+  },
+  "WF6": {
+   "msoa": [
+    "Normanton West",
+    "Normanton East",
+    "Altofts",
+    "Streethouse & Sharlston Common",
+    "Stanley, Moorhouse & Bottomboat"
+   ],
+   "postTown": "Normanton",
+   "postcodes": 582
+  },
+  "WF7": {
+   "msoa": [
+    "Ackworth & Darrington",
+    "Featherstone",
+    "Streethouse & Sharlston Common",
+    "Pontefract North West",
+    "Crofton",
+    "Hemsworth Town",
+    "Kinsley & Fitzwilliam"
+   ],
+   "postTown": "Featherstone",
+   "postcodes": 572
+  },
+  "WF8": {
+   "msoa": [
+    "Pontefract North West",
+    "Pontefract North East",
+    "Pontefract South West",
+    "Pontefract South East",
+    "Ackworth & Darrington",
+    "Eggborough, Kellington & Smeaton",
+    "Upton",
+    "Askern, Campsall & Norton",
+    "Airedale"
+   ],
+   "postTown": "Pontefract",
+   "postcodes": 1026
+  },
+  "WF9": {
+   "msoa": [
+    "Hemsworth Town",
+    "South Elmsall",
+    "South Kirkby",
+    "Kinsley & Fitzwilliam",
+    "Moorthorpe",
+    "Upton",
+    "Ackworth & Darrington",
+    "Ryhill & South Hiendley"
+   ],
+   "postTown": "South Elmsall",
+   "postcodes": 1151
+  },
+  "WN1": {
+   "msoa": [
+    "Wigan Marylebone & Bottling Wood",
+    "Wigan Central",
+    "Wigan East",
+    "Aspull & Red Rock",
+    "New Springs",
+    "Standish South",
+    "Ince-in-Makerfield",
+    "Blackrod & Butterwick Fields"
+   ],
+   "postTown": "Wigan",
+   "postcodes": 692
+  },
+  "WN2": {
+   "msoa": [
+    "Hindley West",
+    "Platt Bridge & Spring View",
+    "Hindley East",
+    "Abram & Bickershaw",
+    "Ince-in-Makerfield",
+    "Hindley Green",
+    "New Springs",
+    "Aspull & Red Rock",
+    "Wigan East",
+    "Leigh West",
+    "Horwich East",
+    "Wigan Central",
+    "Westhoughton Daisy Hill"
+   ],
+   "postTown": "Hindley",
+   "postcodes": 1275
+  },
+  "WN3": {
+   "msoa": [
+    "Winstanley",
+    "Wigan South",
+    "Worsley Mesnes & Hawkley",
+    "Ince-in-Makerfield",
+    "Platt Bridge & Spring View",
+    "Wigan Central"
+   ],
+   "postTown": "Wigan",
+   "postcodes": 718
+  },
+  "WN4": {
+   "msoa": [
+    "Ashton-in-Makerfield North",
+    "Ashton-in-Makerfield West",
+    "Ashton-in-Makerfield East",
+    "Garswood",
+    "Orrell & Longshaw",
+    "Haydock East",
+    "Wigan Central",
+    "Winstanley"
+   ],
+   "postTown": "Ashton In Makerfield",
+   "postcodes": 604
+  },
+  "WN5": {
+   "msoa": [
+    "Orrell & Longshaw",
+    "Pemberton South",
+    "Laithwaite & Marsh Green",
+    "Billinge",
+    "Pemberton North",
+    "Wigan South",
+    "Upholland",
+    "Winstanley"
+   ],
+   "postTown": "Billinge",
+   "postcodes": 936
+  },
+  "WN6": {
+   "msoa": [
+    "Standish South",
+    "Shevington",
+    "Beech Hill",
+    "Standish North",
+    "Wigan Central",
+    "Parbold, Appley Bridge & Wrightington",
+    "Aspull & Red Rock",
+    "Wigan South",
+    "Eccleston & Charnock Richard",
+    "Laithwaite & Marsh Green",
+    "Pemberton North"
+   ],
+   "postTown": "Standish",
+   "postcodes": 932
+  },
+  "WN7": {
+   "msoa": [
+    "Leigh Central",
+    "Leigh East & Higher Folds",
+    "Leigh West",
+    "Leigh North",
+    "Leigh South East",
+    "Leigh South",
+    "Lowton Common",
+    "Hindley Green",
+    "Abram & Bickershaw",
+    "Astley, Blackmoor & Mosley Common"
+   ],
+   "postTown": "Leigh",
+   "postcodes": 1217
+  },
+  "WS1": {
+   "msoa": [
+    "Walsall Central",
+    "Palfrey",
+    "Walsall East",
+    "Walsall North East",
+    "The Delves",
+    "Walsall South East",
+    "Pleck",
+    "Walsall West"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 622
+  },
+  "WS10": {
+   "msoa": [
+    "Wednesbury",
+    "Wood Green & Old Park",
+    "Darlaston East",
+    "Darlaston Central",
+    "Woods & Mesty Croft",
+    "Darlaston West",
+    "Friar Park",
+    "Wednesbury South",
+    "Princes End & Willingsworth",
+    "Yew Tree & Tamebridge"
+   ],
+   "postTown": "Wednesbury",
+   "postcodes": 933
+  },
+  "WS2": {
+   "msoa": [
+    "Walsall West",
+    "Pleck",
+    "Leamore",
+    "Bentley",
+    "Walsall Ryecroft",
+    "Bloxwich South",
+    "Walsall Central",
+    "Darlaston East",
+    "Willenhall Town",
+    "Blakenall South",
+    "Bloxwich Central & North",
+    "Short Heath East",
+    "Walsall North East"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 739
+  },
+  "WS3": {
+   "msoa": [
+    "Bloxwich Central & North",
+    "Little Bloxwich",
+    "Bloxwich North West",
+    "Blakenall North",
+    "Blakenall South",
+    "Pelsall North",
+    "Pelsall South",
+    "Walsall Ryecroft",
+    "Bloxwich South",
+    "Norton Canes",
+    "Featherstone East & Essington",
+    "Brownhills West & Clayhanger",
+    "Walsall Central"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 1003
+  },
+  "WS4": {
+   "msoa": [
+    "Shelfield",
+    "Rushall",
+    "Walsall North East",
+    "Pelsall South",
+    "Aldridge South"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 337
+  },
+  "WS5": {
+   "msoa": [
+    "Yew Tree & Tamebridge",
+    "Walsall South East",
+    "The Delves",
+    "Pheasey & Sutton Road",
+    "Walsall East",
+    "Palfrey",
+    "Walsall Central"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 377
+  },
+  "WS8": {
+   "msoa": [
+    "Brownhills West & Clayhanger",
+    "Brownhills",
+    "Walsall Wood",
+    "Burntwood Chase Terrace & Hammerwich",
+    "Burntwood West",
+    "Aldridge North",
+    "Norton Canes"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 323
+  },
+  "WS9": {
+   "msoa": [
+    "Aldridge Central",
+    "Aldridge South",
+    "Aldridge North",
+    "Walsall Wood",
+    "Shenstone, Stonnall & Little Aston",
+    "Rushall",
+    "Pheasey & Sutton Road",
+    "Streetly North",
+    "Burntwood Chase Terrace & Hammerwich"
+   ],
+   "postTown": "Walsall",
+   "postcodes": 629
+  },
+  "WV1": {
+   "msoa": [
+    "East Park",
+    "Wolverhampton Central",
+    "Heath Town",
+    "West Park",
+    "Waterloo Road",
+    "Blakenhall",
+    "Bilston North East",
+    "Whitmore Reans & Dunstall Hill"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 672
+  },
+  "WV10": {
+   "msoa": [
+    "Bushbury",
+    "Oxley Park",
+    "Featherstone West, Coven & Shareshill",
+    "Heath Town",
+    "Park Lane",
+    "Low Hill",
+    "Bushbury Hill",
+    "Fordhouses",
+    "Featherstone East & Essington",
+    "Wood End",
+    "Wolverhampton Central",
+    "Huntington",
+    "Whitmore Reans & Dunstall Hill",
+    "Wednesfield Town",
+    "Penkridge & Acton Trussell"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 1161
+  },
+  "WV11": {
+   "msoa": [
+    "Wednesfield Town",
+    "Ashmore Park",
+    "Wednesfield North East",
+    "Wood End",
+    "Featherstone East & Essington",
+    "Heath Town",
+    "Bushbury Hill",
+    "Ashmore",
+    "Huntington",
+    "Featherstone West, Coven & Shareshill",
+    "New Invention",
+    "Willenhall Park"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 683
+  },
+  "WV12": {
+   "msoa": [
+    "Short Heath West",
+    "New Invention",
+    "Short Heath East",
+    "Ashmore",
+    "Wednesfield North East",
+    "Wednesfield Town",
+    "Ashmore Park",
+    "Bloxwich North West"
+   ],
+   "postTown": "Willenhall",
+   "postcodes": 502
+  },
+  "WV13": {
+   "msoa": [
+    "Willenhall Park",
+    "Willenhall Town",
+    "Bilston North West",
+    "Bilston North East",
+    "Wednesfield Town",
+    "Short Heath West",
+    "Heath Town"
+   ],
+   "postTown": "Willenhall",
+   "postcodes": 507
+  },
+  "WV14": {
+   "msoa": [
+    "Bilston Lunt & Loxdale",
+    "Bradley",
+    "Coseley Wallbrook",
+    "West Coseley",
+    "Ettingshall",
+    "Woodcross",
+    "Bilston North East",
+    "Darlaston West",
+    "Bilston North West",
+    "Princes End & Willingsworth",
+    "Sedgley East"
+   ],
+   "postTown": "Bilston",
+   "postcodes": 1038
+  },
+  "WV2": {
+   "msoa": [
+    "Blakenhall",
+    "Ettingshall",
+    "Wolverhampton Central",
+    "Goldthorn Park",
+    "East Park",
+    "Heath Town"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 456
+  },
+  "WV3": {
+   "msoa": [
+    "Compton & Merryhill North",
+    "Wolverhampton Central",
+    "Bradmore",
+    "Castlecroft",
+    "West Park",
+    "Merryhill South",
+    "Blakenhall",
+    "Heath Town",
+    "Goldthorn Park",
+    "Wombourne Outer, Swindon & Seisdon"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 615
+  },
+  "WV4": {
+   "msoa": [
+    "Upper Penn",
+    "Goldthorn Park",
+    "Merryhill South",
+    "Ettingshall Park",
+    "Bradmore",
+    "Ettingshall",
+    "Wombourne Outer, Swindon & Seisdon",
+    "Blakenhall",
+    "Wombourne Inner",
+    "Woodcross",
+    "Compton & Merryhill North",
+    "Sedgley West",
+    "Heath Town",
+    "Sedgley East"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 740
+  },
+  "WV6": {
+   "msoa": [
+    "Perton & Pattingham",
+    "Tettenhall South",
+    "Tettenhall North",
+    "Whitmore Reans & Dunstall Hill",
+    "Castlecroft",
+    "West Park",
+    "Waterloo Road",
+    "Bilbrook",
+    "Alveley, Claverley & Worfield",
+    "Wombourne Outer, Swindon & Seisdon",
+    "Codsall",
+    "Compton & Merryhill North",
+    "Cosford & Albrighton"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 1046
+  },
+  "WV9": {
+   "msoa": [
+    "Featherstone West, Coven & Shareshill",
+    "Pendeford",
+    "Fordhouses",
+    "Brewood & Wheaton Aston",
+    "Bilbrook",
+    "Heath Town",
+    "Oxley Park",
+    "Tettenhall North"
+   ],
+   "postTown": "Wolverhampton",
+   "postcodes": 188
+  }
+ },
+ "generatedBy": "scripts/build_city_neighbourhoods.py",
+ "licence": "Open Government Licence v3.0",
+ "msoaNameSource": "House of Commons Library MSOA Names v2.1 (2021 MSOAs)",
+ "postcodeSource": "ONS National Statistics Postcode Lookup (live postcodes)",
+ "purpose": "evidence for --check-names; NOT a scoring input"
+}

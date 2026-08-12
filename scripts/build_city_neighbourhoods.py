@@ -133,20 +133,44 @@ C_PRICE, C_DATE, C_POSTCODE, C_LOCALITY, C_TOWN, C_DISTRICT = 1, 2, 3, 10, 11, 1
 # Didsbury and Withington" is a checkable fact about postal geography; it does
 # not enter any score, cannot move a ranking, and the outward code stays
 # visible beside it so the label can never claim more precision than the data.
-# A district is left as its post town where no single area name is widely
-# recognised - most of the Bolton, Wigan, Oldham and Rochdale ones - because
-# inventing a plausible-sounding name is the same failure as inventing a
-# plausible-sounding number.
-# Keyed by CITY. Only Greater Manchester has any, because GM was the only
-# generated city when these were written. The other six are left to their Royal
-# Mail locality: inventing a plausible-sounding area name is the same failure as
-# inventing a plausible-sounding number, so an empty dict is the honest default
-# rather than a gap waiting to be filled.
+#
+# Keyed by CITY, and the key must be one the builder actually uses - see the
+# UNKNOWN CITY KEYS guard in `check_names()`, which exists because four of
+# these dicts were first written under keys nobody looks up.
+#
+# HOW THESE ARE WRITTEN, AND WHY THEY ARE NOT JUST RECALLED (2026-08-12). Until
+# today only Greater Manchester had any, and 273 of 503 districts across the
+# other eight cities therefore rendered under a repeated post town - Birmingham
+# x35, Liverpool x29, Leeds x16, Sheffield x15, Bristol x16. Nothing shipped was
+# false, since the outward code is always visible beside the label, but a ranked
+# list of thirty-five "Birmingham" rows tells a user nothing.
+#
+# Every name below is drawn from that district's OWN published MSOA names and
+# checked back against them by `--check-names`. That matters more than it
+# sounds: a name typed from memory is an unverifiable claim, and this file's
+# whole argument for allowing a curated LABEL where it forbids a curated NUMBER
+# is that the label is a checkable fact about postal geography. So it is now
+# checked. See `check_names()` for the rule and `data/district-msoa-names.json`
+# for the evidence.
+#
+# DERIVING the name outright was tried first and REJECTED ON MEASUREMENT, not
+# taste. A postcode district spans 4-13 MSOAs, so the modal MSOA name carries
+# only 15-33% of the district and names a sub-area: BS8 came out "Clifton East",
+# SK5 came out "Brinnington" when the district is Reddish, and a shared-token
+# variant produced "Five" for B16 (from Five Ways), "Quays" for M50, and
+# "Mossley" for BOTH L17 and L18 - recreating the duplicate it was meant to
+# fix. Scored against the 26 hand-written Manchester names as an answer key,
+# every derived variant disagreed with most of them.
+#
+# A district is still left as its post town where no single area name is widely
+# recognised - the three Darlington districts, B4, NE26, NE29, NE33, L20, B66,
+# B70, BA1/BA2 - because inventing a plausible-sounding name is the same
+# failure as inventing a plausible-sounding number.
 NAME_OVERRIDES_BY_CITY = {}
 NAME_OVERRIDES_BY_CITY['manchester'] = {
     'M1': 'Manchester City Centre',
     'M3': 'Salford Central',
-    'M4': 'Ancoats & Northern Quarter',
+    'M4': 'Ancoats & New Islington',
     'M5': 'Ordsall & Seedley',
     'M6': 'Pendleton',
     'M7': 'Broughton',
@@ -154,22 +178,316 @@ NAME_OVERRIDES_BY_CITY['manchester'] = {
     'M9': 'Blackley & Harpurhey',
     'M11': 'Openshaw & Clayton',
     'M12': 'Ardwick & Longsight',
-    'M13': 'Chorlton-on-Medlock',
+    'M13': 'Ardwick & Victoria Park',
     'M14': 'Fallowfield & Rusholme',
     'M15': 'Hulme',
     'M16': 'Whalley Range & Old Trafford',
     'M18': 'Gorton',
     'M19': 'Levenshulme & Burnage',
     'M20': 'Didsbury & Withington',
-    'M21': 'Chorlton-cum-Hardy',
+    'M21': 'Chorlton',
     'M22': 'Wythenshawe North',
     'M23': 'Wythenshawe South',
     'M40': 'Newton Heath & Moston',
     'M50': 'Salford Quays',
     'SK1': 'Stockport Town Centre',
     'SK3': 'Edgeley & Cheadle Heath',
-    'SK4': 'The Heatons',
+    'SK4': 'Heaton Moor & Heaton Mersey',
     'SK5': 'Reddish',
+    # The sixteen Greater Manchester districts still rendering under a repeated
+    # post town when the other eight cities were done (2026-08-12).
+    'BL1': 'Bolton Town Centre',
+    'BL2': 'Harwood & Breightmet',
+    'BL3': 'Great Lever & Daubhill',
+    'BL8': 'Tottington & Walshaw',
+    'BL9': 'Bury Town Centre',
+    'OL1': 'Oldham Town North',
+    'OL4': 'Lees & Springhead',
+    'OL6': 'Ashton Central',
+    'OL7': 'Ashton Waterloo',
+    'OL8': 'Hathershaw & Garden Suburb',
+    'OL11': 'Castleton & Kirkholt',
+    'OL12': 'Healey & Shawclough',
+    'OL16': 'Kingsway & Milnrow',
+    'WN1': 'Wigan Central',
+    'WN3': 'Winstanley & Worsley Mesnes',
+    'WN5': 'Pemberton & Orrell',
+}
+NAME_OVERRIDES_BY_CITY['westmidlands'] = {
+    # Birmingham. B4 is left as the post town: it straddles the Gun Quarter,
+    # Aston University and Dartmouth Circus with no one recognised name.
+    'B1': 'Ladywood',
+    'B3': 'Birmingham City Centre',
+    'B5': 'Digbeth & Park Central',
+    'B6': 'Aston & Birchfield',
+    'B7': 'Nechells',
+    'B8': 'Saltley & Washwood Heath',
+    'B9': 'Bordesley Green',
+    'B11': 'Sparkhill & Sparkbrook',
+    'B12': 'Balsall Heath',
+    'B13': 'Moseley',
+    'B14': 'Kings Heath & Maypole',
+    'B15': 'Edgbaston',
+    'B16': 'Rotton Park & Summerfield',
+    'B17': 'Harborne',
+    'B18': 'Winson Green & Hockley',
+    'B19': 'Lozells',
+    'B20': 'Handsworth Wood',
+    'B23': 'Erdington',
+    'B24': 'Gravelly Hill & Pype Hayes',
+    'B25': 'Yardley',
+    'B26': 'Sheldon',
+    'B28': 'Hall Green',
+    'B29': 'Selly Oak',
+    'B30': 'Bournville & Cotteridge',
+    'B31': 'Northfield & Longbridge',
+    'B33': 'Stechford & Kitts Green',
+    'B34': 'Shard End',
+    'B35': 'Castle Vale',
+    'B36': 'Castle Bromwich',
+    'B37': 'Chelmsley Wood',
+    'B38': "King's Norton",
+    'B42': 'Perry Barr',
+    'B43': 'Great Barr',
+    'B44': 'Kingstanding',
+    # Black Country and the wider county. B66 and B70 keep their post towns:
+    # B66 IS Smethwick, and B70 is West Bromwich's own centre.
+    'B62': 'Quinton & Hurst Green',
+    'B63': 'Halesowen Town',
+    'B67': 'Bearwood',
+    'B71': 'Stone Cross & Charlemont',
+    'B72': 'Wylde Green',
+    'B73': 'New Oscott',
+    'B74': 'Streetly',
+    'B75': 'Four Oaks & Little Sutton',
+    'B76': 'Walmley & Minworth',
+    'B91': 'Solihull Town Centre',
+    'B92': 'Olton & Elmdon',
+    'CV1': 'Coventry City Centre',
+    'CV2': 'Wood End & Walsgrave',
+    'CV3': 'Binley & Willenhall',
+    'CV4': 'Canley & Tile Hill',
+    'CV5': 'Earlsdon & Allesley',
+    'CV6': 'Foleshill & Holbrooks',
+    'DY1': 'Dudley Priory & Wrens Nest',
+    'DY2': 'Netherton & Kates Hill',
+    'DY3': 'Sedgley & Gornal',
+    'DY8': 'Stourbridge Town & Wordsley',
+    'DY9': 'Lye & Hagley',
+    'WS1': 'Walsall Central',
+    'WS2': 'Pleck & Bentley',
+    'WS3': 'Bloxwich',
+    'WS4': 'Rushall & Shelfield',
+    'WS5': 'Yew Tree & The Delves',
+    'WS8': 'Brownhills',
+    'WS9': 'Aldridge',
+    'WV1': 'Wolverhampton City Centre',
+    'WV2': 'Blakenhall & Ettingshall',
+    'WV3': 'Bradmore & Compton',
+    'WV4': 'Penn & Goldthorn Park',
+    'WV6': 'Tettenhall',
+    'WV9': 'Pendeford & Coven',
+    'WV10': 'Bushbury & Oxley',
+    'WV11': 'Wednesfield',
+    'WV12': 'Short Heath & New Invention',
+    'WV13': 'Willenhall Town',
+}
+NAME_OVERRIDES_BY_CITY['merseyside'] = {
+    # L20 keeps its post town: L20 IS Bootle, and L30 next door is Netherton.
+    'CH41': 'Birkenhead Central',
+    'CH42': 'Tranmere & Egerton Park',
+    'CH44': 'Seacombe & Liscard',
+    'CH45': 'New Brighton & Wallasey Village',
+    'CH46': 'Moreton & Leasowe',
+    # Not "Hoylake & West Kirby": CH48 IS West Kirby, and CH47's MSOA list
+    # reaches over the boundary. Corroboration cannot catch a name that is
+    # merely the NEIGHBOUR's, so read the sibling districts before writing one.
+    'CH47': 'Hoylake & Meols',
+    'CH49': 'Upton & Greasby',
+    'CH60': 'Heswall',
+    'CH61': 'Pensby & Thingwall',
+    'CH62': 'Bromborough & Eastham',
+    'CH63': 'Bebington',
+    'L1': 'Liverpool City Centre',
+    'L2': 'Pier Head',
+    'L3': 'Vauxhall',
+    'L4': 'Walton & Anfield',
+    'L5': 'Kirkdale & Everton',
+    'L6': 'Kensington & Fairfield',
+    'L7': 'Edge Hill',
+    'L8': 'Toxteth & Dingle',
+    'L9': 'Walton Vale & Orrell Park',
+    'L10': 'Fazakerley & Aintree',
+    'L11': 'Norris Green & Croxteth',
+    'L12': 'Croxteth Park & Sandfield Park',
+    'L13': 'Tuebrook & Stoneycroft',
+    'L14': 'Dovecot & Knotty Ash',
+    'L15': 'Wavertree',
+    'L16': 'Childwall',
+    'L17': 'Sefton Park & Otterspool',
+    'L18': 'Mossley Hill & Calderstones',
+    'L19': 'Garston & Aigburth',
+    'L21': 'Litherland & Seaforth',
+    'L23': 'Crosby & Blundellsands',
+    'L24': 'Speke',
+    'L25': 'Woolton & Gateacre',
+    'L27': 'Netherley',
+    'L28': 'Stockbridge Village',
+    'L30': 'Netherton',
+    'L31': 'Maghull',
+    'L32': 'Kirkby South',
+    'L33': 'Kirkby North',
+    'L36': 'Huyton',
+    'PR8': 'Birkdale & Ainsdale',
+    'PR9': 'Southport Waterfront & Marshside',
+    'WA9': 'Thatto Heath & Sutton',
+    'WA10': 'St Helens Town Centre',
+}
+NAME_OVERRIDES_BY_CITY['westyorkshire'] = {
+    'BD1': 'Bradford City Centre',
+    'BD2': 'Eccleshill & Bolton Woods',
+    'BD3': 'Barkerend & Thornbury',
+    'BD4': 'Bierley & Holme Wood',
+    'BD5': 'Bowling & Bankfoot',
+    'BD6': 'Buttershaw & Wibsey',
+    'BD7': 'Great Horton & Scholemoor',
+    'BD8': 'Manningham & Girlington',
+    'BD9': 'Heaton & Frizinghall',
+    'BD10': 'Idle & Thackley',
+    'BD21': 'Keighley Central',
+    'BD22': 'Haworth & Oakworth',
+    'HD1': 'Huddersfield Town Centre',
+    'HD2': 'Fixby & Brackenhall',
+    'HD3': 'Lindley & Longwood',
+    'HD4': 'Newsome & Crosland Moor',
+    'HD5': 'Almondbury & Kirkheaton',
+    'HX1': 'Halifax Town Centre',
+    'HX2': 'Illingworth & Ovenden',
+    'HX3': 'Northowram & Southowram',
+    'LS1': 'Leeds City Centre',
+    'LS2': 'Woodhouse & Little London',
+    'LS4': 'Burley & Kirkstall',
+    'LS5': 'Hawksworth & West Park',
+    'LS6': 'Headingley & Hyde Park',
+    'LS7': 'Chapel Allerton & Chapeltown',
+    'LS8': 'Roundhay & Harehills',
+    'LS9': 'Burmantofts & Richmond Hill',
+    'LS10': 'Hunslet & Middleton',
+    'LS11': 'Beeston & Holbeck',
+    'LS12': 'Armley & Wortley',
+    'LS13': 'Bramley & Stanningley',
+    'LS14': 'Seacroft & Swarcliffe',
+    'LS15': 'Cross Gates & Whitkirk',
+    'LS16': 'Adel & Lawnswood',
+    'LS17': 'Alwoodley & Moortown',
+    'WF1': 'Wakefield Central',
+    'WF2': 'Sandal & Lupset',
+    'WF12': 'Thornhill & Earlsheaton',
+    'WF13': 'Dewsbury Central & Ravensthorpe',
+}
+NAME_OVERRIDES_BY_CITY['southyorkshire'] = {
+    'DN1': 'Doncaster Town Centre',
+    'DN2': 'Wheatley & Intake',
+    'DN4': 'Bessacarr & Balby',
+    'DN5': 'Bentley & Sprotbrough',
+    'S1': 'Sheffield City Centre',
+    'S2': 'Norfolk Park & Park Hill',
+    'S3': 'Kelham & Netherthorpe',
+    'S4': 'Burngreave & Fir Vale',
+    'S5': 'Firth Park & Parson Cross',
+    'S6': 'Hillsborough & Walkley',
+    'S7': 'Nether Edge & Millhouses',
+    'S8': 'Woodseats & Meersbrook',
+    'S9': 'Darnall & Tinsley',
+    'S10': 'Broomhill & Fulwood',
+    'S11': 'Ecclesall & Greystones',
+    'S12': 'Gleadless & Birley',
+    'S13': 'Woodhouse & Handsworth',
+    'S14': 'Gleadless Valley',
+    'S17': 'Dore & Totley',
+    'S60': 'Rotherham Central & Brinsworth',
+    'S61': 'Kimberworth & Greasborough',
+    'S65': 'East Dene & Thrybergh',
+    'S70': 'Barnsley Town & Worsbrough',
+    'S71': 'Athersley & Monk Bretton',
+    'S75': 'Mapplewell & Darton',
+}
+NAME_OVERRIDES_BY_CITY['tyneandwear'] = {
+    # NE26, NE29 and NE33 keep their post towns: each IS the centre of Whitley
+    # Bay, North Shields and South Shields respectively, and the neighbouring
+    # district in each pair is the one carrying a distinct name.
+    'NE1': 'Newcastle City Centre',
+    'NE2': 'Jesmond',
+    'NE3': 'Gosforth & Kenton',
+    'NE4': "Elswick & Arthur's Hill",
+    'NE5': 'Westerhope & Blakelaw',
+    'NE6': 'Byker & Walkergate',
+    'NE7': 'High Heaton & Benton',
+    'NE8': 'Gateshead Town & Bensham',
+    'NE9': 'Low Fell & Wrekenton',
+    'NE10': 'Felling & Heworth',
+    'NE11': 'Dunston & Lobley Hill',
+    'NE12': 'Longbenton & Killingworth',
+    'NE13': 'Wideopen & Great Park',
+    'NE15': 'Lemington & Newburn',
+    'NE25': 'Monkseaton & Seaton Delaval',
+    'NE30': 'Tynemouth & Cullercoats',
+    'NE34': 'Whiteleas & Cleadon Park',
+    'NE37': 'Concord & Sulgrave',
+    'NE38': 'Washington Town Centre',
+    'SR1': 'Sunderland City Centre',
+    'SR2': 'Hendon & Ryhope',
+    'SR3': 'Silksworth & Herrington',
+    'SR4': 'Pallion & Pennywell',
+    'SR5': 'Southwick & Town End Farm',
+    'SR6': 'Seaburn & Monkwearmouth',
+}
+NAME_OVERRIDES_BY_CITY['bristol'] = {
+    # BA1 and BA2 keep the post town: they split Bath north/south of the Avon
+    # with no single recognised area name on either side. BS23 IS Weston-super-
+    # Mare's own centre, so it keeps the post town and its two neighbours carry
+    # the distinct names.
+    'BS1': 'Bristol City Centre',
+    'BS2': 'St Pauls & St Werburghs',
+    'BS3': 'Bedminster & Southville',
+    'BS4': 'Brislington & Knowle',
+    'BS5': 'Easton & St George',
+    'BS6': 'Redland & Cotham',
+    'BS7': 'Bishopston & Horfield',
+    'BS8': 'Clifton',
+    'BS9': 'Westbury-on-Trym & Stoke Bishop',
+    'BS10': 'Henbury & Southmead',
+    'BS11': 'Avonmouth & Shirehampton',
+    'BS13': 'Hartcliffe & Withywood',
+    'BS14': 'Hengrove & Stockwood',
+    'BS15': 'Kingswood & Hanham',
+    'BS16': 'Fishponds & Emersons Green',
+    'BS22': 'Worle',
+    'BS24': 'Hutton & Locking',
+    'BS30': 'Longwell Green & Oldland Common',
+}
+NAME_OVERRIDES_BY_CITY['leicester'] = {
+    'LE1': 'Leicester City Centre',
+    'LE2': 'Clarendon Park & Knighton',
+    'LE3': 'Westcotes & Braunstone',
+    'LE4': 'Belgrave & Rushey Mead',
+    'LE5': 'Evington & Thurnby Lodge',
+}
+NAME_OVERRIDES_BY_CITY['teesside'] = {
+    # The three Darlington districts and TS26 keep their post towns: no single
+    # area name is widely recognised for any of them.
+    'TS1': 'Middlesbrough Town Centre',
+    'TS3': 'Berwick Hills & Park End',
+    'TS4': 'Beechwood & Easterside',
+    'TS5': 'Linthorpe & Acklam',
+    'TS6': 'Eston & South Bank',
+    'TS18': 'Stockton Town Centre',
+    'TS19': 'Hardwick & Roseworth',
+    'TS20': 'Norton',
+    'TS21': 'Sedgefield & Stillington',
+    'TS24': 'Headland & Old Town',
+    'TS25': 'Seaton Carew & Owton Manor',
+    'TS27': 'Blackhall & Elwick',
 }
 
 # A median under this many transactions is not reported. 30 is a judgement,
@@ -282,6 +600,13 @@ def collect_centroids(wanted):
     NSPL is ~806 MB and is scanned once. `doterm` (date of termination) is
     non-empty for retired postcodes; including them would drag a centroid
     toward wherever the estate used to be.
+
+    Also tallies each district's MSOA21 codes on the SAME pass, which is what
+    `--check-names` corroborates the curated labels against. A second 806 MB
+    scan to collect one more column is the kind of thing that turns a
+    three-minute build into a six-minute one for no reason.
+
+    Returns (centroids, msoa_counts).
     """
     if not os.path.exists(NSPL_PATH):
         sys.exit(
@@ -290,20 +615,31 @@ def collect_centroids(wanted):
             'and a neighbourhood with no lat/lon cannot be scored for quiet at all.'
         )
     sums = defaultdict(lambda: [0.0, 0.0, 0])
+    msoa = defaultdict(lambda: defaultdict(int))
     with open(NSPL_PATH, newline='', encoding='utf-8', errors='replace') as fh:
         reader = csv.DictReader(fh)
         cols = {c.lower(): c for c in (reader.fieldnames or [])}
         c_pcds = cols.get('pcds') or cols.get('pcd')
         c_lat, c_long = cols.get('lat'), cols.get('long')
         c_term = cols.get('doterm')
+        c_msoa = cols.get('msoa21cd')
         if not (c_pcds and c_lat and c_long):
             sys.exit(f'NSPL columns not as expected: {reader.fieldnames[:12]}')
+        if not c_msoa:
+            sys.exit(
+                'NSPL has no msoa21cd column, so the curated area names cannot be\n'
+                'corroborated. A vintage roll that drops or renames it must not\n'
+                'silently downgrade the check to nothing.'
+            )
         for row in reader:
             if c_term and (row.get(c_term) or '').strip():
                 continue
             out = outward(row.get(c_pcds))
             if out not in wanted:
                 continue
+            code = (row.get(c_msoa) or '').strip()
+            if code:
+                msoa[out][code] += 1
             try:
                 lat, lon = float(row[c_lat]), float(row[c_long])
             except (ValueError, TypeError):
@@ -315,7 +651,162 @@ def collect_centroids(wanted):
             s[0] += lat
             s[1] += lon
             s[2] += 1
-    return {k: (v[0] / v[2], v[1] / v[2], v[2]) for k, v in sums.items() if v[2]}
+    centroids = {k: (v[0] / v[2], v[1] / v[2], v[2]) for k, v in sums.items() if v[2]}
+    return centroids, msoa
+
+
+# The evidence the curated labels are checked against.
+#
+# `msoa-names-2.1.csv` is the House of Commons Library's MSOA Names dataset -
+# a human-readable name for all 7,264 English and Welsh 2021 MSOAs, published
+# under the Open Government Licence. It is the ONLY published source that gives
+# statistical geographies the names people actually use; ONS's own `msoa21nm` is
+# "Bristol 023".
+#
+# `district-msoa-names.json` is the small derived join of it against NSPL, and
+# is CHECKED IN deliberately: `--check-names` has to run in preflight on a
+# machine with no 806 MB NSPL and no network. The 663 KB source CSV is not
+# needed at check time and stays gitignored.
+MSOA_NAMES_URL = 'https://houseofcommonslibrary.github.io/msoanames/MSOA-Names-2.1.csv'
+MSOA_NAMES_PATH = os.path.join(REPO, 'data', 'msoa-names-2.1.csv')
+DISTRICT_MSOA_PATH = os.path.join(REPO, 'data', 'district-msoa-names.json')
+
+# Words a curated label may contain WITHOUT appearing in the district's MSOA
+# names. Two kinds only: bare compass and civic words, which describe a position
+# rather than assert a place; and the district's own post town, which is a Royal
+# Mail fact already in hand from the Price Paid data. Everything else has to be
+# corroborated. Keep this list SHORT - each entry is a word the check can no
+# longer see, and a long list would quietly turn the check green.
+GENERIC_LABEL_WORDS = {
+    'and', 'the', 'city', 'centre', 'center', 'town', 'village', 'north',
+    'south', 'east', 'west', 'central', 'upper', 'lower', 'inner', 'outer',
+}
+
+
+def load_msoa_names():
+    """{msoa21cd: human-readable name} from the House of Commons Library file."""
+    if not os.path.exists(MSOA_NAMES_PATH):
+        sys.exit(
+            f'{os.path.basename(MSOA_NAMES_PATH)} not found. Fetch it with:\n'
+            f'  curl -sS -A "Mozilla/5.0" -o {MSOA_NAMES_PATH} {MSOA_NAMES_URL}'
+        )
+    with open(MSOA_NAMES_PATH, newline='', encoding='utf-8-sig') as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows or 'msoa21cd' not in rows[0]:
+        sys.exit(f'{MSOA_NAMES_PATH} is not the 2021 MSOA names file (needs msoa21cd)')
+    return {r['msoa21cd']: r['msoa21hclnm'].strip() for r in rows if r['msoa21hclnm'].strip()}
+
+
+def write_district_msoa_index(msoa_counts, post_towns):
+    """Persist the per-district evidence `--check-names` reads.
+
+    Names are ordered by how many of the district's postcodes fall in them, so
+    the file doubles as the thing to read when WRITING a label: the recognisable
+    area name is usually right there at the top.
+    """
+    names = load_msoa_names()
+    out = {}
+    unnamed = set()
+    for district, codes in msoa_counts.items():
+        agg = defaultdict(int)
+        for code, n in codes.items():
+            name = names.get(code)
+            if not name:
+                unnamed.add(code)
+                continue
+            agg[name] += n
+        if not agg:
+            continue
+        total = sum(agg.values())
+        out[district] = {
+            'postTown': post_towns.get(district, ''),
+            'postcodes': total,
+            'msoa': [n for n, _ in sorted(agg.items(), key=lambda kv: (-kv[1], kv[0]))],
+        }
+    payload = {
+        'generatedBy': 'scripts/build_city_neighbourhoods.py',
+        'purpose': 'evidence for --check-names; NOT a scoring input',
+        'msoaNameSource': 'House of Commons Library MSOA Names v2.1 (2021 MSOAs)',
+        'postcodeSource': 'ONS National Statistics Postcode Lookup (live postcodes)',
+        'licence': 'Open Government Licence v3.0',
+        'districts': out,
+    }
+    with open(DISTRICT_MSOA_PATH, 'w', encoding='utf-8') as fh:
+        json.dump(payload, fh, indent=1, sort_keys=True)
+        fh.write('\n')
+    if unnamed:
+        # Welsh and Scottish MSOAs have no HoC name; anything else is a vintage
+        # mismatch between NSPL and the names file and is worth seeing.
+        print(f'  {len(unnamed)} MSOA codes had no published name (Wales/Scotland or a vintage skew)')
+    print(f'  wrote MSOA evidence for {len(out)} districts to {os.path.basename(DISTRICT_MSOA_PATH)}')
+
+
+def _label_words(label):
+    return re.findall(r"[A-Za-z][A-Za-z'\-]*", label)
+
+
+def check_names():
+    """Corroborate every curated label against its own district's MSOA names.
+
+    THE RULE: each word of a curated label must appear somewhere in that
+    district's published MSOA names, or be its post town, or be a bare compass
+    or civic word. Nothing else passes.
+
+    WHY THIS AND NOT A SIMILARITY SCORE. The failure being guarded against is a
+    label that sounds right and belongs somewhere else - "BS8: Didsbury",
+    "L8: Chelsea" - and a threshold on string distance would rank those as
+    confidently wrong rather than wrong. Word containment answers the only
+    question that matters: does any published source put this name in this
+    district?
+
+    It cannot see a bad compass claim ("Darlington East" for a western
+    district), which is why the compass words are only ever allowed ALONGSIDE
+    a post town rather than as a whole label. Returns the number of failures.
+    """
+    if not os.path.exists(DISTRICT_MSOA_PATH):
+        sys.exit(
+            f'{os.path.basename(DISTRICT_MSOA_PATH)} not found. It is written by a\n'
+            'full build: python scripts/build_city_neighbourhoods.py'
+        )
+    with open(DISTRICT_MSOA_PATH, encoding='utf-8') as fh:
+        evidence = json.load(fh)['districts']
+
+    failures = 0
+
+    # A dict keyed by a city that does not exist is looked up by nobody and
+    # corroborates perfectly, which is the worst of both: every name in it
+    # passes this check and none of them ever reaches a label. Four of the eight
+    # dicts written on 2026-08-12 were keyed `west_midlands` / `south_yorkshire`
+    # when the builder's own keys are `westmidlands` / `southyorkshire`, and the
+    # check reported all 285 names corroborated while 163 of them were dead.
+    unknown = sorted(set(NAME_OVERRIDES_BY_CITY) - set(DEFAULT_CITIES))
+    if unknown:
+        print(f'  UNKNOWN CITY KEYS: {", ".join(unknown)}')
+        print(f'     generated cities are: {", ".join(DEFAULT_CITIES)}')
+        failures += len(unknown)
+    for city in sorted(NAME_OVERRIDES_BY_CITY):
+        overrides = NAME_OVERRIDES_BY_CITY[city]
+        bad = []
+        for district, label in sorted(overrides.items()):
+            rec = evidence.get(district)
+            if not rec:
+                bad.append((district, label, ['no MSOA evidence for this district']))
+                continue
+            haystack = ' '.join(rec['msoa'] + [rec['postTown']]).lower()
+            unmatched = [
+                w for w in _label_words(label)
+                if w.lower() not in GENERIC_LABEL_WORDS and w.lower() not in haystack
+            ]
+            if unmatched:
+                bad.append((district, label, unmatched))
+        n = len(overrides)
+        print(f'  {city:16} {n:3} curated, {n - len(bad):3} corroborated, {len(bad):3} unmatched')
+        for district, label, unmatched in bad:
+            top = ', '.join(evidence.get(district, {}).get('msoa', [])[:4]) or '(none)'
+            print(f'     {district:6} {label!r} - no source for {unmatched}')
+            print(f'            {district} MSOAs: {top}')
+        failures += len(bad)
+    return failures
 
 
 INDEX_PATH = os.path.join(REPO, 'index.html')
@@ -440,6 +931,11 @@ def build_city(city, keep_by_city, centroids, args):
         'priceVintage': ', '.join(str(y) for y in args.years),
         'priceBasis': 'median sale price per postcode district',
         'coordinateSource': 'ONS National Statistics Postcode Lookup (live postcodes, mean centroid)',
+        'nameSource': (
+            'Royal Mail locality most transactions use, or a curated postal-district '
+            'label corroborated against House of Commons Library MSOA Names v2.1 '
+            '(see --check-names). Names are labels, not measurements, and enter no score.'
+        ),
         'crimeSourced': False,
         'crimeNote': (
             'Sub-borough crime is not published at this geography; ONS Table C4 is '
@@ -485,7 +981,26 @@ def main():
         action='store_true',
         help="also rewrite index.html between each city's NEIGHBOURHOODS markers",
     )
+    ap.add_argument(
+        '--check-names',
+        action='store_true',
+        help='corroborate the curated area labels against published MSOA names and exit',
+    )
     args = ap.parse_args()
+
+    if args.check_names:
+        print('Curated area names vs House of Commons Library MSOA Names v2.1')
+        failures = check_names()
+        if failures:
+            print(
+                f'\nFAIL: {failures} curated names could not be corroborated.\n'
+                'Either the name belongs to a different district, or no published\n'
+                'source puts it in this one. Correct it or drop it back to the post town.'
+            )
+            return 1
+        total = sum(len(v) for v in NAME_OVERRIDES_BY_CITY.values())
+        print(f'\nOK: all {total} curated names corroborated.')
+        return 0
 
     cities = [args.city] if args.city else list(DEFAULT_CITIES)
     print(f'Neighbourhoods from HM Land Registry Price Paid for: {", ".join(cities)}')
@@ -513,8 +1028,44 @@ def main():
         sys.exit('FAIL: no districts met the threshold for any city. Check the district names.')
 
     # ONE NSPL pass for every city. It is 806 MB.
-    print('  scanning NSPL for coordinates (this is the slow part) ...')
-    centroids = collect_centroids(wanted)
+    print('  scanning NSPL for coordinates and MSOAs (this is the slow part) ...')
+    centroids, msoa_counts = collect_centroids(wanted)
+
+    # Post town per district, the one label word a curated name may use without
+    # MSOA corroboration. Same modal locality `build_city` labels with.
+    post_towns = {}
+    for city in cities:
+        for out, rec in keep_by_city[city].items():
+            if rec['localities']:
+                post_towns[out] = max(rec['localities'].items(), key=lambda kv: kv[1])[0]
+
+    # ONLY on a full build. A --city run scans NSPL for that city's districts
+    # alone, so writing the evidence here would replace all 501 districts with
+    # that city's 59 - and every other city's labels would then fail the check
+    # for "no MSOA evidence" while nothing was actually wrong with them. That
+    # is not hypothetical: a --city merseyside run did exactly this on
+    # 2026-08-12 and preflight went red on 239 perfectly good names.
+    if args.city:
+        print(f'  leaving {os.path.basename(DISTRICT_MSOA_PATH)} alone: a single-city')
+        print('  build has evidence for one city only and would truncate it')
+    else:
+        write_district_msoa_index(msoa_counts, post_towns)
+
+    # BEFORE anything is written. An uncorroborated label is the one output of
+    # this script that cannot be caught downstream - a wrong price shows up in
+    # --check against HPI, a wrong borough shows up as a borough with no
+    # neighbourhoods, but "L8: Chelsea" would simply render. A single city build
+    # cannot see the other cities' evidence, so it is skipped there rather than
+    # reported as a pile of false failures.
+    if not args.city:
+        print('\nCorroborating curated area names against MSOA names')
+        failures = check_names()
+        if failures:
+            print(
+                f'\nFAIL: {failures} curated names could not be corroborated; nothing written.\n'
+                'Correct the name or drop it back to the post town.'
+            )
+            return 1
 
     total = 0
     any_missing = []

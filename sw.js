@@ -174,7 +174,14 @@
 // the base rule. Eleven chips ran off the edge at 901px, where the phone fix
 // did not reach, so `Greater Manchester` sat at 806..906px in a 901px window
 // with the map container clipping it and nothing scrollable around it.
-const VERSION = 'v1.0.30';
+// v1.0.31 (2026-08-12): 285 postcode districts across nine city-regions gained a
+// curated area name, so a returning visitor on a precached shell would keep
+// seeing thirty-five rows labelled "Birmingham" while a new one sees Edgbaston,
+// Harborne and Selly Oak. index.html is in SHELL_ASSETS, so this bump is what
+// actually delivers the labels. No new SHELL_ASSETS entries: the corroboration
+// evidence (data/district-msoa-names.json) is a build-time artefact and is
+// never fetched by the page.
+const VERSION = 'v1.0.31';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
