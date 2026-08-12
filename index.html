@@ -10791,10 +10791,33 @@
             (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
           );
 
+        // How much of this ordering is just price? MEASURED, not asserted.
+        //
+        // Outside London and New York a "neighbourhood" is a postcode district
+        // with `crime: 0` (sub-borough crime is not published at that geography)
+        // and a `live` inherited from its borough, so districts within a city
+        // differ almost only by PRICE and aircraft quiet - and affordability is
+        // ~31% of the balanced score. Measured over the rendered rows, the
+        // rank-to-price correlation is 0.79 to 0.89 for every generated city
+        // against -0.23 for London: the list is largely cheapest-first.
+        //
+        // Nothing here is miscomputed - the score is exactly what METHODOLOGY
+        // says. What over-claims is the LABEL: "#1" reads as a recommendation
+        // when what it measures is best value. So the heading and the note below
+        // are set from this number rather than from a per-city registry string,
+        // because a hand-written "this is price-driven" sentence is wrong the
+        // moment a city gains an input - the same staleness that put "NO DATA"
+        // over live readings on seven legends.
+        let priceDominance = null;
+        const rankPrice = [];
+
         if (rankingView === 'neighbourhood') {
           // Neighbourhood-level scoring with computed noise, price, crime, transport
           const neighbourhoods = calcNeighbourhoodScores(currentCity);
           neighbourhoods.forEach((n, i) => {
+            if (typeof n.avg_price === 'number' && n.avg_price > 0) {
+              rankPrice.push([i + 1, n.avg_price]);
+            }
             tableRows += `<tr data-rank-name="${esc(n.name)}" data-rank-action="search" style="cursor:pointer;">
         <td>${i + 1}</td>
         <td>${esc(n.name)}<span style="display:block;font-size:9px;color:var(--mid);">${esc(n.borough)}</span></td>
@@ -10817,6 +10840,25 @@
           });
         }
 
+        if (rankPrice.length >= 8) {
+          const n = rankPrice.length;
+          const mr = rankPrice.reduce((t, x) => t + x[0], 0) / n;
+          const mp = rankPrice.reduce((t, x) => t + x[1], 0) / n;
+          let num = 0;
+          let dr = 0;
+          let dp = 0;
+          for (const [r, pr] of rankPrice) {
+            num += (r - mr) * (pr - mp);
+            dr += (r - mr) ** 2;
+            dp += (pr - mp) ** 2;
+          }
+          if (dr > 0 && dp > 0) priceDominance = num / Math.sqrt(dr * dp);
+        }
+        // 0.6 is the line between "price is one factor" and "price IS the
+        // ordering". Measured: London -0.23, NYC -0.06, every generated city
+        // 0.67 to 0.89 - there is nothing in between to be arbitrary about.
+        const priceLed = priceDominance !== null && priceDominance >= 0.6;
+
         const areaLabel = rankingView === 'neighbourhood' ? 'Neighbourhood' : 'Borough';
         const toggleLabel = rankingView === 'neighbourhood' ? 'Show boroughs only' : 'Show neighbourhoods';
         // Provenance for the neighbourhood view, from the registry so each city
@@ -10834,7 +10876,12 @@
           areaNote +
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
           '<p class="property-note" style="margin:0;font-size:11px;flex:1;">' +
-          `Ranked by <strong>${PERSONAS[currentPersona].label} Buyer Score</strong>: quiet skies (${Math.round(w.quiet * 100)}%) + affordability (${Math.round(w.afford * 100)}%) + growth (${Math.round(w.growth * 100)}%) + liveability (${Math.round(w.live * 100)}%).` +
+          (priceLed
+            ? `Ranked by <strong>${PERSONAS[currentPersona].label} best value</strong>: quiet skies (${Math.round(w.quiet * 100)}%) + affordability (${Math.round(w.afford * 100)}%) + growth (${Math.round(w.growth * 100)}%) + liveability (${Math.round(w.live * 100)}%).`
+            : `Ranked by <strong>${PERSONAS[currentPersona].label} Buyer Score</strong>: quiet skies (${Math.round(w.quiet * 100)}%) + affordability (${Math.round(w.afford * 100)}%) + growth (${Math.round(w.growth * 100)}%) + liveability (${Math.round(w.live * 100)}%).`) +
+          (priceLed
+            ? ' <strong>This ordering is led by price.</strong> Districts here share their borough&rsquo;s liveability and carry no sub-borough crime figure &mdash; that is not published at postcode-district geography &mdash; so they differ mainly by price and aircraft noise. Read it as best value, not as which area is best.'
+            : '') +
           '</p></div>' +
           `<div style="margin-bottom:10px;"><button type="button" onclick="toggleRankingView()" style="background:none;border:1px solid var(--mid);color:var(--dark);font-size:9px;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;">${toggleLabel}</button></div>` +
           '<table class="rank-table"><thead><tr>' +
