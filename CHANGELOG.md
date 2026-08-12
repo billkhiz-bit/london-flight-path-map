@@ -29,6 +29,12 @@ neighbourhood ranking read as a recommendation when it was largely a price sort.
   "Station Approach" became "Approach", and Manchester carried four Altrinchams
   because NaPTAN lists platform, entrance, interchange and Metrolink stop
   separately. Anchored to the end, Manchester goes 364 -> 246.
+- **NYC's transport layer draws nothing, and did not before this either.**
+  `NYC_STATIONS` has been `[]` since before today, under a comment describing
+  "major subway/rail hubs" that were never populated. NaPTAN is a UK register
+  and cannot fill it; an MTA source would be needed. Recorded rather than
+  fixed, because an empty array under a comment promising data is exactly the
+  shape that produced the -0.4 penalty.
 - **The neighbourhood ranking now says "best value" where price leads it.**
   Measured over the rendered rows, rank-to-price correlation is 0.67 to 0.89 for
   every generated city against **-0.23 for London** and -0.06 for NYC - so nine

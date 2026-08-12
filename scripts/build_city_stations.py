@@ -218,12 +218,24 @@ def collect(bboxes):
                 # One entry per station NAME. Platforms and entrances are
                 # separate NaPTAN nodes and would otherwise list the same
                 # station six times.
-                if name not in per_city[city]:
-                    per_city[city][name] = [round(lon, 5), round(lat, 5)]
+                # RAIL WINS over a tram/metro node of the same name. Where
+                # both exist - Altrincham, Eccles, Ashton - the rail station is
+                # the one a reader means, and it is what decides whether the
+                # map labels it.
+                st = row.get('StopType')
+                kind = 'rail' if st in ('RLY', 'RSE', 'PLT') else 'metro'
+                prev = per_city[city].get(name)
+                if prev is None:
+                    per_city[city][name] = [round(lon, 5), round(lat, 5), kind]
                     kept += 1
+                elif kind == 'rail' and prev[2] != 'rail':
+                    prev[2] = 'rail'
                 break
     print(f'  scanned {scanned:,} NaPTAN nodes, kept {kept:,} stations')
-    return {c: [{'name': n, 'coords': v} for n, v in sorted(s.items())] for c, s in per_city.items()}
+    return {
+        c: [{'name': n, 'coords': v[:2], 'type': v[2]} for n, v in sorted(st.items())]
+        for c, st in per_city.items()
+    }
 
 
 def write_index(city, stations):

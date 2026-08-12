@@ -241,7 +241,10 @@ family: **a bounding box is not containment** (Leicester's and Nottingham's
 overlap - first-match-wins gave Leicester 104 stations and Nottingham 16; point-
 in-polygon gives 19 and 69), and **stripping a descriptor anywhere in a name
 edits the name** ("Station Approach" -> "Approach"; four Altrinchams). NYC is
-untouched - NaPTAN is UK-only and correctly yields zero.
+untouched - NaPTAN is UK-only and correctly yields zero. **NYC's transport
+layer has ALWAYS drawn nothing**: `NYC_STATIONS` was already `[]` before this
+work, under a comment describing "major subway/rail hubs". Filling it needs an
+MTA source, not NaPTAN.
 
 **The neighbourhood ranking says "best value" where price leads it (2026-08-12).**
 Rank-to-price correlation, measured over the rendered rows: **-0.23 London,
