@@ -6,7 +6,33 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 ## [Unreleased]
 
-### 2026-08-12 (latest) - Stations move off the map and into the panel
+### 2026-08-12 (latest) - Score sanity probes reach every city
+
+**`check_score_sanity.py` had sixteen probes and all of them were London.**
+CLAUDE.md calls it "the only stage that can catch a DATA defect" - the pytest
+suites never reach DynamoDB and Playwright asserts the site against itself - and
+it was blind to eleven of twelve cities. Now 27 probes, one per city.
+
+- **They assert the RESOLVED CITY, not that a score came back.** A probe checking
+  only for HTTP 200 would have passed throughout this morning's defect, because
+  a London default returns a perfectly well-formed error.
+- **They found a live false claim on the first run.** Manchester's
+  `CITY_PROVENANCE` told API customers *"PARTIAL, 2 of 4 inputs measured ...
+  Transport and healthcare are NOT sourced"*. True when written; false from
+  2026-08-11, when transport landed in v3.6 and healthcare in v3.7. For two days
+  `/v1/score` understated Manchester's provenance while `context.liveResolution`
+  said `measured` in the same response. Corrected, and the sources list now
+  credits NaPTAN and NHS ODS.
+- **The first correction reddened the gate on a correct value**: the new string
+  quoted the old wording to explain the change, and the check substring-matches
+  on `PARTIAL`. The history moved to a comment. A customer-facing field should
+  not carry its own changelog, and a string a gate greps must not quote the
+  thing it greps for.
+
+Provenance strings are hand-written per city with nothing deriving them from the
+data they describe, so this class of staleness will recur; the code says so.
+
+### 2026-08-12 - Stations move off the map and into the panel
 
 **The transport map layer is deleted.** Its markers could not be clicked - the
 borough path underneath takes the event - so it cluttered the thing that is
