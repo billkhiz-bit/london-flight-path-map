@@ -165,3 +165,9 @@ aqload.err
 aqload.log
 roadfetch.log
 floodfetch.log
+# scripts/load_aircraft_rasters.sh, run detached. `.log` is already covered by
+# the *.log rule above; these two are the raw stdout/stderr of the detached
+# process itself, which is where a launch failure shows up when the script never
+# gets far enough to write its own log.
+aircraftload.out
+aircraftload.err
