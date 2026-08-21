@@ -1,5 +1,52 @@
 # Changelog
 
+## 2026-08-21 (evening) — the distribution half: capture, quota, badge, pages
+
+Four of the six cowork findings, built and deployed.
+
+**D5.** The postcode panel is the highest-intent moment on the consumer site and
+collected nothing. It now carries a short notify form posting `source:'consumer'`
+to the existing `/v1/signup`, which records the address and skips key issuance
+entirely - a consumer must not come out of a postcode search holding an API key.
+What it promises is deliberately small: a note when the data refreshes, roughly
+quarterly, because there is no SES in this stack and outbound mail is currently a
+person and Gmail. `privacy.html` gains the purpose, its lawful basis and the
+deletion route, and says the notes are sent by hand.
+
+**D1.** The free tier was 100 requests/month because batch multiplied each one by
+100. That was the only lever available in July and it closed the wedge. Today's
+per-method `RateLimit: 0` is a better one: the free plan now refuses batch, so
+requests equal scores and the quota carries the intended **10,000** directly -
+same entitlement, a hundred times more calls to spend it in.
+
+**D2.** An embeddable SVG badge at `GET /badge?postcode=`, unauthenticated
+because it renders inside an `<img>` on pages we do not control. An `<img>` and
+not a JS snippet: portals run strict CSP and a third-party script is the first
+thing blocked, so the badge would fail silently on exactly the sites worth
+appearing on. It reuses `resolve_query`, so it cannot show a score `/v1/score`
+would not - verified live at 7.1 for SW11 1AA, matching exactly.
+
+**D4.** 99 generated borough pages plus an `/area/` index, and the sitemap goes
+from **8 URLs to 108**. Every figure comes from `resolve_query` and the two data
+holders; absent fields are omitted rather than defaulted. The pages carry no
+`<script>` tag at all, which is the point - the map is client-side, so a crawler
+previously got a shell.
+
+Three new blocking gates, each proven red: `demo-key-scope` (asks the running
+API whether rate-0 denies, because the template cannot answer that),
+`uk-city-panel`, and `area-pages` (asserts content and sitemap agreement in both
+directions, including that no two pages share a fact block).
+
+Two bugs found by verification rather than by review. The consumer duplicate path
+fell into the B2B 409 and told people about an API key they never had; the unit
+test was green because it drove the race branch instead of the common one. And
+the page generator read `app.BOROUGH_EXTRA` behind a `hasattr()` guard - an
+attribute that does not exist - so all 99 pages silently lost crime, schools,
+transport, healthcare, road noise, air quality and flood, and still passed
+`--check`. A defensive guard turned a wrong attribute name into a quietly worse
+product.
+
+
 ## 2026-08-21 (later) — audit: TfL User-Agent, an unkept promise, four false claims
 
 Full audit, first since 2026-08-12. Three parallel agents, then every Critical

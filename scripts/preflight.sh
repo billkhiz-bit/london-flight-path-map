@@ -323,6 +323,10 @@ else
   # borough-score-parity compares SCORES. Both passed while nine UK cities
   # answered an area search with "NYC subway data coming soon".
   check "UK cities get UK panel content" node tests/uk-city-panel.mjs
+  # 99 static area pages are the site's only indexable surface; thin or
+  # duplicated ones are worse than none (doorway pages), so this asserts
+  # CONTENT and that the sitemap agrees in both directions.
+  check "area pages carry real data"    node tests/area-pages.mjs
   # A borough choropleth must paint exactly the boroughs that hold a reading.
   # Added 2026-08-11: all three fill layers ended their lookup with `|| 'moderate'`
   # or `|| 'low'`, so every borough of the seven non-London UK cities was painted

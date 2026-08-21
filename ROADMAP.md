@@ -369,8 +369,25 @@ mechanism) -> D2 (badge) -> D4 (per-borough static pages, which the badge then
 links back to). D3 and D6 need no build - one is a pricing call, the other a
 date to watch.
 
-**Not started.** Recorded here rather than acted on because D1 and D3 are pricing
-decisions and D2/D4 are features, none of which should be chosen unilaterally.
+**D5, D1, D2 and D4 all SHIPPED and deployed 2026-08-21.** D3 and D6 remain
+open by their nature - one is a pricing call, the other a date to watch.
+
+| | Shipped | Verified live |
+|---|---|---|
+| D5 | Notify form under every postcode result, posting `source:'consumer'` to `/v1/signup`; no API key is minted for a consumer | Form renders on CloudFront, both new and repeat submissions correct |
+| D1 | Free tier 100 -> **10,000 requests/month**, `/v1/score/batch` denied per-method so requests == scores | Plan reads `quota=10000`, batch 429s, CI key on another plan still batches |
+| D2 | `GET /badge?postcode=` returns an SVG; embed snippet with copy button in the panel | Badge returns **7.1** for SW11 1AA, matching `/v1/score` exactly, no key |
+| D4 | 99 generated borough pages + `/area/` index; sitemap **8 -> 108 URLs** | Pages serve 200 with 15 facts each and **no `<script>` tag** |
+
+Three new blocking gates: `demo-key-scope`, `uk-city-panel`, `area-pages`.
+
+**What each one cost that was not in the finding.** D5 needed a privacy
+disclosure, because `privacy.html` had said the only address we hold is for API
+keys. D1 needed all four mirrors the template names, and the drift gate caught
+two of them itself. D2 needed XML escaping, because an SVG is a script-capable
+document served from our origin onto someone else's page. D4 needed a
+duplicate-content floor, because 99 thin pages is a doorway network and worse
+for the domain than none.
 
 ---
 

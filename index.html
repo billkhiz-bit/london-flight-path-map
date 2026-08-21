@@ -1362,6 +1362,46 @@
         outline: 2px solid var(--orange);
       }
 
+      /* Embeddable badge block (D2, 2026-08-21). */
+      .badge-preview {
+        display: block;
+        margin: 8px 0;
+        max-width: 100%;
+        height: auto;
+      }
+      .badge-embed {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        line-height: 1.5;
+        color: var(--dark);
+        background: #fafaf9;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        resize: vertical;
+      }
+      .badge-copy {
+        margin-top: 6px;
+        min-height: 44px;
+        padding: 8px 14px;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #fff;
+        background: var(--dark);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .badge-embed:focus-visible,
+      .badge-copy:focus-visible {
+        outline: 2px solid var(--dark);
+        outline-offset: 2px;
+      }
       /* Consumer notify capture in the postcode panel (D5, 2026-08-21). */
       .notify-form {
         display: flex;
@@ -3270,6 +3310,7 @@
           <span class="sep">·</span>
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
+          <a href="/area/">Areas</a>
           <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
           <a href="/terms">Terms</a>
@@ -3484,6 +3525,7 @@
           <span class="sep">·</span>
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
+          <a href="/area/">Areas</a>
           <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
           <a href="/terms">Terms</a>
@@ -8400,6 +8442,42 @@
       // Nearest NaPTAN stations to a point, straight-line, nearest first.
       // Rail ranks above metro/tram at equal distance, because "your nearest
       // station" means the rail one to most readers.
+      // The embed snippet a site owner pastes. Built here rather than on the
+      // server so what they copy is exactly what they see rendered above it.
+      //
+      // The <a> wraps the <img> deliberately: the link back is the point of the
+      // whole exercise, and wrapping means the backlink survives even when the
+      // image does not load. rel="noopener" because it opens in a new tab;
+      // NOT nofollow, since the referral is the mechanism.
+      function embedSnippet(postcode) {
+        const pc = encodeURIComponent(postcode);
+        const site = 'https://skyscore.co.uk';
+        return (
+          `<a href="${site}/?postcode=${pc}" target="_blank" rel="noopener">` +
+          `<img src="${API_BASE}/badge?postcode=${pc}" ` +
+          `width="220" height="64" alt="Sky Score for ${postcode}"></a>`
+        );
+      }
+
+      function wireBadgeCopy() {
+        const btn = document.getElementById('badge-copy');
+        if (!btn) return;
+        const box = document.getElementById('badge-embed');
+        const out = document.getElementById('badge-copy-result');
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(box.value);
+            out.textContent = 'Copied. Paste it into your page.';
+          } catch {
+            // Clipboard API needs a secure context and permission; selecting
+            // the text is a real fallback rather than an apology.
+            box.select();
+            out.textContent = 'Press Ctrl+C to copy the selected code.';
+          }
+          trackEvent('badge-embed-copied');
+        });
+      }
+
       // Consumer notify list. POSTs to the SAME /v1/signup route as the B2B key
       // form, with source:'consumer' - which makes the Lambda record the address
       // and skip key issuance entirely. Reusing the route means reusing its
@@ -10138,6 +10216,19 @@
     }
     ${buildOptionalSections(extra, 'pc')}
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
+    ${
+      analysis.postcode && !analysis.isOutcode
+        ? `<div class="sidebar-section">
+      <h3>PUT THIS ON YOUR SITE</h3>
+      <p class="info-note" style="margin-top:0;">A badge for ${escapeHtml(analysis.postcode)}, free to embed. It is an image, so it works anywhere HTML does.</p>
+      <img class="badge-preview" src="${API_BASE}/badge?postcode=${encodeURIComponent(analysis.postcode)}" width="220" height="64" alt="Sky Score badge for ${escapeHtml(analysis.postcode)}" loading="lazy" />
+      <label class="visually-hidden" for="badge-embed">Embed code for this badge</label>
+      <textarea id="badge-embed" class="badge-embed" rows="3" readonly>${escapeHtml(embedSnippet(analysis.postcode))}</textarea>
+      <button id="badge-copy" type="button" class="badge-copy">Copy embed code</button>
+      <p id="badge-copy-result" class="info-note" role="status" aria-live="polite" style="margin-top:4px;"></p>
+    </div>`
+        : ''
+    }
     <div class="sidebar-section notify-block">
       <h3>TELL ME WHEN THIS CHANGES</h3>
       <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
@@ -10168,6 +10259,7 @@
         // node dies with it, silently, and the button would just stop working
         // on the second search.
         wireNotifyForm(analysis.postcode);
+        wireBadgeCopy();
 
         // Populate the panels. EPC and HM Land Registry are UK-WIDE, so the
         // gate is the country, not the city - the comment here used to say

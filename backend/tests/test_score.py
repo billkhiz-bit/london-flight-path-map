@@ -2750,3 +2750,92 @@ class RoadLdenPlausibilityTests(unittest.TestCase):
         # 4e90cc0 merged the road lookup into the aircraft tier's GetItem.
         self.assertFalse(hasattr(app, '_lookup_road_lden'))
         self.assertFalse(hasattr(app, '_road_cache_get'))
+
+
+class BadgeTests(unittest.TestCase):
+    """The embeddable SVG badge - D2, 2026-08-21.
+
+    This is the Walk Score mechanism: the badge is what puts a score on someone
+    else's listing page, and it is the half of that playbook this product had
+    skipped. It is served as an <img>, not a JS snippet, because property
+    portals run strict CSP and a third-party script is the first thing blocked -
+    the badge would silently fail on exactly the sites worth appearing on.
+
+    It reuses resolve_query, so a badge cannot show a score /v1/score would not.
+    """
+
+    def _svg(self, params):
+        return app.handle_badge({'queryStringParameters': params, 'path': '/badge'})
+
+    def test_badge_score_equals_the_api_score(self):
+        # The whole reason it calls resolve_query. If the badge ever grew its
+        # own scoring path, a listing page could advertise a number the API
+        # contradicts - and the badge is the copy the public sees.
+        body, status = app.resolve_query({'postcode': 'SW11 1AA'})
+        self.assertEqual(status, 200)
+        expected = str(round(float(body['score']), 1))
+        res = self._svg({'postcode': 'SW11 1AA'})
+        self.assertEqual(res['statusCode'], 200)
+        self.assertIn(f'>{expected}<', res['body'])
+
+    def test_unresolvable_postcode_still_returns_an_image(self):
+        # A 404 with no body renders as a BROKEN IMAGE on a customer's page,
+        # which is worse than an honest badge saying the area is not covered.
+        # The status code still tells a machine what happened.
+        res = self._svg({'postcode': 'ZZ99 9ZZ'})
+        self.assertGreaterEqual(res['statusCode'], 400)
+        self.assertTrue(res['body'].startswith('<svg'))
+        self.assertIn('Not covered', res['body'])
+        # Short cache: an uncovered postcode becomes covered when a city lands,
+        # and a day-long cache would go on saying otherwise after it did.
+        self.assertIn('max-age=300', res['headers']['Cache-Control'])
+
+    def test_missing_postcode_is_a_badge_not_a_stack_trace(self):
+        res = self._svg(None)
+        self.assertEqual(res['statusCode'], 400)
+        self.assertTrue(res['body'].startswith('<svg'))
+
+    def test_postcode_is_xml_escaped(self):
+        # AN SVG IS A SCRIPT-CAPABLE DOCUMENT. It is served from our origin and
+        # embedded on third-party pages, so unescaped input here is stored XSS
+        # on someone else's site wearing our domain. The postcode reaches the
+        # SVG body on the not-covered path, which is the reachable one for
+        # arbitrary input - a hostile postcode never resolves.
+        res = self._svg({'postcode': '<script>alert(1)</script>'})
+        # Case-insensitive: the postcode is upper-cased before it reaches the
+        # SVG, so a literal-lowercase assertion passes even with escaping
+        # removed. Checked with a regex rather than a substring for that reason.
+        import re  # pylint: disable=import-outside-toplevel
+        self.assertIsNone(
+            re.search(r'<\s*script', res['body'], re.I),
+            'an unescaped <script> reached the SVG body',
+        )
+        self.assertIn('&lt;', res['body'])
+
+    def test_served_as_svg_with_nosniff(self):
+        h = self._svg({'postcode': 'SW11 1AA'})['headers']
+        self.assertTrue(h['Content-Type'].startswith('image/svg+xml'))
+        # Without nosniff a browser may re-interpret the response, which for a
+        # document type that can carry script is not a theoretical worry.
+        self.assertEqual(h['X-Content-Type-Options'], 'nosniff')
+
+    def test_long_cache_on_a_real_score(self):
+        # Scores move quarterly; a badge on a busy listing page renders
+        # constantly. Uncached, another site's traffic becomes our Lambda bill.
+        h = self._svg({'postcode': 'SW11 1AA'})['headers']
+        self.assertIn('max-age=86400', h['Cache-Control'])
+
+    def test_dark_theme_changes_the_background_only(self):
+        light = self._svg({'postcode': 'SW11 1AA'})['body']
+        dark = self._svg({'postcode': 'SW11 1AA', 'theme': 'dark'})['body']
+        self.assertNotEqual(light, dark)
+        self.assertIn('#1c1c1c', dark)
+        self.assertNotIn('#1c1c1c', light)
+
+    def test_band_boundaries_do_not_leave_a_gap(self):
+        # Every score in 0..10 must land in a band. A gap would render a badge
+        # with no colour and no label - the absence-as-measurement shape.
+        for tenth in range(0, 101):
+            score = tenth / 10
+            colour, label = app._badge_band(score)
+            self.assertTrue(colour and label, f'no band for {score}')

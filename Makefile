@@ -356,6 +356,16 @@ prototype-deploy:
 # are the three files most likely to be edited and then forgotten, because
 # nothing visibly breaks when they go stale. security.txt in particular
 # carries a disclosure address that SECURITY.md is checked against.
+# 99 generated borough pages + the /area/ index. Regenerate with
+# `python scripts/build_area_pages.py --write` BEFORE deploying - the pages
+# carry live scores, so a stale upload publishes numbers the API has moved on
+# from. sitemap.xml is written by the same script and ships in meta-deploy.
+area-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync area/ \
+		s3://$(S3_BUCKET)/area/ \
+		--content-type "text/html" --cache-control "public,max-age=3600" \
+		--delete --region $(AWS_REGION)
+
 meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp robots.txt \
 		s3://$(S3_BUCKET)/robots.txt \
@@ -378,8 +388,8 @@ meta-deploy:
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: fonts-deploy web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy meta-deploy
-	@echo "Web + data + PWA + demo + prototype + meta deployed. Skip deeplinks-deploy until placeholders are filled."
+web-deploy-all: fonts-deploy web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy
+	@echo "Web + data + PWA + demo + prototype + area + meta deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------
 # iOS (Codemagic does the heavy lifting; we just trigger and submit)

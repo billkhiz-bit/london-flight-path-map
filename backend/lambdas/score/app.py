@@ -6311,8 +6311,144 @@ def handle_environment(event):
     )
 
 
+# --- Embeddable badge -------------------------------------------------------
+#
+# WHY AN SVG SERVED AS <img>, and not a JavaScript snippet.
+#
+# This is the Walk Score mechanism: the badge is what puts a score on somebody
+# else's listing page, and the API becomes worth buying because the badge made
+# the number familiar. So the only thing that matters is that it renders on
+# pages we do not control.
+#
+# A JS embed does not clear that bar. Property portals and agency CMSes run
+# strict CSP, and a script from a third-party origin is the first thing their
+# policy blocks - the badge would silently not appear on exactly the sites worth
+# appearing on. An <img> is allowed almost everywhere, needs no JS at all,
+# survives a CMS that strips <script>, and is cached by CloudFront rather than
+# re-executed per view. The link back is a plain <a> the embedder pastes around
+# it, which also means the backlink survives when the image does not load.
+#
+# WHAT IT EXPOSES, and why that is not the product. The composite score for a
+# postcode is already public: the consumer site renders it for anyone. What the
+# API sells is programmatic access - components, personas, weights, comparison
+# and batch - and none of those appear here. Same posture as /v1/environment:
+# the reading, not the engine.
+
+_BADGE_BANDS = [
+    (8.0, '#1a7f37', 'Excellent'),
+    (6.5, '#3f8f29', 'Good'),
+    (5.0, '#9a6700', 'Fair'),
+    (0.0, '#a40e26', 'Poor'),
+]
+
+
+def _badge_band(score):
+    for floor, colour, label in _BADGE_BANDS:
+        if score >= floor:
+            return colour, label
+    return _BADGE_BANDS[-1][1], _BADGE_BANDS[-1][2]
+
+
+def _svg_escape(text):
+    """XML-escape. The postcode reaches the SVG body, so this is not optional.
+
+    An SVG served from our origin and embedded on a third-party page is a
+    script-capable document; unescaped input in it is stored XSS on someone
+    else's site, carrying our domain in the frame. Everything interpolated
+    below goes through here.
+    """
+    return (
+        str(text)
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+        .replace('"', '&quot;')
+        .replace("'", '&#39;')
+    )
+
+
+def _badge_svg(postcode, score, band_label, colour, dark=False):
+    bg = '#1c1c1c' if dark else '#ffffff'
+    fg = '#f5f5f4' if dark else '#141414'
+    sub = '#a1a1a1' if dark else '#636363'
+    line = '#3a3a3a' if dark else '#e7e5e4'
+    pc = _svg_escape(postcode)
+    label = _svg_escape(band_label)
+    # role="img" plus <title> is what gives a screen reader something to say;
+    # an <img> embed also carries the alt text the embedder writes.
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="220" height="64" viewBox="0 0 220 64" role="img" aria-label="Sky Score {pc}: {score} out of 10, {label}">
+  <title>Sky Score {pc}: {score} out of 10 ({label})</title>
+  <rect x="0.5" y="0.5" width="219" height="63" rx="6" fill="{bg}" stroke="{line}"/>
+  <rect x="1" y="1" width="6" height="62" rx="3" fill="{colour}"/>
+  <text x="20" y="24" font-family="Helvetica,Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="1.2" fill="{sub}">SKY SCORE</text>
+  <text x="20" y="50" font-family="Helvetica,Arial,sans-serif" font-size="24" font-weight="700" fill="{fg}">{score}</text>
+  <text x="60" y="50" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="{sub}">/ 10</text>
+  <text x="92" y="42" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="600" fill="{colour}">{label}</text>
+  <text x="92" y="55" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="{sub}">{pc}</text>
+</svg>'''
+
+
+def _svg_response(svg, status=200, cache_seconds=86400):
+    return {
+        'statusCode': status,
+        'headers': {
+            'Content-Type': 'image/svg+xml; charset=utf-8',
+            # Long cache on purpose. Scores move on data vintages, roughly
+            # quarterly, and this is embedded on pages that may render it
+            # thousands of times a day - an uncached badge would make somebody
+            # else's traffic our Lambda bill.
+            'Cache-Control': f'public, max-age={cache_seconds}',
+            # Explicitly NOT a JSON CORS surface. An <img> needs no CORS at all;
+            # allowing it would only widen what can read this.
+            'X-Content-Type-Options': 'nosniff',
+        },
+        'body': svg,
+    }
+
+
+def handle_badge(event):
+    """GET /badge?postcode=&theme= - an embeddable SVG score badge.
+
+    UNAUTHENTICATED, necessarily: it is embedded on pages we do not control, so
+    it cannot carry a key. It reuses resolve_query, so a badge can never show a
+    score /v1/score would not.
+
+    An unresolvable postcode returns a BADGE, not an error. A broken image on a
+    customer's listing page is worse than an honest one saying the postcode is
+    not covered, and a 404 renders as exactly that broken image. The status code
+    still tells a machine what happened.
+    """
+    params = event.get('queryStringParameters') or {}
+    postcode = parse_str_param(params.get('postcode'))
+    dark = parse_str_param(params.get('theme')).lower() == 'dark'
+
+    if not postcode:
+        return _svg_response(
+            _badge_svg('No postcode', '-', 'Add ?postcode=', '#636363', dark),
+            status=400,
+            cache_seconds=300,
+        )
+
+    body, status = resolve_query({'postcode': postcode})
+    if status != 200 or not isinstance(body.get('score'), (int, float)):
+        # Short cache: an uncovered postcode becomes covered when a city lands,
+        # and a day-long cache would keep showing "not covered" after it did.
+        return _svg_response(
+            _badge_svg(postcode.upper(), '-', 'Not covered', '#636363', dark),
+            status=status if status >= 400 else 404,
+            cache_seconds=300,
+        )
+
+    score = round(float(body['score']), 1)
+    colour, label = _badge_band(score)
+    resolved = (body.get('location') or {}).get('postcode') or postcode.upper()
+    return _svg_response(_badge_svg(resolved, score, label, colour, dark))
+
+
 def handle_get(event):
     path = (event.get('path') or '').rstrip('/')
+    if path.endswith('/badge'):
+        return handle_badge(event)
     if path.endswith('/regions'):
         return handle_regions(event)
     if path.endswith('/changes'):

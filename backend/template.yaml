@@ -394,6 +394,22 @@ Resources:
         # What it exposes is measurements, not the product: no weights, no
         # persona, no composite score. The scoring engine stays behind the key.
         # Throttled per-method below, same posture as /epc.
+        # /badge is UNAUTHENTICATED and must be: it renders inside an <img> on
+        # third-party listing pages, which cannot carry a key. It returns an
+        # SVG of the composite score only - no components, no weights, no
+        # persona, no batch - so it exposes the number the consumer site
+        # already shows publicly and none of what the API sells. Same posture
+        # as /v1/environment directly below.
+        #
+        # Cached hard (24h) at the CDN because scores move on quarterly data
+        # vintages while a badge on a busy listing page renders constantly;
+        # without that, somebody else's traffic becomes our Lambda bill.
+        BadgeGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /badge
+            Method: get
         EnvironmentGet:
           Type: Api
           Properties:
