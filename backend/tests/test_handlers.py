@@ -207,6 +207,131 @@ class SignupHandlerTests(unittest.TestCase):
             self.app._safe_revoke_orphan_key('legitimate-key-id')
             mock_delete.assert_called_once_with(apiKey='legitimate-key-id')
 
+    # ----- Consumer notify list (D5, 2026-08-21) -----
+    #
+    # The consumer path shares a route with the B2B key signup, which is the
+    # whole risk: a person who typed a postcode into the consumer map must not
+    # come out of it holding an API key. API Gateway caps keys per account, and
+    # audit finding 9 records that key METADATA carries the raw email - so an
+    # accidental key here is both a cost and a privacy regression.
+
+    def test_consumer_signup_issues_no_api_key(self):
+        # The assertion that matters. create_api_key is patched to EXPLODE, so
+        # this fails loudly if the consumer path ever reaches it, rather than
+        # passing on a mock that quietly returned a key nobody inspected.
+        def _must_not_run(*a, **k):
+            raise AssertionError('consumer signup created an API key')
+
+        captured = {}
+        with patch.object(self.app, 'get_existing_signup', return_value=None), \
+             patch.object(self.app, 'create_api_key', side_effect=_must_not_run), \
+             patch.object(self.app.ddb, 'put_item',
+                          side_effect=lambda **kw: captured.update(kw)):
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({
+                    'email': 'reader@example.com',
+                    'source': 'consumer',
+                    'postcode': 'M1 1AE',
+                }),
+            }, None)
+        self.assertEqual(result['statusCode'], 201)
+        payload = json.loads(result['body'])
+        self.assertEqual(payload['status'], 'subscribed')
+        # No key value may appear in a consumer response, under any key name.
+        self.assertNotIn('apiKey', payload)
+        self.assertNotIn('key', payload)
+        # The row records WHERE it came from. Without this the two intents are
+        # indistinguishable later, and a marketing list ends up holding people
+        # who only ever asked about one postcode.
+        item = captured['Item']
+        self.assertEqual(item['source']['S'], 'consumer')
+        self.assertEqual(item['postcode']['S'], 'M1 1AE')
+        self.assertEqual(item['keyId']['S'], '')
+
+    def test_consumer_repeat_visitor_is_not_told_about_api_keys(self):
+        # THE PATH A REAL REPEAT VISITOR TAKES, which is not the one the race
+        # test below covers. get_existing_signup finds the row and returns it;
+        # before the fix that fell into the B2B 409, so a consumer who typed
+        # their address twice was told 'A new key cannot be re-issued via this
+        # endpoint. Contact support to revoke and re-issue if the original key
+        # has been lost.' - about a key they never asked for and do not have.
+        #
+        # This shipped and the suite stayed green, because the duplicate test
+        # patched get_existing_signup to None and drove the RACE branch. Two
+        # branches produce 'already exists'; only one of them is common.
+        with patch.object(self.app, 'get_existing_signup',
+                          return_value={'email': {'S': 'repeat@example.com'}}):
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'repeat@example.com', 'source': 'consumer'}),
+            }, None)
+        self.assertEqual(result['statusCode'], 200)
+        payload = json.loads(result['body'])
+        self.assertEqual(payload['status'], 'already-subscribed')
+        # The words that must not reach a consumer.
+        blob = json.dumps(payload).lower()
+        self.assertNotIn('key', blob)
+        self.assertNotIn('support', blob)
+
+    def test_b2b_repeat_still_gets_the_key_409(self):
+        # The other direction: the consumer fix must not swallow the B2B 409,
+        # which is load-bearing - it tells a developer their key exists and
+        # cannot be re-shown.
+        with patch.object(self.app, 'get_existing_signup',
+                          return_value={'email': {'S': 'dev@example.com'}}):
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'dev@example.com'}),
+            }, None)
+        self.assertEqual(result['statusCode'], 409)
+        self.assertIn('already signed up', json.loads(result['body'])['error'])
+    def test_consumer_duplicate_reads_as_success_not_error(self):
+        # Already subscribed is the outcome they wanted. A 409 would render as
+        # 'something went wrong' to someone who is, in fact, on the list.
+        from botocore.exceptions import ClientError
+        dupe = ClientError(
+            {'Error': {'Code': 'ConditionalCheckFailedException', 'Message': 'x'}},
+            'PutItem',
+        )
+        with patch.object(self.app, 'get_existing_signup', return_value=None), \
+             patch.object(self.app.ddb, 'put_item', side_effect=dupe):
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'dupe@example.com', 'source': 'consumer'}),
+            }, None)
+        self.assertEqual(result['statusCode'], 200)
+        self.assertEqual(json.loads(result['body'])['status'], 'already-subscribed')
+
+    def test_unrecognised_source_falls_through_to_the_key_path(self):
+        # Opt-in by EXACT match. If a typo or a hostile body could select the
+        # consumer branch by accident that would be harmless, but the reverse -
+        # defaulting to the key path only on an exact 'api' - would mean a
+        # malformed source silently issues an API key to a consumer.
+        with patch.object(self.app, 'get_existing_signup', return_value=None), \
+             patch.object(self.app, 'create_api_key',
+                          return_value=('key-id', 'sk_value')), \
+             patch.object(self.app.ddb, 'put_item'):
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'x@example.com', 'source': 'Consumer '}),
+            }, None)
+        self.assertEqual(result['statusCode'], 201)
+        self.assertIn('apiKey', json.loads(result['body']))
+
+    def test_b2b_signup_still_records_its_own_source(self):
+        captured = {}
+        with patch.object(self.app, 'get_existing_signup', return_value=None), \
+             patch.object(self.app, 'create_api_key',
+                          return_value=('key-id', 'sk_value')), \
+             patch.object(self.app.ddb, 'put_item',
+                          side_effect=lambda **kw: captured.update(kw)):
+            self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': 'dev@example.com'}),
+            }, None)
+        self.assertEqual(captured['Item']['source']['S'], 'api')
+
     def test_signup_race_revokes_orphan_and_returns_409(self):
         # I-N6: a real-world signup race — get_existing_signup returns None
         # (no prior row), create_api_key succeeds, but record_signup hits
@@ -546,13 +671,23 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         cls.plan = text[start:end]
 
     def _plan_int(self, field):
+        """Read a PLAN-LEVEL throttle/quota integer.
+
+        Deliberately the LAST match, not the first. From 2026-08-21 the plan
+        carries a per-method deny (`/v1/score/batch/POST: RateLimit: 0`) inside
+        ApiStages, ABOVE the plan-level Throttle - so a first-match read returned
+        0 and this gate failed claiming the response advertised a rate the plan
+        did not enforce. The plan-level block is last in the resource, and it is
+        the one a caller actually experiences on the routes they can reach.
+        """
         import re  # pylint: disable=import-outside-toplevel
-        match = re.search(rf'^\s*{field}:\s*(\d+)\s*$', self.plan, re.MULTILINE)
+        matches = re.findall(rf'^\s*{field}:\s*(\d+)\s*$', self.plan, re.MULTILINE)
+        match = matches[-1] if matches else None
         self.assertIsNotNone(
             match, f'{field} not found in ScoreFreeUsagePlan — the block was '
                    'renamed or restructured, so this gate is no longer '
                    'checking anything. Fix the test, do not delete it.')
-        return int(match.group(1))
+        return int(match)
 
     def _signup_body(self):
         app = _import_lambda('signup')
@@ -583,13 +718,24 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         self.assertEqual(limits['sustainedRateLimit'], self._plan_int('RateLimit'))
         self.assertEqual(limits['burstLimit'], self._plan_int('BurstLimit'))
 
-    def test_batch_multiplier_matches_the_score_lambda(self):
-        # The multiplier is what turns a request quota into a score ceiling.
-        # If MAX_BATCH_SIZE moves and this field does not, the advertised
-        # ceiling silently becomes wrong in the customer's favour.
-        limits = self._signup_limits()
-        self.assertEqual(limits['batchMultiplier'],
-                         _import_lambda('score').MAX_BATCH_SIZE)
+    def test_batch_multiplier_follows_whether_the_plan_can_batch(self):
+        # The multiplier is what turns a request quota into a score ceiling, so
+        # if it is wrong the advertised ceiling is wrong in someone's favour.
+        #
+        # It used to assert `== MAX_BATCH_SIZE` unconditionally, which was right
+        # while every plan could batch. From 2026-08-21 the free plan denies
+        # /v1/score/batch per-method, so its real multiplier is 1 and asserting
+        # 100 would be asserting an entitlement the gateway refuses.
+        #
+        # DERIVED FROM THE TEMPLATE, not restated: the expected value is read
+        # from whether the deny is present, so this cannot be satisfied by
+        # editing a number to match. Removing the deny without restoring the
+        # multiplier fails, and vice versa.
+        denies_batch = '/v1/score/batch/POST:' in self.plan
+        expected = 1 if denies_batch else _import_lambda('score').MAX_BATCH_SIZE
+        self.assertEqual(
+            self._signup_limits()['batchMultiplier'], expected,
+            'the advertised multiplier disagrees with what the plan enforces')
 
     def test_score_ceiling_is_the_product_of_the_two(self):
         limits = self._signup_limits()

@@ -18,9 +18,12 @@ whole point. Abuse is bounded by:
     need WAF (see below).
   - One key per email (idempotent, duplicate signups return a "key
     already issued" error; we cannot re-show the key after creation)
-  - The downstream UsagePlan caps each issued key at 100 req/month,
-    which is 10,000 scores/month because a /v1/score/batch request
-    carries up to 100 queries and still counts as one request
+  - The downstream UsagePlan caps each issued key at 10,000 req/month,
+    which is 10,000 SCORES/month: /v1/score/batch is denied per-method
+    for this plan (RateLimit 0), so a request cannot carry 100 queries
+    and requests and scores are finally the same unit. Before
+    2026-08-21 the cap was 100 requests for the same 10,000 scores,
+    which an integrator could exhaust in an afternoon.
 
 If this becomes a vector, the next layer is reCAPTCHA / hCaptcha on the
 form, then WAF rules. Not worth adding pre-emptively.
@@ -227,16 +230,30 @@ def create_api_key(email, name):
     return key_id, key_value
 
 
-def record_signup(email, name, key_id):
-    """Audit-log the signup. Email is the partition key (one per email)."""
+def record_signup(email, name, key_id, source='api', postcode=''):
+    """Audit-log the signup. Email is the partition key (one per email).
+
+    `source` and `postcode` were added 2026-08-21 for the consumer notify list.
+    They are recorded rather than inferred because the two intents are genuinely
+    different and a single table cannot distinguish them later: an API signup
+    wanted a key, a consumer signup wanted to hear when ONE postcode moves. A
+    row with no source would have to be guessed at, and guessing is how a
+    marketing list ends up holding people who never asked to be on one.
+
+    `keyId` is empty for a consumer, because no key is issued for them.
+    """
+    item = {
+        'email': {'S': email},
+        'name': {'S': name or ''},
+        'keyId': {'S': key_id or ''},
+        'source': {'S': source},
+        'createdAt': {'S': datetime.now(UTC).isoformat()},
+    }
+    if postcode:
+        item['postcode'] = {'S': postcode}
     ddb.put_item(
         TableName=SIGNUPS_TABLE,
-        Item={
-            'email': {'S': email},
-            'name': {'S': name or ''},
-            'keyId': {'S': key_id},
-            'createdAt': {'S': datetime.now(UTC).isoformat()},
-        },
+        Item=item,
         # Idempotency: fail if the email already exists. Caller checked
         # above but a race is possible between get_item and put_item.
         ConditionExpression='attribute_not_exists(email)',
@@ -296,6 +313,13 @@ def handle_post(event):
 
     email = (body.get('email') or '').strip().lower()
     name = (body.get('name') or '').strip()
+    # 'consumer' is the postcode-panel notify list; anything else is the
+    # existing B2B key signup. Defaulting to the KEY path would mean a
+    # malformed source silently issues an API key to someone who asked for an
+    # email alert - so the consumer path is opt-in by exact match, and an
+    # unrecognised value falls through to the behaviour that already existed.
+    source = 'consumer' if (body.get('source') or '').strip() == 'consumer' else 'api'
+    postcode = (body.get('postcode') or '').strip().upper()[:12]
 
     if not email or not EMAIL_PATTERN.match(email):
         return response(
@@ -317,6 +341,26 @@ def handle_post(event):
     # unauthenticated, so anyone who guesses an address would otherwise
     # learn when its owner registered. It stays on the row for support.
     existing = get_existing_signup(email)
+    if existing and source == 'consumer':
+        # The COMMON duplicate path for a consumer, and it must not fall
+        # into the B2B 409 below - that one says a key cannot be
+        # re-issued and to contact support, which is nonsense to someone
+        # who asked for an email about a postcode.
+        #
+        # This ordering bug shipped to production for the length of one
+        # deploy on 2026-08-21 and the unit test did not see it, because
+        # the test patched get_existing_signup to None and exercised the
+        # RACE path (put_item raising ConditionalCheckFailed) instead of
+        # the path every real repeat visitor takes. Caught by calling the
+        # deployed endpoint twice.
+        return response(
+            200,
+            {
+                'status': 'already-subscribed',
+                'message': 'You are already on the list for score updates.',
+            },
+            event,
+        )
     if existing:
         return response(
             409,
@@ -326,6 +370,54 @@ def handle_post(event):
                     'A new key cannot be re-issued via this endpoint. '
                     'Contact support to revoke and re-issue if the original '
                     'key has been lost.'
+                ),
+            },
+            event,
+        )
+
+    # CONSUMER NOTIFY LIST - returns before any key is created.
+    #
+    # A person who typed a postcode into the consumer map does not want an API
+    # key, and issuing one would be both a cost (API Gateway caps keys per
+    # account) and a privacy problem: it puts them in a B2B key registry whose
+    # metadata carries their email, which audit finding 9 already flags.
+    #
+    # WHAT WE PROMISE HERE IS LIMITED ON PURPOSE. There is no SES in this stack
+    # and no automated sending of any kind; outbound mail today is a human using
+    # Gmail's "send mail as", which is not even DKIM-aligned for this domain yet
+    # (see EMAIL_AUTH_SETUP.md). So the copy on the page offers a quarterly note
+    # when the score moves - which matches both the real vintage cadence and
+    # what a person can actually send by hand - and does NOT offer instant
+    # alerts. Storing an address against a promise the infrastructure cannot
+    # keep is the same defect as painting a borough with a reading nobody took.
+    if source == 'consumer':
+        try:
+            record_signup(email, name, key_id='', source='consumer', postcode=postcode)
+        except ClientError as e:
+            if e.response.get('Error', {}).get('Code', '') == 'ConditionalCheckFailedException':
+                # Already on the list. That is the outcome they wanted, so it
+                # is reported as success rather than as an error - a 409 here
+                # would read as "something went wrong" to someone who is, in
+                # fact, subscribed.
+                return response(
+                    200,
+                    {
+                        'status': 'already-subscribed',
+                        'message': "You are already on the list for score updates.",
+                    },
+                    event,
+                )
+            logger.error('[SIGNUP_CONSUMER_FAILED] err=%r', e)
+            return response(503, {'error': 'Could not save. Please try again later.'}, event)
+        return response(
+            201,
+            {
+                'status': 'subscribed',
+                'postcode': postcode or None,
+                'message': (
+                    "Thanks. We will email you when this area's score changes, "
+                    'which happens when the underlying data is refreshed - '
+                    'roughly quarterly.'
                 ),
             },
             event,
@@ -346,7 +438,7 @@ def handle_post(event):
         )
 
     try:
-        record_signup(email, name, key_id)
+        record_signup(email, name, key_id, source='api')
     except ClientError as e:
         code = e.response.get('Error', {}).get('Code', '')
         if code == 'ConditionalCheckFailedException':
@@ -387,10 +479,13 @@ def handle_post(event):
             # both together. batchMultiplier is stated explicitly because the
             # quota meters requests while the product sells scores.
             'limits': {
-                'monthlyQuota': 100,
+                'monthlyQuota': 10000,
                 'burstLimit': 5,
-                'sustainedRateLimit': 1,
-                'batchMultiplier': 100,
+                'sustainedRateLimit': 2,
+                # 1, not 100: /v1/score/batch is denied per-method for this
+                # plan as of 2026-08-21, so a free request cannot carry more
+                # than one query and the ceiling is no longer a product.
+                'batchMultiplier': 1,
                 'monthlyScoreCeiling': 10000,
                 # 'quota' means the ceiling IS monthlyQuota x batchMultiplier.
                 # Professional's is 'fair-use' and is deliberately lower than

@@ -444,32 +444,53 @@ Resources:
     DependsOn: FlightMapApiprodStage
     Properties:
       UsagePlanName: SkyScoreFreeTier
-      Description: Free tier, 100 requests/month, 5 req/sec burst.
+      Description: Free tier, 10000 requests/month = 10000 scores, 5 req/sec burst.
       # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. Four places mirror
       # these numbers and none of them can read the plan at runtime:
       # backend/lambdas/signup/app.py (the signup response), pricing.html,
       # api/index.html and score-demo/openapi.yaml. Change them together.
       #
-      # Quota meters REQUESTS; the product sells SCORES, and /v1/score/batch
-      # carries up to MAX_BATCH_SIZE (100) queries per request. So the real
-      # free ceiling is Limit x 100 scores/month, not Limit. Lowered 1000 -> 100
-      # on 2026-07-29 (10,000 scores, was 100,000) because the old ceiling gave
-      # away the entire volume proposition of the £499 Professional tier for
-      # free, in under nine minutes. Reasoning and rejected options:
+      # REQUESTS NOW EQUAL SCORES, and that is the point of this block.
+      #
+      # Quota meters REQUESTS while the product sells SCORES, and
+      # /v1/score/batch carried up to MAX_BATCH_SIZE (100) queries per request -
+      # so the free ceiling was always Limit x 100. On 2026-07-29 the only lever
+      # available was the multiplicand, and Limit went 1000 -> 100 to bring the
+      # ceiling from 100,000 scores down to 10,000, because the old one gave away
+      # the whole volume proposition of the £499 tier in under nine minutes.
+      # That worked and it cost the wedge: 100 requests is an afternoon of one
+      # live listings page, so an integrator could not finish an evaluation.
+      #
+      # 2026-08-21 removes the multiplier instead of the volume. The per-method
+      # deny below is the same mechanism proven live for the demo key on the
+      # same day (see ScoreDemoUsagePlan): a free key gets 429 on batch, so
+      # requests and scores are the same unit and Limit can carry the intended
+      # 10,000 scores directly. Same entitlement as the 2026-07-29 decision,
+      # 100x more calls to spend it in, and Professional's published
+      # 1,000,000-score ceiling is still 100x this.
+      #
+      # WHAT A FREE KEY LOSES: bulk. That is deliberate - score_bulk.py is
+      # described in its own header as the Enterprise deliverable, and single
+      # lookups are the shape of an evaluation. Reasoning and rejected options:
       # BATCH_METERING_DECISION.md.
       ApiStages:
         - ApiId: !Ref FlightMapApi
           Stage: prod
+          Throttle:
+            /v1/score/batch/POST:
+              BurstLimit: 0
+              RateLimit: 0
       Quota:
-        Limit: 100
+        Limit: 10000
         Period: MONTH
-      # RateLimit 2 -> 1 alongside the quota cut. It does not change the monthly
-      # total, it doubles the time to drain it (500s -> 1000s), so the drain
-      # reads as sustained use rather than a burst that is over before any
-      # monthly-window alarm could notice.
+      # RateLimit back to 2 from the 1 that accompanied the 2026-07-29 cut. That
+      # drop existed to make a 100-request drain read as sustained use rather
+      # than a burst; with 10,000 requests the monthly window is no longer
+      # something a caller can empty in minutes, so the slow-drain argument no
+      # longer applies and 1 req/sec would simply be an unhelpful integration.
       Throttle:
         BurstLimit: 5
-        RateLimit: 1
+        RateLimit: 2
 
   ScoreFreeUsagePlanKey:
     Type: AWS::ApiGateway::UsagePlanKey

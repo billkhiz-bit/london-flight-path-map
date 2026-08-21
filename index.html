@@ -1362,6 +1362,50 @@
         outline: 2px solid var(--orange);
       }
 
+      /* Consumer notify capture in the postcode panel (D5, 2026-08-21). */
+      .notify-form {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .notify-form input {
+        flex: 1 1 auto;
+        min-width: 0; /* without this the input refuses to shrink and the
+                         button leaves the panel on a 320px viewport */
+        padding: 8px 10px;
+        font-family: inherit;
+        font-size: 12px;
+        color: var(--dark);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+      }
+      .notify-form input:focus-visible,
+      .notify-form button:focus-visible {
+        outline: 2px solid var(--dark);
+        outline-offset: 2px;
+      }
+      .notify-form button {
+        flex: 0 0 auto;
+        /* 44px min target: the responsive audit flags anything smaller, and
+           this sits at the bottom of a scrolling panel on a phone. */
+        min-height: 44px;
+        padding: 8px 14px;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #fff;
+        background: var(--dark);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .notify-form button:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
       /* F-UX-8: visually-hidden but accessible to screen readers. Used for
          the autocomplete-status live region. The clip + clip-path combo
          works in every browser; just `display: none` would HIDE the live
@@ -8356,6 +8400,60 @@
       // Nearest NaPTAN stations to a point, straight-line, nearest first.
       // Rail ranks above metro/tram at equal distance, because "your nearest
       // station" means the rail one to most readers.
+      // Consumer notify list. POSTs to the SAME /v1/signup route as the B2B key
+      // form, with source:'consumer' - which makes the Lambda record the address
+      // and skip key issuance entirely. Reusing the route means reusing its
+      // validation, CORS, throttle and one-row-per-email idempotency rather than
+      // standing up a second unauthenticated write path.
+      //
+      // The copy promises a quarterly note and nothing faster, because there is
+      // no SES in the stack: outbound mail is currently a person and Gmail. A
+      // capture form that promises instant alerts would be storing addresses
+      // against a promise the infrastructure cannot keep.
+      function wireNotifyForm(postcode) {
+        const form = document.getElementById('notify-form');
+        if (!form) return;
+        const out = document.getElementById('notify-result');
+        const btn = document.getElementById('notify-btn');
+        form.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          const email = (document.getElementById('notify-email').value || '').trim();
+          // Deliberately a light check. The Lambda is the authority on what a
+          // valid address is; duplicating its regex here would be a second
+          // holder that drifts, and the round trip is cheap.
+          if (!email || !email.includes('@')) {
+            out.textContent = 'Enter an email address so we know where to send it.';
+            return;
+          }
+          btn.disabled = true;
+          out.textContent = 'Saving...';
+          trackEvent('notify-attempted');
+          try {
+            const res = await fetch(`${API_BASE}/v1/signup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, source: 'consumer', postcode: postcode || '' }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+              // The Lambda's own sentence, not one composed here - it is the
+              // side that knows whether this was a new subscription or an
+              // existing one, and two copies of that wording would drift.
+              out.textContent = data.message || 'Thanks, you are on the list.';
+              form.style.display = 'none';
+              trackEvent('notify-subscribed');
+            } else {
+              out.textContent = data.error || 'Could not save that. Please try again.';
+              btn.disabled = false;
+            }
+          } catch {
+            // Network failure must not read as rejection of the address.
+            out.textContent = 'Could not reach the server. Please try again.';
+            btn.disabled = false;
+          }
+        });
+      }
+
       // Is this city served by the UK-wide datasets - EPC, HM Land Registry,
       // NaPTAN? Read from the registry's `country`, never from a city list: a
       // hardcoded list is one more place to forget when a city is added, and
@@ -10040,6 +10138,17 @@
     }
     ${buildOptionalSections(extra, 'pc')}
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
+    <div class="sidebar-section notify-block">
+      <h3>TELL ME WHEN THIS CHANGES</h3>
+      <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
+      <form id="notify-form" class="notify-form" novalidate>
+        <label class="visually-hidden" for="notify-email">Email address for score updates</label>
+        <input id="notify-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="notify-privacy" />
+        <button id="notify-btn" type="submit">Notify me</button>
+      </form>
+      <p id="notify-result" class="info-note" role="status" aria-live="polite" style="margin-top:6px;"></p>
+      <p id="notify-privacy" class="info-note" style="margin-top:4px;font-size:10px;">One email per refresh at most. No marketing, no sharing. <a href="/privacy" style="color:var(--orange);">How we handle it</a>.</p>
+    </div>
     <div class="sidebar-section">
       <h3>YOUR NEXT STEPS</h3>
       <p class="property-note" style="margin-top:0;">
@@ -10053,6 +10162,12 @@
         <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
       </p>
     </div>`;
+
+        // The notify form is rebuilt with the panel on every search, so it is
+        // wired here rather than once at boot - a listener bound to the old
+        // node dies with it, silently, and the button would just stop working
+        // on the second search.
+        wireNotifyForm(analysis.postcode);
 
         // Populate the panels. EPC and HM Land Registry are UK-WIDE, so the
         // gate is the country, not the city - the comment here used to say

@@ -530,3 +530,33 @@ This file tracks the meta-rules; routine changes go in `CHANGELOG.md`.
 | Date | Change |
 |---|---|
 | 2026-05-07 | Initial OPERATIONS.md created as part of Wave 9 enterprise readiness. PITR documented as one-time admin action pending IAM policy update. |
+
+## Log-group retention is NOT declared in the template (found 2026-08-21)
+
+A Lambda log group is created by AWS on the function's FIRST INVOCATION, with
+no retention policy. `privacy.html` promises 30 days and
+`scripts/check_log_retention.sh` is a blocking gate, so the sequence is:
+
+1. deploy a function, or redeploy one whose group had been cleaned up
+2. invoke it once - even a smoke test counts
+3. the next preflight goes RED on that group
+
+That happened on 2026-08-21: verifying the new consumer signup path by calling
+the live endpoint created `/aws/lambda/london-flight-map-SignupFunction-vLApmPCZyQTD`
+and the gate caught it immediately, which is the gate working.
+
+Manual fix (flightmap-dev DOES hold `logs:PutRetentionPolicy`, unlike the
+delete permissions it lacks):
+
+```bash
+export MSYS_NO_PATHCONV=1   # or Git Bash mangles the /aws/lambda path
+AWS_PROFILE=flightmap aws logs put-retention-policy \
+  --log-group-name "/aws/lambda/<function-log-group>" \
+  --retention-in-days 30 --region eu-west-2
+```
+
+**Durable fix, not yet done:** declare each group as an `AWS::Logs::LogGroup`
+with `RetentionInDays: 30` in `backend/template.yaml`. Deliberately not done
+blind - CloudFormation refuses to CREATE a log group that already exists, so
+the existing groups would need importing into the stack first. Worth doing on a
+session where the stack can be watched, not as a side effect of another change.

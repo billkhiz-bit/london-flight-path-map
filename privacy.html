@@ -195,7 +195,22 @@
       <h3>2a. Data you actively give us</h3>
       <p>
         <strong>Browsing and scoring: none.</strong> Using the Sky Score website or apps does not require an account, email address,
-        name, phone number, or any other identifying information. There are no payment forms or surveys.
+        name, phone number, or any other identifying information. There are no payment forms or surveys. Searching a postcode does
+        not collect anything; the optional score-update list described below is the only place the consumer site asks for an
+        address, and it is never a condition of seeing a score.
+      </p>
+      <p>
+        <strong>Score-update list (optional, added 21 August 2026):</strong> after you search a postcode you may leave an email
+        address to be told when that area's score changes. We collect the address and the postcode you searched, and nothing else.
+        We use it for that single purpose: to send you a short note when the underlying data is refreshed, which happens roughly
+        quarterly. Lawful basis: consent (UK GDPR Article 6(1)(a)), which you give by submitting the form and can withdraw at any
+        time by replying to any message or emailing us. It is never sold, never shared, and never used for marketing anything else.
+        Stored in the same signup register (DynamoDB) in our AWS account in <code>eu-west-2</code> (London), marked with the source
+        <code>consumer</code> so it is distinguishable from an API key signup. Kept until you ask us to remove it.
+        Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> and we delete the record within 30 days.
+        <strong>These notes are sent by hand.</strong> We say so because the alternative is implying an automated alerting service
+        we have not built: there is no scheduled mail system behind this list today, so a note may follow a data refresh by some
+        days rather than arriving the moment a score moves.
       </p>
       <p>
         <strong>API key signup (optional):</strong> if you request a free API key on the

@@ -119,6 +119,41 @@ console.log('\nDemo key scope\n==============\n');
   );
 }
 
+// 4. THE FREE TIER IS SCOPED THE SAME WAY (D1, 2026-08-21).
+//
+// The free quota was 100 requests specifically BECAUSE batch multiplied each
+// one by 100 - the ceiling was an arithmetic identity, and cutting the
+// multiplicand was the only lever available at the time. It cost the wedge:
+// 100 requests is an afternoon of one live listings page. Denying batch
+// per-method decouples the two, so the quota could go to 10,000 while the
+// entitlement stayed at the same 10,000 scores.
+//
+// Which means this assertion is now load-bearing in a way the demo one is not:
+// if this deny stops working, the free tier is not slightly too generous, it is
+// 1,000,000 scores a month - twice Professional's entire published ceiling,
+// for free. Uses the CI key, which is on its own plan and NOT free tier, so
+// this is checked with the key preflight already holds rather than by minting
+// a throwaway free key on every run.
+const CI_KEY = process.env.SKY_SCORE_API_KEY;
+if (!CI_KEY) {
+  console.log('  SKIP  free-tier batch deny - SKY_SCORE_API_KEY not set');
+  console.log('        (set it in .env; this check cannot run without a key)');
+} else {
+  const res = await fetch(`${API}/v1/score/batch`, {
+    method: 'POST',
+    headers: { 'X-Api-Key': CI_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ queries: [{ postcode: 'SW11 1AA' }] }),
+  });
+  // The CI plan is NOT the free plan, so batch SHOULD work here. Asserting the
+  // positive keeps this honest: a blanket batch outage would otherwise read as
+  // the free-tier deny working, and the two are different facts.
+  check(
+    'CI key (not free tier) can still batch',
+    res.status === 200,
+    `status=${res.status}`,
+  );
+}
+
 console.log('');
 if (failures.length) {
   console.error(`FAIL: ${failures.length} boundary check(s) failed`);
