@@ -501,6 +501,44 @@ Resources:
       ApiStages:
         - ApiId: !Ref FlightMapApi
           Stage: prod
+          # PER-METHOD DENY (2026-08-21). An API Gateway key authorises at the
+          # STAGE, not per route: a key on any usage plan reaches EVERY method
+          # carrying ApiKeyRequired: true. This key is PRINTED IN PAGE SOURCE on
+          # score-demo, so before this block it also opened:
+          #
+          #   POST /v1/chat        a Bedrock model, billed to this account. The
+          #                        comment on ChatPost calls an unauthenticated
+          #                        model endpoint 'a free LLM for anyone who
+          #                        finds it' - which is what this was. And
+          #                        verify_answer() is not a second line: it
+          #                        extracts NUMERIC tokens only, so any
+          #                        digit-free reply passes as grounded.
+          #   POST /v1/score/batch MAX_BATCH_SIZE is 100, so 2,000 requests is
+          #                        200,000 scores - 20x the Free tier, without
+          #                        the email address Free asks for.
+          #
+          # RateLimit 0 is the only DECLARATIVE way to keep a key off a route;
+          # there is no per-route key association in API Gateway. It is a deny
+          # dressed as a throttle, so callers see 429 rather than 403 - the
+          # reason this is a comment and not just config.
+          #
+          # Nothing legitimate loses anything: the demo form makes single GET
+          # /v1/score calls, /v1/chat has no caller outside its own Lambda, and
+          # score_bulk.py and loadtest.mjs use customer and CI keys on other
+          # plans. The status page's batch probe DID use this key and was
+          # removed in the same commit.
+          #
+          # VERIFY AFTER EVERY DEPLOY. If API Gateway ever reads 0 as
+          # 'unlimited' rather than 'deny', this block silently stops being a
+          # control while still looking like one - the exact shape this repo
+          # keeps paying for. tests/demo-key-scope.mjs proves it live.
+          Throttle:
+            /v1/chat/POST:
+              BurstLimit: 0
+              RateLimit: 0
+            /v1/score/batch/POST:
+              BurstLimit: 0
+              RateLimit: 0
       Quota:
         Limit: 2000
         Period: MONTH

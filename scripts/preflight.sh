@@ -124,6 +124,11 @@ check "API base-URL drift (I-N5)"      sh scripts/check_api_url_drift.sh
 # itself, which is how the raster served Heathrow a quiet score of 7.5/10 for a
 # week with this gate green throughout. Hits the live API, like the e2e stage.
 check "score sanity (live API)"        python scripts/check_score_sanity.py
+# Costs ZERO demo quota in the normal case: the two denial assertions are
+# throttled at the edge and API Gateway does not meter a throttled request.
+# The one metered call degrades to a warning if the funnel quota is spent,
+# so this gate cannot repeat what `score sanity` did when it held this key.
+check "demo key reaches only /v1/score" node tests/demo-key-scope.mjs
 # Borough avgPrice and trend against HM Land Registry HPI, keyed on ONS codes.
 # Placed with the offline gates rather than in the --skip-e2e block: it needs no
 # browser and no live site, only data/hpi-average-prices.csv, which it fetches
@@ -313,6 +318,11 @@ else
   # Deliberately data-driven, unlike the stage above: no count to keep in step,
   # so city ten is covered the day it is added. Both defects re-proven red.
   check "every city switches"           node tests/city-switch.mjs
+  # Types a real postcode in a NON-LONDON city, which nothing had ever done.
+  # "every city switches" clicks the chip and checks the MAP;
+  # borough-score-parity compares SCORES. Both passed while nine UK cities
+  # answered an area search with "NYC subway data coming soon".
+  check "UK cities get UK panel content" node tests/uk-city-panel.mjs
   # A borough choropleth must paint exactly the boroughs that hold a reading.
   # Added 2026-08-11: all three fill layers ended their lookup with `|| 'moderate'`
   # or `|| 'low'`, so every borough of the seven non-London UK cities was painted

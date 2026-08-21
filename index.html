@@ -8356,6 +8356,15 @@
       // Nearest NaPTAN stations to a point, straight-line, nearest first.
       // Rail ranks above metro/tram at equal distance, because "your nearest
       // station" means the rail one to most readers.
+      // Is this city served by the UK-wide datasets - EPC, HM Land Registry,
+      // NaPTAN? Read from the registry's `country`, never from a city list: a
+      // hardcoded list is one more place to forget when a city is added, and
+      // this exact branch already shipped nine cities the wrong country's
+      // content by asking `=== 'london'` and treating everything else as NYC.
+      function isUkCity(cityKey) {
+        return cityOf(cityKey).country === 'United Kingdom';
+      }
+
       function nearestStations(lat, lon, limit) {
         if (typeof lat !== 'number' || typeof lon !== 'number') return [];
         const list = cityOf(currentCity).stations() || [];
@@ -8367,6 +8376,37 @@
           }))
           .sort((a, b) => a.km - b.km || (a.type === 'rail' ? -1 : 1))
           .slice(0, limit || 4);
+      }
+
+      // NaPTAN stations for a point, rendered into `containerId`.
+      //
+      // ONE HOLDER. This was inline inside renderTransportData's empty-response
+      // fallback, reachable only from the London branch of the postcode panel -
+      // so the 1,771 stations built on 2026-08-12 to cover the other ten cities
+      // could not be reached by any of them. The data shipped, the renderer
+      // shipped, and nothing joined them. Extracted 2026-08-21 so both the
+      // TfL-returned-nothing path and the there-is-no-TfL-here path call the
+      // same code rather than one of them growing a second copy.
+      //
+      // Returns true if it rendered stations, false if there were none - the
+      // caller decides what an empty result MEANS, because "TfL gave us
+      // nothing" and "nowhere near a station" are different sentences.
+      function renderNaptanStations(containerId, lat, lon) {
+        const el = document.getElementById(containerId);
+        if (!el) return false;
+        const near = nearestStations(lat, lon, 4);
+        if (!near.length) return false;
+        el.innerHTML =
+          near
+            .map(
+              (s) =>
+                `<div class="transport-row"><span class="station-name">${escapeHtml(
+                  s.name
+                )}</span><span class="station-dist">${s.km.toFixed(1)} km</span></div>`
+            )
+            .join('') +
+          '<p class="info-note" style="margin-top:6px;font-size:10px;">Nearest rail, metro and tram stations, straight-line distance. Source: NaPTAN (DfT), Open Government Licence v3.0.</p>';
+        return true;
       }
 
       function renderTransportData(containerId, data) {
@@ -8391,20 +8431,7 @@
           // is the same register the borough transport score uses. Distances
           // are straight-line, and the panel says so rather than implying a
           // walking route.
-          const near = nearestStations(data._lat, data._lon, 4);
-          if (near.length) {
-            el.innerHTML =
-              near
-                .map(
-                  (s) =>
-                    `<div class="transport-row"><span class="station-name">${escapeHtml(
-                      s.name
-                    )}</span><span class="station-dist">${s.km.toFixed(1)} km</span></div>`
-                )
-                .join('') +
-              '<p class="info-note" style="margin-top:6px;font-size:10px;">Nearest rail, metro and tram stations, straight-line distance. Source: NaPTAN (DfT), Open Government Licence v3.0.</p>';
-            return;
-          }
+          if (renderNaptanStations(containerId, data._lat, data._lon)) return;
           el.innerHTML = '<p class="info-note">No stations found within 1.5km.</p>';
           return;
         }
@@ -9972,6 +9999,40 @@
       <h3>NEARBY NHS SERVICES</h3>
       <div id="postcode-nhs-data"><span class="crime-loading">Loading from NHS API...</span></div>
     </div>`
+        : isUkCity(currentCity)
+        ? // THREE WAYS, NOT TWO (2026-08-21). This was `london ? ... : ...` and
+          // the else-branch was NEW YORK'S, so an area search in Manchester,
+          // Birmingham, Leeds, Sheffield, Liverpool, Newcastle, Bristol,
+          // Leicester or Teesside answered "NYC subway data coming soon. Check
+          // MTA.info for schedules." A heading naming one city over a page
+          // showing another.
+          //
+          // Those nine also lost EPC and sold prices, under a comment saying
+          // the APIs were London-only "because they are UK-specific" - the
+          // reverse of true. EPC and HM Land Registry are UK-wide, and the
+          // sold-prices CONTAINER was rendering for them the whole time from
+          // buildPropertyLinks, so nine cities sat on "Loading from Land
+          // Registry..." that could never resolve.
+          //
+          // Stations here are NaPTAN, not TfL: TfL genuinely does not cover
+          // these cities, and asking it would return the empty response that
+          // used to be printed as "No stations found within 1.5km."
+          //
+          // NHS is deliberately still London-only. Not an oversight - the same
+          // audit that found this flagged /nhs for having no reserved
+          // concurrency behind a 45s timeout against API Gateway's 29s cap, and
+          // for answering with a confident empty result rather than fallback
+          // links. Widening a route with a known concurrency fault to nine more
+          // cities makes that fault likelier, so it waits for the fix. An
+          // absent section is honest; a confidently empty one is not.
+          `<div class="sidebar-section">
+      <h3>NEAREST STATIONS</h3>
+      <div id="postcode-transport-data"><span class="crime-loading">Finding nearest stations...</span></div>
+    </div>
+    <div class="sidebar-section">
+      <h3>ENERGY PERFORMANCE (EPC)</h3>
+      <div id="postcode-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>
+    </div>`
         : `<div class="sidebar-section">
       <h3>NEAREST SUBWAY STATIONS</h3>
       <div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange);">MTA.info</a> for schedules.</span></div>
@@ -9993,11 +10054,16 @@
       </p>
     </div>`;
 
-        // Fetch transport/EPC/sold data (London only - these APIs are UK-specific)
+        // Populate the panels. EPC and HM Land Registry are UK-WIDE, so the
+        // gate is the country, not the city - the comment here used to say
+        // "London only, these APIs are UK-specific", which gave nine UK cities
+        // neither. TfL is the genuinely London-only one, and NaPTAN stands in
+        // for it elsewhere. See the branch above for why NHS still does not.
+        //
+        // These panels carry no postcode label, so a stale response is
+        // invisible to the reader - every callback re-checks the token.
+        const signal = req.signal;
         if (currentCity === 'london') {
-          // These four panels carry no postcode label, so a stale response is
-          // invisible to the reader - every callback re-checks the token.
-          const signal = req.signal;
           fetchTransportData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderTransportData('postcode-transport-data', data);
@@ -10006,6 +10072,21 @@
             if (!isCurrentSearch(req)) return;
             renderNhsData('postcode-nhs-data', data);
           });
+        } else if (isUkCity(currentCity)) {
+          // No fetch: NaPTAN is already on the page for the map, so this is a
+          // sort over data in memory. If the city has no stations near the
+          // point, SAY SO rather than leaving the loading state up - an
+          // unresolved spinner is the same lie as a confident empty list, just
+          // slower to read.
+          if (!renderNaptanStations('postcode-transport-data', analysis.lat, analysis.lon)) {
+            const tEl = document.getElementById('postcode-transport-data');
+            if (tEl)
+              tEl.innerHTML =
+                '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
+          }
+        }
+
+        if (isUkCity(currentCity)) {
           if (!analysis.isOutcode) {
             fetchSoldPrices(analysis.postcode, signal).then((soldData) => {
               if (!isCurrentSearch(req)) return;

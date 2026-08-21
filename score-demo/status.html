@@ -221,13 +221,19 @@
       method: 'GET',
       headers: { 'X-Api-Key': API_KEY },
     },
-    {
-      name: 'POST /v1/score/batch',
-      url: API_BASE + '/v1/score/batch',
-      method: 'POST',
-      headers: { 'X-Api-Key': API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ queries: [{ postcode: 'SW11 1AA' }] }),
-    },
+    // POST /v1/score/batch is NOT probed, deliberately (2026-08-21).
+    //
+    // This page is public and the key below is in its source, so the key must
+    // not be entitled to batch - one metered request would return 100 scores.
+    // The demo plan now denies that route per-method, so probing it with this
+    // key returns 429 and would paint the page red for a control working
+    // exactly as intended.
+    //
+    // Probing it keyless instead would only re-prove the key check that the
+    // /v1/score rows already prove. The boundary itself is asserted by
+    // tests/demo-key-scope.mjs, which is where a security assertion belongs -
+    // a customer-facing status page should report whether the service is up,
+    // not whether an internal control is holding.
     {
       name: 'API browser demo',
       url: 'https://skyscore.co.uk/score-demo/index.html',
