@@ -278,7 +278,7 @@ API Gateway ── Lambda × 8 active ── DynamoDB (favourites, signups, DEFR
 
 | Lambda | Path | Purpose |
 |---|---|---|
-| `score` | `/v1/score`, `/v1/score/batch`, `/v1/regions`, `/v1/changes`, `/v1/environment` | B2B scoring, API-key gated except `/v1/changes` and `/v1/environment` |
+| `score` | `/v1/score`, `/v1/score/batch`, `/v1/regions`, `/v1/changes`, `/v1/environment` | B2B scoring. **API-key gated on `/v1/score` and `/v1/score/batch` only** - `/v1/regions`, `/v1/changes` and `/v1/environment` are all open (verified live 2026-08-21; this row claimed `/v1/regions` was gated) |
 | `chat` | `/v1/chat` | Retrieval-only assistant; context comes from invoking `score` directly, never from the model |
 | `signup` | `/v1/signup` | Self-service API-key issuance |
 | `favourites` | `/favourites` | Consumer saved-property storage (`X-Device-Token` auth) |

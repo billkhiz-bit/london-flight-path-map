@@ -6064,9 +6064,15 @@ def handle_changes(event):
 
     Public (no API key): the underlying tables are already public via the
     consumer site, and this is the shareable 'what moved this quarter'
-    surface. Note this is the ONLY key-free route on this function —
-    /v1/regions carries `ApiKeyRequired: true` in template.yaml despite an
-    earlier version of this docstring citing it as a fellow public endpoint.
+    surface.
+
+    NOT the only key-free route on this function: /v1/regions is ALSO
+    unauthenticated. This docstring said the opposite until 2026-08-21 - and an
+    earlier version had it right and was "corrected" into the falsehood. Checked
+    against the live API rather than against this file: `GET /v1/regions` with no
+    key returns HTTP 200 and 4.9 KB, and `RegionsGet` in template.yaml carries no
+    `Auth` block at all. Whether it SHOULD be gated is open (see AUDIT_REPORT.md
+    I1); what it is, is open.
 
     Each borough carries an `attribution` breakdown and a derived
     `explanation`, so "why did this move?" is answerable from the response

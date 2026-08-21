@@ -379,7 +379,11 @@ Resources:
             RestApiId: !Ref FlightMapApi
             Path: /v1/regions
             Method: get
-        # /v1/environment is UNAUTHENTICATED, unlike the three routes above.
+        # /v1/environment is UNAUTHENTICATED - as, in fact, are /v1/regions
+        # directly above and /v1/changes. This comment said "unlike the three
+        # routes above" until 2026-08-21, which was true only of /v1/score and
+        # /v1/score/batch. RegionsGet and ChangesGet have no Auth block; both
+        # answer 200 with no key, verified live. See AUDIT_REPORT.md I1.
         #
         # The browser extension reads a listing page and gets coordinates; every
         # environmental dataset here is postcode-keyed, so none of it could

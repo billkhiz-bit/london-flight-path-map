@@ -1,5 +1,56 @@
 # Changelog
 
+## 2026-08-21 (later) — audit: TfL User-Agent, an unkept promise, four false claims
+
+Full audit, first since 2026-08-12. Three parallel agents, then every Critical
+re-verified against a primary source before it was recorded. 11 critical, 14
+important, 12 minor in `AUDIT_REPORT.md`.
+
+**`/transport` had never returned a line status.** `fetch_line_status` sent only
+an `Accept` header while `fetch_nearby_stations`, eleven lines above, has always
+sent a `User-Agent`. TfL answers 403 to urllib's default `Python-urllib/3.x`, the
+403 is caught, and `lineStatus: []` is served under `available: true` - an empty
+disruption list being indistinguishable from "every line running normally". Live,
+Oxford Circus returned 5 stations and 0 statuses; the same TfL URL gives 403
+without the header and 200 with it. A suspended Central line rendered as "no
+disruptions" for the endpoint's entire life.
+
+The test could not see it, **and the first fix did not make it able to**:
+`test_success_response` asserted `"lineStatus" in body`, which `[]` satisfies, so
+teaching the mock to raise 403 left the suite green. It now asserts the list is
+non-empty, red-proofed by reverting only the `Line/Status` header.
+
+**Ten cities promised live crime data from `data.police.uk`.** The host appears in
+`index.html` exactly ten times, all of them that sentence: no fetch, no handler,
+and absent from `connect-src`, so a request would be CSP-blocked if one existed.
+The strings and the registry field are gone - a field on ten cities and absent on
+the eleventh fails key parity, so it had to leave whole.
+
+**`api/index.html` said "verbatim from the live API, 4 August 2026"** over a
+payload reading `methodologyVersion: 3.8`. The API returned 3.5 that day; 3.8
+landed on the 11th, and 3.8 is the release that rescaled the aircraft ladder
+producing the `quiet` value beside it. Relabelled as illustrative.
+
+**Four places claimed `/v1/regions` is key-gated. It is not** - HTTP 200, 4.9 KB,
+no key. Corrected in `CLAUDE.md`, `README.md`, `PROJECT_DOCUMENTATION.md`, the
+`handle_changes` docstring and the `template.yaml` comment. The docstring is the
+sharpest case: an earlier version had it right and was "corrected" into the
+falsehood. Whether it *should* be gated is open (`AUDIT_REPORT.md` I1).
+
+**A recorded finding was corrected rather than closed.** The `excellent`
+air-quality band was down as one "no UK borough can occupy". Over 254,904 DEFRA
+PCM cells, 59.2% clear both WHO guidelines and the PM2.5 median is 4.43 against a
+guideline of 5.0. The band is reachable; our coverage is 86 urban boroughs.
+
+Also corrected against measurement: road noise and flood are **not** derived for
+every city (Leicester 0/8, Teesside 0/5), and `privacy.html` carries the 30-day
+retention wording, not the indefinite one.
+
+Left open deliberately: the public demo key reaches `POST /v1/chat` and
+`/v1/score/batch` because **API Gateway usage plans authorise per stage, not per
+route**. That is an auth-architecture choice, not a patch.
+
+
 ## 2026-08-21 — /v1/environment derives its city; road Lden gains a ceiling
 
 **`/v1/environment` answered every UK coordinate with London's geometry**
