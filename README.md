@@ -53,6 +53,7 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | Consumer site | <https://skyscore.co.uk/> |
 | Pricing (B2B API tiers + 90-day pilot) | <https://skyscore.co.uk/pricing> |
 | Privacy policy | <https://skyscore.co.uk/privacy> |
+| Area pages (99 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
 | Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
 | API landing page | <https://skyscore.co.uk/api/> |
 | API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
@@ -96,8 +97,9 @@ Six endpoints returning JSON. Four are API-key gated. Two are deliberately publi
 | `POST` | `/v1/chat` | Retrieval-only assistant; answers are discarded if they contain a number the retrieved data does not |
 | `GET` | `/v1/changes` | **Public.** What moved between data vintages, and why |
 | `GET` | `/v1/environment` | **Public.** Aircraft/road Lden, NO2 and PM2.5 for a coordinate, each against its WHO guideline. No weights, no persona, no composite score |
+| `GET` | `/badge` | **Public.** An embeddable SVG score badge for a postcode. Served as an `<img>`, not a script, so it renders on listing pages behind strict CSP. Reuses the same scoring path, so it cannot show a score `/v1/score` would not |
 
-Free tier: 100 requests/month, 5/sec burst, 1/sec sustained — and because a batch request carries up to 100 addresses for one request, that is a ceiling of 10,000 scores/month. Paid tiers introduced when the first paying integrator commits.
+Free tier: **10,000 requests/month**, 5/sec burst, 2/sec sustained. One request is one address — `/v1/score/batch` is denied per-method on the free plan, so requests and scores are the same unit and the ceiling is 10,000 scores. (Until 2026-08-21 it was 100 requests × a 100-address batch for the same 10,000 ceiling, which was an afternoon of one live listings page.) Paid tiers introduced when the first paying integrator commits.
 
 ## Quick-start
 

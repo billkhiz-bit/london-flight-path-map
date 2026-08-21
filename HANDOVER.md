@@ -49,6 +49,31 @@ worth starting before you need it.
 
 ---
 
+## 2a. State as of 2026-08-21 evening
+
+Everything below §3 predates a long session; this is where it actually stands.
+
+| | |
+|---|---|
+| Audit criticals | **all 11 closed**, deployed, verified live |
+| Distribution findings | **D5, D1, D2, D4 shipped**; D3 and D6 need no build |
+| Blocking preflight stages | **30** (was 25; five added today) |
+| Log groups | 8, one per live Lambda, all 30-day retention, **zero orphans** |
+| Deploy drift | zero, verified by sha256 against the origin |
+
+**Needs Bill, and nothing else does:** publish DMARC at `p=none` in Cloudflare;
+add a second AWS MFA device (there is one factor and no fallback); decide D3, the
+gap between £0 and £499.
+
+**Gates added today, all proven red before being trusted:**
+`demo-key-scope.mjs` (asks the running API whether a per-method RateLimit of 0
+actually denies - the template cannot answer that), `uk-city-panel.mjs` (types a
+real postcode in a non-London city, which nothing had ever done),
+`area-pages.mjs`, `area-page-freshness.mjs` (99 baked scores against the live
+API in ONE batch request) and `test_empty_source_guards.py`.
+
+---
+
 ## 3. What is left, highest value first
 
 All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.

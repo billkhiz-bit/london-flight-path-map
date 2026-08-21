@@ -174,6 +174,29 @@ In `SECURITY.md`, under **Operational visibility**, replace the bullet beginning
 
 Set `2026-07-DD` to the actual date you do it.
 
+---
+
+## MEASURED 2026-08-21 — two things in the block above are wrong
+
+Checked against the account rather than reasoned about:
+
+- **The account holds 8 log groups, not 13, and ZERO are orphaned.** One per live
+  Lambda, every one at 30-day retention. The 6 orphaned by removed functions are
+  gone, as is the signup group that held raw emails between 26 June and 23 July.
+  Whether they were deleted or aged out under the applied retention cannot now be
+  told apart from outside - either way they are not there.
+- **`flightmap-dev` DOES hold `logs:PutRetentionPolicy`.** The sentence above says
+  the deploy user is "intentionally not granted" it and that retention must be
+  applied in the console. That is not true: setting retention from the CLI with
+  this profile succeeds, and it is how the SignupFunction group was corrected on
+  2026-08-21 without a console session. What the user lacks is the DELETE verbs
+  (`logs:DeleteLogGroup`), which is a different and much narrower restriction.
+
+So the drafted wording is safe to publish once the date is filled in, but the
+operational note attached to it should not be carried over. The recurring gap is
+that a NEW group is created by AWS on a function's first invocation with no
+retention at all - see `OPERATIONS.md`, which carries the one-line fix.
+
 ### Why it is worded that way
 
 - It states the **previous claim was wrong**, not merely stale. That distinction is the whole point

@@ -270,6 +270,17 @@ Liveability is a weighted combination of four sub-scores:
 
 ```
 live = 0.35 × schools + 0.30 × crime + 0.25 × transport + 0.10 × healthcare
+
+**An unreadable source produces NO band, and that is not the same as a band of
+zero.** `points_within()` in `build_borough_bands.py` returns `None` when the
+NaPTAN or NHS index is EMPTY - which means the register could not be read, not
+that every postcode is far from a station - and the loaders refuse a zero-row
+read outright. A *populated* index with no station near a borough still returns
+`0.0` and still bands `poor`, because that is a measurement of a genuinely
+poorly-served borough. Until 2026-08-21 the two were the same value, so a
+renamed upstream column would have published `transport: poor` for every borough
+in the country - into both score holders at once, which is why comparing them to
+each other could not detect it. See `tests/test_empty_source_guards.py`.
 ```
 
 **When a sub-score has no data (added 2026-08-09).** An absent input is not

@@ -14,7 +14,7 @@ rather than dropped.
 
 | | Count |
 |---|---|
-| Critical | 11 (**5 fixed today**) |
+| Critical | 11 — **all 11 closed 2026-08-21**, deployed and verified live |
 | Important | 14 |
 | Minor | 12 |
 
@@ -107,7 +107,34 @@ recurring.
 
 ---
 
-## 2a. Critical — still open
+## 2a. Critical — ALL CLOSED 2026-08-21
+
+C9, C10 and C11 are fixed, deployed and verified live. Every critical in this
+report is now closed. Summary before the detail:
+
+| # | Fixed by | Guard, and how it was proven |
+|---|---|---|
+| C9 | The aircraft layer joins `markLayerCoverage()`, and the decibel scale is **hidden** rather than relabelled | `layer-honesty.mjs` measures whether an image is present and whether the scale is visible, on **both** sides. It found two bugs in the fix itself, in opposite directions |
+| C10 | `points_within()` returns `None` for an EMPTY index; both loaders refuse a zero-row read | `test_empty_source_guards.py`, proven red. A populated index with nothing nearby still returns `0.0` — that distinction is the point |
+| C11 | A tile classifying 100% code 0 is retried and never cached | Same file, proven red |
+
+**Why C9's gate mattered more than C9's fix.** The first version of the fix
+carried two lifecycle faults: West Midlands inherited New York's `true` because
+the flag outlived the city switch — and it is the city selected immediately
+after NYC, so every other city passed — and then NYC rendered a hidden scale
+over its own painted tiles, because the legend is drawn before
+`updateDefraTiles()` runs. A gate reading `aircraftScalePainted` would have
+agreed with both bugs perfectly. Measuring the DOM is what separated the check
+from a mirror.
+
+**Why C10 is not "treat 0 as None".** A populated index with no station near a
+borough is a MEASUREMENT of 0%: that borough really is poorly served and must
+still band `poor`. Only an EMPTY index is unknown. Collapsing the two would have
+swapped one silent wrong answer for another.
+
+---
+
+## 2b. Critical — the original detail (all now closed)
 
 ### C6 — the public demo key authorises `POST /v1/chat`, a Bedrock LLM billed here
 `score-demo/index.html:449`, `backend/template.yaml:307, 491-503`

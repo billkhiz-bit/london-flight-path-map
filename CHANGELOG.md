@@ -1,5 +1,60 @@
 # Changelog
 
+## 2026-08-21 (late) — three layers stop describing data that is not there
+
+The last three audit criticals. Every critical in `AUDIT_REPORT.md` is now
+closed, deployed and verified against the live site.
+
+**C9.** The aircraft legend's five decibel bands are static markup while
+`updateDefraTiles()` paints a dB surface for London and NYC only, so nine cities
+carried a scale describing a surface that is on the map at no zoom - worst in
+South Yorkshire, whose own title reads "AIRCRAFT NOISE (NO AIRPORT)" directly
+above five confident decibel bands. `markLayerCoverage()` was written in August
+to prevent this and covered road, flood and air quality; the aircraft group was
+left out of the fix made for its three siblings. The scale is now HIDDEN rather
+than relabelled, because "(NO DATA)" above five bands is the map still being
+louder than the label.
+
+**The gate mattered more than the fix.** `layer-honesty.mjs` found two bugs in
+that fix, in opposite directions: West Midlands inherited New York's `true`
+because the flag outlived the city switch - and it is the city selected
+immediately after NYC, so every other city passed - and then NYC rendered a
+hidden scale over its own painted tiles, because the legend is drawn before
+`updateDefraTiles()` runs. A gate reading `aircraftScalePainted` would have
+agreed with both. It measures the DOM on both sides instead.
+
+**C10.** `points_within()` returned `0.0` when the station or GP index was
+EMPTY, so `transport_band` answered 'poor' and `health_band` answered 'moderate'
+for every borough in the country. `transport` is 0.25 of liveability and
+`--write-lambda` copies the value into the score Lambda, so both holders carried
+the same wrong number and `test_borough_data_parity` stayed green comparing them
+to each other. The file-exists guards could not see it: a NaPTAN export with a
+renamed column opens, parses, and yields nothing.
+
+Not "treat 0 as None": a POPULATED index with no station near a borough is a
+measurement of 0% and must still band 'poor'. Only an empty index is unknown.
+
+**C11.** `(255,255,255,0)` is a known colour meaning "not in any modelled risk
+polygon", so a fully transparent render passed `classify()` without raising and
+became 100% code 0 - low risk, fully surveyed. Every way that service fails
+while still returning a valid PNG produces that exact image. And it was
+permanent: the 4 MB `.npy` defeats the `st_size > 200` re-run skip. Blank
+classifications are now retried and never cached.
+
+**Two claims corrected against measurement rather than reread.** The legend said
+"DEFRA expects Round 5 around 2027" in two places - the static markup and the
+registry copy `applyCityChrome()` swaps in. The five-year END cycle is
+documented; that expectation is not, so both now say Round 5 falls due in 2027
+and that DEFRA has published no date.
+
+And a recorded blocker was already closed. `CLAUDE.md` said six orphaned log
+groups remained, one holding raw emails from June and July, needing console work
+this IAM user could not do. Measured: **8 groups, one per live Lambda, all at
+30-day retention, zero orphans** - and `flightmap-dev` does hold
+`logs:PutRetentionPolicy`, lacking only the delete verbs.
+`DRAFT_security_retention_passage.md` asserted the opposite and is corrected.
+
+
 ## 2026-08-21 (evening) — the distribution half: capture, quota, badge, pages
 
 Four of the six cowork findings, built and deployed.

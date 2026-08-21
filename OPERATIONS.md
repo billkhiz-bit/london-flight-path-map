@@ -555,6 +555,21 @@ AWS_PROFILE=flightmap aws logs put-retention-policy \
   --retention-in-days 30 --region eu-west-2
 ```
 
+**Audited 2026-08-21:** the account holds **8 log groups, one per live Lambda,
+every one at 30-day retention, and zero orphans**. The 6 orphaned groups recorded
+in `CLAUDE.md` and `DRAFT_security_retention_passage.md` - including the signup
+one said to hold raw emails from June and July - no longer exist. Re-measure a
+recorded blocker before planning work around it.
+
+To re-audit:
+
+```bash
+export MSYS_NO_PATHCONV=1
+AWS_PROFILE=flightmap aws logs describe-log-groups --region eu-west-2   --query 'logGroups[].[logGroupName,retentionInDays]' --output text
+```
+
+Any row whose second column is `None` needs the command above.
+
 **Durable fix, not yet done:** declare each group as an `AWS::Logs::LogGroup`
 with `RetentionInDays: 30` in `backend/template.yaml`. Deliberately not done
 blind - CloudFormation refuses to CREATE a log group that already exists, so
