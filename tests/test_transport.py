@@ -4,7 +4,7 @@ import io
 import json
 import os
 import sys
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 # ---------------------------------------------------------------------------
 # Import the transport Lambda via our loader (avoids module name collisions)
@@ -121,8 +121,22 @@ class TestHandlerSuccess:
     ]).encode()
 
     def _mock_urlopen(self, req, timeout=10):
-        """Return different payloads depending on the URL."""
+        """Return different payloads depending on the URL.
+
+        ASSERTS ON THE HEADERS, and that is the point. This branched on the
+        URL alone until 2026-08-21 and so could not tell the request that
+        works from the one TfL 403s. The Line/Status call was missing a
+        User-Agent for its whole existence, the 403 was swallowed to [], and
+        test_success_response passed on `"lineStatus" in body` - which an
+        empty list satisfies. Green suite, dead endpoint.
+
+        TfL rejects urllib's default Python-urllib/3.x, so a mock that does
+        not model the rejection cannot model the upstream.
+        """
         url = req.full_url if hasattr(req, "full_url") else str(req)
+        ua = req.get_header("User-agent") or ""
+        if not ua.startswith("SkyScore"):
+            raise HTTPError(url, 403, "Forbidden", {}, None)
         if "StopPoint" in url:
             data = self.TFL_STOP_RESPONSE
         else:
@@ -140,9 +154,20 @@ class TestHandlerSuccess:
         assert result["statusCode"] == 200
         body = json.loads(result["body"])
         assert "stations" in body
-        assert "lineStatus" in body
         assert "location" in body
         assert body["available"] is True
+        # DATA, NOT SHAPE. `"lineStatus" in body` was the assertion here until
+        # 2026-08-21 and an empty list satisfies it - which is exactly what a
+        # swallowed TfL 403 produces, so this test passed for the entire life
+        # of an endpoint that had never once returned a line status.
+        #
+        # Proven red: remove the User-Agent from fetch_line_status and this
+        # line fails. The `in body` version does not.
+        assert len(body["stations"]) > 0
+        assert len(body["lineStatus"]) > 0, (
+            "lineStatus is empty - a swallowed upstream error looks exactly "
+            "like 'every line running normally'"
+        )
 
     def test_upstream_failure_returns_available_false(self, monkeypatch):
         """TfL being unreachable must be distinguishable from 'no stations

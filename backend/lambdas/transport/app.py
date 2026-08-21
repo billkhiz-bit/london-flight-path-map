@@ -121,7 +121,19 @@ def fetch_line_status(line_ids):
     ids_str = ','.join(line_ids[:10])
     url = f'{TFL_BASE}/Line/{ids_str}/Status'
 
-    req = Request(url, headers={'Accept': 'application/json'})
+    # THE USER-AGENT IS LOAD-BEARING. TfL answers 403 to urllib's default
+    # `Python-urllib/3.x` on this route, and that 403 lands in the except
+    # below and becomes `[]` - an empty disruption list, indistinguishable
+    # from "every line is running normally". So this endpoint had NEVER
+    # returned a line status. Verified live 2026-08-21: Oxford Circus gave 5
+    # stations and 0 statuses, and the same TfL URL answers 403 without this
+    # header and 200 with it.
+    #
+    # fetch_nearby_stations, eleven lines above, has always sent it - which is
+    # why the stations half worked and the status half did not. Same mirrored-
+    # pair trap as road_lden_from_row, and the same User-Agent trap CLAUDE.md
+    # already records for the DEFRA host.
+    req = Request(url, headers={'Accept': 'application/json', 'User-Agent': 'SkyScore/1.0'})
     try:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode())
