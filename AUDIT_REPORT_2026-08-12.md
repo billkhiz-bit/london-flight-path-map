@@ -178,20 +178,41 @@ in both encodings.
 ## 2. Critical — verified, still open
 
 ### A-0812-U1 — `/v1/environment` computes aircraft noise with London geometry for every UK coordinate
-`backend/lambdas/score/app.py:6136` · **OPEN**
+`backend/lambdas/score/app.py:6136` · **FIXED 2026-08-21** (pending deploy)
 
 The call is literally `calc_postcode_quiet(lat, lon, 'london', postcode_clean)`
 regardless of where the coordinate is. The endpoint is **unauthenticated** and is
 what the public browser extension renders as `10 − quiet`.
 
-**Verification status: code confirmed, live impact NOT reproduced.** The
-reporting agent measured `aircraftQuietEstimated: 10.0` for M22 5PR beside
-Manchester Airport against `2.0` under `'manchester'`. My own live call for that
-coordinate returned `"No UK postcode found near those coordinates"`, and a
-Heathrow-area control returned `aircraftQuietEstimated: null`. So the hardcode is
-real and the consequence is plausible, but the specific figures are unconfirmed.
-**Reproduce properly before fixing** — pass a coordinate that reverse-geocodes,
-and compare `'london'` against the resolved city.
+**REPRODUCED AND FIXED 2026-08-21.** The earlier reproduction failed for a
+reason worth recording: postcodes.io's reverse lookup defaults to a **100 m
+radius** and `reverse_geocode` does not widen it, so a coordinate over a runway
+or a field returns `result: null`. That is what "No UK postcode found" meant —
+not that the finding was wrong. Using a residential coordinate instead,
+**M22 5RX** (53.3800, −2.2650), 1.2 km from Manchester Airport's runway:
+
+| | |
+|---|---|
+| Live endpoint, pre-fix | `aircraftQuietEstimated: 10.0` — top of scale |
+| Manchester's own geometry | `2.0` |
+| Error | **8 points on a 10-point scale**, in the flattering direction |
+
+**Why the wrong city always flatters.** Every term in `calc_postcode_quiet` is
+distance-gated, so a geometry that does not contain your airport cannot be loud
+about it — it reports quiet. Measured over **6,000 sampled live NSPL postcodes**:
+94.0% unchanged, 4.9% changed, and **291 of 291 changed readings moved LOUDER,
+zero quieter**. Mean change −3.01, largest −9.0.
+
+**The fix is three parts.** `reverse_geocode` now returns the LAD code that was
+already in the same postcodes.io payload and was being discarded; `derive_city()`
+is extracted as the ONE holder of the derivation, so `resolve_query` and
+`handle_environment` cannot drift apart again; and for the **68% of live UK
+postcodes outside every covered city** (measured against NSPL), the estimate
+comes from the loudest of all UK geometries rather than London's. That fallback
+is safe precisely where it applies: `/v1/score` 404s those postcodes, so there is
+no per-city answer to contradict, and a maximum cannot under-report.
+
+Guarded by `EnvironmentCityDerivationTests` (9 tests, proven red at HEAD).
 
 ### A-0812-U2 — three WCAG contrast failures
 `index.html:2277`, `:108`, `:1613` · **PARTLY FIXED 2026-08-12**
@@ -227,7 +248,7 @@ inline `style` attributes need removing so `applyCityChrome()` can win.
    least legible text in the panel.
 
 ### A-0812-U3 — road noise has no plausibility ceiling, and a dead 60-line duplicate holds a third copy
-`backend/lambdas/score/app.py:3901` · **OPEN**
+`backend/lambdas/score/app.py:3901` · **FIXED 2026-08-21** (pending deploy)
 
 `lden_from_row` gained `_RASTER_MAX_PLAUSIBLE_DB` today; its explicit mirror
 `road_lden_from_row` did not, and both read the same row. A `+3.4e38` sentinel —
@@ -401,3 +422,20 @@ The combobox is a correct APG implementation.
   colour-contrast it could not resolve, i.e. the whole map-overlay chrome.
 - **`refresh_crime_from_ons.py --check`, `build_progress8.py --check`,
   `build_borough_bands.py --check`** all exist and are in **no** gate.
+
+
+---
+
+## 8. Closed on 2026-08-21
+
+| ID | What changed | Guard |
+|---|---|---|
+| **A-0812-U1** | `/v1/environment` derives the city from the resolved LAD instead of the literal `'london'`; union-of-geometry fallback outside covered cities; coverage notice no longer names London to non-London callers | `EnvironmentCityDerivationTests` (9) |
+| **A-0812-U3** | `road_lden_from_row` is a RANGE, not a floor — the `+3.4e38` sentinel was returning `3.4e+38` as a decibel reading, proven at HEAD. Dead `_lookup_road_lden` (62 lines) and its orphaned 2048-entry LRU deleted, along with the vestigial test patch that made a no-op read as coverage | `RoadLdenPlausibilityTests` (5) |
+
+**A pattern worth naming from U3.** `lden_from_row` and `road_lden_from_row` were
+written as an explicit mirrored pair, eleven lines apart, both documented as
+mirrors — and the 2026-08-12 ceiling reached only one. Mirrored code that must
+stay in step, but is not structurally forced to, drifts on the *next* edit rather
+than the current one. That is why U1's fix extracted `derive_city()` into a
+single holder instead of copying the derivation into the second call site.

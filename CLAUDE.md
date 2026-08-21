@@ -472,6 +472,29 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
 - **Backend**: `backend/template.yaml`, SAM/CloudFormation defining the 8 active Lambdas + API Gateway + DynamoDB. (Was 7 until 2026-08-06, when `chat` was restored to the template as a retrieval-only function; count the `AWS::Serverless::Function` blocks rather than trusting any prose, here or elsewhere.)
 - **B2B funnel pages** (deployed alongside `index.html`): `/api/` landing (`api/index.html`), `/pricing` (`pricing.html`, added 2026-07-23: 90-day £2,500 pilot + Free/£499 Professional/Enterprise tiers + founder block), `/privacy` (`privacy.html`). **S3 key gotcha:** the `sky-score-rewrite-index` CloudFront function rewrites extensionless paths to `<path>/index.html`, so privacy/pricing MUST be uploaded to `privacy/index.html` and `pricing/index.html` keys (`make web-deploy` does this correctly since 2026-07-23; a flat `privacy` key is a dead object).
 - **Active Lambdas** (in `backend/lambdas/<name>/app.py`):
+  - **`/v1/environment` DERIVES ITS CITY (2026-08-21).** It called
+    `calc_postcode_quiet(lat, lon, 'london', ...)` — the city as a string
+    literal — for every UK coordinate from the day it shipped. Measured:
+    **M22 5RX, 1.2 km from Manchester Airport, published 10.0** (top of scale,
+    "no aircraft noise") against Manchester's own **2.0**. Over 6,000 sampled
+    NSPL postcodes the fix moved 4.9%, and **291 of 291 moved LOUDER, none
+    quieter** — because every term in `calc_postcode_quiet` is distance-gated, a
+    geometry lacking your airport is structurally incapable of over-reporting.
+    **`derive_city()` is now the ONE holder** of LAD→city, shared with
+    `resolve_query`; do not inline a second copy. Outside the 13 cities (**68%
+    of live UK postcodes**) it takes the loudest of all UK geometries, which is
+    safe only because `/v1/score` 404s those postcodes and a maximum cannot
+    under-report. **`reverse_geocode` returns a dict now, not a string.**
+    Related gotcha: postcodes.io reverse lookup defaults to a **100 m radius**,
+    so a coordinate over a runway or field returns `result: null` — that is what
+    defeated the first attempt to reproduce this.
+  - **Road Lden is a RANGE, both ends (2026-08-21).** `road_lden_from_row` was a
+    floor alone while its mirror `lden_from_row`, eleven lines above and reading
+    the same row, gained a ceiling on 2026-08-12. **The two GeoTIFF nodata
+    sentinels have opposite signs**, so a floor catches `-3.4e38` and publishes
+    `+3.4e38` as `roadNoiseLdenDb` — proven at HEAD, not theorised. Dead
+    `_lookup_road_lden` (62 lines, third copy of the floor, zero call sites
+    since `4e90cc0`) and its orphaned LRU are deleted.
   - `score`, B2B scoring engine. API-key gated on `/v1/score`, `/v1/score/batch`, `/v1/regions`, `/v1/changes`. **`/v1/environment?lat=&lon=` is UNAUTHENTICATED** (added 2026-08-06): it reverse-geocodes a coordinate and returns MEASUREMENTS only (aircraft/road Lden, NO2, PM2.5, each with its WHO guideline) - no weights, no persona, no composite score, because the browser extension is a public artefact and cannot hold a key. Throttled 5 RPS.
   - `chat`, **retrieval-only** assistant (`POST /v1/chat`, API-key gated), restored 2026-08-06 from `6bad8ce`. The model never supplies data: context comes from invoking `ScoreFunction` DIRECTLY, and `verify_answer()` DISCARDS any reply containing a number absent from the retrieved payload. That control fired in production on the third live question - a 2030 price forecast the prompt had forbidden. Do NOT "simplify" it to a free-form call.
   - `signup`, self-service API-key issuance

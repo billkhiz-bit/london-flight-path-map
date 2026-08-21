@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-08-21 — /v1/environment derives its city; road Lden gains a ceiling
+
+**`/v1/environment` answered every UK coordinate with London's geometry**
+(A-0812-U1), from the day it shipped on 2026-08-06 until today. The call was
+`calc_postcode_quiet(lat, lon, 'london', postcode_clean)` with the city as a
+string literal. The endpoint is unauthenticated and the public browser extension
+renders it as `10 − quiet`, which made it the most widely-readable number the
+product published.
+
+Reproduced before fixing, because a prior audit had recorded it as "live impact
+NOT reproduced": **M22 5RX**, 1.2 km from Manchester Airport's runway, returned
+`aircraftQuietEstimated: 10.0` — the top of the scale — against **2.0** under
+Manchester's own geometry. The earlier attempt failed because postcodes.io's
+reverse lookup defaults to a **100 m radius**, so an airport coordinate returns
+`result: null`; that read as "the finding is wrong" and was not.
+
+**The wrong city always flatters.** Every term in `calc_postcode_quiet` is
+distance-gated, so a geometry that does not contain your airport cannot be loud
+about it. Measured over 6,000 sampled live NSPL postcodes: 94.0% unchanged, 4.9%
+changed, and **291 of 291 changed readings moved louder — zero quieter**.
+
+Three parts to the fix. `reverse_geocode` now returns the LAD code that was
+already arriving in the same postcodes.io payload and being discarded.
+`derive_city()` is extracted as the single holder of LAD→city and `resolve_query`
+delegates to it, so the two call sites cannot drift. For the **68% of live UK
+postcodes outside every covered city**, the estimate is the loudest of all UK
+geometries rather than London's — safe there specifically because `/v1/score`
+404s those postcodes, so there is no per-city answer to contradict, and a maximum
+cannot under-report. The coverage notice no longer tells a Manchester caller
+about "10% of London postcodes".
+
+**Road Lden had a floor and no ceiling** (A-0812-U3). Its explicit mirror
+`lden_from_row` — eleven lines above, same row of the same table — gained
+`_RASTER_MAX_PLAUSIBLE_DB` on 2026-08-12; this one did not. The two GeoTIFF
+nodata sentinels have **opposite signs** (London's region export `+3.4e38`, every
+per-airport coverage `-3.4e38`), so a floor rejects one and publishes the other:
+proven at HEAD, `road_lden_from_row({'roadLden': 3.4e38})` returned `3.4e+38`.
+Dead `_lookup_road_lden` (62 lines, its own 2048-entry LRU, zero call sites since
+`4e90cc0`) is deleted, along with the vestigial test patch that defeated a cache
+nothing reached — a no-op that read as active coverage.
+
+14 new tests, all proven red at HEAD. 512 pass, ruff clean. **Not yet deployed.**
+
+
 Sky Score release history. API contract is stable (`/v1/*`); breaking changes deploy under `/v2/*`. Methodology versions are tracked separately in [`METHODOLOGY.md`](./METHODOLOGY.md#20-changelog).
 
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

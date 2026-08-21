@@ -58,19 +58,18 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
    metered request returns 100 scores. A 2,000/month plan becomes 200,000
    scores, undercutting the £499 tier. Fix: per-method throttle on
    `ScoreDemoUsagePlan` in `backend/template.yaml`, or a route-scoped plan.
-2. **Road-noise plausibility ceiling** (~15 min) — `lden_from_row` gained
-   `_RASTER_MAX_PLAUSIBLE_DB` on 2026-08-12; its mirror `road_lden_from_row` did
-   not, and both read the same row. A `+3.4e38` sentinel would publish as
-   `roadNoiseLdenDb`. Also `_lookup_road_lden` is 60 lines with **zero call
-   sites**.
+2. ~~**Road-noise plausibility ceiling**~~ — **DONE 2026-08-21.** The
+   `+3.4e38` sentinel was proven to return `3.4e+38` as decibels at HEAD; the
+   check is now a range. Dead `_lookup_road_lden` deleted.
 3. **The `excellent` air-quality band can never fire** — *needs your decision.*
    All 86 boroughs exceed the WHO 2021 PM2.5 guideline of 5 µg/m³ (range
    6.3–11.3), so the legend advertises a category no UK borough can occupy.
    Either drop the band or re-anchor it to a reachable standard.
-4. **`/v1/environment` hardcodes `'london'` geometry** (`app.py:6136`) for every
-   UK coordinate. Confirmed locally: a coordinate by Manchester Airport scores
-   **10.0** under London geometry against **0.0** under Manchester's. The
-   endpoint is unauthenticated and the public extension renders it.
+4. ~~**`/v1/environment` hardcodes `'london'` geometry**~~ — **DONE 2026-08-21.**
+   Reproduced live (M22 5RX returned 10.0 against Manchester's 2.0) and fixed by
+   deriving the city from the resolved LAD. Measured over 6,000 NSPL postcodes:
+   94% unchanged, and all 291 changed readings moved louder. **Needs a SAM
+   deploy** — the fix is committed but not live.
 5. **Mobile legend headings at 1.19:1** — inline `style` beats the stylesheet
    override written to fix it. The hardened a11y gate now scans a phone viewport
    but does not open the collapsed legend, so it does not catch this.
@@ -92,6 +91,15 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ---
 
+## 4a. Deploy owed
+
+The 2026-08-21 fixes to `backend/lambdas/score/app.py` are **committed but not
+deployed**. Until a SAM deploy runs, `/v1/environment` still answers every UK
+coordinate with London geometry. Deploy command in `CLAUDE.md` → Build & Deploy;
+keep `source .env` in the SAME invocation as `sam build`/`sam deploy`.
+
+---
+
 ## 5. Habits this repo has paid for
 
 Worth re-reading before changing anything:
@@ -104,5 +112,11 @@ Worth re-reading before changing anything:
   `|| 'moderate'` fill layers, and "No stations found within 1.5km" were all the
   same defect wearing different clothes.
 - **Any count in an assertion or a label is scheduled staleness.**
+- **Mirrored code drifts on the NEXT edit, not this one.** `lden_from_row` and
+  `road_lden_from_row` sat eleven lines apart, documented as mirrors, and only
+  one got the 2026-08-12 ceiling. Prefer one holder to two correct copies.
+- **A join that matches nothing returns a confident, well-formatted number.**
+  Measuring NSPL coverage on 2026-08-21 first produced a clean `100.0%` off a
+  column name that did not exist. Assert on a non-zero match before reporting.
 - **Verify agent and doc claims against primary sources.** Both produced
   confident, wrong figures this session.

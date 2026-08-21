@@ -1642,15 +1642,15 @@ class IndependentReviewRegressionTests(unittest.TestCase):
         # timing out into a 502. Rewriting them to expect 0 would have been the
         # easy way to green and would have quietly retired both guards, leaving
         # nothing to catch the regression when the tier is eventually restored.
-        # _road_cache_get is defeated for the same reason as _raster_cache_get:
-        # a warm memo would make the second calc_score of ?compare=previous
-        # issue no GetItem at all, and the count would pass while proving
-        # nothing. Added 2026-08-06 when the road metric started reading from
-        # this table — the counts below now cover BOTH metrics, which is the
-        # number that actually decides whether a request times out.
+        # The road metric no longer issues a GetItem of its own: it reads
+        # roadLden off the SAME row the aircraft tier fetches, so one lookup
+        # serves both and the counts below still cover both metrics — which is
+        # the number that decides whether a request times out. This patched
+        # _road_cache_get alongside _raster_cache_get until 2026-08-21, which
+        # by then defeated a cache on a code path nothing reached; the function
+        # behind it had been dead since 4e90cc0 merged the two lookups.
         with patch.object(app, '_raster_cache_get', lambda k: None), patch.object(
-            app, '_road_cache_get', lambda k: None
-        ), patch.object(app, 'RASTER_TIER_QUARANTINED', False):
+            app, 'RASTER_TIER_QUARANTINED', False):
             app.resolve_query(dict(query))
         return len([c for c in calls if 'raster' in c])
 
@@ -2624,3 +2624,129 @@ class PostcodeCityDerivationTests(unittest.TestCase):
         self.assertEqual(
             app.normalise_borough('Bristol, City of', 'bristol'), 'City of Bristol'
         )
+
+
+class EnvironmentCityDerivationTests(unittest.TestCase):
+    """/v1/environment must score aircraft noise with the RIGHT city's geometry.
+
+    WHY THIS EXISTS. `handle_environment` called
+    `calc_postcode_quiet(lat, lon, 'london', postcode_clean)` — the city as a
+    string literal — for every coordinate in the United Kingdom, from the day
+    the endpoint shipped (2026-08-06) until 2026-08-21. The endpoint is
+    UNAUTHENTICATED and the public browser extension renders it as `10 − quiet`,
+    so this was the most widely-readable number the product published.
+
+    MEASURED, not reasoned about. M22 5RX sits 1.2 km from Manchester Airport's
+    runway. The live endpoint returned `aircraftQuietEstimated: 10.0` — the top
+    of the scale, "no aircraft noise at all". Manchester's own geometry gives
+    2.0. Eight points of error on a ten-point scale.
+
+    The direction matters more than the size: every term in calc_postcode_quiet
+    is distance-gated, so the WRONG city's geometry cannot be loud. It has never
+    heard of the airport you live under, so it reports quiet. This is the same
+    defect as the `-0.4` phantom transport penalty, the `|| 'moderate'` fill
+    layers and "No stations found within 1.5km" — an absence rendered as a
+    measurement — and it is the fourth instance.
+
+    A prior audit recorded this finding with the note "live impact NOT
+    reproduced". It is reproduced here.
+    """
+
+    # 1.2 km from Manchester Airport. Verified live against postcodes.io:
+    # M22 5RX, admin_district Manchester, LAD E08000003.
+    MAN_LAT, MAN_LON = 53.3800, -2.2650
+    MAN_LAD = 'E08000003'
+
+    def test_derive_city_resolves_manchester_from_lad(self):
+        self.assertEqual(app.derive_city(self.MAN_LAD, None), 'manchester')
+
+    def test_derive_city_falls_back_to_borough_name(self):
+        # The postcodes.io tier carries no LAD code, only the district name.
+        # A code-only fix repairs the loaded tier and leaves this one on london.
+        self.assertEqual(app.derive_city(None, 'Manchester'), 'manchester')
+
+    def test_derive_city_absorbs_the_qualifier_inversion(self):
+        # ONS writes "City of Bristol"; postcodes.io returns "Bristol, City of".
+        self.assertEqual(app.derive_city(None, 'Bristol, City of'), 'bristol')
+
+    def test_derive_city_returns_none_outside_every_city(self):
+        # 68% of live UK postcodes, measured against NSPL. None, never a
+        # default — the caller must decide what an unknown city means.
+        self.assertIsNone(app.derive_city('E07000223', 'Adur'))
+
+    def test_manchester_geometry_is_loud_where_london_geometry_is_silent(self):
+        """The defect itself, stated as the gap between the two."""
+        under_london = app.calc_postcode_quiet(
+            self.MAN_LAT, self.MAN_LON, 'london', None, raster_lden=None
+        )
+        under_manchester = app.calc_postcode_quiet(
+            self.MAN_LAT, self.MAN_LON, 'manchester', None, raster_lden=None
+        )
+        # London's geometry does not know MAN exists, so it reports perfection.
+        self.assertEqual(under_london, 10.0)
+        # Asserted as a floor on the GAP, not on 2.0 exactly: the ladder is
+        # allowed to be recalibrated (v3.8 already rescaled every airport), and
+        # pinning the figure would make this fail on an intended change while
+        # still not proving the city was derived. Any count in an assertion is
+        # scheduled staleness.
+        self.assertLess(under_manchester, under_london - 5.0)
+
+    def test_union_fallback_hears_the_nearest_airport(self):
+        """Outside every city, take the loudest geometry — never London's."""
+        # Same Manchester coordinate. Even with NO city derived, the union must
+        # not report silence, because Manchester's geometry is in it.
+        union = app._quiet_across_all_geometry(self.MAN_LAT, self.MAN_LON, None)
+        self.assertEqual(
+            union,
+            app.calc_postcode_quiet(
+                self.MAN_LAT, self.MAN_LON, 'manchester', None, raster_lden=None
+            ),
+        )
+        self.assertLess(union, 10.0)
+
+    def test_union_reports_quiet_where_there_is_genuinely_no_airport(self):
+        # Off the Cornish coast — beyond every ramp of every airport we hold.
+        # 10.0 here is the right answer, not a fallback: distance gating means
+        # a union cannot manufacture noise any more than it can hide it.
+        self.assertEqual(app._quiet_across_all_geometry(50.15, -5.55, None), 10.0)
+
+    def test_coverage_notice_names_no_city(self):
+        # It read "about 10% of London postcodes" and was served verbatim for
+        # every city. A coverage figure for one city, presented as this
+        # postcode's own.
+        self.assertNotIn('London', app._COVERAGE_NOTICES['postcode'])
+
+
+class RoadLdenPlausibilityTests(unittest.TestCase):
+    """The road plausibility check must be a RANGE, and fail in both directions.
+
+    `lden_from_row` gained a ceiling on 2026-08-12. Its explicit mirror
+    `road_lden_from_row` — eleven lines below it, reading the same row of the
+    same table — did not, and kept a floor alone until 2026-08-21.
+
+    GeoTIFF nodata here is ±3.4e38 and THE TWO SENTINELS HAVE OPPOSITE SIGNS:
+    the London region export declares +3.4e38, every per-airport coverage
+    -3.4e38. So a floor catches exactly one of them and publishes the other as
+    a decibel reading on an unauthenticated endpoint.
+    """
+
+    def test_negative_sentinel_is_rejected(self):
+        self.assertIsNone(app.road_lden_from_row({'roadLden': -3.4e38}, 'M1 1AE'))
+
+    def test_positive_sentinel_is_rejected(self):
+        # The direction the floor could not see. Red before 2026-08-21.
+        self.assertIsNone(app.road_lden_from_row({'roadLden': 3.4e38}, 'M1 1AE'))
+
+    def test_plausible_reading_survives_both_bounds(self):
+        self.assertEqual(app.road_lden_from_row({'roadLden': 62.5}, 'M1 1AE'), 62.5)
+
+    def test_absent_reading_is_none_not_zero(self):
+        self.assertIsNone(app.road_lden_from_row({}, 'M1 1AE'))
+        self.assertIsNone(app.road_lden_from_row(None, 'M1 1AE'))
+
+    def test_dead_road_lookup_is_gone(self):
+        # 60 lines, its own 2048-entry LRU, zero call sites, and a THIRD copy of
+        # the floor that the 2026-08-12 ceiling never reached. Dead since
+        # 4e90cc0 merged the road lookup into the aircraft tier's GetItem.
+        self.assertFalse(hasattr(app, '_lookup_road_lden'))
+        self.assertFalse(hasattr(app, '_road_cache_get'))

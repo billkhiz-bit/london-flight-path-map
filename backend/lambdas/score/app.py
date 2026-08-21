@@ -3819,7 +3819,6 @@ def _lookup_lden_raster(postcode_clean):
 _ROAD_MIN_PLAUSIBLE_DB = 40.0
 
 
-_road_cache_get, _road_cache_put = _make_lru(2048)
 
 
 def _lookup_noise_row(postcode_clean):
@@ -3899,13 +3898,23 @@ def lden_from_row(row, postcode_clean=''):
 
 
 def road_lden_from_row(row, postcode_clean=''):
-    """Apply the road plausibility floor to a pre-fetched row."""
+    """Apply the road plausibility RANGE to a pre-fetched row.
+
+    A RANGE, both ends, and the word is load-bearing. This was a floor alone
+    until 2026-08-21 while its mirror lden_from_row - eleven lines above, same
+    row, same table - had gained a ceiling on 2026-08-12. Two functions written
+    as an explicit pair, and only one was corrected.
+
+    The ceiling is not hypothetical. GeoTIFF nodata here is +/-3.4e38 and the
+    two sentinels have OPPOSITE SIGNS depending on the coverage: the London
+    region export declares +3.4e38, every per-airport coverage -3.4e38. A floor
+    catches the negative one and passes the positive one straight through, so
+    `roadNoiseLdenDb: 3.4e+38` was publishable on an unauthenticated endpoint.
+    """
     value = (row or {}).get('roadLden')
     if value is None:
         return None
-    # Same reasoning as the aircraft floor: a sentinel that sailed through would
-    # read as an implausibly quiet street.
-    if value < _ROAD_MIN_PLAUSIBLE_DB:
+    if value < _ROAD_MIN_PLAUSIBLE_DB or value > _RASTER_MAX_PLAUSIBLE_DB:
         logger.warning(
             '[SCORE_ROAD_DEGRADED] postcode=%s err=implausible-lden value=%s',
             postcode_clean, value)
@@ -3913,66 +3922,32 @@ def road_lden_from_row(row, postcode_clean=''):
     return value
 
 
-def _lookup_road_lden(postcode_clean):
-    """Road Lden sample for a postcode, or None.
+def _quiet_across_all_geometry(lat, lon, postcode_clean=None):
+    """Loudest quiet score any UK city's geometry gives for a point, or None.
 
-    Same table and same failure posture as _lookup_lden_raster: every negative
-    result returns None so the caller simply omits the figure. A missing road
-    reading must never become a favourable one — that substitution is this
-    project's most-repeated defect.
+    For coordinates outside every city we score - 68% of live UK postcodes,
+    measured against NSPL 2026-02 - where naming one city would be a guess.
 
-    ONE ROUND-TRIP PER SCORE. This projects `roadLdenDb` from the same row the
-    aircraft tier reads, and memoises per warm container, because
-    IndependentReviewRegressionTests counts GetItems against the noise table and
-    holds the line at one per score, two for ?compare=previous. That guard was
-    written after duplicate lookups pushed a ?compare=previous request past the
-    28s Lambda timeout into a 502 — adding a second unconditional GetItem here
-    would walk straight back into it, and the test caught exactly that on the
-    first run of this function.
+    LOUDEST, i.e. the MINIMUM quiet, not the nearest city's. Distance gating
+    does the work: a Cornish postcode is beyond every ramp of every airport
+    here, so each city returns 10.0 and the minimum is 10.0 - which is the
+    right answer, not a fallback. A postcode in Cheshire is inside Manchester's
+    ramps and outside everyone else's, so Manchester's reading wins on its own
+    merits. Taking a maximum instead, or picking the geographically nearest
+    city, both re-open the exact failure this replaced: silence about the
+    airport overhead.
+
+    NYC is excluded by name. Its geometry is thousands of km from any UK
+    coordinate so it would always return 10.0 and never win a minimum, but
+    including it would mean this quietly depended on that staying true.
     """
-    if not NOISE_RASTER_TABLE or not postcode_clean:
-        return None
-
-    cached = _road_cache_get(postcode_clean)
-    if cached is not None:
-        return cached
-
-    ddb = _get_ddb_client()
-    if ddb is None:
-        return None
-
-    try:
-        from botocore.exceptions import BotoCoreError, ClientError
-    except ImportError:
-        return None
-
-    try:
-        result = ddb.get_item(
-            TableName=NOISE_RASTER_TABLE,
-            Key={'postcode': {'S': postcode_clean}},
-            ProjectionExpression='roadLdenDb',
-        )
-    except (BotoCoreError, ClientError) as exc:
-        logger.warning('[SCORE_ROAD_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
-        return None
-
-    raw = (result.get('Item') or {}).get('roadLdenDb', {}).get('N')
-    if not raw:
-        return None
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return None
-
-    # Same plausibility floor as aircraft, same reasoning: a sentinel that
-    # sailed through would read as an implausibly quiet street.
-    if value < _ROAD_MIN_PLAUSIBLE_DB:
-        logger.warning(
-            '[SCORE_ROAD_DEGRADED] postcode=%s err=implausible-lden value=%s',
-            postcode_clean, value)
-        return None
-    _road_cache_put(postcode_clean, value)
-    return value
+    readings = [
+        calc_postcode_quiet(lat, lon, city, postcode_clean, raster_lden=None)
+        for city in CITY_GEOMETRY
+        if city != 'nyc'
+    ]
+    readings = [r for r in readings if r is not None]
+    return min(readings) if readings else None
 
 
 # Ceiling: WHO Environmental Noise Guidelines for the European Region (2018)
@@ -4878,10 +4853,16 @@ def get_live_score(bd, english=True):
 # in this repo yet, so neither appears here.
 _COVERAGE_NOTICES = {
     'raster': None,  # measured at this location — nothing to disclose
+    # No city name in this sentence. It said "about 10% of London postcodes"
+    # and was served verbatim for Manchester, Leeds and everywhere else - a
+    # coverage figure for one city presented as this postcode's own. The share
+    # genuinely differs per city (0.6-3.9% outside London), so naming a number
+    # at all would need it measured per city; the claim that carries is simply
+    # that this postcode is not in the measured set.
     'postcode': (
         'Aircraft noise here is estimated from distance to airports and '
         'flight-path geometry, not measured. DEFRA publishes contours for '
-        'about 10% of London postcodes and this one falls outside them.'
+        'part of this area and this postcode falls outside them.'
     ),
     'borough': (
         'Aircraft noise here is a borough-wide average, not a figure for this '
@@ -5342,7 +5323,11 @@ _reverse_cache_get, _reverse_cache_put = _make_lru(1024)
 
 
 def reverse_geocode(lat, lon):
-    """Nearest UK postcode to a coordinate, or None.
+    """Nearest UK location to a coordinate, or None.
+
+    Returns a dict of `postcode`, `ladCode` and `adminDistrict` — the last two
+    so the caller can derive a city. It returned the bare postcode string until
+    2026-08-21; see derive_city for what that cost.
 
     The one thing the browser extension cannot do for itself. A property
     listing yields coordinates; every environmental dataset here is keyed by
@@ -5383,10 +5368,22 @@ def reverse_geocode(lat, lon):
     if not results:
         return None
 
-    postcode = (results[0] or {}).get('postcode')
-    if postcode:
-        _reverse_cache_put(key, postcode)
-    return postcode
+    row = results[0] or {}
+    postcode = row.get('postcode')
+    if not postcode:
+        return None
+
+    # The LAD travels with the postcode because it arrives in the SAME payload.
+    # postcodes.io has always returned codes.admin_district here; this function
+    # discarded it and returned the string alone, so the only caller had nothing
+    # to derive a city from and hardcoded 'london'. Keeping it costs no request.
+    location = {
+        'postcode': postcode,
+        'ladCode': (row.get('codes') or {}).get('admin_district'),
+        'adminDistrict': row.get('admin_district'),
+    }
+    _reverse_cache_put(key, location)
+    return location
 
 
 # LAD code -> (city id, borough name as CITIES holds it).
@@ -5747,6 +5744,34 @@ _CITY_BY_BOROUGH_NAME = {
 }
 
 
+def derive_city(lad_code, admin_district):
+    """City id for a resolved location, or None if we do not cover it.
+
+    ONE HOLDER, called by both resolve_query and handle_environment. It was
+    inline in resolve_query alone until 2026-08-21, and handle_environment -
+    written later - simply passed the literal 'london' instead. The endpoint is
+    unauthenticated and the public browser extension renders it, so a postcode
+    1.2 km from Manchester Airport published aircraftQuietEstimated 10.0, the
+    top of the scale, against 2.0 under Manchester's own geometry. Eight points
+    of error on a ten-point scale, in the flattering direction.
+
+    Two tiers because the two resolver paths carry different fields: the local
+    NSPL row has the LAD code, the postcodes.io fallback has only the district
+    NAME. A code-only lookup repairs the loaded tier and leaves the fallback
+    answering london, which is the same defect one step further down.
+
+    Returns None rather than a default. A caller that cannot name a city must
+    decide what that means for its own surface - there is no city here that is
+    safe to assume.
+    """
+    derived = LAD_TO_BOROUGH.get(lad_code)
+    if not derived:
+        derived = _CITY_BY_BOROUGH_NAME.get(_norm_borough_key(admin_district))
+    if derived and derived[0] in CITIES:
+        return derived[0]
+    return None
+
+
 def resolve_query(query):
     """Run a single score query. Returns the response body or an error dict."""
     postcode = parse_str_param(query.get('postcode'))
@@ -5857,13 +5882,11 @@ def resolve_query(query):
             # `admin_district`. An explicit `city=` still wins, so a caller can
             # still force a cohort. Guarded by PostcodeCityDerivationTests.
             if not parse_str_param(query.get('city')):
-                derived = LAD_TO_BOROUGH.get(pc.get('_ladCode'))
-                if not derived:
-                    derived = _CITY_BY_BOROUGH_NAME.get(
-                        _norm_borough_key(pc.get('admin_district'))
-                    )
-                if derived and derived[0] in CITIES:
-                    city = derived[0]
+                derived_city = derive_city(
+                    pc.get('_ladCode'), pc.get('admin_district')
+                )
+                if derived_city:
+                    city = derived_city
                     location_meta['city'] = city
             borough = normalise_borough(pc.get('admin_district'), city)
             location_meta.update(
@@ -6173,8 +6196,8 @@ def handle_environment(event):
     if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
         return response(400, {'error': 'lat/lon out of range.'})
 
-    pc = reverse_geocode(lat, lon)
-    if not pc:
+    location = reverse_geocode(lat, lon)
+    if not location:
         return response(
             404,
             {
@@ -6183,6 +6206,8 @@ def handle_environment(event):
             },
         )
 
+    pc = location['postcode']
+    city = derive_city(location.get('ladCode'), location.get('adminDistrict'))
     postcode_clean = pc.replace(' ', '').upper()
     noise_row = _lookup_noise_row(postcode_clean)
     env = build_environment(noise_row, postcode_clean)
@@ -6221,10 +6246,46 @@ def handle_environment(event):
         # flight-path geometry. Surfacing it, clearly labelled as an estimate,
         # is more useful than silence and still not a claim to have measured.
         # Same function the score uses, so the two cannot disagree.
-        estimated = calc_postcode_quiet(lat, lon, 'london', postcode_clean)
+        #
+        # THE CITY IS DERIVED, NOT ASSUMED. This read `'london'` as a literal
+        # until 2026-08-21, for every coordinate in the UK. Measured: M22 5RX,
+        # 1.2 km from Manchester Airport's runway, published 10.0 - the top of
+        # the scale, "no aircraft noise" - where Manchester's own geometry gives
+        # 2.0. Every term here is distance-gated, so the wrong city's geometry
+        # fails silently and always in the flattering direction: it does not
+        # know about the airport you live under, so it reports quiet.
+        #
+        # When the postcode sits outside all thirteen cities - 68% of live UK
+        # postcodes, measured against NSPL - take the LOUDEST reading any of our
+        # geometries gives rather than one city's. Two reasons it is safe here
+        # and would not be above: /v1/score 404s those postcodes, so there is no
+        # per-city answer to contradict; and a maximum cannot under-report,
+        # which is the single direction this defect failed in. It costs 0.2 ms
+        # over 624 waypoints. `basis` names which of the two ran, because a
+        # union is a weaker claim than a city and must not read as the same one.
+        if city:
+            # raster_lden=None, not the sentinel: lden_from_row has already
+            # resolved this row and missed, and the sentinel would send
+            # calc_postcode_quiet back to DynamoDB for the same key. Its own
+            # docstring calls that doubling out - _make_lru never caches a
+            # negative, so a miss genuinely hits the network twice.
+            estimated = calc_postcode_quiet(
+                lat, lon, city, postcode_clean, raster_lden=None
+            )
+            basis = 'flight-path geometry, not measured'
+        else:
+            estimated = _quiet_across_all_geometry(lat, lon, postcode_clean)
+            # A NOUN PHRASE, because the extension renders this as
+            # `Estimated from ${basis}.` — panel.js:696. A string that reads
+            # well alone can read as gibberish in its caller's sentence, and
+            # this one is the sentence a user actually sees.
+            basis = (
+                'the nearest airports we hold, not measured - this postcode is '
+                'outside every city Sky Score covers'
+            )
         if estimated is not None:
             env['aircraftQuietEstimated'] = estimated
-            env['aircraftQuietBasis'] = 'flight-path geometry, not measured'
+            env['aircraftQuietBasis'] = basis
         notices.append(_COVERAGE_NOTICES['postcode'])
     if 'roadNoiseLdenDb' not in env:
         notices.append(
