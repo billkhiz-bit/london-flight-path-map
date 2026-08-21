@@ -3154,6 +3154,13 @@
             >
               DEFRA AIRCRAFT NOISE (dB Lden)
             </div>
+            <!-- The five dB bands describe a DEFRA raster. Only London and NYC
+                 ever paint one, so for the other nine cities this scale
+                 described a surface that is not on the map at any zoom -
+                 five confident decibel bands over geometry-derived corridors.
+                 markLayerCoverage() hides it when nothing painted, the same
+                 measured treatment its three sibling layers already had. -->
+            <div id="legend-noise-scale">
             <div class="legend-row">
               <div class="legend-swatch" style="background: rgba(0, 77, 168, 0.5)"></div>
               <span>55-59 dB</span>
@@ -3177,6 +3184,7 @@
               <div class="legend-swatch" style="background: rgba(242, 38, 38, 0.5)"></div>
               <span>75+ dB</span>
             </div>
+            </div>
             <!-- Set from the city registry by applyCityChrome(). Had no id and
                  was never swapped, so New York showed this DEFRA / LHR / LCY /
                  LGW paragraph beneath a "BTS AIRCRAFT NOISE (dB DNL)" heading.
@@ -3190,7 +3198,7 @@
               LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is
               2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4
               result as a highly anomalous situation. These contours therefore understate a typical year, most at the
-              airports worst affected. Round 4 is still the latest official round; DEFRA expects Round 5 around 2027.
+              airports worst affected. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
               Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search
               gives a 0-10 quiet score for that location, not a decibel reading.
             </div>
@@ -6061,7 +6069,7 @@
           legendHeli: true,
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           legendNoiseExplainer:
-            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. These contours therefore understate a typical year, most at the airports worst affected. Round 4 is still the latest official round; DEFRA expects Round 5 around 2027. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading.",
+            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. These contours therefore understate a typical year, most at the airports worst affected. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7353,6 +7361,12 @@
       // from ~14 KB to ~50 KB; cached 24h, so paid once per visitor.
       const AIRCRAFT_RASTER_PX = 4096;
       let aircraftRasterLoadedFor = null; // 'london' | 'nyc' | null - cleared on city switch
+      // Did a dB-banded aircraft surface actually reach the map this render?
+      // MEASURED at the point of painting, not predicted from the city id -
+      // the same reason markLayerCoverage counts painted boroughs instead of
+      // trusting a registry string. A prediction has to be remembered when the
+      // eight remaining DEFRA coverages are sampled; a measurement does not.
+      let aircraftScalePainted = false;
 
       // DEFRA_WMS removed 2026-08-03. It was declared and never read: one
       // occurrence in the whole file, its own declaration. The live aircraft
@@ -7779,10 +7793,14 @@
         }
 
         // Aircraft noise, only overlay that uses WMS/tiles (detailed contour data)
+        // Reset before the branches, so a city that paints nothing leaves it
+        // false rather than inheriting the previous city's answer.
+        aircraftScalePainted = false;
         if (isNyc) {
           // NYC still uses XYZ slippy tiles, which DO need re-rendering on
           // pan/zoom for new tiles to load at the current viewport.
           renderTileGrid('us-aircraft-tiles', US_MAP_SERVICES.aircraft.url, minLat, minLon, maxLat, maxLon);
+          aircraftScalePainted = true;
         } else if (currentCity === 'london') {
           // LONDON ONLY, and the guard is new (2026-08-11). This branch used to
           // be a bare `else`, so every non-NYC city fetched
@@ -7797,6 +7815,11 @@
           // Idempotent: only fetch on first show / after city switch / after
           // window resize. Per-pan calls hit this guard and return immediately.
           // visual fix-DEFRA-1.
+          if (aircraftRasterLoadedFor === 'london') {
+            // Already fetched and still on the map, so the scale is live even
+            // though this call does no work.
+            aircraftScalePainted = true;
+          }
           if (aircraftRasterLoadedFor !== 'london') {
             const lb = LONDON_AIRCRAFT_BBOX;
             // visual fix-DEFRA-5: PNG is now self-hosted on our CloudFront
@@ -7823,9 +7846,21 @@
                 .attr('width', br[0] - tl[0])
                 .attr('height', br[1] - tl[1]);
               aircraftRasterLoadedFor = 'london';
+              aircraftScalePainted = true;
+              // The legend is drawn before the raster finishes loading, so it
+              // has to be told again once it has. Without this London shows
+              // "(NO DATA)" over its own contours until the next repaint.
+              markLayerCoverage();
             }
           }
         }
+        // Tell the legend what this call actually painted. ONE call site
+        // for the whole branch chain rather than one per branch: NYC set
+        // the flag and did not refresh, so its decibel scale stayed hidden
+        // over its own painted tiles - the mirror of the bug above it, and
+        // introduced by the same fix. The async London raster keeps its own
+        // call because it finishes long after this line.
+        markLayerCoverage();
         // Road noise, flood risk, and air quality use borough-level fills only (no WMS/ArcGIS rasters)
       }
 
@@ -9394,12 +9429,25 @@
        * to be remembered when the data arrives, and the same string is wrong in
        * the other direction the moment it does.
        */
+      // Last counts from repaintFillLayers, so the aircraft branch can refresh
+      // the legend on its own (its raster loads asynchronously, after the fill
+      // layers have already painted) without re-running the borough paint.
+      let _lastPaintedCounts = { road: 0, flood: 0, aq: 0 };
+
       function markLayerCoverage(painted) {
+        if (painted) _lastPaintedCounts = painted;
+        const counts = _lastPaintedCounts;
         const cfg = cityOf(currentCity);
         const rows = [
-          ['legend-road-title', cfg.legendRoadTitle, painted.road],
-          ['legend-flood-title', cfg.legendFloodTitle, painted.flood],
-          ['legend-aq-title', cfg.legendAqTitle, painted.aq],
+          ['legend-road-title', cfg.legendRoadTitle, counts.road],
+          ['legend-flood-title', cfg.legendFloodTitle, counts.flood],
+          ['legend-aq-title', cfg.legendAqTitle, counts.aq],
+          // The aircraft layer joins its three siblings. It was left out of the
+          // fix made for them on 2026-08-11, so nine cities carried a five-band
+          // decibel scale over an overlay updateDefraTiles() never painted -
+          // South Yorkshire worst of all, whose own title reads
+          // "AIRCRAFT NOISE (NO AIRPORT)" above five dB bands.
+          ['legend-noise-title', cfg.legendNoiseTitle, aircraftScalePainted ? 1 : 0],
         ];
         for (const [id, title, count] of rows) {
           const el = document.getElementById(id);
@@ -9407,6 +9455,13 @@
           const base = (title || '').replace(/\s*\(NO DATA\)\s*$/, '');
           el.textContent = count > 0 ? base : `${base} (NO DATA)`;
         }
+
+        // HIDE THE SCALE, do not merely relabel it. A "(NO DATA)" title above
+        // five confident decibel bands is the map still being louder than the
+        // label - the same reason paintBoroughLayer SKIPS a borough with no
+        // reading rather than painting it a default colour.
+        const scale = document.getElementById('legend-noise-scale');
+        if (scale) scale.style.display = aircraftScalePainted ? '' : 'none';
       }
 
       function renderDefraTiles() {
@@ -10796,6 +10851,12 @@
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
         aircraftRasterLoadedFor = null;
+        // Cleared with it, same lifecycle: the flag describes what is
+        // CURRENTLY painted. Left set across a switch, the next city
+        // inherits the previous one's answer - West Midlands showed New
+        // York's decibel scale for exactly that reason, because it is the
+        // city selected straight after NYC. Caught by layer-honesty.
+        aircraftScalePainted = false;
         // Rebuild rather than toggle: the chip row only shows the ACTIVE
         // country's cities, so a cross-country switch changes which chips
         // exist, not merely which is highlighted.
@@ -11703,6 +11764,13 @@
           // Projection translate has changed → previously cached g-coords for
           // the aircraft raster are now wrong. Force a re-position next call.
           aircraftRasterLoadedFor = null;
+          // Cleared with it, and for the same reason: the flag describes what
+          // is CURRENTLY on the map. Left set, it survives the switch and the
+          // next city inherits the previous one's answer - which is exactly
+          // what happened, caught by layer-honesty: West Midlands showed New
+          // York's decibel scale because it is the city switched to right
+          // after NYC. Every other city passed, because by then it was false.
+          aircraftScalePainted = false;
           // Any non-London city, not just New York: this was `currentCity ===
           // 'nyc'`, so Greater Manchester's outlines were never re-rendered here.
           if (currentCity !== 'london') {

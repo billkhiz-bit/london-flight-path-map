@@ -400,6 +400,14 @@ def load_gp_postcodes():
         doc = json.load(fh)
     out = {p['postcode'].replace(' ', '').upper() for p in doc['practices'].values()}
     print(f'  {len(out):,} distinct GP postcodes ({doc["count"]:,} practices)')
+    # Same reasoning as the NaPTAN guard: an empty set is a failed read, and it
+    # would publish 'moderate' healthcare for every borough rather than nothing.
+    if not out:
+        raise SystemExit(
+            f'{GP_JSON} parsed but yielded ZERO GP postcodes. '
+            'Refusing to continue: an empty index publishes a healthcare band '
+            'for every borough that no data supports.'
+        )
     return out
 
 
@@ -440,6 +448,19 @@ def load_naptan_grid():
             grid[(int(e // 1000), int(n // 1000))].append((e, n))
             kept += 1
     print(f'  {kept:,} rail/metro/tram access nodes indexed')
+    # ZERO ROWS IS A FAILED READ, not a country with no stations. The
+    # file-exists check above passes for a NaPTAN export whose StopType or
+    # Easting column has been renamed upstream - it opens, it parses, it yields
+    # nothing - and every borough then publishes 'poor' transport into both
+    # score holders. Fail here rather than downstream.
+    if kept == 0:
+        raise SystemExit(
+            f'{NAPTAN_CSV} parsed but yielded ZERO rail/metro/tram nodes. '
+            'The file exists and is readable, so this is a schema change, not a '
+            'missing download - check the StopType and Easting/Northing column '
+            'names. Refusing to continue: an empty index would publish '
+            "'poor' transport for every borough, into both holders."
+        )
     return grid
 
 
@@ -473,6 +494,20 @@ def points_within(grid, points, radius_m):
             if hit:
                 break
         near += hit
+    # AN EMPTY INDEX IS NOT A ZERO SHARE.
+    #
+    # `grid` empty means the register could not be read - a renamed column in
+    # NaPTAN, an empty GP export - not that every postcode is far from a
+    # station. Returning 0.0 for that made transport_band() answer 'poor' and
+    # health_band() answer 'moderate' for EVERY borough, and `transport` is
+    # 0.25 of liveability. Worse, --write-lambda copies the same value into the
+    # score Lambda, so both holders agreed and test_borough_data_parity stayed
+    # green while both were wrong.
+    #
+    # The file-exists guards above cannot see this: a renamed column opens and
+    # parses perfectly and yields nothing.
+    if not grid:
+        return None
     return 100.0 * near / len(points) if points else None
 
 

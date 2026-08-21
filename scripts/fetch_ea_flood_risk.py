@@ -164,8 +164,32 @@ def fetch_tile(path, bbox):
             continue
         arr = np.array(Image.open(io.BytesIO(raw)).convert('RGBA'))
         codes = classify(arr)
-        np.save(path, codes)
         nz = int((codes > 0).sum())
+        # A WHOLLY UNCLASSIFIED TILE IS AN OUTAGE, NOT A SAFE AREA.
+        #
+        # (255,255,255,0) is a KNOWN colour meaning 'not in any modelled risk
+        # polygon', so a fully transparent render sails through classify()
+        # without raising and becomes 100% code 0 - which reads downstream as
+        # 'low flood risk, fully surveyed'. Every way this service can fail
+        # while still returning a valid PNG produces exactly that image: a
+        # renamed layer, an outage behind a 200, or a request above the ~10 m/px
+        # scale limit at which RoFRS draws nothing at all.
+        #
+        # And it would be PERMANENT. The 4 MB .npy defeats the `st_size > 200`
+        # skip at the top of this function, so a re-run says 'have it' and the
+        # bad tile outlives the outage that produced it.
+        #
+        # Retried rather than aborted: a transient outage is the likeliest
+        # cause, and the loop already backs off. If every attempt comes back
+        # blank the function returns False and the caller reports the failure.
+        if nz == 0:
+            print(
+                f'  {path.name}: attempt {attempt}/{RETRIES} classified 0% - '
+                'a blank render is an outage, not a risk-free area. Not caching.'
+            )
+            time.sleep(PAUSE_S * attempt * 2)
+            continue
+        np.save(path, codes)
         print(f'  got  {path.name} ({100 * nz / codes.size:5.1f}% classified)')
         return True
 

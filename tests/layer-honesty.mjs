@@ -161,6 +161,47 @@ for (const city of cities) {
     return out;
   }, LAYERS);
 
+  // THE AIRCRAFT LAYER, which is a raster and not borough paths, so it cannot
+  // be counted the way the three above are - but it went wrong the same way.
+  // Its five-band decibel scale is static markup, while updateDefraTiles()
+  // paints a dB surface for London and NYC only. For the other nine cities the
+  // legend described a surface that is not on the map at any zoom, worst in
+  // South Yorkshire whose own title reads "AIRCRAFT NOISE (NO AIRPORT)".
+  //
+  // Measured from the DOM on BOTH sides - is an image actually there, and is
+  // the scale actually visible - rather than from the `aircraftScalePainted`
+  // flag the fix introduced. Reading that flag would be taking the expectation
+  // from the code under test, which is this repo's most repeated defect.
+  const air = await page.evaluate(() => {
+    const img = document.getElementById('defra-aircraft-img');
+    const tiles = document.getElementById('us-aircraft-tiles');
+    const hasRaster = Boolean(
+      (img && (img.getAttribute('href') || img.getAttribute('xlink:href'))) ||
+        (tiles && tiles.querySelectorAll('image').length > 0)
+    );
+    const scale = document.getElementById('legend-noise-scale');
+    const scaleShown = Boolean(scale) && getComputedStyle(scale).display !== 'none';
+    const title = (document.getElementById('legend-noise-title') || {}).textContent || '';
+    return { hasRaster, scaleShown, saysNoData: /\(NO DATA\)/.test(title) };
+  });
+  if (air.scaleShown !== air.hasRaster) {
+    fail += 1;
+    console.log(
+      `  ! ${city.id}: decibel scale ${air.scaleShown ? 'SHOWN' : 'hidden'} but a dB ` +
+        `surface is ${air.hasRaster ? 'painted' : 'NOT painted'}`
+    );
+  }
+  // And the title must agree with the scale. Relabelling without hiding leaves
+  // "(NO DATA)" above five confident bands, which is the map still being louder
+  // than the label.
+  if (air.saysNoData === air.hasRaster) {
+    fail += 1;
+    console.log(
+      `  ! ${city.id}: title says ${air.saysNoData ? '(NO DATA)' : 'data'} while a dB ` +
+        `surface is ${air.hasRaster ? 'painted' : 'not painted'}`
+    );
+  }
+
   const cells = [];
   for (const l of LAYERS) {
     const m = measured[l.key];

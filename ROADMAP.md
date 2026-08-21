@@ -343,7 +343,7 @@ shape than the funnel that is meant to carry it.
 | D3 | Nothing between GBP0 and GBP499 | TRUE - `pricing.html` contains exactly two figures, GBP499 and GBP2,500 | Bill (pricing) |
 | D4 | Eight URLs in the sitemap | TRUE - and **all eight are product or marketing pages**. Zero content pages, and the map is client-side, so there is no indexable surface at all | Build |
 | D5 | The postcode search captures nothing | TRUE at the point named. Signup EXISTS but lives on `score-demo/index.html`, the B2B page - so the capture is on the low-intent surface and absent from the high-intent one | Build |
-| D6 | Round 4 maps 2021, a COVID year | TRUE and already disclosed everywhere. Round 5 falls due under END's five-year cycle; **confirm the date with DEFRA before quoting one** | Watch |
+| D6 | Round 4 maps 2021, a COVID year | TRUE and disclosed everywhere. **Checked 2026-08-21: the five-year END cycle is documented, but DEFRA has published NO Round 5 date.** The site's legend said "DEFRA expects Round 5 around 2027", which asserts an expectation DEFRA has not stated; corrected to "falls due in 2027; DEFRA has not published a date". Nothing further to do until they announce | Watch |
 
 **The connection the findings did not make, and it changes D1.** The free tier is
 100/month *because* `MAX_BATCH_SIZE` is 100, so one request can be 100 scores -
