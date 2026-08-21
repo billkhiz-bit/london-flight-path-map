@@ -330,6 +330,50 @@ Brief summary; pick one or two next session:
 
 ---
 
+## Distribution findings, 2026-08-21 (from a cowork session)
+
+Six findings, **all six verified against the repo** before being recorded here.
+They are DISTRIBUTION problems, not correctness ones - the data is now in better
+shape than the funnel that is meant to carry it.
+
+| # | Finding | Verified | Owner |
+|---|---|---|---|
+| D1 | Free tier is 100 requests/month | TRUE - `SkyScoreFreeTier`, `Limit: 100`, `Period: MONTH` | Bill (pricing) |
+| D2 | No embeddable badge | TRUE - the only `badge` strings in `index.html` are the `line-badge` / `rating-badge` CSS classes | Build |
+| D3 | Nothing between GBP0 and GBP499 | TRUE - `pricing.html` contains exactly two figures, GBP499 and GBP2,500 | Bill (pricing) |
+| D4 | Eight URLs in the sitemap | TRUE - and **all eight are product or marketing pages**. Zero content pages, and the map is client-side, so there is no indexable surface at all | Build |
+| D5 | The postcode search captures nothing | TRUE at the point named. Signup EXISTS but lives on `score-demo/index.html`, the B2B page - so the capture is on the low-intent surface and absent from the high-intent one | Build |
+| D6 | Round 4 maps 2021, a COVID year | TRUE and already disclosed everywhere. Round 5 falls due under END's five-year cycle; **confirm the date with DEFRA before quoting one** | Watch |
+
+**The connection the findings did not make, and it changes D1.** The free tier is
+100/month *because* `MAX_BATCH_SIZE` is 100, so one request can be 100 scores -
+`BATCH_METERING_DECISION.md` cut it 1,000 -> 100 for exactly that reason. That
+was the only lever available at the time. It is not any more: the 2026-08-21 fix
+for C6/C7 proved that a **per-method `RateLimit: 0`** keeps a key off a route,
+verified live. Applying the same block to `ScoreFreeUsagePlan` decouples the two,
+so **the request quota could go back up without the x100 multiplier following
+it**. Free keys can still call batch today - only the demo plan is scoped.
+
+That is a genuine unlock rather than a price cut: the wedge was closed by a
+metering workaround, and the workaround now has a better alternative.
+
+**D2 is the strategically largest.** Walk Score's mechanism was the badge, not
+the API - the badge is what put the score on every listing page and made the API
+worth buying. It is also the one item here that compounds with D4: an embed is a
+backlink, and 8 URLs with no content pages is not a weak organic surface, it is
+none.
+
+**Sequence I would suggest**, cheapest-first and each independently useful:
+D5 (capture at the moment of intent) -> D1 (unlock the quota via the C6/C7
+mechanism) -> D2 (badge) -> D4 (per-borough static pages, which the badge then
+links back to). D3 and D6 need no build - one is a pricing call, the other a
+date to watch.
+
+**Not started.** Recorded here rather than acted on because D1 and D3 are pricing
+decisions and D2/D4 are features, none of which should be chosen unilaterally.
+
+---
+
 ## Open decisions
 
 | Decision | Default | Resolve when |

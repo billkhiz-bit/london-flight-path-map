@@ -80,7 +80,34 @@ recurring.
 
 ---
 
-## 2. Critical — open, needs your decision
+## 2. Critical — CLOSED 2026-08-21 (C6, C7, C8) and open (C9-C11)
+
+**C6, C7 and C8 are fixed, deployed and verified live.**
+
+- **C6/C7** — `ScoreDemoUsagePlan` now carries a per-method `Throttle` map with
+  `RateLimit: 0` on `/v1/chat/POST` and `/v1/score/batch/POST`. Whether API
+  Gateway reads 0 as *deny* or as *unlimited* could not be settled from the
+  template, so `tests/demo-key-scope.mjs` asks the running API: **red on both
+  routes before the deploy, green after** (429/429), with `GET /v1/score` still
+  returning a real score. Blocking in preflight, and it spends **no demo quota**
+  in the normal case because a throttled request is never metered.
+  The status page's batch probe was removed rather than repaired — a public page
+  cannot hold a key entitled to batch.
+- **C8** — the panel branch is three ways and reads `country` from the registry
+  rather than naming cities. UK cities get NaPTAN stations, EPC and sold prices;
+  NYC keeps its own copy. The NaPTAN render moved into one holder, which is what
+  made the 1,771 stations reachable. **NHS stays London-only deliberately** —
+  I3 flags it for no reserved concurrency behind a 45 s timeout against APIGW's
+  29 s cap, and widening a faulty route to nine more cities makes the fault
+  likelier. `tests/uk-city-panel.mjs` types a real postcode in a non-London city,
+  which nothing had ever done; proven red (6 failures with the branch reverted).
+  It also closed a defect nobody had listed: nine UK cities rendered the
+  sold-prices container from `buildPropertyLinks()` while the fetch was
+  London-gated, so they sat on **"Loading from Land Registry..." forever**.
+
+---
+
+## 2a. Critical — still open
 
 ### C6 — the public demo key authorises `POST /v1/chat`, a Bedrock LLM billed here
 `score-demo/index.html:449`, `backend/template.yaml:307, 491-503`
