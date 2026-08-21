@@ -61,10 +61,15 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 2. ~~**Road-noise plausibility ceiling**~~ — **DONE 2026-08-21.** The
    `+3.4e38` sentinel was proven to return `3.4e+38` as decibels at HEAD; the
    check is now a range. Dead `_lookup_road_lden` deleted.
-3. **The `excellent` air-quality band can never fire** — *needs your decision.*
-   All 86 boroughs exceed the WHO 2021 PM2.5 guideline of 5 µg/m³ (range
-   6.3–11.3), so the legend advertises a category no UK borough can occupy.
-   Either drop the band or re-anchor it to a reachable standard.
+3. **The `excellent` air-quality band** — *still needs your decision, but the
+   diagnosis above it was WRONG and is corrected.* Measured 2026-08-21 over
+   254,904 DEFRA PCM cells: **59.2% clear both WHO guidelines**, PM2.5 median
+   **4.43** against a guideline of 5.0. The band is entirely reachable; it cannot
+   fire for the **86 urban boroughs we currently cover**. So "drop it" and
+   "re-anchor it" are both wrong — dropping it means re-adding it the moment
+   coverage leaves the city cores, which `EXPANSION.md` says is the plan. The fix
+   is the `markLayerCoverage()` pattern: hide bands with zero rendered boroughs
+   so it corrects itself.
 4. ~~**`/v1/environment` hardcodes `'london'` geometry**~~ — **DONE 2026-08-21.**
    Reproduced live (M22 5RX returned 10.0 against Manchester's 2.0) and fixed by
    deriving the city from the resolved LAD. Measured over 6,000 NSPL postcodes:
