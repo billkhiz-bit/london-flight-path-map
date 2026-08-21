@@ -285,3 +285,15 @@ authority, not the prose.
 3. **No gate exercises the non-London area-search path**, which is how C8
    survived: the score-parity check compares boroughs, never the panel.
 4. **`tests/api.test.mjs` cannot fail on a 4xx**, so it guards nothing it claims.
+
+**Closed 2026-08-21 (evening):** point 3 - the non-London area-search path now
+has `tests/uk-city-panel.mjs`. And a gap CREATED the same day was closed with
+it: the 99 generated area pages bake their scores at build time, so a data
+vintage would have put them silently out of step with `/v1/score` while
+`deployed == source` kept passing (after a roll the repo and the CDN are both
+stale, so they agree). `tests/area-page-freshness.mjs` compares the baked
+number against the live API for all 99 in a SINGLE batch request - 1 quota unit
+rather than 99, because a blocking gate that spends a consumable is how
+`score sanity` once blocked every commit in the repo. Proven red three ways:
+a stale score, a template change that breaks the parse, and a missing API key
+(which fails rather than skips - a silent skip is how a stale page survives).

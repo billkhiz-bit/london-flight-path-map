@@ -327,6 +327,13 @@ else
   # duplicated ones are worse than none (doorway pages), so this asserts
   # CONTENT and that the sitemap agrees in both directions.
   check "area pages carry real data"    node tests/area-pages.mjs
+  # The area pages BAKE their scores at build time - that is what makes them
+  # indexable without JS, and what lets them go stale when a data vintage
+  # lands. No other gate can see it: `area pages carry real data` checks
+  # richness, and `deployed == source` compares repo to CDN, which after a
+  # roll are BOTH stale and therefore agree. One batch request covers all 99,
+  # so this costs 1 CI quota unit per run rather than 99.
+  check "area pages match the live API" node tests/area-page-freshness.mjs
   # A borough choropleth must paint exactly the boroughs that hold a reading.
   # Added 2026-08-11: all three fill layers ended their lookup with `|| 'moderate'`
   # or `|| 'low'`, so every borough of the seven non-London UK cities was painted

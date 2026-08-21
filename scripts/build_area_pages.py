@@ -25,6 +25,15 @@ page would carry fewer than MIN_FACTS real figures, because 99 thin pages is
 worse for a domain than none: that is the shape search engines call doorway
 pages, and it would put the site's whole reputation behind filler.
 
+AFTER A DATA VINTAGE ROLL, RERUN THIS
+-------------------------------------
+The pages bake their scores, so a vintage roll silently puts 99 static pages out
+of step with /v1/score. `tests/area-page-freshness.mjs` is a blocking gate that
+compares the two and will go red until the pages are regenerated and redeployed:
+
+    python scripts/build_area_pages.py --write
+    make area-deploy meta-deploy
+
 USAGE
     python scripts/build_area_pages.py --write     # write area/ and sitemap
     python scripts/build_area_pages.py --check     # verify, write nothing
