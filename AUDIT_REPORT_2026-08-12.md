@@ -178,7 +178,7 @@ in both encodings.
 ## 2. Critical — verified, still open
 
 ### A-0812-U1 — `/v1/environment` computes aircraft noise with London geometry for every UK coordinate
-`backend/lambdas/score/app.py:6136` · **FIXED 2026-08-21** (pending deploy)
+`backend/lambdas/score/app.py:6136` · **FIXED AND DEPLOYED 2026-08-21.** Verified live after deploy: M22 5RX returns `aircraftQuietEstimated: 2.0`, was 10.0. London control unchanged (measured raster, `aircraftQuiet 7.2`).
 
 The call is literally `calc_postcode_quiet(lat, lon, 'london', postcode_clean)`
 regardless of where the coordinate is. The endpoint is **unauthenticated** and is
@@ -248,7 +248,7 @@ inline `style` attributes need removing so `applyCityChrome()` can win.
    least legible text in the panel.
 
 ### A-0812-U3 — road noise has no plausibility ceiling, and a dead 60-line duplicate holds a third copy
-`backend/lambdas/score/app.py:3901` · **FIXED 2026-08-21** (pending deploy)
+`backend/lambdas/score/app.py:3901` · **FIXED AND DEPLOYED 2026-08-21.**
 
 `lden_from_row` gained `_RASTER_MAX_PLAUSIBLE_DB` today; its explicit mirror
 `road_lden_from_row` did not, and both read the same row. A `+3.4e38` sentinel —

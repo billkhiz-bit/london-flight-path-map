@@ -12,7 +12,7 @@ Everything is committed, pushed and deployed. Nothing is running.
 | | |
 |---|---|
 | Branch | `master`, level with `origin/master` |
-| Deploy drift | **zero** across all 16 public surfaces |
+| Deploy drift | **zero** - re-verified 2026-08-21 by sha256 against the origin |
 | Score sanity | **PASS, 27 postcodes** |
 | Preflight | **PASS** |
 | Loaders | all finished — air quality complete, 7 DEFRA aircraft rasters loaded and deployed 19:01:57 |
@@ -96,12 +96,18 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ---
 
-## 4a. Deploy owed
+## 4a. Deploy state
 
-The 2026-08-21 fixes to `backend/lambdas/score/app.py` are **committed but not
-deployed**. Until a SAM deploy runs, `/v1/environment` still answers every UK
-coordinate with London geometry. Deploy command in `CLAUDE.md` → Build & Deploy;
-keep `source .env` in the SAME invocation as `sam build`/`sam deploy`.
+**Everything is deployed as of 2026-08-21 17:26.** `ScoreFunction` and
+`TransportFunction` both updated via SAM; `index.html` and `api/index.html`
+uploaded and CloudFront invalidated. Verified from the origin rather than from
+the deploy's own exit code: both HTML files are byte-identical to source
+(sha256), `/v1/environment` at M22 5RX returns 2.0, and `/transport` at Oxford
+Circus returns 6 line statuses including two live disruptions.
+
+Gotcha that still applies: keep `source .env` in the SAME Bash invocation as
+`sam build`/`sam deploy` - the working directory persists between calls and
+environment variables do not.
 
 ---
 

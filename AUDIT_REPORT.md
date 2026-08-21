@@ -33,6 +33,14 @@ while comparing nothing, one of them blocking.
 
 ## 1. Critical — fixed today
 
+**All five are deployed and verified live** (2026-08-21 17:26). `ScoreFunction`
+and `TransportFunction` updated via SAM; `index.html` and `api/index.html`
+uploaded and CloudFront invalidated. Verification was against the origin, not the
+deploy's exit code: both HTML files match source by sha256, `/v1/environment` at
+M22 5RX now returns `2.0`, and `/transport` at Oxford Circus returns **6 line
+statuses including Victoria "Severe Delays" and Central "Minor Delays"** - the
+exact disruptions that had been rendering as "no disruptions".
+
 | # | Issue | File | Verified by |
 |---|---|---|---|
 | C1 | `/v1/environment` scored every UK coordinate with **London's** geometry | `backend/lambdas/score/app.py` | Live: M22 5RX returned `10.0` vs Manchester's `2.0` |
