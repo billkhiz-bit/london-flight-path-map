@@ -14,7 +14,7 @@ Everything is committed, pushed and deployed. Nothing is running.
 | Branch | `master`, level with `origin/master` |
 | Deploy drift | **zero** - re-verified 2026-08-21 by sha256 against the origin |
 | Score sanity | **PASS, 27 postcodes** |
-| Preflight | **PASS** |
+| Preflight | **PASS** (re-run 2026-08-22, all blocking stages green) |
 | Loaders | all finished — air quality complete, 7 DEFRA aircraft rasters loaded and deployed 19:01:57 |
 
 ---
@@ -56,6 +56,9 @@ Everything below §3 predates a long session; this is where it actually stands.
 | | |
 |---|---|
 | Audit criticals | **all 11 closed**, deployed, verified live |
+| Audit **Important** | **10 of 14 closed 2026-08-22**, source only - **NOT DEPLOYED** |
+| Audit **Minor** | 5 closed 2026-08-22, source only |
+| Tests | **555**, up from 534 - 21 added, every one proven red first |
 | Distribution findings | **D5, D1, D2, D4 shipped**; D3 and D6 need no build |
 | Blocking preflight stages | **30** (was 25; five added today) |
 | Log groups | 8, one per live Lambda, all 30-day retention, **zero orphans** |
@@ -78,14 +81,26 @@ API in ONE batch request) and `test_empty_source_guards.py`.
 
 All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
-1. **`/v1/score/batch` demo-key bypass** (~20 min + deploy) — the demo key
-   printed in `score-demo/index.html` is authorised on the batch route, so one
-   metered request returns 100 scores. A 2,000/month plan becomes 200,000
-   scores, undercutting the £499 tier. Fix: per-method throttle on
-   `ScoreDemoUsagePlan` in `backend/template.yaml`, or a route-scoped plan.
+1. ~~**`/v1/score/batch` demo-key bypass**~~ — **DONE**, and it was already done
+   when this list was written. `ScoreDemoUsagePlan` and `ScoreFreeUsagePlan`
+   both carry the per-method `RateLimit: 0` deny (commit `f883a0e`), and
+   `tests/demo-key-scope.mjs` asks the RUNNING API whether 0 actually denies.
+   This entry survived its own fix by two days. *Re-measure a recorded blocker
+   before working from it* — the third time that lesson has been paid for in
+   this file.
 2. ~~**Road-noise plausibility ceiling**~~ — **DONE 2026-08-21.** The
    `+3.4e38` sentinel was proven to return `3.4e+38` as decibels at HEAD; the
    check is now a range. Dead `_lookup_road_lden` deleted.
+2a. **`ReservedConcurrentExecutions` is the one part of I3 still open**, and it
+   is blocked on a number this machine cannot read: `flightmap-dev` is denied
+   `lambda:GetAccountSettings`, so the account's concurrency limit is unknown
+   and any reserve would be a guess. AWS also refuses to leave under 100
+   unreserved. Get the figure from the console, then reserve for
+   `ScoreFunction` (protect the paid path) rather than capping the free ones.
+   The timeout half of I3 is done: every function was over API Gateway's 29s
+   integration cap, including the Globals default, and at 45s `/nhs` could not
+   reach its own fallback branch inside the caller's window.
+
 3. **The `excellent` air-quality band** — *still needs your decision, but the
    diagnosis above it was WRONG and is corrected.* Measured 2026-08-21 over
    254,904 DEFRA PCM cells: **59.2% clear both WHO guidelines**, PM2.5 median
@@ -100,9 +115,12 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
    deriving the city from the resolved LAD. Measured over 6,000 NSPL postcodes:
    94% unchanged, and all 291 changed readings moved louder. **Needs a SAM
    deploy** — the fix is committed but not live.
-5. **Mobile legend headings at 1.19:1** — inline `style` beats the stylesheet
-   override written to fix it. The hardened a11y gate now scans a phone viewport
-   but does not open the collapsed legend, so it does not catch this.
+5. ~~**Mobile legend headings at 1.19:1**~~ — **DONE 2026-08-22**, and the real
+   figure was **1.00:1**: three headings were `#141414` on a `#141414` pill, the
+   same colour as their background. Measured on the rendered DOM, not estimated.
+   The a11y gate now opens the collapsed legend and reveals all four layer
+   groups, which immediately found a second defect nothing had scanned -
+   `.sheet-footer .for-devs` at 2.60:1.
 
 ---
 
@@ -123,7 +141,26 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ## 4a. Deploy state
 
-**Everything is deployed as of 2026-08-21 17:26.** `ScoreFunction` and
+**AS OF 2026-08-22 THE SOURCE IS AHEAD OF PRODUCTION.** The audit-Important work
+of that day is committed and gated but **not deployed**. Nothing is broken by
+waiting - every change is a correction, so production is running the older,
+wrong behaviour until it ships.
+
+What a deploy needs to carry, and why each matters:
+
+| Surface | Command | Carries |
+|---|---|---|
+| Lambdas | `sam build && sam deploy` | `/nhs` no longer asserting absence over 35.4% of its bbox; EPC no longer publishing an unknown band as `rating: 0` / `averageBand: G`; per-request ONS attribution; `/v1/changes` memoised + `Cache-Control`; **every function timeout under API Gateway's 29s cap** |
+| `index.html` | `make web-deploy` | legend headings 1.00:1 -> 17.64:1 on every phone; footer link 2.60 -> 5.65:1; price column labelled median where it is one |
+| `privacy.html`, `changes.html` | `make web-deploy` | both stop scrolling sideways on every phone; §5 names the five datasets it had been omitting |
+| `score-demo/` | `make demo-deploy` | the free tier stops being advertised at **100 requests/month** when the plan enforces 10,000, and stops selling batch the gateway denies |
+| `pricing.html` | `make web-deploy` | 12-vs-13 city-region contradiction with `/api/` |
+
+`tests/responsive.mjs` with no argument is the fastest way to confirm the three
+page fixes landed: it reported 10 failing page/viewport combinations against
+CloudFront on 2026-08-22 and 0 against source.
+
+**Everything was deployed as of 2026-08-21 17:26.** `ScoreFunction` and
 `TransportFunction` both updated via SAM; `index.html` and `api/index.html`
 uploaded and CloudFront invalidated. Verified from the origin rather than from
 the deploy's own exit code: both HTML files are byte-identical to source

@@ -225,22 +225,80 @@ classifying 100% code 0 must fail.
 
 ## 3. Important
 
+**Ten of the fourteen were closed on 2026-08-22**, each with a guard proven red
+before it was trusted. Three of the ten turned out to be larger than recorded
+here; the measurements are in the closure notes below the table. What is left is
+I1 (a decision, not a defect), the `ReservedConcurrentExecutions` half of I3
+(needs an account concurrency figure `flightmap-dev` cannot read), and I6.
+
 | # | Issue | File | Note |
 |---|---|---|---|
 | I1 | **`/v1/regions` and `/v1/changes` are unauthenticated** while `template.yaml`, the `score/app.py` docstring and `CLAUDE.md` all say gated | `template.yaml:376` | Verified live: HTTP 200, 4.9 KB and 116 KB, no key. **CLAUDE.md corrected today** |
-| I2 | `/v1/changes` is uncached and recomputes 33 boroughs per call at 116 KB | `score/app.py:6061` | Cost amplification on an open route |
-| I3 | `/nhs` has `Timeout: 45` against APIGW's 29 s cap, no per-method throttle, and **no function sets `ReservedConcurrentExecutions`** | `template.yaml:213` | Verified: 0 occurrences repo-wide. Can starve the paid `/v1/score` path |
-| I4 | `tests/api.test.mjs` passes on **any** 4xx; 2 of its 5 endpoints have only ever asserted a 400 | `tests/api.test.mjs:48` | It is the pre-release gate |
-| I5 | `build_aircraft_bands.py --check` — **a blocking preflight stage** — exits 0 having compared nothing | `scripts/build_aircraft_bands.py:488` | `if have is None: continue`, then `return 1 if bad else 0` |
+| I2 | `/v1/changes` is uncached and recomputes 33 boroughs per call at 116 KB | `score/app.py:6061` | Cost amplification on an open route. **CLOSED 2026-08-22** - memoised per container + `Cache-Control`; `generatedAt` deliberately NOT cached. |
+| I3 | `/nhs` has `Timeout: 45` against APIGW's 29 s cap, no per-method throttle, and **no function sets `ReservedConcurrentExecutions`** | `template.yaml:213` | Verified: 0 occurrences repo-wide. Can starve the paid `/v1/score` path. **TIMEOUTS CLOSED 2026-08-22** - 45/60/30 all to 28. Concurrency half OPEN: `flightmap-dev` is denied `lambda:GetAccountSettings`, so the reserve cannot be sized from here. |
+| I4 | `tests/api.test.mjs` passes on **any** 4xx; 2 of its 5 endpoints have only ever asserted a 400 | `tests/api.test.mjs:48` | It is the pre-release gate. **CLOSED 2026-08-22** - asserts payload contents; `/transport` and `/nhs` were live-proven to be returning 400 and passing. |
+| I5 | `build_aircraft_bands.py --check` — **a blocking preflight stage** — exits 0 having compared nothing | `scripts/build_aircraft_bands.py:488` | `if have is None: continue`, then `return 1 if bad else 0`. **CLOSED 2026-08-22** - and in two sibling gates that had the same hole, one of them also blocking. |
 | I6 | Leicester 0/8 and Teesside 0/5 carry **no** road-noise or flood band; three defences pass green | `data/borough-extra.json` | Verified. The map is honest; **CLAUDE.md was over-claiming, corrected today** |
-| I7 | Mobile legend headings at **1.22:1**; the a11y gate never opens the collapsed legend | `index.html:3117, 3141, 3161` | Inline `style` beats the override written to fix it |
-| I8 | `privacy.html` overflows to **469px** at 320 and 375 — and `responsive.mjs` has only ever loaded the homepage | `privacy.html:250`, `tests/responsive.mjs:18` | The legal notice scrolls sideways on every phone |
-| I9 | EPC: an unrecognised band publishes `rating: 0` / `averageBand: 'G'` | `epc/app.py:175` | `.get(band, 0)` beside a guarded `[band]` ten lines up |
-| I10 | `/nhs` bundled path renders a confident empty result where the sibling path renders fallback links | `nhs/app.py:311-330` | Corners of the bbox report no GP, pharmacy or hospital |
-| I11 | `_LOCAL_POSTCODE_SERVED` is a sticky global — one NSPL hit credits ONS for every later postcodes.io answer | `score/app.py:3453` | B2B customers audit that `sources` array |
-| I12 | The extension deletes its own aircraft-coverage caveat whenever a basis string exists | `extension/content/panel.js:790` | The flag tests "something is there", not "the notice is there" |
-| I13 | The extension prints *"Live data unavailable"* and *"None found nearby"* one line apart | `extension/content/panel.js:576, 610` | Fourth instance of the class |
-| I14 | The extension's Chrome-visible description still sells the transport section removed 2026-08-06 | `extension/manifest.json:5` | Grep for the NAME, not the function |
+| I7 | Mobile legend headings at **1.22:1**; the a11y gate never opens the collapsed legend | `index.html:3117, 3141, 3161` | Inline `style` beats the override written to fix it. **CLOSED 2026-08-22** - measured at **1.00:1**, not 1.22; gate now opens the legend. |
+| I8 | `privacy.html` overflows to **469px** at 320 and 375 — and `responsive.mjs` has only ever loaded the homepage | `privacy.html:250`, `tests/responsive.mjs:18` | The legal notice scrolls sideways on every phone. **CLOSED 2026-08-22** - THREE pages were broken, not one; the audit covers 8 pages now. |
+| I9 | EPC: an unrecognised band publishes `rating: 0` / `averageBand: 'G'` | `epc/app.py:175` | `.get(band, 0)` beside a guarded `[band]` ten lines up. **CLOSED 2026-08-22** - unknown band publishes null; no recognised band gives `averageBand: N/A`. |
+| I10 | `/nhs` bundled path renders a confident empty result where the sibling path renders fallback links | `nhs/app.py:311-330` | Corners of the bbox report no GP, pharmacy or hospital. **CLOSED 2026-08-22** - **35.4%** of the bbox was affected, measured on a 24x24 grid. |
+| I11 | `_LOCAL_POSTCODE_SERVED` is a sticky global — one NSPL hit credits ONS for every later postcodes.io answer | `score/app.py:3453` | B2B customers audit that `sources` array. **CLOSED 2026-08-22** - now `threading.local()`, reset per query. |
+| I12 | The extension deletes its own aircraft-coverage caveat whenever a basis string exists | `extension/content/panel.js:790` | The flag tests "something is there", not "the notice is there". **CLOSED 2026-08-22** - suppression keyed on the notice itself, not on "some text exists". |
+| I13 | The extension prints *"Live data unavailable"* and *"None found nearby"* one line apart | `extension/content/panel.js:576, 610` | Fourth instance of the class. **CLOSED 2026-08-22** - the two messages are now mutually exclusive. |
+| I14 | The extension's Chrome-visible description still sells the transport section removed 2026-08-06 | `extension/manifest.json:5` | Grep for the NAME, not the function. **CLOSED 2026-08-22** - `extension/README.md` carried the same stale claim in its opening line. |
+
+---
+
+## 3a. Closure notes, 2026-08-22
+
+Three findings were **larger than this report recorded**, and one recorded number
+was wrong in the direction that matters. All four were found by measuring rather
+than by reading the finding.
+
+**I5 was three gates, not one.** The report named
+`build_aircraft_bands.py --check`. The same hole - a missing holder is
+`continue`, so comparing nothing returns 0 - was also in
+`build_hpi_prices.py --check` (**also blocking**; an empty registry printed
+`0/0 agree` and passed, and `--all` over an empty city list is `sum(())` = 0 =
+PASS) and in `build_progress8.py --check`. All three now print what they
+compared and fail on zero. The floor is **per-unit**: renaming one city's marker
+leaves 104 of 114 bands still comparing, which a global `compared > 0` check
+would wave through.
+
+**I7 was 1.00:1, not 1.22:1.** Measured on the rendered DOM at 390x844: three
+legend headings were `var(--dark)` #141414 on a `rgba(20,20,20,0.92)` pill - the
+*same colour as their background*. Not low contrast, invisible. Now 17.64:1.
+Hardening the a11y gate to open the collapsed legend then found a **second**
+defect nothing had ever scanned: `.sheet-footer .for-devs` at 2.60:1, fixed by
+applying `--orange-text`, a token created for this exact purpose on 2026-08-12
+and never applied here.
+
+**I8 was three pages, not one.** `privacy.html` overflowed 149px at 320. But
+`changes.html` was worse - it scrolled the WINDOW **402px** at five viewports -
+and `score-demo/status.html` overflowed at 320. `changes.html` is the
+interesting one: it already had `overflow-x: auto` on a wrapper that measured a
+correct 272px box, every over-wide element had a clipping ancestor, and the page
+still scrolled. The cause is `position: sticky` on `th`: a stuck element is not
+clipped by its scroll container when the document scrollable region is
+computed. `contain: paint` was the only one of five candidate fixes that worked,
+and it keeps the sticky header rather than trading the feature for the fix.
+
+**I10 affects 35.4% of the bounding box.** `in_bundle_area()` tests a rectangle
+spanning 51.25..51.72 by -0.55..0.35, well into Surrey, Kent, Essex and Herts.
+Sampled on a 24x24 grid, 204 of 576 points had no bundled service within 1500 m
+and were published as `available: true` with three empty lists. The report said
+"corners of the bbox".
+
+**A finding not in this report, found by the I8 gate widening.**
+`score-demo/index.html` still advertised the pre-2026-08-21 free tier - "100
+requests / month, 5 burst, 1 sustained" plus a working batch multiplier - on the
+page a prospect uses to try the API. 100x under the real quota, and selling an
+entitlement the usage plan now answers with 429. `FreeTierQuotaDriftTests` opens
+by saying the numbers live in five places and only one is enforced, and then
+asserted exactly one of the other four; `template.yaml`'s own list of mirrors
+omitted this file. Both are fixed, and the pages are now asserted against the
+plan.
 
 ---
 
@@ -262,6 +320,15 @@ NaPTAN, EA RoFRS and NHS ODS from the stated score sources · `pricing.html` say
 customers "the 33 supported London boroughs" for a 94-borough API ·
 `d3.v7.min.js` 280 KB in `<head>` with no `defer` · `/v1/changes` ships
 `explanation` byte-identical to `why.summary`, **21.7% of a 116 KB payload**.
+
+**Closed 2026-08-22:** `Avg Price` over a median (the header now follows the
+view - median for neighbourhoods, average for boroughs) · `privacy.html` §5
+(five datasets added: DEFRA background maps, Price Paid, NaPTAN, NHS ODS, EA
+RoFRS) · the 13-vs-12 city-region contradiction (both pages now count 12 UK
+regions plus New York; every per-city borough count was verified against the
+Lambda and all twelve were already correct) · `score_bulk.py`'s "33 supported
+London boroughs", which now names no count at all and points at `/v1/regions` ·
+and the three-published-quotas item, which was worse than recorded - see §3a.
 
 ---
 
