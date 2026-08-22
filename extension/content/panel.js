@@ -1177,6 +1177,13 @@ function buildPanel(listing, plan) {
   panel.id = PANEL_ID;
   panel.setAttribute('role', 'complementary');
   panel.setAttribute('aria-label', 'cubitt33 property data');
+  // tabindex="-1" makes the panel focusable by script but NOT a tab stop, which
+  // is what lets the badge hand focus over on open. Without it, opening the
+  // panel destroys the element the keyboard was on and focus resets to <body> -
+  // on a Rightmove listing that means tabbing from the top of the page to get
+  // back to what you just opened (WCAG 2.4.3). Focusing the panel rather than
+  // its first control also gets the role and label announced.
+  panel.setAttribute('tabindex', '-1');
 
   const header = el('header', 'c33-header');
 
@@ -1228,7 +1235,10 @@ function buildPanel(listing, plan) {
   close.setAttribute('aria-label', 'Close cubitt33 panel');
   close.addEventListener('click', () => {
     removePanel();
-    showBadge(listing);
+    // The badge is what replaces the panel, so it is where focus belongs. The
+    // close button is being removed from the document by the line above; taking
+    // focus with it strands the keyboard at <body>.
+    showBadge(listing, { focus: true });
   });
   header.appendChild(close);
   panel.appendChild(header);
@@ -1467,7 +1477,7 @@ function badgeMark() {
   return svg;
 }
 
-function showBadge(listing) {
+function showBadge(listing, { focus = false } = {}) {
   removeBadge();
 
   const badge = el('button', null);
@@ -1483,9 +1493,14 @@ function showBadge(listing) {
     removeBadge();
     const body = buildPanel(listing, plan);
     loadInto(body, listing, plan);
+    document.getElementById(PANEL_ID)?.focus();
   });
 
   document.body.appendChild(badge);
+  // Only when focus is being HANDED here by a close. Stealing focus on first
+  // render would yank a reader out of the listing they are reading, which is a
+  // worse defect than the one this fixes.
+  if (focus) badge.focus();
 }
 
 function run() {

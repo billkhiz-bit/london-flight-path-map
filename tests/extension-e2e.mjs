@@ -91,6 +91,18 @@ await page.locator('#cubitt33-badge').click();
 check('panel appears on click', (await page.locator('#cubitt33-panel').count()) === 1);
 check('badge removed when panel opens', (await page.locator('#cubitt33-badge').count()) === 0);
 
+// FOCUS IS HANDED OVER, not dropped (WCAG 2.4.3).
+//
+// Opening the panel destroys the badge the keyboard was on, and closing it
+// destroys the close button. Until 2026-08-22 neither handler moved focus, so
+// both actions reset it to <body> - on a real Rightmove listing that means
+// tabbing from the top of the page to get back to what you just opened. There
+// was no .focus() call anywhere in panel.js.
+check(
+  'focus moves to the panel when it opens',
+  (await page.evaluate(() => document.activeElement?.id)) === 'cubitt33-panel'
+);
+
 // THE REGRESSION ASSERTION. A fast section must paint without waiting for the
 // slow one. The panel used to Promise.all over every endpoint, so a slow or
 // dead Overpass — its normal state often enough to matter — held everything
@@ -379,8 +391,17 @@ check('debug reports outcode', text.includes('SW5'));
 check('debug reports coordinates', text.includes(LAT));
 check('no uncaught page errors', pageErrors.length === 0, pageErrors.join('; '));
 
-// Second listing at the same coordinates must hit the rounded-coordinate cache.
+// Closing hands focus to the badge that replaces the panel - the other half of
+// the WCAG 2.4.3 fix above. The close button is removed from the document by
+// its own handler, so without this focus lands on <body>.
 await page.locator('#cubitt33-panel .c33-close').click();
+await page.locator('#cubitt33-badge').waitFor({ timeout: 15000 });
+check(
+  'focus returns to the badge when the panel closes',
+  (await page.evaluate(() => document.activeElement?.id)) === 'cubitt33-badge'
+);
+
+// Second listing at the same coordinates must hit the rounded-coordinate cache.
 await page.goto('https://www.rightmove.co.uk/properties/987654321');
 await page.locator('#cubitt33-badge').waitFor({ timeout: 15000 });
 const cacheClick = Date.now();

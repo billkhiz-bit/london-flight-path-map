@@ -103,7 +103,11 @@
 }
 
 #cubitt33-badge:focus-visible {
-  outline: 3px solid #4a9eff;
+  /* #1a73e8, not #4a9eff. The old ring was 2.75:1 against the white panel and
+     WCAG 1.4.11 asks 3:1 for a focus indicator - so the one affordance a
+     keyboard user navigates BY was the thing they could least easily see.
+     4.51:1 now. All five declarations in this file moved together. */
+  outline: 3px solid #1a73e8;
   outline-offset: 2px;
 }
 
@@ -170,7 +174,7 @@
 }
 
 #cubitt33-panel .c33-toggle:focus-visible {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid #1a73e8;
   outline-offset: 1px;
 }
 
@@ -285,7 +289,7 @@
 }
 
 #cubitt33-panel .c33-close:focus-visible {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid #1a73e8;
   outline-offset: 2px;
 }
 
@@ -446,7 +450,7 @@
 }
 
 #cubitt33-panel .c33-fold-sum:focus-visible {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid #1a73e8;
   outline-offset: 2px;
 }
 
@@ -547,7 +551,7 @@
 }
 
 #cubitt33-panel .c33-note-sum:focus-visible {
-  outline: 2px solid #4a9eff;
+  outline: 2px solid #1a73e8;
   outline-offset: 2px;
 }
 
@@ -564,14 +568,22 @@
   border-top: 1px solid #e6eaef;
   font-size: 10px;
   line-height: 1.4;
-  color: #8a97a8;
+  /* 5.67:1 on the white panel, was #8a97a8 at 2.97:1 against WCAG 1.4.3's 4.5.
+     This is the licence attribution - OGL and OpenStreetMap ODbL both REQUIRE
+     visible attribution, so it is the one line on the panel that must be
+     legible as a condition of using the data at all. It was the least legible.
+     Corrected 2026-08-22. */
+  color: #5b6879;
 }
 
 #cubitt33-panel .c33-debug {
   margin-top: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;
-  color: #b3bdc9;
+  /* 4.19:1, was #b3bdc9 at 1.90:1 - the lowest contrast on the panel. Debug
+     output is still text a person has to read, and this is the row that carries
+     the extraction diagnosis when a listing looks wrong. */
+  color: #727d8a;
 }
 
 @media (prefers-reduced-motion: no-preference) {
