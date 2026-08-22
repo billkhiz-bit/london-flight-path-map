@@ -321,6 +321,35 @@ customers "the 33 supported London boroughs" for a 94-borough API ·
 `d3.v7.min.js` 280 KB in `<head>` with no `defer` · `/v1/changes` ships
 `explanation` byte-identical to `why.summary`, **21.7% of a 116 KB payload**.
 
+**Second pass, 2026-08-22:** the extension now hands focus to the panel on open
+and back to the badge on close (it had no `.focus()` call at all, so both actions
+dropped a keyboard user to `<body>` - on a Rightmove listing that means tabbing
+from the top of the page; both directions are asserted in the e2e and proven
+red) · the panel focus ring 2.75 -> **4.51:1**, the OGL/ODbL licence attribution
+2.97 -> **5.67:1** (that line is a condition of using the data and was the least
+legible thing on the panel) and the debug row 1.90 -> **4.19:1** · `crimeRate`
+now names the borough on BOTH paths instead of claiming `(EST.)` on one - ONS
+Table C4 is a published figure, not an estimate, and the `(EST.)` sat directly
+above an ONS attribution · the status page distinguishes **"Up (no key
+required)"** from "Up (auth enforced)", which had rendered identically, so a
+route silently losing its gate looked exactly like a gate holding.
+
+**Examined and deliberately NOT changed:**
+
+- **EPC band swatches.** B at 2.72:1 and F at 2.70:1 are the OFFICIAL EPC ramp,
+  which a user matches against their real certificate - WCAG 1.4.11 exempts a
+  presentation that is essential to the information. And the finding's premise
+  (a CSS comment saying "a column carries no text") is wrong about the chart:
+  every column carries its band letter and its count, so band identity is not
+  conveyed by colour alone. Changing these would break the match to the
+  certificate to fix a rule that is already satisfied another way.
+- **`d3.v7.min.js` without `defer`.** 280 KB render-blocking in `<head>` is a
+  real cost, but the inline script spans most of `<body>` and deferred scripts
+  run *after* it. Proving no top-level d3 call exists across ~8,000 lines needs
+  more than a grep, and the failure mode is a blank map on the live consumer
+  site. Left for a session where the change can be watched. Moving the tag to
+  the end of `<body>` is the lower-risk form of the same win.
+
 **Closed 2026-08-22:** `Avg Price` over a median (the header now follows the
 view - median for neighbourhoods, average for boroughs) · `privacy.html` §5
 (five datasets added: DEFRA background maps, Price Paid, NaPTAN, NHS ODS, EA

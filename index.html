@@ -9976,7 +9976,7 @@
       <h3>CRIME</h3>
       <span class="rating-badge ${ratingBadgeClass(extra.crime)}">${extra.crime}</span>
       <div class="crime-summary">
-        <div class="crime-stat"><div class="crime-stat-value">${extra.crimeRate}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (EST.)</div></div>
+        <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (${escapeHtml(extra.name)} BOROUGH)</div></div>
       </div>
       <p class="info-note">${escapeHtml(crimeNote(extra))}</p>
     </div>

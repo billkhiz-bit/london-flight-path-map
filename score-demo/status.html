@@ -297,6 +297,17 @@
       const ok = keyless
         ? (r.status === 403 || (r.status >= 200 && r.status < 400))
         : r.status >= 200 && r.status < 400;
+      // A keyless probe of a route DECLARED key-gated that answers 2xx means
+      // no key was required. Both outcomes were previously rendered as a bare
+      // "Up", so a gate silently opening looked identical to a gate holding -
+      // on the page whose whole job is to tell you what the service is doing.
+      //
+      // Reported rather than failed, deliberately. /v1/regions is open on
+      // purpose today (AUDIT_REPORT.md I1 - whether it SHOULD be is an open
+      // decision), and the service genuinely is up, so painting this red would
+      // be a false alarm about an architecture choice. Naming it is the honest
+      // middle: if /v1/score ever appears here, that is a real finding.
+      const openRoute = keyless && ok && r.status >= 200 && r.status < 400;
       let data = null;
       if (endpoint.captureBody && ok) {
         try { data = await r.json(); } catch {}
@@ -308,7 +319,14 @@
         status: r.status,
         elapsed,
         keyless,
-        statusText: ok ? (keyless && r.status === 403 ? 'Up (auth enforced)' : 'Up') : `${r.status}`,
+        openRoute,
+        statusText: ok
+          ? (keyless && r.status === 403
+              ? 'Up (auth enforced)'
+              : openRoute
+                ? 'Up (no key required)'
+                : 'Up')
+          : `${r.status}`,
       };
     } catch (err) {
       return { ...endpoint, ok: false, status: 0, elapsed: 0, statusText: 'Error' };
