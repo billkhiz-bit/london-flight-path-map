@@ -344,6 +344,11 @@ template cannot answer that. **Verify after every deploy.**
 
 ## Absence must never render as a measurement — the 2026-08-22 sweep
 
+**Shipped and verified live the same day.** Four Lambdas via SAM, six public
+surfaces via S3 + a completed CloudFront invalidation. The live responsive audit
+went from 10 failing page/viewport combinations to 0, and `/nhs` at an uncovered
+bbox point now answers with NHS search links instead of three empty lists.
+
 Ten audit-Important findings closed in one pass, and **most were one defect
 wearing different clothes**. Read this before adding any fallback value.
 

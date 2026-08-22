@@ -1,5 +1,86 @@
 # Changelog
 
+## 2026-08-22 — ten Important findings, and four gates that could not have caught them
+
+Closed 10 of the 14 Important findings and 10 Minor ones from the 21 Aug audit.
+Deployed and verified from the origin: four Lambdas via SAM, six public surfaces
+via S3 with a completed CloudFront invalidation. **The live responsive audit went
+from 10 failing page/viewport combinations to 0.**
+
+**Three findings were larger than the audit recorded, and one figure was wrong in
+the reassuring direction.** All four were found by measuring, not by reading the
+finding.
+
+**The legend headings were 1.00:1, not 1.22.** Three of them rendered
+`var(--dark)` #141414 on a `rgba(20,20,20,0.92)` pill - the same colour as their
+background, invisible on every phone since the layer legends shipped. The colour
+sat in an inline `style` attribute, which no selector can outrank, so the
+`@media` override written specifically to fix it had never applied. The a11y gate
+had gained a mobile viewport on 12 Aug for exactly this defect and still could
+not see it: on a phone the legend ships `aria-expanded="false"` and axe does not
+evaluate hidden elements. **Adding a viewport is not the same as reaching the
+state.**
+
+**I8 was three pages, not one.** `privacy.html` was 149px over at 320, but
+`changes.html` scrolled the WINDOW **402px** at five viewports and was not in the
+finding at all, and `score-demo/status.html` overflowed at 320. `changes.html` is
+the interesting one: it already had `overflow-x: auto` on a wrapper measuring a
+correct 272px box, and every over-wide element had a clipping ancestor. The cause
+is `position: sticky` on `th` - a stuck element is not clipped by its scroll
+container when the document scrollable region is computed. `contain: paint` was
+the only one of five candidate fixes that worked, and it keeps the sticky header
+rather than trading the feature for the fix.
+
+**`/nhs` asserted absence over 35.4% of its own bounding box.** `in_bundle_area()`
+tests a rectangle reaching into Surrey, Kent, Essex and Herts. Sampled on a 24x24
+grid, 204 of 576 points had no bundled service within 1500 m and were published
+as `available: true` with three empty lists - "we checked, there is no GP near
+you". The Overpass branch beside it, facing the same gap, returns fallback links
+and `available: false`: one branch admitted ignorance, the other asserted
+absence, for identical missing data. Verified live after the deploy - that
+coordinate now returns three NHS search links.
+
+**I5 was three gates, two of them blocking.** `build_hpi_prices.py --check`
+printed `0/0 agree` on an empty registry and returned 0, and `--all` over an
+empty city list is `sum(())` == 0 == PASS. `build_progress8.py` skipped every
+city whose boroughs carried no p8. **The floor is per-unit rather than global,
+because a global one is not enough:** renaming a single city's marker leaves 104
+of 114 bands still comparing.
+
+**Every gate that was widened found a defect nobody had reported - three for
+three.** Opening the legend found the sheet footer link at 2.60:1. Widening the
+responsive audit past the homepage found two more broken pages. Correcting the
+demo page's quota copy found that `FreeTierQuotaDriftTests` opens by saying the
+free-tier numbers live in five places and only one is enforced, then asserted
+exactly one of the other four - while `template.yaml`'s own list of mirrors
+omitted the file that had drifted. `score-demo/index.html` was advertising **100
+requests/month against a plan enforcing 10,000**, and selling a batch multiplier
+the gateway answers with 429, on the page prospects use to try the API.
+
+**Also:** EPC published an unparsed band as `rating: 0` / `averageBand: 'G'` -
+worse than any real G - from a `.get(band, 0)` sitting ten lines below a guarded
+lookup of the same value. Postcode attribution was per-container rather than
+per-request, so one NSPL hit credited ONS in every later response from that
+container. Every Lambda timeout was above API Gateway's 29s integration cap,
+including the Globals default, and at `Timeout: 45` `/nhs` could not reach its
+own fallback branch inside the caller's window - **raising a timeout past the cap
+silently disables the fallback beneath it.** `/v1/changes` is unauthenticated and
+rebuilt a 114 KB body per call to return identical bytes; it is memoised now,
+with `generatedAt` deliberately left out of the cache. The extension deleted its
+own aircraft caveat whenever a basis string existed, could print "Live data
+unavailable" and "None found nearby" one line apart, had **no `.focus()` call at
+all** (so opening or closing the panel dropped a keyboard user to `<body>`), and
+carried a focus ring at 2.75:1 and a licence attribution - required by OGL and
+ODbL - at 2.97:1.
+
+**Examined and deliberately not changed:** the EPC band swatches (the official
+ramp, which WCAG 1.4.11 exempts as essential, and the columns already carry their
+letters, so the finding's premise was wrong) and `d3.v7.min.js` without `defer`
+(a real 280 KB cost, but the inline script spans most of `<body>` and deferred
+scripts run after it).
+
+21 tests added, every one proven red first. 534 -> 555.
+
 ## 2026-08-21 (late) — three layers stop describing data that is not there
 
 The last three audit criticals. Every critical in `AUDIT_REPORT.md` is now

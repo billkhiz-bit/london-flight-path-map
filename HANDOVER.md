@@ -56,13 +56,13 @@ Everything below §3 predates a long session; this is where it actually stands.
 | | |
 |---|---|
 | Audit criticals | **all 11 closed**, deployed, verified live |
-| Audit **Important** | **10 of 14 closed 2026-08-22**, source only - **NOT DEPLOYED** |
-| Audit **Minor** | 5 closed 2026-08-22, source only |
+| Audit **Important** | **10 of 14 closed 2026-08-22**, DEPLOYED and verified live |
+| Audit **Minor** | 10 closed 2026-08-22, DEPLOYED and verified live |
 | Tests | **555**, up from 534 - 21 added, every one proven red first |
 | Distribution findings | **D5, D1, D2, D4 shipped**; D3 and D6 need no build |
 | Blocking preflight stages | **30** (was 25; five added today) |
 | Log groups | 8, one per live Lambda, all 30-day retention, **zero orphans** |
-| Deploy drift | zero, verified by sha256 against the origin |
+| Deploy drift | zero, re-verified by sha256 2026-08-22 after the deploy |
 
 **Needs Bill, and nothing else does:** publish DMARC at `p=none` in Cloudflare;
 add a second AWS MFA device (there is one factor and no fallback); decide D3, the
@@ -141,24 +141,23 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ## 4a. Deploy state
 
-**AS OF 2026-08-22 THE SOURCE IS AHEAD OF PRODUCTION.** The audit-Important work
-of that day is committed and gated but **not deployed**. Nothing is broken by
-waiting - every change is a correction, so production is running the older,
-wrong behaviour until it ships.
+**DEPLOYED 2026-08-22.** The audit-Important work of that day is live: SAM
+updated `ScoreFunction`, `EpcFunction`, `NhsFunction` and `ChatFunction`, and
+all six changed public surfaces were uploaded with a full CloudFront
+invalidation (waited to completion, not fired and forgotten).
 
-What a deploy needs to carry, and why each matters:
+**Verified from the origin rather than from the deploy's exit code:**
 
-| Surface | Command | Carries |
-|---|---|---|
-| Lambdas | `sam build && sam deploy` | `/nhs` no longer asserting absence over 35.4% of its bbox; EPC no longer publishing an unknown band as `rating: 0` / `averageBand: G`; per-request ONS attribution; `/v1/changes` memoised + `Cache-Control`; **every function timeout under API Gateway's 29s cap** |
-| `index.html` | `make web-deploy` | legend headings 1.00:1 -> 17.64:1 on every phone; footer link 2.60 -> 5.65:1; price column labelled median where it is one |
-| `privacy.html`, `changes.html` | `make web-deploy` | both stop scrolling sideways on every phone; §5 names the five datasets it had been omitting |
-| `score-demo/` | `make demo-deploy` | the free tier stops being advertised at **100 requests/month** when the plan enforces 10,000, and stops selling batch the gateway denies |
-| `pricing.html` | `make web-deploy` | 12-vs-13 city-region contradiction with `/api/` |
-
-`tests/responsive.mjs` with no argument is the fastest way to confirm the three
-page fixes landed: it reported 10 failing page/viewport combinations against
-CloudFront on 2026-08-22 and 0 against source.
+| Check | Result |
+|---|---|
+| All six HTML surfaces vs source | **sha256 MATCH** on every one |
+| `check_deploy_drift.sh` | **0 of 16 surfaces differ** (was 6) |
+| `tests/responsive.mjs` against **live** | **0 failures across 45 page/viewport combinations** - it reported **10** before the deploy |
+| `check_score_sanity.py` | **PASS, 27 postcodes** |
+| `/v1/changes` | now returns `Cache-Control: public, max-age=3600` |
+| `/nhs` at an uncovered bbox point (51.25, -0.472) | returns three **NHS search links** instead of three empty lists - the confident-absence fix, working live |
+| `/nhs` central London (51.5152, -0.1418) | still `bundled-snapshot`, 5 GPs - real coverage untouched |
+| `/epc` N1 7SX | 10 certificates, `averageBand: C`, a real band still carries its rating |
 
 **Everything was deployed as of 2026-08-21 17:26.** `ScoreFunction` and
 `TransportFunction` both updated via SAM; `index.html` and `api/index.html`

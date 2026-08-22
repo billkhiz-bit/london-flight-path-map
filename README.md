@@ -289,7 +289,7 @@ API Gateway ── Lambda × 8 active ── DynamoDB (favourites, signups, DEFR
 | `transport` | `/transport` | TfL Open Data station + line-status |
 | `nhs` | `/nhs` | NHS Service Search |
 
-**Removed surfaces (kept in git history):** Five Bedrock Lambdas (`chat`, `multi_agent`, `analyze_image`, `analyze_document`, `report`) and the OpenSky-backed `live_flights` Lambda were deployed earlier but removed end-to-end in May 2026 — Bedrock to align the consumer surface with the methodology-defensibility positioning of the B2B API, OpenSky pending a written commercial-use agreement. Restoration: `git revert` of commits `69905ee` + `71a731c` + `6bad8ce` for AI features; restore `live_flights/` + flip prototype's `liveLicensed` flag for live aircraft. See `LICENSING.md` for the OpenSky context.
+**Removed surfaces (kept in git history):** **Four** Bedrock Lambdas (`multi_agent`, `analyze_image`, `analyze_document`, `report`) and the OpenSky-backed `live_flights` Lambda were deployed earlier but removed end-to-end in May 2026. **`chat` is NOT among them** - it was restored to the template on 2026-08-06 as a retrieval-only function and is in the table eleven lines above, which this sentence contradicted until 2026-08-22 — Bedrock to align the consumer surface with the methodology-defensibility positioning of the B2B API, OpenSky pending a written commercial-use agreement. Restoration: `git revert` of commits `69905ee` + `71a731c` + `6bad8ce` for AI features; restore `live_flights/` + flip prototype's `liveLicensed` flag for live aircraft. See `LICENSING.md` for the OpenSky context.
 
 ## Tech stack
 

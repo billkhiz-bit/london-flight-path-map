@@ -226,7 +226,13 @@ classifying 100% code 0 must fail.
 ## 3. Important
 
 **Ten of the fourteen were closed on 2026-08-22**, each with a guard proven red
-before it was trusted. Three of the ten turned out to be larger than recorded
+before it was trusted, and **all of them are DEPLOYED and verified live** - SAM
+updated four Lambdas, six public surfaces were uploaded and CloudFront was
+invalidated to completion. Verification was against the origin, not the deploy's
+exit code: every HTML surface matches source by sha256, drift is 0 of 16, and
+`tests/responsive.mjs` against **live** went from **10 failing page/viewport
+combinations to 0**. `/nhs` at an uncovered bbox point now returns NHS search
+links where it used to return three empty lists. Three of the ten turned out to be larger than recorded
 here; the measurements are in the closure notes below the table. What is left is
 I1 (a decision, not a defect), the `ReservedConcurrentExecutions` half of I3
 (needs an account concurrency figure `flightmap-dev` cannot read), and I6.

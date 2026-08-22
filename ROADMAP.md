@@ -25,10 +25,10 @@ Sky Score is the noise + livability layer for UK property data, designed to be h
 ## Current state
 
 - **Consumer site live**: `https://skyscore.co.uk`, covers London + NYC, postcode/borough scoring, favourites, NHS/transport/EPC/sold-prices data lookups
-- **Backend**: **7 active Lambdas** behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. The 5 dormant Bedrock functions built for the original hackathon are **not in `template.yaml`** — code and template entries live in git history only, so reviving one means restoring both, redeploying, then unhiding the UI block. (Corrected 2026-07-29: this line said "8 active + 5 dormant"; the template holds 7, as `CLAUDE.md` and `README.md` have said since 2026-07-23.)
+- **Backend**: **8 active Lambdas** behind API Gateway at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. The 5 dormant Bedrock functions built for the original hackathon are **not in `template.yaml`** — code and template entries live in git history only, so reviving one means restoring both, redeploying, then unhiding the UI block. (Corrected 2026-07-29 from "8 active + 5 dormant" to 7; corrected again 2026-08-22 to **8**, by counting `AWS::Serverless::Function` blocks rather than trusting the prose - `ChatFunction` was restored to the template on 2026-08-06 as a retrieval-only function and this line never caught up. The eight: Score, Chat, Signup, Favourites, Epc, SoldPrices, Transport, Nhs.)
 - **Prototype (Sky Score Radar)** live at `/prototype/`, 3D visualisation with simulated flight tracks (live OpenSky data removed 2026-05-07 pending licensing — see open decisions table)
 - **Recent wins**: Amazon Nova hackathon ($200 AWS credits, blog category), Emergent Ventures application submitted (awaiting response), Red Bull Basement application submitted (awaiting shortlist), Luma event applied
-- **Known issues**: see `AUDIT_REPORT.md` (last full audit 2026-07-24; targeted pass 2026-07-27 on two gates that could not fail)
+- **Known issues**: see `AUDIT_REPORT.md`. **Last full audit 2026-08-21** (not 07-24, as this line said until 2026-08-22 - there have been three since). All 11 criticals closed 21 Aug; **10 of 14 Important and 10 Minor closed and deployed 22 Aug**. Open: I1 (whether `/v1/regions` and `/v1/changes` *should* be gated - a decision, not a defect), the `ReservedConcurrentExecutions` half of I3 (blocked: `flightmap-dev` cannot read the account concurrency limit), and I6.
 
 ## Constraints
 
