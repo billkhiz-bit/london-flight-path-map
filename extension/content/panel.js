@@ -573,7 +573,11 @@ function renderNhs(result) {
 
   const data = result.data;
 
-  if (data.available === false) {
+  // `available: false` means the endpoint could not look, not that it looked
+  // and found nothing. The distinction decides which of the two messages below
+  // is allowed to render — see the `rendered === 0` branch.
+  const couldNotLook = data.available === false;
+  if (couldNotLook) {
     section.appendChild(el('p', 'c33-none', data.note || 'Live data unavailable'));
   }
 
@@ -607,7 +611,17 @@ function renderNhs(result) {
     rendered += 1;
   }
 
-  if (rendered === 0) {
+  // "None found nearby" is a MEASUREMENT: it claims we searched and the area
+  // is empty. It may only be said when we actually searched (audit finding
+  // I13, fixed 2026-08-22). Without the guard this printed directly beneath
+  // "Live data unavailable", so the panel said it could not get the data and
+  // then told the user what the data said - two contradictory sentences one
+  // line apart, and the confident one is the one that gets believed.
+  //
+  // Fourth instance of this class in this codebase, after the -0.4 transport
+  // penalty, the `|| 'moderate'` fill layers and "No stations found within
+  // 1.5km". Absence must never render as a measurement.
+  if (rendered === 0 && !couldNotLook) {
     section.appendChild(el('p', 'c33-none', 'None found nearby'));
   }
 
@@ -787,7 +801,21 @@ function renderEnvironment(result) {
   // Everything except the aircraft coverage notice, which now sits inline on
   // the row it describes. Kept here when no estimated row rendered to carry it
   // — a caveat with nothing to attach to still has to be said somewhere.
-  const inlinedAircraftNotice = rows.some((r) => r[5] && r[0].includes('estimated'));
+  //
+  // COMPARED BY IDENTITY, not by "the row has some text" (audit finding I12,
+  // fixed 2026-08-22). The estimated row's note is the endpoint's short
+  // per-row basis when `aircraftQuietBasis` is present, and only falls back to
+  // this longer coverage notice when it is absent. The old test - `r[5] &&
+  // r[0].includes('estimated')` - was true in BOTH cases, so whenever a basis
+  // string existed the notice was filtered out of the disclosure while never
+  // having been inlined anywhere: the caveat vanished from the panel entirely,
+  // in exactly the common case.
+  //
+  // The comment on aircraftNotice above promises this fails OPEN if the
+  // wording drifts. That promise only holds if the suppression is keyed on the
+  // notice itself, which is what this now does.
+  const inlinedAircraftNotice =
+    Boolean(aircraftNotice) && rows.some((r) => r[5] === aircraftNotice);
   explanations.push(
     ...(data.notices || []).filter((n) => !(inlinedAircraftNotice && n === aircraftNotice))
   );

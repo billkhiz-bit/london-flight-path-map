@@ -1,7 +1,14 @@
 # cubitt33 browser extension — demo build
 
-Unlisted demo. Shows independent transport and healthcare data alongside a
-Rightmove listing, to prove the wedge before committing to the product build.
+Unlisted demo. Shows independent environment, energy, sold-price and healthcare
+data alongside a Rightmove listing, to prove the wedge before committing to the
+product build.
+
+<!-- This sentence said "transport and healthcare" until 2026-08-22, six weeks
+     after the transport section was dropped - and the removal is documented in
+     this same file, further down. So did manifest.json's Chrome-visible
+     description. Audit finding I14: when a feature is deleted, grep for its
+     NAME, not just its function. -->
 
 **Not for publication.** See "Before this could ship" below.
 
