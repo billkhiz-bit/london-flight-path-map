@@ -4,7 +4,12 @@ Description: Sky Score - Backend API
 
 Globals:
   Function:
-    Timeout: 30
+    # 28, not 30. Every function here is a SYNCHRONOUS API Gateway integration
+    # and APIGW cuts those at 29s, so a 30s default gave each one a second of
+    # budget no caller could ever receive. Three functions overrode it upward
+    # (45, 60, and score's deliberate 28); the default itself was the same
+    # defect at the root. Audit finding I3, 2026-08-22.
+    Timeout: 28
     Runtime: python3.11
     MemorySize: 256
     Environment:
@@ -210,7 +215,17 @@ Resources:
     Properties:
       CodeUri: lambdas/nhs/
       Handler: app.handler
-      Timeout: 45
+      # 28s, matching ScoreFunction, NOT 45 (audit finding I3, 2026-08-22).
+      # API Gateway cuts a synchronous integration at 29s, so the last 16
+      # seconds of a 45s budget were unreachable by any caller - we paid for
+      # work that could not be delivered.
+      #
+      # The important half is not the cost. `handler` catches a slow Overpass
+      # and returns NHS search links with `available: false`; at 45s that
+      # branch could never run inside the caller's window, so a slow upstream
+      # produced a raw 504 instead of the degraded answer the code was written
+      # to give. Lowering the ceiling is what makes the fallback reachable.
+      Timeout: 28
       Events:
         NhsGet:
           Type: Api
@@ -277,9 +292,11 @@ Resources:
       CodeUri: lambdas/chat/
       Handler: app.handler
       # Two sequential network hops: a ScoreFunction invoke (up to 28s worst
-      # case) then a Bedrock call. 60s leaves headroom without letting a hung
-      # model call bill indefinitely.
-      Timeout: 60
+      # case) then a Bedrock call. Was 60s "for headroom" - but this is a
+      # synchronous API Gateway integration and APIGW cuts at 29s, so headroom
+      # past that is time the caller has already stopped waiting for and we are
+      # still billed for. Same finding as NhsFunction above (I3, 2026-08-22).
+      Timeout: 28
       MemorySize: 512
       Environment:
         Variables:
@@ -461,10 +478,19 @@ Resources:
     Properties:
       UsagePlanName: SkyScoreFreeTier
       Description: Free tier, 10000 requests/month = 10000 scores, 5 req/sec burst.
-      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. Four places mirror
+      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. FIVE places mirror
       # these numbers and none of them can read the plan at runtime:
       # backend/lambdas/signup/app.py (the signup response), pricing.html,
-      # api/index.html and score-demo/openapi.yaml. Change them together.
+      # api/index.html, score-demo/openapi.yaml and score-demo/index.html.
+      # Change them together.
+      #
+      # score-demo/index.html was missing from this list until 2026-08-22, and
+      # it was the one that drifted: it advertised "100 requests / month, 5
+      # burst, 1 sustained" plus a working batch multiplier - the pre-2026-08-21
+      # figures - on the page a prospect uses to try the API. A list of mirrors
+      # that omits a mirror is worse than no list, because it reads as complete.
+      # FreeTierQuotaDriftTests now asserts every page against this block, so
+      # the list is documentation and the test is the guard.
       #
       # REQUESTS NOW EQUAL SCORES, and that is the point of this block.
       #

@@ -202,7 +202,12 @@ def query_overpass(lat, lon):
     )
     # 30s, above Overpass's own 25s budget so it finishes rather than being
     # abandoned mid-flight, and below the 45s function Timeout.
-    with urlopen(req, timeout=30) as resp:
+    # 26s, not 30. It must sit ABOVE Overpass's own [timeout:25] budget so we
+    # do not cut the upstream off just as it answers, and BELOW the function's
+    # 28s ceiling so the fallback branch has room to build a response. At 30 it
+    # sat above the ceiling, so a slow Overpass killed the whole invocation
+    # instead of degrading to search links.
+    with urlopen(req, timeout=26) as resp:
         return json.loads(resp.read().decode()).get('elements', [])
 
 
@@ -308,17 +313,41 @@ def handler(event, context):
 
         # London is served from the bundled snapshot: no network call, so no
         # shared-IP lottery and no fallback. See the block above _load_bundle.
+        #
+        # AN EMPTY BUNDLE RESULT IS NOT AN ANSWER (audit finding I10, fixed
+        # 2026-08-22). `in_bundle_area` tests a BOUNDING BOX - 51.25..51.72 by
+        # -0.55..0.35 - which reaches well into Surrey, Kent, Essex and Herts,
+        # none of which the snapshot covers. Measured over a 24x24 grid of that
+        # rectangle, 35.4% of points had no bundled service within 1500 m and
+        # were being published as `available: true` with three empty lists:
+        # "we checked, there is no GP, pharmacy or hospital near you". The
+        # sibling Overpass path below, when IT cannot answer, returns fallback
+        # links and `available: false` - so one branch admitted ignorance and
+        # the other asserted absence, for the same missing data.
+        #
+        # Falling through rather than returning fallback links directly is
+        # deliberate: outside the snapshot's real coverage Overpass usually DOES
+        # have the data, and if it does not, the branch below already degrades
+        # honestly. "A bounding box is not containment", recurring.
         if in_bundle_area(lat, lon):
             buckets = from_bundle(lat, lon)
-            buckets.update(
-                {
-                    'location': {'lat': lat, 'lon': lon},
-                    'sources': [ATTRIBUTION],
-                    'available': True,
-                    'dataSource': 'bundled-snapshot',
-                }
+            if any(buckets.values()):
+                buckets.update(
+                    {
+                        'location': {'lat': lat, 'lon': lon},
+                        'sources': [ATTRIBUTION],
+                        'available': True,
+                        'dataSource': 'bundled-snapshot',
+                    }
+                )
+                return response(200, buckets)
+            logger.info(
+                'Inside the bundle bbox but no service within %sm; deferring to '
+                'Overpass. lat=%s lon=%s',
+                SEARCH_RADIUS_M,
+                lat,
+                lon,
             )
-            return response(200, buckets)
 
         try:
             elements = query_overpass(lat, lon)

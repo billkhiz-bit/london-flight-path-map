@@ -172,7 +172,16 @@ def handler(event, context):
                     'band': band,
                     # Numeric rating is no longer in search responses, synthesise
                     # from band midpoint so existing consumer-site UI keeps working.
-                    'rating': BAND_MIDPOINT.get(band, 0),
+                    #
+                    # None, NOT 0, for a band we do not recognise (audit I9,
+                    # 2026-08-22). 0 is not "unknown" on a 1-100 EPC scale, it is
+                    # BELOW the worst real certificate - so an unparsed band
+                    # published the property as worse than any G. Note the
+                    # guarded `BAND_MIDPOINT[band]` ten lines above, inside
+                    # `if band in bands`: the same lookup was already careful
+                    # there, and this copy was not. A null forces a consumer to
+                    # handle the gap; a 0 invites it to plot one.
+                    'rating': BAND_MIDPOINT.get(band),
                     # Fields below require a per-certificate fetch via /api/certificate;
                     # left empty in the search response.
                     'type': '',
@@ -190,7 +199,16 @@ def handler(event, context):
                 }
             )
 
-        avg_rating = round(sum(synthesised_ratings) / len(synthesised_ratings)) if synthesised_ratings else 0
+        # No recognised band anywhere means we have NO average, which is not the
+        # same as an average of zero. rating_to_band(0) returns 'G', so the old
+        # `else 0` published `averageBand: 'G'` - a confident worst-case reading
+        # - for a postcode whose bands we simply could not parse. `mostCommonBand`
+        # beside it already used 'N/A' for exactly this case.
+        avg_rating = (
+            round(sum(synthesised_ratings) / len(synthesised_ratings))
+            if synthesised_ratings
+            else None
+        )
 
         body = {
             'postcode': postcode,
@@ -198,7 +216,7 @@ def handler(event, context):
             'count': len(rows),
             'summary': {
                 'averageRating': avg_rating,
-                'averageBand': rating_to_band(avg_rating),
+                'averageBand': rating_to_band(avg_rating) if avg_rating is not None else 'N/A',
                 'mostCommonBand': max(bands, key=bands.get) if any(bands.values()) else 'N/A',
                 'bandDistribution': bands,
             },

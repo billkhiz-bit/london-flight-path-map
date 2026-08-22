@@ -308,17 +308,27 @@ def classify_outcome(postcode, body, status):
 
     if status == 404 and 'supportedBoroughs' in body:
         # attemptedBorough is None whenever normalise_borough could not map the
-        # district at all — the common case for a valid UK postcode outside
-        # London (Edinburgh, Cardiff, anywhere in England beyond the 33). Name
+        # district at all — the common case for a valid UK postcode outside the
+        # covered city-regions (Edinburgh, Belfast, most of rural England). Name
         # the district when we have it and stay vague when we do not, rather
         # than printing 'None' at a customer.
+        #
+        # NOT "the 33 supported London boroughs" (2026-08-22). That was true
+        # when written and stopped being true on 2026-08-10: the API now covers
+        # 94 UK boroughs across 12 city-regions plus New York. An Enterprise
+        # customer running a national file was being told their Manchester
+        # postcodes fell outside London - which is both wrong and reads as a
+        # much smaller product than they are paying for. No count is quoted
+        # here on purpose; /v1/regions is the live answer and cannot go stale.
         attempted = body.get('attemptedBorough')
         row['status'] = 'outside_supported_boroughs'
         row['borough'] = attempted or ''
         row['note'] = (
-            f'Resolved to {attempted}, which is outside the 33 supported London boroughs.'
+            f'Resolved to {attempted}, which is outside the supported '
+            'city-regions - see /v1/regions for the current list.'
             if attempted else
-            'Valid postcode, but it resolves outside the 33 supported London boroughs.'
+            'Valid postcode, but it resolves outside the supported '
+            'city-regions - see /v1/regions for the current list.'
         )
     elif status == 404 and 'supportedNycBoroughs' in body:
         row['status'] = 'unsupported_zip'

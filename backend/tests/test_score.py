@@ -1052,16 +1052,65 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         # the loader runs where the table exists but every lookup still goes
         # to postcodes.io. Crediting ONS during that window would be a false
         # provenance claim in the array B2B customers audit.
-        original = app._LOCAL_POSTCODE_SERVED
+        original = app.local_postcode_served()
         try:
-            app._LOCAL_POSTCODE_SERVED = False
+            app.reset_postcode_attribution()
             self.assertIn('postcodes.io', app.build_sources()[2])
             self.assertNotIn('ONS National Statistics', app.build_sources()[2])
 
-            app._LOCAL_POSTCODE_SERVED = True
+            app.mark_local_postcode_served()
             self.assertIn('ONS National Statistics', app.build_sources()[2])
         finally:
-            app._LOCAL_POSTCODE_SERVED = original
+            app._postcode_attribution.served = original
+
+    def test_attribution_does_not_survive_into_the_next_request(self):
+        """Audit finding I11, fixed 2026-08-22.
+
+        The flag was a plain module global set True on the first NSPL hit and
+        never reset. Lambda reuses containers, so ONE local hit credited ONS
+        NSPL in the `sources` array of every later response from that
+        container - including responses postcodes.io actually served.
+
+        resolve_query() must therefore start each query clean. The old code
+        had no reset anywhere, so this cannot pass against it.
+        """
+        app.mark_local_postcode_served()
+        self.assertTrue(app.local_postcode_served(), 'precondition')
+
+        # Any query at all: the reset is the first thing resolve_query does, so
+        # even an error path must clear the previous caller's attribution.
+        app.resolve_query({'borough': 'Camden'})
+
+        self.assertFalse(
+            app.local_postcode_served(),
+            'the previous NSPL hit leaked into this request, so its '
+            '`sources` array would credit ONS for data postcodes.io served',
+        )
+
+    def test_one_batch_workers_hit_does_not_credit_ons_in_another(self):
+        """Batch runs queries in a ThreadPoolExecutor sharing one container.
+
+        The original comment reasoned about the WRITE race under that pool and
+        called it "idempotent", which is true and beside the point: the defect
+        is one worker READING another's True.
+        """
+        import threading as _threading  # noqa: PLC0415
+
+        app.mark_local_postcode_served()
+        seen = {}
+
+        def worker():
+            seen['served'] = app.local_postcode_served()
+
+        thread = _threading.Thread(target=worker)
+        thread.start()
+        thread.join()
+
+        self.assertTrue(app.local_postcode_served(), 'this thread keeps its own')
+        self.assertFalse(
+            seen['served'],
+            'a sibling batch worker inherited another thread NSPL attribution',
+        )
 
     def test_every_city_has_its_own_provenance(self):
         """Adding a city without provenance must fail here, not in production.
@@ -1613,13 +1662,13 @@ class IndependentReviewRegressionTests(unittest.TestCase):
     """
 
     def setUp(self):
-        self._served = app._LOCAL_POSTCODE_SERVED
+        self._served = app.local_postcode_served()
         self._table = app.POSTCODE_TABLE
         self._raster = app.NOISE_RASTER_TABLE
         self._client = app._DDB_CLIENT
 
     def tearDown(self):
-        app._LOCAL_POSTCODE_SERVED = self._served
+        app._postcode_attribution.served = self._served
         app.POSTCODE_TABLE = self._table
         app.NOISE_RASTER_TABLE = self._raster
         app._DDB_CLIENT = self._client
@@ -1812,7 +1861,7 @@ class RasterQuarantineTests(unittest.TestCase):
 
         for served in (False, True):
             with self.subTest(served=served):
-                app._LOCAL_POSTCODE_SERVED = served
+                app._postcode_attribution.served = served
                 raw = app.handle_regions(event)['body']
                 credits_ons_in_sources = 'ONS' in app.build_sources()[2]
                 claims_nspl_in_regions = 'NSPL' in raw

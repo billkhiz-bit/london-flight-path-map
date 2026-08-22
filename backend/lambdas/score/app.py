@@ -1423,7 +1423,7 @@ CITIES = {
         # machine-readable provenance.
         'postcodeResolver': lambda: (
             'ONS NSPL local table, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Present in the dataset at PREVIOUS_VINTAGE, so ?compare=previous has a
@@ -1457,10 +1457,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: this city did not exist at PREVIOUS_VINTAGE and
@@ -1477,10 +1477,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1496,10 +1496,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1515,10 +1515,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1534,10 +1534,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1551,7 +1551,7 @@ CITIES = {
         'postcodeFormat': 'UK postcode (e.g. LE1 1AA)',
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1565,7 +1565,7 @@ CITIES = {
         'postcodeFormat': 'UK postcode (e.g. TS1 1AA)',
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
     },
@@ -1579,10 +1579,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1598,10 +1598,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted, so False: postdates PREVIOUS_VINTAGE, so ?compare=previous
@@ -1617,10 +1617,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
     },
@@ -1639,10 +1639,10 @@ CITIES = {
         # string here claimed the NSPL table even when it had not answered -
         # the "credit a source on configuration rather than on what answered"
         # defect CITY_PROVENANCE exists to prevent. The test that flips
-        # _LOCAL_POSTCODE_SERVED caught it on the first run.
+        # local_postcode_served() caught it on the first run.
         'postcodeResolver': lambda: (
             'ONS NSPL local table by LAD code, postcodes.io fallback'
-            if _LOCAL_POSTCODE_SERVED
+            if local_postcode_served()
             else 'postcodes.io'
         ),
         # Omitted deliberately, which means False: Greater Manchester did not
@@ -3446,11 +3446,37 @@ NOISE_RASTER_TABLE = os.environ.get('NOISE_RASTER_TABLE', '')
 # request exactly as it did before this table existed.
 POSTCODE_TABLE = os.environ.get('POSTCODE_TABLE', '')
 
-# Set the first time the local NSPL tier actually answers a lookup in this
-# container. Drives the `sources` attribution — see _postcode_source_line.
-# Plain module global, no lock: worst case under the batch worker pool is
-# two threads writing True concurrently, which is idempotent.
-_LOCAL_POSTCODE_SERVED = False
+# Whether the local NSPL tier answered THIS request. Drives the `sources`
+# attribution — see _postcode_source_line.
+#
+# PER REQUEST, NOT PER CONTAINER (audit finding I11, fixed 2026-08-22). This
+# was a plain module global, set True on the first NSPL hit and never reset.
+# Lambda reuses containers, so one local hit credited ONS NSPL on every later
+# response from that container — including the ones postcodes.io actually
+# answered. The old comment reasoned about the write race under the batch
+# worker pool ("idempotent") and not about the READ, which is where the defect
+# was: two threads writing True is harmless, one thread reading another's True
+# is a false provenance claim.
+#
+# threading.local() gives each batch worker its own value, and reset_postcode_
+# attribution() at the top of resolve_query() clears it per query, so a
+# reused container and a 100-query batch both attribute honestly. B2B
+# customers audit this array; crediting a body that did not answer is the
+# same class of error as the Home Office line dropped on 2026-08-03.
+_postcode_attribution = threading.local()
+
+
+def local_postcode_served():
+    """True if ONS NSPL served the postcode lookup for the current request."""
+    return getattr(_postcode_attribution, 'served', False)
+
+
+def mark_local_postcode_served():
+    _postcode_attribution.served = True
+
+
+def reset_postcode_attribution():
+    _postcode_attribution.served = False
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -4346,7 +4372,7 @@ CITY_PROVENANCE = {
             'EPC data: MHCLG, Open Government Licence v3.0',
             'Sold prices: HM Land Registry, Open Government Licence v3.0',
             # Index 2 by contract — two tests assert the postcode line's position.
-            lambda: _postcode_source_line(_LOCAL_POSTCODE_SERVED),
+            lambda: _postcode_source_line(local_postcode_served()),
             # The Home Office was dropped here on 2026-08-03. v3.5 moved the crime
             # rate to ONS Table C4, which left the Home Office credited in every
             # London response while answering for nothing — the same "crediting on
@@ -5265,8 +5291,7 @@ def _lookup_postcode_local(clean, include_terminated=False):
     # served a lookup in this container and may now be credited in the
     # `sources` array. Set only on this path — a miss, a terminated row or
     # any error leaves it alone, because none of those were answered locally.
-    global _LOCAL_POSTCODE_SERVED
-    _LOCAL_POSTCODE_SERVED = True
+    mark_local_postcode_served()
 
     return {
         # Canonical spaced form, derived rather than stored. The inward code
@@ -5774,6 +5799,9 @@ def derive_city(lad_code, admin_district):
 
 def resolve_query(query):
     """Run a single score query. Returns the response body or an error dict."""
+    # Per-request attribution starts clean. Without this a reused container
+    # carries the previous caller's NSPL hit into this response's `sources`.
+    reset_postcode_attribution()
     postcode = parse_str_param(query.get('postcode'))
     borough_input = parse_str_param(query.get('borough'))
     city = parse_str_param(query.get('city'), 'london').lower()
@@ -6058,6 +6086,26 @@ def handle_regions(event):
     )
 
 
+# Computed once per container. `handle_changes` never reads `event` and every
+# input is a module constant (CITIES, previous_dataset, PERSONAS['balanced'],
+# the vintage strings), so the body cannot vary between callers within a
+# deployment - only a redeploy changes it, and that replaces the container.
+#
+# Audit finding I2, fixed 2026-08-22: the route is UNAUTHENTICATED and was
+# recomputing 66 calc_score() calls, two benchmark passes, two growth-rank
+# passes and 33 attribution builds on every request, to return a 116 KB body
+# that is byte-identical every time. That is a cost amplifier anyone can pull.
+_CHANGES_BODY = None
+
+# One hour. The payload only changes on a vintage roll, which arrives with a
+# deploy, so a longer TTL would serve correctly for months - but this repo has
+# already served a user days-stale borough data through an over-eager cache,
+# and an hour bounds how long a rolled vintage can keep answering with the old
+# one at the edge.
+_CHANGES_MAX_AGE = 3600
+_CHANGES_HEADERS = {'Cache-Control': f'public, max-age={_CHANGES_MAX_AGE}'}
+
+
 def handle_changes(event):
     """GET /v1/changes — quarter-over-quarter movement for every London
     borough under balanced weights.
@@ -6077,6 +6125,14 @@ def handle_changes(event):
     Each borough carries an `attribution` breakdown and a derived
     `explanation`, so "why did this move?" is answerable from the response
     without a second call."""
+    global _CHANGES_BODY
+    if _CHANGES_BODY is not None:
+        return response(
+            200,
+            {**_CHANGES_BODY, 'generatedAt': datetime.now(UTC).isoformat()},
+            _CHANGES_HEADERS,
+        )
+
     bal = PERSONAS['balanced']
     prev_set = previous_dataset('london')
     cur_bm = benchmarks(CITIES['london']['boroughs'])
@@ -6130,9 +6186,7 @@ def handle_changes(event):
     moved = [c for c in changes if abs(c['scoreChange']) > 0.5]
     risers = [c for c in changes if c['scoreChange'] > 0]
     fallers = [c for c in changes if c['scoreChange'] < 0]
-    return response(
-        200,
-        {
+    _CHANGES_BODY = {
             'city': 'london',
             'persona': 'balanced',
             'currentVintage': SNAPSHOT_VINTAGE,
@@ -6165,12 +6219,20 @@ def handle_changes(event):
             'methodologyVersion': METHODOLOGY_VERSION,
             'methodologyUrl': METHODOLOGY_URL,
             'apiVersion': API_VERSION,
-            'generatedAt': datetime.now(UTC).isoformat(),
             # /v1/changes covers the London cohort only — previous_dataset() has
             # no vintage for any other city — so London's provenance is the
             # accurate claim here rather than a default that happens to fit.
             'sources': build_sources('london'),
-        },
+    }
+    # `generatedAt` is stamped per response, NOT cached with the body. Freezing
+    # it would have the payload claim it was generated at container start for
+    # the life of that container - a caller reading it as freshness would be
+    # misled by the very optimisation that made the response cheap. Everything
+    # above it is deterministic within a deployment; this line is not.
+    return response(
+        200,
+        {**_CHANGES_BODY, 'generatedAt': datetime.now(UTC).isoformat()},
+        _CHANGES_HEADERS,
     )
 
 
@@ -6599,12 +6661,14 @@ def cors_headers():
     }
 
 
-def response(status, body):
+def response(status, body, headers=None):
+    """JSON response. `headers` adds to (and may override) the defaults."""
     return {
         'statusCode': status,
         'headers': {
             'Content-Type': 'application/json',
             **cors_headers(),
+            **(headers or {}),
         },
         'body': json.dumps(body),
     }
