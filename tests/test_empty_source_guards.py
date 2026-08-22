@@ -26,7 +26,10 @@ Run: python -m pytest tests/test_empty_source_guards.py
 """
 from __future__ import annotations
 
+import argparse
+import contextlib
 import importlib.util
+import io
 import sys
 import unittest
 from pathlib import Path
@@ -166,6 +169,73 @@ class BlankFloodTileIsNotLowRisk(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(len(saved), 1, 'a tile carrying real risk must be cached')
 
+
+
+class CheckThatComparedNothingIsNotAPass(unittest.TestCase):
+    """Audit finding I5, fixed 2026-08-22 - the same defect one level up.
+
+    `build_aircraft_bands.py --check` is a BLOCKING preflight stage. A holder it
+    could not read was a bare `continue`, so renaming a marker in either file
+    made it print "0 disagreement(s)" and exit 0 having compared nothing - in
+    output byte-identical to a real pass. C10 and C11 above are an empty SOURCE
+    read as a measurement; this is an empty COMPARISON read as agreement.
+
+    The floor is per-unit rather than global on purpose. Renaming one city's
+    marker leaves 104 of 114 bands still being compared, so a global
+    `compared > 0` check would pass it; test_one_citys_marker_moving_is_caught
+    is the case that distinguishes the two designs.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mod = _load('build_aircraft_bands')
+
+    def _run(self, city, lam=None, site=None):
+        """Run the check for one city, optionally stubbing either reader."""
+        mod = self.mod
+        real_lam, real_site = mod.read_lambda, mod.read_site
+        if lam is not None:
+            mod.read_lambda = lam
+        if site is not None:
+            mod.read_site = site
+        try:
+            args = argparse.Namespace(city=city, write=False)
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = mod.check_or_write(args)
+            return rc, buf.getvalue()
+        finally:
+            mod.read_lambda, mod.read_site = real_lam, real_site
+
+    def test_healthy_tree_still_passes_and_says_what_it_compared(self):
+        rc, out = self._run('manchester')
+        self.assertEqual(rc, 0, out)
+        self.assertIn('Compared 20 band(s)', out)
+
+    def test_both_markers_missing_fails_instead_of_reporting_agreement(self):
+        rc, out = self._run('manchester', lam=lambda c: None, site=lambda c: None)
+        self.assertEqual(rc, 1, out)
+        self.assertIn('Compared 0 band(s)', out)
+        self.assertIn('FAIL: compared nothing', out)
+
+    def test_one_citys_marker_moving_is_caught(self):
+        """The case a global floor would miss: most bands still compare."""
+        rc, out = self._run('manchester', site=lambda c: None)
+        self.assertEqual(rc, 1, out)
+        self.assertIn('MISSING', out)
+
+    def test_a_backend_only_citys_absent_site_holder_is_not_a_failure(self):
+        """Cardiff has no site holder BY DESIGN, and must not read as a fault.
+
+        This is the half that makes the guard usable rather than merely strict.
+        The distinction is derived from data/borough-extra.json, not from a
+        second copy of BACKEND_ONLY_CITIES.
+        """
+        self.assertNotIn('cardiff', self.mod.site_cities())
+        rc, out = self._run('cardiff')
+        self.assertEqual(rc, 0, out)
+        self.assertIn('backend-only', out)
+        self.assertIn('Compared 4 band(s)', out)
 
 if __name__ == '__main__':
     unittest.main()

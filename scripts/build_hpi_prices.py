@@ -300,6 +300,18 @@ def check(city: str, hpi: dict[str, dict], vintage: str) -> int:
     """Compare the registry against HPI. Returns the number of disagreements."""
     lads = CITY_LADS[city]
     held = registry_boroughs(city)
+
+    # A FLOOR, not a courtesy. This is a blocking preflight stage, and until
+    # 2026-08-22 an empty block printed "0/0 agree" and returned 0 - the same
+    # output shape as a clean run over 33 boroughs. Renaming the marker
+    # registry_boroughs() reads is enough to produce it. Audit finding I5's
+    # class, in the gate that guards prices.
+    if not held:
+        print(f"\n{city}: FAIL - the registry holds NO boroughs to compare.")
+        print("  Comparing zero fields is not agreement. Check the marker "
+              "registry_boroughs() reads in the score Lambda.")
+        return 1
+
     price_bad, trend_bad, missing = [], [], []
 
     for name, bd in held.items():
@@ -485,8 +497,16 @@ def main() -> int:
         if city not in in_registry:
             print(f"{city} is not in the score Lambda yet - use --emit.", file=sys.stderr)
             return 2
+    if not cities:
+        print(
+            "FAIL: no cities to check. `sum(())` is 0, so this used to print "
+            "PASS having compared nothing at all.",
+            file=sys.stderr,
+        )
+        return 1
     bad = sum(check(city, hpi, args.vintage) for city in cities)
-    print(f"\nRESULT: {'PASS' if bad == 0 else f'FAIL ({bad} disagreements)'}")
+    print(f"\nChecked {len(cities)} city/cities against HPI {args.vintage}.")
+    print(f"RESULT: {'PASS' if bad == 0 else f'FAIL ({bad} disagreements)'}")
     return 0 if bad == 0 else 1
 
 

@@ -470,12 +470,44 @@ def derive(city):
     return rows, airport, scale, footprint
 
 
+SITE_REGISTRY = Path("data/borough-extra.json")
+
+
+def site_cities():
+    """Which cities the SITE holds data for, read from the file that decides it.
+
+    This is the same authority `tests/test_borough_data_parity.py` consults to
+    work out which cities are worth comparing, and it is READ rather than listed
+    on purpose. A second copy of BACKEND_ONLY_CITIES here would be correct the
+    day it was written and wrong the day a city is promoted out of it - the
+    drift that has already produced three live defects in this repo.
+    """
+    try:
+        return set(json.loads(SITE_REGISTRY.read_text(encoding="utf-8")))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(
+            f"cannot read {SITE_REGISTRY} ({exc}), so there is no way to tell a "
+            "backend-only city from a renamed marker. Refusing to report a pass."
+        ) from exc
+
+
 def check_or_write(args):
     """Compare or correct BOTH holders. A city on the site has two; a
     backend-only city has one. Either way they are done together or not at all -
-    a partial write is how the site and the API came to disagree before."""
+    a partial write is how the site and the API came to disagree before.
+
+    THE FLOOR BELOW IS THE POINT, not bookkeeping. Until 2026-08-22 a missing
+    holder was a bare `continue`, so renaming a marker upstream made this - a
+    BLOCKING preflight stage - print "0 disagreement(s)" and exit 0 having
+    compared nothing, in output byte-identical to a real pass. Proven by
+    stubbing both readers to None. An expected holder that is absent is now a
+    failure, and the number of bands actually compared is printed, so a vacuous
+    run can no longer be mistaken for a clean one.
+    """
     cities = [args.city] if args.city else sorted(AIRPORTS)
+    on_site = site_cities()
     bad = 0
+    compared = 0
     for city in cities:
         rows, _, _, _ = derive(city)
         want = {name: band for _, name, _, band, _, _, _ in rows}
@@ -485,8 +517,20 @@ def check_or_write(args):
         ):
             have = reader(city)
             if have is None:
+                # Absent. Legitimate ONLY for the site holder of a city the site
+                # does not carry; anything else means the marker moved.
+                if label == "site" and city not in on_site:
+                    print(f"  {city:14s} {label:7s} absent (backend-only, nothing to compare)")
+                    continue
+                bad += 1
+                print(
+                    f"  MISSING {city:14s} {label:7s} marker {marker!r} not found "
+                    f"in {path}. Either it was renamed, or the city left "
+                    f"{SITE_REGISTRY}. Failing to compare a holder is not a pass."
+                )
                 continue
             diff = {b: (have.get(b), want[b]) for b in want if have.get(b) != want[b]}
+            compared += len(want)
             if args.write:
                 n = _rewrite(path, marker, end, want)
                 print(f"  {city:14s} {label:7s} wrote {n} bands ({len(diff)} changed)")
@@ -496,7 +540,14 @@ def check_or_write(args):
                     print(f"  DIFF {city:14s} {label:7s} {b:26s} holds {h!s:15s} derives {w}")
     if args.write:
         return 0
-    print(f"\n{bad} disagreement(s) between the holders and the derivation.")
+    print(f"\nCompared {compared} band(s) across {len(cities)} city/cities.")
+    if not compared:
+        print(
+            "FAIL: compared nothing. Every holder was absent, so this run "
+            "proves no agreement whatsoever - it is not a pass."
+        )
+        return 1
+    print(f"{bad} disagreement(s) between the holders and the derivation.")
     return 1 if bad else 0
 
 

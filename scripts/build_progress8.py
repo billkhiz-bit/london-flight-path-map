@@ -162,13 +162,21 @@ def main() -> int:
     # --check: every city the Lambda holds that has p8 in its boroughs.
     app = _score_app()
     bad = 0
+    compared = 0
+    skipped = []
     for city in registry:
         if city not in app.CITIES:
+            skipped.append(f"{city} (not in the Lambda registry)")
             continue
         held = app.CITIES[city]["boroughs"]
         with_p8 = {n: bd["p8"] for n, bd in held.items() if bd.get("p8") is not None}
         if not with_p8:
+            # Legitimate for Cardiff - Progress 8 is an ENGLAND measure. But it
+            # is also what a renamed `p8` key looks like, so it is COUNTED and
+            # reported rather than silently skipped; see the floor below.
+            skipped.append(f"{city} (no borough carries p8)")
             continue
+        compared += len(with_p8)
         got, _missing = for_city(city, p8)
         diffs = [
             f"{n}: registry {v} vs DfE {got[n]}"
@@ -182,7 +190,20 @@ def main() -> int:
         for a in absent:
             print(f"    NOT PUBLISHED: {a}")
         bad += len(diffs)
-    print(f"\nRESULT: {'PASS' if bad == 0 else f'FAIL ({bad} differ)'}")
+
+    # THE FLOOR. `if not with_p8: continue` meant that renaming the `p8` key
+    # made every city skip and this print "RESULT: PASS" having compared
+    # nothing - output indistinguishable from a clean run. Audit finding I5's
+    # class. Cardiff legitimately has no p8, so the floor is on the TOTAL
+    # rather than per city, and the skips are named either way.
+    for line in skipped:
+        print(f"  skipped: {line}")
+    print(f"\nCompared {compared} Progress 8 value(s).")
+    if not compared:
+        print("FAIL: compared nothing. Every city was skipped, so this run "
+              "proves no agreement with DfE whatsoever - it is not a pass.")
+        return 1
+    print(f"RESULT: {'PASS' if bad == 0 else f'FAIL ({bad} differ)'}")
     return 0 if bad == 0 else 1
 
 
