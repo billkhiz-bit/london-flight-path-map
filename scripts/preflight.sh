@@ -345,7 +345,11 @@ else
   check "layers paint only real data"   node tests/layer-honesty.mjs
   # The blocking half of the responsive audit, against the working tree over the
   # server started above. See the long note on the advisory live run further up.
-  check "responsive, source (10 vp)"    node tests/responsive.mjs "http://127.0.0.1:$smoke_port/index.html"
+  # Covers EVERY public page since 2026-08-22, not just the homepage - widening
+  # it found privacy.html, changes.html and the status page all scrolling
+  # sideways on a phone. The label carries no count on purpose; the harness
+  # prints how many page/viewport pairs it actually ran.
+  check "responsive, source"            node tests/responsive.mjs "http://127.0.0.1:$smoke_port/index.html"
   # WCAG over the SOURCE tree, on its own server on 8923 with the CloudFront
   # extensionless rewrite reproduced, so /pricing resolves the way the origin
   # resolves it.
@@ -419,12 +423,12 @@ if [ "$SKIP_E2E" -eq 0 ]; then
   # if too few probes return.
   advise "site == /v1/score (6 postcodes)" node tests/site-api-parity.mjs
 
-  # The live half of the responsive audit. Reports what visitors actually get at
-  # ten viewports; the blocking half runs the same file against the working tree.
+  # The live half of the responsive audit. Reports what visitors actually get;
+  # the blocking half runs the same file against the working tree.
   # Advisory for the same reason as the drift check above: it is describing
   # production, not the commit in hand, so it stays red between fixing a layout
   # defect and deploying the fix.
-  advise "responsive, live (10 vp)"      node tests/responsive.mjs
+  advise "responsive, live"              node tests/responsive.mjs
 fi
 
 echo

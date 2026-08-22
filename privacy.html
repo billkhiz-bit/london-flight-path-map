@@ -106,6 +106,29 @@
       a {
         color: var(--orange-text);
       }
+      /* Audit finding I8, fixed 2026-08-22. The table below is a 4-column
+         subprocessor list that renders 449px wide at any viewport, so this
+         page scrolled SIDEWAYS on every phone in the breakpoint list - 149px
+         over at 320, still 55px over at 414. A legal notice that drifts
+         off-screen is the one page where that matters most.
+
+         The wrapper scrolls instead of the document. tabindex="0" and the
+         labelled role are load-bearing, not decoration: a scroll container
+         that only a mouse can reach fails WCAG 2.1.1, so fixing the layout
+         without them would trade one defect for another. */
+      .table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 14px;
+      }
+      .table-scroll:focus-visible {
+        outline: 2px solid var(--orange-text);
+        outline-offset: 2px;
+      }
+      .table-scroll table {
+        margin-bottom: 0;
+        min-width: 460px;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -262,105 +285,107 @@
       </ul>
 
       <h2>4. Subprocessors</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Subprocessor</th>
-            <th>Purpose</th>
-            <th>Data</th>
-            <th>Region</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Amazon Web Services (AWS)</td>
-            <td>Backend compute, API Gateway, DynamoDB</td>
-            <td>Lambda execution logs (30-day retention, see 2d)</td>
-            <td>eu-west-2 (London)</td>
-          </tr>
-          <tr>
-            <td>S3 + CloudFront</td>
-            <td>Static asset delivery</td>
-            <td>Standard CDN logs</td>
-            <td>Multi-region</td>
-          </tr>
-          <tr>
-            <td>api.postcodes.io</td>
-            <td>Postcode lookup from coordinates</td>
-            <td>Lat/lon (transient)</td>
-            <td>UK</td>
-          </tr>
-          <tr>
-            <td>GoatCounter</td>
-            <td>Anonymous analytics</td>
-            <td>Aggregate counts</td>
-            <!-- Was "EU (Berlin)" until 2026-08-04, while SUBPROCESSORS.md
-                 says "EU (Netherlands)" and names the operator as offshootbv,
-                 a Dutch BV. Two published documents disagreeing on a data
-                 location is worse than one imprecise one, and neither figure
-                 was verifiable from here, so both now state the claim that is
-                 certainly true. Confirm the hosting region with GoatCounter
-                 and then make both documents specific again. -->
-            <td>EU</td>
-          </tr>
-          <tr>
-            <td>Codemagic</td>
-            <td>Building iOS / Android binaries</td>
-            <td>Source code only - no user data</td>
-            <td>EU</td>
-          </tr>
-          <tr>
-            <td>Apple App Store / Google Play</td>
-            <td>App distribution + crash reports if you opt in</td>
-            <td>Standard store telemetry</td>
-            <td>Various</td>
-          </tr>
-          <!-- Rows below added 2026-08-04. This table listed six entries and
-               omitted every upstream data API the score Lambdas call, plus the
-               third parties this page's own CSP allows the browser to contact.
-               SUBPROCESSORS.md had the same gap and was corrected in the same
-               change; the two are meant to agree, and a reader who follows the
-               link at the bottom of this table would have found two different
-               lists. Derived from the Lambda call sites and the page CSP, each
-               verified as genuinely used rather than merely allow-listed. -->
-          <tr>
-            <td>Transport for London</td>
-            <td>Nearest stations and line status</td>
-            <td>Lat/lon (transient)</td>
-            <td>UK</td>
-          </tr>
-          <tr>
-            <td>MHCLG (EPC register)</td>
-            <td>Energy certificates for the property panel</td>
-            <td>Postcode (transient)</td>
-            <td>UK</td>
-          </tr>
-          <tr>
-            <td>HM Land Registry</td>
-            <td>Sold price history</td>
-            <td>Postcode (transient)</td>
-            <td>UK</td>
-          </tr>
-          <tr>
-            <td>OpenStreetMap Overpass (FOSSGIS e.V.)</td>
-            <td>Nearby healthcare facilities</td>
-            <td>Lat/lon (transient)</td>
-            <td><strong>Germany</strong></td>
-          </tr>
-          <tr>
-            <td>GitHub (raw.githubusercontent.com)</td>
-            <td>Fallback map boundary files only</td>
-            <td>Your IP address</td>
-            <td>US</td>
-          </tr>
-          <tr>
-            <td>FEMA, US EPA, US DOT</td>
-            <td>Flood, air quality and noise map layers, New York view only</td>
-            <td>Your IP address and the map area you are viewing</td>
-            <td>US</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-scroll" role="region" aria-label="Subprocessors" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th>Subprocessor</th>
+              <th>Purpose</th>
+              <th>Data</th>
+              <th>Region</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Amazon Web Services (AWS)</td>
+              <td>Backend compute, API Gateway, DynamoDB</td>
+              <td>Lambda execution logs (30-day retention, see 2d)</td>
+              <td>eu-west-2 (London)</td>
+            </tr>
+            <tr>
+              <td>S3 + CloudFront</td>
+              <td>Static asset delivery</td>
+              <td>Standard CDN logs</td>
+              <td>Multi-region</td>
+            </tr>
+            <tr>
+              <td>api.postcodes.io</td>
+              <td>Postcode lookup from coordinates</td>
+              <td>Lat/lon (transient)</td>
+              <td>UK</td>
+            </tr>
+            <tr>
+              <td>GoatCounter</td>
+              <td>Anonymous analytics</td>
+              <td>Aggregate counts</td>
+              <!-- Was "EU (Berlin)" until 2026-08-04, while SUBPROCESSORS.md
+                   says "EU (Netherlands)" and names the operator as offshootbv,
+                   a Dutch BV. Two published documents disagreeing on a data
+                   location is worse than one imprecise one, and neither figure
+                   was verifiable from here, so both now state the claim that is
+                   certainly true. Confirm the hosting region with GoatCounter
+                   and then make both documents specific again. -->
+              <td>EU</td>
+            </tr>
+            <tr>
+              <td>Codemagic</td>
+              <td>Building iOS / Android binaries</td>
+              <td>Source code only - no user data</td>
+              <td>EU</td>
+            </tr>
+            <tr>
+              <td>Apple App Store / Google Play</td>
+              <td>App distribution + crash reports if you opt in</td>
+              <td>Standard store telemetry</td>
+              <td>Various</td>
+            </tr>
+            <!-- Rows below added 2026-08-04. This table listed six entries and
+                 omitted every upstream data API the score Lambdas call, plus the
+                 third parties this page's own CSP allows the browser to contact.
+                 SUBPROCESSORS.md had the same gap and was corrected in the same
+                 change; the two are meant to agree, and a reader who follows the
+                 link at the bottom of this table would have found two different
+                 lists. Derived from the Lambda call sites and the page CSP, each
+                 verified as genuinely used rather than merely allow-listed. -->
+            <tr>
+              <td>Transport for London</td>
+              <td>Nearest stations and line status</td>
+              <td>Lat/lon (transient)</td>
+              <td>UK</td>
+            </tr>
+            <tr>
+              <td>MHCLG (EPC register)</td>
+              <td>Energy certificates for the property panel</td>
+              <td>Postcode (transient)</td>
+              <td>UK</td>
+            </tr>
+            <tr>
+              <td>HM Land Registry</td>
+              <td>Sold price history</td>
+              <td>Postcode (transient)</td>
+              <td>UK</td>
+            </tr>
+            <tr>
+              <td>OpenStreetMap Overpass (FOSSGIS e.V.)</td>
+              <td>Nearby healthcare facilities</td>
+              <td>Lat/lon (transient)</td>
+              <td><strong>Germany</strong></td>
+            </tr>
+            <tr>
+              <td>GitHub (raw.githubusercontent.com)</td>
+              <td>Fallback map boundary files only</td>
+              <td>Your IP address</td>
+              <td>US</td>
+            </tr>
+            <tr>
+              <td>FEMA, US EPA, US DOT</td>
+              <td>Flood, air quality and noise map layers, New York view only</td>
+              <td>Your IP address and the map area you are viewing</td>
+              <td>US</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <p>
         Everything in the "transient" rows above is passed straight through to answer your search and is never
         stored by Sky Score. The rows marked US or Germany are the ones worth noting if you need UK-only
@@ -378,8 +403,14 @@
       <p>
         Sky Score's <em>content</em> (the underlying scores) is computed from public datasets. Most are under the
         <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>:
-        DEFRA Strategic Noise Maps, HM Land Registry House Price Index, the EPC certificate register, ONS National Statistics
-        Postcode Lookup, ONS <em>Crime in England and Wales</em>, and DfE Key Stage 4 Progress 8.
+        DEFRA Strategic Noise Maps (aircraft and road), DEFRA background air quality maps, HM Land Registry House Price
+        Index and Price Paid Data, the EPC certificate register, ONS National Statistics Postcode Lookup, ONS
+        <em>Crime in England and Wales</em>, DfE Key Stage 4 Progress 8, DfT NaPTAN (public transport access nodes),
+        the NHS Organisation Data Service, and Environment Agency Risk of Flooding from Rivers and Sea.
+        <!-- The last five were added 2026-08-22. NaPTAN has been 0.25 of the liveability score since methodology v3.6
+             and NHS ODS since v3.7, both of which the API already credits per component in `sourceBreakdown`; DEFRA
+             background maps and EA RoFRS drive the air quality and flood map layers. This paragraph had not been
+             revisited since those landed, so the page understated what the product is built from. -->
         <strong>Two are not, and this page previously said otherwise (corrected 2026-08-03):</strong>
         nearby-facility data comes from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> under the
         <a href="https://opendatacommons.org/licenses/odbl/">Open Database Licence 1.0</a>, which is share-alike rather than

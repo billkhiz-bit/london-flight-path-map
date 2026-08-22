@@ -241,6 +241,72 @@ for (const viewport of VIEWPORTS) {
     failed++;
   }
 
+  // THE COLLAPSED LEGEND, which axe had never been able to see.
+  //
+  // Audit finding I7. The comment by VIEWPORTS above already described this
+  // defect - and the mobile viewport it added still could not catch it,
+  // because on a phone the legend ships `aria-expanded="false"` and
+  // `.legend-toggle[aria-expanded='false'] ~ *` hides every row. axe does not
+  // evaluate hidden elements, so the scan came back clean over markup no
+  // check had ever looked at.
+  //
+  // Measured the day this was added: three group headings rendered
+  // var(--dark) #141414 on the near-black pill at 1.00:1 - the SAME COLOUR as
+  // their background, invisible on every phone since the layer legends
+  // shipped. Adding a viewport is not the same as reaching the state.
+  //
+  // The layer groups are display:none until their layer paints, so they are
+  // revealed here too; a legend section only reachable with live data is
+  // still a legend section a user reads.
+  try {
+    await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#app', { state: 'visible', timeout: 30000 });
+    const opened = await page.evaluate(() => {
+      const toggle = document.getElementById('legend-toggle');
+      if (toggle && toggle.getAttribute('aria-expanded') === 'false') toggle.click();
+      let shown = 0;
+      for (const id of ['legend-road-group', 'legend-flood-group', 'legend-aq-group']) {
+        const group = document.getElementById(id);
+        if (group) {
+          group.style.display = 'block';
+          shown++;
+        }
+      }
+      const title = document.getElementById('legend-noise-title');
+      // Report what the harness actually REACHED. A scan of a legend that
+      // never opened must not be able to pass as a scan of an open one -
+      // that is precisely the failure being fixed here.
+      return { shown, titleVisible: !!(title && title.offsetParent !== null) };
+    });
+    await page.waitForTimeout(300);
+    if (!opened.titleVisible || opened.shown < 3) {
+      console.log(
+        `${'/ (legend expanded)'.padEnd(28)} FAIL could not reach the legend ` +
+          `(groups shown ${opened.shown}/3, heading visible ${opened.titleVisible})`
+      );
+      failed++;
+    } else {
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze();
+      const v = failing(results);
+      if (v.length) failed++;
+      console.log(
+        `${'/ (legend expanded)'.padEnd(28)} ${v.length ? 'FAIL' : 'OK  '} all four layer legends` +
+          (v.length ? ` — ${v.length} blocking` : '')
+      );
+      for (const item of v) {
+        console.log(`    [${item.impact.toUpperCase()}] ${item.id}: ${item.help}`);
+        for (const node of item.nodes.slice(0, 3)) {
+          console.log(`      - ${node.target.join(' > ')}`);
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`${'/ (legend expanded)'.padEnd(28)} ERROR ${e.message.split('\n')[0]}`);
+    failed++;
+  }
+
   await context.close();
 }
 
@@ -248,6 +314,6 @@ await browser.close();
 server.close();
 console.log(
   `\nRESULT: ${failed === 0 ? 'PASS' : 'FAIL'} ` +
-    `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection state)`
+    `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection and expanded-legend states)`
 );
 process.exit(failed === 0 ? 0 : 1);

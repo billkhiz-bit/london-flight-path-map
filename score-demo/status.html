@@ -101,16 +101,26 @@
     border-radius: 12px;
     padding: 8px;
   }
+  /* Audit finding I8, fixed 2026-08-22. `flex: 1` sets `min-width: auto` on
+     the item, so .name could not shrink below its content and pushed the
+     status badge 30px past a 320px viewport. flex-wrap lets the badge drop to
+     its own line instead, and min-width: 0 lets the name and url shrink. Found
+     by the responsive audit the same day it was widened past the homepage -
+     this page had never been measured at any width. */
   .row {
     padding: 14px 16px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
   }
   .row:last-child { border-bottom: 0; }
-  .row .name { flex: 1; font-weight: 500; }
-  .row .url { font-family: 'Geist Mono', monospace; color: var(--muted); font-size: 12px; }
+  .row .name { flex: 1 1 auto; min-width: 0; font-weight: 500; }
+  .row .url {
+    font-family: 'Geist Mono', monospace; color: var(--muted); font-size: 12px;
+    min-width: 0; overflow-wrap: anywhere;
+  }
   .row .status {
     font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
     padding: 4px 10px; border-radius: 999px;

@@ -15,7 +15,52 @@
 
 import { chromium } from '@playwright/test';
 
-const TARGET = process.argv[2] || 'https://d1oe4ftwutjpf.cloudfront.net/';
+const RAW_TARGET = process.argv[2] || 'https://d1oe4ftwutjpf.cloudfront.net/';
+
+// EVERY PUBLIC PAGE, not just the homepage (2026-08-22, audit finding I8).
+//
+// This file audited ONE url for its whole life. The homepage is the hardest
+// page to get right and the obvious thing to check, so the gap never showed -
+// but it meant the legal and funnel pages had never been measured at any
+// width. BOTH pages carrying a <table> were broken when this was widened:
+// privacy.html overflowed 149px at 320, and changes.html scrolled the WINDOW
+// 402px sideways at five viewports. A legal notice that drifts off-screen is
+// the worst page to have left unchecked.
+//
+// The base may be CloudFront (which rewrites `/privacy` to `privacy/index.html`)
+// or a plain local file server (where only `privacy.html` exists), so each path
+// is RESOLVED against the target rather than assumed. A page that resolves to
+// neither form is a FAILURE, not a skip - a silently dropped page is how this
+// check came to cover one url in the first place.
+const BASE = RAW_TARGET.replace(/\/(index\.html)?$/, '');
+
+const PAGES = [
+  { name: 'consumer app', slug: 'index', full: true, settle: 2500 },
+  { name: 'pricing', slug: 'pricing' },
+  { name: 'privacy', slug: 'privacy' },
+  { name: 'terms of use', slug: 'terms' },
+  { name: 'what changed', slug: 'changes', settle: 2500 },
+  { name: 'API landing', slug: 'api/index' },
+  { name: 'score demo', slug: 'score-demo/index' },
+  { name: 'status page', slug: 'score-demo/status' },
+];
+
+async function resolvePage(slug) {
+  const bare = slug.replace(/\/?index$/, '');
+  const candidates = slug.endsWith('index')
+    ? [`${bare}/`, `${bare}/index.html`]
+    : [`/${slug}`, `/${slug}.html`];
+  for (const c of candidates) {
+    const url = BASE + (c.startsWith('/') ? c : `/${c}`);
+    try {
+      const res = await fetch(url, { redirect: 'follow' });
+      if (res.ok) return url;
+    } catch {
+      /* try the next form */
+    }
+  }
+  return null;
+}
 
 // Breakpoints chosen from what the codebase already commits to: index.html
 // switches to the desktop two-column grid at 901px, and the prototype declares
@@ -33,24 +78,37 @@ const VIEWPORTS = [
   { w: 1920, h: 1080, name: 'desktop' },
 ];
 
+// The homepage gets all ten. The static pages get the narrow end only: they
+// carry no responsive JavaScript, overflow is a pure CSS question, and the
+// phone widths are where it bites. Eight more pages x ten viewports would
+// roughly quadruple a blocking stage to re-measure widths that cannot differ.
+const NARROW = VIEWPORTS.filter((v) => v.w <= 480);
+
 const results = [];
 
 const browser = await chromium.launch();
 
-for (const vp of VIEWPORTS) {
+const unresolved = [];
+for (const meta of PAGES) {
+  const url = await resolvePage(meta.slug);
+  if (!url) {
+    unresolved.push(meta);
+    continue;
+  }
+  for (const vp of meta.full ? VIEWPORTS : NARROW) {
   const page = await browser.newPage({ viewport: { width: vp.w, height: vp.h } });
   const consoleErrors = [];
   page.on('pageerror', (e) => consoleErrors.push(e.message));
 
   try {
-    await page.goto(TARGET, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
   } catch {
     // networkidle can never settle on a page with polling or long-lived
     // connections. Fall back rather than reporting a layout failure for what is
     // really a loading-strategy mismatch.
-    await page.goto(TARGET, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   }
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(meta.settle ?? 600);
 
   const audit = await page.evaluate(() => {
     const doc = document.documentElement;
@@ -167,16 +225,28 @@ for (const vp of VIEWPORTS) {
     };
   });
 
-  results.push({ vp, audit, consoleErrors });
+  results.push({ meta, vp, audit, consoleErrors });
   await page.close();
+  }
 }
 
 await browser.close();
 
-console.log(`\nResponsive audit: ${TARGET}\n`);
+console.log(`\nResponsive audit: ${BASE || RAW_TARGET}\n`);
 
 let failures = 0;
-for (const { vp, audit, consoleErrors } of results) {
+// A page whose url resolved to nothing is a hard failure. Skipping it would
+// quietly recreate the single-page coverage this widening removed.
+for (const meta of unresolved) {
+  console.log(`UNRESOLVED    ${meta.name} (${meta.slug}) - no url served at either form`);
+  failures += 1;
+}
+let lastPage = null;
+for (const { meta, vp, audit, consoleErrors } of results) {
+  if (meta.name !== lastPage) {
+    console.log(`${lastPage ? '\n' : ''}# ${meta.name}`);
+    lastPage = meta.name;
+  }
   const overflow = audit.overflowBy > 1;
   const stranded = audit.unreachableCount > 0;
   const flag = overflow ? 'OVERFLOW' : stranded ? 'STRANDED' : 'ok      ';
@@ -215,7 +285,9 @@ for (const { vp, audit, consoleErrors } of results) {
 
 console.log(
   failures === 0
-    ? `\nNo horizontal overflow and no stranded controls at any of ${VIEWPORTS.length} viewports.`
-    : `\n${failures} of ${VIEWPORTS.length} viewports overflow horizontally or strand a control.`
+    ? `\nNo horizontal overflow and no stranded controls: ${results.length} page/viewport ` +
+      `combinations across ${PAGES.length} pages.`
+    : `\n${failures} of ${results.length} page/viewport combinations overflow horizontally, ` +
+      `strand a control, or could not be reached.`
 );
 process.exit(failures === 0 ? 0 : 1);

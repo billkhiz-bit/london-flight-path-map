@@ -465,8 +465,15 @@
         opacity: 0.5;
       }
       /* Highlight the For Developers link a touch so it's discoverable */
+      /* --orange-text, not --orange. Measured 2.60:1 as text on the light
+         footer, against WCAG AA's 4.5:1. The text-safe token has existed since
+         2026-08-12 for exactly this and its comment says "the next use
+         inherits the fix instead of repeating the defect" - this pair was
+         written before that and never revisited. Found by the expanded-legend
+         a11y scan added 2026-08-22, which was the first check ever to reach
+         the mobile sheet footer. */
       .site-footer .for-devs {
-        color: var(--orange);
+        color: var(--orange-text);
       }
       .site-footer .for-devs:hover {
         color: var(--dark);
@@ -506,7 +513,7 @@
           color: var(--dark);
         }
         .sheet-footer .for-devs {
-          color: var(--orange);
+          color: var(--orange-text);
         }
         .sheet-footer .sep {
           color: rgba(99, 99, 99, 0.5);
@@ -516,6 +523,21 @@
         }
       }
 
+      /* Audit finding I7, fixed 2026-08-22. These four headings and the
+         explainer carried their colour in an INLINE style attribute, which
+         beats any stylesheet rule including the @media override written
+         specifically to fix them. On the mobile legend pill - which paints
+         rgba(20,20,20,0.92) - three of them rendered var(--dark) #141414 on
+         near-black at 1.19:1, i.e. invisible, on every phone for as long as
+         the layer legends have existed.
+
+         The colour lives here so the override can win. Do not put it back in a
+         style attribute: specificity is not the problem, the cascade position
+         is. */
+      .map-legend .legend-group-title,
+      .map-legend .legend-note {
+        color: var(--dark);
+      }
       .map-legend {
         position: absolute;
         bottom: 24px;
@@ -2398,9 +2420,16 @@
           color: var(--white);
         }
         .map-legend .legend-row span,
+        .map-legend .legend-group-title,
+        .map-legend .legend-note,
         .map-legend #legend-aircraft-group div,
         .map-legend #legend-road-group div,
-        .map-legend #legend-flood-group div {
+        .map-legend #legend-flood-group div,
+        /* #legend-aq-group was absent from this list entirely, so the air
+           quality heading stayed dark even once the inline style was gone.
+           The two class selectors above are the durable half - an ID list has
+           to be remembered every time a layer is added, and was not. */
+        .map-legend #legend-aq-group div {
           color: var(--white);
         }
         .legend-toggle {
@@ -3149,7 +3178,8 @@
           </div>
           <div id="legend-aircraft-group">
             <div
-              style="margin: 6px 0 4px; font-size: 8px; color: var(--mid); letter-spacing: 1px"
+              class="legend-group-title"
+              style="margin: 6px 0 4px; font-size: 8px; letter-spacing: 1px"
               id="legend-noise-title"
             >
               DEFRA AIRCRAFT NOISE (dB Lden)
@@ -3191,7 +3221,8 @@
                  The markup below is London's copy and is the initial state. -->
             <div
               id="legend-noise-explainer"
-              style="font-size: 8px; color: var(--mid); margin: 4px 0 0; line-height: 1.4"
+              class="legend-note"
+              style="font-size: 8px; margin: 4px 0 0; line-height: 1.4"
             >
               <strong>What this is:</strong>
               DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR,
@@ -3209,7 +3240,8 @@
                  the legend reads as authoritatively as the aircraft section
                  above (which already says "DEFRA AIRCRAFT NOISE (dB Lden)"). -->
             <div
-              style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600"
+              class="legend-group-title"
+              style="margin: 8px 0 4px; font-size: 10px; letter-spacing: 1px; font-weight: 600"
               id="legend-road-title"
             >
               DEFRA ROAD NOISE
@@ -3229,7 +3261,8 @@
           </div>
           <div id="legend-flood-group" style="display: none">
             <div
-              style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600"
+              class="legend-group-title"
+              style="margin: 8px 0 4px; font-size: 10px; letter-spacing: 1px; font-weight: 600"
               id="legend-flood-title"
             >
               EA FLOOD RISK
@@ -3249,7 +3282,8 @@
           </div>
           <div id="legend-aq-group" style="display: none">
             <div
-              style="margin: 8px 0 4px; font-size: 10px; color: var(--dark); letter-spacing: 1px; font-weight: 600"
+              class="legend-group-title"
+              style="margin: 8px 0 4px; font-size: 10px; letter-spacing: 1px; font-weight: 600"
               id="legend-aq-title"
             >
               BOROUGH AIR QUALITY
@@ -11197,7 +11231,16 @@
         const priceLed = priceDominance !== null && priceDominance >= 0.6;
 
         const areaLabel = rankingView === 'neighbourhood' ? 'Neighbourhood' : 'Borough';
+        // The price column is a MEDIAN in the neighbourhood view and a genuine
+        // average in the borough view, and one header served both. Neighbourhood
+        // figures come from HM Land Registry Price Paid via
+        // build_city_neighbourhoods.py, which reports a median and drops any
+        // district under 30 sales; borough figures come from UK HPI, which
+        // publishes an average. Labelling a median "Avg Price" is the same class
+        // of error as WA8 publishing a Knowsley median under the name "Widnes" -
+        // the number is right and the word above it is not.
         const toggleLabel = rankingView === 'neighbourhood' ? 'Show boroughs only' : 'Show neighbourhoods';
+        const priceLabel = rankingView === 'neighbourhood' ? 'Median Price' : 'Avg Price';
         // Provenance for the neighbourhood view, from the registry so each city
         // states what its own figures are. escapeHtml because these are plain
         // text, not markup: renderGroup once double-encoded a pre-escaped
@@ -11224,7 +11267,7 @@
           '<table class="rank-table"><thead><tr>' +
           '<th>#</th><th>' +
           areaLabel +
-          '</th><th class="col-noise">Noise</th><th class="col-price">Avg Price</th><th class="col-score">Score</th>' +
+          '</th><th class="col-noise">Noise</th><th class="col-price">' + priceLabel + '</th><th class="col-score">Score</th>' +
           '</tr></thead><tbody>' +
           tableRows +
           '</tbody></table>';

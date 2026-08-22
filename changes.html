@@ -65,7 +65,22 @@
     background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--amber);
     border-radius: 8px; padding: 14px 18px; font-size: 14px; color: var(--muted); margin: 20px 0;
   }
-  .table-wrap { overflow-x: auto; margin: 10px 0 30px; border: 1px solid var(--border); border-radius: 12px; }
+  /* Audit finding I8, fixed 2026-08-22. `overflow-x: auto` alone did NOT
+     contain this table: measured at 320px the wrapper was a correct 272px box
+     with scrollWidth 722, every over-wide element had a clipping ancestor, and
+     the WINDOW still scrolled 402px sideways. The cause is the `position:
+     sticky` on `th` below - a stuck element is not clipped by its scroll
+     container when the document's scrollable overflow region is computed, so
+     the 722px header escaped into the page.
+     `contain: paint` makes the wrapper a containing block that clips its
+     descendants, which is what a scroll container should already have been
+     doing. It was the only one of five candidate fixes that worked (tested:
+     overflow-x hidden, overflow auto, table min-width 0, max-width 100%), and
+     it keeps the sticky header rather than trading the feature for the fix. */
+  .table-wrap {
+    overflow-x: auto; margin: 10px 0 30px; border: 1px solid var(--border);
+    border-radius: 12px; contain: paint;
+  }
   table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
   th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
   th {
@@ -204,7 +219,8 @@
   </section>
   <div class="note" id="method-note" hidden></div>
   <p class="status" id="status" role="status">Loading the latest movement data…</p>
-  <div class="table-wrap" id="table-wrap" hidden>
+  <div class="table-wrap" id="table-wrap" role="region"
+       aria-label="Borough score movements" tabindex="0" hidden>
     <table aria-describedby="vintage-line">
       <thead>
         <tr>
