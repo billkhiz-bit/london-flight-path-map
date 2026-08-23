@@ -1,5 +1,87 @@
 # Changelog
 
+## 2026-08-23 (later) — the map is the landing surface on phones again
+
+**The bottom sheet auto-opened over the map below 640px, and that was the tail
+of a half-finished fix.** Apple rejected build 19 under Guideline 4.0 on
+2026-05-18 because auto-opening **hid the map** on an iPad Air; the same-day fix
+moved the threshold from `<=900` to `<=640`, which gave iPad portrait its map
+back and left phones with exactly the behaviour the reviewer had objected to.
+**The line was drawn where the rejection stopped, not where the reasoning did** -
+Apple only tested an iPad, and the surviving phone behaviour was then recorded in
+`CLAUDE.md` as *"deliberate ... carries an Apple Guideline 4.0 rejection scar"*,
+which reads as though Apple had required it.
+
+| Viewport | map at boot, before | after |
+|---|---|---|
+| 320x568 | **12%** | **61%** |
+| 375x667 | 12% | 67% |
+| 390x844 | 12% | 74% |
+| 414x896 | 12% | 75% |
+| 700x900 | 71% (already peek) | 71% |
+
+Nothing is lost by peeking: the peek height is 220px **precisely so the search
+box is reachable without tapping the handle**, and `revealSheetIfMobile()` still
+auto-opens when a result lands. The discoverability argument that chose
+auto-open is about a RESULT being missed, and at boot there is no result. Native
+is unaffected - `.is-native .app > .sidebar` sets `transform: none !important`.
+
+**Three collisions were invisible until the map became the landing surface.**
+All measured with `elementFromPoint`, not eyeballed:
+
+- **`.first-hint` covered the title, the country tabs and the top zoom button**
+  at every phone size. It sat at `top: 24px` while the band y 8-148 is entirely
+  chrome. Moved below it.
+- **`.site-footer`, `.map-legend` and `.layer-toggles` are all bottom-anchored
+  in `#map-container` at `z-index: 10`**, and the footer stands 34-72px tall
+  depending on how its links wrap - so it had *always* run through the other
+  two. At 901x800 it drew "AREAS PRIVACY" across the LABELS toggle, which was
+  genuinely unclickable, and "FOR DEVELOPERS" across the legend's "75+ dB".
+  `--footer-inset` is **measured**, because a constant is right at one width and
+  wrong at every other. The 901-1366 band needed it too - and that block's own
+  comment claimed the footer inset existed *"to clear the layer-toggle band"*.
+- **The legend's cap has to clear the NAVIGATION, not just the viewport.**
+  `100dvh - 248px` fitted the screen and still grew up through the country tabs
+  and the first two city chips.
+
+**The audit that should have caught all of it only ever asked about POSITION** -
+is the page wider than the viewport, and is a control past the horizontal edge
+with nothing to scroll it back. Three detectors added, **each of which found a
+live defect on its first run**:
+
+1. **COVERED** - `elementFromPoint` at a control's centre, the question a finger
+   asks. Found the hint and the footer collisions.
+2. **CLIPPED ABOVE** - the vertical twin of stranded. A 711px legend rendering
+   from y=-374 was neither overflow nor past the horizontal edge.
+3. **A legend-open page state** - every entry was judged in its LANDING state,
+   and on a phone the legend ships collapsed, so detector 2 could not see the
+   defect it was written for. **Proven: removing the legend cap left the audit
+   reporting all 45 combinations clean.** Adding it took the run to 55
+   combinations and immediately found the nav collision above.
+
+Two exemptions are **tested rather than named**: a control parked outside its
+own scroller is a scroll case (the city chips, whose strip fixed the 2026-08-11
+untappable-chip defect and must not now be failed for it), and an element that
+returns into view when focused is the skip-link pattern. The second needs the
+transition suppressed - `.skip-link` animates `top` over 0.15s, so a rect read
+straight after `focus()` reports the position it is *leaving*, which is how that
+exemption failed on its first run and flagged the skip link at all ten viewports.
+
+**`city-switch.mjs` runs at two viewports now, phone first.** It had run at
+1440x900 only since the day it was written to catch six cities that threw on
+selection - so it had never switched a city on a phone, where the scroll strip,
+the sheet, the toggle popover and the collapsed legend are all driven by
+JavaScript that does not run above 900px. 11 cities x 2 viewports = 22 switches.
+
+**A first reading was wrong and is recorded because it nearly shipped.** A hit
+test reported every map control unclickable at every phone viewport. It was the
+harness: it never dismissed the first-run hint or collapsed the sheet, which is
+what a person does. Doing both, city switching worked throughout. The screenshot
+disagreed with the measurement, and the disagreement was the signal.
+
+**Deployed and verified from the origin**: sha256 match, drift 0 of 16, and the
+responsive audit against **live CloudFront** reports 55 of 55 clean.
+
 ## 2026-08-23 — the legend stops describing bands that are not on the map
 
 Three leftovers from the 21 Aug audit, closed and deployed. **Two of the three

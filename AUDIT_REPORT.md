@@ -491,12 +491,19 @@ authority, not the prose.
    `city-switch.mjs` and `uk-city-panel.mjs` run at **1440x900 only**, so
    nothing in the suite had ever opened the legend, or clicked a chip, on a
    phone. The legend is fixed; **the gate gap is not** - see item 5.
-5. **No gate watches for a control clipped above the viewport, or occluded by
-   another element.** Both are invisible to every check here: overflow is
-   horizontal-only, and `elementFromPoint` is used nowhere. A phone-viewport
-   pass in `city-switch.mjs` plus a top-clipping assertion in `responsive.mjs`
-   would cover it. Raised 2026-08-23 and deliberately left open rather than
-   half-built.
+5. ~~**No gate watches for a control clipped above the viewport, or occluded
+   by another element.**~~ **CLOSED 2026-08-23**, and closing it found four live
+   defects. `responsive.mjs` gained COVERED (`elementFromPoint` at a control's
+   centre), CLIPPED ABOVE (the vertical twin of stranded) and a **legend-open
+   page state** - the third was necessary because the first two judge the
+   LANDING state, and on a phone the legend ships collapsed, so the clipped
+   detector could not see the defect it was written for. `city-switch.mjs` now
+   runs at 390x844 as well as 1440x900. Found and fixed: the first-run hint over
+   the title/tabs/zoom, the site footer over the LABELS toggle and the legend at
+   desktop widths, and a legend cap that fitted the viewport but not the
+   navigation. All three detectors proven red. **Two exemptions are tested, not
+   name-matched** - a control parked outside its own scroller, and an element
+   that returns into view when focused.
 6. **A gate that races an async render can pass by never reaching the state.**
    `a11y-source.mjs` scanned `score-demo/api-docs.html` before its Swagger spec
    fetch resolved, so it audited a near-empty page and reported OK; the one run

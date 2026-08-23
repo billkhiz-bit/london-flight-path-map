@@ -162,7 +162,18 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ## 4a. Deploy state
 
-**DEPLOYED 2026-08-23, TWICE.** Second deploy carried the mobile legend
+**DEPLOYED 2026-08-23, THREE TIMES.** The third carried the mobile sheet
+change and the collision fixes (`index.html`); invalidation
+`I4E0T15AM59EV7HSXCBHV7OK15` waited to completion, sha256 matches, drift 0 of 16,
+and **`tests/responsive.mjs` against LIVE reports 55 of 55 clean** - it had gone
+red against live with 10 failures the moment the new detectors landed, which was
+the deployed page being measured honestly for the first time.
+
+**Phones now land on the map**: 12% of the viewport was map at boot at 320, 375,
+390 and 414; it is 61-75% now. The sheet boots at peek, as iPad portrait has
+since the Apple fix in May.
+
+**DEPLOYED 2026-08-23, EARLIER TWICE.** Second deploy carried the mobile legend
 disclosure (`index.html`) and the Swagger `select-name` fix
 (`score-demo/api-docs.html`); invalidation `I62G6RVYSZ7ZWSNL6EDFZIL8T6` waited to
 completion, sha256 matches on both, `check_deploy_drift.sh` reports **all 16
