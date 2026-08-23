@@ -90,17 +90,42 @@ const server = createServer(async (req, res) => {
 if (!TARGET) await new Promise((r) => server.listen(PORT, r));
 const url = TARGET || `http://localhost:${PORT}/index.html`;
 
+// TWO VIEWPORTS, added 2026-08-23. This file ran at 1440x900 only, so from
+// the day it was written - to catch six cities that threw on selection - it had
+// never switched a city on a phone. The mobile layout is not a narrower copy of
+// the desktop one: it has a scroll strip, a bottom sheet, a popover for the
+// layer toggles and a collapsed legend, all driven by JavaScript that does not
+// run above 900px. A throw in any of that is invisible here at 1440.
+//
+// Phone first is deliberate. If both are going to fail, the phone failure is
+// the one worth reading first, because it is the one nothing else covers.
+const VIEWPORTS = [
+  { width: 390, height: 844, label: 'phone 390x844' },
+  { width: 1440, height: 900, label: 'desktop 1440x900' },
+];
+
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-
 const errors = [];
-page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => {
-  if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 140));
-});
 
-await page.goto(url, { waitUntil: 'domcontentloaded' });
-await page.waitForTimeout(3000);
+const openAt = async (vp) => {
+  const context = await browser.newContext({
+    viewport: { width: vp.width, height: vp.height },
+    isMobile: vp.width < 900,
+    hasTouch: vp.width < 900,
+  });
+  const pg = await context.newPage();
+  pg.on('pageerror', (e) => errors.push(e.message));
+  pg.on('console', (m) => {
+    if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 140));
+  });
+  await pg.goto(url, { waitUntil: 'domcontentloaded' });
+  await pg.waitForTimeout(3000);
+  return { context, pg };
+};
+
+// The city list is identical at every viewport - it is read out of CITY_DATA
+// and each city's own boundary file - so derive it once on the first page.
+let { context, pg: page } = await openAt(VIEWPORTS[0]);
 
 // The expected borough count comes from the city's own boundary file, fetched
 // in the page. Hardcoding the counts here would make this test a second holder
@@ -134,10 +159,16 @@ const cities = await page.evaluate(async () => {
   return out;
 });
 
-console.log(`\nCity switch: ${cities.length} cities from CITY_DATA at ${url}\n`);
+console.log(`\nCity switch: ${cities.length} cities from CITY_DATA at ${url}`);
 
 let fail = 0;
-for (const city of cities) {
+for (const vp of VIEWPORTS) {
+  if (vp !== VIEWPORTS[0]) {
+    await context.close();
+    ({ context, pg: page } = await openAt(vp));
+  }
+  console.log(`\n--- ${vp.label} ---`);
+  for (const city of cities) {
   errors.length = 0;
 
   // Switch countries through the tab, the way a user does — the chips for a
@@ -191,14 +222,18 @@ for (const city of cities) {
       `ok    ${city.label.padEnd(20)} ${String(state.boroughs).padStart(2)} outlines · ${state.subtitle.slice(0, 34)}`
     );
   }
+  }
 }
 
+await context.close();
 await browser.close();
 if (!TARGET) server.close();
 
 console.log(
   fail === 0
-    ? `\nAll ${cities.length} cities switch and render.`
-    : `\n${fail} of ${cities.length} cities fail to switch or render.`
+    ? `\nAll ${cities.length} cities switch and render at ${VIEWPORTS.length} viewports ` +
+      `(${cities.length * VIEWPORTS.length} switches).`
+    : `\n${fail} of ${cities.length * VIEWPORTS.length} city/viewport combinations fail to ` +
+      `switch or render.`
 );
 process.exit(fail === 0 ? 0 : 1);

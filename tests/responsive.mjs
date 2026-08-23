@@ -36,6 +36,25 @@ const BASE = RAW_TARGET.replace(/\/(index\.html)?$/, '');
 
 const PAGES = [
   { name: 'consumer app', slug: 'index', full: true, settle: 2500 },
+  // THE SAME PAGE WITH ITS LEGEND OPEN, added 2026-08-23.
+  //
+  // Every entry here is audited in its LANDING state, and on a phone the map
+  // legend ships collapsed - so the audit could not see the defect the
+  // clipped-above detector was written for. Proven: removing the legend's
+  // max-height cap, which is what stops it rendering from y=-374 at 320x568,
+  // left this file reporting all 45 combinations clean.
+  //
+  // That is the same trap the a11y scan fell into with this exact element, and
+  // the lesson is the same one: adding a viewport is not the same as reaching
+  // the state. A gate that only ever sees the closed form of a disclosure is
+  // inspecting one tap short of the product.
+  {
+    name: 'consumer app, legend open',
+    slug: 'index',
+    full: true,
+    settle: 2500,
+    prepare: 'legend',
+  },
   { name: 'pricing', slug: 'pricing' },
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
@@ -109,6 +128,45 @@ for (const meta of PAGES) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   }
   await page.waitForTimeout(meta.settle ?? 600);
+
+  if (meta.prepare === 'legend') {
+    // Turn on the three borough fill layers and open the legend, the way a
+    // user does. Reported rather than assumed: if the controls are not there,
+    // the run is a scan of the landing state wearing another name, and saying
+    // so is cheaper than discovering it later.
+    const reached = await page.evaluate(() => {
+      let toggled = 0;
+      for (const k of ['defra-road', 'flood', 'air-quality']) {
+        const b = document.querySelector(`[data-layer="${k}"]`);
+        if (b) {
+          b.click();
+          toggled += 1;
+        }
+      }
+      const t = document.getElementById('legend-toggle');
+      // Desktop has no toggle - the legend is always open there - so `opened`
+      // is only meaningful when the control exists.
+      const needsToggle = Boolean(t) && getComputedStyle(t).display !== 'none';
+      if (needsToggle && t.getAttribute('aria-expanded') === 'false') t.click();
+      const legend = document.getElementById('map-legend');
+      return {
+        toggled,
+        opened: !needsToggle || t.getAttribute('aria-expanded') === 'true',
+        legendHeight: legend ? Math.round(legend.getBoundingClientRect().height) : 0,
+      };
+    });
+    await page.waitForTimeout(500);
+    if (reached.toggled < 3 || !reached.opened || reached.legendHeight < 40) {
+      console.log(
+        `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
+          `legend-open state (layers ${reached.toggled}/3, opened ${reached.opened}, ` +
+          `legend ${reached.legendHeight}px)`
+      );
+      failures += 1;
+      await page.close();
+      continue;
+    }
+  }
 
   const audit = await page.evaluate(() => {
     const doc = document.documentElement;
@@ -213,12 +271,164 @@ for (const meta of PAGES) {
       }
     }
 
+    // COVERED CONTROLS. Added 2026-08-23, and it is a THIRD way for a control
+    // to be untappable that neither check above can see.
+    //
+    // `overflowBy` catches a page wider than the viewport. `unreachable`
+    // catches a control past the horizontal edge with nothing to scroll it
+    // back. Both are about POSITION. A control can also sit squarely inside
+    // the viewport, at a sensible position, with another element painted on
+    // top of it - and every check here reported ok.
+    //
+    // Measured that day on the consumer app at 320, 375, 390 and 414: the
+    // first-run hint spanned y 24-84 across the full width, over a top band
+    // that is entirely navigation - the map title (y 36-59), the country tabs
+    // (y 70-94) and the top zoom button (y 8-52). Three controls covered at
+    // every phone size, for as long as the hint had existed.
+    //
+    // elementFromPoint at the control's centre is the question a finger asks.
+    // `contains` in both directions, because the topmost node is usually a
+    // <span> inside the button, and occasionally an ancestor.
+    // PARKED OUTSIDE ITS OWN SCROLLER is a scroll case, not an occlusion case.
+    //
+    // The city chips live in a horizontal strip. A chip scrolled past the
+    // strip's edge still has a bounding rect at that position, so
+    // elementFromPoint at its centre correctly returns whatever IS painted
+    // there - the zoom-reset button, as it happens. Reporting that as "covered"
+    // would be the audit failing on the scroll strip that FIXED the 2026-08-11
+    // untappable-chips defect, which is the same mistake `unreachable` above
+    // already avoids by walking up for a scrollable ancestor.
+    const parkedOutsideScroller = (node, r) => {
+      for (let el = node.parentElement; el && el !== document.body; el = el.parentElement) {
+        const s = getComputedStyle(el);
+        const scrollsX =
+          (s.overflowX === 'auto' || s.overflowX === 'scroll') &&
+          el.scrollWidth > el.clientWidth + 1;
+        const scrollsY =
+          (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+          el.scrollHeight > el.clientHeight + 1;
+        if (!scrollsX && !scrollsY) continue;
+        const b = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        if (cx < b.left - 1 || cx > b.right + 1 || cy < b.top - 1 || cy > b.bottom + 1) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const covered = [];
+    for (const node of document.querySelectorAll(
+      'button, a[href], input, select, [role="button"]'
+    )) {
+      const r = node.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const s = getComputedStyle(node);
+      if (s.visibility === 'hidden' || s.display === 'none') continue;
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      // Only judge what is actually on screen; off-screen is the other check's
+      // business, and judging it here would double-report the same defect.
+      if (cx < 0 || cy < 0 || cx > doc.clientWidth || cy > window.innerHeight) continue;
+      if (parkedOutsideScroller(node, r)) continue;
+      const top = document.elementFromPoint(cx, cy);
+      if (!top || node === top || node.contains(top) || top.contains(node)) continue;
+      covered.push({
+        tag: node.tagName.toLowerCase(),
+        id: node.id || '',
+        text: (node.textContent || '').trim().slice(0, 20),
+        by: top.tagName.toLowerCase() + (top.id ? '#' + top.id : ''),
+      });
+    }
+
+    // CLIPPED ABOVE THE VIEWPORT. The vertical twin of `unreachable`, and the
+    // reason it exists: the map legend measured 711px tall and rendered from
+    // y=-98 at 390x844 and y=-374 at 320x568, so its heading and its first
+    // colour bands were above the top of the screen. This audit passed at all
+    // ten viewports throughout, because clipping off the TOP is neither
+    // horizontal overflow nor a control past the horizontal edge.
+    //
+    // Same honesty rule as scrollableOnX: a pane with a scrollable ancestor on
+    // y can legitimately park content above the fold, so walk up for one.
+    const scrollableOnY = (node) => {
+      for (let el = node.parentElement; el && el !== document.body; el = el.parentElement) {
+        const s = getComputedStyle(el);
+        if (
+          (s.overflowY === 'auto' || s.overflowY === 'scroll') &&
+          el.scrollHeight > el.clientHeight + 1
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const clippedAbove = [];
+    for (const node of document.querySelectorAll(
+      '#map-legend, .map-legend, .legend-group-title, button, a[href], [role="button"]'
+    )) {
+      const r = node.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const s = getComputedStyle(node);
+      if (s.visibility === 'hidden' || s.display === 'none') continue;
+      if (r.top >= -1) continue;
+      if (scrollableOnY(node)) continue;
+      // An element that scrolls itself is fine too - that is the fix the
+      // legend received rather than an exemption it was granted.
+      if (node.scrollHeight > node.clientHeight + 1) {
+        const own = getComputedStyle(node);
+        if (own.overflowY === 'auto' || own.overflowY === 'scroll') continue;
+      }
+      // OFF-SCREEN UNTIL FOCUSED is a required pattern, not a defect. The skip
+      // link on every page here sits at top=-40px precisely so it does not
+      // occupy space until a keyboard user tabs to it - WCAG 2.4.1 is satisfied
+      // BY that behaviour, so flagging it would have this audit arguing with
+      // the a11y one.
+      //
+      // Tested rather than name-matched: focus it and see whether it comes
+      // back. A `.skip-link` allow-list would also excuse a genuinely broken
+      // element that happened to carry the class, and would miss the same
+      // pattern under any other name. Focus is restored afterwards so the
+      // page is left as it was found.
+      if (typeof node.focus === 'function') {
+        const previous = document.activeElement;
+        // SUPPRESS THE TRANSITION FOR THE PROBE. `.skip-link` carries
+        // `transition: top 0.15s`, so a rect read immediately after focus()
+        // reports the position it is moving AWAY from - which is how this
+        // exemption failed on its first run and flagged the skip link at all
+        // ten viewports. Measuring the settled position without waiting 150ms
+        // per element keeps the audit fast and deterministic.
+        const priorTransition = node.style.transition;
+        node.style.transition = 'none';
+        node.focus({ preventScroll: true });
+        const focused = node.getBoundingClientRect();
+        if (previous && typeof previous.focus === 'function') {
+          previous.focus({ preventScroll: true });
+        } else {
+          node.blur();
+        }
+        node.style.transition = priorTransition;
+        if (focused.top >= -1) continue;
+      }
+      clippedAbove.push({
+        tag: node.tagName.toLowerCase(),
+        id: node.id || '',
+        cls: (node.className || '').toString().slice(0, 30),
+        top: Math.round(r.top),
+      });
+    }
+
     return {
       overflowBy,
       offenders: wide.slice(0, 5),
       offenderCount: wide.length,
       unreachable: unreachable.slice(0, 8),
       unreachableCount: unreachable.length,
+      covered: covered.slice(0, 8),
+      coveredCount: covered.length,
+      clippedAbove: clippedAbove.slice(0, 8),
+      clippedAboveCount: clippedAbove.length,
       smallTargets: small.slice(0, 5),
       smallCount: small.length,
       bodyFontPx: parseFloat(getComputedStyle(document.body).fontSize),
@@ -249,8 +459,18 @@ for (const { meta, vp, audit, consoleErrors } of results) {
   }
   const overflow = audit.overflowBy > 1;
   const stranded = audit.unreachableCount > 0;
-  const flag = overflow ? 'OVERFLOW' : stranded ? 'STRANDED' : 'ok      ';
-  if (overflow || stranded) failures += 1;
+  const coveredUp = audit.coveredCount > 0;
+  const clipped = audit.clippedAboveCount > 0;
+  const flag = overflow
+    ? 'OVERFLOW'
+    : stranded
+      ? 'STRANDED'
+      : coveredUp
+        ? 'COVERED '
+        : clipped
+          ? 'CLIPPED '
+          : 'ok      ';
+  if (overflow || stranded || coveredUp || clipped) failures += 1;
 
   console.log(
     `${flag} ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} ${vp.name}`
@@ -261,6 +481,24 @@ for (const { meta, vp, audit, consoleErrors } of results) {
     );
     for (const u of audit.unreachable) {
       console.log(`           <${u.tag} class="${u.cls}"> "${u.text}" ${u.left}..${u.right}`);
+    }
+  }
+  if (coveredUp) {
+    console.log(
+      `         ${audit.coveredCount} control(s) sit under another element:`
+    );
+    for (const c of audit.covered) {
+      console.log(
+        `           ${c.tag}${c.id ? '#' + c.id : ''} ${c.text ? `"${c.text}"` : ''} covered by ${c.by}`
+      );
+    }
+  }
+  if (clipped) {
+    console.log(
+      `         ${audit.clippedAboveCount} element(s) clipped above the viewport:`
+    );
+    for (const c of audit.clippedAbove) {
+      console.log(`           ${c.tag}${c.id ? '#' + c.id : `.${c.cls}`} top=${c.top}px`);
     }
   }
   if (overflow) {
@@ -285,9 +523,10 @@ for (const { meta, vp, audit, consoleErrors } of results) {
 
 console.log(
   failures === 0
-    ? `\nNo horizontal overflow and no stranded controls: ${results.length} page/viewport ` +
+    ? `\nNo horizontal overflow, no stranded or covered controls, nothing clipped ` +
+      `above the fold: ${results.length} page/viewport ` +
       `combinations across ${PAGES.length} pages.`
-    : `\n${failures} of ${results.length} page/viewport combinations overflow horizontally, ` +
-      `strand a control, or could not be reached.`
+    : `\n${failures} of ${results.length} page/viewport combinations overflow, strand or ` +
+      `cover a control, or clip content above the fold.`
 );
 process.exit(failures === 0 ? 0 : 1);

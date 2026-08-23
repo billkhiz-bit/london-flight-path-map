@@ -541,7 +541,8 @@
       }
       .map-legend {
         position: absolute;
-        bottom: 24px;
+        /* Same footer band as .layer-toggles above - see the note there. */
+        bottom: calc(24px + var(--footer-inset, 0px));
         left: 32px;
         background: rgba(250, 250, 249, 0.85);
         backdrop-filter: blur(8px);
@@ -677,7 +678,26 @@
 
       .layer-toggles {
         position: absolute;
-        bottom: 24px;
+        /* CLEAR THE FOOTER BAND, 2026-08-23.
+           .site-footer, .map-legend and .layer-toggles are all bottom-anchored
+           inside #map-container at z-index 10, and the footer starts at
+           `bottom: 2px` and stands 34-72px tall depending on how its links
+           wrap. So all three have always occupied the same strip, with the
+           footer painting last because it comes later in the DOM.
+
+           Measured at 901x800: the footer ran through the LABELS toggle
+           ("AREAS PRIVACY" drawn across it) and through the legend
+           ("FOR DEVELOPERS" over "75+ dB"), and the toggle was genuinely
+           unclickable - elementFromPoint returned the footer link. It flipped
+           between clickable and not as the width changed, because that only
+           depends on whether a link happens to land on the toggle's centre.
+
+           --footer-inset is MEASURED by updateFooterInset() rather than
+           declared, because the footer's height changes with wrapping: 72px at
+           901, 48px at 1280, 34px at 1440. A constant would be correct at one
+           width and wrong at the rest. It resolves to 0 on mobile, where the
+           footer sits inside the sheet and has no height. */
+        bottom: calc(24px + var(--footer-inset, 0px));
         right: 24px;
         display: flex;
         flex-direction: column;
@@ -2305,8 +2325,80 @@
            tappable. .site-footer is position:static below 768px and is
            unaffected by `bottom`. */
         .layer-toggles,
+        /* THE FIRST-RUN HINT SITS BELOW THE NAVIGATION, not on top of it
+           (2026-08-23). At `top: 24px` it spanned y 24-84 across the full
+           width, and the whole top band of this map is controls:
+
+             map-controls column   y   8-148  (three 44px buttons)
+             map title             y  36- 59
+             country tabs          y  70- 94
+             city chip strip       y  96-140
+
+           So the hint covered the title, the UK/USA tabs and the top zoom
+           button - measured as COVERED by elementFromPoint at 320, 375, 390
+           and 414. It had always done that; it stopped being harmless the
+           moment the sheet was changed to boot at peek, because until then
+           the map and its controls were behind a panel anyway and nobody
+           could reach them regardless.
+
+           156px clears the whole band by 8px, and the first thing below is the
+           legend at y=288 on the shortest phone - 72px of clearance. Desktop is
+           left alone: it centres the hint over a 1040px map where none of this
+           collides. */
+        .first-hint {
+          top: 156px;
+        }
         .map-legend {
           bottom: 232px;
+          /* CAP AND SCROLL, 2026-08-23.
+             The legend sits `bottom: 232px` above the sheet's peek height, so
+             the space it actually has is the viewport minus that offset minus a
+             top margin. Below ~390px it did not fit even after the aircraft
+             prose was folded into a disclosure: measured 458px against 320px of
+             room at 320x568, so its top rendered at y=-122 and the aircraft
+             title was cut off above the screen.
+
+             Capping is only half an answer - see the fade rules below. */
+          /* Two terms, both measured, kept separate so the reasoning stays
+             legible:
+               232px  this legend's own bottom offset (the line above)
+               156px  the bottom of the navigation band (map-controls run
+                      y 8-148, the city chip strip y 96-140) plus an 8px gap
+
+             A cap that only fits the VIEWPORT is not enough: at 320x568 a
+             248px allowance left the legend 320px tall, growing up through the
+             country tabs and the first two city chips and covering them. The
+             responsive audit proved it the moment it learned to open the
+             legend. */
+          max-height: calc(100dvh - 232px - 156px);
+          overflow-y: auto;
+          /* Keep a flick inside the legend from scrolling the page behind it. */
+          overscroll-behavior: contain;
+        }
+        /* THE FADE IS THE FEATURE, exactly as it is for the city strip above.
+           This app retired one scroll strip for having no affordance (see
+           .layers-trigger), and a legend that silently hides half its bands is
+           the same failure: the user cannot tell the difference between "no
+           road-noise legend here" and "the road-noise legend is below the
+           fold".
+
+           data-scroll is written by updateLegendFade() from a measurement, and
+           removed when everything fits - a permanent fade would claim there is
+           always more to see, which is the same lie pointing the other way. */
+        .map-legend[data-scroll='down'] {
+          mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+        }
+        .map-legend[data-scroll='up'] {
+          mask-image: linear-gradient(to bottom, transparent, #000 24px);
+        }
+        .map-legend[data-scroll='both'] {
+          mask-image: linear-gradient(
+            to bottom,
+            transparent,
+            #000 24px,
+            #000 calc(100% - 24px),
+            transparent
+          );
         }
         /* Phone-friendly tap targets on layer toggles */
         .layer-toggle {
@@ -2584,7 +2676,9 @@
            ~32px tap; now 11px / 8-14 / 40px min. The vertical stack
            stays at bottom-right but with more breathing room. */
         .layer-toggles {
-          bottom: 28px;
+          /* Carries --footer-inset like the base rule; a plain `bottom: 28px`
+             here silently reinstated the collision this band is worst for. */
+          bottom: calc(28px + var(--footer-inset, 0px));
           right: 28px;
           gap: 5px;
         }
@@ -2614,8 +2708,16 @@
           padding: 10px 14px;
         }
 
-        /* Footer kept at bottom but with more inset and slightly larger
-           type (9px instead of 8px) to clear the layer-toggle band. */
+        /* Footer kept at bottom with more inset and slightly larger type
+           (9px instead of 8px).
+
+           The clause "to clear the layer-toggle band" was here until
+           2026-08-23 and was not true: measured at 901x800 the footer stood
+           72px tall from `bottom: 6px` while the toggles sat at `bottom: 28px`,
+           so it ran straight through them - "AREAS PRIVACY" drawn across the
+           LABELS toggle, which elementFromPoint confirmed was unclickable. The
+           toggles and the legend now carry --footer-inset instead, which is
+           measured from this footer's actual height. */
         .site-footer {
           /* Was 12px; 6px less for the same reason as the base rule, so the
              24px WCAG targets do not lift the text off its design position. */
@@ -9673,6 +9775,10 @@
             row.style.display = bands[row.dataset.band] > 0 ? '' : 'none';
           }
         }
+
+        // Rows just appeared or disappeared, so whether the legend overflows
+        // has changed. Measured here rather than guessed at any call site.
+        if (typeof updateLegendFade === 'function') updateLegendFade();
       }
 
       function renderDefraTiles() {
@@ -10858,6 +10964,51 @@
         box.dataset.scroll = atStart ? 'right' : atEnd ? 'left' : 'both';
       }
 
+      /**
+       * Vertical twin of updateCityStripFade(), for the map legend.
+       *
+       * Called wherever the legend's height can change: after a repaint (band
+       * rows appear and disappear with the data), when the mobile disclosure
+       * is toggled, when the aircraft prose disclosure is opened, and on
+       * resize. Measured rather than assumed, so a legend that fits carries no
+       * fade at all.
+       */
+      /**
+       * Publish the footer's real height so the map's bottom chrome can clear
+       * it.
+       *
+       * Measured rather than declared: the footer is a wrapping row of links,
+       * so its height depends on the viewport width - 72px at 901, 48px at
+       * 1280, 34px at 1440 - and any constant would be right at one width and
+       * wrong at every other. On mobile the footer lives inside the sheet and
+       * measures 0, which is exactly the value the map chrome should use
+       * there, so this needs no breakpoint of its own.
+       *
+       * The 8px is a gap, not a guess at the height.
+       */
+      function updateFooterInset() {
+        const footer = document.querySelector('.site-footer');
+        if (!footer) return;
+        const h = footer.getBoundingClientRect().height;
+        document.documentElement.style.setProperty(
+          '--footer-inset',
+          h > 0 ? `${Math.round(h) + 8}px` : '0px'
+        );
+      }
+
+      function updateLegendFade() {
+        const box = document.getElementById('map-legend');
+        if (!box) return;
+        const overflow = box.scrollHeight - box.clientHeight;
+        if (overflow <= 1) {
+          box.removeAttribute('data-scroll');
+          return;
+        }
+        const atTop = box.scrollTop <= 1;
+        const atBottom = box.scrollTop >= overflow - 1;
+        box.dataset.scroll = atTop ? 'down' : atBottom ? 'up' : 'both';
+      }
+
       function switchCountry(country) {
         if (cityOf(currentCity).country === country) return;
         const target =
@@ -11617,6 +11768,12 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('app').style.display = 'grid';
 
+        // The footer only has a height once the app is displayed, and the map's
+        // bottom chrome is positioned off that height - so this runs here,
+        // immediately after the reveal and before anything reads a bottom
+        // offset. Re-run on resize alongside the two fade measurements.
+        updateFooterInset();
+
         // Chrome for the STARTING city. applyCityChrome only ran on a switch,
         // so first paint used whatever the markup happened to say - which for
         // the subtitle was "INDEPENDENT NOISE + LIVABILITY DATA" with no city
@@ -11771,7 +11928,22 @@
           legendToggle.addEventListener('click', () => {
             const expanded = legendToggle.getAttribute('aria-expanded') === 'true';
             legendToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            // Height just changed by the whole body of the legend.
+            updateLegendFade();
           });
+        }
+        // Every other way the legend's height or scroll position can change.
+        // Each is a separate event because each is a different cause, and a
+        // fade left behind on a legend that now fits points at nothing.
+        const legendBox = document.getElementById('map-legend');
+        if (legendBox) {
+          // Cheap - two reads and an attribute write - so it runs on the
+          // scroll itself rather than debounced, keeping the fade honest as
+          // the user drags.
+          legendBox.addEventListener('scroll', updateLegendFade, { passive: true });
+          // <details> does not bubble `toggle` in older engines, so listen in
+          // the capture phase rather than relying on delegation.
+          legendBox.addEventListener('toggle', updateLegendFade, true);
         }
 
         // Audit F-A11Y-8: quick-search chips inside the empty-state.
@@ -11828,18 +12000,40 @@
             const open = sheetEl.classList.contains('sheet-open');
             window.setSheetState(open ? 'peek' : 'open');
           });
-          // On phones (<=640px) the sheet starts open so the sidebar is
-          // fully usable on initial load. User can tap the handle to
-          // collapse to peek (search box stays visible at peek height).
-          // At iPad portrait (640-900px) the sheet starts in peek state
-          // so the map is visible behind it on first load - auto-opening
-          // hid the map entirely on iPad, which Apple's reviewer cited
-          // under Guideline 4.0 (Design) on 2026-05-18. revealSheetIfMobile()
-          // still auto-opens after a search result lands. Above 900px the
-          // sheet is irrelevant - desktop sidebar is a static column.
-          if (window.innerWidth <= 640) {
-            window.setSheetState('open');
-          }
+          // THE SHEET BOOTS AT PEEK ON EVERY MOBILE WIDTH (2026-08-23).
+          //
+          // It used to auto-open below 640px, and that was the tail of a
+          // half-finished fix rather than a decision. The history:
+          //
+          //   Apple rejected build 19 under Guideline 4.0 (Design) on
+          //   2026-05-18 because auto-opening the sheet HID THE MAP on iPad
+          //   Air. The same-day fix moved this threshold from <=900 to <=640,
+          //   which gave iPad portrait its map back and left phones with
+          //   exactly the behaviour the reviewer had objected to. The line was
+          //   drawn where the rejection stopped, not where the reasoning did -
+          //   Apple only tested an iPad.
+          //
+          // Measured before this change: 12% of the viewport was map at 320,
+          // 375, 390 and 414, while iPad portrait sat at 71%. The city chips
+          // and the map legend were both entirely below the fold at boot on
+          // every phone - so the two controls that make this a map product
+          // could not be seen until the user collapsed a panel they had not
+          // asked for.
+          //
+          // Nothing is lost by peeking. The peek height is 220px, sized in the
+          // CSS specifically so the search box is reachable WITHOUT tapping
+          // the handle ("the sheet is functional even in its collapsed
+          // state"), and revealSheetIfMobile() still auto-opens the moment a
+          // result lands. The discoverability argument that chose auto-open is
+          // about a RESULT being missed; at boot there is no result, only an
+          // empty search prompt.
+          //
+          // Native is unaffected either way: `.is-native .app > .sidebar` sets
+          // `transform: none !important`, so .sheet-open has no visual effect
+          // there. The app uses setMobileView()/data-mview instead.
+          //
+          // Above 900px the sheet is irrelevant - desktop sidebar is a static
+          // column - so no explicit boot state is needed at any width.
         }
         // TODO (you): decide when to auto-open the sheet on result load.
         // See updateSidebar() - search result and borough click both call it.
@@ -12022,6 +12216,13 @@
           // the strip overflowing entirely, and a fade left behind on a row
           // that now fits points at nothing.
           updateCityStripFade();
+          // The footer rewraps at a new width, so its height changes and the
+          // chrome above it has to move with it. Before updateLegendFade(),
+          // because the legend's available height depends on this inset.
+          updateFooterInset();
+          // Same reasoning, vertically: rotating a phone changes how much room
+          // the legend has, and can stop it overflowing entirely.
+          updateLegendFade();
         });
       }
 
