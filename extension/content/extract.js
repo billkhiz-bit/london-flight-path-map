@@ -50,13 +50,37 @@
 // nothing. Rejecting out-of-range coordinates makes a bad match fail loudly.
 const UK_BOUNDS = { minLat: 49.8, maxLat: 61.0, minLon: -8.7, maxLon: 1.8 };
 
-// Greater London, approximately. TfL's StopPoint API only knows about London,
-// so a Manchester listing would come back with zero stations — which reads as
-// "no transport here" when it actually means "wrong data source". The panel
-// uses this to caption that case honestly instead of rendering a confident
-// emptiness. Same failure class the /transport Lambda already guards against
-// for outages (backend/lambdas/transport/app.py:41).
-const LONDON_BOUNDS = { minLat: 51.28, maxLat: 51.70, minLon: -0.52, maxLon: 0.34 };
+// LONDON_BOUNDS IS DELETED (2026-08-23), and it had outlived its reason twice.
+//
+// It was a rectangle - 51.28..51.70 by -0.52..0.34 - that the panel used to
+// decide whether to show a coverage caveat. Two things were wrong with it.
+//
+// 1. IT CAVEATED A SECTION THAT NO LONGER EXISTS. The comment here read "TfL's
+//    StopPoint API only knows about London, so a Manchester listing would come
+//    back with zero stations". True, and irrelevant since 2026-08-06, when the
+//    transport section was removed from the extension. The bounds outlived the
+//    feature by seventeen days and were quietly repurposed to noise coverage
+//    without anyone re-asking whether the geography still fitted. Grep for the
+//    NAME, not just the function - the same lesson the transport removal
+//    itself was written up under, one level further out.
+//
+// 2. A BOUNDING BOX IS NOT CONTAINMENT, and this is the fifth time in this
+//    repo. Verified against the live endpoint on 2026-08-23:
+//
+//      Watford  WD17 2RA  inside the box, and /v1/environment answers
+//                         "outside every city Sky Score covers" -> the caveat
+//                         was HIDDEN exactly where it was true
+//      Dartford DA1 1DR   same
+//      M3 4EN             outside the box, and a covered city with its own
+//                         geometry since 2026-08-21 -> the caveat was SHOWN
+//                         exactly where it was false
+//
+//    Watford also returns a measured roadNoiseLdenDb of 55.2, while the caveat
+//    it suppressed claims road figures "may be absent" outside London.
+//
+// The replacement is not a better polygon. /v1/environment already resolves
+// this precisely, per postcode, because it derives the city itself - see
+// coverageCaveat() in panel.js. Nothing client-side needs to guess.
 
 function inBounds(lat, lon, b) {
   return lat >= b.minLat && lat <= b.maxLat && lon >= b.minLon && lon <= b.maxLon;
@@ -516,6 +540,5 @@ function extractListing() {
     // breaks after a Rightmove redesign, the first question is always "did we
     // fall through to a weaker strategy, or fail outright?"
     source: coords.source,
-    inLondon: inBounds(coords.lat, coords.lon, LONDON_BOUNDS),
   };
 }

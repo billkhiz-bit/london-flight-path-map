@@ -544,21 +544,57 @@ function decidePresentation(listing) {
     ? ['environment', 'epc', 'rent', 'nhs']
     : ['environment', 'epc', 'soldPrices', 'rent', 'nhs'];
 
-  if (!listing.inLondon) {
-    // Outside London the environmental rasters thin out - DEFRA's aircraft
-    // contours are English agglomerations and the road raster we hold is a
-    // London bbox. Everything here still resolves via postcode, so the sections
-    // stay; the caveat exists so a sparse answer is not read as a clean one.
-    return {
-      show: 'partial',
-      sections: order,
-      letting,
-      caveat:
-        'Aircraft and road noise coverage is strongest in London; figures outside it may be absent.',
-    };
-  }
-
+  // THE COVERAGE CAVEAT IS NO LONGER DECIDED HERE (2026-08-23).
+  //
+  // It used to be, from listing.inLondon - a bounding box, computed at
+  // extraction time, before a single upstream had been asked anything. See the
+  // note where LONDON_BOUNDS used to live in extract.js for the two ways that
+  // was wrong. It is now read out of the /v1/environment response by
+  // coverageCaveat(), which is the only place the answer actually exists.
+  //
+  // The cost is that the caveat appears a moment later than the panel, once
+  // Environment lands, instead of immediately. That is the right trade: a
+  // caveat rendered before the data can be contradicted by the data, and this
+  // one was - it told a Manchester reader that coverage "is strongest in
+  // London" directly above Manchester's own DEFRA-derived figures.
   return { show: 'full', sections: order, letting, caveat: null };
+}
+
+// The phrase /v1/environment uses for the one state this caveat is about:
+// a postcode that resolved, but to no city Sky Score covers, so the aircraft
+// estimate came from a union of every geometry we hold rather than from this
+// area's own airports and flight paths.
+//
+// MATCHED AS PROSE, which is a real weakness and is GUARDED rather than noted.
+// The endpoint has no machine-readable coverage field today, and this repo has
+// already paid for one suppression keyed on wording (audit I12, where a caveat
+// deleted itself). So tests/extension-e2e.mjs asks the LIVE endpoint for a
+// known-uncovered coordinate and asserts this classifier returns 'outside' -
+// if DEFRA-side wording ever drifts, that gate reds rather than this quietly
+// returning null forever. Adding `aircraftQuietCoverage` to the response is
+// the better shape and would delete this constant.
+const OUTSIDE_COVERAGE_PHRASE = 'outside every city Sky Score covers';
+
+/**
+ * The panel-wide caveat, measured from what the endpoint answered.
+ *
+ * Returns null in the two cases that need no panel-level warning:
+ *   - DEFRA measured this postcode (aircraftNoiseLdenDb present)
+ *   - it is inside a covered city, so the estimate used that city's own
+ *     airports and flight paths
+ * Both of those still disclose "estimated, not measured" on the row itself,
+ * inside Environment's own disclosure. This is only for the wider claim.
+ */
+function coverageCaveat(envResult) {
+  if (!envResult || !envResult.ok) return null;
+  const env = (envResult.data || {}).environment || {};
+  const basis = env.aircraftQuietBasis;
+  if (typeof basis !== 'string' || !basis.includes(OUTSIDE_COVERAGE_PHRASE)) return null;
+  return (
+    'This address is outside every area Sky Score covers, so the aircraft ' +
+    'figure is estimated from the nearest airports we hold rather than from ' +
+    "this area's own flight paths. Other figures here are unaffected."
+  );
 }
 
 // --- Section renderers ---------------------------------------------------
@@ -1378,6 +1414,21 @@ async function loadInto(body, listing, plan) {
   const coordWork = byKey(false).map(async (name) => {
     const result = await requestSection(name, listing);
     paint(name, result);
+    // The panel-wide coverage caveat, now that the endpoint has answered.
+    // Inserted above the body so it keeps the position it held when
+    // decidePresentation guessed at it from a bounding box.
+    if (name === 'environment') {
+      const text = coverageCaveat(result);
+      if (text) {
+        const panel = document.getElementById(PANEL_ID);
+        // Guard the insert: the reader may have closed the panel while this
+        // was in flight, and appending to a detached node would put the
+        // caveat nowhere while reading as success.
+        if (panel && panel.contains(body)) {
+          panel.insertBefore(el('p', 'c33-caveat', text), body);
+        }
+      }
+    }
     return [name, result];
   });
 

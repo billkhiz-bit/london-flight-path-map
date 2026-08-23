@@ -98,7 +98,7 @@ const CASES = [
       scripts: [`window.PAGE_MODEL={"pad":"${pad}","location":{"latitude":51.4613,"longitude":-0.1656}}`],
       h1: 'Battersea Park Road, London SW11',
     },
-    want: { source: 'page-model', lat: 51.4613, outcode: 'SW11', inLondon: true },
+    want: { source: 'page-model', lat: 51.4613, outcode: 'SW11' },
   },
   {
     name: 'page-model, reversed key order',
@@ -106,7 +106,7 @@ const CASES = [
       scripts: [`window.PAGE_MODEL={"pad":"${pad}","longitude":-0.1656,"latitude":51.4613}`],
       h1: 'Clapham, London SW4 7AA',
     },
-    want: { source: 'page-model', lat: 51.4613, outcode: 'SW4', inLondon: true },
+    want: { source: 'page-model', lat: 51.4613, outcode: 'SW4' },
   },
   {
     // Rightmove serves coordinates as quoted STRINGS. The fixture above uses
@@ -118,7 +118,7 @@ const CASES = [
       scripts: [`window.PAGE_MODEL={"pad":"${pad}","latitude":51.4613,"longitude":-0.1656}`],
       h1: 'Battersea, London SW11',
     },
-    want: { source: 'page-model', lat: 51.4613, inLondon: true },
+    want: { source: 'page-model', lat: 51.4613 },
   },
   {
     // Keys present but not adjacent — the third-attempt split path. Scoped to a
@@ -140,7 +140,7 @@ const CASES = [
       jsonld: [JSON.stringify({ '@type': 'Residence', geo: { latitude: 51.5, longitude: -0.12 } })],
       h1: 'Soho, London W1',
     },
-    want: { source: 'json-ld', lat: 51.5, outcode: 'W1', inLondon: true },
+    want: { source: 'json-ld', lat: 51.5, outcode: 'W1' },
   },
   {
     name: 'static map image URL',
@@ -148,23 +148,27 @@ const CASES = [
       imgs: ['https://maps.googleapis.com/maps/api/staticmap?center=51.5074,-0.1278&zoom=15'],
       h1: 'Westminster, London SW1',
     },
-    want: { source: 'static-map', lat: 51.5074, outcode: 'SW1', inLondon: true },
+    want: { source: 'static-map', lat: 51.5074, outcode: 'SW1' },
   },
   {
     name: 'geo.position meta tag',
     doc: { metas: { 'geo.position': '51.52;-0.09' }, h1: 'Barbican, London EC1A 1BB' },
-    want: { source: 'meta', lat: 51.52, outcode: 'EC1A', inLondon: true },
+    want: { source: 'meta', lat: 51.52, outcode: 'EC1A' },
   },
   {
-    name: 'non-London coords resolve but flag inLondon false',
+    // Was 'non-London coords resolve but flag inLondon false' until 2026-08-23.
+    // The flag is deleted - the panel now reads coverage out of the
+    // /v1/environment response rather than out of a bounding box here - but the
+    // half of this case worth keeping is the half that never depended on it:
+    // UK_BOUNDS must accept a coordinate 260 km north of London, and the
+    // outcode must come off the heading rather than off any London assumption.
+    // Narrowing UK_BOUNDS to something London-shaped is the regression.
+    name: 'coordinates far outside London still extract',
     doc: {
       scripts: [`{"pad":"${pad}","latitude":53.4808,"longitude":-2.2426}`],
       h1: 'Deansgate, Manchester M1 4BT',
     },
-    // The panel suppresses transport for these — TfL has no coverage, and a
-    // bare "0 stations" would state an absence of transport while only knowing
-    // an absence of data.
-    want: { source: 'page-model', lat: 53.4808, outcode: 'M1', inLondon: false },
+    want: { source: 'page-model', lat: 53.4808, outcode: 'M1' },
   },
   { name: 'nothing extractable returns null', doc: { h1: 'A house somewhere' }, want: null },
   {
@@ -253,7 +257,6 @@ const REAL_PAGES = [
       lat: 51.49423,
       lon: -0.18825,
       outcode: 'SW5',
-      inLondon: true,
       // Reached through the same index-reference indirection as the
       // coordinates: the node says {"price":233} and flat[233] is 34000000.
       askingPrice: 34000000,
@@ -270,7 +273,6 @@ const REAL_PAGES = [
       lat: 51.556473,
       lon: -0.218428,
       outcode: 'NW2',
-      inLondon: true,
       // THE ASSERTION THIS FIXTURE EXISTS FOR. A letting's `price` is a monthly
       // figure; withholding it is what stops £1,800 pcm being plotted against
       // completed sales. Proven now on a real To Rent page rather than on a

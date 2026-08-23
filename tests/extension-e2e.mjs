@@ -550,9 +550,25 @@ if (hasRent) {
 // browser. Both cases below are ones where showing the obvious thing would
 // state more than we know.
 
-// Outside Greater London, TfL has no coverage, so /transport returns zero
-// stations. Rendering that as "no stations nearby" would assert an absence of
-// TRANSPORT while only knowing an absence of DATA.
+// A COVERED CITY THAT IS NOT LONDON.
+//
+// This block used to assert that Manchester received the caveat "coverage is
+// strongest in London", and it was correct on the day it was written - the
+// caveat came from a London bounding box, and Manchester is outside it.
+//
+// It stopped being correct twice over and stayed green through both. The
+// section it was justified by (transport, "TfL has no coverage, so /transport
+// returns zero stations") was deleted from the extension on 2026-08-06, and
+// Manchester gained seven DEFRA per-airport rasters on 2026-08-12 and its own
+// derived geometry in /v1/environment on 2026-08-21. So the assertion spent
+// its last seventeen days confirming that a covered city was being told our
+// coverage lies elsewhere. Fourth instance in this repo of a passing test
+// asserting old behaviour, which is worse than no test because it reads as
+// evidence.
+//
+// What it asserts now is the inverse, and it is the direction that can only be
+// checked against the live endpoint: M3 4EN resolves to a city Sky Score
+// covers, so no panel-wide coverage caveat is due.
 const manchester = readFileSync(join(HERE, 'fixtures', 'rightmove-manchester.html'), 'utf8');
 await page.locator('#cubitt33-panel .c33-close').click();
 await page.unroute('**://www.rightmove.co.uk/**');
@@ -569,15 +585,27 @@ const mcr = await page.locator('#cubitt33-panel').innerText();
 // until the Environment section began rendering its own coverage notices with
 // the same class, at which point a passing count became an accident of how many
 // unrelated caveats happened to be on screen. Matching the text keeps the
-// assertion tied to the thing it was written for: transport being suppressed
-// outside TfL's coverage.
+// assertion tied to the thing it is written for.
 check(
-  'non-London: coverage caveat shown',
+  'covered non-London city: no out-of-coverage caveat',
   (await page
     .locator('#cubitt33-panel .c33-caveat')
-    .filter({ hasText: /coverage is strongest in London/i })
-    .count()) === 1
+    .filter({ hasText: /outside every area Sky Score covers/i })
+    .count()) === 0,
+  mcr.includes('outside every area') ? 'caveat present on a covered city' : ''
 );
+// And the retired wording must not come back from anywhere. A grep would catch
+// it in this repo; this catches it in the rendered panel, which is where it
+// mattered.
+check(
+  'covered non-London city: the London-shaped caveat is gone',
+  !/coverage is strongest in London/i.test(mcr)
+);
+// The row-level disclosure is NOT what was removed, and losing it would be a
+// real regression hiding inside this change: Manchester's aircraft figure is
+// still geometry rather than a DEFRA reading, and the Environment section must
+// still say so.
+check('covered non-London city: row-level "not measured" still disclosed', /not measured/i.test(mcr));
 
 // EPC and sold prices are postcode-keyed, so they only appear once
 // /v1/environment has reverse-geocoded one. Outside London that still works —
@@ -587,6 +615,58 @@ const mcrSections = await page.locator('#cubitt33-panel .c33-section h3').allInn
 check('non-London: EPC section still attempted', mcrSections.some((h) => /EPC/i.test(h)), mcrSections.join(','));
 check('non-London: healthcare still shown', /HEALTHCARE/i.test(mcr));
 check('non-London: outcode parsed', mcr.includes('M1'));
+
+// GENUINELY OUTSIDE EVERY COVERED CITY, and inside the rectangle that used to
+// decide this. Watford sits at 51.6565, -0.3903 - within the deleted
+// LONDON_BOUNDS on all four sides - so under the bounding box it was told
+// nothing at all, which is the exact case the caveat exists for. Dartford
+// (51.4464, 0.2189) is the same shape and was verified the same way.
+//
+// This is the assertion that could not have been written before: it needs the
+// endpoint's own answer, because no client-side rectangle distinguishes
+// Watford from Wembley.
+const watford = readFileSync(join(HERE, 'fixtures', 'rightmove-watford.html'), 'utf8');
+await page.locator('#cubitt33-panel .c33-close').click();
+await page.unroute('**://www.rightmove.co.uk/**');
+await page.route('**://www.rightmove.co.uk/**', (route) =>
+  route.fulfill({ status: 200, contentType: 'text/html', body: watford })
+);
+await page.goto('https://www.rightmove.co.uk/properties/555000444');
+await page.locator('#cubitt33-badge').waitFor({ timeout: 15000 });
+await page.locator('#cubitt33-badge').click();
+await page.locator('#cubitt33-panel .c33-foot').waitFor({ timeout: 45000 });
+const wd = await page.locator('#cubitt33-panel').innerText();
+
+check('outside coverage: postcode resolved', /WD17/.test(wd), wd.split('\n')[1] || '');
+check(
+  'outside coverage: caveat shown',
+  (await page
+    .locator('#cubitt33-panel .c33-caveat')
+    .filter({ hasText: /outside every area Sky Score covers/i })
+    .count()) === 1
+);
+
+// THE PROSE MATCH THIS DEPENDS ON, ASKED OF THE ENDPOINT DIRECTLY.
+//
+// coverageCaveat() classifies by looking for a phrase in `aircraftQuietBasis`,
+// because /v1/environment has no machine-readable coverage field. That is a
+// real weakness - this repo has already had a caveat delete itself over a
+// suppression keyed on wording (audit I12) - so it is guarded rather than
+// noted. If the endpoint's wording drifts, this reds with the actual string in
+// the failure detail, instead of coverageCaveat() quietly returning null for
+// every listing forever.
+const envProbe = await page.evaluate(async () => {
+  const res = await fetch(
+    'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.6565&lon=-0.3903'
+  );
+  const body = await res.json();
+  return (body.environment || {}).aircraftQuietBasis || null;
+});
+check(
+  'endpoint still uses the phrase coverageCaveat matches on',
+  typeof envProbe === 'string' && envProbe.includes('outside every city Sky Score covers'),
+  String(envProbe)
+);
 
 // A postcode DEFRA actually measured. The SW5 fixture above exercises only the
 // "nothing measured, here is why" path; without this the Environment section
@@ -626,7 +706,7 @@ await page.waitForTimeout(3000);
 check('unlocatable: no badge rendered', (await page.locator('#cubitt33-badge').count()) === 0);
 check('unlocatable: no panel rendered', (await page.locator('#cubitt33-panel').count()) === 0);
 
-console.log('\n--- panel (non-London) ---');
+console.log('\n--- panel (covered non-London city) ---');
 console.log(mcr.split('\n').filter(Boolean).slice(0, 10).map((l) => '  ' + l).join('\n'));
 
 console.log('\n--- panel (first view) ---');
