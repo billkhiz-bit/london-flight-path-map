@@ -91,4 +91,30 @@ if [ "$DRIFTED" -gt 0 ]; then
   exit 1
 fi
 
+# A FLOOR ON THE COMPARISON ITSELF, added 2026-08-23.
+#
+# CHECKED was counted and never asserted, and success printed NOTHING - so a
+# run that compared all sixteen surfaces and a run whose loop never executed
+# were byte-identical output and both exit 0. Empty SURFACES, or move the repo
+# so every local_path misses its `[ -f ]` guard, and this reports the tree as
+# perfectly in sync while having opened nothing.
+#
+# Fourth instance of that shape in this repo, after build_aircraft_bands.py
+# (blocking), build_hpi_prices.py (blocking) and refresh_crime_from_ons.py, all
+# closed on 2026-08-22. Found here by watching it verify a real deploy: the
+# check went from one line of output to none, which is the same thing it would
+# have printed had it died before the loop.
+#
+# 16 is the count the SURFACES list declares. Asserted as a MINIMUM, so adding
+# a seventeenth surface raises it with no edit here while a shrinking list
+# reds - a fixed count would be the scheduled staleness this repo keeps paying
+# for.
+if [ "$CHECKED" -lt 16 ]; then
+  printf 'FAIL: compared only %d surfaces, expected at least 16. The list is\n' "$CHECKED"
+  printf '  short or the files are not where this script looks - either way it\n'
+  printf '  reported agreement it never measured.\n'
+  exit 1
+fi
+
+printf 'PASS: all %d public surfaces match the live origin.\n' "$CHECKED"
 exit 0

@@ -472,6 +472,14 @@ authority, not the prose.
 1. **Any `--check` that skips a missing field and then reports agreement.**
    Three found: `build_aircraft_bands` (blocking), `build_progress8`,
    `refresh_crime_from_ons`. A per-unit floor fixes all three.
+   **A FOURTH turned up on 2026-08-23**, in the advisory tier and by a different
+   route: `check_deploy_drift.sh` counted its comparisons and never asserted the
+   count, and printed nothing at all on success. So "compared 16 surfaces, all
+   match" and "the loop never ran" were the same output and the same exit code.
+   Noticed only by watching it verify a real deploy - it went from one line to
+   none, which is exactly what it would print having died early. Floor added,
+   proven red. **The tell is a success path that prints nothing**: silence
+   cannot distinguish agreement from absence.
 2. **`responsive.mjs` and the a11y scan load one URL each** — the homepage, in
    its default state. Neither has ever loaded `privacy`, `pricing`, `terms`,
    `changes` or a demo page, and neither opens a collapsed disclosure.

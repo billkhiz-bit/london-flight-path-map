@@ -162,7 +162,31 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ## 4a. Deploy state
 
-**DEPLOYED 2026-08-22.** The audit-Important work of that day is live: SAM
+**DEPLOYED 2026-08-23.** `index.html` only - it was the sole surface out of step,
+and neither the extension (unlisted) nor any Lambda changed. Uploaded to S3,
+CloudFront invalidation `I1Q8QLUBYZ3SFP4BYRV4884NRM` **waited to completion**
+rather than fired and forgotten.
+
+Verified from the origin, not from the deploy's exit code:
+
+| Check | Result |
+|---|---|
+| `index.html` source vs CloudFront | **sha256 MATCH** |
+| `check_deploy_drift.sh` | **PASS, all 16 surfaces** |
+| `smoke-local` against CloudFront | PASS - 33/5/10 boroughs paint, d3 loads, **1 request** (the preload does not double-fetch in production) |
+| Legend markup live | 10 `data-band` rows, EXCELLENT swatch present |
+| d3 tag position live | preload at line 93 in `<head>`, script at 3661 at the foot of `<body>` |
+| `preflight` after the deploy | PASS, and `deployed == source` moved from *deviates* to **ok** |
+
+**A gate hardened by watching it verify this deploy.** `check_deploy_drift.sh`
+counted `CHECKED` and never asserted it, and printed **nothing** on success - so
+a run comparing all sixteen surfaces and a run whose loop never executed
+produced identical output and both exited 0. Empty `SURFACES` and it reported
+the tree perfectly in sync having opened nothing. Fourth instance of that shape
+here, after the three `--check` gates closed on 2026-08-22. It now asserts a
+floor of 16 and says what it compared; proven red by emptying the list.
+
+**Previously DEPLOYED 2026-08-22.** The audit-Important work of that day is live: SAM
 updated `ScoreFunction`, `EpcFunction`, `NhsFunction` and `ChatFunction`, and
 all six changed public surfaces were uploaded with a full CloudFront
 invalidation (waited to completion, not fired and forgotten).
