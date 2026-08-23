@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, quiet, affordability, growth, liveability (growth is weighted for the `investor` persona only since methodology v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.8 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus 11 UK city-regions, 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v3.8 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **The UK city-regions outside London are thinner than London on purpose,
 > and the gap is now four datasets rather than seven.** Road noise, flood risk
@@ -24,7 +24,7 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across four components, qu
 > Teesside 0.190). Validated against the 35,352 London postcodes DEFRA did
 > measure: mean absolute error against the measurement falls from 3.230 to
 > 1.879. Liveability now rests on **all four
-> measured inputs** for 78 of 86 boroughs,
+> measured inputs** for 84 of 99 boroughs,
 > with `context.liveResolution` reporting that per response and the absent
 > inputs having their weight **redistributed** rather than filled with a
 > placeholder. Postcode resolution works for **every** city since 2026-08-10.
@@ -231,9 +231,20 @@ everywhere; the gap is the remaining five.
 | **Crime breakdown (top offences)** | ONS | yes | no | **no** |
 
 Two of those five carry weight in the score. Liveability weights are schools
-0.35, crime 0.30, transport 0.25, healthcare 0.10 — and as of v3.7 **all four
-are measured for 78 of 86 boroughs**, up from 38. That was 35% of the weight
-unmeasured before v3.6. The remaining gaps (measured aircraft noise, crime
+0.35, crime 0.30, transport 0.25, healthcare 0.10 — and **all four are measured
+for 84 of 99 boroughs**, up from 38 before v3.6, which was 35% of the weight
+unmeasured.
+
+That figure is **counted through the Lambda's own `live_resolution()`**, not
+recomputed here, so it cannot disagree with the `context.liveResolution` each
+response carries. It read *78 of 86* until 2026-08-23 - correct when v3.7
+shipped on 11 August and stale from later the same day, when Leicester's 8
+boroughs and Teesside's 5 landed. The arithmetic checks out in both directions:
+86 + 13 = 99, and 6 of the 13 arrive fully measured, 78 + 6 = 84. The remaining
+15 are all `partial`, none `unavailable`: Progress 8 is missing for 20 boroughs
+(Cardiff has none, Wales having no England measure, and Leicester and Nottingham
+sit under upper-tier county education authorities) and a published crime rate for
+3. The remaining gaps (measured aircraft noise, crime
 breakdown) affect what the site can *show*, not what it scores.
 
 **The largest single win left is DEFRA aircraft sampling.** Round 4 covers all

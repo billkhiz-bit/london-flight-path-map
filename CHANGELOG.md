@@ -1,5 +1,91 @@
 # Changelog
 
+## 2026-08-23 — the legend stops describing bands that are not on the map
+
+Three leftovers from the 21 Aug audit, closed and deployed. **Two of the three
+were recorded inaccurately, and one was the exact inverse of the code.**
+
+**41 of 99 rendered legend band rows described a band no borough on that map
+carried.** The three fill-layer titles have been measured since 11 August -
+"(NO DATA)" is appended from what the render produced - but the three swatches
+under each title were never checked against anything. Leicester and Teesside
+showed six confident colour swatches, three road and three flood, beneath two
+titles already reading "(NO DATA)". That is the same defect the aircraft decibel
+scale was fixed for on 11 August, sitting untouched in its three sibling layers.
+`markLayerCoverage()` now hides a row whose band painted nothing - hiding rather
+than dimming, because `paintBoroughLayer` omits a borough it has no reading for,
+and a legend that keeps describing the omission is the label being quieter than
+the map.
+
+**The `excellent` air-quality band was recorded backwards, in two documents, for
+eleven days.** `HANDOVER.md` and `ROADMAP.md` both had it as a band "the legend
+advertises that no UK borough can occupy". The legend never advertised it:
+`#legend-aq-group` carried three rows while `repaintFillLayers()` carried four
+colours, so `#16a34a` was the one band the map could paint with **no row to name
+it** - four shades off GOOD's `#22c55e`, and therefore readable as GOOD. The
+over-claim was the painter's, and the correction was a swatch to ADD. It fires
+for none of our 91 urban boroughs and for 59.2% of DEFRA's national cells, so a
+row that hides itself when empty makes the question moot: it appears by itself
+when coverage leaves the city cores. `FILL_LAYER_COLOURS` is hoisted out of
+`repaintFillLayers` so the painter's keys and the legend's `data-band` rows are
+two lists a gate can compare; while they were a function-local and static markup,
+nothing could.
+
+**The extension's `LONDON_BOUNDS` caveated a section deleted seventeen days
+earlier.** Its own comment read "TfL's StopPoint API only knows about London, so
+a Manchester listing would come back with zero stations" - and the transport
+section came out of the extension on 6 August. It was repurposed to noise
+coverage without the geography being re-asked, and **a bounding box is not
+containment, fifth instance**. Verified live rather than reasoned about: Watford
+`WD17 2RA` and Dartford `DA1 1DR` sit inside the rectangle while
+`/v1/environment` answers "outside every city Sky Score covers", so the caveat
+was hidden exactly where it was true; `M3 4EN` sits outside it and is a covered
+city, so it was shown exactly where it was false. Watford also returns a
+**measured** `roadNoiseLdenDb` of 55.2, contradicting the caveat being
+suppressed. `coverageCaveat()` reads `aircraftQuietBasis` off the response, the
+only place the answer exists. **The e2e was asserting the defect** - it checked
+that Manchester received the London-shaped caveat - the fourth instance here of a
+passing test that reads as evidence.
+
+**d3 out of `<head>`, measured rather than argued.** The 22 Aug audit parked this
+"for a session where the change can be watched", and was right to refuse
+`defer`: deferred scripts run after the parser and therefore after the inline
+script, so every top-level `d3` reference in ~8,400 lines would break. Moving the
+tag to the foot of `<body>` immediately above that inline script changes
+execution order not at all. Emulated 3G, five runs each, median: **first
+contentful paint 3592 -> 1124 ms**, d3 arrived 3580 -> 3797 ms, map drawn 8614 ->
+8698 ms. The counter-measurement is the important half - moving a script out of
+`<head>` lowers its fetch priority, so first paint could improve while the thing
+people came for arrives later, and +84 ms is inside a ~110 ms run-to-run spread.
+**A preload whose `as` or `integrity` does not match its consumer is silent**:
+the browser fetches the file twice and everything still works, doubling the bytes
+on the one resource the change exists to make cheaper. `smoke-local` counts the
+requests and asserts exactly one; proven red with `as="fetch"`.
+
+**A gate hardened by watching it verify the deploy.** `check_deploy_drift.sh`
+counted its comparisons and never asserted the count, and printed **nothing** on
+success - so a run comparing all sixteen surfaces and a run whose loop never
+executed produced identical output and both exited 0. Noticed only because it
+went from one line to none, which is what it would print having died early.
+Fourth instance of that shape here, and the first in the advisory tier. **A
+success path that prints nothing cannot distinguish agreement from absence.**
+
+**Counts corrected, found by re-measuring rather than by any check.** `README.md`
+said *11 UK city-regions* where the live `/v1/regions`, the Lambda and the
+deployed `pricing.html` all say **12** (94 UK boroughs) - it was missed by the
+22 Aug sweep that fixed the two funnel pages. And liveability coverage read **78
+of 86** in README and EXPANSION; the live figure counted through the Lambda's own
+`live_resolution()` is **84 of 99**, stale since Leicester and Teesside shipped
+on 11 August, hours after v3.7 set the original number. The dated v3.7 entries in
+this file and in `METHODOLOGY.md` are left alone: they are records of what that
+change achieved, and retro-editing history is worse than a stale present tense.
+
+**Deployed and verified from the origin**, not from the deploy's exit code:
+`index.html` was the only surface out of step, the CloudFront invalidation was
+waited to completion, sha256 matches, drift is 0 of 16, and the live page was
+smoke-tested from CloudFront including that the d3 preload does not double-fetch
+in production.
+
 ## 2026-08-22 — ten Important findings, and four gates that could not have caught them
 
 Closed 10 of the 14 Important findings and 10 Minor ones from the 21 Aug audit.

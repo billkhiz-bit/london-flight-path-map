@@ -138,9 +138,14 @@ inherit all four inputs with no new integration.
    boroughs; 52 of 86 moved by more than 0.05; Cardiff became scoreable for the
    first time. The UK city-regions went from 2 of 4 liveability inputs to 3.
 2. ~~Healthcare.~~ **DONE 2026-08-11 as methodology v3.7.** `epraccur.zip` 403s,
-   but the **ODS syndication API** works and needs no key. **All four liveability
-   inputs are now measured for 78 of 86 boroughs**, up from 38. OSM Overpass was
-   not needed, so no ODbL share-alike obligation was taken on.
+   but the **ODS syndication API** works and needs no key. All four liveability
+   inputs were measured for **78 of 86 boroughs** at v3.7, up from 38. OSM
+   Overpass was not needed, so no ODbL share-alike obligation was taken on.
+   **Current figure: 84 of 99** (re-counted 2026-08-23 through the Lambda's own
+   `live_resolution()`); the 86 became 99 when Leicester and Teesside shipped
+   later the same day. This is a planning doc, so the live number is the one to
+   plan against - the v3.7 figure is kept beside it as the record of what that
+   change achieved, not as the current state.
 3. **Cardiff to the site — newly possible as of v3.6.** Its four boroughs held
    `crimeRate` alone, one input, below the two-input floor. Transport made it
    two, so all four now publish a liveability score. Leaving `BACKEND_ONLY` is a
