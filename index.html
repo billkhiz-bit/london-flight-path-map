@@ -2018,8 +2018,22 @@
         color: var(--mid);
         cursor: pointer;
         border-bottom: 2px solid transparent;
-        /* WCAG 2.5.8: text-only controls still need a 24px target. */
+        /* WCAG 2.5.8: text-only controls still need a 24px target.
+
+           BOTH AXES. This said min-height alone until 2026-08-23, so the rule
+           was half-applied: measured at desktop widths the tabs were 14x24
+           ("UK") and 22x24 ("USA"), failing the very criterion the comment
+           cites. Mobile passed only by accident - its override adds
+           `padding: 0 6px` for spacing reasons, which happens to widen them to
+           26 and 34.
+
+           It matters more since the sheet stopped covering the map at boot:
+           these two tabs are the top of the navigation a phone user now lands
+           on, and the same control is 5px narrower than the rule on a laptop.
+           min-width rather than padding, so nothing moves visually - the text
+           just gets a box that meets the target size. */
         min-height: 24px;
+        min-width: 24px;
       }
       .country-btn.active {
         color: var(--dark);
