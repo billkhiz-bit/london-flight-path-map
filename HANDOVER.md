@@ -162,7 +162,20 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 
 ## 4a. Deploy state
 
-**DEPLOYED 2026-08-23.** `index.html` only - it was the sole surface out of step,
+**DEPLOYED 2026-08-23, TWICE.** Second deploy carried the mobile legend
+disclosure (`index.html`) and the Swagger `select-name` fix
+(`score-demo/api-docs.html`); invalidation `I62G6RVYSZ7ZWSNL6EDFZIL8T6` waited to
+completion, sha256 matches on both, `check_deploy_drift.sh` reports **all 16
+surfaces in sync**, and the live smoke passes from CloudFront. **The branch was
+also pushed** - it had been 14 commits ahead and local-only since 22 August, and
+is now level with origin.
+
+*(Note for a future session: the project `CLAUDE.md` still says "keep git local
+only, never push", which now contradicts both the global multi-device rule and
+what was actually done. Left as-is deliberately - Bill chose to push without
+changing the instruction.)*
+
+First deploy: `index.html` only - it was the sole surface out of step,
 and neither the extension (unlisted) nor any Lambda changed. Uploaded to S3,
 CloudFront invalidation `I1Q8QLUBYZ3SFP4BYRV4884NRM` **waited to completion**
 rather than fired and forgotten.

@@ -80,11 +80,61 @@ on 11 August, hours after v3.7 set the original number. The dated v3.7 entries i
 this file and in `METHODOLOGY.md` are left alone: they are records of what that
 change achieved, and retro-editing history is worse than a stale present tense.
 
-**Deployed and verified from the origin**, not from the deploy's exit code:
-`index.html` was the only surface out of step, the CloudFront invalidation was
-waited to completion, sha256 matches, drift is 0 of 16, and the live page was
-smoke-tested from CloudFront including that the d3 preload does not double-fetch
-in production.
+**The legend did not fit a phone, and no gate could see it.** Measured at
+390x844: the expanded legend was **711px tall and rendered from y=-98**, so its
+top was off the screen and its bottom was under the sheet; at 320x568 it started
+at **y=-374**. Opening it on a phone gave a fragment of prose mid-sentence,
+overlapping the SKY SCORE wordmark, with the road, flood and air-quality legends
+below never appearing at all - so the morning's work was invisible on mobile.
+
+The composition decided the fix: **383px of the 711 was the aircraft group**,
+whose five dB swatches are only ~70px of that. The rest was one 120-word
+provenance paragraph. A scrollbar is the wrong answer to a legend that is mostly
+not a legend. Folded into a `<details>`, the same treatment the extension panel
+gives its own caveats. **711 -> 458px**; it now fits at 390 and above for every
+city. At 320x568 London with all four layers on is still 122px over - improved
+from 374, not resolved - while Teesside and South Yorkshire fit at 255 and 296px.
+
+**`responsive.mjs` passed throughout**, because it asserts no horizontal overflow
+and no control past the viewport edge with no scrollable ancestor. **An element
+clipped off the TOP is neither.** And `city-switch.mjs` and `uk-city-panel.mjs`
+both run at 1440x900 only, so nothing in the suite had ever opened the legend on
+a phone - the same shape as the 11 August defect where nothing had ever clicked
+a chip, one layer along.
+
+**A first reading of the mobile state was wrong and is recorded here because it
+nearly shipped as a finding.** A hit test reported every map control unclickable
+at every phone viewport. It was the harness, not the product: it never dismissed
+the first-run hint or collapsed the sheet, which is what a person does. Doing
+both, city switching works at 320 and 390. *Reproduce the user's path before
+reporting a user-facing defect.*
+
+**A CRITICAL WCAG violation that presented as flake.** The source scan reported
+`select-name` on `score-demo/api-docs.html` during a full preflight, then passed
+three times clean. Swagger UI renders its server `<select>` unnamed, and the page
+has patched that since 27 July - but from `onComplete`, which fires **after** the
+element is inserted, leaving a window in which it exists unlabelled. The scan was
+racing the same window from the other side and usually lost harmlessly: it ran
+before the spec fetch resolved, found a page Swagger had not touched, and
+reported OK. **That page was effectively unaudited, and the run that caught the
+real defect was the anomaly rather than the error.** The observer now attaches
+before render; the scan waits on an independent render signal and treats "never
+rendered" as failure. Was ~1 run in 4; now 3 of 3 red with the label removed and
+3 of 3 green with it restored.
+
+The a11y scan also opens the new legend disclosure before scanning. axe does not
+evaluate a closed `<details>`, so without that the fix would have moved a block
+of text **out of the audit** - the same defect fixed hours earlier, when the
+EXCELLENT swatch was hidden in every city and never scanned. **Making something
+smaller must not make it unaudited.**
+
+**Deployed and verified from the origin**, not from the deploy's exit code. Two
+deploys: `index.html` in the morning, then `index.html` + `score-demo/api-docs.html`
+in the afternoon. Both invalidations were waited to completion, sha256 matches on
+every surface, `check_deploy_drift.sh` reports **all 16 in sync**, and the live
+page was smoke-tested from CloudFront including that the d3 preload does not
+double-fetch in production. **15 commits pushed to origin** - the branch had been
+14 ahead and local-only since 22 August.
 
 ## 2026-08-22 — ten Important findings, and four gates that could not have caught them
 

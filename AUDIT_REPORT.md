@@ -483,6 +483,26 @@ authority, not the prose.
 2. **`responsive.mjs` and the a11y scan load one URL each** — the homepage, in
    its default state. Neither has ever loaded `privacy`, `pricing`, `terms`,
    `changes` or a demo page, and neither opens a collapsed disclosure.
+   **Both halves closed, and a THIRD gap in the same family found 2026-08-23:**
+   `responsive.mjs` asserts no horizontal overflow and no control past the
+   viewport edge with no scrollable ancestor. **An element clipped off the TOP
+   of the viewport is neither**, so it passed at all ten viewports while the
+   expanded legend rendered from y=-98 at 390x844 and y=-374 at 320x568. And
+   `city-switch.mjs` and `uk-city-panel.mjs` run at **1440x900 only**, so
+   nothing in the suite had ever opened the legend, or clicked a chip, on a
+   phone. The legend is fixed; **the gate gap is not** - see item 5.
+5. **No gate watches for a control clipped above the viewport, or occluded by
+   another element.** Both are invisible to every check here: overflow is
+   horizontal-only, and `elementFromPoint` is used nowhere. A phone-viewport
+   pass in `city-switch.mjs` plus a top-clipping assertion in `responsive.mjs`
+   would cover it. Raised 2026-08-23 and deliberately left open rather than
+   half-built.
+6. **A gate that races an async render can pass by never reaching the state.**
+   `a11y-source.mjs` scanned `score-demo/api-docs.html` before its Swagger spec
+   fetch resolved, so it audited a near-empty page and reported OK; the one run
+   that caught a CRITICAL `select-name` looked like flake. Fixed for that page
+   with an independent render signal that fails when unmet. **Nothing checks
+   the other eight pages for the same shape.**
 3. **No gate exercises the non-London area-search path**, which is how C8
    survived: the score-parity check compares boroughs, never the panel.
 4. **`tests/api.test.mjs` cannot fail on a 4xx**, so it guards nothing it claims.
