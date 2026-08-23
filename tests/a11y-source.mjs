@@ -56,7 +56,24 @@ const PAGES = [
   { path: '/privacy', name: 'privacy' },
   { path: '/terms', name: 'terms of use' },
   { path: '/api/', name: 'API landing' },
-  { path: '/changes', name: 'what changed this quarter' },
+  {
+    path: '/changes',
+    name: 'what changed this quarter',
+    // WAIT FOR THE TABLE TO EXIST, added 2026-08-23 closing AUDIT §7 item 6.
+    //
+    // This page builds its entire body from /v1/changes, so a scan that ran
+    // before the fetch resolved audited a heading and an empty <tbody> - the
+    // same shape that left score-demo/api-docs.html effectively unaudited until
+    // its CRITICAL select-name surfaced looking like flake.
+    //
+    // SETTLED EITHER WAY, not "the API answered". On failure this page writes
+    // an apology into #status and leaves #rows empty, so a predicate keyed only
+    // on rows would turn an upstream blip into a red blocking gate. This asks
+    // whether load() finished, which is the thing the scan actually depends on.
+    renderedWhenFn: () =>
+      document.querySelectorAll('#rows tr').length > 0 ||
+      /Could not load/i.test(document.getElementById('status')?.textContent || ''),
+  },
   { path: '/score-demo/', name: 'score demo' },
   {
     path: '/score-demo/api-docs.html',
@@ -81,7 +98,14 @@ const PAGES = [
     // globally here would silently un-gate the rule that caught the locator.
     disableRules: ['nested-interactive'],
   },
-  { path: '/score-demo/status.html', name: 'status page' },
+  {
+    path: '/score-demo/status.html',
+    name: 'status page',
+    // Same race, same page-shape: every endpoint card is written by
+    // renderEndpoints(). A probe that fails still produces a card
+    // (`ok: false`), so this settles on an outage too rather than hanging.
+    renderedWhenFn: () => (document.getElementById('endpointsGrid')?.children.length || 0) > 0,
+  },
 ];
 
 /**
@@ -168,7 +192,7 @@ for (const viewport of VIEWPORTS) {
   });
   const page = await context.newPage();
   console.log(`\n--- ${viewport.label} (${viewport.width}x${viewport.height}) ---`);
-  for (const { path, name, waitFor, renderedWhen, disableRules } of PAGES) {
+  for (const { path, name, waitFor, renderedWhen, renderedWhenFn, disableRules } of PAGES) {
   let violations = [];
   let note = '';
   try {
@@ -186,6 +210,22 @@ for (const viewport of VIEWPORTS) {
         .catch(() => {
           note = ' (locator never rendered)';
         });
+    }
+    if (renderedWhenFn) {
+      // A predicate rather than a selector, because "this page has finished
+      // rendering" is not always the presence of one element - see the note on
+      // /changes above. Not reaching it is a FAILURE, never a quiet pass: a
+      // scan of a page that never painted is a scan of nothing.
+      try {
+        await page.waitForFunction(renderedWhenFn, null, { timeout: 30000 });
+      } catch {
+        console.log(
+          `${path.padEnd(28)} FAIL ${name} — never finished rendering, so nothing ` +
+            'meaningful was scanned'
+        );
+        failed++;
+        continue;
+      }
     }
     if (renderedWhen) {
       // NOT REACHING THE STATE IS A FAILURE, never a quiet pass. A scan of a
