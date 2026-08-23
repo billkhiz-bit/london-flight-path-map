@@ -597,6 +597,33 @@
         gap: 8px;
         margin-bottom: 4px;
       }
+      /* The aircraft provenance note, collapsed. See the markup comment on
+         #legend-noise-disclosure for the measurements that prompted it. */
+      .legend-disclosure {
+        margin: 6px 0 0;
+      }
+      .legend-disclosure > summary {
+        font-size: 8px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--mid);
+        cursor: pointer;
+        /* Deliberately NOT display:flex - that removes Chrome's ::marker box
+           and the disclosure triangle cannot be restored. */
+        list-style: revert;
+        padding: 2px 0;
+      }
+      .legend-disclosure > summary:hover {
+        color: var(--dark);
+      }
+      .legend-disclosure > summary:focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+      .legend-disclosure[open] > summary {
+        color: var(--dark);
+        margin-bottom: 2px;
+      }
       .legend-row:last-child {
         margin-bottom: 0;
       }
@@ -3223,15 +3250,45 @@
               <span>75+ dB</span>
             </div>
             </div>
-            <!-- Set from the city registry by applyCityChrome(). Had no id and
-                 was never swapped, so New York showed this DEFRA / LHR / LCY /
-                 LGW paragraph beneath a "BTS AIRCRAFT NOISE (dB DNL)" heading.
-                 The markup below is London's copy and is the initial state. -->
-            <div
-              id="legend-noise-explainer"
-              class="legend-note"
-              style="font-size: 8px; margin: 4px 0 0; line-height: 1.4"
-            >
+            <!-- COLLAPSED INTO A DISCLOSURE, 2026-08-23.
+                 Measured at 390x844: the expanded legend was 711px tall against
+                 an 844px viewport and rendered from y=-98, so its top was off
+                 the screen and its bottom was under the sheet. 383px of the 711
+                 was this one aircraft group, and the five dB swatches are only
+                 ~70px of that - the rest was this paragraph. So a phone user
+                 opening the legend got a fragment of prose mid-sentence,
+                 overlapping the SKY SCORE wordmark, and the road/flood/air
+                 legends below never appeared at all.
+
+                 Same treatment the extension panel already gives its own
+                 caveats: one disclosure for everything explanatory, because the
+                 facts it justifies are already on the rows. The headline claim
+                 is on the TITLE - South Yorkshire's reads "AIRCRAFT NOISE (NO
+                 AIRPORT)" - and this is the detail behind it.
+
+                 It does NOT hide when markLayerCoverage() hides the dB scale.
+                 The scale describes a raster; this describes the basis, and for
+                 the nine cities with no raster the basis is the only thing
+                 there is to say. South Yorkshire's copy is the sole place the
+                 "no commercial airport" fact is written out.
+
+                 No `display: flex` on the <summary>: that removes the ::marker
+                 box in Chrome and `list-style: revert` cannot bring it back,
+                 which is why the extension panel had to draw its own triangle.
+                 Left as a list-item so the native marker works. -->
+            <details class="legend-disclosure" id="legend-noise-disclosure">
+              <summary>About this data</summary>
+              <!-- Set from the city registry by applyCityChrome(), which writes
+                   innerHTML to THIS element - so the <details> wrapper above is
+                   preserved across a city switch. Had no id and was never
+                   swapped, so New York showed this DEFRA / LHR / LCY / LGW
+                   paragraph beneath a "BTS AIRCRAFT NOISE (dB DNL)" heading.
+                   The markup below is London's copy and is the initial state. -->
+              <div
+                id="legend-noise-explainer"
+                class="legend-note"
+                style="font-size: 8px; margin: 4px 0 0; line-height: 1.4"
+              >
               <strong>What this is:</strong>
               DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR,
               LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is
@@ -3239,8 +3296,9 @@
               result as a highly anomalous situation. These contours therefore understate a typical year, most at the
               airports worst affected. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
               Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search
-              gives a 0-10 quiet score for that location, not a decibel reading.
-            </div>
+                gives a 0-10 quiet score for that location, not a decibel reading.
+              </div>
+            </details>
           </div>
           <div id="legend-road-group" style="display: none">
             <!-- visual fix-LAYER-LABELS: title bumped from 8px var(--mid) to

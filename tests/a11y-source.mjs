@@ -320,22 +320,37 @@ for (const viewport of VIEWPORTS) {
           }
         }
       }
+      // AND ANY COLLAPSED DISCLOSURE IN THE LEGEND, added 2026-08-23 with the
+      // change that folded the aircraft provenance note into a <details>.
+      //
+      // Collapsing that paragraph is what took the legend from 711px to 458px
+      // and made it fit a phone - but axe does not evaluate the contents of a
+      // closed <details>, so without this the fix would have quietly moved a
+      // block of text OUT of the audit. That is the same defect this file was
+      // extended to fix hours earlier, when the EXCELLENT swatch was hidden in
+      // every city and therefore never scanned. Making something smaller must
+      // not make it unaudited.
+      let disclosures = 0;
+      for (const d of document.querySelectorAll('#map-legend details')) {
+        d.open = true;
+        disclosures++;
+      }
       const title = document.getElementById('legend-noise-title');
       // Report what the harness actually REACHED. A scan of a legend that
       // never opened must not be able to pass as a scan of an open one -
       // that is precisely the failure being fixed here.
-      return { shown, rows, titleVisible: !!(title && title.offsetParent !== null) };
+      return { shown, rows, disclosures, titleVisible: !!(title && title.offsetParent !== null) };
     });
     await page.waitForTimeout(300);
     // The row floor is 10 because that is what the markup declares: 3 road, 3
     // flood, 4 air quality. Any count in an assertion is scheduled staleness,
     // so this one fails LOW only - adding a band raises the count and needs no
     // edit here, while a selector that stops matching drops it and does.
-    if (!opened.titleVisible || opened.shown < 3 || opened.rows < 10) {
+    if (!opened.titleVisible || opened.shown < 3 || opened.rows < 10 || opened.disclosures < 1) {
       console.log(
         `${'/ (legend expanded)'.padEnd(28)} FAIL could not reach the legend ` +
           `(groups shown ${opened.shown}/3, band rows revealed ${opened.rows}, ` +
-          `heading visible ${opened.titleVisible})`
+          `disclosures opened ${opened.disclosures}, heading visible ${opened.titleVisible})`
       );
       failed++;
     } else {
