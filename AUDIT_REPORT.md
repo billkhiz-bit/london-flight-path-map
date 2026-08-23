@@ -504,12 +504,20 @@ authority, not the prose.
    navigation. All three detectors proven red. **Two exemptions are tested, not
    name-matched** - a control parked outside its own scroller, and an element
    that returns into view when focused.
-6. **A gate that races an async render can pass by never reaching the state.**
-   `a11y-source.mjs` scanned `score-demo/api-docs.html` before its Swagger spec
-   fetch resolved, so it audited a near-empty page and reported OK; the one run
-   that caught a CRITICAL `select-name` looked like flake. Fixed for that page
-   with an independent render signal that fails when unmet. **Nothing checks
-   the other eight pages for the same shape.**
+6. ~~**A gate that races an async render can pass by never reaching the
+   state.**~~ **CLOSED 2026-08-23.** `a11y-source.mjs` scanned
+   `score-demo/api-docs.html` before its Swagger spec fetch resolved, so it
+   audited a near-empty page and reported OK; the one run that caught a CRITICAL
+   `select-name` looked like flake. Generalised by asking which OTHER pages can
+   race at all: **only three of the eight render anything with JavaScript**, and
+   the score demo paints on user submit, so its landing state is genuinely its
+   landing state. `/changes` (builds its table from `/v1/changes`) and the
+   status page (writes every endpoint card from its probes) now carry
+   predicates. **The predicate settles either way rather than waiting for the
+   API to answer** - `/changes` writes its failure into `#status` and leaves
+   `#rows` empty, so a check keyed only on rows would turn an upstream blip into
+   a red blocking gate. What the scan depends on is that the page FINISHED
+   rendering, not that it succeeded. Proven red.
 3. **No gate exercises the non-London area-search path**, which is how C8
    survived: the score-parity check compares boroughs, never the panel.
 4. **`tests/api.test.mjs` cannot fail on a 4xx**, so it guards nothing it claims.
