@@ -61,6 +61,19 @@ const PAGES = [
   {
     path: '/score-demo/api-docs.html',
     name: 'API reference',
+    // WAIT FOR SWAGGER TO HAVE PAINTED, added 2026-08-23.
+    //
+    // Without this the scan raced the spec fetch and usually won in the
+    // useless direction: it ran before Swagger had inserted anything, found a
+    // near-empty page, and reported OK. This page was effectively unaudited,
+    // and the one time it did red - a CRITICAL `select-name` on the server
+    // <select> - it looked like flake because three clean re-runs followed.
+    //
+    // `.opblock` is an INDEPENDENT render signal, deliberately not "every
+    // select has an aria-label". Waiting on the thing the fix does would be an
+    // expectation read from the code under test, and this gate could then
+    // never fail on it.
+    renderedWhen: '#swagger-ui .opblock',
     // Swagger UI 5.17.14 renders an operation summary <button> containing the
     // deep-link <button>. Upstream defect, unfixable without patching a
     // vendored bundle the next upgrade would overwrite. Scoped to this ONE rule
@@ -155,7 +168,7 @@ for (const viewport of VIEWPORTS) {
   });
   const page = await context.newPage();
   console.log(`\n--- ${viewport.label} (${viewport.width}x${viewport.height}) ---`);
-  for (const { path, name, waitFor, disableRules } of PAGES) {
+  for (const { path, name, waitFor, renderedWhen, disableRules } of PAGES) {
   let violations = [];
   let note = '';
   try {
@@ -173,6 +186,21 @@ for (const viewport of VIEWPORTS) {
         .catch(() => {
           note = ' (locator never rendered)';
         });
+    }
+    if (renderedWhen) {
+      // NOT REACHING THE STATE IS A FAILURE, never a quiet pass. A scan of a
+      // page that never rendered is a scan of nothing, and reporting it as OK
+      // is exactly how this page went unaudited.
+      try {
+        await page.waitForSelector(renderedWhen, { state: 'visible', timeout: 30000 });
+      } catch {
+        console.log(
+          `${path.padEnd(28)} FAIL ${name} — never rendered (${renderedWhen}), ` +
+            'so nothing was scanned'
+        );
+        failed++;
+        continue;
+      }
     }
     let builder = new AxeBuilder({ page }).withTags([
       'wcag2a',

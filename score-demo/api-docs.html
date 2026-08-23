@@ -144,20 +144,50 @@
   // markup the new version produces (and no-ops harmlessly if the element
   // is renamed).
   //
-  // onComplete fires after the spec is parsed and the UI is painted. The
-  // MutationObserver covers the servers block being re-rendered later, which
-  // Swagger does when the spec defines multiple servers.
-  function labelSwaggerControls() {
-    const label = () => {
-      document
-        .querySelectorAll('#swagger-ui select:not([aria-label]):not([id="filter"])')
-        .forEach((el) => el.setAttribute('aria-label', 'Select API server'));
-    };
-    label();
+  // THE OBSERVER STARTS BEFORE SWAGGER RENDERS, corrected 2026-08-23.
+  //
+  // It used to be installed by onComplete, which fires AFTER the UI is
+  // painted - so between Swagger inserting <select id="servers"> and this
+  // labelling it there was a window in which the element existed unlabelled.
+  // Small, but real, and it was caught in production-shaped conditions: the
+  // WCAG source scan reported `select-name` CRITICAL on this page during a
+  // full preflight run, then passed on its own three times in a row.
+  //
+  // The scan was racing the same window from the other side, and usually lost
+  // in the harmless direction - it scanned before #servers existed at all and
+  // reported OK for the wrong reason. So the gate agreed with the page most of
+  // the time by never reaching the state, which is this repo's most repeated
+  // defect wearing a stopwatch.
+  //
+  // Observing from before the render closes the window: the label is applied
+  // in the same mutation batch that inserts the element. onComplete still
+  // calls label() as a backstop for a Swagger build that somehow paints
+  // without mutating #swagger-ui.
+  //
+  // Still patched after render rather than by editing the vendored bundle, so
+  // the next Swagger UI upgrade cannot silently drop the fix - a modified
+  // vendor file would be overwritten, whereas this runs against whatever
+  // markup the new version produces and no-ops if the element is renamed.
+  function labelSwaggerSelects() {
+    document
+      .querySelectorAll('#swagger-ui select:not([aria-label]):not([id="filter"])')
+      .forEach((el) => el.setAttribute('aria-label', 'Select API server'));
+  }
+
+  if (window.MutationObserver) {
+    // #swagger-ui exists in the static markup, so this attaches before
+    // SwaggerUIBundle has painted anything into it.
     const root = document.getElementById('swagger-ui');
-    if (root && window.MutationObserver) {
-      new MutationObserver(label).observe(root, { childList: true, subtree: true });
+    if (root) {
+      new MutationObserver(labelSwaggerSelects).observe(root, {
+        childList: true,
+        subtree: true,
+      });
     }
+  }
+
+  function labelSwaggerControls() {
+    labelSwaggerSelects();
   }
 </script>
 
