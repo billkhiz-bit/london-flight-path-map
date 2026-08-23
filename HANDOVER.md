@@ -60,7 +60,7 @@ Everything below §3 predates a long session; this is where it actually stands.
 | Audit **Minor** | 10 closed 2026-08-22 + **2 more on 2026-08-23** (`LONDON_BOUNDS`, the d3 tag), all deployed except the 2026-08-23 batch |
 | Tests | **pytest 555, unchanged** - 2026-08-23 added assertions to the `.mjs` gates, not to pytest (extension e2e 60 -> 65 checks, plus new families in `layer-honesty`, `smoke-local` and `check_deploy_drift`). The line here read "555 +8", which implied 563 pytest tests and was measured wrong within a day of being written. Every added assertion proven red first |
 | Distribution findings | **D5, D1, D2, D4 shipped**; D3 and D6 need no build |
-| Blocking preflight stages | **30** (was 25; five added today) |
+| Blocking preflight stages | **29** (measured 2026-08-23 from a real run, not counted by hand - it read 30, and a count in a label is scheduled staleness. `sed -n '/^Blocking:/,/^Advisory:/p' <log> \| grep -cE '  (PASS\|FAIL)'`) |
 | Log groups | 8, one per live Lambda, all 30-day retention, **zero orphans** |
 | Deploy drift | zero, re-verified by sha256 2026-08-22 after the deploy |
 
