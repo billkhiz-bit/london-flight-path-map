@@ -265,24 +265,49 @@ for (const viewport of VIEWPORTS) {
       const toggle = document.getElementById('legend-toggle');
       if (toggle && toggle.getAttribute('aria-expanded') === 'false') toggle.click();
       let shown = 0;
+      let rows = 0;
       for (const id of ['legend-road-group', 'legend-flood-group', 'legend-aq-group']) {
         const group = document.getElementById(id);
         if (group) {
           group.style.display = 'block';
           shown++;
+          // AND THE BAND ROWS INSIDE THEM, added 2026-08-23 alongside the
+          // change that started hiding a row whose band painted nothing.
+          //
+          // Without this the scan silently narrows the day that ships. The
+          // EXCELLENT air-quality swatch is hidden in all eleven cities we
+          // cover - every one is urban and none clears the WHO PM2.5
+          // guideline - so axe would never evaluate it, and it would first
+          // reach a user on the day coverage takes in a rural borough, never
+          // having had its contrast measured. That is how three legend
+          // headings shipped at 1.00:1, literally the same colour as their own
+          // background, until this file learned to open the collapsed legend.
+          //
+          // Same principle as the note above: adding a viewport is not the
+          // same as reaching a state, and an element only reachable with data
+          // we do not hold yet is still an element a user will read.
+          for (const row of group.querySelectorAll('[data-band]')) {
+            row.style.display = 'flex';
+            rows++;
+          }
         }
       }
       const title = document.getElementById('legend-noise-title');
       // Report what the harness actually REACHED. A scan of a legend that
       // never opened must not be able to pass as a scan of an open one -
       // that is precisely the failure being fixed here.
-      return { shown, titleVisible: !!(title && title.offsetParent !== null) };
+      return { shown, rows, titleVisible: !!(title && title.offsetParent !== null) };
     });
     await page.waitForTimeout(300);
-    if (!opened.titleVisible || opened.shown < 3) {
+    // The row floor is 10 because that is what the markup declares: 3 road, 3
+    // flood, 4 air quality. Any count in an assertion is scheduled staleness,
+    // so this one fails LOW only - adding a band raises the count and needs no
+    // edit here, while a selector that stops matching drops it and does.
+    if (!opened.titleVisible || opened.shown < 3 || opened.rows < 10) {
       console.log(
         `${'/ (legend expanded)'.padEnd(28)} FAIL could not reach the legend ` +
-          `(groups shown ${opened.shown}/3, heading visible ${opened.titleVisible})`
+          `(groups shown ${opened.shown}/3, band rows revealed ${opened.rows}, ` +
+          `heading visible ${opened.titleVisible})`
       );
       failed++;
     } else {

@@ -82,16 +82,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Sky Score" />
 
-    <!-- Self-hosted since 2026-07-30. This was https://d3js.org/d3.v7.min.js;
-         the vendored copy is byte-identical (its SHA-384 matches the integrity
-         hash that was already pinned here, which is why the attribute is kept
-         - it documents provenance and still verifies same-origin). Serving it
-         ourselves removes a third-party script from the critical path and lets
-         the service worker precache it for a genuine offline launch. -->
-    <script
-      src="/js/vendor/d3.v7.min.js"
+    <!-- d3 IS NO LONGER FETCHED HERE. The tag moved to the foot of <body>,
+         immediately above the inline script that uses it - see the note there.
+         This preload keeps the fetch starting during head parse, which is the
+         half of the old position worth keeping; it does not block rendering.
+         `integrity` matches the tag's, so the two are one request and not two. -->
+    <link
+      rel="preload"
+      as="script"
+      href="/js/vendor/d3.v7.min.js"
       integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
-    ></script>
+    />
     <!-- visual fix-DEFRA-5: preload the aircraft noise raster so the browser
          starts the fetch during HTML parse, in parallel with JS download +
          eval. By the time renderDefraTiles runs, the PNG is already in the
@@ -731,10 +732,17 @@
         background: #7c3aed;
         border-color: #7c3aed;
       }
-      .layer-toggle[data-layer='transport'].active .indicator {
-        background: #0d4ea2; /* TfL roundel blue */
-        border-color: #0d4ea2;
-      }
+      /* The transport toggle's indicator colour lived here until 2026-08-23,
+         eleven days after the toggle itself was removed. Six toggles are
+         declared in the markup - paths, defra-aircraft, defra-road, flood,
+         air-quality, labels - and this rule was the seventh, styling a
+         selector that matches nothing.
+
+         FOURTH stale reference from that one removal, after the metric card's
+         'TOGGLE "TRANSPORT" ON MAP', the `.layer-transport` selector entry and
+         the map's aria-label. Each was found separately, by someone reading
+         nearby code rather than by any check. Deleting a feature means
+         grepping for its NAME. */
       .layer-toggle[data-layer='flood'].active .indicator {
         background: #3b82f6;
         border-color: #3b82f6;
@@ -3246,15 +3254,21 @@
             >
               DEFRA ROAD NOISE
             </div>
-            <div class="legend-row">
+            <!-- data-band keys each row to the value paintBoroughLayer() reads
+                 out of borough-extra.json, so markLayerCoverage() can hide the
+                 rows nothing painted. A band row is a claim that the map can
+                 show you that colour; leaving it standing over a city where no
+                 borough carries it is the same over-claim the "(NO DATA)"
+                 suffix above already measures, one level down. -->
+            <div class="legend-row" data-band="high">
               <div class="legend-swatch" style="background: #7c3aed; opacity: 0.65"></div>
               <span>HIGH</span>
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="moderate">
               <div class="legend-swatch" style="background: #a78bfa; opacity: 0.65"></div>
               <span>MODERATE</span>
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="low">
               <div class="legend-swatch" style="background: #ddd6fe; opacity: 0.65"></div>
               <span>LOW</span>
             </div>
@@ -3267,15 +3281,15 @@
             >
               EA FLOOD RISK
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="high">
               <div class="legend-swatch" style="background: #1e3a8a; opacity: 0.55"></div>
               <span id="legend-flood">HIGH</span>
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="medium">
               <div class="legend-swatch" style="background: #3b82f6; opacity: 0.55"></div>
               <span>MEDIUM</span>
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="low">
               <div class="legend-swatch" style="background: #93c5fd; opacity: 0.55"></div>
               <span>LOW</span>
             </div>
@@ -3288,17 +3302,38 @@
             >
               BOROUGH AIR QUALITY
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="poor">
               <div class="legend-swatch" style="background: #dc2626; opacity: 0.55"></div>
               <span id="legend-aq">POOR</span>
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="moderate">
               <div class="legend-swatch" style="background: #f59e0b; opacity: 0.55"></div>
               <span>MODERATE</span>
             </div>
-            <div class="legend-row">
+            <div class="legend-row" data-band="good">
               <div class="legend-swatch" style="background: #22c55e; opacity: 0.55"></div>
               <span>GOOD</span>
+            </div>
+            <!-- EXCELLENT WAS MISSING, and this was recorded backwards. Both
+                 HANDOVER.md and ROADMAP.md had it down as a band "the legend
+                 advertises that no UK borough can occupy". The legend never
+                 advertised it: it carried three rows while repaintFillLayers()
+                 carried four colours, so the one band the map could paint with
+                 no label was #16a34a - a green four shades off GOOD's #22c55e,
+                 which is what it would have been read as.
+
+                 aq_band() in build_borough_bands.py returns 'excellent' when
+                 the worse of NO2/PM2.5 sits at or under its WHO guideline, and
+                 59.2% of DEFRA's 254,904 national cells clear both. None of
+                 our 91 boroughs do (measured: 62 moderate, 18 good, 11 poor),
+                 because all 91 are urban - so this row hides itself today and
+                 starts appearing on its own when coverage leaves the city
+                 cores, which is what EXPANSION.md plans. That is the
+                 markLayerCoverage() bargain: a measured row costs nothing
+                 while it is empty and needs nobody to remember it later. -->
+            <div class="legend-row" data-band="excellent">
+              <div class="legend-swatch" style="background: #16a34a; opacity: 0.55"></div>
+              <span>EXCELLENT</span>
             </div>
           </div>
         </div>
@@ -3595,6 +3630,37 @@
       </nav>
     </div>
 
+    <!-- d3, MOVED HERE FROM <head> ON 2026-08-23.
+         Self-hosted since 2026-07-30. This was https://d3js.org/d3.v7.min.js;
+         the vendored copy is byte-identical (its SHA-384 matches the integrity
+         hash that was already pinned, which is why the attribute is kept - it
+         documents provenance and still verifies same-origin). Serving it
+         ourselves removes a third-party script from the critical path and lets
+         the service worker precache it for a genuine offline launch.
+
+         WHY IT MOVED, and why NOT `defer`. In <head> a classic script blocks
+         the parser, so 280 KB had to arrive before a single pixel of the app
+         shell could paint. Measured on emulated 3G before the move: d3 landed
+         at 3412 ms and First Contentful Paint at 3728 ms - the shell waited on
+         a library it does not need to be drawn.
+
+         `defer` is the obvious fix and is WRONG here: deferred scripts run
+         after the parser finishes, which is after the inline script below, so
+         every top-level d3 reference in ~8,400 lines would break. Moving the
+         tag to sit immediately above that inline script instead changes the
+         EXECUTION order not at all - d3 still runs first, as it always has -
+         while letting the ~640 lines of shell markup above parse and paint
+         first. The preload in <head> keeps the download starting as early as
+         it did before.
+
+         So the risk this carried in the 2026-08-22 audit ("proving no top-level
+         d3 call exists needs more than a grep, and the failure mode is a blank
+         map on the live site") does not apply to this form: nothing was
+         reordered relative to the code that calls it. -->
+    <script
+      src="/js/vendor/d3.v7.min.js"
+      integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
+    ></script>
     <script src="js/api-base.js"></script>
     <script>
       // PWA: register the service worker. Runs after window load so it
@@ -9431,7 +9497,26 @@
        * underneath stay their normal colour - and it cannot be mistaken for a
        * measurement.
        */
+      /**
+       * The colour a fill layer paints for each band it can read.
+       *
+       * Hoisted out of repaintFillLayers() on 2026-08-23 so that these keys and
+       * the legend's data-band rows are two holders of one list that a gate can
+       * compare. While they were function-locals nothing could: aqColors held
+       * four bands and the legend held three, and the fourth - 'excellent',
+       * #16a34a - was a colour the map could paint with no row to explain it.
+       */
+      const FILL_LAYER_COLOURS = {
+        road: { high: '#7c3aed', moderate: '#a78bfa', low: '#ddd6fe' },
+        flood: { high: '#1e3a8a', medium: '#3b82f6', low: '#93c5fd' },
+        aq: { poor: '#dc2626', moderate: '#f59e0b', good: '#22c55e', excellent: '#16a34a' },
+      };
+
       function paintBoroughLayer(group, valueOf, colours, stroke) {
+        // Per BAND, not just a total. markLayerCoverage() hides a legend row
+        // whose band painted nothing, so the counter has to be at the same
+        // granularity as the claim it is used to check.
+        const bands = {};
         let painted = 0;
         cityOf(currentCity)
           .features()
@@ -9448,9 +9533,10 @@
               .attr('stroke', stroke)
               .attr('stroke-width', 0.5)
               .style('pointer-events', 'none');
+            bands[value] = (bands[value] || 0) + 1;
             painted += 1;
           });
-        return painted;
+        return { total: painted, bands };
       }
 
       /**
@@ -9466,16 +9552,17 @@
       // Last counts from repaintFillLayers, so the aircraft branch can refresh
       // the legend on its own (its raster loads asynchronously, after the fill
       // layers have already painted) without re-running the borough paint.
-      let _lastPaintedCounts = { road: 0, flood: 0, aq: 0 };
+      const _emptyCounts = () => ({ total: 0, bands: {} });
+      let _lastPaintedCounts = { road: _emptyCounts(), flood: _emptyCounts(), aq: _emptyCounts() };
 
       function markLayerCoverage(painted) {
         if (painted) _lastPaintedCounts = painted;
         const counts = _lastPaintedCounts;
         const cfg = cityOf(currentCity);
         const rows = [
-          ['legend-road-title', cfg.legendRoadTitle, counts.road],
-          ['legend-flood-title', cfg.legendFloodTitle, counts.flood],
-          ['legend-aq-title', cfg.legendAqTitle, counts.aq],
+          ['legend-road-title', cfg.legendRoadTitle, counts.road.total],
+          ['legend-flood-title', cfg.legendFloodTitle, counts.flood.total],
+          ['legend-aq-title', cfg.legendAqTitle, counts.aq.total],
           // The aircraft layer joins its three siblings. It was left out of the
           // fix made for them on 2026-08-11, so nine cities carried a five-band
           // decibel scale over an overlay updateDefraTiles() never painted -
@@ -9496,6 +9583,38 @@
         // reading rather than painting it a default colour.
         const scale = document.getElementById('legend-noise-scale');
         if (scale) scale.style.display = aircraftScalePainted ? '' : 'none';
+
+        // AND THE SAME TREATMENT ONE LEVEL DOWN, per band.
+        //
+        // The three titles above went from a hardcoded per-city string to a
+        // measurement on 2026-08-11, but their band ROWS stayed static markup -
+        // so a city where no borough is at High flood risk still showed a HIGH
+        // swatch, and every city showed all three road bands whether one, two
+        // or none of them were on the map. Hiding is the honest form rather
+        // than dimming: paintBoroughLayer omits a borough it has no reading
+        // for, and a legend that keeps describing what the map omitted is the
+        // label being quieter than the map again.
+        //
+        // Measured from what painted, so it needs nobody to remember it. A
+        // band that starts appearing when coverage widens - 'excellent' air
+        // quality is the live case - reveals its own row with no edit here.
+        //
+        // The aircraft scale is deliberately NOT split this way: it is a DEFRA
+        // raster, not borough paths, so which dB bands a tile contains is not
+        // knowable from the DOM. Whole-scale is the finest honest granularity
+        // there.
+        for (const [groupId, key] of [
+          ['legend-road-group', 'road'],
+          ['legend-flood-group', 'flood'],
+          ['legend-aq-group', 'aq'],
+        ]) {
+          const group = document.getElementById(groupId);
+          if (!group) continue;
+          const bands = counts[key].bands || {};
+          for (const row of group.querySelectorAll('[data-band]')) {
+            row.style.display = bands[row.dataset.band] > 0 ? '' : 'none';
+          }
+        }
       }
 
       function renderDefraTiles() {
@@ -9597,9 +9716,7 @@
         floodG.selectAll('path').remove();
         aqG.selectAll('path').remove();
 
-        const roadNoiseColors = { high: '#7c3aed', moderate: '#a78bfa', low: '#ddd6fe' };
-        const floodColors = { high: '#1e3a8a', medium: '#3b82f6', low: '#93c5fd' };
-        const aqColors = { poor: '#dc2626', moderate: '#f59e0b', good: '#22c55e', excellent: '#16a34a' };
+        const { road: roadNoiseColors, flood: floodColors, aq: aqColors } = FILL_LAYER_COLOURS;
 
         const road = paintBoroughLayer(roadG, (n) => getExtraData(n)?.roadNoise, roadNoiseColors, '#5b21b6');
         const flood = paintBoroughLayer(floodG, (n) => getExtraData(n)?.flood, floodColors, '#1e40af');

@@ -38,6 +38,18 @@ try {
 
 const boroughCount = await page.locator('path.borough').count();
 const d3Loaded = await page.evaluate(() => typeof window.d3 !== 'undefined' && !!window.d3.version);
+
+// EXACTLY ONE REQUEST FOR d3, added 2026-08-23 with the move out of <head>.
+//
+// The tag now sits at the foot of <body> with a `rel=preload` in <head> that
+// starts the fetch early without blocking the parser. A preload whose
+// attributes do not match its consumer - a different `as`, a missing or
+// differing `integrity`, a crossorigin mismatch - is not an error anywhere: the
+// browser simply fetches the file TWICE and everything still works. So the
+// failure mode of getting this wrong is silent, and doubles the bytes on the
+// exact resource the change was made to make cheaper. Counted rather than
+// trusted.
+const d3Requests = requests.filter((u) => u.includes('d3.v7.min.js')).length;
 const d3Version = await page.evaluate(() => (window.d3 ? window.d3.version : null));
 
 const askedGithub = requests.some((u) => u.includes('raw.githubusercontent.com'));
@@ -175,6 +187,7 @@ const manNamesOk = MAN_EXPECTED.every((n) => manNames.includes(n));
 console.log('--- LOCAL SMOKE ---');
 console.log('#app visible:            ', appVisible);
 console.log('d3 loaded:               ', d3Loaded, d3Version);
+console.log('d3 requests:             ', d3Requests, '(must be 1 - preload must not double-fetch)');
 console.log('borough paths rendered:  ', boroughCount);
 console.log('requested /js/vendor/d3: ', askedLocalD3);
 console.log('requested local geojson: ', askedLocalGeo);
@@ -279,6 +292,7 @@ await browser.close();
 const ok =
   appVisible &&
   d3Loaded &&
+  d3Requests === 1 &&
   boroughCount >= 30 &&
   askedLocalD3 &&
   askedLocalGeo &&

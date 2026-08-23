@@ -34,6 +34,35 @@
  * Proven red in both directions: restoring `|| 'moderate'` over-paints, and
  * renaming a borough key in borough-extra.json under-paints.
  *
+ * And the legend's BAND ROWS, added 2026-08-23
+ * --------------------------------------------
+ * The same question one level down. The three layer TITLES have been measured
+ * since 2026-08-11 - "(NO DATA)" is appended from what the render produced -
+ * but each title sat above three static swatches that were never checked
+ * against anything. Measured across all eleven cities at the time of writing:
+ * 41 of 99 rendered band rows described a band no borough on that map carried.
+ * Leicester and Teesside showed six confident colour swatches - three road,
+ * three flood - underneath two titles already reading "(NO DATA)".
+ *
+ * Two assertions, both from the DOM on both sides:
+ *
+ *   completeness  every key in FILL_LAYER_COLOURS has a [data-band] row, and
+ *                 vice versa. City-independent, so it runs once. This is the
+ *                 root-cause guard: aq held four colours against three rows,
+ *                 so 'excellent' (#16a34a, four shades off GOOD's #22c55e) was
+ *                 a colour the map could paint with nothing to name it.
+ *
+ *   visibility    per city, the set of VISIBLE rows equals the set of bands
+ *                 actually painted. Painted bands are inverted out of the
+ *                 rendered `fill` attributes and visibility is read from
+ *                 computed style - never from the counter or the inline style
+ *                 the fix itself writes.
+ *
+ * Both fail in both directions, and all four directions are proven red:
+ * deleting the hiding loop (the pre-fix state) reds visibility one way,
+ * inverting its condition reds it the other, deleting the EXCELLENT row reds
+ * completeness one way, and an unknown row reds it the other.
+ *
  *   node tests/layer-honesty.mjs
  */
 import { chromium } from '@playwright/test';
@@ -71,10 +100,73 @@ const server = createServer(async (req, res) => {
 await new Promise((r) => server.listen(PORT, r));
 
 const LAYERS = [
-  { key: 'defra-road', field: 'roadNoise', sel: '.layer-defra-road', label: 'road noise' },
-  { key: 'flood', field: 'flood', sel: '.layer-flood', label: 'flood' },
-  { key: 'air-quality', field: 'airQuality', sel: '.layer-air-quality', label: 'air quality' },
+  {
+    key: 'defra-road',
+    field: 'roadNoise',
+    sel: '.layer-defra-road',
+    label: 'road noise',
+    group: 'legend-road-group',
+    colourKey: 'road',
+  },
+  {
+    key: 'flood',
+    field: 'flood',
+    sel: '.layer-flood',
+    label: 'flood',
+    group: 'legend-flood-group',
+    colourKey: 'flood',
+  },
+  {
+    key: 'air-quality',
+    field: 'airQuality',
+    sel: '.layer-air-quality',
+    label: 'air quality',
+    group: 'legend-aq-group',
+    colourKey: 'aq',
+  },
 ];
+
+/**
+ * Read what a layer painted and what its legend claims, both from the DOM.
+ *
+ * `painted` is inverted out of the rendered `fill` attributes rather than read
+ * from the counter markLayerCoverage() maintains, and `visible` is the computed
+ * display of each row rather than the inline style the fix writes. Taking
+ * either from the code under test is this repo's most repeated defect - a gate
+ * that reads the flag the fix sets agrees with the fix's own bugs.
+ *
+ * Computed `display` on a row is unaffected by its group being hidden: an
+ * ancestor's `display: none` does not change a descendant's computed value. So
+ * this reads correctly whether or not the layer's legend group is open.
+ */
+const readLegendState = (layerDefs) =>
+  layerDefs.map((l) => {
+    const colours = FILL_LAYER_COLOURS[l.colourKey];
+    const invert = {};
+    for (const [band, hex] of Object.entries(colours)) invert[hex.toLowerCase()] = band;
+
+    const gEl = document.querySelector(l.sel);
+    const painted = new Set();
+    if (gEl) {
+      for (const path of gEl.querySelectorAll('path')) {
+        const fill = (path.getAttribute('fill') || '').toLowerCase();
+        painted.add(invert[fill] || `UNMAPPED:${fill}`);
+      }
+    }
+
+    const group = document.getElementById(l.group);
+    const rows = group ? Array.from(group.querySelectorAll('[data-band]')) : [];
+    return {
+      key: l.key,
+      label: l.label,
+      colourBands: Object.keys(colours),
+      declared: rows.map((r) => r.dataset.band),
+      visible: rows
+        .filter((r) => getComputedStyle(r).display !== 'none')
+        .map((r) => r.dataset.band),
+      painted: Array.from(painted),
+    };
+  });
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -85,12 +177,59 @@ const cities = await page.evaluate(() =>
   Object.entries(CITY_DATA).map(([id, d]) => ({ id, label: d.label, country: d.country }))
 );
 
+// EVERY COLOUR THE PAINTER CAN PRODUCE MUST HAVE A ROW TO EXPLAIN IT.
+//
+// City-independent, so it runs once. This is the root-cause guard for the
+// defect found on 2026-08-23: FILL_LAYER_COLOURS.aq held four bands while the
+// air-quality legend held three, so 'excellent' - #16a34a, four shades off
+// GOOD's #22c55e - was a colour the map could paint with nothing to name it.
+//
+// Recorded in HANDOVER.md and ROADMAP.md the other way round, as a legend
+// advertising a band no borough can occupy. It never advertised it. The two
+// lists were function-locals and static markup with no gate between them,
+// which is why a note could sit on the wrong side of the fact for two days.
+{
+  const state = await page.evaluate(readLegendState, LAYERS);
+  let missing = 0;
+  for (const l of state) {
+    const gap = l.colourBands.filter((b) => !l.declared.includes(b));
+    const extra = l.declared.filter((b) => !l.colourBands.includes(b));
+    if (gap.length) {
+      missing += 1;
+      console.log(
+        `  ! ${l.label}: the painter can paint [${gap.join(', ')}] with no legend row ` +
+          `to name it (legend declares [${l.declared.join(', ')}])`
+      );
+    }
+    if (extra.length) {
+      missing += 1;
+      console.log(
+        `  ! ${l.label}: the legend declares [${extra.join(', ')}], which the painter ` +
+          'has no colour for, so no map can ever show it'
+      );
+    }
+  }
+  if (missing) {
+    console.log(
+      '\nFAIL: legend rows and painter colours are not the same list of bands.'
+    );
+    await browser.close();
+    server.close();
+    process.exit(1);
+  }
+  console.log(
+    `Legend rows and painter colours agree on all bands ` +
+      `(${state.map((l) => `${l.label} ${l.declared.length}`).join(', ')}).`
+  );
+}
+
 console.log('\nLayer honesty: painted boroughs vs boroughs holding a reading\n');
 console.log(`${'city'.padEnd(20)} ${'road noise'.padEnd(16)} ${'flood'.padEnd(16)} air quality`);
 console.log('-'.repeat(74));
 
 let fail = 0;
 let totalExpected = 0;
+let totalBandRows = 0;
 
 // THE LANDING CITY, MEASURED WITHOUT SWITCHING TO IT.
 //
@@ -202,6 +341,46 @@ for (const city of cities) {
     );
   }
 
+  // THE LEGEND'S BAND ROWS, against the bands actually on the map.
+  //
+  // The layer titles have been measured since 2026-08-11 - "(NO DATA)" is
+  // appended from what the render produced - but their band ROWS were static
+  // markup until 2026-08-23. A city with no High-risk flood borough still
+  // carried a HIGH swatch, and every city carried all three road bands
+  // whatever was underneath.
+  //
+  // Fails in both directions, which are two different lies:
+  //   visible but not painted  the legend claims a colour the map cannot show
+  //   painted but not visible  the map shows a colour the legend cannot explain
+  const legend = await page.evaluate(readLegendState, LAYERS);
+  for (const l of legend) {
+    const unmapped = l.painted.filter((b) => b.startsWith('UNMAPPED:'));
+    if (unmapped.length) {
+      fail += 1;
+      console.log(
+        `  ! ${city.id} ${l.label}: painted ${unmapped.length} path(s) in a colour ` +
+          `absent from FILL_LAYER_COLOURS (${unmapped.join(', ')})`
+      );
+    }
+    const claimed = l.visible.filter((b) => !l.painted.includes(b));
+    const unexplained = l.painted.filter((b) => !b.startsWith('UNMAPPED:') && !l.visible.includes(b));
+    if (claimed.length) {
+      fail += 1;
+      console.log(
+        `  ! ${city.id} ${l.label}: legend shows [${claimed.join(', ')}], which no ` +
+          'borough on this map carries'
+      );
+    }
+    if (unexplained.length) {
+      fail += 1;
+      console.log(
+        `  ! ${city.id} ${l.label}: map paints [${unexplained.join(', ')}] with the ` +
+          'legend row hidden'
+      );
+    }
+    totalBandRows += l.visible.length;
+  }
+
   const cells = [];
   for (const l of LAYERS) {
     const m = measured[l.key];
@@ -210,7 +389,10 @@ for (const city of cities) {
     totalExpected += m.expected;
     cells.push(`${ok ? ' ' : '!'}${m.painted}/${m.expected}`.padEnd(16));
   }
-  console.log(`${city.label.padEnd(20)} ${cells.join(' ')}`);
+  const bandCells = legend
+    .map((l) => `${l.visible.length}/${l.declared.length}`)
+    .join(' ');
+  console.log(`${city.label.padEnd(20)} ${cells.join(' ')}  bands ${bandCells}`);
 }
 
 // A FLOOR ON THE EXPECTATION ITSELF.
@@ -235,12 +417,38 @@ if (totalExpected === 0) {
   process.exit(1);
 }
 
+// THE SAME FLOOR FOR THE BAND CHECK, and it is a separate one on purpose.
+//
+// The band comparison is between two sets, and empty == empty passes - the
+// shape that let build_aircraft_bands.py print "0/0 agree" and exit 0 while
+// being a blocking gate.
+//
+// HONEST LIMIT, in the spirit of the note on the landing-city case above: this
+// floor is NOT independently provable red today, because every route to it is
+// already covered. Removing [data-band] from the markup reds the completeness
+// check first; hiding every row while boroughs paint reds the set comparison;
+// and nothing painting anywhere reds the totalExpected floor below it. It is a
+// backstop against a future refactor that removes one of those, not a
+// proven red-prover. The other three assertions here ARE proven, in both
+// directions each - see the header.
+if (totalBandRows === 0) {
+  console.log(
+    '\nFAIL: no legend band row was visible in any city. Either [data-band] no ' +
+      'longer matches the legend markup, or markLayerCoverage hid every row - ' +
+      'the comparison ran against nothing either way.'
+  );
+  process.exit(1);
+}
+
 await browser.close();
 server.close();
 
 console.log(
   fail === 0
-    ? '\nEvery layer paints exactly the boroughs that hold a reading.'
-    : `\n${fail} layer/city combination(s) paint a different number of boroughs than hold data.`
+    ? `\nEvery layer paints exactly the boroughs that hold a reading, and every ` +
+        `legend band row matches a band on the map (${totalBandRows} rows shown ` +
+        `across ${cities.length} cities).`
+    : `\n${fail} layer/city problem(s): a painted count that disagrees with the data, ` +
+        'or a legend band row that disagrees with the map.'
 );
 process.exit(fail === 0 ? 0 : 1);
