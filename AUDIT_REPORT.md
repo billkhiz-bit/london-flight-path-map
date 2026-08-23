@@ -349,12 +349,76 @@ route silently losing its gate looked exactly like a gate holding.
   every column carries its band letter and its count, so band identity is not
   conveyed by colour alone. Changing these would break the match to the
   certificate to fix a rule that is already satisfied another way.
-- **`d3.v7.min.js` without `defer`.** 280 KB render-blocking in `<head>` is a
-  real cost, but the inline script spans most of `<body>` and deferred scripts
-  run *after* it. Proving no top-level d3 call exists across ~8,000 lines needs
-  more than a grep, and the failure mode is a blank map on the live consumer
-  site. Left for a session where the change can be watched. Moving the tag to
-  the end of `<body>` is the lower-risk form of the same win.
+- ~~**`d3.v7.min.js` without `defer`.**~~ **CLOSED 2026-08-23**, in the
+  lower-risk form this entry itself named. The reasoning above is right about
+  `defer` and was right to refuse it: deferred scripts run after the parser and
+  therefore after the inline script, so every top-level `d3` reference would
+  break, and the failure mode is a blank map on the live consumer site.
+
+  Moving the tag to the foot of `<body>`, immediately above the inline script,
+  carries none of that risk - **execution order is unchanged**, d3 still runs
+  first, and only the ~640 lines of shell markup above it stop waiting. A
+  `rel=preload` in `<head>` keeps the download starting as early as it did.
+
+  Measured rather than argued, since this was explicitly "left for a session
+  where the change can be watched". Emulated 3G, 5 runs each, median:
+
+  | | d3 in `<head>` | d3 at foot | delta |
+  |---|---|---|---|
+  | First Contentful Paint | 3592 ms | **1124 ms** | **-2468 ms** |
+  | d3 arrived | 3580 ms | 3797 ms | +217 ms |
+  | map drawn | 8614 ms | 8698 ms | +84 ms |
+
+  The counter-measurement is the important half: moving a script out of `<head>`
+  lowers its fetch priority, so first paint could improve while the thing people
+  came for arrives later. It does not - +84 ms against a run-to-run spread of
+  ~110 ms on FCP alone, and time-to-map is gated by data fetches rather than by
+  d3.
+
+  **A preload whose attributes do not match its consumer is silent.** A
+  different `as`, or a missing `integrity`, and the browser simply fetches the
+  file twice with everything still working - doubling the bytes on the exact
+  resource the change exists to make cheaper. `tests/smoke-local.mjs` counts d3
+  requests and asserts exactly one; proven red by setting `as="fetch"`.
+
+**Closed 2026-08-23:** the extension's `LONDON_BOUNDS` bounding box, which is
+the entry above about Watford and Dartford - and it was **wrong in both
+directions, not one**. Verified against the live endpoint rather than reasoned
+about: Watford `WD17 2RA` and Dartford `DA1 1DR` are INSIDE the rectangle while
+`/v1/environment` answers *"outside every city Sky Score covers"*, so the caveat
+was hidden exactly where it was true; `M3 4EN` is outside the rectangle and is a
+covered city with its own derived geometry since 2026-08-21, so it was shown
+exactly where it was false. Watford also returns a **measured** road figure of
+55.2 dB Lden, directly contradicting the caveat that was being suppressed.
+
+Two things this finding did not say, both worse than the bbox itself:
+
+- **The bounds existed to caveat a section deleted seventeen days earlier.**
+  Their own comment reads *"TfL's StopPoint API only knows about London, so a
+  Manchester listing would come back with zero stations"* - and the transport
+  section was removed from the extension on 2026-08-06. They were repurposed to
+  noise coverage without anyone re-asking whether the geography still fitted.
+  Fourth stale reference from that one removal.
+- **The e2e was asserting the defect.** It checked that Manchester received a
+  caveat reading *"coverage is strongest in London"*, which was correct on the
+  day it was written and became a green check confirming that a covered city was
+  being told our coverage lies elsewhere. Fourth instance in this repo of a
+  passing test that reads as evidence.
+
+`LONDON_BOUNDS`, `inBounds(...LONDON_BOUNDS)` and the `inLondon` field are
+deleted. `coverageCaveat()` reads `aircraftQuietBasis` off the response, which
+is the only place the answer exists. Its prose match is **guarded rather than
+noted** - the e2e asks the live endpoint for a known-uncovered coordinate and
+asserts the phrase is still present, so wording drift reds instead of the
+classifier quietly returning null forever. A machine-readable
+`aircraftQuietCoverage` field on `/v1/environment` is the better shape and would
+delete the constant; it is not needed for correctness today.
+
+**Also closed 2026-08-23**, found while doing the above rather than by any
+check: `extension/background.js` holds the extension's only `API_BASE` and was
+outside `check_api_url_drift.sh` while `tests/*.mjs` - which asserts against the
+same host - was inside it, so an API Gateway id rotation would have reddened the
+e2e without ever naming the file holding the stale host.
 
 **Closed 2026-08-22:** `Avg Price` over a median (the header now follows the
 view - median for neighbourhoods, average for boroughs) · `privacy.html` §5

@@ -57,8 +57,8 @@ Everything below §3 predates a long session; this is where it actually stands.
 |---|---|
 | Audit criticals | **all 11 closed**, deployed, verified live |
 | Audit **Important** | **10 of 14 closed 2026-08-22**, DEPLOYED and verified live |
-| Audit **Minor** | 10 closed 2026-08-22, DEPLOYED and verified live |
-| Tests | **555**, up from 534 - 21 added, every one proven red first |
+| Audit **Minor** | 10 closed 2026-08-22 + **2 more on 2026-08-23** (`LONDON_BOUNDS`, the d3 tag), all deployed except the 2026-08-23 batch |
+| Tests | **555** at 2026-08-22, **+8 on 2026-08-23**, every one proven red first |
 | Distribution findings | **D5, D1, D2, D4 shipped**; D3 and D6 need no build |
 | Blocking preflight stages | **30** (was 25; five added today) |
 | Log groups | 8, one per live Lambda, all 30-day retention, **zero orphans** |
@@ -101,15 +101,36 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
    integration cap, including the Globals default, and at 45s `/nhs` could not
    reach its own fallback branch inside the caller's window.
 
-3. **The `excellent` air-quality band** — *still needs your decision, but the
-   diagnosis above it was WRONG and is corrected.* Measured 2026-08-21 over
-   254,904 DEFRA PCM cells: **59.2% clear both WHO guidelines**, PM2.5 median
-   **4.43** against a guideline of 5.0. The band is entirely reachable; it cannot
-   fire for the **86 urban boroughs we currently cover**. So "drop it" and
-   "re-anchor it" are both wrong — dropping it means re-adding it the moment
-   coverage leaves the city cores, which `EXPANSION.md` says is the plan. The fix
-   is the `markLayerCoverage()` pattern: hide bands with zero rendered boroughs
-   so it corrects itself.
+3. ~~**The `excellent` air-quality band**~~ — **DONE 2026-08-23, and the
+   finding was recorded BACKWARDS twice.** It was written up here and in
+   `ROADMAP.md` as a band *"the legend advertises that no UK borough can
+   occupy"*. The legend never advertised it. `#legend-aq-group` carried three
+   rows — POOR, MODERATE, GOOD — while `repaintFillLayers()` carried four
+   colours, so `excellent` (`#16a34a`, four shades off GOOD's `#22c55e`) was the
+   one band the map could paint with **no row to explain it**. The over-claim
+   was the painter's, not the legend's, and the correction was a swatch to ADD
+   rather than one to remove.
+
+   The 2026-08-21 measurement underneath it stands and is what made the shape
+   obvious: 59.2% of 254,904 DEFRA PCM cells clear both WHO guidelines, PM2.5
+   median 4.43 against 5.0, so the band is reachable nationally and simply
+   cannot fire for the 91 urban boroughs we cover (measured across
+   `borough-extra.json`: 62 moderate, 18 good, 11 poor, 0 excellent).
+
+   Fixed the way the note proposed anyway — `markLayerCoverage()` extended one
+   level down, hiding any band row that painted nothing. **41 of 99 rendered
+   band rows were describing a band not on that map**, worst in Leicester and
+   Teesside, which showed six confident swatches (three road, three flood)
+   beneath two titles already reading "(NO DATA)". The EXCELLENT row costs
+   nothing while empty and appears by itself when coverage leaves the city
+   cores, so nobody has to remember it. Guarded by `tests/layer-honesty.mjs`,
+   which now also asserts painter-colours and legend-rows are the same list;
+   proven red in four directions.
+
+   **The lesson is about the note, not the band.** Two docs carried a
+   confidently-worded diagnosis that was the inverse of the code, for eleven
+   days, because the two lists it compared were a function-local and a block of
+   static markup with no gate between them. There is a gate now.
 4. ~~**`/v1/environment` hardcodes `'london'` geometry**~~ — **DONE 2026-08-21.**
    Reproduced live (M22 5RX returned 10.0 against Manchester's 2.0) and fixed by
    deriving the city from the resolved LAD. Measured over 6,000 NSPL postcodes:
