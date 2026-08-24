@@ -341,6 +341,13 @@ def handle_post(event):
     # unauthenticated, so anyone who guesses an address would otherwise
     # learn when its owner registered. It stays on the row for support.
     existing = get_existing_signup(email)
+    # Which register does the existing row belong to? Consumer rows write
+    # keyId as an explicit '' (record_signup below); key rows carry the real
+    # id. Only an EXPLICIT marker changes a reply: a legacy row missing the
+    # attribute keeps its branch's original wording, because guessing about
+    # an unknown shape is how a reply ends up describing a list the row is
+    # not on - the exact defect this distinction exists to fix (2026-08-24).
+    existing_key_id = (existing or {}).get('keyId', {}).get('S')
     if existing and source == 'consumer':
         # The COMMON duplicate path for a consumer, and it must not fall
         # into the B2B 409 below - that one says a key cannot be
@@ -353,6 +360,23 @@ def handle_post(event):
         # RACE path (put_item raising ConditionalCheckFailed) instead of
         # the path every real repeat visitor takes. Caught by calling the
         # deployed endpoint twice.
+        if existing_key_id:
+            # Their row is the API-key register, and one-row-per-email means
+            # this subscription was NOT recorded - so "you are already on the
+            # list for score updates" was false in both halves. One sentence,
+            # the true one: the frontend prints data.message verbatim.
+            return response(
+                200,
+                {
+                    'status': 'already-registered',
+                    'message': (
+                        'This email already holds a Sky Score API key; use a '
+                        'different address for score updates, or contact '
+                        'support to switch this one.'
+                    ),
+                },
+                event,
+            )
         return response(
             200,
             {
@@ -362,6 +386,21 @@ def handle_post(event):
             event,
         )
     if existing:
+        if existing_key_id == '':
+            # An explicit consumer row: no key was ever issued for this
+            # address, so the re-issue wording below would assert a key that
+            # does not exist. Name the list the row is actually on.
+            return response(
+                409,
+                {
+                    'error': 'This email has already signed up.',
+                    'note': (
+                        'This address is on the score-updates list and holds '
+                        'no API key. Contact support to add API access to it.'
+                    ),
+                },
+                event,
+            )
         return response(
             409,
             {

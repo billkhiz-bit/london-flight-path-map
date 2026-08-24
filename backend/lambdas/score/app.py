@@ -20,6 +20,7 @@ import math
 import os
 import re
 import threading
+import time
 from collections import OrderedDict
 from datetime import UTC, datetime
 from urllib.error import HTTPError, URLError
@@ -109,6 +110,16 @@ MAX_BATCH_SIZE = 100
 # postcodes.io (network-bound), so ~10 workers gives near-linear speedup
 # on the typical 30-50 postcode batch without saturating any upstream.
 BATCH_PARALLELISM = int(os.environ.get('BATCH_PARALLELISM', '10'))
+# Seconds held back from the invocation deadline before run_one refuses to
+# START another batch item. 6 = one worst-case postcodes.io urlopen (5s, the
+# timeout every worker may already have in flight when the cutoff lands) plus
+# assembly and serialisation of up to 100 results. Without this, a stalled
+# postcodes.io made a full batch 100 queries x 5s / 10 workers = 50s of wall
+# clock against a 28s Lambda ceiling, and ALL the answers - including the
+# ones already computed - were thrown away as a raw 504. The margin only ever
+# bites when the batch is already doomed to overrun; a healthy batch finishes
+# in single-digit seconds and never reaches it.
+_BATCH_DEADLINE_MARGIN_S = 6.0
 
 SCHOOL_SCORE = {'outstanding': 10, 'excellent': 9, 'good': 6, 'mixed': 3}
 TRANSPORT_SCORE = {'excellent': 10, 'good': 7, 'moderate': 4, 'poor': 2}
@@ -3902,8 +3913,50 @@ def _lookup_noise_row(postcode_clean):
     }
 
 
+# Air-quality plausibility range, in ug/m3 - NOT dB, so the noise bounds above
+# cannot be reused. Measured off the 2022 PCM grids on 2026-08-24 (254,905
+# cells each): NO2 spans 0.42-36.33, PM2.5 1.72-13.55. The floor stays at 0.0
+# rather than the measured minima because concentrations improve year on year
+# and a cleaner future vintage must not be swallowed by a floor read off one
+# year; a negative concentration is physically impossible and is the shape the
+# -3.4e38 sentinel takes. 200 is unreachable by any plausible annual mean -
+# the worst city annual means on record sit near 110 ug/m3 (PM2.5, Delhi) and
+# below 100 (NO2, kerbside) - while catching every sentinel in play
+# (+/-3.4e38, +/-9999).
+_AQ_MIN_PLAUSIBLE_UGM3 = 0.0
+_AQ_MAX_PLAUSIBLE_UGM3 = 200.0
+
+
+def _plausible_from_row(row, key, floor, ceiling, log_tag, postcode_clean='', known_fill=None):
+    """THE plausibility range for every field on the noise-raster row.
+
+    ONE holder, four callers - aircraft Lden, road Lden, NO2, PM2.5 - because
+    this check has now drifted as mirrored copies three times: lden_from_row
+    gained its ceiling on 2026-08-12, road_lden_from_row not until 2026-08-21,
+    and the air-quality pair on the same row kept a floor-only `>= 0` until
+    2026-08-24, so +3.4e38 was publishable as an annual-mean concentration.
+    Mirrored code is correct when written and breaks when the FIRST copy
+    changes; a fifth field on this row must call this, never copy it.
+
+    `known_fill` names a sentinel expected at volume (the aircraft tier's
+    legacy 35.0 fill, held by 89.5% of London rows) so it does not spam the
+    alarm channel; any other out-of-range value warns, because an unexpected
+    one is a data problem a human should see.
+    """
+    value = (row or {}).get(key)
+    if value is None:
+        return None
+    if value < floor or value > ceiling:
+        if value != known_fill:
+            logger.warning(
+                '[%s] postcode=%s err=implausible-%s value=%s',
+                log_tag, postcode_clean, key, value)
+        return None
+    return value
+
+
 def lden_from_row(row, postcode_clean=''):
-    """Apply the aircraft plausibility floor to a pre-fetched row.
+    """Aircraft Lden off a pre-fetched row, range-guarded.
 
     Mirrors the tail of _lookup_lden_raster, which still exists for
     calc_postcode_quiet's own sentinel-driven path. Rows written before
@@ -3911,20 +3964,13 @@ def lden_from_row(row, postcode_clean=''):
     of London holds that value — treating it as a reading is what made every
     uncovered postcode look like a successful hit.
     """
-    value = (row or {}).get('lden')
-    if value is None:
-        return None
-    if value < _RASTER_MIN_PLAUSIBLE_DB or value > _RASTER_MAX_PLAUSIBLE_DB:
-        if value != _RASTER_NODATA_FILL:
-            logger.warning(
-                '[SCORE_RASTER_DEGRADED] postcode=%s err=implausible-lden value=%s',
-                postcode_clean, value)
-        return None
-    return value
+    return _plausible_from_row(
+        row, 'lden', _RASTER_MIN_PLAUSIBLE_DB, _RASTER_MAX_PLAUSIBLE_DB,
+        'SCORE_RASTER_DEGRADED', postcode_clean, known_fill=_RASTER_NODATA_FILL)
 
 
 def road_lden_from_row(row, postcode_clean=''):
-    """Apply the road plausibility RANGE to a pre-fetched row.
+    """Road Lden off a pre-fetched row, range-guarded.
 
     A RANGE, both ends, and the word is load-bearing. This was a floor alone
     until 2026-08-21 while its mirror lden_from_row - eleven lines above, same
@@ -3937,15 +3983,23 @@ def road_lden_from_row(row, postcode_clean=''):
     catches the negative one and passes the positive one straight through, so
     `roadNoiseLdenDb: 3.4e+38` was publishable on an unauthenticated endpoint.
     """
-    value = (row or {}).get('roadLden')
-    if value is None:
-        return None
-    if value < _ROAD_MIN_PLAUSIBLE_DB or value > _RASTER_MAX_PLAUSIBLE_DB:
-        logger.warning(
-            '[SCORE_ROAD_DEGRADED] postcode=%s err=implausible-lden value=%s',
-            postcode_clean, value)
-        return None
-    return value
+    return _plausible_from_row(
+        row, 'roadLden', _ROAD_MIN_PLAUSIBLE_DB, _RASTER_MAX_PLAUSIBLE_DB,
+        'SCORE_ROAD_DEGRADED', postcode_clean)
+
+
+def no2_from_row(row, postcode_clean=''):
+    """NO2 annual mean off a pre-fetched row, range-guarded (see the guard)."""
+    return _plausible_from_row(
+        row, 'no2', _AQ_MIN_PLAUSIBLE_UGM3, _AQ_MAX_PLAUSIBLE_UGM3,
+        'SCORE_AQ_DEGRADED', postcode_clean)
+
+
+def pm25_from_row(row, postcode_clean=''):
+    """PM2.5 annual mean off a pre-fetched row, range-guarded (see the guard)."""
+    return _plausible_from_row(
+        row, 'pm25', _AQ_MIN_PLAUSIBLE_UGM3, _AQ_MAX_PLAUSIBLE_UGM3,
+        'SCORE_AQ_DEGRADED', postcode_clean)
 
 
 def _quiet_across_all_geometry(lat, lon, postcode_clean=None):
@@ -4307,6 +4361,18 @@ def _takes_city(func):
         return False
 
 
+def _takes_borough(func):
+    """Does this provenance callable also accept the borough's data row?
+
+    Same signature-driven dispatch as _takes_city, for the same reason: a
+    try/except around the call would also swallow TypeErrors raised INSIDE it.
+    """
+    try:
+        return len(inspect.signature(func).parameters) >= 2
+    except (TypeError, ValueError):  # builtins without signatures
+        return False
+
+
 # Provenance for the liveability inputs, COMPUTED from what the city's boroughs
 # actually carry rather than written down beside them.
 #
@@ -4326,21 +4392,43 @@ _LIVE_INPUT_SOURCES = {
 }
 
 
-def _live_inputs_present(city):
-    """Which liveability inputs any borough of `city` actually holds."""
+def _live_inputs_present(city, bd=None):
+    """Which liveability inputs are actually held.
+
+    With a borough record, THAT borough's inputs; without one, any borough of
+    `city`. The distinction is the 2026-08-24 fix: the any-borough union was
+    stamped on every response, so Broxtowe - whose row carries neither
+    Progress 8 nor an ONS crime rate - was credited "DfE ...; ONS Table C4"
+    while the same response's context.liveResolution said 2 of 4. Ten boroughs
+    (Nottingham's three districts, Leicester's seven) carried that
+    contradiction. The union remains the right claim at CITY level
+    (build_batch_sources, /v1/changes), which is why bd stays optional rather
+    than required.
+    """
+    fields = ('p8', 'schools', 'crimeRate', 'transport', 'healthcare')
+    if bd is not None:
+        present = [f for f in fields if bd.get(f) is not None]
+        # Mirror live_resolution's schools slot: for an English borough the
+        # retired curated band without a Progress 8 figure is DEFAULTED, not
+        # measured (METHODOLOGY 4.4), so it must not be credited as an input
+        # here - the two sentences travel in the same response and must agree.
+        if city != 'nyc' and bd.get('p8') is None and 'schools' in present:
+            present.remove('schools')
+        return present
     cfg = CITIES.get(city)
     if not cfg:
         return []
     present = []
-    for field in ('p8', 'schools', 'crimeRate', 'transport', 'healthcare'):
-        if any(bd.get(field) is not None for bd in cfg['boroughs'].values()):
+    for field in fields:
+        if any(row.get(field) is not None for row in cfg['boroughs'].values()):
             present.append(field)
     return present
 
 
-def _live_sources_line(city):
-    """One sentence naming the liveability inputs this city measures."""
-    present = _live_inputs_present(city)
+def _live_sources_line(city, bd=None):
+    """One sentence naming the liveability inputs measured HERE - for the
+    requested borough when its record is supplied, else for the city."""
+    present = _live_inputs_present(city, bd)
     named = [f'{_LIVE_INPUT_SOURCES[f]}' for f in present]
     # schools is one COMPONENT fed by either p8 or the curated tier, so the
     # denominator is four however many raw fields are present.
@@ -4662,8 +4750,15 @@ def build_sources(city='london', bd=None):
             # bare `except TypeError` around a call also swallows TypeErrors
             # raised INSIDE the callable, and it did - a len()-over-generator
             # bug surfaced as "missing argument" from the fallback path rather
-            # than as itself.
-            out.append(line(city) if _takes_city(line) else line())
+            # than as itself. The liveability line additionally takes the
+            # borough's row, so a response describes the borough it scored
+            # rather than the city's any-borough union (see
+            # _live_inputs_present for the ten boroughs that contradiction
+            # reached).
+            if _takes_city(line):
+                out.append(line(city, bd) if _takes_borough(line) else line(city))
+            else:
+                out.append(line())
         elif line is _BOROUGH_METADATA_SENTINEL:
             out.append(_london_borough_metadata_line(bd))
         else:
@@ -4951,16 +5046,23 @@ def build_environment(noise_row, postcode_clean=''):
     # nothing to a reader. WHO 2021: NO2 10 ug/m3, PM2.5 5 ug/m3 annual mean.
     # Stating the reference is not editorialising — omitting it would leave the
     # number to be interpreted against whatever the reader assumes.
-    no2 = (noise_row or {}).get('no2')
-    if no2 is not None and no2 >= 0:
+    # Range-guarded through the same single guard as the two Lden fields.
+    # The bare `>= 0` this replaces was a floor alone, so +3.4e38 - the
+    # positive GeoTIFF nodata shape both Lden fields are guarded against -
+    # was publishable as an annual-mean concentration.
+    no2 = no2_from_row(noise_row, postcode_clean)
+    if no2 is not None:
         env['no2AnnualMeanUgm3'] = round(no2, 1)
         env['no2WhoGuidelineUgm3'] = 10
 
-    pm25 = (noise_row or {}).get('pm25')
-    if pm25 is not None and pm25 >= 0:
+    pm25 = pm25_from_row(noise_row, postcode_clean)
+    if pm25 is not None:
         env['pm25AnnualMeanUgm3'] = round(pm25, 1)
         env['pm25WhoGuidelineUgm3'] = 5
 
+    # Guarded values, so a row holding only rejected sentinels credits no
+    # source - attribution with no readings under it is the inverse of the
+    # absence-as-measurement defect.
     if no2 is not None or pm25 is not None:
         env['airQualitySource'] = (
             'DEFRA background pollution maps (PCM), annual mean 2022, 1 km grid'
@@ -5652,6 +5754,11 @@ RESPONSE_FIELDS = {
     'sources',
     'sourceBreakdown',
     'plannedComponents',
+    # Missing until 2026-08-24, so any ?include= silently stripped every
+    # coverage caveat - build_coverage promises it "on every response" and the
+    # filter was quietly breaking that promise. It is also in filter_response's
+    # always-kept set: listing it here alone would only make it requestable.
+    'coverage',
 }
 
 
@@ -5679,10 +5786,14 @@ def parse_include(raw):
 
 def filter_response(body, include):
     """Apply an include-filter to a response body. Always retains meta
-    fields (apiVersion, methodologyVersion, generatedAt, sources)."""
+    fields (apiVersion, methodologyVersion, generatedAt, sources, coverage)."""
     if not include:
         return body
-    always = {'apiVersion', 'methodologyVersion', 'methodologyUrl', 'generatedAt', 'sources'}
+    # coverage is kept for the same reason sources is: it is the caveat
+    # surface. A payload-slimming filter must not be able to remove the
+    # sentence that says a component is a placeholder rather than a reading.
+    always = {'apiVersion', 'methodologyVersion', 'methodologyUrl', 'generatedAt', 'sources',
+              'coverage'}
     keep = include | always
     # Asking for the comparison should also get you the reason there isn't one.
     # Otherwise ?include=comparison on a city with no prior vintage returns a
@@ -6522,7 +6633,7 @@ def handle_get(event):
     return response(status, body)
 
 
-def handle_batch(event):
+def handle_batch(event, context=None):
     raw_body = event.get('body') or ''
     if event.get('isBase64Encoded'):
         import base64
@@ -6581,10 +6692,39 @@ def handle_batch(event):
 
     indexed_queries = list(enumerate(queries))
 
+    # The invocation deadline, from the one place it is knowable. context is
+    # optional (None from unit tests and direct invocations) and the method is
+    # probed rather than assumed, so a missing or unusual context degrades to
+    # the old no-deadline behaviour instead of a 500 for the whole batch.
+    deadline = None
+    if context is not None and hasattr(context, 'get_remaining_time_in_millis'):
+        try:
+            deadline = (time.monotonic()
+                        + context.get_remaining_time_in_millis() / 1000.0
+                        - _BATCH_DEADLINE_MARGIN_S)
+        except Exception:  # noqa: BLE001 - a broken context must not kill the batch
+            deadline = None
+
     def run_one(item):
         idx, query = item
         if not isinstance(query, dict):
             return idx, ({'error': 'Query must be an object.'}, 400)
+        # Refuse to START once the deadline nears, so a stalled upstream costs
+        # the batch its tail rather than the whole response: without this, 100
+        # queries each spending a 5s postcodes.io timeout across 10 workers is
+        # 50s of wall clock against a 28s Lambda ceiling, and every answer -
+        # including the computed ones - died together in a raw 504. The item
+        # SAYS it was never attempted; a refused slot must never be readable
+        # as "scored" or as "this postcode has no data".
+        if deadline is not None and time.monotonic() >= deadline:
+            return idx, ({
+                'error': ('Not attempted: the batch neared the request '
+                          'deadline before this query started, so it was '
+                          'never attempted. The results above it are '
+                          'complete; resubmit the unattempted queries in a '
+                          'smaller batch.'),
+                'notAttempted': True,
+            }, 503)
         try:
             return idx, resolve_query(query)
         except Exception as exc:  # noqa: BLE001 — per-query blast radius containment
@@ -6615,11 +6755,17 @@ def handle_batch(event):
             success += 1
         else:
             result['error'] = body.get('error', 'Unknown error')
-            for k in ('attemptedBorough', 'supportedBoroughs', 'supportedCities', 'example'):
+            # notAttempted is the deadline marker: it distinguishes "this
+            # query was refused unrun" from every error a query can EARN, so
+            # a caller can resubmit exactly the unattempted tail.
+            for k in ('attemptedBorough', 'supportedBoroughs', 'supportedCities', 'example',
+                      'notAttempted'):
                 if k in body:
                     result[k] = body[k]
             error += 1
         results.append(result)
+
+    not_attempted = sum(1 for r in results if r.get('notAttempted'))
 
     return response(
         200,
@@ -6627,6 +6773,10 @@ def handle_batch(event):
             'totalQueries': len(queries),
             'successCount': success,
             'errorCount': error,
+            # Only present when the deadline fired: a partial batch announces
+            # itself at the top level rather than requiring a scan of 100
+            # per-item errors to notice the response is incomplete.
+            **({'notAttemptedCount': not_attempted} if not_attempted else {}),
             'apiVersion': API_VERSION,
             'methodologyVersion': METHODOLOGY_VERSION,
             'generatedAt': datetime.now(UTC).isoformat(),
@@ -6645,7 +6795,9 @@ def handler(event, context):
         if method == 'OPTIONS':
             return handle_options()
         if method == 'POST':
-            return handle_batch(event)
+            # context carries the invocation deadline the batch path budgets
+            # against; see _BATCH_DEADLINE_MARGIN_S.
+            return handle_batch(event, context)
         return handle_get(event)
     except Exception as exc:  # final guard, never let internals leak
         logger.exception('Unhandled exception in score handler: %s', exc)

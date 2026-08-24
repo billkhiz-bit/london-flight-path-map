@@ -49,23 +49,36 @@ def handler(event, context):
                     'lineStatus': [],
                     'location': {'lat': lat, 'lon': lon},
                     'available': False,
+                    # Statuses were never fetched, so this must not imply
+                    # they were checked and found empty.
+                    'lineStatusAvailable': False,
                     'note': 'Live transport data temporarily unavailable.',
                     'sources': [ATTRIBUTION],
                 },
             )
 
-        # 2. Get live line statuses for relevant lines
+        # 2. Get live line statuses for relevant lines.
+        # None means the Status route was unreachable - the same contract the
+        # stations half has had since A-0724-I5. Until 2026-08-24 the outage
+        # collapsed into [] here, so a TfL 403 rendered as an empty disruption
+        # list, indistinguishable from "every line is running normally".
         line_ids = set()
         for s in stations:
             for line in s.get('lines', []):
                 line_ids.add(line)
         line_status = fetch_line_status(list(line_ids)[:10]) if line_ids else []
 
+        # COMPAT: existing consumers (index.html, the extension) read
+        # lineStatus as an array, so the outage case keeps lineStatus: [] and
+        # says so in lineStatusAvailable rather than changing the field's
+        # type. Consumers can upgrade to read the flag; none is required to.
+        line_status_available = line_status is not None
         return response(
             200,
             {
                 'stations': stations,
-                'lineStatus': line_status,
+                'lineStatus': line_status if line_status_available else [],
+                'lineStatusAvailable': line_status_available,
                 'location': {'lat': lat, 'lon': lon},
                 'available': True,
                 'sources': [ATTRIBUTION],
@@ -115,6 +128,13 @@ def fetch_nearby_stations(lat, lon):
 
 
 def fetch_line_status(line_ids):
+    """Live statuses for `line_ids`, or None when TfL is unreachable.
+
+    None and [] are different facts: [] means "asked, nothing to report",
+    None means "could not ask" - the distinction fetch_nearby_stations has
+    carried since A-0724-I5 and this half of the file lacked until
+    2026-08-24. Callers must not render None as an empty disruption list.
+    """
     if not line_ids:
         return []
 
@@ -123,11 +143,13 @@ def fetch_line_status(line_ids):
 
     # THE USER-AGENT IS LOAD-BEARING. TfL answers 403 to urllib's default
     # `Python-urllib/3.x` on this route, and that 403 lands in the except
-    # below and becomes `[]` - an empty disruption list, indistinguishable
-    # from "every line is running normally". So this endpoint had NEVER
-    # returned a line status. Verified live 2026-08-21: Oxford Circus gave 5
-    # stations and 0 statuses, and the same TfL URL answers 403 without this
-    # header and 200 with it.
+    # below - which until 2026-08-24 returned `[]`, an empty disruption list
+    # indistinguishable from "every line is running normally". So this
+    # endpoint had NEVER returned a line status. Verified live 2026-08-21:
+    # Oxford Circus gave 5 stations and 0 statuses, and the same TfL URL
+    # answers 403 without this header and 200 with it. The except now returns
+    # None so an outage is at least NAMED, but the header is still what makes
+    # the route answer at all.
     #
     # fetch_nearby_stations, eleven lines above, has always sent it - which is
     # why the stations half worked and the status half did not. Same mirrored-
@@ -139,7 +161,7 @@ def fetch_line_status(line_ids):
             data = json.loads(resp.read().decode())
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning('TfL Line/Status lookup failed: %s', exc)
-        return []
+        return None
 
     results = []
     for line in data:

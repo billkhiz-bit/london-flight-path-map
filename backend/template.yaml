@@ -108,6 +108,21 @@ Resources:
           ResourcePath: /v1/environment
           ThrottlingRateLimit: 5
           ThrottlingBurstLimit: 10
+        # /badge: unauthenticated, and each UNIQUE postcode is one uncached
+        # Lambda invocation - CloudFront holds a rendered badge for 24h, so
+        # repeat traffic never reaches the origin and only new postcodes do.
+        # 5 RPS sustained is ~432k distinct postcode renders a day, far beyond
+        # any legitimate embedding pattern, while capping what an enumeration
+        # of the postcode space (or a cache-busting query string) can spend of
+        # the shared stage bucket. Until this entry the route inherited the
+        # 50 RPS '*/*' ceiling - the same gap /epc had before 2026-07-24, on
+        # a route with the same no-key posture. One entry ONLY: this list
+        # renders into ORDERED UpdateStage patches where the later duplicate
+        # wins silently (see the /v1/score block below for the scar).
+        - HttpMethod: GET
+          ResourcePath: /badge
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
         # /v1/score + /v1/score/batch MUST be declared here (2026-07-24
         # 100k soak): console-set overrides of 5 rps / 10 burst were live
         # on both product routes and invisible to this template — CFN
@@ -511,14 +526,29 @@ Resources:
       # 100x more calls to spend it in, and Professional's published
       # 1,000,000-score ceiling is still 100x this.
       #
-      # WHAT A FREE KEY LOSES: bulk. That is deliberate - score_bulk.py is
-      # described in its own header as the Enterprise deliverable, and single
-      # lookups are the shape of an evaluation. Reasoning and rejected options:
-      # BATCH_METERING_DECISION.md.
+      # WHAT A FREE KEY LOSES: bulk and chat. Bulk is deliberate -
+      # score_bulk.py is described in its own header as the Enterprise
+      # deliverable, and single lookups are the shape of an evaluation.
+      # Reasoning and rejected options: BATCH_METERING_DECISION.md. Chat is
+      # the 2026-08-24 addition: /v1/signup mints a key on this plan for any
+      # email address, and until then every one of those keys could POST
+      # /v1/chat and spend Bedrock budget - the exact exposure the demo plan
+      # below closed on 2026-08-21, on the plan whose keys are EASIER to get.
       ApiStages:
         - ApiId: !Ref FlightMapApi
           Stage: prod
+          # Same per-method RateLimit-0 deny as ScoreDemoUsagePlan below, which
+          # carries the full explanation of the mechanism (keys authorise per
+          # STAGE, 0 is the only declarative way off a route, callers see 429).
+          # /v1/chat has no caller outside its own Lambda, so no free-tier
+          # integration loses anything; batch is denied so that requests and
+          # scores stay the same unit (see the block comment above). VERIFY
+          # AFTER EVERY DEPLOY - tests/demo-key-scope.mjs asks the running API,
+          # and ChatRouteDenyTests holds the template half between deploys.
           Throttle:
+            /v1/chat/POST:
+              BurstLimit: 0
+              RateLimit: 0
             /v1/score/batch/POST:
               BurstLimit: 0
               RateLimit: 0

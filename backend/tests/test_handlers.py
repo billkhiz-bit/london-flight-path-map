@@ -1346,3 +1346,216 @@ class SoldPricesParsingTests(unittest.TestCase):
 
         self.assertIn('WA2%208SN', captured['url'])
         self.assertNotIn('%2B', captured['url'])
+
+
+# ---------- Usage-plan route scoping (template half) ----------
+
+class ChatRouteDenyTests(unittest.TestCase):
+    """Every plan whose keys are handed out must deny POST /v1/chat per-method.
+
+    An API Gateway key authorises at the STAGE, not per route: a key on any
+    usage plan reaches every method carrying ApiKeyRequired: true. The demo
+    plan gained a per-method RateLimit-0 deny for /v1/chat on 2026-08-21; the
+    free plan - whose keys /v1/signup mints for any email address - did not,
+    so every self-service key could POST /v1/chat and spend Bedrock budget
+    outside the "requests = scores" entitlement the plan block documents.
+
+    This is the TEMPLATE half, deliberately: whether API Gateway treats
+    RateLimit 0 as deny rather than "unlimited" is a question only the running
+    API can answer, and tests/demo-key-scope.mjs asks it after every deploy.
+    This half exists so the deny cannot silently fall out of the template
+    between deploys. Same textual read as FreeTierQuotaDriftTests above, for
+    the same reason (CFN intrinsics defeat yaml.safe_load).
+    """
+
+    TEMPLATE = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'template.yaml'))
+
+    @classmethod
+    def setUpClass(cls):
+        with open(cls.TEMPLATE, encoding='utf-8') as handle:
+            cls.text = handle.read()
+
+    def _api_stages(self, resource, next_resource):
+        """The ApiStages segment of one usage plan, where a per-method deny
+        must live. A route key under the PLAN-LEVEL Throttle would be invalid
+        CloudFormation, so finding it there must not satisfy this test."""
+        start = self.text.index(f'  {resource}:')
+        end = self.text.index(f'  {next_resource}:', start)
+        block = self.text[start:end]
+        stages_start = block.index('ApiStages:')
+        stages_end = block.index('Quota:', stages_start)
+        return block[stages_start:stages_end]
+
+    def _assert_denied(self, stages, route, plan):
+        lines = [ln.strip() for ln in stages.splitlines()
+                 if ln.strip() and not ln.strip().startswith('#')]
+        try:
+            at = lines.index(f'{route}:')
+        except ValueError:
+            self.fail(f'{route} is not listed inside {plan}.ApiStages - '
+                      'a key on this plan reaches it')
+        self.assertEqual(
+            sorted(lines[at + 1:at + 3]),
+            ['BurstLimit: 0', 'RateLimit: 0'],
+            f'{route} is listed in {plan}.ApiStages but not denied with '
+            'BurstLimit 0 / RateLimit 0')
+
+    def test_free_plan_denies_chat_and_batch(self):
+        stages = self._api_stages('ScoreFreeUsagePlan', 'ScoreFreeUsagePlanKey')
+        self._assert_denied(stages, '/v1/chat/POST', 'ScoreFreeUsagePlan')
+        self._assert_denied(stages, '/v1/score/batch/POST', 'ScoreFreeUsagePlan')
+
+    def test_demo_plan_denies_chat_and_batch(self):
+        stages = self._api_stages('ScoreDemoUsagePlan', 'SignupFunction')
+        self._assert_denied(stages, '/v1/chat/POST', 'ScoreDemoUsagePlan')
+        self._assert_denied(stages, '/v1/score/batch/POST', 'ScoreDemoUsagePlan')
+
+
+class TransportLineStatusOutageTests(unittest.TestCase):
+    """A TfL outage on Line/Status must never read as "no disruptions".
+
+    The stations half of this handler has distinguished outage from empty
+    since A-0724-I5: fetch_nearby_stations returns None when TfL is
+    unreachable and the response says available: false. The lineStatus half,
+    in the same file, returned [] for BOTH - so a 403 or timeout rendered as
+    an empty disruption list, indistinguishable from "every line is running
+    normally". Same absence-as-measurement shape, one function apart.
+
+    Compat constraint: existing consumers read lineStatus as an array, so the
+    outage case keeps lineStatus: [] and adds lineStatusAvailable: false
+    alongside it rather than changing the field's type.
+    """
+
+    def setUp(self):
+        self.app = _import_lambda('transport')
+
+    def _stations(self, lines=('victoria',)):
+        return [{'name': 'Oxford Circus', 'distance': 120, 'modes': ['tube'],
+                 'lines': list(lines), 'lat': 51.515, 'lon': -0.141}]
+
+    def _call(self):
+        result = self.app.handler(
+            {'queryStringParameters': {'lat': '51.515', 'lon': '-0.141'}}, None)
+        self.assertEqual(result['statusCode'], 200)
+        return json.loads(result['body'])
+
+    def test_upstream_403_sets_the_flag_false_and_keeps_the_array(self):
+        # The 403 TfL answers to a bad User-Agent - the exact failure that hid
+        # this endpoint's brokenness for months (see fetch_line_status).
+        from urllib.error import HTTPError
+        err = HTTPError('https://api.tfl.gov.uk', 403, 'Forbidden', None, None)
+        with patch.object(self.app, 'fetch_nearby_stations',
+                          return_value=self._stations()),              patch.object(self.app, 'urlopen', side_effect=err):
+            body = self._call()
+        self.assertEqual(body['lineStatus'], [])
+        self.assertIs(body['lineStatusAvailable'], False)
+
+    def test_no_lines_to_ask_about_is_a_real_empty(self):
+        # A station list whose stations carry no line ids means there is
+        # genuinely nothing to report - not an outage.
+        with patch.object(self.app, 'fetch_nearby_stations',
+                          return_value=self._stations(lines=())):
+            body = self._call()
+        self.assertEqual(body['lineStatus'], [])
+        self.assertIs(body['lineStatusAvailable'], True)
+
+    def test_successful_status_fetch_reports_available(self):
+        import io as _io
+        payload = _io.BytesIO(json.dumps([{
+            'name': 'Victoria', 'id': 'victoria', 'modeName': 'tube',
+            'lineStatuses': [{'statusSeverityDescription': 'Good Service'}],
+        }]).encode())
+        payload.__enter__ = lambda s=payload: s
+        payload.__exit__ = lambda s=payload, *a: None
+        with patch.object(self.app, 'fetch_nearby_stations',
+                          return_value=self._stations()),              patch.object(self.app, 'urlopen', return_value=payload):
+            body = self._call()
+        self.assertEqual(body['lineStatus'][0]['status'], 'Good Service')
+        self.assertIs(body['lineStatusAvailable'], True)
+
+    def test_stations_outage_branch_reports_status_unavailable_too(self):
+        # When TfL is unreachable for stations, statuses were never fetched
+        # either - that response must not imply they were checked and empty.
+        with patch.object(self.app, 'fetch_nearby_stations', return_value=None):
+            body = self._call()
+        self.assertIs(body['available'], False)
+        self.assertEqual(body['lineStatus'], [])
+        self.assertIs(body['lineStatusAvailable'], False)
+
+    def test_fetch_line_status_returns_none_on_failure(self):
+        # None, not [] - the same contract fetch_nearby_stations already has,
+        # so a caller cannot mistake an outage for an empty result.
+        from urllib.error import URLError
+        with patch.object(self.app, 'urlopen', side_effect=URLError('down')):
+            self.assertIsNone(self.app.fetch_line_status(['victoria']))
+        # And no ids to query is a real empty, unchanged.
+        self.assertEqual(self.app.fetch_line_status([]), [])
+
+
+class SignupDuplicateNamesTheListTests(unittest.TestCase):
+    """A duplicate reply must name the list the EXISTING row belongs to.
+
+    get_existing_signup keys on email alone, and the signups table holds two
+    kinds of row: API-key registrations (keyId set) and consumer score-update
+    subscriptions (keyId written as an explicit ''). The duplicate branches
+    only ever looked at the SOURCE of the new request, so an API-key holder
+    typing their address into the consumer form was told "You are already on
+    the list for score updates" - a list their row does not belong to, about a
+    subscription that was not recorded. The frontend prints data.message
+    verbatim, so the one sentence has to be the true one.
+    """
+
+    def setUp(self):
+        self.app = _import_lambda('signup')
+
+    def _post(self, body):
+        return self.app.handler(
+            {'httpMethod': 'POST', 'body': json.dumps(body)}, None)
+
+    def test_key_holder_on_the_consumer_form_is_told_about_the_key(self):
+        row = {'email': {'S': 'dev@example.com'}, 'keyId': {'S': 'k-123'}}
+        with patch.object(self.app, 'get_existing_signup', return_value=row):
+            result = self._post({'email': 'dev@example.com', 'source': 'consumer'})
+        self.assertEqual(result['statusCode'], 200)
+        payload = json.loads(result['body'])
+        self.assertIn('API key', payload['message'])
+        # The sentence that was false: this row is NOT on that list, and no
+        # subscription was recorded for it.
+        self.assertNotIn('list for score updates', payload['message'])
+        self.assertNotEqual(payload['status'], 'already-subscribed')
+
+    def test_consumer_row_on_the_consumer_form_keeps_the_plain_reply(self):
+        # The common repeat visitor is unchanged: their row IS the score-update
+        # list, and the existing guard test's no-key/no-support rule holds.
+        row = {'email': {'S': 'x@example.com'}, 'keyId': {'S': ''}}
+        with patch.object(self.app, 'get_existing_signup', return_value=row):
+            result = self._post({'email': 'x@example.com', 'source': 'consumer'})
+        self.assertEqual(result['statusCode'], 200)
+        payload = json.loads(result['body'])
+        self.assertEqual(payload['status'], 'already-subscribed')
+        blob = json.dumps(payload).lower()
+        self.assertNotIn('key', blob)
+        self.assertNotIn('support', blob)
+
+    def test_consumer_row_asking_for_a_key_is_not_told_one_exists(self):
+        # The mirrored direction: a score-updates subscriber posting the B2B
+        # form was told a key "cannot be re-issued" - implying a key that was
+        # never issued. The 409 stands (one row per email); the note must name
+        # the list the row is actually on.
+        row = {'email': {'S': 'sub@example.com'}, 'keyId': {'S': ''}}
+        with patch.object(self.app, 'get_existing_signup', return_value=row):
+            result = self._post({'email': 'sub@example.com'})
+        self.assertEqual(result['statusCode'], 409)
+        payload = json.loads(result['body'])
+        self.assertIn('already signed up', payload['error'])
+        self.assertIn('score-updates list', payload['note'])
+        self.assertNotIn('re-issue', payload['note'])
+
+    def test_key_holder_asking_for_a_key_keeps_the_re_issue_note(self):
+        # And the note that IS true stays: a real key row cannot be re-shown.
+        row = {'email': {'S': 'dev@example.com'}, 'keyId': {'S': 'k-123'}}
+        with patch.object(self.app, 'get_existing_signup', return_value=row):
+            result = self._post({'email': 'dev@example.com'})
+        self.assertEqual(result['statusCode'], 409)
+        self.assertIn('re-issue', json.loads(result['body'])['note'])

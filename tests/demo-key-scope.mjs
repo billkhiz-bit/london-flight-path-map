@@ -154,6 +154,45 @@ if (!CI_KEY) {
   );
 }
 
+// 5. THE FREE TIER MUST NOT REACH /v1/chat EITHER (2026-08-24).
+//
+// The demo deny above closed the key printed in page source; the free plan -
+// whose keys /v1/signup mints for ANY email address - kept reaching Bedrock
+// for three more days. Same stage-not-route mechanism, same RateLimit-0 fix,
+// applied to ScoreFreeUsagePlan. ChatRouteDenyTests holds the template half;
+// this is the half only the running API can answer.
+//
+// Needs a key that is genuinely ON the free plan. The CI key is deliberately
+// not (SkyScoreCiTier), so this uses its own env var and SKIPS loudly rather
+// than letting the wrong plan's key satisfy a free-tier assertion - the
+// shared-quota incident is exactly what happens when key and plan are
+// conflated. Mint one via POST /v1/signup with a throwaway address and keep it
+// in .env; it costs nothing (the probes below are throttled at the edge and a
+// throttled request is never metered).
+const FREE_KEY = process.env.SKY_SCORE_FREE_TIER_KEY;
+if (!FREE_KEY) {
+  console.log('  SKIP  free-tier chat/batch deny - SKY_SCORE_FREE_TIER_KEY not set');
+  console.log('        (a signup-minted free key in .env; the CI key is on another plan)');
+} else {
+  for (const [name, path, body] of [
+    ['free-tier key: POST /v1/chat is refused', '/v1/chat',
+      JSON.stringify({ question: 'ping', postcode: 'SW11 1AA' })],
+    ['free-tier key: POST /v1/score/batch is refused', '/v1/score/batch',
+      JSON.stringify({ queries: [{ postcode: 'SW11 1AA' }] })],
+  ]) {
+    const res = await fetch(`${API}${path}`, {
+      method: 'POST',
+      headers: { 'X-Api-Key': FREE_KEY, 'Content-Type': 'application/json' },
+      body,
+    });
+    check(
+      name,
+      BLOCKED_STATUS.has(res.status),
+      `status=${res.status}${res.status === 200 ? ' <- A FREE KEY IS THROUGH THE DENY' : ''}`,
+    );
+  }
+}
+
 console.log('');
 if (failures.length) {
   console.error(`FAIL: ${failures.length} boundary check(s) failed`);

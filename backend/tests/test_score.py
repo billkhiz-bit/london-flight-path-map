@@ -2888,3 +2888,281 @@ class BadgeTests(unittest.TestCase):
             score = tenth / 10
             colour, label = app._badge_band(score)
             self.assertTrue(colour and label, f'no band for {score}')
+
+
+class PerBoroughSourceLineTests(unittest.TestCase):
+    """sources[] must describe the REQUESTED borough, not the city's union.
+
+    _live_inputs_present asked whether ANY borough of the city holds an input,
+    and _live_sources_line stamped the result on every response - so Broxtowe,
+    whose row carries neither Progress 8 nor an ONS crime rate, was credited
+    "Liveability (4 of 4 inputs): DfE ...; ONS Table C4 ..." while the same
+    response's context.liveResolution said 2 of 4. Ten boroughs across the
+    registry carried a DfE credit for data DfE never published about them:
+    Broxtowe, Gedling and Rushcliffe (education is a county function held by
+    the city borough alone) and Leicester's seven districts (same gap).
+
+    City-level surfaces (build_batch_sources' union, /v1/changes) keep the
+    any-borough behaviour deliberately: a claim about a city is a claim about
+    what any of its boroughs measures. The per-borough claim is the one that
+    was false.
+    """
+
+    def _live_line(self, sources):
+        lines = [s for s in sources if isinstance(s, str) and s.startswith('Liveability')]
+        self.assertEqual(len(lines), 1, f'expected one liveability line in {sources}')
+        return lines[0]
+
+    def test_broxtowe_is_not_credited_with_dfe_or_ons(self):
+        body, status = app.resolve_query({'borough': 'Broxtowe', 'city': 'nottingham'})
+        self.assertEqual(status, 200)
+        line = self._live_line(body['sources'])
+        # Broxtowe's row: p8 None, crimeRate None, transport + healthcare set.
+        self.assertNotIn('DfE', line,
+                         'Broxtowe has no Progress 8 figure; crediting DfE here '
+                         'contradicts context.liveResolution in the same body')
+        self.assertNotIn('Table C4', line)
+        self.assertIn('2 of 4', line)
+        self.assertIn('NaPTAN', line)
+        self.assertIn('NHS Organisation Data Service', line)
+
+    def test_the_city_borough_keeps_its_dfe_credit(self):
+        # The fix must not strip a credit that is TRUE: the City of Nottingham
+        # row holds p8 and crimeRate, so its line names all four.
+        body, status = app.resolve_query(
+            {'borough': 'City of Nottingham', 'city': 'nottingham'})
+        self.assertEqual(status, 200)
+        line = self._live_line(body['sources'])
+        self.assertIn('DfE', line)
+        self.assertIn('Table C4', line)
+        self.assertIn('4 of 4', line)
+
+    def test_source_line_agrees_with_live_resolution_everywhere(self):
+        # The general form of the Broxtowe case, across every city that uses
+        # the computed line: the measured-input count in the sources sentence
+        # must equal the count context.liveResolution reports for that borough.
+        # London and NYC use hand-written source lists and are exempt by
+        # construction (no line starts 'Liveability').
+        for city, cfg in app.CITIES.items():
+            for borough in cfg['boroughs']:
+                with self.subTest(city=city, borough=borough):
+                    body, status = app.resolve_query({'borough': borough, 'city': city})
+                    self.assertEqual(status, 200)
+                    lines = [s for s in body['sources']
+                             if isinstance(s, str) and s.startswith('Liveability')]
+                    if not lines:
+                        continue
+                    # liveResolution is prose: 'measured', or
+                    # 'partial|unavailable ... N/4 inputs measured ...'.
+                    reported = body['context']['liveResolution']
+                    if reported == 'measured':
+                        counted = 4
+                    else:
+                        found = re.search(r'(\d)/4 inputs measured', reported)
+                        self.assertIsNotNone(found, f'unparseable: {reported}')
+                        counted = int(found.group(1))
+                    self.assertIn(
+                        f'{counted} of 4', lines[0],
+                        'the sources sentence claims a different input count '
+                        'from context.liveResolution in the same response')
+
+    def test_batch_union_keeps_city_level_wording(self):
+        # The batch header's sources cover MANY results, so the any-borough
+        # union is the honest city-level claim there. bd=None must therefore
+        # keep the old behaviour.
+        line = app._live_sources_line('nottingham')
+        self.assertIn('4 of 4', line)
+        self.assertIn('DfE', line)
+
+
+class IncludeFilterCoverageTests(unittest.TestCase):
+    """?include= must never strip the coverage caveats.
+
+    build_coverage's docstring promises coverage "on every response, not only
+    degraded ones", but 'coverage' was missing from RESPONSE_FIELDS - so any
+    ?include= request silently dropped every coverage notice, including the
+    plain-English "this component is a placeholder, do not read it as average"
+    caveat. A filter an integrator uses to slim a payload must not be able to
+    remove the sentence that keeps the payload honest, which is exactly why
+    sources already sits in filter_response's always-kept set.
+    """
+
+    def test_include_score_still_carries_coverage(self):
+        body, status = app.resolve_query(
+            {'borough': 'Hackney', 'city': 'london', 'include': 'score'})
+        self.assertEqual(status, 200)
+        self.assertIn('score', body)
+        self.assertIn(
+            'coverage', body,
+            '?include=score stripped the coverage block - the caveat surface '
+            'must survive every include filter, like sources does')
+        self.assertIn('notices', body['coverage'])
+
+    def test_coverage_is_a_known_response_field(self):
+        # parse_include intersects with RESPONSE_FIELDS, so a field absent from
+        # it cannot even be requested by name - the docstring's "every
+        # response" was unreachable through any ?include= at all.
+        self.assertIn('coverage', app.RESPONSE_FIELDS)
+
+
+class AirQualityPlausibilityTests(unittest.TestCase):
+    """no2/pm25 need a RANGE guard - the FOURTH member of the drift family.
+
+    lden_from_row gained a ceiling on 2026-08-12, road_lden_from_row not until
+    2026-08-21, and the air-quality pair on the SAME DynamoDB row kept a
+    floor-only guard (`>= 0`) until 2026-08-24 - so +3.4e38, the positive
+    GeoTIFF nodata shape the other two fields are guarded against, was
+    publishable as an annual-mean concentration on an unauthenticated
+    endpoint. Mirrored code is correct when written and breaks when the first
+    copy changes; the fix is ONE guard, not a fourth copy.
+    """
+
+    def test_positive_sentinel_is_rejected_not_published(self):
+        # The direction the `>= 0` floor could not see. Red before 2026-08-24.
+        env = app.build_environment({'no2': 3.4e38, 'pm25': 3.4e38}, 'M1 1AE')
+        self.assertNotIn('no2AnnualMeanUgm3', env)
+        self.assertNotIn('pm25AnnualMeanUgm3', env)
+        # Two rejected readings must not leave the source credit behind -
+        # attribution with no values is the inverse absence-as-measurement.
+        self.assertNotIn('airQualitySource', env)
+
+    def test_negative_sentinel_is_still_rejected(self):
+        env = app.build_environment({'no2': -3.4e38, 'pm25': -9999.0})
+        self.assertEqual(env, {})
+
+    def test_genuine_grid_extremes_survive_both_bounds(self):
+        # Measured off the 2022 PCM grids (254,905 cells each): NO2 spans
+        # 0.42-36.33 ug/m3, PM2.5 1.72-13.55. The bounds must not swallow the
+        # dirtiest or the cleanest genuine cell.
+        env = app.build_environment({'no2': 36.33, 'pm25': 1.72})
+        self.assertEqual(env['no2AnnualMeanUgm3'], 36.3)
+        self.assertEqual(env['pm25AnnualMeanUgm3'], 1.7)
+
+    def test_implausible_value_warns_someone(self):
+        # An unexpected out-of-range value is a data problem a human should
+        # see, exactly as the two Lden guards already behave.
+        with patch.object(app, 'logger') as log:
+            app.build_environment({'no2': 9999.0, 'pm25': None}, 'M1 1AE')
+        self.assertTrue(log.warning.called,
+                        'an implausible concentration passed without a warning')
+
+    def test_all_four_fields_route_through_the_single_guard(self):
+        # The family drifted BECAUSE each field owned a copy. This pins the
+        # structure the fix chose: one range guard, four thin callers, so a
+        # future bound lands on all four fields or none.
+        calls = []
+        original = app._plausible_from_row
+
+        def spy(row, key, *args, **kwargs):
+            calls.append(key)
+            return original(row, key, *args, **kwargs)
+
+        with patch.object(app, '_plausible_from_row', side_effect=spy):
+            app.lden_from_row({'lden': 55.0})
+            app.road_lden_from_row({'roadLden': 55.0})
+            app.build_environment({'no2': 12.0, 'pm25': 8.0})
+        self.assertLessEqual({'lden', 'roadLden', 'no2', 'pm25'}, set(calls))
+
+
+class BatchDeadlineTests(unittest.TestCase):
+    """A stalled resolver must cost the batch its TAIL, not the whole response.
+
+    /v1/score/batch runs up to 100 queries through a pool of 10, and each can
+    spend a 5s postcodes.io timeout. When that upstream stalls, 100 queries at
+    10-a-time is 50s of wall clock against a 28s Lambda ceiling - so ALL 100
+    answers, including the ones already computed, were thrown away as a raw
+    504. run_one now refuses to START an item once the invocation deadline
+    (minus a margin for the in-flight tail and response assembly) has passed,
+    and the refused item SAYS it was never attempted - a partial batch where
+    absence is labelled, never rendered as a scored result.
+
+    The stall is stubbed and the margin patched to zero, so these prove the
+    mechanism without a network or a 28-second test.
+    """
+
+    class _Ctx:
+        """The two methods of a Lambda context this feature reads."""
+
+        def __init__(self, remaining_ms):
+            self._remaining = remaining_ms
+
+        def get_remaining_time_in_millis(self):
+            return self._remaining
+
+    def _batch(self, queries, ctx):
+        event = {'httpMethod': 'POST', 'body': json.dumps({'queries': queries})}
+        result = app.handle_batch(event, ctx)
+        self.assertEqual(result['statusCode'], 200,
+                         'a deadline must produce a partial 200, never a 5xx')
+        return json.loads(result['body'])
+
+    def test_items_past_the_deadline_say_never_attempted(self):
+        # Sequential (parallelism 1), 0.2s stall per item, 0.5s of budget:
+        # some items run, the tail must be refused BEFORE its resolver runs.
+        attempted_queries = []
+
+        def slow_resolver(query):
+            attempted_queries.append(query)
+            time.sleep(0.2)
+            return {'error': 'stalled'}, 502
+
+        with patch.object(app, 'BATCH_PARALLELISM', 1),              patch.object(app, '_BATCH_DEADLINE_MARGIN_S', 0.0),              patch.object(app, 'resolve_query', side_effect=slow_resolver):
+            body = self._batch([{'postcode': f'E{i} 1AA'} for i in range(6)],
+                               self._Ctx(500))
+
+        refused = [r for r in body['results'] if r.get('notAttempted')]
+        self.assertGreater(len(attempted_queries), 0,
+                           'the deadline fired before anything ran')
+        self.assertGreater(len(refused), 0, 'the deadline never fired')
+        self.assertEqual(len(attempted_queries) + len(refused), 6)
+        for r in refused:
+            # Structured, honest, and NOT a 200: absence must not be able to
+            # render as a scored result anywhere downstream.
+            self.assertNotEqual(r['status'], 200)
+            self.assertIs(r['notAttempted'], True)
+            self.assertIn('never attempted', r['error'])
+        self.assertEqual(body['errorCount'], 6)
+        self.assertEqual(body['notAttemptedCount'], len(refused))
+
+    def test_exhausted_budget_refuses_without_calling_the_resolver(self):
+        # Through handler(), proving the context is threaded from the real
+        # entry point and that a refused item costs no upstream call at all.
+        called = []
+
+        def resolver(query):
+            called.append(query)
+            return {'score': 5.0}, 200
+
+        with patch.object(app, '_BATCH_DEADLINE_MARGIN_S', 0.0),              patch.object(app, 'resolve_query', side_effect=resolver):
+            result = app.handler(
+                {'httpMethod': 'POST',
+                 'body': json.dumps({'queries': [{'postcode': 'E1 1AA'}]})},
+                self._Ctx(0))
+        body = json.loads(result['body'])
+        self.assertEqual(called, [])
+        self.assertIs(body['results'][0]['notAttempted'], True)
+        self.assertEqual(body['successCount'], 0)
+
+    def test_without_a_deadline_every_item_is_attempted(self):
+        # Unit tests and direct invocations pass context=None; behaviour there
+        # must be exactly the pre-deadline behaviour.
+        seen = []
+
+        def resolver(query):
+            seen.append(query)
+            return {'score': 5.0}, 200
+
+        with patch.object(app, 'resolve_query', side_effect=resolver):
+            body = self._batch([{'postcode': 'E1 1AA'}] * 3, None)
+        self.assertEqual(len(seen), 3)
+        self.assertEqual(body['successCount'], 3)
+        self.assertNotIn('notAttemptedCount', body)
+
+    def test_generous_budget_changes_nothing(self):
+        def resolver(query):
+            return {'score': 5.0}, 200
+
+        with patch.object(app, 'resolve_query', side_effect=resolver):
+            body = self._batch([{'postcode': 'E1 1AA'}] * 3, self._Ctx(60000))
+        self.assertEqual(body['successCount'], 3)
+        self.assertNotIn('notAttemptedCount', body)
