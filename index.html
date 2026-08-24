@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -600,6 +600,22 @@
       }
       /* The aircraft provenance note, collapsed. See the markup comment on
          #legend-noise-disclosure for the measurements that prompted it. */
+      /* WAS AN INLINE `style` ATTRIBUTE, and that is the whole point
+         (2026-08-24). An inline style beats every stylesheet rule short of
+         !important, so the mobile block that turns this legend's text white
+         could not reach it: the annotation stayed var(--mid) #636363 on the
+         phone panel's rgba(20, 20, 20, 0.92), which composites to #252524 -
+         2.42:1 at 7px, against a 4.5:1 requirement.
+         This is the SAME mechanism as audit finding I7, where three legend
+         headings sat at 1.00:1 behind inline styles, and index.html:529 already
+         carries a comment saying an inline style "beats any stylesheet rule
+         including the @media override written to fix it". The durable fix is to
+         stop writing colours inline, not to add !important to the override. */
+      .legend-row em.legend-annotation {
+        color: var(--mid);
+        font-style: normal;
+        font-size: 7px;
+      }
       .legend-disclosure {
         margin: 6px 0 0;
       }
@@ -2271,9 +2287,34 @@
         display: none; /* desktop hides it; sheet-mode CSS below shows it */
       }
       @media (max-width: 900px) {
+        /* ONE HOLDER FOR THE SHEET'S PEEK HEIGHT (2026-08-24).
+           Every bottom-anchored piece of map chrome is positioned relative to
+           it, and until now each carried its own arithmetic already done:
+           232 = 220 + 12, 272 = 260 + 12, 280 and 320 = peek + 60. Six literals
+           encoding one number, so changing the peek meant remembering all of
+           them - and the tablet override below changed the peek and duly had to
+           restate every one.
+           THE CAP IS THE OTHER HALF. 220px is a sensible peek on a portrait
+           phone (26% of 844) and absurd in landscape, where the viewport is
+           390px tall: the tablet override keys on WIDTH alone, so a phone on
+           its side matched `min-width: 640px` and took the 260px iPad peek -
+           67% of the screen, over a map given 130px. Capping by viewport height
+           costs portrait nothing (min(220px, 42dvh) is 220 at any phone height
+           above 524px) and gives landscape its map back. */
         .app {
           grid-template-columns: 1fr;
           grid-template-rows: 1fr;
+          --sheet-peek: min(220px, 42dvh);
+          --sheet-chrome: calc(var(--sheet-peek) + 12px);
+        }
+        /* Clip the map to the band mapCentreY() measured - see the comment on
+           that function. Both custom properties are unset until a band has been
+           proven real, and `inset(0 0 0 0)` is a no-op clip, so an unmeasured
+           or degenerate layout renders exactly as it did before. */
+        #map-svg {
+          clip-path: inset(
+            var(--map-band-top, 0px) 0 var(--map-band-bottom, 0px) 0
+          );
         }
         .sidebar {
           position: fixed;
@@ -2293,7 +2334,7 @@
              users can search without first tapping the handle, so the
              sheet is functional even in its collapsed state. .sheet-open
              removes the translate to show the full panel. */
-          transform: translateY(calc(100% - 220px));
+          transform: translateY(calc(100% - var(--sheet-peek)));
           transition: transform 0.3s ease;
           overflow: hidden;
           will-change: transform;
@@ -2338,7 +2379,29 @@
            anchored map chrome above it so legend and layer toggles remain
            tappable. .site-footer is position:static below 768px and is
            unaffected by `bottom`. */
-        .layer-toggles,
+        /* `.layer-toggles` BELONGS WITH .map-legend, and was separated from it
+           by a comment (restored 2026-08-24).
+           Until 48c01aa this read `.layer-toggles, .map-legend { bottom:
+           232px; }` - the comment above still describes exactly that, "push the
+           bottom-anchored map chrome above [the sheet] so legend and layer
+           toggles remain tappable". That commit needed a `top` rule for the
+           first-run hint and grafted `.first-hint` onto this selector list,
+           moving `.map-legend` out to its own block but leaving `.layer-toggles`
+           behind - so the six layer toggles silently changed from a BOTTOM
+           anchor to `top: 156px`, while still inheriting a `bottom` from the
+           640-900 block. An absolutely-positioned box given both stretches
+           between them, and at 844x390 that put the stack from y=156 down
+           through a sheet whose top edge is y=130.
+           Measured before this was restored: 0 of 6 toggles reachable at
+           844x390 and 4 of 6 at 900x600, every failure elementFromPoint-COVERED
+           by the sheet.
+           A comment between two selectors is invisible to CSS and highly
+           visible to a reader, which is what made this survive review. Keep
+           each selector's own rule adjacent to its selector. */
+        .layer-toggles {
+          bottom: var(--sheet-chrome);
+          top: auto;
+        }
         /* THE FIRST-RUN HINT SITS BELOW THE NAVIGATION, not on top of it
            (2026-08-23). At `top: 24px` it spanned y 24-84 across the full
            width, and the whole top band of this map is controls:
@@ -2363,9 +2426,9 @@
           top: 156px;
         }
         .map-legend {
-          bottom: 232px;
+          bottom: var(--sheet-chrome);
           /* CAP AND SCROLL, 2026-08-23.
-             The legend sits `bottom: 232px` above the sheet's peek height, so
+             The legend sits one --sheet-chrome above the sheet's peek, so
              the space it actually has is the viewport minus that offset minus a
              top margin. Below ~390px it did not fit even after the aircraft
              prose was folded into a disclosure: measured 458px against 320px of
@@ -2375,7 +2438,7 @@
              Capping is only half an answer - see the fade rules below. */
           /* Two terms, both measured, kept separate so the reasoning stays
              legible:
-               232px  this legend's own bottom offset (the line above)
+               --sheet-chrome  this legend's own bottom offset (the line above)
                156px  the bottom of the navigation band (map-controls run
                       y 8-148, the city chip strip y 96-140) plus an 8px gap
 
@@ -2384,7 +2447,7 @@
              country tabs and the first two city chips and covering them. The
              responsive audit proved it the moment it learned to open the
              legend. */
-          max-height: calc(100dvh - 232px - 156px);
+          max-height: calc(100dvh - var(--sheet-chrome) - 156px);
           overflow-y: auto;
           /* Keep a flick inside the legend from scrolling the page behind it. */
           overscroll-behavior: contain;
@@ -2546,7 +2609,7 @@
              cluster just above the sheet peek so all map-affordance
              chrome lives in the same band. Visual treatment matches
              .layers-trigger: dark pill with light text. */
-          bottom: 232px;
+          bottom: var(--sheet-chrome);
           left: 8px;
           background: rgba(20, 20, 20, 0.92);
           color: var(--white);
@@ -2559,6 +2622,50 @@
         }
         .map-legend .legend-toggle {
           color: var(--white);
+        }
+        /* INHERIT WHITE FROM THE PANEL, so a new element type does not have to
+           be remembered (2026-08-24).
+           The list below whitens a hand-written set of descendants, and the
+           comment inside it already records this trap once: #legend-aq-group
+           was missing, so that heading stayed dark. It happened a second time
+           with a different KIND of element. The <details> disclosure added on
+           2026-08-23 - to fold the aircraft provenance note and get the legend
+           down to 458px so it fits a phone - brought a <summary> and an <em>
+           with it, and neither is in the list. Measured on the deployed markup
+           at 390x844: "About this data" rendered #141414 on #252524, a contrast
+           of 1.20:1 at 8px, and the "WHO sleep" annotation with it. Dark on
+           dark, on every phone, since the day the legend was made to fit.
+           This rule is the durable half. It cannot fix the two selectors below,
+           which lose to a 0-2-0 desktop rule setting var(--dark) and so still
+           need naming - but anything that merely INHERITS is now correct by
+           default, which is every element type nobody has thought of yet.
+           The a11y gate could not see this: axe could not resolve a background
+           through the unclipped map SVG and returned "incomplete" rather than a
+           violation. It only began reporting it once the map gained a
+           clip-path. */
+        .map-legend {
+          color: var(--white);
+        }
+        /* The two that inheritance cannot reach, because they carry an explicit
+           colour chosen for the LIGHT desktop panel:
+             .legend-disclosure[open] > summary   var(--dark)  #141414
+             the WHO annotation                   var(--mid)   #636363
+           Both are correct at >=901px, where this legend is light with dark
+           text, and both are near-invisible below it, where the panel is
+           rgba(20, 20, 20, 0.92). Measured on the phone panel: the summary at
+           1.20:1 and the annotation at 2.42:1, against a 4.5:1 requirement that
+           applies to them BOTH because 7px and 8px are far under the large-text
+           threshold. The annotation takes --light rather than --white so it
+           still reads as secondary to the band label beside it - 9.3:1, which
+           is ample. :hover is included because a touch device can leave a
+           sticky hover behind, and the hover rule sets --dark too. */
+        .map-legend .legend-disclosure > summary,
+        .map-legend .legend-disclosure > summary:hover,
+        .map-legend .legend-disclosure[open] > summary {
+          color: var(--white);
+        }
+        .map-legend .legend-row em {
+          color: var(--light);
         }
         .map-legend .legend-row span,
         .map-legend .legend-group-title,
@@ -2586,6 +2693,23 @@
           top: 8px;
           right: 8px;
         }
+      }
+
+      /* THE LAYERS POPOVER IS FOR SHORT VIEWPORTS AS WELL AS NARROW ONES
+         (split out of the <=480px block, 2026-08-24).
+         These rules used to live inside `@media (max-width: 480px)`, so
+         between 481px and 900px the six layer toggles rendered as an
+         always-visible vertical stack 279px tall. That is fine at 900x600 and
+         impossible at 844x390 - a phone on its side - where the stack is
+         anchored a --sheet-chrome above the bottom of a 390px viewport and runs
+         off the TOP of the screen. Measured before this split: 2 of 6 toggles
+         at negative y, unreachable, with no scroll affordance.
+         Third time in this file that a rule keyed on WIDTH has been wrong for a
+         landscape phone, after the sheet peek above and the tablet override it
+         inherited. The failing dimension here is HEIGHT, so that is what the
+         second condition asks about. 900px keeps it inside the band where
+         --sheet-peek is defined. */
+      @media (max-width: 480px), (max-width: 900px) and (max-height: 500px) {
         /* Audit F-A11Y-5: layers-trigger as a single button at bottom-
            right of the map area, just above the sheet peek. Tapping it
            flips aria-expanded, which the general-sibling rule below uses
@@ -2598,7 +2722,7 @@
           align-items: center;
           gap: 6px;
           position: absolute;
-          bottom: 232px;
+          bottom: var(--sheet-chrome);
           right: 8px;
           z-index: 11;
           padding: 8px 14px;
@@ -2633,7 +2757,7 @@
           display: flex;
           flex-direction: column;
           position: absolute;
-          bottom: 280px;
+          bottom: calc(var(--sheet-peek) + 60px);
           right: 8px;
           left: auto;
           top: auto;
@@ -2642,7 +2766,14 @@
           padding: 6px;
           gap: 4px;
           z-index: 11;
-          max-height: 50vh;
+          /* THE SPACE THIS ACTUALLY HAS, not a proportion of the screen.
+             `50vh` ignores the popover's own bottom offset, so in landscape it
+             asked for 195px on top of a 224px offset in a 390px viewport and
+             the top 29px rendered above y=0 - unreachable, and not something
+             the scrollbar can rescue because the overflow was at the wrong end.
+             Subtracting the offset makes the cap the real remaining band, which
+             is also strictly more generous on a tall phone than 50vh was. */
+          max-height: calc(100dvh - var(--sheet-peek) - 68px);
           overflow-y: auto;
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
         }
@@ -2789,18 +2920,8 @@
          tapping the handle. Push the layer-toggles / legend / trigger
          up to clear the new peek height. */
       @media (min-width: 640px) and (max-width: 900px) {
-        .sidebar {
-          transform: translateY(calc(100% - 260px));
-        }
-        .layer-toggles,
-        .map-legend {
-          bottom: 272px;
-        }
-        .layers-trigger {
-          bottom: 272px;
-        }
-        .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
-          bottom: 320px;
+        .app {
+          --sheet-peek: min(260px, 42dvh);
         }
       }
 
@@ -3354,7 +3475,7 @@
               <div class="legend-swatch" style="background: rgba(242, 184, 38, 0.5)"></div>
               <span>
                 65-69 dB
-                <em style="color: var(--mid); font-style: normal; font-size: 7px">↓ WHO sleep</em>
+                <em class="legend-annotation">↓ WHO sleep</em>
               </span>
             </div>
             <div class="legend-row">
@@ -3996,7 +4117,7 @@
             msg =
               'To install: open the <strong>Share</strong> menu (or your browser&rsquo;s <strong>&#8943;</strong> menu), then <strong>Add to Home Screen</strong>';
           }
-          if (!localStorage.getItem('ios-install-dismissed')) {
+          if (!readFlag('ios-install-dismissed')) {
             document.addEventListener('DOMContentLoaded', () => {
               const textEl = document.querySelector('#ios-install-hint .ios-install-text');
               if (textEl) textEl.innerHTML = msg;
@@ -4032,7 +4153,7 @@
               if (wrap) wrap.hidden = true;
             }
           } else if (ev.target.closest('#ios-install-dismiss')) {
-            localStorage.setItem('ios-install-dismissed', '1');
+            writeFlag('ios-install-dismissed', '1');
             const hint = document.getElementById('ios-install-hint');
             if (hint) hint.hidden = true;
             const chip = document.getElementById('install-chip');
@@ -7729,6 +7850,145 @@
       // that check asserts a field is DEFINED, not that it has substance, which
       // is a real limit worth knowing when reading it.
       let projection, pathGenerator, svg, g, zoom;
+
+      // THE MAP'S SCALE IS FITTED TO THE BOX IT IS DRAWN IN (2026-08-24).
+      //
+      // Each city's `scale` in CITY_DATA is fitted by
+      // scripts/fit_city_projection.py against the DESKTOP map box - 1040x900,
+      // the area #map-container occupies beside the sidebar at >=901px. Every
+      // city fits that box: measured across all ten UK cities, the geography
+      // fills 54-83% of the width and 0.0% of it is clipped.
+      //
+      // On a phone that same per-city scale was pushed through one branch,
+      // comparing the width against 600 and multiplying by a fixed fraction -
+      // written out in THREE places. That multiplier is a constant, and this
+      // file has already paid for the lesson that a constant is right at one
+      // width and wrong at every other; see updateFooterInset(), which measures
+      // rather than assumes for exactly this reason.
+      //
+      // Measured at HEAD before this change, portrait 320x568, share of the
+      // drawn geography falling OUTSIDE the map box:
+      //
+      //     London            40.9%      Teesside            27.6%
+      //     Tyne and Wear     28.8%      West Yorkshire      27.5%
+      //     South Yorkshire   27.9%      Greater Manchester  24.0%
+      //     West Midlands     27.9%      Merseyside           8.4%
+      //     Bristol           27.7%      Leicester            8.1%
+      //
+      // Every city, every phone. Heathrow sat 140px off the left edge of a
+      // 320px screen, so the boroughs on a region's flanks could not be seen or
+      // tapped at all. LANDSCAPE was worse in the other axis: at 844x390 the
+      // width test is FALSE, so the full desktop scale went into a box 510px
+      // shorter than the one it was fitted for - 28.4% clipped off the top and
+      // bottom.
+      //
+      // NOTHING WATCHED THIS. tests/responsive.mjs asks whether the DOCUMENT
+      // overflows, and whether a CONTROL is past the edge, covered, or clipped
+      // above. An SVG path drawn outside its own SVG box is none of those, so
+      // all ten viewports passed while 41% of London was off-screen.
+      //
+      // The fix is a RATIO, not a second constant: scale each city's own
+      // desktop fit by how much smaller its box now is. Because the factor is
+      // relative to that fit it is city-independent - London keeps its 83% of
+      // the width and Merseyside keeps its 54%, at every size. The clamp at 1
+      // makes the desktop path provably unchanged: at 1040x900 the factor is
+      // exactly 1.0, so no existing desktop view moves by a pixel.
+      //
+      // THE TWO REFERENCE TERMS ARE NOT THE SAME KIND OF NUMBER, and getting
+      // that wrong shrank the map on laptops. 1040 is the map box's WIDTH at
+      // the desktop layout, and the width is what binds there - London's
+      // geography is 866px across, 83% of it. But the geography is only 545px
+      // TALL, so a height reference of 900 demanded room the map never needed:
+      // measured at 1366x768, the commonest laptop screen, that pulled the fill
+      // from 84% down to 72%, and at 1280x720 from 92% to 74%. Both fitted
+      // perfectly well before.
+      //
+      // So the height term is a calibration height carried to the same
+      // proportion as the width term. The height to use is NOT London's:
+      // London is the WIDEST region we draw (866px at factor 1.0) but not the
+      // tallest. Measured across all eleven cities at 1440x900, Tyne and Wear
+      // is 621px tall and Greater Manchester 572, against London's 545. Using
+      // London's height left both of them spilling in landscape - 12px and 9px
+      // at 844x390 - which tests/map-fit.mjs caught on its first run, having
+      // been written for exactly this axis.
+      //
+      // So the reference is the box that holds the largest geography ANY city
+      // draws: 866 wide, 621 tall, both carried by 1040 / 866 = 1.2009.
+      // A twelfth city taller than Tyne and Wear would make this stale, and
+      // that is precisely what map-fit.mjs goes red on, in landscape, before
+      // anybody sees it.
+      const MAP_FIT_REF_W = 1040;
+      const MAP_FIT_REF_H = 746;
+      function fittedScale(baseScale, w, h) {
+        // A container that has not been laid out yet reports 0. Falling through
+        // with it would scale the map to nothing, so an UNMEASURABLE box is
+        // treated as the box the fit was made for - which is what this code did
+        // before the function existed. An absence must not read as a
+        // measurement of zero.
+        if (!(w > 0) || !(h > 0)) return baseScale;
+        return baseScale * Math.min(w / MAP_FIT_REF_W, h / MAP_FIT_REF_H, 1);
+      }
+
+      // ...AND CENTRED IN THE PART OF THAT BOX YOU CAN ACTUALLY SEE.
+      //
+      // Fitting the scale is only half of it. Below the sheet breakpoint the
+      // map BOX is not the visible map: the navigation band (title, country
+      // tabs, city chips, zoom column) is painted over its top and the bottom
+      // sheet covers its bottom at peek. Centring the geography at h/2 puts it
+      // behind both.
+      //
+      // That was invisible while the map was over-scaled, because the parts
+      // that landed under the chrome were off-screen anyway. Fixing the scale
+      // surfaced it: at 320x568 the outlying airport labels LTN and STN came
+      // back into the box and rendered up inside the city-chip strip.
+      //
+      // Both edges are MEASURED, not assumed - the nav band's height depends on
+      // how the chips wrap and the sheet's peek is a CSS value that has already
+      // changed once. Same reasoning as updateFooterInset().
+      //
+      // The guard is the interesting part. In LANDSCAPE the 220px sheet peek
+      // leaves a 390px-tall phone a 22px band, and centring a 236px map in it
+      // would be worse than not trying. So a band too short to hold the map is
+      // declined and the container centre is used - today's behaviour, kept for
+      // the case where there is no better answer rather than forced into one.
+      function mapCentreY(container, h) {
+        const sheet = document.querySelector('.sidebar');
+        const nav = document.querySelector('.city-selector');
+        if (!sheet || !nav) return h / 2;
+        const box = container.getBoundingClientRect();
+        const sheetTop = sheet.getBoundingClientRect().top - box.top;
+        const navBottom = nav.getBoundingClientRect().bottom - box.top;
+        // On desktop the sheet is a grid column beside the map, not over it, so
+        // its top is off the right-hand side and this is not a band at all.
+        // Falling back keeps the desktop path provably unchanged.
+        if (!(sheetTop > 0) || sheetTop >= h) return h / 2;
+        const top = Math.max(0, navBottom);
+        const band = sheetTop - top;
+        if (!(band > 0)) return h / 2;
+        const centre = top + band / 2;
+        // A band shorter than the map it has to hold is not an improvement.
+        // 168px is the tallest geography this fit produces on the narrowest
+        // phone we support (London at 320x568, measured); below that, decline.
+        if (band < 168) return h / 2;
+        // PUBLISH THE BAND SO THE MAP CAN BE CLIPPED TO IT.
+        //
+        // Centring inside the band is not sufficient on its own: a city's
+        // AIRPORTS are not inside its boundary. Luton and Stansted sit 30-50km
+        // north of the London LADs, so at a fit computed from the boroughs
+        // their markers land above the geography and paint into the navigation
+        // band - LTN rendered inside the city-chip strip at 320x568 the moment
+        // the scale fix brought them back into the box.
+        //
+        // Clipping is the honest answer rather than hiding those two markers:
+        // the map does not own the pixels the chrome is drawn on, so it should
+        // not paint them. Written as measured values, never as the constants
+        // this whole change exists to remove, and only ever set on the path
+        // that has already proven the band is real - so a failed measurement
+        // leaves the properties unset and the CSS falls back to no clip.
+        container.style.setProperty('--map-band-top', top + 'px');
+        container.style.setProperty('--map-band-bottom', Math.max(0, h - sheetTop) + 'px');
+        return centre;
+      }
       let layers = {
         paths: true,
         'defra-aircraft': true,
@@ -10453,19 +10713,19 @@
         <div class="score-breakdown" style="margin-top:14px;">
           <div class="score-row"><span class="score-row-label">Quiet Skies</span>
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${pcQuiet * 10}%;background:${scoreColor(pcQuiet)};"></div></div>
-            <span class="score-row-value">${pcQuiet}/10</span></div>
+            <span class="score-row-value">${show1(pcQuiet)}/10</span></div>
           <div class="score-row"><span class="score-row-label">Affordability</span>
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${a * 10}%;background:${scoreColor(a)};"></div></div>
-            <span class="score-row-value">${a}/10</span></div>
+            <span class="score-row-value">${show1(a)}/10</span></div>
           <div class="score-row"><span class="score-row-label">Growth</span>
             <div class="score-bar-track"><div class="score-bar-fill" style="width:${gr * 10}%;background:${scoreColor(gr)};"></div></div>
-            <span class="score-row-value">${gr}/10</span></div>
+            <span class="score-row-value">${show1(gr)}/10</span></div>
           <div class="score-row"><span class="score-row-label">Liveability</span>
             ${
               lv === null
                 ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
                 : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
-            <span class="score-row-value">${lv}/10</span>`
+            <span class="score-row-value">${show1(lv)}/10</span>`
             }</div>
         </div>
         <p class="info-note" style="margin-top:8px;font-size:9px;">Quiet Skies uses your location's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
@@ -10707,14 +10967,14 @@
       // flagged. Pre-launch, this trade-off is acceptable.
       const _UUID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
       function getDeviceToken() {
-        let id = localStorage.getItem('flightmap_device_token');
+        let id = readFlag('flightmap_device_token');
         if (!id || !_UUID_RE.test(id)) {
           id =
             (crypto.randomUUID && crypto.randomUUID()) ||
             // Fallback for ancient browsers, 32 hex chars from Math.random;
             // weaker entropy but still passes the Lambda's format check.
             Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-          localStorage.setItem('flightmap_device_token', id);
+          writeFlag('flightmap_device_token', id);
         }
         return id;
       }
@@ -11247,8 +11507,8 @@
         const cityData = cityOf(city);
         projection
           .center(cityData.center)
-          .scale(w < 600 ? cityData.scale * 0.625 : cityData.scale)
-          .translate([w / 2, h / 2]);
+          .scale(fittedScale(cityData.scale, w, h))
+          .translate([w / 2, mapCentreY(container, h)]);
         // interrupt() before remove(): d3 transitions outlive detachment, and
         // remove() alone leaves the flight-path dot loops running. The
         // flightAnimGen check in animateDot() is what actually ends them; this
@@ -11770,6 +12030,48 @@
       // ============================================================
       // INIT
       // ============================================================
+      // localStorage reads THROW rather than returning null when a browser
+      // blocks site data, so every read needs this. Absence and "blocked" are
+      // deliberately the same answer here - both mean "we have no flag", which
+      // is the safe default for a first-run hint.
+      // ROUND AT THE POINT OF DISPLAY, not in the value.
+      //
+      // The postcode panel reads `scoresRaw` deliberately - the note beside
+      // that object says anything RECOMBINING the components into a total must
+      // use the unrounded ones or it double-rounds and disagrees with
+      // /v1/score. That is right, and `pcScore` depends on it.
+      //
+      // But the same four variables were then printed, so the breakdown showed
+      // a raw float: "Affordability 6.333333333333333/10", sixteen significant
+      // figures in a 41px-wide column that then ran off the side of a phone.
+      // The borough panel never had this because it prints `scores`, the copy
+      // that is already rounded for display.
+      //
+      // So the fix is a display formatter rather than rounding the value: the
+      // arithmetic keeps its precision and only the rendering is trimmed.
+      function show1(n) {
+        return typeof n === 'number' && isFinite(n) ? String(Math.round(n * 10) / 10) : n;
+      }
+      function readFlag(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch (_) {
+          return null;
+        }
+      }
+      // The write half, so no call site has to remember its own try/catch.
+      // Writes throw for the same reasons reads do, and a failed write is not
+      // an error worth surfacing: it means this preference will not survive the
+      // session, which is exactly what a private window does anyway.
+      function writeFlag(key, value) {
+        try {
+          localStorage.setItem(key, value);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
       async function init() {
         // F-Perf-10: kick off the borough-extra fetch in parallel with the
         // geojson load. Both are needed eventually but neither blocks the
@@ -11835,14 +12137,21 @@
         // borough click, layer toggle). Re-shows in private windows.
         const hintEl = document.getElementById('first-hint');
         if (hintEl) {
-          if (localStorage.getItem('flightmap_hint_seen') === '1') {
+          // GUARDED, like the setItem six lines below it (2026-08-24).
+          // The two were written together and only one got a try/catch, which
+          // is this repo's mirrored-code class again. Reading localStorage
+          // THROWS - it does not return null - when a browser blocks site data:
+          // a locked-down corporate profile, some embedded WebViews, Safari
+          // with cross-site tracking fully restricted. And this runs inside
+          // init() twenty lines ABOVE `svg = d3.select('#map-svg')`, so the
+          // throw took the whole of map creation with it: a visitor who blocks
+          // site data got a blank page, not a missing hint banner.
+          if (readFlag('flightmap_hint_seen') === '1') {
             hintEl.classList.add('dismissed');
           } else {
             const dismiss = () => {
               hintEl.classList.add('dismissed');
-              try {
-                localStorage.setItem('flightmap_hint_seen', '1');
-              } catch (e) {}
+              writeFlag('flightmap_hint_seen', '1');
             };
             document.getElementById('first-hint-dismiss').addEventListener('click', dismiss);
             // Auto-dismiss on any of the implicit "I've started using the app"
@@ -11864,8 +12173,8 @@
         projection = d3
           .geoMercator()
           .center(cityData.center)
-          .scale(w < 600 ? cityData.scale * 0.625 : cityData.scale)
-          .translate([w / 2, h / 2]);
+          .scale(fittedScale(cityData.scale, w, h))
+          .translate([w / 2, mapCentreY(container, h)]);
         pathGenerator = d3.geoPath().projection(projection);
 
         let zoomTileTimer = null;
@@ -12184,7 +12493,7 @@
           const nw = container.clientWidth;
           const nh = container.clientHeight;
           const baseScale = cityOf(currentCity).scale;
-          projection.scale(nw < 600 ? baseScale * 0.625 : baseScale).translate([nw / 2, nh / 2]);
+          projection.scale(fittedScale(baseScale, nw, nh)).translate([nw / 2, mapCentreY(container, nh)]);
           // interrupt() before remove() - see the matching call in switchCity.
           g.selectAll('*').interrupt().remove();
           // Projection translate has changed → previously cached g-coords for
@@ -12315,16 +12624,36 @@
       // B2B funnel events, same convention as /api/index.html (Wave 12.7):
       // events bucket under /event/<name> in GoatCounter. Footer CTAs carry
       // data-event attributes; one delegated listener covers them all.
-      (function () {
-        function trackEvent(name) {
-          try {
-            if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-              window.goatcounter.count({ path: 'event/' + name, title: name, event: true });
-            }
-          } catch (_) {
-            /* never break the UI for analytics */
+      // HOISTED OUT OF THE IIFE BELOW, 2026-08-24, because three of its five
+      // call sites could not see it and one of them broke a form.
+      //
+      // `trackEvent` was declared INSIDE the listener IIFE, so it existed only
+      // for the delegated footer-link handler. The three calls in the main
+      // script body - 'badge-embed-copied', 'notify-attempted' and
+      // 'notify-subscribed' - each threw ReferenceError.
+      //
+      // The consequence is not a lost analytics event. In the notify handler
+      // the call sits AFTER `btn.disabled = true` and `out.textContent =
+      // 'Saving...'` and BEFORE the `try`, so the throw aborts the submit
+      // handler with the button already disabled: every visitor who submitted
+      // the "tell me when this changes" form got a permanent "Saving..." and no
+      // request was ever sent. The consumer email capture has never worked.
+      //
+      // The function body already swallows everything - the whole point is that
+      // analytics must never break the UI - so the guard was there; it was the
+      // SCOPE that was wrong. ESLint had been reporting `'trackEvent' is not
+      // defined` as a warning at all three sites, which is what a no-undef
+      // warning is for.
+      function trackEvent(name) {
+        try {
+          if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+            window.goatcounter.count({ path: 'event/' + name, title: name, event: true });
           }
+        } catch (_) {
+          /* never break the UI for analytics */
         }
+      }
+      (function () {
         document.addEventListener('click', (e) => {
           const a = e.target.closest && e.target.closest('a[data-event]');
           if (a) trackEvent(a.getAttribute('data-event'));
@@ -12333,6 +12662,6 @@
 
       init();
     </script>
-    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </body>
 </html>

@@ -196,7 +196,7 @@
 // The new data file is deliberately NOT in SHELL_ASSETS: cache.addAll() is
 // atomic, and a decoration-grade fetch failure must not stop the worker
 // installing for every city.
-const VERSION = 'v1.0.33';
+const VERSION = 'v1.0.34';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -323,6 +323,30 @@ self.addEventListener('fetch', (event) => {
   // (see header note), so the freshest copy must win whenever there is a
   // network; the cache is the offline fallback only.
   if (url.origin === self.location.origin && url.pathname.startsWith('/js/')) {
+    event.respondWith(networkFirstAsset(req));
+    return;
+  }
+
+  // Same-origin /data/: network-first, for exactly the reason /js/ is.
+  //
+  // These are versionless URLs with MUTABLE contents, and one of them decides
+  // what score every borough shows. borough-extra.json is deployed with
+  // `Cache-Control: no-cache` precisely because a stale copy is wrong data
+  // rather than stale decoration - the Makefile and CLAUDE.md both call that
+  // header load-bearing, and it was added after a user was served crime
+  // figures from before the 2026-08-02 correction.
+  //
+  // But a Cache-Control header governs the browser's HTTP cache. It does not
+  // govern Cache Storage: `cacheFirst` returns the stored Response without
+  // ever asking the network, so the service worker pinned the file
+  // indefinitely and the no-cache header could not reach it. The recorded
+  // fix for that incident closed the HTTP-cache half and left this one open,
+  // which is why the note ends "bumping sw.js does NOT fix this" - true, and
+  // it was pointing at the wrong layer twice over.
+  //
+  // network-first keeps the offline story intact: the cache is still the
+  // fallback, it is simply no longer the first answer.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/data/')) {
     event.respondWith(networkFirstAsset(req));
     return;
   }

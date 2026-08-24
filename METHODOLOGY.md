@@ -1203,9 +1203,29 @@ can reach a GP and a branch is a place you can attend.
 
 **What moved.** 54 of 86 boroughs changed liveability by more than 0.05, mean
 0.22 and maximum 0.60 - gentler than v3.6 because healthcare carries 0.10 of the
-weight against transport's 0.25. **78 of 86 boroughs now score on all four
-liveability inputs, up from 38.** The remainder are Cardiff (no Progress 8 in
-Wales) and Nottingham's outer districts.
+weight against transport's 0.25. **At v3.7 that took boroughs scoring on all
+four liveability inputs from 38 to 78 of 86.**
+
+**Current coverage: 84 of 99 boroughs** (re-counted 2026-08-23 through the
+scoring Lambda's own `live_resolution()`, so this figure cannot disagree with the
+`context.liveResolution` each API response carries). The 86 became 99 when
+Leicester and Teesside shipped on 2026-08-11, hours after v3.7 set the original
+number.
+
+The remaining 15 are **partial, never unavailable** - the absent input's weight
+is redistributed across the measured ones rather than filled with a placeholder:
+
+| Where | Boroughs | What is absent |
+|---|---|---|
+| Cardiff | 4 | Progress 8 is an England measure; Wales has none |
+| Leicester | 7 of 8 | education is an upper-tier county function, so Progress 8 publishes for Leicestershire rather than for its districts |
+| Nottingham | 3 of 4 | the same, for Nottinghamshire - **and** no ONS Table C4 rate at district level, so Broxtowe, Gedling and Rushcliffe are each missing two inputs, not one. `live_resolution()` reports them at `2/4 inputs measured` |
+| London | 1 (City of London) | no Progress 8 figure - the City has effectively no state secondary cohort. Its crime rate **is** present (190); see the worked example in §6.4 |
+
+*This sentence read "78 of 86 boroughs now score on all four" until 2026-08-23,
+and named only Cardiff and Nottingham as the remainder - omitting Leicester's
+seven and the City of London. This document is linked from nine public pages, so
+a stale figure here is a claim made to customers.*
 
 ### 7.2 Transport, derived nationally (v3.6, 2026-08-11)
 

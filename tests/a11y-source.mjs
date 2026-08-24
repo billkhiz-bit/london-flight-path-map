@@ -184,6 +184,45 @@ function failing(results) {
 
 const browser = await chromium.launch();
 
+// WAIT FOR ANIMATIONS TO FINISH BEFORE SCANNING (2026-08-24).
+//
+// axe computes colour contrast by compositing what it can see AT THAT INSTANT.
+// An element part-way through a fade is measured at its transient opacity, not
+// its settled one, and reported as a contrast failure no user will ever meet.
+//
+// `.first-hint` runs `animation: hint-in 0.4s ease-out` from `opacity: 0`. Its
+// panel is `rgba(20, 20, 20, 0.92)` with near-white text - about 15:1 once
+// settled. Caught mid-fade it composites against the light page instead, and
+// axe reported #e7e6e3 on #cac9c7 at 1.32:1. Across three identical runs the
+// ratio came out 2.02, 1.32 and 1.32 - a different answer each time, which is
+// the signature of a RACE rather than a defect.
+//
+// This gate has always been able to lose that race; it simply used to win it.
+// Any change that shifts boot timing by a few milliseconds flips it, and the
+// failure then points at the innocent change. That is worse than a gate being
+// absent, because it accuses.
+//
+// Infinite animations are excluded deliberately - waiting on one never returns,
+// and a spinner is not a state a scan needs to wait out.
+async function settleAnimations(page) {
+  await page
+    .evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => {
+            const t = a.effect && a.effect.getTiming();
+            return t && t.iterations !== Infinity;
+          })
+          .map((a) => a.finished.catch(() => {}))
+      )
+    )
+    .catch(() => {
+      /* A scan must not be skipped because the settle failed - fall through
+         and scan anyway, so this can only ever remove flake, never coverage. */
+    });
+}
+
 let failed = 0;
 for (const viewport of VIEWPORTS) {
   // axe-core/playwright rejects the implicit context browser.newPage() creates.
@@ -249,6 +288,7 @@ for (const viewport of VIEWPORTS) {
       'wcag21aa',
     ]);
     if (disableRules) builder = builder.disableRules(disableRules);
+    await settleAnimations(page);
     const results = await builder.analyze();
     violations = failing(results);
   } catch (e) {
@@ -289,6 +329,7 @@ for (const viewport of VIEWPORTS) {
       if (el) el.click();
     });
     await page.waitForTimeout(1200);
+    await settleAnimations(page);
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
@@ -394,6 +435,7 @@ for (const viewport of VIEWPORTS) {
       );
       failed++;
     } else {
+      await settleAnimations(page);
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();

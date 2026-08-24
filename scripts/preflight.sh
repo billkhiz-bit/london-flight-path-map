@@ -318,6 +318,22 @@ else
   # Deliberately data-driven, unlike the stage above: no count to keep in step,
   # so city ten is covered the day it is added. Both defects re-proven red.
   check "every city switches"           node tests/city-switch.mjs
+  # DOES THE MAP FIT THE BOX IT IS DRAWN IN? Added 2026-08-24.
+  #
+  # "every city switches" counts outlines, and the count is right whether or
+  # not you can see them. responsive.mjs asks whether the DOCUMENT overflows
+  # and whether a CONTROL is stranded, covered or clipped - and an SVG path
+  # drawn outside its own SVG box is none of those. So every gate here was
+  # green while 41% of London rendered off-screen at 320x568, Heathrow 140px
+  # past the left edge, in all eleven cities. 53 of 90 city/viewport
+  # combinations were failing.
+  #
+  # Asserts both directions: nothing may spill outside the box, and the
+  # geography must fill a floor of it - "nothing is clipped" is otherwise
+  # satisfiable by drawing the map tiny. Includes a LANDSCAPE viewport,
+  # which is where the old code took its desktop branch and failed in the
+  # vertical axis while every portrait phone failed in the horizontal one.
+  check "map fits its box"              node tests/map-fit.mjs
   # Types a real postcode in a NON-LONDON city, which nothing had ever done.
   # "every city switches" clicks the chip and checks the MAP;
   # borough-score-parity compares SCORES. Both passed while nine UK cities
