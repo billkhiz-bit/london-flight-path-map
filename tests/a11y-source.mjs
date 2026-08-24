@@ -324,25 +324,55 @@ for (const viewport of VIEWPORTS) {
   try {
     await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#app', { state: 'visible', timeout: 30000 });
-    await page.evaluate(() => {
+    const clicked = await page.evaluate(() => {
       const el = document.querySelector('.borough-list-item, .rank-table tbody tr');
       if (el) el.click();
+      return !!el;
     });
     await page.waitForTimeout(1200);
-    await settleAnimations(page);
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .analyze();
-    const v = failing(results);
-    if (v.length) failed++;
-    console.log(
-      `${'/ (borough selected)'.padEnd(28)} ${v.length ? 'FAIL' : 'OK  '} rendered detail panel` +
-        (v.length ? ` — ${v.length} blocking` : '')
-    );
-    for (const item of v) {
-      console.log(`    [${item.impact.toUpperCase()}] ${item.id}: ${item.help}`);
-      for (const node of item.nodes.slice(0, 3)) {
-        console.log(`      - ${node.target.join(' > ')}`);
+    // NOT REACHING THE STATE IS A FAILURE, never a quiet pass - the rule the
+    // renderedWhen pages above already enforce, applied to the click this
+    // state depends on. Until 2026-08-24 a null match simply skipped the
+    // click and axe scanned the LANDING state under the "borough selected"
+    // label, reporting OK over a panel that never opened. That is live risk,
+    // not theory: `.borough-list-item` survives in CSS only - no markup
+    // carries it - so the state is reached solely through the `.rank-table`
+    // half of the selector, and the day that half stops matching too, this
+    // scan silently narrows.
+    //
+    // `.score-breakdown .score-row` is an INDEPENDENT render signal, the same
+    // move the API-reference page makes with `.opblock`: it is what
+    // updateSidebar() injects for a user to read, not an attribute an a11y
+    // fix would set. updateSidebar() runs synchronously on the click, so rows
+    // still absent after the settle mean the panel did not render. Fails LOW
+    // only - a row count here would be scheduled staleness.
+    const panelRows = clicked
+      ? await page.evaluate(
+          () => document.querySelectorAll('#sidebar-content .score-breakdown .score-row').length
+        )
+      : 0;
+    if (!clicked || panelRows === 0) {
+      console.log(
+        `${'/ (borough selected)'.padEnd(28)} FAIL could not reach the rendered detail panel ` +
+          `(borough row ${clicked ? 'clicked' : 'NOT FOUND'}, score rows rendered ${panelRows})`
+      );
+      failed++;
+    } else {
+      await settleAnimations(page);
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .analyze();
+      const v = failing(results);
+      if (v.length) failed++;
+      console.log(
+        `${'/ (borough selected)'.padEnd(28)} ${v.length ? 'FAIL' : 'OK  '} rendered detail panel` +
+          (v.length ? ` — ${v.length} blocking` : '')
+      );
+      for (const item of v) {
+        console.log(`    [${item.impact.toUpperCase()}] ${item.id}: ${item.help}`);
+        for (const node of item.nodes.slice(0, 3)) {
+          console.log(`      - ${node.target.join(' > ')}`);
+        }
       }
     }
   } catch (e) {

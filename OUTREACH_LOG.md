@@ -133,8 +133,8 @@ Cohort signal worth keeping: the other rows on that sheet skew **halal fintech**
 - Methodology: `https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md`
 - Public repo: `https://github.com/billkhiz-bit/london-flight-path-map`
 - Privacy policy (live page for store-listing forms): `https://skyscore.co.uk/privacy`
-- iOS app: TBD — pending Codemagic build + App Store review (Wave 13, in-flight 2026-05-09)
-- Android app: TBD — pending Codemagic build + Play Console internal-track upload
+- iOS app: LIVE on the GB App Store since June 2026 - <https://apps.apple.com/gb/app/sky-score/id6768118116> (this line said "TBD - pending" for over two months after approval; the listing is an outreach asset, cite it)
+- Android app: deliberately unsubmitted - held by the rename decision (see ROADMAP), not by the build
 
 ---
 

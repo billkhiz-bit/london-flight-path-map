@@ -103,6 +103,12 @@ PROBES = [
     ('TS1 2AZ', 'Middlesbrough town centre'),
     ('NG1 5FS', 'Nottingham city centre'),
     ('CF10 1EP', 'Cardiff city centre'),
+    # NYC, added 2026-08-24. It was the ONE city with no probe, and it is the
+    # one whose pipeline shares nothing with the others - ZIP resolution instead
+    # of NSPL, FAA/BTS provenance instead of DEFRA, curated flood bands instead
+    # of the EA. Every failure mode it has is therefore one no UK probe can
+    # catch. 10001 is Manhattan's Chelsea, a ZIP with per-ZIP centroid coverage.
+    ('10001', 'New York, Chelsea (Manhattan)'),
 ]
 
 # The city each probe must resolve to. London postcodes are not listed - they
@@ -119,6 +125,7 @@ EXPECT_CITY = {
     'TS1 2AZ': 'teesside',
     'NG1 5FS': 'nottingham',
     'CF10 1EP': 'cardiff',
+    '10001': 'nyc',
 }
 
 COMPONENTS = ('quiet', 'afford', 'growth', 'live')

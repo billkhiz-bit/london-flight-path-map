@@ -322,7 +322,7 @@ API Gateway ── Lambda × 8 active ── DynamoDB (favourites, signups, DEFR
 │ └── tests/ # Unit tests: score engine + handler suite
 ├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source
 ├── ROADMAP.md # Rolling project plan with design notes for deferred work
-├── BUILDATHON_PLAN.md # Shared Futures Buildathon (June 2026) plan
+├── archive/BUILDATHON_PLAN_2026.md # Shared Futures Buildathon plan (archived)
 ├── OUTREACH_LOG.md # B2B outreach pipeline tracker
 └── tests/ # Playwright E2E + per-Lambda pytest suites (rewritten 2026-07-24)
 ```

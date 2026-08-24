@@ -157,6 +157,18 @@ check "prices == HM Land Registry"     python scripts/build_hpi_prices.py --chec
 # across the two files; --check parses all four, and a parser that knew only
 # one silently read every borough as absent.
 check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --check
+# Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
+# run. The --check has existed since 2026-08-03 and no preflight stage ever
+# ran it - crime was one of three scoring inputs whose check sat outside the
+# gate - and until 2026-08-24 it could exit 0 having compared ZERO boroughs,
+# so wiring it in without the per-city floor would have gated nothing.
+#
+# Same data-dependency shape as the HPI stage above: needs only
+# data/ons_pfa_tables.xlsx, which load_table() fetches once from ONS and
+# caches. Measured 2026-08-24: 1.7s for all eleven cities with the workbook
+# cached. Proven able to fail per city: a renamed London borough key floors
+# london while the other ten still compare, and the run exits 1.
+check "crime == ONS Table C4"          python scripts/refresh_crime_from_ons.py --check --all
 # The OUTPUT check the Manchester incident needed and nothing had. Input parity
 # (tests/test_borough_data_parity.py) passed throughout that defect, because
 # both holders HELD the data and the site never loaded it into the object it
@@ -400,6 +412,27 @@ advise "Prettier (all files deviate)"   npm run format:check
 # `backend/lambdas/*/requirements.txt`, which matches nothing, and swallowed
 # the result with `|| true` — a no-op that rendered as a green tick.
 advise "npm audit"                      npm audit
+
+# Progress 8 against DfE KS4 2022/23. Advisory, NOT blocking, on the data
+# dependency alone: the check itself is offline and fast (0.2s measured
+# 2026-08-24, with a compared-nothing floor since 2026-08-22), but its input
+# data/ks4-2022-23.zip is gitignored and CANNOT be auto-fetched the way the
+# HPI csv can - the Explore Education Statistics host answers 403 to a
+# non-browser User-Agent - so a blocking stage would fail every fresh clone
+# on a file no command restores. Drift risk is one-sided: 2022/23 is the
+# TERMINAL Progress 8 vintage until ~2027 (the KS2 baseline was lost to the
+# 2020/21 test cancellations), so only a registry edit can move it, and the
+# pytest parity suite still blocks on the two holders disagreeing.
+advise "p8 == DfE KS4 2022/23"          python scripts/build_progress8.py --check
+
+# The five borough band fields (road noise, air quality, flood, transport,
+# healthcare) against their sources. Advisory for the same reason as p8, at
+# larger scale: the check re-derives every band from the 806 MB NSPL plus the
+# DEFRA/EA rasters, NaPTAN and the NHS GP register - all gitignored, restored
+# only by their own fetch scripts and loaders - and a fresh clone has none of
+# them. 59s measured 2026-08-24 with the data present, during which it still
+# reds on any drifted band before a commit.
+advise "borough bands == sources"       python scripts/build_borough_bands.py --check
 
 # Compares all 14 publicly-served files against what CloudFront actually
 # serves. Advisory because drift is the EXPECTED state between committing and

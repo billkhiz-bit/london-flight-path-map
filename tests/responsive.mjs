@@ -104,6 +104,12 @@ const VIEWPORTS = [
 const NARROW = VIEWPORTS.filter((v) => v.w <= 480);
 
 const results = [];
+// Declared BEFORE the page loop, not beside the summary loop below, because
+// the PREP-FAIL branch inside the loop counts into it too. Declared late, a
+// prep failure died on the TDZ ReferenceError instead of reporting - so the
+// one path that admits "this run scanned less than it claims" was the one
+// path that crashed the audit rather than failing it.
+let failures = 0;
 
 const browser = await chromium.launch();
 
@@ -444,7 +450,6 @@ await browser.close();
 
 console.log(`\nResponsive audit: ${BASE || RAW_TARGET}\n`);
 
-let failures = 0;
 // A page whose url resolved to nothing is a hard failure. Skipping it would
 // quietly recreate the single-page coverage this widening removed.
 for (const meta of unresolved) {

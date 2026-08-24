@@ -49,6 +49,20 @@ worth starting before you need it.
 
 ---
 
+## 2a-bis. State as of 2026-08-24
+
+| | |
+|---|---|
+| Review | 33-agent whole-app review, 112 findings, criticals independently verified (23 CONFIRMED / 1 REFUTED) |
+| Deployed | `fd2558b` (map fits its box + 9 sibling fixes) live, sha256-verified, drift 0/16; a second wave (answer screen, payload diet, cross-city search, `?city=` reader) staged behind preflight |
+| New blocking gate | `tests/map-fit.mjs` - 90 city/viewport combinations incl. landscape |
+| Score sanity | 28 probes now - NYC added, the one city that had none |
+| Docs | BUILDATHON archived to `archive/`, ROADMAP security-residual re-measured, OUTREACH_LOG iOS line corrected (it said "TBD - pending" two months after the app went live) |
+
+**Needs Bill, unchanged:** DMARC p=none; second AWS MFA; ICO fee (Cubitt33 Ltd);
+rebrand step 1 (read UK00004145719); console concurrency figure; the outreach
+send itself. **Full register and evidence: the 2026-08-24 review artifact.**
+
 ## 2a. State as of 2026-08-21 evening
 
 Everything below §3 predates a long session; this is where it actually stands.

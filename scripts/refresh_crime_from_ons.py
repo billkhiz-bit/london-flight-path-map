@@ -24,6 +24,8 @@ USAGE
     python scripts/refresh_crime_from_ons.py --check    # compare only, exit 1 on drift
     python scripts/refresh_crime_from_ons.py --write    # update data/borough-extra.json
     python scripts/refresh_crime_from_ons.py --check --city manchester
+    python scripts/refresh_crime_from_ons.py --check --all   # every CITY_PFA city;
+    #   the blocking preflight stage, with a per-city floor on zero comparisons
 
 Run --check whenever ONS publishes (quarterly). Rates move with each release,
 so drift here is expected and is the signal to roll the vintage, not a bug.
@@ -246,30 +248,20 @@ def load_table(city='london'):
     return out
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--write', action='store_true', help='update data/borough-extra.json')
-    ap.add_argument('--check', action='store_true', help='report drift, exit 1 if any')
-    ap.add_argument(
-        '--city',
-        default='london',
-        choices=sorted(CITY_PFA),
-        help='city to check. london reads data/borough-extra.json and supports '
-             '--write; manchester is backend-only, so it reads CITIES directly '
-             'and is check-only.',
-    )
-    args = ap.parse_args()
+def compare_city(city, write=False):
+    """Compare one city's published rates against ONS Table C4.
 
-    ons = load_table(args.city)
+    Returns (drift, compared): the boroughs whose rate differs from ONS, and
+    the number actually compared. The caller owns the floor on `compared` -
+    see main(). With write=True (London only) borough-extra.json is rewritten.
+    """
+    ons = load_table(city)
 
     # Greater Manchester's ten rates were verified by hand on 2026-08-09 and all
     # matched. Wiring that in is what stops it being a one-off: ONS republishes
     # quarterly, and a check nobody can re-run decays into a claim.
-    if args.city != 'london':
-        if args.write:
-            print(f'--write is London-only; {args.city} has no borough-extra.json entry.')
-            return 2
-        data, london = None, lambda_rates(args.city)
+    if city != 'london':
+        data, london = None, lambda_rates(city)
     else:
         data = json.loads(EXTRA.read_text(encoding='utf-8'))
         london = data['london']
@@ -285,6 +277,7 @@ def main():
             medians[col] = statistics.median(vals)
 
     drift, unresolved = [], []
+    compared = 0
     for canonical, rec in ons.items():
         key = SITE_ALIAS.get(canonical, canonical)
         if key not in london:
@@ -296,11 +289,12 @@ def main():
             # the repo publishes there is our own figure, not theirs — see §11.
             unresolved.append((key, london[key].get('crimeRate'), str(total)))
             continue
+        compared += 1
         total = round(float(total), 1)
         current = london[key].get('crimeRate')
         if current != total:
             drift.append((key, current, total))
-        if args.write:
+        if write:
             london[key]['crimeRate'] = total
             parts = [(c, float(rec[c])) for c in OFFENCE_COLS
                      if isinstance(rec.get(c), (int, float))]
@@ -320,7 +314,7 @@ def main():
             ]
             london[key]['crimeVintage'] = 'ONS Table C4, year ending March 2026'
 
-    print(f'\n  city: {args.city}')
+    print(f'\n  city: {city}')
     # Compare each ONS row AFTER aliasing, against the repo's keys.
     # Comparing the aliased set against the raw set instead reported
     # `Barking and Dagenham` as unmatched when the alias resolves it.
@@ -330,7 +324,10 @@ def main():
         # up, so a rename on either side would quietly leave the
         # comparison rather than fail it.
         print(f'  ONS rows not matched to a repo borough: {unmatched}')
-    print(f'  ONS rows: {len(ons)}   repo boroughs: {len(london)}')
+    # `compared` is printed because the 2026-08-22 gate sweep found three
+    # checks that could pass while comparing nothing; a gate must say what it
+    # compared, and main() fails the run when this is zero for any city.
+    print(f'  ONS rows: {len(ons)}   repo boroughs: {len(london)}   compared: {compared}')
     print(f'  boroughs whose rate differs from ONS: {len(drift)}')
     for k, cur, new in sorted(drift, key=lambda t: -abs((t[1] or 0) - t[2])):
         print(f'    {k:26} repo={str(cur):>7}  ONS={new:>7}  ({new - (cur or 0):+.1f})')
@@ -340,14 +337,77 @@ def main():
             print(f'    {k}: repo publishes {cur}, ONS says {why!r}')
             print('      -> our own figure. Must not be attributed to ONS. See METHODOLOGY §11.')
 
-    if args.write:
+    if write:
         EXTRA.write_text(
             json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
         )
         print(f'\n  wrote {EXTRA}')
         print('  NB: backend/lambdas/score/app.py LONDON_BOROUGHS holds its own copy '
               'and must be updated to match, or site and API will disagree.')
-        return 0
+
+    return drift, compared
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--write', action='store_true', help='update data/borough-extra.json')
+    ap.add_argument('--check', action='store_true', help='report drift, exit 1 if any')
+    ap.add_argument(
+        '--city',
+        default='london',
+        choices=sorted(CITY_PFA),
+        help='city to check. london reads data/borough-extra.json and supports '
+             '--write; manchester is backend-only, so it reads CITIES directly '
+             'and is check-only.',
+    )
+    ap.add_argument(
+        '--all',
+        action='store_true',
+        help='check every city in CITY_PFA in one run (check-only), the way '
+             'build_hpi_prices.py --check --all covers prices',
+    )
+    args = ap.parse_args()
+
+    if args.all and args.write:
+        ap.error('--all is check-only; --write takes a single --city')
+    if args.write and args.city != 'london':
+        print(f'--write is London-only; {args.city} has no borough-extra.json entry.')
+        return 2
+
+    cities = sorted(CITY_PFA) if args.all else [args.city]
+
+    total_drift = 0
+    floored = []
+    for city in cities:
+        drift, compared = compare_city(city, write=args.write)
+        total_drift += len(drift)
+        # THE FLOOR, PER CITY. The comparison loop SKIPS any ONS row it cannot
+        # pair with a repo borough, so with every row unmatched - one renamed
+        # key on either side is enough - this printed "in step with ONS" having
+        # compared nothing, output indistinguishable from a clean run. Audit
+        # finding I5's class, in the gate that guards crime rates; the last of
+        # the audit's named gates to grow a floor, after build_aircraft_bands,
+        # build_hpi_prices and build_progress8 on 2026-08-22.
+        #
+        # Per CITY, not on the total, unlike Progress 8 (where Cardiff
+        # legitimately carries none): every city in CITY_PFA has at least one
+        # CSP row with a published rate - the City of London suppression still
+        # leaves London at 32 of 33 - so a city comparing zero is always a
+        # fault, and under --all a rename in ONE city must fail even while the
+        # other ten still compare.
+        if compared == 0:
+            floored.append(city)
+            print(f'  FAIL: compared nothing for {city}. Every ONS row was '
+                  'unmatched or suppressed, so this run proves no agreement '
+                  'with ONS whatsoever - it is not a pass.')
+
+    if args.write:
+        return 1 if floored else 0
+
+    print(f'\nCompared crime rates for {len(cities)} city/cities against ONS Table C4.')
+    if floored:
+        print(f'RESULT: FAIL - zero boroughs compared for: {", ".join(floored)}')
+        return 1
 
     # Exit non-zero on DRIFT only, not on `unresolved`.
     #
@@ -360,10 +420,10 @@ def main():
     #
     # Drift IS news: the published rates have moved and the repo has not, which
     # is the condition this script exists to catch.
-    if args.check and drift:
-        print('\nRESULT: DRIFT — run with --write, and mirror into the Lambda.')
+    if args.check and total_drift:
+        print('RESULT: DRIFT — run with --write, and mirror into the Lambda.')
         return 1
-    print('\nRESULT: in step with ONS.' if not drift else '')
+    print('RESULT: in step with ONS.' if not total_drift else '')
     return 0
 
 
