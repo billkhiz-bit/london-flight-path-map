@@ -98,7 +98,13 @@
          eval. By the time renderDefraTiles runs, the PNG is already in the
          HTTP cache. Combined with self-hosting on CloudFront, the visible
          "lag" between map paint and contour appearance drops near zero. -->
-    <link rel="preload" as="image" href="/data/aircraft-noise-london-lden.png" />
+    <!-- The London noise PNG is deliberately NOT preloaded (removed
+         2026-08-24). A rel=preload fetches at the browser's highest priority,
+         and this one competed with d3 and the streaming HTML for a decorative
+         raster that only London uses and only once the aircraft layer renders -
+         measured at ~868 ms on the map's critical path on throttled 3G. The
+         overlay code fetches it when it actually draws, which is the right
+         priority: after the map exists. -->
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {
@@ -2304,8 +2310,56 @@
         .app {
           grid-template-columns: 1fr;
           grid-template-rows: 1fr;
-          --sheet-peek: min(220px, 42dvh);
+          /* env() is additive so the peek's CONTENT clears the home
+             indicator on notched phones; both terms are 0 where there is
+             none, so nothing moves on desktop or in the test harness. The
+             native app handles its own insets (.is-native rules) - this is
+             the WEB sheet's, which had none while viewport-fit=cover is set,
+             so the tab bar sat in the indicator band on an installed PWA. */
+          --sheet-peek: min(calc(220px + env(safe-area-inset-bottom, 0px)), 42dvh);
           --sheet-chrome: calc(var(--sheet-peek) + 12px);
+        }
+
+        /* THE PHONE GETS ITS OWN TYPE FLOOR (2026-08-24). The sidebar's type
+           scale was byte-identical at 390px and 1440px - measured across a
+           rendered postcode result: 30 elements at 9px, 28 at 10px, 27 at
+           11px. On a desktop those are captions beside a big map; on a phone
+           the sidebar IS the product and they are the body text. These raise
+           the reading classes two steps; anything still tiny after this is an
+           inline style, which is its own defect (see the legend annotation). */
+        .info-note {
+          font-size: 12px;
+        }
+        .property-note {
+          font-size: 13px;
+        }
+        .score-explain {
+          font-size: 12px;
+        }
+        .score-row-label,
+        .score-row-value {
+          font-size: 12px;
+        }
+        .noise-detail-label,
+        .noise-detail-value {
+          font-size: 11px;
+        }
+        .stat-label {
+          font-size: 10px;
+        }
+        .crime-stat-label {
+          font-size: 11px;
+        }
+
+        /* AT PEEK, THE SPACE BELONGS TO THE PRODUCT (2026-08-24). The install
+           prompt sits above the tab bar so it survives sidebar-content
+           rebuilds - correct - but at a 220px peek that made it the last
+           visible slot, evicting the one sentence that says what Sky Score
+           does and the quick-search chips that get a first-time user to a
+           result. It reappears the moment the sheet is opened, which is also
+           the moment the user has decided the product is worth installing. */
+        .sidebar:not(.sheet-open) .install-prompt {
+          display: none;
         }
         /* Clip the map to the band mapCentreY() measured - see the comment on
            that function. Both custom properties are unset until a band has been
@@ -2921,7 +2975,7 @@
          up to clear the new peek height. */
       @media (min-width: 640px) and (max-width: 900px) {
         .app {
-          --sheet-peek: min(260px, 42dvh);
+          --sheet-peek: min(calc(260px + env(safe-area-inset-bottom, 0px)), 42dvh);
         }
       }
 
@@ -6455,7 +6509,7 @@
           // the same fail-open shape this registry exists to remove, in if/else
           // form rather than ternary.
           subtitle: 'LONDON · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search area, neighbourhood or borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
@@ -6514,7 +6568,7 @@
           runwayNote: 'airports operate on different runway configurations',
           currencyHtml: '$',
           subtitle: 'NEW YORK · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search area, neighbourhood or borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE CURATED FAA/BTS NOISE CONTOURS',
@@ -6568,7 +6622,7 @@
           runwayNote: 'Birmingham runs one runway on a 148/328 alignment',
           currencyHtml: '&pound;',
           subtitle: 'WEST MIDLANDS · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Solihull, Coventry or Dudley) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6618,7 +6672,7 @@
           runwayNote: 'Leeds Bradford runs one runway on a 138/318 alignment',
           currencyHtml: '&pound;',
           subtitle: 'WEST YORKSHIRE · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Leeds, Bradford or Wakefield) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6668,7 +6722,7 @@
           runwayNote: 'no commercial airport operates in South Yorkshire',
           currencyHtml: '&pound;',
           subtitle: 'SOUTH YORKSHIRE · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Sheffield, Doncaster or Barnsley) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'NO COMMERCIAL AIRPORT IN THIS CITY REGION',
@@ -6718,7 +6772,7 @@
           runwayNote: 'Liverpool runs one runway on an 086/266 alignment',
           currencyHtml: '&pound;',
           subtitle: 'MERSEYSIDE · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Liverpool, Wirral or Sefton) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6768,7 +6822,7 @@
           runwayNote: 'Newcastle runs one runway on an 065/245 alignment',
           currencyHtml: '&pound;',
           subtitle: 'TYNE AND WEAR · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Newcastle, Gateshead or Sunderland) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6830,7 +6884,7 @@
           runwayNote: 'East Midlands runs one runway on an 087/267 alignment',
           currencyHtml: '&pound;',
           subtitle: 'LEICESTER · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Leicester, Charnwood or Hinckley and Bosworth) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6888,7 +6942,7 @@
           runwayNote: 'Teesside International runs one runway on a 048/228 alignment',
           currencyHtml: '&pound;',
           subtitle: 'TEESSIDE · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Middlesbrough, Stockton-on-Tees or Redcar and Cleveland) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6938,7 +6992,7 @@
           runwayNote: 'Bristol runs one runway on an 087/267 alignment',
           currencyHtml: '&pound;',
           subtitle: 'BRISTOL · INDEPENDENT NOISE + LIVABILITY DATA',
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Bristol, Bath or Weston) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -6998,7 +7052,7 @@
           currencyHtml: '&pound;',
           subtitle: 'GREATER MANCHESTER · INDEPENDENT NOISE + LIVABILITY DATA',
           // No area map for this city, so do not invite an area search.
-          searchPlaceholder: 'Search a borough',
+          searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
@@ -7349,6 +7403,26 @@
 
       async function hydrateAircraftQuiet() {
         await Promise.all(AIRCRAFT_QUIET_FILES.map(hydrateAircraftQuietFile));
+      }
+
+      // LAZY SINCE 2026-08-24. These two files are 573 KB and have exactly ONE
+      // reader - the postcode-result panel - so fetching them at boot made
+      // every visitor pay half a megabyte before the map could compete for
+      // bandwidth, for a lookup most visits never perform. The fetch now
+      // starts on the first signal of search intent (focusing the search box)
+      // and is awaited, deadline-capped, where the result renders.
+      //
+      // The await also CLOSES a race the boot fetch had: a search submitted
+      // before hydration finished read an empty map and silently scored from
+      // geometry, so the same postcode could answer differently a minute
+      // apart. Now the result waits for the data up to the cap; past the cap
+      // it renders from geometry - the documented fallback, the status quo
+      // before 2026-08-06, not a degraded page.
+      let _aircraftQuietPromise = null;
+      function ensureAircraftQuiet(capMs) {
+        if (!_aircraftQuietPromise) _aircraftQuietPromise = hydrateAircraftQuiet();
+        if (!capMs) return _aircraftQuietPromise;
+        return Promise.race([_aircraftQuietPromise, new Promise((r) => setTimeout(r, capMs))]);
       }
 
       async function hydrateAircraftQuietFile(url) {
@@ -8201,11 +8275,32 @@
         if (!name) return null;
         const c = name.toLowerCase().trim();
         const data = getActiveBoroughData();
+        // EXACT MATCH FIRST, then the most SPECIFIC boundary match - never a
+        // bare substring scan (2026-08-24).
+        //
+        // The old single pass was `c === k || c.includes(k) || k.includes(c)`
+        // with first-key-wins, and Leicester's registry is where that bites:
+        // "North West Leicestershire" CONTAINS "leicester", and Leicester is
+        // the earlier key, so a search for the district returned the CITY -
+        // 8.6/10 and a Leicester heading where the honest answer is North West
+        // Leicestershire's own row. An exact key existed the whole time and
+        // was never consulted first.
+        //
+        // The second pass reuses boroughNameMatches - the boundary-prefix rule
+        // that already exists because a substring test once drew Brentwood as
+        // the London borough of Brent - and prefers the LONGEST matching key,
+        // so a more specific name always beats a shorter one it happens to
+        // contain.
         for (const [key, val] of Object.entries(data)) {
-          const k = key.toLowerCase();
-          if (c === k || c.includes(k) || k.includes(c)) return { name: key, ...val };
+          if (c === key.toLowerCase()) return { name: key, ...val };
         }
-        return null;
+        let best = null;
+        for (const [key, val] of Object.entries(data)) {
+          if (boroughNameMatches(key, c) && (!best || key.length > best.name.length)) {
+            best = { name: key, ...val };
+          }
+        }
+        return best;
       }
 
       // ============================================================
@@ -9684,7 +9779,7 @@
         // everything that paints below. Without it a slower earlier search
         // lands its pin, map flight, EPC panel and sold prices under this
         // search's heading, and nothing ever corrects it.
-        const search = beginSearch();
+        let search = beginSearch();
         // Hide autocomplete dropdown
         const dd = document.getElementById('autocomplete-dropdown');
         dd.classList.remove('visible');
@@ -9810,6 +9905,8 @@
             }
             renderPostcodePin(analysis.lat, analysis.lon);
             flyToSearchResult(analysis.lat, analysis.lon);
+            await ensureAircraftQuiet(6000);
+            if (!isCurrentSearch(search)) return;
             updateSidebarPostcode(analysis, borData, search);
             return;
           }
@@ -9819,6 +9916,21 @@
         document.getElementById('sidebar-title').textContent = 'SEARCHING...';
         const { result, failure } = await lookupPostcode(q, search);
         if (!isCurrentSearch(search)) return;
+        // THE POSTCODE'S OWN CITY ANSWERS, not whichever city is on screen
+        // (2026-08-24). Everything below reads the ACTIVE city's airports,
+        // corridors and borough data, so analysing an M1 postcode while London
+        // is displayed reported the distance to Heathrow as the noise story.
+        // Derive the city from the resolved admin_district and switch first.
+        // switchCity cancels in-flight searches by design - it must, or a
+        // superseded search paints over the new city - so this search's claim
+        // is re-taken after the switch completes.
+        if (result && result.admin_district) {
+          const derived = deriveCityFromBorough(result.admin_district);
+          if (derived && derived !== currentCity) {
+            await switchCity(derived);
+            search = beginSearch();
+          }
+        }
         // A superseded search must paint nothing at all - a newer one owns the
         // sidebar now.
         if (failure === 'superseded') return;
@@ -9859,6 +9971,8 @@
 
         flyToSearchResult(analysis.lat, analysis.lon);
 
+        await ensureAircraftQuiet(6000);
+        if (!isCurrentSearch(search)) return;
         updateSidebarPostcode(analysis, boroughData, search);
       }
 
@@ -10613,7 +10727,8 @@
         const noisePct = Math.min(100, analysis.noiseScore * 10);
         const top3 = analysis.airportDists.slice(0, 3);
 
-        let boroughHtml = '';
+        let scoreHtml = '';
+        let boroughStatsHtml = '';
         const extra = getExtraData(analysis.borough);
         // Hoisted out of the if-block below on 2026-08-03. The favourites button
         // near the end of this function reads it, and that button is OUTSIDE the
@@ -10702,7 +10817,7 @@
             }
             return `<strong>Think carefully.</strong> This location scores low due to ${pcQuiet < 3 ? 'significant aircraft noise' : 'very high prices'}${pcQuiet < 3 && a < 3 ? ' combined with high prices' : ''}. Only buy here if you have specific reasons.`;
           })();
-          boroughHtml = `
+          scoreHtml = `
       <div class="sidebar-section">
         <h3>${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} SCORE - THIS LOCATION</h3>
         <div class="summary-card">
@@ -10729,7 +10844,8 @@
             }</div>
         </div>
         <p class="info-note" style="margin-top:8px;font-size:9px;">Quiet Skies uses your location's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
-      </div>
+      </div>`;
+          boroughStatsHtml = `
       <div class="sidebar-section">
         <h3>BOROUGH: ${boroughData.name.toUpperCase()}</h3>
         <div class="stat-grid">
@@ -10741,6 +10857,17 @@
         }
 
         document.getElementById('sidebar-content').innerHTML = `
+    ${
+      /* THE SCORE COMES FIRST (2026-08-24). The product's one promise is "is
+         THIS address noisy, liveable, affordable", and this panel used to
+         answer it at y=1001 of an 844px viewport - the verdict sat 157px below
+         the fold, under LOCATION (141px), the noise narrative (180px) and KEY
+         FACTS (281px). Measured, not guessed: a phone user searching their own
+         postcode had to scroll past 602px of preamble to reach the number they
+         asked for. The preamble all still exists - it follows the answer
+         instead of ransoming it. */
+      scoreHtml
+    }
     <div class="sidebar-section">
       <h3>LOCATION</h3>
       <div class="postcode-result">
@@ -10781,7 +10908,7 @@
         )
         .join('')}
     </div>
-    ${boroughHtml}
+    ${boroughStatsHtml}
     ${
       extra
         ? `
@@ -10889,9 +11016,20 @@
       <p class="property-note" style="margin-top:0;">
         <strong>1. Check noise overlay</strong> - zoom into the map to see official ${cityOf(currentCity).noiseAuthorityPlain} noise contours at your location.<br><br>
         ${
+          /* The Heathrow WebTrak link is LONDON's, and until 2026-08-24 it was
+             the copy for every UK city - so a Manchester search's "next steps"
+             pointed at Heathrow's flight tracker. Only the links we can vouch
+             for are linked: London's WebTrak instance is verified, NYC's FAA
+             framing is city-specific, and the other nine get neutral copy
+             naming their own airport rather than an invented URL - a wrong
+             link is a false claim with a house style against it. If per-city
+             WebTrak instances are ever verified, this belongs in the registry
+             as a field on ALL cities (smoke-local asserts key parity). */
           currentCity === 'nyc'
             ? '<strong>2. Check FAA data</strong> - review flight tracking tools for JFK, LaGuardia and Newark to see which planes fly over this area.<br><br>'
-            : '<strong>2. Use WebTrak</strong> - <a href="https://webtrak.emsbk.com/lhr6" target="_blank" style="color:var(--orange);">Heathrow WebTrak</a> shows exactly which planes fly over this location and how often.<br><br>'
+            : currentCity === 'london'
+              ? '<strong>2. Use WebTrak</strong> - <a href="https://webtrak.emsbk.com/lhr6" target="_blank" style="color:var(--orange);">Heathrow WebTrak</a> shows exactly which planes fly over this location and how often.<br><br>'
+              : '<strong>2. Check flight tracking</strong> - the airport operator&rsquo;s own flight tracker (or any public ADS-B tracker) shows which planes fly over this location and how often.<br><br>'
         }
         <strong>3. Visit at different times</strong> - ${cityOf(currentCity).runwayNote}, so noise changes between morning and afternoon. Visit at least twice.<br><br>
         <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
@@ -11466,6 +11604,41 @@
         return cityOf(currentCity).boroughData();
       }
 
+      // WHICH CITY HOLDS THIS BOROUGH? The frontend twin of the Lambda's
+      // derive_city() (2026-08-24).
+      //
+      // The landing city is London and nothing here ever derived a city from a
+      // search result, so a Birmingham visitor typing their own postcode - the
+      // single most likely first action - was analysed against LONDON's
+      // airports and corridors and told about Heathrow. The backend had the
+      // identical defect for two days in August ("Borough not currently
+      // supported in london"), fixed by deriving the city from the resolved
+      // postcode; this is that fix one layer up, against the same trap the
+      // backend's needed twice: postcodes.io inverts the qualifier, returning
+      // "Bristol, City of" where the registry says "Bristol" or "City of
+      // London" style names, so the comma form is rotated before matching.
+      //
+      // Scans the REGISTRY, not the active city, and matches with
+      // boroughNameMatches - the boundary rule - not a substring. Returns null
+      // for a borough no city holds, which callers must treat as "leave the
+      // city alone": an uncovered postcode is not a reason to move the map.
+      function deriveCityFromBorough(adminDistrict) {
+        if (!adminDistrict) return null;
+        let name = String(adminDistrict).trim();
+        const rotated = name.match(/^(.+),\s*(City|Royal Borough|Borough)\s+of$/i);
+        if (rotated) name = `${rotated[2]} of ${rotated[1]}`;
+        for (const cityKey of Object.keys(CITY_DATA)) {
+          // NYC boroughs arrive through the ZIP path, never through a UK
+          // admin_district, and its registry names would false-match nothing -
+          // but skipping it is cheaper than proving that forever.
+          if (cityKey === 'nyc') continue;
+          for (const key of Object.keys(cityOf(cityKey).boroughData())) {
+            if (boroughNameMatches(key, name)) return cityKey;
+          }
+        }
+        return null;
+      }
+
       async function switchCity(city) {
         if (city === currentCity) return;
         // The `city === currentCity` guard only stops a repeat click on the
@@ -11631,6 +11804,24 @@
             // dots stops rescheduling itself rather than ticking forever on
             // nodes that are no longer in the document.
             if (gen !== flightAnimGen) return;
+            // THE LOOP YIELDS WHEN NOBODY CAN SEE IT (2026-08-24). Measured on
+            // a 4x-throttled mobile profile: these tweens burnt ~31% of a core
+            // FOREVER - in a background tab, with the layer toggled off, and
+            // for users who asked the OS for reduced motion, which the CSS
+            // honours and this loop ignored. Each is a pause, not an exit: the
+            // generation token stays valid, and the retry keeps the dots able
+            // to resume the moment the condition lifts, so a paused tab picks
+            // the animation back up without a re-render.
+            if (
+              document.hidden ||
+              !layers.paths ||
+              window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ) {
+              dot.transition().duration(0);
+              halo.transition().duration(0);
+              setTimeout(animateDot, 2000);
+              return;
+            }
             const tmp = pg.append('path').attr('d', line(lineData)).style('display', 'none');
             const node = tmp.node();
             const len = node.getTotalLength();
@@ -12077,8 +12268,7 @@
         // geojson load. Both are needed eventually but neither blocks the
         // other; whichever finishes second triggers a re-score.
         const extraPromise = hydrateBoroughExtra();
-        // Parallel, not awaited: a miss falls back to geometry, so nothing blocks.
-        hydrateAircraftQuiet();
+        // aircraft-quiet is NOT fetched here any more - see ensureAircraftQuiet.
         const features = await loadGeoJson();
 
         document.getElementById('loading').style.display = 'none';
@@ -12296,13 +12486,31 @@
             const open = layersTrigger.getAttribute('aria-expanded') === 'true';
             layersTrigger.setAttribute('aria-expanded', open ? 'false' : 'true');
           });
-          // Close popover when tapping anywhere outside it.
-          document.addEventListener('click', (ev) => {
-            if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
-            if (layerTogglesPanel.contains(ev.target)) return;
-            if (layersTrigger.contains(ev.target)) return;
-            layersTrigger.setAttribute('aria-expanded', 'false');
-          });
+          // Close popover when tapping anywhere outside it - and SWALLOW the
+          // tap when it lands on the map (2026-08-24). This used to run in the
+          // bubble phase, after the borough path's own click handler, so the
+          // dismissal gesture every phone user reaches for also SELECTED a
+          // borough and threw the sheet open over the map they were trying to
+          // see. Capture phase runs before the path's target-phase handler, so
+          // a map tap that is closing the popover can be stopped there: one
+          // gesture, one effect. A tap outside the map (the sheet, the chips)
+          // still does its own job as well as closing - only the map tap is
+          // ambiguous, because selecting is the map's whole click surface.
+          document.addEventListener(
+            'click',
+            (ev) => {
+              if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
+              if (layerTogglesPanel.contains(ev.target)) return;
+              if (layersTrigger.contains(ev.target)) return;
+              layersTrigger.setAttribute('aria-expanded', 'false');
+              const onMap = ev.target.closest && ev.target.closest('#map-svg');
+              if (onMap) {
+                ev.stopPropagation();
+                ev.preventDefault();
+              }
+            },
+            { capture: true }
+          );
         }
 
         // Audit F-A11Y-4: bottom-sheet sidebar on phones. .sheet-open class
@@ -12319,7 +12527,78 @@
           sheetHandle.setAttribute('aria-expanded', open ? 'true' : 'false');
         };
         if (sheetHandle) {
-          sheetHandle.addEventListener('click', () => {
+          // THE PILL DRAGS AS WELL AS TAPS (2026-08-24). A 48x5 rounded pill
+          // at the top of a bottom sheet is the most standardised drag
+          // affordance on both mobile platforms, and this one silently did
+          // nothing on a swipe - it only toggled on tap. Pointer events rather
+          // than touch events so a mouse can drag it too; the sheet follows
+          // the finger through an inline transform, and release snaps to
+          // whichever state the drag was heading for. The inline transform is
+          // cleared on release so the stylesheet's two states stay the single
+          // source of truth - an inline style that lingers is how the legend
+          // colour fight started.
+          let dragStartY = null;
+          let dragBaseY = 0;
+          let dragMaxY = 0;
+          let dragMoved = false;
+          sheetHandle.addEventListener('pointerdown', (ev) => {
+            if (window.innerWidth > 900) return;
+            // Everything in measured pixels, taken once at the start of the
+            // gesture. An inline transform REPLACES the class transform, so
+            // the sheet's current translate has to be recovered from geometry:
+            // untransformed, the fixed sheet's top is innerHeight minus its
+            // height, and whatever further down it sits now is the translate.
+            const rect = sheetEl.getBoundingClientRect();
+            dragBaseY = rect.top - (window.innerHeight - rect.height);
+            // Never drag the handle itself off-screen; past this the release
+            // logic owns the outcome anyway.
+            dragMaxY = Math.max(dragBaseY, rect.height - 120);
+            dragStartY = ev.clientY;
+            dragMoved = false;
+            sheetHandle.setPointerCapture(ev.pointerId);
+            // Mid-drag the sheet must track the finger, not animate after it.
+            sheetEl.style.transition = 'none';
+          });
+          sheetHandle.addEventListener('pointermove', (ev) => {
+            if (dragStartY === null) return;
+            const dy = ev.clientY - dragStartY;
+            if (Math.abs(dy) > 6) dragMoved = true;
+            if (!dragMoved) return;
+            const y = Math.min(dragMaxY, Math.max(0, dragBaseY + dy));
+            sheetEl.style.transform = `translateY(${y}px)`;
+          });
+          let suppressNextClick = false;
+          const endDrag = (ev) => {
+            if (dragStartY === null) return;
+            const dy = ev.clientY - dragStartY;
+            const wasDrag = dragMoved;
+            dragStartY = null;
+            dragMoved = false;
+            // Hand the transform back to the stylesheet before the state
+            // class changes, so the transition animates from wherever the
+            // finger left the sheet.
+            sheetEl.style.transform = '';
+            sheetEl.style.transition = '';
+            if (!wasDrag) return; // the click handler owns taps
+            // The browser fires a CLICK after pointerup, and the first version
+            // of this reset dragMoved before that click arrived - so the tap
+            // toggle ran on the ghost click and undid the drag it followed.
+            // Proven with an event trace: pointerup set peek, click@the-same-
+            // coordinate re-opened. The flag lives exactly one click.
+            suppressNextClick = true;
+            const open = sheetEl.classList.contains('sheet-open');
+            // 60px of travel commits the gesture; less snaps back.
+            if (open && dy > 60) window.setSheetState('peek');
+            else if (!open && dy < -60) window.setSheetState('open');
+          };
+          sheetHandle.addEventListener('pointerup', endDrag);
+          sheetHandle.addEventListener('pointercancel', endDrag);
+          sheetHandle.addEventListener('click', (ev) => {
+            if (suppressNextClick) {
+              suppressNextClick = false;
+              ev.stopPropagation();
+              return;
+            }
             const open = sheetEl.classList.contains('sheet-open');
             window.setSheetState(open ? 'peek' : 'open');
           });
@@ -12660,7 +12939,71 @@
         });
       })();
 
-      init();
+      // bootFromQuery is chained rather than called after init() returns:
+      // init is async, and running the query switch while its London render is
+      // still in flight lets that render land ON TOP of the query city's -
+      // measured before this ordering: ?city=teesside showed the Teesside chip
+      // active above 33 London outlines, the exact superseded-render class the
+      // citySeq token exists for.
+      init().then(bootFromQuery);
+
+      // THE 99 AREA PAGES' ONLY CALL-TO-ACTION FINALLY HAS A READER
+      // (2026-08-24). Every generated page under area/ links here as
+      // /?city=<key> - and nothing in this file had ever read a query string,
+      // so the site's only indexable surface funnelled every search visitor to
+      // the default London view of a different city. Reading the parameter is
+      // the better half of the fix (the alternative was rewriting 99 pages'
+      // links to say nothing useful).
+      //
+      // Runs AFTER init() so it composes with the normal boot rather than
+      // forking it, and validates against CITY_DATA - an unknown key is
+      // ignored, never an error page, because the URL is user-editable.
+      // ?postcode= is honoured too so a future deep link can land on a result;
+      // triggerSearch derives the city from the postcode itself, so the city
+      // parameter is not needed when both are present.
+      // First touch of the search box starts the aircraft-quiet download, so
+      // by the time a postcode is typed the 573 KB has been arriving for as
+      // long as the typing took. once:true - it is memoised anyway, this just
+      // avoids re-entering on every focus.
+      document.getElementById('search-input').addEventListener(
+        'focus',
+        () => {
+          ensureAircraftQuiet();
+        },
+        { once: true }
+      );
+      // AND OPENS THE SHEET, every focus, phone only (2026-08-24). The peek
+      // height was sized so the search box is reachable without a tap - which
+      // it is - but the AUTOCOMPLETE list renders below the box, into the part
+      // of the sheet still translated off-screen: measured at 390x844, 8 of 10
+      // suggestions were unreachable at peek and 0 of 10 with the sheet open.
+      // Focusing the box is the moment typing begins, so opening here also
+      // keeps the input above the on-screen keyboard.
+      document.getElementById('search-input').addEventListener('focus', () => {
+        if (window.innerWidth <= 900 && window.setSheetState) {
+          window.setSheetState('open');
+        }
+      });
+
+      function bootFromQuery() {
+        let params;
+        try {
+          params = new URLSearchParams(window.location.search);
+        } catch (_) {
+          return;
+        }
+        const qCity = (params.get('city') || '').toLowerCase().trim();
+        const qPostcode = (params.get('postcode') || '').trim();
+        if (qPostcode) {
+          const input = document.getElementById('search-input');
+          if (input) input.value = qPostcode;
+          triggerSearch(qPostcode);
+          return;
+        }
+        if (qCity && CITY_DATA[qCity] && qCity !== currentCity) {
+          switchCity(qCity);
+        }
+      }
     </script>
     <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </body>
