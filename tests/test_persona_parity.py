@@ -35,9 +35,17 @@ def _frontend_personas():
     assert match, "could not locate the PERSONAS block in index.html"
     block = match.group(1)
     found = {}
+    # `env` joined at methodology v3.9, 2026-08-26. The keys are NOT optional
+    # in this pattern on purpose: making the new one optional would let a
+    # frontend copy that silently lost `env` still parse, and this file's whole
+    # job is that the two copies cannot diverge quietly. A missing key fails
+    # test_frontend_parses below with "the regex needs updating", which is the
+    # loud failure - the alternative is a persona parsing to four weights,
+    # comparing equal on those four, and passing while the site scores a
+    # component the API does not.
     pattern = re.compile(
         r"(\w+):\s*\{.*?weights:\s*\{\s*quiet:\s*([\d.]+),\s*afford:\s*([\d.]+),"
-        r"\s*growth:\s*([\d.]+),\s*live:\s*([\d.]+)\s*\}",
+        r"\s*growth:\s*([\d.]+),\s*live:\s*([\d.]+),\s*env:\s*([\d.]+)\s*\}",
         re.S,
     )
     for entry in pattern.finditer(block):
@@ -46,6 +54,7 @@ def _frontend_personas():
             "afford": float(entry.group(3)),
             "growth": float(entry.group(4)),
             "live": float(entry.group(5)),
+            "env": float(entry.group(6)),
         }
     return found
 

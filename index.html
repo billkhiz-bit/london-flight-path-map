@@ -6307,49 +6307,49 @@
           label: 'Balanced',
           icon: '\u2696',
           desc: 'Noise, affordability and liveability',
-          weights: { quiet: 0.38, afford: 0.31, growth: 0.0, live: 0.31 },
+          weights: { quiet: 0.32, afford: 0.27, growth: 0.0, live: 0.27, env: 0.14 },
         },
         family: {
           label: 'Family',
           icon: '\uD83C\uDFE0',
           desc: 'Schools, safety, quiet streets',
-          weights: { quiet: 0.22, afford: 0.22, growth: 0.0, live: 0.56 },
+          weights: { quiet: 0.19, afford: 0.19, growth: 0.0, live: 0.48, env: 0.14 },
         },
         investor: {
           label: 'Investor',
           icon: '\uD83D\uDCC8',
           desc: 'Growth potential and value',
-          weights: { quiet: 0.1, afford: 0.3, growth: 0.4, live: 0.2 },
+          weights: { quiet: 0.09, afford: 0.26, growth: 0.34, live: 0.17, env: 0.14 },
         },
         firsttime: {
           label: 'First-Time',
           icon: '\uD83D\uDD11',
           desc: 'Affordable entry with good transport',
-          weights: { quiet: 0.19, afford: 0.5, growth: 0.0, live: 0.31 },
+          weights: { quiet: 0.16, afford: 0.43, growth: 0.0, live: 0.27, env: 0.14 },
         },
         quietlife: {
           label: 'Quiet Life',
           icon: '\uD83C\uDF3F',
           desc: 'Peace and quiet above all',
-          weights: { quiet: 0.56, afford: 0.22, growth: 0.0, live: 0.22 },
+          weights: { quiet: 0.48, afford: 0.19, growth: 0.0, live: 0.19, env: 0.14 },
         },
         renter: {
           label: 'Renter',
           icon: '\uD83C\uDFE2',
           desc: 'Renting, growth irrelevant',
-          weights: { quiet: 0.3, afford: 0.35, growth: 0.0, live: 0.35 },
+          weights: { quiet: 0.26, afford: 0.3, growth: 0.0, live: 0.3, env: 0.14 },
         },
         commuter: {
           label: 'Commuter',
           icon: '\uD83D\uDE87',
           desc: 'Transport-led, price-conscious',
-          weights: { quiet: 0.24, afford: 0.35, growth: 0.0, live: 0.41 },
+          weights: { quiet: 0.21, afford: 0.3, growth: 0.0, live: 0.35, env: 0.14 },
         },
         laterlife: {
           label: 'Later life',
           icon: '\uD83C\uDF3E',
           desc: 'Quiet plus healthcare access',
-          weights: { quiet: 0.44, afford: 0.17, growth: 0.0, live: 0.39 },
+          weights: { quiet: 0.38, afford: 0.15, growth: 0.0, live: 0.33, env: 0.14 },
         },
       };
       let currentPersona = 'balanced';
@@ -7165,6 +7165,63 @@
         return Math.round(sum * 10) / 10;
       }
 
+      // Environment composite (methodology v3.9, 2026-08-26). Air quality +
+      // flood risk, the two datasets that were derived for every city on
+      // 2026-08-11 and drawn on the map ever since without entering any score.
+      //
+      // MUST STAY EQUIVALENT TO get_env_score() IN THE SCORE LAMBDA. The site
+      // scores client-side and /v1/score scores server-side; a difference here
+      // is the divergence class this repo has shipped three times, and
+      // tests/test_persona_parity.py only guards the WEIGHTS, not this.
+      //
+      // Reads the CONTINUOUS fields, not the three-band summaries beside them.
+      // The bands exist to colour the map and are far too coarse to score:
+      // 68.1% of boroughs share the modal air band. Both ramps are anchored on
+      // PUBLISHED thresholds rather than the observed range - WHO 2021
+      // guideline to the UK legal limit for NO2 (40 ug/m3 = 4x the guideline),
+      // and 0% to the 10% EA Medium-or-High share that METHODOLOGY 7.1 already
+      // uses as its `high` cut. A cohort-relative scale could never answer
+      // "all of them are bad", which is the answer that would matter most.
+      const ENV_WEIGHTS = { airQuality: 0.65, flood: 0.35 };
+      const AQ_GUIDELINE_RATIO = 1.0;
+      const AQ_LEGAL_LIMIT_RATIO = 4.0;
+      const FLOOD_HIGH_PCT = 10.0;
+      // ONE measured input is enough to publish, unlike liveability's two. See
+      // the _ENV_MIN_FIELDS comment in the Lambda for why, and for the risk it
+      // accepts: the 13 single-input boroughs are Leicester's 8 and Teesside's
+      // 5, and the input they lack is plausibly the one they would score worst
+      // on. environmentSingleInput flags them for ranking surfaces.
+      const ENV_MIN_FIELDS = 1;
+
+      function aqToScore(ratio) {
+        const span = AQ_LEGAL_LIMIT_RATIO - AQ_GUIDELINE_RATIO;
+        return Math.max(0, Math.min(10, (10 * (AQ_LEGAL_LIMIT_RATIO - ratio)) / span));
+      }
+
+      function floodToScore(pct) {
+        return Math.max(0, Math.min(10, 10 * (1 - pct / FLOOD_HIGH_PCT)));
+      }
+
+      function getEnvScore(boroughName, city) {
+        const ex = cityOf(city).boroughExtra()[boroughName];
+        if (!ex) return null;
+        const scores = {};
+        // typeof, not != null: these arrive from JSON and a string would score
+        // silently and wrongly through the arithmetic below.
+        if (typeof ex.airQualityWhoRatio === 'number')
+          scores.airQuality = aqToScore(ex.airQualityWhoRatio);
+        if (typeof ex.floodMediumOrHighPct === 'number')
+          scores.flood = floodToScore(ex.floodMediumOrHighPct);
+        const fields = Object.keys(scores);
+        if (fields.length < ENV_MIN_FIELDS) return null;
+        // Proportional redistribution over what is present, as liveWeightsFor
+        // does - so the declared 65/35 keeps its meaning when one input is
+        // absent rather than the survivor being promoted to a different one.
+        const total = fields.reduce((a, f) => a + ENV_WEIGHTS[f], 0);
+        const sum = fields.reduce((a, f) => a + scores[f] * (ENV_WEIGHTS[f] / total), 0);
+        return Math.round(sum * 10) / 10;
+      }
+
       const IMPACT_TO_QUIET = {
         low: 10,
         'low-moderate': 7.5,
@@ -7213,12 +7270,16 @@
           // the place. See METHODOLOGY.md §5.1.
           const growth = growthScore(d.trend, maxTrend, minTrend);
           const live = getLiveScore(name, city || 'london');
+          // v3.9. Null wherever neither continuous field exists - all five NYC
+          // boroughs, since DEFRA and the EA are UK sources. combineWeighted
+          // already drops any null part and rescales, so it needed no change.
+          const env = getEnvScore(name, city || 'london');
           // `live` is null when fewer than two of its four inputs exist, so the
           // component would say nothing about this place. combineWeighted drops
           // it and rescales, exactly as calc_scores() does in the score Lambda.
           // Both sides must make the same choice or the site and /v1/score
           // disagree, which has already happened three times.
-          const total = combineWeighted({ quiet, afford, growth, live }, w);
+          const total = combineWeighted({ quiet, afford, growth, live, env }, w);
           result[name] = {
             ...d,
             trend_pct: (d.trend >= 0 ? '+' : '') + d.trend + '%',
@@ -7230,12 +7291,19 @@
               afford: Math.round(afford * 10) / 10,
               growth: Math.round(growth * 10) / 10,
               ...(live !== null ? { live: Math.round(live * 10) / 10 } : {}),
+              ...(env !== null ? { env: Math.round(env * 10) / 10 } : {}),
             },
             // Unrounded companions, added 2026-08-04. `scores` above is rounded
             // for DISPLAY and must stay that way; anything that RECOMBINES these
             // into a total must use these instead, or it double-rounds and
             // disagrees with /v1/score. See the note on pcScore.
-            scoresRaw: { quiet, afford, growth, ...(live !== null ? { live } : {}) },
+            scoresRaw: {
+              quiet,
+              afford,
+              growth,
+              ...(live !== null ? { live } : {}),
+              ...(env !== null ? { env } : {}),
+            },
             score: Math.round(total * 10) / 10,
           };
         }
@@ -7697,8 +7765,15 @@
           // layer, which was empty for nine of eleven cities. The score keeps
           // its single NaPTAN input at borough level.
           const adjLive = live;
+          // v3.9. Taken from the borough unmodified, unlike `live` above,
+          // which carries a per-neighbourhood crime modifier. There is no
+          // sub-borough air-quality or flood reading to modify it WITH -
+          // DEFRA's grid is 1 km and the EA share is computed over the
+          // borough's postcodes - so inventing a neighbourhood-level
+          // adjustment would be a number created at the point of drawing it.
+          const env = borData.scores?.env ?? null;
 
-          const total = combineWeighted({ quiet, afford, growth, live: adjLive }, w);
+          const total = combineWeighted({ quiet, afford, growth, live: adjLive, env }, w);
 
           // Derive noise impact label.
           //
@@ -10542,7 +10617,10 @@
           // null rather than 5 when the borough publishes no liveability score.
           // The row below renders "no data" instead of painting a bar at a
           // value nothing measured - the display half of the same rule.
-          lv = data.scores?.live ?? null;
+          lv = data.scores?.live ?? null,
+          // v3.9. null, never 5, wherever the borough has neither input -
+          // NYC, Cardiff and Nottingham. Same rule as lv above.
+          ev = data.scores?.env ?? null;
         const pw = PERSONAS[currentPersona].weights;
 
         document.getElementById('sidebar-content').innerHTML = `
@@ -10594,6 +10672,21 @@
           }
         </div>
         <div class="score-explain">Schools, crime, transport, healthcare combined. Weight: <strong>${Math.round(pw.live * 100)}%</strong></div>
+
+        <div class="score-row" style="margin-top:10px;">
+          <span class="score-row-label">Environment</span>
+          ${
+            ev === null
+              ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
+              : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${ev * 10}%;background:${scoreColor(ev)};"></div></div>
+          <span class="score-row-value">${ev}/10</span>`
+          }
+        </div>
+        <div class="score-explain">Air quality and flood risk. Weight: <strong>${Math.round(pw.env * 100)}%</strong>${
+          data.floodMediumOrHighPct === undefined && ev !== null
+            ? ' &middot; air quality only here, so not comparable with a fully-measured borough'
+            : ''
+        }</div>
       </div>
     </div>
 
@@ -10738,7 +10831,8 @@
             // publish one. combineWeighted below then drops the component and
             // rescales, which is what /v1/score does; substituting 5 here would
             // both penalise the postcode and reopen a site/API divergence.
-            lv = boroughData.scoresRaw?.live ?? boroughData.scores?.live ?? null;
+            lv = boroughData.scoresRaw?.live ?? boroughData.scores?.live ?? null,
+            ev = boroughData.scoresRaw?.env ?? boroughData.scores?.env ?? null;
           const pw = PERSONAS[currentPersona].weights;
           // Use postcode-specific noise to calculate Quiet Skies score
           // DEFRA's measurement where it exists, flight-path geometry otherwise.
@@ -10769,7 +10863,9 @@
           // was written to DynamoDB rather than merely shown. Any new surface that
           // needs this postcode's score must read `pcScore`, never re-derive it.
           pcScore =
-            Math.round(combineWeighted({ quiet: pcQuiet, afford: a, growth: gr, live: lv }, pw) * 10) / 10;
+            Math.round(
+              combineWeighted({ quiet: pcQuiet, afford: a, growth: gr, live: lv, env: ev }, pw) * 10,
+            ) / 10;
           // Generate postcode-specific verdict
           const pcVerdict = (() => {
             if (pcScore >= 7.5) {
@@ -10819,6 +10915,13 @@
                 ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
                 : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
             <span class="score-row-value">${show1(lv)}/10</span>`
+            }</div>
+          <div class="score-row"><span class="score-row-label">Environment</span>
+            ${
+              ev === null
+                ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
+                : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${ev * 10}%;background:${scoreColor(ev)};"></div></div>
+            <span class="score-row-value">${show1(ev)}/10</span>`
             }</div>
         </div>
         <p class="info-note" style="margin-top:8px;">Quiet Skies uses your location's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
