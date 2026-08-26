@@ -73,6 +73,15 @@ async function resolvePage(slug) {
     const url = BASE + (c.startsWith('/') ? c : `/${c}`);
     try {
       const res = await fetch(url, { redirect: 'follow' });
+      // DRAIN THE BODY. This probe only reads res.ok, so before Node 24 the
+      // undrained body was merely wasteful; on Node 24.19 it is FATAL. undici
+      // leaves the parser paused waiting for a body nobody consumes, and when
+      // the socket ends it trips `assert(!this.paused)` and kills the process
+      // - inside node:internal, with zero viewports evaluated, so the stage
+      // reads as a responsive FAILURE when nothing about any page was checked.
+      // `responsive, live` passed throughout, on the same script and the same
+      // Node, which is what localised it to this call rather than the audit.
+      await res.body?.cancel();
       if (res.ok) return url;
     } catch {
       /* try the next form */
