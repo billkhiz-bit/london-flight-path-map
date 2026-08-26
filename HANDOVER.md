@@ -57,10 +57,19 @@ methodology **v3.9**: air quality and flood become a scored `environment`
 component. It is complete, both holders agree, and it is **deliberately not
 deployed**.
 
-**IT CANNOT DEPLOY YET.** The component introduces ~0.62 points of total-score
-range, above the 0.5 threshold METHODOLOGY sets for a material change, so the
-**14-day integrator notice is required first**. That is a business action, not a
-code one, and it is the only thing standing between this tree and a deploy.
+**IT CAN DEPLOY - the notice does not bind on an empty list.** The component
+introduces ~0.62 points of total-score range, above the 0.5 threshold
+METHODOLOGY sets, so the 14-day advance-notice policy applies. **Measured
+2026-08-26: the signups table holds two rows and both are Bill's own** (the May
+test key, and an August consumer signup), so there is no third-party integrator
+to notify. That is the same basis the previous TEN methodology changes shipped
+on - "no paying customers as at this date, so this ships with this changelog
+entry as the record".
+
+An earlier draft of this section said the deploy was blocked on the notice. It
+is not, and the difference matters: the obligation is real and becomes binding
+the moment a first customer holds a key. **Re-check the signups table before
+the next material change rather than assuming this still holds.**
 
 | Piece | State |
 |---|---|
