@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 3.8, last updated 2026-08-12.
+> Version 3.9, last updated 2026-08-26.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -41,7 +41,7 @@ Two surfaces:
 - A **consumer site** at `https://skyscore.co.uk` that informs renters and buyers.
 - A **B2B API** (`/v1/score` for single postcode, `/v1/score/batch` for bulk) intended for property data aggregators, conveyancers, and Sharia-compliant home-finance providers whose customers benefit from accurate due-diligence data.
 
-The score is a transparent, weighted combination of four components, Quiet, Affordability, Growth, and Liveability. It is not a market valuation, an EPC rating, or a regulatory rating; it is a holistic quality signal designed to *complement* those.
+The score is a transparent, weighted combination of five components, Quiet, Affordability, Growth, Liveability and Environment (added v3.9, 2026-08-26). It is not a market valuation, an EPC rating, or a regulatory rating; it is a holistic quality signal designed to *complement* those.
 
 The product exists to address a structural information asymmetry in UK property: estate agents and listings platforms make money when sales close, so they are not incentivised to surface signals that might cause a buyer to walk away. Sky Score is positioned as the "ethical alternative" data layer for buyers and the institutions that serve them.
 
@@ -125,6 +125,7 @@ A request for a postcode outside the supported geography returns a 404 with a `s
 | **Affordability** | Average sold price relative to cohort | 0-10 (10 = cheapest in cohort) |
 | **Growth** | Recent price-trend signal | 0-10 (10 = fastest riser, 5 = flat market, 0 = steepest faller) |
 | **Liveability** | Schools, crime, transport, healthcare | 0-10 (10 = most liveable) |
+| **Environment** | Air quality + flood risk (v3.9) | 0-10 (10 = cleanest air, lowest flood risk) |
 
 Each component is bounded in 0-10 with floating-point precision internally and one-decimal display precision in the API response.
 
@@ -721,6 +722,90 @@ in the `live` component; importing it into `quiet` would double-count across com
 exactly the way §4.4's Progress 8 note guards against. The air-ambulance pads are weighted down
 because they generate roughly a seventh of the movements, not because hospitals are good.
 
+### 4.7 Environment, air quality + flood risk (v3.9, 2026-08-26)
+
+Two inputs, weighted **air quality 0.65 / flood 0.35**, combined over whatever
+the borough actually has and rescaled in proportion when one is absent.
+
+Air quality carries the larger share because it is a **chronic** exposure that
+applies to every resident every day, while flood is **episodic** and near-zero
+for most of the country (median 1.08% of postcodes at Medium-or-High). Flood is
+not weighted down because it matters less to the household it happens to.
+
+#### Why the continuous fields and not the bands
+
+`build_borough_bands.py` has derived both since 2026-08-11 and writes a
+three-band summary *and* a continuous value for each. **The bands are a map-fill
+artefact and are far too coarse to score** - measured across all 91 boroughs,
+68.1% of `airQuality` is `moderate` and 63.7% of `flood` is `low`. The
+continuous fields discriminate properly:
+
+| Field | n | Min | Median | Max | Distinct values |
+|---|---|---|---|---|---|
+| `airQualityWhoRatio` | 86 | 1.26 | 1.71 | 3.39 | 60 |
+| `floodMediumOrHighPct` | 73 | 0.00 | 1.08 | 31.39 | 69 |
+
+#### Both ramps are anchored on published thresholds
+
+Not on the observed range. §7.1 already commits to this: *"no band is a
+percentile or a tertile"*, because a scale defined relative to the other
+boroughs cannot return "all of them are bad", which is the answer that would
+matter most. A cohort anchor would also silently rescale every borough the next
+time a city is added.
+
+```
+air quality   ratio 1.0x -> 10   WHO 2021 annual-mean guideline (NO2 10, PM2.5 5 ug/m3)
+              ratio 4.0x ->  0   UK LEGAL LIMIT for NO2, 40 ug/m3 = 4x the guideline
+              aq  = clamp(10 * (4.0 - ratio) / 3.0, 0, 10)
+
+flood         0% of postcodes at EA Medium-or-High -> 10
+              10%                                  ->  0   the `high` cut in 7.1,
+                                                           itself the 1%-annual-chance
+                                                           planning line
+              fl  = clamp(10 * (1 - pct / 10.0), 0, 10)
+```
+
+The flood distribution is heavily skewed and **that is the shape of the real
+risk, not an artefact to correct**. Six boroughs sit above the 10% clamp and
+Sefton reaches 31.4%, so the clamp does real work.
+
+#### Coverage, and the floor of ONE input
+
+`environmentResolution` reports which case a borough is in, mirroring
+`liveResolution`.
+
+| Case | Boroughs | Behaviour |
+|---|---|---|
+| `measured` | 73 | Both inputs |
+| `partial` | 13 | Air quality only - Leicester's 8, Teesside's 5 |
+| `unavailable` | 13 | Neither - NYC's 5, plus Cardiff and Nottingham, which are backend-only and have no `borough-extra` entry to derive from |
+
+The floor is **one** input, not the two liveability requires. Liveability
+declares four inputs, so one of four is a quarter of the promise; environment
+declares two, so one of two is half, and the missing half is disclosed rather
+than hidden.
+
+> **The risk that floor accepts, stated rather than discovered later.** A
+> single-input score is not merely less certain - the absent input is **not
+> missing at random**. The 13 affected boroughs are inland Leicester and coastal
+> Teesside, and flood is plausibly the input Teesside would score worst on. So
+> `environmentSingleInput` is returned alongside the score, and ranking surfaces
+> must exclude those boroughs from "best environment" comparisons. Disclosure
+> alone is insufficient for an **ordered list**: a reader still sees the number
+> at the top whatever caveat sits beside it.
+
+#### What this changed
+
+Spread is 4.60-9.00 across 86 boroughs, so at 0.14 the component introduces
+about **0.62 points** of total-score range - above the 0.5 threshold §7 sets for
+a material change, so the **14-day integrator notice is required**. Wandsworth
+is the worked example: env 4.7 (air 2.42x WHO), balanced score 6.5 -> 6.2, with
+its other four components unchanged.
+
+Both holders carry the two continuous fields since this release
+(`LAMBDA_FIELDS` in the builder), and `tests/test_borough_data_parity.py`
+compares them.
+
 ### 4.6 DEFRA raster sampling (v3.1, loaded 2026-07-26, quarantined 2026-08-03)
 
 When correctly populated, the v3.1 raster tier replaces Haversine with direct sampling of the DEFRA Strategic Noise Mapping (Round 4, 2022) Lden GeoTIFF at the postcode centroid. That remains the intended gold-standard method — but it is an aspiration, not a description of what runs today. **The table was loaded, found to be wrong, and the tier is quarantined; see the warning in §4.5.** This section describes the design, not the live path.
@@ -824,7 +909,7 @@ The four weights are an editorial decision informed by UK home-buyer priority re
 
 ## 5. Combining the components
 
-The four components are combined with persona weights:
+The five components are combined with persona weights:
 
 ```
 score = w.quiet × quiet + w.afford × afford + w.growth × growth + w.live × live
@@ -833,7 +918,7 @@ score = w.quiet × quiet + w.afford × afford + w.growth × growth + w.live × l
 ### 5.1 Default persona, balanced
 
 ```
-balanced = { quiet: 0.38, afford: 0.31, growth: 0.00, live: 0.31 }
+balanced = { quiet: 0.32, afford: 0.27, growth: 0.00, live: 0.27, env: 0.14 }
 ```
 
 **Why these defaults?**
@@ -854,18 +939,22 @@ The component is still computed and still published, so `investor` weights it at
 
 The eight named personas reflect typical buyer-segment priorities. Each is documented openly so customers can decide whether the preset matches their use case.
 
+**As of v3.9, every persona carries `env` at 0.14.** The weight was taken by multiplying each persona's other weights by 0.86 and rounding to 2dp, so relative emphasis among the remaining components is unchanged - the same proportional redistribution v3.3 used when it removed growth. Two rows rounded to 1.01 and were corrected by taking 0.01 off the single weight nearest its rounding boundary (`balanced` quiet 0.33 -> 0.32; `laterlife` live 0.34 -> 0.33). Every row sums to exactly 1.00, which `test_every_persona_sums_to_one` now asserts.
+
+`env` is **uniform across personas on purpose.** Varying it - a family or later-life buyer weighting air quality higher on health grounds - is defensible, but it is a claim about PEOPLE rather than about data, and it should be made deliberately rather than alongside the component's introduction. Open follow-up.
+
 **As of v3.3, `investor` is the only persona weighting growth.** Where growth previously carried weight, that weight was redistributed across the persona's remaining three components *in proportion*, so each preset's relative emphasis is unchanged. `renter` already carried 0.00 on the same reasoning (no selling event); v3.3 generalises it.
 
-| Persona | quiet | afford | growth | live | Rationale |
-|---|---|---|---|---|---|
-| `balanced` | 0.38 | 0.31 | 0.00 | 0.31 | Default; no specific buyer profile. Growth dropped in v3.3 |
-| `family` | 0.22 | 0.22 | 0.00 | 0.56 | Schools dominate; safety and day-to-day liveability matter most. Informed by general buyer-priority research from Rightmove, Zoopla, and RICS publications, which consistently identify schools and safety as primary factors for family buyers. |
-| `investor` | 0.10 | 0.30 | 0.40 | 0.20 | Capital growth potential and entry price are primary; quality factors discount-driven not lifestyle-driven. |
-| `firsttime` | 0.19 | 0.50 | 0.00 | 0.31 | Affordability dominates first-time-buyer constraints; remaining factors moderately weighted. |
-| `quietlife` | 0.56 | 0.22 | 0.00 | 0.22 | Specialist preset for buyers explicitly prioritising peace; weighted heavily on quiet at the expense of growth. |
-| `renter` | 0.30 | 0.35 | 0.00 | 0.35 | No selling event so growth is irrelevant; affordability and liveability share weight with quiet. |
-| `commuter` | 0.24 | 0.35 | 0.00 | 0.41 | Transport-led, price-sensitive; liveability captures schools/transport/healthcare composite. |
-| `laterlife` | 0.44 | 0.17 | 0.00 | 0.39 | Cash buyer prioritising peace and healthcare access; growth de-emphasised. (Renamed from `downsizer` in Wave 12.10.) |
+| Persona | quiet | afford | growth | live | **env** | Rationale |
+|---|---|---|---|---|---|---|
+| `balanced` | 0.32 | 0.27 | 0.00 | 0.27 | **0.14** | Default; no specific buyer profile. Growth dropped in v3.3 |
+| `family` | 0.19 | 0.19 | 0.00 | 0.48 | **0.14** | Schools dominate; safety and day-to-day liveability matter most. Informed by general buyer-priority research from Rightmove, Zoopla, and RICS publications, which consistently identify schools and safety as primary factors for family buyers. |
+| `investor` | 0.09 | 0.26 | 0.34 | 0.17 | **0.14** | Capital growth potential and entry price are primary; quality factors discount-driven not lifestyle-driven. |
+| `firsttime` | 0.16 | 0.43 | 0.00 | 0.27 | **0.14** | Affordability dominates first-time-buyer constraints; remaining factors moderately weighted. |
+| `quietlife` | 0.48 | 0.19 | 0.00 | 0.19 | **0.14** | Specialist preset for buyers explicitly prioritising peace; weighted heavily on quiet at the expense of growth. |
+| `renter` | 0.26 | 0.30 | 0.00 | 0.30 | **0.14** | No selling event so growth is irrelevant; affordability and liveability share weight with quiet. |
+| `commuter` | 0.21 | 0.30 | 0.00 | 0.35 | **0.14** | Transport-led, price-sensitive; liveability captures schools/transport/healthcare composite. |
+| `laterlife` | 0.38 | 0.15 | 0.00 | 0.33 | **0.14** | Cash buyer prioritising peace and healthcare access; growth de-emphasised. (Renamed from `downsizer` in Wave 12.10.) |
 
 **Family persona ratio ~50% on `live` is the largest deviation from balanced**, reflecting that family-segment research consistently shows schools-and-safety as the dominant decision factor. The other personas are smaller deviations that nudge the default in a direction without departing from sensible bounds.
 
@@ -1284,10 +1373,21 @@ if they drift.
 
 ### 7.1 Borough road-noise and air-quality bands (added 2026-08-11)
 
-These two bands drive **map overlays and the borough detail panel only**. Neither
-is a scoring component: `flood` and `airQuality` remain declared in
-`plannedComponents` on `/v1/score`, and road noise reaches the score through the
-per-postcode Lden path in §4.6, not through these bands.
+> **Superseded in part at v3.9, 2026-08-26.** Air quality and flood are now
+> **scored**, through the `environment` component in §4.7 - but *not through the
+> bands described here*. The bands remain display-only; what scores are the
+> CONTINUOUS fields derived alongside them, `airQualityWhoRatio` and
+> `floodMediumOrHighPct`. The distinction matters: 68.1% of boroughs share the
+> modal air band and 63.7% share the modal flood band, so scoring the bands
+> would have put two-thirds of the country on one number. Both were removed
+> from `plannedComponents` in the same release.
+>
+> **Road noise is unchanged and still does not score.** It reaches nothing but
+> `/v1/environment`, and is scheduled for the v4.0 noise composite.
+
+These three bands drive **map overlays and the borough detail panel only**, and
+road noise reaches the score through neither: the per-postcode Lden path in §4.6
+is aircraft, not road.
 
 They exist because the alternative was worse than nothing. Until 2026-08-11 the
 road-noise, flood and air-quality overlays were **curated for London and New York
@@ -1437,7 +1537,7 @@ The DEFRA noise data is by far the slowest-refreshing input. This subsection mak
 | **DEFRA noise mapping** | **5 years** ← slowest |
 | MHCLG EPC | Continuous (per certificate issued) |
 
-**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"3.8"`). On any methodology change — including a new noise-mapping round — this version increments. When Round 5 data lands the version will jump to `"4.0"`.
+**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"3.9"`). On any methodology change — including a new noise-mapping round — this version increments. When Round 5 data lands the version will jump to `"4.0"`.
 
 > **Corrected 2026-08-04.** Two errors in the sentence above. (1) It said "currently `3.1`", **stale by four versions** — the live API returns `3.5`. (2) It promised *"integrators can pin to a specific version via `?methodology=X.Y` (where supported)"*. **That parameter is not implemented anywhere.** `backend/lambdas/score/app.py` never reads it, so the request is silently ignored and the caller receives current-version numbers while believing they pinned. The hedge "(where supported)" was doing a great deal of work; it is nowhere supported.
 >
@@ -1695,6 +1795,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-08-26 (v3.9)**, **Air quality and flood become a scored `environment` component.** (1) *Defect:* both datasets have been derived for every city since 2026-08-11, verified by `build_borough_bands.py --check`, drawn on the map and shown in the detail panel - and **neither had ever entered a score**. `flood` and `airQuality` sat in `plannedComponents`, so `/v1/score` was advertising as forthcoming two things it already held. The `airQuality` entry additionally named the **DEFRA Daily Air Quality Index** as its source, which was never what the loader reads; the loader's own docstring has carried a "WHY NOT DAQI" section since it was written, because a daily index at sparse monitoring stations is about today's weather as much as about the address. (2) *Change:* a fifth component, `environment`, weighted **air quality 0.65 / flood 0.35**, over the CONTINUOUS fields `airQualityWhoRatio` and `floodMediumOrHighPct` - **not** the three-band summaries beside them. Measured across all 91 boroughs, 68.1% of the air band and 63.7% of the flood band are the modal value, so scoring the bands would have put two-thirds of the country on one number; the continuous fields carry 60 and 69 distinct values. Both ramps anchor on **published thresholds** rather than the observed range: WHO 2021 guideline to the **UK legal limit for NO2** (40 ug/m3 = 4x the guideline), and 0% to the **10% EA Medium-or-High share** that §7.1 already uses as its `high` cut. §7.1's own rule - "no band is a percentile or a tertile" - is why; a cohort anchor cannot answer "all of them are bad", and would silently rescale every borough the next time a city is added. (3) *Weights:* every persona's other weights were multiplied by **0.86** and rounded to 2dp, so relative emphasis among them is unchanged - the same proportional redistribution v3.3 used when it removed growth. Two rows rounded to 1.01 and were corrected on the weight nearest its boundary (`balanced` quiet 0.33 -> 0.32; `laterlife` live 0.34 -> 0.33). `env` is **uniform at 0.14 across all eight personas on purpose**: varying it is a claim about people rather than about data and should be made deliberately, not alongside the component's introduction. (4) *Coverage, and a floor of ONE input:* 73 boroughs `measured`, **13 `partial`** (Leicester's 8 and Teesside's 5, which have air quality and no flood coverage), 13 `unavailable` (NYC's 5, since DEFRA and the EA are UK sources, plus Cardiff and Nottingham, which are backend-only and have no `borough-extra` entry to derive from). The floor is one input rather than liveability's two because environment declares two slots, so one is half the promise rather than a quarter. (5) *The risk that floor accepts, stated rather than discovered later:* a single-input score is not merely less certain - **the absent input is not missing at random.** The 13 affected boroughs are inland Leicester and coastal Teesside, and flood is plausibly the input Teesside would score worst on. `context.environmentSingleInput` is therefore returned alongside `environmentResolution`, and ranking surfaces must exclude those boroughs from "best environment" comparisons: disclosure alone is insufficient for an **ordered list**, because a reader still sees the number at the top whatever caveat sits beside it. (6) *Effect:* component spread is **4.60-9.00 across 86 boroughs**, about **0.62 points** of total-score range at 0.14 - above the 0.5 threshold §7 sets for a material change. Wandsworth is the worked case: env 4.7 (its air is 2.42x the WHO guideline), balanced 6.5 -> 6.2, **with its other four components unchanged**, which is the invariant a proportional reweighting should produce. (7) *Two-holder work this required, and one defect it exposed:* the Lambda's borough records carried only the eight fields it scored, so the two ratios had to join `LAMBDA_FIELDS` and are now propagated by `build_borough_bands.py --sync-lambda` and compared by `tests/test_borough_data_parity.py`. The builder's `write_lambda` also handled quoted band strings only, and would have written a float as a string. **And it does not know the borough-name alias the parity test declares**: `borough-extra.json` keys `Barking`, the Lambda keys `Barking and Dagenham`, so the propagation silently skipped it - Barking and Dagenham would have been the one London borough with no environment score while its 32 neighbours had one. Caught on the first dry run (157 fields written, not 159). The alias is now declared in both places with `test_name_aliases_match_the_builder` failing if they drift. (8) *Test re-aims, both verified rather than re-pinned:* `test_wandsworth_balanced` 6.5 -> 6.2, and `test_compare_previous_london_borough` scoreChange 0.0 -> **-0.1** - the latter is **not growth leaking in**, it is affordability (price 660,000 -> 680,105, afford 6.7 -> 6.5) at an exact weighted delta of **-0.0540**, which reads as -0.1 now only because adding `env` moved where the 1dp boundary falls; `env` itself is identical across vintages, as a DEFRA/EA input should be. `test_explanation_names_the_direction_and_the_driver` was re-aimed **Ealing -> Harrow**, because the investor growth weight moving 0.40 -> 0.34 means Ealing's fall no longer survives rounding; 11 of 33 boroughs still satisfy all four of that test's assertions and the subject was chosen from that set rather than the assertions being softened. (9) *Inverted, not deleted:* `test_air_quality_does_not_enter_the_weighted_score` asserted the opposite of this release, and its comment gave the reason - "scoring it would change every score ever returned". That was a statement of the cost, not a permanent constraint. It now asserts the new contract, because a test left asserting a lifted constraint reads as evidence the constraint still holds. (10) *Notice:* this exceeds the 0.5-point threshold, so the **14-day integrator notice is required** and this entry is not sufficient on its own.
 - **2026-08-11 (v3.8)**, **The aircraft distance ladder is scaled by each airport's measured noise footprint.** (1) *Defect:* outside London and New York, a borough's aircraft `impact` band comes from a distance ladder (§7.4) calibrated on **Heathrow** and, until this release, applied to every other airport **unweighted**. The geometry was correct; the premise was not — it asserted that every airport was Heathrow-sized. The plainest consequence was **Stockton-on-Tees published as `severe`, the same band as Hounslow**, from Teesside International, which handles **173,006 passengers a year against Heathrow's 83.9 million**. That produced a borough-wide quiet of 0.0 and an overall score of 2.6. Liverpool, Leeds, Birmingham, Newcastle, Solihull and Cardiff carried smaller versions of the same penalty. (2) *Why the existing caveat was not a defence:* the generator's docstring described the ladder as "pessimistic and therefore survivable", the direction-of-error argument this document uses throughout. It does not hold once the magnitude of the error exceeds the thing being measured — a 485-fold overstatement is not a conservative estimate, it is a wrong number with a disclaimer attached. (3) *Rejected — passenger numbers:* the obvious scaling, and wrong twice. It stops discriminating precisely where these cities are (Birmingham, Bristol, Newcastle, Liverpool, Leeds Bradford and East Midlands all collapse onto one value), and it measures demand rather than emission: **East Midlands has the second-largest measured footprint of the twelve airports, on 3.2 million passengers**, because it is a freight hub whose night movements Lden weights by +10 dB, while **Gatwick is 0.475 on 40.9 million**. Passengers would have understated EMA roughly twofold, in one of the two cities added that same day. (4) *Change:* each airport's ladder is scaled by the area above **55 dB Lden** in its own **DEFRA Round 4** surface, expressed as an equivalent radius against Heathrow's — the published contour itself rather than a proxy for it. Heathrow is 1.000 by construction, so **no London borough moves**; New York uses curated bands and is untouched. Full table in §7.4. (5) *Near-field floor, added because the first attempt overshot:* scaling every rung moved 29 boroughs and moved **all 29 down**, flipping the error optimistic — the one direction §11 refuses. It put **Vale of Glamorgan on `low`**, the band for a borough with no airport within 50 km, when Cardiff Airport sits inside it; Liverpool and Leeds did the same. A borough holding any part of a published 55 dB contour is now floored at `moderate`, with distance measured to the borough **polygon** so containment reads as 0 km. (6) *Unmapped airports:* Cardiff (CWL) and Teesside (MME) fall below the threshold at which strategic noise mapping applies, so no footprint exists. Their ladders are floored at the smallest published footprint rather than extrapolated below it, and their `CITY_PROVENANCE` now says so instead of claiming a DEFRA measurement that does not exist. (7) *Greater Manchester:* its ten bands were hand-assigned when it was city #3, before the generator existed, and were the only site city's aircraft input no script could reproduce. Now derived; four of ten moved. (8) *Effect:* **31 boroughs across 11 city-regions move, every one upward, by +0.30 to +1.60.** Largest: Wirral +1.60; Walsall, Bradford, Gateshead, North Tyneside, Middlesbrough, Stockton-on-Tees, City of Bristol, Cardiff, Vale of Glamorgan, Manchester and Tameside all +1.10. Stockton-on-Tees moves 2.6 → 3.7. (9) *Guard:* `impact` was the **last score input with no script behind it**. `scripts/build_aircraft_bands.py` gained `--check` and `--write`, both covering the site holder and the Lambda holder, and `--check` is now a blocking preflight stage. It was proven able to fail on the real defect — 89 disagreements before the correction, 0 after — and it parses all **four** spellings of the borough record that exist across the two files, a parser knowing only one having silently read every borough as absent. (10) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-08-11 (v3.7)**, **`healthcare` derived nationally from the NHS Organisation Data Service.** (1) *Defect:* healthcare carries 0.10 of liveability and existed for **London and New York only**; every UK city-region outside London defaulted, and under `_LIVE_MIN_FIELDS = 2` a borough holding too few inputs published no liveability score at all. (2) *Change:* derived for all 81 boroughs from the ODS register of active GP practices and branch surgeries, banded on practices per head within a **500 m** radius of population-weighted points — chosen by measuring five radii, because 1 km put 68 of 81 boroughs in one band and never produced `moderate`. (3) *Source gotchas, both measured:* `epraccur.zip` returns 403, but the **ODS syndication API** works and needs no key; and the correct filter is `Roles=RO76`, not `PrimaryRoleId=RO76`, because a GP practice's *primary* role is RO177 — which is **Prescribing Cost Centre** and also covers hospices, care homes, courts and prisons, so using it would have inflated healthcare access invisibly. OSM Overpass was not needed, so no ODbL share-alike obligation was taken on. (4) *Effect:* boroughs with all four liveability inputs measured rise from **38 to 78 of 86**. (5) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.
 - **2026-08-11 (v3.6)**, **`transport` derived nationally from NaPTAN.** (1) *Defect:* the same shape as v3.7 — transport carries 0.25 of liveability, the largest of the four after schools, and was curated for London and New York alone. (2) *Change:* derived for all 81 boroughs from **NaPTAN** (Great Britain coverage), banded on stop density. (3) *Effect:* **52 of 86 boroughs move by more than 0.05**, and **Cardiff becomes scoreable for the first time** — its four boroughs previously held `crimeRate` alone, one input, below the two-input floor. The UK city-regions move from 2 of 4 liveability inputs measured to 3. **Nottingham did not move**: Broxtowe, Gedling and Rushcliffe gained transport but hold nothing else, education being an upper-tier county function so Progress 8 publishes for Nottinghamshire rather than for them. (4) *Notice:* the API has no paying customers as at this date, so this ships with this changelog entry as the record.

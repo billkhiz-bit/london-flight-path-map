@@ -49,6 +49,72 @@ worth starting before you need it.
 
 ---
 
+## 2a-quater. METHODOLOGY v3.9 SHIPPED TO SOURCE, NOT DEPLOYED, 2026-08-26
+
+**The June roll (2a-ter below) is DONE - deployed, verified, committed. That
+section is closed; do not re-run it.** What sits in the working tree now is
+methodology **v3.9**: air quality and flood become a scored `environment`
+component. It is complete, both holders agree, and it is **deliberately not
+deployed**.
+
+**IT CANNOT DEPLOY YET.** The component introduces ~0.62 points of total-score
+range, above the 0.5 threshold METHODOLOGY sets for a material change, so the
+**14-day integrator notice is required first**. That is a business action, not a
+code one, and it is the only thing standing between this tree and a deploy.
+
+| Piece | State |
+|---|---|
+| `environment` component in the Lambda | `get_env_score`, `env_resolution`, `env_single_input`, anchored on WHO 2021 -> UK NO2 legal limit and the EA 10% `high` cut |
+| Two continuous fields in BOTH holders | `LAMBDA_FIELDS` gained them; propagated by the new `build_borough_bands.py --sync-lambda`, which skips the heavy derivation |
+| Persona weights | All 8, both holders, every row sums to 1.00, `env` uniform at 0.14 |
+| Frontend | Computes AND displays it; all three `combineWeighted` sites carry it, including the `pcScore` that is persisted to DynamoDB |
+| `plannedComponents` | `flood` and `airQuality` REMOVED - they shipped |
+| METHODOLOGY | v3.9, new 4.7, 7.1 corrected, persona table regenerated from the Lambda, changelog entry |
+| Gates | `borough-score-parity` PASS on all 91; parity test gained both fields plus a NAME_ALIASES drift guard, proven red |
+
+**Two defects this uncovered, both worth knowing:**
+
+1. **`write_lambda` could not carry a float.** It matched and wrote
+   `'field': 'value'` only, so a ratio would have been written as a quoted
+   string - importing fine and turning every later comparison into a string
+   compare. Now type-aware.
+2. **The borough-name alias was missing from the builder.** `borough-extra.json`
+   keys `Barking`; the Lambda keys `Barking and Dagenham`. The propagation
+   SILENTLY skipped it (157 fields written, not 159), which would have left
+   Barking and Dagenham as the one London borough with no environment score
+   while its 32 neighbours had one. Caught on the first dry run.
+
+**THE AREA PAGES WILL GO STALE THE MOMENT THIS DEPLOYS, and preflight cannot
+warn you yet.** `area pages match the live API` passes RIGHT NOW because both
+sides are still v3.8: the pages were rebuilt on the June vintage during the
+roll, and the live Lambda still scores without `environment`. Deploying v3.9
+moves the API to five components while the 99 baked pages keep four, so that
+blocking gate flips red immediately after the deploy rather than before it.
+
+So the v3.9 deploy runbook is the roll's, plus a rebuild:
+
+1. Send the 14-day notice. Wait it out. Nothing below happens first.
+2. Deploy backend (SAM), so the Lambda serves v3.9.
+3. **`python scripts/build_area_pages.py --write`** - rebuild all 99 on v3.9.
+4. Deploy web + area + meta, then invalidate. Use
+   `MSYS_NO_PATHCONV=1` on the CloudFront paths or the batch is rejected AFTER
+   the uploads have already succeeded.
+5. Re-run preflight; `area pages match the live API` should be green again.
+
+**OPEN, and deliberately not done here:**
+
+- **The 14-day notice.** Required before deploy.
+- **`env` is uniform at 0.14 across all personas.** Varying it (a family or
+  later-life buyer weighting air quality higher) is defensible but is a claim
+  about people, not data - make it deliberately.
+- **Cardiff and Nottingham get no environment score at all.** They are
+  backend-only so they have no `borough-extra` entry to derive from, even though
+  DEFRA air quality covers them. 8 boroughs report `unavailable`.
+- **Road noise still does not score.** Scheduled for v4.0 with rail, as the
+  `quiet` noise composite.
+- **Rank guard is returned, not enforced.** `context.environmentSingleInput` is
+  published; no ranking surface consumes it yet.
+
 ## 2a-ter. PAUSED MID-ROLL, 2026-08-25 - read this FIRST
 
 **The working tree carries a finished-but-undeployed vintage roll and fix set.
