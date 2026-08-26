@@ -49,6 +49,50 @@ worth starting before you need it.
 
 ---
 
+## 2a-ter. PAUSED MID-ROLL, 2026-08-25 - read this FIRST
+
+**The working tree carries a finished-but-undeployed vintage roll and fix set.
+Live is UNTOUCHED and internally consistent on the May vintage.** Bill logged
+off before the final preflight/deploy. Everything below is verified offline:
+**pytest 583 + 136 subtests green, ruff clean, `build_hpi_prices.py --check
+--all` = 0 disagreements on 2026-06.**
+
+What is in the tree (uncommitted):
+
+| Piece | State |
+|---|---|
+| **HPI roll May→June 2026** (published 19 Aug; 179 fields moved) | Both holders, all 12 cities. `--write` generalised from London-and-trend-only; site dialect is `avg_price` (bit again mid-roll) |
+| **3-step previous-vintage roll** | `LONDON_PREVIOUS_PT` = May values; `SNAPSHOT_VINTAGE` 2026-Q3, `PREVIOUS_VINTAGE` 2026-Q2 |
+| **Market summary direction-aware** | Its tail said "the market fell" unconditionally; June is the first RISING quarter (-3.35→-3.03) and exposed it |
+| **Provenance prose corrections** | Six cities' "not yet sampled" (false since 2026-08-12), Nottingham's "liveability UNAVAILABLE/DROPPED" (false since v3.6/7), Cardiff's DEFRA-maps-CWL contradiction, London credits (NaPTAN+NHS ODS in, EPC/sold out - index-2 contract kept), P8 "cannot exist" claim (2023/24 Revised EXISTS, Feb 2025) |
+| **NYC airport scale exemption** | JFK/LGA/EWR/TEB at 1.0 in the Lambda via `_US_AIRPORT_CODES` (module-load order forbids reading AIRPORTS_NYC; drift guard test added). Fixes Howard Beach quiet 10.0 beside impact "severe" |
+| **Test re-aims** | ~12 vintage pins re-pinned with comments; Waltham Forest is now the real-data was-the-benchmark subject; the stubbed cohort now DOMINATES live trends (Havering 9.0 - its 4.0 was overtaken by real Barking +4.3) |
+| **99 area pages rebuilt** on June | `--check` OK |
+| **METHODOLOGY** | P8 terminality corrected (non sequitur), vintage line + 2026-08-25 changelog entry |
+
+**RESUME RUNBOOK (~20-30 min):**
+1. `set -a && source .env && set +a && sh scripts/preflight.sh` - expect
+   **exactly one red: `area pages match the live API`**. That gate compares the
+   rebuilt June pages against the LIVE API still serving May - red by design
+   inside a roll window, green after step 2. Any OTHER red is real.
+2. Deploy backend first (Lambda serves June): the documented SAM block in
+   CLAUDE.md. Then `make web-deploy-all` equivalents: index.html + area/ +
+   sitemap (area-deploy target exists) + invalidate; sw.js unchanged.
+3. Re-run preflight → all green incl. area freshness. Commit (suggested split:
+   roll+tests / provenance+NYC / area pages+docs), verify live:
+   `check_score_sanity` (28 probes), drift 0/16, and three spot probes the
+   audit named: NG1 5FS sourceBreakdown.live no longer says UNAVAILABLE;
+   M22 1PR prose defers to quietResolution; ZIP 11414 quiet is no longer 10.0.
+4. Update the review artifact's data-accuracy state if desired.
+
+**Still open after that** (the data-accuracy audit's remaining items):
+P8 roll to 2023/24 Revised (EES 403s non-browser UAs - fetch with a browser
+User-Agent; scoring will move); NSPL reload when the August 2026 edition lands
+(days away - skip May, one ~6h load; BatchWriteItem grant still unapplied);
+London/NYC curated neighbourhood tables are UNDATED March-2026 values 10-16%
+under current PPD in spots - date them or regenerate London via the proven PPD
+pipeline; crime year-ending-June lands 22 Oct.
+
 ## 2a-bis. State as of 2026-08-24
 
 | | |
