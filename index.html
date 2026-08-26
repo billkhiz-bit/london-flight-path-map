@@ -525,7 +525,7 @@
         .sheet-footer .sep {
           color: rgba(99, 99, 99, 0.5);
         }
-        .is-native .sheet-footer {
+        .is-tabbed .sheet-footer {
           display: none;
         }
       }
@@ -2973,15 +2973,28 @@
         display: none;
       }
       @media (max-width: 900px) {
-        /* The mobile redesign (bottom nav + map-as-background) is NATIVE-APP
-           ONLY. Every redesign base rule below is scoped to .is-native, a
-           class added to <html> only inside the Capacitor app (see
-           setupNativeFeatures). On web/PWA the class is absent, these rules
-           never match, and the site keeps its classic bottom-sheet layout.
-           NB: written as ".is-native .app > …" (class only) - prefixing with
-           "html.is-native" would add element-specificity and out-rank the
-           [data-mview] view rules, breaking the native map swap. */
-        .is-native .mobile-nav {
+        /* The mobile redesign (bottom nav + map-as-background) is scoped to
+           .is-tabbed, NOT .is-native. Retargeted 2026-08-26; see
+           applyTabbedLayout().
+
+           .is-tabbed is set unconditionally on native - so the app's layout is
+           byte-identical to before - and on the WEB only behind ?tabbed=1 at
+           <=900px. Default web behaviour is therefore unchanged, which is what
+           keeps tests/native-sim-render.mjs and tests/live-mobile-verify.mjs
+           passing: both assert the web serves the CLASSIC layout, and both
+           would have to be inverted deliberately before this could become the
+           default.
+
+           Why it is no longer native-only: MOBILE_REDESIGN_PLAN.md v3 gated it
+           on 2026-05-29 because the redesign "never shipped to either store".
+           iOS 1.0.21 carrying it was submitted that same day and has been live
+           on the GB App Store since 1 June, so the condition the gate was
+           hedging against has expired.
+
+           NB: written as ".is-tabbed .app > …" (class only) - prefixing with
+           "html.is-tabbed" would add element-specificity and out-rank the
+           [data-mview] view rules, breaking the map swap. */
+        .is-tabbed .mobile-nav {
           position: fixed;
           left: 0;
           right: 0;
@@ -3030,8 +3043,8 @@
         /* Both panes fill the screen above the nav. Visibility (not
            display) is used so #map-container retains a non-zero
            clientWidth - D3 reads this at init time. */
-        .is-native .app > #map-container,
-        .is-native .app > .sidebar {
+        .is-tabbed .app > #map-container,
+        .is-tabbed .app > .sidebar {
           position: fixed;
           top: 0;
           left: 0;
@@ -3045,12 +3058,12 @@
           border: none;
           box-shadow: none;
         }
-        .is-native .app > #map-container {
+        .is-tabbed .app > #map-container {
           overflow: hidden;
           visibility: hidden;
           z-index: 1;
         }
-        .is-native .app > .sidebar {
+        .is-tabbed .app > .sidebar {
           overflow: auto;
           -webkit-overflow-scrolling: touch;
           visibility: visible;
@@ -3171,10 +3184,10 @@
         /* Sheet artefacts + in-sidebar tab bar belong to the bottom nav -
            native app only. On web these stay visible so the classic
            bottom-sheet layout keeps its drag handle and in-panel tabs. */
-        .is-native .sheet-handle {
+        .is-tabbed .sheet-handle {
           display: none !important;
         }
-        .is-native .sidebar > .tab-bar {
+        .is-tabbed .sidebar > .tab-bar {
           display: none;
         }
 
@@ -4008,6 +4021,36 @@
       // and PWA installs it's undefined and these features stay dormant.
       // The same index.html serves all three contexts - feature detect,
       // don't fork.
+      // Which mobile layout this surface gets: the classic bottom sheet, or the
+      // three-tab redesign (Search / Rankings / Saved, map-as-background).
+      //
+      // NATIVE always gets tabs - the App Store build has shipped with them
+      // since iOS 1.0.21 (live 1 Jun 2026), so this preserves it exactly.
+      //
+      // WEB is OFF BY DEFAULT and opt-in per page load via ?tabbed=1. That is
+      // deliberate: `tests/native-sim-render.mjs` and
+      // `tests/live-mobile-verify.mjs` both assert the web serves the CLASSIC
+      // layout, and they are correct until someone decides otherwise. Making
+      // tabs the web default means INVERTING those two gates on purpose, the
+      // way test_air_quality_does_not_enter_the_weighted_score was inverted for
+      // v3.9 - not deleting them, because a test left asserting a lifted
+      // constraint reads as evidence the constraint still holds.
+      //
+      // A URL parameter rather than localStorage, on purpose: this is a
+      // look-at-it flag, and one that survives a page close would be a second
+      // layout quietly shipping to whoever last toggled it.
+      function applyTabbedLayout() {
+        const root = document.documentElement;
+        const native = root.classList.contains('is-native');
+        let preview = false;
+        try {
+          preview = new URLSearchParams(window.location.search).get('tabbed') === '1';
+        } catch {
+          // A malformed query string must never take the layout down.
+        }
+        root.classList.toggle('is-tabbed', native || (preview && window.innerWidth <= 900));
+      }
+
       (function setupNativeFeatures() {
         const cap = window.Capacitor;
         if (!cap || typeof cap.isNativePlatform !== 'function' || !cap.isNativePlatform()) return;
@@ -4020,6 +4063,10 @@
         // keeps its classic bottom-sheet mobile layout. Web and native are
         // deliberately separate now. See MOBILE_REDESIGN_PLAN.md.
         document.documentElement.classList.add('is-native');
+        // Native always gets the tabbed layout - it has shipped with it since
+        // iOS 1.0.21. applyTabbedLayout() reads is-native, so this ordering
+        // matters: the class has to exist before it is asked about.
+        applyTabbedLayout();
 
         // Reveal native-only UI.
         document.querySelectorAll('.native-only').forEach((el) => {
@@ -4080,6 +4127,14 @@
           }
         };
       })();
+
+      // Applied at PARSE TIME, not from init(). init() is called on the last
+      // line of this script, which is AFTER the boot call that chooses the
+      // first mobile view - so setting the class there left the web preview
+      // with the tabbed base rules and no `data-mview`, and the sidebar
+      // covered the map entirely. Measured: map 0% visible, sidebar 91.6%.
+      // Ordering, not styling: the class has to exist before anything asks.
+      applyTabbedLayout();
 
       // PWA install UX. Two paths because Chrome/Edge/Android fire
       // beforeinstallprompt while iOS Safari deliberately does not -
@@ -10770,8 +10825,8 @@
         // A result just landed. Native app: switch to the redesign's Search
         // view so the result shows over the map. Web/PWA: open the classic
         // bottom sheet instead - the two mobile experiences are separate now.
-        const native = document.documentElement.classList.contains('is-native');
-        if (native && window.setMobileView) window.setMobileView('search');
+        const tabbed = document.documentElement.classList.contains('is-tabbed');
+        if (tabbed && window.setMobileView) window.setMobileView('search');
         else if (window.setSheetState) window.setSheetState('open');
       }
 
@@ -12933,7 +12988,7 @@
           // is-native class is absent, so bail before touching the attribute -
           // that keeps every @media redesign rule dormant and leaves the
           // classic bottom-sheet layout in charge.
-          if (!document.documentElement.classList.contains('is-native')) return;
+          if (!document.documentElement.classList.contains('is-tabbed')) return;
           if (!TAB_FOR[view]) return;
           app.dataset.mview = view;
           nav.querySelectorAll('.mobile-nav-btn').forEach((b) => {
