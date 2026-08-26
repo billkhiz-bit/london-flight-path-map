@@ -44,7 +44,28 @@ NAME_ALIASES = {'Barking': 'Barking and Dagenham'}
 
 # Fields both holders carry. `p8` is London-only: New York has neither Ofsted
 # nor DfE, so its curated `schools` tier is its schools input.
-SHARED_FIELDS = ('crimeRate', 'schools', 'transport', 'healthcare', 'p8')
+#
+# The two ratios joined on 2026-08-26 with methodology v3.9, when air quality
+# and flood stopped being display-only and became the `environment` component.
+# The CONTINUOUS fields are the scored ones and therefore the ones that must
+# agree; the three-band summaries beside them still live only in
+# borough-extra.json, because they are still only drawn.
+#
+# Neither is universal, and that is expected rather than drift: New York has
+# neither (DEFRA and the EA are UK sources) and Leicester and Teesside have the
+# ratio but no flood coverage. What this file checks is that the two holders
+# agree about WHICH boroughs have them - see
+# test_a_field_is_not_silently_missing_from_one_side, which is the assertion
+# that a propagation gap fails rather than passes quietly.
+SHARED_FIELDS = (
+    'crimeRate',
+    'schools',
+    'transport',
+    'healthcare',
+    'p8',
+    'airQualityWhoRatio',
+    'floodMediumOrHighPct',
+)
 
 # Cities the score Lambda serves that the consumer site does NOT, so they have
 # one holder and nothing to compare. Declared explicitly rather than inferred,
@@ -220,3 +241,42 @@ def test_the_comparison_actually_compared_something():
     """
     assert len(_pairs('london')) == 33
     assert len(_pairs('nyc')) == 5
+
+
+def test_name_aliases_match_the_builder():
+    """The borough-name alias exists twice; fail the build if the copies drift.
+
+    `scripts/build_borough_bands.py` needs the same `Barking` ->
+    `Barking and Dagenham` mapping this file needs, for the same reason: the two
+    holders key that borough differently. Without it `--sync-lambda` searches the
+    Lambda source for "'Barking': {", finds nothing, and skips - which on
+    2026-08-26 left Barking and Dagenham as the one London borough with no
+    airQualityWhoRatio while its 32 neighbours had one.
+
+    DUPLICATED RATHER THAN EXTRACTED, DELIBERATELY. No test here imports from
+    scripts/ and no script imports from tests/, so sharing one entry means
+    inventing a module for it. The precedent is _US_AIRPORT_CODES in the score
+    Lambda, duplicated the same week for the same reason and guarded exactly
+    like this. Extraction is the better end state; this is the control that
+    makes the interim safe, per feedback-mirrored-code-drifts - a second correct
+    copy is fine only while something fails when it stops being correct.
+    """
+    import importlib.util
+    import os
+
+    builder = os.path.normpath(
+        os.path.join(
+            os.path.dirname(__file__), os.pardir, 'scripts', 'build_borough_bands.py'
+        )
+    )
+    spec = importlib.util.spec_from_file_location('build_borough_bands_alias', builder)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.NAME_ALIASES == NAME_ALIASES, (
+        'NAME_ALIASES has drifted between tests/test_borough_data_parity.py and '
+        f'scripts/build_borough_bands.py: {NAME_ALIASES} vs {module.NAME_ALIASES}. '
+        'A borough missing from the builder copy is SILENTLY skipped by '
+        '--sync-lambda, so it keeps the old value in the Lambda while the site '
+        'moves on.'
+    )

@@ -765,25 +765,69 @@ def apply_to_extra(results, write):
     return diffs
 
 
-LAMBDA_FIELDS = ('transport', 'healthcare')
+LAMBDA_FIELDS = (
+    'transport',
+    'healthcare',
+    # Added for methodology v3.9, 2026-08-26, when air quality and flood stopped
+    # being display-only. These are the CONTINUOUS fields, not the three-band
+    # summaries beside them: the bands exist to colour a map and are far too
+    # coarse to score (68.1% of `airQuality` is 'moderate', 63.7% of `flood` is
+    # 'low'), while the ratios discriminate across 60 and 69 distinct values.
+    # The bands stay in borough-extra.json alone, because they are still only
+    # drawn.
+    'airQualityWhoRatio',
+    'floodMediumOrHighPct',
+)
+
+# The two holders disagree on ONE borough's name: borough-extra.json keys it
+# `Barking`, the Lambda keys it `Barking and Dagenham`, which is the borough's
+# actual name.
+#
+# WITHOUT THIS, write_lambda SILENTLY SKIPS IT. It searches the Lambda source
+# for "'Barking': {", finds nothing, prints one line among many and moves on -
+# so Barking and Dagenham would be the single London borough with no
+# airQualityWhoRatio, and get_env_score() would return None for it while its 32
+# neighbours scored. Found on the first --sync-lambda dry run, 2026-08-26.
+#
+# DUPLICATED FROM tests/test_borough_data_parity.py ON PURPOSE, and guarded
+# rather than extracted. No test in this repo imports from scripts/ and no
+# script imports from tests/, so extracting means inventing a shared module for
+# one entry. The precedent is _US_AIRPORT_CODES in the score Lambda, duplicated
+# the same day for the same reason with a drift-guard test beside it:
+# test_name_aliases_match_the_builder() fails if these two ever diverge. Do not
+# add an entry here without adding it there.
+#
+# Declared, never fuzzy-matched - a fuzzy match would also pair a genuinely
+# missing borough with a similar one and report success.
+NAME_ALIASES = {'Barking': 'Barking and Dagenham'}
 
 
 def write_lambda(results, write):
     """Put the derived SCORING fields into the score Lambda's borough dicts.
 
-    WHY THIS EXISTS AND THE OTHERS DO NOT. Road noise, air quality and flood are
-    display-only, so borough-extra.json is their single holder. `transport` is a
-    SCORING input, weighted 0.25 of liveability, and the Lambda scores from its
-    own CITIES dict - so leaving it in one holder would put the site and the API
-    on different numbers, which is the divergence class this repo has shipped
-    three times.
+    WHY THIS EXISTS AND WHY ROAD NOISE STILL DOES NOT. Anything the Lambda
+    SCORES has to live in both holders, because the Lambda scores from its own
+    CITIES dict and the site scores from borough-extra.json - leaving a scored
+    input in one holder puts the site and the API on different numbers, which is
+    the divergence class this repo has shipped three times.
+
+    Until 2026-08-26 that meant `transport` and `healthcare` alone, and this
+    docstring said road noise, air quality and flood were "display-only, so
+    borough-extra.json is their single holder". Methodology v3.9 makes air
+    quality and flood SCORED, via the `environment` component, so two of those
+    three moved and the sentence had to move with them. **Road noise remains
+    display-only** and remains single-holder; it is scheduled for v4.0 as part
+    of the `quiet` noise composite, and this line is the thing to change then.
 
     tests/test_borough_data_parity.py compares the two holders and is the guard
     that this stayed honest; validate_borough_vocabulary() at Lambda import is
-    the guard that the values are legal.
+    the guard that the categorical values are legal.
 
     Handles both source shapes: London's multi-line borough dicts and the newer
-    cities' single-line ones.
+    cities' single-line ones, and both value shapes: categorical bands written
+    as quoted strings, and the v3.9 ratios written as bare numbers. Writing a
+    float as a quoted string is the obvious way to get this wrong - the Lambda
+    would import fine and every comparison against it would be a string compare.
     """
     import re
 
@@ -813,6 +857,8 @@ def write_lambda(results, write):
             continue
 
         for borough, rec in boroughs.items():
+            # The Lambda's key, which is not always the site's - see NAME_ALIASES.
+            borough = NAME_ALIASES.get(borough, borough)
             # Relocated per borough: every edit shifts every later offset, so a
             # block range computed once goes stale after the first write.
             at = src.find(anchor)
@@ -830,11 +876,24 @@ def write_lambda(results, write):
                     continue
                 start, end = block_extent(src, city_start + mo.end() - 1)
                 body = src[start : end + 1]
-                existing = re.search(rf"'{field}': '([a-z-]+)'", body)
+                # A categorical band is a quoted string; a v3.9 ratio is a bare
+                # number. Quoting the number would import cleanly and turn every
+                # downstream comparison into a string compare, so the literal is
+                # derived from the value's type rather than assumed.
+                if isinstance(value, str):
+                    literal = f"'{value}'"
+                    existing = re.search(rf"'{field}': '([a-z-]+)'", body)
+                    unchanged = existing is not None and existing.group(1) == value
+                else:
+                    literal = repr(round(float(value), 2))
+                    existing = re.search(rf"'{field}': (-?[0-9]+(?:\.[0-9]+)?)", body)
+                    unchanged = existing is not None and existing.group(1) == literal
                 if existing:
-                    if existing.group(1) == value:
+                    if unchanged:
                         continue
-                    new_body = body[: existing.start()] + f"'{field}': '{value}'" + body[existing.end() :]
+                    new_body = (
+                        body[: existing.start()] + f"'{field}': {literal}" + body[existing.end() :]
+                    )
                 else:
                     # Insert before the closing brace, matching the local style:
                     # multi-line dicts get their own indented line.
@@ -843,12 +902,12 @@ def write_lambda(results, write):
                         new_body = body[:-1].rstrip()
                         if not new_body.endswith(','):
                             new_body += ','
-                        new_body += f"\n{indent}'{field}': '{value}',\n    }}"
+                        new_body += f"\n{indent}'{field}': {literal},\n    }}"
                     else:
                         new_body = body[:-1].rstrip()
                         if not new_body.endswith(','):
                             new_body += ','
-                        new_body += f" '{field}': '{value}'}}"
+                        new_body += f" '{field}': {literal}}}"
                 src = src[:start] + new_body + src[end + 1 :]
                 changed += 1
     if changed and write:
@@ -866,7 +925,42 @@ def main():
         help="also put scoring fields into the score Lambda's borough dicts",
     )
     ap.add_argument('--limit', type=int, help='only read N NSPL rows (smoke test)')
+    ap.add_argument(
+        '--sync-lambda',
+        action='store_true',
+        help='propagate scoring fields from borough-extra.json into the Lambda, no derivation',
+    )
     args = ap.parse_args()
+
+    # --sync-lambda deliberately SKIPS derive(). Everything else here re-derives
+    # from DEFRA, the EA WMS, NaPTAN and a 2.7M-row NSPL scan, which is minutes
+    # of work and needs the network for flood; propagating an already-derived
+    # value into the second holder needs none of it.
+    #
+    # THIS IS A COPY, NOT A DERIVATION, AND THE DISTINCTION MATTERS. It trusts
+    # borough-extra.json to be current and can only make the Lambda agree with
+    # it - it cannot tell you whether that file still agrees with DEFRA. That is
+    # what `--check` is for, and it is the gate that should run first. Used the
+    # other way round this would launder a stale value into a second holder and
+    # make the parity test go green on two copies of the same wrong number,
+    # which is precisely the failure recorded in feedback-empty-index-is-not-a-
+    # zero-reading.
+    if args.sync_lambda:
+        extra = json.loads(BOROUGH_EXTRA.read_text(encoding='utf-8'))
+        wanted = set(LAMBDA_FIELDS)
+        staged = {
+            city: {
+                name: {k: v for k, v in rec.items() if k in wanted}
+                for name, rec in boroughs.items()
+            }
+            for city, boroughs in extra.items()
+        }
+        n = write_lambda(staged, write=args.write)
+        verb = 'written into' if args.write else 'would change in'
+        print(f'{n} field(s) {verb} {SCORE_APP.name}')
+        if not args.write:
+            print('(dry run; pass --write to apply)')
+        return 0
 
     results = derive(limit=args.limit)
     report(results)
