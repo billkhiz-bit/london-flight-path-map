@@ -139,10 +139,23 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertEqual(body['context']['avgPriceGbp'], 680105)
         self.assertEqual(comp['scoreChange'], round(body['score'] - comp['previousScore'], 1))
         # Under v3.3 the balanced persona does not weight growth, so
-        # Wandsworth's dead growth signal no longer moves its score. The
-        # movement must still be REPORTED as unweighted rather than vanish —
-        # otherwise "the market moved and my score didn't" is unexplained.
-        self.assertEqual(comp['scoreChange'], 0.0)
+        # Wandsworth's growth signal still contributes nothing. The movement
+        # must be REPORTED as unweighted rather than vanish — otherwise "the
+        # market moved and my score didn't" is unexplained, and that assertion
+        # is the one below, which is unchanged.
+        #
+        # RE-PINNED 0.0 -> -0.1 at v3.9. This is NOT growth leaking in. The
+        # driver is affordability: Wandsworth's average price rose 660,000 ->
+        # 680,105, so afford fell 6.7 -> 6.5, and the exact weighted delta is
+        # -0.0540, which rounds to -0.1. It read as 0.0 before only because the
+        # two vintages rounded to the same 1dp score under the old weights;
+        # adding `env` moved where that boundary falls.
+        #
+        # `env` itself is identical across vintages (4.7 both), verified when
+        # re-pinning - it is derived from DEFRA and EA data that does not move
+        # on a quarterly HPI roll. If this pin ever changes because `env`
+        # differed between vintages, that is a real defect and not a re-pin.
+        self.assertEqual(comp['scoreChange'], -0.1)
         self.assertEqual([u['factor'] for u in comp['why']['unweighted']], ['growth'])
         self.assertIn('did not change the score', comp['why']['unweighted'][0]['note'])
 
@@ -245,19 +258,31 @@ class TrendsFeatureTests(unittest.TestCase):
             self.assertEqual(sizes, sorted(sizes, reverse=True), msg=c['borough'])
 
     def test_explanation_names_the_direction_and_the_driver(self):
-        # Ealing's trend went +4.1% -> -0.3%, crossing into negative. Under the
-        # investor view (the only one that weights growth since v3.3) the
-        # explanation must say the score fell, name growth, and disclose the
-        # scoring model.
-        ealing = self._investor_why('Ealing')
-        self.assertIn('fell', ealing['summary'])
-        self.assertIn('Growth', ealing['summary'])
+        # RE-AIMED Ealing -> Harrow at v3.9, 2026-08-26. Harrow's trend went
+        # +0.4% -> -1.4%, crossing into negative, which is the property this
+        # test needs: the 'steepest fall' disclosure only appears on the
+        # falling-price branch, so a still-rising borough cannot exercise it.
+        #
+        # Ealing no longer qualifies, and the reason is the change itself
+        # rather than any drift in the data. v3.9 cut the investor growth
+        # weight 0.40 -> 0.34 (proportional redistribution to make room for
+        # `env`), so Ealing's fall no longer survives rounding to 1dp - it now
+        # reports "Score held". Measured the same day: 11 of 33 boroughs still
+        # satisfy all four assertions below, so the subject was re-chosen from
+        # that set rather than the assertions being softened to fit Ealing.
+        #
+        # Under the investor view - the only persona that weights growth since
+        # v3.3 - the explanation must say the score fell, name growth, and
+        # disclose the scoring model.
+        harrow = self._investor_why('Harrow')
+        self.assertIn('fell', harrow['summary'])
+        self.assertIn('Growth', harrow['summary'])
         # The flat string must still disclose the model, not only the structured
         # form — a caller reading `explanation` alone should not lose it.
         # v3.4: the model is the 5.0 flat-market anchor plus the tail benchmark,
         # where v3.2 disclosed a floor at 0.
-        self.assertIn('flat market', ealing['summary'])
-        self.assertIn('steepest fall', ealing['summary'])
+        self.assertIn('flat market', harrow['summary'])
+        self.assertIn('steepest fall', harrow['summary'])
         # Newham's price fell, so affordability improved even though the overall
         # score dropped. The explanation must not flatten every factor into the
         # same direction as the headline.
@@ -610,9 +635,21 @@ class CalcScoreTests(unittest.TestCase):
         # table had transport at `good`. The headline barely moves because
         # liveability is 31% of the balanced persona and the two inputs are
         # 0.25 and 0.10 of that.
+        # 6.5 -> 6.2 at v3.9, when air quality and flood became the `env`
+        # component. Wandsworth scores env 4.7, one of the lowest in the
+        # country: its air is 2.42x the WHO 2021 guideline. At 0.14 that is a
+        # -0.3 headline move, and it is the correction the component exists to
+        # make - a dense inner-London borough beside the A3 was previously
+        # scored as though its air were not a fact about living there.
+        #
+        # The other four components are UNCHANGED at v3.9. That is the
+        # invariant worth watching in this fixture: `env` entering must move
+        # the total and nothing else, because the reweighting is proportional
+        # and the inputs to quiet/afford/growth/live did not change.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.5)
+        self.assertEqual(result['score'], 6.2)
+        self.assertEqual(result['components']['env'], 4.7)
         self.assertEqual(result['components']['quiet'], 5.0)
         # 6.7 under the May vintage; the June roll moved the cohort.
         self.assertEqual(result['components']['afford'], 6.5)
@@ -674,11 +711,33 @@ class PersonaCoverageTests(unittest.TestCase):
             self.assertAlmostEqual(total, 1.0, places=2,
                                    msg=f'{name!r} sums to {total}')
 
-    def test_all_personas_have_four_keys(self):
-        expected = {'quiet', 'afford', 'growth', 'live'}
+    def test_all_personas_carry_every_component(self):
+        """Five components since v3.9, and every persona declares all of them.
+
+        Renamed from ...have_four_keys. A count in a NAME is scheduled
+        staleness in the same way a count in an assertion is: the old name
+        would have had to change anyway, and leaving it would have described
+        the wrong contract while passing.
+        """
+        expected = {'quiet', 'afford', 'growth', 'live', 'env'}
         for name, weights in app.PERSONAS.items():
             self.assertEqual(set(weights.keys()), expected,
                              msg=f'{name!r} keys: {set(weights.keys())}')
+
+    def test_every_persona_sums_to_one(self):
+        """Weights must total 1.00, which nothing asserted before v3.9.
+
+        The v3.9 reweighting multiplied eight rows by 0.86 and rounded to 2dp,
+        and two of them landed on 1.01 and had to be corrected by hand. That is
+        exactly the arithmetic a test should be holding, not a reviewer: a row
+        summing to 1.01 does not fail anywhere else, it just quietly inflates
+        every score in that persona by one per cent.
+        """
+        for name, weights in app.PERSONAS.items():
+            self.assertAlmostEqual(
+                sum(weights.values()), 1.0, places=9,
+                msg=f'{name!r} sums to {sum(weights.values())!r}',
+            )
 
     def test_renter_growth_is_zero(self):
         # Renters do not realise capital growth.
@@ -2604,11 +2663,26 @@ class RoadNoiseReportingTests(unittest.TestCase):
         self.assertEqual(app.road_lden_from_row({'roadLden': 40.0}), 40.0)
 
     def test_road_reading_does_not_enter_the_weighted_score(self):
-        # Folding it in would change every score the API has ever returned,
-        # which METHODOLOGY §7 treats as a version bump with 14 days' notice.
+        """Road Lden is STILL reported and not scored, after v3.9.
+
+        Air quality and flood became scored on 2026-08-26; road noise did not,
+        and is scheduled for v4.0 as part of a `quiet` noise composite with
+        aircraft and rail. Kept as a live assertion rather than a note, because
+        the expected component set moved underneath it and a test that only
+        checked the old set would have gone green again the moment `env` was
+        added for the wrong reason.
+        """
         body, status = app.resolve_query({'borough': 'Hackney', 'city': 'london'})
         self.assertEqual(status, 200)
-        self.assertEqual(set(body['components']), {'quiet', 'afford', 'growth', 'live'})
+        self.assertEqual(
+            set(body['components']), {'quiet', 'afford', 'growth', 'live', 'env'}
+        )
+        # The specific claim, independent of the component set: no road field
+        # is a component. The READING is not asserted here - it comes off the
+        # postcode noise row, so a borough-only query like this one has none,
+        # and the sibling tests in this class that pass a postcode are where
+        # its presence belongs.
+        self.assertNotIn('road', ' '.join(body['components']).lower())
 
     def test_aircraft_floor_still_rejects_the_legacy_nodata_fill(self):
         # 89.5% of London currently holds the 35.0 fill written before
@@ -2644,13 +2718,37 @@ class AirQualityReportingTests(unittest.TestCase):
         self.assertIn('no2AnnualMeanUgm3', env)
         self.assertNotIn('pm25AnnualMeanUgm3', env)
 
-    def test_air_quality_does_not_enter_the_weighted_score(self):
-        # plannedComponents still lists airQuality as planned; reporting a
-        # measurement is not the same as scoring it, and scoring it would
-        # change every score ever returned.
+    def test_air_quality_now_enters_the_weighted_score(self):
+        """v3.9: air quality is SCORED, via `env`. This assertion is inverted.
+
+        Until 2026-08-26 this test asserted the opposite, and its comment gave
+        the reason: "scoring it would change every score ever returned". That
+        was a true statement of the cost, not a permanent constraint, and v3.9
+        pays it deliberately - with the 14-day integrator notice METHODOLOGY
+        requires for any borough moving more than 0.5 points.
+
+        Inverted rather than deleted. A test that asserts a lifted constraint
+        does not merely stop being useful, it reads as evidence the constraint
+        still holds - which is the exact shape of
+        test_resolve_query_404_unchanged_for_non_london, correct when written
+        and left asserting a defect for two days after the gate it described
+        was removed.
+        """
         body, status = app.resolve_query({'borough': 'Camden', 'city': 'london'})
         self.assertEqual(status, 200)
-        self.assertEqual(set(body['components']), {'quiet', 'afford', 'growth', 'live'})
+        self.assertEqual(
+            set(body['components']), {'quiet', 'afford', 'growth', 'live', 'env'}
+        )
+        # The component is the composite, not the raw ratio, and it is derived
+        # from the borough record rather than restated here - a literal would
+        # have to be re-pinned on every vintage roll and would not detect the
+        # component being computed from the wrong field.
+        bd = app.CITIES['london']['boroughs']['Camden']
+        self.assertAlmostEqual(
+            body['components']['env'], round(app.get_env_score(bd) * 10) / 10, places=6
+        )
+        self.assertEqual(body['context']['environmentResolution'], 'measured')
+        self.assertFalse(body['context']['environmentSingleInput'])
 
 
 class PostcodeCityDerivationTests(unittest.TestCase):
