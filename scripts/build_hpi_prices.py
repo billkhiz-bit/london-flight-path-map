@@ -53,7 +53,7 @@ import urllib.request
 from pathlib import Path
 
 # The vintage the registry claims, in CITY_PROVENANCE and in CLAUDE.md.
-DEFAULT_VINTAGE = "2026-05-01"
+DEFAULT_VINTAGE = "2026-06-01"  # June 2026 UK HPI, rolled 2026-08-25
 CACHE = Path("data/hpi-average-prices.csv")
 SCORE_APP = Path("backend/lambdas/score/app.py")
 
@@ -423,35 +423,80 @@ def _rewrite_trend(
 
 
 def write(city: str, hpi: dict[str, dict]) -> int:
-    """Correct `trend` in both holders from HPI. Returns the number unapplied."""
-    if city != "london":
-        print("--write is London-only for now; it is the city with two holders.", file=sys.stderr)
-        return 1
+    """Correct `avgPrice` and `trend` from HPI. Returns the number unapplied.
 
+    GENERALISED FROM LONDON-AND-TREND-ONLY ON 2026-08-24, during the first
+    vintage roll this repo has performed (2026-05 to 2026-06). The original
+    write path was built for the 2026-08-10 incident, where only London's
+    trends were wrong - so the first real roll found the tool could correct
+    one field of one city while --check rightly failed the other eleven.
+
+    Which holders get written depends on the city, and the asymmetry is the
+    point rather than an accident:
+      * The LAMBDA dict ({CITY}_BOROUGHS) is written for every city - it is
+        the single source the frontend generator reads.
+      * London's SITE block is written directly, because London's frontend
+        data is hand-curated markup that build_city_frontend_block.py does
+        not generate.
+      * Every other city's site block must be REGENERATED afterwards with
+        `build_city_frontend_block.py --city X --insert` - this function
+        prints the reminder, and `tests/borough-score-parity.mjs` fails the
+        build if it is forgotten, which is the gate actually guarding the
+        two-holder divergence here.
+    """
     lads = CITY_LADS[city]
     held = registry_boroughs(city)
-    wanted = {n: hpi[lads[n]]["trend"] for n in held if lads.get(n) and hpi.get(lads[n])}
-    changed = {n: v for n, v in wanted.items() if abs(held[n]["trend"] - v) > TREND_TOLERANCE}
-    if not changed:
-        print("Nothing to do: every trend already matches HPI.")
+    wanted_t = {n: hpi[lads[n]]["trend"] for n in held if lads.get(n) and hpi.get(lads[n])}
+    wanted_p = {n: hpi[lads[n]]["price"] for n in held if lads.get(n) and hpi.get(lads[n])}
+    changed_t = {n: v for n, v in wanted_t.items() if abs(held[n]["trend"] - v) > TREND_TOLERANCE}
+    changed_p = {
+        n: v
+        for n, v in wanted_p.items()
+        if v is not None and abs(held[n]["avgPrice"] - v) > PRICE_TOLERANCE
+    }
+    if not changed_t and not changed_p:
+        print("Nothing to do: every avgPrice and trend already matches HPI.")
         return 0
-    print(f"{len(changed)} of {len(held)} boroughs need a new trend.")
+    print(f"{city}: {len(changed_p)} price(s) and {len(changed_t)} trend(s) need a new value.")
 
-    # Lambda:  'Hounslow': {  ...  'trend': -1.1,
+    marker = f"{city.upper()}_BOROUGHS = {{"
     lam = SCORE_APP.read_text(encoding="utf-8")
-    lam, bad_lam = _rewrite_trend(
-        lam, "LONDON_BOROUGHS = {", r"'{name}': \{{", r"'trend': (-?\d+\.?\d*)", changed
+    lam, bad_t = _rewrite_trend(
+        lam, marker, r"'{name}': \{{", r"'trend': (-?\d+\.?\d*)", changed_t
     )
-    # Site:    Hounslow: {  ...  trend: -1.1,     (quoted key when it has spaces)
-    site = SITE_HOLDER.read_text(encoding="utf-8")
-    site_wanted = {SITE_NAME.get(n, n): v for n, v in changed.items()}
-    site, bad_site = _rewrite_trend(
-        site, "const BOROUGH_DATA_RAW = {", r"'?{name}'?: \{{", r"\btrend: (-?\d+\.?\d*)", site_wanted
+    lam, bad_p = _rewrite_trend(
+        lam,
+        marker,
+        r"'{name}': \{{",
+        r"'avgPrice': (\d+)",
+        {n: f"{v:.0f}" for n, v in changed_p.items()},
     )
 
-    problems = bad_lam + bad_site
+    bad_site_t: list[str] = []
+    bad_site_p: list[str] = []
+    site = None
+    if city == "london":
+        site = SITE_HOLDER.read_text(encoding="utf-8")
+        site_t = {SITE_NAME.get(n, n): v for n, v in changed_t.items()}
+        site_p = {SITE_NAME.get(n, n): f"{v:.0f}" for n, v in changed_p.items()}
+        site, bad_site_t = _rewrite_trend(
+            site,
+            "const BOROUGH_DATA_RAW = {",
+            r"'?{name}'?: \{{",
+            r"\btrend: (-?\d+\.?\d*)",
+            site_t,
+        )
+        site, bad_site_p = _rewrite_trend(
+            site,
+            "const BOROUGH_DATA_RAW = {",
+            r"'?{name}'?: \{{",
+            r"avg_price: (\d+)",
+            site_p,
+        )
+
+    problems = bad_t + bad_p + bad_site_t + bad_site_p
     if problems:
-        # Write NEITHER file. A half-applied correction is the divergence this
+        # Write NOTHING. A half-applied correction is the divergence this
         # function exists to avoid, and it would be committed looking complete.
         for p in problems:
             print(f"  UNAPPLIED: {p}", file=sys.stderr)
@@ -459,8 +504,14 @@ def write(city: str, hpi: dict[str, dict]) -> int:
         return len(problems)
 
     SCORE_APP.write_text(lam, encoding="utf-8", newline="")
-    SITE_HOLDER.write_text(site, encoding="utf-8", newline="")
-    print(f"Wrote {SCORE_APP} and {SITE_HOLDER}. Re-run --check to confirm.")
+    if site is not None:
+        SITE_HOLDER.write_text(site, encoding="utf-8", newline="")
+        print(f"Wrote {SCORE_APP} and {SITE_HOLDER}. Re-run --check to confirm.")
+    else:
+        print(
+            f"Wrote {SCORE_APP}. Now regenerate the site block: "
+            f"python scripts/build_city_frontend_block.py --city {city} --insert"
+        )
     return 0
 
 

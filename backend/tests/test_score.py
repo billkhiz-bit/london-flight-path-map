@@ -94,6 +94,33 @@ class ParseWeightsTests(unittest.TestCase):
         self.assertEqual(result, {'quiet': 1.0, 'afford': 0.0, 'growth': 0.0, 'live': 0.0})
 
 
+class UsAirportExemptionTests(unittest.TestCase):
+    """The NYC scale exemption, both halves.
+
+    JFK/LGA/EWR/TEB fell to UNMAPPED_AIRPORT_SCALE (0.190, "smaller than the
+    smallest DEFRA-mapped airport") from 2026-08-11 to 2026-08-25, stretching
+    the ladder 5x and publishing Howard Beach, under the JFK approach, as
+    quiet 10.0 beside its own impact band of severe - while the site exempted
+    the same airports at 1.0. Two holders, one exemption, written one day
+    apart."""
+
+    def test_us_airports_take_the_site_exemption(self):
+        for code in ('JFK', 'LGA', 'EWR', 'TEB'):
+            self.assertEqual(app.airport_noise_scale(code), 1.0, code)
+        # UK behaviour unchanged in both directions.
+        self.assertEqual(app.airport_noise_scale('LHR'), 1.0)
+        self.assertEqual(app.airport_noise_scale('CWL'), app.UNMAPPED_AIRPORT_SCALE)
+
+    def test_exemption_set_matches_nyc_airports(self):
+        # _US_AIRPORT_CODES exists because airport_noise_scale runs during
+        # module load, before NYC_AIRPORTS is defined - so it cannot read the
+        # registry directly and a fifth NYC airport would silently take the
+        # 0.190 default. This is the guard that turns that drift red.
+        self.assertEqual(
+            app._US_AIRPORT_CODES, {ap['code'] for ap in app.AIRPORTS_NYC}
+        )
+
+
 class TrendsFeatureTests(unittest.TestCase):
     """?compare=previous on /v1/score + GET /v1/changes (2026-07-24).
 
@@ -103,10 +130,13 @@ class TrendsFeatureTests(unittest.TestCase):
         body, status = app.resolve_query({'borough': 'Wandsworth', 'compare': 'previous'})
         self.assertEqual(status, 200)
         comp = body['comparison']
-        self.assertEqual(comp['previousVintage'], '2026-Q1')
-        self.assertEqual(comp['currentVintage'], '2026-Q2')
-        self.assertEqual(comp['previousAvgPriceGbp'], 680000)
-        self.assertEqual(body['context']['avgPriceGbp'], 660000)
+        # Re-pinned at the 2026-Q3 roll (June 2026 HPI, 2026-08-25); the
+        # previous vintage is now the May snapshot this test used to call
+        # current.
+        self.assertEqual(comp['previousVintage'], '2026-Q2')
+        self.assertEqual(comp['currentVintage'], '2026-Q3')
+        self.assertEqual(comp['previousAvgPriceGbp'], 660000)
+        self.assertEqual(body['context']['avgPriceGbp'], 680105)
         self.assertEqual(comp['scoreChange'], round(body['score'] - comp['previousScore'], 1))
         # Under v3.3 the balanced persona does not weight growth, so
         # Wandsworth's dead growth signal no longer moves its score. The
@@ -143,7 +173,7 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertEqual(resp['statusCode'], 200)
         body = json.loads(resp['body'])
         self.assertEqual(body['summary']['boroughs'], 33)
-        self.assertEqual(body['currentVintage'], '2026-Q2')
+        self.assertEqual(body['currentVintage'], '2026-Q3')
         changes = body['changes']
         self.assertEqual(len(changes), 33)
         deltas = [abs(c['scoreChange']) for c in changes]
@@ -234,7 +264,7 @@ class TrendsFeatureTests(unittest.TestCase):
         newham = self._investor_why('Newham')
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
         self.assertGreater(afford['change'], 0, 'affordability improved')
-        self.assertIn('9.3 → 9.5', afford['title'])
+        self.assertIn('9.5 → 9.6', afford['title'])
         self.assertTrue(any('price here fell' in st for st in afford['steps']), afford['steps'])
 
     def test_changes_publishes_weights_so_attribution_is_checkable(self):
@@ -261,15 +291,21 @@ class TrendsFeatureTests(unittest.TestCase):
         body = json.loads(app.handle_changes({})['body'])
         m = body['marketContext']
         self.assertEqual(m['areas'], 33)
-        self.assertLess(m['meanTrendPct'], m['previousMeanTrendPct'])
-        self.assertEqual(m['previousFallingAreas'], 0)
-        # 14 until 2026-08-10, when London's trends were corrected to HM Land
-        # Registry HPI 2026-05 - they had matched no HPI month at all. The
-        # corrected cohort is more negative, so more boroughs fall.
-        self.assertEqual(m['fallingAreas'], 20)
-        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Waltham Forest')
-        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Barking and Dagenham')
-        self.assertIn('market fell', m['summary'])
+        # The 2026-Q3 roll is the first vintage pair where the mean IMPROVED
+        # (-3.35% to -3.03%), which found the summary's tail asserting "the
+        # market fell" unconditionally - one line after the numbers disproving
+        # it. The tail is direction-aware now, and this test pins the rising
+        # branch; the falling branch's wording survives in the code for the
+        # next down quarter.
+        self.assertGreater(m['meanTrendPct'], m['previousMeanTrendPct'])
+        # 0 until the 2026-Q3 roll: the Q1 snapshot predated the 2026-08-10
+        # trend correction, so no previous borough read as falling. The
+        # previous vintage is now the corrected May cohort.
+        self.assertEqual(m['previousFallingAreas'], 20)
+        self.assertEqual(m['fallingAreas'], 19)
+        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Barking and Dagenham')
+        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Waltham Forest')
+        self.assertIn('market moving', m['summary'])
 
     def test_why_shows_its_workings_for_relative_factors(self):
         # Growth and affordability are scored relative to other boroughs, so the
@@ -287,11 +323,13 @@ class TrendsFeatureTests(unittest.TestCase):
         # test_amplification_prose_when_a_rising_area_was_the_benchmark, which
         # stubs its cohort and so cannot be silently uncovered by a vintage roll
         # again.
-        self.assertIn('City of London', growth['workings'])
+        # Westminster since the 2026-Q3 roll (-25.4%); City of London held
+        # the steepest fall under the May vintage.
+        self.assertIn('Westminster', growth['workings'])
         self.assertIn('steepest fall', growth['workings'])
-        self.assertIn('= 4.8', growth['workings'])
+        self.assertIn('= 4.9', growth['workings'])
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
-        self.assertIn('= 9.5', afford['workings'])
+        self.assertIn('= 9.6', afford['workings'])
         # The cheapest/dearest endpoints are named in the prose steps, so the
         # reader knows what the scale runs between.
         steps = ' '.join(afford['steps'])
@@ -321,43 +359,42 @@ class TrendsFeatureTests(unittest.TestCase):
             self.assertNotIn('vintage', blob, c['borough'])
 
     def test_why_uses_rank_to_explain_the_drop(self):
-        """Rank is the intuitive anchor the earlier wording talked around."""
+        """Rank is the intuitive anchor the earlier wording talked around.
+
+        The direction flips with the market: under the May vintage Barking had
+        fallen 1st to 14th; the June roll took it 14th back to 1st. What is
+        being tested is that rank anchors the explanation, whichever way it
+        moved."""
         barking = self._investor_why('Barking and Dagenham')
         growth = next(d for d in barking['drivers'] if d['factor'] == 'growth')
-        self.assertEqual(growth['previousRank'], 1)
-        # 17 until the 2026-08-10 HPI correction moved the whole cohort.
-        self.assertEqual(growth['rank'], 14)
+        self.assertEqual(growth['previousRank'], 14)
+        self.assertEqual(growth['rank'], 1)
         self.assertEqual(growth['rankOf'], 33)
         steps = ' '.join(growth['steps'])
-        self.assertIn('1st of 33 to 14th of 33', steps)
+        self.assertIn('14th of 33 to 1st of 33', steps)
 
     def test_why_explains_amplification_when_area_was_the_benchmark(self):
-        """The main reason a fall looks extreme: it WAS the yardstick.
+        """The main reason a big move looks extreme: the area WAS the yardstick.
 
-        Barking scored 10/10 in Q1 by being the fastest grower — a ceiling, not
-        a margin — so it could only move down.
+        The subject is whichever borough held rank 1 under the PREVIOUS vintage
+        and slipped - a role the market reassigns every roll. Under the Q1
+        snapshot it was Barking (falling branch); under the Q2/Q3 pair it is
+        Waltham Forest, still rising but overtaken by Barking's +4.3%, which is
+        the rising branch's own version of the prose: it took the full 10 last
+        quarter, so down was the only direction available.
         """
-        barking = self._investor_why('Barking and Dagenham')
-        growth = next(d for d in barking['drivers'] if d['factor'] == 'growth')
+        wf = self._investor_why('Waltham Forest')
+        growth = next(d for d in wf['drivers'] if d['factor'] == 'growth')
         steps = ' '.join(growth['steps'])
         # v3.4 replaced the pure "league table" model with a flat-market anchor;
         # the amplification explanation it wraps must survive that change.
         self.assertIn('flat market', steps)
-        self.assertIn('Barking and Dagenham', steps)
-        # Barking is now in the FALLING tail. Until 2026-08-10 it held +0.9% and
-        # took the rising branch, which says "took the full 10, and the only
-        # direction available was down" and adds a "prices are still rising"
-        # caveat. Correcting London's trends to HM Land Registry HPI 2026-05 put
-        # it at -0.2%, so the falling branch's own amplification prose applies
-        # instead. Asserting "still rising" here would now assert something the
-        # data says is false.
-        self.assertIn('held the', steps)
-        self.assertIn('top score of 10', steps)
-        self.assertIn('could only ever move down from there', steps)
-        self.assertTrue(
-            any('falling' in s.lower() for s in growth['steps']),
-            'must say prices are now falling, not still rising',
-        )
+        self.assertIn('Waltham Forest', steps)
+        self.assertIn('took the full 10', steps)
+        self.assertIn('only direction available was down', steps)
+        # Still rising in absolute terms - the relative slip must not read as
+        # prices falling.
+        self.assertIn('Still rising', steps)
 
     def test_amplification_prose_when_a_rising_area_was_the_benchmark(self):
         """The rising tail's was-the-benchmark explanation, on a STUBBED cohort.
@@ -383,10 +420,15 @@ class TrendsFeatureTests(unittest.TestCase):
                 out[name]['trend'] = trend
             return out
 
+        # STUB VALUES MUST DOMINATE THE LIVE COHORT. The rest of each
+        # borough's data is real, so a stub of +4.0% stopped being the
+        # benchmark the moment a real borough hit +4.3% (Barking, 2026-Q3
+        # roll) and this test failed for the wrong reason. 9.0 outruns any
+        # plausible real London trend.
         # Previously: subject is the fastest riser in the cohort.
         prev_set = cohort({subject: 6.0, 'Havering': 2.0})
         # Now: subject is still rising, but Havering rises faster.
-        cur_set = cohort({subject: 1.5, 'Havering': 4.0})
+        cur_set = cohort({subject: 1.5, 'Havering': 9.0})
 
         inv = app.PERSONAS['investor']
         cur = app.calc_score(subject, 'london', inv, boroughs_override=cur_set)
@@ -433,14 +475,16 @@ class TrendsFeatureTests(unittest.TestCase):
         def growth_of(borough):
             return app.calc_score(borough, 'london', inv)['components']['growth']
 
-        # -0.3%, -9.5% and -28.2% respectively: strictly ordered by depth of fall.
-        ealing, kc, col = growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('City of London')
-        self.assertLess(col, kc)
+        # -1.9%, -14.7% and -25.4% respectively under the 2026-Q3 vintage:
+        # strictly ordered by depth of fall. Westminster displaced the City of
+        # London as the steepest faller at the June roll.
+        ealing, kc, wst = growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('Westminster')
+        self.assertLess(wst, kc)
         self.assertLess(kc, ealing)
         # All are falling, so all sit below the 5.0 flat-market anchor.
         self.assertLess(ealing, 5.0)
         # Only the steepest faller in the cohort may sit on the floor.
-        self.assertEqual(col, 0.0)
+        self.assertEqual(wst, 0.0)
 
         # The workings must name the benchmark the tail is scaled against rather
         # than assert a floor that no longer exists.
@@ -453,11 +497,13 @@ class TrendsFeatureTests(unittest.TestCase):
         # while its own prices got worse, because others fell further. Left
         # unexplained that looks like a bug. Ranks come from the raw trend order,
         # so v3.4 does not move them.
-        # (33, 30) until the 2026-08-10 HPI correction re-ordered the cohort.
-        # The assertions ABOVE are the invariant this test exists for - that
-        # mild and severe falls separate at all - and they are unchanged.
-        self.assertEqual((growth['previousRank'], growth['rank']), (33, 29))
-        self.assertTrue(any('moved UP the growth table' in cv for cv in kc_why['caveats']))
+        # (33, 30) until the 2026-08-10 HPI correction; (33, 29) under the May
+        # vintage; (29, 31) since the 2026-Q3 roll, where K&C's fall DEEPENED
+        # against the cohort and it slid down the table - so the moved-UP
+        # caveat rightly does not fire this quarter. The assertions ABOVE are
+        # the invariant this test exists for - that mild and severe falls
+        # separate at all - and they are unchanged.
+        self.assertEqual((growth['previousRank'], growth['rank']), (29, 31))
 
         # And no borough may still publish the retired limitation as a caveat.
         body = json.loads(app.handle_changes({})['body'])
@@ -568,13 +614,15 @@ class CalcScoreTests(unittest.TestCase):
         result = app.calc_score('Wandsworth', 'london', weights)
         self.assertEqual(result['score'], 6.5)
         self.assertEqual(result['components']['quiet'], 5.0)
-        self.assertEqual(result['components']['afford'], 6.7)
+        # 6.7 under the May vintage; the June roll moved the cohort.
+        self.assertEqual(result['components']['afford'], 6.5)
         # 4.3 until 2026-08-10: Wandsworth's trend was -4.2%, and correcting
         # London to HM Land Registry HPI 2026-05 put it at -6.1%. The headline
         # assertion above is unchanged at 6.4, which is the invariant this
         # fixture exists to guard - v3.3 gives growth no weight in `balanced`,
         # so a growth move must not reach the total.
-        self.assertEqual(result['components']['growth'], 3.9)
+        # 3.9 under the May vintage; the June roll moved the cohort.
+        self.assertEqual(result['components']['growth'], 4.0)
         # live 7.9 -> 8.0 on 2026-08-03, when the crime rates were re-verified
         # against ONS Table C4 in full rather than by spot check. Wandsworth held
         # 82 per 1,000 against a published 76.4, so crime_to_score moves 7.87 ->
@@ -587,7 +635,8 @@ class CalcScoreTests(unittest.TestCase):
         # and over three-quarters within 500 m of a GP, so both reach the top
         # band. Together they are 35% of the liveability composite.
         self.assertEqual(result['components']['live'], 8.3)
-        self.assertEqual(result['context']['avgPriceGbp'], 660000)
+        # 660000 under the May vintage; June puts Wandsworth at 680105.
+        self.assertEqual(result['context']['avgPriceGbp'], 680105)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
 
     def test_growth_clamped_to_scale(self):
