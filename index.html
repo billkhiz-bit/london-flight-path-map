@@ -4048,8 +4048,31 @@
         } catch {
           // A malformed query string must never take the layout down.
         }
-        root.classList.toggle('is-tabbed', native || (preview && window.innerWidth <= 900));
+        const want = native || (preview && window.innerWidth <= 900);
+        const had = root.classList.contains('is-tabbed');
+        root.classList.toggle('is-tabbed', want);
+
+        // The base rules alone are not a layout. The [data-mview] VIEW rules
+        // decide which of the three tabs is showing, and until one is chosen
+        // the sidebar covers the map entirely - measured at 0% map, 91.6%
+        // sidebar when this was first wired. Native's boot path sets it; the
+        // web preview has to set it here.
+        if (want && !had && !document.getElementById('app')?.dataset.mview && window.setMobileView) {
+          window.setMobileView('search');
+        }
       }
+
+      // RE-APPLIED ON RESIZE, and this is not a nicety.
+      //
+      // applyTabbedLayout() ran once at parse time, so opening the page at
+      // desktop width and THEN narrowing it - which is exactly what happens in
+      // DevTools device mode, and on a phone rotating - left the class unset
+      // and the classic layout in place. The flag appeared to do nothing, and
+      // the honest reading of that from the outside is "this looks the same as
+      // before". A width-gated class has to be re-evaluated when the width
+      // changes; anything else only works if you happen to load at the right
+      // size.
+      window.addEventListener('resize', applyTabbedLayout);
 
       (function setupNativeFeatures() {
         const cap = window.Capacitor;
