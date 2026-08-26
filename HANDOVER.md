@@ -113,12 +113,22 @@ So the v3.9 deploy runbook is the roll's, plus a rebuild:
 **OPEN, and deliberately not done here:**
 
 - **The 14-day notice.** Required before deploy.
-- **`env` is uniform at 0.14 across all personas.** Varying it (a family or
-  later-life buyer weighting air quality higher) is defensible but is a claim
-  about people, not data - make it deliberately.
-- **Cardiff and Nottingham get no environment score at all.** They are
-  backend-only so they have no `borough-extra` entry to derive from, even though
-  DEFRA air quality covers them. 8 boroughs report `unavailable`.
+- ~~`env` uniform at 0.14~~ **DONE.** `family` and `laterlife` carry 0.18,
+  anchored on the WHO/COMEAP air-pollution sensitivity groups (children, older
+  adults). The other six stay at baseline - no published group, no variation.
+- ~~Cardiff and Nottingham get no environment score~~ **DONE.** Derived straight
+  into the Lambda with no `borough-extra` entry, which is correct rather than a
+  gap: they are backend-only, so there is no site half to diverge from, and
+  giving them a `borough-extra` entry would trip
+  `test_backend_only_cities_are_declared_not_discovered`. Coverage went 86 -> 94
+  scored, 73 -> 77 measured, and **New York is now the only city with none**.
+  Nottingham is `measured` on both inputs; Cardiff is `partial` because the EA
+  coverage is England's.
+- **Nottingham is now materially less thin, which is a BACKEND_ONLY_CITIES
+  question.** It sits there on judgement rather than impossibility - `live` of
+  2.6 on two inputs was too thin to publish. A fully-measured environment
+  component is a real second leg. Worth re-asking whether it can go on the site;
+  that is a one-way door, so read the checklist in CLAUDE.md before opening it.
 - **Road noise still does not score.** Scheduled for v4.0 with rail, as the
   `quiet` noise composite.
 - **Rank guard is returned, not enforced.** `context.environmentSingleInput` is

@@ -218,13 +218,27 @@ def airport_noise_scale(code):
 # closest to its rounding boundary was taken down by 0.01 (balanced: quiet
 # 0.33 -> 0.32; laterlife: live 0.34 -> 0.33). Every row sums to exactly 1.00.
 #
-# WHY 0.14 AND WHY UNIFORM. Environment is two measured inputs against three or
+# WHY 0.14 AS THE BASELINE. Environment is two measured inputs against three or
 # four in `live`, and it is a NEW claim rather than a re-weighting of an
-# existing one, so it enters modestly. It is uniform across personas on purpose:
-# varying it - a family or later-life buyer weighting air quality higher on
-# health grounds - is a defensible product claim but it is a claim about PEOPLE,
-# not about data, and it should be made deliberately rather than smuggled in
-# alongside the component's introduction. Open follow-up.
+# existing one, so it enters modestly.
+#
+# WHY `family` AND `laterlife` CARRY 0.18 INSTEAD, AND NOTHING ELSE DOES. This
+# is the one place a persona weight is anchored on an EXTERNAL health source
+# rather than on buyer-priority research. WHO and COMEAP both identify specific
+# air-pollution sensitivity groups - children, older adults, pregnant women, and
+# people with asthma or heart and lung conditions. Two personas map onto that
+# list without interpretation: `family` (children, whose lung development is
+# affected) and `laterlife` (older adults). The other six have no
+# group-specific basis, so they stay at the baseline rather than being nudged
+# on a hunch.
+#
+# The extra 0.04 was taken from each of those two personas' OWN remaining
+# weights in proportion, so their internal emphasis is unchanged: `family` stays
+# liveability-led (0.46 of 0.82) and `laterlife` stays quiet-led (0.36 of 0.82).
+#
+# This deliberately does NOT vary by persona anywhere else. "Everyone breathes
+# the same air" is a sound default, and a weight that differs without a
+# published group behind it is an opinion wearing a number.
 #
 # THIS MOVES EVERY PUBLISHED SCORE. Measured spread of the env component is
 # 4.60-9.00 across 86 boroughs, so at 0.14 it introduces ~0.62 points of
@@ -232,7 +246,8 @@ def airport_noise_scale(code):
 # change, so the 14-day integrator notice is REQUIRED, not optional.
 PERSONAS = {
     'balanced': {'quiet': 0.32, 'afford': 0.27, 'growth': 0.00, 'live': 0.27, 'env': 0.14},
-    'family': {'quiet': 0.19, 'afford': 0.19, 'growth': 0.00, 'live': 0.48, 'env': 0.14},
+    # 0.18 env: children are a WHO/COMEAP air-quality sensitivity group.
+    'family': {'quiet': 0.18, 'afford': 0.18, 'growth': 0.00, 'live': 0.46, 'env': 0.18},
     # Investor: expected return IS the question, so growth keeps full weight.
     'investor': {'quiet': 0.09, 'afford': 0.26, 'growth': 0.34, 'live': 0.17, 'env': 0.14},
     'firsttime': {'quiet': 0.16, 'afford': 0.43, 'growth': 0.00, 'live': 0.27, 'env': 0.14},
@@ -242,7 +257,8 @@ PERSONAS = {
     # Commuter / young professional: transport-led, price-sensitive.
     'commuter': {'quiet': 0.21, 'afford': 0.30, 'growth': 0.00, 'live': 0.35, 'env': 0.14},
     # Later-life buyer: cash buyer prioritising quiet + healthcare access.
-    'laterlife': {'quiet': 0.38, 'afford': 0.15, 'growth': 0.00, 'live': 0.33, 'env': 0.14},
+    # 0.18 env: older adults are the other WHO/COMEAP sensitivity group.
+    'laterlife': {'quiet': 0.36, 'afford': 0.14, 'growth': 0.00, 'live': 0.32, 'env': 0.18},
 }
 
 # ---------------------------------------------------------------------------
@@ -1479,10 +1495,10 @@ BRISTOL_BOROUGHS = {
 }
 
 CARDIFF_BOROUGHS = {
-    'Cardiff': {'impact': 'low', 'avgPrice': 270094, 'trend': 2.1, 'crimeRate': 93.8, 'transport': 'good', 'healthcare': 'moderate'},
-    'Vale of Glamorgan': {'impact': 'moderate', 'avgPrice': 297999, 'trend': 3.3, 'crimeRate': 60.8, 'transport': 'good', 'healthcare': 'moderate'},
-    'Newport': {'impact': 'low', 'avgPrice': 230505, 'trend': 5.0, 'crimeRate': 109.4, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Caerphilly': {'impact': 'low', 'avgPrice': 197272, 'trend': 5.9, 'crimeRate': 85.3, 'transport': 'moderate', 'healthcare': 'moderate'},
+    'Cardiff': {'impact': 'low', 'avgPrice': 270094, 'trend': 2.1, 'crimeRate': 93.8, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.86},
+    'Vale of Glamorgan': {'impact': 'moderate', 'avgPrice': 297999, 'trend': 3.3, 'crimeRate': 60.8, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36},
+    'Newport': {'impact': 'low', 'avgPrice': 230505, 'trend': 5.0, 'crimeRate': 109.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.69},
+    'Caerphilly': {'impact': 'low', 'avgPrice': 197272, 'trend': 5.9, 'crimeRate': 85.3, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59},
 }
 
 
@@ -1537,10 +1553,10 @@ TEESSIDE_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.23, 'transport': 'good', 'healthcare': 'good'},
-    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate'},
-    'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate'},
-    'Rushcliffe': {'impact': 'low', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate'},
+    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.23, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 2.89},
+    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.65},
+    'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.93},
+    'Rushcliffe': {'impact': 'low', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.56},
 }
 
 CITIES = {
