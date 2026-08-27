@@ -129,6 +129,41 @@ already held.
   red. One line (`await res.body?.cancel()`) took it from 0 to 55 page/viewport
   combinations. Every sibling gate was audited: clean.
 
+### Later still - the trade-mark search that had blocked three workstreams
+
+- **The recorded reason CUBITT33 was "borderline, not clean" dissolved on
+  measurement.** Both class-9 registrations treated as blockers were read off
+  the IPO register: **UK00004145719 "Cubitt"** is owned by **Fyne Audio Systems
+  & Technology Ltd.**, a Scottish hi-fi maker, class 9 only, for *loudspeakers,
+  soundbars, headphones*; **UK00003649225 "33"** is class 9 only for *guitar-amp
+  modelling plug-ins and effect pedals*. **Neither is in class 42**, which is
+  ours. Fyne Audio's other marks are S-Trax and Vintage Monarch - loudspeakers
+  again.
+- **The error was reasoning from a class NUMBER instead of a specification.**
+  Class 9 holds downloadable software, loudspeakers, fire extinguishers and
+  diving suits. "Occupied in class 9" was a label doing a measurement's job, and
+  the measurement took ninety seconds - while blocking the Play Store, cold
+  outreach and an Ummah Build listing for nineteen days.
+- **This is NOT a clearance search and must not be read as one.** Two marks
+  read; no word-level sweep for other Cubitt-formative marks, no class-42 check.
+  The rule is unchanged: **attorney opinion, never file first.** What it does
+  establish is the asymmetry - leaving `SKY STORE` (Sky Ltd, classes 9 **and**
+  42, with a reputation and the SkyDrive/Skyscape precedents) for a field whose
+  nearest neighbours make speakers and guitar pedals.
+
+### Also - two auth claims that had gone false
+
+- **`CLAUDE.md` still listed `/v1/regions` and `/v1/changes` as API-key gated.**
+  Both answer **200 with no key**, verified live. `template.yaml` and the
+  `handle_regions` docstring were corrected on 2026-08-21 and **this line was
+  not** - so the falsehood survived in the file sessions actually read.
+- **`handle_options()` justified open CORS with a reason that had gone false** -
+  "the GET/POST are API-key gated". Three GET routes are not. The conclusion
+  still holds for the real reason (CORS is a browser control and does nothing
+  against server-side calls), so the docstring now says that instead. **A stale
+  justification is worse than none: it reads as evidence the question was asked
+  recently.**
+
 ### Later the same day - the two guards behind the guards
 
 - **The FIFTH inline copy of the noise-row range check is folded in.**

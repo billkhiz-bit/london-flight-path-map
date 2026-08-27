@@ -39,7 +39,15 @@ When the user says goodbye, thanks you, or indicates they're done, run `git stat
 You have unsaved changes. Would you like me to commit them before you go?
 ```
 
-If they say yes, create a commit with a clear message describing what changed. Keep git local only, never push.
+If they say yes, create a commit with a clear message describing what changed.
+
+**PUSH. The old "keep git local only, never push" line here is SUPERSEDED
+(2026-08-27, Bill's ruling.)** It contradicted the global rule that push/pull is
+the only safe sync mechanism, and the contradiction was not harmless: it stalled
+**21 commits** on a single machine and cost two round-trips in one session to
+resolve, because an explicit "never" cannot be overridden by inference. Follow
+the global multi-device workflow - `git fetch` early, surface drift,
+`git pull --rebase` before pushing if the branch diverged.
 
 ## On conversation start
 
@@ -650,7 +658,7 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
     `+3.4e38` as `roadNoiseLdenDb` — proven at HEAD, not theorised. Dead
     `_lookup_road_lden` (62 lines, third copy of the floor, zero call sites
     since `4e90cc0`) and its orphaned LRU are deleted.
-  - `score`, B2B scoring engine. API-key gated on `/v1/score`, `/v1/score/batch`, `/v1/regions`, `/v1/changes`. **`/v1/environment?lat=&lon=` is UNAUTHENTICATED** (added 2026-08-06): it reverse-geocodes a coordinate and returns MEASUREMENTS only (aircraft/road Lden, NO2, PM2.5, each with its WHO guideline) - no weights, no persona, no composite score, because the browser extension is a public artefact and cannot hold a key. Throttled 5 RPS.
+  - `score`, B2B scoring engine. API-key gated on `/v1/score` and `/v1/score/batch`. **`/v1/regions` and `/v1/changes` are NOT gated** - both answer 200 with no key, re-verified live 2026-08-27. This line claimed otherwise for months, and `template.yaml` and the `handle_regions` docstring were corrected on 2026-08-21 while THIS one was not, so the falsehood survived in the file sessions actually read. Whether they SHOULD be gated is open (audit I1); the deployment is the authority, not this sentence. **`/v1/environment?lat=&lon=` is UNAUTHENTICATED** (added 2026-08-06): it reverse-geocodes a coordinate and returns MEASUREMENTS only (aircraft/road Lden, NO2, PM2.5, each with its WHO guideline) - no weights, no persona, no composite score, because the browser extension is a public artefact and cannot hold a key. Throttled 5 RPS.
   - `chat`, **retrieval-only** assistant (`POST /v1/chat`, API-key gated), restored 2026-08-06 from `6bad8ce`. The model never supplies data: context comes from invoking `ScoreFunction` DIRECTLY, and `verify_answer()` DISCARDS any reply containing a number absent from the retrieved payload. That control fired in production on the third live question - a 2030 price forecast the prompt had forbidden. Do NOT "simplify" it to a free-form call.
   - `signup`, self-service API-key issuance
   - `favourites`, DynamoDB CRUD with `X-Device-Token` auth

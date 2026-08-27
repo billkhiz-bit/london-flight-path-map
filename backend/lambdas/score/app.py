@@ -6559,8 +6559,17 @@ def resolve_query(query):
 
 
 def handle_options():
-    """CORS preflight response. Open to any origin, the GET/POST are
-    API-key gated, so origin restriction adds no security."""
+    """CORS preflight response. Open to any origin.
+
+    The conclusion is right and the ORIGINAL REASON WENT FALSE. This said
+    "the GET/POST are API-key gated, so origin restriction adds no security",
+    and three GET routes on this function are not gated at all - /v1/regions,
+    /v1/changes and /v1/environment each answer 200 with no key (verified live
+    2026-08-27). The reason that actually holds is the one ROADMAP records:
+    CORS is a BROWSER control and does not protect against server-side calls,
+    so an origin restriction buys nothing on any of these routes, gated or not.
+    Keeping a stale justification is worse than keeping none - it reads as
+    evidence the question was asked recently."""
     return {
         'statusCode': 200,
         'headers': cors_headers(),
