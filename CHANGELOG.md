@@ -1,5 +1,151 @@
 # Changelog
 
+## 2026-08-27 - a field only its producer read, and a gate nothing ran
+
+**The transport panel rendered an upstream outage as a clean network.** The
+Lambda has separated "TfL answered and nothing near you is disrupted" from "we
+could not ask" since 2026-08-24, publishing `lineStatusAvailable`. Nothing read
+it. The frontend gated the whole section on `lineStatus.length > 0`, so a 403 on
+the Status route rendered as NO SECTION AT ALL - stations listed, silence where
+the disruption list goes, which is exactly what a clean network looks like.
+
+- **The producing comment is where it went wrong.** It read "consumers can
+  upgrade to read the flag; none is required to", which made the second half of
+  the fix optional, so it never happened and the field became documentation of
+  a bug rather than a fix for one. **A field only its producer reads is not a
+  fix.**
+- **The notice DENIES the false reading, it does not merely withhold the
+  claim.** Silence was already being read as "no disruptions", so omitting the
+  good-service claim leaves the same inference standing for anyone who has seen
+  the section populated. It also names the upstream and scopes itself: the
+  stations above came from a different TfL route that answered.
+- **The heading now renders whenever the section is RELEVANT**, so its absence
+  reliably means "no lines nearby" rather than being ambiguous.
+- **`!== false`, not a truthiness test.** A response cached before 2026-08-24
+  has the field `undefined`, which meant "checked" under the old contract; a
+  truthiness test would have flipped every stale cached response into a false
+  outage claim - the same defect pointing the other way.
+
+### The gate that was in no gate
+
+**`tests/failure-path.mjs` - the file dedicated to "the fallback shipped
+untested" - was itself untested.** Not in `preflight.sh`, not in
+`package.json`, not in the Makefile. It is now blocking in preflight, pointed
+at SOURCE for the reason `responsive` and `a11y` already are: against live it
+reds on a tree that has already fixed the defect and stays red until a deploy.
+
+- **It had been dying on Node 24 partway through**, at check 10 of 19: a stalled
+  `page.route` handler aborted a route that `unroute` had already handled, and
+  the unhandled rejection is fatal. It exited 1, so it read as a FAILING gate
+  rather than a crashed one. Sibling of the undici crash that had
+  `responsive, source` reporting FAIL on zero pages the day before.
+- **A stale selector had been masquerading as a finding for sixteen days.**
+  `offline switch to NYC still paints` clicked `.city-btn[data-city="nyc"]`,
+  which has not existed in the DOM since the switcher went two-tier on
+  2026-08-11 - the chip row renders only the ACTIVE country's cities. The bare
+  `catch` swallowed the throw and reported London's 33 boroughs, which reads as
+  "the switch ran and painted the wrong city". **A missing control was rendered
+  as a measurement of broken behaviour**, and the offline guarantee it guards
+  was fine all along: verified by hand, offline NYC paints all 5 via the real
+  user path. The failure now NAMES the step it died on, because swallowing the
+  throw is what let the selector masquerade.
+- **A realistic fixture cannot tell you it was never used.** The new stub used
+  a glob that matched nothing, so all three cases were quietly answered by the
+  REAL TfL API - and it looked right, because SW11 1AA genuinely is ~420m from
+  Clapham Junction on Southern. The route is a URL predicate now and the test
+  asserts its own stub answered.
+- **An assertion and the copy it checks were one edit apart.** The notice says
+  "not a report of good service", so a `/Good Service/i` substring check reds on
+  a correct tree. It counts rendered `.line-status` rows instead.
+
+## 2026-08-26 — air quality and flood become a score, not a colour
+
+**Methodology v3.9, deployed and verified live.** Both datasets have been
+derived for every city since 2026-08-11, checked by `--check`, drawn on the map
+and shown in the panel — and **neither had ever entered a score.** They sat in
+`plannedComponents`, so `/v1/score` was advertising as forthcoming two things it
+already held.
+
+- **`environment` is the fifth component**, air quality 0.65 / flood 0.35, at
+  **0.14 of most personas and 0.18 for `family` and `laterlife`** — the only
+  persona weights here anchored on an external *health* source rather than
+  buyer-priority research. WHO and COMEAP both name children and older adults as
+  air-pollution sensitivity groups, and those two personas map onto that list
+  without interpretation. The other six have no group-specific basis and stayed
+  at baseline: a weight that differs without a published group behind it is an
+  opinion wearing a number.
+- **It scores the CONTINUOUS fields, never the three-band map summaries.**
+  Measured across all 91 boroughs, 68.1% of the air band and 63.7% of the flood
+  band are the modal value — scoring those would have put two-thirds of the
+  country on one number. `airQualityWhoRatio` carries 60 distinct values, and it
+  was sitting in `borough-extra.json` written by the builder and read by nothing.
+  **Data both holders had, that neither read** — the mirror of this repo's usual
+  defect, which is data the site has and never loads.
+- **Both ramps anchor on published thresholds, not the cohort.** WHO 2021
+  guideline → the **UK legal limit for NO₂** (40 µg/m³ = 4× the guideline); flood
+  0% → the **10% EA Medium-or-High** cut §7.1 already uses. Anchoring on the
+  observed max would be the min-max trap §7.1 rejects everywhere else and would
+  rescale every borough the next time a city is added.
+- **Coverage 94 of 99**: 77 `measured`, 17 `partial`, 5 `unavailable` — New York
+  alone, DEFRA and the EA being UK sources. Cardiff and Nottingham were derived
+  **straight into the Lambda with no `borough-extra` entry**, which is correct
+  rather than a shortcut: they are backend-only, so there is no site half to
+  diverge from, and giving them an entry would trip
+  `test_backend_only_cities_are_declared_not_discovered` and force them onto the
+  site as a side effect of a data fix.
+- **The single-input risk is stated, not discovered later.** 17 boroughs score on
+  air quality alone, and **the absent input is not missing at random** — they are
+  inland Leicester, Cardiff and coastal Teesside, and flood is plausibly what
+  Teesside would score worst on. `context.environmentSingleInput` is published so
+  ranking surfaces can exclude them; disclosure alone is insufficient for an
+  *ordered* list.
+- **A test was inverted, not deleted.**
+  `test_air_quality_does_not_enter_the_weighted_score` asserted the opposite of
+  this release, and its comment gave the reason — "scoring it would change every
+  score ever returned". That was a statement of cost, not a permanent
+  constraint. Left alone it would read as evidence the constraint still held.
+- **The 14-day notice did not block it.** The signups table holds two rows and
+  both are the author's own, so there was no third-party integrator to notify —
+  the changelog-as-record basis the previous ten methodology changes used. An
+  earlier draft of the docs called it a blocker; measurement disproved that. **It
+  becomes binding the moment a first customer holds a key.**
+
+### Two silent defects the work uncovered
+
+- **`write_lambda` could not carry a float**, and **did not know the borough-name
+  alias the parity test declares.** `borough-extra.json` keys `Barking`; the
+  Lambda keys `Barking and Dagenham`. The propagation searched for
+  `'Barking': {`, found nothing, printed one warning among a hundred and carried
+  on — which would have left Barking and Dagenham as the one London borough with
+  no environment score while its 32 neighbours had one. **Caught only because 159
+  was a checkable number** (86 ratios + 73 percentages) and the run reported 157.
+  A propagation step that reports what it *did* without reporting what it
+  *expected* is one line from the silent-skip class.
+- **`responsive, source` was reporting FAIL having evaluated ZERO pages.** A
+  `fetch()` in the URL probe read only `res.ok` and never drained the body, so
+  undici left the parser paused and Node 24 turned that into a fatal
+  `assert(!this.paused)`. The red carried no information and was
+  indistinguishable from a real finding — the inverse of a check that cannot go
+  red. One line (`await res.body?.cancel()`) took it from 0 to 55 page/viewport
+  combinations. Every sibling gate was audited: clean.
+
+### Also shipped
+
+- **The tabbed mobile layout is live behind `?tabbed=1`, default OFF.** Map
+  34.6% → 78.7% at 375×667, visible controls 18 → 14. The native-only gate was a
+  hedge against a design that "never shipped to either store" — iOS 1.0.21
+  carrying it went live 1 June, so the condition expired three months ago. Both
+  gates asserting the classic web layout still pass untouched; making tabs the
+  default means inverting them deliberately.
+- **`applyTabbedLayout()` must run on resize.** It originally ran once at parse
+  time, so opening at desktop width and narrowing — DevTools device mode, a phone
+  rotating — left the class unset and the flag looked like it did nothing. A
+  width-gated class evaluated once is load-time-gated.
+- **`MSYS_NO_PATHCONV=1` is required on CloudFront invalidation paths.** Git Bash
+  mangled `'/index.html'` into a Windows path and the batch was rejected **after
+  all four upload stages had already succeeded** — objects live, cache not
+  cleared, which is the worst half to lose quietly.
+
 ## 2026-08-23 (later) — the map is the landing surface on phones again
 
 **The bottom sheet auto-opened over the map below 640px, and that was the tail

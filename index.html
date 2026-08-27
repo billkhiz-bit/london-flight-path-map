@@ -9429,9 +9429,43 @@
             })
             .join('');
         }
-        if (data.lineStatus && data.lineStatus.length > 0) {
+        // THREE states, not two. `lineStatus: []` is ambiguous on its own:
+        // it means "TfL answered and no line near you is disrupted" when the
+        // Status route worked, and "we could not ask" when it 403'd. Until
+        // 2026-08-27 both rendered as NO SECTION AT ALL, so an upstream
+        // outage looked exactly like a clean network - absence rendered as a
+        // favourable measurement, this project's most-repeated defect.
+        //
+        // The Lambda has published `lineStatusAvailable` since 2026-08-24 to
+        // say which it is, under a comment reading "consumers can upgrade to
+        // read the flag; none is required to". None had. A field only the
+        // producer reads is not a fix.
+        //
+        // `!== false` and not a truthiness test: a cached response predating
+        // the field has it undefined, and that means "checked" (the old
+        // contract), not "unavailable".
+        const lineStatusChecked = data.lineStatusAvailable !== false;
+        const lineStatusRows = Boolean(data.lineStatus && data.lineStatus.length > 0);
+        if (lineStatusRows || !lineStatusChecked) {
           html +=
             '<h3 style="margin-top:12px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;">LIVE LINE STATUS</h3>';
+        }
+        if (!lineStatusChecked) {
+          // Names the upstream, the way /nhs and the NaPTAN fallback do when
+          // they degrade, and DENIES THE FALSE READING explicitly rather than
+          // merely withholding the claim. Silence here was already being read
+          // as "no disruptions", so a notice that only omits the good-service
+          // claim leaves the same inference available to anyone who has seen
+          // this section populated before.
+          //
+          // Scoped on purpose: the stations above came from a DIFFERENT TfL
+          // route which answered, so this is not a whole-panel outage and
+          // must not read as one. That is what `available: false` above is
+          // for.
+          html +=
+            '<p class="info-note">Line status could not be checked just now: the TfL status feed did not respond. This is not a report of good service. The stations above are unaffected.</p>';
+        }
+        if (lineStatusRows) {
           html += data.lineStatus
             .map((l) => {
               const good = l.status === 'Good Service';

@@ -78,6 +78,21 @@ Teaching the mock to raise 403 left the suite green. The assertion is now
 `Line/Status` header. *Assert on data, not shape* — the `/sold-prices` lesson,
 recurring.
 
+**The CONSUMER half stayed open for three more days, and that is the part worth
+recording.** The Lambda fix added `lineStatusAvailable` so a caller could tell
+an outage from a quiet network, under a comment reading *"consumers can upgrade
+to read the flag; none is required to"*. **Nothing did.** `index.html` still
+gated the whole section on `lineStatus.length > 0`, so a 403 rendered as no
+section at all — stations listed, silence where the disruption list goes, which
+is what a clean network looks like. The endpoint told the truth into a void.
+
+**Closed 2026-08-27**: the panel reads the flag and renders a scoped notice that
+names TfL and explicitly denies the good-service reading. Guarded by three new
+checks in `tests/failure-path.mjs`, red-proven against the undeployed tree.
+**A field only its producer reads is not a fix** — when a fix adds a field
+describing degradation, the audit item closes on the CONSUMER, not the producer.
+(No extension half: it dropped `/transport` on 2026-08-06.)
+
 ---
 
 ## 2. Critical — CLOSED 2026-08-21 (C6, C7, C8) and open (C9-C11)

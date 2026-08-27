@@ -313,6 +313,25 @@ else
     sleep 1
   done
   check "local smoke + registry"        node tests/smoke-local.mjs
+  # DEGRADED PATHS: a stalled network, an offline launch, and a partial TfL
+  # outage. Wired in 2026-08-27, having been in NO gate at all since it was
+  # written - not preflight, not package.json, not the Makefile. The one file
+  # dedicated to "the fallback shipped untested" was itself untested, and it
+  # had been dying on Node 24 partway through (a route aborted after unroute
+  # -> unhandled rejection -> fatal), exiting 1 having run 10 of 19 checks.
+  # That reads as a FAILING gate rather than a crashed one, which is the same
+  # shape as the undici crash that had `responsive, source` reporting FAIL on
+  # zero pages.
+  #
+  # Pointed at SOURCE, not live, for the reason spelled out above this block:
+  # against CloudFront it reds on a tree that has already fixed the defect and
+  # stays red until a deploy, so "do not commit past a red gate" would forbid
+  # committing the very fix it is asking for. Blocking on source gates the
+  # deploy. The trade is that Chromium ignores offline emulation on loopback,
+  # so the two offline-paint checks pass spuriously here; "nyc geojson is
+  # precached" is the one that genuinely reds locally, and it is the assertion
+  # that actually guards cache.addAll() being atomic.
+  check "degraded + offline fallbacks"  env "SMOKE_BASE=http://127.0.0.1:$smoke_port" node tests/failure-path.mjs
   # Both ported from the core-cities spike branch with the country tier, and
   # both serve the repo themselves rather than reusing the server above.
   # locator-verify is proven able to fail: remove data/uk-locator.json and
