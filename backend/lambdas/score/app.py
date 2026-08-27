@@ -3869,6 +3869,40 @@ _RASTER_MIN_PLAUSIBLE_DB = 40.0
 _RASTER_MAX_PLAUSIBLE_DB = 120.0
 
 
+def _plausible_value(value, floor, ceiling, log_tag, key, postcode_clean='', known_fill=None):
+    """THE range check for every raster-derived number, scalar form.
+
+    Extracted 2026-08-27, and it is the FIFTH copy of this eight-line check to
+    be folded in. `_plausible_from_row` below already called itself "ONE holder,
+    four callers" and was telling the truth about the four ROW-based fields -
+    but the tail of `_lookup_lden_raster`, which reads the same table for the
+    same quantity, kept its own inline copy the whole time, and its own
+    docstring said so ("Mirrors the tail of _lookup_lden_raster, which still
+    exists"). A holder that names its callers can still be missing one; count
+    the copies, not the callers.
+
+    This is the copy that would have drifted next: it is the only one reached by
+    `calc_postcode_quiet`'s sentinel-driven path, so a future ceiling change
+    made in the row helper alone would leave the postcode tier reading a
+    sentinel as decibels - which is exactly the 2026-08-21 road-Lden defect,
+    one tier further down.
+
+    Returns the value unchanged when it is inside [floor, ceiling], else None.
+    `known_fill` names a sentinel expected at volume so it does not spam the
+    alarm channel; anything else out of range warns, because an unexpected
+    sentinel is a data problem a human should see.
+    """
+    if value is None:
+        return None
+    if value < floor or value > ceiling:
+        if value != known_fill:
+            logger.warning(
+                '[%s] postcode=%s err=implausible-%s value=%s',
+                log_tag, postcode_clean, key, value)
+        return None
+    return value
+
+
 def _lookup_lden_raster(postcode_clean):
     """v3.1, Look up DEFRA Lden raster sample for a postcode in DynamoDB.
 
@@ -3960,11 +3994,11 @@ def _lookup_lden_raster(postcode_clean):
     # [SCORE_RASTER_DEGRADED] prefix is what the tier's alarms already key on.
     # REVISIT when the raster vintage rolls: if DEFRA Round 5 maps below 40 dB,
     # this floor would discard genuine quiet samples.
-    if value < _RASTER_MIN_PLAUSIBLE_DB or value > _RASTER_MAX_PLAUSIBLE_DB:
-        if value != _RASTER_NODATA_FILL:
-            logger.warning(
-                '[SCORE_RASTER_DEGRADED] postcode=%s err=implausible-lden value=%s',
-                postcode_clean, value)
+    value = _plausible_value(
+        value, _RASTER_MIN_PLAUSIBLE_DB, _RASTER_MAX_PLAUSIBLE_DB,
+        'SCORE_RASTER_DEGRADED', 'lden', postcode_clean,
+        known_fill=_RASTER_NODATA_FILL)
+    if value is None:
         return None
     _raster_cache_put(postcode_clean, value)
     return value
@@ -4067,31 +4101,25 @@ _AQ_MAX_PLAUSIBLE_UGM3 = 200.0
 
 
 def _plausible_from_row(row, key, floor, ceiling, log_tag, postcode_clean='', known_fill=None):
-    """THE plausibility range for every field on the noise-raster row.
+    """Row-shaped wrapper over _plausible_value: extract `key`, then range-check.
 
-    ONE holder, four callers - aircraft Lden, road Lden, NO2, PM2.5 - because
-    this check has now drifted as mirrored copies three times: lden_from_row
-    gained its ceiling on 2026-08-12, road_lden_from_row not until 2026-08-21,
-    and the air-quality pair on the same row kept a floor-only `>= 0` until
-    2026-08-24, so +3.4e38 was publishable as an annual-mean concentration.
-    Mirrored code is correct when written and breaks when the FIRST copy
-    changes; a fifth field on this row must call this, never copy it.
+    Four callers - aircraft Lden, road Lden, NO2, PM2.5 - because this check
+    drifted as mirrored copies three times: lden_from_row gained its ceiling on
+    2026-08-12, road_lden_from_row not until 2026-08-21, and the air-quality
+    pair on the same row kept a floor-only `>= 0` until 2026-08-24, so +3.4e38
+    was publishable as an annual-mean concentration. A fifth field on this row
+    must call this, never copy it.
 
-    `known_fill` names a sentinel expected at volume (the aircraft tier's
-    legacy 35.0 fill, held by 89.5% of London rows) so it does not spam the
-    alarm channel; any other out-of-range value warns, because an unexpected
-    one is a data problem a human should see.
+    **This docstring used to open "ONE holder, four callers" and that was not
+    true of the CHECK, only of the row-reading half.** The tail of
+    `_lookup_lden_raster` held a fifth inline copy from before this function
+    existed until 2026-08-27; the range logic now lives in `_plausible_value`
+    and both reach it. `known_fill` and the alarm behaviour are documented
+    there.
     """
-    value = (row or {}).get(key)
-    if value is None:
-        return None
-    if value < floor or value > ceiling:
-        if value != known_fill:
-            logger.warning(
-                '[%s] postcode=%s err=implausible-%s value=%s',
-                log_tag, postcode_clean, key, value)
-        return None
-    return value
+    return _plausible_value(
+        (row or {}).get(key), floor, ceiling, log_tag, key,
+        postcode_clean, known_fill=known_fill)
 
 
 def lden_from_row(row, postcode_clean=''):

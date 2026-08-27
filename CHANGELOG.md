@@ -129,6 +129,32 @@ already held.
   red. One line (`await res.body?.cancel()`) took it from 0 to 55 page/viewport
   combinations. Every sibling gate was audited: clean.
 
+### Later the same day - the two guards behind the guards
+
+- **The FIFTH inline copy of the noise-row range check is folded in.**
+  `_plausible_from_row` called itself "ONE holder, four callers" and was telling
+  the truth about the four ROW-based fields, while the tail of
+  `_lookup_lden_raster` - same table, same quantity - kept its own copy, and
+  that function's sibling docstring said so outright. **A holder that names its
+  callers can still be missing one; count the copies, not the callers.** It was
+  the copy that would have drifted next, being the only one on
+  `calc_postcode_quiet`'s sentinel path. Now `_plausible_value`, red-proven:
+  neutering it fails **14 tests across both tiers**.
+  (I reported this closed earlier in the day having misread the consolidation.
+  It was not.)
+- **Progress 8: the "terminal vintage" claim was wrong by one year, and 2023/24
+  has been sitting unrolled since February 2025.** Progress 8 needs a KS2
+  baseline and the cancelled sittings were 2020 and 2021, so the cohorts without
+  one are KS4 **2024/25 and 2025/26** - not 2023/24, whose cohort sat KS2 in
+  2018/19. Verified against DfE's own release pages rather than reasoned about.
+  **Costed rather than guessed: 72 of 79 boroughs would move, none by more than
+  ±0.20**, mean +0.008, 33 up against 39 down, none dropping out. The roll is
+  deliberately NOT taken (it changes published scores and needs the 99 area
+  pages regenerated); the unknowns are removed so it is now a decision.
+  DfE renamed the `gender` column to `sex`, which the loader now accepts - and
+  its `len(out) < 100` floor is what turned that rename into a loud failure
+  rather than a silent empty extraction.
+
 ### Also shipped
 
 - **The tabbed mobile layout is live behind `?tabbed=1`, default OFF.** Map

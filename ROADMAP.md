@@ -25,11 +25,28 @@ clicking a selector deleted by the two-tier switcher**, with a bare `catch`
 reporting London's 33 boroughs as though the switch had run - **a missing
 control rendered as a measurement of broken behaviour**, when offline NYC was
 fine all along; and the new stub was **answered by the live API** because its
-glob matched nothing and its fixture was realistic enough to hide that. **Not
-deployed** - source only, awaiting authorisation. **CORRECTION carried:** the
-fifth inline copy of the noise-row range guard is **still open** at
-`app.py:3963` inside `_lookup_lden_raster`; I read `_plausible_from_row`'s four
-call sites as covering it and wrongly reported it closed.)
+glob matched nothing and its fixture was realistic enough to hide that. **DEPLOYED
+and verified from the origin** - `deployed == source` 16 of 16, and the guard
+that was red against live is now 19/19 there. **Then two more, same day.** The
+**fifth inline copy of the noise-row range check** is folded into
+`_plausible_value` (I had reported this closed earlier in the day, having
+misread the consolidation; `_plausible_from_row` genuinely was one holder for
+the four ROW-based fields, while `_lookup_lden_raster` kept its own copy -
+**a holder that names its callers can still be missing one; count the copies,
+not the callers**). Red-proven: neutering it fails 14 tests across BOTH tiers.
+And **Progress 8's "terminal vintage" claim was wrong by exactly one year** -
+P8 needs a KS2 baseline, the cancelled sittings were 2020 and 2021, so the
+cohorts without one are KS4 2024/25 and 2025/26, **not 2023/24**, which has
+been published since 2025-02-27 and carries P8 as a headline measure (verified
+against DfE's release pages, not inferred). **The roll is costed and
+deliberately NOT taken**: 72 of 79 boroughs would move, none by more than
+±0.20, mean +0.008, 33 up against 39 down, none dropping out - currency rather
+than a re-basing. It changes published scores and needs the 99 area pages
+regenerated, so it is Bill's call; the unknowns are gone. DfE renamed the
+`gender` column to `sex` and the loader now accepts both. **The stale claim had
+also outlived its own correction in two places** - the schools memory's
+frontmatter description and the MEMORY.md index line both still asserted
+terminality three days after the body was fixed.)
 
 **Previously reviewed:** 2026-08-26 (**METHODOLOGY v3.9 SHIPPED: air quality and flood
 now SCORE.** Two datasets that had been derived, verified and drawn since

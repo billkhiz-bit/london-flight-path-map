@@ -24,10 +24,44 @@ Two things that verification pinned down and guesswork would not have:
     suppression markers are non-numeric so a naive float() raises rather than
     silently coercing.
 
-2022/23 is the TERMINAL vintage until 2026/27 publishes: Progress 8 cannot be
-calculated for 2023/24 onwards because the KS2 baseline was lost to the 2020 and
-2021 test cancellations, and DfE announced no replacement. So this is a one-off
-extraction, not a recurring roll.
+VINTAGE, CORRECTED 2026-08-27. This paragraph used to read "2022/23 is the
+TERMINAL vintage until 2026/27 publishes ... so this is a one-off extraction,
+not a recurring roll." **The mechanism was right and the boundary was one year
+early**, which cost a published vintage that had been available for six months.
+
+Progress 8 needs a KS2 baseline, and the cancelled sittings were 2020 and 2021 -
+so the cohorts without one are KS4 **2024/25 and 2025/26**, not 2023/24, whose
+cohort sat KS2 in 2018/19. Verified against DfE's own release pages, not
+inferred: the 2024/25 release states "It is not possible to calculate Progress 8
+for academic years 2024/25 and 2025/26" and "in April 2024 the previous
+government announced that there will be no replacement", while the 2023/24
+release (published 2025-02-27) carries Progress 8 as a headline measure.
+
+So the true shape is: 2022/23 (shipped), **2023/24 available and NOT taken up**,
+then a genuine two-year gap, resuming 2026/27. It IS a recurring roll, just an
+irregular one.
+
+**Measured 2026-08-27, so the roll is a decision rather than an unknown**: of
+the 79 boroughs we score on p8, **72 would change and 7 would not**, and the
+movement is small and unbiased - min -0.18, max +0.20, mean +0.008, median
+-0.01, nothing beyond +/-0.20, 33 improving against 39 worsening, and no borough
+absent from the new vintage. Largest movers Havering +0.20, Sunderland +0.19,
+Islington +0.18.
+
+**The roll needs one schema change: DfE renamed the `gender` column to `sex`.**
+Handled below. Nothing else moved - `geographic_level`, `version`, `la_name` and
+`avg_p8score` are unchanged, and both vintages carry three `time_period` rows
+per authority (the headline year plus 2019/20 and 2020/21) whose older two are
+suppressed as `z`, so they fall out through `_num()` without an explicit filter.
+That reliance is load-bearing and undocumented upstream; if a future release
+publishes a numeric P8 for a back year, add a `time_period` filter.
+
+To roll: point BUNDLE/MEMBER/EXTRACT at the 2023/24 release, then re-emit each
+city. The bundle is 69 MB at
+`https://content.explore-education-statistics.service.gov.uk/api/releases/`
+`b76a938a-7875-4542-af20-0b23ecb99a49/files` (browser User-Agent required, as
+for 2022/23). Remember the 99 area pages BAKE their scores - rerun
+`build_area_pages.py --write` after any roll, or `area-page-freshness` reds.
 
 Source: DfE "Key stage 4 performance", Explore Education Statistics, release
 2022-23, file `data/2223_la_data_revised.csv` inside the release bundle.
@@ -59,6 +93,13 @@ SCORE_APP = Path("backend/lambdas/score/app.py")
 VERSION = "Revised"
 GENDER = "Total"
 LEVEL = "Local authority"
+
+# DfE renamed this column between the 2022/23 and 2023/24 releases; the measure
+# is identical. Both are accepted so a vintage roll is a constant change rather
+# than a debugging session - the `len(out) < 100` floor below is what turned the
+# rename into a loud failure rather than a silent empty extraction, and it
+# should stay that way. Order matters only for the error message.
+SEX_COLUMNS = ("gender", "sex")
 
 # Registry borough name -> DfE LA name, only where they differ. Declared, not
 # fuzzy-matched: a fuzzy match pairs a genuinely missing authority with a
@@ -111,9 +152,10 @@ def load_p8() -> dict[str, float]:
         )
     out: dict[str, float] = {}
     for row in csv.DictReader(io.StringIO(raw)):
+        sex = next((row[c] for c in SEX_COLUMNS if c in row), None)
         if (
             row.get("geographic_level") == LEVEL
-            and row.get("gender") == GENDER
+            and sex == GENDER
             and row.get("version") == VERSION
         ):
             value = _num(row.get("avg_p8score"))
