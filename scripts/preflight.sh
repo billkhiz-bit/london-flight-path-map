@@ -19,7 +19,13 @@
 #
 # Usage:
 #   sh scripts/preflight.sh              # everything
-#   sh scripts/preflight.sh --skip-e2e   # skip Playwright (hits the live site)
+#   sh scripts/preflight.sh --skip-e2e   # skip the 3 stages needing network
+#
+# --skip-e2e skips ONLY the stages that need the network: the Playwright
+# suite, the extension e2e, and the area-page freshness check. It does NOT
+# skip the source-pointed browser gates - those serve the working tree and
+# are what stop a defect reaching the deploy. It used to skip all fourteen
+# and report PASS, which made it a way to get a green run by not looking.
 #   sh scripts/preflight.sh --fix        # auto-fix what is auto-fixable
 #
 # Exit status is 0 only if every BLOCKING check passed. Advisory checks are
@@ -58,6 +64,7 @@ fi
 FAILED=""
 PASSED=""
 ADVISORY=""
+SKIPPED_NET=""
 
 # Run a blocking check. Output is shown only on failure, so a green run stays
 # readable — but it is NEVER piped, so $? is the real status of the command.
@@ -74,6 +81,28 @@ check() {
     printf '%s\n' "$out" | tail -25 | sed 's/^/      /'
   fi
 }
+
+# Run a BLOCKING check that genuinely needs the network, honouring --skip-e2e.
+#
+# The flag used to be a block wrapper, and it swallowed FOURTEEN stages while
+# printing SKIPPED for two. Eleven of them never touched the network at all -
+# they serve the working tree over a local server precisely so they gate the
+# DEPLOY - so `--skip-e2e` was silently disabling the entire source-pointed
+# half of the suite and then printing RESULT: PASS. That is the shape this
+# repo keeps paying for: green because of what it was not looking at.
+#
+# A per-stage helper is used instead of a block so a skipped stage still prints
+# its own line, in its own position. A stage that vanishes from the report is
+# indistinguishable from a stage that passed.
+net_check() {
+  if [ "$SKIP_E2E" -eq 1 ]; then
+    printf '  %-34s%s\n' "$1" "SKIPPED (--skip-e2e, needs network)"
+    SKIPPED_NET="$SKIPPED_NET|$1"
+  else
+    check "$@"
+  fi
+}
+
 
 # Run an advisory check. Reported, never blocking.
 advise() {
@@ -232,187 +261,185 @@ check "self-hosted fonts (9 pages)"    node tests/fonts-selfhosted.mjs
 # the fixtures — only a browser can, via scripts/build_extraction_probe.sh.
 check "extension extraction"           node tests/extension-extraction.mjs
 
-if [ "$SKIP_E2E" -eq 1 ]; then
-  printf '  %-34s%s\n' "Playwright e2e" "SKIPPED (--skip-e2e)"
-  printf '  %-34s%s\n' "extension e2e" "SKIPPED (--skip-e2e)"
-else
-  # --workers=2 is load-bearing, not tuning. The suite's baseURL is the live
-  # CloudFront site; at the default worker count the parallel burst produces
-  # timeouts indistinguishable from real assertion failures (measured
-  # 2026-07-27: 14 failed / 2 passed at default, 16 passed at --workers=2).
-  check "Playwright e2e (--workers=2)"  npx playwright test --workers=2 --reporter=line
+# The three stages below that need the network are marked with net_check.
+# Everything else here runs against the working tree and must NOT be
+# skippable: these are the gates that stop a defect reaching the deploy.
+# --workers=2 is load-bearing, not tuning. The suite's baseURL is the live
+# CloudFront site; at the default worker count the parallel burst produces
+# timeouts indistinguishable from real assertion failures (measured
+# 2026-07-27: 14 failed / 2 passed at default, 16 passed at --workers=2).
+net_check "Playwright e2e (--workers=2)" npx playwright test --workers=2 --reporter=line
 
-  # Loads the extension into a real Chromium and drives it against a fixture
-  # served AT the rightmove.co.uk URL, so the content script's match pattern
-  # fires without a single request reaching Rightmove. Grouped under --skip-e2e
-  # because it launches a browser and calls the live /transport and /nhs.
-  #
-  # It cannot run under Playwright's normal headless mode: that uses
-  # chromium_headless_shell, which does not load extensions at all, so every
-  # assertion would fail for reasons unrelated to the code. The suite passes
-  # --headless=new itself.
-  check "extension e2e"                 node tests/extension-e2e.mjs
+# Loads the extension into a real Chromium and drives it against a fixture
+# served AT the rightmove.co.uk URL, so the content script's match pattern
+# fires without a single request reaching Rightmove. Grouped under --skip-e2e
+# because it launches a browser and calls the live /transport and /nhs.
+#
+# It cannot run under Playwright's normal headless mode: that uses
+# chromium_headless_shell, which does not load extensions at all, so every
+# assertion would fail for reasons unrelated to the code. The suite passes
+# --headless=new itself.
+net_check "extension e2e"             node tests/extension-e2e.mjs
 
-  # Loads the live site at ten viewports, 320px to 1920px, and fails on
-  # horizontal overflow OR on a control stranded past the viewport edge with no
-  # scrollable ancestor. The first is the failure that matters on a phone and
-  # the one least likely to be noticed otherwise: the page still works, it just
-  # drifts sideways, and nobody testing at 1440px will ever see it.
-  #
-  # The second was added 2026-08-11 because the first could not see it. The
-  # audit had always BUILT a list of clipped elements and only PRINTED it when
-  # the page itself scrolled sideways — so the city chips, clipped by the map
-  # container's overflow:hidden, left this stage reading "ok" at all ten
-  # viewports while three of eight UK cities could not be tapped at 320px.
-  # Proven red against the pre-fix live site (5 of 10 viewports) and green
-  # against the fixed source.
-  #
-  # Tap-target findings are printed but do not fail the run. They need judgement
-  # rather than a threshold — the site footer is 8px uppercase chrome, hidden
-  # entirely below 900px, and forcing it to 24px would triple its height to fix
-  # a desktop-only mouse target. A gate that demanded that would be overruled
-  # every time it fired, which is how a gate stops being read.
-  #
-  # SPLIT ACROSS SOURCE AND LIVE on 2026-08-11, the same split a11y already
-  # makes (tests/a11y-source.mjs blocking, the CloudFront spec catching a bad
-  # deploy). The BLOCKING run is against the working tree and lives in the
-  # local-server block below; the live run is ADVISORY, at the bottom.
-  #
-  # The reason is not convenience. Pointed at live, this stage goes red on a
-  # tree that has ALREADY FIXED the defect and stays red until a deploy, so
-  # "do not commit past a red gate" would forbid committing the fix for the
-  # very thing it is complaining about. Blocking on source gates the deploy;
-  # the advisory live run keeps reporting production's real state, which is
-  # exactly what `deployed == source` is already advisory for.
+# Loads the live site at ten viewports, 320px to 1920px, and fails on
+# horizontal overflow OR on a control stranded past the viewport edge with no
+# scrollable ancestor. The first is the failure that matters on a phone and
+# the one least likely to be noticed otherwise: the page still works, it just
+# drifts sideways, and nobody testing at 1440px will ever see it.
+#
+# The second was added 2026-08-11 because the first could not see it. The
+# audit had always BUILT a list of clipped elements and only PRINTED it when
+# the page itself scrolled sideways — so the city chips, clipped by the map
+# container's overflow:hidden, left this stage reading "ok" at all ten
+# viewports while three of eight UK cities could not be tapped at 320px.
+# Proven red against the pre-fix live site (5 of 10 viewports) and green
+# against the fixed source.
+#
+# Tap-target findings are printed but do not fail the run. They need judgement
+# rather than a threshold — the site footer is 8px uppercase chrome, hidden
+# entirely below 900px, and forcing it to 24px would triple its height to fix
+# a desktop-only mouse target. A gate that demanded that would be overruled
+# every time it fired, which is how a gate stops being read.
+#
+# SPLIT ACROSS SOURCE AND LIVE on 2026-08-11, the same split a11y already
+# makes (tests/a11y-source.mjs blocking, the CloudFront spec catching a bad
+# deploy). The BLOCKING run is against the working tree and lives in the
+# local-server block below; the live run is ADVISORY, at the bottom.
+#
+# The reason is not convenience. Pointed at live, this stage goes red on a
+# tree that has ALREADY FIXED the defect and stays red until a deploy, so
+# "do not commit past a red gate" would forbid committing the fix for the
+# very thing it is complaining about. Blocking on source gates the deploy;
+# the advisory live run keeps reporting production's real state, which is
+# exactly what `deployed == source` is already advisory for.
 
-  # LOCAL smoke, and the distinction from every other e2e stage here is the
-  # point: those hit the DEPLOYED site, so a broken index.html in the working
-  # tree passes all of them. tests/smoke-local.mjs has existed since the
-  # 2026-07-30 vendoring work and was in no gate at all — the one test that
-  # could catch a regression before it shipped was the one nothing ran.
-  #
-  # It loads the working tree over a throwaway static server, paints London, NYC
-  # and Greater Manchester in detail, and asserts the CITY_DATA registry rejects
-  # an unknown city instead of silently serving London's data under its name.
-  #
-  # The count that used to be in this label was load-bearing and went stale
-  # anyway: it read "both cities" through the session in which Greater
-  # Manchester became the third, then "3 cities" while the app carried NINE, so
-  # six cities sat outside the only pre-deploy registry gate. The registry
-  # assertions inside now ENUMERATE CITY_DATA rather than naming three cities,
-  # and "every city switches" below covers rendering, so there is no longer a
-  # number here to fall behind.
-  smoke_port=8123
-  python -m http.server "$smoke_port" --bind 127.0.0.1 >/dev/null 2>&1 &
-  smoke_pid=$!
-  # Wait for the socket rather than sleeping a guessed interval.
-  smoke_tries=0
-  until curl -sf "http://127.0.0.1:$smoke_port/index.html" -o /dev/null; do
-    smoke_tries=$((smoke_tries + 1))
-    [ "$smoke_tries" -gt 30 ] && break
-    sleep 1
-  done
-  check "local smoke + registry"        node tests/smoke-local.mjs
-  # DEGRADED PATHS: a stalled network, an offline launch, and a partial TfL
-  # outage. Wired in 2026-08-27, having been in NO gate at all since it was
-  # written - not preflight, not package.json, not the Makefile. The one file
-  # dedicated to "the fallback shipped untested" was itself untested, and it
-  # had been dying on Node 24 partway through (a route aborted after unroute
-  # -> unhandled rejection -> fatal), exiting 1 having run 10 of 19 checks.
-  # That reads as a FAILING gate rather than a crashed one, which is the same
-  # shape as the undici crash that had `responsive, source` reporting FAIL on
-  # zero pages.
-  #
-  # Pointed at SOURCE, not live, for the reason spelled out above this block:
-  # against CloudFront it reds on a tree that has already fixed the defect and
-  # stays red until a deploy, so "do not commit past a red gate" would forbid
-  # committing the very fix it is asking for. Blocking on source gates the
-  # deploy. The trade is that Chromium ignores offline emulation on loopback,
-  # so the two offline-paint checks pass spuriously here; "nyc geojson is
-  # precached" is the one that genuinely reds locally, and it is the assertion
-  # that actually guards cache.addAll() being atomic.
-  check "degraded + offline fallbacks"  env "SMOKE_BASE=http://127.0.0.1:$smoke_port" node tests/failure-path.mjs
-  # Both ported from the core-cities spike branch with the country tier, and
-  # both serve the repo themselves rather than reusing the server above.
-  # locator-verify is proven able to fail: remove data/uk-locator.json and
-  # London and Manchester report markers=0 land=0.
-  check "locator inset"                 node tests/locator-verify.mjs
-  check "selector tiers do not overlap" node tests/selector-widths.mjs
-  # Clicks EVERY chip in CITY_DATA and asserts the city renders the number of
-  # outlines its own boundary file declares, with no page error. Added
-  # 2026-08-11: nothing in the suite had ever clicked a city chip, and two
-  # defects were living in that gap on the LIVE site — a second registry that
-  # held three cities while CITY_DATA held nine, and corridors ported from the
-  # Lambda under its `coords` key when the renderer reads `.coordinates`.
-  # Six of nine cities threw on selection and every gate was green.
-  #
-  # Deliberately data-driven, unlike the stage above: no count to keep in step,
-  # so city ten is covered the day it is added. Both defects re-proven red.
-  check "every city switches"           node tests/city-switch.mjs
-  # DOES THE MAP FIT THE BOX IT IS DRAWN IN? Added 2026-08-24.
-  #
-  # "every city switches" counts outlines, and the count is right whether or
-  # not you can see them. responsive.mjs asks whether the DOCUMENT overflows
-  # and whether a CONTROL is stranded, covered or clipped - and an SVG path
-  # drawn outside its own SVG box is none of those. So every gate here was
-  # green while 41% of London rendered off-screen at 320x568, Heathrow 140px
-  # past the left edge, in all eleven cities. 53 of 90 city/viewport
-  # combinations were failing.
-  #
-  # Asserts both directions: nothing may spill outside the box, and the
-  # geography must fill a floor of it - "nothing is clipped" is otherwise
-  # satisfiable by drawing the map tiny. Includes a LANDSCAPE viewport,
-  # which is where the old code took its desktop branch and failed in the
-  # vertical axis while every portrait phone failed in the horizontal one.
-  check "map fits its box"              node tests/map-fit.mjs
-  # Types a real postcode in a NON-LONDON city, which nothing had ever done.
-  # "every city switches" clicks the chip and checks the MAP;
-  # borough-score-parity compares SCORES. Both passed while nine UK cities
-  # answered an area search with "NYC subway data coming soon".
-  check "UK cities get UK panel content" node tests/uk-city-panel.mjs
-  # 99 static area pages are the site's only indexable surface; thin or
-  # duplicated ones are worse than none (doorway pages), so this asserts
-  # CONTENT and that the sitemap agrees in both directions.
-  check "area pages carry real data"    node tests/area-pages.mjs
-  # The area pages BAKE their scores at build time - that is what makes them
-  # indexable without JS, and what lets them go stale when a data vintage
-  # lands. No other gate can see it: `area pages carry real data` checks
-  # richness, and `deployed == source` compares repo to CDN, which after a
-  # roll are BOTH stale and therefore agree. One batch request covers all 99,
-  # so this costs 1 CI quota unit per run rather than 99.
-  check "area pages match the live API" node tests/area-page-freshness.mjs
-  # A borough choropleth must paint exactly the boroughs that hold a reading.
-  # Added 2026-08-11: all three fill layers ended their lookup with `|| 'moderate'`
-  # or `|| 'low'`, so every borough of the seven non-London UK cities was painted
-  # one confident colour for data nobody had. Nothing caught it because nothing
-  # compared the RENDER to the DATA - pytest never opens index.html and the
-  # Playwright specs assert the site against itself, so a fabricated fill is
-  # self-consistent. Fails in BOTH directions: over-painting is an invented
-  # default, under-painting is a borough whose data the map cannot find.
-  check "layers paint only real data"   node tests/layer-honesty.mjs
-  # The blocking half of the responsive audit, against the working tree over the
-  # server started above. See the long note on the advisory live run further up.
-  # Covers EVERY public page since 2026-08-22, not just the homepage - widening
-  # it found privacy.html, changes.html and the status page all scrolling
-  # sideways on a phone. The label carries no count on purpose; the harness
-  # prints how many page/viewport pairs it actually ran.
-  check "responsive, source"            node tests/responsive.mjs "http://127.0.0.1:$smoke_port/index.html"
-  # WCAG over the SOURCE tree, on its own server on 8923 with the CloudFront
-  # extensionless rewrite reproduced, so /pricing resolves the way the origin
-  # resolves it.
-  #
-  # The Playwright a11y spec above scans CloudFront, so until 2026-08-10 an
-  # accessibility regression could not be caught until it was already serving to
-  # users - which is exactly how the locator inset shipped `role="img"` around
-  # ten focusable markers and failed this gate the next morning, from
-  # production. The two are complementary: this one gates the deploy, that one
-  # catches a bad or partial deploy.
-  #
-  # Proven able to fail: flipping #locator-svg back to role="img" reds it with
-  # "[SERIOUS] nested-interactive" on `/` alone and exits 1.
-  check "WCAG source scan (9 pages)"    node tests/a11y-source.mjs
-  kill "$smoke_pid" 2>/dev/null || true
-fi
+# LOCAL smoke, and the distinction from every other e2e stage here is the
+# point: those hit the DEPLOYED site, so a broken index.html in the working
+# tree passes all of them. tests/smoke-local.mjs has existed since the
+# 2026-07-30 vendoring work and was in no gate at all — the one test that
+# could catch a regression before it shipped was the one nothing ran.
+#
+# It loads the working tree over a throwaway static server, paints London, NYC
+# and Greater Manchester in detail, and asserts the CITY_DATA registry rejects
+# an unknown city instead of silently serving London's data under its name.
+#
+# The count that used to be in this label was load-bearing and went stale
+# anyway: it read "both cities" through the session in which Greater
+# Manchester became the third, then "3 cities" while the app carried NINE, so
+# six cities sat outside the only pre-deploy registry gate. The registry
+# assertions inside now ENUMERATE CITY_DATA rather than naming three cities,
+# and "every city switches" below covers rendering, so there is no longer a
+# number here to fall behind.
+smoke_port=8123
+python -m http.server "$smoke_port" --bind 127.0.0.1 >/dev/null 2>&1 &
+smoke_pid=$!
+# Wait for the socket rather than sleeping a guessed interval.
+smoke_tries=0
+until curl -sf "http://127.0.0.1:$smoke_port/index.html" -o /dev/null; do
+  smoke_tries=$((smoke_tries + 1))
+  [ "$smoke_tries" -gt 30 ] && break
+  sleep 1
+done
+check "local smoke + registry"        node tests/smoke-local.mjs
+# DEGRADED PATHS: a stalled network, an offline launch, and a partial TfL
+# outage. Wired in 2026-08-27, having been in NO gate at all since it was
+# written - not preflight, not package.json, not the Makefile. The one file
+# dedicated to "the fallback shipped untested" was itself untested, and it
+# had been dying on Node 24 partway through (a route aborted after unroute
+# -> unhandled rejection -> fatal), exiting 1 having run 10 of 19 checks.
+# That reads as a FAILING gate rather than a crashed one, which is the same
+# shape as the undici crash that had `responsive, source` reporting FAIL on
+# zero pages.
+#
+# Pointed at SOURCE, not live, for the reason spelled out above this block:
+# against CloudFront it reds on a tree that has already fixed the defect and
+# stays red until a deploy, so "do not commit past a red gate" would forbid
+# committing the very fix it is asking for. Blocking on source gates the
+# deploy. The trade is that Chromium ignores offline emulation on loopback,
+# so the two offline-paint checks pass spuriously here; "nyc geojson is
+# precached" is the one that genuinely reds locally, and it is the assertion
+# that actually guards cache.addAll() being atomic.
+check "degraded + offline fallbacks"  env "SMOKE_BASE=http://127.0.0.1:$smoke_port" node tests/failure-path.mjs
+# Both ported from the core-cities spike branch with the country tier, and
+# both serve the repo themselves rather than reusing the server above.
+# locator-verify is proven able to fail: remove data/uk-locator.json and
+# London and Manchester report markers=0 land=0.
+check "locator inset"                 node tests/locator-verify.mjs
+check "selector tiers do not overlap" node tests/selector-widths.mjs
+# Clicks EVERY chip in CITY_DATA and asserts the city renders the number of
+# outlines its own boundary file declares, with no page error. Added
+# 2026-08-11: nothing in the suite had ever clicked a city chip, and two
+# defects were living in that gap on the LIVE site — a second registry that
+# held three cities while CITY_DATA held nine, and corridors ported from the
+# Lambda under its `coords` key when the renderer reads `.coordinates`.
+# Six of nine cities threw on selection and every gate was green.
+#
+# Deliberately data-driven, unlike the stage above: no count to keep in step,
+# so city ten is covered the day it is added. Both defects re-proven red.
+check "every city switches"           node tests/city-switch.mjs
+# DOES THE MAP FIT THE BOX IT IS DRAWN IN? Added 2026-08-24.
+#
+# "every city switches" counts outlines, and the count is right whether or
+# not you can see them. responsive.mjs asks whether the DOCUMENT overflows
+# and whether a CONTROL is stranded, covered or clipped - and an SVG path
+# drawn outside its own SVG box is none of those. So every gate here was
+# green while 41% of London rendered off-screen at 320x568, Heathrow 140px
+# past the left edge, in all eleven cities. 53 of 90 city/viewport
+# combinations were failing.
+#
+# Asserts both directions: nothing may spill outside the box, and the
+# geography must fill a floor of it - "nothing is clipped" is otherwise
+# satisfiable by drawing the map tiny. Includes a LANDSCAPE viewport,
+# which is where the old code took its desktop branch and failed in the
+# vertical axis while every portrait phone failed in the horizontal one.
+check "map fits its box"              node tests/map-fit.mjs
+# Types a real postcode in a NON-LONDON city, which nothing had ever done.
+# "every city switches" clicks the chip and checks the MAP;
+# borough-score-parity compares SCORES. Both passed while nine UK cities
+# answered an area search with "NYC subway data coming soon".
+check "UK cities get UK panel content" node tests/uk-city-panel.mjs
+# 99 static area pages are the site's only indexable surface; thin or
+# duplicated ones are worse than none (doorway pages), so this asserts
+# CONTENT and that the sitemap agrees in both directions.
+check "area pages carry real data"    node tests/area-pages.mjs
+# The area pages BAKE their scores at build time - that is what makes them
+# indexable without JS, and what lets them go stale when a data vintage
+# lands. No other gate can see it: `area pages carry real data` checks
+# richness, and `deployed == source` compares repo to CDN, which after a
+# roll are BOTH stale and therefore agree. One batch request covers all 99,
+# so this costs 1 CI quota unit per run rather than 99.
+net_check "area pages match the live API" node tests/area-page-freshness.mjs
+# A borough choropleth must paint exactly the boroughs that hold a reading.
+# Added 2026-08-11: all three fill layers ended their lookup with `|| 'moderate'`
+# or `|| 'low'`, so every borough of the seven non-London UK cities was painted
+# one confident colour for data nobody had. Nothing caught it because nothing
+# compared the RENDER to the DATA - pytest never opens index.html and the
+# Playwright specs assert the site against itself, so a fabricated fill is
+# self-consistent. Fails in BOTH directions: over-painting is an invented
+# default, under-painting is a borough whose data the map cannot find.
+check "layers paint only real data"   node tests/layer-honesty.mjs
+# The blocking half of the responsive audit, against the working tree over the
+# server started above. See the long note on the advisory live run further up.
+# Covers EVERY public page since 2026-08-22, not just the homepage - widening
+# it found privacy.html, changes.html and the status page all scrolling
+# sideways on a phone. The label carries no count on purpose; the harness
+# prints how many page/viewport pairs it actually ran.
+check "responsive, source"            node tests/responsive.mjs "http://127.0.0.1:$smoke_port/index.html"
+# WCAG over the SOURCE tree, on its own server on 8923 with the CloudFront
+# extensionless rewrite reproduced, so /pricing resolves the way the origin
+# resolves it.
+#
+# The Playwright a11y spec above scans CloudFront, so until 2026-08-10 an
+# accessibility regression could not be caught until it was already serving to
+# users - which is exactly how the locator inset shipped `role="img"` around
+# ten focusable markers and failed this gate the next morning, from
+# production. The two are complementary: this one gates the deploy, that one
+# catches a bad or partial deploy.
+#
+# Proven able to fail: flipping #locator-svg back to role="img" reds it with
+# "[SERIOUS] nested-interactive" on `/` alone and exits 1.
+check "WCAG source scan (9 pages)"    node tests/a11y-source.mjs
+kill "$smoke_pid" 2>/dev/null || true
 
 echo
 echo "Advisory:"
@@ -515,7 +542,18 @@ if [ -n "$FAILED" ]; then
   exit 1
 fi
 
-echo "RESULT: PASS"
+# A PASS that skipped stages must SAY so. Under --skip-e2e this printed a
+# bare "RESULT: PASS" while three network gates had not run, and one of
+# them (area pages match the live API) is the only gate in the suite that
+# can see a site/API divergence.
+if [ -n "$SKIPPED_NET" ]; then
+  echo "RESULT: PASS (INCOMPLETE - network stages skipped)"
+  echo "$SKIPPED_NET" | tr '|' '
+' | sed '/^$/d' | sed 's/^/  not run: /'
+  echo "  Re-run without --skip-e2e before committing."
+else
+  echo "RESULT: PASS"
+fi
 if [ -n "$ADVISORY" ]; then
   echo "$ADVISORY" | tr '|' '\n' | sed '/^$/d' | sed 's/^/  advisory: /'
 fi
