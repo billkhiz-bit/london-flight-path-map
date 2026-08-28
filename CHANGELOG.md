@@ -129,6 +129,132 @@ already held.
   red. One line (`await res.body?.cancel()`) took it from 0 to 55 page/viewport
   combinations. Every sibling gate was audited: clean.
 
+### The backlog wave - a vintage roll, a default flipped, six false prices
+
+- **Progress 8 rolled to DfE KS4 2023/24 Revised.** Both holders plus the
+  customer-facing provenance string; `--check` is green on 79 boroughs, 0
+  differ. **72 of 79 moved, 7 did not, nothing by more than ±0.20** (mean
+  +0.008, 33 up / 39 down, none dropped) - currency, not a re-basing. The 99
+  area pages were rebuilt, because they BAKE their scores.
+  - **The provenance string was the part that could have gone wrong quietly.**
+    `score/app.py` carried *"DfE has since published 2023/24 Revised (February
+    2025); Sky Score has not yet rolled to it"* - true on Tuesday, false the
+    moment the values moved. A partial vintage roll is exactly what the HPI
+    gate was written for, one dataset over.
+  - DfE renamed the `gender` column to `sex` between releases. The loader takes
+    both, and its `len(out) < 100` floor is what turned that rename into a loud
+    failure instead of a silent empty extraction.
+
+- **The tabbed mobile layout is now the web DEFAULT at <=900px**, with
+  `?tabbed=0` as the opt-out. Measured 375x667: map 34.6% -> 78.7%, visible
+  controls 18 -> 14. **The two gates asserting the classic layout were INVERTED,
+  not deleted** - and the opt-out is what let the classic path keep its
+  coverage. Inverting them bare would have deleted the only test the bottom
+  sheet has, on a path that is still live for anyone landing on `?tabbed=0`.
+  `native-sim-render.mjs` now asserts both directions and passes both.
+
+- **Professional's published score ceiling was already shipped on all four
+  surfaces** - the ROADMAP had it as "DECIDED, NOT YET IMPLEMENTED" for four
+  weeks. Seventh stale record found today. But checking it turned up something
+  else.
+
+### Six published prices that were wrong, and the gate that could not see them
+
+`FreeTierQuotaDriftTests` matched `"N requests"` and nothing else, so every
+abbreviation was invisible to it. Widened to `req/mo` / `req/month` and to
+normalise `100k`, it immediately found **six live figures understating real
+limits by up to 100x**:
+
+- `api/index.html` in **three** places - the `<meta name="description">` search
+  engines display, the page tagline, and the Developer card's price line, which
+  read `100 req/mo` while its own body two lines below said 10,000. **A card
+  contradicting itself by 100x on the B2B funnel page**, gate green throughout.
+- `score-demo/index.html` in **three** places, all describing the shared demo
+  key as *"same 100 req/month limit as the free tier"* - wrong twice over: the
+  free tier enforces 10,000, and the demo key has had its **own**
+  `SkyScoreDemoTier` at 2,000/month since 2026-07-29.
+- `score-demo/openapi.yaml` named the wrong plan entirely (`SkyScoreFreeTierKey`)
+  at the wrong figure.
+
+Every number was checked against the **live** usage plans, not the template.
+The gate now reads the DEMO plan out of `template.yaml` too, because a third
+published figure existed that it had no way to allow - and the tempting fix
+there is to hardcode 2000, which is how a drift gate stops tracking the thing
+it exists to track. Red-proven on an injected figure.
+
+### 2026-08-28 - what the tabbed flip cost, and a tie-break between two languages
+
+**Making the tabbed layout the web default pointed three website gates at chrome
+that had shipped in the App Store since 1 June. All three went red.** The block
+carried its own confession - *"NOT VERIFIED ON A DEVICE: this whole block is
+native-only ... no gate here loads the native shell"* - and it was accurate for
+three months. **A flag is not a gate.**
+
+- **The city row hung 229px off the LEFT edge of a 390px phone.** `left: auto`
+  with `right` on a fixed flex row sizes the box to its CONTENT, so ten UK
+  cities came to 758px - unreachable, and unscrollable too, because a box as
+  wide as its content has nothing to scroll. Mirror image of the 2026-08-11
+  strip defect. The block was sized when its comment said *"at most two chips"*;
+  the UK tab has held ten cities since 2026-08-11 and nothing re-checked it.
+- **Bounding it moved the chips UNDER the search card**, which is a different
+  defect wearing the same clothes. `.city-selector` sits in `#map-container`
+  (z-index 1) and the card sits in `.sidebar` (z-index 2), and **an inner
+  z-index of 4 cannot lift a child out of a parent stacking context that
+  loses**. `elementFromPoint` returned `INPUT` at the centre of the first three
+  chips - covered, not clipped, and only a hit test can tell those apart. The
+  row now has its own band above the card: country, cities, then content, which
+  is the order the classic layout and the desktop already use.
+- **Three SERIOUS contrast failures in the bottom nav, none ever evaluated by
+  axe.** The SELECTED tab label was worst at **2.60:1** - `--orange` is a fill
+  colour, not a text colour. Inactive labels were `--dark` at `opacity: 0.5`,
+  3.44:1, because **opacity dims text against its background and takes the
+  contrast with it**; an inactive state built out of opacity cannot be read at
+  10px. `#search-hint` was 3.05:1 the same way. Replacements were chosen by
+  measurement: `--orange-ink` 5.10:1, `--mid` 5.75:1.
+- Five comments were orphaned by the flip, one of them contradicting a line ten
+  below it in the same function. Corrected in place.
+
+Result: `every city switches` 9 of 22 failing -> 22 green, `responsive, source`
+14 of 55 -> 0, `WCAG source scan` -> clean at both viewports.
+
+### The same score, rounded two different ways
+
+**Python's `round()` breaks halves to EVEN; JavaScript's `Math.round()` breaks
+them UPWARD** - and this repo computes every score in both. That made an exact
+`.x5` tie the one input on which the two holders disagree by construction.
+
+It surfaced through a passing-then-failing invariant: `live_weights_for`
+renormalised a COMPLETE set of weights, which is arithmetically a no-op and is
+not one in floating point, because the declared 0.35/0.30/0.25/0.10 sum to
+`0.9999999999999999`. Every weight came out ~1e-16 heavy. Harmless everywhere
+except on a borough sitting exactly on a rounding boundary - and the 2023/24
+Progress 8 roll put **Bath and North East Somerset** exactly there.
+
+- Removing the noise is correct and was one commit away from **publishing two
+  different scores for the same borough**: banker's rounding sends BANES to 5.8
+  while the site says 5.9.
+- `round_1dp()` is now the single holder of the tie-break, matching
+  `Math.round()` exactly including negatives. **Measured across all 792 persona
+  x borough combinations: zero published scores moved.**
+- The invariant test was re-implementing the rounding beside the weighting, so
+  it had been asserting a convention it did not mean to assert. It calls the
+  helper now; `TieBreakRoundingTests` covers the tie-break on its own.
+
+### One provenance string the roll missed
+
+**Greater Manchester still read "Progress 8, 2022/23, same release and year as
+London"** while London read 2023/24 Revised - false, and self-contradicting
+inside one sentence. The notes above had just congratulated the roll for
+catching exactly this class in London. Fourth instance of mirrored strings
+drifting on the next edit.
+
+Converted to a gate rather than a note: `ProvenanceVintageTests` scans every
+string in `CITY_PROVENANCE` for `Progress 8, <vintage>` and fails on any that is
+not the declared one, with a companion test proving it compared something.
+Red-proven; it names the path. `scripts/preflight.sh` also had the vintage in a
+STAGE LABEL, leaning on "2022/23 is the TERMINAL vintage until ~2027" as the
+reason drift did not matter - the exact claim this roll disproved.
+
 ### Later still - the trade-mark search that had blocked three workstreams
 
 - **The recorded reason CUBITT33 was "borderline, not clean" dissolved on

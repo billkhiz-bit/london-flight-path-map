@@ -64,7 +64,7 @@ for 2022/23). Remember the 99 area pages BAKE their scores - rerun
 `build_area_pages.py --write` after any roll, or `area-page-freshness` reds.
 
 Source: DfE "Key stage 4 performance", Explore Education Statistics, release
-2022-23, file `data/2223_la_data_revised.csv` inside the release bundle.
+2023-24, file `data/202324_la_data_revised.csv` inside the release bundle.
 Open Government Licence v3.0.
 
 Usage
@@ -84,12 +84,13 @@ import types
 import zipfile
 from pathlib import Path
 
-BUNDLE = Path("data/ks4-2022-23.zip")
-MEMBER = "data/2223_la_data_revised.csv"
-EXTRACT = Path("data/ks4-la-2022-23.csv")
+BUNDLE = Path("data/ks4-2023-24.zip")
+MEMBER = "data/202324_la_data_revised.csv"
+EXTRACT = Path("data/ks4-la-2023-24.csv")
 SCORE_APP = Path("backend/lambdas/score/app.py")
 
 # The release carries both, and they disagree. See the module docstring.
+VINTAGE = "2023/24"  # rolled 2026-08-27; the label is DERIVED, never retyped
 VERSION = "Revised"
 GENDER = "Total"
 LEVEL = "Local authority"
@@ -147,7 +148,7 @@ def load_p8() -> dict[str, float]:
             f"Neither {EXTRACT} nor {BUNDLE} is present. Both are gitignored (data/*).\n"
             "Re-download the release bundle from Explore Education Statistics:\n"
             "  https://content.explore-education-statistics.service.gov.uk/api/releases/"
-            "90c95fb2-f2a1-4723-aba8-09c4b6e231a5/files\n"
+            "b76a938a-7875-4542-af20-0b23ecb99a49/files\n"
             "That host needs a browser User-Agent; without one it answers 403 and looks bot-blocked."
         )
     out: dict[str, float] = {}
@@ -189,7 +190,7 @@ def main() -> int:
         ap.error("pass --check or --emit")
 
     p8 = load_p8()
-    print(f"DfE KS4 2022/23 ({VERSION}, {GENDER}): {len(p8)} local authorities\n", file=sys.stderr)
+    print(f"DfE KS4 {VINTAGE} ({VERSION}, {GENDER}): {len(p8)} local authorities\n", file=sys.stderr)
 
     if args.emit:
         if not args.city:

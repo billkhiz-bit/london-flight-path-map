@@ -161,7 +161,7 @@ Response shape (single):
     "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 raster sample -> v3.0 Haversine to airports + flight-path geometry -> v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
     "afford": "HM Land Registry House Price Index (HPI), borough cohort min-max scaling",
     "growth": "HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative",
-    "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2022/23. Crime: ONS Crime in England and Wales, PFA data tables, Table C4. Transport: NaPTAN, share of postcodes within 800m of a rail/metro/tram node. Healthcare: curated tiers."
+    "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24. Crime: ONS Crime in England and Wales, PFA data tables, Table C4. Transport: NaPTAN, share of postcodes within 800m of a rail/metro/tram node. Healthcare: curated tiers."
   }
 }
 ```
@@ -187,7 +187,7 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 | **Quiet** | **Aircraft noise only.** Road noise is a map overlay and a reported measurement, and is **not** a score input | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
 | **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
 | **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
-| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2022/23); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
+| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2023/24); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
 
 The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and the persona weights in §5.1, against the current data snapshot.
 

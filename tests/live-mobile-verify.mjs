@@ -38,9 +38,15 @@ for (const { w, h, label } of widths) {
       defaultView: document.querySelector('.app')?.dataset.mview ?? '(unset)',
     };
   });
-  // Classic web layout: redesign OFF, sheet handle present, no overflow.
+  // INVERTED 2026-08-27: tabs are the web default at <=900px, so the live
+  // expectation is the REDESIGN, not the classic sheet. `is-native` must still
+  // be false - the web/native split has not moved, only the web default.
+  //
+  // This gate points at CloudFront, so it reds on a correct tree until the
+  // deploy lands. That is the honest state, not a fault: `?tabbed=0` below is
+  // what keeps the classic path covered either way.
   const ok =
-    r.isNativeClass === false && r.navVisible === false && r.sheetHandleVisible === true && r.overflowX <= 1;
+    r.isNativeClass === false && r.navVisible === true && r.sheetHandleVisible === false && r.overflowX <= 1;
   allOk = allOk && ok;
   console.log(`${label}:`, JSON.stringify(r), ok ? 'PASS' : 'FAIL');
   await page.screenshot({ path: `tests/live-${w}.png` });
@@ -48,7 +54,7 @@ for (const { w, h, label } of widths) {
 }
 await browser.close();
 if (!allOk) {
-  console.error('\nLive web is NOT on the classic layout — either the revert is not deployed yet, or the redesign leaked onto web.');
+  console.error('\nLive web is NOT on the tabbed layout - either the deploy has not landed yet, or the default was reverted.');
   process.exit(1);
 }
-console.log('\nAll widths: live web on CLASSIC layout — PASS');
+console.log('\nAll widths: live web on TABBED layout - PASS');

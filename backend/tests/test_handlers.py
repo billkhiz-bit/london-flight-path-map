@@ -895,6 +895,7 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        import re  # noqa: PLC0415
         # Read the plan block textually rather than with a YAML parser: the
         # template is full of CFN intrinsics (!Ref, !GetAtt) that safe_load
         # rejects, and adding a custom loader is more machinery than a
@@ -903,9 +904,22 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             text = handle.read()
         start = text.index('  ScoreFreeUsagePlan:')
         end = text.index('  ScoreFreeUsagePlanKey:', start)
-        cls.plan = text[start:end]
+        cls.plan = text[start:end]
 
-    def _plan_int(self, field):
+        # The DEMO plan is a THIRD published figure and the pages quote it.
+        # Without it here, a page stating the demo key's real 2,000/month
+        # reds this gate, and the tempting fix is to hardcode 2000 into
+        # `allowed` - which is how a drift gate stops tracking the template
+        # it exists to track. Read it from the same file as the other two.
+        dstart = text.index('  ScoreDemoUsagePlan:')
+        # Bounded by the NEXT top-level resource, not a named one: the demo
+        # plan has no ...Key sibling, and hardcoding whatever happens to follow
+        # it makes this gate break the next time a resource is inserted.
+        dnext = re.search(r'^  [A-Za-z][A-Za-z0-9]*:$', text[dstart + 1:], re.MULTILINE)
+        assert dnext, 'ScoreDemoUsagePlan is the last resource - bound it explicitly'
+        cls.demo_plan = text[dstart:dstart + 1 + dnext.start()]
+
+    def _plan_int(self, field, block=None):
         """Read a PLAN-LEVEL throttle/quota integer.
 
         Deliberately the LAST match, not the first. From 2026-08-21 the plan
@@ -916,7 +930,7 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         the one a caller actually experiences on the routes they can reach.
         """
         import re  # pylint: disable=import-outside-toplevel
-        matches = re.findall(rf'^\s*{field}:\s*(\d+)\s*$', self.plan, re.MULTILINE)
+        matches = re.findall(rf'^\s*{field}:\s*(\d+)\s*$', block if block is not None else self.plan, re.MULTILINE)
         match = matches[-1] if matches else None
         self.assertIsNotNone(
             match, f'{field} not found in ScoreFreeUsagePlan — the block was '
@@ -1005,19 +1019,30 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         """No page may quote a request quota that is not one we actually offer."""
         import re  # noqa: PLC0415
 
-        allowed = {
-            f'{self._plan_int("Limit"):,}',
-            f'{self.PROFESSIONAL_REQUESTS:,}',
-        }
+        allowed = {self._plan_int('Limit'), self.PROFESSIONAL_REQUESTS, self._plan_int('Limit', self.demo_plan)}
+
+        def as_int(digits, suffix):
+            """"100k" is a published figure and must be CHECKED, not skipped."""
+            return int(digits.replace(',', '')) * (1000 if suffix else 1)
+
         found_any = False
         for rel in self.QUOTA_PAGES:
-            for quoted in re.findall(r'([\d,]+) requests', self._page(rel)):
+            # ABBREVIATIONS COUNT. This matched "N requests" only, so
+            # api/index.html could carry "Free - 100 req/mo" in its price line
+            # while its own body two lines below said "10,000 requests a
+            # month" - a card contradicting itself by 100x, on the B2B funnel
+            # page, with this gate green throughout (found 2026-08-27; the
+            # enforced plan reads 10,000 from the live API). A drift gate that
+            # only reads the long form is checking the WORDING, not the number.
+            pattern = r'([\d,]+)\s*(k?)\s*(?:requests|req/mo|req/month)'
+            for digits, suffix in re.findall(pattern, self._page(rel)):
                 found_any = True
+                value = as_int(digits, suffix)
                 self.assertIn(
-                    quoted, allowed,
-                    f'{rel} advertises "{quoted} requests", which is neither the '
-                    f'enforced free quota ({self._plan_int("Limit"):,}) nor the '
-                    f'published Professional ceiling ({self.PROFESSIONAL_REQUESTS:,})',
+                    value, allowed,
+                    f'{rel} advertises "{digits}{suffix} requests" ({value:,}), which '
+                    f'is neither the enforced free quota ({self._plan_int("Limit"):,}) '
+                    f'nor the published Professional ceiling ({self.PROFESSIONAL_REQUESTS:,})',
                 )
         self.assertTrue(
             found_any,

@@ -393,9 +393,19 @@ April 2024 that there would be no replacement measure for those years. *Correcte
 terminal, which was a non sequitur and wrong - the cancelled baselines belong
 to the 2024/25 and 2025/26 cohorts, while the 2023/24 cohort sat KS2 in 2019
 and has a full measure, published by DfE in February 2025 (2023/24 Revised,
-LA-level).* Sky Score currently serves 2022/23 Revised, one academic year
-behind; the roll to 2023/24 is scheduled, after which 2023/24 is the last
-edition until 2026/27 publishes (~autumn 2027). This is disclosed per response in `sourceBreakdown`.
+LA-level).* **Sky Score serves 2023/24 Revised since 2026-08-27**, and 2023/24
+IS the last edition until 2026/27 publishes (~autumn 2027). This is disclosed per
+response in `sourceBreakdown`.
+
+*Roll note, 2026-08-27.* The move was costed before it was taken: **72 of the 79
+boroughs carrying a Progress 8 value changed, 7 did not, and nothing moved by
+more than ±0.20** (min -0.18, max +0.20, mean +0.008, median -0.01, 33 improving
+against 39 worsening, none dropping out of the release). That is currency rather
+than a re-basing, which is why it did not need the treatment a weighting change
+gets. One upstream schema change: DfE renamed the `gender` column to `sex`
+between the two releases, and `build_progress8.py` accepts both — its
+`len(out) < 100` floor is what turned that rename into a loud failure instead of
+a silent empty extraction.
 
 **A caveat on granularity.** Progress 8 is published at local-authority level,
 so every address within a borough receives the same schools sub-score. It
@@ -1118,7 +1128,7 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 | **OpenStreetMap, via the Overpass API** (`overpass-api.de`, FOSSGIS e.V.) | GP, pharmacy and hospital proximity for the `live` component | Data under **ODbL 1.0** (share-alike, *not* OGL) — attribution required. Service provided best-effort with no SLA | Continuous (community-maintained) |
 | **ONS** | Population estimates, boundary geometry | Open Government Licence v3.0 + OS Open Licence | Annual |
 | **ONS, *Crime in England and Wales*, Police Force Area data tables, Table C4** | Borough-level offence rate per 1,000 residents, on mid-2024 population | Open Government Licence v3.0 | Quarterly release; year ending March 2026 in use |
-| **Department for Education, Key Stage 4 Progress 8** | School quality, intake-adjusted, at local-authority level | Open Government Licence v3.0 | Annual — but **2022/23 is the terminal vintage** until 2026/27 publishes (§4.4) |
+| **Department for Education, Key Stage 4 Progress 8** | School quality, intake-adjusted, at local-authority level | Open Government Licence v3.0 | Annual — **2023/24 since 2026-08-27**, and it IS the terminal vintage until 2026/27 publishes (§4.4). The earlier claim that *2022/23* was terminal was one year early |
 | **HM Land Registry House Price Index (HPI)** | Affordability cohort scaling and the growth trend. Distinct from Price Paid Data above, which serves the sold-price panel | Open Government Licence v3.0 | Monthly |
 | **postcodes.io** | UK postcode → administrative-district resolution | Open Government Licence v3.0 (data) | Quarterly |
 

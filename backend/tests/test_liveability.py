@@ -179,7 +179,15 @@ def test_every_complete_borough_is_unchanged_by_redistribution():
         crm = app.crime_to_score(bd.get('crimeRate'))
         trn = app.TRANSPORT_SCORE.get(bd.get('transport'), 5)
         hlt = app.HEALTH_SCORE.get(bd.get('healthcare'), 5)
-        return round((sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10) * 10) / 10
+        # The literal weights are re-declared here on purpose - that is the
+        # whole point of an independent recomputation. The ROUNDING is not:
+        # this test asserts what redistribution does to the weighting, and
+        # re-implementing `round(x * 10) / 10` beside it silently asserted
+        # Python's round-half-to-even as well. Once BANES landed exactly on a
+        # .05 tie, that inherited convention - not the weighting - was what
+        # made the two sides differ. round_1dp is the single holder for the
+        # tie-break and is covered on its own by TieBreakRoundingTests.
+        return app.round_1dp(sch * 0.35 + crm * 0.30 + trn * 0.25 + hlt * 0.10)
 
     # Asserts the PROPERTY, not a fixed list. This held `== ['london/City of
     # London']` until Greater Manchester was added, at which point ten boroughs

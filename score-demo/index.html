@@ -394,7 +394,7 @@
 
   <section class="card">
     <h2>Try the API</h2>
-    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only, same 100 req/month limit as the free tier, but shared across all visitors. For production use, sign up for your own key above.</p>
+    <p class="tag" style="margin-bottom:12px;">Uses a shared demo key for this page only, on its own SkyScoreDemoTier plan at 2,000 req/month, shared across all visitors. For production use, sign up for your own key above.</p>
     <form id="form">
       <div>
         <label for="postcode">Postcode</label>
@@ -442,7 +442,7 @@
 <script src="../js/api-base.js"></script>
 <script>
   // Public demo key, intentionally embedded in the served HTML for the
-  // "Try the API" form below. Capped at 100 req/month (the SkyScoreFreeTier
+  // "Try the API" form below. Capped at 2,000 req/month (the SkyScoreDemoTier
   // usage plan), shared across all visitors. For production use, sign up
   // above for your own per-email key. Rotated 2026-05-06 (audit C2)
   // after the previous key was committed to git history.
@@ -492,7 +492,7 @@
   // example mid-request started a second concurrent call, and the first
   // call's finally block then re-enabled submit while that second was still
   // open, allowing a third. Symptoms were a form/result desync and needless
-  // burn of the shared demo key's 100 req/month quota.
+  // burn of the shared demo key's 2,000 req/month quota.
   function setBusy(busy) {
     submitBtn.disabled = busy;
     exampleBtns.forEach(btn => { btn.disabled = busy; });

@@ -146,7 +146,7 @@ def gather(city: str, borough: str) -> dict | None:
     merged = {**painted, **{k: v for k, v in scoring.items() if v is not None}}
     for key, label, note in (
         ('crimeRate', 'Recorded crime', 'ONS Table C4, per 1,000 residents per year'),
-        ('p8', 'Progress 8', 'DfE KS4 2022/23 revised, 0.0 is the national average'),
+        ('p8', 'Progress 8', 'DfE KS4 2023/24 revised, 0.0 is the national average'),
         ('roadNoise', 'Road noise', 'DEFRA road Lden, share of addresses over WHO 53 dB'),
         ('airQuality', 'Air quality', 'DEFRA background maps against WHO 2021'),
         ('flood', 'Flood risk', 'Environment Agency RoFRS, risk after defences'),

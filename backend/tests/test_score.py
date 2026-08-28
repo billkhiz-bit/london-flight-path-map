@@ -646,9 +646,13 @@ class CalcScoreTests(unittest.TestCase):
         # invariant worth watching in this fixture: `env` entering must move
         # the total and nothing else, because the reweighting is proportional
         # and the inputs to quiet/afford/growth/live did not change.
+        # 6.2 -> 6.3 on the 2023/24 Progress 8 roll. Wandsworth moves +0.33 ->
+        # +0.49, which lifts schools 6.65 -> 7.45 and `live` 8.3 -> 8.6; at 35%
+        # of the balanced persona that is the +0.1 headline. Currency, not a
+        # re-basing - 72 of 79 boroughs moved and none by more than 0.20.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.2)
+        self.assertEqual(result['score'], 6.3)
         self.assertEqual(result['components']['env'], 4.7)
         self.assertEqual(result['components']['quiet'], 5.0)
         # 6.7 under the May vintage; the June roll moved the cohort.
@@ -671,7 +675,8 @@ class CalcScoreTests(unittest.TestCase):
         # and `good`; measured, Wandsworth is 83.0% within 800 m of a rail node
         # and over three-quarters within 500 m of a GP, so both reach the top
         # band. Together they are 35% of the liveability composite.
-        self.assertEqual(result['components']['live'], 8.3)
+        # 8.3 -> 8.6 on the 2023/24 Progress 8 roll; see the headline note above.
+        self.assertEqual(result['components']['live'], 8.6)
         # 660000 under the May vintage; June puts Wandsworth at 680105.
         self.assertEqual(result['context']['avgPriceGbp'], 680105)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
@@ -2318,7 +2323,7 @@ class CoreCitiesAuditTests(unittest.TestCase):
 
 
 class ProgressEightTests(unittest.TestCase):
-    """Schools moved from Ofsted editorial bands to DfE Progress 8, 2022/23."""
+    """Schools moved from Ofsted editorial bands to DfE Progress 8, 2023/24."""
 
     def test_anchors_are_absolute_not_cohort_relative(self):
         # The whole point: 0.0 is the national average and +/-1.0 is a full
@@ -3313,3 +3318,175 @@ class BatchDeadlineTests(unittest.TestCase):
             body = self._batch([{'postcode': 'E1 1AA'}] * 3, self._Ctx(60000))
         self.assertEqual(body['successCount'], 3)
         self.assertNotIn('notAttemptedCount', body)
+
+
+class TieBreakRoundingTests(unittest.TestCase):
+    """round_1dp is the single holder of how a .x5 tie breaks.
+
+    It exists because there are TWO holders of every score: this Lambda and
+    index.html, which recomputes the same numbers client-side. Python's round()
+    takes halves to even and JavaScript's Math.round() takes halves towards
+    +infinity, so an exact tie is the one input on which the two disagree by
+    construction - and site/API divergence is a defect this repo has shipped
+    three times. Nothing tested the tie-break until the 2023/24 Progress 8 roll
+    put Bath and North East Somerset exactly on one.
+    """
+
+    def test_halves_go_away_from_zero_not_to_even(self):
+        # The four that Python's round() would send the OTHER way. Each is a
+        # real half; 5.85 is the value BANES's declared weights produce.
+        self.assertEqual(app.round_1dp(5.85), 5.9)
+        self.assertEqual(app.round_1dp(0.25), 0.3)
+        self.assertEqual(app.round_1dp(8.45), 8.5)
+        self.assertEqual(app.round_1dp(2.05), 2.1)
+
+    def test_matches_javascript_math_round_on_negatives(self):
+        # Math.round(-2.5) is -2, NOT -3: it takes halves towards +infinity
+        # rather than away from zero. index.html rounds every mirrored score
+        # this way, so matching it is the whole point of the helper.
+        self.assertEqual(app.round_1dp(-0.25), -0.2)
+        self.assertEqual(app.round_1dp(-1.55), -1.5)
+
+    def test_ordinary_values_are_unaffected(self):
+        for raw, want in ((6.34, 6.3), (6.36, 6.4), (0.0, 0.0), (10.0, 10.0)):
+            self.assertEqual(app.round_1dp(raw), want, raw)
+
+    def test_every_published_score_is_on_the_one_decimal_grid(self):
+        """A tie must never escape as a second decimal place."""
+        for city_id, cfg in app.CITIES.items():
+            for name in cfg['boroughs']:
+                for persona in app.PERSONAS.values():
+                    result = app.calc_score(name, city_id, persona)
+                    values = [result['score']] + list(result['components'].values())
+                    for v in values:
+                        self.assertEqual(
+                            round(v * 10), v * 10, f'{city_id}/{name} -> {v}'
+                        )
+
+    def test_a_complete_borough_is_not_moved_by_redistribution(self):
+        """The defect this helper and live_weights_for were paired to fix.
+
+        Renormalising a COMPLETE set of weights is arithmetically a no-op and
+        was not one in floating point: the declared weights sum to
+        0.9999999999999999, so dividing through by that total lifted BANES from
+        exactly 5.85 to 5.850000000000001 and published 5.9 off float noise.
+        Asserted on the weights themselves so it fails whichever way a future
+        edit breaks it.
+        """
+        complete = {f: 1.0 for f in app._LIVE_FIELDS}
+        self.assertEqual(app.live_weights_for(complete), dict(app._LIVE_WEIGHTS))
+        # And an incomplete set must STILL be redistributed in proportion.
+        partial = app.live_weights_for({'crimeRate': 1.0, 'transport': 1.0})
+        self.assertAlmostEqual(sum(partial.values()), 1.0)
+        self.assertAlmostEqual(partial['crimeRate'] / partial['transport'], 0.30 / 0.25)
+
+
+class ProvenanceVintageTests(unittest.TestCase):
+    """No city may publish a Progress 8 vintage other than the one we serve.
+
+    Written because the 2023/24 roll missed one. London's provenance was moved
+    to "2023/24 Revised" and Greater Manchester's, eleven cities down the same
+    dict, still read "Progress 8, 2022/23, same release and year as London" -
+    false, and self-contradicting in the same sentence. The wave's own notes
+    called the provenance string "the part that could have gone wrong quietly",
+    fixed it in one place, and shipped the sibling. Mirrored strings drift on
+    the NEXT edit; a gate is the only thing that notices.
+
+    The pattern is deliberately "Progress 8, <vintage>" and not any four-digit
+    year, so London's legitimate mentions of the cohorts the measure is
+    SUSPENDED for (2024/25, 2025/26) and of what it rolled FROM do not trip it.
+    """
+
+    VINTAGE_RE = re.compile(r'Progress 8,\s*(\d{4}/\d{2})')
+
+    def _declared(self):
+        m = self.VINTAGE_RE.search(app._LIVE_INPUT_SOURCES['p8'])
+        self.assertIsNotNone(m, '_LIVE_INPUT_SOURCES["p8"] must name its vintage')
+        return m.group(1)
+
+    def _strings(self):
+        """Every string anywhere in CITY_PROVENANCE, with a path to it."""
+        found = []
+
+        def walk(node, path):
+            if isinstance(node, str):
+                found.append((path, node))
+            elif isinstance(node, dict):
+                for k, v in node.items():
+                    walk(v, f'{path}.{k}')
+            elif isinstance(node, (list, tuple)):
+                for i, v in enumerate(node):
+                    walk(v, f'{path}[{i}]')
+
+        walk(app.CITY_PROVENANCE, 'CITY_PROVENANCE')
+        return found
+
+    def test_every_named_p8_vintage_matches_what_we_serve(self):
+        declared = self._declared()
+        wrong = [
+            f'{path}: {m}'
+            for path, s in self._strings()
+            for m in self.VINTAGE_RE.findall(s)
+            if m != declared
+        ]
+        self.assertEqual(
+            wrong, [], f'provenance names a Progress 8 vintage we do not serve ({declared})'
+        )
+
+    def test_the_gate_can_see_a_vintage_at_all(self):
+        """A check that compares nothing passes. Prove it compared something."""
+        seen = [m for _, s in self._strings() for m in self.VINTAGE_RE.findall(s)]
+        self.assertGreater(len(seen), 0, 'no P8 vintage found in CITY_PROVENANCE')
+
+
+class CompositeRenormalisationTests(unittest.TestCase):
+    """The composite has the SAME float-noise shape as liveability had.
+
+    calc_scores divides the persona weights through by their own total so a
+    dropped component redistributes in proportion. For a COMPLETE set that is
+    arithmetically a no-op - and `quietlife`'s weights sum to
+    0.9999999999999999, so it is not one in floating point.
+
+    Measured 2026-08-28: it changes no published score today, but NINE composite
+    values sit on an exact .05 tie, which is where a 1e-16 nudge decides the
+    published digit. The site/API half of that risk is closed - round_1dp and
+    Math.round now break ties identically in both holders - so what is left is a
+    score decided by noise rather than by data. This asserts it stays that way
+    instead of leaving it as a note nobody re-runs.
+    """
+
+    def test_renormalising_a_complete_set_changes_no_published_score(self):
+        moved = []
+        for city_id, cfg in app.CITIES.items():
+            for name in cfg['boroughs']:
+                for persona, weights in app.PERSONAS.items():
+                    result = app.calc_score(name, city_id, weights)
+                    present = {
+                        k: v for k, v in weights.items() if k in result['components']
+                    }
+                    scale = sum(present.values())
+                    if abs(scale - 1.0) > 1e-12:
+                        continue  # genuinely incomplete: redistribution is real
+                    comps = result['components']
+                    renormalised = sum(comps[k] * (present[k] / scale) for k in present)
+                    plain = sum(comps[k] * present[k] for k in present)
+                    if app.round_1dp(renormalised) != app.round_1dp(plain):
+                        moved.append(f'{city_id}/{name}/{persona}')
+        self.assertEqual(
+            moved, [], 'renormalising a complete weight set moved a published score'
+        )
+
+    def test_the_gate_compared_something(self):
+        """A per-unit floor, not a global one: a check that skips every borough
+        passes just as loudly as one that agrees with all of them."""
+        compared = 0
+        for city_id, cfg in app.CITIES.items():
+            for name in cfg['boroughs']:
+                for weights in app.PERSONAS.values():
+                    result = app.calc_score(name, city_id, weights)
+                    present = {
+                        k: v for k, v in weights.items() if k in result['components']
+                    }
+                    if abs(sum(present.values()) - 1.0) <= 1e-12:
+                        compared += 1
+        self.assertGreater(compared, 500, f'only {compared} complete sets compared')

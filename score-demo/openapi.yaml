@@ -610,9 +610,11 @@ components:
       in: header
       name: X-Api-Key
       description: |
-        API key issued via the SkyScoreFreeTierKey usage plan (100 req/month,
-        5/sec burst, 1/sec sustained on the free tier, and up to 10,000
-        scores/month once the batch multiplier is counted). Professional is
+        API key issued via the SkyScoreFreeTier usage plan (10,000 req/month
+        = 10,000 scores/month, because batch is a paid feature so one request
+        is one address; 5/sec burst, 2/sec sustained). The shared key embedded
+        in /score-demo is NOT on that plan - it has its own SkyScoreDemoTier
+        at 2,000 req/month.
         100,000 req/month under a fair-use ceiling of 1,000,000 scores/month.
         Contact for paid tiers.
 

@@ -1,6 +1,7 @@
 // Renders index.html in three contexts to prove the web/native split:
 //   1. mobile()    — native sim (Capacitor shim) → expects the REDESIGN
-//   2. webMobile()  — plain web/PWA (no shim)      → expects the CLASSIC sheet
+//   2. webMobile()  - plain web/PWA (no shim) -> expects the TABBED layout,
+//      and ?tabbed=0 -> the CLASSIC sheet (the opt-out keeps that path covered)
 //   3. desktop()    — 1440px                        → expects the two-col grid
 // The redesign is gated behind the is-native class (set only in the Capacitor
 // app), so (1) and (2) must diverge. See MOBILE_REDESIGN_PLAN.md.
@@ -60,15 +61,22 @@ async function mobile() {
   await browser.close();
 }
 
-// Web/PWA context: NO Capacitor shim, so window.Capacitor is undefined,
-// setupNativeFeatures() bails, the is-native class is never added, and the
-// redesign rules must stay dormant. The site should fall back to the classic
-// bottom-sheet layout: no bottom nav, no data-mview, sheet handle present.
-async function webMobile() {
+// Web/PWA context: NO Capacitor shim, so window.Capacitor is undefined and
+// setupNativeFeatures() bails - `is-native` must still never appear on web.
+//
+// INVERTED 2026-08-27. This asserted the CLASSIC bottom-sheet layout, which was
+// correct while the redesign was native-only and then flag-gated. Tabs are now
+// the web default at <=900px, so asserting classic would fail on a CORRECT tree
+// - and the fix an unwary reader reaches for is to weaken the gate.
+//
+// The classic path is NOT dropped: `?tabbed=0` still serves it and is asserted
+// below. Inverting a gate without keeping the old branch covered deletes the
+// only coverage the bottom sheet has, and it is still what an opt-out user gets.
+async function webMobile(query = '', expect = 'tabbed') {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ ...iPhone }); // no addInitScript -> plain web
   const page = await ctx.newPage();
-  await page.goto(fileUrl, { waitUntil: 'load' }).catch(() => {});
+  await page.goto(fileUrl + query, { waitUntil: 'load' }).catch(() => {});
   await page.waitForTimeout(2500);
   const r = await page.evaluate(() => {
     const vis = (el) => (el ? getComputedStyle(el).display !== 'none' : null);
@@ -77,6 +85,7 @@ async function webMobile() {
     const map = document.getElementById('map-container');
     return {
       isNativeClass: document.documentElement.classList.contains('is-native'),
+      isTabbedClass: document.documentElement.classList.contains('is-tabbed'),
       navVisible: vis(nav),
       mview: document.querySelector('.app')?.dataset.mview ?? '(unset)',
       sheetHandleVisible: vis(sheet),
@@ -84,17 +93,19 @@ async function webMobile() {
       overflowX: document.documentElement.scrollWidth - window.innerWidth,
     };
   });
-  console.log('\n=== WEB MOBILE (no Capacitor, iPhone 13) — expect CLASSIC layout ===');
+  const want = expect.toUpperCase();
+  console.log(`\n=== WEB MOBILE (no Capacitor, iPhone 13${query}) expect ${want} layout ===`);
   console.log(JSON.stringify(r));
-  await page.screenshot({ path: 'tests/web-mobile-classic.png' });
+  await page.screenshot({ path: `tests/web-mobile-${expect}.png` });
   await browser.close();
+  // `is-native` must be false in BOTH cases: the web/native split is unchanged,
+  // only which layout the WEB defaults to has moved.
+  const common = r.isNativeClass === false && r.overflowX <= 1;
   const ok =
-    r.isNativeClass === false &&
-    r.navVisible === false &&
-    r.mview === '(unset)' &&
-    r.sheetHandleVisible === true &&
-    r.overflowX <= 1;
-  console.log(ok ? 'WEB-MOBILE CLASSIC: PASS' : 'WEB-MOBILE CLASSIC: FAIL');
+    expect === 'tabbed'
+      ? common && r.isTabbedClass === true && r.navVisible === true && r.mview !== '(unset)' && r.sheetHandleVisible === false
+      : common && r.isTabbedClass === false && r.navVisible === false && r.mview === '(unset)' && r.sheetHandleVisible === true;
+  console.log(ok ? `WEB-MOBILE ${want}: PASS` : `WEB-MOBILE ${want}: FAIL`);
   return ok;
 }
 
@@ -117,9 +128,9 @@ async function desktop() {
 
 console.log('=== MOBILE (native sim, iPhone 13) — expect REDESIGN ===');
 await mobile();
-const webOk = await webMobile();
+const webOk = (await webMobile('', 'tabbed')) && (await webMobile('?tabbed=0', 'classic'));
 await desktop();
 if (!webOk) {
-  console.error('\nFAIL: web mobile is not on the classic layout (the redesign leaked onto web).');
+  console.error('\nFAIL: web mobile layout wrong - either tabs are not the default at <=900px, or ?tabbed=0 no longer serves the classic sheet.');
   process.exit(1);
 }

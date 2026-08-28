@@ -119,7 +119,7 @@
       "transportNote": "District Line, South West Railway, London Overground. Cycling infrastructure improving.",
       "healthcare": "good",
       "healthcareNote": "Kingston Hospital nearby. West Middlesex nearby. Good GP coverage in Richmond and Twickenham.",
-      "p8": 0.4,
+      "p8": 0.43,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -172,7 +172,7 @@
       "transportNote": "Elizabeth Line transformed connectivity. Central, District, Piccadilly Lines also serve the borough.",
       "healthcare": "good",
       "healthcareNote": "Ealing Hospital (A&E). Good GP density. Several walk-in centres.",
-      "p8": 0.62,
+      "p8": 0.56,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -225,7 +225,7 @@
       "transportNote": "Northern Line, Overground, National Rail. Battersea Power Station has Northern Line extension.",
       "healthcare": "excellent",
       "healthcareNote": "St George's Hospital (major A&E and trauma centre). Excellent healthcare provision.",
-      "p8": 0.33,
+      "p8": 0.49,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -278,7 +278,7 @@
       "transportNote": "Victoria, Northern, Bakerloo Lines. Major rail hubs at Waterloo and Vauxhall.",
       "healthcare": "excellent",
       "healthcareNote": "St Thomas' Hospital and King's College Hospital (both major A&E). Excellent tertiary care.",
-      "p8": 0.01,
+      "p8": 0.0,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -331,7 +331,7 @@
       "transportNote": "DLR, National Rail, Overground. Lewisham station is a major hub. Bakerloo Line extension planned.",
       "healthcare": "good",
       "healthcareNote": "Lewisham Hospital (A&E). Good GP and pharmacy coverage.",
-      "p8": 0.0,
+      "p8": 0.1,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -437,7 +437,7 @@
       "transportNote": "DLR, Central, District, Hammersmith, Jubilee, Elizabeth Lines. One of London's best-connected boroughs.",
       "healthcare": "excellent",
       "healthcareNote": "Royal London Hospital (major trauma centre). Whitechapel medical hub. Excellent GP coverage.",
-      "p8": 0.21,
+      "p8": 0.13,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -490,7 +490,7 @@
       "transportNote": "Northern, Victoria, Metropolitan, Piccadilly Lines. King's Cross, St Pancras, Euston rail termini.",
       "healthcare": "excellent",
       "healthcareNote": "University College Hospital (UCLH), Royal Free Hospital. World-class tertiary care.",
-      "p8": -0.03,
+      "p8": -0.14,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -543,7 +543,7 @@
       "transportNote": "Victoria, Northern, Piccadilly Lines. King's Cross hub nearby. Excellent bus routes.",
       "healthcare": "excellent",
       "healthcareNote": "Whittington Hospital (A&E). Good GP provision. UCH nearby.",
-      "p8": -0.03,
+      "p8": 0.15,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -596,7 +596,7 @@
       "transportNote": "Overground, National Rail. No tube but excellent bus network. London's best cycling infrastructure.",
       "healthcare": "excellent",
       "healthcareNote": "Homerton University Hospital (A&E). Good GP coverage. Improving services.",
-      "p8": 0.34,
+      "p8": 0.51,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -649,7 +649,7 @@
       "transportNote": "Northern Line (High Barnet/Edgware branches). Thameslink serves New Barnet, Oakleigh Park.",
       "healthcare": "good",
       "healthcareNote": "Barnet Hospital (A&E), Royal Free Barnet. Good GP coverage in residential areas.",
-      "p8": 0.64,
+      "p8": 0.61,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -702,7 +702,7 @@
       "transportNote": "East Croydon is a major rail hub (15 mins to Victoria). Tramlink network. Good buses.",
       "healthcare": "good",
       "healthcareNote": "Croydon University Hospital (A&E). Good GP density. Several walk-in centres.",
-      "p8": 0.01,
+      "p8": -0.04,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -755,7 +755,7 @@
       "transportNote": "National Rail to London Bridge/Victoria. No tube. Bus network adequate but car-dependent in outer areas.",
       "healthcare": "moderate",
       "healthcareNote": "Princess Royal University Hospital (A&E). Good GP coverage.",
-      "p8": 0.04,
+      "p8": 0.05,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -808,7 +808,7 @@
       "transportNote": "Elizabeth Line, Jubilee, DLR, Central Line. Stratford is a major interchange.",
       "healthcare": "good",
       "healthcareNote": "Newham University Hospital (A&E). Barts Health Trust. GP provision improving.",
-      "p8": 0.25,
+      "p8": 0.28,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -861,7 +861,7 @@
       "transportNote": "Jubilee, Northern, Bakerloo Lines. London Bridge and Elephant & Castle major hubs.",
       "healthcare": "excellent",
       "healthcareNote": "Guy's and St Thomas' Hospital. King's College Hospital. World-class tertiary care.",
-      "p8": 0.38,
+      "p8": 0.46,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -914,7 +914,7 @@
       "transportNote": "Hammersmith, District, Piccadilly, Central Lines. Hammersmith is a major interchange.",
       "healthcare": "good",
       "healthcareNote": "Charing Cross Hospital (A&E). Chelsea and Westminster nearby. Good GP provision.",
-      "p8": 0.47,
+      "p8": 0.52,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1020,7 +1020,7 @@
       "transportNote": "Jubilee, Bakerloo, Metropolitan Lines. Wembley Park and Kilburn well-connected.",
       "healthcare": "excellent",
       "healthcareNote": "Northwick Park Hospital nearby. Central Middlesex Hospital. Good GP coverage.",
-      "p8": 0.61,
+      "p8": 0.58,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1073,7 +1073,7 @@
       "transportNote": "Victoria Line, Piccadilly Line, Overground. No tube in Crouch End/Muswell Hill (bus only).",
       "healthcare": "excellent",
       "healthcareNote": "North Middlesex Hospital (A&E). Some GP capacity pressures in east of the borough.",
-      "p8": 0.21,
+      "p8": 0.3,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1126,7 +1126,7 @@
       "transportNote": "Victoria Line to Walthamstow. Central Line at Leytonstone/Leyton. Overground.",
       "healthcare": "good",
       "healthcareNote": "Whipps Cross Hospital (A&E, being rebuilt). Some areas underserved for GPs.",
-      "p8": -0.06,
+      "p8": -0.1,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1179,7 +1179,7 @@
       "transportNote": "District, Northern Lines. Tramlink serves eastern areas. Wimbledon is a major rail interchange.",
       "healthcare": "good",
       "healthcareNote": "St George's Hospital nearby. St Helier Hospital nearby. Good GP coverage in Wimbledon.",
-      "p8": 0.59,
+      "p8": 0.61,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1232,7 +1232,7 @@
       "transportNote": "Central Line, Elizabeth Line at Ilford. Good national rail. Bus network adequate.",
       "healthcare": "good",
       "healthcareNote": "King George Hospital (A&E). Queen's Hospital nearby. Good GP density.",
-      "p8": 0.5,
+      "p8": 0.52,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1285,7 +1285,7 @@
       "transportNote": "Piccadilly Line to Arnos Grove/Southgate. Overground to Enfield Town. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "North Middlesex Hospital, Chase Farm Hospital (being redeveloped). GP coverage varies.",
-      "p8": 0.21,
+      "p8": 0.09,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1338,7 +1338,7 @@
       "transportNote": "South West Railway to Waterloo (fast trains). Good buses and cycling. No tube but rail is efficient.",
       "healthcare": "moderate",
       "healthcareNote": "Kingston Hospital (A&E). Good GP provision. Surbiton health centre.",
-      "p8": 0.58,
+      "p8": 0.65,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1391,7 +1391,7 @@
       "transportNote": "National Rail to London Bridge/Victoria. Tramlink connection. No tube. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "St Helier Hospital (A&E), Epsom Hospital nearby. Good GP coverage.",
-      "p8": 0.51,
+      "p8": 0.45,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1444,7 +1444,7 @@
       "transportNote": "Every tube line passes through or near Westminster. Victoria, Waterloo, Paddington stations. Unrivalled.",
       "healthcare": "excellent",
       "healthcareNote": "St Mary's Hospital (Paddington), Chelsea and Westminster nearby. Private healthcare on Harley Street.",
-      "p8": 0.48,
+      "p8": 0.47,
       "crimeTop": [
         {
           "offence": "Theft from the person",
@@ -1580,7 +1580,7 @@
       "transportNote": "Elizabeth Line at Romford. District Line at Upminster. c2c to Fenchurch Street. Some areas car-dependent.",
       "healthcare": "moderate",
       "healthcareNote": "Queen's Hospital (A&E). Good GP coverage in residential areas.",
-      "p8": -0.09,
+      "p8": 0.11,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1633,7 +1633,7 @@
       "transportNote": "Elizabeth Line at Abbey Wood. National Rail to London Bridge. Limited tube access. Some areas car-dependent.",
       "healthcare": "good",
       "healthcareNote": "Queen Elizabeth Hospital (Woolwich) nearby. Darent Valley Hospital. Good GP coverage.",
-      "p8": -0.06,
+      "p8": -0.02,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1686,7 +1686,7 @@
       "transportNote": "Metropolitan Line (fast to Baker Street). Bakerloo to Harrow & Wealdstone. Good bus network.",
       "healthcare": "moderate",
       "healthcareNote": "Northwick Park Hospital (A&E). Good GP coverage. Several health centres.",
-      "p8": 0.45,
+      "p8": 0.46,
       "crimeTop": [
         {
           "offence": "Violence against the person",
@@ -1811,7 +1811,7 @@
   },
   "manchester": {
     "Manchester": {
-      "p8": -0.02,
+      "p8": 0.07,
       "crimeRate": 142.7,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -1837,7 +1837,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Salford": {
-      "p8": -0.49,
+      "p8": -0.35,
       "crimeRate": 105.8,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -1863,7 +1863,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Stockport": {
-      "p8": -0.04,
+      "p8": 0.09,
       "crimeRate": 74.8,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -1889,7 +1889,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Trafford": {
-      "p8": 0.24,
+      "p8": 0.35,
       "crimeRate": 74.9,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -1941,7 +1941,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Oldham": {
-      "p8": -0.18,
+      "p8": -0.2,
       "crimeRate": 106.6,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -1967,7 +1967,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Rochdale": {
-      "p8": -0.28,
+      "p8": -0.3,
       "crimeRate": 104.6,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -1993,7 +1993,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bury": {
-      "p8": -0.14,
+      "p8": -0.09,
       "crimeRate": 92.1,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -2019,7 +2019,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bolton": {
-      "p8": -0.08,
+      "p8": 0.05,
       "crimeRate": 98.0,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -2045,7 +2045,7 @@
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wigan": {
-      "p8": -0.39,
+      "p8": -0.32,
       "crimeRate": 91.0,
       "crimeVintage": "ONS Table C4, year ending March 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
@@ -2074,7 +2074,7 @@
   "westmidlands": {
     "Birmingham": {
       "crimeRate": 114.2,
-      "p8": 0.03,
+      "p8": 0.06,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.7,
       "roadNoiseAboveWhoPct": 55.9,
@@ -2098,7 +2098,7 @@
     },
     "Coventry": {
       "crimeRate": 88.4,
-      "p8": -0.05,
+      "p8": 0.01,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.7,
       "roadNoiseAboveWhoPct": 63.6,
@@ -2122,7 +2122,7 @@
     },
     "Dudley": {
       "crimeRate": 74.5,
-      "p8": -0.11,
+      "p8": -0.12,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 53.0,
       "roadNoiseAboveWhoPct": 49.7,
@@ -2146,7 +2146,7 @@
     },
     "Sandwell": {
       "crimeRate": 95.9,
-      "p8": -0.07,
+      "p8": -0.16,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.2,
       "roadNoiseAboveWhoPct": 61.2,
@@ -2170,7 +2170,7 @@
     },
     "Solihull": {
       "crimeRate": 79.5,
-      "p8": -0.11,
+      "p8": -0.06,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.4,
       "roadNoiseAboveWhoPct": 45.7,
@@ -2194,7 +2194,7 @@
     },
     "Walsall": {
       "crimeRate": 92.9,
-      "p8": -0.2,
+      "p8": -0.22,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.9,
       "roadNoiseAboveWhoPct": 58.0,
@@ -2218,7 +2218,7 @@
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
-      "p8": -0.02,
+      "p8": -0.05,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.2,
       "roadNoiseAboveWhoPct": 43.4,
@@ -2244,7 +2244,7 @@
   "westyorkshire": {
     "Bradford": {
       "crimeRate": 117.0,
-      "p8": -0.26,
+      "p8": -0.28,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.6,
       "roadNoiseAboveWhoPct": 54.0,
@@ -2268,7 +2268,7 @@
     },
     "Calderdale": {
       "crimeRate": 103.4,
-      "p8": -0.03,
+      "p8": 0.02,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.9,
       "roadNoiseAboveWhoPct": 63.2,
@@ -2292,7 +2292,7 @@
     },
     "Kirklees": {
       "crimeRate": 87.6,
-      "p8": 0.11,
+      "p8": 0.07,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.2,
       "roadNoiseAboveWhoPct": 58.3,
@@ -2316,7 +2316,7 @@
     },
     "Leeds": {
       "crimeRate": 114.6,
-      "p8": 0.12,
+      "p8": 0.1,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.0,
       "roadNoiseAboveWhoPct": 57.2,
@@ -2340,7 +2340,7 @@
     },
     "Wakefield": {
       "crimeRate": 105.8,
-      "p8": 0.12,
+      "p8": 0.04,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.4,
       "roadNoiseAboveWhoPct": 53.3,
@@ -2366,7 +2366,7 @@
   "southyorkshire": {
     "Barnsley": {
       "crimeRate": 95.1,
-      "p8": -0.16,
+      "p8": -0.32,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.4,
       "roadNoiseAboveWhoPct": 44.5,
@@ -2390,7 +2390,7 @@
     },
     "Doncaster": {
       "crimeRate": 117.3,
-      "p8": 0.01,
+      "p8": 0.0,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.8,
       "roadNoiseAboveWhoPct": 39.0,
@@ -2414,7 +2414,7 @@
     },
     "Rotherham": {
       "crimeRate": 93.1,
-      "p8": -0.15,
+      "p8": -0.18,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.3,
       "roadNoiseAboveWhoPct": 43.6,
@@ -2438,7 +2438,7 @@
     },
     "Sheffield": {
       "crimeRate": 96.9,
-      "p8": -0.09,
+      "p8": -0.16,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.7,
       "roadNoiseAboveWhoPct": 47.3,
@@ -2488,7 +2488,7 @@
     },
     "Liverpool": {
       "crimeRate": 124.1,
-      "p8": -0.43,
+      "p8": -0.48,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.3,
       "roadNoiseAboveWhoPct": 59.5,
@@ -2512,7 +2512,7 @@
     },
     "St Helens": {
       "crimeRate": 86.4,
-      "p8": -0.35,
+      "p8": -0.32,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.1,
       "roadNoiseAboveWhoPct": 51.2,
@@ -2536,7 +2536,7 @@
     },
     "Sefton": {
       "crimeRate": 75.5,
-      "p8": -0.48,
+      "p8": -0.41,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.2,
       "roadNoiseAboveWhoPct": 43.1,
@@ -2560,7 +2560,7 @@
     },
     "Wirral": {
       "crimeRate": 71.1,
-      "p8": -0.11,
+      "p8": -0.16,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,
       "roadNoiseAboveWhoPct": 53.6,
@@ -2586,7 +2586,7 @@
   "tyneandwear": {
     "Gateshead": {
       "crimeRate": 87.8,
-      "p8": -0.11,
+      "p8": -0.14,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.5,
       "roadNoiseAboveWhoPct": 65.6,
@@ -2610,7 +2610,7 @@
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
-      "p8": -0.4,
+      "p8": -0.28,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.7,
       "roadNoiseAboveWhoPct": 66.0,
@@ -2634,7 +2634,7 @@
     },
     "North Tyneside": {
       "crimeRate": 81.8,
-      "p8": -0.09,
+      "p8": -0.15,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.7,
       "roadNoiseAboveWhoPct": 55.5,
@@ -2658,7 +2658,7 @@
     },
     "South Tyneside": {
       "crimeRate": 96.6,
-      "p8": -0.27,
+      "p8": -0.39,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.4,
       "roadNoiseAboveWhoPct": 53.5,
@@ -2682,7 +2682,7 @@
     },
     "Sunderland": {
       "crimeRate": 93.6,
-      "p8": -0.5,
+      "p8": -0.31,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.2,
       "roadNoiseAboveWhoPct": 60.1,
@@ -2708,7 +2708,7 @@
   "bristol": {
     "City of Bristol": {
       "crimeRate": 131.0,
-      "p8": -0.03,
+      "p8": -0.01,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.5,
       "roadNoiseAboveWhoPct": 47.2,
@@ -2732,7 +2732,7 @@
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
-      "p8": 0.26,
+      "p8": 0.16,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 50.6,
       "roadNoiseAboveWhoPct": 34.0,
@@ -2756,7 +2756,7 @@
     },
     "North Somerset": {
       "crimeRate": 81.8,
-      "p8": -0.02,
+      "p8": -0.05,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 50.8,
       "roadNoiseAboveWhoPct": 32.3,
@@ -2780,7 +2780,7 @@
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
-      "p8": 0.02,
+      "p8": -0.16,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.3,
       "roadNoiseAboveWhoPct": 36.9,
@@ -2806,7 +2806,7 @@
   "leicester": {
     "Leicester": {
       "crimeRate": 110.0,
-      "p8": 0.14,
+      "p8": 0.1,
       "no2AnnualMeanUgm3": 17.6,
       "pm25AnnualMeanUgm3": 9.7,
       "airQuality": "moderate",
@@ -2921,7 +2921,7 @@
   "teesside": {
     "Hartlepool": {
       "crimeRate": 134.2,
-      "p8": -0.46,
+      "p8": -0.47,
       "no2AnnualMeanUgm3": 9.9,
       "pm25AnnualMeanUgm3": 6.8,
       "airQuality": "good",
@@ -2936,7 +2936,7 @@
     },
     "Middlesbrough": {
       "crimeRate": 150.0,
-      "p8": -0.47,
+      "p8": -0.45,
       "no2AnnualMeanUgm3": 13.4,
       "pm25AnnualMeanUgm3": 7.9,
       "airQuality": "moderate",
@@ -2951,7 +2951,7 @@
     },
     "Redcar and Cleveland": {
       "crimeRate": 108.9,
-      "p8": -0.33,
+      "p8": -0.36,
       "no2AnnualMeanUgm3": 9.5,
       "pm25AnnualMeanUgm3": 6.5,
       "airQuality": "good",
@@ -2966,7 +2966,7 @@
     },
     "Stockton-on-Tees": {
       "crimeRate": 107.9,
-      "p8": -0.18,
+      "p8": -0.19,
       "no2AnnualMeanUgm3": 11.0,
       "pm25AnnualMeanUgm3": 7.4,
       "airQuality": "good",
@@ -2981,7 +2981,7 @@
     },
     "Darlington": {
       "crimeRate": 91.0,
-      "p8": -0.2,
+      "p8": -0.32,
       "no2AnnualMeanUgm3": 8.7,
       "pm25AnnualMeanUgm3": 6.9,
       "airQuality": "good",

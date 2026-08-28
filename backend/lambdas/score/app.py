@@ -100,7 +100,7 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #   schools  Was an editorial band with no derivable rule: 'excellent' spanned
 #            90.9-100% of schools Good-or-Outstanding and 'good' spanned
 #            83.3-100%, so Westminster at 100% was 'good' and Richmond at 100%
-#            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2022/23), scored
+#            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2023/24), scored
 #            continuously by school_score() on absolute anchors. London goes
 #            from 2 distinct schools sub-scores to 25.
 METHODOLOGY_VERSION = '3.9'
@@ -926,7 +926,7 @@ LONDON_BOROUGHS = {
         'trend': -0.3,
         'schools': 'excellent',
         'crimeRate': 57.3,
-        'p8': 0.4,
+        'p8': 0.43,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.92,
@@ -938,7 +938,7 @@ LONDON_BOROUGHS = {
         'trend': -2.7,
         'schools': 'good',
         'crimeRate': 80.5,
-        'p8': 0.62,
+        'p8': 0.56,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 2.11,
@@ -950,7 +950,7 @@ LONDON_BOROUGHS = {
         'trend': -5.2,
         'schools': 'excellent',
         'crimeRate': 76.4,
-        'p8': 0.33,
+        'p8': 0.49,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.3,
@@ -962,7 +962,7 @@ LONDON_BOROUGHS = {
         'trend': -3.3,
         'schools': 'good',
         'crimeRate': 114.4,
-        'p8': 0.01,
+        'p8': 0.0,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.38,
@@ -974,7 +974,7 @@ LONDON_BOROUGHS = {
         'trend': 0.6,
         'schools': 'good',
         'crimeRate': 94.2,
-        'p8': 0.0,
+        'p8': 0.1,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 2.11,
@@ -998,7 +998,7 @@ LONDON_BOROUGHS = {
         'trend': -13.1,
         'schools': 'good',
         'crimeRate': 106.6,
-        'p8': 0.21,
+        'p8': 0.13,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.76,
@@ -1010,7 +1010,7 @@ LONDON_BOROUGHS = {
         'trend': -7.1,
         'schools': 'excellent',
         'crimeRate': 173.3,
-        'p8': -0.03,
+        'p8': -0.14,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.98,
@@ -1022,7 +1022,7 @@ LONDON_BOROUGHS = {
         'trend': -8.1,
         'schools': 'good',
         'crimeRate': 131.2,
-        'p8': -0.03,
+        'p8': 0.15,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.88,
@@ -1034,7 +1034,7 @@ LONDON_BOROUGHS = {
         'trend': 0.4,
         'schools': 'good',
         'crimeRate': 116.5,
-        'p8': 0.34,
+        'p8': 0.51,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.56,
@@ -1046,7 +1046,7 @@ LONDON_BOROUGHS = {
         'trend': -2.9,
         'schools': 'excellent',
         'crimeRate': 67.8,
-        'p8': 0.64,
+        'p8': 0.61,
         'transport': 'good',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.94,
@@ -1058,7 +1058,7 @@ LONDON_BOROUGHS = {
         'trend': -1.9,
         'schools': 'good',
         'crimeRate': 80.4,
-        'p8': 0.01,
+        'p8': -0.04,
         'transport': 'good',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.81,
@@ -1070,7 +1070,7 @@ LONDON_BOROUGHS = {
         'trend': -1.4,
         'schools': 'excellent',
         'crimeRate': 69.1,
-        'p8': 0.04,
+        'p8': 0.05,
         'transport': 'good',
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.66,
@@ -1082,7 +1082,7 @@ LONDON_BOROUGHS = {
         'trend': -0.7,
         'schools': 'good',
         'crimeRate': 104.0,
-        'p8': 0.25,
+        'p8': 0.28,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 2.31,
@@ -1094,7 +1094,7 @@ LONDON_BOROUGHS = {
         'trend': 2.2,
         'schools': 'good',
         'crimeRate': 120.8,
-        'p8': 0.38,
+        'p8': 0.46,
         'transport': 'good',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.58,
@@ -1106,7 +1106,7 @@ LONDON_BOROUGHS = {
         'trend': -13.3,
         'schools': 'excellent',
         'crimeRate': 107.0,
-        'p8': 0.47,
+        'p8': 0.52,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 2.5,
@@ -1130,7 +1130,7 @@ LONDON_BOROUGHS = {
         'trend': -3.4,
         'schools': 'good',
         'crimeRate': 89.3,
-        'p8': 0.61,
+        'p8': 0.58,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.21,
@@ -1142,7 +1142,7 @@ LONDON_BOROUGHS = {
         'trend': 2.5,
         'schools': 'good',
         'crimeRate': 104.6,
-        'p8': 0.21,
+        'p8': 0.3,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.14,
@@ -1154,7 +1154,7 @@ LONDON_BOROUGHS = {
         'trend': 2.5,
         'schools': 'good',
         'crimeRate': 80.2,
-        'p8': -0.06,
+        'p8': -0.1,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 2.08,
@@ -1166,7 +1166,7 @@ LONDON_BOROUGHS = {
         'trend': 0.5,
         'schools': 'good',
         'crimeRate': 59.3,
-        'p8': 0.59,
+        'p8': 0.61,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.98,
@@ -1178,7 +1178,7 @@ LONDON_BOROUGHS = {
         'trend': 3.6,
         'schools': 'excellent',
         'crimeRate': 74.3,
-        'p8': 0.5,
+        'p8': 0.52,
         'transport': 'good',
         'healthcare': 'good',
         'airQualityWhoRatio': 2.06,
@@ -1190,7 +1190,7 @@ LONDON_BOROUGHS = {
         'trend': 0.3,
         'schools': 'good',
         'crimeRate': 85.2,
-        'p8': 0.21,
+        'p8': 0.09,
         'transport': 'excellent',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.91,
@@ -1202,7 +1202,7 @@ LONDON_BOROUGHS = {
         'trend': 2.9,
         'schools': 'excellent',
         'crimeRate': 66.8,
-        'p8': 0.58,
+        'p8': 0.65,
         'transport': 'good',
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.89,
@@ -1214,7 +1214,7 @@ LONDON_BOROUGHS = {
         'trend': 0.4,
         'schools': 'excellent',
         'crimeRate': 60.3,
-        'p8': 0.51,
+        'p8': 0.45,
         'transport': 'good',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.72,
@@ -1226,7 +1226,7 @@ LONDON_BOROUGHS = {
         'trend': -25.4,
         'schools': 'good',
         'crimeRate': 355.5,
-        'p8': 0.48,
+        'p8': 0.47,
         'transport': 'excellent',
         'healthcare': 'excellent',
         'airQualityWhoRatio': 3.17,
@@ -1267,7 +1267,7 @@ LONDON_BOROUGHS = {
         'trend': 3.9,
         'schools': 'good',
         'crimeRate': 68.3,
-        'p8': -0.09,
+        'p8': 0.11,
         'transport': 'moderate',
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.73,
@@ -1279,7 +1279,7 @@ LONDON_BOROUGHS = {
         'trend': 1.2,
         'schools': 'good',
         'crimeRate': 60.2,
-        'p8': -0.06,
+        'p8': -0.02,
         'transport': 'good',
         'healthcare': 'good',
         'airQualityWhoRatio': 1.78,
@@ -1291,7 +1291,7 @@ LONDON_BOROUGHS = {
         'trend': -1.4,
         'schools': 'excellent',
         'crimeRate': 59.5,
-        'p8': 0.45,
+        'p8': 0.46,
         'transport': 'good',
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.89,
@@ -1383,7 +1383,7 @@ NYC_BOROUGHS = {
 #                     Note GM returns ELEVEN CSP rows: `Manchester Airport` is
 #                     its own partnership and is not a borough.
 #
-#   p8                REAL. DfE Key Stage 4 Progress 8, 2022/23, local-authority
+#   p8                REAL. DfE Key Stage 4 Progress 8, 2023/24, local-authority
 #                     level - the same release London uses. VERIFIED by a
 #                     different route: all 32 of London's p8 values are
 #                     byte-identical between this data's source commit and
@@ -1406,16 +1406,16 @@ NYC_BOROUGHS = {
 #                     Before that change a partial city scored WORSE than an
 #                     empty one, which is why this data sat unported for a week.
 MANCHESTER_BOROUGHS = {
-    'Manchester': {'impact': 'moderate', 'avgPrice': 251250, 'trend': 2.9, 'p8': -0.02, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.87},
-    'Salford': {'impact': 'low', 'avgPrice': 231890, 'trend': -2.4, 'p8': -0.49, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 0.98},
-    'Stockport': {'impact': 'moderate-high', 'avgPrice': 314495, 'trend': 3.5, 'p8': -0.04, 'crimeRate': 74.8, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.39},
-    'Trafford': {'impact': 'moderate', 'avgPrice': 396811, 'trend': 9.7, 'p8': 0.24, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.49, 'floodMediumOrHighPct': 0.21},
+    'Manchester': {'impact': 'moderate', 'avgPrice': 251250, 'trend': 2.9, 'p8': 0.07, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.87},
+    'Salford': {'impact': 'low', 'avgPrice': 231890, 'trend': -2.4, 'p8': -0.35, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 0.98},
+    'Stockport': {'impact': 'moderate-high', 'avgPrice': 314495, 'trend': 3.5, 'p8': 0.09, 'crimeRate': 74.8, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.39},
+    'Trafford': {'impact': 'moderate', 'avgPrice': 396811, 'trend': 9.7, 'p8': 0.35, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.49, 'floodMediumOrHighPct': 0.21},
     'Tameside': {'impact': 'low', 'avgPrice': 211304, 'trend': 2.2, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.35},
-    'Oldham': {'impact': 'low', 'avgPrice': 214850, 'trend': 5.1, 'p8': -0.18, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 0.16},
-    'Rochdale': {'impact': 'low', 'avgPrice': 210083, 'trend': 4.6, 'p8': -0.28, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 0.59},
-    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.3, 'p8': -0.14, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.52, 'floodMediumOrHighPct': 8.51},
-    'Bolton': {'impact': 'low', 'avgPrice': 202770, 'trend': 4.9, 'p8': -0.08, 'crimeRate': 98.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.16},
-    'Wigan': {'impact': 'low', 'avgPrice': 195557, 'trend': 6.6, 'p8': -0.39, 'crimeRate': 91.0, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.5},
+    'Oldham': {'impact': 'low', 'avgPrice': 214850, 'trend': 5.1, 'p8': -0.2, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 0.16},
+    'Rochdale': {'impact': 'low', 'avgPrice': 210083, 'trend': 4.6, 'p8': -0.3, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 0.59},
+    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.3, 'p8': -0.09, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.52, 'floodMediumOrHighPct': 8.51},
+    'Bolton': {'impact': 'low', 'avgPrice': 202770, 'trend': 4.9, 'p8': 0.05, 'crimeRate': 98.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.16},
+    'Wigan': {'impact': 'low', 'avgPrice': 195557, 'trend': 6.6, 'p8': -0.32, 'crimeRate': 91.0, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.5},
 }
 
 # West Midlands, the fourth city, 2026-08-10. Every field is generated, not
@@ -1447,51 +1447,51 @@ MANCHESTER_BOROUGHS = {
 #                     response. This city is thinner than Greater Manchester and
 #                     says so.
 WESTMIDLANDS_BOROUGHS = {
-    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 234150, 'trend': 2.2, 'crimeRate': 114.2, 'p8': 0.03, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 1.08},
-    'Coventry': {'impact': 'low', 'avgPrice': 223731, 'trend': 3.7, 'crimeRate': 88.4, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.37},
-    'Dudley': {'impact': 'low', 'avgPrice': 230781, 'trend': 5.0, 'crimeRate': 74.5, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.28},
-    'Sandwell': {'impact': 'low', 'avgPrice': 205743, 'trend': 0.6, 'crimeRate': 95.9, 'p8': -0.07, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.81, 'floodMediumOrHighPct': 0.38},
-    'Solihull': {'impact': 'moderate-high', 'avgPrice': 334966, 'trend': 4.2, 'crimeRate': 79.5, 'p8': -0.11, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.2},
-    'Walsall': {'impact': 'low', 'avgPrice': 214577, 'trend': 2.2, 'crimeRate': 92.9, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.91},
-    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.2, 'crimeRate': 92.0, 'p8': -0.02, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.1},
+    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 234150, 'trend': 2.2, 'crimeRate': 114.2, 'p8': 0.06, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 1.08},
+    'Coventry': {'impact': 'low', 'avgPrice': 223731, 'trend': 3.7, 'crimeRate': 88.4, 'p8': 0.01, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.37},
+    'Dudley': {'impact': 'low', 'avgPrice': 230781, 'trend': 5.0, 'crimeRate': 74.5, 'p8': -0.12, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.28},
+    'Sandwell': {'impact': 'low', 'avgPrice': 205743, 'trend': 0.6, 'crimeRate': 95.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.81, 'floodMediumOrHighPct': 0.38},
+    'Solihull': {'impact': 'moderate-high', 'avgPrice': 334966, 'trend': 4.2, 'crimeRate': 79.5, 'p8': -0.06, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.2},
+    'Walsall': {'impact': 'low', 'avgPrice': 214577, 'trend': 2.2, 'crimeRate': 92.9, 'p8': -0.22, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.91},
+    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.2, 'crimeRate': 92.0, 'p8': -0.05, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.1},
 }
 
 WESTYORKSHIRE_BOROUGHS = {
-    'Bradford': {'impact': 'low', 'avgPrice': 185028, 'trend': 6.0, 'crimeRate': 117.0, 'p8': -0.26, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.45, 'floodMediumOrHighPct': 4.12},
-    'Calderdale': {'impact': 'low', 'avgPrice': 191540, 'trend': 9.4, 'crimeRate': 103.4, 'p8': -0.03, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 3.79},
-    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 5.4, 'crimeRate': 87.6, 'p8': 0.11, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.48},
-    'Leeds': {'impact': 'moderate', 'avgPrice': 249394, 'trend': 5.9, 'crimeRate': 114.6, 'p8': 0.12, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 1.65},
-    'Wakefield': {'impact': 'low', 'avgPrice': 198519, 'trend': 4.8, 'crimeRate': 105.8, 'p8': 0.12, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.26},
+    'Bradford': {'impact': 'low', 'avgPrice': 185028, 'trend': 6.0, 'crimeRate': 117.0, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.45, 'floodMediumOrHighPct': 4.12},
+    'Calderdale': {'impact': 'low', 'avgPrice': 191540, 'trend': 9.4, 'crimeRate': 103.4, 'p8': 0.02, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 3.79},
+    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 5.4, 'crimeRate': 87.6, 'p8': 0.07, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.48},
+    'Leeds': {'impact': 'moderate', 'avgPrice': 249394, 'trend': 5.9, 'crimeRate': 114.6, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 1.65},
+    'Wakefield': {'impact': 'low', 'avgPrice': 198519, 'trend': 4.8, 'crimeRate': 105.8, 'p8': 0.04, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.26},
 }
 
 SOUTHYORKSHIRE_BOROUGHS = {
-    'Barnsley': {'impact': 'low', 'avgPrice': 175733, 'trend': 6.0, 'crimeRate': 95.1, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 4.49},
-    'Doncaster': {'impact': 'low', 'avgPrice': 170784, 'trend': 4.4, 'crimeRate': 117.3, 'p8': 0.01, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.26, 'floodMediumOrHighPct': 24.38},
-    'Rotherham': {'impact': 'low', 'avgPrice': 190069, 'trend': 2.4, 'crimeRate': 93.1, 'p8': -0.15, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 1.28},
-    'Sheffield': {'impact': 'low', 'avgPrice': 219539, 'trend': 5.0, 'crimeRate': 96.9, 'p8': -0.09, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 0.86},
+    'Barnsley': {'impact': 'low', 'avgPrice': 175733, 'trend': 6.0, 'crimeRate': 95.1, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 4.49},
+    'Doncaster': {'impact': 'low', 'avgPrice': 170784, 'trend': 4.4, 'crimeRate': 117.3, 'p8': 0.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.26, 'floodMediumOrHighPct': 24.38},
+    'Rotherham': {'impact': 'low', 'avgPrice': 190069, 'trend': 2.4, 'crimeRate': 93.1, 'p8': -0.18, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 1.28},
+    'Sheffield': {'impact': 'low', 'avgPrice': 219539, 'trend': 5.0, 'crimeRate': 96.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 0.86},
 }
 
 MERSEYSIDE_BOROUGHS = {
     'Knowsley': {'impact': 'moderate', 'avgPrice': 188727, 'trend': 3.6, 'crimeRate': 81.8, 'p8': -0.9, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.16},
-    'Liverpool': {'impact': 'moderate', 'avgPrice': 185307, 'trend': 7.2, 'crimeRate': 124.1, 'p8': -0.43, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.65, 'floodMediumOrHighPct': 0.31},
-    'St Helens': {'impact': 'low', 'avgPrice': 186435, 'trend': 11.1, 'crimeRate': 86.4, 'p8': -0.35, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.29},
-    'Sefton': {'impact': 'low', 'avgPrice': 225433, 'trend': 5.2, 'crimeRate': 75.5, 'p8': -0.48, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 31.39},
-    'Wirral': {'impact': 'low', 'avgPrice': 215575, 'trend': 7.8, 'crimeRate': 71.1, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.35, 'floodMediumOrHighPct': 1.47},
+    'Liverpool': {'impact': 'moderate', 'avgPrice': 185307, 'trend': 7.2, 'crimeRate': 124.1, 'p8': -0.48, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.65, 'floodMediumOrHighPct': 0.31},
+    'St Helens': {'impact': 'low', 'avgPrice': 186435, 'trend': 11.1, 'crimeRate': 86.4, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.29},
+    'Sefton': {'impact': 'low', 'avgPrice': 225433, 'trend': 5.2, 'crimeRate': 75.5, 'p8': -0.41, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 31.39},
+    'Wirral': {'impact': 'low', 'avgPrice': 215575, 'trend': 7.8, 'crimeRate': 71.1, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.35, 'floodMediumOrHighPct': 1.47},
 }
 
 TYNEANDWEAR_BOROUGHS = {
-    'Gateshead': {'impact': 'low', 'avgPrice': 158254, 'trend': 7.8, 'crimeRate': 87.8, 'p8': -0.11, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.46, 'floodMediumOrHighPct': 4.65},
-    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 208589, 'trend': 6.7, 'crimeRate': 107.4, 'p8': -0.4, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 1.6},
-    'North Tyneside': {'impact': 'low', 'avgPrice': 203813, 'trend': 6.0, 'crimeRate': 81.8, 'p8': -0.09, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.85},
-    'South Tyneside': {'impact': 'low', 'avgPrice': 161372, 'trend': 4.8, 'crimeRate': 96.6, 'p8': -0.27, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 10.94},
-    'Sunderland': {'impact': 'low', 'avgPrice': 143216, 'trend': 4.6, 'crimeRate': 93.6, 'p8': -0.5, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 1.18},
+    'Gateshead': {'impact': 'low', 'avgPrice': 158254, 'trend': 7.8, 'crimeRate': 87.8, 'p8': -0.14, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.46, 'floodMediumOrHighPct': 4.65},
+    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 208589, 'trend': 6.7, 'crimeRate': 107.4, 'p8': -0.28, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 1.6},
+    'North Tyneside': {'impact': 'low', 'avgPrice': 203813, 'trend': 6.0, 'crimeRate': 81.8, 'p8': -0.15, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.85},
+    'South Tyneside': {'impact': 'low', 'avgPrice': 161372, 'trend': 4.8, 'crimeRate': 96.6, 'p8': -0.39, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 10.94},
+    'Sunderland': {'impact': 'low', 'avgPrice': 143216, 'trend': 4.6, 'crimeRate': 93.6, 'p8': -0.31, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 1.18},
 }
 
 BRISTOL_BOROUGHS = {
-    'City of Bristol': {'impact': 'low', 'avgPrice': 356824, 'trend': 3.5, 'crimeRate': 131.0, 'p8': -0.03, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.54, 'floodMediumOrHighPct': 1.05},
-    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 404480, 'trend': -0.1, 'crimeRate': 79.0, 'p8': 0.26, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'floodMediumOrHighPct': 1.77},
-    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 314628, 'trend': 7.5, 'crimeRate': 81.8, 'p8': -0.02, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 1.14},
-    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.3, 'crimeRate': 73.8, 'p8': 0.02, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 5.27},
+    'City of Bristol': {'impact': 'low', 'avgPrice': 356824, 'trend': 3.5, 'crimeRate': 131.0, 'p8': -0.01, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.54, 'floodMediumOrHighPct': 1.05},
+    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 404480, 'trend': -0.1, 'crimeRate': 79.0, 'p8': 0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'floodMediumOrHighPct': 1.77},
+    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 314628, 'trend': 7.5, 'crimeRate': 81.8, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 1.14},
+    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.3, 'crimeRate': 73.8, 'p8': -0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 5.27},
 }
 
 CARDIFF_BOROUGHS = {
@@ -1514,7 +1514,7 @@ CARDIFF_BOROUGHS = {
 # Partnership row - and transport and healthcare carry every borough over the
 # two-input floor regardless.
 LEICESTER_BOROUGHS = {
-    'Leicester': {'impact': 'low', 'avgPrice': 228618, 'trend': 1.7, 'crimeRate': 110.0, 'p8': 0.14, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.93},
+    'Leicester': {'impact': 'low', 'avgPrice': 228618, 'trend': 1.7, 'crimeRate': 110.0, 'p8': 0.1, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.93},
     'Blaby': {'impact': 'low', 'avgPrice': 282918, 'trend': 0.3, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.73},
     'Charnwood': {'impact': 'low-moderate', 'avgPrice': 276865, 'trend': 3.8, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.94},
     'Harborough': {'impact': 'low', 'avgPrice': 346278, 'trend': 9.7, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64},
@@ -1529,11 +1529,11 @@ LEICESTER_BOROUGHS = {
 # an include-list in the crime loader - Darlington is Durham Constabulary while
 # the other four are Cleveland.
 TEESSIDE_BOROUGHS = {
-    'Hartlepool': {'impact': 'low', 'avgPrice': 130271, 'trend': 0.8, 'crimeRate': 134.2, 'p8': -0.46, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36},
-    'Middlesbrough': {'impact': 'low', 'avgPrice': 138122, 'trend': 2.0, 'crimeRate': 150.0, 'p8': -0.47, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58},
-    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 153205, 'trend': 8.1, 'crimeRate': 108.9, 'p8': -0.33, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3},
-    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 170923, 'trend': 3.9, 'crimeRate': 107.9, 'p8': -0.18, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.47},
-    'Darlington': {'impact': 'moderate', 'avgPrice': 158188, 'trend': 3.8, 'crimeRate': 91.0, 'p8': -0.2, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39},
+    'Hartlepool': {'impact': 'low', 'avgPrice': 130271, 'trend': 0.8, 'crimeRate': 134.2, 'p8': -0.47, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36},
+    'Middlesbrough': {'impact': 'low', 'avgPrice': 138122, 'trend': 2.0, 'crimeRate': 150.0, 'p8': -0.45, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58},
+    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 153205, 'trend': 8.1, 'crimeRate': 108.9, 'p8': -0.36, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3},
+    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 170923, 'trend': 3.9, 'crimeRate': 107.9, 'p8': -0.19, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.47},
+    'Darlington': {'impact': 'moderate', 'avgPrice': 158188, 'trend': 3.8, 'crimeRate': 91.0, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39},
 }
 
 # Nottingham (Greater Nottingham: the city plus the three boroughs of its
@@ -1553,7 +1553,7 @@ TEESSIDE_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.23, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 2.89},
+    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 2.89},
     'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.65},
     'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.93},
     'Rushcliffe': {'impact': 'low', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.56},
@@ -4551,7 +4551,7 @@ def _takes_borough(func):
 # A static claim about data is a claim that has to be remembered; this one
 # cannot be wrong because it reads the data.
 _LIVE_INPUT_SOURCES = {
-    'p8': 'DfE Key Stage 4 Progress 8, 2022/23 Revised',
+    'p8': 'DfE Key Stage 4 Progress 8, 2023/24 Revised',
     'schools': 'curated tier (no DfE equivalent for this city)',
     'crimeRate': 'ONS Crime in England and Wales, Table C4',
     'transport': 'NaPTAN rail, metro and tram access within 800 m',
@@ -4647,7 +4647,7 @@ CITY_PROVENANCE = {
             'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
             'afford': 'HM Land Registry House Price Index (HPI), borough cohort min-max scaling',
             'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
-            'live': 'Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2022/23 Revised, local-authority level. DfE has since published 2023/24 Revised (February 2025); Sky Score has not yet rolled to it. The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.',
+            'live': 'Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.',
         },
     },
     'nyc': {
@@ -4840,7 +4840,7 @@ CITY_PROVENANCE = {
         'sources': [
             'Prices: HM Land Registry UK House Price Index, May 2026 vintage, Open Government Licence v3.0',
             'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
-            'Schools: Department for Education, Key Stage 4 Progress 8, 2022/23, Open Government Licence v3.0',
+            'Schools: Department for Education, Key Stage 4 Progress 8, 2023/24, Open Government Licence v3.0',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             'Transport: NaPTAN (DfT National Public Transport Access Nodes), Open Government Licence v3.0', 'Healthcare: NHS Organisation Data Service, Open Government Licence v3.0',
         ],
@@ -4848,7 +4848,7 @@ CITY_PROVENANCE = {
             'quiet': 'PROVISIONAL ESTIMATE derived from Manchester Airport (MAN) runway alignment and approach geometry. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY §3 are not evidenced for this city. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
             'afford': 'HM Land Registry UK House Price Index, May 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN the Greater Manchester cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs, and Trafford at GBP 393k scores as London\'s most expensive borough does at several times that. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
             'growth': 'HM Land Registry UK House Price Index, May 2026 vintage, annualised price trend, cohort-relative. Greater Manchester has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
-            'live': 'MEASURED on all four inputs, matching London. Schools: DfE Key Stage 4 Progress 8, 2022/23, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (methodology v3.6). Healthcare: NHS Organisation Data Service, share of postcodes within 500 m of a GP practice (v3.7).',
+            'live': 'MEASURED on all four inputs, matching London. Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (methodology v3.6). Healthcare: NHS Organisation Data Service, share of postcodes within 500 m of a GP practice (v3.7).',
         },
     },
 }
@@ -4968,6 +4968,29 @@ def build_batch_sources(cities):
     return [f'[{c}] {line}' for c in seen for line in build_sources(c)]
 
 
+def round_1dp(x):
+    """Round to one decimal place, halves AWAY FROM ZERO - not Python's default.
+
+    Every number this returns has a SECOND holder: index.html recomputes the
+    same score client-side and rounds it with Math.round(), which takes halves
+    towards +infinity. Python's round() takes halves to EVEN. The two agree on
+    every input except an exact .x5 tie, where they disagree by construction -
+    so the tie-break is made explicit and identical here rather than left to
+    two languages' differing defaults.
+
+    It is not hypothetical. Four boroughs sit exactly on a tie today (Manhattan,
+    Bronx, Dudley, Bath and North East Somerset) and agree only because float
+    noise happens to push each one off the boundary in the same direction on
+    both sides. Removing that noise from live_weights_for is what surfaced it:
+    banker's rounding sends BANES to 5.8 while the site says 5.9, and
+    site/API divergence is a defect this repo has already shipped three times.
+
+    math.floor(x + 0.5) reproduces Math.round() exactly, negatives included
+    (both send -2.5 to -2), so the two holders cannot drift on a tie again.
+    """
+    return math.floor(x * 10 + 0.5) / 10
+
+
 def crime_to_score(rate):
     if rate is None:
         return 5.0
@@ -5004,9 +5027,13 @@ def school_score(p8):
 
 _LIVE_FIELDS = ('schools', 'crimeRate', 'transport', 'healthcare')
 
-# Declared weights, summing to 1.0. Previously these were four literals inside
-# get_live_score; naming them is what lets an absent input be redistributed
-# rather than filled with a placeholder.
+# Declared weights. Previously these were four literals inside get_live_score;
+# naming them is what lets an absent input be redistributed rather than filled
+# with a placeholder.
+#
+# They sum to 1.0 as DECLARED and to 0.9999999999999999 as FLOATS, which is why
+# live_weights_for short-circuits a complete set instead of dividing it through
+# by that total. See the note there.
 _LIVE_WEIGHTS = {
     'schools': 0.35,
     'crimeRate': 0.30,
@@ -5068,6 +5095,17 @@ def live_weights_for(present):
     present = [f for f in _LIVE_FIELDS if f in present]
     if len(present) < _LIVE_MIN_FIELDS:
         return {}
+    # Nothing absent means nothing to redistribute, and that identity has to be
+    # EXACT rather than merely arithmetically true. The declared weights sum to
+    # 0.9999999999999999 in binary floating point, so dividing a COMPLETE set
+    # through by their own total inflates each one by ~1e-16 - invisible
+    # everywhere except on a borough sitting exactly on a rounding boundary,
+    # where it decides the published digit. Bath and North East Somerset landed
+    # there on the 2023/24 Progress 8 roll: its declared weights give exactly
+    # 5.85 and the renormalised ones gave 5.850000000000001, so it published
+    # 5.9 having been nudged there by float noise rather than by its data.
+    if len(present) == len(_LIVE_FIELDS):
+        return {f: _LIVE_WEIGHTS[f] for f in present}
     total = sum(_LIVE_WEIGHTS[f] for f in present)
     return {f: _LIVE_WEIGHTS[f] / total for f in present}
 
@@ -5125,7 +5163,7 @@ def get_live_score(bd, english=True):
     weights = live_weights_for(scores)
     if not weights:
         return None
-    return round(sum(scores[f] * w for f, w in weights.items()) * 10) / 10
+    return round_1dp(sum(scores[f] * w for f, w in weights.items()))
 
 
 # ---------------------------------------------------------------------------
@@ -5274,7 +5312,7 @@ def get_env_score(bd):
     weights = env_weights_for(scores)
     if not weights:
         return None
-    return round(sum(scores[f] * w for f, w in weights.items()) * 10) / 10
+    return round_1dp(sum(scores[f] * w for f, w in weights.items()))
 
 
 def env_single_input(bd):
@@ -5664,20 +5702,20 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     currency_field = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
 
     return {
-        'score': round(total * 10) / 10,
+        'score': round_1dp(total),
         # `live` is OMITTED, not null and not defaulted, when it could not be
         # computed - the same convention build_environment uses below and for
         # the same reason: a placeholder in a numeric field is how "not
         # measured" becomes "measured as fine". liveResolution says why.
         'components': {
-            'quiet': round(quiet * 10) / 10,
-            'afford': round(afford * 10) / 10,
-            'growth': round(growth * 10) / 10,
-            **({'live': round(live * 10) / 10} if live is not None else {}),
+            'quiet': round_1dp(quiet),
+            'afford': round_1dp(afford),
+            'growth': round_1dp(growth),
+            **({'live': round_1dp(live)} if live is not None else {}),
             # `env` follows `live` exactly: omitted rather than null when the
             # borough has neither input, so a consumer cannot read a gap as a
             # reading. environmentResolution says which it is.
-            **({'env': round(env * 10) / 10} if env is not None else {}),
+            **({'env': round_1dp(env)} if env is not None else {}),
         },
         'context': {
             currency_field: bd['avgPrice'],

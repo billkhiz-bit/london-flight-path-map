@@ -114,6 +114,11 @@
         --light: #c8c7c4;
         --white: #fafaf9;
         --orange: #f27d26;
+        /* The brand orange as INK. #f27d26 is 2.60:1 on --white, so it fails
+           WCAG AA (4.5) for any text - it is a fill and a border colour, not a
+           text colour. This is the same hue darkened to 5.10:1, for the places
+           where the accent has to carry a word. Measured, not picked by eye. */
+        --orange-ink: #a85416;
         --blue: #267df2;
         /* Darkened from #9a7400 on 2026-08-03. At 4.13:1 on the #fafaf9 sidebar it
            failed WCAG AA for normal text, and the 'Moderate AIRCRAFT NOISE' badge
@@ -2978,12 +2983,10 @@
            applyTabbedLayout().
 
            .is-tabbed is set unconditionally on native - so the app's layout is
-           byte-identical to before - and on the WEB only behind ?tabbed=1 at
-           <=900px. Default web behaviour is therefore unchanged, which is what
-           keeps tests/native-sim-render.mjs and tests/live-mobile-verify.mjs
-           passing: both assert the web serves the CLASSIC layout, and both
-           would have to be inverted deliberately before this could become the
-           default.
+           byte-identical to before - and on the WEB at <=900px by DEFAULT since
+           2026-08-27, with ?tabbed=0 as the opt-out. native-sim-render.mjs and
+           live-mobile-verify.mjs were inverted for that flip and now assert
+           both directions.
 
            Why it is no longer native-only: MOBILE_REDESIGN_PLAN.md v3 gated it
            on 2026-05-29 because the redesign "never shipped to either store".
@@ -3020,19 +3023,28 @@
           font-size: 10px;
           letter-spacing: 0.5px;
           text-transform: uppercase;
-          color: var(--dark);
-          opacity: 0.5;
+          /* NOT `--dark at opacity 0.5`, which measured 3.44:1 and fails AA.
+             Opacity dims text against its background and the contrast goes
+             with it, so an inactive state built out of opacity cannot be read
+             at 10px. --mid is 5.75:1 and reads as secondary on its own. This
+             whole nav was native-only until 2026-08-27 and axe had therefore
+             never evaluated it; making the tabbed layout the web default is
+             what finally pointed the WCAG gate at it. */
+          color: var(--mid);
           cursor: pointer;
           min-height: 56px;
-          transition: opacity 0.15s ease;
+          transition: color 0.15s ease;
         }
         .mobile-nav-btn .mobile-nav-icon {
           font-size: 19px;
           line-height: 1;
         }
         .mobile-nav-btn.active {
-          opacity: 1;
-          color: var(--orange);
+          /* --orange itself is 2.60:1 here - the WORST of the three findings,
+             and it was on the SELECTED tab. --orange-ink is the same hue at
+             5.10:1. Weight and aria-current carry the state as well, so it is
+             not colour alone. */
+          color: var(--orange-ink);
           font-weight: 600;
         }
         .mobile-nav-btn:focus-visible {
@@ -3105,7 +3117,9 @@
         /* Floating search card pinned to the top of the screen */
         .app[data-mview='search'] .search-box {
           position: sticky;
-          top: 8px;
+          /* Clears the country + city bands above it. Was 8px, which put the
+             card on the same line as the chips and covered them. */
+          top: calc(env(safe-area-inset-top) + 54px);
           margin: 8px;
           padding: 10px 12px;
           background: var(--white, #ffffff);
@@ -3117,7 +3131,9 @@
         .app[data-mview='search'] .search-box .search-hint {
           font-size: 11px;
           margin-top: 4px;
-          opacity: 0.7;
+          /* `opacity: 0.7` used to sit here and took --mid from 5.75:1 to
+             3.05:1. The hint is already secondary by size and colour; dimming
+             it further only cost the contrast. */
         }
         /* When there IS a result the sidebar-content is populated. Style
            it as a card floating over the map with its own backdrop, with
@@ -3217,11 +3233,32 @@
 
         /* City switcher: compact horizontal chip in the top-right.
            Positioned fixed so it aligns with the floating search card. */
+        /* THE CITY ROW GETS ITS OWN BAND, and both of the things that forces
+           were measured rather than argued.
+
+           It used to be `right: 14px; left: auto`, tucked into the gutter the
+           search card leaves with `margin-right: 165px`. That works for the
+           "at most two chips" this block was written for and fails twice over
+           at ten: `left: auto` makes a fixed flex row size to its CONTENT, so
+           the row measured 758px on a 390px phone and hung off the LEFT edge -
+           unreachable, and unscrollable too, because a box as wide as its
+           content has nothing to scroll. Bounding it then moved the chips
+           UNDER the search card, because `.city-selector` sits in
+           #map-container (z-index 1) and the card sits in .sidebar (z-index 2)
+           - and an inner z-index of 4 cannot lift a child out of a parent
+           stacking context that loses. elementFromPoint returned INPUT at the
+           centre of the first three chips: covered, not clipped.
+
+           So the row is bounded on BOTH sides and stacked above the card
+           instead of beside it, which is the order the classic mobile layout
+           and the desktop already use: country, then cities, then content.
+           overflow-x carries the rest, with the fade affordance the base rule
+           already provides. */
         .app[data-mview='search'] .city-selector {
           position: fixed;
-          top: calc(env(safe-area-inset-top) + 16px);
+          top: calc(env(safe-area-inset-top) + 24px);
+          left: 14px;
           right: 14px;
-          left: auto;
           z-index: 4;
           gap: 0;
         }
@@ -3246,11 +3283,13 @@
         /* The country tier still has to be reachable here, or the USA is
            unreachable in the app. Sits directly above the chip, right-aligned
            to it, and smaller than on the website. */
+        /* Country tier sits directly above the city row, bounded the same way.
+           Two countries fit today; the row that did not fit also fitted once. */
         .app[data-mview='search'] .country-selector {
           position: fixed;
-          top: calc(env(safe-area-inset-top) + 1px);
+          top: calc(env(safe-area-inset-top) + 4px);
+          left: 14px;
           right: 14px;
-          left: auto;
           z-index: 4;
           gap: 10px;
         }
@@ -3260,17 +3299,26 @@
           min-height: 14px;
           padding-bottom: 1px;
         }
-        /* Make the search card leave room for the city chip on the right.
-           At most two chips now that the country tier filters the row, but the
-           widest UK pair is "LONDON" + "GREATER MANCHESTER" - the chips take
-           their text from the registry `label`, which is the full region name,
-           not the old hardcoded "Manchester". Sized for that pair.
-           NOT VERIFIED ON A DEVICE: this whole block is native-only,
-           `data-mview` is never set on the website, and no gate here loads the
-           native shell - the responsive audit walks the website. Check it in
-           the simulator before the next binary. */
+        /* This used to reserve a 165px right-hand gutter so a TWO-chip city
+           row could share the line, and it is the clearest example in this file
+           of an assumption expiring in silence. "At most two chips now that the
+           country tier filters the row" was true when written; the UK tab has
+           held ten cities since 2026-08-11, so the row became 758px and no
+           gutter could hold it.
+
+           It survived because the note that sat here was also true: this block
+           was native-only, `data-mview` was never set on the website, and no
+           gate loaded the native shell - so the row was never measured against
+           anything. Making tabs the web default on 2026-08-27 pointed
+           responsive.mjs, a11y-source.mjs and city-switch.mjs at it for the
+           first time, and all three went red. Worth a simulator pass before the
+           next binary, but it is no longer ungated. */
         .app[data-mview='search'] .search-box {
-          margin-right: 165px;
+          /* Was `margin-right: 165px`, reserving the right-hand gutter for a
+             two-chip city row that shared this line. The row has its own band
+             above since 2026-08-28, so the card takes the full width back -
+             which also returns the input from 191px to the whole viewport. */
+          margin-right: 0;
         }
 
         /* Hide desktop zoom controls on mobile (pinch/double-tap covers it).
@@ -4027,14 +4075,20 @@
       // NATIVE always gets tabs - the App Store build has shipped with them
       // since iOS 1.0.21 (live 1 Jun 2026), so this preserves it exactly.
       //
-      // WEB is OFF BY DEFAULT and opt-in per page load via ?tabbed=1. That is
-      // deliberate: `tests/native-sim-render.mjs` and
-      // `tests/live-mobile-verify.mjs` both assert the web serves the CLASSIC
-      // layout, and they are correct until someone decides otherwise. Making
-      // tabs the web default means INVERTING those two gates on purpose, the
-      // way test_air_quality_does_not_enter_the_weighted_score was inverted for
-      // v3.9 - not deleting them, because a test left asserting a lifted
-      // constraint reads as evidence the constraint still holds.
+      // WEB is ON BY DEFAULT at <=900px since 2026-08-27, with `?tabbed=0` as
+      // the opt-out. It shipped the other way round on 2026-08-26 so the design
+      // could be looked at live first; `tests/native-sim-render.mjs` and
+      // `tests/live-mobile-verify.mjs` were INVERTED for the flip rather than
+      // deleted, and the opt-out is what lets them keep covering the classic
+      // path - which is still live for anyone landing on `?tabbed=0`.
+      //
+      // WHAT THE FLIP COST, because it is the argument for doing this behind a
+      // flag next time: this chrome was native-only for three months, so no
+      // website gate had ever walked it. Pointing them at it found an eleven-
+      // chip city row hanging 229px off the left edge of a 375px phone, and
+      // three SERIOUS contrast failures in the bottom nav - the SELECTED tab
+      // label worst at 2.60:1. Every one had been shipping in the App Store
+      // build. A flag does not make a surface tested; a gate does.
       //
       // A URL parameter rather than localStorage, on purpose: this is a
       // look-at-it flag, and one that survives a page close would be a second
@@ -4042,13 +4096,27 @@
       function applyTabbedLayout() {
         const root = document.documentElement;
         const native = root.classList.contains('is-native');
-        let preview = false;
+
+        // DEFAULT ON at <=900px since 2026-08-27; `?tabbed=0` opts out.
+        //
+        // It shipped the other way round on 2026-08-26 - default OFF behind
+        // `?tabbed=1` - so the design could be looked at on the live site
+        // before it became what everyone gets. Measured at 375x667: map
+        // 34.6% -> 78.7% of the viewport, visible controls 18 -> 14. The
+        // flag has done its job.
+        //
+        // The opt-out is the half worth keeping. It is what
+        // `native-sim-render.mjs` and `live-mobile-verify.mjs` now use to go
+        // on covering the classic layout: inverting those gates without it
+        // would have DELETED the only coverage the bottom-sheet path has,
+        // and that path is still live for anyone who lands on `?tabbed=0`.
+        let optOut = false;
         try {
-          preview = new URLSearchParams(window.location.search).get('tabbed') === '1';
+          optOut = new URLSearchParams(window.location.search).get('tabbed') === '0';
         } catch {
           // A malformed query string must never take the layout down.
         }
-        const want = native || (preview && window.innerWidth <= 900);
+        const want = native || (!optOut && window.innerWidth <= 900);
         const had = root.classList.contains('is-tabbed');
         root.classList.toggle('is-tabbed', want);
 
@@ -7188,8 +7256,21 @@
       function liveWeightsFor(present) {
         const fields = Object.keys(LIVE_WEIGHTS).filter((f) => present.includes(f));
         if (fields.length < LIVE_MIN_FIELDS) return {};
-        const total = fields.reduce((a, f) => a + LIVE_WEIGHTS[f], 0);
+        // Nothing absent means nothing to redistribute, and the identity has to
+        // be EXACT. The declared weights sum to 0.9999999999999999 as floats,
+        // so dividing a COMPLETE set through by its own total inflates every
+        // weight by ~1e-16 - which decides the published digit for a borough
+        // sitting exactly on a rounding boundary. Bath and North East Somerset
+        // landed there on the 2023/24 Progress 8 roll. Mirrors the same
+        // short-circuit in live_weights_for(); the two holders must move
+        // together or this is a site/API divergence, which is a defect this
+        // repo has already shipped three times.
         const out = {};
+        if (fields.length === Object.keys(LIVE_WEIGHTS).length) {
+          for (const f of fields) out[f] = LIVE_WEIGHTS[f];
+          return out;
+        }
+        const total = fields.reduce((a, f) => a + LIVE_WEIGHTS[f], 0);
         for (const f of fields) out[f] = LIVE_WEIGHTS[f] / total;
         return out;
       }
@@ -13041,10 +13122,12 @@
           sidebarContent && sidebarContent.firstElementChild ? sidebarContent.firstElementChild.cloneNode(true) : null;
 
         window.setMobileView = function (view) {
-          // Native-only: this is the sole writer of data-mview. On web the
-          // is-native class is absent, so bail before touching the attribute -
-          // that keeps every @media redesign rule dormant and leaves the
-          // classic bottom-sheet layout in charge.
+          // The sole writer of data-mview. Gated on .is-tabbed, which is set on
+          // native unconditionally and on the web at <=900px unless ?tabbed=0 -
+          // so bailing here is what leaves the classic bottom-sheet layout in
+          // charge on desktop and on the opt-out. (This said "native-only"
+          // until 2026-08-27; the class stopped meaning that when tabs became
+          // the web default.)
           if (!document.documentElement.classList.contains('is-tabbed')) return;
           if (!TAB_FOR[view]) return;
           app.dataset.mview = view;
@@ -13087,9 +13170,10 @@
           });
         }
 
-        // Search-first (native app only): phones/tablets open on the Search
-        // view. setMobileView() is guarded above, so on web this call no-ops
-        // and the classic bottom-sheet layout loads instead.
+        // Search-first: phones and tablets open on the Search view. Applies to
+        // native and, since 2026-08-27, to the website too - setMobileView() is
+        // guarded on .is-tabbed above, so this still no-ops on desktop and on
+        // ?tabbed=0, which keeps the classic bottom-sheet layout.
         if (window.innerWidth <= 900) window.setMobileView('search');
       })();
 

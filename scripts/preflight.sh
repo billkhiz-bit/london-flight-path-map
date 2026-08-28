@@ -432,17 +432,23 @@ advise "Prettier (all files deviate)"   npm run format:check
 # the result with `|| true` — a no-op that rendered as a green tick.
 advise "npm audit"                      npm audit
 
-# Progress 8 against DfE KS4 2022/23. Advisory, NOT blocking, on the data
-# dependency alone: the check itself is offline and fast (0.2s measured
+# Progress 8 against DfE KS4 2023/24 Revised. Advisory, NOT blocking, on the
+# data dependency alone: the check itself is offline and fast (0.2s measured
 # 2026-08-24, with a compared-nothing floor since 2026-08-22), but its input
-# data/ks4-2022-23.zip is gitignored and CANNOT be auto-fetched the way the
-# HPI csv can - the Explore Education Statistics host answers 403 to a
-# non-browser User-Agent - so a blocking stage would fail every fresh clone
-# on a file no command restores. Drift risk is one-sided: 2022/23 is the
-# TERMINAL Progress 8 vintage until ~2027 (the KS2 baseline was lost to the
-# 2020/21 test cancellations), so only a registry edit can move it, and the
-# pytest parity suite still blocks on the two holders disagreeing.
-advise "p8 == DfE KS4 2022/23"          python scripts/build_progress8.py --check
+# KS4 bundle is gitignored and CANNOT be auto-fetched the way the HPI csv can -
+# the Explore Education Statistics host answers 403 to a non-browser
+# User-Agent - so a blocking stage would fail every fresh clone on a file no
+# command restores.
+#
+# THE LABEL SAID 2022/23 UNTIL 2026-08-28, one day after the roll, which is the
+# staleness this repo keeps paying for: a gate whose NAME asserts a vintage has
+# to be remembered, and the reason given for not worrying about drift ("2022/23
+# is the TERMINAL vintage until ~2027") was itself the claim the roll disproved.
+# 2023/24 genuinely is terminal until 2026/27 - the suspended cohorts are
+# 2024/25 and 2025/26 - but that is a fact to re-check, not to lean on. The
+# pytest parity suite blocks on the two holders disagreeing, and
+# ProvenanceVintageTests now blocks on any city naming a vintage we do not serve.
+advise "p8 == DfE KS4 2023/24"          python scripts/build_progress8.py --check
 
 # The five borough band fields (road noise, air quality, flood, transport,
 # healthcare) against their sources. Advisory for the same reason as p8, at

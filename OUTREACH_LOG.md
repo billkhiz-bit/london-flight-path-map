@@ -14,6 +14,20 @@
 
 ---
 
+## Personal contacts, unrecorded until now
+
+Warm contacts made in person that have no row anywhere else. This section exists
+because the Build Night 1 entry below already records the same failure once -
+*"Not captured (recover before the trail cools): the names/companies of the 6
+LinkedIn connections"* - and an unwritten contact decays exactly the way the
+Mike Holden / Bold Legal route did.
+
+| Date | Contact | Channel | Status | Notes / Next action |
+|---|---|---|---|---|
+| 2026-08-27 | **Zubayr** (surname, organisation and role TO CONFIRM with Bill) | In person; email address now held | 🟢 Re-opened, ours to send | Bumped into him again. He **apologised for not seeing the earlier message**, said Bill is **free to message him again**, and **gave his email**. So the earlier silence was not a decline: a stalled thread has been explicitly reopened by the other side, which is the warmest state in this file short of a signed customer. **Blocked only on facts that were never written down** - who he is, which organisation, and what the original message asked. Nothing in this repo, in the `~/.claude` memory directory, or under `OneDrive/Desktop` names him (searched 2026-08-28). **Next action: Bill supplies those three, then draft and send within 48h** - the cadence note below is explicit that in-person contacts are warmest immediately. |
+
+---
+
 ## Tier 1, Property data aggregators
 
 One deal puts Sky Score into thousands of conveyancing searches. Long sales cycles (3-9 months). Approach: LinkedIn → cold email; reference Riskview / Plansearch noise gap.
