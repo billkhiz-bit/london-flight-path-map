@@ -255,6 +255,41 @@ Red-proven; it names the path. `scripts/preflight.sh` also had the vintage in a
 STAGE LABEL, leaning on "2022/23 is the TERMINAL vintage until ~2027" as the
 reason drift did not matter - the exact claim this roll disproved.
 
+### The flag that skipped eleven gates it had no reason to skip
+
+**Shipped and verified live before this was found**, which is the point: the
+wave above was deployed on the strength of an offline `--skip-e2e` run reading
+`RESULT: PASS`.
+
+`--skip-e2e` was a block wrapper around **fourteen** blocking stages. It printed
+`SKIPPED` for **two**, printed nothing for the other twelve, and then printed a
+bare `RESULT: PASS`. Its own usage line said "skip Playwright (hits the live
+site)".
+
+- **Eleven of the twelve it hid never touch the network.** `local smoke`,
+  `degraded + offline fallbacks`, `locator inset`, `selector tiers`, `every city
+  switches`, `map fits its box`, `UK city panel`, `area pages carry real data`,
+  `layers paint only real data`, `responsive, source` and `WCAG source scan` all
+  serve the WORKING TREE over a local server - and several were *deliberately
+  split* from a live-pointed sibling so they would gate the deploy. Skipping
+  them for "hits the live site" is backwards.
+- **Only three need a network**: the Playwright suite, whose baseURL is
+  CloudFront; the extension e2e, which calls live `/transport` and `/nhs`; and
+  `area pages match the live API`, the only gate in the suite that can see a
+  site/API divergence.
+- **The five it hid hardest are the ones that caught every defect in the tabbed
+  flip** described above. The offline pass taken as evidence the tree was clean
+  had not walked that chrome at all.
+- `net_check()` marks the three per stage rather than wrapping a block, so a
+  skipped stage still prints its own line **in its own position**. A stage that
+  vanishes from a report is indistinguishable from one that passed - which is
+  how twelve went unnoticed. A run with anything skipped now reports
+  `RESULT: PASS (INCOMPLETE - network stages skipped)` and names them.
+
+Report goes from 20 stages to 32, all green. **Audit a flag by what it skips,
+not by its name**: both the name and the comment were accurate once, and the
+stage list grew underneath them.
+
 ### Later still - the trade-mark search that had blocked three workstreams
 
 - **The recorded reason CUBITT33 was "borderline, not clean" dissolved on
