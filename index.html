@@ -7426,9 +7426,26 @@
         flood: 'flood risk',
       };
 
-      function envCaveat(ex, ev) {
-        if (!ex || ev === null) return '';
+      // TAKES A BOROUGH NAME AND LOOKS THE RECORD UP ITSELF, exactly as
+      // getEnvScore() does, because the two must agree about which inputs a
+      // borough has. It first took a record, and the sidebar handed it the
+      // SCORED record from matchBorough() - which never carries the three
+      // CONTINUOUS fields envComponentScores() reads. So `have` was always
+      // empty, `names[0]` was undefined, and every UK borough panel rendered
+      // "undefined only here" beside a correctly-computed score. Shipped
+      // 2026-08-29 and caught by the audit the same day.
+      //
+      // A record argument could always be the wrong record; a name plus a city
+      // can only resolve through the one holder that has the fields.
+      function envCaveat(boroughName, city, ev) {
+        if (ev === null || ev === undefined) return '';
+        const ex = cityOf(city).boroughExtra()[boroughName];
+        if (!ex) return '';
         const have = Object.keys(envComponentScores(ex));
+        // Nothing found means we cannot describe the gap - say nothing rather
+        // than name it wrongly. This is the guard whose absence printed
+        // "undefined": an empty list must exit here, not fall through.
+        if (!have.length) return '';
         if (have.length >= Object.keys(ENV_WEIGHTS).length) return '';
         const names = have.map((f) => ENV_FIELD_LABELS[f] || f);
         const list =
@@ -11010,7 +11027,7 @@
           <span class="score-row-value">${ev}/10</span>`
           }
         </div>
-        <div class="score-explain">Air quality, road noise and flood risk. Weight: <strong>${Math.round(pw.env * 100)}%</strong>${envCaveat(data, ev)}</div>
+        <div class="score-explain">Air quality, road noise and flood risk. Weight: <strong>${Math.round(pw.env * 100)}%</strong>${envCaveat(data.name, currentCity, ev)}</div>
       </div>
     </div>
 

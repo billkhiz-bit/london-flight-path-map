@@ -418,6 +418,7 @@ net_check "area pages match the live API" node tests/area-page-freshness.mjs
 # self-consistent. Fails in BOTH directions: over-painting is an invented
 # default, under-painting is a borough whose data the map cannot find.
 check "layers paint only real data"   node tests/layer-honesty.mjs
+check "panel says what it measured"  node tests/panel-caveat.mjs
 # The blocking half of the responsive audit, against the working tree over the
 # server started above. See the long note on the advisory live run further up.
 # Covers EVERY public page since 2026-08-22, not just the homepage - widening

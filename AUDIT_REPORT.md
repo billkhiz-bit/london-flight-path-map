@@ -133,7 +133,7 @@ Three clusters account for most of it.
 
 | | |
 |---|---|
-| **Verification** | **CONFIRMED** — 4 of 4 verifiers could not refute it |
+| **Verification** | **CONFIRMED** — 5 of 5 verifiers could not refute it |
 | Location | `index.html:11013` |
 | Category | renders-a-value-it-did-not-verify |
 | Found by | Absence rendered as a confident me, Frontend JavaScript correctness in (corroborated by 2 independent finders) |
@@ -152,6 +152,7 @@ Three clusters account for most of it.
 - *? lens* (high confidence, severity called `critical`): Three corrections, none of which weakens the finding: 1. "all 11 UK city-regions" is wrong by one. The site carries 10 UK city-regions plus NYC = 11 cities. The 86 affected boroughs span TEN UK cities (measured: london 33, manchester 10, leicester 8, westmidlands 7, westyorkshire 5, merseyside 5, tyneandwear 5, teesside 5, southyorkshire 4, bristol 4). NYC's 5 are suppressed by the `ev === null` g
 - *? lens* (high confidence, severity called `critical`): Three corrections, none of which weaken the finding: 1. THE SUGGESTED FIX NAMES A BINDING THAT IS NOT IN SCOPE. "use the `extra` that updateSidebar already resolves for the metric cards" is wrong: `const extra = getExtraData(data.name)` at index.html:11035 lives inside an IIFE embedded LATER in the same template literal that line 11013 is part of, so it cannot be referenced at 11013. The concrete 
 - *? lens* (high confidence, severity called `critical`): Three corrections, none of which weaken the finding: 1. THE SUGGESTED FIX AS WRITTEN WOULD THROW. It says to "use the `extra` that updateSidebar already resolves for the metric cards". `extra` is NOT in scope at line 11013: it is `const extra = getExtraData(data.name)` declared at line 11033, inside a later arrow-function IIFE (`${(() => { ... })()}`) embedded in the same template literal, several
+- *? lens* (high confidence, severity called `critical`): Four corrections, none of which weaken the finding: 1. IT IS LIVE, not source-only. The finding describes the source tree. I fetched the deployed CloudFront copy — it is byte-identical to `index.html` at HEAD, and clicking Camden on https://d1oe4ftwutjpf.cloudfront.net renders the broken row today. This is a production defect, not a pre-deploy one. 2. THE FIX IS NOT PURE SUPPRESSION — it restores 
 
 ---
 
@@ -185,7 +186,7 @@ Three clusters account for most of it.
 
 | | |
 |---|---|
-| **Verification** | **CONFIRMED** — 1 of 1 verifiers could not refute it |
+| **Verification** | **CONFIRMED** — 3 of 3 verifiers could not refute it |
 | Location | `.github/workflows/ci.yml:35` |
 | Category | check-that-cannot-fail |
 | Found by | Can any gate report success while  |
@@ -201,6 +202,8 @@ Three clusters account for most of it.
 **Verifier notes.**
 
 - *? lens* (high confidence, severity called `important`): 1. THE SUGGESTED FIX IS INCOMPLETE AND WOULD PRODUCE A NEW RED, NOT A GREEN. Dropping `needs:` from `test-backend` is necessary but not sufficient: CI installs only `pytest pytest-mock boto3` (ci.yml line 41), and the root `tests/` suite has since acquired unguarded third-party imports. Reproduced by simulating that dependency set — `tests/test_empty_source_guards.py` (added 2026-08-21, i.e. AFTER
+- *? lens* (high confidence, severity called `important`): Four corrections; none changes the conclusion, but a fix written from the uncorrected version would misattribute the blocker. 1. SEVERITY: critical -> important. The failure_scenario's "is merged to master with a CI status that looks exactly the same as every other commit" is true of CI but omits that `scripts/preflight.sh` - mandated before every commit by CLAUDE.md - runs both pytest suites (lin
+- *? lens* (high confidence, severity called `important`): 1. TEST COUNT IS STALE. The finding says "the 167-test root `tests/` suite". Collected today: root `tests/` = 254 tests, `backend/tests/` = 358. The 167 figure predates roughly a year of additions and should not be quoted in the fix. 2. "CAN NEVER GO GREEN" IS A POLICY CLAIM, NOT A TECHNICAL ONE, AND ONLY FOR HALF OF IT. The prettier half is genuinely a standing decision (preflight.sh:447-452: a 1
 
 ---
 
@@ -323,7 +326,7 @@ Carried from the 2026-08-21 audit and deliberately NOT re-raised:
 
 ## 5. Finishing the verification
 
-15 of the 48 planned verifications completed. The rest died when the session
+18 of the 48 planned verifications completed. The rest died when the session
 hit its spend limit, which is the failure mode the audit skill documents; the
 survey had been checkpointed to disk first, so no FINDING was lost - only the
 adversarial pass over them.
