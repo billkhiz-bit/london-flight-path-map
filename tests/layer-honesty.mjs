@@ -277,10 +277,53 @@ for (const city of cities) {
   await page.evaluate((c) => switchCountry(c), city.country);
   await page.waitForTimeout(250);
   await page.evaluate((id) => switchCity(id), city.id);
-  await page.waitForTimeout(1800);
+  await page.waitForTimeout(250);
   await page.evaluate((keys) => {
     for (const k of keys) layers[k] = true;
   }, LAYERS.map((l) => l.key));
+
+  // THE SETTLE WAIT BELONGS HERE, AFTER THE TOGGLES, NOT AFTER switchCity.
+  // Setting the layer flags triggers another render, and updateDefraTiles()
+  // opens by resetting aircraftScalePainted to false and CLEARING the tile
+  // group before re-adding it - so a wait placed before this line is undone by
+  // it. Measured with the wait in the wrong place: 3 failures in 6 runs, all
+  // reporting "scale hidden but a dB surface IS painted", which is the freshly
+  // re-added tiles being measured before their own settle. Waiting first and
+  // then re-rendering is waiting for the wrong render.
+  // WAIT FOR THE AIRCRAFT LAYER TO SETTLE BEFORE MEASURING IT.
+  //
+  // Every tile in #us-aircraft-tiles is a remote fetch that removes itself on
+  // error, so the group is populated synchronously and can empty a moment
+  // later. NYC's come from geo.dot.gov, measured at 11.6 s for a metadata call
+  // on 2026-08-29. There are three states, and only two of them are meaningful:
+  //
+  //   settled, painted   images present, scale shown        -> compare
+  //   settled, empty     all tiles errored, scale hidden    -> compare
+  //   IN FLIGHT          images present, scale not yet on   -> meaningless
+  //
+  // The third looks exactly like the defect this file exists to catch, so it
+  // must be waited out rather than measured. A fixed sleep cannot do it (this
+  // file used waitForTimeout(1800) and went red in one full preflight run while
+  // passing on identical source either side), and NEITHER CAN A STABLE TILE
+  // COUNT - pending tiles hold a perfectly stable count for as long as they are
+  // pending. That was the first attempt at this fix and it still failed 2 runs
+  // in 4. networkidle is the only instrument here that sees a request which has
+  // not come back yet.
+  //
+  // Deliberately NOT read: `aircraftScalePainted`. Taking the settle signal
+  // from the flag under test is the trap this file avoids everywhere else, and
+  // is why the check below reads the DOM.
+  //
+  // A timeout is REPORTED, never swallowed - the reading that follows would be
+  // early, and a quiet catch would turn this gate's own uncertainty into a
+  // confident measurement, which is the defect class the file exists to catch.
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 45000 });
+  } catch {
+    console.log(
+      `  ~ ${city.id}: network still busy after 45s - the aircraft reading below may be early`
+    );
+  }
   await page.waitForTimeout(400);
 
   const measured = await page.evaluate((layerDefs) => {
@@ -316,7 +359,13 @@ for (const city of cities) {
     const tiles = document.getElementById('us-aircraft-tiles');
     const hasRaster = Boolean(
       (img && (img.getAttribute('href') || img.getAttribute('xlink:href'))) ||
-        (tiles && tiles.querySelectorAll('image').length > 0)
+        // image[data-loaded], not image. A tile element whose href has not come
+        // back yet paints NOTHING, so counting elements reports a surface that
+        // is not on the map - which is the very thing this check exists to
+        // catch, made by the checker. The attribute is set in the tile's own
+        // onload, so it is per-tile ground truth about the DOM and not the
+        // `aircraftScalePainted` flag this file deliberately refuses to read.
+        (tiles && tiles.querySelectorAll('image[data-loaded]').length > 0)
     );
     const scale = document.getElementById('legend-noise-scale');
     const scaleShown = Boolean(scale) && getComputedStyle(scale).display !== 'none';

@@ -39,9 +39,16 @@ Effect: median environment **8.00 -> 6.65**, mean -1.16, worst -2.10
 ranking artefact is **gone** - top ten all fully measured, Teesside now 12, 21,
 35, 47, 55. Coverage 85 `measured` / 5 `partial` / 9 `unavailable`. The three
 ramps and the floor gained their **first direct unit tests** - v3.9 shipped six
-env functions with none between them. **SOURCE ONLY, NOT DEPLOYED**: the 99 area
-pages bake their scores, so the backend must ship before `area-page-freshness`
-can go green - the same ordering the 28 Aug P8 roll had to respect.)
+env functions with none between them. **COMMITTED (`34e1a93`), PUSHED AND DEPLOYED
+THE SAME DAY.** Backend first via SAM, because the 99 area pages bake their
+scores and `area-page-freshness` cannot go green until the Lambda serves v4.0 -
+the same ordering the 28 Aug P8 roll had to respect, and the one gate that
+inverts "preflight, then commit". Verified from the ORIGIN rather than a deploy
+exit code: `/v1/regions` reports `methodologyVersion: 4.0`, drift **0 of 16**,
+`index.html` sha256 matches source, **99 of 99 area pages match the live API**,
+and the three coverage tiers were spot-checked on the deployed API - Cardiff
+`unavailable`, Middlesbrough `partial`, Camden `measured`. **Full preflight with
+NOTHING skipped: all 32 stages.** Weights confirmed by Bill at 0.45/0.35/0.20.)
 
 
 **Previously reviewed:** 2026-08-27 (**A FIELD ONLY ITS PRODUCER READ, AND A GATE

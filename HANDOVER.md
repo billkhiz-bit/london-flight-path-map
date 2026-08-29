@@ -5,17 +5,23 @@ laptop, or starting a fresh session on this desktop.
 
 ---
 
-## 1a. METHODOLOGY v4.0 IN THE WORKING TREE, UNCOMMITTED AND UNDEPLOYED, 2026-08-29
-
-**Read this before anything else.** The tree is NOT clean and the table in §1
-below describes the state before this wave.
+## 1a. METHODOLOGY v4.0 SHIPPED AND DEPLOYED, 2026-08-29
 
 | | |
 |---|---|
-| Working tree | **~110 files modified, NOT committed** |
-| Deploy | **NOT deployed.** Source is ahead of production |
-| Preflight | `--skip-e2e`: **29 PASS, 3 skipped** (the three that need the network) |
-| Open decision | The env **weights and ramp** - Bill asked to see options before committing to them |
+| Commit | **`34e1a93`**, pushed; `master` level with `origin/master` |
+| Backend | **DEPLOYED** via SAM. `/v1/regions` reports `methodologyVersion: 4.0` |
+| Web | **DEPLOYED** - `index.html`, `borough-extra.json`, `sw.js` v1.0.35, 99 area pages, sitemap. Invalidation `I1WETPASHZENQKIIFHGO65NH4Y` **waited to completion** |
+| Verified from the ORIGIN | drift **0 of 16**, `index.html` sha256 matches source, **99 of 99 area pages match the live API** |
+| Weights | **0.45 / 0.35 / 0.20 confirmed by Bill** - decision closed |
+
+Live spot-check of the three coverage tiers, against the deployed API:
+
+| Borough | `env` | `environmentResolution` |
+|---|---|---|
+| Cardiff | absent | `unavailable - 1/3 inputs measured, too few to publish` |
+| Middlesbrough | 6.3 | `partial - 2/3 inputs measured` |
+| Camden | 4.4 | `measured` |
 
 **What it is.** Road noise becomes the third scored `environment` input:
 air quality 0.45 / road noise 0.35 / flood 0.20. It was the last input that was

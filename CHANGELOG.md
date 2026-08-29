@@ -30,6 +30,55 @@ re-composes the component, it does not re-cut the top-level split.
   scoring 10 would be one where no address is over it - reachable in a rural
   district, by none of the urban boroughs covered today.
 
+### NYC showed a decibel scale over an empty map, and the gate was intermittent
+
+Found by the post-deploy preflight, which went red on `layers paint only real
+data` for NYC alone. **Pre-existing, unrelated to the road-noise work above, and
+the aircraft sibling of the three fill layers fixed on 2026-08-11.**
+
+**NYC's aircraft tiles are a REMOTE fetch** from `geo.dot.gov`, measured at
+**11.6 s** for a single metadata call on 2026-08-29. Each tile carries
+`img.onerror = function () { this.remove(); }`, so a failed tile deletes itself
+and the group can be empty a moment after it was populated. Meanwhile
+`aircraftScalePainted = true` was set on the line **immediately after calling**
+the renderer, before a single tile had loaded or failed. So whenever the upstream
+was slow, every tile removed itself and NYC rendered a confident **five-band
+decibel scale over nothing**. Measured: tile count 2 at ~200 ms, 0 from 400 ms
+onward, still 0 after networkidle, scale shown throughout.
+
+- **The flag recorded that the renderer had been CALLED**, which is the
+  "measure the DOM, not the flag" defect in its purest form. It is now set from
+  the settle outcome, and `markLayerCoverage()` - which already knew how to hide
+  the scale and append "(NO DATA)" - does the rest. A generation token stops a
+  late settle relabelling a city the user has since switched away from.
+- **A hung tile must not hold the legend hostage.** A request that returns
+  neither an image nor an error fires neither handler, so the completion counter
+  would never finish and the scale would stay hidden for ever. There is a 20 s
+  deadline that reports what is actually on the map instead.
+
+**Three wrong fixes were tried and measured before the right one**, and each
+failure named the next problem:
+
+1. *A fixed sleep races a network fetch.* The gate waited `waitForTimeout(1800)`,
+   which is why it had been passing intermittently rather than failing honestly.
+2. *A stable count is not a settled one.* Waiting until the tile count stopped
+   changing still failed 2 runs in 4 - **pending tiles hold a perfectly stable
+   count for as long as they are pending**.
+3. *Waiting before the toggles waits for the wrong render.* Setting the layer
+   flags calls `updateDefraTiles()` again, which resets the flag and clears the
+   tile group, undoing any wait placed before it. 3 failures in 6.
+4. **An `<image>` element is not a painted surface.** The gate counted elements,
+   so a tile whose href had not come back was counted as a surface on the map -
+   the checker committing the exact error it exists to catch. Tiles now mark
+   themselves `data-loaded` in their own `onload` and both sides count those.
+   Per-tile ground truth about the DOM, not the flag under test.
+
+**8 consecutive green runs after the fix**, against 2-3 failures in every 6
+before it, and **proven red in both directions**: deliberately, by pointing the
+tiles at a dead host while forcing the flag true ("scale SHOWN but a dB surface
+is NOT painted"); and organically during the iteration above, which produced
+"scale hidden but a dB surface is painted" repeatedly.
+
 ### A recorded constraint that was not one
 
 **Leicester and Teesside carried no road-noise or flood band, and `CLAUDE.md`,

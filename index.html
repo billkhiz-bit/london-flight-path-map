@@ -8105,6 +8105,9 @@
       // trusting a registry string. A prediction has to be remembered when the
       // eight remaining DEFRA coverages are sampled; a measurement does not.
       let aircraftScalePainted = false;
+      // Bumped on every aircraft-tile render so a settle callback that arrives
+      // after the user has switched city cannot relabel the new city's legend.
+      let aircraftTileGeneration = 0;
 
       // DEFRA_WMS removed 2026-08-03. It was declared and never read: one
       // occurrence in the whole file, its own declaration. The live aircraft
@@ -8609,7 +8612,7 @@
         return { lonMin, lonMax, latMin, latMax };
       }
 
-      function renderTileGrid(containerId, baseUrl, minLat, minLon, maxLat, maxLon) {
+      function renderTileGrid(containerId, baseUrl, minLat, minLon, maxLat, maxLon, onSettle) {
         const container = document.getElementById(containerId);
         if (!container) return;
         // Clear previous tiles
@@ -8622,6 +8625,40 @@
 
         const tl = latLonToTile(maxLat, minLon, z);
         const br = latLonToTile(minLat, maxLon, z);
+
+        // ONSETTLE EXISTS BECAUSE APPENDING A TILE IS NOT PAINTING ONE.
+        // Every <image> here is a remote fetch, and each one removes itself on
+        // error, so the container is populated synchronously and can be empty a
+        // moment later. NYC's tiles come from geo.dot.gov, measured at 11.6 s
+        // for a metadata call on 2026-08-29 - slow enough that the caller's
+        // "the surface is painted" assumption was routinely false. onSettle
+        // fires once every appended tile has loaded or failed, with the number
+        // that SURVIVED, so a caller can report what is on the map rather than
+        // what it asked for.
+        let pending = 0;
+        let survived = 0;
+        let settled = 0;
+        let reported = false;
+        const report = (n) => {
+          if (reported) return;
+          reported = true;
+          if (onSettle) onSettle(n);
+        };
+        const settle = (ok) => {
+          if (ok) survived += 1;
+          settled += 1;
+          if (settled === pending) report(survived);
+        };
+        // A HUNG TILE MUST NOT HOLD THE LEGEND HOSTAGE. A request that returns
+        // neither an image nor an error fires neither handler, so `settled`
+        // never reaches `pending` and the scale would stay hidden for ever even
+        // once its neighbours had painted. After the deadline, report what is
+        // actually ON THE MAP - tiles that have loaded - rather than what was
+        // asked for. Chosen over a shorter wait because geo.dot.gov was
+        // measured at 11.6 s for a single metadata call on 2026-08-29.
+        setTimeout(() => {
+          report(container.querySelectorAll('image[data-loaded]').length);
+        }, 20000);
 
         for (let tx = tl.x; tx <= br.x; tx++) {
           for (let ty = tl.y; ty <= br.y; ty++) {
@@ -8637,12 +8674,27 @@
             img.setAttribute('height', svgBR[1] - svgTL[1]);
             img.setAttribute('preserveAspectRatio', 'none');
             img.style.pointerEvents = 'none';
+            // A tile that 404s or times out deletes itself, so the container
+            // can end up EMPTY long after this function returned. Callers used
+            // to assume otherwise - see the onSettle contract below.
             img.onerror = function () {
               this.remove();
+              settle(false);
             };
+            img.onload = function () {
+              // AN <image> ELEMENT IS NOT A PAINTED SURFACE. Until the href
+              // comes back it occupies the DOM and paints nothing, so anything
+              // counting elements over-reports. This marks the ones that
+              // actually arrived; tests/layer-honesty.mjs counts these.
+              this.setAttribute('data-loaded', '1');
+              settle(true);
+            };
+            pending += 1;
             container.appendChild(img);
           }
         }
+        // No tile was projectable at all, so nothing will ever settle.
+        if (pending === 0 && onSettle) onSettle(0);
       }
 
       function updateDefraTiles() {
@@ -8697,8 +8749,34 @@
         if (isNyc) {
           // NYC still uses XYZ slippy tiles, which DO need re-rendering on
           // pan/zoom for new tiles to load at the current viewport.
-          renderTileGrid('us-aircraft-tiles', US_MAP_SERVICES.aircraft.url, minLat, minLon, maxLat, maxLon);
-          aircraftScalePainted = true;
+          //
+          // THE FLAG IS SET FROM THE OUTCOME, NOT FROM THE REQUEST. It used to
+          // read `aircraftScalePainted = true` on the line below this call,
+          // before a single tile had loaded - so whenever geo.dot.gov was slow
+          // or erroring, every tile removed itself and NYC rendered a confident
+          // FIVE-BAND DECIBEL SCALE over an empty map. Measured 2026-08-29:
+          // tile count 2 at ~200 ms, 0 from 400 ms onward and still 0 after
+          // networkidle, with the scale shown throughout. Same defect class as
+          // the three fill layers fixed on 2026-08-11, in their aircraft
+          // sibling, and it survived because the flag recorded that the
+          // renderer had been CALLED.
+          //
+          // tests/layer-honesty.mjs reads the DOM rather than this flag, which
+          // is why it could see the divergence at all; it was passing
+          // intermittently only because a fixed 1800 ms sleep sometimes
+          // measured before the tiles gave up.
+          const generation = ++aircraftTileGeneration;
+          renderTileGrid(
+            'us-aircraft-tiles',
+            US_MAP_SERVICES.aircraft.url,
+            minLat, minLon, maxLat, maxLon,
+            (painted) => {
+              // A later render owns the legend now - do not relabel it.
+              if (generation !== aircraftTileGeneration) return;
+              aircraftScalePainted = painted > 0;
+              markLayerCoverage();
+            }
+          );
         } else if (currentCity === 'london') {
           // LONDON ONLY, and the guard is new (2026-08-11). This branch used to
           // be a bare `else`, so every non-NYC city fetched
