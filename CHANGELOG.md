@@ -1,5 +1,114 @@
 # Changelog
 
+## 2026-08-29 - the last display-only input, and a constraint that was never one
+
+**Road noise had been derived for every covered city since 2026-08-11, drawn as
+a map fill layer, reported by `/v1/environment` - and nothing scored it.** It
+was the last input in that state, in a component whose other two had been wired
+in three days earlier. Methodology v4.0 makes `environment` air quality 0.45 /
+road noise 0.35 / flood 0.20. The persona weights are untouched: this
+re-composes the component, it does not re-cut the top-level split.
+
+- **The obvious continuous field is the wrong one.** Two are derived beside the
+  band, and `roadNoiseLdenMedian` looks the more plottable. Measured: 41 distinct
+  values across 73 boroughs against `roadNoiseAboveWhoPct`'s 69, over an
+  interquartile range of **1.7 dB** - a borough-wide median of a 10 m raster
+  averages the quiet streets into the arterials. They correlate at 0.931, the
+  same signal very differently resolved, and ramping the median 53->63 dB clamps
+  **19 of 73 boroughs to a perfect 10**. This is the v3.9 lesson one level down:
+  that wave rejected the three-band summary because 68.1% shared the modal band,
+  and the median dB is a *second* over-collapse hiding behind a plausible-looking
+  continuous number. **"Continuous" was never the criterion; discrimination was.**
+- **Both ends of the ramp are the natural limits of a share**, and the threshold
+  defining the share is WHO's 53 dB Lden road guideline, not ours. Zeroing at the
+  `high` band cut of 66.7% - mirroring what flood does with its own cut - was
+  measured and rejected: it clamps 11 of 73 to 0. Flood can use its band cut
+  because its distribution is crushed toward zero (median 1.05%); road's median
+  is 55.5%, the opposite shape, so the same choice is wrong here.
+- **The observed range is 0.44-6.77 and the empty top of the scale is not a bug.**
+  WHO's guideline is strict and most urban English addresses exceed it. A borough
+  scoring 10 would be one where no address is over it - reachable in a rural
+  district, by none of the urban boroughs covered today.
+
+### A recorded constraint that was not one
+
+**Leicester and Teesside carried no road-noise or flood band, and `CLAUDE.md`,
+`METHODOLOGY.md` and audit finding I6 all recorded that as a property of the
+data.** It was not. `fetch_defra_road_noise.py` and `fetch_ea_flood_risk.py` are
+both per-city against **England-wide** coverages, both cities are in England,
+both have boundary files, and neither appeared in `NO_ROAD_COVERAGE` or
+`NO_FLOOD_COVERAGE`. The rasters had simply never been fetched for the two
+cities that joined on 2026-08-11. **A measurement recorded without its cause
+reads as a constraint** - the sibling of "re-measure a recorded blocker", which
+this repo has now paid for four times.
+
+Three of four fetches landed. **Teesside's flood raster did not**: one tile of
+eight (the Boulby coastal corner of Redcar and Cleveland, largely North Sea)
+renders blank on every attempt across 8 tries, and the fetcher correctly refuses
+to cache it - *"a blank render is an outage, not a risk-free area"*, the guard
+added for audit C11. A near-all-sea tile and a tile the WMS failed to draw are
+indistinguishable to that guard, so Teesside is `partial` (2 of 3) rather than
+`measured`. **The guard is right and was left alone**; forcing it would
+reintroduce exactly the defect it exists for.
+
+### The floor rose to two, and the documented mitigation did not exist
+
+Adding road noise lowers every borough that HAS road data and leaves untouched
+every borough that does not - **so a borough missing an input rises through the
+table by standing still**. Measured at the old floor of one: the then-13
+single-input boroughs would have moved from a median rank of 41 to **9 of 86**,
+and from 3 of the top 20 to **10 of the top 20**, with Teesside holding the top
+four places outright on one input of three.
+
+- **`env_single_input()` could not be leaned on, because it has no consumer and
+  never had.** Published as `context.environmentSingleInput`, read by nothing -
+  not the site, not the area pages, not the extension; the only other reference
+  in the tree is a unit test asserting it is `false`. Its own docstring said it
+  existed "so ranking surfaces can exclude them", and no ranking surface did.
+  Third instance of the `lineStatusAvailable` shape in three days: **a field
+  only its producer reads is not a fix**, and a mitigation that was never wired
+  cannot justify the floor that depends on it.
+- **It is now literal to its name.** `0 < len(scores) < len(_ENV_FIELDS)` agreed
+  with the name only by arithmetic accident at two declared fields; at three it
+  would report `true` for a borough with **two** measured inputs.
+- **The fetches made the floor nearly free.** It excludes Cardiff's four
+  boroughs - Wales genuinely has no English road or flood coverage, as it has no
+  Progress 8 - rather than the seventeen it would have cost without them.
+- **The site's partial caveat is MEASURED, not asserted.** It read
+  `data.floodMediumOrHighPct === undefined` and printed "air quality only here" -
+  true while flood was the only input that could be absent, and wrong in both
+  directions at three: silent for a borough missing ROAD, and claiming "air
+  quality only" for one with air and road. `envCaveat()` names the inputs we DO
+  have, and `envComponentScores()` is extracted as the single holder so the
+  caveat and the score cannot disagree.
+
+### Effect, and the tests that should have existed
+
+Median environment **8.00 -> 6.65** over the 86 boroughs scored under both
+versions; mean -1.16, largest fall -2.10 (Darlington), largest rise **+0.50**
+(Sefton), 81 fell / 4 rose / 1 unchanged. The fall is new information rather
+than a re-basing - it is what counting a real adverse exposure looks like the
+first time, and four boroughs rising is the component discriminating rather than
+applying a penalty. **The ranking artefact is gone**: the top ten are now all
+fully-measured boroughs, and Teesside sits at 12, 21, 35, 47 and 55.
+
+Coverage across the Lambda's 99: **85 `measured`, 5 `partial`, 9 `unavailable`**
+(NYC 5, Cardiff 4).
+
+**The three ramps and the floor gained their first direct unit tests.** v3.9
+shipped `aq_to_score`, `flood_to_score`, `env_weights_for`,
+`env_component_scores`, `env_resolution` and `env_single_input` with no unit test
+between them, reachable only through `resolve_query` - so a ramp could be
+rewritten and only a borough-level assertion elsewhere would notice.
+`EnvironmentComponentTests` adds 18 cases covering all three ramps' published
+anchors, the clamps, the isinstance guards, proportional redistribution and both
+sides of the floor.
+
+Also: the 99 area pages are rebuilt (they bake their scores), and a stale
+comment claiming `plannedComponents` "still names" the DEFRA Daily Air Quality
+Index is corrected - that entry left `plannedComponents` at v3.9, three days
+before the comment was read.
+
 ## 2026-08-27 - a field only its producer read, and a gate nothing ran
 
 **The transport panel rendered an upstream outage as a clean network.** The

@@ -2,7 +2,49 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-08-27 (**A FIELD ONLY ITS PRODUCER READ, AND A GATE
+**Last reviewed:** 2026-08-29 (**THE LAST DISPLAY-ONLY INPUT, AND A CONSTRAINT
+THAT WAS NEVER ONE.** Methodology **v4.0**: road noise becomes the third scored
+`environment` input, at air quality 0.45 / road noise 0.35 / flood 0.20. Persona
+weights are untouched - this re-composes the component, not the top-level split.
+Road noise had been derived for every covered city since 2026-08-11, drawn as a
+map layer and reported by `/v1/environment`, and **nothing scored it**; it was
+the last input in that state, in a component whose other two were wired in three
+days earlier. **The measured-but-display-only category is now empty.** *The
+obvious continuous field was the wrong one*: `roadNoiseLdenMedian` looks the
+plottable one but carries **41 distinct values across 73 boroughs over an IQR of
+1.7 dB** against the share's 69 over 13.4 points - a borough median of a 10 m
+raster averages the quiet streets into the arterials - and ramping it 53->63 dB
+clamps **19 of 73 to a perfect 10**. They correlate at 0.931: same signal, worse
+resolution. This is the v3.9 band lesson one level down, and **"continuous" was
+never the criterion - discrimination was.** *The Leicester/Teesside gap was an
+unrun script*: `CLAUDE.md`, `METHODOLOGY.md` and audit **I6** all recorded "0/8
+and 0/5 carry neither" as a property of the DATA, when both fetchers are
+per-city against **England-wide** coverages, both cities are in England, and
+**neither was ever in `NO_ROAD_COVERAGE` or `NO_FLOOD_COVERAGE`**. The rasters
+had simply never been fetched for the two cities added on 2026-08-11. Three of
+four landed; Teesside's flood is held by ONE near-all-sea tile that renders
+blank, which the audit-C11 guard rightly refuses to cache - **the guard is right
+and was left alone**. *A measurement recorded without its cause reads as a
+constraint*, which is a new variant of the recorded-findings failure and its
+seventh instance. *The floor rose from 1 input to 2*, on a measurement: adding
+road lowers every borough that HAS it and leaves the rest standing still, so at
+a floor of 1 the 13 missing-data boroughs would have gone from median rank 41 to
+**9 of 86**, Teesside taking the top four on one input of three.
+**`env_single_input()` could not be the mitigation - it is published as
+`environmentSingleInput` and read by NOTHING**, the only other reference being a
+test asserting it is `false`; third instance of the `lineStatusAvailable` shape
+in three days. It is now literal to its name, having previously fired for 2-of-3.
+Effect: median environment **8.00 -> 6.65**, mean -1.16, worst -2.10
+(Darlington), best **+0.50** (Sefton), 81 fell / 4 rose / 1 unchanged; the
+ranking artefact is **gone** - top ten all fully measured, Teesside now 12, 21,
+35, 47, 55. Coverage 85 `measured` / 5 `partial` / 9 `unavailable`. The three
+ramps and the floor gained their **first direct unit tests** - v3.9 shipped six
+env functions with none between them. **SOURCE ONLY, NOT DEPLOYED**: the 99 area
+pages bake their scores, so the backend must ship before `area-page-freshness`
+can go green - the same ordering the 28 Aug P8 roll had to respect.)
+
+
+**Previously reviewed:** 2026-08-27 (**A FIELD ONLY ITS PRODUCER READ, AND A GATE
 NOTHING RAN.** `/transport` has published `lineStatusAvailable` since the 24 Aug
 wave so a caller can tell a TfL outage from a quiet network - and **no surface
 read it**, so a 403 on the Status route rendered as NO SECTION AT ALL: stations

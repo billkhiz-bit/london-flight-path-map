@@ -7324,9 +7324,10 @@
         return Math.round(sum * 10) / 10;
       }
 
-      // Environment composite (methodology v3.9, 2026-08-26). Air quality +
-      // flood risk, the two datasets that were derived for every city on
-      // 2026-08-11 and drawn on the map ever since without entering any score.
+      // Environment composite (methodology v4.0, 2026-08-29). Air quality +
+      // road noise + flood risk. Road noise was the LAST measured input that
+      // was only ever drawn - it colours a map layer and is reported by
+      // /v1/environment, and until now nothing scored it.
       //
       // MUST STAY EQUIVALENT TO get_env_score() IN THE SCORE LAMBDA. The site
       // scores client-side and /v1/score scores server-side; a difference here
@@ -7335,22 +7336,31 @@
       //
       // Reads the CONTINUOUS fields, not the three-band summaries beside them.
       // The bands exist to colour the map and are far too coarse to score:
-      // 68.1% of boroughs share the modal air band. Both ramps are anchored on
-      // PUBLISHED thresholds rather than the observed range - WHO 2021
-      // guideline to the UK legal limit for NO2 (40 ug/m3 = 4x the guideline),
-      // and 0% to the 10% EA Medium-or-High share that METHODOLOGY 7.1 already
-      // uses as its `high` cut. A cohort-relative scale could never answer
-      // "all of them are bad", which is the answer that would matter most.
-      const ENV_WEIGHTS = { airQuality: 0.65, flood: 0.35 };
+      // 68.1% of boroughs share the modal air band. All three ramps are
+      // anchored on PUBLISHED thresholds rather than the observed range - WHO
+      // 2021 guideline to the UK legal limit for NO2 (40 ug/m3 = 4x the
+      // guideline); 0% to 100% of addresses over WHO 2018's 53 dB Lden road
+      // guideline; and 0% to the 10% EA Medium-or-High share that METHODOLOGY
+      // 7.1 already uses as its `high` cut. A cohort-relative scale could never
+      // answer "all of them are bad", which is the answer that would matter
+      // most.
+      //
+      // ROAD NOISE READS roadNoiseAboveWhoPct, NOT roadNoiseLdenMedian. The
+      // median dB looks like the plottable one and is not: 41 distinct values
+      // across 73 boroughs against the share's 69, over an interquartile range
+      // of 1.7 dB. They correlate at 0.931 - same signal, worse resolution.
+      const ENV_WEIGHTS = { airQuality: 0.45, roadNoise: 0.35, flood: 0.2 };
       const AQ_GUIDELINE_RATIO = 1.0;
       const AQ_LEGAL_LIMIT_RATIO = 4.0;
       const FLOOD_HIGH_PCT = 10.0;
-      // ONE measured input is enough to publish, unlike liveability's two. See
-      // the _ENV_MIN_FIELDS comment in the Lambda for why, and for the risk it
-      // accepts: the 13 single-input boroughs are Leicester's 8 and Teesside's
-      // 5, and the input they lack is plausibly the one they would score worst
-      // on. environmentSingleInput flags them for ranking surfaces.
-      const ENV_MIN_FIELDS = 1;
+      const ROAD_FULL_EXPOSURE_PCT = 100.0;
+      // TWO measured inputs, raised from one on 2026-08-29 when road noise made
+      // this a three-input component. See the _ENV_MIN_FIELDS comment in the
+      // Lambda for the measurement: at a floor of one, the boroughs MISSING
+      // road data rise through the national table purely by standing still
+      // while every measured borough falls - median rank 41 -> 9 of 86, and
+      // Teesside taking the top four places on one input of three.
+      const ENV_MIN_FIELDS = 2;
 
       function aqToScore(ratio) {
         const span = AQ_LEGAL_LIMIT_RATIO - AQ_GUIDELINE_RATIO;
@@ -7361,24 +7371,71 @@
         return Math.max(0, Math.min(10, 10 * (1 - pct / FLOOD_HIGH_PCT)));
       }
 
-      function getEnvScore(boroughName, city) {
-        const ex = cityOf(city).boroughExtra()[boroughName];
-        if (!ex) return null;
+      // No address over the WHO road guideline is 10; every address over it is
+      // 0. The observed range is 0.44-6.77 and the empty top of the scale is a
+      // true statement about urban England, not a scale to rebase.
+      function roadToScore(pct) {
+        return Math.max(0, Math.min(10, 10 * (1 - pct / ROAD_FULL_EXPOSURE_PCT)));
+      }
+
+      // Mirrors env_component_scores() in the score Lambda. ONE holder for
+      // "which inputs does this borough actually have", because getEnvScore()
+      // and envCaveat() both need the answer and two copies of that list is
+      // how a caveat comes to disagree with the score beside it.
+      function envComponentScores(ex) {
         const scores = {};
         // typeof, not != null: these arrive from JSON and a string would score
         // silently and wrongly through the arithmetic below.
         if (typeof ex.airQualityWhoRatio === 'number')
           scores.airQuality = aqToScore(ex.airQualityWhoRatio);
+        if (typeof ex.roadNoiseAboveWhoPct === 'number')
+          scores.roadNoise = roadToScore(ex.roadNoiseAboveWhoPct);
         if (typeof ex.floodMediumOrHighPct === 'number')
           scores.flood = floodToScore(ex.floodMediumOrHighPct);
+        return scores;
+      }
+
+      function getEnvScore(boroughName, city) {
+        const ex = cityOf(city).boroughExtra()[boroughName];
+        if (!ex) return null;
+        const scores = envComponentScores(ex);
         const fields = Object.keys(scores);
         if (fields.length < ENV_MIN_FIELDS) return null;
         // Proportional redistribution over what is present, as liveWeightsFor
-        // does - so the declared 65/35 keeps its meaning when one input is
-        // absent rather than the survivor being promoted to a different one.
+        // does - so the declared 45/35/20 keeps its meaning when one input is
+        // absent rather than the survivors being promoted to a different one.
         const total = fields.reduce((a, f) => a + ENV_WEIGHTS[f], 0);
         const sum = fields.reduce((a, f) => a + scores[f] * (ENV_WEIGHTS[f] / total), 0);
         return Math.round(sum * 10) / 10;
+      }
+
+      // The partial-environment caveat, MEASURED from the record rather than
+      // asserted. It used to read `data.floodMediumOrHighPct === undefined` and
+      // print "air quality only here" - true while flood was the only input
+      // that could be absent, and wrong in both directions the moment road
+      // noise made three: it would stay silent for a borough missing ROAD, and
+      // claim "air quality only" for one that has air and road but no flood.
+      //
+      // Naming the inputs we DO have, rather than the ones we do not, is the
+      // markLayerCoverage() principle: a string describing data availability is
+      // a liability, so derive it. This one removes itself the moment a city
+      // gains the coverage it lacks, with nobody having to remember.
+      const ENV_FIELD_LABELS = {
+        airQuality: 'air quality',
+        roadNoise: 'road noise',
+        flood: 'flood risk',
+      };
+
+      function envCaveat(ex, ev) {
+        if (!ex || ev === null) return '';
+        const have = Object.keys(envComponentScores(ex));
+        if (have.length >= Object.keys(ENV_WEIGHTS).length) return '';
+        const names = have.map((f) => ENV_FIELD_LABELS[f] || f);
+        const list =
+          names.length > 1
+            ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+            : names[0];
+        return ` &middot; ${list} only here, so not comparable with a fully-measured borough`;
       }
 
       const IMPACT_TO_QUIET = {
@@ -10875,11 +10932,7 @@
           <span class="score-row-value">${ev}/10</span>`
           }
         </div>
-        <div class="score-explain">Air quality and flood risk. Weight: <strong>${Math.round(pw.env * 100)}%</strong>${
-          data.floodMediumOrHighPct === undefined && ev !== null
-            ? ' &middot; air quality only here, so not comparable with a fully-measured borough'
-            : ''
-        }</div>
+        <div class="score-explain">Air quality, road noise and flood risk. Weight: <strong>${Math.round(pw.env * 100)}%</strong>${envCaveat(data, ev)}</div>
       </div>
     </div>
 

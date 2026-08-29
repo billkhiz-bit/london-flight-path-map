@@ -5,6 +5,62 @@ laptop, or starting a fresh session on this desktop.
 
 ---
 
+## 1a. METHODOLOGY v4.0 IN THE WORKING TREE, UNCOMMITTED AND UNDEPLOYED, 2026-08-29
+
+**Read this before anything else.** The tree is NOT clean and the table in §1
+below describes the state before this wave.
+
+| | |
+|---|---|
+| Working tree | **~110 files modified, NOT committed** |
+| Deploy | **NOT deployed.** Source is ahead of production |
+| Preflight | `--skip-e2e`: **29 PASS, 3 skipped** (the three that need the network) |
+| Open decision | The env **weights and ramp** - Bill asked to see options before committing to them |
+
+**What it is.** Road noise becomes the third scored `environment` input:
+air quality 0.45 / road noise 0.35 / flood 0.20. It was the last input that was
+derived, drawn on the map and reported by `/v1/environment` while nothing scored
+it. Persona weights are untouched - this re-composes the component, not the
+top-level split. Full detail in `CHANGELOG.md`, `METHODOLOGY.md` §4.7 and the
+memory `project-road-noise-scored-v40-2026-08-29`.
+
+**Three things that will save you re-deriving them.**
+
+1. **Score `roadNoiseAboveWhoPct`, never `roadNoiseLdenMedian`.** The median dB
+   looks like the plottable one and carries **41 distinct values over an IQR of
+   1.7 dB** against the share's 69 over 13.4 points. They correlate at 0.931 -
+   same signal, worse resolution.
+2. **Use `build_borough_bands.py --write --write-lambda`, NOT `--sync-lambda`.**
+   Sync copies from `borough-extra.json`, which **skips backend-only Cardiff and
+   Nottingham**, so Nottingham would silently miss road noise. Each derive is a
+   2.7M-row NSPL scan, several minutes.
+3. **The env ramps had no direct unit tests before this wave.**
+   `EnvironmentComponentTests` in `backend/tests/test_score.py` adds 18.
+
+**The one thing that did not finish.** Teesside's flood raster is one tile short
+of eight: the Boulby coastal corner of Redcar and Cleveland, largely North Sea,
+renders blank on all 8 attempts, and `fetch_ea_flood_risk.py` refuses to cache a
+blank render (the audit **C11** guard - *"a blank render is an outage, not a
+risk-free area"*). **The guard is right and was deliberately left alone.**
+Teesside publishes `partial` on two real inputs, which is the honest outcome.
+The proper fix is teaching the tiler to skip a tile containing no postcodes -
+a change to a data-integrity guard, so it wants review rather than a quick patch.
+
+**Deploy order, and it matters.** The 99 area pages BAKE their scores, so
+`tests/area-page-freshness.mjs` stays red until the Lambda serves v4.0 - the same
+ordering the 28 Aug Progress 8 roll had to respect, and the one gate that inverts
+"preflight, then commit".
+
+1. `sam build && sam deploy` (backend first).
+2. `make web-deploy-all` - `index.html`, the 99 area pages,
+   `data/borough-extra.json`, and `sw.js` (bumped to **v1.0.35**; without it a
+   returning visitor keeps a v3.9 shell and renders two inputs while the API
+   answers three). **`export MSYS_NO_PATHCONV=1`** before any invalidation.
+3. Re-run the three skipped gates: Playwright e2e, extension e2e, area-page
+   freshness.
+
+---
+
 ## 1. State at handover
 
 Everything is committed, pushed and deployed. Nothing is running.

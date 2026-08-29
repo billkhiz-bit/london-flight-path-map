@@ -2817,7 +2817,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin1kmPct": 68.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.5,
+      "roadNoiseAboveWhoPct": 46.7,
+      "roadNoiseCoverage": 96.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "low",
+      "floodMediumOrHighPct": 1.13,
+      "floodCoverage": 97.3,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Blaby": {
       "crimeRate": 59.2,
@@ -2831,7 +2840,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 36.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.1,
+      "roadNoiseAboveWhoPct": 50.8,
+      "roadNoiseCoverage": 98.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.4,
+      "floodCoverage": 98.9,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Charnwood": {
       "crimeRate": 67.9,
@@ -2845,7 +2863,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 39.9,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.6,
+      "roadNoiseAboveWhoPct": 35.3,
+      "roadNoiseCoverage": 95.6,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "medium",
+      "floodMediumOrHighPct": 2.53,
+      "floodCoverage": 96.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Harborough": {
       "crimeRate": 44.4,
@@ -2859,7 +2886,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 19.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.7,
+      "roadNoiseAboveWhoPct": 38.5,
+      "roadNoiseCoverage": 91.7,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.14,
+      "floodCoverage": 99.2,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Hinckley and Bosworth": {
       "crimeRate": 59.5,
@@ -2873,7 +2909,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 42.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 53.0,
+      "roadNoiseAboveWhoPct": 49.8,
+      "roadNoiseCoverage": 95.8,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.03,
+      "floodCoverage": 99.8,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Melton": {
       "crimeRate": 56.8,
@@ -2887,7 +2932,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 15.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.8,
+      "roadNoiseAboveWhoPct": 40.4,
+      "roadNoiseCoverage": 93.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "medium",
+      "floodMediumOrHighPct": 2.92,
+      "floodCoverage": 96.0,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "North West Leicestershire": {
       "crimeRate": 59.2,
@@ -2901,7 +2955,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 17.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 51.9,
+      "roadNoiseAboveWhoPct": 41.6,
+      "roadNoiseCoverage": 93.4,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.92,
+      "floodCoverage": 98.2,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     },
     "Oadby and Wigston": {
       "crimeRate": 53.6,
@@ -2915,7 +2978,16 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 26.1,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 50.8,
+      "roadNoiseAboveWhoPct": 27.9,
+      "roadNoiseCoverage": 96.2,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden",
+      "flood": "low",
+      "floodMediumOrHighPct": 0.13,
+      "floodCoverage": 99.6,
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
     }
   },
   "teesside": {
@@ -2932,7 +3004,12 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 42.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 53.6,
+      "roadNoiseAboveWhoPct": 55.6,
+      "roadNoiseCoverage": 97.5,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden"
     },
     "Middlesbrough": {
       "crimeRate": 150.0,
@@ -2947,7 +3024,12 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 33.7,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.1,
+      "roadNoiseAboveWhoPct": 59.5,
+      "roadNoiseCoverage": 99.3,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden"
     },
     "Redcar and Cleveland": {
       "crimeRate": 108.9,
@@ -2962,7 +3044,12 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 27.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.9,
+      "roadNoiseAboveWhoPct": 48.9,
+      "roadNoiseCoverage": 97.1,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden"
     },
     "Stockton-on-Tees": {
       "crimeRate": 107.9,
@@ -2977,7 +3064,12 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 32.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "low",
+      "roadNoiseLdenMedian": 52.6,
+      "roadNoiseAboveWhoPct": 46.2,
+      "roadNoiseCoverage": 98.0,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden"
     },
     "Darlington": {
       "crimeRate": 91.0,
@@ -2992,7 +3084,12 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin1kmPct": 44.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "roadNoise": "moderate",
+      "roadNoiseLdenMedian": 54.5,
+      "roadNoiseAboveWhoPct": 60.2,
+      "roadNoiseCoverage": 97.9,
+      "roadNoiseVintage": "DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden"
     }
   }
 }

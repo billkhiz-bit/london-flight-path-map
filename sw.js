@@ -196,7 +196,18 @@
 // The new data file is deliberately NOT in SHELL_ASSETS: cache.addAll() is
 // atomic, and a decoration-grade fetch failure must not stop the worker
 // installing for every city.
-const VERSION = 'v1.0.34';
+// v1.0.35 (2026-08-29): methodology v4.0 - road noise becomes the third scored
+// `environment` input (air quality 0.45 / road noise 0.35 / flood 0.20), and the
+// floor over those inputs rises from one to two. BOTH halves of the score moved:
+// index.html carries the new ramp, the weights and ENV_MIN_FIELDS, and
+// data/borough-extra.json gained roadNoiseAboveWhoPct for 86 boroughs plus
+// Leicester's and Teesside's newly-fetched bands. index.html is in SHELL_ASSETS,
+// so without this bump a returning visitor keeps a v3.9 shell and renders
+// environment from two inputs while /v1/score answers from three - median 8.00
+// against 6.65, which is the site/API divergence class this repo has shipped
+// three times. /data/ is network-first since v1.0.34, so the JSON alone would
+// have refreshed; the shell is what pins the arithmetic.
+const VERSION = 'v1.0.35';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 

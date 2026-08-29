@@ -103,7 +103,7 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2023/24), scored
 #            continuously by school_score() on absolute anchors. London goes
 #            from 2 distinct schools sub-scores to 25.
-METHODOLOGY_VERSION = '3.9'
+METHODOLOGY_VERSION = '4.0'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -209,6 +209,10 @@ def airport_noise_scale(code):
 # Each persona's former growth weight was redistributed across its remaining
 # three factors *in proportion*, so relative emphasis is unchanged.
 # METHODOLOGY v3.9, 2026-08-26: `env` added at 0.14 in every persona.
+# METHODOLOGY v4.0, 2026-08-29: road noise added INSIDE `env`. The persona
+# weights below are UNCHANGED - v4.0 re-composes the environment component from
+# two inputs to three and does not re-cut the top-level split, so nothing in
+# this table moves and no persona's relative emphasis changes.
 #
 # HOW THE 0.14 WAS TAKEN. Every other weight was multiplied by 0.86 and rounded
 # to 2dp, so each persona's REMAINING weights keep their exact relative
@@ -907,6 +911,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.09,
         'floodMediumOrHighPct': 0.23,
+        'roadNoiseAboveWhoPct': 60.4,
     },
     'Hillingdon': {
         'impact': 'severe',
@@ -919,6 +924,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.98,
         'floodMediumOrHighPct': 2.72,
+        'roadNoiseAboveWhoPct': 47.2,
     },
     'Richmond upon Thames': {
         'impact': 'high',
@@ -931,6 +937,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.92,
         'floodMediumOrHighPct': 1.14,
+        'roadNoiseAboveWhoPct': 68.6,
     },
     'Ealing': {
         'impact': 'high',
@@ -943,6 +950,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.11,
         'floodMediumOrHighPct': 0.43,
+        'roadNoiseAboveWhoPct': 55.0,
     },
     'Wandsworth': {
         'impact': 'moderate',
@@ -955,6 +963,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.3,
         'floodMediumOrHighPct': 7.04,
+        'roadNoiseAboveWhoPct': 55.3,
     },
     'Lambeth': {
         'impact': 'moderate',
@@ -967,6 +976,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.38,
         'floodMediumOrHighPct': 0.18,
+        'roadNoiseAboveWhoPct': 52.4,
     },
     'Lewisham': {
         'impact': 'low-moderate',
@@ -979,6 +989,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.11,
         'floodMediumOrHighPct': 1.61,
+        'roadNoiseAboveWhoPct': 58.4,
     },
     'Greenwich': {
         'impact': 'moderate',
@@ -991,6 +1002,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.12,
         'floodMediumOrHighPct': 0.96,
+        'roadNoiseAboveWhoPct': 58.0,
     },
     'Tower Hamlets': {
         'impact': 'low-moderate',
@@ -1003,6 +1015,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.76,
         'floodMediumOrHighPct': 0.24,
+        'roadNoiseAboveWhoPct': 81.1,
     },
     'Camden': {
         'impact': 'low',
@@ -1015,6 +1028,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.98,
         'floodMediumOrHighPct': 0.33,
+        'roadNoiseAboveWhoPct': 73.8,
     },
     'Islington': {
         'impact': 'low',
@@ -1027,6 +1041,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.88,
         'floodMediumOrHighPct': 0.0,
+        'roadNoiseAboveWhoPct': 75.3,
     },
     'Hackney': {
         'impact': 'low',
@@ -1039,6 +1054,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.56,
         'floodMediumOrHighPct': 2.69,
+        'roadNoiseAboveWhoPct': 64.4,
     },
     'Barnet': {
         'impact': 'low-moderate',
@@ -1051,6 +1067,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.94,
         'floodMediumOrHighPct': 0.64,
+        'roadNoiseAboveWhoPct': 63.1,
     },
     'Croydon': {
         'impact': 'moderate',
@@ -1063,6 +1080,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.81,
         'floodMediumOrHighPct': 1.29,
+        'roadNoiseAboveWhoPct': 54.6,
     },
     'Bromley': {
         'impact': 'low',
@@ -1075,6 +1093,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.66,
         'floodMediumOrHighPct': 1.17,
+        'roadNoiseAboveWhoPct': 52.0,
     },
     'Newham': {
         'impact': 'moderate-high',
@@ -1087,6 +1106,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.31,
         'floodMediumOrHighPct': 2.05,
+        'roadNoiseAboveWhoPct': 62.2,
     },
     'Southwark': {
         'impact': 'low-moderate',
@@ -1099,6 +1119,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.58,
         'floodMediumOrHighPct': 0.02,
+        'roadNoiseAboveWhoPct': 55.0,
     },
     'Hammersmith and Fulham': {
         'impact': 'moderate-high',
@@ -1111,6 +1132,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.5,
         'floodMediumOrHighPct': 0.01,
+        'roadNoiseAboveWhoPct': 66.1,
     },
     'Kensington and Chelsea': {
         'impact': 'moderate',
@@ -1123,6 +1145,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.77,
         'floodMediumOrHighPct': 0.03,
+        'roadNoiseAboveWhoPct': 77.9,
     },
     'Brent': {
         'impact': 'low-moderate',
@@ -1135,6 +1158,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.21,
         'floodMediumOrHighPct': 0.8,
+        'roadNoiseAboveWhoPct': 63.3,
     },
     'Haringey': {
         'impact': 'low',
@@ -1147,6 +1171,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 2.14,
         'floodMediumOrHighPct': 1.36,
+        'roadNoiseAboveWhoPct': 64.1,
     },
     'Waltham Forest': {
         'impact': 'low',
@@ -1159,6 +1184,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.08,
         'floodMediumOrHighPct': 1.36,
+        'roadNoiseAboveWhoPct': 65.1,
     },
     'Merton': {
         'impact': 'low-moderate',
@@ -1171,6 +1197,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.98,
         'floodMediumOrHighPct': 1.04,
+        'roadNoiseAboveWhoPct': 45.2,
     },
     'Redbridge': {
         'impact': 'low',
@@ -1183,6 +1210,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 2.06,
         'floodMediumOrHighPct': 3.29,
+        'roadNoiseAboveWhoPct': 72.1,
     },
     'Enfield': {
         'impact': 'low',
@@ -1195,6 +1223,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.91,
         'floodMediumOrHighPct': 3.42,
+        'roadNoiseAboveWhoPct': 68.0,
     },
     'Kingston upon Thames': {
         'impact': 'low-moderate',
@@ -1207,6 +1236,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.89,
         'floodMediumOrHighPct': 20.02,
+        'roadNoiseAboveWhoPct': 51.1,
     },
     'Sutton': {
         'impact': 'low',
@@ -1219,6 +1249,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.72,
         'floodMediumOrHighPct': 0.22,
+        'roadNoiseAboveWhoPct': 50.2,
     },
     'Westminster': {
         'impact': 'moderate',
@@ -1231,6 +1262,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'excellent',
         'airQualityWhoRatio': 3.17,
         'floodMediumOrHighPct': 0.04,
+        'roadNoiseAboveWhoPct': 91.1,
     },
     'City of London': {
         # ONS declines to publish a recorded-crime rate here (Table C4 note 8,
@@ -1248,6 +1280,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'moderate',
         'airQualityWhoRatio': 3.39,
         'floodMediumOrHighPct': 0.62,
+        'roadNoiseAboveWhoPct': 95.6,
     },
     'Barking and Dagenham': {
         'impact': 'low',
@@ -1260,6 +1293,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.99,
         'floodMediumOrHighPct': 1.16,
+        'roadNoiseAboveWhoPct': 68.1,
     },
     'Havering': {
         'impact': 'low',
@@ -1272,6 +1306,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.73,
         'floodMediumOrHighPct': 0.79,
+        'roadNoiseAboveWhoPct': 56.6,
     },
     'Bexley': {
         'impact': 'low',
@@ -1284,6 +1319,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'good',
         'airQualityWhoRatio': 1.78,
         'floodMediumOrHighPct': 0.76,
+        'roadNoiseAboveWhoPct': 63.0,
     },
     'Harrow': {
         'impact': 'low',
@@ -1296,6 +1332,7 @@ LONDON_BOROUGHS = {
         'healthcare': 'moderate',
         'airQualityWhoRatio': 1.89,
         'floodMediumOrHighPct': 1.35,
+        'roadNoiseAboveWhoPct': 38.7,
     },
 }
 
@@ -1406,16 +1443,16 @@ NYC_BOROUGHS = {
 #                     Before that change a partial city scored WORSE than an
 #                     empty one, which is why this data sat unported for a week.
 MANCHESTER_BOROUGHS = {
-    'Manchester': {'impact': 'moderate', 'avgPrice': 251250, 'trend': 2.9, 'p8': 0.07, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.87},
-    'Salford': {'impact': 'low', 'avgPrice': 231890, 'trend': -2.4, 'p8': -0.35, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 0.98},
-    'Stockport': {'impact': 'moderate-high', 'avgPrice': 314495, 'trend': 3.5, 'p8': 0.09, 'crimeRate': 74.8, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.39},
-    'Trafford': {'impact': 'moderate', 'avgPrice': 396811, 'trend': 9.7, 'p8': 0.35, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.49, 'floodMediumOrHighPct': 0.21},
-    'Tameside': {'impact': 'low', 'avgPrice': 211304, 'trend': 2.2, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.35},
-    'Oldham': {'impact': 'low', 'avgPrice': 214850, 'trend': 5.1, 'p8': -0.2, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 0.16},
-    'Rochdale': {'impact': 'low', 'avgPrice': 210083, 'trend': 4.6, 'p8': -0.3, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 0.59},
-    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.3, 'p8': -0.09, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.52, 'floodMediumOrHighPct': 8.51},
-    'Bolton': {'impact': 'low', 'avgPrice': 202770, 'trend': 4.9, 'p8': 0.05, 'crimeRate': 98.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.16},
-    'Wigan': {'impact': 'low', 'avgPrice': 195557, 'trend': 6.6, 'p8': -0.32, 'crimeRate': 91.0, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.5},
+    'Manchester': {'impact': 'moderate', 'avgPrice': 251250, 'trend': 2.9, 'p8': 0.07, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.87, 'roadNoiseAboveWhoPct': 64.7},
+    'Salford': {'impact': 'low', 'avgPrice': 231890, 'trend': -2.4, 'p8': -0.35, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 0.98, 'roadNoiseAboveWhoPct': 67.0},
+    'Stockport': {'impact': 'moderate-high', 'avgPrice': 314495, 'trend': 3.5, 'p8': 0.09, 'crimeRate': 74.8, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.39, 'roadNoiseAboveWhoPct': 54.4},
+    'Trafford': {'impact': 'moderate', 'avgPrice': 396811, 'trend': 9.7, 'p8': 0.35, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.49, 'floodMediumOrHighPct': 0.21, 'roadNoiseAboveWhoPct': 49.3},
+    'Tameside': {'impact': 'low', 'avgPrice': 211304, 'trend': 2.2, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.35, 'roadNoiseAboveWhoPct': 58.6},
+    'Oldham': {'impact': 'low', 'avgPrice': 214850, 'trend': 5.1, 'p8': -0.2, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 0.16, 'roadNoiseAboveWhoPct': 59.8},
+    'Rochdale': {'impact': 'low', 'avgPrice': 210083, 'trend': 4.6, 'p8': -0.3, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 0.59, 'roadNoiseAboveWhoPct': 59.2},
+    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.3, 'p8': -0.09, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.52, 'floodMediumOrHighPct': 8.51, 'roadNoiseAboveWhoPct': 55.7},
+    'Bolton': {'impact': 'low', 'avgPrice': 202770, 'trend': 4.9, 'p8': 0.05, 'crimeRate': 98.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.16, 'roadNoiseAboveWhoPct': 53.7},
+    'Wigan': {'impact': 'low', 'avgPrice': 195557, 'trend': 6.6, 'p8': -0.32, 'crimeRate': 91.0, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.5, 'roadNoiseAboveWhoPct': 45.9},
 }
 
 # West Midlands, the fourth city, 2026-08-10. Every field is generated, not
@@ -1447,51 +1484,51 @@ MANCHESTER_BOROUGHS = {
 #                     response. This city is thinner than Greater Manchester and
 #                     says so.
 WESTMIDLANDS_BOROUGHS = {
-    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 234150, 'trend': 2.2, 'crimeRate': 114.2, 'p8': 0.06, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 1.08},
-    'Coventry': {'impact': 'low', 'avgPrice': 223731, 'trend': 3.7, 'crimeRate': 88.4, 'p8': 0.01, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.37},
-    'Dudley': {'impact': 'low', 'avgPrice': 230781, 'trend': 5.0, 'crimeRate': 74.5, 'p8': -0.12, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.28},
-    'Sandwell': {'impact': 'low', 'avgPrice': 205743, 'trend': 0.6, 'crimeRate': 95.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.81, 'floodMediumOrHighPct': 0.38},
-    'Solihull': {'impact': 'moderate-high', 'avgPrice': 334966, 'trend': 4.2, 'crimeRate': 79.5, 'p8': -0.06, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.2},
-    'Walsall': {'impact': 'low', 'avgPrice': 214577, 'trend': 2.2, 'crimeRate': 92.9, 'p8': -0.22, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.91},
-    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.2, 'crimeRate': 92.0, 'p8': -0.05, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.1},
+    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 234150, 'trend': 2.2, 'crimeRate': 114.2, 'p8': 0.06, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 1.08, 'roadNoiseAboveWhoPct': 55.9},
+    'Coventry': {'impact': 'low', 'avgPrice': 223731, 'trend': 3.7, 'crimeRate': 88.4, 'p8': 0.01, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.62, 'floodMediumOrHighPct': 1.37, 'roadNoiseAboveWhoPct': 63.6},
+    'Dudley': {'impact': 'low', 'avgPrice': 230781, 'trend': 5.0, 'crimeRate': 74.5, 'p8': -0.12, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.28, 'roadNoiseAboveWhoPct': 49.7},
+    'Sandwell': {'impact': 'low', 'avgPrice': 205743, 'trend': 0.6, 'crimeRate': 95.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.81, 'floodMediumOrHighPct': 0.38, 'roadNoiseAboveWhoPct': 61.2},
+    'Solihull': {'impact': 'moderate-high', 'avgPrice': 334966, 'trend': 4.2, 'crimeRate': 79.5, 'p8': -0.06, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.2, 'roadNoiseAboveWhoPct': 45.7},
+    'Walsall': {'impact': 'low', 'avgPrice': 214577, 'trend': 2.2, 'crimeRate': 92.9, 'p8': -0.22, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.91, 'roadNoiseAboveWhoPct': 58.0},
+    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.2, 'crimeRate': 92.0, 'p8': -0.05, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.1, 'roadNoiseAboveWhoPct': 43.4},
 }
 
 WESTYORKSHIRE_BOROUGHS = {
-    'Bradford': {'impact': 'low', 'avgPrice': 185028, 'trend': 6.0, 'crimeRate': 117.0, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.45, 'floodMediumOrHighPct': 4.12},
-    'Calderdale': {'impact': 'low', 'avgPrice': 191540, 'trend': 9.4, 'crimeRate': 103.4, 'p8': 0.02, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 3.79},
-    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 5.4, 'crimeRate': 87.6, 'p8': 0.07, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.48},
-    'Leeds': {'impact': 'moderate', 'avgPrice': 249394, 'trend': 5.9, 'crimeRate': 114.6, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 1.65},
-    'Wakefield': {'impact': 'low', 'avgPrice': 198519, 'trend': 4.8, 'crimeRate': 105.8, 'p8': 0.04, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.26},
+    'Bradford': {'impact': 'low', 'avgPrice': 185028, 'trend': 6.0, 'crimeRate': 117.0, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.45, 'floodMediumOrHighPct': 4.12, 'roadNoiseAboveWhoPct': 54.0},
+    'Calderdale': {'impact': 'low', 'avgPrice': 191540, 'trend': 9.4, 'crimeRate': 103.4, 'p8': 0.02, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 3.79, 'roadNoiseAboveWhoPct': 63.2},
+    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 5.4, 'crimeRate': 87.6, 'p8': 0.07, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.48, 'roadNoiseAboveWhoPct': 58.3},
+    'Leeds': {'impact': 'moderate', 'avgPrice': 249394, 'trend': 5.9, 'crimeRate': 114.6, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 1.65, 'roadNoiseAboveWhoPct': 57.2},
+    'Wakefield': {'impact': 'low', 'avgPrice': 198519, 'trend': 4.8, 'crimeRate': 105.8, 'p8': 0.04, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.26, 'roadNoiseAboveWhoPct': 53.3},
 }
 
 SOUTHYORKSHIRE_BOROUGHS = {
-    'Barnsley': {'impact': 'low', 'avgPrice': 175733, 'trend': 6.0, 'crimeRate': 95.1, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 4.49},
-    'Doncaster': {'impact': 'low', 'avgPrice': 170784, 'trend': 4.4, 'crimeRate': 117.3, 'p8': 0.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.26, 'floodMediumOrHighPct': 24.38},
-    'Rotherham': {'impact': 'low', 'avgPrice': 190069, 'trend': 2.4, 'crimeRate': 93.1, 'p8': -0.18, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 1.28},
-    'Sheffield': {'impact': 'low', 'avgPrice': 219539, 'trend': 5.0, 'crimeRate': 96.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 0.86},
+    'Barnsley': {'impact': 'low', 'avgPrice': 175733, 'trend': 6.0, 'crimeRate': 95.1, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 4.49, 'roadNoiseAboveWhoPct': 44.5},
+    'Doncaster': {'impact': 'low', 'avgPrice': 170784, 'trend': 4.4, 'crimeRate': 117.3, 'p8': 0.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.26, 'floodMediumOrHighPct': 24.38, 'roadNoiseAboveWhoPct': 39.0},
+    'Rotherham': {'impact': 'low', 'avgPrice': 190069, 'trend': 2.4, 'crimeRate': 93.1, 'p8': -0.18, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 1.28, 'roadNoiseAboveWhoPct': 43.6},
+    'Sheffield': {'impact': 'low', 'avgPrice': 219539, 'trend': 5.0, 'crimeRate': 96.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.39, 'floodMediumOrHighPct': 0.86, 'roadNoiseAboveWhoPct': 47.3},
 }
 
 MERSEYSIDE_BOROUGHS = {
-    'Knowsley': {'impact': 'moderate', 'avgPrice': 188727, 'trend': 3.6, 'crimeRate': 81.8, 'p8': -0.9, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.16},
-    'Liverpool': {'impact': 'moderate', 'avgPrice': 185307, 'trend': 7.2, 'crimeRate': 124.1, 'p8': -0.48, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.65, 'floodMediumOrHighPct': 0.31},
-    'St Helens': {'impact': 'low', 'avgPrice': 186435, 'trend': 11.1, 'crimeRate': 86.4, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.29},
-    'Sefton': {'impact': 'low', 'avgPrice': 225433, 'trend': 5.2, 'crimeRate': 75.5, 'p8': -0.41, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 31.39},
-    'Wirral': {'impact': 'low', 'avgPrice': 215575, 'trend': 7.8, 'crimeRate': 71.1, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.35, 'floodMediumOrHighPct': 1.47},
+    'Knowsley': {'impact': 'moderate', 'avgPrice': 188727, 'trend': 3.6, 'crimeRate': 81.8, 'p8': -0.9, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.16, 'roadNoiseAboveWhoPct': 45.2},
+    'Liverpool': {'impact': 'moderate', 'avgPrice': 185307, 'trend': 7.2, 'crimeRate': 124.1, 'p8': -0.48, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.65, 'floodMediumOrHighPct': 0.31, 'roadNoiseAboveWhoPct': 59.5},
+    'St Helens': {'impact': 'low', 'avgPrice': 186435, 'trend': 11.1, 'crimeRate': 86.4, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.29, 'roadNoiseAboveWhoPct': 51.2},
+    'Sefton': {'impact': 'low', 'avgPrice': 225433, 'trend': 5.2, 'crimeRate': 75.5, 'p8': -0.41, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 31.39, 'roadNoiseAboveWhoPct': 43.1},
+    'Wirral': {'impact': 'low', 'avgPrice': 215575, 'trend': 7.8, 'crimeRate': 71.1, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.35, 'floodMediumOrHighPct': 1.47, 'roadNoiseAboveWhoPct': 53.6},
 }
 
 TYNEANDWEAR_BOROUGHS = {
-    'Gateshead': {'impact': 'low', 'avgPrice': 158254, 'trend': 7.8, 'crimeRate': 87.8, 'p8': -0.14, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.46, 'floodMediumOrHighPct': 4.65},
-    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 208589, 'trend': 6.7, 'crimeRate': 107.4, 'p8': -0.28, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 1.6},
-    'North Tyneside': {'impact': 'low', 'avgPrice': 203813, 'trend': 6.0, 'crimeRate': 81.8, 'p8': -0.15, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.85},
-    'South Tyneside': {'impact': 'low', 'avgPrice': 161372, 'trend': 4.8, 'crimeRate': 96.6, 'p8': -0.39, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 10.94},
-    'Sunderland': {'impact': 'low', 'avgPrice': 143216, 'trend': 4.6, 'crimeRate': 93.6, 'p8': -0.31, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 1.18},
+    'Gateshead': {'impact': 'low', 'avgPrice': 158254, 'trend': 7.8, 'crimeRate': 87.8, 'p8': -0.14, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.46, 'floodMediumOrHighPct': 4.65, 'roadNoiseAboveWhoPct': 65.6},
+    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 208589, 'trend': 6.7, 'crimeRate': 107.4, 'p8': -0.28, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 1.6, 'roadNoiseAboveWhoPct': 66.0},
+    'North Tyneside': {'impact': 'low', 'avgPrice': 203813, 'trend': 6.0, 'crimeRate': 81.8, 'p8': -0.15, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.85, 'roadNoiseAboveWhoPct': 55.5},
+    'South Tyneside': {'impact': 'low', 'avgPrice': 161372, 'trend': 4.8, 'crimeRate': 96.6, 'p8': -0.39, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 10.94, 'roadNoiseAboveWhoPct': 53.5},
+    'Sunderland': {'impact': 'low', 'avgPrice': 143216, 'trend': 4.6, 'crimeRate': 93.6, 'p8': -0.31, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 1.18, 'roadNoiseAboveWhoPct': 60.1},
 }
 
 BRISTOL_BOROUGHS = {
-    'City of Bristol': {'impact': 'low', 'avgPrice': 356824, 'trend': 3.5, 'crimeRate': 131.0, 'p8': -0.01, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.54, 'floodMediumOrHighPct': 1.05},
-    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 404480, 'trend': -0.1, 'crimeRate': 79.0, 'p8': 0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'floodMediumOrHighPct': 1.77},
-    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 314628, 'trend': 7.5, 'crimeRate': 81.8, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 1.14},
-    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.3, 'crimeRate': 73.8, 'p8': -0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 5.27},
+    'City of Bristol': {'impact': 'low', 'avgPrice': 356824, 'trend': 3.5, 'crimeRate': 131.0, 'p8': -0.01, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.54, 'floodMediumOrHighPct': 1.05, 'roadNoiseAboveWhoPct': 47.2},
+    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 404480, 'trend': -0.1, 'crimeRate': 79.0, 'p8': 0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'floodMediumOrHighPct': 1.77, 'roadNoiseAboveWhoPct': 34.0},
+    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 314628, 'trend': 7.5, 'crimeRate': 81.8, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.29, 'floodMediumOrHighPct': 1.14, 'roadNoiseAboveWhoPct': 32.3},
+    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.3, 'crimeRate': 73.8, 'p8': -0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 5.27, 'roadNoiseAboveWhoPct': 36.9},
 }
 
 CARDIFF_BOROUGHS = {
@@ -1514,14 +1551,14 @@ CARDIFF_BOROUGHS = {
 # Partnership row - and transport and healthcare carry every borough over the
 # two-input floor regardless.
 LEICESTER_BOROUGHS = {
-    'Leicester': {'impact': 'low', 'avgPrice': 228618, 'trend': 1.7, 'crimeRate': 110.0, 'p8': 0.1, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.93},
-    'Blaby': {'impact': 'low', 'avgPrice': 282918, 'trend': 0.3, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.73},
-    'Charnwood': {'impact': 'low-moderate', 'avgPrice': 276865, 'trend': 3.8, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.94},
-    'Harborough': {'impact': 'low', 'avgPrice': 346278, 'trend': 9.7, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64},
-    'Hinckley and Bosworth': {'impact': 'low', 'avgPrice': 261584, 'trend': 2.9, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.78},
-    'Melton': {'impact': 'low', 'avgPrice': 283892, 'trend': 2.2, 'crimeRate': 56.8, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58},
-    'North West Leicestershire': {'impact': 'moderate', 'avgPrice': 282239, 'trend': 6.5, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.77},
-    'Oadby and Wigston': {'impact': 'low', 'avgPrice': 259734, 'trend': -1.7, 'crimeRate': 53.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.92},
+    'Leicester': {'impact': 'low', 'avgPrice': 228618, 'trend': 1.7, 'crimeRate': 110.0, 'p8': 0.1, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.93, 'floodMediumOrHighPct': 1.13, 'roadNoiseAboveWhoPct': 46.7},
+    'Blaby': {'impact': 'low', 'avgPrice': 282918, 'trend': 0.3, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 0.4, 'roadNoiseAboveWhoPct': 50.8},
+    'Charnwood': {'impact': 'low-moderate', 'avgPrice': 276865, 'trend': 3.8, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.94, 'floodMediumOrHighPct': 2.53, 'roadNoiseAboveWhoPct': 35.3},
+    'Harborough': {'impact': 'low', 'avgPrice': 346278, 'trend': 9.7, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.14, 'roadNoiseAboveWhoPct': 38.5},
+    'Hinckley and Bosworth': {'impact': 'low', 'avgPrice': 261584, 'trend': 2.9, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.78, 'floodMediumOrHighPct': 0.03, 'roadNoiseAboveWhoPct': 49.8},
+    'Melton': {'impact': 'low', 'avgPrice': 283892, 'trend': 2.2, 'crimeRate': 56.8, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 2.92, 'roadNoiseAboveWhoPct': 40.4},
+    'North West Leicestershire': {'impact': 'moderate', 'avgPrice': 282239, 'trend': 6.5, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.92, 'roadNoiseAboveWhoPct': 41.6},
+    'Oadby and Wigston': {'impact': 'low', 'avgPrice': 259734, 'trend': -1.7, 'crimeRate': 53.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.92, 'floodMediumOrHighPct': 0.13, 'roadNoiseAboveWhoPct': 27.9},
 }
 
 # Teesside: the five Tees Valley unitaries. Darlington is included because it
@@ -1529,11 +1566,11 @@ LEICESTER_BOROUGHS = {
 # an include-list in the crime loader - Darlington is Durham Constabulary while
 # the other four are Cleveland.
 TEESSIDE_BOROUGHS = {
-    'Hartlepool': {'impact': 'low', 'avgPrice': 130271, 'trend': 0.8, 'crimeRate': 134.2, 'p8': -0.47, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36},
-    'Middlesbrough': {'impact': 'low', 'avgPrice': 138122, 'trend': 2.0, 'crimeRate': 150.0, 'p8': -0.45, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58},
-    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 153205, 'trend': 8.1, 'crimeRate': 108.9, 'p8': -0.36, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3},
-    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 170923, 'trend': 3.9, 'crimeRate': 107.9, 'p8': -0.19, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.47},
-    'Darlington': {'impact': 'moderate', 'avgPrice': 158188, 'trend': 3.8, 'crimeRate': 91.0, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39},
+    'Hartlepool': {'impact': 'low', 'avgPrice': 130271, 'trend': 0.8, 'crimeRate': 134.2, 'p8': -0.47, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'roadNoiseAboveWhoPct': 55.6},
+    'Middlesbrough': {'impact': 'low', 'avgPrice': 138122, 'trend': 2.0, 'crimeRate': 150.0, 'p8': -0.45, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'roadNoiseAboveWhoPct': 59.5},
+    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 153205, 'trend': 8.1, 'crimeRate': 108.9, 'p8': -0.36, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3, 'roadNoiseAboveWhoPct': 48.9},
+    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 170923, 'trend': 3.9, 'crimeRate': 107.9, 'p8': -0.19, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.47, 'roadNoiseAboveWhoPct': 46.2},
+    'Darlington': {'impact': 'moderate', 'avgPrice': 158188, 'trend': 3.8, 'crimeRate': 91.0, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.39, 'roadNoiseAboveWhoPct': 60.2},
 }
 
 # Nottingham (Greater Nottingham: the city plus the three boroughs of its
@@ -1553,10 +1590,10 @@ TEESSIDE_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 2.89},
-    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.65},
-    'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.93},
-    'Rushcliffe': {'impact': 'low', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.56},
+    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 2.89, 'roadNoiseAboveWhoPct': 44.4},
+    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.77, 'floodMediumOrHighPct': 0.65, 'roadNoiseAboveWhoPct': 31.8},
+    'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.93, 'roadNoiseAboveWhoPct': 33.3},
+    'Rushcliffe': {'impact': 'low', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.56, 'roadNoiseAboveWhoPct': 31.1},
 }
 
 CITIES = {
@@ -5167,13 +5204,24 @@ def get_live_score(bd, english=True):
 
 
 # ---------------------------------------------------------------------------
-# Environment composite (methodology v3.9). Air quality + flood risk.
+# Environment composite (methodology v4.0). Air quality + road noise + flood.
 #
-# WHY THIS EXISTS AT ALL. Both datasets have been loaded, verified and banded
-# for every city since 2026-08-11, and neither has ever entered the weighted
-# total: `flood` and `airQuality` are declared in plannedComponents, and the API
-# has been advertising them as "planned" to prospects while the data sat unused
-# in borough-extra.json. This wires them in.
+# WHY THIS EXISTS AT ALL. All three datasets have been loaded, verified and
+# banded for every covered city since 2026-08-11, and none entered the weighted
+# total until now. Air quality and flood were wired in by v3.9; ROAD NOISE was
+# the last measured input still only DRAWN - it colours a map layer and is
+# reported by /v1/environment, and nothing scored it. This wires it in and
+# closes the "measured but display-only" category entirely.
+#
+# ROAD NOISE COVERAGE IS NOT A CONSTRAINT, WHICH IS WHY IT COULD BE SCORED.
+# Leicester and Teesside carried no road or flood raster until 2026-08-29, and
+# CLAUDE.md, AUDIT_REPORT I6 and this file all recorded that as a property of
+# the data. It was not: fetch_defra_road_noise.py and fetch_ea_flood_risk.py
+# are both per-city against ENGLAND-WIDE coverages, both cities are in England,
+# both have boundary files, and neither was in NO_ROAD_COVERAGE or
+# NO_FLOOD_COVERAGE. The rasters had simply never been fetched for the two
+# cities that joined on 2026-08-11. A measurement recorded without its cause
+# reads as a constraint.
 #
 # WHY THE CONTINUOUS FIELD AND NOT THE BAND. The three-band summaries exist to
 # colour a map, and they are far too coarse to score: measured across all 91
@@ -5184,6 +5232,15 @@ def get_live_score(bd, english=True):
 # distinct values in 86 boroughs, floodMediumOrHighPct spans 0-31.39 with 69 in
 # 73. The data was always there; nothing read it.
 #
+# ROAD NOISE HAD THE SAME TRAP ONE LEVEL DOWN, and the obvious continuous field
+# is the WRONG one. Two are derived beside the band: roadNoiseLdenMedian looks
+# plottable and is not - measured 2026-08-29 it carries only 41 distinct values
+# across 73 boroughs with an interquartile range of 1.7 dB (53.0-54.7), because
+# a borough-wide median of a 10 m raster averages the quiet streets into the
+# arterials. roadNoiseAboveWhoPct carries 69 distinct values over an IQR of
+# 13.4 points. They correlate at 0.931 - the same signal, very differently
+# resolved. "Continuous" was never the criterion; DISCRIMINATION was.
+#
 # WHY THESE ANCHORS AND NOT THE OBSERVED RANGE. METHODOLOGY 7.1 is explicit that
 # "no band is a percentile or a tertile", because a scale defined relative to the
 # other boroughs cannot return "all of them are bad" - the answer that would
@@ -5193,6 +5250,18 @@ def get_live_score(bd, english=True):
 #                the ratio is expressed against -> 10
 #                4.0x = the UK legal limit for NO2 (40 ug/m3 against WHO's 10),
 #                a statutory figure, not one chosen here -> 0
+#   Road noise   0% of postcodes at or above the WHO 2018 road-traffic
+#                guideline of 53 dB Lden -> 10
+#                100% = every address in the borough over that guideline -> 0.
+#                Both ends are the natural limits of a SHARE, and the threshold
+#                defining the share is WHO's, not ours. Zeroing at the `high`
+#                band cut of 66.7% was measured and rejected: it clamps 11 of 73
+#                boroughs to 0. Flood can use its band cut because its
+#                distribution is crushed toward zero (median 1.08%); road's
+#                median is 56.6%, the opposite shape, so the same choice is
+#                wrong here. Anchoring the low end on the observed minimum was
+#                rejected outright - that is the min-max trap this file names
+#                below.
 #   Flood        0% of postcodes at EA Medium-or-High -> 10
 #                10% = the cut METHODOLOGY 7.1 already uses for the `high` band,
 #                which is itself the 1%-annual-chance planning line -> 0
@@ -5202,42 +5271,79 @@ def get_live_score(bd, english=True):
 # the next time one city is added.
 # ---------------------------------------------------------------------------
 
-_ENV_FIELDS = ('airQuality', 'flood')
+_ENV_FIELDS = ('airQuality', 'roadNoise', 'flood')
 
 _ENV_WEIGHTS = {
-    'airQuality': 0.65,
-    'flood': 0.35,
+    'airQuality': 0.45,
+    'roadNoise': 0.35,
+    'flood': 0.20,
 }
 
-# Air quality carries the larger share because it is a CHRONIC exposure that
-# applies to every resident every day, while flood is an episodic risk that is
-# near-zero for most of the country (median 1.08% of postcodes) and already
-# surfaced in conveyancing searches. Flood is not weighted down because it
-# matters less to the household it happens to.
+# Air quality keeps the largest share on the v3.9 reasoning: it is a CHRONIC
+# exposure applying to every resident every day. ROAD NOISE takes second on the
+# same reasoning - it is the other continuous daily exposure, and largely from
+# the same traffic - but a smaller share than air because its health evidence
+# base (annoyance, sleep disturbance) is softer than air quality's mortality
+# one. Flood stays smallest as the only EPISODIC risk, near-zero for most of the
+# country (median 1.08% of postcodes) and already surfaced in conveyancing
+# searches. Flood is not weighted down because it matters less to the household
+# it happens to.
+#
+# MEASURED CONSEQUENCE, so it is not discovered later. Adding road noise LOWERS
+# environment for every covered borough, because most urban English addresses
+# genuinely exceed the WHO road guideline: the median environment score moves
+# 7.80 -> 6.75, mean -0.98, worst -1.74 (Westminster). At env's 0.14 balanced
+# weight that is at most -0.24 on a headline score. Some boroughs RISE - Sefton
+# +0.49 - which is the component discriminating rather than a uniform penalty.
+# The fall is new information, not a re-basing: it is what counting a real
+# adverse exposure looks like the first time it is counted.
 
 _AQ_GUIDELINE_RATIO = 1.0   # WHO 2021 annual mean, NO2 10 / PM2.5 5 ug/m3
 _AQ_LEGAL_LIMIT_RATIO = 4.0  # UK legal limit NO2 40 ug/m3 = 4x the WHO guideline
 _FLOOD_HIGH_PCT = 10.0       # METHODOLOGY 7.1 `high` cut, the planning threshold
+# 100% = every address in the borough at or above WHO's 53 dB Lden road-traffic
+# guideline. The WHO threshold itself lives in build_borough_bands.py, which is
+# what DERIVES the share; this is the ramp's far end, not the exposure cut.
+_ROAD_FULL_EXPOSURE_PCT = 100.0
 
-# Floor of ONE measured input, not two.
+# Floor of TWO measured inputs. RAISED FROM ONE on 2026-08-29, when road noise
+# made it a third input, and raised on a MEASUREMENT rather than a principle.
 #
-# This DIFFERS from _LIVE_MIN_FIELDS = 2 deliberately, and the difference is a
-# judgement rather than an oversight. Liveability declares four inputs, so one
-# of four is a quarter of what the label promises. Environment declares two, so
-# one of two is half - and the missing half is disclosed by environmentResolution
-# rather than hidden. Thirteen boroughs (Leicester 8, Teesside 5) carry air
-# quality and no flood coverage; refusing them the component entirely would
-# leave 13 of 86 with a headline the others have, to disclose a gap the field
-# already discloses.
+# v3.9 set this to 1 and wrote down the risk it accepted: a single-input score
+# "may be systematically FLATTERING", because the missing input is often the one
+# the borough would score worst on. That was the right call at two declared
+# inputs, where one of two is half of what the label promises. At THREE declared
+# inputs one is a third, and the risk stops being theoretical.
 #
-# THE RISK THIS ACCEPTS, STATED SO IT IS NOT DISCOVERED LATER. A single-input
-# score is not merely wider-error, it may be systematically FLATTERING: measured
-# 2026-08-26, the three best environment scores in the country are Redcar and
-# Cleveland 8.8, Hartlepool 8.6 and Darlington 8.4 - all Teesside, all
-# air-quality-only, and Teesside is coastal, so flood is plausibly the input
-# they would score worst on. env_single_input() exists so ranking surfaces can
-# exclude them; see its docstring.
-_ENV_MIN_FIELDS = 1
+# WHAT WAS MEASURED, 2026-08-29, over the 86 boroughs that then had a score.
+# Adding road noise lowers every borough that HAS road data and leaves untouched
+# every borough that does not - so the boroughs missing an input rise through
+# the table purely by standing still. Keeping the floor at 1 would move the 13
+# single-input boroughs (Leicester 8, Teesside 5) from a median rank of 41 to 9
+# of 86, and from 3 of the top 20 to 10 of the top 20. Teesside would hold the
+# top FOUR places outright - Redcar and Cleveland, Hartlepool, Darlington,
+# Stockton-on-Tees - every one of them scored on one input of three, and
+# Teesside is coastal, so flood is plausibly its worst input. A national table
+# whose leaders lead because we know least about them is worse than no table.
+#
+# WHY NOT LEAN ON env_single_input() INSTEAD. Because it has no consumer and
+# never has. It is published as context.environmentSingleInput and is read by
+# NOTHING - not index.html (which mentions it only in a comment), not the area
+# pages, not the extension; the single other reference in the tree is a unit
+# test asserting it is False. Its own docstring says it "exists so ranking
+# surfaces can exclude them", and no ranking surface does. That is the same
+# shape as lineStatusAvailable, fixed on 2026-08-27: A FIELD ONLY ITS PRODUCER
+# READS IS NOT A FIX, and a mitigation that was never wired cannot be the reason
+# to keep a floor that needs it.
+#
+# WHAT IT COSTS, and why the cost is small. Fetching the two rasters Leicester
+# and Teesside had never been given takes them from one input to three, so the
+# boroughs this floor actually excludes are CARDIFF's four - Wales genuinely has
+# no English road or flood coverage, exactly as it has no Progress 8. They now
+# decline the component and disclose environmentResolution 'unavailable',
+# which is what New York's five have always done. Four of 99, to remove a
+# structurally misleading ranking position.
+_ENV_MIN_FIELDS = 2
 
 
 def aq_to_score(who_ratio):
@@ -5264,6 +5370,29 @@ def flood_to_score(medium_or_high_pct):
     places genuinely are low-risk and a handful are not.
     """
     return max(0.0, min(10.0, 10.0 * (1.0 - medium_or_high_pct / _FLOOD_HIGH_PCT)))
+
+
+def road_to_score(above_who_pct):
+    """Road noise 0-10 from the share of postcodes at or above WHO 53 dB Lden.
+
+    Higher is better, like every other component score and unlike the share it
+    is derived from - see METHODOLOGY 11.0 on scale direction. No address over
+    the WHO road-traffic guideline is 10; every address over it is 0.
+
+    THE OBSERVED RANGE IS 0.44-6.77 AND THAT IS NOT A BUG. Measured across the
+    73 boroughs that had road data on 2026-08-29: median 4.34, against air
+    quality's 7.60 and flood's 8.92. The three components are anchored on their
+    own published thresholds and are not expected to share a median - but this
+    one sits low because WHO's 53 dB guideline is strict and most urban English
+    addresses exceed it. A borough scoring 10 would be one where no address is
+    over the guideline, which is reachable in a rural district and by none of
+    the urban boroughs covered today. The top of the scale being empty is a
+    true statement about urban England, not a scale that needs rebasing - and
+    rebasing it onto the observed range is precisely the min-max trap
+    METHODOLOGY 7.1 rejects, which would also re-scale every borough the next
+    time a quieter district is added.
+    """
+    return max(0.0, min(10.0, 10.0 * (1.0 - above_who_pct / _ROAD_FULL_EXPOSURE_PCT)))
 
 
 def env_weights_for(present):
@@ -5294,6 +5423,9 @@ def env_component_scores(bd):
     ratio = bd.get('airQualityWhoRatio')
     if isinstance(ratio, (int, float)):
         scores['airQuality'] = aq_to_score(ratio)
+    road = bd.get('roadNoiseAboveWhoPct')
+    if isinstance(road, (int, float)):
+        scores['roadNoise'] = road_to_score(road)
     pct = bd.get('floodMediumOrHighPct')
     if isinstance(pct, (int, float)):
         scores['flood'] = flood_to_score(pct)
@@ -5316,22 +5448,30 @@ def get_env_score(bd):
 
 
 def env_single_input(bd):
-    """True when `environment` rests on one measured input instead of two.
+    """True when `environment` rests on exactly ONE measured input of the three.
 
-    Ranking surfaces should exclude these from "best environment" comparisons.
-    A one-input score is not just less certain - the absent input is not missing
-    at random. The 13 affected boroughs are Leicester's 8 and Teesside's 5,
-    which have air quality and no flood or road-noise coverage, and Teesside is
-    coastal: the input we cannot measure there is plausibly the one it would
-    score worst on. So the single-input boroughs currently occupy the top three
-    places nationally, which is a ranking artefact and not a finding.
+    LITERAL TO ITS NAME SINCE v4.0, AND THAT IS A CHANGE. It used to return
+    `0 < len(scores) < len(_ENV_FIELDS)`, which at two declared fields could
+    only mean one - so the name and the test agreed by arithmetic accident. Road
+    noise made _ENV_FIELDS three, and the old expression would have fired for a
+    two-of-three borough as well: a field called `single input` reporting True
+    for a borough with two. The published key `environmentSingleInput` is part
+    of the response contract, so the TEST was corrected to match the NAME rather
+    than the other way round.
 
-    environmentResolution discloses the gap in the response. This exists because
-    disclosure is not enough for an ORDERED list: a reader still sees 8.8 at the
-    top whatever the caveat beside it says.
+    THE RANKING FILTER IS environmentResolution, NOT THIS. Under _ENV_MIN_FIELDS
+    = 2 a one-input borough is not published at all, so this flag no longer
+    selects anything a ranking surface can see; it is a diagnostic. A caller
+    ordering boroughs should exclude on `environmentResolution` starting
+    'partial', which is the state that IS published and IS less certain, and
+    which says so in its own text.
+
+    Nothing in this repo reads either field, which is why the v3.9 note that
+    "env_single_input() exists so ranking surfaces can exclude them" could not
+    be used as the reason to keep the floor at one. A field only its producer
+    reads is not a fix.
     """
-    scores = env_component_scores(bd)
-    return 0 < len(scores) < len(_ENV_FIELDS)
+    return len(env_component_scores(bd)) == 1
 
 
 def env_resolution(bd):
@@ -5351,9 +5491,13 @@ def env_resolution(bd):
             f'unavailable — {present}/{total} inputs measured, too few to publish; '
             'the component is omitted and its weight redistributed'
         )
+    missing = total - present
     return (
-        f'partial — {present}/{total} inputs measured; the absent input is not '
-        'estimated, its weight is redistributed across the measured one. '
+        f'partial — {present}/{total} inputs measured; the '
+        f'{"absent input is" if missing == 1 else "absent inputs are"} not '
+        f'estimated, {"its" if missing == 1 else "their"} weight is '
+        f'redistributed across the measured '
+        f'{"one" if present == 1 else "ones"}. '
         'Not comparable with a fully-measured borough for ranking'
     )
 
@@ -5447,9 +5591,11 @@ def build_environment(noise_row, postcode_clean=''):
 
     # Air quality: DEFRA PCM background maps, annual mean, 2022, 1 km grid.
     #
-    # NOT the Daily Air Quality Index that plannedComponents still names. DAQI
-    # is a daily index at monitoring stations — sparse, and as much about
-    # today's weather as about the address. Annual mean concentration on a
+    # NOT the Daily Air Quality Index. DAQI is a daily index at monitoring
+    # stations — sparse, and as much about today's weather as about the
+    # address. (This comment said "that plannedComponents still names" until
+    # 2026-08-29; the airQuality entry it named left plannedComponents at v3.9,
+    # three days earlier, taking the wrong source claim with it.) Annual mean concentration on a
     # modelled grid is the measure a property decision wants, and the one the
     # WHO guidelines below are expressed against.
     #
@@ -6577,10 +6723,16 @@ def resolve_query(query):
     # docstring has said WHY NOT DAQI since it was written. Removing the entry
     # retires the wrong claim with it.
     #
-    # `roadNoise` is deliberately NOT added here in its place. It is reported by
-    # /v1/environment today and scheduled for the v4.0 noise composite, but a
-    # planned-component entry is a commitment, and this block should not gain
-    # one on the same day two others left it.
+    # `roadNoise` never entered this block and now never will: it went straight
+    # from display-only to scored at methodology v4.0, 2026-08-29, joining
+    # `env` alongside air quality and flood. The v3.9 note here said it was
+    # "scheduled for the v4.0 noise composite" and declined to promise it,
+    # which turned out to be the right call one wave early.
+    #
+    # THE MEASURED-BUT-UNSCORED CATEGORY IS NOW EMPTY. Every input this product
+    # derives is either scored or is a MEASUREMENT reported by /v1/environment
+    # under a label naming what it measures. Nothing is drawn on the map that
+    # a score silently ignores.
     body['plannedComponents'] = {
         'epcDistribution': {
             'status': 'planned',

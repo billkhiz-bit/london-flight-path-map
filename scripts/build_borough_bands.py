@@ -777,6 +777,14 @@ LAMBDA_FIELDS = (
     # drawn.
     'airQualityWhoRatio',
     'floodMediumOrHighPct',
+    # Added for methodology v4.0, 2026-08-29, when road noise stopped being the
+    # last display-only input. The SHARE over WHO's 53 dB Lden guideline, not
+    # the median dB beside it: the median carries 41 distinct values across 73
+    # boroughs against the share's 69, over an interquartile range of 1.7 dB.
+    # roadNoise, roadNoiseLdenMedian and roadNoiseCoverage stay in
+    # borough-extra.json alone - the band colours a map and the other two are
+    # reported by /v1/environment, none of them scores.
+    'roadNoiseAboveWhoPct',
 )
 
 # The two holders disagree on ONE borough's name: borough-extra.json keys it

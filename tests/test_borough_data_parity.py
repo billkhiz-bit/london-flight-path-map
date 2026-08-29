@@ -51,9 +51,12 @@ NAME_ALIASES = {'Barking': 'Barking and Dagenham'}
 # agree; the three-band summaries beside them still live only in
 # borough-extra.json, because they are still only drawn.
 #
-# Neither is universal, and that is expected rather than drift: New York has
-# neither (DEFRA and the EA are UK sources) and Leicester and Teesside have the
-# ratio but no flood coverage. What this file checks is that the two holders
+# None is universal, and that is expected rather than drift: New York has none
+# of the three (DEFRA and the EA are UK sources) and Cardiff has air quality
+# only, because the road coverage is England's Round 4 and RoFRS is an
+# Environment Agency product. Leicester and Teesside were in that list until
+# 2026-08-29 - not because Wales-style coverage was missing, but because their
+# rasters had never been FETCHED. What this file checks is that the two holders
 # agree about WHICH boroughs have them - see
 # test_a_field_is_not_silently_missing_from_one_side, which is the assertion
 # that a propagation gap fails rather than passes quietly.
@@ -65,6 +68,8 @@ SHARED_FIELDS = (
     'p8',
     'airQualityWhoRatio',
     'floodMediumOrHighPct',
+    # v4.0, 2026-08-29. Scored, so it must agree across both holders.
+    'roadNoiseAboveWhoPct',
 )
 
 # Cities the score Lambda serves that the consumer site does NOT, so they have

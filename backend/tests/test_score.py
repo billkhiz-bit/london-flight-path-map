@@ -2827,6 +2827,147 @@ class PostcodeCityDerivationTests(unittest.TestCase):
         )
 
 
+class EnvironmentComponentTests(unittest.TestCase):
+    """The three environment ramps and the floor over them (methodology v4.0).
+
+    NONE OF THIS WAS DIRECTLY COVERED BEFORE 2026-08-29. aq_to_score,
+    flood_to_score, env_weights_for, env_component_scores, env_resolution and
+    env_single_input had no unit test between them - v3.9 shipped a scoring
+    component reached only through resolve_query, so a ramp could be rewritten
+    and only a borough-level assertion somewhere else would notice. Road noise
+    made that three ramps, so they get tested here.
+    """
+
+    # --- road, the v4.0 addition -----------------------------------------
+    def test_road_ramp_hits_both_published_anchors(self):
+        # 0% of addresses over the WHO road guideline is the top of the scale;
+        # every address over it is the bottom. Both ends are the natural limits
+        # of a share, not observed values.
+        self.assertEqual(app.road_to_score(0.0), 10.0)
+        self.assertEqual(app.road_to_score(100.0), 0.0)
+
+    def test_road_ramp_is_linear_between_the_anchors(self):
+        self.assertAlmostEqual(app.road_to_score(50.0), 5.0, places=6)
+        self.assertAlmostEqual(app.road_to_score(25.0), 7.5, places=6)
+
+    def test_road_ramp_clamps_rather_than_going_negative(self):
+        # A share cannot exceed 100, but a clamp that is not there is only
+        # discovered by the value that needs it.
+        self.assertEqual(app.road_to_score(140.0), 0.0)
+        self.assertEqual(app.road_to_score(-5.0), 10.0)
+
+    def test_road_ramp_reads_higher_exposure_as_a_lower_score(self):
+        """METHODOLOGY 11.0: scores run higher = better, measurements do not.
+
+        The share is a MEASUREMENT (higher = worse) and the score inverts it.
+        Getting this backwards is the defect the extension shipped for months,
+        where the longest bar marked the quietest row.
+        """
+        self.assertGreater(app.road_to_score(30.0), app.road_to_score(70.0))
+
+    # --- the other two, previously untested ------------------------------
+    def test_air_quality_ramp_hits_its_published_anchors(self):
+        # WHO 2021 guideline -> 10, UK legal limit for NO2 (4x it) -> 0.
+        self.assertEqual(app.aq_to_score(1.0), 10.0)
+        self.assertEqual(app.aq_to_score(4.0), 0.0)
+        self.assertEqual(app.aq_to_score(6.0), 0.0)
+
+    def test_flood_ramp_hits_its_published_anchors(self):
+        # 0% at EA Medium-or-High -> 10, the 10% `high` planning cut -> 0.
+        self.assertEqual(app.flood_to_score(0.0), 10.0)
+        self.assertEqual(app.flood_to_score(10.0), 0.0)
+        self.assertEqual(app.flood_to_score(31.4), 0.0)
+
+    # --- which inputs count ----------------------------------------------
+    def test_component_scores_omit_an_absent_input_rather_than_defaulting(self):
+        scores = app.env_component_scores({'airQualityWhoRatio': 2.0})
+        self.assertEqual(set(scores), {'airQuality'})
+
+    def test_component_scores_guard_on_the_continuous_field_not_the_band(self):
+        """A band without its continuous field must not score.
+
+        New York carries curated flood BANDS and no EA percentage; scoring the
+        band would reintroduce the editorial tier v3.5 removed.
+        """
+        scores = app.env_component_scores({'flood': 'low', 'roadNoise': 'high'})
+        self.assertEqual(scores, {})
+
+    def test_a_string_does_not_score_through_the_arithmetic(self):
+        # These arrive from JSON; isinstance is the guard, not truthiness.
+        self.assertEqual(app.env_component_scores({'roadNoiseAboveWhoPct': '46.7'}), {})
+
+    # --- the floor, raised to two at v4.0 --------------------------------
+    def test_one_measured_input_is_below_the_floor(self):
+        bd = {'airQualityWhoRatio': 1.5}
+        self.assertEqual(app.env_weights_for(app.env_component_scores(bd)), {})
+        self.assertIsNone(app.get_env_score(bd))
+
+    def test_two_measured_inputs_clear_the_floor(self):
+        bd = {'airQualityWhoRatio': 1.5, 'roadNoiseAboveWhoPct': 50.0}
+        self.assertIsNotNone(app.get_env_score(bd))
+
+    def test_weights_are_redistributed_in_proportion_not_equally(self):
+        """The declared 45/35/20 must keep its meaning when one input is absent.
+
+        With air and road only, air must stay the larger share at 45/80 =
+        0.5625 - promoting the survivors to 50/50 would silently re-weight it.
+        """
+        w = app.env_weights_for({'airQuality': 1, 'roadNoise': 1})
+        self.assertAlmostEqual(w['airQuality'], 0.45 / 0.80, places=6)
+        self.assertAlmostEqual(w['roadNoise'], 0.35 / 0.80, places=6)
+        self.assertAlmostEqual(sum(w.values()), 1.0, places=6)
+
+    def test_full_composite_uses_the_declared_weights(self):
+        bd = {
+            'airQualityWhoRatio': 1.0,       # -> 10.0
+            'roadNoiseAboveWhoPct': 100.0,   # -> 0.0
+            'floodMediumOrHighPct': 0.0,     # -> 10.0
+        }
+        # 0.45*10 + 0.35*0 + 0.20*10 = 6.5
+        self.assertAlmostEqual(app.get_env_score(bd), 6.5, places=6)
+
+    # --- what the response says about itself -----------------------------
+    def test_resolution_says_measured_only_when_all_three_are(self):
+        bd = {'airQualityWhoRatio': 1.5, 'roadNoiseAboveWhoPct': 50.0,
+              'floodMediumOrHighPct': 1.0}
+        self.assertEqual(app.env_resolution(bd), 'measured')
+
+    def test_resolution_is_partial_and_grammatical_at_two_of_three(self):
+        bd = {'airQualityWhoRatio': 1.5, 'roadNoiseAboveWhoPct': 50.0}
+        res = app.env_resolution(bd)
+        self.assertTrue(res.startswith('partial'))
+        self.assertIn('2/3', res)
+        # Singular missing input, plural survivors. The v3.9 string said "the
+        # measured one" unconditionally, wrong the moment there are two.
+        self.assertIn('absent input is', res)
+        self.assertIn('measured ones', res)
+
+    def test_resolution_is_unavailable_below_the_floor(self):
+        res = app.env_resolution({'airQualityWhoRatio': 1.5})
+        self.assertTrue(res.startswith('unavailable'))
+        self.assertIn('1/3', res)
+
+    def test_single_input_flag_is_literal_to_its_name(self):
+        """It must NOT fire for two-of-three, which the old expression did.
+
+        `0 < len(scores) < len(_ENV_FIELDS)` agreed with the name only while
+        _ENV_FIELDS had two entries. Road noise made it three, and a field
+        called environmentSingleInput reporting True for a borough with two
+        measured inputs is a published falsehood.
+        """
+        one = {'airQualityWhoRatio': 1.5}
+        two = {'airQualityWhoRatio': 1.5, 'roadNoiseAboveWhoPct': 50.0}
+        three = dict(two, floodMediumOrHighPct=1.0)
+        self.assertTrue(app.env_single_input(one))
+        self.assertFalse(app.env_single_input(two))
+        self.assertFalse(app.env_single_input(three))
+        self.assertFalse(app.env_single_input({}))
+
+    def test_declared_weights_cover_every_declared_field_and_sum_to_one(self):
+        self.assertEqual(set(app._ENV_WEIGHTS), set(app._ENV_FIELDS))
+        self.assertAlmostEqual(sum(app._ENV_WEIGHTS.values()), 1.0, places=6)
+
+
 class EnvironmentCityDerivationTests(unittest.TestCase):
     """/v1/environment must score aircraft noise with the RIGHT city's geometry.
 

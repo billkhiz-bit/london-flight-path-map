@@ -2,21 +2,34 @@
 
 **A noise + livability data API for UK and NYC property.**
 
-Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
+Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26, gaining road noise at v4.0, 2026-08-29; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v3.9 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v4.0 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
-> **Air quality and flood risk are SCORED since v3.9 (2026-08-26), not just
-> drawn.** They join as a fifth component, `environment`, weighted air quality
-> 0.65 / flood 0.35 at 0.14 of most personas — 0.18 for `family` and
-> `laterlife`, the two that map onto the WHO/COMEAP air-pollution sensitivity
-> groups (children, older adults). **94 of 99 boroughs carry it**, 77 on both
-> inputs; New York is the only city with neither, DEFRA and the EA being UK
-> sources. It scores the CONTINUOUS fields, not the three-band map summaries —
-> 68.1% of boroughs share the modal air band, so scoring the bands would have
-> put two-thirds of the country on one number. Both ramps anchor on published
-> thresholds (WHO 2021 guideline → the UK legal limit for NO₂; 0% → the EA's
-> 10% Medium-or-High cut), never on the observed range.
+> **Air quality, road noise and flood risk are all SCORED, not just drawn.**
+> They are the fifth component, `environment` — air quality 0.65 / flood 0.35
+> at v3.9 (2026-08-26), re-composed to **air quality 0.45 / road noise 0.35 /
+> flood 0.20** at v4.0 (2026-08-29). The component sits at 0.14 of most personas
+> — 0.18 for `family` and `laterlife`, the two that map onto the WHO/COMEAP
+> air-pollution sensitivity groups (children, older adults) — and v4.0 changed
+> none of those: it re-composed the component, not the top-level split.
+>
+> **Road noise was the last input that was measured, mapped and reported while
+> nothing scored it.** With it, **90 of 99 boroughs are fully measured**, 5 are
+> partial (Teesside, awaiting one flood tile) and 9 are unavailable (New York's
+> 5, no UK source applying; Cardiff's 4, Wales having no English road or flood
+> coverage). Median environment moved 8.00 → 6.65 — the honest cost of counting
+> a real adverse exposure for the first time, and not uniform: four boroughs
+> rose.
+>
+> It scores the CONTINUOUS fields, never the three-band map summaries — 68.1%
+> of boroughs share the modal air band and 54.9% the modal road band, so
+> scoring bands would put most of the country on one number. For road it is the
+> SHARE over WHO's guideline, not the median dB beside it: the median carries 41
+> distinct values to the share's 69 over an interquartile range of 1.7 dB. All
+> three ramps anchor on published thresholds (WHO 2021 guideline → the UK legal
+> limit for NO₂; 0% → 100% of addresses over WHO 2018's 53 dB Lden road
+> guideline; 0% → the EA's 10% Medium-or-High cut), never on the observed range.
 >
 > **The UK city-regions outside London are thinner than London on purpose,
 > and the gap is now four datasets rather than seven.** Road noise, flood risk
