@@ -5,6 +5,45 @@ laptop, or starting a fresh session on this desktop.
 
 ---
 
+## 1. PICK UP HERE - the 29 August audit, 2 of 45 findings addressed
+
+**Read `AUDIT_REPORT.md` first.** 45 findings (9 critical / 21 important / 15
+minor). All four of today's waves are committed, pushed, deployed and verified;
+the audit is recorded but almost entirely UNFIXED.
+
+**Do these two first, in this order:**
+
+1. **The EA flood mosaic is mis-georeferenced in 10 of 11 cities** (F24/F39).
+   `scripts/fetch_ea_flood_risk.py` clips edge tiles to the city bbox (line 219)
+   but always requests **2000x2000 px** whatever their extent (line 156), then
+   mosaics at a uniform **10 m/px** (line 237). Only Nottingham's bbox is an
+   exact multiple of the 20 km tile - I checked all eleven. Sefton publishes
+   31.39% against a corrected 0.28%. **Flood has SCORED since v3.9**, so live
+   scores, the map and the 99 baked area pages are affected. Fix the request
+   size (or give each tile its own transform), re-fetch every city, re-derive,
+   rebuild area pages, redeploy. **`build_borough_bands.py --check` cannot see
+   this** - it samples the same mosaic.
+2. **Finish the verification.** 40 findings are still UNVERIFIED because the
+   pass died at 15 of 48 on the session limit. Workflow resume is
+   **same-session only**, so this means re-running the adversarial pass - but
+   NOT the survey: `audit-findings-2026-08-29.json` holds all 45 findings with
+   stable ids, evidence and scenarios. Verify before fixing: the verifiers that
+   did run **downgraded 8 of 13** while refuting none.
+
+**One caveat on tonight's work.** The `envCaveat` fix and its new gate
+(`ce0bf49`) were committed after a green full preflight on the PREVIOUS tree; a
+full run was started afterwards but the session ended before it finished. **Run
+`sh scripts/preflight.sh` before anything else ships.**
+
+Other criticals, none started: CI has run no test suite since 24 July (both test
+jobs `needs:` lint jobs that fail on formatting, so they SKIP); London's
+aircraft raster is declared painted from an href attribute and the gate reads
+the same attribute; borough bands are weighted by retired postcodes (39.2% of
+the NSPL sample); `mobile/scripts/copy-web.mjs`'s data allow-list is stale since
+3 August.
+
+---
+
 ## 1a. METHODOLOGY v4.0 SHIPPED AND DEPLOYED, 2026-08-29
 
 | | |

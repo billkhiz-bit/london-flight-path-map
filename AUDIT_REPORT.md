@@ -129,7 +129,7 @@ Three clusters account for most of it.
 
 ---
 
-### F25 — Every UK borough panel renders "undefined only here" under Environment — envCaveat() is passed the scored record, which never holds the three continuous fields it tests
+### F25 — [FIXED 2026-08-29, ce0bf49] Every UK borough panel renders "undefined only here" under Environment — envCaveat() is passed the scored record, which never holds the three continuous fields it tests
 
 | | |
 |---|---|
@@ -144,7 +144,7 @@ Three clusters account for most of it.
 
 **Why no gate catches it.** `site == Lambda (91 boroughs)` (tests/borough-score-parity.mjs) reads `CITY_DATA[c].boroughData()[name].score` out of the registry — it never opens the sidebar, so it cannot see any rendered copy. `layers paint only real data` inverts SVG `fill` attributes. `responsive`, `map fits its box` and `WCAG source scan` ask about geometry, position and contrast, not text. `every city switches` counts outlines. Nothing in tests/ or tests/e2e/ contains the strings `score-explain`, `only here` or `not comparable` (`grep -rn 'score-explain\\|only here\\|not comparable' tests/` → no matches), so no gate has ever read this row. The full preflight was reported PASS on the commit that shipped it.
 
-**Suggested fix.** Pass the borough-extra record, not the scored record: at line 11013 use the `extra` that updateSidebar already resolves for the metric cards (`getExtraData(data.name)`), i.e. `envCaveat(getExtraData(data.name), ev)`. Independently, make envCaveat() incapable of printing `undefined`: `if (!have.length) return '';` before building `names` — a caveat that cannot name a single input has nothing to disclose. Add an assertion to tests/borough-score-parity.mjs (it already opens the page and iterates every borough) that the rendered `.score-explain` text contains no `undefined`.
+**Suggested fix.** DONE. envCaveat() now takes a borough name + city and resolves the record itself, as getEnvScore() does; an empty measured-input list exits early instead of naming itself. Guarded by tests/panel-caveat.mjs (blocking), proven red against the pre-fix tree. ORIGINAL SUGGESTION: Pass the borough-extra record, not the scored record: at line 11013 use the `extra` that updateSidebar already resolves for the metric cards (`getExtraData(data.name)`), i.e. `envCaveat(getExtraData(data.name), ev)`. Independently, make envCaveat() incapable of printing `undefined`: `if (!have.length) return '';` before building `names` — a caveat that cannot name a single input has nothing to disclose. Add an assertion to tests/borough-score-parity.mjs (it already opens the page and iterates every borough) that the rendered `.score-explain` text contains no `undefined`.
 
 **Verifier notes.**
 

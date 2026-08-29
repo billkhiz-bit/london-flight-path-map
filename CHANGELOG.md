@@ -1,5 +1,56 @@
 # Changelog
 
+## 2026-08-29 (later) - the audit, and the panel nothing had ever rendered
+
+**Full audit: 45 findings, 9 critical.** Report in `AUDIT_REPORT.md`, previous
+archived as `AUDIT_REPORT_2026-08-21.md`, raw findings preserved in
+`audit-findings-2026-08-29.json` so verification can resume without repeating
+the survey. **Only F25 is fixed; everything else is recorded, not addressed.**
+
+**The worst finding is the EA flood mosaic**, wrong in 10 of 11 cities.
+`fetch_ea_flood_risk.py` clips edge tiles to the city bbox but always requests
+2000x2000 px whatever their extent, then mosaics at a uniform 10 m/px - so a
+9 km edge tile is rendered at 4.5 m/px and pasted as if 10, stretching real
+flood polygons about twofold. Checked by hand: **only Nottingham's bbox is an
+exact multiple of the 20 km tile**, so the other ten all carry partial tiles.
+Sefton publishes 31.39% at Medium-or-High against a corrected 0.28%. Flood has
+SCORED since v3.9 and banded the map since 11 August. **`--check` cannot see it
+- it samples the same mosaic, so the two things it compares are the file and
+itself**, which is a new variant of checks-that-cannot-fail: the previous ones
+compared zero items, this one has both sides sharing a corrupted input.
+
+### The panel nothing had ever rendered
+
+**Every UK borough panel printed "- undefined only here"** beside a correct
+Environment score, from this morning's deploy until tonight. `envCaveat()` reads
+the three CONTINUOUS fields, which only `borough-extra.json` carries, and the
+sidebar handed it the SCORED record from `matchBorough()`, which never has them.
+The measured-input list was therefore always empty and `names[0]` was
+`undefined` - a string that exists to disclose a coverage gap instead published
+a placeholder.
+
+- It takes a borough NAME and city now and resolves the record itself, exactly
+  as `getEnvScore()` does, so the caveat and the score beside it read one holder
+  and cannot disagree. **A record argument can always be the wrong record; a
+  name can only resolve through the holder that has the fields.** An empty list
+  exits early rather than falling through to name itself.
+- **It shipped with all 32 gates green because nothing in the suite opens the
+  sidebar.** `borough-score-parity.mjs` compares the score out of the registry
+  without rendering the panel, so every string beside every number was
+  unasserted. `tests/panel-caveat.mjs` renders it and is blocking; proven red
+  against the pre-fix tree, where Camden and Middlesbrough both returned
+  `undefined`.
+
+### Two process lessons from running the audit
+
+- **The spend-limit gotcha fired.** Verification died at 15 of 48 agents on the
+  session limit. It cost no findings, because finders and verifiers were run as
+  SEPARATE workflows with the survey checkpointed to disk first - which is what
+  that gotcha prescribes. Verification runs last, so verification is what dies.
+- **Verifiers downgraded 8 of the first 13 findings and refuted none.** Severity
+  inflation by finders is systematic, so an UNVERIFIED row in the report is a
+  lead, not a fact.
+
 ## 2026-08-29 - the last display-only input, and a constraint that was never one
 
 **Road noise had been derived for every covered city since 2026-08-11, drawn as
