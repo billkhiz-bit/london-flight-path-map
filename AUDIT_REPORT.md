@@ -133,7 +133,7 @@ Three clusters account for most of it.
 
 | | |
 |---|---|
-| **Verification** | **CONFIRMED** — 3 of 3 verifiers could not refute it |
+| **Verification** | **CONFIRMED** — 4 of 4 verifiers could not refute it |
 | Location | `index.html:11013` |
 | Category | renders-a-value-it-did-not-verify |
 | Found by | Absence rendered as a confident me, Frontend JavaScript correctness in (corroborated by 2 independent finders) |
@@ -151,6 +151,7 @@ Three clusters account for most of it.
 - *? lens* (high confidence, severity called `critical`): Four corrections, none of which weakens the finding, but the first changes the fix: 1. "The borough HAS all three inputs" is true for 81 of the 86, NOT all 86. Teesside's five (Hartlepool, Middlesbrough, Redcar and Cleveland, Stockton-on-Tees, Darlington) genuinely carry only two — `airQualityWhoRatio` and `roadNoiseAboveWhoPct`, no `floodMediumOrHighPct`. Measured with the suggested fix applied i
 - *? lens* (high confidence, severity called `critical`): Three corrections, none of which weakens the finding: 1. "all 11 UK city-regions" is wrong by one. The site carries 10 UK city-regions plus NYC = 11 cities. The 86 affected boroughs span TEN UK cities (measured: london 33, manchester 10, leicester 8, westmidlands 7, westyorkshire 5, merseyside 5, tyneandwear 5, teesside 5, southyorkshire 4, bristol 4). NYC's 5 are suppressed by the `ev === null` g
 - *? lens* (high confidence, severity called `critical`): Three corrections, none of which weaken the finding: 1. THE SUGGESTED FIX NAMES A BINDING THAT IS NOT IN SCOPE. "use the `extra` that updateSidebar already resolves for the metric cards" is wrong: `const extra = getExtraData(data.name)` at index.html:11035 lives inside an IIFE embedded LATER in the same template literal that line 11013 is part of, so it cannot be referenced at 11013. The concrete 
+- *? lens* (high confidence, severity called `critical`): Three corrections, none of which weaken the finding: 1. THE SUGGESTED FIX AS WRITTEN WOULD THROW. It says to "use the `extra` that updateSidebar already resolves for the metric cards". `extra` is NOT in scope at line 11013: it is `const extra = getExtraData(data.name)` declared at line 11033, inside a later arrow-function IIFE (`${(() => { ... })()}`) embedded in the same template literal, several
 
 ---
 
@@ -158,7 +159,7 @@ Three clusters account for most of it.
 
 | | |
 |---|---|
-| **Verification** | **CONFIRMED** — 3 of 3 verifiers could not refute it |
+| **Verification** | **CONFIRMED** — 4 of 4 verifiers could not refute it |
 | Location | `index.html:8825` |
 | Category | absence-as-measurement |
 | Found by | Absence rendered as a confident me, Can any gate report success while  (corroborated by 2 independent finders) |
@@ -176,6 +177,7 @@ Three clusters account for most of it.
 - *? lens* (high confidence, severity called `important`): Severity: important, not critical. No user or API caller is affected today — `/data/aircraft-noise-london-lden.png` returns 200 with 45,659 bytes (matching the tracked file) at both `d1oe4ftwutjpf.cloudfront.net` and `skyscore.co.uk`. The raster is display-only and is not a scoring input, so no published number, score or API response can move; the harm is a legend claiming a dB scale over an empty
 - *? lens* (high confidence, severity called `important`): Severity: downgraded critical -> important. Nothing is broken for any user today, and the auditor's own evidence shows it: the baseline and broken readings are identical because the baseline is healthy. `/data/aircraft-noise-london-lden.png` is git-TRACKED (not gitignored), CloudFront serves it 200 at 45,659 bytes (verified live), and `mobile/scripts/copy-web.mjs` lists it in `REQUIRED_DATA` and `
 - *? lens* (high confidence, severity called `important`): 1. SEVERITY: important, not critical. No user or API caller is affected today. The live PNG is 200/45,659 bytes at CloudFront, identical to the tracked copy; it is in git, in `make data-deploy` (Makefile:263) which `web-deploy-all` (Makefile:391) runs, and in the native bundle's REQUIRED_DATA allow-list (mobile/scripts/copy-web.mjs:106) behind a FATAL missing-file check. The NYC half was critical 
+- *? lens* (high confidence, severity called `important`): Severity: `critical` -> `important`. The defect and the gate blindness are both proven, but the origin copy is live and healthy (200, 45,659 bytes, identical to the tracked file on both CloudFront and skyscore.co.uk), so nothing is being mis-rendered today and no scored value is affected in any scenario — the failure needs a deploy/lifecycle mistake or a per-user fetch failure to fire. Mechanism, 
 
 ---
 
@@ -319,7 +321,25 @@ Carried from the 2026-08-21 audit and deliberately NOT re-raised:
   the fetcher correctly refuses to cache it. Known and deliberate.
 - **Prettier deviations** — advisory, repo-wide, long-standing.
 
-## 5. Provenance of this report
+## 5. Finishing the verification
+
+15 of the 48 planned verifications completed. The rest died when the session
+hit its spend limit, which is the failure mode the audit skill documents; the
+survey had been checkpointed to disk first, so no FINDING was lost - only the
+adversarial pass over them.
+
+**Workflow resume is same-session only.** A later session cannot replay the
+completed verifiers from cache, so finishing this means re-running the
+verification workflow from scratch against the ids still marked UNVERIFIED.
+The findings themselves are in
+`<session>/scratchpad/audit_findings.json` and, permanently, in the survey
+journal named below.
+
+Until then: **an UNVERIFIED row is a lead, not a fact.** The verifiers that DID
+run downgraded 8 of their first 13 findings while refuting none, so expect the
+same of the rest - severity here is the finder's opinion, not a measurement.
+
+## 6. Provenance of this report
 
 Survey findings live in the workflow journal at
 `subagents/workflows/wf_1cad9887-8a4/journal.jsonl`; verdicts at
