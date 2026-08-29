@@ -2,7 +2,32 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-08-29 (**THE LAST DISPLAY-ONLY INPUT, AND A CONSTRAINT
+**Last reviewed:** 2026-08-29, later the same day (**FULL AUDIT: 45 FINDINGS,
+AND THE FLOOD DATA IS WRONG.** Ten-agent survey plus adversarial verification -
+report in `AUDIT_REPORT.md`, previous archived as `AUDIT_REPORT_2026-08-21.md`.
+9 critical / 21 important / 15 minor. **The worst is a mis-georeferenced EA
+flood mosaic affecting 10 of 11 cities**: `fetch_ea_flood_risk.py` clips edge
+tiles to the bbox but always requests 2000x2000 px, then mosaics at a uniform
+10 m/px, stretching real flood polygons ~2x. Only Nottingham's bbox is an exact
+tile multiple - I checked every city by hand. Sefton publishes 31.39% against a
+corrected 0.28%. **Flood has SCORED since v3.9 and banded the map since 11 Aug**,
+so live scores, the map and the 99 baked area pages are all affected, and
+`build_borough_bands.py --check` cannot see it because it samples the same
+mosaic - the two things it compares are the file and itself. Also critical: **CI
+has run neither test suite since 24 July** (both test jobs `needs:` lint jobs
+that fail on formatting, so they SKIP rather than fail); `envCaveat()` prints
+**"undefined only here"** on every UK borough panel, a regression from the v4.0
+wave hours earlier; London's aircraft raster is declared painted from an href
+attribute and the gate reads the same attribute; borough bands are weighted by
+**retired postcodes**, 39.2% of the NSPL sample. **Two process lessons.** The
+audit skill's spend-limit gotcha FIRED: verification died at 13 of 48 agents on
+the session limit, and survived only because the finders were checkpointed to
+disk first - always run finders and verifiers as SEPARATE workflows, because
+verification runs last and is what dies. And **verifiers downgraded 8 of the
+first 13 findings** while refuting none: a finder's `critical` is a hypothesis,
+so re-measure before writing any fix. NOTHING FROM THIS AUDIT IS FIXED YET.)
+
+**Previously reviewed:** 2026-08-29 (**THE LAST DISPLAY-ONLY INPUT, AND A CONSTRAINT
 THAT WAS NEVER ONE.** Methodology **v4.0**: road noise becomes the third scored
 `environment` input, at air quality 0.45 / road noise 0.35 / flood 0.20. Persona
 weights are untouched - this re-composes the component, not the top-level split.

@@ -102,6 +102,28 @@ each has a `--check` that can go red:
 |---|---|---|
 | avgPrice / trend | `build_hpi_prices.py --check --all` | HPI 2026-05, **blocking preflight stage**, all agree |
 | roadNoise / airQuality / flood bands | `build_borough_bands.py --check` | DEFRA Round 4 road Lden + DEFRA background maps + EA RoFRS. **Air quality is every city bar NYC; road noise now is too, and flood is everything bar NYC and Teesside** (measured from `borough-extra.json` 2026-08-29: air 86, road 86, flood 81 of 91). The old note here said Leicester 0/8 and Teesside 0/5 carried NEITHER, and recorded it as a property of the data - **it was an unrun script**. Both fetchers are per-city against ENGLAND-WIDE coverages and neither city was in `NO_ROAD_COVERAGE`/`NO_FLOOD_COVERAGE`; the rasters had simply never been fetched for the two cities that joined on 2026-08-11. **A measurement recorded without its cause reads as a constraint.** Teesside's flood is still out on ONE near-all-sea tile that renders blank, which the C11 guard rightly refuses to cache. `paintBoroughLayer()` skips what is missing, so the MAP is honest; this row was the thing over-claiming. **Since v3.9 the BANDS are still display-only but the CONTINUOUS fields beside them SCORE** - see the `environment` row below. |
+> ## ⚠️ FLOOD FIGURES ARE WRONG IN 10 OF 11 CITIES (audit 2026-08-29, F24/F39)
+>
+> `scripts/fetch_ea_flood_risk.py` clips edge tiles to the city bbox (line 219)
+> but **always requests 2000x2000 px** whatever the tile's real extent (line
+> 156), then mosaics assuming a uniform **10 m/px** (line 237). A 9 km-wide edge
+> tile is therefore rendered at 4.5 m/px and pasted as if 10 m/px - **stretched
+> ~2x**, dragging flood polygons kilometres out of position.
+>
+> **Only Nottingham's bbox (40x40 km) is an exact multiple of the 20 km tile.**
+> The other ten cities all have partial edge tiles. Measured by hand, not
+> inferred. Reported effect: Sefton publishes `floodMediumOrHighPct 31.39` /
+> `high` against a corrected **0.28** / `low`.
+>
+> **Flood has SCORED since v3.9 (26 Aug) and banded the map since 11 Aug**, so
+> live scores, the map and the 99 baked area pages are all affected.
+> **`build_borough_bands.py --check` cannot see it** - it samples the same
+> mosaic, so it re-derives the identical wrong number and reports agreement.
+> The two things it compares are the file and itself.
+>
+> NOT YET FIXED. Fix the fetcher's request size (or the mosaic's per-tile
+> transform), re-fetch every city, re-derive, rebuild area pages, redeploy.
+
 | **environment** (v4.0, 2026-08-29) | `build_borough_bands.py --check` / `--write --write-lambda` | **Air quality 0.45 + road noise 0.35 + flood 0.20, from `airQualityWhoRatio`, `roadNoiseAboveWhoPct` and `floodMediumOrHighPct` - the CONTINUOUS fields, never the three-band map summaries** (68.1% share the modal air band, 54.9% the modal road band). **Road noise reads the SHARE over WHO 53 dB, never `roadNoiseLdenMedian`** - the median carries 41 distinct values to the share's 69 over an IQR of 1.7 dB, and ramping it 53->63 dB clamps 19 of 73 boroughs to a perfect 10. All three anchored on PUBLISHED thresholds: WHO 2021 -> the UK legal NO2 limit; 0% -> 100% over WHO's 53 dB Lden road guideline; 0% -> the EA's 10% Medium-or-High cut. **SCORING inputs, so they live in BOTH holders** - `test_borough_data_parity.py` covers all three, plus a `NAME_ALIASES` drift guard. **Use `--write --write-lambda`, not `--sync-lambda`**: sync copies from `borough-extra.json`, which SKIPS backend-only Cardiff and Nottingham, so Nottingham would silently miss road. 90/99 carry road; **85 `measured`, 5 `partial` (Teesside), 9 `unavailable` (NYC 5, Cardiff 4)**. |
 | transport | `build_borough_bands.py --write --write-lambda` | **NaPTAN, share of postcodes within 800 m of a rail/metro/tram node. A SCORING input (0.25 of liveability), so it lives in BOTH holders — `tests/test_borough_data_parity.py` fails the build on drift. Methodology v3.6, 2026-08-11.** |
 | crimeRate | `refresh_crime_from_ons.py --check --all` | ONS Table C4, 0 differ; **blocking preflight stage since 2026-08-24, with a PER-CITY floor** (it used to pass having compared zero) |
