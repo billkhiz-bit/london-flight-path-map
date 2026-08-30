@@ -171,3 +171,7 @@ floodfetch.log
 # gets far enough to write its own log.
 aircraftload.out
 aircraftload.err
+
+# Vendored MapLibre for the design/ basemap prototype. Regenerable:
+# curl -sL -o design/vendor/maplibre-gl.js https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js
+design/vendor/

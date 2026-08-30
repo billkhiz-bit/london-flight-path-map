@@ -186,18 +186,9 @@
       });
 
       if (!state.sel) {
-        // Pick the borough with the most measurements so the first impression
-        // is the design working, not an empty state.
-        var best = null, bestN = -1;
-        Object.keys(recs).forEach(function (b) {
-          var n = ['airQualityWhoRatio', 'roadNoiseAboveWhoPct', 'floodMediumOrHighPct',
-                   'crimeRate', 'transportWithin800mPct', 'healthcareWithin1kmPct']
-            .filter(function (f) { return num(recs[b][f]) !== null; }).length;
-          if (n > bestN) { bestN = n; best = b; }
-        });
-        if (best) {
-          state.sel = best;
-          boroughSel.filter(function (f) { return nameOf(f) === best; })
+        state.sel = defaultBorough(recs);
+        if (state.sel) {
+          boroughSel.filter(function (f) { return nameOf(f) === state.sel; })
             .attr('stroke-width', 2.4).attr('stroke', '#141414').raise();
         }
       }
@@ -260,10 +251,24 @@
 
   var rowCache = null;
 
+  // The borough with the most measurements. Chosen from the DATA so a panel is
+  // never empty just because a re-render beat the map to it.
+  function defaultBorough(recs) {
+    var best = null, bestN = -1;
+    Object.keys(recs || {}).forEach(function (b) {
+      var n = ['airQualityWhoRatio', 'roadNoiseAboveWhoPct', 'floodMediumOrHighPct',
+               'crimeRate', 'transportWithin800mPct', 'healthcareWithin1kmPct']
+        .filter(function (f) { return num(recs[b][f]) !== null; }).length;
+      if (n > bestN) { bestN = n; best = b; }
+    });
+    return best;
+  }
+
   function paintRows() {
     if (!rowCache) rowCache = findRows();
     if (!rowCache.length) { note('no metric rows recognised in this mockup'); banner(); return; }
     var recs = (state.extra && state.extra[state.city]) || {};
+    if (!state.sel) state.sel = defaultBorough(recs);
     var rec = state.sel ? recs[state.sel] : null;
 
     var rawRecs = (state.raw && state.raw[state.city]) || {};
@@ -314,12 +319,16 @@
     // The headline is found by FONT SIZE, not by class. Dashboard 1 uses the
     // arbitrary `text-[5rem]` and Dashboard 2 uses `text-6xl`, so a class
     // selector silently covered only one of the two.
-    if (!document.querySelector('[data-hyd-role]')) {
+    // Runs EVERY pass, skipping what is already claimed. Guarding the whole
+    // block on 'has anything been claimed' meant an element the first pass
+    // did not match could never be claimed later, which is how the
+    // 'LIVEABILITY INDEX' label survived.
+    {
       var leaves = document.querySelectorAll('span, p, div, h1, h2');
       var bigEl = null, bigPx = 0;
       for (var z = 0; z < leaves.length; z++) {
         var el = leaves[z];
-        if (el.children.length) continue;
+        if (el.children.length || el.hasAttribute('data-hyd-role')) continue;
         var lt = (el.textContent || '').trim();
         if (!lt) continue;
         if (/^-?[\d.]+$/.test(lt)) {
@@ -332,7 +341,9 @@
           el.setAttribute('data-hyd-role', 'source');
         }
       }
-      if (bigEl && bigPx >= 32) bigEl.setAttribute('data-hyd-role', 'headline');
+      if (bigEl && bigPx >= 32 && !document.querySelector('[data-hyd-role="headline"]')) {
+        bigEl.setAttribute('data-hyd-role', 'headline');
+      }
     }
 
     var set = function (role, text) {

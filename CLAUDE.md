@@ -545,6 +545,33 @@ Always use "Sky Score" in all public-facing files and UI text.
 
 ## Do NOT add Co-Authored-By lines to git commits
 
+## There is NO basemap, and that is a decision (evaluated 2026-08-30)
+
+The map is `d3.geoMercator` + `geoPath` over our own GeoJSON. **No tiles, no map
+API, no key, no per-load cost.** The handful of "basemap" mentions in
+`index.html` are comments about the grey background, not a tile layer.
+
+`design/map-basemap.html` toggles the same borough data between that vector
+ground and an OpenStreetMap raster basemap, so the trade can be seen rather than
+argued. Adding a street basemap would mean: a third-party runtime dependency at
+the centre of the product, widening the CSP `img-src`, **losing offline** (tiles
+cannot be `cache.addAll`'d, and `tests/failure-path.mjs` asserts an offline
+launch), permanent provider attribution, and per-load billing if it is Google.
+The product argument is separate and stronger: **street detail implies a
+precision we do not have**, since every figure published is borough-level.
+
+**Two gotchas found building it, both the "graceful failure" shape:**
+
+- **CARTO serves HTTP 200 with a valid 76 KB PNG when unauthenticated** - a
+  placeholder stamped "API KEY REQUIRED" on every tile. A health check on status
+  and content-type PASSES on a useless tile. **Assert pixels, not status**, if a
+  tile provider is ever wired in.
+- **A MapLibre `symbol` layer with no `glyphs` URL means the style never
+  finishes loading.** Tiles paint perfectly, `isStyleLoaded()` stays false
+  forever, and the data layers are never added - a flawless street map carrying
+  none of our data, which reads as a design choice rather than a fault. Poll
+  readiness; do not hang data layers off a single `load` event.
+
 ## Audit follow-ups closed 2026-08-30
 
 - **F30 - CI had run neither test suite since 24 July.** `test-backend` and

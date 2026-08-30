@@ -21,6 +21,8 @@ python -m http.server 8932 --bind 127.0.0.1
 | `prototype-desktop.html` | First interactive pass. My own visual direction, not Stitch's. |
 | `stitch-live.html` | Stitch's *actual* generated design (its Tailwind config spliced verbatim) wired to live data. |
 | `stitch/` | The raw Stitch output, unmodified. Static, invented content. |
+| `map-basemap.html` | **Street basemap vs vector**, same data on both grounds. Prototype for a dependency decision, not a proposal. |
+| `compare.html` | Side-by-side or single-pane viewer for everything above. |
 
 ## What `desktop-combined.html` combines, and why
 
@@ -157,3 +159,51 @@ working.
 **The toggle is disabled, not merely off, where a city has no airports.** South
 Yorkshire reports "This city has no airports" on hover. Off and unavailable look
 identical on a control that is only ever off, and they mean different things.
+
+## Round five: does Sky Score want a street basemap?
+
+`map-basemap.html` toggles the SAME borough data between the vector ground
+shipped today and an OpenStreetMap raster basemap, so the only variable is the
+ground. Built because the Stitch mockups showed a Google-style map and the
+question "is that another integration entirely?" deserved a real answer rather
+than an opinion.
+
+**Today there is no basemap at all.** The live map is `d3.geoMercator` and
+`geoPath` over our own GeoJSON. No tiles, no map API, no key, no per-load cost.
+The six "basemap" hits in index.html are comments about the grey background.
+
+**What adopting one would cost**
+
+| | Vector (today) | Street basemap |
+|---|---|---|
+| Third-party runtime dependency | none | a tile provider |
+| Cost | zero | per-load billing (Google) or self-hosting |
+| Offline / PWA | works, boundaries are precached | breaks; tiles cannot be `cache.addAll`'d |
+| CSP | unchanged | must widen `img-src` |
+| Attribution | ONS only | ODbL or provider, permanently on screen |
+| Precision implied | borough | STREET, while every figure we publish is borough-level |
+
+That last row is the product argument, not the technical one. Showing a user
+their street implies a precision the data does not have - the same over-claim as
+the neighbourhood ranking saying "best value" where price led it.
+
+**Two findings from building it, both worth keeping**
+
+- **CARTO returns HTTP 200 with a valid 76 KB PNG when you have no API key** -
+  a placeholder stamped "API KEY REQUIRED" on every tile. A reachability check
+  on status and content-type PASSES on a useless tile. If a tile provider is
+  ever wired in, the health check must assert PIXELS, not status. This is the
+  "graceful failure hides broken" shape arriving from a CDN.
+- **A `symbol` layer with no `glyphs` URL means the MapLibre style never
+  finishes loading.** Tiles kept painting perfectly while `isStyleLoaded()`
+  stayed false forever, so the data layers were never added: a flawless street
+  map with none of our data on it, which reads as a design choice rather than a
+  fault. The page polls readiness now and says so on screen if it gives up.
+
+**MapLibre is vendored** at `design/vendor/`, not loaded from a CDN, for the
+same reason d3 is: the point of the page is to evaluate adding ONE third-party
+dependency, not to quietly add two.
+
+OSM's tile usage policy permits light use with attribution and discourages heavy
+or commercial traffic. This is a prototype, **not** a production answer: shipping
+a street basemap means a paid provider or self-hosted tiles.

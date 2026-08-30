@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky Score — street basemap vs vector</title>
+<link rel="stylesheet" href="/design/vendor/maplibre-gl.css">
+<style>
+  :root {
+    --bg:#e4e3e0; --dark:#141414; --mid:#636363; --light:#c8c7c4; --white:#fafaf9;
+    --orange:#f27d26; --orange-ink:#a85416;
+    --r1:#d7e5d2; --r2:#a8c9a0; --r3:#e3c778; --r4:#e2924e; --r5:#b8453a;
+  }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; }
+  body {
+    background:var(--bg); color:var(--dark);
+    font:13px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .bar {
+    flex:0 0 auto; background:var(--white); border-bottom:1px solid var(--light);
+    padding:8px 14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .bar h1 { font-size:13px; margin:0; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
+  .bar h1 span { color:var(--orange-ink); }
+  button, select {
+    font:inherit; font-size:12px; padding:5px 9px; border:1px solid var(--dark);
+    background:var(--white); color:var(--dark); border-radius:0; cursor:pointer;
+  }
+  button[aria-pressed="true"] { background:var(--dark); color:var(--white); }
+  button:focus-visible, select:focus-visible { outline:2px solid var(--orange-ink); outline-offset:1px; }
+  .spacer { flex:1 1 auto; }
+  .tag { font-size:10.5px; color:var(--mid); }
+
+  .wrap { flex:1 1 auto; position:relative; min-height:0; }
+  #vec, #ml { position:absolute; inset:0; }
+  #vec { background:var(--bg); }
+  #vec svg { width:100%; height:100%; display:block; }
+  .hidden { display:none !important; }
+  .borough { stroke:#9d9a94; stroke-width:.6; cursor:pointer; }
+  .borough:hover { stroke:var(--dark); stroke-width:1.4; }
+  .bo-label {
+    font-family:ui-monospace,monospace; font-weight:600; font-size:7px; fill:#141414;
+    stroke:#FAFAF9; stroke-width:2.5px; paint-order:stroke; opacity:.9;
+    pointer-events:none; text-anchor:middle;
+  }
+
+  .panel {
+    position:absolute; right:12px; top:12px; z-index:5; width:280px;
+    background:var(--white); border:1px solid var(--dark); padding:12px 14px;
+  }
+  .panel h3 { margin:0 0 2px; font-size:16px; }
+  .panel .sub { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); }
+  .row { display:flex; justify-content:space-between; gap:8px; margin-top:9px; font-size:12px; }
+  .row b { font-variant-numeric:tabular-nums; }
+  .track { height:6px; background:#e8e6e2; margin-top:4px; }
+  .fill { height:100%; background:var(--orange); }
+
+  .legend {
+    position:absolute; left:12px; bottom:12px; z-index:5; background:var(--white);
+    border:1px solid var(--dark); padding:10px 12px; font-size:11px;
+  }
+  .legend .r { display:flex; align-items:center; gap:7px; margin:3px 0; }
+  .legend .sw { width:12px; height:12px; border:1px solid rgba(0,0,0,.2); }
+
+  .note {
+    position:absolute; left:12px; top:12px; z-index:5; max-width:330px;
+    background:#fff6ed; border:1px solid #f2c79b; border-left:3px solid var(--orange-ink);
+    padding:9px 11px; font-size:11px; color:#6b3a10;
+  }
+  .maplibregl-ctrl-attrib { font-size:10px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>Sky <span>Score</span> — ground comparison</h1>
+  <button id="mode-vec" type="button" aria-pressed="true">Vector (today)</button>
+  <button id="mode-str" type="button" aria-pressed="false">Street basemap</button>
+  <select id="city" aria-label="City"></select>
+  <span class="spacer"></span>
+  <span class="tag" id="tag"></span>
+</div>
+
+<div class="wrap">
+  <div id="vec"><svg id="svg"></svg></div>
+  <div id="ml" class="hidden"></div>
+
+  <div class="note" id="note"></div>
+
+  <div class="panel">
+    <div class="sub">Selected borough</div>
+    <h3 id="p-name">--</h3>
+    <div id="p-rows"></div>
+  </div>
+
+  <div class="legend">
+    <div style="font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Air quality</div>
+    <div class="r"><span class="sw" style="background:var(--r1)"></span>Lowest</div>
+    <div class="r"><span class="sw" style="background:var(--r3)"></span>Middle</div>
+    <div class="r"><span class="sw" style="background:var(--r5)"></span>Highest</div>
+    <div class="r"><span class="sw" style="background:transparent;border-style:dashed"></span>not measured</div>
+  </div>
+</div>
+
+<script src="/js/vendor/d3.v7.min.js"></script>
+<!-- Vendored, not CDN-loaded. This repo vendors d3 for the same reason: a
+     third-party script tag is an uncontrolled dependency, and the point of
+     this page is to evaluate ADDING one, not to quietly add two. -->
+<script src="/design/vendor/maplibre-gl.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var CITIES = [
+    ['london','London'],['manchester','Greater Manchester'],['westmidlands','West Midlands'],
+    ['westyorkshire','West Yorkshire'],['southyorkshire','South Yorkshire'],['merseyside','Merseyside'],
+    ['tyneandwear','Tyne and Wear'],['bristol','Bristol'],['leicester','Leicester'],
+    ['teesside','Teesside'],['nyc','New York']
+  ];
+  var RAMP = ['#d7e5d2','#a8c9a0','#e3c778','#e2924e','#b8453a'];
+  var FIELDS = [
+    ['airQualityWhoRatio', 'Air quality', 'x WHO', 2, 4],
+    ['roadNoiseAboveWhoPct', 'Road noise', '% over WHO', 1, 100],
+    ['floodMediumOrHighPct', 'Flood risk', '% med/high', 2, 20],
+    ['crimeRate', 'Crime', 'per 1,000', 1, 200],
+    ['transportWithin800mPct', 'Transport', '% <800m', 1, 100]
+  ];
+
+  var state = { city:'london', mode:'vec', extra:null, raw:null, geo:null, fc:null, sel:null, map:null };
+
+  function nameOf(f){ var p=(f&&f.properties)||{}; return p.name||p.LAD13NM||p.NAME||''; }
+  function num(v){ return typeof v==='number'&&isFinite(v)?v:null; }
+  function recs(){ return (state.extra&&state.extra[state.city])||{}; }
+
+  function cuts(){
+    var v=[]; (state.fc?state.fc.features:[]).forEach(function(f){
+      var x=num((recs()[nameOf(f)]||{}).airQualityWhoRatio); if(x!==null) v.push(x); });
+    v.sort(function(a,b){return a-b;});
+    var c=[]; for(var i=1;i<5&&v.length;i++) c.push(v[Math.floor(i*v.length/5)]);
+    return c;
+  }
+  function colourFor(f, c){
+    var v=num((recs()[nameOf(f)]||{}).airQualityWhoRatio);
+    if(v===null) return null;
+    var b=0; while(b<c.length && v>=c[b]) b++;
+    return RAMP[b];
+  }
+
+  function panel(name){
+    state.sel = name;
+    document.getElementById('p-name').textContent = name || '--';
+    var rec = name ? recs()[name] : null;
+    var raw = name ? ((state.raw&&state.raw[state.city])||{})[name] : null;
+    var html = '';
+    if (raw && raw.avg_price) {
+      html += '<div class="row"><span>Average price</span><b>£' +
+        Number(raw.avg_price).toLocaleString('en-GB') + '</b></div>';
+    }
+    FIELDS.forEach(function(f){
+      var v = rec ? num(rec[f[0]]) : null;
+      html += '<div class="row"><span>' + f[1] + '</span>' +
+        (v===null ? '<b style="font-style:italic;color:#636363;font-weight:400">not measured</b>'
+                  : '<b>' + v.toFixed(f[3]) + ' ' + f[2] + '</b>') + '</div>' +
+        '<div class="track"><div class="fill" style="width:' +
+        (v===null?0:Math.max(0,Math.min(100,(v/f[4])*100))) + '%;' +
+        (v===null?'opacity:0':'') + '"></div></div>';
+    });
+    document.getElementById('p-rows').innerHTML = html;
+  }
+
+  /* ------------------------------ VECTOR ------------------------------ */
+  function drawVector(){
+    var host=document.getElementById('vec'), svg=d3.select('#svg');
+    svg.selectAll('*').remove();
+    var w=host.clientWidth, h=host.clientHeight;
+    svg.attr('width',w).attr('height',h);
+    if(!state.fc) return;
+    var proj=d3.geoMercator().fitExtent([[24,24],[w-24,h-24]], state.fc);
+    var path=d3.geoPath(proj), c=cuts();
+
+    svg.append('g').selectAll('path').data(state.fc.features).enter().append('path')
+      .attr('d',path).attr('class','borough')
+      .attr('fill',function(f){ return colourFor(f,c)||'none'; })
+      .attr('fill-opacity',.8)
+      .attr('stroke-dasharray',function(f){ return colourFor(f,c)?null:'3 3'; })
+      .on('click',function(ev,f){ panel(nameOf(f)); })
+      .append('title').text(function(f){ return nameOf(f); });
+
+    var g=state.geo&&state.geo[state.city];
+    if(g){
+      var line=d3.line().x(function(d){return proj(d)[0];}).y(function(d){return proj(d)[1];});
+      var pg=svg.append('g');
+      (g.flightPaths||[]).forEach(function(fp){
+        if(!fp.coordinates||!fp.coordinates.length) return;
+        var d=line(fp.coordinates);
+        pg.append('path').attr('d',d).attr('fill','none').attr('stroke','#fafaf9').attr('stroke-width',3.6);
+        pg.append('path').attr('d',d).attr('fill','none')
+          .attr('stroke',fp.type==='departure'?'#267df2':'#f27d26').attr('stroke-width',1.7).attr('stroke-opacity',.8);
+      });
+      (g.airports||[]).forEach(function(a){
+        if(!a.coords) return; var xy=proj(a.coords); if(!xy||!isFinite(xy[0])) return;
+        svg.append('circle').attr('cx',xy[0]).attr('cy',xy[1]).attr('r',4)
+          .attr('fill','#141414').attr('stroke','#fafaf9').attr('stroke-width',1.4);
+        svg.append('text').attr('x',xy[0]+7).attr('y',xy[1]+3).attr('class','bo-label')
+          .attr('font-size','9px').attr('text-anchor','start').text(a.code);
+      });
+    }
+    var lg=svg.append('g');
+    state.fc.features.forEach(function(f){
+      var cc=path.centroid(f); if(!cc||!isFinite(cc[0])) return;
+      lg.append('text').attr('x',cc[0]).attr('y',cc[1]).attr('class','bo-label')
+        .text(nameOf(f).toUpperCase());
+    });
+  }
+
+  /* ------------------------------ STREET ------------------------------ */
+  // Raster tiles from OpenStreetMap's standard style. KEYLESS, which is the
+  // whole point of the prototype: the comparison has to be makeable before
+  // anyone commits to a provider or a bill.
+  //
+  // CARTO was tried first and is instructive. Its basemaps now require an API
+  // key, and a keyless request returns HTTP 200 with a valid 76 KB PNG - a
+  // placeholder stamped "API KEY REQUIRED" across every tile. A reachability
+  // check on status and content type therefore PASSES on a tile that is
+  // useless, which is this repo's "graceful failure hides broken" shape
+  // arriving from a CDN. Only looking at the rendered map caught it.
+  //
+  // OSM's tile usage policy permits light use with attribution and discourages
+  // heavy or commercial traffic, so this is fine for a local prototype and is
+  // NOT a production answer. A shipped street basemap needs either a paid
+  // provider or self-hosted tiles - see the note in the header.
+  var STYLE = {
+    version: 8,
+    sources: {
+      osm: {
+        type: 'raster',
+        tiles: [
+          'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }
+    },
+    // GLYPHS ARE NOT OPTIONAL HERE. The borough-name layer is a `symbol` with a
+    // text-field, and MapLibre cannot finish loading a style it has no font
+    // source for: isStyleLoaded() stayed false forever, 'load' never fired, and
+    // addLayers() therefore never ran. The tiles still painted, so the page
+    // showed a perfect street map with none of our data on it - which reads as
+    // a design decision rather than a fault.
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+  };
+
+  function bounds(fc){
+    var b=[[180,90],[-180,-90]];
+    function walk(c){
+      if(typeof c[0]==='number'){
+        b[0][0]=Math.min(b[0][0],c[0]); b[0][1]=Math.min(b[0][1],c[1]);
+        b[1][0]=Math.max(b[1][0],c[0]); b[1][1]=Math.max(b[1][1],c[1]);
+        return;
+      }
+      c.forEach(walk);
+    }
+    fc.features.forEach(function(f){ walk(f.geometry.coordinates); });
+    return b;
+  }
+
+  function drawStreet(){
+    if(!state.fc || typeof maplibregl === 'undefined') return;
+    var c = cuts();
+    // Colour is baked per feature so the paint expression stays a simple
+    // property read - a match expression over 33 borough names would have to
+    // be rebuilt on every city change and is easy to get silently wrong.
+    var fc = JSON.parse(JSON.stringify(state.fc));
+    fc.features.forEach(function(f){
+      var col = colourFor(f, c);
+      f.properties = f.properties || {};
+      f.properties._fill = col || 'rgba(0,0,0,0)';
+      f.properties._measured = col ? 1 : 0;
+      f.properties._name = nameOf(f);
+    });
+
+    if(!state.map){
+      state.map = new maplibregl.Map({
+        container: 'ml', style: STYLE, bounds: bounds(state.fc), fitBoundsOptions:{padding:30},
+        attributionControl: { compact: false }
+      });
+      state.map.addControl(new maplibregl.NavigationControl(), 'top-right');
+      window.__skyMap = state.map;   // debugging handle
+      // Waiting on the single 'load' event stranded the layers when the style
+      // could not complete. Polling readiness is dull and cannot miss.
+      var tries = 0;
+      var wait = setInterval(function () {
+        tries++;
+        if (state.map.isStyleLoaded()) {
+          clearInterval(wait);
+          try {
+            addLayers(fc);
+          } catch (err) {
+            document.getElementById('note').innerHTML =
+              '<strong>Borough layers failed to add:</strong> ' + err.message;
+          }
+        } else if (tries > 60) {
+          clearInterval(wait);
+          // Say so on the page. A street map with no data on it is
+          // indistinguishable from a design that chose not to show any.
+          document.getElementById('note').innerHTML =
+            '<strong>Basemap style never finished loading,</strong> so no borough ' +
+            'data is drawn here. The streets you can see are the tiles alone.';
+        }
+      }, 200);
+      state.map.on('error', function (e) {
+        if (e && e.error) { console.warn('[maplibre]', e.error.message); }
+      });
+    } else {
+      var src = state.map.getSource('boroughs');
+      if(src) src.setData(fc);
+      state.map.fitBounds(bounds(state.fc), {padding:30, duration:0});
+    }
+  }
+
+  function addLayers(fc){
+    var m = state.map;
+    m.addSource('boroughs', { type:'geojson', data:fc });
+    m.addLayer({ id:'bo-fill', type:'fill', source:'boroughs',
+      paint:{ 'fill-color':['get','_fill'], 'fill-opacity':0.55 } });
+    m.addLayer({ id:'bo-line', type:'line', source:'boroughs',
+      paint:{ 'line-color':'#5c5c5c', 'line-width':0.8,
+              // A borough with no reading is DASHED and unfilled here too, so
+              // the two grounds make the same claim about missing data.
+              'line-dasharray':[2,2] },
+      filter:['==',['get','_measured'],0] });
+    m.addLayer({ id:'bo-line-solid', type:'line', source:'boroughs',
+      paint:{ 'line-color':'#5c5c5c', 'line-width':0.8 },
+      filter:['==',['get','_measured'],1] });
+    m.addLayer({ id:'bo-label', type:'symbol', source:'boroughs',
+      layout:{ 'text-field':['get','_name'], 'text-size':10,
+               'text-transform':'uppercase', 'text-letter-spacing':0.05 },
+      paint:{ 'text-color':'#141414', 'text-halo-color':'#FAFAF9', 'text-halo-width':1.6 } });
+    m.on('click','bo-fill', function(e){
+      if(e.features && e.features[0]) panel(e.features[0].properties._name);
+    });
+    m.on('mouseenter','bo-fill', function(){ m.getCanvas().style.cursor='pointer'; });
+    m.on('mouseleave','bo-fill', function(){ m.getCanvas().style.cursor=''; });
+  }
+
+  /* -------------------------------- UI -------------------------------- */
+  var NOTE = {
+    vec: '<strong>Vector, as shipped today.</strong> No tiles, no map API, no key, ' +
+         'no per-load cost. Works offline: the service worker precaches the boundary ' +
+         'files, and tests/failure-path.mjs asserts an offline launch.',
+    str: '<strong>Street basemap, prototype only.</strong> OpenStreetMap tiles ' +
+         '(ODbL, attribution required). Adding this means widening the CSP img-src, ' +
+         'a third-party runtime dependency at the centre of the product, and losing ' +
+         'offline: tiles cannot be precached by cache.addAll(). Google Maps would add ' +
+         'per-load billing and an API key on top. CARTO now needs a key too, and serves a watermarked placeholder at HTTP 200 without one.'
+  };
+
+  function setMode(m){
+    state.mode = m;
+    document.getElementById('mode-vec').setAttribute('aria-pressed', String(m==='vec'));
+    document.getElementById('mode-str').setAttribute('aria-pressed', String(m==='str'));
+    document.getElementById('vec').classList.toggle('hidden', m!=='vec');
+    document.getElementById('ml').classList.toggle('hidden', m!=='str');
+    document.getElementById('note').innerHTML = NOTE[m];
+    if(m==='vec') drawVector();
+    else { drawStreet(); if(state.map) setTimeout(function(){ state.map.resize(); }, 60); }
+    document.getElementById('tag').textContent =
+      m==='vec' ? 'self-hosted geometry, no third party' : 'third-party tiles, no offline';
+  }
+
+  function loadCity(){
+    d3.json('/data/' + state.city + '-boroughs.json').then(function(gj){
+      state.fc = (gj && gj.type==='FeatureCollection') ? gj : {type:'FeatureCollection', features:gj};
+      state.sel = null; panel(null);
+      setMode(state.mode);
+    });
+  }
+
+  var sel = document.getElementById('city');
+  CITIES.forEach(function(c){
+    var o=document.createElement('option'); o.value=c[0]; o.textContent=c[1]; sel.appendChild(o);
+  });
+  sel.onchange = function(e){ state.city=e.target.value; loadCity(); };
+  document.getElementById('mode-vec').onclick = function(){ setMode('vec'); };
+  document.getElementById('mode-str').onclick = function(){ setMode('str'); };
+
+  Promise.all([
+    d3.json('/data/borough-extra.json'),
+    d3.json('/design/borough-raw.json').catch(function(){ return null; }),
+    d3.json('/design/airports-paths.json').catch(function(){ return null; })
+  ]).then(function(r){
+    state.extra=r[0]; state.raw=r[1]; state.geo=r[2];
+    loadCity();
+  });
+
+  var t;
+  window.addEventListener('resize', function(){
+    clearTimeout(t);
+    t=setTimeout(function(){ if(state.mode==='vec') drawVector(); else if(state.map) state.map.resize(); }, 180);
+  });
+})();
+</script>
+</body>
+</html>
