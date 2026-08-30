@@ -2,7 +2,46 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-08-29, later the same day (**FULL AUDIT: 45 FINDINGS,
+**Last reviewed:** 2026-08-30 (**THE FLOOD DATA IS FIXED, AND THE GATE THAT
+SHOULD HAVE CAUGHT IT NOW EXISTS.** Audit F24/F39, the worst finding of the 29
+Aug audit, is closed. `fetch_ea_flood_risk.py` clipped edge tiles to the city
+bbox but requested every one at 2000x2000 px whatever ground it covered, then
+mosaicked at a uniform 10 m/px - stretching clipped tiles up to **5x**. **London
+was the worst city, not a footnote** (6 of 12 tiles clipped, 5.00x); only
+Nottingham's bbox is an exact multiple of the 20 km tile. `tile_px()` requests
+each tile at its real extent, verified by simulation before any fetch: all 11
+cities tile with **zero holes and zero overlaps**. **The cache key had to change
+too** - tiles were named by origin alone and `fetch_tile` skips on existence, so
+the stale renders would have been served forever. **Two more defects surfaced in
+the same file, both absence-as-measurement**: Bristol's edge tile was cached
+ALL-ZERO from before the blank-render guard existed (2000x2000 of "surveyed, no
+risk" over 220 km², exactly what that guard's comment predicted would outlive
+the outage), and the mosaic initialised to `np.zeros` where **0 is a real
+reading** - it is 255/Unavailable now, which became load-bearing the moment a
+partial mosaic was legal. **A city is no longer abandoned for one bad tile**:
+Bristol and Teesside are each held by a near-all-sea tile the service renders
+blank at 10, 5.5 and 5 m/px (measured, not assumed); Bristol's lies outside all
+four boroughs, Teesside's clips one corner of Redcar. Effect: **37 of 81
+boroughs moved, 13 changed band, none lost** - Sefton 31.39 -> **0.27**
+`high -> low` (the audit predicted 0.28 by hand, from a separate fetch), South
+Tyneside 10.94 -> **0.11**, Doncaster 24.38 -> **6.39** - and **Teesside gained
+flood for the first time**, taking coverage from 81 to **86 of 91**. **The new
+gate is the point.** `build_borough_bands.py --check` re-derives from the same
+mosaic, so the two things it compares are the file and itself; it reported
+agreement throughout. `scripts/check_flood_georef.py` asks the **EA's own
+GetFeatureInfo** what it publishes at a BNG coordinate, asserts MEDIUM-OR-HIGH -
+the scored quantity - in **both directions**, and is blocking as a `net_check`.
+**Its first version passed the known-bad mosaic 9 of 9**, which is the lesson
+worth keeping: measured against the pre-fix London file the **six interior tile
+blocks were byte-identical** and only the top row and right column had moved, so
+uniform sampling could not fire. `spread_samples()` draws one sample per grid
+cell, **periphery first**, because a tiling error accumulates at the edges by
+construction. Re-proven red at 33-50%. It also gained a **MIN_COMPARED floor** -
+throttling silently shrank one class to 3 of 6 reached, and a class that reached
+the service twice has not been tested. **Sampling was the whole gate; the network
+call was the easy half.**)
+
+**Previously reviewed:** 2026-08-29, later the same day (**FULL AUDIT: 45 FINDINGS,
 AND THE FLOOD DATA IS WRONG.** Ten-agent survey plus adversarial verification -
 report in `AUDIT_REPORT.md`, previous archived as `AUDIT_REPORT_2026-08-21.md`.
 9 critical / 21 important / 15 minor. **The worst is a mis-georeferenced EA

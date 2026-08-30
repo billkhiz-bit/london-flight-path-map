@@ -110,7 +110,7 @@ Three clusters account for most of it.
 
 ---
 
-### F24 — EA flood mosaic is mis-georeferenced: every partial edge tile is a stretched render pasted as if 10 m/px, so flood risk is read from up to 9 km away
+### F24 — [FIXED 2026-08-30] EA flood mosaic is mis-georeferenced: every partial edge tile is a stretched render pasted as if 10 m/px, so flood risk is read from up to 9 km away
 
 | | |
 |---|---|
@@ -118,6 +118,23 @@ Three clusters account for most of it.
 | Location | `scripts/fetch_ea_flood_risk.py:156` |
 | Category | data-derivation |
 | Found by | Absence rendered as a confident me |
+
+> **RESOLVED 2026-08-30.** `tile_px()` requests each tile at its real extent, so
+> every tile is genuinely 10 m/px and the mosaic's existing assumption becomes
+> true; the tile cache key gained the extent, without which the stale 2000x2000
+> renders would have been served forever. Re-fetched, re-derived, area pages
+> rebuilt. **37 of 81 boroughs moved, 13 changed band**: Sefton 31.39 -> **0.27**
+> `high -> low`, within 0.01 of the 0.28 this finding predicted by hand; South
+> Tyneside 10.94 -> **0.11**; Doncaster 24.38 -> **6.39**. **Teesside gained
+> flood for the first time** (81 -> 86 boroughs) because a partial mosaic is now
+> legal. Two further defects surfaced in the same file: Bristol's edge tile was
+> cached ALL-ZERO from before the blank-render guard existed, and the mosaic
+> initialised to `np.zeros` where 0 means "surveyed, no risk" - it is 255
+> (Unavailable) now. Gated by `scripts/check_flood_georef.py`, which queries the
+> EA's own GetFeatureInfo rather than re-deriving from the same mosaic. **Its
+> first version passed the known-bad file 9 of 9**; the six interior tile blocks
+> were byte-identical, so only periphery-first sampling can see this.
+
 
 **Failure scenario.** A user opens the Sefton borough panel (or the public SEO page `area/merseyside/sefton/index.html`, which currently renders `Flood risk: High` with the note `Environment Agency RoFRS, risk after defences`). The panel prints `31.39% of this borough's postcodes sit at Medium or High risk, meaning a 1% or greater chance of flooding from rivers or the sea in any year`. The correct figure from the same EA tiles is 0.28%: the mosaic filled Sefton's rows with a vertically stretched copy of the Ribble/Southport coastal strip 20 km north. Since v3.9/v4.0 this is not just a map colour - `flood_to_score(31.39)` clamps to 0.0 where `flood_to_score(0.28)` is 9.72, so running the live Lambda's `get_env_score()` over the borough record gives environment 5.40 as shipped against 7.30 corrected. Same direction for South Tyneside (5.20 -> 7.10), Bury (5.60 -> 7.10), Doncaster (6.20 -> 7.00). At env's 0.14 balanced weight that is ~0.27 on the headline score, and it moves the `flood` map band from `high` to `low`. Rochdale and Tower Hamlets are wrong in the opposite direction - real risk understated.
 
@@ -216,6 +233,23 @@ Three clusters account for most of it.
 | Category | absence-rendered-as-measurement |
 | Found by | The 44 data-derivation scripts und |
 
+> **RESOLVED 2026-08-30.** `tile_px()` requests each tile at its real extent, so
+> every tile is genuinely 10 m/px and the mosaic's existing assumption becomes
+> true; the tile cache key gained the extent, without which the stale 2000x2000
+> renders would have been served forever. Re-fetched, re-derived, area pages
+> rebuilt. **37 of 81 boroughs moved, 13 changed band**: Sefton 31.39 -> **0.27**
+> `high -> low`, within 0.01 of the 0.28 this finding predicted by hand; South
+> Tyneside 10.94 -> **0.11**; Doncaster 24.38 -> **6.39**. **Teesside gained
+> flood for the first time** (81 -> 86 boroughs) because a partial mosaic is now
+> legal. Two further defects surfaced in the same file: Bristol's edge tile was
+> cached ALL-ZERO from before the blank-render guard existed, and the mosaic
+> initialised to `np.zeros` where 0 means "surveyed, no risk" - it is 255
+> (Unavailable) now. Gated by `scripts/check_flood_georef.py`, which queries the
+> EA's own GetFeatureInfo rather than re-deriving from the same mosaic. **Its
+> first version passed the known-bad file 9 of 9**; the six interior tile blocks
+> were byte-identical, so only periphery-first sampling can see this.
+
+
 **Failure scenario.** Leicester's `transportWithin800mPct` is published as 26.7% and banded `moderate`; over live postcodes only it is 12.0% and bands `poor`. Hinckley and Bosworth 22.5% -> 10.5%. Bath and North East Somerset 25.8% -> 16.9% (`moderate` -> `poor`). Transport is 0.25 of the liveability component in BOTH holders, so the wrong band is served by /v1/score and rendered by the site identically. Feeding the corrected bands through `resolve_query` moves published headline scores: Ealing `live` 8.3 -> 7.6 and score 5.7 -> 5.5; Richmond upon Thames 5.0 -> 4.8; Bexley 8.6 -> 8.4; Enfield 8.4 -> 8.2. On the v4.0 environment inputs: Islington's `roadNoiseAboveWhoPct` 75.3 -> 65.1 (band `high` -> `moderate`), Redbridge 72.1 -> 62.0, Richmond 68.6 -> 56.7, and Kingston upon Thames's `floodMediumOrHighPct` 20.02 -> 5.69 (band `high` -> `medium`). The bias is not random: retired postcodes cluster in redeveloped inner-urban blocks near stations (and duplicate a single coordinate many times, as the two EC1A rows show), so transport access is systematically over-stated where churn is highest.
 
 **Evidence.** `collect_postcodes()` is the single NSPL pass behind transport, healthcare, road noise, flood and air quality for all 91 boroughs. It never reads NSPL's `doterm` column (date of termination) - `grep -n doterm scripts/build_borough_bands.py` returns nothing. Its only filter is lines 266-268: # NSPL parks terminated/unlocatable postcodes at (99.999, 0.0). if lat > 90 or lat < -90: continue That comment is the defect: it reads as "terminated postcodes are excluded" and the test excludes only UNLOCATABLE ones. Measured over the whole 2,723,596-row data/nspl.csv: 915,867 rows are terminated, of which only 11,414 (1.25%) sit at lat>90; **904,453 terminated postcodes carry real coordinates and pass straight through**. (12,789 LIVE postcodes are also parked at lat>90, which is what the parking rule is actually about.) Sampled rows confirm it - E09000019 (Islington) contains `EC1A 1TD doterm=201812 lat 51.524567 lon -0.112017` and `EC1A 1XA doterm=201812` at the identical coordinate. Across the twelve cities the script derives, 373,642 of 952,582 sampled postcodes (39.2%) are terminated - London 45.5%, Cardiff 58.2%, Leicester 35.1%. The repo already knows what "live" means and disagrees with itself: backend/lambdas/score/app.py:4263 records "180,983 live London postcode centroids", and my live-only London count is **exactly 180,983** while build_borough_bands.py uses 332,308. Two sibli
@@ -226,7 +260,7 @@ Three clusters account for most of it.
 
 ---
 
-### F39 — The EA flood mosaic misregisters every city's edge tiles: partial tiles are rendered at 2000x2000 px whatever their extent, then placed as if they were 10 m/px, stretching real flood polygons by up to 5x
+### F39 — [FIXED 2026-08-30, with F24] The EA flood mosaic misregisters every city's edge tiles: partial tiles are rendered at 2000x2000 px whatever their extent, then placed as if they were 10 m/px, stretching real flood polygons by up to 5x
 
 | | |
 |---|---|
@@ -271,7 +305,7 @@ Three clusters account for most of it.
 | F2 | UNVERIFIED | The live OpenAPI spec declares `enum: [london, nyc]` in four places, so a spec-validating client rejects 11 of the 13 cities the API serves | `score-demo/openapi.yaml:374` | An integrator generates a client from the published spec (which is the stated purpose — README lists it as "OpenAPI 3.0 spec" and it is rendered at /score-demo/api-docs.html). The generated `City` type has two members. `GET /v1/score?postcode=M1 1AE` returns `location.city: "manchester"`, which fails deserialisation or response validation |
 | F3 | UNVERIFIED | Every public B2B surface still describes a four-component score three days after `env` shipped: the OpenAPI schemas, the API landing page and the live | `api/index.html:224` | A prospect runs the browser demo on a London postcode. They see Quiet 32%, Affordability 27%, Growth 0%, Liveability 27% — 86% — and a headline score they cannot reproduce from the bars shown, because 14% of it (the environment component, which just moved the median environment score by more than a point) is invisible. They then read api/ |
 | F4 | UNVERIFIED | METHODOLOGY.md tells B2B auditors in three places that road noise does not score, including a block edited today for v4.0 | `METHODOLOGY.md:1508` | A conveyancer or lender doing the methodology audit this document exists for reads §3 and §7.1, concludes Sky Score's number contains no road-noise term, and either (a) buys a separate road-noise product believing there is no overlap, or (b) signs off the score as road-noise-free for a decision where double-counting matters. Meanwhile the |
-| F5 | UNVERIFIED | README's v4.0 headline says 90 of 99 boroughs are "fully measured" for environment; the code says 85, and README's own three numbers sum to 104 | `README.md:18` | README is the first page of the source-available repo the methodology audit is run against, and its first screen is the v4.0 summary. A reader takes "90 of 99 fully measured" as the coverage figure and cites it, when 5 of those 90 are Teesside boroughs scored on two inputs of three with no flood data at all — the exact boroughs the v4.0 f |
+| F5 | **FIXED 2026-08-30** | README's v4.0 headline says 90 of 99 boroughs are "fully measured" for environment; the code says 85, and README's own three numbers sum to 104 | `README.md:18` | README is the first page of the source-available repo the methodology audit is run against, and its first screen is the v4.0 summary. A reader takes "90 of 99 fully measured" as the coverage figure and cites it, when 5 of those 90 are Teesside boroughs scored on two inputs of three with no flood data at all — the exact boroughs the v4.0 f |
 | F9 | UNVERIFIED | A DynamoDB read failure makes /v1/environment and /v1/score assert that DEFRA has no contour at a postcode DEFRA has measured | `backend/lambdas/score/app.py:4090` | DynamoDB throttles or the client cannot be built (a region/config change, a PAY_PER_REQUEST ramp under the loader's write workers - the case _DDB_TIMEOUT_CONFIG's comment anticipates). A request to the unauthenticated GET /v1/environment?lat=51.47&lon=-0.4543 - the endpoint the public browser extension renders on Rightmove listings - retu |
 | F14 | UNVERIFIED | The demo-key scope gate cannot fail while the demo key is out of monthly quota - and it is out of quota right now | `tests/demo-key-scope.mjs:34` | Someone edits `backend/template.yaml` and drops the `/v1/chat/POST` and `/v1/score/batch/POST` Throttle entries from `ScoreDemoUsagePlan` (lines 615-623), or API Gateway changes how it reads RateLimit 0. Because the demo key's 2,000/month quota is currently exhausted, every request with that key returns 429 regardless, so both assertions  |
 | F15 | UNVERIFIED | The free-tier deny assertions - the ones the code calls load-bearing - have never run, because their env var exists nowhere in the repo | `tests/demo-key-scope.mjs:172` | The `ScoreFreeUsagePlan` per-method denies (backend/template.yaml lines 540-547) stop working - removed in an edit, or lost to the CloudFormation MethodSettings/Throttle ordering trap the same file documents twice. Free-tier keys are minted by `/v1/signup`, which is UNAUTHENTICATED and needs only an unverified email address, so anyone can |

@@ -87,6 +87,9 @@ UA = (
 # 10 m/px: 20 km across 2000 px. Anything coarser than ~10 m/px renders blank.
 TILE_M = 20000
 TILE_PX = 2000
+# Metres per pixel. Every tile is requested AND mosaicked at this resolution;
+# the two used to be derived separately, which is how they came to disagree.
+RES_M = TILE_M // TILE_PX
 PAUSE_S = 1.0
 RETRIES = 4
 
@@ -142,6 +145,28 @@ def classify(rgba):
     return out.reshape(h, w)
 
 
+def tile_px(bbox):
+    """Pixel size for a tile rendered at exactly RES_M per pixel.
+
+    LOAD-BEARING, and the fix for a defect that published wrong flood figures in
+    10 of the 11 covered cities. Edge tiles are CLIPPED to the city bbox (see
+    fetch_city), so their extent is smaller than TILE_M - but this function used
+    to be a constant, TILE_PX, and every tile was requested 2000x2000 whatever
+    ground it covered. A 5 km-wide edge tile therefore rendered at 2.5 m/px and
+    was pasted by the mosaic as if 10 m/px, stretching real flood polygons 4x
+    out of position. Only Nottingham escaped: its 40x40 km bbox is the one exact
+    multiple of the 20 km tile.
+
+    Nothing downstream could see it. build_borough_bands.py --check re-derives
+    the borough percentages by sampling the same mosaic, so the two things it
+    compares are the file and itself.
+
+    The city bbox is snapped to 1 km (fetch_defra_road_noise.city_bbox), so both
+    divisions are always exact.
+    """
+    return (bbox[2] - bbox[0]) // RES_M, (bbox[3] - bbox[1]) // RES_M
+
+
 def fetch_tile(path, bbox):
     """Download and classify one tile, skipping if already present."""
     import numpy as np
@@ -153,7 +178,7 @@ def fetch_tile(path, bbox):
 
     for attempt in range(1, RETRIES + 1):
         try:
-            raw = fetch_bytes(getmap_url(bbox, TILE_PX, TILE_PX))
+            raw = fetch_bytes(getmap_url(bbox, *tile_px(bbox)))
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as exc:
             print(f'  {path.name}: attempt {attempt}/{RETRIES} failed ({exc})')
             time.sleep(PAUSE_S * attempt * 2)
@@ -217,29 +242,67 @@ def fetch_city(city):
         n = bbox[1]
         while n < bbox[3]:
             e2, n2 = min(e + TILE_M, bbox[2]), min(n + TILE_M, bbox[3])
-            tiles.append((TILE_DIR / f'flood_{e}_{n}.npy', (e, n, e2, n2)))
+            # The EXTENT is in the name, not just the origin. A clipped edge
+            # tile and a full tile can share an origin while being different
+            # images, and the cache skip in fetch_tile only tests existence - so
+            # a name carrying (e, n) alone kept serving 2000x2000 renders of
+            # 5 km tiles to every later run, outliving the bug that made them.
+            # It also collided across cities, whose grids start at their own
+            # min_e. Renaming is what invalidates the stale cache.
+            tiles.append((TILE_DIR / f'flood_{e}_{n}_{e2 - e}x{n2 - n}.npy', (e, n, e2, n2)))
             n += TILE_M
         e += TILE_M
 
-    print(f'\n{city}: {len(tiles)} tiles covering {bbox} at {TILE_M // TILE_PX} m/px')
+    print(f'\n{city}: {len(tiles)} tiles covering {bbox} at {RES_M} m/px')
     failed = [p.name for p, bb in tiles if not fetch_tile(p, bb) or time.sleep(PAUSE_S)]
     failed = [f for f in failed if f]
-    if failed:
-        print(f'  {len(failed)} tiles failed; re-run to retry only those')
+    if failed and len(failed) == len(tiles):
+        # Every tile blank or unreachable is an outage, not a risk-free city.
+        print(f'  ALL {len(tiles)} tiles failed - refusing to write a mosaic.')
         return 1
+    if failed:
+        # A city is NOT abandoned for one bad tile. Two of the eleven cities are
+        # held by a single near-all-sea tile that the service renders blank at
+        # every resolution tried (verified 2026-08-30 at 10, 5.5 and 5 m/px), and
+        # in both cases the tile lies outside every borough or clips one corner.
+        # Discarding a whole city's flood data over it would lose four boroughs
+        # of good readings to an estuary. The gap is carried as Unavailable
+        # instead, which is what that code means and what floodCoverage reports.
+        print(f'  {len(failed)} of {len(tiles)} tiles missing: {", ".join(failed)}')
+        print('  Their area is written as Unavailable, NOT as no-risk. Re-run to retry them.')
 
     # Mosaic the classified tiles into one GeoTIFF in the raster's own CRS, so
     # build_borough_bands.py can sample it exactly like the road-noise raster.
     min_e, min_n, max_e, max_n = bbox
-    width = (max_e - min_e) // (TILE_M // TILE_PX)
-    height = (max_n - min_n) // (TILE_M // TILE_PX)
-    mosaic = np.zeros((height, width), dtype='uint8')
-    res = TILE_M // TILE_PX
-    for path, (te, _tn, _te2, tn2) in tiles:
+    width = (max_e - min_e) // RES_M
+    height = (max_n - min_n) // RES_M
+    # 255 = Unavailable, NOT 0 = none.
+    #
+    # 0 is a REAL READING meaning 'surveyed, outside every modelled risk
+    # polygon'. Initialising to it makes any pixel no tile ever wrote claim to
+    # have been surveyed and found safe - absence rendered as a measurement,
+    # the defect class this repo has now shipped six times. It was unreachable
+    # while a single failed tile aborted the city; the moment a partial mosaic
+    # became possible (above), the fill value became load-bearing.
+    mosaic = np.full((height, width), 255, dtype='uint8')
+    res = RES_M
+    for path, (te, tn, te2, tn2) in tiles:
+        if not path.exists():
+            continue  # left as Unavailable by the fill above
         codes = np.load(path)
         col = (te - min_e) // res
         row = (max_n - tn2) // res
         h, w = codes.shape
+        # A tile must match the ground it claims. This assertion is what the
+        # mosaic lacked while it was pasting clipped edge tiles as if they were
+        # full ones, and it is one subtraction: cheap enough that its absence
+        # was the whole cost. It fires on a stale pre-2026-08-30 tile too.
+        want_h, want_w = (tn2 - tn) // res, (te2 - te) // res
+        if (h, w) != (want_h, want_w):
+            raise SystemExit(
+                f'{path.name}: {w}x{h} px for a {(te2 - te) / 1000:g}x{(tn2 - tn) / 1000:g} km '
+                f'extent - expected {want_w}x{want_h} at {res} m/px. Delete it and re-fetch.'
+            )
         mosaic[row : row + h, col : col + w] = codes[: height - row, : width - col]
 
     out = DATA / f'ea_flood_risk_{city}.tif'

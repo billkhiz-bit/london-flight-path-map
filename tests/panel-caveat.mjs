@@ -1,6 +1,19 @@
 // Does the borough panel's Environment caveat describe the borough in front of
-// it? Camden is 3/3 (no caveat), Middlesbrough is 2/3 (must NAME the two inputs
-// it has), Brooklyn has none of the three (no caveat, no crash).
+// it? Camden is 3/3 (no caveat), Brooklyn has none of the three (no caveat, no
+// crash), and a CONSTRUCTED 2-of-3 borough must NAME the two inputs it has.
+//
+// The partial case is constructed, and that is deliberate. It used to be
+// Middlesbrough, which held air quality and road noise and no flood. The
+// 2026-08-30 flood georeferencing fix gave Teesside flood, so Middlesbrough
+// became 3/3 and this gate went red on a borough whose data had IMPROVED.
+// Measured that day: of 99 borough records, 90 hold all three inputs, 4 hold
+// one (Cardiff) and 5 hold none (New York) - NO borough is 2-of-3 any more.
+//
+// Borrowing a real borough for the partial case therefore left the caveat path
+// - the exact code that shipped "undefined only here" - untestable the moment
+// coverage completed. The renderer is what this file is for, so the record is
+// built rather than found: one field is dropped from a real record, the panel
+// is re-rendered, and the field is put back.
 //
 // WHY THIS FILE EXISTS. On 2026-08-29 every UK borough panel rendered
 // "... - undefined only here" beside a correctly-computed Environment score,
@@ -43,31 +56,58 @@ await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'domcontentl
 await page.waitForTimeout(3000);
 
 let fail = 0;
-async function check(city, country, borough, expectCaveat) {
+// `drop` removes one env field from the borough's borough-extra record before
+// rendering, so a coverage level that no longer occurs in the data can still be
+// exercised. `mustName` asserts the caveat NAMES what survived, because a
+// caveat that fires with the wrong list is the defect this file was written for.
+async function check(city, country, borough, expectCaveat, drop = null, mustName = null) {
   await page.evaluate((c) => switchCountry(c), country);
   await page.waitForTimeout(300);
   await page.evaluate((c) => switchCity(c), city);
   await page.waitForTimeout(1500);
-  const out = await page.evaluate((b) => {
+  const out = await page.evaluate(([b, cityKey, dropField]) => {
     const d = matchBorough(b);
     if (!d) return { err: 'borough not found' };
-    updateSidebar(d);
-    const rows = [...document.querySelectorAll('.score-explain')];
-    const row = rows.find((r) => /Air quality, road noise and flood risk/.test(r.textContent));
-    return { text: row ? row.textContent.trim() : '(no environment row)' };
-  }, borough);
+    let rec = null, saved, had = false;
+    if (dropField) {
+      rec = cityOf(cityKey).boroughExtra()[b];
+      if (!rec) return { err: 'no borough-extra record to construct from' };
+      had = Object.prototype.hasOwnProperty.call(rec, dropField);
+      if (!had) return { err: `record has no ${dropField} to drop` };
+      saved = rec[dropField];
+      delete rec[dropField];
+    }
+    let text;
+    try {
+      updateSidebar(d);
+      const rows = [...document.querySelectorAll('.score-explain')];
+      const row = rows.find((r) => /Air quality, road noise and flood risk/.test(r.textContent));
+      text = row ? row.textContent.trim() : '(no environment row)';
+    } finally {
+      // Restore even if rendering threw, so one failing case cannot corrupt
+      // the records every later case reads.
+      if (rec && had) rec[dropField] = saved;
+    }
+    return { text };
+  }, [borough, city, drop]);
   if (out.err) { console.log(`  ! ${borough}: ${out.err}`); fail++; return; }
   const hasUndef = /undefined/i.test(out.text);
   const hasCaveat = /only here/.test(out.text);
-  const ok = !hasUndef && hasCaveat === expectCaveat;
+  const named = mustName ? mustName.test(out.text) : true;
+  const ok = !hasUndef && hasCaveat === expectCaveat && named;
   if (!ok) fail++;
-  console.log(`  ${ok ? 'ok ' : 'FAIL'} ${borough.padEnd(16)} caveat=${hasCaveat} (want ${expectCaveat}) undefined=${hasUndef}`);
+  const label = borough + (drop ? ` (-${drop})` : '');
+  console.log(`  ${ok ? 'ok ' : 'FAIL'} ${label.padEnd(34)} caveat=${hasCaveat} (want ${expectCaveat}) undefined=${hasUndef}${mustName ? ` named=${named}` : ''}`);
   console.log(`       "${out.text.slice(0, 165)}"`);
 }
 
 console.log('Environment caveat, rendered:');
 await check('london', 'United Kingdom', 'Camden', false);
-await check('teesside', 'United Kingdom', 'Middlesbrough', true);
+// Middlesbrough is 3/3 since the 2026-08-30 flood fix, so it must NOT caveat.
+await check('teesside', 'United Kingdom', 'Middlesbrough', false);
+// ...and the same borough with flood removed must caveat, naming the two it kept.
+await check('teesside', 'United Kingdom', 'Middlesbrough', true,
+  'floodMediumOrHighPct', /air quality and road noise/i);
 await check('nyc', 'United States', 'Brooklyn', false);
 
 console.log(fail ? `\n${fail} FAILED` : '\nall good');

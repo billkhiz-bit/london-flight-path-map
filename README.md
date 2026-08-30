@@ -15,10 +15,13 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, qu
 > none of those: it re-composed the component, not the top-level split.
 >
 > **Road noise was the last input that was measured, mapped and reported while
-> nothing scored it.** With it, **90 of 99 boroughs are fully measured**, 5 are
-> partial (Teesside, awaiting one flood tile) and 9 are unavailable (New York's
-> 5, no UK source applying; Cardiff's 4, Wales having no English road or flood
-> coverage). Median environment moved 8.00 → 6.65 — the honest cost of counting
+> nothing scored it.** With it, **90 of 99 boroughs are fully measured** and 9
+> are unavailable (New York's 5, no UK source applying; Cardiff's 4, Wales
+> having no English road or flood coverage). **The `partial` tier is empty as of
+> 2026-08-30**: Teesside's five were waiting on one flood tile, and the flood
+> georeferencing fix that day made a partial mosaic legal, so a single blank
+> sea tile no longer abandons a whole city. These three numbers summed to 104
+> until then, and the measured count really was 85 (audit F5). Median environment moved 8.00 → 6.65 — the honest cost of counting
 > a real adverse exposure for the first time, and not uniform: four boroughs
 > rose.
 >

@@ -198,6 +198,31 @@ check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --
 # cached. Proven able to fail per city: a renamed London borough key floors
 # london while the other ten still compare, and the run exits 1.
 check "crime == ONS Table C4"          python scripts/refresh_crime_from_ons.py --check --all
+# THE ONLY FLOOD GATE THAT CROSSES A SOURCE BOUNDARY.
+#
+# `build_borough_bands.py --check` re-derives each borough's flood percentage
+# by sampling the same GeoTIFF the published figures came from, so the two
+# things it compares are the file and itself. It reported agreement for the
+# entire period the mosaics were mis-georeferenced - flood was SCORED from
+# 26 Aug and banded on the map from 11 Aug, wrong in 10 of 11 cities, with
+# every gate green. A re-derivation is not a verification.
+#
+# This asks the Environment Agency's own GetFeatureInfo what it publishes at a
+# British National Grid coordinate and compares it to what our raster says
+# there. Samples are drawn from the ERODED INTERIOR of each class, because
+# uniform sampling would be another check that cannot fail: 93% of a mosaic is
+# `none`, and a random point agrees on both sides whatever the georeferencing.
+#
+# net_check: it needs the network. Proven red against the pre-2026-08-30
+# mosaics and green against the re-fetched ones - run it with --mosaic-dir
+# pointed at a backup to reproduce that.
+# --per-class 4, not the script default of 6. Measured 2026-08-30: at 6 this
+# stage took ~25 minutes inside preflight, which is long enough that someone
+# reaches for --skip-e2e, and a gate that gets skipped protects nothing. 4 is
+# still one above the MIN_COMPARED floor of 3, and the top-up pass adds more
+# points when the service throttles, so the cut costs evidence only when the
+# service is healthy - exactly when the extra points were least needed.
+net_check "flood == EA service (georef)" python scripts/check_flood_georef.py --all --per-class 4
 # The OUTPUT check the Manchester incident needed and nothing had. Input parity
 # (tests/test_borough_data_parity.py) passed throughout that defect, because
 # both holders HELD the data and the site never loaded it into the object it
