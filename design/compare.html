@@ -8,192 +8,205 @@
   :root {
     --bg:#e4e3e0; --dark:#141414; --mid:#636363; --light:#c8c7c4; --white:#fafaf9;
     --orange:#f27d26; --orange-ink:#a85416;
-    --bar: 92px;
   }
   * { box-sizing:border-box; }
-  html,body { height:100%; margin:0; }
   body {
-    background:var(--bg); color:var(--dark);
+    margin:0; background:var(--bg); color:var(--dark);
     font:13px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-    display:flex; flex-direction:column; overflow:hidden;
   }
 
-  header {
-    flex:0 0 auto; padding:10px 16px; background:var(--white);
-    border-bottom:1px solid var(--light); display:flex; gap:18px;
-    align-items:center; flex-wrap:wrap;
+  /* Sticky and DELIBERATELY short. The previous version stacked a header and a
+     permanent warning band above the frame: together they took 139px of a 655px
+     viewport, so the iframe was left 237px tall for a dashboard authored at
+     2048px. Every mockup looked broken and unswitchable. The caveat is a
+     toggle now, and the page scrolls instead of letterboxing. */
+  .bar {
+    position:sticky; top:0; z-index:50; background:var(--white);
+    border-bottom:1px solid var(--light); padding:8px 14px;
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
   }
-  h1 { font-size:14px; margin:0; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
-  h1 span { color:var(--orange-ink); }
-  .hint { color:var(--mid); font-size:11.5px; }
-  .ctl { display:flex; gap:6px; align-items:center; margin-left:auto; flex-wrap:wrap; }
-  label { font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--mid); }
+  .bar h1 { font-size:13px; margin:0; letter-spacing:.06em; text-transform:uppercase; font-weight:700; white-space:nowrap; }
+  .bar h1 span { color:var(--orange-ink); }
   select, button {
     font:inherit; font-size:12px; padding:5px 8px; border:1px solid var(--dark);
     background:var(--white); color:var(--dark); border-radius:0; cursor:pointer;
   }
+  select { max-width:min(46vw, 340px); }
   button[aria-pressed="true"] { background:var(--dark); color:var(--white); }
   button:focus-visible, select:focus-visible { outline:2px solid var(--orange-ink); outline-offset:1px; }
+  .spacer { flex:1 1 auto; }
+  .tag { font-size:10.5px; color:var(--mid); white-space:nowrap; }
 
-  .warn {
-    flex:0 0 auto; padding:7px 16px; background:#fff6ed;
+  .caveat {
+    display:none; padding:8px 14px; background:#fff6ed;
     border-bottom:1px solid #f2c79b; font-size:11.5px; color:#6b3a10;
   }
+  .caveat.open { display:block; }
 
-  main { flex:1 1 auto; display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--light); min-height:0; }
-  main.solo { grid-template-columns:1fr; }
-  .pane { background:var(--bg); display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
-  .pane-head {
-    flex:0 0 auto; padding:6px 10px; background:var(--white);
-    border-bottom:1px solid var(--light); display:flex; gap:8px; align-items:center;
+  .stage { display:grid; grid-template-columns:1fr; gap:14px; padding:14px; }
+  .stage.split { grid-template-columns:1fr 1fr; }
+  @media (max-width: 900px) { .stage.split { grid-template-columns:1fr; } }
+
+  .card { background:var(--white); border:1px solid var(--light); }
+  .card-head {
+    display:flex; gap:8px; align-items:center; padding:6px 10px;
+    border-bottom:1px solid var(--light);
   }
-  .pane-head .name { font-size:11px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pane-head .meta { margin-left:auto; font-size:10px; color:var(--mid); white-space:nowrap; }
-  .pane-head a { font-size:10px; color:var(--orange-ink); text-decoration:none; border-bottom:1px solid currentColor; }
+  .card-head .meta { margin-left:auto; font-size:10px; color:var(--mid); white-space:nowrap; }
+  .card-head a { font-size:10px; color:var(--orange-ink); }
 
-  /* The Stitch exports are authored at 2560px. Rendering them in a ~700px pane
-     without scaling shows the top-left corner only, which compares nothing.
-     The iframe is laid out at its DESIGN width and then transform-scaled, so
-     the whole screen is visible and both panes are at the same scale. */
-  .frame-wrap { flex:1 1 auto; overflow:auto; position:relative; }
-  iframe { border:0; display:block; transform-origin:0 0; background:#fff; }
-  .empty { padding:24px; color:var(--mid); font-size:12px; }
+  /* Each mockup renders at a NOMINAL DESKTOP VIEWPORT and is scaled to the card
+     width. Handing a desktop design the card's own small height is what broke
+     this before: you want a real desktop layout shrunk, not a desktop layout
+     squeezed into a letterbox. */
+  .viewport { position:relative; overflow:hidden; background:#fff; }
+  .viewport iframe { border:0; display:block; transform-origin:0 0; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Sky <span>Score</span> — mockup comparison</h1>
-  <span class="hint">Local preview only, nothing deployed. Press <strong>Tab</strong> to flip between the two.</span>
-  <div class="ctl">
-    <label for="fit">Fit</label>
-    <select id="fit">
-      <option value="fit">Whole screen</option>
-      <option value="0.5">50%</option>
-      <option value="0.75">75%</option>
-      <option value="1">100% (actual size)</option>
-    </select>
-    <button id="swap" type="button">Swap sides</button>
-    <button id="split" type="button" aria-pressed="false">Side by side</button>
-  </div>
-</header>
 
-<div class="warn">
-  <strong>Values in the Stitch screens are invented.</strong> Dashboard 2 cites
-  &ldquo;WHO Guidelines 2022&rdquo; (ours is WHO 2021) and labels a QUIET score
-  as AIRCRAFT NOISE, which inverts the scale. Read them for layout only.
-  The two <strong>LIVE</strong> entries are those same designs driven by real data, and are what the panes default to.
+<div class="bar">
+  <h1>Sky <span>Score</span> — compare</h1>
+  <select id="sel-a" aria-label="Mockup"></select>
+  <select id="sel-b" aria-label="Second mockup" hidden></select>
+  <button id="flip" type="button" title="Keyboard: F">Flip &#8646;</button>
+  <button id="split" type="button" aria-pressed="false">Side by side</button>
+  <label class="tag" for="zoom">Scale</label>
+  <select id="zoom">
+    <option value="fit">Fit width</option>
+    <option value="0.75">75%</option>
+    <option value="1">100%</option>
+  </select>
+  <span class="spacer"></span>
+  <button id="info" type="button" aria-pressed="false">Caveat</button>
+  <span class="tag" id="tag"></span>
 </div>
 
-<main id="main">
-  <section class="pane">
-    <div class="pane-head">
-      <select id="sel-a" aria-label="Left mockup"></select>
+<div class="caveat" id="caveat">
+  <strong>Values in the STATIC Stitch screens are invented.</strong> They cite
+  &ldquo;WHO Guidelines 2022/2023&rdquo; where ours is WHO 2021, show Scotland and
+  Wales coverage we do not have, and one labels a QUIET score as AIRCRAFT NOISE,
+  which inverts the scale. The <strong>LIVE</strong> entries are those same designs
+  driven by real data from <code>borough-extra.json</code>; composite scores there
+  say &ldquo;scored by /v1/score&rdquo; rather than being reinvented.
+</div>
+
+<div class="stage" id="stage">
+  <section class="card">
+    <div class="card-head">
+      <strong id="name-a" style="font-size:11px"></strong>
       <span class="meta" id="meta-a"></span>
-      <a id="open-a" href="#" target="_blank" rel="noopener">open</a>
+      <a id="open-a" href="#" target="_blank" rel="noopener">open full size</a>
     </div>
-    <div class="frame-wrap" id="wrap-a"><iframe id="f-a" title="Left mockup"></iframe></div>
+    <div class="viewport" id="vp-a"><iframe id="f-a" title="Mockup A"></iframe></div>
   </section>
-  <section class="pane" id="pane-b">
-    <div class="pane-head">
-      <select id="sel-b" aria-label="Right mockup"></select>
+  <section class="card" id="card-b" hidden>
+    <div class="card-head">
+      <strong id="name-b" style="font-size:11px"></strong>
       <span class="meta" id="meta-b"></span>
-      <a id="open-b" href="#" target="_blank" rel="noopener">open</a>
+      <a id="open-b" href="#" target="_blank" rel="noopener">open full size</a>
     </div>
-    <div class="frame-wrap" id="wrap-b"><iframe id="f-b" title="Right mockup"></iframe></div>
+    <div class="viewport" id="vp-b"><iframe id="f-b" title="Mockup B"></iframe></div>
   </section>
-</main>
+</div>
 
 <script>
 (function () {
   'use strict';
 
-  // designWidth is what each file was AUTHORED at. The Stitch exports are
-  // 2560px; the hand-built ones are fluid and simply take the pane width.
-  var MOCKUPS = [
-    { id:'l1',   name:'Dashboard 1 — LIVE (icon rail)',          url:'/design/stitch-dash-1-live.html',                designWidth:0 },
-    { id:'l2',   name:'Dashboard 2 — LIVE (top nav)',            url:'/design/stitch-dash-2-live.html',                designWidth:0 },
-    { id:'sd1',  name:'Stitch — Desktop Dashboard 1 (static)',   url:'/design/stitch/stitch-desktop-dashboard-1.html', designWidth:2560 },
-    { id:'sd2',  name:'Stitch — Desktop Dashboard 2 (static)',   url:'/design/stitch/stitch-desktop-dashboard-2.html', designWidth:2560 },
-    { id:'comb', name:'Combined (LIVE DATA)',                      url:'/design/desktop-combined.html',                  designWidth:0 },
-    { id:'live', name:'Current live site',                         url:'/index.html',                                    designWidth:0 },
-    { id:'slive',name:'Stitch design, live data',                  url:'/design/stitch-live.html',                       designWidth:0 },
-    { id:'proto',name:'First prototype',                           url:'/design/prototype-desktop.html',                 designWidth:0 },
-    { id:'cmp',  name:'Stitch — Location Comparison',              url:'/design/stitch/desktop-comparison.html',         designWidth:2560 },
-    { id:'dash', name:'Stitch — Liveability Dashboard',            url:'/design/stitch/desktop-dashboard.html',          designWidth:2560 }
+  // vw/vh is the viewport each design is AUTHORED for. Fluid pages get a real
+  // desktop viewport rather than whatever the card happens to be.
+  var M = [
+    { id: 'l1',    name: 'Dashboard 1 — LIVE (icon rail)',        url: '/design/stitch-dash-1-live.html', vw: 1440, vh: 900 },
+    { id: 'l2',    name: 'Dashboard 2 — LIVE (top nav)',          url: '/design/stitch-dash-2-live.html', vw: 1440, vh: 900 },
+    { id: 'comb',  name: 'Combined — LIVE (live palette)',        url: '/design/desktop-combined.html',   vw: 1440, vh: 900 },
+    { id: 'live',  name: 'Current live site',                     url: '/index.html',                     vw: 1440, vh: 900 },
+    { id: 'slive', name: 'Stitch design, live data',              url: '/design/stitch-live.html',        vw: 1440, vh: 900 },
+    { id: 'proto', name: 'First prototype',                       url: '/design/prototype-desktop.html',  vw: 1440, vh: 900 },
+    { id: 'sd1',   name: 'Stitch Dashboard 1 (static, invented)', url: '/design/stitch/stitch-desktop-dashboard-1.html', vw: 2560, vh: 2048 },
+    { id: 'sd2',   name: 'Stitch Dashboard 2 (static, invented)', url: '/design/stitch/stitch-desktop-dashboard-2.html', vw: 2560, vh: 2048 },
+    { id: 'cmp',   name: 'Stitch Location Comparison (static)',   url: '/design/stitch/desktop-comparison.html', vw: 2560, vh: 2356 },
+    { id: 'dash',  name: 'Stitch Liveability Dashboard (static)', url: '/design/stitch/desktop-dashboard.html',  vw: 2560, vh: 2176 }
   ];
 
-  var state = { a:'l1', b:'l2', fit:'fit', solo:true };
+  var state = { a: 'l1', b: 'l2', split: false, zoom: 'fit' };
 
-  function byId(id){ return MOCKUPS.filter(function(m){ return m.id===id; })[0]; }
+  function byId(id) { for (var i = 0; i < M.length; i++) { if (M[i].id === id) return M[i]; } return M[0]; }
 
-  function fillSelect(sel, chosen){
+  function fill(sel, chosen) {
     sel.innerHTML = '';
-    MOCKUPS.forEach(function(m){
+    M.forEach(function (m) {
       var o = document.createElement('option');
-      o.value = m.id; o.textContent = m.name; o.selected = m.id === chosen;
+      o.value = m.id; o.textContent = m.name; o.selected = (m.id === chosen);
       sel.appendChild(o);
     });
   }
 
-  function layout(side){
+  function place(side) {
     var m = byId(state[side]);
-    var wrap = document.getElementById('wrap-' + side);
+    var vp = document.getElementById('vp-' + side);
     var f = document.getElementById('f-' + side);
-    var meta = document.getElementById('meta-' + side);
-    var open = document.getElementById('open-' + side);
-    if(!m){ return; }
-    open.href = m.url;
+    document.getElementById('name-' + side).textContent = m.name;
+    document.getElementById('open-' + side).href = m.url;
 
-    var availW = wrap.clientWidth, availH = wrap.clientHeight;
-    if(!m.designWidth){
-      // Fluid page: let it use the pane at 1:1, no scaling. Scaling a
-      // responsive page would show a desktop layout at phone dimensions and
-      // compare the wrong thing.
-      f.style.transform = 'none';
-      f.style.width = availW + 'px';
-      f.style.height = availH + 'px';
-      meta.textContent = 'responsive · 1:1';
-    } else {
-      var scale = state.fit === 'fit' ? availW / m.designWidth : parseFloat(state.fit);
-      f.style.width = m.designWidth + 'px';
-      // Keep the authored aspect; 2048/2560 = 0.8 for these exports.
-      f.style.height = Math.round(m.designWidth * 0.8) + 'px';
-      f.style.transform = 'scale(' + scale + ')';
-      meta.textContent = m.designWidth + 'px · ' + Math.round(scale * 100) + '%';
+    var avail = vp.clientWidth || 800;
+    var scale = state.zoom === 'fit' ? Math.min(1, avail / m.vw) : parseFloat(state.zoom);
+
+    // Laid out at the design's own viewport, then scaled. The container height
+    // is the SCALED height, so the card is exactly as tall as the content needs
+    // and the page scrolls. Nothing is letterboxed.
+    f.style.width = m.vw + 'px';
+    f.style.height = m.vh + 'px';
+    f.style.transform = 'scale(' + scale + ')';
+    vp.style.height = Math.round(m.vh * scale) + 'px';
+
+    document.getElementById('meta-' + side).textContent =
+      m.vw + '×' + m.vh + ' · ' + Math.round(scale * 100) + '%';
+
+    // Reload only when the target actually changes, so changing scale does not
+    // throw away a map the user has already clicked into.
+    if (f.getAttribute('data-url') !== m.url) {
+      f.setAttribute('data-url', m.url);
+      f.setAttribute('src', m.url);
     }
-    if(f.getAttribute('src') !== m.url) f.setAttribute('src', m.url);
   }
 
-  function render(){
-    document.getElementById('main').classList.toggle('solo', state.solo);
-    document.getElementById('pane-b').hidden = state.solo;
-    fillSelect(document.getElementById('sel-a'), state.a);
-    if(!state.solo) fillSelect(document.getElementById('sel-b'), state.b);
-    layout('a');
-    if(!state.solo) layout('b');
+  function render() {
+    document.getElementById('stage').classList.toggle('split', state.split);
+    document.getElementById('card-b').hidden = !state.split;
+    document.getElementById('sel-b').hidden = !state.split;
+    fill(document.getElementById('sel-a'), state.a);
+    if (state.split) fill(document.getElementById('sel-b'), state.b);
+    place('a');
+    if (state.split) place('b');
+    document.getElementById('tag').textContent = state.split ? '' : 'press F to flip';
   }
 
-  document.getElementById('sel-a').onchange = function(e){ state.a = e.target.value; render(); };
-  document.getElementById('sel-b').onchange = function(e){ state.b = e.target.value; render(); };
-  document.getElementById('fit').onchange = function(e){ state.fit = e.target.value; render(); };
-  document.getElementById('swap').onclick = function(){
-    var t = state.a; state.a = state.b; state.b = t; render();
-  };
-  document.getElementById('split').onclick = function(e){
-    state.solo = !state.solo;
-    e.currentTarget.setAttribute('aria-pressed', String(!state.solo));
+  document.getElementById('sel-a').onchange = function (e) { state.a = e.target.value; render(); };
+  document.getElementById('sel-b').onchange = function (e) { state.b = e.target.value; render(); };
+  document.getElementById('zoom').onchange = function (e) { state.zoom = e.target.value; render(); };
+  document.getElementById('flip').onclick = function () { var t = state.a; state.a = state.b; state.b = t; render(); };
+  document.getElementById('split').onclick = function (e) {
+    state.split = !state.split;
+    e.currentTarget.setAttribute('aria-pressed', String(state.split));
     render();
   };
-  // Quick A/B without hunting the dropdown: one key flips which dashboard the
-  // single pane is showing, which is how you actually notice a difference.
-  document.addEventListener('keydown', function(e){
-    if (e.key !== 'Tab' || !state.solo || e.target.tagName === 'SELECT') return;
-    e.preventDefault();
+  document.getElementById('info').onclick = function (e) {
+    var open = document.getElementById('caveat').classList.toggle('open');
+    e.currentTarget.setAttribute('aria-pressed', String(open));
+    render();
+  };
+
+  // 'F', not Tab. Tab is how a keyboard user moves between the controls, and
+  // stealing it makes the page unusable without a mouse.
+  document.addEventListener('keydown', function (e) {
+    if (String(e.key).toLowerCase() !== 'f') return;
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
     var t = state.a; state.a = state.b; state.b = t; render();
   });
 
   var t;
-  window.addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(render, 150); });
+  window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(render, 150); });
   render();
 })();
 </script>
