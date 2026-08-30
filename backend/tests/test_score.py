@@ -1235,13 +1235,29 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
         New York remit, and OGL covers UK Crown copyright only. A new city
         would silently inherit the same false claim.
         """
+        # DERIVED, not hardcoded. This asserted the literal
+        # {'quiet','afford','growth','live'} and so passed unchanged through
+        # v3.9 and v4.0, which added a fifth scored component - `env` - that no
+        # city credited to anybody (audit F1). A guard whose expectation is a
+        # copy of yesterday's answer cannot notice a new component.
+        #
+        # London is the reference because it is the only city measured on
+        # everything, so the components IT emits are the full set the engine can
+        # produce. Every city must describe all of them: a component a city
+        # cannot score has to SAY so, which is what METHODOLOGY §18 promises.
+        london, status = app.resolve_query({'city': 'london', 'borough': 'Camden'})
+        self.assertEqual(status, 200)
+        expected = set(london['components'])
+        self.assertIn('env', expected,
+                      'London must emit env; if it does not, this guard is testing nothing')
+
         for city in app.CITIES:
             self.assertIn(city, app.CITY_PROVENANCE,
                           f'{city} is scoreable but has no provenance entry')
             self.assertTrue(app.build_sources(city), city)
             self.assertEqual(
                 set(app.build_source_breakdown(city)),
-                {'quiet', 'afford', 'growth', 'live'},
+                expected,
                 f'{city} breakdown must cover every scored component',
             )
 

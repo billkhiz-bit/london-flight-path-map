@@ -13,16 +13,16 @@
 //   ../icons/*          → www/icons/*
 //   ../js/*             → www/js/*             (api-base.js, future shared JS)
 //   ../prototype/*      → www/prototype/*      (3D radar, kept in scope)
-//   ../data/<allow-list> → www/data/           (see REQUIRED_DATA below:
-//                                               noise tile + the three JSON
-//                                               files the app cannot score
-//                                               without)
+//   ../data/<derived set> → www/data/          (see REQUIRED_DATA below: the
+//                                               union of every /data/ file
+//                                               sw.js precaches and index.html
+//                                               fetches, derived not listed)
 //
 // Files NOT copied: backend/, score-demo/, node_modules/, tests/,
 // docs (README, METHODOLOGY, etc.) — none of these belong inside the
 // shipped app bundle.
 
-import { mkdir, copyFile, readdir, stat, rm } from 'node:fs/promises';
+import { mkdir, copyFile, readdir, stat, rm, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -99,12 +99,41 @@ async function main() {
   // An extension filter fails open: add a file, get no error, ship without it.
   // An allow-list fails closed, and this build now exits non-zero rather than
   // producing a bundle that looks fine and scores wrong.
-  const REQUIRED_DATA = [
-    'borough-extra.json', // crime/schools/transport/healthcare - liveability
-    'london-boroughs.json', // map geometry, precached by sw.js
-    'nyc-boroughs.json', // ditto; cache.addAll() is atomic, so a miss kills install
-    'aircraft-noise-london-lden.png', // DEFRA overlay
-  ];
+  // DERIVED, NOT LISTED. This was a hand-written list of four files, frozen on
+  // 3 August while the site grew to eleven cities - audit F41. A Capacitor build
+  // therefore shipped London and New York geometry and nothing else, and the
+  // damage was worse than nine missing outlines: sw.js precaches ELEVEN borough
+  // files via cache.addAll(), which is ATOMIC, so the service worker would have
+  // failed to install at all in the native app.
+  //
+  // A second list of the same facts goes stale the moment the first one moves.
+  // So the requirement is now read from the two places that already declare
+  // what the app loads - sw.js's SHELL_ASSETS and index.html's own fetches -
+  // and their union is what must be copied. Add a city, and this follows.
+  const dataRefs = new Set();
+  for (const file of ['sw.js', 'index.html']) {
+    const text = await readFile(join(ROOT, file), 'utf8');
+    for (const m of text.matchAll(/['"`]\/?data\/([A-Za-z0-9._-]+)['"`]/g)) {
+      dataRefs.add(m[1]);
+    }
+  }
+  const REQUIRED_DATA = [...dataRefs].sort();
+
+  // A REGEX THAT MATCHES NOTHING MUST NOT PRODUCE AN EMPTY REQUIREMENT. If the
+  // quoting in sw.js or index.html ever changes, the set silently empties and
+  // this build would copy no data at all while reporting success - the exact
+  // "gate that compares nothing" this repo has shipped five times. Eleven
+  // cities plus borough-extra is already sixteen, so ten is a floor no healthy
+  // tree can fall below.
+  if (REQUIRED_DATA.length < 10) {
+    console.error(
+      `
+  FATAL: only ${REQUIRED_DATA.length} data reference(s) found in sw.js and index.html.
+  That is a parsing failure, not a small app. Refusing to build.`
+    );
+    process.exit(1);
+  }
+  console.log(`  data/ requirement derived from sw.js + index.html: ${REQUIRED_DATA.length} files`);
   const missingData = [];
   await mkdir(join(WWW, 'data'), { recursive: true });
   for (const f of REQUIRED_DATA) {

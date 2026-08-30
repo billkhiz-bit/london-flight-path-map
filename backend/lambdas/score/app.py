@@ -4891,6 +4891,7 @@ CITY_PROVENANCE = {
 }
 
 
+
 def _borough_record(city, borough):
     """The borough's data row, or None if it cannot be resolved.
 
@@ -4936,6 +4937,114 @@ def _london_borough_metadata_line(bd=None):
     return 'Borough metadata: ' + ' and '.join(parts) + suffix
 
 
+# --- environment provenance (audit F1) -------------------------------------
+#
+# The scored `environment` component was credited to NOBODY: no sourceBreakdown
+# key and no sources line, while terms.html obliges integrators to carry the
+# sources array through to their own users and METHODOLOGY §18 tells their
+# auditor the array is complete. The component carries 0.14 of six personas and
+# 0.18 of `family` and `laterlife`, entirely from three OGL v3.0 datasets.
+#
+# Derived per city rather than listed, because a hand-written list is what went
+# stale through v3.9 and v4.0 without one gate noticing.
+
+_ENV_SOURCE_TEXT = {
+    'airQuality': (
+        'Air quality: DEFRA background pollution maps (PCM), '
+        'Open Government Licence v3.0'
+    ),
+    'roadNoise': (
+        'Road noise: DEFRA Strategic Noise Mapping Round 4 road Lden, '
+        'Open Government Licence v3.0'
+    ),
+    'flood': (
+        'Flood risk: Environment Agency Risk of Flooding from Rivers and Sea, '
+        'Open Government Licence v3.0'
+    ),
+}
+
+_ENV_FIELD_OF = {
+    'airQuality': 'airQualityWhoRatio',
+    'roadNoise': 'roadNoiseAboveWhoPct',
+    'flood': 'floodMediumOrHighPct',
+}
+
+
+def _env_inputs_present(city):
+    """Which environment datasets any borough of `city` actually carries.
+
+    Read from the borough records, not declared, so a city that gains or loses
+    a dataset changes its own provenance without anyone remembering to.
+    """
+    entry = CITIES.get(city) or {}
+    boroughs = (entry.get('boroughs') or {}).values()
+    return [
+        key
+        for key, field in _ENV_FIELD_OF.items()
+        if any(isinstance(b.get(field), (int, float)) for b in boroughs)
+    ]
+
+
+def _env_source_line(key):
+    """A source line for one dataset, or None where the city does not use it."""
+
+    def line(city):
+        return _ENV_SOURCE_TEXT[key] if key in _env_inputs_present(city) else None
+
+    return line
+
+
+def _env_breakdown_line(city):
+    """Per-component lineage for `environment`.
+
+    METHODOLOGY §18: where a component has no source the response must SAY so
+    rather than publish a silent default, so the below-floor and no-data cases
+    are stated rather than omitted.
+    """
+    present = _env_inputs_present(city)
+    if not present:
+        # 'NOT' in capitals is load-bearing, not shouting:
+        # test_non_uk_city_never_credits_uk_bodies permits a UK body to appear
+        # in a non-UK response ONLY inside an explicit disclaimer, and detects
+        # one by that token. The guard exists because New York once shipped
+        # crediting MHCLG, DfE, TfL, NHS and DEFRA under OGL v3.0, none of which
+        # has any New York remit. Naming DEFRA here to say it does NOT apply is
+        # the honest form; softening the token would weaken a real guard.
+        return (
+            'NOT scored for this city. DEFRA and the Environment Agency publish '
+            'for the UK only, so no environment input is available here.'
+        )
+    named = ', '.join(
+        f'{_ENV_SOURCE_TEXT[k].split(":")[0]} ({_ENV_WEIGHTS[k]:.2f})' for k in present
+    )
+    if len(present) < 2:
+        return (
+            f'Not scored for this city: {named} is the only input available, below '
+            'the two-input floor the component requires, so environment is omitted '
+            'from the score rather than published on one reading.'
+        )
+    return (
+        f'{named}. Weights are re-normalised over the inputs a borough actually '
+        'has; a borough below the two-input floor omits the component entirely.'
+    )
+
+
+# Environment provenance is injected here rather than written into each of the
+# thirteen city dicts above (audit F1). A per-city literal is exactly what went
+# stale through v3.9 and v4.0 with no gate noticing, and a city added tomorrow
+# would need someone to remember. Injection means it cannot be forgotten, and
+# both the breakdown line and the three source lines are DERIVED from the
+# borough records, so a city that gains or loses a dataset re-describes itself.
+for _prov in CITY_PROVENANCE.values():
+    _prov['breakdown']['env'] = _env_breakdown_line
+    _prov['sources'] = list(_prov['sources']) + [
+        _env_source_line('airQuality'),
+        _env_source_line('roadNoise'),
+        _env_source_line('flood'),
+    ]
+del _prov
+
+
 def build_sources(city='london', bd=None):
     """The response `sources` array, built per request and per city.
 
@@ -4973,7 +5082,11 @@ def build_sources(city='london', bd=None):
             out.append(_london_borough_metadata_line(bd))
         else:
             out.append(line)
-    return out
+    # A callable may return None to mean "this dataset is not used for this
+    # city". Dropping it is the point: crediting DEFRA for New York would be
+    # the 2026-07 defect that published UK provenance over US data, and
+    # test_non_uk_city_never_credits_uk_bodies exists because of it.
+    return [line for line in out if line]
 
 
 def build_source_breakdown(city='london'):

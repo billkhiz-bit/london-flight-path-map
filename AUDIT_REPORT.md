@@ -60,7 +60,7 @@ Three clusters account for most of it.
 
 ## 1. Critical
 
-### F1 — The scored `environment` component is credited to nobody: no `sourceBreakdown` entry, no `sources` line, and the guard test hardcodes the pre-v3.9 four-key set
+### F1 — [FIXED 2026-08-30]  The scored `environment` component is credited to nobody: no `sourceBreakdown` entry, no `sources` line, and the guard test hardcodes the pre-v3.9 four-key set
 
 | | |
 |---|---|
@@ -199,7 +199,7 @@ Three clusters account for most of it.
 
 ---
 
-### F30 — CI has executed neither test suite since 24 July: both test jobs are skipped because their `needs` lint jobs fail on formatting checks that can never go green
+### F30 — [FIXED 2026-08-30]  CI has executed neither test suite since 24 July: both test jobs are skipped because their `needs` lint jobs fail on formatting checks that can never go green
 
 | | |
 |---|---|
@@ -279,7 +279,7 @@ Three clusters account for most of it.
 
 ---
 
-### F41 — The native bundle's data allow-list is still the four files it had on 3 August, so a Capacitor build ships without 9 of 11 cities' boundaries and every font in the atomic precache set
+### F41 — [FIXED 2026-08-30]  The native bundle's data allow-list is still the four files it had on 3 August, so a Capacitor build ships without 9 of 11 cities' boundaries and every font in the atomic precache set
 
 | | |
 |---|---|
