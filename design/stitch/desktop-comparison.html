@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UK Compare - Bristol vs Manchester</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#444748",
+                      "inverse-on-surface": "#f4f0ef",
+                      "outline": "#747878",
+                      "primary": "#000000",
+                      "on-primary-container": "#858383",
+                      "inverse-surface": "#313030",
+                      "surface-bright": "#fdf8f8",
+                      "surface-container-low": "#f7f3f2",
+                      "on-error": "#ffffff",
+                      "surface-container": "#f1edec",
+                      "on-secondary": "#ffffff",
+                      "on-surface": "#1c1b1b",
+                      "surface-dim": "#ddd9d8",
+                      "secondary-fixed-dim": "#c9c6c4",
+                      "tertiary-container": "#1c1b1a",
+                      "background": "#fdf8f8",
+                      "primary-container": "#1c1b1b",
+                      "inverse-primary": "#c8c6c5",
+                      "secondary-container": "#e5e2e0",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "on-tertiary-fixed": "#1c1b1a",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#868382",
+                      "tertiary-fixed": "#e6e2df",
+                      "secondary": "#605e5d",
+                      "surface": "#fdf8f8",
+                      "surface-container-high": "#ebe7e6",
+                      "on-primary-fixed-variant": "#474746",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "on-background": "#1c1b1b",
+                      "primary-fixed": "#e5e2e1",
+                      "error": "#ba1a1a",
+                      "surface-variant": "#e5e2e1",
+                      "on-tertiary-fixed-variant": "#484645",
+                      "on-secondary-fixed-variant": "#484646",
+                      "outline-variant": "#c4c7c7",
+                      "surface-tint": "#5f5e5e",
+                      "tertiary-fixed-dim": "#cac6c4",
+                      "secondary-fixed": "#e5e2e0",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#000000",
+                      "on-secondary-container": "#666463",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed": "#1c1b1b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "20px",
+                      "gutter": "1px",
+                      "margin-md": "24px",
+                      "margin-sm": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "display-score": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-data": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-score": [
+                              "48px",
+                              {
+                                      "lineHeight": "1",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "10px",
+                              {
+                                      "lineHeight": "12px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-data": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #e4e3e0; /* Fallback for custom background */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom scrollbar for horizontal scrolling on smaller screens if needed */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1edec; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c7c7; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #747878; 
+        }
+        
+        .scale-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: #ddd9d8;
+            position: relative;
+            margin-top: 8px;
+        }
+        .scale-marker {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 1px;
+            background-color: #1c1b1b;
+        }
+        
+        /* Force tabular lining figures */
+        .tabular-nums {
+            font-feature-settings: "tnum" on, "lnum" on;
+        }
+    </style>
+</head>
+<body class="bg-secondary-container min-h-screen flex flex-col font-body-data text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center w-full px-container-padding h-16 shrink-0 sticky top-0 z-50">
+<div class="flex items-center gap-margin-sm">
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary dark:text-inverse-primary tracking-tight">UK Compare</h1>
+</div>
+<div class="flex items-center justify-center flex-1 max-w-2xl px-margin-md">
+<div class="flex items-center w-full border border-outline-variant bg-surface-container-lowest h-10 px-3 hover:border-primary transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+<span class="material-symbols-outlined text-outline text-sm mr-2" data-icon="search">search</span>
+<input class="w-full bg-transparent border-none p-0 text-body-data text-on-surface placeholder:text-outline focus:ring-0" placeholder="Search location 1..." type="text" value="Bristol, UK"/>
+</div>
+<div class="px-4 font-label-caps text-label-caps text-outline font-semibold uppercase tracking-widest shrink-0">vs</div>
+<div class="flex items-center w-full border border-outline-variant bg-surface-container-lowest h-10 px-3 hover:border-primary transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+<span class="material-symbols-outlined text-outline text-sm mr-2" data-icon="search">search</span>
+<input class="w-full bg-transparent border-none p-0 text-body-data text-on-surface placeholder:text-outline focus:ring-0" placeholder="Search location 2..." type="text" value="Manchester, UK"/>
+</div>
+</div>
+<div class="flex items-center gap-margin-sm text-primary dark:text-inverse-primary">
+<button aria-label="Map view" class="p-2 hover:bg-surface-container-low transition-colors rounded-none cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+</button>
+<button aria-label="Settings" class="p-2 hover:bg-surface-container-low transition-colors rounded-none cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Comparison Grid -->
+<main class="flex-1 flex flex-col md:flex-row w-full max-w-[1440px] mx-auto bg-surface-container-lowest border-l border-r border-outline-variant shadow-none">
+<!-- Left Column: Bristol -->
+<section class="flex-1 border-b md:border-b-0 md:border-r border-outline-variant flex flex-col min-w-[320px]">
+<!-- Column Header -->
+<div class="p-container-padding border-b border-outline-variant bg-surface-bright">
+<div class="w-full aspect-video mb-margin-sm border border-outline-variant bg-surface-container relative overflow-hidden group">
+<img class="w-full h-full object-cover mix-blend-multiply opacity-80 group-hover:opacity-100 transition-opacity" data-alt="A highly detailed, minimalist aerial map view of Bristol, UK. The map features a light-mode aesthetic with stark white and pale grey geometric blocks representing city infrastructure, intersected by precise, dark grey hairline roads and subtle blue-grey waterway indications. The lighting is flat and analytical, emphasizing structural precision over realism. No text or labels are present." data-location="Bristol" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_td9x3-F8x_R94eGxDsuE4rnjpaUzuaHWfh_ybEa2WEjdUcQN3Ah10_nN99tN5Pt8e4895ut79ugJrLL-hg4RsakGEZNJpeG-u6Kuk--3W-omCpYILqVSGn5eDcfvJdIkSzplQGmx6rtGnhDXhiOqCk774bDC6rNwNakfCJkE6oMtQ7Pkm1fYWIxeBQmNQrQqnmOWQ65eL_3Jarnm6kFQA7W5NVwDVZs5VgP0WF5R7Sb4G1HXLiit7NeKPpsKKDz1mGEonLiZWQ"/>
+<div class="absolute inset-0 ring-1 ring-inset ring-outline-variant/20 pointer-events-none"></div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface m-0 tracking-tight">Bristol</h2>
+<p class="font-label-sm text-label-sm text-outline mt-1 uppercase tracking-widest">South West England</p>
+</div>
+<div class="text-right">
+<div class="font-display-score text-display-score font-semibold text-primary tabular-nums tracking-tighter">8.4<span class="text-2xl text-outline font-normal">/10</span></div>
+<p class="font-label-sm text-label-sm text-outline mt-1 uppercase tracking-widest">Composite Index</p>
+</div>
+</div>
+</div>
+<!-- Data Rows Container -->
+<div class="flex flex-col bg-surface-container-lowest p-container-padding gap-0">
+<!-- Category Section -->
+<div class="py-margin-sm border-b border-outline-variant border-dashed">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-margin-sm">Acoustic Profile</h3>
+<!-- Row: Ambient Noise -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Ambient Noise</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">42 dB</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 42%;"></div>
+</div>
+</div>
+<!-- Row: Peak Transient -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Peak Transient</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">78 dB</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 78%;"></div>
+</div>
+</div>
+<!-- Row: Low Freq Rumble -->
+<div class="flex flex-col">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">LF Rumble</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">35 Hz</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 35%;"></div>
+</div>
+</div>
+</div>
+<!-- Category Section -->
+<div class="py-margin-sm border-b border-outline-variant border-dashed">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-margin-sm">Urban Metrics</h3>
+<!-- Row: Traffic Density -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Traffic Density</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">6,240 v/h</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 62%;"></div>
+</div>
+</div>
+<!-- Row: Green Space Index -->
+<div class="flex flex-col">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Green Space</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">28.4%</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 28%;"></div>
+</div>
+</div>
+</div>
+<!-- Category Section -->
+<div class="py-margin-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-margin-sm">Environmental</h3>
+<!-- Row: Air Quality (Null state example) -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Air Quality (PM2.5)</span>
+<span class="font-body-data text-body-data text-outline italic tabular-nums text-right w-2/3 text-sm">not measured here</span>
+</div>
+<div class="scale-bar-container opacity-50">
+<!-- Empty bar for null state -->
+</div>
+</div>
+<!-- Row: Avg Wind Speed -->
+<div class="flex flex-col">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Avg Wind Spd</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">4.2 m/s</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 42%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Manchester -->
+<section class="flex-1 flex flex-col min-w-[320px]">
+<!-- Column Header -->
+<div class="p-container-padding border-b border-outline-variant bg-surface-bright">
+<div class="w-full aspect-video mb-margin-sm border border-outline-variant bg-surface-container relative overflow-hidden group">
+<img class="w-full h-full object-cover mix-blend-multiply opacity-80 group-hover:opacity-100 transition-opacity" data-alt="A highly detailed, minimalist aerial map view of Manchester, UK. The map features a light-mode aesthetic with stark white and pale grey geometric blocks representing dense urban city infrastructure, intersected by precise, dark grey hairline roads and subtle blue-grey waterway indications like canals. The lighting is flat and analytical, emphasizing structural precision over realism. No text or labels are present." data-location="Manchester" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC61ZqaKttGkkbO-xJobI4zVErm3SDiSDzlkCvZZkf1mWumlTNJ2XtNuZvn1WjrFiA3gwC-4PyAa79RP7mY2w7lnVoDqYSLe-2xQFo9ehmJ3bvoMJq4_MlIRUqMb3a0MZtEGJng-USfhxDcUzOkjclXQppg-sDM7b3SUdoIrJlcC4rlEa8_GYftlQwYRINj9TPOXNnpfP62GK_H9YHmMetCRjyUof0nX3PSsdzOMug-XuyrCCkVuqD8C1WYBMLjJwKfptW4G5vsvA"/>
+<div class="absolute inset-0 ring-1 ring-inset ring-outline-variant/20 pointer-events-none"></div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface m-0 tracking-tight">Manchester</h2>
+<p class="font-label-sm text-label-sm text-outline mt-1 uppercase tracking-widest">North West England</p>
+</div>
+<div class="text-right">
+<div class="font-display-score text-display-score font-semibold text-primary tabular-nums tracking-tighter">7.1<span class="text-2xl text-outline font-normal">/10</span></div>
+<p class="font-label-sm text-label-sm text-outline mt-1 uppercase tracking-widest">Composite Index</p>
+</div>
+</div>
+</div>
+<!-- Data Rows Container -->
+<div class="flex flex-col bg-surface-container-lowest p-container-padding gap-0">
+<!-- Category Section -->
+<div class="py-margin-sm border-b border-outline-variant border-dashed">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-margin-sm">Acoustic Profile</h3>
+<!-- Row: Ambient Noise -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Ambient Noise</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">58 dB</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 58%;"></div>
+</div>
+</div>
+<!-- Row: Peak Transient -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Peak Transient</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">86 dB</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 86%;"></div>
+</div>
+</div>
+<!-- Row: Low Freq Rumble -->
+<div class="flex flex-col">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">LF Rumble</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">42 Hz</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 42%;"></div>
+</div>
+</div>
+</div>
+<!-- Category Section -->
+<div class="py-margin-sm border-b border-outline-variant border-dashed">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-margin-sm">Urban Metrics</h3>
+<!-- Row: Traffic Density -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Traffic Density</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">9,810 v/h</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 98%;"></div>
+</div>
+</div>
+<!-- Row: Green Space Index -->
+<div class="flex flex-col">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Green Space</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">18.2%</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 18%;"></div>
+</div>
+</div>
+</div>
+<!-- Category Section -->
+<div class="py-margin-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-margin-sm">Environmental</h3>
+<!-- Row: Air Quality -->
+<div class="flex flex-col mb-margin-md">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Air Quality (PM2.5)</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">12.4 µg/m³</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 75%;"></div>
+</div>
+</div>
+<!-- Row: Avg Wind Speed -->
+<div class="flex flex-col">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest w-1/3">Avg Wind Spd</span>
+<span class="font-body-data text-body-data font-medium text-on-surface tabular-nums text-right w-2/3">3.8 m/s</span>
+</div>
+<div class="scale-bar-container">
+<div class="scale-marker" style="left: 38%;"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-high dark:bg-surface-container border-t border-outline-variant w-full py-margin-sm px-container-padding flex justify-between items-center mt-auto shrink-0 z-50">
+<div class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant">
+            © 2024 UK Data Instrument. All measurements calculated using precise acoustic modeling.
+        </div>
+<nav class="flex gap-margin-md">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity duration-200" href="#">Methodology</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity duration-200" href="#">Data Sources</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity duration-200" href="#">API</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-opacity duration-200" href="#">Privacy</a>
+</nav>
+</footer>
+</body></html>

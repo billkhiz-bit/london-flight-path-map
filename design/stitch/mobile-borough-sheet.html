@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sky Score - Islington</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#e4e3e0',
+                        surface: '#fafaf9',
+                        primary: '#141414',
+                        secondary: '#636363',
+                        border: '#c8c7c4',
+                        accent: {
+                            DEFAULT: '#f27d26',
+                            ink: '#a85416'
+                        },
+                        data: {
+                            green: '#0a7a3e',
+                            amber: '#8e6b00',
+                            blue: '#267df2'
+                        }
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #e4e3e0; color: #141414; }
+        h1, h2, h3, .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background h-screen w-full overflow-hidden flex flex-col relative">
+<!-- Top Navigation Anchor (Hidden on this specific view as requested by prompt focus on sheet, but required by system if Top Level. We assume this is a detail view from map) -->
+<header class="w-full top-0 left-0 border-b border-border bg-background flex items-center justify-between px-4 py-2 fixed z-10 hidden">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">analytics</span>
+<span class="font-headline font-bold text-lg tracking-tighter text-primary">SKY SCORE</span>
+</div>
+</header>
+<!-- Map Background Area (Top 25%) -->
+<div class="w-full h-1/4 relative bg-background border-b border-border">
+<!-- Placeholder for Map -->
+<img class="absolute inset-0 w-full h-full object-cover opacity-60" data-alt="A highly detailed, stark, and unstyled top-down satellite map view of Islington, London. The aesthetic is strictly utilitarian, resembling a surveyor's report rather than a consumer navigation app. The palette relies on muted warm greys (#e4e3e0) and stark off-whites (#fafaf9), with dark, precise linework (#141414) delineating roads and property boundaries. Lighting is flat and shadowless, emphasizing pure data visualization over realism. No decorative elements or colorful markers." data-location="Islington, London" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSjjkrwe072-aG1A1aajnDmji8Db1lJWizbnd-XilbxhPJQcUP53B83CZ9JACTWEp5EWvYtT7Q--Cfk53pZw1i6GlZwxJppvMR_MhtShA-inI5OOLLss0DvThQ081C0vBsf4gwbd8azngG2iEuqPD2Bzk4dclMsPk-iE7hiLhVpnVDGvwtTmYc7vYMnjrTp94xOlfR9oUJtdk2pUaqh8CGjPa8lHI8ktiL9n_LZJDEGYut0BmB8o4Aj3i0X_shcZUQt8d7Q97XvdA"/>
+</div>
+<!-- Bottom Sheet (Bottom 75%) -->
+<main class="w-full h-3/4 bg-surface flex flex-col relative z-20">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center py-3 border-b border-border">
+<div class="w-12 h-1 bg-border rounded-full"></div>
+</div>
+<div class="flex-1 overflow-y-auto pb-24">
+<!-- Header Section -->
+<div class="px-6 py-6 border-b border-border">
+<div class="flex justify-between items-end mb-2">
+<h1 class="font-headline font-bold text-4xl tracking-tighter text-primary uppercase">ISLINGTON</h1>
+<div class="bg-data-green text-surface px-3 py-1 rounded-sm font-headline font-bold text-xl tabular-nums">7.2</div>
+</div>
+<p class="font-label text-[10px] tracking-wider uppercase text-secondary">SOURCE: DEFRA, EA, CIVIL AVIATION AUTHORITY</p>
+</div>
+<!-- Measurements Section -->
+<div class="px-6 py-6 flex flex-col gap-8 border-b border-border">
+<!-- Air Quality -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="font-label text-xs uppercase tracking-widest text-primary">AIR QUALITY</span>
+<span class="font-headline text-2xl font-bold tabular-nums text-primary">12 µg/m³</span>
+</div>
+<div class="relative w-full h-2 bg-background border border-border">
+<!-- Fill (Fills right as it worsens, assuming higher is worse for air quality) -->
+<div class="absolute top-0 left-0 h-full bg-data-amber" style="width: 40%;"></div>
+<!-- Guideline Tick -->
+<div class="absolute top-0 bottom-0 w-0.5 bg-primary" style="left: 33%;" title="WHO Guideline"></div>
+<span class="absolute -top-4 text-[9px] text-secondary tabular-nums" style="left: 33%; transform: translateX(-50%);">WHO</span>
+</div>
+</div>
+<!-- Road Noise -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="font-label text-xs uppercase tracking-widest text-primary">ROAD NOISE</span>
+<span class="font-headline text-2xl font-bold tabular-nums text-primary">58 dB</span>
+</div>
+<div class="relative w-full h-2 bg-background border border-border">
+<div class="absolute top-0 left-0 h-full bg-data-amber" style="width: 65%;"></div>
+<div class="absolute top-0 bottom-0 w-0.5 bg-primary" style="left: 50%;" title="WHO Guideline"></div>
+<span class="absolute -top-4 text-[9px] text-secondary tabular-nums" style="left: 50%; transform: translateX(-50%);">WHO</span>
+</div>
+</div>
+<!-- Flood Risk -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="font-label text-xs uppercase tracking-widest text-primary">FLOOD RISK</span>
+<span class="font-body text-sm italic text-secondary">not measured here</span>
+</div>
+<div class="relative w-full h-2 bg-background border border-border">
+</div>
+</div>
+<!-- Aircraft Noise -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-baseline">
+<span class="font-label text-xs uppercase tracking-widest text-primary">AIRCRAFT NOISE</span>
+<span class="font-body text-sm italic text-secondary">not measured here</span>
+</div>
+<div class="relative w-full h-2 bg-background border border-border">
+</div>
+</div>
+</div>
+<!-- Nearest Stations Accordion (Expanded state) -->
+<div class="px-6 py-6">
+<div class="flex justify-between items-center mb-4 cursor-pointer">
+<h2 class="font-label text-xs uppercase tracking-widest text-primary">NEAREST STATIONS</h2>
+<span class="material-symbols-outlined text-primary text-sm transition-transform rotate-180">expand_more</span>
+</div>
+<ul class="flex flex-col gap-3">
+<li class="flex justify-between items-center pb-2 border-b border-background last:border-0">
+<span class="font-body text-sm text-primary">Angel</span>
+<span class="font-headline text-sm font-bold tabular-nums text-primary">0.4 mi</span>
+</li>
+<li class="flex justify-between items-center pb-2 border-b border-background last:border-0">
+<span class="font-body text-sm text-primary">Highbury &amp; Islington</span>
+<span class="font-headline text-sm font-bold tabular-nums text-primary">0.8 mi</span>
+</li>
+<li class="flex justify-between items-center pb-2 border-b border-background last:border-0">
+<span class="font-body text-sm text-primary">Farringdon</span>
+<span class="font-headline text-sm font-bold tabular-nums text-primary">1.1 mi</span>
+</li>
+<li class="flex justify-between items-center pb-2 border-b border-background last:border-0">
+<span class="font-body text-sm text-primary">Old Street</span>
+<span class="font-headline text-sm font-bold tabular-nums text-primary">1.2 mi</span>
+</li>
+</ul>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-lg border-t border-border bg-surface flex justify-around items-center h-16 px-6 pb-safe">
+<button class="flex flex-col items-center justify-center text-accent-ink font-bold active:opacity-70 transition-opacity hover:opacity-80 group">
+<span class="material-symbols-outlined text-2xl mb-1 group-hover:scale-110 transition-transform">search</span>
+<span class="font-label uppercase tracking-wider text-[10px]">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary active:opacity-70 transition-opacity hover:opacity-80 group">
+<span class="material-symbols-outlined text-2xl mb-1 group-hover:scale-110 transition-transform">leaderboard</span>
+<span class="font-label uppercase tracking-wider text-[10px]">Rankings</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary active:opacity-70 transition-opacity hover:opacity-80 group">
+<span class="material-symbols-outlined text-2xl mb-1 group-hover:scale-110 transition-transform">bookmark</span>
+<span class="font-label uppercase tracking-wider text-[10px]">Saved</span>
+</button>
+</nav>
+</body></html>

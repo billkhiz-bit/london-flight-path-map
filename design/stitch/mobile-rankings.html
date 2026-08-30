@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sky Score - Rankings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {},
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk", "sans-serif"],
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Hide scrollbar for filter row */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Tabular nums for scores and ranks */
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#e4e3e0] text-[#141414] font-body min-h-screen flex flex-col pt-[53px] pb-[72px]">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#e4e3e0] border-b border-[#c8c7c4] flex items-center justify-between px-4 py-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#141414]" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<h1 class="font-headline uppercase tracking-widest text-xs text-[#141414] font-bold">SKY SCORE</h1>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 w-full bg-[#fafaf9]">
+<!-- Header Section -->
+<div class="px-4 py-4 border-b border-[#c8c7c4]">
+<h2 class="font-headline text-2xl font-bold tracking-tight mb-2">UK Rankings</h2>
+<p class="text-[#636363] text-sm italic font-label">
+                This list is ordered primarily by median property price trends for the current quarter.
+            </p>
+</div>
+<!-- Filters (Scrollable) -->
+<div class="px-4 py-3 border-b border-[#c8c7c4] bg-[#fafaf9] overflow-x-auto no-scrollbar whitespace-nowrap sticky top-[53px] z-40">
+<div class="flex gap-2">
+<button class="px-4 py-1.5 rounded-full bg-[#141414] text-[#fafaf9] font-label text-xs uppercase tracking-wider font-semibold">Price</button>
+<button class="px-4 py-1.5 rounded-full border border-[#c8c7c4] text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors font-label text-xs uppercase tracking-wider">Noise</button>
+<button class="px-4 py-1.5 rounded-full border border-[#c8c7c4] text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors font-label text-xs uppercase tracking-wider">Air Quality</button>
+<button class="px-4 py-1.5 rounded-full border border-[#c8c7c4] text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors font-label text-xs uppercase tracking-wider">Flood Risk</button>
+<button class="px-4 py-1.5 rounded-full border border-[#c8c7c4] text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors font-label text-xs uppercase tracking-wider">Crime</button>
+</div>
+</div>
+<!-- Ranked List -->
+<div class="flex flex-col w-full">
+<!-- Item 1 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">01</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Islington</div>
+<div class="font-body text-xs text-[#636363]">Greater London, N1</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">8.4</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#0a7a3e]" style="width: 84%;"></div>
+</div>
+<!-- Item 2 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">02</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Richmond</div>
+<div class="font-body text-xs text-[#636363]">Greater London, TW9</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">8.1</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#0a7a3e]" style="width: 81%;"></div>
+</div>
+<!-- Item 3 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">03</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Bath</div>
+<div class="font-body text-xs text-[#636363]">Somerset, BA1</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">7.8</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#8e6b00]" style="width: 78%;"></div>
+</div>
+<!-- Item 4 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">04</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Harrogate</div>
+<div class="font-body text-xs text-[#636363]">North Yorkshire, HG1</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">7.6</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#8e6b00]" style="width: 76%;"></div>
+</div>
+<!-- Item 5 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">05</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">St Albans</div>
+<div class="font-body text-xs text-[#636363]">Hertfordshire, AL1</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">7.2</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#8e6b00]" style="width: 72%;"></div>
+</div>
+<!-- Item 6 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">06</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Winchester</div>
+<div class="font-body text-xs text-[#636363]">Hampshire, SO23</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">6.9</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#f27d26]" style="width: 69%;"></div>
+</div>
+<!-- Item 7 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">07</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Cheltenham</div>
+<div class="font-body text-xs text-[#636363]">Gloucestershire, GL50</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">6.5</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#f27d26]" style="width: 65%;"></div>
+</div>
+<!-- Item 8 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">08</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Leamington Spa</div>
+<div class="font-body text-xs text-[#636363]">Warwickshire, CV32</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">6.1</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#f27d26]" style="width: 61%;"></div>
+</div>
+<!-- Item 9 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">09</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Oxford</div>
+<div class="font-body text-xs text-[#636363]">Oxfordshire, OX1</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">5.4</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#267df2]" style="width: 54%;"></div>
+</div>
+<!-- Item 10 -->
+<div class="relative px-4 py-4 border-b border-[#c8c7c4] flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<span class="text-[#636363] font-headline text-lg tabular-nums w-6">10</span>
+<div>
+<div class="font-headline font-semibold text-base text-[#141414]">Cambridge</div>
+<div class="font-body text-xs text-[#636363]">Cambridgeshire, CB2</div>
+</div>
+</div>
+<div class="font-headline text-xl font-bold tabular-nums text-[#141414]">5.2</div>
+<!-- Score Bar -->
+<div class="absolute bottom-0 left-0 h-[2px] bg-[#267df2]" style="width: 52%;"></div>
+</div>
+</div>
+<div class="py-8 flex justify-center items-center">
+<button class="text-[#636363] hover:text-[#141414] font-label text-xs uppercase tracking-widest font-semibold transition-colors">Load More</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-[#fafaf9] border-t border-[#c8c7c4] z-50">
+<!-- Tab 1: Search (Inactive) -->
+<a class="flex flex-col items-center justify-center text-[#636363] py-2 hover:text-[#141414] transition-colors active:scale-95 transition-transform flex-1" href="#">
+<span class="material-symbols-outlined mb-1">map</span>
+<span class="font-label uppercase tracking-wider text-[10px]">Search</span>
+</a>
+<!-- Tab 2: Rankings (Active) -->
+<a class="flex flex-col items-center justify-center text-[#a85416] py-2 hover:text-[#141414] transition-colors active:scale-95 transition-transform flex-1 relative" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-label uppercase tracking-wider text-[10px] font-bold">Rankings</span>
+<!-- Active indicator underline could go here if needed, but styling says font-bold and color -->
+</a>
+<!-- Tab 3: Saved (Inactive) -->
+<a class="flex flex-col items-center justify-center text-[#636363] py-2 hover:text-[#141414] transition-colors active:scale-95 transition-transform flex-1" href="#">
+<span class="material-symbols-outlined mb-1">bookmark</span>
+<span class="font-label uppercase tracking-wider text-[10px]">Saved</span>
+</a>
+</nav>
+</body></html>

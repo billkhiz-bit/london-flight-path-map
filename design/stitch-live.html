@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sky Score — Stitch design, live data</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1c1b1b",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "on-background": "#1c1b1b",
+                        "outline": "#747878",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#5f5e5e",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "surface-container-low": "#f7f3f2",
+                        "on-secondary-fixed-variant": "#474747",
+                        "surface-container-highest": "#e5e2e1",
+                        "inverse-on-surface": "#f4f0ef",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "surface-container": "#f1edec",
+                        "primary-fixed": "#e5e2e1",
+                        "on-primary-fixed-variant": "#474746",
+                        "on-primary-container": "#858383",
+                        "surface-bright": "#fdf8f8",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-container": "#e4e2e2",
+                        "tertiary-fixed": "#e6e2df",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#ddd9d8",
+                        "on-surface-variant": "#444748",
+                        "tertiary": "#000000",
+                        "primary": "#000000",
+                        "inverse-primary": "#c8c6c5",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#ebe7e6",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#1c1b1a",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#484645",
+                        "on-tertiary-container": "#868382",
+                        "tertiary-fixed-dim": "#cac6c4",
+                        "secondary-fixed-dim": "#c8c6c6",
+                        "on-secondary-container": "#646464",
+                        "inverse-surface": "#313030",
+                        "secondary-fixed": "#e4e2e2",
+                        "secondary": "#5e5e5e",
+                        "background": "#fdf8f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "stack-tight": "4px",
+                        "margin-page": "24px",
+                        "gutter": "12px",
+                        "card-padding": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "display-score": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-score": ["48px", { "lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-variant text-on-surface h-screen w-full flex overflow-hidden">
+
+<!-- TOP NAV -->
+<nav class="fixed top-0 w-full flex justify-between items-center px-margin-page h-16 max-w-full z-50 bg-surface dark:bg-primary-container border-b border-outline-variant dark:border-outline">
+  <div class="flex items-center gap-6">
+    <h1 class="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary-fixed">SKY_SCORE</h1>
+    <div class="hidden md:flex gap-6" id="country-tabs"></div>
+  </div>
+  <div class="flex items-center gap-4">
+    <span class="font-data-mono text-data-mono text-secondary dark:text-secondary-fixed-dim" id="vintage-tag"></span>
+  </div>
+</nav>
+
+<!-- LEFT RAIL -->
+<div class="flex flex-col h-screen fixed left-0 top-16 z-40 bg-surface-container-low dark:bg-primary-container border-r border-outline-variant dark:border-outline w-80 hidden lg:flex">
+  <div class="p-card-padding border-b border-outline-variant dark:border-outline">
+    <h2 class="text-headline-sm font-headline-sm font-bold text-primary dark:text-on-primary">Liveability Dashboard</h2>
+    <p class="font-data-mono text-data-mono text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant mt-1" id="rail-sub">Live data, no invented values</p>
+  </div>
+  <div class="flex-1 py-stack-md" id="metric-nav"></div>
+  <div class="p-card-padding border-t border-outline-variant dark:border-outline mt-auto">
+    <p class="font-label-caps text-label-caps text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant mb-2">COVERAGE</p>
+    <p class="font-data-mono text-data-mono text-primary dark:text-primary-fixed" id="rail-coverage">&nbsp;</p>
+  </div>
+</div>
+
+<main class="flex-1 ml-0 lg:ml-80 mt-16 flex h-[calc(100vh-4rem)]">
+  <!-- MAP -->
+  <section class="flex-1 relative bg-surface-container-highest overflow-hidden flex flex-col border-r border-outline-variant">
+    <div class="absolute top-0 left-0 w-full z-10 p-4 flex flex-col gap-2 pointer-events-none">
+      <div class="flex gap-2 pointer-events-auto mt-2 overflow-x-auto pb-2" id="city-chips"></div>
+    </div>
+
+    <div class="w-full h-full bg-surface-container-high relative">
+      <svg id="map" class="w-full h-full" role="img" aria-label="Borough map shaded by the selected measurement"></svg>
+
+      <div class="absolute right-4 top-24 flex flex-col gap-2 z-10 pointer-events-auto">
+        <button id="zoom-in" class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors" aria-label="Zoom in"><span class="material-symbols-outlined text-sm">add</span></button>
+        <button id="zoom-out" class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors" aria-label="Zoom out"><span class="material-symbols-outlined text-sm">remove</span></button>
+        <button id="zoom-reset" class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors mt-4" aria-label="Reset view"><span class="material-symbols-outlined text-sm">my_location</span></button>
+      </div>
+
+      <!-- Legend rows are MEASURED from what actually painted, never declared. -->
+      <div class="absolute bottom-6 left-6 z-10 bg-surface border border-outline-variant p-4 pointer-events-auto w-64 shadow-none">
+        <h3 class="font-label-caps text-label-caps text-primary mb-3" id="legend-title">LEGEND</h3>
+        <div class="flex flex-col gap-2" id="legend-rows"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT PANEL -->
+  <aside class="w-[400px] h-full bg-surface border-l border-outline-variant flex flex-col overflow-y-auto hidden md:flex shrink-0">
+    <div class="p-card-padding border-b border-outline-variant">
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-outline">search</span>
+        <input id="search" class="w-full bg-surface-container-low border-b border-outline-variant py-2 pl-10 pr-3 font-body-md text-body-md text-primary placeholder:text-outline focus:outline-none focus:border-primary transition-colors rounded-none shadow-none" placeholder="Filter boroughs in this city" type="text"/>
+      </div>
+    </div>
+
+    <div class="p-card-padding border-b border-outline-variant bg-surface-bright">
+      <div class="flex items-baseline gap-2 mb-1">
+        <span class="font-display-score text-display-score text-primary" id="head-value">--</span>
+        <span class="font-headline-sm text-headline-sm text-primary" id="head-unit">&nbsp;</span>
+      </div>
+      <p class="font-label-caps text-label-caps text-on-secondary-fixed-variant tracking-wider" id="head-label">SELECT A BOROUGH</p>
+    </div>
+
+    <div class="flex flex-col" id="rows"></div>
+
+    <div class="p-card-padding flex-1 bg-surface">
+      <h4 class="font-label-caps text-label-caps text-on-surface-variant mb-4">PROVENANCE</h4>
+      <div class="flex flex-col gap-3" id="provenance">
+        <p class="font-data-mono text-data-mono text-outline">Click a borough on the map.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script src="/js/vendor/d3.v7.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var CITIES = [
+    ['london','LONDON'],['manchester','GREATER MANCHESTER'],['westmidlands','WEST MIDLANDS'],
+    ['westyorkshire','WEST YORKSHIRE'],['southyorkshire','SOUTH YORKSHIRE'],['merseyside','MERSEYSIDE'],
+    ['tyneandwear','TYNE AND WEAR'],['bristol','BRISTOL'],['leicester','LEICESTER'],
+    ['teesside','TEESSIDE'],['nyc','NEW YORK']
+  ];
+  var COUNTRY = { london:'UK', manchester:'UK', westmidlands:'UK', westyorkshire:'UK',
+    southyorkshire:'UK', merseyside:'UK', tyneandwear:'UK', bristol:'UK',
+    leicester:'UK', teesside:'UK', nyc:'USA' };
+
+  var METRICS = {
+    air:       { label:'AIR QUALITY', icon:'air',           field:'airQualityWhoRatio',     unit:'x WHO',
+                 hi:4,   worseIsHigher:true,  fmt:function(v){return v.toFixed(2);},
+                 src:'DEFRA background maps. Worse of NO2 / PM2.5 against the WHO 2021 guideline.', vintageKey:'airQualityVintage' },
+    road:      { label:'ROAD NOISE', icon:'volume_up',      field:'roadNoiseAboveWhoPct',   unit:'% of postcodes',
+                 hi:100, worseIsHigher:true,  fmt:function(v){return v.toFixed(1);},
+                 src:'DEFRA Round 4 road Lden. Share above the WHO 53 dB guideline.', vintageKey:'roadNoiseVintage' },
+    flood:     { label:'FLOOD RISK', icon:'water',          field:'floodMediumOrHighPct',   unit:'% Med or High',
+                 hi:20,  worseIsHigher:true,  fmt:function(v){return v.toFixed(2);},
+                 src:'Environment Agency RoFRS. Risk AFTER defences.', vintageKey:'floodVintage' },
+    crime:     { label:'CRIME', icon:'gavel',               field:'crimeRate',              unit:'per 1,000',
+                 hi:200, worseIsHigher:true,  fmt:function(v){return v.toFixed(1);},
+                 src:'ONS Table C4, police recorded crime.', vintageKey:'crimeVintage' },
+    transport: { label:'TRANSPORT', icon:'train',           field:'transportWithin800mPct', unit:'% within 800 m',
+                 hi:100, worseIsHigher:false, fmt:function(v){return v.toFixed(1);},
+                 src:'NaPTAN. Postcodes within 800 m of a rail, metro or tram node.', vintageKey:'transportVintage' },
+    healthcare:{ label:'HEALTHCARE', icon:'local_hospital', field:'healthcareWithin1kmPct', unit:'% within 1 km',
+                 hi:100, worseIsHigher:false, fmt:function(v){return v.toFixed(1);},
+                 src:'Postcodes within 1 km of a GP surgery or hospital.', vintageKey:'healthcareVintage' }
+  };
+  var ORDER = ['air','road','flood','crime','transport','healthcare'];
+
+  var RAMP  = ['#c4c7c7','#9aa0a0','#5f5e5e','#8a4b3f','#ba1a1a'];
+  var BANDS = ['LOWEST','LOW','MIDDLE','HIGH','HIGHEST'];
+
+  var state = { city:'london', metric:'air', country:'UK', extra:null, sel:null, filter:'', zoom:1 };
+
+  function nameOf(f){ var p=f.properties||{}; return p.name||p.LAD13NM||p.NAME||''; }
+  function val(rec,m){ if(!rec) return null; var v=rec[m.field]; return (typeof v==='number'&&isFinite(v))?v:null; }
+
+  function cuts(vals){
+    var v = vals.slice().sort(function(a,b){return a-b;});
+    if(!v.length) return [];
+    var c=[]; for(var i=1;i<5;i++) c.push(v[Math.floor(i*v.length/5)]);
+    return c;
+  }
+  function band(x,c){ for(var i=0;i<c.length;i++) if(x<c[i]) return i; return c.length; }
+
+  function renderCountryTabs(){
+    var box=document.getElementById('country-tabs'); box.innerHTML='';
+    ['UK','USA'].forEach(function(k){
+      var a=document.createElement('button');
+      a.className = (k===state.country)
+        ? 'text-primary dark:text-primary-fixed border-b-2 border-primary dark:border-primary-fixed pb-1 font-body-md text-body-md'
+        : 'text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md';
+      a.textContent = k==='UK' ? 'United Kingdom' : 'United States';
+      a.onclick=function(){
+        state.country=k;
+        var first=CITIES.filter(function(c){return COUNTRY[c[0]]===k;})[0];
+        if(first){ state.city=first[0]; state.sel=null; }
+        draw();
+      };
+      box.appendChild(a);
+    });
+  }
+
+  function renderCityChips(){
+    var box=document.getElementById('city-chips'); box.innerHTML='';
+    CITIES.filter(function(c){return COUNTRY[c[0]]===state.country;}).forEach(function(c){
+      var b=document.createElement('button');
+      b.className = (c[0]===state.city)
+        ? 'px-3 py-1 bg-primary text-on-primary font-label-caps text-label-caps whitespace-nowrap'
+        : 'px-3 py-1 bg-surface-container text-on-secondary-fixed-variant border border-outline-variant font-label-caps text-label-caps whitespace-nowrap hover:bg-surface-container-low';
+      b.textContent=c[1];
+      b.onclick=function(){ state.city=c[0]; state.sel=null; draw(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderMetricNav(){
+    var box=document.getElementById('metric-nav'); box.innerHTML='';
+    ORDER.forEach(function(k){
+      var m=METRICS[k], on=(k===state.metric);
+      var a=document.createElement('button');
+      a.className = on
+        ? 'w-full text-left flex items-center gap-3 py-3 text-primary dark:text-primary-fixed font-bold border-l-2 border-primary dark:border-primary-fixed pl-4 bg-surface-container-highest dark:bg-secondary-container transition-all'
+        : 'w-full text-left flex items-center gap-3 py-3 text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant pl-4 hover:bg-surface-container-highest dark:hover:bg-secondary-container transition-all';
+      a.innerHTML='<span class="material-symbols-outlined">'+m.icon+'</span><span class="font-label-caps text-label-caps">'+m.label+'</span>';
+      a.onclick=function(){ state.metric=k; draw(); };
+      box.appendChild(a);
+    });
+  }
+
+  function renderLegend(painted,missing,m){
+    document.getElementById('legend-title').textContent=m.label;
+    var box=document.getElementById('legend-rows'); box.innerHTML='';
+    var any=false;
+    RAMP.forEach(function(col,i){
+      if(!painted[i]) return;
+      any=true;
+      var d=document.createElement('div');
+      d.className='flex items-center gap-3';
+      d.innerHTML='<div class="w-2 h-2" style="background:'+col+'"></div>'+
+        '<span class="font-data-mono text-data-mono text-on-surface-variant">'+BANDS[i]+'</span>'+
+        '<span class="font-data-mono text-data-mono text-outline ml-auto">'+painted[i]+'</span>';
+      box.appendChild(d);
+    });
+    if(!any){
+      box.innerHTML='<span class="font-data-mono text-data-mono text-outline italic">nothing painted here</span>';
+    }
+    if(missing){
+      var d2=document.createElement('div');
+      d2.className='flex items-center gap-3';
+      d2.innerHTML='<div class="w-2 h-2 border border-outline-variant"></div>'+
+        '<span class="font-data-mono text-data-mono text-outline italic">not measured</span>'+
+        '<span class="font-data-mono text-data-mono text-outline ml-auto">'+missing+'</span>';
+      box.appendChild(d2);
+    }
+  }
+
+  function renderPanel(name,rec){
+    var m=METRICS[state.metric], v=val(rec,m);
+    document.getElementById('head-value').textContent = v===null ? '--' : m.fmt(v);
+    document.getElementById('head-unit').textContent  = v===null ? '' : m.unit;
+    document.getElementById('head-label').textContent = name.toUpperCase()+(v===null?' - NOT MEASURED HERE':'');
+
+    var rows=document.getElementById('rows'); rows.innerHTML='';
+    var held=0;
+    ORDER.forEach(function(k){
+      var mm=METRICS[k], vv=val(rec,mm);
+      if(vv!==null) held++;
+      var pct = vv===null ? 0 : Math.max(0,Math.min(100,(vv/mm.hi)*100));
+      var d=document.createElement('div');
+      d.className = vv===null
+        ? 'p-card-padding border-b border-outline-variant flex flex-col gap-2 bg-surface-container-lowest'
+        : 'p-card-padding border-b border-outline-variant flex flex-col gap-2 hover:bg-surface-container-lowest transition-colors';
+      d.innerHTML =
+        '<div class="flex justify-between items-center">'+
+          '<span class="font-body-md text-body-md '+(vv===null?'text-on-secondary-fixed-variant':'font-medium text-primary')+'">'+mm.label+'</span>'+
+          (vv===null
+            ? '<span class="font-data-mono text-data-mono text-outline italic">not measured here</span>'
+            : '<span class="font-data-mono text-data-mono text-primary">'+mm.fmt(vv)+' '+mm.unit+'</span>')+
+        '</div>'+
+        '<div class="w-full h-1 bg-surface-container-high">'+
+          (vv===null?'':'<div class="h-full bg-primary" style="width:'+pct+'%"></div>')+
+        '</div>';
+      rows.appendChild(d);
+    });
+
+    var prov=document.getElementById('provenance');
+    prov.innerHTML='';
+    ORDER.forEach(function(k){
+      var mm=METRICS[k];
+      var vint = rec && rec[mm.vintageKey] ? rec[mm.vintageKey] : null;
+      var p=document.createElement('div');
+      p.innerHTML='<p class="font-label-caps text-label-caps text-outline mb-1">'+mm.label+
+        (vint?' &middot; '+vint:'')+'</p>'+
+        '<p class="font-data-mono text-data-mono text-primary">'+mm.src+'</p>';
+      prov.appendChild(p);
+    });
+    var cov=document.createElement('p');
+    cov.className='font-data-mono text-data-mono text-outline mt-2';
+    cov.textContent = held+' of '+ORDER.length+' measurements held for this borough.';
+    prov.appendChild(cov);
+  }
+
+  function clearPanel(){
+    document.getElementById('head-value').textContent='--';
+    document.getElementById('head-unit').textContent='';
+    document.getElementById('head-label').textContent='SELECT A BOROUGH';
+    document.getElementById('rows').innerHTML='';
+    document.getElementById('provenance').innerHTML=
+      '<p class="font-data-mono text-data-mono text-outline">Click a borough on the map.</p>';
+  }
+
+  function draw(){
+    renderCountryTabs(); renderCityChips(); renderMetricNav();
+    var m=METRICS[state.metric];
+    var svg=d3.select('#map'); svg.selectAll('*').remove();
+    var node=document.getElementById('map'), w=node.clientWidth, h=node.clientHeight;
+
+    d3.json('/data/'+state.city+'-boroughs.json').then(function(gj){
+      var fc=(gj&&gj.type==='FeatureCollection')?gj:{type:'FeatureCollection',features:gj};
+      var recs=(state.extra&&state.extra[state.city])||{};
+      var proj=d3.geoMercator().fitExtent([[40,110],[w-40,h-60]],fc);
+      var path=d3.geoPath(proj);
+
+      var vals=[];
+      fc.features.forEach(function(f){ var v=val(recs[nameOf(f)],m); if(v!==null) vals.push(v); });
+      var c=cuts(vals), painted=[0,0,0,0,0], missing=0;
+
+      var g=svg.append('g');
+      g.attr('transform','scale('+state.zoom+')');
+      g.selectAll('path').data(fc.features).enter().append('path')
+        .attr('d',path)
+        .attr('stroke','#747878').attr('stroke-width',0.7)
+        .attr('fill',function(f){
+          var v=val(recs[nameOf(f)],m);
+          if(v===null){ missing++; return 'none'; }
+          var bi=band(v,c); if(!m.worseIsHigher) bi=4-bi;
+          painted[bi]++; return RAMP[bi];
+        })
+        .attr('fill-opacity',0.72)
+        .attr('stroke-dasharray',function(f){ return val(recs[nameOf(f)],m)===null?'3 3':null; })
+        .style('cursor','pointer')
+        .style('opacity',function(f){
+          if(!state.filter) return 1;
+          return nameOf(f).toLowerCase().indexOf(state.filter)>=0 ? 1 : 0.18;
+        })
+        .on('click',function(ev,f){
+          state.sel=nameOf(f);
+          g.selectAll('path').attr('stroke-width',0.7).attr('stroke','#747878');
+          d3.select(this).attr('stroke-width',2.4).attr('stroke','#1c1b1b').raise();
+          renderPanel(nameOf(f),recs[nameOf(f)]);
+        })
+        .append('title')
+        .text(function(f){
+          var v=val(recs[nameOf(f)],m);
+          return nameOf(f)+' - '+(v===null?'not measured here':m.fmt(v)+' '+m.unit);
+        });
+
+      renderLegend(painted,missing,m);
+      document.getElementById('rail-coverage').textContent =
+        vals.length+' of '+fc.features.length+' boroughs carry this reading';
+      document.getElementById('rail-sub').textContent =
+        (CITIES.filter(function(x){return x[0]===state.city;})[0]||['',''])[1];
+
+      var anyVint=null;
+      Object.keys(recs).forEach(function(k){ if(!anyVint&&recs[k]&&recs[k][m.vintageKey]) anyVint=recs[k][m.vintageKey]; });
+      document.getElementById('vintage-tag').textContent = anyVint ? (m.label+' '+anyVint) : '';
+
+      if(state.sel&&recs[state.sel]){
+        renderPanel(state.sel,recs[state.sel]);
+        g.selectAll('path').filter(function(f){return nameOf(f)===state.sel;})
+          .attr('stroke-width',2.4).attr('stroke','#1c1b1b').raise();
+      } else { clearPanel(); }
+    }).catch(function(e){
+      svg.append('text').attr('x',60).attr('y',180).attr('fill','#747878')
+        .text('Could not load boundaries for '+state.city+': '+e.message);
+    });
+  }
+
+  document.getElementById('search').addEventListener('input',function(e){
+    state.filter=e.target.value.trim().toLowerCase(); draw();
+  });
+  document.getElementById('zoom-in').onclick   =function(){ state.zoom=Math.min(3,state.zoom*1.25); draw(); };
+  document.getElementById('zoom-out').onclick  =function(){ state.zoom=Math.max(0.5,state.zoom/1.25); draw(); };
+  document.getElementById('zoom-reset').onclick=function(){ state.zoom=1; draw(); };
+
+  d3.json('/data/borough-extra.json').then(function(extra){
+    state.extra=extra; draw();
+    var t; window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(draw,180); });
+  });
+})();
+</script>
+</body>
+</html>

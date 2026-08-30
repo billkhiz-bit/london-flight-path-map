@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LIVE · Sky Score - Analysis</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {},
+            borderRadius: {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            fontFamily: {
+                "headline": ["Space Grotesk", "sans-serif"],
+                "display": ["Space Grotesk", "sans-serif"],
+                "body": ["Inter", "sans-serif"],
+                "label": ["Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-[#e4e3e0] text-[#141414] font-body h-screen overflow-hidden flex w-full max-w-[1440px] mx-auto antialiased">
+<!-- SideNavBar -->
+<nav class="bg-[#e4e3e0] text-[#141414] font-body text-xs font-medium uppercase tracking-widest docked left-0 h-full w-20 border-r border-[#c8c7c4] flex flex-col items-center py-4 z-50 flex-shrink-0">
+<div class="mt-8 mb-12 h-20 w-8 flex items-center justify-center relative">
+<span class="font-headline font-black text-xl text-[#141414] -rotate-90 whitespace-nowrap absolute">Sky Score</span>
+</div>
+<div class="flex flex-col w-full">
+<a class="bg-[#fafaf9] text-[#a85416] border-r-2 border-[#f27d26] w-full flex flex-col items-center justify-center py-5 transition-all duration-150 group" href="#">
+<span class="material-symbols-outlined mb-2 group-hover:bg-[#c8c7c4]">map</span>
+                Map
+            </a>
+<a class="text-[#636363] hover:bg-[#c8c7c4] transition-all duration-150 w-full flex flex-col items-center justify-center py-5" href="#">
+<span class="material-symbols-outlined mb-2">layers</span>
+                Layers
+            </a>
+<a class="text-[#636363] hover:bg-[#c8c7c4] transition-all duration-150 w-full flex flex-col items-center justify-center py-5" href="#">
+<span class="material-symbols-outlined mb-2">filter_list</span>
+                Filters
+            </a>
+<a class="text-[#636363] hover:bg-[#c8c7c4] transition-all duration-150 w-full flex flex-col items-center justify-center py-5" href="#">
+<span class="material-symbols-outlined mb-2">history</span>
+                History
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex h-full relative">
+<!-- Left Column: Map -->
+<section class="flex-1 relative flex flex-col bg-[#e4e3e0]">
+<!-- Map Background Image -->
+<div class="absolute inset-0 bg-cover bg-center w-full h-full opacity-60" data-alt="A highly detailed overhead map of London, rendered in a sober, minimalist surveyor style. The background is a warm neutral gray. Borough boundaries are drawn as ultra-thin hairline borders. The landmasses have very subtle, translucent tonal fills. No text, no icons, just pure geographic lines resembling an instrument panel reading. Bright, even, flat lighting with no shadows." data-location="London" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBWDLOU17ewNGxBp2jVck2dCSE-f23zJ0Cb7Nb0KZeNgHb2oRIpaUiKmwlYhfc6M9uc7YgyWyxfLKxJEd63MzHjLAzV8GtjB12AQ2Om10hs7Q4jbdjegIBVSrYOduUN_BcI73SEXdB7TP3GzFGYKFOUSSDtr7WBuD6CtfRZZdrSMNiR4dHkBe14YwnAIGWTmeuqtLii699Tb9Xi-hFDA2m_O4hQipx730iXIwpNn9j0a81A5WRa6J8Pn5qKl-C0z7PlI78v0mswD6g')"></div>
+<!-- Overlay Elements Container -->
+<div class="absolute inset-0 p-6 pointer-events-none">
+<!-- Pill Chips (Above Map) -->
+<div class="pointer-events-auto flex flex-col gap-3">
+<div class="flex gap-2">
+<button class="bg-[#fafaf9] border border-[#c8c7c4] px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] font-medium border-l-2 border-l-[#f27d26] text-[#141414]">United Kingdom</button>
+<button class="bg-[#e4e3e0] border border-[#c8c7c4] px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#636363] hover:bg-[#fafaf9] transition-colors">United States</button>
+</div>
+<div class="flex gap-2">
+<button class="bg-[#141414] text-[#fafaf9] border border-[#141414] px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] font-medium">London</button>
+<button class="bg-[#fafaf9] border border-[#c8c7c4] px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#636363] hover:bg-[#e4e3e0] transition-colors">Greater Manchester</button>
+<button class="bg-[#fafaf9] border border-[#c8c7c4] px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#636363] hover:bg-[#e4e3e0] transition-colors">West Midlands</button>
+</div>
+</div>
+<!-- Map Controls (Top Right) -->
+<div class="absolute top-6 right-6 pointer-events-auto flex flex-col gap-[-1px]">
+<button class="bg-[#fafaf9] border border-[#c8c7c4] w-10 h-10 flex items-center justify-center hover:bg-[#e4e3e0] transition-colors">
+<span class="material-symbols-outlined text-[#141414]">add</span>
+</button>
+<button class="bg-[#fafaf9] border-l border-r border-b border-[#c8c7c4] w-10 h-10 flex items-center justify-center hover:bg-[#e4e3e0] transition-colors">
+<span class="material-symbols-outlined text-[#141414]">remove</span>
+</button>
+<button class="bg-[#fafaf9] border border-[#c8c7c4] w-10 h-10 flex items-center justify-center mt-3 hover:bg-[#e4e3e0] transition-colors">
+<span class="material-symbols-outlined text-[#141414]">my_location</span>
+</button>
+</div>
+<!-- Legend (Bottom Left) -->
+<div class="absolute bottom-6 left-6 pointer-events-auto bg-[#fafaf9] border border-[#c8c7c4] p-4 min-w-[160px]">
+<div class="text-[10px] uppercase tracking-[0.15em] text-[#636363] mb-3 font-medium">Measurement</div>
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center gap-3">
+<div class="w-3.5 h-3.5 border border-[#c8c7c4] bg-[#0a7a3e]"></div>
+<span class="text-[11px] uppercase tracking-wider text-[#141414]">Quiet</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-3.5 h-3.5 border border-[#c8c7c4] bg-[#8e6b00]"></div>
+<span class="text-[11px] uppercase tracking-wider text-[#141414]">Moderate</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-3.5 h-3.5 border border-[#c8c7c4] bg-[#267df2]"></div>
+<span class="text-[11px] uppercase tracking-wider text-[#141414]">High</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Fixed Panel -->
+<section class="w-[400px] flex-shrink-0 bg-[#fafaf9] border-l border-[#c8c7c4] flex flex-col h-full z-20">
+<!-- Top Search -->
+<div class="p-5 border-b border-[#c8c7c4] bg-[#fafaf9]">
+<div class="relative flex items-center w-full">
+<span class="material-symbols-outlined absolute left-3 text-[#636363] text-[20px]">search</span>
+<input class="w-full bg-[#e4e3e0] border border-[#c8c7c4] pl-10 pr-4 py-2.5 text-[13px] text-[#141414] focus:outline-none focus:border-[#141414] placeholder:text-[#636363] placeholder:tracking-wide" placeholder="Enter a postcode or area" type="text"/>
+</div>
+</div>
+<!-- TopAppBar Navigation -->
+<div class="flex px-2 border-b border-[#c8c7c4] h-12 bg-[#fafaf9]">
+<button class="flex-1 flex justify-center items-center h-full text-[#a85416] border-b-2 border-[#f27d26] font-bold font-body text-sm tracking-tight cursor-pointer">
+                    Analysis
+                </button>
+<button class="flex-1 flex justify-center items-center h-full text-[#636363] hover:bg-[#e4e3e0] transition-colors font-body text-sm tracking-tight cursor-pointer">
+                    Rankings
+                </button>
+<button class="flex-1 flex justify-center items-center h-full text-[#636363] hover:bg-[#e4e3e0] transition-colors font-body text-sm tracking-tight cursor-pointer">
+                    Saved
+                </button>
+</div>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto p-8 flex flex-col gap-10">
+<!-- Verdict Score -->
+<div class="flex flex-col">
+<h2 class="text-[10px] uppercase tracking-[0.2em] text-[#636363] mb-3 font-medium">Index Score</h2>
+<div class="flex items-baseline gap-4">
+<span class="font-headline font-medium text-[5rem] tabular-nums tracking-tighter leading-none text-[#141414]">7.4</span>
+<span class="text-[#0a7a3e] border border-[#0a7a3e] px-2.5 py-1 text-[11px] uppercase tracking-[0.15em] font-semibold">Good</span>
+</div>
+<div class="mt-6 pt-3 border-t border-[#c8c7c4] flex justify-between items-center">
+<span class="text-[11px] uppercase tracking-widest text-[#636363]">Source: EA / ONS 2023</span>
+<span class="material-symbols-outlined text-[#636363] text-[16px] cursor-pointer hover:text-[#141414]">info</span>
+</div>
+</div>
+<!-- Data Rows -->
+<div class="flex flex-col gap-7">
+<!-- Row 1 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-[11px] uppercase tracking-widest text-[#141414] font-medium">Quiet Skies</span>
+<span class="font-headline text-xl tabular-nums font-medium">8.2</span>
+</div>
+<div class="h-2 w-full border border-[#c8c7c4] bg-[#e4e3e0] relative flex items-center">
+<div class="absolute left-[65%] h-[150%] w-px bg-[#141414] z-10"></div>
+<div class="h-full bg-[#0a7a3e]" style="width: 82%"></div>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-[11px] uppercase tracking-widest text-[#141414] font-medium">Affordability</span>
+<span class="font-headline text-xl tabular-nums font-medium">4.1</span>
+</div>
+<div class="h-2 w-full border border-[#c8c7c4] bg-[#e4e3e0] relative flex items-center">
+<div class="absolute left-[50%] h-[150%] w-px bg-[#141414] z-10"></div>
+<div class="h-full bg-[#8e6b00]" style="width: 41%"></div>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-[11px] uppercase tracking-widest text-[#141414] font-medium">Liveability</span>
+<span class="font-headline text-xl tabular-nums font-medium">7.8</span>
+</div>
+<div class="h-2 w-full border border-[#c8c7c4] bg-[#e4e3e0] relative flex items-center">
+<div class="absolute left-[75%] h-[150%] w-px bg-[#141414] z-10"></div>
+<div class="h-full bg-[#0a7a3e]" style="width: 78%"></div>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<span class="text-[11px] uppercase tracking-widest text-[#141414] font-medium">Environment</span>
+<span class="font-headline text-xl tabular-nums font-medium">6.5</span>
+</div>
+<div class="h-2 w-full border border-[#c8c7c4] bg-[#e4e3e0] relative flex items-center">
+<div class="absolute left-[60%] h-[150%] w-px bg-[#141414] z-10"></div>
+<div class="h-full bg-[#8e6b00]" style="width: 65%"></div>
+</div>
+</div>
+<!-- Row 5 (Missing Data Example) -->
+<div class="flex flex-col gap-2 mt-4 pt-6 border-t border-[#c8c7c4]">
+<div class="flex justify-between items-end">
+<span class="text-[11px] uppercase tracking-widest text-[#636363]">Aircraft Noise</span>
+<span class="font-body text-xs italic text-[#636363]">not measured here</span>
+</div>
+<div class="h-2 w-full border border-[#c8c7c4] bg-[#e4e3e0]"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<script src="/js/vendor/d3.v7.min.js"></script>
+<script src="/design/hydrate.js?v=1788115098"></script>
+</body></html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky Score design exploration</title>
+<style>
+  :root {
+    --bg: #e4e3e0;
+    --card: #fafaf9;
+    --dark: #141414;
+    --mid: #636363;
+    --line: #c8c7c4;
+    --orange-ink: #a85416;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 24px 64px;
+    background: var(--bg);
+    color: var(--dark);
+    font: 15px/1.55 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--mid); margin: 0 0 8px; }
+  .warn {
+    background: #fff6ed;
+    border: 1px solid #f2c79b;
+    border-left: 4px solid var(--orange-ink);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 20px 0 32px;
+  }
+  .warn strong { color: var(--orange-ink); }
+  h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--mid);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px;
+    margin: 36px 0 18px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card img {
+    width: 100%;
+    display: block;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+  }
+  .card .body { padding: 12px 14px 14px; }
+  .card .name { font-weight: 600; margin-bottom: 2px; }
+  .card .meta { font-size: 12px; color: var(--mid); margin-bottom: 10px; }
+  .card a {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--orange-ink);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 10px;
+  }
+  .card a:hover, .card a:focus-visible { border-color: var(--orange-ink); }
+  .noshot {
+    height: 132px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mid);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--line);
+    background: #fff;
+  }
+  footer { margin-top: 44px; color: var(--mid); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sky Score design exploration</h1>
+  <p class="sub">Google Stitch output, 2026-08-30. Local preview only, nothing here is deployed.</p>
+
+  <div class="warn">
+    <strong>Every value on these screens is invented.</strong> Stitch fills mockups with
+    plausible-looking numbers, place names and metrics that Sky Score does not publish:
+    the desktop dashboard shows Scotland and Wales tabs and a population-density figure,
+    and the comparison screen invents "LF rumble", "Peak transient" and "Green space".
+    Read these for layout, hierarchy and colour only. Treat all content as lorem ipsum.
+  </div>
+
+  <h2>Desktop</h2>
+  <div class="grid">
+    <div class="card">
+      <img src="desktop-liveability-dashboard.png" alt="Desktop liveability dashboard: dark left rail, map centre, score panel right">
+      <div class="body">
+        <div class="name">Liveability Dashboard</div>
+        <div class="meta">Three column. Map centre, 400px data panel right.</div>
+        <a href="desktop-dashboard.html">Open</a>
+      </div>
+    </div>
+    <div class="card">
+      <img src="desktop-comparison.png" alt="Desktop comparison: two places side by side with aligned measurement rows">
+      <div class="body">
+        <div class="name">Location Comparison</div>
+        <div class="meta">Two places side by side, rows aligned. Unbuilt feature.</div>
+        <a href="desktop-comparison.html">Open</a>
+      </div>
+    </div>
+  </div>
+
+  <h2>Mobile</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="noshot">HTML only</div>
+      <div class="body">
+        <div class="name">Map view A</div>
+        <div class="meta">Map-led home, chips over map, 3 tab bar.</div>
+        <a href="mobile-map-a.html">Open</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="noshot">HTML only</div>
+      <div class="body">
+        <div class="name">Map view B</div>
+        <div class="meta">Second take on the same brief.</div>
+        <a href="mobile-map-b.html">Open</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="noshot">HTML only</div>
+      <div class="body">
+        <div class="name">Postcode result</div>
+        <div class="meta">Score first, components, then disclosures.</div>
+        <a href="mobile-postcode-result.html">Open</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="noshot">HTML only</div>
+      <div class="body">
+        <div class="name">Borough detail sheet</div>
+        <div class="meta">Bottom sheet over map, measurement rows.</div>
+        <a href="mobile-borough-sheet.html">Open</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="noshot">HTML only</div>
+      <div class="body">
+        <div class="name">Area rankings</div>
+        <div class="meta">Ranked list with the measured price caveat.</div>
+        <a href="mobile-rankings.html">Open</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Colourful desktop variants are still generating in Stitch and will be added here when they land.
+  </footer>
+</div>
+</body>
+</html>

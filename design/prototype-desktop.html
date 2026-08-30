@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky Score — desktop design prototype</title>
+<link rel="preload" href="/js/vendor/d3.v7.min.js" as="script">
+<style>
+  :root {
+    /* Ground */
+    --bg:        #f4f2ef;
+    --card:      #ffffff;
+    --ink:       #141414;
+    --ink-2:     #5c5c5c;
+    --line:      #e0ddd8;
+
+    /* Brand. Two values: the bright one is 2.60:1 and may never carry text. */
+    --orange:      #f27d26;
+    --orange-ink:  #a85416;
+
+    /* One hue per component. FILL for bars and swatches, INK for words. */
+    --quiet-fill: #2f86f2;  --quiet-ink: #1a5fb4;
+    --afford-fill:#16a34a;  --afford-ink:#0a7a3e;
+    --live-fill:  #8b5cf6;  --live-ink:  #6d28d9;
+    --env-fill:   #14b8a6;  --env-ink:   #0f766e;
+
+    /* Sequential ramp, low severity to high. */
+    --r1: #dcfce7; --r2: #86efac; --r3: #fbbf24; --r4: #f97316; --r5: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  .app { display: grid; grid-template-columns: 1fr 420px; height: 100dvh; }
+
+  /* ---------------- MAP ---------------- */
+  .map-wrap { position: relative; overflow: hidden; }
+  svg { display: block; width: 100%; height: 100%; }
+  .borough { stroke: #b9b5ae; stroke-width: 0.6; cursor: pointer; transition: fill-opacity .12s; }
+  .borough:hover { stroke: var(--ink); stroke-width: 1.4; }
+  .borough.sel  { stroke: var(--orange-ink); stroke-width: 2.2; }
+  .borough.nodata { fill: none; stroke-dasharray: 3 3; stroke: #b9b5ae; }
+
+  .bar-top {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 14px 18px 10px;
+    background: linear-gradient(to bottom, rgba(244,242,239,.97), rgba(244,242,239,0));
+  }
+  .brand { font-weight: 700; letter-spacing: .13em; font-size: 13px; text-transform: uppercase; }
+  .brand span { color: var(--orange-ink); }
+  .tagline { color: var(--ink-2); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; margin-top: 2px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chip {
+    font: 600 11px/1 Inter, sans-serif; letter-spacing: .07em; text-transform: uppercase;
+    padding: 7px 11px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--ink-2); cursor: pointer;
+  }
+  .chip:hover { border-color: #c9c4bc; color: var(--ink); }
+  .chip[aria-pressed="true"] {
+    background: var(--orange); border-color: var(--orange); color: #fff;
+  }
+  .chip:focus-visible { outline: 2px solid var(--orange-ink); outline-offset: 2px; }
+
+  .metrics-row { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+  .metrics-row .lbl { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin-right: 2px; }
+
+  .legend {
+    position: absolute; left: 18px; bottom: 18px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 11px 13px; min-width: 190px;
+  }
+  .legend h4 { margin: 0 0 8px; font: 700 10px/1 Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .legend .row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 11.5px; }
+  .legend .sw { width: 13px; height: 13px; border-radius: 3px; border: 1px solid rgba(0,0,0,.14); flex: 0 0 auto; }
+  .legend .cnt { margin-left: auto; color: var(--ink-2); font-size: 10.5px; }
+  .legend .none { color: var(--ink-2); font-style: italic; font-size: 11px; }
+
+  /* ---------------- PANEL ---------------- */
+  .panel { background: var(--card); border-left: 1px solid var(--line); overflow-y: auto; padding: 18px 20px 30px; }
+  .panel h2 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+  .panel .sub { color: var(--ink-2); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-top: 3px; }
+
+  .empty { color: var(--ink-2); margin-top: 40px; text-align: center; font-size: 13px; }
+
+  .grade { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 4px; }
+  .grade .n { font: 700 46px/1 "Space Grotesk", Inter, sans-serif; color: var(--orange-ink); }
+  .grade .d { color: var(--ink-2); font-size: 15px; }
+
+  .sect { margin-top: 20px; }
+  .sect h3 {
+    font: 700 10px/1 Inter, sans-serif; letter-spacing: .11em; text-transform: uppercase;
+    color: var(--ink-2); margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
+  }
+
+  .m { padding: 10px 0 12px; border-bottom: 1px solid #f0eeea; }
+  .m:last-child { border-bottom: 0; }
+  .m .head { display: flex; align-items: baseline; gap: 8px; }
+  .m .name { font: 700 10.5px/1.3 Inter, sans-serif; letter-spacing: .09em; text-transform: uppercase; }
+  .m .val { margin-left: auto; font-weight: 700; font-size: 15px; }
+  .m .unit { color: var(--ink-2); font-weight: 400; font-size: 11px; margin-left: 3px; }
+
+  /* Scale bar with a tick at the PUBLISHED guideline. */
+  .track { position: relative; height: 8px; background: #eeece8; border-radius: 4px; margin-top: 9px; }
+  .fill  { position: absolute; inset: 0 auto 0 0; border-radius: 4px; }
+  .tick  { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); opacity: .58; }
+  .scale-note { display: flex; justify-content: space-between; margin-top: 5px; font-size: 10px; color: var(--ink-2); }
+
+  .absent { color: var(--ink-2); font-style: italic; font-size: 12.5px; margin-top: 8px; }
+  .absent + .track .fill { display: none; }
+
+  .src { color: var(--ink-2); font-size: 10.5px; margin-top: 6px; }
+  .banner {
+    margin: 14px 0 0; padding: 10px 12px; border-radius: 8px;
+    background: #fff6ed; border: 1px solid #f2c79b; border-left: 3px solid var(--orange-ink);
+    font-size: 11.5px; color: #6b3a10;
+  }
+  .foot { margin-top: 22px; color: var(--ink-2); font-size: 10.5px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="map-wrap">
+    <svg id="map" role="img" aria-label="Borough map, shaded by the selected measurement"></svg>
+    <div class="bar-top">
+      <div class="brand">SKY <span>SCORE</span></div>
+      <div class="tagline">Desktop design prototype &middot; real measurements, no invented values</div>
+      <div class="chips" id="chips" role="group" aria-label="City"></div>
+      <div class="metrics-row" id="metrics" role="group" aria-label="Shade map by"><span class="lbl">Shade by</span></div>
+    </div>
+    <div class="legend" id="legend"><h4 id="legend-title">Legend</h4><div id="legend-rows"></div></div>
+  </div>
+
+  <aside class="panel" id="panel">
+    <h2 id="p-title">Select a borough</h2>
+    <div class="sub" id="p-sub">Click any shape on the map</div>
+    <div class="banner">
+      Every number on this page is read from <code>data/borough-extra.json</code>, the
+      same file the live site scores from. Nothing here is invented, and a measurement
+      we do not hold is shown as missing rather than as a value.
+    </div>
+    <div class="empty" id="p-empty">No borough selected.</div>
+    <div id="p-body" hidden></div>
+    <div class="foot" id="p-foot"></div>
+  </aside>
+</div>
+
+<script src="/js/vendor/d3.v7.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Cities that the SITE carries (borough-extra holds these). Cardiff and
+  // Nottingham are backend-only and deliberately absent, exactly as on the
+  // live site.
+  var CITIES = [
+    ['london', 'London'], ['manchester', 'Greater Manchester'],
+    ['westmidlands', 'West Midlands'], ['westyorkshire', 'West Yorkshire'],
+    ['southyorkshire', 'South Yorkshire'], ['merseyside', 'Merseyside'],
+    ['tyneandwear', 'Tyne and Wear'], ['bristol', 'Bristol'],
+    ['leicester', 'Leicester'], ['teesside', 'Teesside'], ['nyc', 'New York']
+  ];
+
+  // Each metric names the field it reads, its unit, and the PUBLISHED
+  // threshold its tick marks. `hi` is the value at the right-hand end of the
+  // bar. `worseIsHigher` states the direction explicitly, because the rule in
+  // this product is that direction follows the label, not a house style.
+  var METRICS = {
+    air: {
+      label: 'Air quality', field: 'airQualityWhoRatio', unit: '× WHO',
+      hi: 4, tick: 1, tickLabel: 'WHO 2021 guideline', worseIsHigher: true,
+      ink: 'var(--env-ink)', fill: 'var(--env-fill)',
+      source: 'DEFRA background maps. Worse of NO₂ / PM2.5 against WHO 2021.',
+      fmt: function (v) { return v.toFixed(2); }
+    },
+    road: {
+      label: 'Road noise', field: 'roadNoiseAboveWhoPct', unit: '% of postcodes',
+      hi: 100, tick: 0, tickLabel: '', worseIsHigher: true,
+      ink: 'var(--quiet-ink)', fill: 'var(--quiet-fill)',
+      source: 'DEFRA Round 4 road Lden. Share above the WHO 53 dB guideline.',
+      fmt: function (v) { return v.toFixed(1); }
+    },
+    flood: {
+      label: 'Flood risk', field: 'floodMediumOrHighPct', unit: '% at Medium or High',
+      hi: 20, tick: 10, tickLabel: 'EA Medium-or-High cut', worseIsHigher: true,
+      ink: 'var(--live-ink)', fill: 'var(--live-fill)',
+      source: 'Environment Agency RoFRS. Risk AFTER defences.',
+      fmt: function (v) { return v.toFixed(2); }
+    },
+    crime: {
+      label: 'Crime rate', field: 'crimeRate', unit: 'per 1,000',
+      hi: 200, tick: 0, tickLabel: '', worseIsHigher: true,
+      ink: 'var(--orange-ink)', fill: 'var(--orange)',
+      source: 'ONS Table C4, police recorded crime.',
+      fmt: function (v) { return v.toFixed(1); }
+    },
+    transport: {
+      label: 'Transport', field: 'transportWithin800mPct', unit: '% within 800 m',
+      hi: 100, tick: 0, tickLabel: '', worseIsHigher: false,
+      ink: 'var(--afford-ink)', fill: 'var(--afford-fill)',
+      source: 'NaPTAN. Postcodes within 800 m of a rail, metro or tram node.',
+      fmt: function (v) { return v.toFixed(1); }
+    },
+    healthcare: {
+      label: 'Healthcare', field: 'healthcareWithin1kmPct', unit: '% within 1 km',
+      hi: 100, tick: 0, tickLabel: '', worseIsHigher: false,
+      ink: 'var(--afford-ink)', fill: 'var(--afford-fill)',
+      source: 'Postcodes within 1 km of a GP surgery or hospital.',
+      fmt: function (v) { return v.toFixed(1); }
+    }
+  };
+  var ORDER = ['air', 'road', 'flood', 'crime', 'transport', 'healthcare'];
+  var RAMP = ['var(--r1)', 'var(--r2)', 'var(--r3)', 'var(--r4)', 'var(--r5)'];
+  var BAND_LABEL = ['Lowest', 'Low', 'Middle', 'High', 'Highest'];
+
+  var state = { city: 'london', metric: 'air', extra: null, selected: null };
+
+  function nameOf(f) {
+    var p = f.properties || {};
+    return p.name || p.LAD13NM || p.NAME || '';
+  }
+
+  // Quintile bands over the boroughs THAT HAVE A READING. A borough with no
+  // reading is never given a band - it is drawn hollow. Painting an unknown as
+  // a mid value is the defect this product exists to avoid.
+  function bandsFor(values) {
+    var v = values.slice().sort(function (a, b) { return a - b; });
+    if (!v.length) return [];
+    var cuts = [];
+    for (var i = 1; i < 5; i++) cuts.push(v[Math.floor(i * v.length / 5)]);
+    return cuts;
+  }
+  function bandOf(x, cuts) {
+    for (var i = 0; i < cuts.length; i++) if (x < cuts[i]) return i;
+    return cuts.length;
+  }
+
+  function readValue(rec, m) {
+    if (!rec) return null;
+    var v = rec[m.field];
+    return (typeof v === 'number' && isFinite(v)) ? v : null;
+  }
+
+  function renderChips() {
+    var box = document.getElementById('chips');
+    box.innerHTML = '';
+    CITIES.forEach(function (c) {
+      var b = document.createElement('button');
+      b.className = 'chip';
+      b.type = 'button';
+      b.textContent = c[1];
+      b.setAttribute('aria-pressed', String(c[0] === state.city));
+      b.onclick = function () { state.city = c[0]; state.selected = null; draw(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderMetricChips() {
+    var box = document.getElementById('metrics');
+    box.querySelectorAll('.chip').forEach(function (n) { n.remove(); });
+    ORDER.forEach(function (k) {
+      var b = document.createElement('button');
+      b.className = 'chip';
+      b.type = 'button';
+      b.textContent = METRICS[k].label;
+      b.setAttribute('aria-pressed', String(k === state.metric));
+      b.onclick = function () { state.metric = k; draw(); };
+      box.appendChild(b);
+    });
+  }
+
+  // The legend is MEASURED from what actually painted, never declared. A band
+  // that painted nothing is not shown. This mirrors markLayerCoverage() on the
+  // live site, and the reason is the same: a static legend row is a claim that
+  // goes stale the moment coverage changes.
+  function renderLegend(painted, missing, m) {
+    document.getElementById('legend-title').textContent = m.label;
+    var rows = document.getElementById('legend-rows');
+    rows.innerHTML = '';
+    var any = false;
+    RAMP.forEach(function (col, i) {
+      var n = painted[i] || 0;
+      if (!n) return;
+      any = true;
+      var d = document.createElement('div');
+      d.className = 'row';
+      d.innerHTML = '<span class="sw" style="background:' + col + '"></span>' +
+                    '<span>' + BAND_LABEL[i] + '</span>' +
+                    '<span class="cnt">' + n + '</span>';
+      rows.appendChild(d);
+    });
+    if (!any) {
+      rows.innerHTML = '<div class="none">Nothing painted for this measurement.</div>';
+    }
+    if (missing) {
+      var d2 = document.createElement('div');
+      d2.className = 'row';
+      d2.innerHTML = '<span class="sw" style="background:transparent;border-style:dashed"></span>' +
+                     '<span class="none">not measured</span>' +
+                     '<span class="cnt">' + missing + '</span>';
+      rows.appendChild(d2);
+    }
+  }
+
+  function bar(m, value) {
+    if (value === null) {
+      return '<div class="absent">not measured here</div><div class="track"></div>';
+    }
+    var pct = Math.max(0, Math.min(100, (value / m.hi) * 100));
+    var tick = m.tick > 0 ? '<span class="tick" style="left:' + ((m.tick / m.hi) * 100) + '%"></span>' : '';
+    return '<div class="track"><span class="fill" style="width:' + pct + '%;background:' + m.fill + '"></span>' + tick + '</div>' +
+      '<div class="scale-note"><span>0</span>' +
+      (m.tickLabel ? '<span>' + m.tickLabel + '</span>' : '<span></span>') +
+      '<span>' + m.hi + '</span></div>';
+  }
+
+  function renderPanel(name, rec) {
+    document.getElementById('p-title').textContent = name;
+    document.getElementById('p-sub').textContent =
+      (CITIES.filter(function (c) { return c[0] === state.city; })[0] || ['', ''])[1];
+    document.getElementById('p-empty').hidden = true;
+    var body = document.getElementById('p-body');
+    body.hidden = false;
+
+    var held = 0, total = 0, html = '<div class="sect"><h3>Measurements</h3>';
+    ORDER.forEach(function (k) {
+      var m = METRICS[k], v = readValue(rec, m);
+      total++;
+      if (v !== null) held++;
+      html += '<div class="m"><div class="head">' +
+        '<span class="name" style="color:' + m.ink + '">' + m.label + '</span>' +
+        (v === null ? '' : '<span class="val">' + m.fmt(v) + '<span class="unit">' + m.unit + '</span></span>') +
+        '</div>' + bar(m, v) +
+        '<div class="src">' + m.source + '</div></div>';
+    });
+    html += '</div>';
+
+    if (rec && typeof rec.p8 === 'number') {
+      html += '<div class="sect"><h3>Schools</h3><div class="m"><div class="head">' +
+        '<span class="name" style="color:var(--live-ink)">Progress 8</span>' +
+        '<span class="val">' + (rec.p8 > 0 ? '+' : '') + rec.p8.toFixed(2) + '</span></div>' +
+        '<div class="src">DfE KS4 2023/24 Revised. 0.00 is the national average.</div></div></div>';
+    }
+
+    html += '<div class="sect"><h3>Coverage</h3><div class="m"><div class="head">' +
+      '<span class="name">Measurements held</span><span class="val">' + held + '<span class="unit">of ' + total + '</span></span>' +
+      '</div><div class="src">' +
+      (held === total
+        ? 'Every measurement on this panel is present for this borough.'
+        : 'This borough is missing ' + (total - held) + '. Those rows say so rather than showing a value.') +
+      '</div></div></div>';
+
+    body.innerHTML = html;
+  }
+
+  function draw() {
+    renderChips();
+    renderMetricChips();
+
+    var m = METRICS[state.metric];
+    var svg = d3.select('#map');
+    svg.selectAll('*').remove();
+    var node = document.getElementById('map');
+    var w = node.clientWidth, h = node.clientHeight;
+
+    d3.json('/data/' + state.city + '-boroughs.json').then(function (gj) {
+      var fc = (gj && gj.type === 'FeatureCollection') ? gj : { type: 'FeatureCollection', features: gj };
+      var cityRecs = (state.extra && state.extra[state.city]) || {};
+
+      // fitSize means no hand-picked centre or scale, so every city frames
+      // itself and a new city needs no constants.
+      var proj = d3.geoMercator().fitExtent([[24, 150], [w - 24, h - 40]], fc);
+      var path = d3.geoPath(proj);
+
+      var vals = [];
+      fc.features.forEach(function (f) {
+        var v = readValue(cityRecs[nameOf(f)], m);
+        if (v !== null) vals.push(v);
+      });
+      var cuts = bandsFor(vals);
+      var painted = [0, 0, 0, 0, 0], missing = 0;
+
+      svg.append('g').selectAll('path').data(fc.features).enter().append('path')
+        .attr('d', path)
+        .attr('class', function (f) {
+          var v = readValue(cityRecs[nameOf(f)], m);
+          return 'borough' + (v === null ? ' nodata' : '');
+        })
+        .attr('fill', function (f) {
+          var v = readValue(cityRecs[nameOf(f)], m);
+          if (v === null) { missing++; return 'none'; }
+          var bi = bandOf(v, cuts);
+          if (!m.worseIsHigher) bi = 4 - bi;   // direction follows the label
+          painted[bi]++;
+          return RAMP[bi];
+        })
+        .attr('fill-opacity', 0.62)
+        .append('title')
+        .text(function (f) {
+          var v = readValue(cityRecs[nameOf(f)], m);
+          return nameOf(f) + ' — ' + (v === null ? 'not measured here' : m.fmt(v) + ' ' + m.unit);
+        });
+
+      svg.selectAll('path.borough').on('click', function (ev, f) {
+        state.selected = nameOf(f);
+        svg.selectAll('path.borough').classed('sel', false);
+        d3.select(this).classed('sel', true);
+        renderPanel(nameOf(f), cityRecs[nameOf(f)]);
+      });
+
+      renderLegend(painted, missing, m);
+
+      document.getElementById('p-foot').textContent =
+        fc.features.length + ' boroughs drawn. ' + vals.length + ' carr' +
+        (vals.length === 1 ? 'ies' : 'y') + ' a ' + m.label.toLowerCase() +
+        ' reading, ' + missing + (missing === 1 ? ' does' : ' do') + ' not.';
+
+      if (state.selected && cityRecs[state.selected]) {
+        renderPanel(state.selected, cityRecs[state.selected]);
+        svg.selectAll('path.borough').classed('sel', function (f) { return nameOf(f) === state.selected; });
+      } else {
+        document.getElementById('p-body').hidden = true;
+        document.getElementById('p-empty').hidden = false;
+        document.getElementById('p-title').textContent = 'Select a borough';
+        document.getElementById('p-sub').textContent = 'Click any shape on the map';
+      }
+    }).catch(function (e) {
+      // An absent boundary file must say so, not render as an empty map.
+      svg.append('text').attr('x', 40).attr('y', 200).attr('fill', '#5c5c5c')
+        .text('Could not load boundaries for ' + state.city + ': ' + e.message);
+    });
+  }
+
+  d3.json('/data/borough-extra.json').then(function (extra) {
+    state.extra = extra;
+    draw();
+    var t;
+    window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(draw, 180); });
+  });
+})();
+</script>
+</body>
+</html>

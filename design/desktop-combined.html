@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sky Score — combined mockup</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="preload" href="/js/vendor/d3.v7.min.js" as="script">
+<style>
+  /* ------------------------------------------------------------------
+     PALETTE AND TYPE ARE THE LIVE SITE'S, COPIED NOT REINTERPRETED.
+     Bill preferred the live colour scheme over both Stitch systems. The
+     three *-text variants exist because the fills fail WCAG AA as text on
+     one or both grounds; that split is load-bearing, not decoration.
+     ------------------------------------------------------------------ */
+  :root {
+    --bg:#e4e3e0; --dark:#141414; --mid:#636363; --light:#c8c7c4; --white:#fafaf9;
+    --orange:#f27d26; --orange-ink:#a85416; --blue:#267df2; --yellow:#8e6b00; --green:#0a7a3e;
+    --orange-text:#a04d00; --yellow-text:#8a5a00; --green-text:#076b36;
+    --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --r1:#d7e5d2; --r2:#a8c9a0; --r3:#e3c778; --r4:#e2924e; --r5:#b8453a;
+    /* Mirrors the live site's --sheet-peek: 220px capped at 42dvh. The cap
+       matters on a landscape phone, where 220px would eat most of the
+       screen - a width-keyed rule cannot see that. */
+    --sheet-peek: min(220px, 42dvh);
+  }
+  * { box-sizing:border-box; }
+  html,body { height:100%; }
+  body {
+    margin:0; background:var(--bg); color:var(--dark);
+    font-family:var(--font-sans); font-size:14px; line-height:1.5;
+    font-variant-numeric:tabular-nums; overflow:hidden;
+  }
+  .app { display:grid; grid-template-columns:1fr 420px; height:100dvh; }
+
+  /* ------------------------------ MAP ------------------------------ */
+  .map-wrap { position:relative; overflow:hidden; }
+  svg { display:block; width:100%; height:100%; }
+  .borough { stroke:#9d9a94; stroke-width:.6; cursor:pointer; }
+  .borough:hover { stroke:var(--dark); stroke-width:1.5; }
+  .borough.sel { stroke:var(--dark); stroke-width:2.4; }
+
+  .chrome {
+    position:absolute; top:0; left:0; right:0; padding:16px 18px 14px;
+    background:linear-gradient(to bottom, rgba(228,227,224,.96), rgba(228,227,224,0));
+    pointer-events:none; z-index:5;
+  }
+  .chrome > * { pointer-events:auto; }
+  .brand { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:3px; text-transform:uppercase; }
+  .tagline { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); margin-top:3px; }
+
+  .countries { display:flex; gap:14px; margin-top:12px; }
+  .country {
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase;
+    background:none; border:0; padding:2px 0 3px; color:var(--mid); cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .country[aria-pressed="true"] { color:var(--dark); border-bottom-color:var(--orange); }
+  .country:focus-visible { outline:2px solid var(--orange-ink); outline-offset:2px; }
+
+  /* THE CONTAINERS BILL LIKED, lifted from .city-btn on the live site. */
+  .strip { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .chip {
+    padding:4px 12px; font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
+    text-transform:uppercase; cursor:pointer; border:1px solid var(--dark);
+    background:rgba(250,250,249,.85); color:var(--dark); border-radius:0; flex:0 0 auto;
+  }
+  .chip:hover { background:var(--dark); color:var(--white); }
+  .chip[aria-pressed="true"] { background:var(--dark); color:var(--white); }
+  .chip.metric[aria-pressed="true"] { background:var(--orange); border-color:var(--orange); color:#fff; }
+  .chip.layer[aria-pressed="true"] { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .chip:focus-visible { outline:2px solid var(--orange-ink); outline-offset:2px; }
+  .strip .lead { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); align-self:center; margin-right:2px; }
+
+  .legend {
+    position:absolute; left:18px; bottom:18px; background:var(--white);
+    border:1px solid var(--dark); padding:11px 13px; min-width:205px; z-index:4;
+  }
+  .legend h4 { margin:0 0 9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+  .legend .row { display:flex; align-items:center; gap:8px; margin:5px 0; font-family:var(--font-mono); font-size:9px; letter-spacing:.5px; }
+  .legend .sw { width:12px; height:12px; border:1px solid rgba(0,0,0,.2); flex:0 0 auto; }
+  .legend .cnt { margin-left:auto; color:var(--mid); }
+  .legend .none { color:var(--mid); font-style:italic; text-transform:none; letter-spacing:0; }
+
+  /* Overview layer: airports and flight paths, as on the live site. */
+  .path { fill:none; stroke:var(--orange); stroke-linecap:round; pointer-events:none; }
+  .path.departure { stroke:var(--blue); }
+  /* A white casing under every line. Without it the orange arrivals vanish
+     into the orange and red end of the severity ramp - the layer would be
+     present and unreadable, which is worse than absent because it looks
+     like it is working. */
+  .path-casing { fill:none; stroke:var(--white); stroke-opacity:.9; stroke-linecap:round; pointer-events:none; }
+  .path.freq-high { stroke-width:2.1; stroke-opacity:.75; }
+  .path.freq-medium { stroke-width:1.5; stroke-opacity:.6; }
+  .path.freq-low { stroke-width:1.1; stroke-opacity:.45; }
+  .apt-dot { fill:var(--dark); stroke:var(--white); stroke-width:1.5; }
+  /* Borough names, as on the live site. The white halo via paint-order is
+     load-bearing and its reason is recorded in index.html: a #141414 label on
+     a selected #141414 borough disappeared, and re-colouring per click did not
+     work because the click handler never re-rendered the labels. A halo reads
+     on ANY fill and needs no per-state logic. */
+  .bo-label {
+    font-family:var(--font-mono); font-weight:600; fill:#141414;
+    stroke:#FAFAF9; stroke-width:2.5px; paint-order:stroke; stroke-linejoin:round;
+    opacity:.9; pointer-events:none; text-anchor:middle;
+  }
+  .apt-label {
+    font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1px;
+    fill:var(--dark); paint-order:stroke; stroke:var(--white); stroke-width:3px;
+    stroke-linejoin:round; pointer-events:none;
+  }
+
+  /* A metric this city has no readings for is DISABLED, not silently empty.
+     New York holds curated band strings but none of the six continuous
+     fields except crime, so shading by air quality drew nothing at all and
+     read as a broken map. */
+  .chip[disabled] { opacity:.42; cursor:not-allowed; text-decoration:line-through; }
+  .chip[disabled]:hover { background:rgba(250,250,249,.85); color:var(--dark); }
+
+  .mobile-note { display:none; }
+
+  /* ----------------------------- PANEL ----------------------------- */
+  .panel { background:var(--white); border-left:1px solid var(--light); overflow-y:auto; padding:18px 20px 40px; }
+  .panel-head { font-family:var(--font-mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mid); border-bottom:1px solid var(--light); padding-bottom:10px; }
+  .place { font-size:22px; font-weight:600; letter-spacing:-.01em; margin:14px 0 2px; }
+  .place-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); }
+  .headline { display:flex; align-items:baseline; gap:8px; margin:16px 0 2px; }
+  .headline .n { font-family:var(--font-mono); font-size:42px; font-weight:700; line-height:1; color:var(--orange-text); }
+  .headline .u { font-family:var(--font-mono); font-size:11px; color:var(--mid); letter-spacing:1px; }
+  .headline-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); }
+
+  .sect { margin-top:22px; }
+  .sect h3 { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mid); font-weight:700; margin:0 0 12px; padding-bottom:7px; border-bottom:1px solid var(--light); }
+
+  .m { padding:11px 0 13px; border-bottom:1px solid #eeece9; }
+  .m:last-child { border-bottom:0; }
+  .m.active { background:rgba(242,125,38,.055); margin:0 -8px; padding-left:8px; padding-right:8px; }
+  .m .head { display:flex; align-items:baseline; gap:8px; }
+  .m .name { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+  .m .val { margin-left:auto; font-family:var(--font-mono); font-weight:700; font-size:14px; }
+  .m .unit { color:var(--mid); font-weight:400; font-size:9px; margin-left:4px; letter-spacing:.5px; }
+  .track { position:relative; height:7px; background:#e8e6e2; margin-top:10px; }
+  .fill { position:absolute; inset:0 auto 0 0; }
+  .tick { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--dark); opacity:.62; }
+  .scale-note { display:flex; justify-content:space-between; margin-top:5px; font-family:var(--font-mono); font-size:8px; letter-spacing:.5px; color:var(--mid); }
+  .absent { color:var(--mid); font-style:italic; font-size:12px; margin-top:9px; }
+  .src { color:var(--mid); font-size:10.5px; margin-top:7px; line-height:1.45; }
+  .empty { color:var(--mid); margin-top:44px; text-align:center; font-size:13px; }
+  .note { margin-top:16px; padding:10px 12px; background:rgba(242,125,38,.07); border-left:3px solid var(--orange); font-size:11.5px; color:#6b3a10; }
+  .foot { margin-top:22px; font-family:var(--font-mono); font-size:9px; letter-spacing:.5px; color:var(--mid); line-height:1.6; }
+
+  /* -------------------- POSTCODE / EPC / SOLD -------------------- */
+  .pc-row { display:flex; gap:6px; margin-top:10px; }
+  .pc-row input {
+    flex:1 1 auto; min-width:0; padding:8px 10px; border:1px solid var(--dark);
+    background:var(--white); font-family:var(--font-mono); font-size:11px;
+    letter-spacing:1px; text-transform:uppercase; border-radius:0; color:var(--dark);
+  }
+  .pc-row input::placeholder { color:var(--mid); letter-spacing:.5px; }
+  .pc-row input:focus-visible { outline:2px solid var(--orange-ink); outline-offset:1px; }
+  .pc-row button {
+    padding:8px 14px; border:1px solid var(--dark); background:var(--dark); color:var(--white);
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  }
+  .pc-row button:disabled { opacity:.55; cursor:default; }
+  .pc-state { font-family:var(--font-mono); font-size:9px; letter-spacing:.5px; color:var(--mid); margin-top:8px; }
+
+  /* EPC IS SEVEN DISCRETE COLUMNS, DELIBERATELY NOT A SCALE BAR.
+     cert.rating LOOKS plottable but is synthesised from a band midpoint in
+     the Lambda (MHCLG dropped the numeric rating), so every C returns
+     exactly 75. A continuous bar would claim a precision the data has never
+     had. Columns say "17 of these are a C" and nothing more. */
+  .epc-cols { display:flex; align-items:flex-end; gap:5px; height:96px; margin-top:4px; }
+  .epc-col { flex:1 1 0; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; }
+  .epc-bar { width:100%; min-height:2px; background:var(--light); }
+  .epc-n { font-family:var(--font-mono); font-size:9px; color:var(--mid); }
+  .epc-band { font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:.5px; }
+  .epc-A .epc-bar{background:#0a7a3e}.epc-B .epc-bar{background:#3f9c47}
+  .epc-C .epc-bar{background:#8bbf3f}.epc-D .epc-bar{background:#e3c778}
+  .epc-E .epc-bar{background:#e2924e}.epc-F .epc-bar{background:#d4703c}
+  .epc-G .epc-bar{background:#b8453a}
+
+  .tx { display:flex; gap:10px; align-items:baseline; padding:7px 0; border-bottom:1px solid #f1efec; font-size:12px; }
+  .tx:last-child { border-bottom:0; }
+  .tx .addr { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tx .price { font-family:var(--font-mono); font-weight:700; }
+  .tx .when { font-family:var(--font-mono); font-size:9px; color:var(--mid); letter-spacing:.5px; }
+
+  /* Desktop hides the sheet handle and the legend toggle. These MUST be
+     declared BEFORE the mobile block: they were originally at the end of
+     the sheet, where equal specificity plus later source order beat the
+     media query and left the legend unreachable on a phone - measured,
+     not spotted by eye. */
+  .sheet-handle, .legend-toggle { display:none; }
+
+  /* ------------------------------ MOBILE ------------------------------
+     Modelled on the LIVE site, which Bill says is in a good state: the map
+     is the landing surface, the chip rows are HORIZONTAL SCROLL STRIPS
+     rather than wrapping, and the panel is a bottom sheet booting at PEEK
+     so the map stays visible. Apple rejected build 19 under Guideline 4.0
+     precisely because a sheet covered the map, so it must never boot open.
+     -------------------------------------------------------------------- */
+  @media (max-width: 900px) {
+    .app { display:block; height:100dvh; position:relative; }
+    .map-wrap { position:absolute; inset:0; }
+
+    .chrome { padding:12px 12px 8px; }
+    .brand { font-size:13px; letter-spacing:2px; }
+    .tagline { font-size:8px; }
+
+    /* Wrapping put nine cities on four lines and ate the map. A strip
+       scrolls instead, and the edge fade is load-bearing: this app already
+       retired one scroll strip because a strip with no affordance reads as
+       absent. */
+    .strip {
+      flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+      -webkit-overflow-scrolling:touch; padding-bottom:2px;
+    }
+    .strip[data-scroll="right"], .strip[data-scroll="both"] {
+      -webkit-mask-image:linear-gradient(to right, #000 88%, transparent 100%);
+      mask-image:linear-gradient(to right, #000 88%, transparent 100%);
+    }
+    .strip::-webkit-scrollbar { display:none; }
+
+    .legend { display:none; }
+    .legend.open { display:block; left:12px; bottom:calc(var(--sheet-peek) + 12px); }
+
+    .legend-toggle {
+      display:block; position:absolute; right:12px; bottom:calc(var(--sheet-peek) + 12px); z-index:6;
+      padding:6px 10px; border:1px solid var(--dark); background:var(--white);
+      font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
+      text-transform:uppercase; cursor:pointer;
+    }
+
+    .panel {
+      position:absolute; left:0; right:0; bottom:0; z-index:10;
+      height:88dvh; border-left:0; border-top:1px solid var(--dark);
+      transform:translateY(calc(88dvh - var(--sheet-peek)));
+      transition:transform .22s ease; padding:0 16px 28px;
+    }
+    .panel.open { transform:translateY(0); }
+    .sheet-handle {
+      display:block; width:100%; padding:10px 0 8px; border:0; cursor:pointer;
+      position:sticky; top:0; background:var(--white); z-index:2;
+    }
+    .sheet-handle::before {
+      content:''; display:block; width:38px; height:4px; border-radius:2px;
+      background:var(--light); margin:0 auto 8px;
+    }
+    .sheet-handle span {
+      font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
+      text-transform:uppercase; color:var(--mid);
+    }
+    .panel-head { display:none; }
+    .place { margin-top:2px; font-size:19px; }
+    /* Bill wants the LIVE mobile layout kept. This page proposes DESKTOP
+       only, so say so rather than letting a phone visitor read it as a
+       mobile proposal. */
+    .mobile-note {
+      display:block; margin-top:10px; padding:8px 10px; background:rgba(38,125,242,.08);
+      border-left:3px solid var(--blue); font-size:11px; color:#123c73;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="map-wrap">
+    <svg id="map" role="img" aria-label="Borough map shaded by the selected measurement"></svg>
+    <div class="chrome">
+      <div class="brand">Sky Score</div>
+      <div class="tagline" id="tagline">Independent noise + livability data</div>
+      <div class="countries" id="countries" role="group" aria-label="Country"></div>
+      <div class="strip" id="chips" role="group" aria-label="City"></div>
+      <div class="strip" id="metrics" role="group" aria-label="Shade map by"><span class="lead">Shade by</span></div>
+      <div class="strip" id="layers" role="group" aria-label="Overlays"><span class="lead">Overlay</span></div>
+    </div>
+    <button type="button" class="legend-toggle" id="legend-toggle" aria-expanded="false" aria-controls="legend">Legend</button>
+    <div class="legend" id="legend"><h4 id="legend-title">Legend</h4><div id="legend-rows"></div></div>
+  </div>
+
+  <aside class="panel" id="panel">
+    <button type="button" class="sheet-handle" id="sheet-handle" aria-expanded="false" aria-controls="panel">
+      <span id="sheet-hint">Pull up for detail</span>
+    </button>
+    <div class="panel-head">Property intelligence</div>
+    <div class="place" id="place">Select a borough</div>
+    <div class="place-sub" id="place-sub">Click any shape on the map</div>
+
+    <div id="body" hidden>
+      <div class="headline"><span class="n" id="head-n">--</span><span class="u" id="head-u"></span></div>
+      <div class="headline-label" id="head-l"></div>
+      <div id="rows"></div>
+    </div>
+    <div class="empty" id="empty">No borough selected.</div>
+
+    <div class="sect">
+      <h3>Postcode lookup</h3>
+      <div class="pc-row">
+        <input id="pc" type="text" placeholder="e.g. M1 1AE" aria-label="Postcode" autocomplete="postal-code">
+        <button id="pc-go" type="button">Look up</button>
+      </div>
+      <div class="pc-state" id="pc-state">Fetches EPC certificates and sold prices from the live API.</div>
+      <div id="pc-out"></div>
+    </div>
+
+    <div class="mobile-note">
+      This is a <strong>desktop</strong> proposal. The live site's mobile layout is
+      staying as it is; what you see here on a phone is only a readable fallback.
+    </div>
+
+    <div class="note">
+      Borough figures are read from <strong>data/borough-extra.json</strong>; EPC and sold
+      prices come from the live <strong>/epc</strong> and <strong>/sold-prices</strong> endpoints.
+      Nothing here is invented, and anything we do not hold says so rather than showing a value.
+    </div>
+    <div class="foot" id="foot"></div>
+  </aside>
+</div>
+
+<script src="/js/vendor/d3.v7.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+
+  var CITIES = [
+    ['london','London'],['manchester','Greater Manchester'],['westmidlands','West Midlands'],
+    ['westyorkshire','West Yorkshire'],['southyorkshire','South Yorkshire'],['merseyside','Merseyside'],
+    ['tyneandwear','Tyne and Wear'],['bristol','Bristol'],['leicester','Leicester'],
+    ['teesside','Teesside'],['nyc','New York']
+  ];
+  var COUNTRY = { london:'UK',manchester:'UK',westmidlands:'UK',westyorkshire:'UK',southyorkshire:'UK',
+    merseyside:'UK',tyneandwear:'UK',bristol:'UK',leicester:'UK',teesside:'UK',nyc:'USA' };
+
+  var METRICS = {
+    air:{label:'Air quality',field:'airQualityWhoRatio',unit:'x WHO',hi:4,tick:1,tickLabel:'WHO 2021',worseIsHigher:true,vintage:'airQualityVintage',src:'DEFRA background maps. Worse of NO2 / PM2.5 against the WHO 2021 guideline.',fmt:function(v){return v.toFixed(2);}},
+    road:{label:'Road noise',field:'roadNoiseAboveWhoPct',unit:'% of postcodes',hi:100,tick:0,tickLabel:'',worseIsHigher:true,vintage:'roadNoiseVintage',src:'DEFRA Round 4 road Lden. Share above the WHO 53 dB guideline.',fmt:function(v){return v.toFixed(1);}},
+    flood:{label:'Flood risk',field:'floodMediumOrHighPct',unit:'% med or high',hi:20,tick:10,tickLabel:'EA cut',worseIsHigher:true,vintage:'floodVintage',src:'Environment Agency RoFRS. Risk AFTER defences.',fmt:function(v){return v.toFixed(2);}},
+    crime:{label:'Crime',field:'crimeRate',unit:'per 1,000',hi:200,tick:0,tickLabel:'',worseIsHigher:true,vintage:'crimeVintage',src:'ONS Table C4, police recorded crime.',fmt:function(v){return v.toFixed(1);}},
+    transport:{label:'Transport',field:'transportWithin800mPct',unit:'% within 800 m',hi:100,tick:0,tickLabel:'',worseIsHigher:false,vintage:'transportVintage',src:'NaPTAN. Postcodes within 800 m of a rail, metro or tram node.',fmt:function(v){return v.toFixed(1);}},
+    healthcare:{label:'Healthcare',field:'healthcareWithin1kmPct',unit:'% within 1 km',hi:100,tick:0,tickLabel:'',worseIsHigher:false,vintage:'healthcareVintage',src:'Postcodes within 1 km of a GP surgery or hospital.',fmt:function(v){return v.toFixed(1);}}
+  };
+  var ORDER = ['air','road','flood','crime','transport','healthcare'];
+  var VIEWS = ['overview'].concat(ORDER);   // 'overview' is a VIEW, not a measurement
+  var RAMP = ['var(--r1)','var(--r2)','var(--r3)','var(--r4)','var(--r5)'];
+  var BANDS = ['Lowest','Low','Middle','High','Highest'];
+  var EPC_BANDS = ['A','B','C','D','E','F','G'];
+  // Mirrors CITY_DATA.mapLabelFontSize: London is 6px because 33 boroughs is
+  // the most crowded map, New York 8px because five are the least.
+  var LABEL_PX = { london:6, nyc:8 };
+
+  var state = { city:'london', metric:'overview', country:'UK', extra:null, sel:null, geo:null, showAir:true, showLabels:true };
+  function isMobile(){ return window.matchMedia('(max-width: 900px)').matches; }
+
+  function nameOf(f){ var p=f.properties||{}; return p.name||p.LAD13NM||p.NAME||''; }
+  function val(rec,m){ if(!rec) return null; var v=rec[m.field]; return (typeof v==='number'&&isFinite(v))?v:null; }
+  function cuts(vals){ var v=vals.slice().sort(function(a,b){return a-b;}); if(!v.length) return [];
+    var c=[]; for(var i=1;i<5;i++) c.push(v[Math.floor(i*v.length/5)]); return c; }
+  function band(x,c){ for(var i=0;i<c.length;i++) if(x<c[i]) return i; return c.length; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(ch){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]; }); }
+
+  function btn(text,pressed,cls,fn){
+    var b=document.createElement('button'); b.type='button'; b.className=cls;
+    b.textContent=text; b.setAttribute('aria-pressed',String(pressed)); b.onclick=fn; return b;
+  }
+
+  function renderCountries(){
+    var box=document.getElementById('countries'); box.innerHTML='';
+    ['UK','USA'].forEach(function(k){
+      box.appendChild(btn(k==='UK'?'United Kingdom':'United States',k===state.country,'country',function(){
+        state.country=k;
+        var first=CITIES.filter(function(c){return COUNTRY[c[0]]===k;})[0];
+        if(first){ state.city=first[0]; state.sel=null; }
+        draw();
+      }));
+    });
+  }
+  function renderChips(){
+    var box=document.getElementById('chips'); box.innerHTML='';
+    CITIES.filter(function(c){return COUNTRY[c[0]]===state.country;}).forEach(function(c){
+      box.appendChild(btn(c[1],c[0]===state.city,'chip',function(){ state.city=c[0]; state.sel=null; draw(); }));
+    });
+    markScroll(box);
+    var active=box.querySelector('[aria-pressed="true"]');
+    if(active&&active.scrollIntoView) active.scrollIntoView({block:'nearest',inline:'center'});
+  }
+  // Which measurements does this city actually hold? Asked of the data, not
+  // assumed from the city. New York carries crime and none of the other five.
+  function availability(){
+    var recs=(state.extra&&state.extra[state.city])||{}, out={};
+    ORDER.forEach(function(k){
+      out[k]=Object.keys(recs).some(function(b){ return val(recs[b],METRICS[k])!==null; });
+    });
+    return out;
+  }
+
+  function renderMetrics(){
+    var box=document.getElementById('metrics');
+    Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(n){n.remove();});
+    var have=availability();
+    VIEWS.forEach(function(k){
+      var label = k==='overview' ? 'Overview' : METRICS[k].label;
+      var b=btn(label,k===state.metric,'chip metric',function(){ state.metric=k; draw(); });
+      if(k!=='overview' && !have[k]){
+        b.disabled=true;
+        b.title='Not measured anywhere in this city';
+      }
+      box.appendChild(b);
+    });
+    markScroll(box);
+  }
+
+  // The fade is MEASURED, not assumed: a strip that does not overflow must
+  // not wear a fade suggesting hidden content, and one scrolled to the end
+  // must not keep fading on the side with nothing left.
+  function markScroll(el){
+    var over = el.scrollWidth - el.clientWidth;
+    if(over <= 2){ el.setAttribute('data-scroll','none'); return; }
+    el.setAttribute('data-scroll', el.scrollLeft >= over - 2 ? 'left' : 'right');
+  }
+  ['chips','metrics','layers'].forEach(function(id){
+    document.getElementById(id).addEventListener('scroll',function(){ markScroll(this); },{passive:true});
+  });
+
+  // Airports and flight paths, drawn from design/airports-paths.json, which is
+  // GENERATED from index.html by scripts/extract_airports_paths.py. It is not a
+  // second transcription: the two holders use different dialects for the same
+  // geometry (coords vs coordinates) and hand-porting has caused live defects.
+  function drawLabels(svg, path, features){
+    var px = LABEL_PX[state.city] || 7;
+    var g = svg.append('g');
+    features.forEach(function(f){
+      var c = path.centroid(f);
+      if(!c || !isFinite(c[0])) return;
+      g.append('text')
+        .attr('x', c[0]).attr('y', c[1])
+        .attr('class','bo-label').attr('font-size', px + 'px')
+        .text(nameOf(f).toUpperCase());
+    });
+  }
+
+  function drawAirLayer(svg, proj){
+    var g = state.geo && state.geo[state.city];
+    if(!g) return;
+    var line = d3.line().x(function(d){ return proj(d)[0]; }).y(function(d){ return proj(d)[1]; });
+
+    var pg = svg.append('g');
+    // Casing first, then the coloured line on top, so the layer stays legible
+    // over a shaded map as well as over the neutral Overview ground.
+    (g.flightPaths||[]).forEach(function(fp){
+      if(!fp.coordinates || !fp.coordinates.length) return;
+      var d = line(fp.coordinates);
+      var freq = fp.freq || 'medium';
+      var casing = freq === 'high' ? 4.6 : freq === 'medium' ? 3.8 : 3.2;
+      pg.append('path').attr('d', d).attr('class', 'path-casing').attr('stroke-width', casing);
+      pg.append('path')
+        .attr('d', d)
+        .attr('class', 'path ' + (fp.type||'arrival') + ' freq-' + freq)
+        .append('title').text(fp.name + ' - ' + (fp.type||'') + ', ' + freq + ' frequency');
+    });
+
+    var ag = svg.append('g');
+    (g.airports||[]).forEach(function(a){
+      if(!a.coords) return;
+      var xy = proj(a.coords);
+      if(!xy || !isFinite(xy[0])) return;
+      ag.append('circle').attr('cx',xy[0]).attr('cy',xy[1]).attr('r',4.5).attr('class','apt-dot')
+        .append('title').text(a.name + (a.passengers ? ' - ' + a.passengers + ' passengers a year' : ''));
+      ag.append('text').attr('x',xy[0]+8).attr('y',xy[1]+3).attr('class','apt-label').text(a.code);
+    });
+  }
+
+  function renderLayers(){
+    var box=document.getElementById('layers');
+    Array.prototype.forEach.call(box.querySelectorAll('.chip'),function(n){n.remove();});
+    var g=(state.geo&&state.geo[state.city])||{airports:[],flightPaths:[]};
+    var has=(g.airports||[]).length||(g.flightPaths||[]).length;
+    var b=btn('Flight paths', state.showAir && has, 'chip layer', function(){
+      state.showAir=!state.showAir; draw();
+    });
+    if(!has){
+      // Not "off" - unavailable, and the reason is a fact about the city.
+      b.disabled=true;
+      b.title='This city has no airports';
+    }
+    box.appendChild(b);
+    box.appendChild(btn('Labels', state.showLabels, 'chip layer', function(){
+      state.showLabels=!state.showLabels; draw();
+    }));
+    markScroll(box);
+  }
+
+  // The air rows are counted from what this city holds and are appended to
+  // whichever legend is showing, because the layer is drawn in every view.
+  function airLegendRows(){
+    if(!state.showAir) return '';
+    var g=(state.geo&&state.geo[state.city])||{airports:[],flightPaths:[]};
+    var n=(g.flightPaths||[]).length, a=(g.airports||[]).length;
+    if(!n && !a) return '';
+    var arr=(g.flightPaths||[]).filter(function(p){return (p.type||'arrival')==='arrival';}).length;
+    var out='';
+    if(a) out+='<div class="row"><span class="sw" style="background:var(--dark);border-radius:50%"></span>'+
+      '<span>Airports</span><span class="cnt">'+a+'</span></div>';
+    if(arr) out+='<div class="row"><span class="sw" style="background:var(--orange)"></span>'+
+      '<span>Arrivals</span><span class="cnt">'+arr+'</span></div>';
+    if(n-arr) out+='<div class="row"><span class="sw" style="background:var(--blue)"></span>'+
+      '<span>Departures</span><span class="cnt">'+(n-arr)+'</span></div>';
+    return out;
+  }
+
+  function renderLegend(painted,missing,m,overview,boroughCount){
+    var airRowsHtml='';
+    var title=document.getElementById('legend-title');
+    var rowsEl=document.getElementById('legend-rows');
+    if(overview){
+      var g=(state.geo&&state.geo[state.city])||{airports:[],flightPaths:[]};
+      var arr=(g.flightPaths||[]).filter(function(p){return (p.type||'arrival')==='arrival';}).length;
+      var dep=(g.flightPaths||[]).length-arr;
+      title.textContent='Overview';
+      // Counted from what this city actually holds. South Yorkshire has no
+      // airports at all - Doncaster Sheffield closed to commercial flights in
+      // 2022 - and that must read as a fact, not as a failure to load.
+      var html='';
+      if((g.airports||[]).length){
+        html+='<div class="row"><span class="sw" style="background:var(--dark);border-radius:50%"></span>'+
+          '<span>Airports</span><span class="cnt">'+g.airports.length+'</span></div>';
+      }
+      if(arr) html+='<div class="row"><span class="sw" style="background:var(--orange)"></span>'+
+        '<span>Arrivals</span><span class="cnt">'+arr+'</span></div>';
+      if(dep) html+='<div class="row"><span class="sw" style="background:var(--blue)"></span>'+
+        '<span>Departures</span><span class="cnt">'+dep+'</span></div>';
+      if(!html) html='<div class="row"><span class="none">no airports in this city</span></div>';
+      html+='<div class="row"><span class="sw" style="background:#efeeeb"></span>'+
+        '<span>Boroughs</span><span class="cnt">'+boroughCount+'</span></div>';
+      rowsEl.innerHTML=html;
+      return;
+    }
+    title.textContent=m.label;
+    airRowsHtml = airLegendRows();
+    var rows=rowsEl; rows.innerHTML=''; var any=false;
+    RAMP.forEach(function(col,i){
+      if(!painted[i]) return; any=true;
+      var d=document.createElement('div'); d.className='row';
+      d.innerHTML='<span class="sw" style="background:'+col+'"></span><span>'+BANDS[i]+
+        '</span><span class="cnt">'+painted[i]+'</span>';
+      rows.appendChild(d);
+    });
+    if(!any) rows.innerHTML='<div class="row"><span class="none">nothing painted here</span></div>';
+    if(missing){
+      var d2=document.createElement('div'); d2.className='row';
+      d2.innerHTML='<span class="sw" style="background:transparent;border-style:dashed"></span>'+
+        '<span class="none">not measured</span><span class="cnt">'+missing+'</span>';
+      rows.appendChild(d2);
+    }
+    if(airRowsHtml) rows.insertAdjacentHTML('beforeend', airRowsHtml);
+  }
+
+  function bar(m,v){
+    if(v===null) return '<div class="absent">not measured here</div><div class="track"></div>';
+    var pct=Math.max(0,Math.min(100,(v/m.hi)*100));
+    var tick=m.tick>0?'<span class="tick" style="left:'+((m.tick/m.hi)*100)+'%"></span>':'';
+    return '<div class="track"><span class="fill" style="width:'+pct+'%;background:var(--orange)"></span>'+tick+'</div>'+
+      '<div class="scale-note"><span>0</span>'+(m.tickLabel?'<span>'+m.tickLabel+'</span>':'<span></span>')+
+      '<span>'+m.hi+'</span></div>';
+  }
+
+  function renderPanel(name,rec){
+    // In Overview there is no selected measurement, so the headline shows how
+    // many of the six this borough holds rather than dereferencing a metric
+    // that does not exist.
+    var m = METRICS[state.metric] || null;
+    var hv = m ? val(rec,m) : null;
+    document.getElementById('place').textContent=name;
+    document.getElementById('place-sub').textContent=(CITIES.filter(function(c){return c[0]===state.city;})[0]||['',''])[1];
+    document.getElementById('empty').hidden=true;
+    document.getElementById('body').hidden=false;
+    var heldNow=ORDER.filter(function(k){ return val(rec,METRICS[k])!==null; }).length;
+    document.getElementById('head-n').textContent = m ? (hv===null?'--':m.fmt(hv)) : String(heldNow);
+    document.getElementById('head-u').textContent = m ? (hv===null?'':m.unit) : 'of '+ORDER.length+' measured';
+    document.getElementById('head-l').textContent = m
+      ? (hv===null?m.label+' - not measured here':m.label)
+      : 'Measurements held here';
+    document.getElementById('sheet-hint').textContent=name+' - pull up for detail';
+
+    var held=0, html='<div class="sect"><h3>Measurements</h3>';
+    ORDER.forEach(function(k){
+      var mm=METRICS[k], v=val(rec,mm); if(v!==null) held++;
+      var vint=rec&&rec[mm.vintage]?rec[mm.vintage]:'';
+      html+='<div class="m'+(k===state.metric?' active':'')+'"><div class="head">'+
+        '<span class="name">'+mm.label+'</span>'+
+        (v===null?'':'<span class="val">'+mm.fmt(v)+'<span class="unit">'+mm.unit+'</span></span>')+
+        '</div>'+bar(mm,v)+'<div class="src">'+mm.src+(vint?' <em>'+esc(vint)+'</em>':'')+'</div></div>';
+    });
+    html+='</div>';
+    if(rec&&typeof rec.p8==='number'){
+      html+='<div class="sect"><h3>Schools</h3><div class="m"><div class="head">'+
+        '<span class="name">Progress 8</span><span class="val">'+(rec.p8>0?'+':'')+rec.p8.toFixed(2)+
+        '</span></div><div class="src">DfE KS4 2023/24 Revised. 0.00 is the national average.</div></div></div>';
+    }
+    html+='<div class="sect"><h3>Coverage</h3><div class="m"><div class="head">'+
+      '<span class="name">Measurements held</span><span class="val">'+held+'<span class="unit">of '+ORDER.length+
+      '</span></span></div><div class="src">'+
+      (held===ORDER.length?'Every measurement on this panel is present for this borough.'
+        :'Missing '+(ORDER.length-held)+'. Those rows say so rather than showing a value.')+
+      '</div></div></div>';
+    document.getElementById('rows').innerHTML=html;
+  }
+
+  function clearPanel(){
+    document.getElementById('body').hidden=true;
+    document.getElementById('empty').hidden=false;
+    document.getElementById('place').textContent='Select a borough';
+    document.getElementById('place-sub').textContent=isMobile()?'Tap any shape on the map':'Click any shape on the map';
+    document.getElementById('sheet-hint').textContent='Pull up for detail';
+  }
+
+  /* ---------------------- POSTCODE: EPC + SOLD ---------------------- */
+  function money(n){ return '£' + Number(n).toLocaleString('en-GB'); }
+
+  function renderEpc(d){
+    if(!d) return '<div class="sect"><h3>EPC</h3><div class="absent">could not be fetched</div></div>';
+    // available:false means "we could not ask", which is NOT the same as
+    // "there are none". Say which one it is.
+    if(d.available === false){
+      return '<div class="sect"><h3>EPC</h3><div class="absent">EPC data could not be checked for this postcode</div></div>';
+    }
+    if(!d.count){
+      return '<div class="sect"><h3>EPC</h3><div class="absent">no certificates registered at this postcode</div>'+
+        '<div class="src">MHCLG. Checked and none found, which is different from not checked.</div></div>';
+    }
+    var dist=(d.summary&&d.summary.bandDistribution)||{};
+    var max=Math.max.apply(null,EPC_BANDS.map(function(b){return dist[b]||0;}))||1;
+    var cols=EPC_BANDS.map(function(b){
+      var n=dist[b]||0;
+      return '<div class="epc-col epc-'+b+'">'+
+        '<span class="epc-n">'+(n||'')+'</span>'+
+        '<span class="epc-bar" style="height:'+(n?Math.max(3,(n/max)*68):2)+'px"></span>'+
+        '<span class="epc-band">'+b+'</span></div>';
+    }).join('');
+    return '<div class="sect"><h3>EPC &middot; '+d.count+' certificates</h3>'+
+      '<div class="epc-cols">'+cols+'</div>'+
+      '<div class="src">Most common band <strong>'+esc(d.summary&&d.summary.mostCommonBand)+'</strong>. '+
+      'Seven discrete columns, not a scale: the numeric rating is synthesised from a band midpoint, '+
+      'so every C would plot identically. MHCLG, Open Government Licence v3.0.</div></div>';
+  }
+
+  function renderSold(d){
+    if(!d) return '<div class="sect"><h3>Sold nearby</h3><div class="absent">could not be fetched</div></div>';
+    var tx=d.transactions||[];
+    if(!tx.length){
+      return '<div class="sect"><h3>Sold nearby</h3><div class="absent">no recorded sales at this postcode</div>'+
+        '<div class="src">HM Land Registry Price Paid. Checked and none found.</div></div>';
+    }
+    var rows=tx.slice(0,8).map(function(t){
+      var addr=[t.address,t.street].filter(Boolean).join(' ');
+      return '<div class="tx"><span class="addr">'+esc(addr||'address withheld')+'</span>'+
+        '<span class="price">'+money(t.price)+'</span>'+
+        '<span class="when">'+esc(String(t.date).slice(0,7))+'</span></div>';
+    }).join('');
+    var prices=tx.map(function(t){return t.price;}).sort(function(a,b){return a-b;});
+    var med=prices[Math.floor(prices.length/2)];
+    return '<div class="sect"><h3>Sold nearby &middot; '+tx.length+'</h3>'+rows+
+      '<div class="src">Median of these '+tx.length+': <strong>'+money(med)+'</strong>. '+
+      'These are recorded SALE prices, not an estimate of any particular property. '+
+      'HM Land Registry, Open Government Licence v3.0.</div></div>';
+  }
+
+  var pcOut=document.getElementById('pc-out'), pcState=document.getElementById('pc-state'), pcGo=document.getElementById('pc-go');
+  function lookup(){
+    var pc=(document.getElementById('pc').value||'').trim().toUpperCase();
+    if(!pc){ pcState.textContent='Enter a postcode first.'; return; }
+    pcGo.disabled=true; pcState.textContent='Looking up '+pc+' ...'; pcOut.innerHTML='';
+    var q=encodeURIComponent(pc);
+    // Settle BOTH, and never let one failure blank the other.
+    Promise.allSettled([
+      fetch(API+'/epc?postcode='+q).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch(API+'/sold-prices?postcode='+q).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    ]).then(function(res){
+      var epc=res[0].status==='fulfilled'?res[0].value:null;
+      var sold=res[1].status==='fulfilled'?res[1].value:null;
+      pcOut.innerHTML=renderEpc(epc)+renderSold(sold);
+      var failed=[!epc&&'EPC',!sold&&'sold prices'].filter(Boolean);
+      pcState.textContent = failed.length
+        ? pc+' - '+failed.join(' and ')+' unavailable, the rest is shown'
+        : pc+' - live from /epc and /sold-prices';
+      pcGo.disabled=false;
+    });
+  }
+  pcGo.onclick=lookup;
+  document.getElementById('pc').addEventListener('keydown',function(e){ if(e.key==='Enter') lookup(); });
+
+  /* ------------------------------ SHEET ------------------------------ */
+  var panel=document.getElementById('panel'), handle=document.getElementById('sheet-handle');
+  handle.onclick=function(){
+    var open=panel.classList.toggle('open');
+    handle.setAttribute('aria-expanded',String(open));
+  };
+  var lt=document.getElementById('legend-toggle'), lg=document.getElementById('legend');
+  lt.onclick=function(){
+    var open=lg.classList.toggle('open');
+    lt.setAttribute('aria-expanded',String(open));
+  };
+
+  /* ------------------------------- MAP ------------------------------- */
+  function draw(){
+    renderCountries(); renderChips();
+    // If the selected measurement has no readings in this city, fall back to
+    // Overview rather than drawing an empty map. New York is the case: it holds
+    // crime and none of the other five continuous fields.
+    if(state.metric!=='overview'){
+      var have=availability();
+      if(!have[state.metric]) state.metric='overview';
+    }
+    renderMetrics();
+    var overview = state.metric==='overview';
+    var m = overview ? null : METRICS[state.metric];
+    var svg=d3.select('#map'); svg.selectAll('*').remove();
+    var node=document.getElementById('map'), w=node.clientWidth, h=node.clientHeight;
+    // On a phone the chip stack covers the top and the sheet peek the bottom,
+    // so the map is fitted into the band that is actually VISIBLE. Fitting to
+    // the raw box would draw boroughs under the chrome.
+    var mob = isMobile();
+    var topPad = mob ? 150 : 172;
+    var botPad = mob ? (Math.min(220, window.innerHeight * 0.42) + 28) : 46;
+
+    d3.json('/data/'+state.city+'-boroughs.json').then(function(gj){
+      var fc=(gj&&gj.type==='FeatureCollection')?gj:{type:'FeatureCollection',features:gj};
+      var recs=(state.extra&&state.extra[state.city])||{};
+      var proj=d3.geoMercator().fitExtent(
+        [[24,topPad],[Math.max(80,w-24),Math.max(topPad+80,h-botPad)]], fc);
+      var path=d3.geoPath(proj);
+      var vals=[];
+      if(!overview) fc.features.forEach(function(f){ var v=val(recs[nameOf(f)],m); if(v!==null) vals.push(v); });
+      var c=cuts(vals), painted=[0,0,0,0,0], missing=0;
+
+      svg.append('g').selectAll('path').data(fc.features).enter().append('path')
+        .attr('d',path).attr('class','borough')
+        .attr('fill',function(f){
+          if(overview) return '#efeeeb';           // neutral ground under the paths
+          var v=val(recs[nameOf(f)],m);
+          if(v===null){ missing++; return 'none'; }
+          var bi=band(v,c); if(!m.worseIsHigher) bi=4-bi;
+          painted[bi]++; return RAMP[bi];
+        })
+        .attr('fill-opacity',overview?1:0.78)
+        .attr('stroke-dasharray',function(f){
+          return (!overview && val(recs[nameOf(f)],m)===null) ? '3 3' : null; })
+        .on('click',function(ev,f){
+          state.sel=nameOf(f);
+          svg.selectAll('path.borough').classed('sel',false);
+          d3.select(this).classed('sel',true).raise();
+          renderPanel(nameOf(f),recs[nameOf(f)]);
+          // A result has landed, so opening the sheet is now useful. At boot
+          // there is no result, which is why it starts at peek.
+          if(isMobile()){ panel.classList.add('open'); handle.setAttribute('aria-expanded','true'); }
+        })
+        .append('title')
+        .text(function(f){
+          if(overview) return nameOf(f);
+          var v=val(recs[nameOf(f)],m);
+          return nameOf(f)+' - '+(v===null?'not measured here':m.fmt(v)+' '+m.unit);
+        });
+
+      // The air layer is NOT tied to the shading: Bill asked to see it under
+      // air quality, road noise and the rest, not only in Overview.
+      if(state.showAir) drawAirLayer(svg, proj);
+      // Labels last, so they sit above both the fills and the flight paths.
+      if(state.showLabels) drawLabels(svg, path, fc.features);
+      renderLegend(painted,missing,m,overview,fc.features.length);
+      renderLayers();
+      document.getElementById('tagline').textContent=
+        (CITIES.filter(function(x){return x[0]===state.city;})[0]||['',''])[1]+' - noise + livability data';
+      var gg=(state.geo&&state.geo[state.city])||{airports:[],flightPaths:[]};
+      document.getElementById('foot').textContent = overview
+        ? fc.features.length+' boroughs, '+(gg.airports||[]).length+' airports and '+
+          (gg.flightPaths||[]).length+' flight paths drawn.'
+        : fc.features.length+' boroughs drawn. '+vals.length+' carr'+(vals.length===1?'ies':'y')+
+          (/^[aeiou]/i.test(m.label)?' an ':' a ')+m.label.toLowerCase()+' reading, '+
+          missing+(missing===1?' does':' do')+' not.';
+
+      if(state.sel&&recs[state.sel]){
+        renderPanel(state.sel,recs[state.sel]);
+        svg.selectAll('path.borough').classed('sel',function(f){return nameOf(f)===state.sel;});
+      } else { clearPanel(); }
+    }).catch(function(e){
+      svg.append('text').attr('x',24).attr('y',topPad+40).attr('fill','#636363')
+        .text('Could not load boundaries for '+state.city+': '+e.message);
+    });
+  }
+
+  Promise.all([
+    d3.json('/data/borough-extra.json'),
+    // Generated by scripts/extract_airports_paths.py. If it is missing the map
+    // still works and Overview simply draws no paths - it must not blank the
+    // page, and it must not pretend a city has no airports either, which is
+    // why the legend counts what loaded rather than asserting an absence.
+    d3.json('/design/airports-paths.json').catch(function(){ return null; })
+  ]).then(function(res){
+    state.extra=res[0];
+    state.geo=res[1];
+    if(!state.geo) console.warn('airports-paths.json missing; run scripts/extract_airports_paths.py');
+    draw();
+    var t;
+    window.addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(draw,180); });
+  });
+})();
+</script>
+</body>
+</html>

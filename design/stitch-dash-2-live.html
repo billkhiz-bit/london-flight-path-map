@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LIVE · Sky Score - Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#e4e3e0',
+                        surface: '#fafaf9',
+                        primary: '#141414',
+                        secondary: '#636363',
+                        border: '#c8c7c4',
+                        accent: {
+                            DEFAULT: '#f27d26',
+                            ink: '#a85416'
+                        },
+                        data: {
+                            green: '#0a7a3e',
+                            amber: '#8e6b00',
+                            blue: '#267df2'
+                        }
+                    },
+                    fontFamily: {
+                        headline: ["Space Grotesk", "sans-serif"],
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                        label: ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for dense data panels */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c8c7c4;
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body class="bg-background text-primary font-body antialiased h-screen w-screen overflow-hidden flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#fafaf9] dark:bg-[#141414] text-[#141414] dark:text-[#fafaf9] flex justify-between items-center w-full px-6 h-14 border-b border-[#c8c7c4] dark:border-[#636363] docked full-width top-0 z-20 shrink-0">
+<div class="flex items-center gap-8 h-full">
+<span class="font-headline text-xl font-bold tracking-tight text-[#141414] dark:text-[#fafaf9]">Sky Score</span>
+<nav class="hidden md:flex items-center gap-6 h-full font-headline text-sm tracking-wider uppercase">
+<a class="h-full flex items-center text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors px-2 cursor-pointer active:opacity-80" href="#">Map</a>
+<a class="h-full flex items-center text-[#a85416] border-b-2 border-[#f27d26] pb-1 cursor-pointer active:opacity-80" href="#">Analysis</a>
+<a class="h-full flex items-center text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors px-2 cursor-pointer active:opacity-80" href="#">Rankings</a>
+<a class="h-full flex items-center text-[#636363] hover:text-[#141414] hover:bg-[#e4e3e0] transition-colors px-2 cursor-pointer active:opacity-80" href="#">Saved</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative w-64 mr-4">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-secondary text-lg">search</span>
+<input class="w-full bg-background border-none text-xs h-8 pl-8 pr-3 focus:ring-1 focus:ring-accent-ink transition-all placeholder:text-secondary text-primary font-body" placeholder="Enter a postcode or area" type="text"/>
+</div>
+<button class="text-[#636363] hover:text-[#141414] transition-colors cursor-pointer active:opacity-80 flex items-center justify-center w-8 h-8 rounded-full hover:bg-border">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-[#636363] hover:text-[#141414] transition-colors cursor-pointer active:opacity-80 flex items-center justify-center w-8 h-8 rounded-full hover:bg-border">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Layout -->
+<main class="flex-1 flex overflow-hidden w-full max-w-[1440px] mx-auto relative">
+<!-- Left Column (Map Area) -->
+<div class="flex-1 relative bg-[#e4e3e0] overflow-hidden">
+<!-- Simulated Map Background Image (Muted City Map) -->
+<div class="absolute inset-0 bg-cover bg-center w-full h-full opacity-70" data-alt="A highly detailed, muted top-down 2D map of London. The map is styled in a sober, instrument-like aesthetic using warm greys and off-whites. Boroughs are outlined with razor-thin hairline borders in dark grey, with very subtle, translucent geometric fills representing data zones in pale amber and sage green. No roads or names are visible, only stark administrative boundaries. The lighting is flat and analytical." data-location="London" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAOyNmnshbIM7pzde3OMPQ-Ol4Roa6XkJtoylUMymWIqbWOuDlTVhe4fsxZjhx4b05bl_NNpV8DmnDqF74sZ3KjyYhZxpwlVjB8y8BgOsGIlSkznxslMpExZ_1DJw6PvNH3KQOHxxTktGh9ktiLKUARuZMwLZqEsnENMPZELO_TOOJ6O3LJHeQ1Yz7QQ2TqChyxmiGr_GE5dnKA026eZWJ_Lx0CeTOUpCpux6CAKFftKoU8p6N_iNZre6Z2IoRxecDLjIyZtzAUbqY')"></div>
+<!-- Map Controls overlay -->
+<!-- Top Chips -->
+<div class="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10">
+<!-- Tier 1: Countries -->
+<div class="bg-surface border border-border flex p-1">
+<button class="px-4 py-1 text-xs font-label uppercase tracking-widest bg-[#e4e3e0] text-primary">UK</button>
+<button class="px-4 py-1 text-xs font-label uppercase tracking-widest text-secondary hover:text-primary transition-colors">USA</button>
+</div>
+<!-- Tier 2: Cities -->
+<div class="bg-surface/90 border border-border flex p-1 backdrop-blur-sm">
+<button class="px-3 py-1 text-xs font-label uppercase tracking-wider bg-primary text-surface">London</button>
+<button class="px-3 py-1 text-xs font-label uppercase tracking-wider text-secondary hover:text-primary transition-colors">Manchester</button>
+<button class="px-3 py-1 text-xs font-label uppercase tracking-wider text-secondary hover:text-primary transition-colors">West Midlands</button>
+</div>
+</div>
+<!-- Top Right Controls -->
+<div class="absolute top-4 right-4 flex flex-col gap-2 z-10">
+<button class="w-8 h-8 bg-surface border border-border flex items-center justify-center text-primary hover:bg-[#e4e3e0] transition-colors" title="Zoom In">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+<button class="w-8 h-8 bg-surface border border-border flex items-center justify-center text-primary hover:bg-[#e4e3e0] transition-colors" title="Zoom Out">
+<span class="material-symbols-outlined text-lg">remove</span>
+</button>
+<button class="w-8 h-8 bg-surface border border-border flex items-center justify-center text-primary hover:bg-[#e4e3e0] transition-colors mt-2" title="My Location">
+<span class="material-symbols-outlined text-lg">my_location</span>
+</button>
+<button class="w-8 h-8 bg-surface border border-border flex items-center justify-center text-primary hover:bg-[#e4e3e0] transition-colors" title="Layers">
+<span class="material-symbols-outlined text-lg">layers</span>
+</button>
+</div>
+<!-- Bottom Left Legend -->
+<div class="absolute bottom-6 left-6 bg-surface border border-border p-3 z-10 min-w-[140px]">
+<h4 class="font-headline text-[10px] uppercase tracking-widest text-secondary mb-2 border-b border-border pb-1">Noise Levels</h4>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-data-green border border-border/50"></div>
+<span class="text-[10px] font-label uppercase tracking-wider text-primary">Acceptable</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-data-amber border border-border/50"></div>
+<span class="text-[10px] font-label uppercase tracking-wider text-primary">Elevated</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 bg-data-blue border border-border/50"></div>
+<span class="text-[10px] font-label uppercase tracking-wider text-primary">Critical</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column (Fixed Analysis Panel) -->
+<aside class="w-[400px] shrink-0 bg-surface border-l border-border h-full flex flex-col relative z-20">
+<!-- Panel Header / Tabs (Replicating sub-nav if needed, but contextually this is the analysis view) -->
+<div class="px-6 py-4 border-b border-border">
+<h2 class="font-headline text-lg text-primary tracking-tight mb-4">Area Analysis</h2>
+<div class="flex gap-6 border-b border-border w-full">
+<button class="pb-2 text-xs font-label uppercase tracking-wider text-accent-ink border-b-2 border-accent mb-[-1px]">Overview</button>
+<button class="pb-2 text-xs font-label uppercase tracking-wider text-secondary hover:text-primary transition-colors mb-[-1px]">Demographics</button>
+<button class="pb-2 text-xs font-label uppercase tracking-wider text-secondary hover:text-primary transition-colors mb-[-1px]">History</button>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+<!-- Main Score -->
+<div class="flex flex-col items-center justify-center py-4 border border-border bg-[#e4e3e0]/30">
+<div class="text-[10px] font-label uppercase tracking-widest text-secondary mb-1">Liveability Index</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-6xl tabular-nums tracking-tighter text-primary">7.4</span>
+<span class="text-sm font-label uppercase tracking-wider text-data-green border border-data-green/30 px-2 py-0.5">Good</span>
+</div>
+<div class="text-[10px] text-secondary mt-2">Data source: WHO Guidelines 2023</div>
+</div>
+<!-- Metrics Rows -->
+<div class="space-y-6">
+<h3 class="font-headline text-sm tracking-wider uppercase border-b border-border pb-2 text-primary">Environmental Factors</h3>
+<!-- Row 1: Quiet Skies (Fills right as it improves) -->
+<div class="group">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-xs font-label uppercase tracking-wider text-primary">Quiet Skies</span>
+<span class="text-sm tabular-nums font-medium text-primary">8.2</span>
+</div>
+<div class="h-1.5 w-full bg-[#e4e3e0] relative">
+<!-- Guideline tick (e.g., WHO threshold at 5.0) -->
+<div class="absolute top-0 bottom-0 left-[50%] w-[1px] bg-secondary z-10"></div>
+<!-- Fill -->
+<div class="absolute top-0 left-0 bottom-0 bg-data-green" style="width: 82%;"></div>
+</div>
+<div class="text-[9px] text-secondary mt-1 tracking-wide">CAA Flight Path Data 2022</div>
+</div>
+<!-- Row 2: Road Noise (Fills right as it worsens) -->
+<div class="group">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-xs font-label uppercase tracking-wider text-primary">Road Noise</span>
+<span class="text-sm tabular-nums font-medium text-primary">6.8<span class="text-[10px] text-secondary ml-1">dB(A)</span></span>
+</div>
+<div class="h-1.5 w-full bg-[#e4e3e0] relative">
+<!-- Guideline tick (EA threshold) -->
+<div class="absolute top-0 bottom-0 left-[65%] w-[1px] bg-secondary z-10"></div>
+<!-- Fill -->
+<div class="absolute top-0 left-0 bottom-0 bg-data-amber" style="width: 68%;"></div>
+</div>
+<div class="text-[9px] text-secondary mt-1 tracking-wide">EA Strategic Noise Mapping</div>
+</div>
+<!-- Row 3: Affordability -->
+<div class="group">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-xs font-label uppercase tracking-wider text-primary">Affordability</span>
+<span class="text-sm tabular-nums font-medium text-primary">4.1</span>
+</div>
+<div class="h-1.5 w-full bg-[#e4e3e0] relative">
+<div class="absolute top-0 left-0 bottom-0 bg-accent" style="width: 41%;"></div>
+</div>
+<div class="text-[9px] text-secondary mt-1 tracking-wide">ONS Local Rents 2023</div>
+</div>
+<!-- Row 4: Aircraft Noise (Missing Data) -->
+<div class="group opacity-70">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-xs font-label uppercase tracking-wider text-secondary">Aircraft Noise</span>
+<span class="text-xs italic text-secondary lowercase">not measured here</span>
+</div>
+<div class="h-1.5 w-full bg-[#e4e3e0] relative border border-border/50">
+<!-- Empty track explicitly showing no data -->
+</div>
+</div>
+</div>
+<!-- Provenance Block -->
+<div class="mt-8 p-4 border border-border bg-[#e4e3e0]/20">
+<h4 class="font-headline text-[10px] uppercase tracking-widest text-primary mb-2">Data Provenance</h4>
+<p class="text-xs text-secondary leading-relaxed">
+                        Scores are aggregated from open government datasets. Missing values indicate regions outside current sensor deployment zones. Do not extrapolate adjacent readings.
+                    </p>
+</div>
+</div>
+</aside>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="bg-[#e4e3e0] dark:bg-[#141414] text-[#636363] font-body text-[10px] uppercase tracking-widest border-t border-[#c8c7c4] fixed bottom-0 right-0 w-[400px] px-4 py-2 flex justify-between z-30">
+<span>© Sky Score Data Services. Data sources: WHO, EA, Ordnance Survey.</span>
+<div class="flex gap-3 hidden">
+<!-- Hidden links as per design request to focus on copyright text, or show if space permits -->
+<a class="text-[#636363] hover:text-[#a85416]" href="#">Terms</a>
+<a class="text-[#636363] hover:text-[#a85416]" href="#">Privacy</a>
+<a class="text-[#636363] hover:text-[#a85416]" href="#">Data Provenance</a>
+</div>
+</footer>
+<script src="/js/vendor/d3.v7.min.js"></script>
+<script src="/design/hydrate.js?v=1788115098"></script>
+</body></html>

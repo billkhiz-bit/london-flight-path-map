@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UK Property Noise Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1c1b1b",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#1c1b1b",
+                        "surface": "#fdf8f8",
+                        "on-background": "#1c1b1b",
+                        "outline": "#747878",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#5f5e5e",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "surface-container-low": "#f7f3f2",
+                        "on-secondary-fixed-variant": "#474747",
+                        "surface-container-highest": "#e5e2e1",
+                        "inverse-on-surface": "#f4f0ef",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "surface-container": "#f1edec",
+                        "primary-fixed": "#e5e2e1",
+                        "on-primary-fixed-variant": "#474746",
+                        "on-primary-container": "#858383",
+                        "surface-bright": "#fdf8f8",
+                        "outline-variant": "#c4c7c7",
+                        "secondary-container": "#e4e2e2",
+                        "tertiary-fixed": "#e6e2df",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#ddd9d8",
+                        "on-surface-variant": "#444748",
+                        "tertiary": "#000000",
+                        "primary": "#000000",
+                        "inverse-primary": "#c8c6c5",
+                        "surface-variant": "#e5e2e1",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#ebe7e6",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#1c1b1a",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#484645",
+                        "on-tertiary-container": "#868382",
+                        "tertiary-fixed-dim": "#cac6c4",
+                        "secondary-fixed-dim": "#c8c6c6",
+                        "on-secondary-container": "#646464",
+                        "inverse-surface": "#313030",
+                        "secondary-fixed": "#e4e2e2",
+                        "secondary": "#5e5e5e",
+                        "background": "#fdf8f8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "12px",
+                        "stack-tight": "4px",
+                        "margin-page": "24px",
+                        "gutter": "12px",
+                        "card-padding": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "display-score": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["13px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-score": ["48px", { "lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-variant text-on-surface h-screen w-full flex overflow-hidden">
+<!-- Top Navigation (Shared Component Style) -->
+<header class="fixed top-0 w-full flex justify-between items-center px-margin-page h-16 w-full max-w-full z-50 bg-surface dark:bg-primary-container border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-6">
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary-fixed">URBAN_SONIC</h1>
+<nav class="hidden md:flex gap-6">
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">Australia</a>
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary dark:border-primary-fixed pb-1 hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">United Kingdom</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">United States</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed cursor-pointer">account_circle</span>
+</div>
+</header>
+<!-- SideNavBar (Shared Component Style) -->
+<nav class="flex flex-col h-screen fixed left-0 top-16 z-40 bg-surface-container-low dark:bg-primary-container border-r border-outline-variant dark:border-outline w-80 hidden lg:flex">
+<div class="p-card-padding border-b border-outline-variant dark:border-outline">
+<h2 class="text-headline-sm font-headline-sm font-bold text-primary dark:text-on-primary">Liveability Dashboard</h2>
+<p class="font-data-mono text-data-mono text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant mt-1">Instrument Panel v1.02</p>
+</div>
+<div class="flex-1 py-stack-md">
+<a class="flex items-center gap-3 py-3 text-primary dark:text-primary-fixed font-bold border-l-2 border-primary dark:border-primary-fixed pl-4 bg-surface-container-highest dark:bg-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Analysis</span>
+</a>
+<a class="flex items-center gap-3 py-3 text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant pl-4 hover:bg-surface-container-highest dark:hover:bg-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-caps text-label-caps">Rankings</span>
+</a>
+<a class="flex items-center gap-3 py-3 text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant pl-4 hover:bg-surface-container-highest dark:hover:bg-secondary-container transition-all" href="#">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="font-label-caps text-label-caps">Saved</span>
+</a>
+</div>
+<div class="p-card-padding border-t border-outline-variant dark:border-outline mt-auto">
+<button class="w-full bg-primary text-on-primary py-2 font-label-caps text-label-caps hover:bg-secondary transition-colors border border-primary">Export Report</button>
+<div class="mt-4 flex flex-col gap-2">
+<a class="flex items-center gap-3 text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant hover:text-primary transition-colors pl-4" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-on-secondary-fixed-variant dark:text-on-tertiary-fixed-variant hover:text-primary transition-colors pl-4" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 lg:ml-80 mt-16 flex h-[calc(100vh-4rem)]">
+<!-- Map Area (Left Column) -->
+<section class="flex-1 relative bg-surface-container-highest overflow-hidden flex flex-col border-r border-outline-variant">
+<!-- Chip Navigation -->
+<div class="absolute top-0 left-0 w-full z-10 p-4 flex flex-col gap-2 pointer-events-none">
+<div class="flex gap-2 pointer-events-auto">
+<button class="px-4 py-1.5 bg-surface text-primary border border-outline-variant font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">ENGLAND</button>
+<button class="px-4 py-1.5 bg-surface-container text-on-secondary-fixed-variant border border-outline-variant font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">SCOTLAND</button>
+<button class="px-4 py-1.5 bg-surface-container text-on-secondary-fixed-variant border border-outline-variant font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">WALES</button>
+</div>
+<div class="flex gap-2 pointer-events-auto mt-2 overflow-x-auto pb-2">
+<button class="px-3 py-1 bg-primary text-on-primary font-label-caps text-label-caps whitespace-nowrap">LONDON</button>
+<button class="px-3 py-1 bg-surface-container text-on-secondary-fixed-variant border border-outline-variant font-label-caps text-label-caps whitespace-nowrap hover:bg-surface-container-low">MANCHESTER</button>
+<button class="px-3 py-1 bg-surface-container text-on-secondary-fixed-variant border border-outline-variant font-label-caps text-label-caps whitespace-nowrap hover:bg-surface-container-low">BIRMINGHAM</button>
+<button class="px-3 py-1 bg-surface-container text-on-secondary-fixed-variant border border-outline-variant font-label-caps text-label-caps whitespace-nowrap hover:bg-surface-container-low">LEEDS</button>
+</div>
+</div>
+<!-- Map Placeholder -->
+<div class="w-full h-full bg-surface-container-high relative" data-alt="A highly detailed, muted, top-down map of London boroughs, displaying thin hairline borough outlines in a clinical, precise architectural style. Translucent color fills of cool greys and subtle warm grey tones overlay the map to indicate data density. The map has a high-density, instrument-like feel without any 3D depth, shadows, or glossy gradients. It reflects a modern minimalist and technical brutalist aesthetic suitable for a professional real estate dashboard." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBdNRGjvPcVt6gFx81mu1l_dOXgdQD_sQgzzL-S2lXbOXo8tToFI8yH0HAl0YgjM5PfEgYqWrT7LGvNCZmJzPohXWXAkTJ9o9U9FRHtfc2fDRfYs6pcIaqvMttbbLPLD2Nj1ZM1bcelSqB2-BRyIMxTJCTYfhzfcR9tjJzRzZRgpyqWnG825VVbAn1CZ47hs0eF_IJigi_fFUaZPx3lrf8lWPTZPmiZ9k5nMwQ41GXhjowEfLiNt00CmZ5miD0O9iUsyYda6ehIEA')">
+<!-- Map controls -->
+<div class="absolute right-4 top-24 flex flex-col gap-2 z-10 pointer-events-auto">
+<button class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+<button class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">remove</span>
+</button>
+<button class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors mt-4">
+<span class="material-symbols-outlined text-sm">my_location</span>
+</button>
+<button class="w-8 h-8 bg-surface border border-outline-variant flex items-center justify-center text-primary hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">layers</span>
+</button>
+</div>
+<!-- Legend Card -->
+<div class="absolute bottom-6 left-6 z-10 bg-surface border border-outline-variant p-4 pointer-events-auto w-64 shadow-none">
+<h3 class="font-label-caps text-label-caps text-primary mb-3">NOISE INTENSITY</h3>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-error"></div>
+<span class="font-data-mono text-data-mono text-on-surface-variant">HIGH (80+ dB)</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-surface-tint"></div>
+<span class="font-data-mono text-data-mono text-on-surface-variant">MODERATE (60-80 dB)</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 bg-outline-variant"></div>
+<span class="font-data-mono text-data-mono text-on-surface-variant">LOW (&lt;60 dB)</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel (Sidebar) -->
+<aside class="w-[400px] h-full bg-surface border-l border-outline-variant flex flex-col overflow-y-auto hidden md:flex shrink-0">
+<!-- Search -->
+<div class="p-card-padding border-b border-outline-variant">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-b border-outline-variant py-2 pl-10 pr-3 font-body-md text-body-md text-primary placeholder:text-outline focus:outline-none focus:border-primary transition-colors rounded-none shadow-none" placeholder="Enter a postcode or area" type="text"/>
+</div>
+</div>
+<!-- Score Area -->
+<div class="p-card-padding border-b border-outline-variant bg-surface-bright">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-display-score text-display-score text-primary">7.4</span>
+<span class="font-headline-sm text-headline-sm text-primary">/ 10</span>
+</div>
+<p class="font-label-caps text-label-caps text-on-secondary-fixed-variant tracking-wider">GOOD LIVEABILITY</p>
+</div>
+<!-- Data Rows -->
+<div class="flex flex-col">
+<!-- Row 1 -->
+<div class="p-card-padding border-b border-outline-variant flex flex-col gap-2 hover:bg-surface-container-lowest transition-colors">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md font-medium text-primary">Quiet Skies</span>
+<span class="font-data-mono text-data-mono text-primary">8.2</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high">
+<div class="h-full bg-primary" style="width: 82%;"></div>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="p-card-padding border-b border-outline-variant flex flex-col gap-2 hover:bg-surface-container-lowest transition-colors">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md font-medium text-primary">Affordability</span>
+<span class="font-data-mono text-data-mono text-primary">6.5</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high">
+<div class="h-full bg-surface-tint" style="width: 65%;"></div>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="p-card-padding border-b border-outline-variant flex flex-col gap-2 hover:bg-surface-container-lowest transition-colors">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md font-medium text-primary">Liveability</span>
+<span class="font-data-mono text-data-mono text-primary">7.8</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high">
+<div class="h-full bg-primary" style="width: 78%;"></div>
+</div>
+</div>
+<!-- Row 4 (Empty) -->
+<div class="p-card-padding border-b border-outline-variant flex flex-col gap-2 bg-surface-container-lowest">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-secondary-fixed-variant">Environment</span>
+<span class="font-data-mono text-data-mono text-outline italic">not measured here</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high"></div>
+</div>
+</div>
+<!-- Extra Info block for visual density -->
+<div class="p-card-padding flex-1 bg-surface">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-4">AREA METADATA</h4>
+<div class="grid grid-cols-2 gap-y-4 gap-x-2">
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-1">POP DENSITY</p>
+<p class="font-data-mono text-data-mono text-primary">5,432 /km²</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-1">TRANSIT LINKS</p>
+<p class="font-data-mono text-data-mono text-primary">TUBE, BUS</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-1">ZONING</p>
+<p class="font-data-mono text-data-mono text-primary">MIXED-USE</p>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</body></html>
