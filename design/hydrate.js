@@ -64,7 +64,10 @@
   }
 
   function textOf(el) { return (el.textContent || '').trim().toLowerCase(); }
-  function nameOf(f) { var p = f.properties || {}; return p.name || p.LAD13NM || p.NAME || ''; }
+  // Null-safe on purpose: svg.selectAll('path') also matches the flight-path
+  // elements, which carry no bound datum. Assuming every path is a borough
+  // threw and aborted the whole render.
+  function nameOf(f) { var p = (f && f.properties) || {}; return p.name || p.LAD13NM || p.NAME || ''; }
   function num(v) { return typeof v === 'number' && isFinite(v) ? v : null; }
 
   /* ---------------------------------------------------------------- map --- */
@@ -118,7 +121,7 @@
       var cuts = [];
       for (var i = 1; i < 5 && sorted.length; i++) cuts.push(sorted[Math.floor(i * sorted.length / 5)]);
 
-      svg.append('g').selectAll('path').data(fc.features).enter().append('path')
+      var boroughSel = svg.append('g').selectAll('path').data(fc.features).enter().append('path')
         .attr('d', path)
         .attr('stroke', '#9d9a94').attr('stroke-width', 0.6)
         .attr('fill', function (f) {
@@ -134,7 +137,7 @@
         .style('cursor', 'pointer')
         .on('click', function (ev, f) {
           state.sel = nameOf(f);
-          svg.selectAll('path').attr('stroke-width', 0.6).attr('stroke', '#9d9a94');
+          boroughSel.attr('stroke-width', 0.6).attr('stroke', '#9d9a94');
           d3.select(this).attr('stroke-width', 2.4).attr('stroke', '#141414').raise();
           paintRows();
         })
@@ -182,7 +185,23 @@
           .text(nameOf(f).toUpperCase());
       });
 
-      if (!state.sel) paintRows();
+      if (!state.sel) {
+        // Pick the borough with the most measurements so the first impression
+        // is the design working, not an empty state.
+        var best = null, bestN = -1;
+        Object.keys(recs).forEach(function (b) {
+          var n = ['airQualityWhoRatio', 'roadNoiseAboveWhoPct', 'floodMediumOrHighPct',
+                   'crimeRate', 'transportWithin800mPct', 'healthcareWithin1kmPct']
+            .filter(function (f) { return num(recs[b][f]) !== null; }).length;
+          if (n > bestN) { bestN = n; best = b; }
+        });
+        if (best) {
+          state.sel = best;
+          boroughSel.filter(function (f) { return nameOf(f) === best; })
+            .attr('stroke-width', 2.4).attr('stroke', '#141414').raise();
+        }
+      }
+      paintRows();
     }).catch(function (e) {
       note('boundaries for ' + state.city + ' failed: ' + e.message);
       banner();
@@ -218,7 +237,18 @@
           }
         }
         if (valEl) {
-          var bar = box.querySelector('div[style*="width"], div[class*="rounded-full"] > div, .bg-primary');
+          // The fill is a SIBLING of the label+value row, not inside it:
+          //   <div row>  <div label+value>  <div track><div fill></div></div>
+          // Scoping the search to the box that held the value found no bar at
+          // all, so "not measured here" sat beside a full green bar - the map
+          // saying one thing and the number another, which is the exact
+          // contradiction this product exists to avoid. Widen by one level.
+          var scope = box.parentElement || box;
+          var bars = scope.querySelectorAll('div[style*="width"]');
+          var bar = null;
+          for (var q = 0; q < bars.length; q++) {
+            if (!bars[q].contains(els[i])) { bar = bars[q]; break; }
+          }
           out.push({ key: t, labelEl: els[i], valEl: valEl, barEl: bar });
           break;
         }
@@ -266,15 +296,56 @@
       if (r.barEl) {
         r.barEl.style.width = pct + '%';
         r.barEl.style.transition = 'width .2s ease';
+        // An unmeasured row shows nothing, never the mockup's placeholder fill.
+        r.barEl.style.opacity = italic ? '0' : '1';
       }
     });
 
-    // The headline number, if this mockup has one.
-    var big = document.querySelector('[class*="text-6xl"], [class*="text-5xl"], [class*="display-score"]');
-    if (big && !big.children.length) {
-      big.textContent = state.sel ? (state.sel.length > 18 ? state.sel.slice(0, 18) : state.sel) : '--';
-      big.style.fontSize = state.sel ? '28px' : '';
+    // The mockup ships an invented headline - "7.4", "GOOD", "SOURCE: EA / ONS
+    // 2023" - and leaving it beside real rows is worse than the rows being
+    // empty: it reads as a computed result.
+    //
+    // Elements are CLAIMED with a data attribute the first time they are found.
+    // Matching on text alone is not idempotent: once the text is overwritten
+    // the pattern no longer matches, so the second render cannot find it and
+    // the value freezes at whatever the first pass wrote. That is exactly how
+    // the city chip stuck on "--".
+    //
+    // The headline is found by FONT SIZE, not by class. Dashboard 1 uses the
+    // arbitrary `text-[5rem]` and Dashboard 2 uses `text-6xl`, so a class
+    // selector silently covered only one of the two.
+    if (!document.querySelector('[data-hyd-role]')) {
+      var leaves = document.querySelectorAll('span, p, div, h1, h2');
+      var bigEl = null, bigPx = 0;
+      for (var z = 0; z < leaves.length; z++) {
+        var el = leaves[z];
+        if (el.children.length) continue;
+        var lt = (el.textContent || '').trim();
+        if (!lt) continue;
+        if (/^-?[\d.]+$/.test(lt)) {
+          var px = parseFloat(getComputedStyle(el).fontSize) || 0;
+          if (px > bigPx) { bigPx = px; bigEl = el; }
+        }
+        if (/^(index score|liveability index)$/i.test(lt)) el.setAttribute('data-hyd-role', 'headline-label');
+        else if (/^(good|acceptable)$/i.test(lt)) el.setAttribute('data-hyd-role', 'chip');
+        else if (/^source:/i.test(lt) || /WHO Guidelines 20/i.test(lt) || /EA \/ ONS/i.test(lt)) {
+          el.setAttribute('data-hyd-role', 'source');
+        }
+      }
+      if (bigEl && bigPx >= 32) bigEl.setAttribute('data-hyd-role', 'headline');
     }
+
+    var set = function (role, text) {
+      var el = document.querySelector('[data-hyd-role="' + role + '"]');
+      if (el) el.textContent = text;
+      return el;
+    };
+    var cityName = (CITIES.filter(function (c) { return c[0] === state.city; })[0] || ['', ''])[1];
+    var hl = set('headline', state.sel || 'Select a borough');
+    if (hl) { hl.style.fontSize = '26px'; hl.style.lineHeight = '1.15'; }
+    set('headline-label', 'SELECTED BOROUGH');
+    set('chip', state.sel ? cityName : '--');
+    set('source', 'Source: DEFRA, Environment Agency, ONS, DfE and HM Land Registry (OGL v3.0)');
   }
 
   /* -------------------------------------------------------------- chips --- */
