@@ -35,6 +35,13 @@ was a real bug but NOT the cause of the mobile deep-link behaviour; and inerting
 `#map-container` removed the document's only `<main>`, caught by the a11y gate
 within one run.
 
+**PAUSED MID-FIX, ON A BRANCH:** `wip/d3-landscape` carries the landscape-phone
+work (audit D3) and is **one CSS declaration from done** - `responsive.mjs`
+reports 1 of 71, the legend's own expand toggle still covered by its scrolling
+rows; make the sticky toggle opaque and raise it, because `background: inherit`
+resolves to transparent there. Master is clean and green at `f727e76`; the
+branch is not merged precisely because it would leave a blocking gate red.
+
 **STILL OPEN AND NEEDING A DEPLOY WINDOW:** the aircraft near-field **disc**
 (Rushcliffe publishes `Quiet skies 10.0/10` over 10.43 km2 at >=55 dB, should be
 3.4), the neighbourhood medians including HM Land Registry **Category B** (412 of

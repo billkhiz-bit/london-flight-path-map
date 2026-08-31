@@ -521,6 +521,47 @@ that escapes. `responsive.mjs` gained a **borough-selected page state**: every
 entry was audited before a result exists, so the COVERED detector was written and
 had never reached the state that needed it. 55 → 65 combinations.
 
+### D3 is PARKED on `wip/d3-landscape`, one failure from done
+
+Not on master, because it leaves `responsive.mjs` red at **1 of 71**: at
+844×390 the legend's own expand toggle is still reported covered by its
+scrolling rows.
+
+**The next step is known and small.** Make the sticky toggle **opaque** and
+raise it above the rows — `background: inherit` resolves to *transparent* there,
+because the panel's background lives on an ancestor, so the toggle stays sticky
+and the rows show through it, which `elementFromPoint` reports exactly as
+covered. One CSS declaration.
+
+**What is done and measured on that branch:**
+
+| | Before → after |
+|---|---|
+| Legend cap had **no floor** | 58.2px of 395px content at 844×390, 17.6px at 568×320 (85% and 96% hidden) → floored at 160px where it fits |
+| Expand chip gated on `max-width: 480px` | `display: none` at every landscape size → gated on `(max-width: 900px) and (max-height: 500px)` |
+| Layers popover opened **upwards through the search card** | 5 of 6 toggles blocked at 844×390, 6 of 6 at 568×320 → anchored below the card |
+| `responsive.mjs` ran **no landscape viewport** | a whole orientation unaudited → 844×390 and 568×320 added, 65 → 71 combinations |
+
+**Two things the measuring changed about the fix, both worth keeping.**
+
+- **A flat `max(160px, …)` floor fixed 844×390 and *caused* a new defect at
+  568×320**, where 160px is tall enough to grow up over three city chips — the
+  audit named them. The chips are primary navigation and the legend secondary,
+  so the legend yields below 380px of viewport height, exactly as the locator
+  yields at 901px. **380px is the measured boundary, not a guess.**
+- **The popover rule changed nothing when first written**, because a bare
+  selector earlier in the stylesheet lost on both specificity and source order
+  to the `.app[data-mview='search']` rule. Measured: the popover stayed at
+  y 58–216. It works from the later block with matching specificity.
+
+**And the harness had to move with the design.** The legend-open prep floor was
+a flat 40px; below 380px the legend now deliberately yields, so holding 40px
+there fails the *design* rather than the harness. It mirrors the CSS now.
+
+**This is the third width-keyed rule against a height-shaped problem** in this
+file, after the sheet peek and the layers popover — which is the argument for
+the landscape viewports being permanent rather than a one-off check.
+
 ### D1's residual, measured and left open
 
 The fix makes the panel correct everywhere and the map selection correct on
