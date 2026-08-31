@@ -2524,6 +2524,14 @@
              country tabs and the first two city chips and covering them. The
              responsive audit proved it the moment it learned to open the
              legend. */
+          /* AND A FLOOR (2026-08-31, audit D3). The cap had none, so on a
+             LANDSCAPE phone it resolved to 58.2px at 844x390 and 17.6px at
+             568x320 - against 395px of content, i.e. 85% and 96% hidden - and
+             the expand chip that would rescue it was gated on width, so it was
+             not shown either. `max()` keeps the ceiling honest on a tall
+             screen and stops it collapsing on a short one; 160px is four band
+             rows plus the heading, which is the least that reads as a legend
+             rather than a scrollbar. */
           max-height: calc(100dvh - var(--sheet-chrome) - 156px);
           overflow-y: auto;
           /* Keep a flick inside the legend from scrolling the page behind it. */
@@ -2766,6 +2774,55 @@
         .legend-toggle[aria-expanded='false'] ~ * {
           display: none !important;
         }
+      }
+
+      /* THE EXPAND CHIP IS GATED ON HEIGHT TOO (2026-08-31, audit D3).
+         The two rules above live in `@media (max-width: 480px)`, so on a
+         landscape phone - 844px wide, 390px tall - the chip was `display: none`
+         and the legend could not be opened at all, while the failing dimension
+         was HEIGHT. Measured: 58px of 395px content shown at 844x390, 26px at
+         568x320, expand toggle not rendered at any landscape size.
+         This is the third time a mobile rule here has been keyed on width while
+         height was what broke - the sheet peek and the layers popover both
+         carry the same correction, and `@media (max-width: 900px) and
+         (max-height: 500px)` is the condition they already settled on. */
+      /* A FLOOR UNDER THE LEGEND, BUT ONLY WHERE IT FITS (2026-08-31, D3).
+         The cap above has no floor, so on a landscape phone it resolved to
+         58.2px at 844x390 against 395px of content. A flat `max(160px, ...)`
+         fixed that and CAUSED a new defect at 568x320, where 160px is tall
+         enough to grow up over three city chips - the responsive audit named
+         them. The chips are primary navigation and the legend is secondary, so
+         the legend yields, exactly as the locator does at 901px.
+         380px is the measured boundary: at 390px tall the floor clears the
+         chip row, at 320px it does not. */
+      @media (max-width: 900px) and (min-height: 380px) and (max-height: 500px) {
+        .map-legend {
+          max-height: max(160px, calc(100dvh - var(--sheet-chrome) - 156px));
+        }
+      }
+
+      @media (max-width: 900px) and (max-height: 500px) {
+        .legend-toggle {
+          display: flex;
+          /* STICKY INSIDE ITS OWN SCROLLER. The legend is `overflow-y: auto`
+             and the toggle is its first child, so once the rows exceed the cap
+             the toggle scrolled under them - the audit reported it as
+             "legend-toggle covered by div" at 844x390. A disclosure's own
+             control has to survive scrolling the thing it discloses. */
+          position: sticky;
+          top: 0;
+          /* Above the rows it scrolls over, and OPAQUE. `background: inherit`
+             resolved to transparent here - the panel's own background lives on
+             an ancestor - so the sticky toggle stayed sticky and the rows still
+             showed through it, which elementFromPoint reports exactly as being
+             covered. Matches the panel's dark mobile surface. */
+          z-index: 3;
+          background: rgba(20, 20, 20, 0.98);
+        }
+        .legend-toggle[aria-expanded='false'] ~ * {
+          display: none !important;
+        }
+
         .map-controls {
           top: 8px;
           right: 8px;
@@ -3269,6 +3326,38 @@
         }
         .app[data-mview='search'] .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
           bottom: calc(56px + env(safe-area-inset-bottom) + 62px);
+        }
+
+        /* SHORT VIEWPORT: OPEN DOWNWARDS FROM UNDER THE SEARCH CARD
+           (2026-08-31, audit D3).
+           Bottom-anchored above the sheet, the popover had roughly 88px of
+           clear space in a 390px-tall landscape viewport - the sticky search
+           card holds y 54-138 and the sheet takes the bottom band - so it grew
+           UP through the card: 5 of 6 toggles blocked at 844x390 and 6 of 6 at
+           568x320, measured with elementFromPoint at each toggle's centre.
+           Six 36px rows need about 216px and that band does not have it, so the
+           popover stops competing for it. Anchored below the card and allowed
+           to overlay the sheet, which is what a transient popover at z-index 11
+           should do. 146px is the card's bottom (138) plus the 8px gap the rest
+           of this chrome uses.
+           Placed HERE, after the rule above and carrying the same
+           `.app[data-mview='search']` specificity: written earlier in the sheet
+           with a bare selector it lost on both counts and changed nothing -
+           measured, the popover stayed at y 58-216. */
+        @media (max-height: 500px) {
+          .app[data-mview='search'] .layers-trigger[aria-expanded='true'] ~ #layer-toggles,
+          .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
+            top: 146px;
+            bottom: auto;
+            /* Clears the BOTTOM chrome as well as the top. Capping only against
+               the card left the popover running to y=382 in a 390px viewport
+               while the bottom nav starts at ~334, so the last two toggles were
+               still covered - 2 of 6 at 844x390. The nav expression is the same
+               one the chrome above this rule uses, so the two cannot drift. */
+            max-height: calc(
+              100dvh - 146px - (56px + env(safe-area-inset-bottom) + 22px)
+            );
+          }
         }
 
         /* CLEAN MOBILE CHROME - search view only.
