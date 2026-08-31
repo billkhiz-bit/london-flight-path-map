@@ -101,6 +101,36 @@ def fmt_price(value):
     return f'£{value:,.0f}' if isinstance(value, (int, float)) else None
 
 
+def _painted_for(city, borough):
+    """borough-extra.json's key for a borough is not always the Lambda's.
+
+    THE ALIAS IS DECLARED IN FOUR OTHER PLACES AND WAS MISSING FROM THIS ONE
+    (2026-08-31, audit I5). The Lambda keys `Barking and Dagenham`;
+    borough-extra.json keys `Barking`. This did a raw `.get(borough)`, missed,
+    and fell back to `{}` - so that borough's page silently lost **Road noise,
+    Air quality and Flood risk**, three rows every other London page carries,
+    while the data sat in the file under the other name.
+
+    Nothing noticed because the remaining facts still cleared MIN_FACTS - the
+    same "a defensive fallback turned a wrong key into a quietly worse product"
+    shape the comment above records for `hasattr`.
+
+    This is the SAME containment rule build_borough_bands.apply_to_extra and the
+    frontend's getExtraData() already use, so all three resolve a borough the
+    same way. Exact match first, so a longest-prefix collision cannot beat an
+    exact one.
+    """
+    holder = _BOROUGH_EXTRA.get(city) or {}
+    if borough in holder:
+        return holder[borough]
+    lower = borough.lower()
+    for key, rec in holder.items():
+        k = key.lower()
+        if lower == k or lower in k or k in lower:
+            return rec
+    return {}
+
+
 def gather(city: str, borough: str) -> dict | None:
     """Every published figure for one borough, absent keys omitted."""
     body, status = app.resolve_query({'borough': borough, 'city': city})
@@ -122,7 +152,7 @@ def gather(city: str, borough: str) -> dict | None:
     # remaining eight facts cleared MIN_FACTS. A defensive guard turned a wrong
     # attribute name into a quietly worse product. Both lookups now raise.
     scoring = app.CITIES[city]['boroughs'][borough]
-    painted = (_BOROUGH_EXTRA.get(city) or {}).get(borough) or {}
+    painted = _painted_for(city, borough)
 
     facts = []
 
@@ -136,12 +166,32 @@ def gather(city: str, borough: str) -> dict | None:
     add('Affordability', f"{comp.get('afford')} / 10" if comp.get('afford') is not None else None)
     add('Growth', f"{comp.get('growth')} / 10" if comp.get('growth') is not None else None)
     add('Liveability', f"{comp.get('live')} / 10" if comp.get('live') is not None else None)
-    add('Average price', fmt_price(ctx.get('avgPriceGbp')), 'HM Land Registry HPI')
+    # THE PER-FACT NOTE IS A UK LITERAL, AND IT WAS PRINTED FOR NEW YORK TOO
+    # (2026-08-31, audit C3).
+    #
+    # Every note below names a UK body, and they were evaluated for every city -
+    # so area/nyc/brooklyn/ printed "HM Land Registry HPI", "ONS Table C4",
+    # "DEFRA road Lden", "Environment Agency RoFRS" and "NaPTAN" as the sources
+    # of its numbers, while the SAME PAGE's sources paragraph, which is derived
+    # and correct, said "NYPD CompStat-derived offence rates... curated New York
+    # borough median sale prices, in USD... Licence note: OGL v3.0 covers UK
+    # Crown copyright and does NOT apply to any data in this response".
+    # Brooklyn's own record carries None for all four of those fields.
+    #
+    # A non-UK city gets NO note rather than an invented one: the derived
+    # sources paragraph already carries the correct attribution, and guessing a
+    # US source name here would replace a false claim with a made-up one.
+    uk = app.CITIES[city].get('country') == 'United Kingdom'
+
+    def uk_note(text):
+        return text if uk else None
+
+    add('Average price', fmt_price(ctx.get('avgPriceGbp')), uk_note('HM Land Registry HPI'))
     trend = ctx.get('priceTrendPct')
     if isinstance(trend, (int, float)):
-        add('Price trend', f'{trend:+.1f}% year on year', 'HM Land Registry HPI')
+        add('Price trend', f'{trend:+.1f}% year on year', uk_note('HM Land Registry HPI'))
     add('Aircraft noise band', (ctx.get('noiseImpactBand') or '').title() or None,
-        'DEFRA Strategic Noise Mapping Round 4')
+        uk_note('DEFRA Strategic Noise Mapping Round 4'))
 
     merged = {**painted, **{k: v for k, v in scoring.items() if v is not None}}
     for key, label, note in (
@@ -156,7 +206,13 @@ def gather(city: str, borough: str) -> dict | None:
         raw = merged.get(key)
         if raw in (None, ''):
             continue
-        add(label, f'{raw:g}' if isinstance(raw, (int, float)) else str(raw).title(), note)
+        # City of London's crime rate is OUR OWN estimate - ONS suppresses the
+        # rate for its small resident population, and the crime gate prints
+        # "must not be attributed to ONS" on every run. This page credited ONS
+        # for it anyway.
+        if key == 'crimeRate' and scoring.get('crimeEstimated'):
+            note = 'Sky Score estimate - ONS publishes no rate for this area'
+        add(label, f'{raw:g}' if isinstance(raw, (int, float)) else str(raw).title(), uk_note(note))
 
     return {
         'city': city,
@@ -261,11 +317,23 @@ def render(data: dict) -> str:
         )
         for f in data['facts']
     )
+    # THE META DESCRIPTION NAMED UK BODIES FOR NEW YORK TOO (2026-08-31, C3).
+    #
+    # This is the text that appears in a SEARCH RESULT, so "Brooklyn ... from
+    # DEFRA, ONS, DfE and HM Land Registry data" was a false provenance claim on
+    # the most public surface the page has - and it survived the per-fact note
+    # fix, because it is built here and not there. Found by the gate written for
+    # the notes, which is the argument for writing the gate.
+    uk_city = app.CITIES[data['city']].get('country') == 'United Kingdom'
+    source_clause = (
+        'from DEFRA, ONS, DfE and HM Land Registry data'
+        if uk_city
+        else 'from public New York City sources'
+    )
     desc = (
         f"{data['borough']} scores {data['score']} out of 10 on Sky Score. "
         f"Aircraft and road noise, affordability, schools, crime and transport "
-        f"for {data['borough']}, {city_label}, from DEFRA, ONS, DfE and "
-        f"HM Land Registry data."
+        f"for {data['borough']}, {city_label}, {source_clause}."
     )[:300]
     return PAGE.format(
         title=e(f"{data['borough']} noise & liveability score | Sky Score"),
@@ -288,7 +356,7 @@ INDEX = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Every area Sky Score covers | Sky Score</title>
-<meta name="description" content="Noise and liveability scores for {n} boroughs across {c} UK and US city regions, from DEFRA, ONS, DfE and HM Land Registry data." />
+<meta name="description" content="Noise and liveability scores for {n} boroughs across {c} UK and US city regions, from published UK government and New York City sources." />
 <link rel="canonical" href="{site}/area/" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>

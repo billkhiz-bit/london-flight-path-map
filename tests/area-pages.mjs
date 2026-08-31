@@ -176,6 +176,68 @@ check(
   badCta.length ? `${badCta.length} page(s) link without &borough=: ${badCta.slice(0, 3).join(', ')}` : `${pages.length - badCta.length} checked`,
 );
 
+// --- provenance and holder-lookup gates (2026-08-31, audits C3 and I5) ------
+//
+// C3: every per-fact note in build_area_pages.py is a hardcoded UK body, and
+// they were printed for EVERY city - so area/nyc/brooklyn/ credited ONS, DEFRA,
+// the Environment Agency, NaPTAN and HM Land Registry for its numbers, while
+// the same page's derived sources paragraph said "Licence note: OGL v3.0 covers
+// UK Crown copyright and does NOT apply to any data in this response". The one
+// surface that renders provenance per fact was the one nothing checked.
+//
+// I5: the page's holder lookup was a raw `.get(borough)`, and borough-extra.json
+// keys Barking and Dagenham as `Barking` - so that page silently lost Road
+// noise, Air quality and Flood risk, three rows every other London page
+// carries, while the data sat in the file under the other name. The alias is
+// declared in four other places.
+const UK_BODIES =
+  /ONS Table|HM Land Registry|DEFRA|Environment Agency|NaPTAN|NHS ODS|DfE KS4/i;
+const NON_UK_PREFIXES = ['/area/nyc/'];
+
+const ukCredited = pages.filter(
+  (p) =>
+    NON_UK_PREFIXES.some((prefix) => p.url.startsWith(prefix)) &&
+    UK_BODIES.test(readFileSync(p.file, 'utf8'))
+);
+check(
+  'no non-UK page credits a UK body',
+  ukCredited.length === 0,
+  ukCredited.length
+    ? `${ukCredited.length} page(s): ${ukCredited.map((p) => p.url).join(', ')}`
+    : `${pages.filter((p) => NON_UK_PREFIXES.some((x) => p.url.startsWith(x))).length} non-UK pages checked`,
+);
+
+// The holder-lookup gate, from TWO INDEPENDENT ANGLES so it cannot be satisfied
+// by the same mistake twice: count the pages missing a Road noise row, and count
+// the borough-extra records that genuinely carry no roadNoise under ANY key.
+// They must agree. Break the alias and the first number rises while the second
+// does not.
+const extra = JSON.parse(readFileSync('data/borough-extra.json', 'utf8'));
+let recordsWithoutRoad = 0;
+for (const [, boroughs] of Object.entries(extra)) {
+  if (!boroughs || typeof boroughs !== 'object') continue;
+  for (const [, rec] of Object.entries(boroughs)) {
+    if (!rec || typeof rec !== 'object') continue;
+    if (rec.roadNoise === undefined) recordsWithoutRoad++;
+  }
+}
+const pagesWithoutRoad = pages.filter((p) => !/>Road noise</.test(readFileSync(p.file, 'utf8')));
+// Only cities that HAVE a borough-extra entry are comparable: NYC has no road
+// data at all and is counted on both sides, Cardiff and Nottingham have no
+// entry, so their pages are excluded from the page-side count.
+const comparablePagesWithoutRoad = pagesWithoutRoad.filter(
+  (p) => !p.url.startsWith('/area/cardiff/') && !p.url.startsWith('/area/nottingham/'),
+);
+check(
+  'every borough with road data shows it (holder lookup resolves aliases)',
+  comparablePagesWithoutRoad.length === recordsWithoutRoad,
+  `${comparablePagesWithoutRoad.length} page(s) without a Road noise row vs ` +
+    `${recordsWithoutRoad} record(s) without roadNoise` +
+    (comparablePagesWithoutRoad.length !== recordsWithoutRoad
+      ? ` - mismatch: ${comparablePagesWithoutRoad.map((p) => p.url).slice(0, 4).join(', ')}`
+      : ''),
+);
+
 console.log('');
 if (failures.length) {
   console.error(`FAIL: ${failures.length} check(s) failed`);

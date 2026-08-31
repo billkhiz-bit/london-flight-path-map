@@ -9456,14 +9456,42 @@
       async function fetchTransportData(lat, lon, signal) {
         try {
           const resp = await fetch(`${API_BASE}/transport?lat=${lat}&lon=${lon}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
-          if (!resp.ok) return { available: true, stations: [], _lat: lat, _lon: lon };
+          // A NON-2xx IS NOT AVAILABILITY (2026-08-31, audit C5).
+          //
+          // This returned `available: true` with no stations, so a 500, a 502
+          // on a Lambda timeout, or a 429 rendered as a clean network. And
+          // because it omitted `lineStatusAvailable`, the panel's
+          // `data.lineStatusAvailable !== false` evaluated `undefined !== false`
+          // -> true, so the 2026-08-27 "line status could not be checked"
+          // notice could never fire on this path. Measured: on a 500 the panel
+          // listed four NaPTAN stations and the LIVE LINE STATUS section
+          // disappeared entirely - the state that notice exists to deny.
+          //
+          // The Lambda itself says `available: False` when TfL is unreachable;
+          // the frontend was fabricating the opposite. The renderer's
+          // `available === false` branch already says the right thing.
+          if (!resp.ok) return { available: false, _lat: lat, _lon: lon };
           const body = await resp.json();
           // Carry the query point so the NaPTAN fallback below knows where
           // "nearest" is measured from. TfL's response does not echo it.
           return Object.assign({ _lat: lat, _lon: lon }, body);
         } catch (e) {
-          if (!isAbortError(e)) console.warn('Transport API failed:', e);
-          return null;
+          // A TIMEOUT IS A FAILURE THE USER SHOULD HEAR ABOUT; AN ABORT IS NOT.
+          //
+          // Both returned `null`, and renderTransportData opens with
+          // `if (!el || !data) return;` - so a stalled or failed call left
+          // "Loading from TfL API..." on screen for the rest of the session.
+          // Measured against production: 2 of 16 samples took 7.6s and 10.8s
+          // against a PANEL_TIMEOUT_MS of 8000, so this is a live path, not a
+          // theoretical one. The fallback needs no network at all - 708 London
+          // NaPTAN stations are already in memory.
+          //
+          // isAbortError alone stays null: that means a newer search took over
+          // and this panel is being replaced, exactly as the comment on
+          // isTimeoutError above says.
+          if (isAbortError(e)) return null;
+          console.warn('Transport API failed:', e);
+          return { available: false, _lat: lat, _lon: lon };
         }
       }
 
@@ -9824,17 +9852,33 @@
       async function fetchNhsData(lat, lon, signal) {
         try {
           const resp = await fetch(`${API_BASE}/nhs?lat=${lat}&lon=${lon}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
-          if (!resp.ok) return null;
+          // Same as /transport above (2026-08-31, audit C4): null made
+          // renderNhsData early-return and leave "Loading from NHS API..." on
+          // screen permanently. `available: false` reaches the renderer's
+          // unavailable branch instead. fetchEpcData already carried this
+          // lesson - "Always resolve to an object, never null" - and it was
+          // applied to EPC alone.
+          if (!resp.ok) return { available: false };
           return await resp.json();
         } catch (e) {
-          if (!isAbortError(e)) console.warn('NHS API failed:', e);
-          return null;
+          if (isAbortError(e)) return null;
+          console.warn('NHS API failed:', e);
+          return { available: false };
         }
       }
 
       function renderNhsData(containerId, data) {
         const el = document.getElementById(containerId);
         if (!el || !data) return;
+        // NO healthcare section had an unavailable branch, so there was nowhere
+        // for a failed lookup to land even once the fetcher stopped returning
+        // null. Distinct wording from "found nothing within 1.5km" below, which
+        // is a MEASUREMENT: this one says we could not ask.
+        if (data.available === false) {
+          el.innerHTML =
+            '<p class="info-note">Healthcare data is temporarily unavailable. Try again shortly.</p>';
+          return;
+        }
         const gp = data.gp || [];
         const pharmacies = data.pharmacies || [];
         const hospitals = data.hospitals || [];

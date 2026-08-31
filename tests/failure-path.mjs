@@ -205,6 +205,12 @@ const page3 = await tfl.newPage();
 
 let transportBody = null;
 let stubHits = 0;
+// MODES, added 2026-08-31. The stub only ever fulfilled at status 200, so the
+// two failure shapes the panel actually meets in production - a 5xx and a stall
+// past PANEL_TIMEOUT_MS - were untestable here. null means "behave as before".
+let transportMode = null;
+let nhsMode = null;
+let nhsHits = 0;
 // A URL PREDICATE, not a glob. `'**/transport?**'` silently matched nothing
 // here, so every case below was quietly answered by the REAL TfL API - and it
 // looked fine, because the stub values were realistic: SW11 1AA really is
@@ -215,11 +221,50 @@ await page3.route(
   async (route) => {
     if (!transportBody) return route.continue();
     stubHits++;
+    if (transportMode === 'error') {
+      return route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        headers: { 'access-control-allow-origin': '*' },
+        body: '{"error":"upstream"}',
+      });
+    }
+    if (transportMode === 'stall') {
+      // Longer than PANEL_TIMEOUT_MS (8000) so the page's own AbortSignal
+      // deadline fires. Never abort the route after unroute() - that is what
+      // killed this file on Node 24 at check 10 of 19.
+      await new Promise((r) => setTimeout(r, 11000));
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify(transportBody),
+      });
+    }
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
       headers: { 'access-control-allow-origin': '*' },
       body: JSON.stringify(transportBody),
+    });
+  }
+);
+
+// /nhs was in NO route in this file, so its identical null-on-failure defect
+// had no way of being seen here at all.
+await page3.route(
+  (url) => url.pathname.endsWith('/nhs'),
+  async (route) => {
+    if (!nhsMode) return route.continue();
+    nhsHits++;
+    if (nhsMode === 'stall') {
+      await new Promise((r) => setTimeout(r, 11000));
+    }
+    return route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: '{"error":"upstream"}',
     });
   }
 );
@@ -230,6 +275,7 @@ const NOTICE = /could not be checked just now/i;
 async function transportPanelText(body) {
   transportBody = body;
   stubHits = 0;
+  nhsHits = 0;
   await page3.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page3.waitForSelector('#app', { state: 'visible', timeout: 30000 });
   await page3.fill('#search-input', 'SW11 1AA');
@@ -310,6 +356,99 @@ record('checked-and-quiet does NOT show the outage notice', !NOTICE.test(checked
 // cached response into a false outage notice.
 const legacy = await stubbedPanel('legacy shape', { stations: STATIONS, lineStatus: [], available: true });
 record('pre-2026-08-24 response shape does NOT show the outage notice', !NOTICE.test(legacy), legacy.slice(0, 120));
+
+// (d) THE UPSTREAM IS DOWN, NOT QUIET (2026-08-31, audit C4 and C5).
+//
+// Everything above stubs /transport at status 200 and never routes /nhs at
+// all, so two live defects sat underneath a passing file.
+//
+//   - `fetchTransportData` turned ANY non-2xx into `{ available: true,
+//     stations: [] }`. A 500, a 502 on a Lambda timeout or a 429 rendered as a
+//     clean network - four NaPTAN stations and NO line-status section, which is
+//     the exact inference the 2026-08-27 notice exists to deny. And because the
+//     fabricated object omitted `lineStatusAvailable`, the panel's
+//     `!== false` test saw `undefined` and concluded "checked".
+//   - Both fetchers returned `null` on a throw, and both renderers open with
+//     `if (!el || !data) return;` - so a stalled call left "Loading from TfL
+//     API..." / "Loading from NHS API..." on screen for the rest of the
+//     session. Measured against production: 2 of 16 /transport samples took
+//     7.6s and 10.8s against a PANEL_TIMEOUT_MS of 8000.
+//
+// The rule the codebase already states, beside `isTimeoutError`: a TimeoutError
+// "is a *real* failure the user should hear about - unlike AbortError, which
+// only means a newer search took over". These cases assert that rule is kept.
+//
+// LOADING IS THE LOAD-BEARING ASSERTION. "Says unavailable" alone would pass a
+// panel that also still said Loading somewhere; a stuck placeholder is the
+// defect, so its absence is checked explicitly.
+const UNAVAILABLE_TRANSPORT = /transport data is temporarily unavailable/i;
+const UNAVAILABLE_NHS = /healthcare data is temporarily unavailable/i;
+const STILL_LOADING = /Loading from (TfL|NHS) API/i;
+
+for (const [label, mode] of [
+  ['5xx', 'error'],
+  ['stall past the deadline', 'stall'],
+]) {
+  transportMode = mode;
+  const text = await transportPanelText({ stations: STATIONS, available: true });
+  transportMode = null;
+  record(`/transport ${label}: the stub actually answered`, stubHits > 0, `hits=${stubHits}`);
+  record(
+    `/transport ${label} says it is unavailable`,
+    UNAVAILABLE_TRANSPORT.test(text),
+    text.slice(0, 130)
+  );
+  record(
+    `/transport ${label} does not leave a Loading placeholder`,
+    !STILL_LOADING.test(text),
+    text.slice(0, 130)
+  );
+  // The fabricated-success half: an outage must never render stations as
+  // though the network were fine.
+  record(
+    `/transport ${label} does not present an outage as stations`,
+    !/Clapham Junction/i.test(text),
+    text.slice(0, 130)
+  );
+}
+
+for (const [label, mode] of [
+  ['5xx', 'error'],
+  ['stall past the deadline', 'stall'],
+]) {
+  nhsMode = mode;
+  await transportPanelText({ stations: STATIONS, available: true });
+  nhsMode = null;
+  // POLL THE NHS PANEL ON ITS OWN. transportPanelText settles on the TRANSPORT
+  // panel, and in these cases transport is NOT stalled - so it stabilises in a
+  // couple of seconds and the read below used to land before the NHS fetch's
+  // own 8s deadline had even fired, reporting "Loading from NHS API..." as a
+  // product defect. It was the harness reading too early. The two panels have
+  // independent lifecycles, so each needs its own settle.
+  let nhsText = '';
+  for (let i = 0; i < 50; i++) {
+    nhsText = await page3.evaluate(
+      () => document.getElementById('postcode-nhs-data')?.innerText || ''
+    );
+    if (nhsText && !/Loading from NHS API/i.test(nhsText)) break;
+    await page3.waitForTimeout(400);
+  }
+  record(`/nhs ${label}: the stub actually answered`, nhsHits > 0, `hits=${nhsHits}`);
+  record(`/nhs ${label} says it is unavailable`, UNAVAILABLE_NHS.test(nhsText), nhsText.slice(0, 130));
+  record(
+    `/nhs ${label} does not leave a Loading placeholder`,
+    !STILL_LOADING.test(nhsText),
+    nhsText.slice(0, 130)
+  );
+  // Distinct from the measurement beside it: "found nothing within 1.5km" is a
+  // reading, "unavailable" is an admission. An outage must not borrow the
+  // reading's words.
+  record(
+    `/nhs ${label} does not claim it looked and found nothing`,
+    !/No healthcare locations found/i.test(nhsText),
+    nhsText.slice(0, 130)
+  );
+}
 
 await tfl.close();
 
