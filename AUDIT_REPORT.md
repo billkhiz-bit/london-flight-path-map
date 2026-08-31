@@ -423,6 +423,38 @@ the workbook's own cover sheet needs no network and cannot be satisfied by a
 stale file. *A fix that makes a gate depend on a third party staying up has
 moved the failure, not removed it.*
 
+### Third pass: absence-as-measurement, and two false provenance claims
+
+| # | Fix | Proof |
+|---|---|---|
+| C5 | A `/transport` non-2xx returned `{available: true, stations: []}` — a 500 rendered as a **clean network**, and the omitted `lineStatusAvailable` made the panel's `!== false` test conclude "checked" | Reverted: the panel lists four stations on a 500 |
+| C4 | Both `/transport` and `/nhs` returned `null` on a throw, and both renderers early-return — a stall left **"Loading from TfL API…"** up for the session. `renderNhsData` had no unavailable branch at all | Reverted: both placeholders persist |
+| C3 | The 99 area pages credited **ONS, DEFRA, EA, NaPTAN and HM Land Registry on New York's pages**, against the same page's derived sources paragraph saying OGL "does NOT apply to any data in this response". City of London's crime credited ONS for our own estimate | Gate named all 5 NYC pages |
+| I5 | Barking and Dagenham's page silently lost **Road noise, Air quality and Flood risk** — the holder keys it `Barking`, the page did a raw `.get()`. The alias is declared in four other places | Gate named the borough exactly |
+| I27 | `sourceBreakdown.live` credited **DfE for 7 of Leicester's 8 boroughs**, which carry no Progress 8 — contradicting `liveResolution` and `sources` in the same response. Verbatim the 2026-08-24 defect, whose fix reached the sibling function only | Reverted: 4 boroughs named, "breakdown says 4 of 4, liveResolution says 3 of 4" |
+| I30 | The postcode LRU returned above `mark_local_postcode_served()`, so only the **first** request for a postcode credited ONS and every later one credited postcodes.io, which was never called | Reverted: "request 2 credited: postcodes.io" |
+
+**The C3 gate found a second instance the fix had not reached** — the **meta
+description**, the text a search result shows, said "Brooklyn … from DEFRA, ONS,
+DfE and HM Land Registry data". Fifth time this session that hardening a gate
+turned up a defect beyond the one it was written for.
+
+**Noticed by accident, and left open:** while red-proofing I27 the first revert
+hit `_live_sources_line` rather than `_live_breakdown_line` (the two share a
+line of code), and **no test failed**. So the `sources` array's per-borough
+behaviour is materially under-tested — the new
+`test_breakdown_agrees_with_live_resolution_for_every_borough` covers the
+breakdown against `liveResolution`, and nothing compares the `sources` array to
+either. Worth a third assertion in the same shape.
+
+**A test-isolation lesson from the same pass:** the I30 regression passed alone
+and failed in the full suite, because an earlier test had already cached
+`SW11 1AA` with a row carrying no `_resolver` — so the fix *correctly* declined
+to credit ONS for a row that did not come from NSPL, and the test read that as
+the defect. It uses a postcode nothing else touches now. **A test that shares
+mutable cache state with its neighbours is measuring their order, not its
+subject.**
+
 ### D1's residual, measured and left open
 
 The fix makes the panel correct everywhere and the map selection correct on

@@ -4644,9 +4644,27 @@ def _live_sources_line(city, bd=None):
             + '. Any absent input has its weight redistributed, not defaulted')
 
 
-def _live_breakdown_line(city):
-    """The sourceBreakdown.live sentence, counted rather than asserted."""
-    present = _live_inputs_present(city)
+def _live_breakdown_line(city, bd=None):
+    """The sourceBreakdown.live sentence, counted rather than asserted.
+
+    TAKES `bd` SINCE 2026-08-31 (audit I27). It did not, so it counted the
+    CITY-LEVEL union and credited DfE Key Stage 4 for boroughs that carry no
+    Progress 8 at all - seven of Leicester's eight today. The same response
+    said, in two other places, that the input was absent:
+
+        liveResolution      : partial - 3/4 inputs measured
+        sources             : Liveability (3 of 4 inputs): ONS...; NaPTAN...; NHS ODS...
+        sourceBreakdown.live: 4 of 4 inputs measured. DfE Key Stage 4 Progress 8...
+
+    This is verbatim the 2026-08-24 defect that gave `_live_inputs_present` its
+    `bd` parameter. That fix reached `_live_sources_line(city, bd)` and not its
+    sibling here, which takes no `bd` and is called per borough from
+    resolve_query - the mirrored-code family, fourth instance in this file.
+
+    The city-level union remains right where there is no borough in hand
+    (build_batch_sources, /v1/changes), which is why `bd` is optional.
+    """
+    present = _live_inputs_present(city, bd)
     measured = len({{'p8': 'schools', 'schools': 'schools'}.get(f, f) for f in present})
     if measured < _LIVE_MIN_FIELDS:
         return (f'UNAVAILABLE, {measured} of 4 inputs measured, and '
@@ -5089,17 +5107,30 @@ def build_sources(city='london', bd=None):
     return [line for line in out if line]
 
 
-def build_source_breakdown(city='london'):
-    """Per-component lineage for `city`. See build_sources() for why per-city."""
+def build_source_breakdown(city='london', bd=None):
+    """Per-component lineage for `city`. See build_sources() for why per-city.
+
+    `bd` is the resolved borough row when there is one. Without it the
+    liveability line counts the city-level union, which over-credits any
+    borough missing an input - see _live_breakdown_line.
+    """
     prov = CITY_PROVENANCE.get(city)
     if prov is None:
         return {}
+
+    def _resolve(value):
+        if not callable(value):
+            return value
+        # Pass bd only to the builders that accept it, so a per-component
+        # lineage function that does not care is unaffected.
+        try:
+            return value(city, bd)
+        except TypeError:
+            return value(city)
+
     # Callables are resolved here for the same reason build_sources resolves
     # them: a value that depends on the data must be read at response time.
-    return {
-        key: (value(city) if callable(value) else value)
-        for key, value in prov['breakdown'].items()
-    }
+    return {key: _resolve(value) for key, value in prov['breakdown'].items()}
 
 
 def build_batch_sources(cities):
@@ -6371,6 +6402,23 @@ def lookup_postcode(postcode, include_terminated=False):
         return None
     cached = _postcode_cache_get(clean)
     if cached is not None:
+        # RE-CREDIT ONS ON A CACHE HIT (2026-08-31, audit I30).
+        #
+        # `mark_local_postcode_served()` lives inside `_lookup_postcode_local`,
+        # and this early return is ABOVE it - so in a warm container only the
+        # FIRST request for a given postcode credited ONS, and requests 2..N
+        # credited postcodes.io, which was never called. Proven with the NSPL
+        # table stubbed to answer and `_fetch_postcode` replaced by a raise:
+        # request 1 published "ONS National Statistics Postcode Lookup... with
+        # postcodes.io as fallback", requests 2 and 3 published "postcodes.io"
+        # alone, on a path where postcodes.io was unreachable.
+        #
+        # It is also inconsistent WITHIN one response: repeat the same postcode
+        # twice in a /v1/score/batch `queries` array and the two results carried
+        # different provenance. `_postcode_source_line`'s own docstring says
+        # "Credit what actually answered".
+        if cached.get('_resolver') == 'nspl':
+            mark_local_postcode_served()
         return cached
     result = _lookup_postcode_local(clean, include_terminated=include_terminated)
     if result is POSTCODE_TERMINATED:
@@ -6817,8 +6865,11 @@ def resolve_query(query):
         'methodologyUrl': METHODOLOGY_URL,
         'apiVersion': API_VERSION,
         'generatedAt': datetime.now(UTC).isoformat(),
+        # ONE record for both, so the sources array and the lineage cannot
+        # disagree about which inputs this borough has - which is exactly what
+        # they did before 2026-08-31.
         'sources': build_sources(city, bd=_borough_record(city, borough)),
-        'sourceBreakdown': build_source_breakdown(city),
+        'sourceBreakdown': build_source_breakdown(city, _borough_record(city, borough)),
     }
     # Roadmap-visible placeholder components, let prospects see what's planned
     # before they ask. Each entry has a status flag so integrators don't try

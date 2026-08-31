@@ -3647,3 +3647,114 @@ class CompositeRenormalisationTests(unittest.TestCase):
                     if abs(sum(present.values()) - 1.0) <= 1e-12:
                         compared += 1
         self.assertGreater(compared, 500, f'only {compared} complete sets compared')
+
+
+class PerBoroughProvenanceTests(unittest.TestCase):
+    """sourceBreakdown must describe the BOROUGH, not the city's best case.
+
+    Audit I27, 2026-08-31. `_live_breakdown_line` took no `bd`, so it counted
+    the city-level union and credited DfE Key Stage 4 for boroughs carrying no
+    Progress 8 - seven of Leicester's eight - while the SAME response's
+    liveResolution and sources array both said the input was absent. Verbatim
+    the 2026-08-24 defect, whose fix reached `_live_sources_line(city, bd)` and
+    not its sibling.
+    """
+
+    def test_breakdown_agrees_with_live_resolution_for_every_borough(self):
+        """The two sentences count the same thing, so they must not disagree.
+
+        Written across every borough of every city rather than against
+        Leicester alone: the previous test of this behaviour asserted only the
+        positive case and its own comment said the negative one 'lives on the
+        Core Cities branch, where a partially-sourced city actually exists'.
+        That city is on master now.
+        """
+        checked = 0
+        mismatches = []
+        for city_id, cfg in app.CITIES.items():
+            if city_id not in app.CITY_PROVENANCE:
+                continue
+            for borough in cfg['boroughs']:
+                body, status = app.resolve_query({'borough': borough, 'city': city_id})
+                if status != 200:
+                    continue
+                breakdown = (body.get('sourceBreakdown') or {}).get('live')
+                resolution = (body.get('context') or {}).get('liveResolution')
+                if not breakdown or not resolution:
+                    continue
+                checked += 1
+                want = re.search(r'(\d+)\s*(?:of|/)\s*4', resolution)
+                got = re.search(r'(\d+) of 4 inputs measured', breakdown)
+                if not want or not got:
+                    continue
+                if want.group(1) != got.group(1):
+                    mismatches.append(
+                        f'{city_id}/{borough}: breakdown says {got.group(1)} of 4, '
+                        f'liveResolution says {want.group(1)} of 4'
+                    )
+        self.assertGreater(checked, 50, f'only {checked} boroughs compared - vacuous')
+        self.assertEqual(mismatches, [], '; '.join(mismatches[:4]))
+
+    def test_a_borough_without_progress_8_does_not_credit_dfe(self):
+        """The concrete case, named, so a future reader sees what this is for."""
+        body, status = app.resolve_query({'borough': 'Charnwood', 'city': 'leicester'})
+        self.assertEqual(status, 200)
+        self.assertIsNone(
+            app.CITIES['leicester']['boroughs']['Charnwood'].get('p8'),
+            'Charnwood gained a Progress 8 figure - pick another borough without one',
+        )
+        self.assertNotIn('DfE', body['sourceBreakdown']['live'])
+
+
+class CachedPostcodeAttributionTests(unittest.TestCase):
+    """A warm cache must not change who gets credited for the lookup.
+
+    Audit I30, 2026-08-31. `mark_local_postcode_served()` lives inside
+    `_lookup_postcode_local`, and the LRU's early return sat above it - so only
+    the FIRST request for a postcode in a container credited ONS and every later
+    one credited postcodes.io, which had not been called. Inside one batch that
+    made two identical postcodes carry different provenance.
+    """
+
+    def test_repeat_lookups_keep_crediting_ons(self):
+        # CONTROL THE CACHE. This passed in isolation and failed in the full
+        # suite, because an earlier test had already cached SW11 1AA with a row
+        # carrying no `_resolver` - so the fix correctly declined to credit ONS
+        # for a row that did not come from NSPL, and the test read that as the
+        # defect. A postcode nothing else uses removes the ordering dependency
+        # without weakening the assertion.
+        probe = 'ZZ99 9ZZ'
+        original_local = app._lookup_postcode_local
+        original_fetch = app._fetch_postcode
+
+        def local(clean, include_terminated=False):
+            app.mark_local_postcode_served()
+            return {
+                'postcode': probe,
+                'lat': 51.46,
+                'lon': -0.16,
+                '_resolver': 'nspl',
+                '_ladCode': 'E09000032',
+            }
+
+        def fetch(_postcode):
+            raise AssertionError('postcodes.io must not be called when NSPL answered')
+
+        app._lookup_postcode_local = local
+        app._fetch_postcode = fetch
+        try:
+            lines = []
+            for _ in range(3):
+                app.reset_postcode_attribution()
+                app.lookup_postcode(probe)
+                lines.append(app._postcode_source_line(app.local_postcode_served()))
+        finally:
+            app._lookup_postcode_local = original_local
+            app._fetch_postcode = original_fetch
+
+        # Asserted on ALL THREE, not on the last: the defect was that the first
+        # differed from the rest, so comparing only one hides it either way.
+        for i, line in enumerate(lines, 1):
+            self.assertIn('ONS National Statistics Postcode Lookup', line,
+                          f'request {i} credited: {line}')
+        self.assertEqual(len(set(lines)), 1, f'provenance changed between requests: {lines}')
