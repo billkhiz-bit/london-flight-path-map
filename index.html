@@ -2109,6 +2109,35 @@
       .city-selector::-webkit-scrollbar {
         display: none;
       }
+      /* DESKTOP WRAPS INSTEAD OF SCROLLING (2026-08-31, audit D4).
+         A horizontal scroll strip works on a phone because you can swipe it.
+         With a mouse there was no way to move it at all: measured
+         `offsetHeight - clientHeight = 0` at every width, so no scrollbar
+         exists, a plain vertical wheel leaves scrollLeft at 0, and there is no
+         drag handler. Only a trackpad's horizontal gesture or focus() moved it.
+         The chip content is 1109px, so at 901px 652px of it - SIX of the ten
+         cities - was unreachable, and one city was still off-strip at 1366x768,
+         the most common laptop resolution in use.
+         Wrapping is the fix rather than arrow buttons because the goal is that
+         every city is VISIBLE, not merely reachable: a control a mouse user
+         cannot see is not discoverable however well it scrolls. Desktop has the
+         vertical room, the strip sits over the map's top-left corner, and
+         `right: 76px` already keeps it clear of the zoom column.
+         Below 901px the scroll strip stays exactly as it is - it was added on
+         2026-08-11 because the wrapped row was 453px wide against a 375px
+         viewport and the map container clipped it, leaving three of eight
+         cities untappable. This does not reopen that. */
+      @media (min-width: 901px) {
+        .city-selector {
+          flex-wrap: wrap;
+          overflow-x: visible;
+          overflow-y: visible;
+          row-gap: 4px;
+          /* The fade is a scroll affordance and there is nothing to scroll
+             here, so it would be claiming more content off to the right. */
+          mask-image: none;
+        }
+      }
       /* Without this the chips shrink to fit instead of scrolling, and the
          labels truncate rather than the row moving. */
       .city-btn {
@@ -2145,7 +2174,18 @@
          main map stays the scoring map, and the sidebar never empties. */
       .locator {
         position: absolute;
-        top: 138px;
+        /* MEASURED FROM THE CHIP STRIP, NOT A CONSTANT (2026-08-31, audit D4).
+           138px was right while the strip was always one 24px row. Wrapping it
+           at >=901px so every city is visible makes the strip 52-128px tall
+           depending on width, and a fixed top put the wrapped rows straight
+           over the locator's ten focusable markers - which responsive.mjs
+           caught as six covered controls at 901px.
+           updateLocatorOffset() writes --locator-top from the strip's own
+           height, so this is correct at every width instead of at one. Same
+           reasoning as --footer-inset, which this file already measures for
+           the same class of collision. The fallback keeps the original value
+           if the script never runs. */
+        top: var(--locator-top, 138px);
         left: 32px;
         width: 112px;
         z-index: 5;
@@ -3153,7 +3193,20 @@
           align-items: center;
           justify-content: center;
           position: absolute;
-          top: 4px;
+          /* CLEARS THE STICKY SEARCH CARD (2026-08-31, audit D2).
+             This was `top: 4px`, which put the button at y=113 while the
+             sticky `.search-box` occupies y 54-138 - so 80% of the 36x36
+             target was painted over and `elementFromPoint` at its CENTRE
+             returned the search box. Measured identical at 320, 375, 390, 414
+             and 900: hit-testable 20%, a real click at the centre did not
+             dismiss, and a screenshot crop showed no visible glyph at all.
+             The card's own `padding-top: 36px` already reserves this band;
+             the button simply was not in it. `z-index: 2` below cannot help -
+             `#tab-analysis` is `position: relative; z-index: auto`, so it
+             creates no stacking context and an inner 2 loses to the search
+             card's 3 directly. The same mechanism this file already documents
+             for the city chips at line 3246. */
+          top: 36px;
           right: 4px;
           width: 36px;
           height: 36px;
@@ -4141,6 +4194,11 @@
       // changes; anything else only works if you happen to load at the right
       // size.
       window.addEventListener('resize', applyTabbedLayout);
+      // Rotating a phone or dragging a desktop window across 900px changes
+      // whether the panel covers the map without any result landing.
+      window.addEventListener('resize', () => {
+        if (typeof scheduleMapInertSync === 'function') scheduleMapInertSync();
+      });
 
       (function setupNativeFeatures() {
         const cap = window.Capacitor;
@@ -11165,14 +11223,73 @@
       // result lands in the sidebar. Auto-open chosen for discoverability -
       // the alternative was peek-only or once-per-session; auto-open won
       // because the alternatives risked users not noticing their result.
+      // THE MAP'S CONTROLS MUST LEAVE THE TAB ORDER WHEN THE PANEL COVERS THEM
+      // (2026-08-31, audit D6).
+      //
+      // With a result open at 390x844 the sidebar is fixed and 390x788 - the
+      // whole viewport - and thirteen controls behind it stayed focusable,
+      // `inert: false`, `aria-hidden: false`, every one confirmed occluded by
+      // elementFromPoint: two country tabs, ten city chips, the layers trigger
+      // and the legend toggle. Walking Tab produced stops 16-28 all occluded,
+      // so a keyboard user tabs through thirteen invisible controls and the
+      // focus ring disappears off-screen.
+      //
+      // COVERAGE IS MEASURED, NOT INFERRED FROM A BREAKPOINT. A width test
+      // would be wrong twice: the sheet at peek does not cover the map, and
+      // the tabbed layout at the same width does. This asks whether the
+      // sidebar's rect actually contains the map's, which is the question the
+      // user's finger and the Tab key both ask.
+      function syncMapInert() {
+        const map = document.getElementById('map-container');
+        const sidebar = document.getElementById('sidebar');
+        if (!map || !sidebar || !('inert' in HTMLElement.prototype)) return;
+        const hasResult = !!document.querySelector(
+          '#sidebar-content .score-breakdown .score-row'
+        );
+        let covering = false;
+        if (hasResult) {
+          const s = sidebar.getBoundingClientRect();
+          const m = map.getBoundingClientRect();
+          covering =
+            s.top <= m.top + 4 &&
+            s.bottom >= m.bottom - 4 &&
+            s.left <= m.left + 4 &&
+            s.right >= m.right - 4;
+        }
+        // INERT THE CHILDREN, NOT THE <main> ITSELF.
+        //
+        // #map-container IS the document's `<main>` (index.html:3413), and
+        // marking it inert removed the only main landmark - `a11y-source.mjs`
+        // caught that immediately as `landmark-one-main` failing in the
+        // borough-selected state, which is this fix trading one accessibility
+        // defect for another. Inerting each child takes the thirteen controls
+        // out of the tab order while leaving the landmark itself intact and
+        // navigable.
+        for (const child of map.children) child.inert = covering;
+      }
+
+      // The sheet animates, so the rect read immediately after a state change
+      // is the one it is moving away from - the same trap the skip-link
+      // exemption hit in responsive.mjs. Measure again once layout settles.
+      function scheduleMapInertSync() {
+        syncMapInert();
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(() => setTimeout(syncMapInert, 350));
+        }
+      }
+
       function revealSheetIfMobile() {
-        if (window.innerWidth > 900) return;
-        // A result just landed. Native app: switch to the redesign's Search
-        // view so the result shows over the map. Web/PWA: open the classic
-        // bottom sheet instead - the two mobile experiences are separate now.
-        const tabbed = document.documentElement.classList.contains('is-tabbed');
-        if (tabbed && window.setMobileView) window.setMobileView('search');
-        else if (window.setSheetState) window.setSheetState('open');
+        if (window.innerWidth <= 900) {
+          // A result just landed. Native app: switch to the redesign's Search
+          // view so the result shows over the map. Web/PWA: open the classic
+          // bottom sheet instead - the two mobile experiences are separate now.
+          const tabbed = document.documentElement.classList.contains('is-tabbed');
+          if (tabbed && window.setMobileView) window.setMobileView('search');
+          else if (window.setSheetState) window.setSheetState('open');
+        }
+        // Runs at EVERY width, including desktop, so widening the window
+        // clears an inert flag set while narrow.
+        scheduleMapInertSync();
       }
 
       // `search` is the token from beginSearch(), and the hydration callbacks
@@ -11829,6 +11946,7 @@
           box.scrollLeft = Math.max(0, active.offsetLeft - (box.clientWidth - active.offsetWidth) / 2);
         }
         updateCityStripFade();
+        updateLocatorOffset();
       }
 
       /**
@@ -11841,6 +11959,59 @@
        * ten will overflow a viewport that city nine did not, and this needs no
        * edit for that.
        */
+      /**
+       * Push the locator inset below the city chips.
+       *
+       * The strip is `position: absolute`, so a taller strip does not reflow
+       * anything beneath it - the locator has to be told. 18px is the gap the
+       * original constants expressed (strip bottom 120, locator top 138) and
+       * is kept so the desktop spacing is unchanged when the strip is one row.
+       */
+      let legendObserver = null;
+
+      function updateLocatorOffset() {
+        const box = document.getElementById('city-selector');
+        const loc = document.querySelector('.locator');
+        const legend = document.getElementById('map-legend');
+        if (!box) return;
+        const top = box.offsetTop + box.offsetHeight + 18;
+        document.documentElement.style.setProperty('--locator-top', `${Math.round(top)}px`);
+
+        // OBSERVED, NOT HOOKED. Wiring this to updateLegendFade() covered the
+        // landing state and missed the legend-OPEN one, because the legend
+        // grows through several paths - a layer toggled, a disclosure opened,
+        // a repaint adding band rows - and any list of call sites is a list
+        // that can be short by one. A ResizeObserver fires on the thing that
+        // actually changed, whatever moved it.
+        if (loc && legendObserver === null && typeof ResizeObserver === 'function') {
+          const lg = document.getElementById('map-legend');
+          if (lg) {
+            legendObserver = new ResizeObserver(() => updateLocatorOffset());
+            legendObserver.observe(lg);
+          }
+        }
+
+        // AND YIELD ENTIRELY WHEN THERE IS NO ROOM.
+        //
+        // At 901px the desktop grid leaves the map column about 457px, so the
+        // ten chips need three rows and the locator's new top lands on the
+        // bottom-anchored legend - measured as seven covered controls. Both
+        // cannot have that space, and the chips are the primary navigation
+        // while the locator is an orientation aid, so the locator gives way.
+        //
+        // Hidden rather than squeezed: a 145px inset overlapping the legend is
+        // two controls in one place, which is the defect this is resolving,
+        // not a smaller version of it. `hidden` also takes its ten markers out
+        // of the tab order, which a visual-only hide would not.
+        if (!loc) return;
+        const mapBox = document.getElementById('map-container');
+        if (!legend || !mapBox) return;
+        const legendTop = legend.getBoundingClientRect().top - mapBox.getBoundingClientRect().top;
+        const needed = top + loc.offsetHeight;
+        // 8px of breathing room, so "just touching" is not treated as fitting.
+        loc.hidden = legendTop > 0 && needed + 8 > legendTop;
+      }
+
       function updateCityStripFade() {
         const box = document.getElementById('city-selector');
         if (!box) return;
@@ -11892,6 +12063,13 @@
       function updateLegendFade() {
         const box = document.getElementById('map-legend');
         if (!box) return;
+        // The legend is bottom-anchored and grows UPWARDS, so opening it moves
+        // the ceiling the locator has to fit under. Re-measured here as well as
+        // on resize because a disclosure changes the geometry with no resize
+        // event - which is exactly how the collision survived the first fix:
+        // the landing state had 93px of clearance and the legend-open state at
+        // 901x800 had none.
+        updateLocatorOffset();
         const overflow = box.scrollHeight - box.clientHeight;
         if (overflow <= 1) {
           box.removeAttribute('data-scroll');
@@ -13299,6 +13477,7 @@
           // the strip overflowing entirely, and a fade left behind on a row
           // that now fits points at nothing.
           updateCityStripFade();
+          updateLocatorOffset();
           // The footer rewraps at a new width, so its height changes and the
           // chrome above it has to move with it. Before updateLegendFade(),
           // because the legend's available height depends on this inset.
@@ -13362,12 +13541,27 @@
         // re-hides the analysis-card wrapper automatically.
         const closeBtn = document.getElementById('result-close');
         if (closeBtn && sidebarContent && emptyStateNode) {
+          // ESCAPE DISMISSES TOO (2026-08-31, audit D2). The button is
+          // anchored to the result card, so it scrolls away with it; Escape
+          // works wherever the panel has been scrolled to. Routed through the
+          // button's own click so there is ONE restore path rather than two
+          // that can drift - and skipped while a field has focus, where
+          // Escape conventionally clears the input instead.
+          document.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Escape') return;
+            const active = document.activeElement;
+            if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
+            if (getComputedStyle(closeBtn).display === 'none') return;
+            closeBtn.click();
+          });
           closeBtn.addEventListener('click', () => {
             // replaceChildren + cloneNode keeps the restore on safe DOM
             // APIs (no innerHTML/parsed strings). The clone is taken from
             // the boot-time snapshot so future calls still have a pristine
             // template to copy from.
             sidebarContent.replaceChildren(emptyStateNode.cloneNode(true));
+            // The result is gone, so the map is reachable again.
+            scheduleMapInertSync();
             // No chip binding here on purpose: the delegated document listener
             // (audit F-A11Y-8) already covers every .quicksearch-chip, cloned
             // ones included. Re-binding on each close stacked a second handler

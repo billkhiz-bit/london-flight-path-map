@@ -55,6 +55,22 @@ const PAGES = [
     settle: 2500,
     prepare: 'legend',
   },
+  // THE SAME PAGE WITH A BOROUGH SELECTED, added 2026-08-31 (audit D2).
+  //
+  // Same lesson as the legend entry above, one state further on. Every entry
+  // was audited before a result exists, and the result card is where the
+  // dismiss control lives - so the audit could not see that `.result-close`
+  // was 20% hit-testable at EVERY width <=900px, with elementFromPoint at its
+  // centre returning the sticky search card and a real click failing to
+  // dismiss. The COVERED detector was already written and simply never
+  // reached the state that needed it.
+  {
+    name: 'consumer app, borough selected',
+    slug: 'index',
+    full: true,
+    settle: 2500,
+    prepare: 'result',
+  },
   { name: 'pricing', slug: 'pricing' },
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
@@ -143,6 +159,30 @@ for (const meta of PAGES) {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
   }
   await page.waitForTimeout(meta.settle ?? 600);
+
+  if (meta.prepare === 'result') {
+    // Select a borough the way a user does, and REPORT rather than assume:
+    // a run that could not reach the state is a scan of the landing page
+    // wearing another name.
+    const reached = await page.evaluate(() => {
+      const path = document.querySelector('path.borough');
+      if (path) path.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      return Boolean(path);
+    });
+    await page.waitForTimeout(1800);
+    const rendered = await page.evaluate(
+      () => document.querySelectorAll('#sidebar-content .score-breakdown .score-row').length
+    );
+    if (!reached || rendered === 0) {
+      console.log(
+        `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
+          `borough-selected state (path ${reached}, score rows ${rendered})`
+      );
+      failures += 1;
+      await page.close();
+      continue;
+    }
+  }
 
   if (meta.prepare === 'legend') {
     // Turn on the three borough fill layers and open the legend, the way a
@@ -347,6 +387,21 @@ for (const meta of PAGES) {
       // business, and judging it here would double-report the same defect.
       if (cx < 0 || cy < 0 || cx > doc.clientWidth || cy > window.innerHeight) continue;
       if (parkedOutsideScroller(node, r)) continue;
+      // INERT IS NOT A CONTROL RIGHT NOW (2026-08-31, audit D6).
+      //
+      // A third exemption, and like the two above it is TESTED rather than
+      // named: `closest('[inert]')` is the browser's own answer to "can this
+      // be reached", the same answer the Tab key and a click both get. When
+      // the mobile result panel covers the map, index.html marks the map
+      // region inert precisely so its thirteen controls leave the tab order -
+      // reporting them as "covered" afterwards would fail the audit on the fix
+      // for the defect it found.
+      //
+      // Deliberately NOT `aria-hidden`: that hides from assistive tech while
+      // leaving the element clickable and focusable, so it would exempt
+      // controls that a finger can still reach. `inert` is the one that
+      // actually removes it.
+      if (node.closest('[inert]')) continue;
       const top = document.elementFromPoint(cx, cy);
       if (!top || node === top || node.contains(top) || top.contains(node)) continue;
       covered.push({
