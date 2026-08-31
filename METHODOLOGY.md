@@ -106,12 +106,32 @@ the MSOA data outright was tried and rejected on measurement — a district span
 **Coverage is not uniform, and every response says which inputs it rests on**
 via `context.liveResolution`. Greater Manchester's
 aircraft bands are **estimated from runway geometry, not sampled from the DEFRA
-strategic noise maps** that cover London, and its liveability rests on 2 of the
-4 inputs (see the table in §4.4.1) with the absent inputs' weight redistributed
-rather than filled with a placeholder. Road noise, flood risk and air quality
-have no Greater Manchester source and are not published for it.
+strategic noise maps** that cover London, and its liveability rests on **all 4**
+inputs, and it carries **all 3** environment inputs.
 
-**Planned:** the remaining UK Core Cities (Birmingham, Bristol, Leeds, Edinburgh, Glasgow, Liverpool, Newcastle, Sheffield, Cardiff, Belfast, Nottingham), then England + Wales.
+> **Corrected 2026-08-31.** This paragraph said Greater Manchester's liveability
+> "rests on 2 of the 4 inputs" and that "road noise, flood risk and air quality
+> have no Greater Manchester source and are not published for it". Both were
+> true when written and neither has been since **v3.6/v3.7** (transport and
+> healthcare, 2026-08-11) and **2026-08-11** (all three environment rasters).
+> Verified against `data/borough-extra.json`: every one of the ten boroughs
+> carries `crimeRate`, `p8`, `transport`, `healthcare`, `airQualityWhoRatio`,
+> `roadNoiseAboveWhoPct` and `floodMediumOrHighPct` — Manchester itself is
+> crime 142.7, P8 +0.07, transport `good`, healthcare `good`, air 1.77,
+> road 64.7%, flood 0.87%. §7.1, §7.2 and §7.3 of this document already said
+> so, so §2 contradicted three later sections. The weight-redistribution
+> mechanism it describes is real and still applies where an input IS absent —
+> Cardiff has no Progress 8, New York no DEFRA coverage.
+
+**Planned:** Edinburgh, Glasgow and Belfast, then England + Wales.
+
+> **Corrected 2026-08-31.** This line listed Birmingham, Bristol, Leeds,
+> Liverpool, Newcastle, Sheffield, Cardiff and Nottingham as planned. All eight
+> are live and scoreable, and §2 lists them as supported **61 lines above** — so
+> a prospect reading the section top to bottom was told the same eight cities
+> were both shipped and forthcoming. Only the three Scottish and Northern Irish
+> cities remain, and `EXPANSION.md` records why: the NATION is the unit of work,
+> and Scotland changes publisher for five of six components.
 
 **Postcode → borough resolution** uses `postcodes.io` for UK postcodes; NYC ZIPs use a static lookup table baked into the Lambda (sourced from NYC OpenData ZCTA boundaries + USPS). ZIPs without an explicit centroid fall back to the borough-aggregate Lden band for the quiet score; non-NYC US ZIPs (e.g. 90210) return a structured 404 with the supported borough list.
 
@@ -658,12 +678,12 @@ The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode'
 - Airport-proximity bonus uses Euclidean-style distance, not flight-corridor membership. A postcode 5 km from an airport but to the *side* of the runway corridor is currently penalised the same as one directly under the corridor. Raster sampling will correct this.
 - Flight-path waypoints are coarse polylines, not full flight-procedure geometries with altitude data. A postcode under a 9,000-ft transit gets the same noise score as one under a 1,500-ft final approach.
 - NYC ZIP centroids are representative neighbourhood points, not true ZCTA polygon centroids. ~1 km of within-ZIP imprecision.
-- **Helicopter noise is not modelled by the API.** See the divergence note below.
+- **Helicopter noise IS modelled by the API** (since 2026-08-03). This line said it was not until 2026-08-31; see the correction under the divergence note below.
 
 **Known divergence: the consumer site scores heliports, the API does not (recorded 2026-08-03).**
 `skyscore.co.uk` adds a term this section does not describe: it measures distance to **five**
 London rotary sites and adds a movement-weighted contribution to `noise_score`. `/v1/score`
-has no heliport term at all. The term touches **14.1% of Greater London's land area**; outside
+had no heliport term until 2026-08-03. The term touches **14.1% of Greater London's land area**; outside
 that, site and API now agree exactly.
 
 > **A second divergence existed here and was closed on 2026-08-03.** This paragraph previously
@@ -723,7 +743,7 @@ editorial choice must at least be *declared* as one:
   change anywhere in the plausible range, since it sits far below the 12,000 reference either way.
 - **The 3 km / 5 km radii and the two-tier structure itself are still editorial.** Only the
   *relative weighting between sites* is now derived.
-- **The API does not implement this term at all**, so the surfaces remain divergent within
+- ~~**The API does not implement this term at all**, so the surfaces remain divergent within~~ **CLOSED 2026-08-03, corrected here 2026-08-31.** `calc_postcode_quiet` applies the heliport term (`HELIPORTS_LONDON`, `app.py:2144`, wired in at `:3355` under a comment recording the port). There is no site/API divergence here, and this document advertised one over 14.1% of London for four weeks after it was closed. The stale text read: divergent within
   14.1% of London until it is ported.
 
 One thing settled deliberately: weighting rests on **noise exposure**, never on whether a
@@ -1042,8 +1062,33 @@ The four weights are an editorial decision informed by UK home-buyer priority re
 The five components are combined with persona weights:
 
 ```
-score = w.quiet × quiet + w.afford × afford + w.growth × growth + w.live × live
+score = w.quiet × quiet + w.afford × afford + w.growth × growth
+      + w.live  × live  + w.env    × env
 ```
+
+**`env` was missing from this formula until 2026-08-31**, from the day the
+component shipped in v3.9. The line above said "five components" and then summed
+four, while §5.1 directly below it already listed `env: 0.14` — so the document
+contradicted itself across eight lines, and **the half a customer executes was
+the wrong half**. §5 is the reproduction procedure a B2B audit runs, and env is
+0.14 of six personas and 0.18 of `family` and `laterlife`, so every borough in
+every city reproduced ~14–18% wrong.
+
+**A component that is absent is dropped, and the survivors are rescaled** — the
+weights are not simply treated as zero. `calc_score` builds the parts it has,
+sums their weights, and divides through:
+
+```
+effective[k] = w[k] / Σ w[present]
+score        = Σ (component[k] × effective[k])
+```
+
+With every component present the persona rows sum to 1.00 and the rescale is a
+no-op. It matters for New York (no `env` — no UK environmental coverage) and for
+Cardiff (below the two-input `env` floor), where the remaining components carry
+the whole score. **A reproduction that treats a missing component as 0.0 rather
+than dropping it will under-report those boroughs**, because it divides by a
+weight total that includes something never measured.
 
 ### 5.1 Default persona, balanced
 
@@ -1052,10 +1097,15 @@ balanced = { quiet: 0.32, afford: 0.27, growth: 0.00, live: 0.27, env: 0.14 }
 ```
 
 **Why these defaults?**
-- **Quiet 38%**, prominent because Sky Score's distinctive contribution to the property-data landscape is noise awareness; existing tools (Hometrack, Sprift, Rightmove) underweight noise, so we lead with it.
-- **Affordability 31%**, material to most buyers but not dominant.
+- **Quiet 32%**, prominent because Sky Score's distinctive contribution to the property-data landscape is noise awareness; existing tools (Hometrack, Sprift, Rightmove) underweight noise, so we lead with it.
+- **Affordability 27%**, material to most buyers but not dominant.
 - **Growth 0%** as of v3.3 — see below. Weighted only for `investor`.
-- **Liveability 31%**, composite of multiple factors, each individually important.
+- **Liveability 27%**, composite of multiple factors, each individually important.
+- **Environment 14%** since v3.9 — air quality, road noise and flood risk. See §5.2 for why `family` and `laterlife` carry 0.18 instead.
+
+*(These four read 38/31/0/31 until 2026-08-31 — the pre-v3.9 figures, left
+behind when env took 0.14 out of each of the others in proportion. They
+contradicted the `balanced` dict printed immediately above them.)*
 
 **Why growth carries no weight outside `investor` (v3.3).** In the 2026-Q1 to 2026-Q2 refresh, growth accounted for **87% of all score movement** across the 33 London boroughs; excluding it, the largest change anywhere was 0.62 points. Nothing physical about those places had changed — the same flight paths, schools and crime rates — yet headline scores moved by up to 1.6 points on a single market series.
 
@@ -1539,16 +1589,34 @@ not over its area. An area-weighted figure is dominated by whatever is empty —
 parks, reservoir, farmland — so it reports the quiet of places nobody lives at.
 
 **Road noise**, from the DEFRA Round 4 road Lden surface for England, banded on
-the borough's **median** Lden against the WHO 2018 guideline for road traffic,
-**53 dB Lden**:
+the **share of the borough's postcodes at or above** the WHO 2018 guideline for
+road traffic, **53 dB Lden** — the field published as `roadNoiseAboveWhoPct`:
 
 | Band | Condition |
 |---|---|
-| `high` | median ≥ 53 dB — the typical address is over the WHO guideline |
-| `moderate` | median 48–53 dB — under it, within one DEFRA band |
-| `low` | median < 48 dB |
+| `high` | ≥ 66.7% of postcodes over 53 dB — two-thirds of addresses above the WHO guideline |
+| `moderate` | 50–66.7% over 53 dB |
+| `low` | < 50% over 53 dB |
 
-The 5 dB step is the data's own granularity; DEFRA publishes Lden in 5 dB bands.
+> **Corrected 2026-08-31.** This table described banding the borough's **median
+> Lden** against 53/48 dB. That is not what `road_band()` does and never was: it
+> takes the SHARE over 53 dB and cuts at `ROAD_HIGH_SHARE = 200/3` and
+> `ROAD_MODERATE_SHARE = 50.0` (`scripts/build_borough_bands.py:168-169, 537`).
+> Applying the old rule to `data/borough-extra.json` reproduces the published
+> band for only **11 of the 86** boroughs that carry both figures — Hounslow's
+> median is 54.8 dB, which the old rule calls `high` while the product publishes
+> `moderate`; Hillingdon 52.6 dB, old rule `moderate`, published `low`.
+> **87% of the boroughs this table governs were mis-described.**
+>
+> §4.7 already named the real cut ("the `high` band cut of 66.7%") and the v4.0
+> changelog entry in §20 states the share is the scored quantity, so the
+> document disagreed with itself in three places. The median survives as
+> `roadNoiseLdenMedian` and is **display-only** — §4.7 records why the share is
+> the discriminating field (69 distinct values against the median's 41, over an
+> interquartile range of 1.7 dB).
+
+The share, not the median, is also what **scores**: `env` ramps
+`roadNoiseAboveWhoPct` from 0% (10) to 100% (0). See §4.7.
 
 **Air quality**, from the DEFRA background pollution maps. Each borough's mean
 NO₂ and PM2.5 is expressed as a ratio to its **WHO 2021** annual-mean guideline
@@ -1780,7 +1848,7 @@ A score component sits alongside Affordability and Growth, where higher is bette
 |---|---|
 | `IMPACT_TO_QUIET` value scale (10 / 7.5 / 5.0 / 3.0 / 1.5 / 0.0) | The dB Lden bands are DEFRA-anchored; the score values reflect the inverse-square-ish relationship between noise dB and health effect documented in WHO meta-analyses. The non-linear spacing (3 → 1.5 = halving) reflects that small dB increases at high baselines have outsized effects. |
 | `SCHOOL_SCORE` values (10 / 9 / 6 / 3) — **RETIRED 2026-08-02** | **This row previously claimed the bands were "anchored to the Ofsted national distribution". That claim was false**, which is why v3.5 removed them: no threshold on "% Good or Outstanding" reproduces the stored bands, and the measure behind them was withdrawn by Ofsted in September 2024. Retained here as a record of a defence that did not hold up, because the point of this section is that a stated justification can be checked. Schools now uses `school_score(p8) = clamp(5.0 + 5.0 × p8, 0, 10)`, whose anchors are external constants (0.0 = national average, ±1.0 = one grade per subject) rather than editorial. The legacy bands survive only as a fallback for areas with no Progress 8 figure — in London, the City of London alone. |
-| Heliport bands (+2 / +1 within 3 km / 5 km) and the 3 km / 5 km radii | **Editorial, declared.** The *relative* weighting between sites is derived — sound energy sums logarithmically, so annual movements contribute `10·log₁₀(N)`, the same basis as Lden under END 2002/49/EC (§4.1). That is what separates the 12,000-movement sites from the ~1,600-movement air-ambulance pads. The absolute band values and the two distance radii are **not** anchored to any published source; they mirror the airport-proximity structure above for internal consistency. Consumer site only — `/v1/score` does not implement this term. See §4.5. |
+| Heliport bands (+2 / +1 within 3 km / 5 km) and the 3 km / 5 km radii | **Editorial, declared.** The *relative* weighting between sites is derived — sound energy sums logarithmically, so annual movements contribute `10·log₁₀(N)`, the same basis as Lden under END 2002/49/EC (§4.1). That is what separates the 12,000-movement sites from the ~1,600-movement air-ambulance pads. The absolute band values and the two distance radii are **not** anchored to any published source; they mirror the airport-proximity structure above for internal consistency. **Both surfaces** — `/v1/score` has implemented this term since 2026-08-03 (`HELIPORTS_LONDON`, kept identical to `index.html` by `test_heliports_match_the_site`). This cell said "Consumer site only" until 2026-08-31. See §4.5. |
 | Denham Aerodrome's weight | **Editorial, declared, and the weakest link in this table.** No published movement figure exists: Buckinghamshire Council, the Denham Aerodrome Consultative Committee and the aerodrome's own material were all checked (2026-08-03). Its weight is assigned by analogy to Elstree, a comparable general-aviation aerodrome with documented helicopter operations. Affects 1.50% of Greater London. Revise on publication of a type breakdown. |
 | `CRIME_TO_SCORE` slope and intercept | Calibrated so that London median crime rate (88/1000) yields score 7.5, and rate=50 (cleanest London tier) yields 10. Slope of −1 per 15 units chosen so a 50% increase above median crosses the "below average" threshold. |
 | `TRANSPORT_SCORE` 4-tier categorisation | Approximates TfL PTAL bands (PTAL 0-6b reduced to 4 tiers) for interpretability. Direct PTAL integration is on the v2.1 roadmap. |

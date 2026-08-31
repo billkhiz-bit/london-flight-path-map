@@ -117,7 +117,23 @@ Sky Score is the ethical alternative data layer:
 
 ## API surface
 
-Six endpoints returning JSON. Four are API-key gated. Two are deliberately public: `/v1/changes`, so anyone can audit what moved between vintages without holding a key, and `/v1/environment`, because it serves a browser extension that cannot keep a key secret — which is why it returns measurements only and never a score.
+Seven endpoints returning JSON, listed below. **Three are API-key gated** —
+`/v1/score`, `/v1/score/batch` and `/v1/chat`, the routes that cost money to
+serve. The other four are deliberately public, each for its own reason:
+`/v1/regions` is discovery, so a client can find out what is supported before it
+holds a key; `/v1/changes`, so anyone can audit what moved between vintages
+without one; `/v1/environment`, because it serves a browser extension that cannot
+keep a key secret — which is why it returns measurements only and never a score;
+and `/badge`, because it renders inside an `<img>` on a third-party listing page,
+where no key can travel.
+
+> **Corrected 2026-08-31.** This paragraph read "Six endpoints. Four are
+> API-key gated. Two are deliberately public" — wrong in all three numbers,
+> against a table directly below it listing **seven** rows with **three** marked
+> Public. Verified against the running API rather than the template: `/v1/score`
+> answers 403 without a key while `/v1/regions`, `/v1/changes` and `/badge` all
+> answer 200. The routes are now NAMED rather than counted, because a count in
+> prose is scheduled staleness — this one had already gone stale twice.
 
 | Method | Path | Purpose |
 |---|---|---|
