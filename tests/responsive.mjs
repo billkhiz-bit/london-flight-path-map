@@ -120,6 +120,18 @@ const VIEWPORTS = [
   { w: 901, h: 800, name: 'just above desktop grid' },
   { w: 1280, h: 800, name: 'laptop' },
   { w: 1920, h: 1080, name: 'desktop' },
+  // LANDSCAPE, added 2026-08-31 (audit D3). Every viewport above is portrait or
+  // desktop, so a whole orientation was unaudited - and this app's mobile rules
+  // have now been keyed on WIDTH while the failing dimension was HEIGHT three
+  // separate times (the sheet peek, the layers popover, and the legend's expand
+  // chip). A phone rotated is not a narrower desktop: it is 390px of height
+  // with a sticky search card taking 84 of them.
+  //
+  // Measured before the fix at 844x390: the legend showed 58px of 395px of
+  // content with its expand chip `display: none`, because that chip was gated
+  // on `max-width: 480px`. At 568x320 it showed 26px - 93% hidden.
+  { w: 844, h: 390, name: 'iPhone 14 landscape' },
+  { w: 568, h: 320, name: 'iPhone SE landscape' },
 ];
 
 // The homepage gets all ten. The static pages get the narrow end only: they
@@ -211,11 +223,24 @@ for (const meta of PAGES) {
       };
     });
     await page.waitForTimeout(500);
-    if (reached.toggled < 3 || !reached.opened || reached.legendHeight < 40) {
+    // THE HEIGHT FLOOR MIRRORS THE CSS (2026-08-31, audit D3).
+    //
+    // 40px proved the legend had actually rendered rather than the run being a
+    // scan of the landing state wearing another name. That is still the job -
+    // but the legend now DELIBERATELY yields to the city chips below 380px of
+    // viewport height, because at 568x320 a legend tall enough to be useful is
+    // tall enough to cover three chips, and the chips are primary navigation.
+    // Holding 40px there would fail the design rather than the harness.
+    //
+    // `opened` and `toggled` are what actually prove the state was reached;
+    // the height only guards against a zero-size render, so it drops to a
+    // presence check where the cap is deliberately tight.
+    const legendFloor = vp.h >= 380 ? 40 : 8;
+    if (reached.toggled < 3 || !reached.opened || reached.legendHeight < legendFloor) {
       console.log(
         `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
           `legend-open state (layers ${reached.toggled}/3, opened ${reached.opened}, ` +
-          `legend ${reached.legendHeight}px)`
+          `legend ${reached.legendHeight}px, floor ${legendFloor})`
       );
       failures += 1;
       await page.close();
