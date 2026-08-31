@@ -35,6 +35,7 @@ import os
 import re
 
 import boto3
+from botocore.config import Config
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
@@ -53,6 +54,35 @@ MAX_QUESTION_CHARS = 500
 MAX_OUTPUT_TOKENS = 400
 
 logger = logging.getLogger()
+
+# THE INNER BUDGET MUST FIT INSIDE THE OUTER ONE (2026-08-31, audit I16).
+#
+# Both clients below were built with botocore's DEFAULTS: connect_timeout 60,
+# read_timeout 60, and a retry mode that makes up to 5 attempts on a throttle.
+# This function's Timeout is 28 (API Gateway will not wait past 29). So when
+# Bedrock throttles nova-lite - a shared-capacity model in us-east-1, called
+# from eu-west-2 - botocore retried with backoff, elapsed passed 28s, and Lambda
+# was killed MID-CALL. `ask_model`'s `except Exception` never ran, so the caller
+# got a raw 502 with no CORS headers and no JSON envelope instead of the
+# 503 {'error': 'The assistant is unavailable right now.'} that exists for
+# exactly this.
+#
+# Same class as audit I3 (2026-08-22), which lowered NhsFunction from 45s to 28s
+# because "at 45s that branch could never run inside the caller's window, so a
+# slow upstream produced a raw 504 instead of the degraded answer the code was
+# written to give". That sweep fixed function-timeout-exceeds-gateway-cap and
+# did not look at client-timeout-exceeds-function-timeout. /nhs already gets
+# this right (timeout=26 under 28); chat was the one place an inner budget
+# exceeded its outer one.
+#
+# Hoisted to module scope for the second half of the finding: chat rebuilt a
+# client on EVERY invocation, which is 50-200ms of the same budget, while
+# favourites and signup already build theirs once.
+_BOTO_CONFIG = Config(
+    connect_timeout=2,
+    read_timeout=8,
+    retries={'max_attempts': 2, 'mode': 'standard'},
+)
 logger.setLevel(logging.INFO)
 
 SYSTEM_PROMPT = """You answer questions about UK and NYC property locations for Sky Score.
@@ -106,7 +136,7 @@ def retrieve_context(query):
     }
 
     try:
-        client = boto3.client('lambda')
+        client = boto3.client('lambda', config=_BOTO_CONFIG)
         result = client.invoke(
             FunctionName=SCORE_FUNCTION_NAME,
             InvocationType='RequestResponse',
@@ -172,7 +202,7 @@ def verify_answer(answer, context):
 
 def ask_model(question, context):
     """Single Bedrock call. Returns (answer, error)."""
-    bedrock = boto3.client('bedrock-runtime', region_name=BEDROCK_REGION)
+    bedrock = boto3.client('bedrock-runtime', region_name=BEDROCK_REGION, config=_BOTO_CONFIG)
 
     user_text = (
         f'DATA (the only permitted source):\n{json.dumps(context, indent=1)}\n\n'

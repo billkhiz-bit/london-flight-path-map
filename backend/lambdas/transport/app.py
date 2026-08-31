@@ -66,7 +66,30 @@ def handler(event, context):
         for s in stations:
             for line in s.get('lines', []):
                 line_ids.add(line)
-        line_status = fetch_line_status(list(line_ids)[:10]) if line_ids else []
+        # NEVER ASKED IS NOT "ASKED AND NOTHING TO REPORT" (2026-08-31, F/I32).
+        #
+        # `... if line_ids else []` made line_status `[]` without calling TfL,
+        # and `[] is not None` is True - so a stop with no line ids published
+        # `lineStatusAvailable: true`, the machine-readable claim that the
+        # status feed was consulted. Measured live across 12 city centres:
+        # Manchester and Sheffield are tram-only, TfL's StopPoint serves their
+        # Metrolink/Supertram stops with no lineModeGroups, and both reported
+        # `true` on 0 lines. The lines exist; TfL does not publish their
+        # metadata.
+        #
+        # The consequence on the site: renderTransportData computes
+        # `lineStatusChecked = data.lineStatusAvailable !== false` -> true and
+        # `lineStatusRows` -> false, so NEITHER the heading NOR the 2026-08-27
+        # "could not be checked" notice renders. Silence, which that notice
+        # exists to stop being read as "no disruptions".
+        #
+        # The old reasoning - "a station list whose stations carry no line ids
+        # means there is genuinely nothing to report" - holds for a London stop
+        # with no lines and is false for a tram stop. We did not ask; say so.
+        if line_ids:
+            line_status = fetch_line_status(list(line_ids))
+        else:
+            line_status = None
 
         # COMPAT: existing consumers (index.html, the extension) read
         # lineStatus as an array, so the outage case keeps lineStatus: [] and
@@ -127,6 +150,9 @@ def fetch_nearby_stations(lat, lon):
     return results[:5]
 
 
+MAX_LINE_IDS = 40
+
+
 def fetch_line_status(line_ids):
     """Live statuses for `line_ids`, or None when TfL is unreachable.
 
@@ -138,7 +164,25 @@ def fetch_line_status(line_ids):
     if not line_ids:
         return []
 
-    ids_str = ','.join(line_ids[:10])
+    # ONE CAP, IN ONE PLACE, AND HIGH ENOUGH NOT TO BITE (2026-08-31, audit
+    # F20). This was `[:10]` here AND `list(line_ids)[:10]` at the call site -
+    # capped twice - while King's Cross derives 14 line ids. TfL was asked about
+    # ten of them, answered "Good Service" for those ten, and the response said
+    # `lineStatusAvailable: true`: a partial answer published as a complete one,
+    # with the dropped subset varying by set-iteration order. A suspended line
+    # could be the one dropped.
+    #
+    # Raised rather than reported: a new `lineStatusPartial` field would be the
+    # `lineStatusAvailable` mistake again - a field only its producer reads is
+    # not a fix. 40 ids is roughly 400 URL characters and covers every
+    # interchange on the network, so the truncation simply stops happening. The
+    # cap survives as a safety valve and says so in the log if it ever fires.
+    if len(line_ids) > MAX_LINE_IDS:
+        logger.warning(
+            'transport: %d line ids at this stop, asking about %d - raise MAX_LINE_IDS',
+            len(line_ids), MAX_LINE_IDS,
+        )
+    ids_str = ','.join(line_ids[:MAX_LINE_IDS])
     url = f'{TFL_BASE}/Line/{ids_str}/Status'
 
     # THE USER-AGENT IS LOAD-BEARING. TfL answers 403 to urllib's default

@@ -19,6 +19,7 @@ Run from project root:
 
 import json
 import os
+import re
 import sys
 import unittest
 from unittest.mock import MagicMock, patch
@@ -764,6 +765,53 @@ class ChangesCachingTests(unittest.TestCase):
         )
 
 
+class InnerClientBudgetTests(unittest.TestCase):
+    """A client's own timeouts must fit inside the function's (audit I16).
+
+    ApiGatewayTimeoutCapTests below asserts function Timeout <= 29 - the OUTER
+    budget. It has no notion of an INNER one, and chat built both its boto3
+    clients with botocore's defaults: connect_timeout 60, read_timeout 60, up to
+    5 attempts on a throttle, inside a function whose Timeout is 28. So a
+    Bedrock throttle ran the clock past 28s and Lambda was killed MID-CALL,
+    before `ask_model`'s except could return the 503 it exists to return - the
+    caller got a raw 502 with no CORS headers instead.
+
+    Raising a timeout past its container silently disables the fallback beneath
+    it, which is the same sentence the class below already carries about
+    function-vs-gateway. This is that lesson one layer in.
+    """
+
+    def test_chat_client_budget_fits_inside_the_function_timeout(self):
+        import importlib.util
+
+        chat_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'lambdas', 'chat', 'app.py'))
+        spec = importlib.util.spec_from_file_location('chat_budget_probe', chat_path)
+        chat = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(chat)
+
+        cfg = chat._BOTO_CONFIG
+        attempts = (cfg.retries or {}).get('max_attempts', 1)
+        worst_case = (cfg.connect_timeout + cfg.read_timeout) * attempts
+
+        # Read the function's own timeout rather than hardcoding it, so the two
+        # cannot drift apart the way the client and the function did.
+        template = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '..', 'template.yaml'))
+        with open(template, encoding='utf-8') as fh:
+            text = fh.read()
+        block = text[text.index('  ChatFunction:'):]
+        match = re.search(r'Timeout:\s*(\d+)', block[:2000])
+        function_timeout = int(match.group(1)) if match else 28
+
+        self.assertLess(
+            worst_case, function_timeout,
+            f'chat boto3 budget is {worst_case}s of connect+read across '
+            f'{attempts} attempts, against a function Timeout of '
+            f'{function_timeout}s - the degraded-response branch cannot run',
+        )
+
+
 class ApiGatewayTimeoutCapTests(unittest.TestCase):
     """Audit finding I3, fixed 2026-08-22.
 
@@ -904,7 +952,8 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             text = handle.read()
         start = text.index('  ScoreFreeUsagePlan:')
         end = text.index('  ScoreFreeUsagePlanKey:', start)
-        cls.plan = text[start:end]
+        cls.plan = text[start:end]
+
 
         # The DEMO plan is a THIRD published figure and the pages quote it.
         # Without it here, a page stating the demo key's real 2,000/month
@@ -1476,14 +1525,56 @@ class TransportLineStatusOutageTests(unittest.TestCase):
         self.assertEqual(body['lineStatus'], [])
         self.assertIs(body['lineStatusAvailable'], False)
 
-    def test_no_lines_to_ask_about_is_a_real_empty(self):
-        # A station list whose stations carry no line ids means there is
-        # genuinely nothing to report - not an outage.
+    def test_no_lines_to_ask_about_reports_that_we_could_not_ask(self):
+        """Stations found, no line ids derived: we never contacted the feed.
+
+        THIS TEST ASSERTED THE OPPOSITE UNTIL 2026-08-31, and its reasoning was
+        the problem rather than its expectation. It read "a station list whose
+        stations carry no line ids means there is genuinely nothing to report -
+        not an outage", which is true for a London stop with no lines and false
+        for a tram stop: TfL's StopPoint serves Manchester Metrolink and
+        Sheffield Supertram stops with no lineModeGroups, so the lines exist and
+        TfL simply does not publish their metadata.
+
+        Measured live across 12 city centres before the fix: Manchester and
+        Sheffield both published `lineStatusAvailable: true` on 0 lines - the
+        machine-readable claim that the status feed had been consulted. On the
+        site that made `lineStatusAvailable !== false` true and the row count
+        zero, so neither the heading nor the "could not be checked" notice
+        rendered, which is the silence that notice exists to stop.
+
+        A passing test reading as evidence, fourth instance recorded in this
+        repo.
+        """
         with patch.object(self.app, 'fetch_nearby_stations',
                           return_value=self._stations(lines=())):
             body = self._call()
         self.assertEqual(body['lineStatus'], [])
-        self.assertIs(body['lineStatusAvailable'], True)
+        self.assertIs(body['lineStatusAvailable'], False)
+
+    def test_every_derived_line_id_is_asked_about(self):
+        """No silent truncation at a big interchange (audit F20).
+
+        `[:10]` was applied at the call site AND inside fetch_line_status, while
+        King's Cross derives 14 line ids - so TfL was asked about ten, answered
+        for those ten, and the response claimed the status feed was complete.
+        The dropped subset varied with set-iteration order, so a suspended line
+        could be the one dropped.
+        """
+        asked = {}
+
+        def capture(ids):
+            asked['ids'] = list(ids)
+            return []
+
+        many = tuple(f'line{i}' for i in range(14))
+        with patch.object(self.app, 'fetch_nearby_stations',
+                          return_value=self._stations(lines=many)),                 patch.object(self.app, 'fetch_line_status', side_effect=capture):
+            self._call()
+        self.assertEqual(
+            sorted(asked['ids']), sorted(many),
+            f"asked about {len(asked['ids'])} of {len(many)} derived line ids",
+        )
 
     def test_successful_status_fetch_reports_available(self):
         import io as _io

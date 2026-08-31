@@ -455,6 +455,34 @@ the defect. It uses a postcode nothing else touches now. **A test that shares
 mutable cache state with its neighbours is measuring their order, not its
 subject.**
 
+### Fourth pass: the transport contract, and an inner budget
+
+| # | Fix | Proof |
+|---|---|---|
+| I32 | `/transport` published `lineStatusAvailable: true` on responses where the status feed was **never contacted** — live in Manchester and Sheffield, both tram-only, where TfL serves the stops with no `lineModeGroups`. On the site that made `lineStatusAvailable !== false` true with zero rows, so **neither the heading nor the "could not be checked" notice rendered** — the silence that notice exists to stop | Reverted: test fails |
+| F20 | `[:10]` was applied at the call site **and** inside `fetch_line_status` — capped twice — while King's Cross derives 14 line ids. TfL was asked about ten, answered for those ten, and the response claimed completeness; the dropped subset varied with set-iteration order, so a suspended line could be the one dropped | New test: asked about 10 of 14 |
+| I16 | Both chat boto3 clients used botocore's defaults — connect 60, read 60, up to 5 attempts — inside a function whose `Timeout` is 28. A Bedrock throttle ran past 28s and Lambda was killed **mid-call**, before `ask_model`'s except could return its 503, so the caller got a raw 502 with no CORS headers | Reverted: "**600s** of connect+read across 5 attempts, against a function Timeout of 28s" |
+
+**The I32 test had to have its reasoning replaced, not its expectation flipped.**
+It read *"a station list whose stations carry no line ids means there is
+genuinely nothing to report - not an outage"*, which is true for a London stop
+with no lines and false for a tram stop. Flipping `True` to `False` under the
+old comment would have left the file asserting the right thing for a reason
+that is wrong. **Fourth instance of a passing test reading as evidence.**
+
+**F20 was fixed by raising the cap, not by reporting the truncation.** A
+`lineStatusPartial` field would be the `lineStatusAvailable` mistake again — *a
+field only its producer reads is not a fix*. At 40 ids the truncation simply
+stops happening; the cap survives as a safety valve and logs if it ever fires.
+
+**I16 is the `ApiGatewayTimeoutCapTests` lesson one layer in.** That class
+asserts function `Timeout` ≤ 29 — the OUTER budget — and had no notion of an
+inner one. Its own docstring already says *"raising a timeout past the cap
+silently disables the fallback beneath it"*; the new test applies that sentence
+to the client inside the function, and reads the function's timeout out of the
+template rather than hardcoding it, so the two cannot drift the way the client
+and the function did.
+
 ### D1's residual, measured and left open
 
 The fix makes the panel correct everywhere and the map selection correct on
