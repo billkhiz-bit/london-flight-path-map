@@ -225,15 +225,119 @@ for (const vp of VIEWPORTS) {
   }
 }
 
+
+// THE AREA-PAGE DEEP LINK, added 2026-08-31 (audit D1).
+//
+// Every one of the 99 generated pages links to `/?city=<key>&borough=<Name>`,
+// and `bootFromQuery()` read `city` and never `borough` - so the one link the
+// whole SEO surface exists to provide switched to the right city and then
+// showed the empty state. `tests/area-pages.mjs` asserts the WRITER still emits
+// `&borough=`; this asserts the READER acts on it. The two halves are checked
+// separately on purpose: a correct link and a correct reader can drift apart
+// while each looks fine on its own.
+//
+// It lives here because this file already drives the app and already switches
+// cities. A new file would be the fifth orphaned gate in this repo.
+//
+// Asserted on RENDERED DOM, never on `currentCity` / `selectedBorough`: both
+// are IIFE-scoped, so reading them off `window` returns undefined for every
+// case, and a harness that does so reports failures against a working fix.
+// That happened while building this.
+//
+// THE MAP-SELECTION HALF IS DESKTOP-ONLY, AND THAT IS A MEASURED LIMITATION,
+// NOT AN OVERSIGHT. On a phone, a deep link that also SWITCHES CITY renders the
+// panel correctly and then loses the map highlight: measured on 390x844,
+// `?city=manchester&borough=Salford` sets the fill synchronously (reading it in
+// the same tick gives 1 dark outline) and something repaints it to the default
+// within ~1.2s, stably, at every sample out to 8s. It is specific to that path
+// - Camden with no city switch keeps its highlight on the same phone, a normal
+// borough CLICK keeps it, and a plain resize after either keeps it. The panel,
+// which is what the visitor reads, is correct in every case. Asserting the
+// highlight on mobile would red a gate on a defect the deep-link fix did not
+// introduce and does not own; asserting the panel everywhere and the highlight
+// where it is guaranteed is the honest bar. Recorded as an open finding.
+console.log('\n--- area-page deep links ---');
+{
+  // Desktop: panel AND map selection. `dark === 1` is the load-bearing part -
+  // a score row only proves a panel rendered, where a dark outline proves the
+  // MAP selection happened.
+  const { context: dCtx, pg: dPage } = await openAt({ width: 1440, height: 900, label: 'desktop' });
+  for (const [query, borough] of [
+    ['?city=london&borough=Camden', 'Camden'],
+    ['?city=manchester&borough=Salford', 'Salford'],
+    ['?city=london&borough=Barking%20and%20Dagenham', 'Barking'],
+    ['?city=london&borough=NotARealBorough', null],
+  ]) {
+    try {
+      await dPage.goto(`${url}${query}`, { waitUntil: 'load' });
+      await dPage.waitForTimeout(3500);
+      const r = await dPage.evaluate(() => ({
+        rows: document.querySelectorAll('#sidebar-content .score-breakdown .score-row').length,
+        text: (document.querySelector('#sidebar-content')?.innerText || '').replace(/\s+/g, ' '),
+        dark: document.querySelectorAll('path.borough[fill="#141414"]').length,
+      }));
+      const ok = borough
+        ? r.rows > 0 && r.dark === 1 && r.text.includes(borough)
+        : r.rows === 0 && /Search by area/.test(r.text);
+      if (!ok) fail++;
+      console.log(`  ${ok ? 'ok  ' : 'FAIL'} desktop ${query.padEnd(44)} rows=${r.rows} selected=${r.dark}`);
+    } catch (e) {
+      fail++;
+      console.log(`  FAIL desktop ${query.padEnd(44)} ${e.message.split('\n')[0]}`);
+    }
+  }
+  await dCtx.close();
+
+  // Phone: the PANEL must carry the borough, including across a city switch.
+  // This is the half a visitor from a search result actually reads.
+  const { context: mCtx, pg: mPage } = await openAt({ width: 390, height: 844, label: 'phone' });
+  for (const [query, borough] of [
+    ['?city=london&borough=Camden', 'Camden'],
+    ['?city=manchester&borough=Salford', 'Salford'],
+  ]) {
+    try {
+      await mPage.goto(`${url}${query}`, { waitUntil: 'load' });
+      await mPage.waitForTimeout(3500);
+      const r = await mPage.evaluate(() => ({
+        rows: document.querySelectorAll('#sidebar-content .score-breakdown .score-row').length,
+        text: (document.querySelector('#sidebar-content')?.innerText || '').replace(/\s+/g, ' '),
+      }));
+      const ok = r.rows > 0 && r.text.includes(borough);
+      if (!ok) fail++;
+      console.log(`  ${ok ? 'ok  ' : 'FAIL'} phone   ${query.padEnd(44)} rows=${r.rows} names=${r.text.includes(borough)}`);
+    } catch (e) {
+      fail++;
+      console.log(`  FAIL phone   ${query.padEnd(44)} ${e.message.split('\n')[0]}`);
+    }
+  }
+  await mCtx.close();
+}
+
+// Teardown moved BELOW the deep-link block on 2026-08-31: it used to sit
+// directly above, so the new checks opened a context on an already-closed
+// browser and the file died with an uncaught exception instead of running
+// them. A gate that crashes reports neither pass nor fail.
 await context.close();
 await browser.close();
 if (!TARGET) server.close();
 
+// A FLOOR. `fail` is only ever incremented inside the loops above, so an empty
+// `cities` printed "All 0 cities switch and render" and exited 0 - this file,
+// the only one that covers NYC, had no floor at all, while its sibling
+// map-fit.mjs carries one for exactly this hazard.
+if (cities.length < 10) {
+  console.log(
+    `\nFAIL: only ${cities.length} cities enumerated from CITY_DATA; expected at least 10. ` +
+      `A shrunken list makes every assertion above vacuous.`
+  );
+  fail++;
+}
+
 console.log(
   fail === 0
     ? `\nAll ${cities.length} cities switch and render at ${VIEWPORTS.length} viewports ` +
-      `(${cities.length * VIEWPORTS.length} switches).`
-    : `\n${fail} of ${cities.length * VIEWPORTS.length} city/viewport combinations fail to ` +
-      `switch or render.`
+      `(${cities.length * VIEWPORTS.length} switches), and the area-page deep links resolve.`
+    : `\n${fail} failure(s) across ${cities.length * VIEWPORTS.length} city/viewport ` +
+      `combinations plus the deep-link checks.`
 );
 process.exit(fail === 0 ? 0 : 1);

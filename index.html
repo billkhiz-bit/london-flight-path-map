@@ -10385,7 +10385,22 @@
           .append('path')
           .attr('class', 'borough')
           .attr('d', pathGenerator)
-          .attr('fill', (d) => (getName(d) === selectedBorough ? '#141414' : '#E4E3E0'))
+          // CANONICAL comparison, not the raw feature name (2026-08-31).
+          // This was `getName(d) === selectedBorough`, while the mouseout
+          // handler eleven lines below already resolved through matchBorough -
+          // the same two-copies-of-one-rule shape this repo has now found three
+          // times, and the reason a re-render after a selection could drop the
+          // highlight. `selectedBorough` holds the CANONICAL name (set from the
+          // borough record), so a city whose GeoJSON spells a borough
+          // differently never matched here. Both forms are accepted, exactly as
+          // the sibling handler does it.
+          .attr('fill', (d) => {
+            const n = getName(d);
+            const m = matchBorough(n);
+            return (m && m.name === selectedBorough) || n === selectedBorough
+              ? '#141414'
+              : '#E4E3E0';
+          })
           .attr('stroke', '#141414')
           .attr('stroke-width', 0.5)
           .on('mouseover', function (e, d) {
@@ -13410,7 +13425,31 @@
         }
       });
 
-      function bootFromQuery() {
+      // AND THE BOROUGH HALF OF THAT CTA, 2026-08-31 (audit D1).
+      //
+      // The comment above says the area pages' call-to-action "finally has a
+      // reader". Half of it did. Every generated page links to
+      // `/?city=<key>&borough=<Name>` - grep returns 99 of 99 - and this
+      // function read `city` and `postcode` and never `borough`, so
+      // "Open Camden on the Sky Score map" switched to the right CITY and then
+      // showed the empty state: "Search by area, postcode or borough - or click
+      // the map". Measured at 390 and 1366: `selectedBorough: null`, no panel.
+      //
+      // These are 100 of the site's ~109 URLs and the only ones a search
+      // visitor lands on cold, so the one link the SEO surface exists to
+      // provide arrived at an invitation to start over.
+      //
+      // MUST AWAIT switchCity. It is async, and the comment above records what
+      // happens when a render lands on top of an in-flight one - ?city=teesside
+      // once showed the Teesside chip above 33 London outlines. Selecting a
+      // borough before its city's boundaries have rendered is the same class,
+      // one step further in: matchBorough would be asked about a borough the
+      // active city does not hold yet.
+      //
+      // An unresolvable borough is IGNORED, never an error, exactly as the
+      // unknown-city key is - the URL is user-editable, and the city view is a
+      // reasonable landing place on its own.
+      async function bootFromQuery() {
         let params;
         try {
           params = new URLSearchParams(window.location.search);
@@ -13419,6 +13458,7 @@
         }
         const qCity = (params.get('city') || '').toLowerCase().trim();
         const qPostcode = (params.get('postcode') || '').trim();
+        const qBorough = (params.get('borough') || '').trim();
         if (qPostcode) {
           const input = document.getElementById('search-input');
           if (input) input.value = qPostcode;
@@ -13426,7 +13466,11 @@
           return;
         }
         if (qCity && CITY_DATA[qCity] && qCity !== currentCity) {
-          switchCity(qCity);
+          await switchCity(qCity);
+        }
+        if (qBorough) {
+          const match = matchBorough(qBorough);
+          if (match && match.name) selectBoroughByName(match.name);
         }
       }
     </script>

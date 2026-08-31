@@ -131,9 +131,50 @@ check(
 // --- the pages must be readable without JavaScript --------------------------
 // The entire point: the map is client-side, so if these needed JS too they
 // would add nothing a crawler can see.
-const sample = readFileSync(pages[0].file, 'utf8');
-check('pages carry no script tag', !/<script/i.test(sample), '');
-check('score is in the served HTML', /Sky Score out of 10/.test(sample), '');
+// EVERY page, not pages[0] (2026-08-31, audit I10). These two ran on
+// `pages[0]` alone - always area/bristol/bath-and-north-east-somerset - so 98
+// of 99 pages were unchecked on the property the comment above calls "the
+// entire point". Proven: given `<script src="https://evil.example/t.js">` and
+// their score text stripped from 98 pages, all three checks passed and the file
+// exited 0. The loop below already reads every file for the duplicate-block
+// check, so this costs nothing.
+const noScript = [];
+const noScore = [];
+const badCta = [];
+for (const pg of pages) {
+  const html = readFileSync(pg.file, 'utf8');
+  if (/<script/i.test(html)) noScript.push(pg.url);
+  if (!/Sky Score out of 10/.test(html)) noScore.push(pg.url);
+  // THE CALL-TO-ACTION MUST CARRY THE BOROUGH (2026-08-31, audit D1). Every
+  // page links to `/?city=<key>&borough=<Name>`, and index.html read `city`
+  // and never `borough` - so the one link the whole SEO surface exists to
+  // provide switched to the right city and then showed the empty state. The
+  // reader is fixed; this asserts the WRITER still emits what it reads.
+  // The `area/index.html` listing page has no per-borough CTA, so it is
+  // excluded by only testing pages that carry the score line.
+  // Excluded BY URL, not by content. Gating this on the score line being
+  // present meant a page that failed the score check silently vanished from
+  // this one too - one assertion becoming an escape hatch from another, which
+  // is the shape this file exists to catch. Found while red-proofing it.
+  if (pg.url !== '/area/' && !/href="\/\?city=[^"]*&amp;borough=[^"]+"/.test(html)) {
+    badCta.push(pg.url);
+  }
+}
+check(
+  'every page carries no script tag',
+  noScript.length === 0,
+  noScript.length ? `${noScript.length} page(s) carry <script>: ${noScript.slice(0, 3).join(', ')}` : `${pages.length} checked`,
+);
+check(
+  'every page has the score in served HTML',
+  noScore.length === 0,
+  noScore.length ? `${noScore.length} page(s) missing it: ${noScore.slice(0, 3).join(', ')}` : `${pages.length} checked`,
+);
+check(
+  'every CTA deep-links to a borough',
+  badCta.length === 0,
+  badCta.length ? `${badCta.length} page(s) link without &borough=: ${badCta.slice(0, 3).join(', ')}` : `${pages.length - badCta.length} checked`,
+);
 
 console.log('');
 if (failures.length) {

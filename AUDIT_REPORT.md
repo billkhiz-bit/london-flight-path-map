@@ -394,6 +394,32 @@ Nine findings, each verified before and after. The gate work is recorded in
 | I23 | §2 "Planned" reduced to Edinburgh, Glasgow, Belfast | Against `CITY_DATA` |
 | I24 | Four heliport statements corrected | Against `HELIPORTS_LONDON` |
 | I6 | `numpy pillow` added to CI | Proven: 254 pass local, 8 fail stubbed |
+| D1 | `bootFromQuery()` now reads `borough`, awaiting the async `switchCity` first | 6 deep-link cases, proven red 5 of 6 by reverting the fix |
+| I10 | `area-pages.mjs`'s three per-page checks now loop over all 99, not `pages[0]` | Each proven red on a page that is not `pages[0]` |
+| — | `city-switch.mjs` gained a city-count floor; `renderBoroughs()` now compares borough names canonically, as its sibling handler already did | Floor: an empty list used to print "All 0 cities switch" and exit 0 |
+
+### D1's residual, measured and left open
+
+The fix makes the panel correct everywhere and the map selection correct on
+desktop. **On a phone, a deep link that also switches city renders the panel
+correctly and then loses the map highlight.** Measured on 390x844:
+`?city=manchester&borough=Salford` sets the fill *synchronously* — reading it in
+the same tick gives 1 dark outline — and something repaints it to the default
+within ~1.2s, stably, at every sample out to 8 seconds.
+
+It is specific to that one path, which is what makes it worth recording rather
+than guessing at: **Camden with no city switch keeps its highlight on the same
+phone, a normal borough click keeps it, and a plain resize after either keeps
+it.** So it is not the generic repaint-on-resize case, and it is not something
+the deep-link fix introduced.
+
+`renderBoroughs()` was found comparing `getName(d) === selectedBorough` — the
+raw feature name — while the mouseout handler eleven lines below already
+resolved through `matchBorough()`. That is a real inconsistency of the
+two-copies-of-one-rule kind and is fixed, but it was **not** the cause; the
+mobile behaviour is unchanged by it. The late repainter has not been
+identified. The gate asserts the panel at both viewports and the highlight only
+where it is guaranteed, rather than reddening on a defect the fix does not own.
 | F34/F35/F31/F43/F14/F15 (29 Aug) | See the previous report's Status section | All proven red |
 
 ---
