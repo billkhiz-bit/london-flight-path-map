@@ -28,6 +28,49 @@ evidence were dropped by the finders themselves before reporting.
 | Minor | 15 |
 | **Total** | **45** |
 
+### Status, 2026-08-31
+
+**Eleven findings closed, one partial.** F1, F5, F24, F25, F30, F39 and F41 on 30 August;
+**F14, F15, F31, F34, F35 and F43 on 31 August, with F33 partial** — the whole "gates that
+cannot fail" cluster, which the shape-of-this-audit note below calls the most
+productive dimension three audits running.
+
+Every 31 August fix was **proven able to go red** before being accepted, and two
+of the proofs mattered more than the fixes:
+
+- **F34 was worse than recorded.** `FAIL_MODERATE` was not merely filtered out by
+  impact — axe never RAN those four rules, because all four are tagged
+  `best-practice` only while the builder asked for WCAG tags alone. The set was
+  dead code from the day it was written. Proven at the taxonomy level rather
+  than against today's pages, which shows it could never have fired on ANY page.
+  It was hiding missing `<main>` landmarks on **privacy.html and terms.html —
+  the two legal pages — and all 100 pages under `area/`**.
+- **F43's first red-proof passed, and the harness was at fault, not the gate.**
+  MSYS rewrote the `/fonts/...` path argument (this repo's own documented Git
+  Bash gotcha, in a new place), so nothing was actually broken. *A harness that
+  disagrees with the real thing is evidence about the harness first.*
+
+**F33 is PARTIAL, not closed, and the follow-up audit caught me claiming
+otherwise.** The fix does what the finding asked — the city list is now
+cross-checked against the Lambda's own `<CITY>_BOROUGHS` blocks, so dropping a
+city from `AIRPORTS` fails loudly (proven red: before, that scenario printed
+"Compared 104 band(s) … 0 disagreement(s)" and exited 0), and there is a
+per-city floor. But `london` and `nyc` are named `DERIVATION_EXEMPT` rather than
+covered, so **London's 33 and NYC's 5 published `impact` bands — 38 of 99,
+including every `severe` band and the entire Heathrow set the ladder is
+calibrated on — are still compared against nothing.** Naming them means a
+twelfth city cannot silently join them, which is the improvement; it is not the
+same as checking them. Covering London needs the gate to read the DEFRA GeoTIFFs
+already on disk, which would also close finding 1 of the 31 August data-scripts
+audit.
+
+**A new instance of the same class was created and caught during the fix**: a
+collapsed `\b` in a Bash heredoc became a literal `\x08` in the new
+viewport-exemption regex, so a guard written that minute to close F34 could
+never match — a check that cannot fail, made while removing checks that cannot
+fail. `grep` renders it as though the backslash were there and `node --check`
+accepts it. See [[feedback-gitbash-shell-gotchas]].
+
 | Verification | Count |
 |---|---|
 | CONFIRMED (survived adversarial refutation) | 5 |
@@ -233,21 +276,23 @@ Three clusters account for most of it.
 | Category | absence-rendered-as-measurement |
 | Found by | The 44 data-derivation scripts und |
 
-> **RESOLVED 2026-08-30.** `tile_px()` requests each tile at its real extent, so
-> every tile is genuinely 10 m/px and the mosaic's existing assumption becomes
-> true; the tile cache key gained the extent, without which the stale 2000x2000
-> renders would have been served forever. Re-fetched, re-derived, area pages
-> rebuilt. **37 of 81 boroughs moved, 13 changed band**: Sefton 31.39 -> **0.27**
-> `high -> low`, within 0.01 of the 0.28 this finding predicted by hand; South
-> Tyneside 10.94 -> **0.11**; Doncaster 24.38 -> **6.39**. **Teesside gained
-> flood for the first time** (81 -> 86 boroughs) because a partial mosaic is now
-> legal. Two further defects surfaced in the same file: Bristol's edge tile was
-> cached ALL-ZERO from before the blank-render guard existed, and the mosaic
-> initialised to `np.zeros` where 0 means "surveyed, no risk" - it is 255
-> (Unavailable) now. Gated by `scripts/check_flood_georef.py`, which queries the
-> EA's own GetFeatureInfo rather than re-deriving from the same mosaic. **Its
-> first version passed the known-bad file 9 of 9**; the six interior tile blocks
-> were byte-identical, so only periphery-first sampling can see this.
+> **STILL OPEN - and the note that used to sit here belonged to F24.** A copy of
+> the flood-mosaic resolution (`tile_px()`, Sefton 31.39 -> 0.27) was pasted
+> under this finding on 2026-08-30, stamping the report's most valuable open
+> item "RESOLVED". That text describes `fetch_ea_flood_risk.py`; **F38 is about
+> `build_borough_bands.py` never reading NSPL's `doterm`** - an unrelated file
+> and an unrelated defect. Corrected 2026-08-31. The surviving copy under F24
+> is the correct one.
+>
+> **Re-confirmed by direct measurement 2026-08-31**, outside the agent pipeline
+> that left it UNVERIFIED. `grep -n doterm scripts/build_borough_bands.py`
+> still returns nothing, while `build_aircraft_quiet_dataset.py`,
+> `build_city_neighbourhoods.py`, `load_nspl.py` and
+> `probe_aircraft_raster_coverage.py` all filter on it. A full pass over
+> `data/nspl.csv` reproduces every figure below **exactly**: 2,723,596 rows,
+> **915,867 terminated**, of which only **11,414 (1.25%)** sit at `lat > 90`
+> and **904,453 pass straight through** into every derived band. The 12,789
+> live-but-parked rows are what the filter is actually for.
 
 
 **Failure scenario.** Leicester's `transportWithin800mPct` is published as 26.7% and banded `moderate`; over live postcodes only it is 12.0% and bands `poor`. Hinckley and Bosworth 22.5% -> 10.5%. Bath and North East Somerset 25.8% -> 16.9% (`moderate` -> `poor`). Transport is 0.25 of the liveability component in BOTH holders, so the wrong band is served by /v1/score and rendered by the site identically. Feeding the corrected bands through `resolve_query` moves published headline scores: Ealing `live` 8.3 -> 7.6 and score 5.7 -> 5.5; Richmond upon Thames 5.0 -> 4.8; Bexley 8.6 -> 8.4; Enfield 8.4 -> 8.2. On the v4.0 environment inputs: Islington's `roadNoiseAboveWhoPct` 75.3 -> 65.1 (band `high` -> `moderate`), Redbridge 72.1 -> 62.0, Richmond 68.6 -> 56.7, and Kingston upon Thames's `floodMediumOrHighPct` 20.02 -> 5.69 (band `high` -> `medium`). The bias is not random: retired postcodes cluster in redeveloped inner-urban blocks near stations (and duplicate a single coordinate many times, as the two EC1A rows show), so transport access is systematically over-stated where churn is highest.
@@ -307,8 +352,8 @@ Three clusters account for most of it.
 | F4 | UNVERIFIED | METHODOLOGY.md tells B2B auditors in three places that road noise does not score, including a block edited today for v4.0 | `METHODOLOGY.md:1508` | A conveyancer or lender doing the methodology audit this document exists for reads §3 and §7.1, concludes Sky Score's number contains no road-noise term, and either (a) buys a separate road-noise product believing there is no overlap, or (b) signs off the score as road-noise-free for a decision where double-counting matters. Meanwhile the |
 | F5 | **FIXED 2026-08-30** | README's v4.0 headline says 90 of 99 boroughs are "fully measured" for environment; the code says 85, and README's own three numbers sum to 104 | `README.md:18` | README is the first page of the source-available repo the methodology audit is run against, and its first screen is the v4.0 summary. A reader takes "90 of 99 fully measured" as the coverage figure and cites it, when 5 of those 90 are Teesside boroughs scored on two inputs of three with no flood data at all — the exact boroughs the v4.0 f |
 | F9 | UNVERIFIED | A DynamoDB read failure makes /v1/environment and /v1/score assert that DEFRA has no contour at a postcode DEFRA has measured | `backend/lambdas/score/app.py:4090` | DynamoDB throttles or the client cannot be built (a region/config change, a PAY_PER_REQUEST ramp under the loader's write workers - the case _DDB_TIMEOUT_CONFIG's comment anticipates). A request to the unauthenticated GET /v1/environment?lat=51.47&lon=-0.4543 - the endpoint the public browser extension renders on Rightmove listings - retu |
-| F14 | UNVERIFIED | The demo-key scope gate cannot fail while the demo key is out of monthly quota - and it is out of quota right now | `tests/demo-key-scope.mjs:34` | Someone edits `backend/template.yaml` and drops the `/v1/chat/POST` and `/v1/score/batch/POST` Throttle entries from `ScoreDemoUsagePlan` (lines 615-623), or API Gateway changes how it reads RateLimit 0. Because the demo key's 2,000/month quota is currently exhausted, every request with that key returns 429 regardless, so both assertions  |
-| F15 | UNVERIFIED | The free-tier deny assertions - the ones the code calls load-bearing - have never run, because their env var exists nowhere in the repo | `tests/demo-key-scope.mjs:172` | The `ScoreFreeUsagePlan` per-method denies (backend/template.yaml lines 540-547) stop working - removed in an edit, or lost to the CloudFormation MethodSettings/Throttle ordering trap the same file documents twice. Free-tier keys are minted by `/v1/signup`, which is UNAUTHENTICATED and needs only an unverified email address, so anyone can |
+| F14 | **FIXED 2026-08-31** | The demo-key scope gate cannot fail while the demo key is out of monthly quota - and it is out of quota right now | `tests/demo-key-scope.mjs:34` | Someone edits `backend/template.yaml` and drops the `/v1/chat/POST` and `/v1/score/batch/POST` Throttle entries from `ScoreDemoUsagePlan` (lines 615-623), or API Gateway changes how it reads RateLimit 0. Because the demo key's 2,000/month quota is currently exhausted, every request with that key returns 429 regardless, so both assertions  |
+| F15 | **FIXED 2026-08-31** | The free-tier deny assertions - the ones the code calls load-bearing - have never run, because their env var exists nowhere in the repo | `tests/demo-key-scope.mjs:172` | The `ScoreFreeUsagePlan` per-method denies (backend/template.yaml lines 540-547) stop working - removed in an edit, or lost to the CloudFormation MethodSettings/Throttle ordering trap the same file documents twice. Free-tier keys are minted by `/v1/signup`, which is UNAUTHENTICATED and needs only an unverified email address, so anyone can |
 | F16 | UNVERIFIED | /v1/signup writes an unverified third party onto the score-update list, and that write permanently locks the real owner out of self-service API signup | `backend/lambdas/signup/app.py:432` | An attacker scripts POST /v1/signup with `source: consumer` against a list of addresses at the per-route ceiling of 1 RPS (backend/template.yaml:71-74) = 86,400/day. Three effects, all verified above: (a) every unknown address is written into `london-flight-map-signups` as a consented subscriber, kept under 35-day PITR, on a list whose ow |
 | F17 | UNVERIFIED | /nhs is unauthenticated, holds a Lambda for up to 26 seconds per request, and is the one route with no per-method throttle | `backend/template.yaml:52` | An attacker sends 50 RPS of `GET /nhs?lat=56.5&lon=-4.2` (any coordinate outside the London snapshot bbox, so `in_bundle_area` is false and every request reaches Overpass). Two consequences, neither needing a key: (1) the stage-wide 50 RPS bucket is fully consumed by /nhs, so paying customers' `GET /v1/score` requests are rejected at the  |
 | F19 | UNVERIFIED | chat's grounding control whitelists exactly the 0-10 range every Sky Score number lives in, so a hallucinated score passes as grounded | `backend/lambdas/chat/app.py:138` | A caller POSTs `{"postcode":"SE1 7PB","question":"how quiet is it?"}` to /v1/chat for a borough whose real payload is `score: 4.1, components.quiet: 2.0`. Nova Lite (temperature 0.2, and reachable by prompt injection through the free-text `question` field, which is interpolated into the user message at line 176 with no separation from the |
@@ -316,13 +361,13 @@ Three clusters account for most of it.
 | F21 | UNVERIFIED | A failed or slow /nhs or /transport call leaves the panel's "Loading..." placeholder up permanently, so both Lambdas' honest degraded responses are un | `index.html:9807` | A London postcode whose bundled snapshot has no service within 1500 m (measured below: 8.4% of Greater London's area) falls through to live Overpass. Overpass from Lambda competes for AWS's shared-IP budget — the documented, measured reason the bundle exists — and takes 12s. At 8s the browser aborts with TimeoutError, fetchNhsData returns |
 | F27 | UNVERIFIED | fetchTransportData turns any non-2xx /transport response into `available: true`, so a Lambda 5xx renders as "stations found, no line disruptions" | `index.html:9442` | `/transport` returns 500 (the Lambda's own final guard at `transport/app.py:88-89`), or API Gateway returns 502/504 on a Lambda timeout, or the key/route is throttled. A London user searching SW1A 1AA sees four stations with distances under `NEAREST STATIONS (LIVE TfL DATA)` and no line-status section at all. Per the codebase's own reason |
 | F28 | UNVERIFIED | When borough-extra.json fails to load, every borough score silently INFLATES and the notice explaining it describes arithmetic the code does not do | `index.html:7826` | A CloudFront blip, a corporate proxy, or an S3 permissions error makes /data/borough-extra.json 403 or time out twice. Every borough on the site now scores ~1.0 point HIGHER than /v1/score returns for the same borough (Camden 7.6 vs 6.6), because dropping liveability and environment removes the two components London boroughs score worst o |
-| F31 | UNVERIFIED | The two gates that assert the web/native layout split are wired into no runner, and two of the three contexts inside one of them assert nothing at all | `tests/native-sim-render.mjs:130` | The tabbed layout became the web default at <=900px on 2026-08-27 (index.html:4096-4121, `applyTabbedLayout()`), with `?tabbed=0` as the documented opt-out. If a later CSS or JS edit breaks the `?tabbed=0` classic path - `#sheet-handle` never shown, `is-tabbed` not removed - nothing in the repo notices: the only assertion of that path liv |
+| F31 | **FIXED 2026-08-31** | The two gates that assert the web/native layout split are wired into no runner, and two of the three contexts inside one of them assert nothing at all | `tests/native-sim-render.mjs:130` | The tabbed layout became the web default at <=900px on 2026-08-27 (index.html:4096-4121, `applyTabbedLayout()`), with `?tabbed=0` as the documented opt-out. If a later CSS or JS edit breaks the `?tabbed=0` classic path - `#sheet-handle` never shown, `is-tabbed` not removed - nothing in the repo notices: the only assertion of that path liv |
 | F32 | UNVERIFIED | All 99 area pages publish a component breakdown that omits `environment` - 14% of every score - while including `growth`, which carries 0% weight; the | `scripts/build_area_pages.py:137` | A visitor or a search crawler lands on /area/london/camden/. The page states "6.6 Sky Score out of 10" and then a table of Quiet skies 10.0, Affordability 4.7, Growth 3.6, Liveability 5.5. Those four cannot produce 6.6 under any published weighting - they produce 6.92 - and the row that reconciles them (Environment 4.4, the component that |
-| F34 | UNVERIFIED | The a11y gate's FAIL_MODERATE set can never fire - all four rules are excluded by the tag filter directly above it, and two of them are violated today | `tests/a11y-source.mjs:172` | privacy.html and terms.html - the legal pages - ship with no `<main>` landmark and 38 and 46 content nodes respectively outside any landmark. A screen-reader user pressing the 'jump to main content' shortcut on either page lands nowhere and has to traverse the whole document. The gate that exists to stop exactly this prints OK for both an |
-| F35 | UNVERIFIED | The 100 pages under area/ are in no accessibility or responsive gate at all, and every one of them ships without a main landmark | `tests/a11y-source.mjs:53` | A screen-reader user landing on any of the 99 borough pages from search - which is the entire reason the pages exist - gets a document with no main landmark and all of its content, including the score headline and the 15-row measurement table, outside any landmark. More importantly the whole surface is ungated: scripts/build_area_pages.py |
+| F34 | **FIXED 2026-08-31** | The a11y gate's FAIL_MODERATE set can never fire - all four rules are excluded by the tag filter directly above it, and two of them are violated today | `tests/a11y-source.mjs:172` | privacy.html and terms.html - the legal pages - ship with no `<main>` landmark and 38 and 46 content nodes respectively outside any landmark. A screen-reader user pressing the 'jump to main content' shortcut on either page lands nowhere and has to traverse the whole document. The gate that exists to stop exactly this prints OK for both an |
+| F35 | **FIXED 2026-08-31** | The 100 pages under area/ are in no accessibility or responsive gate at all, and every one of them ships without a main landmark | `tests/a11y-source.mjs:53` | A screen-reader user landing on any of the 99 borough pages from search - which is the entire reason the pages exist - gets a document with no main landmark and all of its content, including the score headline and the 15-row measurement table, outside any landmark. More importantly the whole surface is ungated: scripts/build_area_pages.py |
 | F36 | UNVERIFIED | On every phone width the result card's close button is 69% covered by the sticky search card - live in production, on the default mobile layout | `index.html:3151` | A visitor on a phone (tabbed layout is the web default at <=900px since 2026-08-27, index.html:4119) searches a postcode or taps a borough. The result card opens over the map. The `×` that returns them to the map is painted under the floating white search card - visually a stray mark, and a tap at its centre hits the search input instead. |
 | F42 | UNVERIFIED | /v1/environment and /badge publish DEFRA measurements with no sources array, so the extension panel's own attribution footer credits everyone except D | `backend/lambdas/score/app.py:7088` | A reader opens a Rightmove listing in a postcode with no EPC certificates on record and no Land Registry sales (a new-build, or any of the postcodes where /sold-prices returns an empty array). The only section that resolves is Environment. renderSources() collects zero strings across all payloads, hits `if (!seen.size) return null`, and t |
-| F43 | UNVERIFIED | The only gate that compares deployed state to source covers 3 of the 20 assets whose atomic precache decides whether the PWA installs, and prints "all | `scripts/check_deploy_drift.sh:119` | `make web-deploy-all` runs. fonts-deploy uploads fonts.css and inter.woff2 but the recursive .woff2 copy is interrupted, or the run hits the documented Git-Bash MSYS invalidation failure that bit on 2026-08-26 *after* the uploads — leaving jetbrains-mono.woff2 absent from the origin. Every later target succeeds. `sh scripts/check_deploy_d |
+| F43 | **FIXED 2026-08-31** | The only gate that compares deployed state to source covers 3 of the 20 assets whose atomic precache decides whether the PWA installs, and prints "all | `scripts/check_deploy_drift.sh:119` | `make web-deploy-all` runs. fonts-deploy uploads fonts.css and inter.woff2 but the recursive .woff2 copy is interrupted, or the run hits the documented Git-Bash MSYS invalidation failure that bit on 2026-08-26 *after* the uploads — leaving jetbrains-mono.woff2 absent from the origin. Every later target succeeds. `sh scripts/check_deploy_d |
 
 ## 3. Minor
 
@@ -338,7 +383,7 @@ Three clusters account for most of it.
 | F22 | UNVERIFIED | signup leaks an API key with no orphan-alarm log when the DynamoDB write fails with a non-ClientError, the exact case the mirrored rollback 265 lines  | `backend/lambdas/signup/app.py:481` | A DynamoDB connection failure or read timeout on the PutItem in record_signup (SignupFunction has `Timeout: 10`, so a slow DDB call is entirely plausible). The user has already had an APIGW key created, enabled and linked to SkyScoreFreeTier. They receive HTTP 500 'Internal server error.' with no key. CloudWatch shows only the generic 'un |
 | F23 | UNVERIFIED | The recorded rationale for the /nhs bbox fall-through is the inverse of the data: the snapshot covers the whole bounding box, so the fall-through make | `backend/lambdas/nhs/app.py:318` | A user searches a postcode in outer London where the nearest OSM-tagged GP, pharmacy and hospital are all beyond 1500 m — the green-belt fringes of Havering, Bromley, Enfield or Hillingdon, 8.4% of Greater London's area. The snapshot already knows the correct answer (nothing within 1.5 km) but `any(buckets.values())` is false, so the requ |
 | F29 | UNVERIFIED | The Saved list files every UK city's favourites under a "LONDON" heading | `index.html:11604` | A user in Greater Manchester saves M1 1AE, then Bradford (West Yorkshire) and Middlesbrough (Teesside). Opening Saved, all three appear under a heading reading "LONDON", beside their real borough names ("Manchester", "Bradford", "Middlesbrough") — a heading that contradicts the rows underneath it. Clicking one still opens the correct city |
-| F33 | UNVERIFIED | `aircraft bands == geometry` reads its city list from the same dict it checks and has no coverage floor, so it omits London's 33 and NYC's 5 boroughs  | `scripts/build_aircraft_bands.py:507` | A merge, a rebase, or a refactor drops or renames one entry in `AIRPORTS` - say `manchester`, whose docstring comment at lines 78-82 records that its ten bands "were hand-assigned against a Heathrow-calibrated ladder and were the only site city whose aircraft input no script could reproduce". The blocking preflight stage then prints "Comp |
+| F33 | **PARTIAL 2026-08-31** | `aircraft bands == geometry` reads its city list from the same dict it checks and has no coverage floor, so it omits London's 33 and NYC's 5 boroughs  | `scripts/build_aircraft_bands.py:507` | A merge, a rebase, or a refactor drops or renames one entry in `AIRPORTS` - say `manchester`, whose docstring comment at lines 78-82 records that its ten bands "were hand-assigned against a Heathrow-calibrated ladder and were the only site city whose aircraft input no script could reproduce". The blocking preflight stage then prints "Comp |
 | F37 | UNVERIFIED | The homepage footer renders "Methodology v3.7" while the live API, METHODOLOGY.md and the 99 area pages all say 4.0 | `index.html:3757` | A visitor (or a pilot prospect doing diligence) reads "Methodology v3.7" in the footer, clicks it, and lands on a document headed "Version 4.0" describing a scored environment component the footer says does not exist yet. Any score they then pull from /v1/score comes back stamped 4.0. Three surfaces give three different answers to "which  |
 | F40 | UNVERIFIED | roadNoiseAboveWhoPct is a share of the postcodes DEFRA mapped, not of the borough's addresses, but is published and scored as the latter - the quiet c | `scripts/build_borough_bands.py:608` | Solihull publishes `roadNoiseAboveWhoPct: 45.7` with `roadNoiseCoverage: 88.0`; the share of its addresses over the WHO guideline is 40.2%. Every one of the 86 boroughs with road data is biased in the same direction - louder, i.e. worse - by 0 to 5.5 points. One published map band is wrong as a result: London's Sutton is banded `moderate` |
 | F44 | UNVERIFIED | The prototype's meta, og and twitter descriptions advertise "live aircraft tracking" on a page whose own live mode is disabled pending OpenSky licensi | `prototype/index.html:16` | Someone shares the prototype URL on LinkedIn or X, or it surfaces in a search result. The card and the snippet read "3D terrain visualisation of London airspace with live aircraft tracking" — a capability the page deliberately does not have, and cannot have until OpenSky's written licensing agreement lands (OPENSKY_LICENSING_EMAIL.md, Tic |

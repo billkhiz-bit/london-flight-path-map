@@ -2,7 +2,62 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-08-30 (**THE FLOOD DATA IS FIXED, AND THE GATE THAT
+**Last reviewed:** 2026-08-31 (**THE GATE CLUSTER IS CLOSED, AND A FULL AUDIT
+FOUND TWO WRONG NUMBERS WE PUBLISH TODAY.** Two pieces of work.
+
+*First, the "gates that cannot fail" cluster from the 29 Aug audit* - F14, F15,
+F31, F34, F35, F43 closed and F33 partial, every one proven able to go red
+before it was accepted. **F34 was worse than recorded**: `FAIL_MODERATE` was not
+merely filtered out by impact, axe never RAN those four rules, because all four
+are tagged `best-practice` only while the builder asked for WCAG tags alone -
+dead code from the day it was written, proven at the taxonomy level so it could
+never have fired on ANY page. It was hiding missing `<main>` landmarks on
+**privacy.html and terms.html, the two legal pages, and all 100 pages under
+`area/`** - which were in no accessibility or responsive gate at all. The a11y
+scan now covers 109 pages, the list DERIVED from the filesystem, with the
+single-viewport exemption **asserted** (it reads the generator and fails if a
+width breakpoint appears) rather than left in a comment. `native-sim-render` and
+`live-mobile-verify` were in **no runner at all** - the 3rd and 4th orphaned
+gates found here after `failure-path` on 27 Aug - and two of the three contexts
+inside the first asserted **nothing**, so the App Store layout could break in any
+way and it still exited 0. `check_deploy_drift` covered **3 of the 20** assets
+whose atomic `cache.addAll()` decides whether the PWA installs; it now derives
+the set from `sw.js` and proves reachability (live: **20 of 20 present**).
+**Two lessons cost more than the fixes.** F43's first red-proof PASSED and the
+HARNESS was at fault - MSYS rewrote the `/fonts/...` argument, this repo's own
+documented Git Bash gotcha in a new place; *a harness that disagrees with the
+real thing is evidence about the harness first*. And a collapsed `\b` in a Bash
+heredoc became a literal `\x08`, so a guard written that minute to close F34
+could never match - **a check that cannot fail, created while removing checks
+that cannot fail**.
+
+*Second, a full seven-finder audit* - report in `AUDIT_REPORT.md`, previous
+archived as `AUDIT_REPORT_2026-08-29.md`. 6 critical / ~34 important. **Two
+findings change numbers we publish right now.** The aircraft near-field floor is
+a **DISC** compared against a runway-shaped contour, so Rushcliffe publishes
+`Quiet skies 10.0/10` over **10.43 km² at ≥55 dB, max 65.6 dB** - its balanced
+score should be 3.4, not 5.0 - while Solihull at a comparable 9.21 km² is
+published `moderate-high`, so it is internally inconsistent rather than a
+threshold. And the neighbourhood medians include HM Land Registry **Category B**
+transactions (repossessions, non-private transfers, "Other" property types),
+which HMLR's own statistics and the UK HPI exclude - **412 of 485 published
+prices are wrong**, TS26 Hartlepool by 40%, swinging its score 7.84 -> 5.88,
+while the borough `avgPrice` beside it is Category-A via the HPI gate. **The
+same product publishes two price bases.** Also live: the 99 area pages credit
+ONS, DEFRA, EA and NaPTAN on New York's pages while the same page's derived
+sources paragraph says OGL does not apply; a `/transport` 5xx renders as a clean
+network; and a slow `/nhs` or `/transport` leaves "Loading from TfL API..." up
+permanently, measured at 2 of 16 live samples past the 8s deadline. **Nine
+findings were re-verified by hand** and the documentation half was FIXED in the
+same pass - METHODOLOGY §5 published a five-component score under a FOUR-term
+formula (the reproduction procedure a B2B audit runs), §7.1's road band rule
+reproduced 11 of 86 published bands and now reproduces 86 of 86, LICENSING
+carried the v3.9 env weights and had no row for DEFRA road Lden at all, and CI's
+`test-backend` had been RED on every push since F30 "fixed" it - 254 tests pass
+locally, 8 fail under CI's dependency set. **Nothing from the audit's critical
+list is fixed yet; F38 from 29 Aug remains the largest open item.**)
+
+**Previously reviewed:** 2026-08-30 (**THE FLOOD DATA IS FIXED, AND THE GATE THAT
 SHOULD HAVE CAUGHT IT NOW EXISTS.** Audit F24/F39, the worst finding of the 29
 Aug audit, is closed. `fetch_ea_flood_risk.py` clipped edge tiles to the city
 bbox but requested every one at 2000x2000 px whatever ground it covered, then
