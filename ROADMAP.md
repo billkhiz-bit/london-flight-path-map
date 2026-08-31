@@ -2,7 +2,48 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-08-31 (**THE GATE CLUSTER IS CLOSED, AND A FULL AUDIT
+**Last reviewed:** 2026-08-31, later the same day (**FIVE FIX PASSES AFTER THE
+AUDIT, ALL SOURCE-ONLY - LIVE IS UNTOUCHED.** 14 gates that could not fail are
+closed, plus five absence-as-measurement defects, two false provenance claims
+and three live UX defects. Every fix proven red against a constructed defect
+first; where a proof touched a tracked file the restore was sha256-verified.
+
+*The three worst gates.* `check_flood_georef` passed on a mosaic with **every
+flood polygon erased** (proven by zeroing London's 1,215,784 medium-or-high
+pixels) and silently skipped **10 of 11 cities**. `build_borough_bands --check`
+read missing data as agreement, on the ONLY source-crossing gate for road noise,
+air quality, transport and healthcare. `map-fit` **never measured New York at any
+viewport** - it enumerated the active country's chips only, and NYC is the one
+city with a different projection origin AND boundary source.
+
+*Three live UX defects.* The result-close `x` was **20% hit-testable at every
+width <=900px** with its centre resolving to the search card; Escape did nothing
+either. **13 controls stayed in the tab order behind the full-screen mobile
+panel.** And **6 of 10 city chips could not be reached with a mouse** at 901px,
+with Greater Manchester still off-strip at 1366x768 - no scrollbar exists, a
+vertical wheel does nothing, there is no drag handler.
+
+*Two false provenance claims fixed.* `sourceBreakdown.live` credited DfE for 7 of
+Leicester's 8 boroughs while the same response said 3/4; and the postcode LRU
+returned above the attribution call, so only the FIRST request for a postcode
+credited ONS and every later one credited postcodes.io, uncalled.
+
+*Three fixes were made twice and the first attempt was wrong each time,* which is
+the part worth carrying: keying the ONS cache on EDITION forces a re-download and
+the ONS URL 404s today; `renderBoroughs` comparing raw instead of canonical names
+was a real bug but NOT the cause of the mobile deep-link behaviour; and inerting
+`#map-container` removed the document's only `<main>`, caught by the a11y gate
+within one run.
+
+**STILL OPEN AND NEEDING A DEPLOY WINDOW:** the aircraft near-field **disc**
+(Rushcliffe publishes `Quiet skies 10.0/10` over 10.43 km2 at >=55 dB, should be
+3.4), the neighbourhood medians including HM Land Registry **Category B** (412 of
+485 prices wrong, Hartlepool by 40%), **F38**'s 904,453 retired postcodes, and
+the N1 7SX site/API divergence. All four change published numbers, and
+`area pages match the live API` is blocking, so none can be committed green
+without deploying.)
+
+**Previously reviewed:** 2026-08-31 (**THE GATE CLUSTER IS CLOSED, AND A FULL AUDIT
 FOUND TWO WRONG NUMBERS WE PUBLISH TODAY.** Two pieces of work.
 
 *First, the "gates that cannot fail" cluster from the 29 Aug audit* - F14, F15,

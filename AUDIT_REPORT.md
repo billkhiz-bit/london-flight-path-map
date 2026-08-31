@@ -483,6 +483,44 @@ to the client inside the function, and reads the function's timeout out of the
 template rather than hardcoding it, so the two cannot drift the way the client
 and the function did.
 
+### Fifth pass: the controls people reach for
+
+| # | Fix | Before -> after |
+|---|---|---|
+| D2 | The result-close **×** sat at `top: 4px` = y113 while the sticky search card occupies y 54-138. `z-index: 2` could not help: `#tab-analysis` is `z-index: auto`, so an inner 2 loses to the card's 3 directly | **20% -> 100% hit-testable**, centre resolves to the button, a real click dismisses, at 320/375/390/414/900. **Escape** now dismisses too, routed through the button's own click |
+| D6 | 13 controls stayed focusable behind the full-screen mobile panel — 2 country tabs, 10 city chips, the layers trigger, the legend toggle — all confirmed occluded, Tab stops 16-28 | The map's children go `inert` while the panel covers it, **coverage measured**, not inferred from a breakpoint |
+| D4 | Up to **6 of 10 city chips unreachable with a mouse**: no scrollbar exists (`offsetHeight - clientHeight = 0`), a vertical wheel leaves `scrollLeft` at 0, no drag handler. Greater Manchester was still off-strip at **1366×768** | Wraps at ≥901px. All 10 reachable at 901/1024/1280/1366/1440/1600. Mobile's scroll strip untouched |
+
+**Three things the measurements changed about the fix.**
+
+- **The locator inset's top is now derived, not a constant.** `138px` was right
+  only while the strip was one 24px row; wrapping made it 52–128px and the rows
+  landed on the locator's ten focusable markers. Same reasoning as
+  `--footer-inset`, which this file already measures for this class.
+- **At 901px there is genuinely no room for both.** The desktop grid leaves the
+  map ~457px, so the chips need three rows; the locator yields entirely there —
+  `hidden`, which also removes its markers from the tab order, rather than
+  squeezed, which would be the same defect made smaller.
+- **The locator is repositioned from a `ResizeObserver` on the legend, not a
+  list of call sites.** Hooking it to `updateLegendFade()` covered the landing
+  state and missed the legend-open one, because the legend grows through several
+  paths and **any list of call sites is a list that can be short by one**.
+
+**The a11y gate caught this fix trading one defect for another.** `#map-container`
+*is* the document's `<main>`, so marking it `inert` removed the only main
+landmark — `landmark-one-main` failed in the borough-selected state immediately.
+Inerting its **children** takes the thirteen controls out of the tab order and
+leaves the landmark intact.
+
+**Neither existing gate could have caught D4**, and the reason is worth keeping:
+a chip past a scroller's edge is a *scroll* case, and `responsive.mjs` correctly
+exempts one — the same exemption that stops it failing on the mobile strip. With
+a mouse there was simply no way to scroll. `selector-widths.mjs` now asserts chip
+containment at ≥901px, proven red at 901/1024/1200/1366/1440 naming each chip
+that escapes. `responsive.mjs` gained a **borough-selected page state**: every
+entry was audited before a result exists, so the COVERED detector was written and
+had never reached the state that needed it. 55 → 65 combinations.
+
 ### D1's residual, measured and left open
 
 The fix makes the panel correct everywhere and the map selection correct on
