@@ -449,6 +449,41 @@ where it is guaranteed, rather than reddening on a defect the fix does not own.
 
 ---
 
+## 5b. Found after the audit: a live site/API divergence on N1 7SX
+
+`tests/site-api-parity.mjs` — the advisory stage that compares the score the
+**live site renders** against what **`/v1/score`** returns — reports **1 of 6
+probes diverging**, and it is not caused by anything in this session (nothing
+has been deployed).
+
+```
+SW11 1AA   OK       6.8/10        SE18 6NQ   OK       8.2/10
+W3 7BN     OK       5.8/10        TW6 1AP    OK       5.7/10
+SW12 0DL   OK       6.5/10        N1 7SX     DIVERGE  site 7.0 vs api 7.1
+```
+
+**All five components agree to 1 dp**: quiet 7.0, afford 7.3, growth 5.5,
+live 7.8, env 5.2. Under balanced weights those published figures sum to
+**7.045** — **0.005 below the 7.05 rounding boundary**. So the two holders'
+*raw* values differ by a hair somewhere, and the postcode lands on a knife edge
+where that hair is worth 0.1 on the headline number.
+
+**Which raw input differs is NOT established, and the obvious explanation is
+wrong.** The tempting diagnosis is round-then-sum against sum-then-round, and it
+does not survive reading the code: `index.html:11223` passes **unrounded**
+components to `combineWeighted`, exactly as the Lambda does, with the rounded
+`scores` kept as a separate display field. The likeliest remaining candidate is
+a small difference in the postcode-level `quiet` between the two tiers, but that
+is a hypothesis, not a measurement. **A fix written from the wrong diagnosis is
+wrong too** — identify the differing raw value first.
+
+Worth stating plainly: this is the gate working. It was added after the site and
+API disagreed on 13% of London postcodes while every component matched, and it
+is the only check that compares the **output** rather than the inputs. Fixing it
+changes a published number and so needs a coordinated deploy of both halves.
+
+---
+
 ## 6. Carried forward from 29 August, still open
 
 `F8` (persona-blind comparison explanations), `F26` (London's aircraft raster
