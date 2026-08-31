@@ -1,12 +1,25 @@
 import { chromium } from '@playwright/test';
 
-// Verify the LIVE deployed WEB layout across phone widths — what real
-// skyscore.co.uk / PWA users see. As of the 2026-05-29 web/native split, the
-// mobile redesign (bottom nav + map-as-background) is NATIVE-APP ONLY; the
-// website serves the CLASSIC bottom-sheet layout. So on live web we expect NO
-// bottom nav, no data-mview, and the sheet handle present. This goes green
-// once the reverted index.html is deployed to CloudFront — until then live
-// still carries the old v1 redesign and this will report FAIL (expected).
+// Verify the LIVE deployed WEB layout across phone widths - what real
+// skyscore.co.uk / PWA users see.
+//
+// HEADER CORRECTED 2026-08-31 (audit F31). It still described the 2026-05-29
+// split, under which the redesign was NATIVE-ONLY and the website served the
+// classic bottom sheet, and it told the reader this file expects "NO bottom
+// nav, no data-mview, and the sheet handle present". The assertion below was
+// INVERTED on 2026-08-27 when tabs became the web default at <=900px, so the
+// file's own header said the opposite of its own check. That is worse than no
+// comment: a reader trusting it would have "fixed" a correct gate by breaking
+// it, which is exactly how a passing test comes to assert a defect.
+//
+// Current expectation: live web at <=900px serves the TABBED layout - bottom
+// nav visible, sheet handle hidden - while `is-native` stays FALSE, because
+// the web/native split has not moved; only the web DEFAULT has.
+//
+// This reads CloudFront, so it reports DEPLOYED state. preflight runs it as
+// ADVISORY for that reason: a source tree ahead of the last deploy is the
+// normal condition in this repo and must not block a commit. Same reasoning as
+// `deployed == source` and `site == /v1/score`.
 const URL = 'https://d1oe4ftwutjpf.cloudfront.net/index.html?cb=' + Date.now();
 const widths = [
   { w: 360, h: 800, label: 'small Android (360)' },

@@ -47,6 +47,17 @@ async function call(path, { method = 'GET', body = null } = {}) {
 }
 
 const failures = [];
+
+// Checks that could not be EXERCISED, as distinct from checks that failed.
+// Kept apart on purpose: a failure means the boundary is broken, an unproven
+// check means we learned nothing. Collapsing the two either blocks commits on
+// a consumable or reports evidence that was never gathered.
+const unproven = [];
+// Set by block 1 when the demo key's monthly quota is spent. While it is true,
+// a 429 from the deny probes below is ambiguous - it could be the per-method
+// RateLimit 0, or it could be the quota answering every route the same way.
+let quotaExhausted = false;
+
 function check(name, pass, detail) {
   console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${name}  ${detail}`);
   if (!pass) failures.push(`${name}: ${detail}`);
@@ -76,6 +87,7 @@ console.log('\nDemo key scope\n==============\n');
   // to a warning here. The security assertions below do NOT degrade - they cost
   // nothing, so nothing can wear them down.
   if (r.status === 429) {
+    quotaExhausted = true;
     console.log(
       '  WARN  GET /v1/score not verified - demo quota exhausted (429).' +
         ' Not failing: this is a consumable, and the boundary checks below' +
@@ -90,6 +102,18 @@ console.log('\nDemo key scope\n==============\n');
   }
 }
 
+// The deny probes go through this rather than check(), because 429 means two
+// different things depending on whether the quota is spent, and only one of
+// them is evidence that the per-method deny is working.
+function deny(name, status, extra = '') {
+  if (quotaExhausted && status === 429) {
+    console.log(`  UNPROVEN  ${name}  status=429 (indistinguishable from the spent quota)`);
+    unproven.push(`${name} - 429 while the demo quota is exhausted, so the per-method deny was not tested`);
+    return;
+  }
+  check(name, BLOCKED_STATUS.has(status), `status=${status}${extra}`);
+}
+
 // 2. Batch must be refused. 100 scores per metered request is 20x the Free tier
 //    for a key that costs nobody an email address.
 {
@@ -97,10 +121,10 @@ console.log('\nDemo key scope\n==============\n');
     method: 'POST',
     body: JSON.stringify({ queries: [{ postcode: 'SW11 1AA' }] }),
   });
-  check(
+  deny(
     'POST /v1/score/batch is refused',
-    BLOCKED_STATUS.has(r.status),
-    `status=${r.status}${r.status === 200 ? ' <- RATE 0 IS NOT DENYING' : ''}`,
+    r.status,
+    r.status === 200 ? ' <- RATE 0 IS NOT DENYING' : '',
   );
 }
 
@@ -112,10 +136,10 @@ console.log('\nDemo key scope\n==============\n');
     method: 'POST',
     body: JSON.stringify({ question: 'ping', postcode: 'SW11 1AA' }),
   });
-  check(
+  deny(
     'POST /v1/chat is refused',
-    BLOCKED_STATUS.has(r.status),
-    `status=${r.status}${r.status === 200 ? ' <- A PUBLIC KEY IS REACHING BEDROCK' : ''}`,
+    r.status,
+    r.status === 200 ? ' <- A PUBLIC KEY IS REACHING BEDROCK' : '',
   );
 }
 
@@ -137,6 +161,7 @@ console.log('\nDemo key scope\n==============\n');
 const CI_KEY = process.env.SKY_SCORE_API_KEY;
 if (!CI_KEY) {
   console.log('  SKIP  free-tier batch deny - SKY_SCORE_API_KEY not set');
+  unproven.push('free-tier batch deny - SKY_SCORE_API_KEY is not set, so the ScoreFreeUsagePlan batch deny was not tested');
   console.log('        (set it in .env; this check cannot run without a key)');
 } else {
   const res = await fetch(`${API}/v1/score/batch`, {
@@ -172,6 +197,7 @@ if (!CI_KEY) {
 const FREE_KEY = process.env.SKY_SCORE_FREE_TIER_KEY;
 if (!FREE_KEY) {
   console.log('  SKIP  free-tier chat/batch deny - SKY_SCORE_FREE_TIER_KEY not set');
+  unproven.push('free-tier chat/batch deny - SKY_SCORE_FREE_TIER_KEY is not set, so the deny this file calls load-bearing has never run');
   console.log('        (a signup-minted free key in .env; the CI key is on another plan)');
 } else {
   for (const [name, path, body] of [
@@ -199,4 +225,39 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
+
+// AN UNPROVEN CHECK IS NOT A PASSED ONE (2026-08-31, audit F14/F15).
+//
+// This file used to end by printing "OK: the demo key reaches /v1/score and
+// nothing else" whatever had actually been exercised. Two ways that sentence
+// could be false while the file exited 0:
+//
+//   F14 - the deny probes accept 403 OR 429, and an EXHAUSTED MONTHLY QUOTA
+//   answers 429 on every route. So with the quota spent, "batch is refused"
+//   and "chat is refused" pass without the per-method RateLimit-0 denies
+//   having been tested at all. The comment in block 1 reasoned that the deny
+//   probes are "unaffected because a throttled request is never metered" -
+//   true about COST, and it does not follow that they are evidence. This is
+//   the same distinction check_flood_georef.py draws with MIN_COMPARED: a
+//   class that reached the service twice has not been tested.
+//
+//   F15 - the free-tier denies, which the block above calls load-bearing
+//   ("if this deny stops working the free tier is 1,000,000 scores a month"),
+//   need SKY_SCORE_FREE_TIER_KEY, and that variable existed nowhere in the
+//   repo - not in .env.example, not in CI. They have never run.
+//
+// Neither is promoted to a FAILURE. A consumable must never block a commit,
+// which is this file's own founding principle and a scar preflight already
+// carries. But the summary now NAMES what went unproven, because a stage that
+// reports OK on checks it did not perform is the shape this repo keeps finding
+// - and it is worse than a missing gate, because it reads as evidence.
+if (unproven.length) {
+  console.log(`INCOMPLETE: ${failures.length} failed, ${unproven.length} not exercised`);
+  for (const u of unproven) console.log(`  - ${u}`);
+  console.log('');
+  console.log('  The checks that DID run passed. The ones above proved nothing');
+  console.log('  either way, so do not read this run as confirming the boundary.');
+  process.exit(0);
+}
+
 console.log('OK: the demo key reaches /v1/score and nothing else\n');

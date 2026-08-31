@@ -26,7 +26,7 @@
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 
 const ROOT = process.cwd();
@@ -169,6 +169,25 @@ const VIEWPORTS = [
 // at any viewport no matter how badly they broke. They are structural: a
 // missing <main>, a broken heading order or a role applied to the wrong element
 // is what a screen-reader user navigates BY.
+//
+// THIS SET WAS UNREACHABLE FROM THE DAY IT WAS WRITTEN (fixed 2026-08-31,
+// audit F34). Widening the IMPACT filter was only half the job: axe never RAN
+// these rules, because all four are tagged `best-practice` ONLY and the
+// builder asked for `wcag2a|wcag2aa|wcag21a|wcag21aa`. A rule that does not
+// run cannot appear in `results.violations`, so `FAIL_MODERATE.has(v.id)` was
+// dead code and the gate reported OK on every page. Proven at the taxonomy
+// level rather than against today's pages, which is stronger - it shows the
+// set could never fire on ANY page:
+//
+//     node -e "const r=require('axe-core').getRules();
+//              console.log(r.find(x=>x.ruleId==='landmark-one-main').tags)"
+//     [ 'cat.semantics', 'best-practice' ]
+//
+// What it was hiding: privacy.html and terms.html - the two LEGAL pages - and
+// all 100 pages under area/ shipped with no <main> landmark. Every other
+// public page had one, so this was never a house style; it was an unaudited
+// gap. `region` additionally requires all content to sit inside SOME landmark,
+// which is why the fix wraps rather than merely inserts a tag.
 const FAIL_MODERATE = new Set([
   'heading-order',
   'landmark-one-main',
@@ -176,10 +195,28 @@ const FAIL_MODERATE = new Set([
   'aria-allowed-role',
 ]);
 
+// ONE HOLDER for what axe runs, hoisted 2026-08-31. This array was written out
+// three times - the page loop, the borough-panel scan and the expanded-legend
+// scan - so widening it in one place would have left two scans on the old set,
+// which is this repo's documented "mirrored code drifts on the NEXT edit".
+//
+// `best-practice` is here so the four rules above can fire AT ALL. It is not
+// here to enlist the ~30 other best-practice rules as blocking - see failing().
+const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'];
+const WCAG_TAGS = new Set(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
+
 function failing(results) {
-  return results.violations.filter(
-    (v) => v.impact === 'critical' || v.impact === 'serious' || FAIL_MODERATE.has(v.id)
-  );
+  return results.violations.filter((v) => {
+    // The four structural rules block at whatever impact axe assigns them.
+    if (FAIL_MODERATE.has(v.id)) return true;
+    // Everything else keeps the bar this gate has always held: WCAG rules
+    // only, at critical or serious. Adding `best-practice` to AXE_TAGS must
+    // not silently promote every other best-practice rule to blocking - that
+    // would be a scope change nobody chose, arriving as a side effect of a
+    // bug fix, and it would red on rules the project has never agreed to.
+    if (!v.tags.some((t) => WCAG_TAGS.has(t))) return false;
+    return v.impact === 'critical' || v.impact === 'serious';
+  });
 }
 
 const browser = await chromium.launch();
@@ -281,12 +318,7 @@ for (const viewport of VIEWPORTS) {
         continue;
       }
     }
-    let builder = new AxeBuilder({ page }).withTags([
-      'wcag2a',
-      'wcag2aa',
-      'wcag21a',
-      'wcag21aa',
-    ]);
+    let builder = new AxeBuilder({ page }).withTags(AXE_TAGS);
     if (disableRules) builder = builder.disableRules(disableRules);
     await settleAnimations(page);
     const results = await builder.analyze();
@@ -302,7 +334,7 @@ for (const viewport of VIEWPORTS) {
   if (violations.length) failed++;
   console.log(
     `${path.padEnd(28)} ${violations.length ? 'FAIL' : 'OK  '} ${name}${note}` +
-      (violations.length ? ` — ${violations.length} critical/serious` : '')
+      (violations.length ? ` — ${violations.length} blocking` : '')
   );
   for (const v of violations) {
     console.log(`    [${v.impact.toUpperCase()}] ${v.id}: ${v.help}`);
@@ -359,9 +391,7 @@ for (const viewport of VIEWPORTS) {
       failed++;
     } else {
       await settleAnimations(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
+      const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       const v = failing(results);
       if (v.length) failed++;
       console.log(
@@ -466,9 +496,7 @@ for (const viewport of VIEWPORTS) {
       failed++;
     } else {
       await settleAnimations(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-        .analyze();
+      const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
       const v = failing(results);
       if (v.length) failed++;
       console.log(
@@ -490,10 +518,113 @@ for (const viewport of VIEWPORTS) {
   await context.close();
 }
 
+// ---------------------------------------------------------------------------
+// AREA PAGES - all 99 boroughs plus the /area/ index (2026-08-31, audit F35).
+//
+// These were in NO accessibility gate and no responsive one. That is 100 of
+// the site's 109 public URLs, and they are the only ones a search visitor
+// lands on COLD - the entire reason the pages exist. Every one shipped without
+// a <main> landmark, so a screen-reader user arriving from search got the
+// score headline and the 15-row measurement table with no way to jump to
+// either. The 9 hand-listed pages above were scanned twice over at two
+// viewports while the ungated majority was never opened once.
+//
+// THE LIST IS DERIVED, NEVER WRITTEN DOWN. A hardcoded roster is a count in an
+// assertion, which this repo keeps finding to be scheduled staleness: a
+// twelfth city would be generated by build_area_pages.py and silently skipped
+// here, and the gate would report the same confident OK on less ground.
+//
+// ONE VIEWPORT, and that is MEASURED, not assumed. build_area_pages.py emits
+// exactly one media query per template and it is `prefers-color-scheme` -
+// there is no width breakpoint anywhere in area/ - so a second viewport would
+// re-run byte-identical CSS for another ~29s. That reasoning is ASSERTED below
+// rather than left in this comment: the day a width breakpoint lands in the
+// generator, the justification expires, and the gate must say so instead of
+// quietly scanning half of what it claims to.
+async function areaPagePaths() {
+  const base = join(ROOT, 'area');
+  const out = [];
+  let cities;
+  try {
+    cities = await readdir(base, { withFileTypes: true });
+  } catch {
+    // A MISSING area/ REPORTS, it does not throw. An unhandled rejection at
+    // top level kills the harness mid-run and prints a stack trace, which
+    // reads as a BROKEN gate rather than a failing one - the exact shape that
+    // had responsive.mjs printing FAIL on Node 24 having evaluated zero pages.
+    // Returning empty hands the floor below something it can report on.
+    return [];
+  }
+  for (const city of cities) {
+    if (!city.isDirectory()) continue;
+    for (const borough of await readdir(join(base, city.name), { withFileTypes: true })) {
+      if (borough.isDirectory()) out.push(`/area/${city.name}/${borough.name}/`);
+    }
+  }
+  out.sort();
+  return ['/area/', ...out];
+}
+
+const areaPages = await areaPagePaths();
+
+// FLOOR. A walk that matches nothing must never read as a clean scan - the
+// "compared zero and passed" shape this repo has now found in five gates.
+// build_area_pages.py --write writes 99 boroughs plus an index.
+const AREA_FLOOR = 50;
+if (areaPages.length < AREA_FLOOR) {
+  console.log(
+    `${'area/'.padEnd(28)} FAIL only ${areaPages.length} area page(s) found - ` +
+      `build_area_pages.py --write produces 100`
+  );
+  failed++;
+}
+
+// The single-viewport exemption, tested rather than named.
+const generator = await readFile(join(ROOT, 'scripts', 'build_area_pages.py'), 'utf8');
+const widthBreakpoints = generator.match(/@media[^{]*\b(?:min|max)-width/g) || [];
+if (widthBreakpoints.length) {
+  console.log(
+    `${'area/ (viewport policy)'.padEnd(28)} FAIL the generator now emits ` +
+      `${widthBreakpoints.length} width breakpoint(s), so the one-viewport scan below ` +
+      `no longer covers these pages - add VIEWPORTS back for area/`
+  );
+  failed++;
+}
+
+{
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  let areaFailed = 0;
+  for (const path of areaPages) {
+    try {
+      await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+      const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+      const v = failing(results);
+      if (v.length) {
+        areaFailed++;
+        failed++;
+        console.log(`${path.padEnd(44)} FAIL ${v.length} blocking`);
+        for (const item of v.slice(0, 4)) {
+          console.log(`    [${item.impact.toUpperCase()}] ${item.id}: ${item.help}`);
+        }
+      }
+    } catch (e) {
+      console.log(`${path.padEnd(44)} ERROR ${e.message.split('\n')[0]}`);
+      failed++;
+    }
+  }
+  console.log(
+    `\n${'area/ (every page)'.padEnd(28)} ${areaFailed || areaPages.length < AREA_FLOOR ? 'FAIL' : 'OK  '} ` +
+      `${areaPages.length} pages scanned at 1440x900, ${areaFailed} failing`
+  );
+  await context.close();
+}
+
 await browser.close();
 server.close();
 console.log(
   `\nRESULT: ${failed === 0 ? 'PASS' : 'FAIL'} ` +
-    `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection and expanded-legend states)`
+    `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection ` +
+    `and expanded-legend states, plus ${areaPages.length} area pages)`
 );
 process.exit(failed === 0 ? 0 : 1);

@@ -216,6 +216,7 @@ PAGE = """<!doctype html>
 <body>
 <div class="wrap">
 <nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
+<main>
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. Aircraft and road noise, affordability, schools, crime and access, from published sources.</p>
 
@@ -239,6 +240,7 @@ PAGE = """<!doctype html>
 <p class="sources">{sources}</p>
 <p class="sources">Methodology version {methodology}. Full method: <a href="/score-demo/api-docs.html">API reference</a>.
 Figures are for the whole borough; a single address can differ, and the map shows postcode-level detail.</p>
+</main>
 
 <footer>
 <p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
@@ -307,11 +309,13 @@ INDEX = """<!doctype html>
 </head>
 <body>
 <div class="wrap">
-<p class="sub"><a href="/">Sky Score</a> &rsaquo; Areas</p>
+<nav class="sub"><a href="/">Sky Score</a> &rsaquo; Areas</nav>
+<main>
 <h1>Every area we cover</h1>
 <p class="sub">{n} boroughs across {c} city regions. Each page carries the published measurements behind that area's score.</p>
 {body}
 <p class="sub" style="margin-top:32px;"><a href="/">Back to the map</a> &middot; <a href="/api/">For developers</a></p>
+</main>
 </div>
 </body>
 </html>

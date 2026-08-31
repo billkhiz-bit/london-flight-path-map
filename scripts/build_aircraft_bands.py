@@ -506,8 +506,61 @@ def check_or_write(args):
     """
     cities = [args.city] if args.city else sorted(AIRPORTS)
     on_site = site_cities()
+
+    # THE CITY LIST USED TO COME FROM THE DICT UNDER TEST (fixed 2026-08-31,
+    # audit F33). `cities` is derived from AIRPORTS, and so is `want` - so a
+    # merge, rebase or rename that dropped one entry removed that city from the
+    # comparison AND from the expectation at the same time. The holders kept
+    # their stale bands, this BLOCKING stage printed a smaller, confident
+    # "Compared N band(s)" and exited 0, and the only trace was a number nobody
+    # had a reason to distrust. The global `if not compared` floor cannot see
+    # it: dropping manchester still leaves 104 of 114 bands comparing.
+    #
+    # The holders are an INDEPENDENT source - they are written by --write but
+    # their SET OF CITY BLOCKS is not derived from AIRPORTS at read time - so
+    # asking them which cities exist is a question AIRPORTS cannot answer for
+    # itself.
+    #
+    # london and nyc are exempt BY NAME and that is deliberate: neither is in
+    # AIRPORTS because London is the ladder's calibration reference rather than
+    # a scaled city, and NYC has no DEFRA coverage at all. Naming them here
+    # means adding a twelfth derived city cannot quietly join them - it lands in
+    # `unexpected` until AIRPORTS covers it.
+    DERIVATION_EXEMPT = {"london", "nyc"}
+    if not args.city:
+        declared = {
+            m.group(1).lower()
+            for m in re.finditer(
+                r"^([A-Z_]+)_BOROUGHS = \{", LAMBDA_PATH.read_text(encoding="utf-8"), re.M
+            )
+        }
+        if not declared:
+            print(
+                "FAIL: found no <CITY>_BOROUGHS blocks in "
+                f"{LAMBDA_PATH}. The marker moved, so the cross-check below "
+                "compared nothing and would have passed silently."
+            )
+            return 1
+        unexpected = declared - set(AIRPORTS) - DERIVATION_EXEMPT
+        if unexpected:
+            print(
+                f"FAIL: {LAMBDA_PATH} publishes aircraft bands for "
+                f"{sorted(unexpected)} but AIRPORTS does not cover "
+                f"{'it' if len(unexpected) == 1 else 'them'}, so this check "
+                "silently skipped a city whose bands are live. Either restore "
+                "the AIRPORTS entry or add the city to DERIVATION_EXEMPT with "
+                "a reason."
+            )
+            return 1
+        print(
+            f"  cross-check    {len(declared)} city block(s) in the Lambda; "
+            f"{len(AIRPORTS)} derived, {len(DERIVATION_EXEMPT)} exempt "
+            f"({', '.join(sorted(DERIVATION_EXEMPT))})"
+        )
+
     bad = 0
     compared = 0
+    per_city = {}
     for city in cities:
         rows, _, _, _ = derive(city)
         want = {name: band for _, name, _, band, _, _, _ in rows}
@@ -531,6 +584,7 @@ def check_or_write(args):
                 continue
             diff = {b: (have.get(b), want[b]) for b in want if have.get(b) != want[b]}
             compared += len(want)
+            per_city[city] = per_city.get(city, 0) + len(want)
             if args.write:
                 n = _rewrite(path, marker, end, want)
                 print(f"  {city:14s} {label:7s} wrote {n} bands ({len(diff)} changed)")
@@ -547,6 +601,22 @@ def check_or_write(args):
             "proves no agreement whatsoever - it is not a pass."
         )
         return 1
+
+    # A PER-CITY FLOOR, not just a global one (2026-08-31, audit F33). A global
+    # `compared > 0` is satisfied by 104 of 114 bands, so it waves through
+    # exactly the failure it was written to stop: one city dropping out while
+    # the other ten keep the total comfortably non-zero. This repo has recorded
+    # that lesson twice - "the floor is PER-UNIT" - and this stage still had
+    # only the global one.
+    empty = sorted(c for c in cities if not per_city.get(c))
+    if empty:
+        print(
+            f"FAIL: compared 0 bands for {empty}. The city is in AIRPORTS but "
+            "neither holder yielded anything to compare, so its live bands are "
+            "unverified while the total above looks healthy."
+        )
+        return 1
+
     print(f"{bad} disagreement(s) between the holders and the derivation.")
     return 1 if bad else 0
 

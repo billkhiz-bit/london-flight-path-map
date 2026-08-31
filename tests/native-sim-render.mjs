@@ -28,7 +28,20 @@ async function mobile() {
     const r = n.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(n).display !== 'none';
   });
-  console.log('mobile-nav visible:', navVisible);
+  const isNative = await page.evaluate(() =>
+    document.documentElement.classList.contains('is-native')
+  );
+  console.log('mobile-nav visible:', navVisible, '| is-native:', isNative);
+
+  // ASSERTIONS, added 2026-08-31 (audit F31). This context MEASURED and
+  // PRINTED and never compared, so the native layout could break in any way
+  // and the file still exited 0 - a screenshot generator wearing a gate's
+  // name. The web/native split is the thing under test, so `is-native` must be
+  // set here and absent on web (webMobile below asserts the other half).
+  let ok = navVisible === true && isNative === true;
+  if (!ok) {
+    console.log('NATIVE: FAIL is-native or the bottom nav is missing under the Capacitor shim');
+  }
 
   for (const view of ['search', 'ranking', 'saved']) {
     await page.evaluate((v) => window.setMobileView(v), view);
@@ -55,10 +68,35 @@ async function mobile() {
       activeNav: [...document.querySelectorAll('.mobile-nav-btn.active')].map((b) => b.dataset.mview),
       navCount: document.querySelectorAll('.mobile-nav-btn').length,
     }));
-    console.log(`view=${view}:`, JSON.stringify(m));
+    // `navCount > 0`, never `=== 3`: any count in an assertion is scheduled
+    // staleness, and a fourth tab must not red this. `installVisible === false`
+    // is the load-bearing one - a PWA install prompt inside a native binary
+    // points users at a rival distribution channel, which is an App Store
+    // review problem, and nothing else in the repo checks it.
+    const viewOk =
+      m.mview === view &&
+      m.overflowX <= 1 &&
+      m.navCount > 0 &&
+      m.activeNav.length === 1 &&
+      m.activeNav[0] === view &&
+      m.searchBoxVisible === true &&
+      m.installVisible === false;
+    if (!viewOk) ok = false;
+    console.log(`view=${view}:`, JSON.stringify(m), viewOk ? 'PASS' : 'FAIL');
     await page.screenshot({ path: `tests/mview-${view}.png` });
+
+    // Apple rejected build 19 under Guideline 4.0 because a sheet covered the
+    // map. The search view is where a native user LANDS, so the map being
+    // visible there is the regression that rejection bought; ranking and saved
+    // legitimately cover it, so they are not asserted.
+    if (view === 'search' && m.mapVisible !== true) {
+      ok = false;
+      console.log('NATIVE: FAIL the map is not visible in the landing (search) view');
+    }
   }
   await browser.close();
+  console.log(ok ? 'NATIVE REDESIGN: PASS' : 'NATIVE REDESIGN: FAIL');
+  return ok;
 }
 
 // Web/PWA context: NO Capacitor shim, so window.Capacitor is undefined and
@@ -124,13 +162,36 @@ async function desktop() {
   console.log('\nDESKTOP 1440px:', JSON.stringify(d));
   await page.screenshot({ path: 'tests/desktop-regression.png' });
   await browser.close();
+  // Desktop keeps the two-column grid and must never show the mobile nav.
+  // The COLUMN COUNT is the contract, not the widths: pinning the literal
+  // "1040px 400px" would red on a legitimate design tweak, while collapsing to
+  // one column - which is what a broken media query does - still fails.
+  const ok =
+    d.navShown === false &&
+    d.overflowX <= 1 &&
+    d.gridCols.trim().split(' ').filter(Boolean).length >= 2;
+  console.log(ok ? 'DESKTOP: PASS' : 'DESKTOP: FAIL');
+  return ok;
 }
 
-console.log('=== MOBILE (native sim, iPhone 13) — expect REDESIGN ===');
-await mobile();
+console.log('=== MOBILE (native sim, iPhone 13) - expect REDESIGN ===');
+const nativeOk = await mobile();
 const webOk = (await webMobile('', 'tabbed')) && (await webMobile('?tabbed=0', 'classic'));
-await desktop();
-if (!webOk) {
-  console.error('\nFAIL: web mobile layout wrong - either tabs are not the default at <=900px, or ?tabbed=0 no longer serves the classic sheet.');
-  process.exit(1);
+const desktopOk = await desktop();
+
+console.log('');
+console.log(
+  `RESULT: ${nativeOk && webOk && desktopOk ? 'PASS' : 'FAIL'} ` +
+    `(native ${nativeOk ? 'ok' : 'FAIL'}, web mobile ${webOk ? 'ok' : 'FAIL'}, ` +
+    `desktop ${desktopOk ? 'ok' : 'FAIL'})`
+);
+if (!nativeOk) {
+  console.error('FAIL: the native sim did not render the redesign - is-native, the bottom nav, a tab view or the landing map is wrong.');
 }
+if (!webOk) {
+  console.error('FAIL: web mobile layout wrong - either tabs are not the default at <=900px, or ?tabbed=0 no longer serves the classic sheet.');
+}
+if (!desktopOk) {
+  console.error('FAIL: desktop lost its two-column grid, or the mobile nav leaked above 900px.');
+}
+process.exit(nativeOk && webOk && desktopOk ? 0 : 1);

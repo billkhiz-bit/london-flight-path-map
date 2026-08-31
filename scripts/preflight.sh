@@ -418,6 +418,25 @@ check "every city switches"           node tests/city-switch.mjs
 # which is where the old code took its desktop branch and failed in the
 # vertical axis while every portrait phone failed in the horizontal one.
 check "map fits its box"              node tests/map-fit.mjs
+# THE WEB/NATIVE LAYOUT SPLIT. Wired in 2026-08-31 closing audit F31; before
+# that this file and tests/live-mobile-verify.mjs were in NO RUNNER AT ALL -
+# the third and fourth orphaned gates found in this repo, after failure-path
+# (27 Aug) and the two here. A test nobody runs is not a gate, it is a file.
+#
+# It renders index.html in three contexts and they must DIVERGE: the Capacitor
+# shim gets the native redesign, plain web at <=900px gets the tabbed layout,
+# `?tabbed=0` still gets the classic bottom sheet, and 1440px keeps the
+# two-column grid. Only the web-mobile context used to assert anything - the
+# native and desktop halves measured, printed and compared NOTHING, so the App
+# Store layout could break in any way and the file still exited 0.
+#
+# Proven able to fail, both new halves, against real defects in index.html:
+# collapsing `grid-template-columns: 1fr 400px` to `1fr` reds DESKTOP, and
+# suppressing `classList.add('is-native')` reds NATIVE. index.html was restored
+# byte-identically (sha256 verified) after each.
+#
+# No network and no server: it loads index.html over file://.
+check "web/native layout split"       node tests/native-sim-render.mjs
 # Types a real postcode in a NON-LONDON city, which nothing had ever done.
 # "every city switches" clicks the chip and checks the MAP;
 # borough-score-parity compares SCORES. Both passed while nine UK cities
@@ -464,7 +483,7 @@ check "responsive, source"            node tests/responsive.mjs "http://127.0.0.
 #
 # Proven able to fail: flipping #locator-svg back to role="img" reds it with
 # "[SERIOUS] nested-interactive" on `/` alone and exits 1.
-check "WCAG source scan (9 pages)"    node tests/a11y-source.mjs
+check "WCAG source scan (all pages)"  node tests/a11y-source.mjs
 kill "$smoke_pid" 2>/dev/null || true
 
 echo
@@ -556,6 +575,16 @@ if [ "$SKIP_E2E" -eq 0 ]; then
   # production, not the commit in hand, so it stays red between fixing a layout
   # defect and deploying the fix.
   advise "responsive, live"              node tests/responsive.mjs
+
+  # The live half of the web/native split, wired in 2026-08-31 with F31. Reads
+  # CloudFront and asserts that deployed web at 360/390/414 serves the TABBED
+  # layout while `is-native` stays false.
+  #
+  # ADVISORY, deliberately, and for the same reason as the two stages above: it
+  # describes PRODUCTION, not the commit in hand, so it stays red for exactly
+  # as long as a correct source tree waits for a deploy. Blocking it would gate
+  # every commit on having already deployed, which inverts the workflow.
+  advise "live web == tabbed layout"     node tests/live-mobile-verify.mjs
 fi
 
 echo

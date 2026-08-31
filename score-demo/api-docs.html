@@ -98,7 +98,11 @@
 </head>
 <body>
 
-<div class="topbar">
+<!-- <header>/<main>, not two <div>s (2026-08-31, audit F34). Swagger injects
+     its whole document into #swagger-ui, so without a wrapper every node it
+     writes sits outside any landmark and a screen-reader user has no way to
+     jump to the reference. The class is kept, so the CSS above is untouched. -->
+<header class="topbar">
   <h1>Sky Score API <span class="accent">, Reference</span></h1>
   <p>
     Interactive API documentation. Try requests in-browser using the "Try it out" buttons below.
@@ -106,9 +110,9 @@
     <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">Methodology</a> &middot;
     <a href="./openapi.yaml" target="_blank" rel="noopener">OpenAPI spec (yaml)</a>
   </p>
-</div>
+</header>
 
-<div id="swagger-ui"></div>
+<main id="swagger-ui"></main>
 
 <!-- Self-hosted Swagger UI 5.17.14 (see CSP comment above). SHA-384 of each
      vendored file verified against the previously pinned SRI hashes at

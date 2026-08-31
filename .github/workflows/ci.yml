@@ -49,7 +49,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install pytest pytest-mock boto3
+      # numpy + pillow are NOT optional (added 2026-08-31). The root suite's
+      # tests/test_empty_source_guards.py imports them inside test bodies -
+      # no importorskip, no skip guard - so without them 8 tests ERROR and this
+      # job is RED on every push for a reason that has nothing to do with the
+      # code. That is one step beyond the 2026-08-30 fix (F30), which stopped
+      # the test jobs being SKIPPED by a failing lint `needs:` only for them to
+      # fail on imports instead: CI still produced no usable correctness signal.
+      # Proven by stubbing both to raise ImportError - 254 passed locally,
+      # 8 failed under CI's dependency set.
+      #
+      # The scripts under test import them lazily inside functions, so nothing
+      # else in the suite needs them and the module-level imports stay stdlib.
+      - run: pip install pytest pytest-mock boto3 numpy pillow
       # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend
