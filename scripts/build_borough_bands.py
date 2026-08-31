@@ -148,7 +148,7 @@ import csv
 import importlib.util
 import json
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -719,6 +719,22 @@ def apply_to_extra(results, write):
 
     diffs = []
     skipped_cities = []
+    # PER-FIELD COMPARISON COUNTS (2026-08-31).
+    #
+    # `if new is None: continue` below means a field the DERIVATION could not
+    # produce is skipped silently, so missing data was indistinguishable from
+    # agreement. `data/` is gitignored, so an absent raster is the normal state
+    # on any machine but the one that fetched it - and it is the state a new
+    # city is in. Proven: with the road rasters absent this printed
+    # "borough-extra.json agrees with DEFRA on every derived field" and exited
+    # 0; so did an EMPTY derivation.
+    #
+    # This is the only gate that crosses a source boundary for road noise (0.35
+    # of `environment`), air quality (0.45), transport (0.25 of `live`) and
+    # healthcare (0.10). Nothing in tests/ or backend/tests/ reads NaPTAN, the
+    # NHS register or the DEFRA grids at all.
+    compared = Counter()
+    holder_only = Counter()
     for city, boroughs in results.items():
         if city not in extra:
             # Cardiff and Nottingham are BACKEND_ONLY_CITIES: scored by the API,
@@ -748,14 +764,43 @@ def apply_to_extra(results, write):
                 new = rec.get(key)
                 old = target.get(key)
                 if new is None:
+                    # Recorded, not silently dropped. A field the holder
+                    # PUBLISHES that the source no longer produces is the
+                    # interesting case - it means we are serving a number
+                    # nothing can currently reproduce.
+                    if old is not None:
+                        holder_only[key] += 1
                     continue
+                compared[key] += 1
                 if old != new:
                     diffs.append(f'{city}.{borough}.{key}: {old!r} -> {new!r}')
                     if write:
                         target[key] = new
 
     if skipped_cities:
-        print(f'\nnot on the site, skipped: {", ".join(sorted(skipped_cities))}')
+        print()
+        print(f'not on the site, skipped: {", ".join(sorted(skipped_cities))}')
+
+    # SAY WHAT WAS COMPARED, ALWAYS. A run that compared everything and a run
+    # whose loop never executed used to print the same sentence.
+    print()
+    print(f'{"field":<26} {"compared":>8}  {"holder-only":>11}')
+    for key in DERIVED_KEYS:
+        flag = '' if compared[key] else '   <- NOTHING COMPARED'
+        print(f'{key:<26} {compared[key]:>8}  {holder_only[key]:>11}{flag}')
+
+    if not write:
+        # PER-FIELD FLOOR, not a global one. A global `compared > 0` is
+        # satisfied by air quality alone while every road field is absent -
+        # the same shape this repo has now closed in five other gates.
+        empty = [k for k in DERIVED_KEYS if not compared[k]]
+        if empty:
+            diffs.append(
+                'COMPARED NOTHING for '
+                + ', '.join(empty)
+                + ' - the source produced no value for these anywhere, so agreement '
+                'was never tested. Fetch the rasters, or this is not a pass.'
+            )
 
     if write and diffs:
         with BOROUGH_EXTRA.open('w', encoding='utf-8', newline='\n') as fh:

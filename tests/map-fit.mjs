@@ -126,6 +126,9 @@ function measure() {
 const browser = await chromium.launch();
 const failures = [];
 let checks = 0;
+// Set on the first viewport pass, from CITY_DATA, so the floor below is the
+// registry's own count rather than a literal that goes stale on city twelve.
+let CITY_COUNT = 0;
 
 for (const [w, h, label] of VIEWPORTS) {
   const ctx = await browser.newContext({
@@ -140,36 +143,69 @@ for (const [w, h, label] of VIEWPORTS) {
     .catch(() => {});
   await page.waitForTimeout(1200);
 
-  const names = [];
-  for (const c of await page.$$('.city-selector .city-btn')) {
-    names.push((await c.textContent()).trim());
-  }
+  // DRIVEN FROM CITY_DATA AND ACROSS BOTH COUNTRY TABS (2026-08-31, audit I11).
+  //
+  // This enumerated `.city-selector .city-btn`, and the app renders chips for
+  // the ACTIVE COUNTRY only - so this gate measured 10 cities, never 11, and
+  // **New York was never measured at any viewport**. Verified before the fix:
+  // the distinct labels it printed were Bristol, Greater Manchester, Leicester,
+  // London, Merseyside, South Yorkshire, Teesside, Tyne and Wear, West Midlands
+  // and West Yorkshire, with zero mentions of New York.
+  //
+  // NYC is the one city with a different projection origin AND a different
+  // boundary source, so it is the single city most likely to draw outside its
+  // own box - and it was the one city exempt from the check written for that.
+  //
+  // `switchCountry` then `switchCity` rather than clicking a chip: this gate is
+  // about GEOMETRY, and tests/city-switch.mjs already covers the chip as a
+  // control. Both are page-scope function declarations, so they are reachable
+  // from evaluate (a `let` like `currentCity` is not - it never becomes a
+  // window property, which is why the switch is confirmed from the DOM below).
+  const cities = await page.evaluate(() =>
+    Object.entries(CITY_DATA).map(([id, d]) => ({ id, label: d.label, country: d.country }))
+  );
+  CITY_COUNT = cities.length;
 
   console.log(`\n# ${w}x${h}  ${label}`);
-  for (let i = 0; i < names.length; i++) {
-    const fresh = (await page.$$('.city-selector .city-btn'))[i];
-    if (!fresh) continue;
-    await fresh.click({ force: true }).catch(() => {});
+  for (const city of cities) {
+    await page.evaluate((c) => switchCountry(c), city.country);
+    await page.waitForTimeout(300);
+    await page.evaluate((id) => switchCity(id), city.id);
     await page.waitForTimeout(1300);
-    const m = await page.evaluate(measure);
+
+    // CONFIRM THE SWITCH LANDED. The old loop did
+    // `.click({force:true}).catch(() => {})` and then measured whatever was on
+    // screen - so a chip that had stopped switching was measured as the
+    // PREVIOUS city and printed ok under the new city's name. Read it back from
+    // the rendered chip, not from a variable the fix would also set.
+    const active = await page.evaluate(
+      () => document.querySelector('.city-selector .city-btn.active')?.textContent?.trim() ?? ''
+    );
     checks++;
+    if (active !== city.label) {
+      failures.push(`${w}x${h} ${city.label}: switch did not land (active chip reads "${active}")`);
+      console.log(`  FAIL  ${city.label.padEnd(20)} switch did not land (active "${active}")`);
+      continue;
+    }
+
+    const m = await page.evaluate(measure);
     if (m.error) {
-      failures.push(`${w}x${h} ${names[i]}: ${m.error}`);
-      console.log(`  FAIL  ${names[i].padEnd(20)} ${m.error}`);
+      failures.push(`${w}x${h} ${city.label}: ${m.error}`);
+      console.log(`  FAIL  ${city.label.padEnd(20)} ${m.error}`);
       continue;
     }
     const spill = Math.round(m.over.left + m.over.right + m.over.top + m.over.bottom);
     const fill = Math.max(m.geoW / m.boxW, m.geoH / m.boxH);
-    const line = `${names[i].padEnd(20)} ${Math.round(m.geoW)}x${Math.round(m.geoH)} in ${Math.round(m.boxW)}x${Math.round(m.boxH)}  fill ${(fill * 100).toFixed(0)}%`;
+    const line = `${city.label.padEnd(20)} ${Math.round(m.geoW)}x${Math.round(m.geoH)} in ${Math.round(m.boxW)}x${Math.round(m.boxH)}  fill ${(fill * 100).toFixed(0)}%`;
     if (spill > 1) {
       const pct = (((m.over.left + m.over.right) / m.geoW) * 100).toFixed(1);
       failures.push(
-        `${w}x${h} ${names[i]}: ${spill}px outside the map box (${pct}% of width off-screen)`
+        `${w}x${h} ${city.label}: ${spill}px outside the map box (${pct}% of width off-screen)`
       );
       console.log(`  FAIL  ${line}  SPILL ${spill}px`);
     } else if (fill < MIN_FILL) {
       failures.push(
-        `${w}x${h} ${names[i]}: fills only ${(fill * 100).toFixed(0)}% of the box, floor is ${MIN_FILL * 100}%`
+        `${w}x${h} ${city.label}: fills only ${(fill * 100).toFixed(0)}% of the box, floor is ${MIN_FILL * 100}%`
       );
       console.log(`  FAIL  ${line}  TOO SMALL`);
     } else {
@@ -183,9 +219,18 @@ server.close();
 
 // A gate that compares nothing must fail, not pass. This repo has recorded four
 // checks that reported agreement having measured none.
-if (checks < VIEWPORTS.length * 2) {
+// The floor was `VIEWPORTS.length * 2` = 18 against a real 90 - global, so
+// eight of nine viewports could contribute nothing and it still passed. It is
+// now every city at every viewport, derived from the registry.
+if (CITY_COUNT < 10) {
+  console.error(`
+FAIL: only ${CITY_COUNT} cities enumerated from CITY_DATA; expected at least 10.`);
+  process.exit(1);
+}
+const EXPECTED_CHECKS = CITY_COUNT * VIEWPORTS.length;
+if (checks < EXPECTED_CHECKS) {
   console.error(
-    `\nFAIL: only ${checks} city/viewport combinations were measured; expected at least ${VIEWPORTS.length * 2}.`
+    `\nFAIL: only ${checks} city/viewport combinations were measured; expected ${EXPECTED_CHECKS} (${CITY_COUNT} cities x ${VIEWPORTS.length} viewports).`
   );
   process.exit(1);
 }

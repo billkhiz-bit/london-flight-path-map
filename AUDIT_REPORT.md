@@ -398,6 +398,31 @@ Nine findings, each verified before and after. The gate work is recorded in
 | I10 | `area-pages.mjs`'s three per-page checks now loop over all 99, not `pages[0]` | Each proven red on a page that is not `pages[0]` |
 | — | `city-switch.mjs` gained a city-count floor; `renderBoroughs()` now compares borough names canonically, as its sibling handler already did | Floor: an empty list used to print "All 0 cities switch" and exit 0 |
 
+### Second gate pass, same day
+
+Eight more, each proven red against a constructed defect and green again after.
+Where a proof touched a tracked file it was restored and the restore verified by
+sha256.
+
+| # | Gate | What it could not see | Proof |
+|---|---|---|---|
+| I7 | `check_flood_georef.py` | A class with no eroded interior was **skipped**, so a mosaic with every medium-or-high polygon erased passed on the not-MoH direction alone — against a docstring promising both directions precisely to stop that | Zeroed London's **1,215,784 MoH pixels (3.72%)**: printed "NO ERODED INTERIOR", exited 0 |
+| I8 | `check_flood_georef.py` | An **absent mosaic** was skipped and the only floor was global | 10 of 11 mosaics removed: "verified... for 1 cities", exit 0 |
+| I9 | `build_borough_bands.py --check` | `new is None` skipped silently, so **missing data was agreement** — on the only source-crossing gate for road noise (0.35 of env), air quality (0.45), transport (0.25 of live) and healthcare (0.10) | Empty derivation: "agrees with DEFRA on every derived field", exit 0. Now 86 comparisons per field |
+| I11 | `tests/map-fit.mjs` | **New York was never measured at any viewport** — it enumerated the active country's chips only, and NYC is the one city with a different projection origin *and* boundary source. Floor was 18 against a real 90 | NYC scale tripled: **9 of 9 viewports fail**, where none could before. Now 99 combinations |
+| I12 | `check_api_url_drift.sh` | Counted distinct **matching** hosts, so a file matching nothing dropped out | 7 of 8 surfaces rewritten to `DELETED.example`: PASS |
+| I13 | `check_no_em_dash.sh` | A renamed page was skipped, zero files scanned was a pass, and the **100 area pages were outside it** | `terms.html` renamed: exit 0. Now 109 pages |
+| I14 | `refresh_crime_from_ons.py` | Floor was per **city**, so one borough dropping out left the other nine comparing — its own comment predicted this and did not act | A renamed borough: "in step with ONS", exit 0 |
+| I15 | `refresh_crime_from_ons.py` | The cache name omitted the edition and nothing read `Cover_sheet`, so **a quarterly roll re-checked the old workbook** | `EDITION` bumped: PASS, exit 0, no download |
+
+**I15's fix was made twice, and the first one was wrong.** Keying the cache
+filename on `EDITION` is the obvious move and was **reverted**: it forces a
+re-download, and the ONS URL 404s today, so a working blocking gate would have
+gone red for a reason with nothing to do with the data. Reading the edition off
+the workbook's own cover sheet needs no network and cannot be satisfied by a
+stale file. *A fix that makes a gate depend on a third party staying up has
+moved the failure, not removed it.*
+
 ### D1's residual, measured and left open
 
 The fix makes the panel correct everywhere and the map selection correct on

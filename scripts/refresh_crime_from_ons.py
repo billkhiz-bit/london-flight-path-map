@@ -203,6 +203,32 @@ def load_table(city='london'):
         print(f'  saved {CACHE} ({CACHE.stat().st_size:,} bytes)')
 
     wb = openpyxl.load_workbook(CACHE, read_only=True, data_only=True)
+
+    # THE CACHE MUST PROVE ITS OWN EDITION (2026-08-31, audit I15).
+    #
+    # XLSX_URL embeds EDITION; CACHE does not, and nothing here ever opened
+    # Cover_sheet, which states the workbook's edition in A1. So bumping
+    # EDITION exactly as a quarterly roll does re-read the OLD workbook, with
+    # no download, and printed "in step with ONS" - the one blocking gate whose
+    # purpose is to detect a vintage roll declaring agreement with an edition it
+    # had never fetched. Proven by bumping EDITION to yearendingjune2026: PASS,
+    # exit 0, no network.
+    #
+    # Keying the cache filename on EDITION was tried first and REVERTED: it
+    # forces a re-download, and the ONS URL 404s today, so a working blocking
+    # gate would go red for a reason that has nothing to do with the data. This
+    # asks the artefact what it is instead, which needs no network and cannot be
+    # satisfied by a stale file.
+    want = EDITION[len('yearending'):]           # e.g. 'march2026'
+    cover = str(wb['Cover_sheet'].cell(row=1, column=1).value or '')
+    seen = re.sub(r'[^a-z0-9]', '', cover.lower())
+    if want not in seen:
+        print(f'FAIL: {CACHE} is not the {EDITION} edition.')
+        print(f'  cover sheet reads: {cover.strip()[:90]}')
+        print(f'  expected it to name: {want}')
+        print('  Delete the cache and re-run so the declared edition is the one compared.')
+        raise SystemExit(1)
+
     rows = list(wb['Table C4'].iter_rows(values_only=True))
     h = next(i for i, r in enumerate(rows) if r and r[0] == 'Police Force Area code')
     hdr = [str(c).replace('\n', ' ').strip() if c else '' for c in rows[h]]
@@ -278,10 +304,21 @@ def compare_city(city, write=False):
 
     drift, unresolved = [], []
     compared = 0
+    # Which REPO boroughs this pass actually reached. `compared == 0` per city
+    # is a floor on the city; it says nothing about a single borough dropping
+    # out, and the loop below SKIPS any ONS row it cannot pair up. The comment
+    # further down has predicted this since it was written - "a rename on either
+    # side would quietly leave the comparison rather than fail it" - without
+    # acting on it. Proven: renaming one CSP row in a scratch copy of the
+    # workbook left 9 of 10 comparing, printed the unmatched row, and returned
+    # "in step with ONS", exit 0, while that borough's rate was 25 per 1,000
+    # adrift.
+    seen = set()
     for canonical, rec in ons.items():
         key = SITE_ALIAS.get(canonical, canonical)
         if key not in london:
             continue
+        seen.add(key)
         total = rec.get(TOTAL_COL)
         if not isinstance(total, (int, float)):
             # ONS suppresses the City of London rate (small resident population),
@@ -328,6 +365,13 @@ def compare_city(city, write=False):
     # checks that could pass while comparing nothing; a gate must say what it
     # compared, and main() fails the run when this is zero for any city.
     print(f'  ONS rows: {len(ons)}   repo boroughs: {len(london)}   compared: {compared}')
+    # PER-BOROUGH FLOOR. Every repo borough must be either compared against ONS
+    # or explicitly unresolved (ONS suppresses the City of London rate). One
+    # that is neither was never checked, and the city-level `compared == 0`
+    # floor cannot see it.
+    unaccounted = sorted(b for b in london if b not in seen)
+    if unaccounted:
+        print(f'  NOT COMPARED AT ALL: {unaccounted}')
     print(f'  boroughs whose rate differs from ONS: {len(drift)}')
     for k, cur, new in sorted(drift, key=lambda t: -abs((t[1] or 0) - t[2])):
         print(f'    {k:26} repo={str(cur):>7}  ONS={new:>7}  ({new - (cur or 0):+.1f})')
@@ -345,7 +389,7 @@ def compare_city(city, write=False):
         print('  NB: backend/lambdas/score/app.py LONDON_BOROUGHS holds its own copy '
               'and must be updated to match, or site and API will disagree.')
 
-    return drift, compared
+    return drift, compared, unaccounted
 
 
 def main():
@@ -379,7 +423,7 @@ def main():
     total_drift = 0
     floored = []
     for city in cities:
-        drift, compared = compare_city(city, write=args.write)
+        drift, compared, unaccounted = compare_city(city, write=args.write)
         total_drift += len(drift)
         # THE FLOOR, PER CITY. The comparison loop SKIPS any ONS row it cannot
         # pair with a repo borough, so with every row unmatched - one renamed
@@ -395,7 +439,15 @@ def main():
         # leaves London at 32 of 33 - so a city comparing zero is always a
         # fault, and under --all a rename in ONE city must fail even while the
         # other ten still compare.
-        if compared == 0:
+        # PER-BOROUGH, not only per city (2026-08-31, audit I14). The floor
+        # above catches a city that compared NOTHING; a single borough dropping
+        # out leaves the other nine comparing and sails through it. Measured
+        # against a scratch workbook with one CSP row renamed: 9 of 10 compared,
+        # "in step with ONS", exit 0, and that borough's rate 25 per 1,000
+        # adrift (Wigan live 4.8 against 4.3).
+        if unaccounted:
+            floored.append(f'{city} (not compared: {", ".join(unaccounted)})')
+        elif compared == 0:
             floored.append(city)
             print(f'  FAIL: compared nothing for {city}. Every ONS row was '
                   'unmatched or suppressed, so this run proves no agreement '
@@ -406,7 +458,10 @@ def main():
 
     print(f'\nCompared crime rates for {len(cities)} city/cities against ONS Table C4.')
     if floored:
-        print(f'RESULT: FAIL - zero boroughs compared for: {", ".join(floored)}')
+        print('RESULT: FAIL - boroughs left uncompared:')
+        for f in floored:
+            print(f'  {f}')
+        print('  A borough ONS did not reach is a borough this gate did not check.')
         return 1
 
     # Exit non-zero on DRIFT only, not on `unresolved`.

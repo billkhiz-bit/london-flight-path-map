@@ -250,7 +250,7 @@ check "site == Lambda (91 boroughs)"   node tests/borough-score-parity.mjs
 check "area names == MSOA names"       python scripts/build_city_neighbourhoods.py --check-names
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
-check "no em dashes (9 pages)"         sh scripts/check_no_em_dash.sh
+check "no em dashes (all pages)"       sh scripts/check_no_em_dash.sh
 
 # privacy.html §2d promises 30-day log retention. This asserts AWS actually
 # does that. BLOCKING, and currently RED on purpose.

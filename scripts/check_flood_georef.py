@@ -220,7 +220,7 @@ def check_city(city, mosaic_dir, per_class, seed):
 
     tif = mosaic_dir / f'ea_flood_risk_{city}.tif'
     if not tif.exists():
-        print(f'{city:<16} NO MOSAIC - skipped (not a pass)')
+        print(f'{city:<16} NO MOSAIC - NOT VERIFIED (fetch it, or this city is unchecked)')
         return None
 
     with rasterio.open(tif) as src:
@@ -336,10 +336,41 @@ def main():
     for city in cities:
         res = check_city(city, mosaic_dir, args.per_class, args.seed)
         if res is None:
+            # A MISSING MOSAIC IS A FAILURE, NOT A SKIP (2026-08-31).
+            #
+            # This was `continue`, and the only floor below is the GLOBAL
+            # `if not checked` - so with ten of the eleven mosaics absent this
+            # printed "verified against the EA service for 1 cities" and exited
+            # 0. Proven by pointing --mosaic-dir at a directory holding London
+            # alone. `data/*.tif` is gitignored and restored only by its own
+            # fetch script, so "the raster was never fetched for that city" is
+            # not hypothetical - it is exactly the Leicester/Teesside incident
+            # CLAUDE.md records, here applied to the gate itself.
+            #
+            # The city list comes from the CHECKED-IN boundary files, so the
+            # expected set is stable and this cannot fail for a city that does
+            # not exist.
+            failed.append(f'{city} NO MOSAIC - not verified')
             continue
         city_compared = 0
         for label, r in res.items():
             if r is None:
+                # A CLASS WITH NO INTERIOR IS UNTESTED, NOT AGREED.
+                #
+                # Also `continue` until 2026-08-31, and this is the sharper of
+                # the two: erase every medium-or-high pixel from a mosaic and
+                # that class has no eroded interior, so it was dropped and the
+                # city passed on the not-MoH direction ALONE. Proven - zeroing
+                # London's 1,215,784 MoH pixels (3.72% of the city) printed
+                # "medium-or-high NO ERODED INTERIOR" and exited 0, on a mosaic
+                # that would drive floodMediumOrHighPct to 0.0 for all 33
+                # boroughs of a SCORED input.
+                #
+                # The docstring at the top of this file promises both directions
+                # are checked precisely because asserting only "where we say
+                # flood, the service agrees" passes a mosaic that has lost its
+                # polygons entirely. That promise was not kept by the code.
+                failed.append(f'{city}/{label} NO INTERIOR - cannot be tested')
                 continue
             _agree, compared, _unreach, rate = r
             city_compared += compared
@@ -357,10 +388,20 @@ def main():
     print()
     if not checked:
         print('FAIL: no city was compared. A gate that compares nothing cannot go red.')
+        print(f'  expected {len(cities)} cities: {", ".join(cities)}')
+        print('  if the mosaics are simply absent, fetch them:')
+        print('    python scripts/fetch_ea_flood_risk.py --all')
         return 1
     if failed:
-        print(f'FAIL: {len(failed)} check(s) below {MIN_AGREE:.0%} - ' + '; '.join(failed))
-        print('The mosaic disagrees with the Environment Agency about where flood risk is.')
+        untested = [f for f in failed if 'NO MOSAIC' in f or 'NO INTERIOR' in f or 'INCONCLUSIVE' in f]
+        disagreed = [f for f in failed if f not in untested]
+        print(f'FAIL: {len(failed)} check(s) - {len(disagreed)} disagree, {len(untested)} untested')
+        for f in failed:
+            print(f'  - {f}')
+        if disagreed:
+            print('The mosaic disagrees with the Environment Agency about where flood risk is.')
+        if untested:
+            print('An untested class is not an agreeing one: these were never compared.')
         return 1
     print(f'flood georeferencing verified against the EA service for {checked} cities')
     return 0

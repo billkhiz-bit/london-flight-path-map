@@ -34,6 +34,39 @@ if [ "$COUNT" -eq 0 ]; then
   exit 1
 fi
 
+# PER-FILE FLOOR (2026-08-31, audit I12).
+#
+# COUNT is the number of distinct MATCHING hosts, so a file that matches
+# NOTHING contributes nothing and cannot fail this. Proven: rewrite the API
+# base in index.html, changes.html, all three score-demo pages, api/index.html
+# and extension/background.js to https://DELETED.example, leave js/api-base.js
+# alone, and this printed "PASS: every surface uses <host>" and exited 0. It
+# detected drift BETWEEN two execute-api ids and never drift AWAY from
+# execute-api at all - which is the likelier accident, because that is what a
+# find-and-replace or a half-finished custom-domain migration produces.
+#
+# Every one of the eight surfaces carries the host today (measured: 2,2,1,1,1,
+# 1,1,1), so requiring one from each is a floor, not a new constraint. The
+# tests/*.mjs glob is deliberately NOT included here - those files are a moving
+# set and their job is to assert against the host, not to hold it.
+MISSING=''
+for f in $FILES; do
+  if [ ! -f "$f" ]; then
+    MISSING="$MISSING $f(absent)"
+  elif [ "$(grep -c "$PATTERN" "$f" 2>/dev/null)" -eq 0 ]; then
+    MISSING="$MISSING $f"
+  fi
+done
+if [ -n "$MISSING" ]; then
+  echo "FAIL: these surfaces carry no API Gateway host at all:"
+  for f in $MISSING; do echo "  $f"; done
+  echo
+  echo "  A surface that matches nothing cannot disagree with the others, so"
+  echo "  it drops out of the comparison silently. Either it lost the host in"
+  echo "  an edit, or it moved and \$FILES needs updating."
+  exit 1
+fi
+
 if [ "$COUNT" -ne 1 ]; then
   echo "FAIL: API base URL drift. Found $COUNT distinct hosts:"
   printf '%s\n' "$HOSTS" | sed 's/^/  /'
