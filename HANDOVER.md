@@ -168,9 +168,10 @@ TTL: adding one deletes user data on a schedule, so it is Bill's decision, not
 a fix to slip into a throttling change.
 
 - **D9** four visual systems across nine page types (narrowed slightly by the
-  token work above, not closed). **D10** country tabs are 14px tall against the
-  WCAG 2.5.8 24x24 minimum. **D11** dark mode exists on the area pages only and
-  declares no `color-scheme`.
+  token work above, not closed). **D11** dark mode exists on the area pages only
+  and declares no `color-scheme`. (**D10 is CLOSED** - and was a regression: the
+  base rule had met WCAG 2.5.8 since 2026-08-23 and the tabbed mobile view
+  overrode it back to 14px, which became the WEB default on 2026-08-28.)
 - **The N1 7SX site/API divergence** (§5b). Still undiagnosed, and the obvious
   explanation is still wrong - identify the differing RAW value before writing
   any fix.

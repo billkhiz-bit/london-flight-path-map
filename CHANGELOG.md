@@ -81,6 +81,32 @@ while the report named two. Identical node counts (204/204) was the tell.
 - **I34** "four components" over five rendered rows, and a ranking header whose
   percentages summed to 82-86%.
 
+### D10 - the navigation's tap targets, and a fix that had been overridden
+
+**A regression, not an unfixed item.** `.country-btn` has carried
+`min-height: 24px; min-width: 24px` since 2026-08-23, added with a comment
+citing WCAG 2.5.8 by name - and `.app[data-mview='search']` overrode it back to
+`min-height: 14px`. That override shipped as the NATIVE-only redesign, and the
+tabbed layout became the **web default on 2026-08-28**, so a rule written for
+one App Store build silently took over the accessibility of every phone visitor
+five days after the fix landed. **A narrower override of a criterion the base
+rule exists to satisfy is worth being suspicious of on sight.**
+
+Measured before: **24x14 and 28.3x14 at 390x844, 320x568 and landscape
+844x390**, while desktop - which never sees the override - was a correct 24x24.
+The ten city chips below them were **47.8x22 to 95.5x22**, and being a
+segmented control with `gap: 0` they cannot claim the criterion's spacing
+exception either.
+
+**Restoring the target made the two tiers overlap by 4px**, and
+`selector-widths.mjs` caught it - the gate exists precisely because the two rows
+are independently absolute-positioned, so every override that moves one must
+move the other. The chip strip's `top: 24px` turned out to be a number derived
+from the 14px defect rather than from the design; it is `32px` now (4 + 24 + 4).
+Type size is unchanged, only the targets grew, and the map band is MEASURED from
+`navBottom` so it absorbs the extra height - verified by `map-fit`, `responsive`,
+`city-switch`, `native-sim-render` and the WCAG scan.
+
 ### Three more audit findings closed - F26, I17, I26/F8
 
 - **F26 - London's aircraft raster was declared painted from an href**, and the

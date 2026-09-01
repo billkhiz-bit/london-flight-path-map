@@ -45,7 +45,7 @@ that [a recorded finding can be the inverse of the code](./AUDIT_REPORT_2026-08-
 
 | **I19, I25** | closed 2026-09-01, after the wave above - see §4b |
 
-Still open and untouched: **D9, D10, D11**, and the
+Still open and untouched: **D9, D11**, and the
 N1 7SX divergence in §5b.
 
 **Two findings in this report are INVERTED and are corrected in §4a**: the §3b
@@ -382,7 +382,7 @@ screenshots proved all ten controls do paint an indicator, despite
 | D7 | `.score-explain` misses AA by 0.03 across the whole borough panel | MEDIUM | **4.47:1**, needs 4.5. `#5f5f5f` clears it |
 | D8 | The borough panel **never names the borough** in a heading: six `<h3>`s, none the subject, `<h1>` stays "Sky Score" and `document.title` never changes | MEDIUM | `h1` → `h3` with no `h2` |
 | D9 | Four visual systems across nine page types — four font families, four `h1` sizes, four link colours, **two opposite background polarities**, three accent oranges | MEDIUM | area→home→pricing crosses three products |
-| D10 | Country tabs are **14px tall** (UK 24×14, USA 28×14); ten city chips 22px — under the WCAG 2.5.8 24×24 minimum, on the primary navigation | LOW-MED | `responsive.mjs` builds a tap-target list but keeps it advisory |
+| D10 | **FIXED 2026-09-01.** Country tabs are **14px tall** (UK 24×14, USA 28×14); ten city chips 22px — under the WCAG 2.5.8 24×24 minimum, on the primary navigation. **It was a REGRESSION, not an unfixed item**: the base `.country-btn` has carried `min-height: 24px; min-width: 24px` since 2026-08-23, added with a comment citing this exact criterion, and `.app[data-mview='search']` overrode it back to 14px. That override shipped as the NATIVE-only redesign, and on 2026-08-28 the tabbed layout became the WEB DEFAULT — so a rule written for one App Store build silently took over the accessibility of every phone visitor five days after the fix landed. Measured before: 24×14 and 28.3×14 at 390×844, 320×568 **and landscape 844×390**, while desktop — which never sees the override — was a correct 24×24. The chips were 47.8×22 to 95.5×22 and are a segmented control with `gap: 0`, so the criterion's spacing exception cannot apply. Restoring the target made the two tiers **overlap by 4px**, which `selector-widths.mjs` caught — the chip strip's `top: 24px` was a number derived from the 14px defect, not from the design; it is 32px (4 + 24 + 4) now. Type size is unchanged; only the targets grew, and the map band is measured from `navBottom` so it absorbs the extra height | LOW-MED | `responsive.mjs` builds a tap-target list but keeps it advisory |
 | D11 | Dark mode exists on the **area pages only** and declares no `color-scheme`, so UA scrollbars render light on `#141414` and an area→map journey flashes full white | LOW | 0 `prefers-color-scheme` hits in the other 9 pages |
 
 **Clean, and worth not re-auditing:** all 100 area pages at 320 and 414 in both

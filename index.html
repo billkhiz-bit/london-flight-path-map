@@ -3440,7 +3440,14 @@
            already provides. */
         .app[data-mview='search'] .city-selector {
           position: fixed;
-          top: calc(env(safe-area-inset-top) + 24px);
+          /* 32px = the tabs' own 4px offset + their 24px target + a 4px gap.
+             It was 24px, which cleared a 14px-tall tab row by 6px and was
+             therefore a number derived from the D10 defect above rather than
+             from the design. Restoring the 24x24 target made the two tiers
+             overlap by 4px, which tests/selector-widths.mjs caught - it exists
+             because these two rows are independently absolute-positioned, so
+             every override that moves one must move the other. */
+          top: calc(env(safe-area-inset-top) + 32px);
           left: 14px;
           right: 14px;
           z-index: 4;
@@ -3450,7 +3457,15 @@
           font-size: 8px;
           letter-spacing: 0.5px;
           padding: 4px 7px;
-          min-height: 22px;
+          /* 24px, not 22 (audit D10's sibling, found while fixing it).
+             The chips sat 2px under the same WCAG 2.5.8 target as the country
+             tabs above, measured 47.8x22 to 95.5x22 at 390x844, 320x568 and
+             844x390. They are a segmented control with `gap: 0`, so the
+             criterion's SPACING exception cannot apply - adjacent targets
+             cannot be 24px apart when they touch. Two pixels, and it closes
+             the same criterion on the control immediately below the one the
+             audit named. */
+          min-height: 24px;
           border-radius: 0;
         }
         /* The chips are flat siblings again under the country tier, so
@@ -3480,7 +3495,21 @@
         .app[data-mview='search'] .country-btn {
           font-size: 8px;
           letter-spacing: 0.08em;
-          min-height: 14px;
+          /* NO min-height OVERRIDE (audit D10, 2026-09-01).
+             This said `min-height: 14px` and so undid the base rule's
+             `min-height: 24px`, which was added on 2026-08-23 specifically to
+             meet WCAG 2.5.8's 24x24 target. Measured before the change: the
+             tabs were 24x14 and 28.3x14 at 390x844, 320x568 AND landscape
+             844x390, while desktop - which never sees this override - was a
+             correct 24x24.
+             The fix lasted five days. `data-mview='search'` shipped as the
+             NATIVE-only redesign, and on 2026-08-28 the tabbed layout became
+             the web default, so a rule written for one App Store build
+             silently took over the accessibility of every phone visitor. A
+             narrower override of a criterion the base rule exists to satisfy
+             is worth being suspicious of on sight.
+             The type stays at 8px; only the touch target grows, and the map
+             band is MEASURED from navBottom so it absorbs the extra height. */
           padding-bottom: 1px;
         }
         /* This used to reserve a 165px right-hand gutter so a TWO-chip city
