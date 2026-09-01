@@ -145,7 +145,7 @@ where no key can travel.
 | `GET` | `/v1/environment` | **Public.** Aircraft/road Lden, NO2 and PM2.5 for a coordinate, each against its WHO guideline. No weights, no persona, no composite score |
 | `GET` | `/badge` | **Public.** An embeddable SVG score badge for a postcode. Served as an `<img>`, not a script, so it renders on listing pages behind strict CSP. Reuses the same scoring path, so it cannot show a score `/v1/score` would not |
 
-Free tier: **10,000 requests/month**, 5/sec burst, 2/sec sustained. One request is one address — `/v1/score/batch` is denied per-method on the free plan, so requests and scores are the same unit and the ceiling is 10,000 scores. (Until 2026-08-21 it was 100 requests × a 100-address batch for the same 10,000 ceiling, which was an afternoon of one live listings page.) Paid tiers introduced when the first paying integrator commits.
+Free tier: **10,000 requests/month**, 5/sec burst, 2/sec sustained. One request is one address — `/v1/score/batch` is denied per-method on the free plan, so requests and scores are the same unit and the ceiling is 10,000 scores. (Until 2026-08-21 the same ceiling was reached by a much smaller request quota multiplied by a 100-address batch - an afternoon of one live listings page. The superseded figure is deliberately not restated: a reader skimming for the limit cannot tell a quoted historical number from a live one, and neither can the drift gate that now reads this file.) Paid tiers introduced when the first paying integrator commits.
 
 ## Quick-start
 
@@ -270,7 +270,7 @@ everywhere; the gap is the remaining five.
 | Road noise | DEFRA Round 4 road Lden | yes | curated | **yes** (2026-08-11) |
 | Air quality | DEFRA background maps | yes | curated | **yes** (2026-08-11) |
 | Flood risk | EA Risk of Flooding from Rivers and Sea | yes | curated | **yes** (2026-08-11) |
-| Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11); plus 1,771 stations drawn on the map's transport layer, display only (2026-08-12) |
+| Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11); plus **1,415 stations in the detail panel's nearest-stations list**, display only. The map's transport LAYER was deleted on 2026-08-12 (the markers could not be clicked - the borough path took the event - and duplicated a signal already scored). The count fell from 1,651 on 2026-09-01, when audit I19 stopped publishing one tram stop as five and dropped 806 retired NaPTAN nodes |
 | Healthcare | **NHS ODS** GP practices within 500 m | yes | curated | **yes** (2026-08-11) |
 | Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 485 districts** (2026-08-12); 285 carry a curated area name corroborated against published MSOA names, and every district is majority inside the city publishing it |
 | **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **yes where DEFRA published a contour** (2026-08-12): 7 per-airport coverages, 7,339 postcodes = 0.6–3.9% per city; the rest estimated from runway geometry |

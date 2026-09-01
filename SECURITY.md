@@ -53,7 +53,7 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 
 ### Authentication + authorisation on the API
 
-- **API key required** on every `/v1/score*` endpoint (API Gateway Usage Plan; 100 req/month free tier, lowered from 1000 on 2026-07-29; per-key throttling at 1 req/s sustained, 5 burst). Note the quota meters *requests* and a `/v1/score/batch` request carries up to 100 queries, so the free ceiling is 10,000 scores/month; this multiplier is stated on `/pricing`, `/api/` and in the OpenAPI spec rather than left for a reader to derive.
+- **API key required** on every `/v1/score*` endpoint (API Gateway Usage Plan; 10,000 requests/month free tier; per-key throttling at 2 req/s sustained, 5 burst). Requests and scores are the **same unit**: `/v1/score/batch` is denied to the free plan per-method (`RateLimit: 0`, answered as 429), so a request cannot carry more than one query. This corrects a line that survived until 2026-09-01 describing the quota and the ×100 batch multiplier as they stood before 2026-08-21.
 - **Per-route APIGW throttle** of 1 RPS / 5 burst on `/v1/signup` to gate self-service abuse (audit ID: N-Code-2).
 - **Self-service signup hardened**: CORS allow-listed to `https://skyscore.co.uk` and the legacy CloudFront URL only (no wildcard), one-key-per-email idempotency with consistent-read DDB, race-recovered orphan-key cleanup, structured `[SIGNUP_ORPHAN_KEY]` log prefix for CloudWatch alarming.
 - **Favourites endpoint** uses an opaque `X-Device-Token` UUID header (audit C3 mitigation; capability-based, not identity-based — anyone learning a token can use it). Documented limitation; identity-based auth is on the roadmap if PII expands.

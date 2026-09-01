@@ -1059,6 +1059,17 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         'score-demo/index.html',
         'score-demo/openapi.yaml',
         'METHODOLOGY.md',
+        # Found on 2026-09-01 by sweeping every live .md rather than trusting
+        # the list. All three were still on the pre-2026-08-21 figures, and
+        # PROJECT_DOCUMENTATION's was inside a passage headed "Corrected
+        # 2026-08-04" - a correction that had itself gone stale.
+        'PROJECT_DOCUMENTATION.md',
+        'OPERATIONS.md',
+        'SECURITY.md',
+        # Already correct when added, which is the reason to add it: a gate
+        # that watches only the files known to be wrong catches nothing on the
+        # day a right one drifts.
+        'README.md',
     )
 
     # METHODOLOGY.md is a SIXTH mirror and appeared in NO list - not the one in
@@ -1187,8 +1198,7 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             'batch request carries up to 100 addresses and counts as one request',
             'while still costing one request',
         )
-        for rel in ('score-demo/index.html', 'pricing.html', 'api/index.html',
-                    'METHODOLOGY.md'):
+        for rel in self.QUOTA_PAGES:
             text = self._page(rel).lower()
             for claim in claims:
                 self.assertNotIn(

@@ -104,10 +104,15 @@ key that CloudFormation does not manage — the same unlink-then-link dance
 applies. Not an admin action: `flightmap-dev` holds `apigateway:POST` and
 `apigateway:DELETE`, so it ran from this machine.
 
-Live plan ids as deployed: `SkyScoreFreeTier` = `sjtyz8` (100 req/month),
+Live plan ids as deployed: `SkyScoreFreeTier` = `sjtyz8` (10,000 req/month
+since 2026-08-21, when batch was denied to free keys and the quota was raised
+by the same factor so requests and scores became the same unit),
 `SkyScoreDemoTier` = `x88go8` (2,000 req/month).
 
-The free tier dropped to 100 req/month on 2026-07-29. The shared public demo
+The free tier was cut sharply on 2026-07-29 and restored to 10,000 on
+2026-08-21 (the superseded figure is deliberately not restated - this file is
+read by the free-tier drift gate, which cannot tell a quoted historical number
+from a live claim). The shared public demo
 key (`SkyScoreDemoKeyV2`, id `1zy00lrqs5`, embedded in `score-demo/*.html`) was
 linked to `ScoreFreeUsagePlan`, so between the deploy and the relink the public
 "Try the API" form shared that 100 across every visitor to the page. The quota

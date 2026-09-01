@@ -7,7 +7,7 @@ _Last full refresh: 2026-07-24 (audit item I14)._
 **Sky Score** is a noise + livability data product for UK and NYC property. Two surfaces:
 
 - **Consumer site**, public, free, no sign-up. Helps renters and buyers see the structural data (aircraft noise, road noise, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to surface. London + NYC, postcode/ZIP-level for both.
-- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 100 req/month (10,000 scores/month via batch), self-service signup at `/v1/signup`.
+- **B2B API** (`/v1/score`, `/v1/score/batch`, `/v1/regions`), productised endpoint for property data aggregators, conveyancers, and Sharia-compliant home-finance providers. Methodology fully published, OpenAPI 3.0 spec, free tier 10,000 requests/month = 10,000 scores (batch is denied to free keys, so requests and scores are the same unit), self-service signup at `/v1/signup`.
 
 Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + Haversine fallback) + 5 NYC boroughs (~182 residential ZIPs, ~110 with per-ZIP centroids).
 
@@ -100,7 +100,7 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 #### 1. ScoreFunction (`/v1/score`, `/v1/score/batch`, `/v1/regions` GET/POST)
 - **File:** `backend/lambdas/score/app.py`
 - **Purpose:** B2B scoring engine — main product. Returns `score`, `components`, `context`, `sources`. v3.1 raster-first resolution chain falling back to Haversine then borough.
-- **Auth:** API key gated via APIGW Usage Plan (`SkyScoreFreeTier`: 100 req/month, 5/sec burst)
+- **Auth:** API key gated via APIGW Usage Plan (`SkyScoreFreeTier`: 10,000 requests/month, 5/sec burst, 2/sec sustained)
 
 #### 2. SignupFunction (`/v1/signup` POST)
 - **File:** `backend/lambdas/signup/app.py`
@@ -465,7 +465,7 @@ Sky Score/
 
 ## Product capabilities (current state)
 
-1. **Productised B2B API**, `/v1/score` and `/v1/score/batch` with API-key auth, plus the public `/v1/changes`, `/v1/environment` and - contrary to what this line said until 2026-08-21 - `/v1/regions`, and a published OpenAPI 3.0 spec (self-hosted Swagger UI). Free tier is **100 requests/month** capped via API Gateway UsagePlan, which is **10,000 scores/month** once the ×100 batch multiplier is counted; self-service signup at `/v1/signup`. *(Corrected 2026-08-04: this said "1000/month", a 10× overstatement of the deployed quota. The number was lowered from 1,000 to 100 on 2026-07-29 precisely because the request quota understated what a batch key could extract — see `BATCH_METERING_DECISION.md` — and this reference was never updated, so the architecture doc advertised the pre-decision figure.)*
+1. **Productised B2B API**, `/v1/score` and `/v1/score/batch` with API-key auth, plus the public `/v1/changes`, `/v1/environment` and - contrary to what this line said until 2026-08-21 - `/v1/regions`, and a published OpenAPI 3.0 spec (self-hosted Swagger UI). Free tier is **10,000 requests/month** capped via API Gateway UsagePlan, and that is also **10,000 scores/month**, because `/v1/score/batch` is denied to free keys per-method so a request cannot carry more than one query; self-service signup at `/v1/signup`. *(Corrected twice. On 2026-08-04 it overstated the quota tenfold. On 2026-09-01 the correction itself had gone stale: it still advertised the pre-2026-08-21 quota and the ×100 batch multiplier that was removed that day, so a note written to fix a wrong number spent five weeks publishing another one. The superseded figures are not restated here — see `BATCH_METERING_DECISION.md` for the history.)*
 2. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO noise guidelines, **DfE Key Stage 4 Progress 8**, **ONS *Crime in England and Wales* Table C4**, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`. *(Corrected 2026-08-04: previously credited "Ofsted distribution" and "ONS crime medians". Ofsted bands were retired in v3.5 — they were editorial and unreproducible — and crime is sourced from Table C4 rates, not medians.)*
 3. **Multi-city**, London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both.
 4. **DEFRA raster resolution (v3.1)**, score Lambda samples DynamoDB Lden values per postcode, falling back to Haversine then borough averages. Loader in `scripts/load_defra_raster.py`.

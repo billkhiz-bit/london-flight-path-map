@@ -527,11 +527,20 @@ Resources:
     Properties:
       UsagePlanName: SkyScoreFreeTier
       Description: Free tier, 10000 requests/month = 10000 scores, 5 req/sec burst.
-      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. SIX places mirror
+      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. NINE places mirror
       # these numbers and none of them can read the plan at runtime:
       # backend/lambdas/signup/app.py (the signup response), pricing.html,
-      # api/index.html, score-demo/openapi.yaml, score-demo/index.html and
-      # METHODOLOGY.md section 16. Change them together.
+      # api/index.html, score-demo/openapi.yaml, score-demo/index.html,
+      # METHODOLOGY.md section 16, PROJECT_DOCUMENTATION.md, OPERATIONS.md and
+      # SECURITY.md. Change them together.
+      #
+      # It said SIX for a few hours on 2026-09-01 and was wrong by three. The
+      # last three were found by SWEEPING every live .md for the figure, not by
+      # reading this list - which is the third time this list has been short
+      # (score-demo/index.html 2026-08-22, METHODOLOGY.md and these three
+      # 2026-09-01). Every one of them is now READ by FreeTierQuotaDriftTests,
+      # so the list is documentation and the test is the guard. If you add a
+      # tenth, add it to QUOTA_PAGES in the same commit.
       #
       # METHODOLOGY.md was added on 2026-09-01, having been in no list at all
       # while carrying "100 requests per month", "1 request per second
