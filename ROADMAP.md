@@ -2,7 +2,11 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-08-31, later the same day (**FIVE FIX PASSES AFTER THE
+**Last reviewed:** 2026-09-01 (**D3 LANDED; the parked "one CSS declaration"
+was the wrong element.** See the LANDED note below and `AUDIT_REPORT.md` §D3.
+Source-only, live untouched.)
+
+**Previously reviewed:** 2026-08-31, later the same day (**FIVE FIX PASSES AFTER THE
 AUDIT, ALL SOURCE-ONLY - LIVE IS UNTOUCHED.** 14 gates that could not fail are
 closed, plus five absence-as-measurement defects, two false provenance claims
 and three live UX defects. Every fix proven red against a constructed defect
@@ -35,12 +39,23 @@ was a real bug but NOT the cause of the mobile deep-link behaviour; and inerting
 `#map-container` removed the document's only `<main>`, caught by the a11y gate
 within one run.
 
-**PAUSED MID-FIX, ON A BRANCH:** `wip/d3-landscape` carries the landscape-phone
-work (audit D3) and is **one CSS declaration from done** - `responsive.mjs`
-reports 1 of 71, the legend's own expand toggle still covered by its scrolling
-rows; make the sticky toggle opaque and raise it, because `background: inherit`
-resolves to transparent there. Master is clean and green at `f727e76`; the
-branch is not merged precisely because it would leave a blocking gate red.
+**LANDED 2026-09-01: `wip/d3-landscape` is merged and `responsive.mjs` is 71 of
+71.** The parked note said one CSS declaration was left - make the sticky legend
+toggle opaque and raise it above its own scrolling rows. **That declaration was
+already committed on the branch and the gate still reported 1 of 71**, so the
+recorded diagnosis was wrong rather than unfinished. The coverer was
+`div.search-box`, the full-width sticky search card at y 54-138: the flat 160px
+floor asked for 42px more than a 390px-tall viewport has, and a bottom-anchored
+panel takes that difference from whatever is above it. **The audit output could
+not have said so** - it prints tag and id only, and `search-box` has no id, so
+it read `covered by div`.
+
+Fixed by capping at the band that is actually clear
+(`calc(100dvh - 126px - 146px)` = 118px at 844x390), which also **deleted** the
+`min-height: 380px` boundary and the harness carve-out mirroring it - that
+carve-out had been accepting a **26px legend of 427px content** at 568x320.
+Proven red three ways. A brace-move that had silently carried `.map-controls`
+into the wrong media block was found and reverted in the same pass.
 
 **STILL OPEN AND NEEDING A DEPLOY WINDOW:** the aircraft near-field **disc**
 (Rushcliffe publishes `Quiet skies 10.0/10` over 10.43 km2 at >=55 dB, should be

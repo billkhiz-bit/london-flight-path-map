@@ -223,19 +223,19 @@ for (const meta of PAGES) {
       };
     });
     await page.waitForTimeout(500);
-    // THE HEIGHT FLOOR MIRRORS THE CSS (2026-08-31, audit D3).
+    // THE HEIGHT FLOOR IS UNIFORM AGAIN (2026-09-01, audit D3).
     //
-    // 40px proved the legend had actually rendered rather than the run being a
-    // scan of the landing state wearing another name. That is still the job -
-    // but the legend now DELIBERATELY yields to the city chips below 380px of
-    // viewport height, because at 568x320 a legend tall enough to be useful is
-    // tall enough to cover three chips, and the chips are primary navigation.
-    // Holding 40px there would fail the design rather than the harness.
+    // 40px proves the legend actually rendered, rather than the run being a
+    // scan of the landing state wearing another name.
     //
-    // `opened` and `toggled` are what actually prove the state was reached;
-    // the height only guards against a zero-size render, so it drops to a
-    // presence check where the cap is deliberately tight.
-    const legendFloor = vp.h >= 380 ? 40 : 8;
+    // It briefly dropped to 8px below 380px of viewport height, to mirror a
+    // CSS rule that let the legend yield to the city chips there. That rule is
+    // gone: the cap is now derived from the band between the search card and
+    // the legend's own bottom edge, which is 48px at 568x320 - so the legend
+    // clears the chips by construction and still clears 40px. A harness
+    // carve-out that mirrors a design constant should die with it, or it
+    // silently keeps accepting a legend that has collapsed again.
+    const legendFloor = 40;
     if (reached.toggled < 3 || !reached.opened || reached.legendHeight < legendFloor) {
       console.log(
         `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
@@ -433,7 +433,32 @@ for (const meta of PAGES) {
         tag: node.tagName.toLowerCase(),
         id: node.id || '',
         text: (node.textContent || '').trim().slice(0, 20),
-        by: top.tagName.toLowerCase() + (top.id ? '#' + top.id : ''),
+        // NAME THE COVERER IDENTIFIABLY, CLASS INCLUDED (2026-09-01, audit D3).
+        //
+        // This read `tagName + (id ? '#'+id : '')` and cost a day. At 844x390
+        // the coverer was `div.search-box` - the full-width sticky search card
+        // - which carries no id, so the report read literally
+        // `legend-toggle covered by div`. Nothing false was printed; the one
+        // field that identified the element simply was not emitted, and "a
+        // div" beside a legend full of divs was read as one of the legend's
+        // own rows. The fix written from that reading (make the sticky toggle
+        // opaque, raise it above the rows) was already committed while the
+        // gate still reported 1 of 71, and would have covered the primary
+        // search input had it worked.
+        //
+        // The elements that do the covering are anonymous layout wrappers by
+        // nature, so id-only is at its weakest exactly where it is needed.
+        // `classList` rather than `className`, because on an SVG element
+        // `className` is an SVGAnimatedString and stringifies to `[object
+        // SVGAnimatedString]`; two classes is enough to identify without
+        // turning a utility-class stack into a paragraph.
+        by:
+          top.tagName.toLowerCase() +
+          (top.id ? '#' + top.id : '') +
+          Array.from(top.classList || [])
+            .slice(0, 2)
+            .map((c) => '.' + c)
+            .join(''),
       });
     }
 

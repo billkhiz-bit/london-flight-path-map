@@ -521,42 +521,89 @@ that escapes. `responsive.mjs` gained a **borough-selected page state**: every
 entry was audited before a result exists, so the COVERED detector was written and
 had never reached the state that needed it. 55 → 65 combinations.
 
-### D3 is PARKED on `wip/d3-landscape`, one failure from done
+### D3 is CLOSED (2026-09-01) — and the recorded next step was the wrong element
 
-Not on master, because it leaves `responsive.mjs` red at **1 of 71**: at
-844×390 the legend's own expand toggle is still reported covered by its
-scrolling rows.
+`responsive.mjs` is **71 of 71** and the branch is merged. The parked note said
+the remaining work was to make the sticky toggle **opaque** and raise it above
+its own scrolling rows. **That declaration was already on the branch, committed,
+and the gate still reported 1 of 71** — so the diagnosis was wrong, not
+incomplete.
 
-**The next step is known and small.** Make the sticky toggle **opaque** and
-raise it above the rows — `background: inherit` resolves to *transparent* there,
-because the panel's background lives on an ancestor, so the toggle stays sticky
-and the rows show through it, which `elementFromPoint` reports exactly as
-covered. One CSS declaration.
+**What was actually covering it.** Not the legend's rows: `div.search-box` —
+the sticky search card, **full width at x 8–844**, holding y 54–138. The legend
+is bottom-anchored with its bottom edge pinned at y=264, so the flat `160px`
+floor could only take the height it wanted by growing **upwards**, to y 104–264.
+That put the toggle's centre at y=133, **5px inside the card**. Both carry
+`z-index: 3`, so source order decided and the card won.
+
+**The misdiagnosis has a mechanical cause worth fixing elsewhere.** The
+reporter prints `top.tagName + (top.id ? '#'+top.id : '')` — **tag and id only,
+never the class.** `div.search-box` has no id, so the audit output read
+literally `covered by div`, and the nearest plausible `div` was assumed. The
+gate measured correctly; its *output* discarded the field that identified the
+culprit.
+
+**Raising the legend would have turned the gate green and made the UI worse** —
+it would have covered the primary search input, which is the exact defect the
+layers popover was moved out of this same band to avoid.
+
+**The fix is the band that exists, not a target height.**
+`max-height: calc(100dvh - 126px - 146px)` — the legend's bottom edge (56px
+nav + its own 70px offset) less the card's bottom (54+84) plus the 8px gap this
+chrome uses, the same constant the popover rule already uses. Measured
+after: legend y **146–264, 118px** at 844×390, top exactly at card-bottom + 8.
+
+**It deleted the `min-height: 380px` boundary rather than joining it.** That
+constant existed only to stop a *flat* floor covering the city chips at
+568×320; a band-derived cap puts the legend's top at 146px at every height in
+the range, so it cannot reach chips at y 24–46. Proven both ways — reverting to
+the flat floor reds at 844×390 (`legend-toggle covered by div`) **and** at
+568×320 (`button "London" covered by div#map-legend`, 4 controls).
+
+**And the branch's own harness carve-out was hiding a collapsed legend.** The
+prep floor had been dropped to `vp.h >= 380 ? 40 : 8` to mirror the CSS
+boundary, which meant 568×320 passed at **26px of 427px content — 94% hidden**.
+The cap makes it 48px; the floor is uniform 40px again and proven red at 26px.
+*A harness carve-out that mirrors a design constant has to die with it.*
+
+**One unintended change was found and reverted.** The branch opened its new
+media block by relocating the *closing brace* of `@media (max-width: 480px)`,
+which silently carried `.map-controls { top: 8px; right: 8px }` into
+`(max-width: 900px) and (max-height: 500px)` with it — invisible in the diff,
+where `.map-controls` renders as an unchanged context line. Masked today by a
+later `.app[data-mview='search']` rule; restored regardless.
 
 **What is done and measured on that branch:**
 
 | | Before → after |
 |---|---|
-| Legend cap had **no floor** | 58.2px of 395px content at 844×390, 17.6px at 568×320 (85% and 96% hidden) → floored at 160px where it fits |
+| Legend cap had **no floor** | 58.2px of 427px content at 844×390, 17.6px at 568×320 (86% and 96% hidden) → **118px and 48px**, capped at the clear band |
 | Expand chip gated on `max-width: 480px` | `display: none` at every landscape size → gated on `(max-width: 900px) and (max-height: 500px)` |
 | Layers popover opened **upwards through the search card** | 5 of 6 toggles blocked at 844×390, 6 of 6 at 568×320 → anchored below the card |
 | `responsive.mjs` ran **no landscape viewport** | a whole orientation unaudited → 844×390 and 568×320 added, 65 → 71 combinations |
 
-**Two things the measuring changed about the fix, both worth keeping.**
+**Three things the measuring changed about the fix, all worth keeping.**
 
-- **A flat `max(160px, …)` floor fixed 844×390 and *caused* a new defect at
-  568×320**, where 160px is tall enough to grow up over three city chips — the
-  audit named them. The chips are primary navigation and the legend secondary,
-  so the legend yields below 380px of viewport height, exactly as the locator
-  yields at 901px. **380px is the measured boundary, not a guess.**
+- **A flat `max(160px, …)` floor was wrong twice over, and the second way was
+  invisible for a day.** It *caused* a new defect at 568×320, where 160px is
+  tall enough to grow up over three city chips — and at 844×390 it was asking
+  for 42px more than the viewport has, which is the collision above. Both are
+  the same error: **a bottom-anchored panel given a height it cannot fit takes
+  the difference from whatever is above it.** The cure is to compute the
+  available band, not to name a desired height.
+- **A magic number that exists to contain another magic number dissolves when
+  you compute the real one.** `min-height: 380px` was introduced solely to keep
+  the flat floor off the city chips. With a band-derived cap it has no work to
+  do and is deleted, along with the harness carve-out that mirrored it.
 - **The popover rule changed nothing when first written**, because a bare
   selector earlier in the stylesheet lost on both specificity and source order
   to the `.app[data-mview='search']` rule. Measured: the popover stayed at
   y 58–216. It works from the later block with matching specificity.
 
-**And the harness had to move with the design.** The legend-open prep floor was
-a flat 40px; below 380px the legend now deliberately yields, so holding 40px
-there fails the *design* rather than the harness. It mirrors the CSS now.
+**And the harness moved with the design — then back again.** The legend-open
+prep floor was dropped from a flat 40px to `vp.h >= 380 ? 40 : 8` to mirror the
+CSS boundary. That accepted a **26px** legend at 568×320. The floor is uniform
+40px again, and proven red against exactly that state.
 
 **This is the third width-keyed rule against a height-shaped problem** in this
 file, after the sheet peek and the layers popover — which is the argument for

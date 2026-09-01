@@ -2524,14 +2524,15 @@
              country tabs and the first two city chips and covering them. The
              responsive audit proved it the moment it learned to open the
              legend. */
-          /* AND A FLOOR (2026-08-31, audit D3). The cap had none, so on a
-             LANDSCAPE phone it resolved to 58.2px at 844x390 and 17.6px at
-             568x320 - against 395px of content, i.e. 85% and 96% hidden - and
-             the expand chip that would rescue it was gated on width, so it was
-             not shown either. `max()` keeps the ceiling honest on a tall
-             screen and stops it collapsing on a short one; 160px is four band
-             rows plus the heading, which is the least that reads as a legend
-             rather than a scrollbar. */
+          /* THIS CAP IS THE PORTRAIT ONE, and it is not the whole story
+             (2026-09-01, audit D3). On a LANDSCAPE phone it resolves to 58.2px
+             at 844x390 and 17.6px at 568x320 - against 427px of content, i.e.
+             86% and 96% hidden - and the expand chip that would rescue it was
+             gated on width, so it was not shown either.
+             A later `(max-width: 900px) and (max-height: 500px)` block
+             overrides both, capping at the band left clear by the search card
+             rather than at a target height. Read that block before changing
+             this line; a floor was tried here first and covered the card. */
           max-height: calc(100dvh - var(--sheet-chrome) - 156px);
           overflow-y: auto;
           /* Keep a flick inside the legend from scrolling the page behind it. */
@@ -2774,6 +2775,10 @@
         .legend-toggle[aria-expanded='false'] ~ * {
           display: none !important;
         }
+        .map-controls {
+          top: 8px;
+          right: 8px;
+        }
       }
 
       /* THE EXPAND CHIP IS GATED ON HEIGHT TOO (2026-08-31, audit D3).
@@ -2786,18 +2791,52 @@
          height was what broke - the sheet peek and the layers popover both
          carry the same correction, and `@media (max-width: 900px) and
          (max-height: 500px)` is the condition they already settled on. */
-      /* A FLOOR UNDER THE LEGEND, BUT ONLY WHERE IT FITS (2026-08-31, D3).
+      /* THE LEGEND GETS THE BAND THAT IS ACTUALLY CLEAR (2026-09-01, D3).
          The cap above has no floor, so on a landscape phone it resolved to
-         58.2px at 844x390 against 395px of content. A flat `max(160px, ...)`
-         fixed that and CAUSED a new defect at 568x320, where 160px is tall
-         enough to grow up over three city chips - the responsive audit named
-         them. The chips are primary navigation and the legend is secondary, so
-         the legend yields, exactly as the locator does at 901px.
-         380px is the measured boundary: at 390px tall the floor clears the
-         chip row, at 320px it does not. */
-      @media (max-width: 900px) and (min-height: 380px) and (max-height: 500px) {
+         58.2px at 844x390 against 427px of content - 86% hidden.
+
+         A FLAT `max(160px, ...)` FLOOR WAS THE FIRST FIX AND IT WAS WRONG.
+         160px is more room than a 390px-tall viewport has. The legend is
+         bottom-anchored, so asking for height it cannot get grows it UPWARDS:
+         measured at 844x390, the legend ran y 104-264 while `.search-box` -
+         sticky, FULL WIDTH at x 8-844 - holds y 54-138, so the legend's own
+         expand toggle had its centre 5px inside the card. Both carry
+         `z-index: 3`, so source order decided and the card won.
+
+         `responsive.mjs` reported that as `legend-toggle covered by div` and it
+         was read as the legend's own scrolling rows, which is why the recorded
+         next step was to make the sticky toggle opaque and raise it. That was
+         the wrong element: the reporter prints tag and id only, and
+         `div.search-box` carries no id. Opacity was never involved - the
+         collision is geometric, and RAISING the legend would have turned the
+         gate green by covering the primary search input, which is the defect
+         the layers popover was moved out of this same band to avoid.
+
+         So the cap is the band that exists, not a target height:
+           100dvh - 126px   the legend's bottom edge (56px mobile nav +
+                            its own 70px offset inside #map-container)
+           - 146px          the search card's bottom (54 + 84) plus the 8px
+                            gap the rest of this chrome uses - the same
+                            constant, for the same reason, as the popover
+                            rule further down this file
+         118px at 844x390 and 228px at 900x500. That is short of the four rows
+         the floor was aiming for and it is what the viewport has; the card is
+         the primary input and the legend is secondary, so the legend yields -
+         exactly as it yields to the city chips, and the locator at 901px.
+
+         It replaces the `min-height: 380px` gate rather than joining it. That
+         boundary existed only because a FLAT floor at 568x320 was tall enough
+         to grow over three city chips; a band-derived cap cannot, because it
+         puts the legend's top at 146px at every height in this range - below
+         the card at 138px, far below the chips at y 24-46. One rule, and no
+         boundary constant to go stale.
+
+         If the legend's 70px bottom offset or the card's height ever moves,
+         this arithmetic goes stale - and `responsive.mjs` reds at 844x390 and
+         568x320, which is how this collision was found. */
+      @media (max-width: 900px) and (max-height: 500px) {
         .map-legend {
-          max-height: max(160px, calc(100dvh - var(--sheet-chrome) - 156px));
+          max-height: calc(100dvh - 126px - 146px);
         }
       }
 
@@ -2811,21 +2850,20 @@
              control has to survive scrolling the thing it discloses. */
           position: sticky;
           top: 0;
-          /* Above the rows it scrolls over, and OPAQUE. `background: inherit`
-             resolved to transparent here - the panel's own background lives on
-             an ancestor - so the sticky toggle stayed sticky and the rows still
-             showed through it, which elementFromPoint reports exactly as being
-             covered. Matches the panel's dark mobile surface. */
+          /* Above the rows it scrolls over, and OPAQUE - `background: inherit`
+             resolves to transparent here, because the panel's own background
+             lives on an ancestor, so without this the rows read through a
+             sticky header. That is a real defect and this is its fix.
+             It is NOT what the audit's `legend-toggle covered by div` was
+             about: that was `div.search-box` overlapping from outside the
+             legend, fixed by the max-height rule above. Proven, not assumed -
+             this declaration was in place and the gate still reported 1 of 71.
+             Matches the panel's dark mobile surface. */
           z-index: 3;
           background: rgba(20, 20, 20, 0.98);
         }
         .legend-toggle[aria-expanded='false'] ~ * {
           display: none !important;
-        }
-
-        .map-controls {
-          top: 8px;
-          right: 8px;
         }
       }
 
