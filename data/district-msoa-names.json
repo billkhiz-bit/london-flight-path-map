@@ -187,7 +187,7 @@
     "West Bromwich East & Kenrick Park",
     "Handsworth Wood"
    ],
-   "postTown": "Handsworth",
+   "postTown": "Birmingham",
    "postcodes": 437
   },
   "B23": {
@@ -257,7 +257,7 @@
     "Olton & Kineton Green",
     "Lyndon North"
    ],
-   "postTown": "Acocks Green",
+   "postTown": "Birmingham",
    "postcodes": 430
   },
   "B28": {
@@ -646,16 +646,6 @@
    "postTown": "Tividale",
    "postcodes": 728
   },
-  "B7": {
-   "msoa": [
-    "Nechells",
-    "Saltley West",
-    "North Central & Dartmouth Circus",
-    "Gravelly Hill & South Erdington"
-   ],
-   "postTown": "Birmingham",
-   "postcodes": 274
-  },
   "B70": {
    "msoa": [
     "West Bromwich East & Kenrick Park",
@@ -779,7 +769,7 @@
     "Saltley East",
     "North Central & Dartmouth Circus"
    ],
-   "postTown": "Birmingham",
+   "postTown": "Bordesley Green",
    "postcodes": 393
   },
   "B90": {
@@ -843,17 +833,6 @@
    ],
    "postTown": "Knowle",
    "postcodes": 515
-  },
-  "B94": {
-   "msoa": [
-    "Earlswood, Tanworth-in-Arden & Sambourne",
-    "Kingswood & Leek Wootton",
-    "Dickens Heath, Cheswick Green & Hockley Heath",
-    "Dorridge",
-    "Knowle"
-   ],
-   "postTown": "Hockley Heath",
-   "postcodes": 341
   },
   "BA1": {
    "msoa": [
@@ -2725,7 +2704,7 @@
     "Ingbirchworth, Dunford Bridge & Thurgoland",
     "Netherton & South Crosland"
    ],
-   "postTown": "Honley",
+   "postTown": "Meltham",
    "postcodes": 1204
   },
   "HX1": {
@@ -2974,16 +2953,6 @@
    "postTown": "Liverpool",
    "postcodes": 492
   },
-  "L2": {
-   "msoa": [
-    "Pier Head",
-    "Central & Islington",
-    "Albert Dock & Queen's Dock",
-    "Dingle"
-   ],
-   "postTown": "Liverpool",
-   "postcodes": 174
-  },
   "L20": {
    "msoa": [
     "Bootle South",
@@ -3018,7 +2987,7 @@
     "Brighton le Sands & Crosby West",
     "Crosby East"
    ],
-   "postTown": "Waterloo",
+   "postTown": "Liverpool",
    "postcodes": 281
   },
   "L23": {
@@ -3079,15 +3048,6 @@
    ],
    "postTown": "Liverpool",
    "postcodes": 156
-  },
-  "L28": {
-   "msoa": [
-    "Stockbridge Village",
-    "Yewtree",
-    "Croxteth Park"
-   ],
-   "postTown": "Liverpool",
-   "postcodes": 115
   },
   "L3": {
    "msoa": [
@@ -3443,7 +3403,7 @@
     "Cosby, Croft & Elmesthorpe",
     "Whetstone"
    ],
-   "postTown": "Enderby",
+   "postTown": "Narborough",
    "postcodes": 506
   },
   "LE2": {
@@ -5934,15 +5894,6 @@
    "postTown": "Cheadle Hulme",
    "postcodes": 1330
   },
-  "SR1": {
-   "msoa": [
-    "Sunderland Central & Deptford",
-    "Hendon & Docks",
-    "Millfield"
-   ],
-   "postTown": "Sunderland",
-   "postcodes": 290
-  },
   "SR2": {
    "msoa": [
     "Ryhope",
@@ -6419,23 +6370,6 @@
    ],
    "postTown": "Lowton",
    "postcodes": 1518
-  },
-  "WA8": {
-   "msoa": [
-    "Widnes Riverside",
-    "Farnworth",
-    "Upton Rocks",
-    "Halton View",
-    "Victoria Park",
-    "Hale Bank",
-    "Ditton",
-    "Hough Green",
-    "Halsnead, Cronton & Halewood East",
-    "Bold & Clock Face",
-    "Penketh & Cuerdley"
-   ],
-   "postTown": "Widnes",
-   "postcodes": 1591
   },
   "WA9": {
    "msoa": [

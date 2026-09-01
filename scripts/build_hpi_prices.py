@@ -46,7 +46,9 @@ for a city that does not exist yet. Re-run `--check` after every HPI release
 from __future__ import annotations
 
 import argparse
+import calendar
 import csv
+import re
 import sys
 import types
 import urllib.request
@@ -294,6 +296,43 @@ def registry_boroughs(city: str) -> dict[str, dict]:
     compiled from code that no longer exists. Reading the text has no cache.
     """
     return _load_score_app().CITIES[city]["boroughs"]
+
+
+def check_vintage_words(vintage: str) -> int:
+    """The provenance PROSE must name the vintage the numbers came from.
+
+    I2, 2026-08-31. `--check` compared 99 boroughs' avgPrice and trend against
+    HPI 2026-06 and passed, while thirty-four provenance strings in the same
+    file told integrators the figures were "May 2026 vintage". The June roll
+    landed on 2026-08-25 and moved the NUMBERS; the SENTENCES beside them were
+    not brought along, and no gate could see it because this one compares
+    numbers only.
+
+    That matters more than a stale comment: `terms.html` obliges integrators to
+    pass the `sources` array through to their own users, so the wrong vintage is
+    republished downstream as a licensing and provenance claim.
+
+    Counted, not merely searched. A rename upstream that leaves ZERO matching
+    strings would satisfy "no wrong month found" while describing nothing.
+    """
+    year, month, _ = vintage.split("-")
+    want = f"{calendar.month_name[int(month)]} {year} vintage"
+    text = SCORE_APP.read_text(encoding="utf-8")
+    found = text.count(want)
+    stale = sorted({
+        m for m in re.findall(r"([A-Z][a-z]+ 20\d\d vintage)", text) if m != want
+    })
+    print("")
+    print(f"provenance prose: {found} strings say {want!r}")
+    if stale:
+        print(f"FAIL: {len(stale)} other vintage(s) named in the same file: {', '.join(stale)}")
+        print(f"      The numbers are HPI {vintage}. Replace them with {want!r}.")
+        return 1
+    if not found:
+        print(f"FAIL: no provenance string names {want!r}. A vintage nobody states is")
+        print("      one an integrator cannot audit, and a zero count is not agreement.")
+        return 1
+    return 0
 
 
 def check(city: str, hpi: dict[str, dict], vintage: str) -> int:
@@ -556,6 +595,7 @@ def main() -> int:
         )
         return 1
     bad = sum(check(city, hpi, args.vintage) for city in cities)
+    bad += check_vintage_words(args.vintage)
     print(f"\nChecked {len(cities)} city/cities against HPI {args.vintage}.")
     print(f"RESULT: {'PASS' if bad == 0 else f'FAIL ({bad} disagreements)'}")
     return 0 if bad == 0 else 1

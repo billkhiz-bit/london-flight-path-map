@@ -151,6 +151,23 @@ def clean_name(raw):
     # time the descriptor strip runs it sees "... Rail Station" and removes
     # only "Station". One more pass takes the orphaned "Rail".
     s = re.sub(r'\s+\brail\s*$', '', s, flags=re.I)
+    # A TRAILING DIRECTION IS A PLATFORM, NOT A PLACE (audit I19, 2026-09-01).
+    #
+    # Sheffield Supertram names each direction as its own NaPTAN node, and none
+    # of the strips above touches them, so one stop published as up to five
+    # "stations": Attercliffe, "... From City", "... To City", "... Platform to
+    # City", "... Platform to Meadowhall". Measured across the published
+    # arrays: 170 of 943 entries were a place already listed, 166 of them South
+    # Yorkshire, which is why a quarter of "nearest four stations" panels
+    # showed fewer than four PLACES while still filling four rows.
+    #
+    # Anchored to the end, like every strip above it, and for the same reason
+    # the docstring gives. Checked before shipping rather than reasoned about:
+    # of the 180 names this changes, 175 merge into a place listed within
+    # 800 m, and the 5 with no sibling keep a real place name - "Meadowhall
+    # Interchange To City" -> "Meadowhall Interchange". It runs LAST because
+    # "X To City Rail Station" must lose the descriptor first.
+    s = re.sub(r'\s*\b(?:platform\s+)?(?:to|from|towards)\s+.+$', '', s, flags=re.I)
     return ' '.join(s.split()).strip(' -,')
 
 
@@ -198,10 +215,33 @@ def collect(bboxes):
         )
     per_city = {c: {} for c in bboxes}
     scanned = kept = 0
+    skipped_inactive = 0
     with open(NAPTAN_CSV, newline='', encoding='utf-8-sig', errors='replace') as fh:
-        for row in csv.DictReader(fh):
+        reader = csv.DictReader(fh)
+        # HARD-FAIL ON AN ABSENT COLUMN, never fall through. `row.get('Status')`
+        # returns None if NaPTAN renames the field, which compares unequal to
+        # 'active' and would drop EVERY station - and the opposite spelling of
+        # this guard would keep every retired one. Either way the run looks
+        # normal, which is the failure this repo keeps paying for.
+        if 'Status' not in (reader.fieldnames or []):
+            sys.exit(
+                'NaPTAN has no Status column - it was renamed or the CSV is a '
+                'different export. Refusing to publish retired stations as '
+                f'current. Columns seen: {reader.fieldnames}'
+            )
+        for row in reader:
             scanned += 1
             if row.get('StopType') not in RAIL_TYPES:
+                continue
+            # NaPTAN keeps RETIRED nodes, with real coordinates and a real
+            # name, marked `Status: inactive` - 806 of the 11,163 rows of
+            # the types above. Nothing read the column, so closed stations and
+            # heritage halts shipped in the panel as current (audit I19).
+            # Same shape as the terminated postcodes in build_borough_bands.py:
+            # a retired record with plausible coordinates is indistinguishable
+            # from a live one unless you read the flag that says so.
+            if (row.get('Status') or '').strip().lower() != 'active':
+                skipped_inactive += 1
                 continue
             try:
                 lat, lon = bng_to_wgs84(float(row['Easting']), float(row['Northing']))
@@ -224,16 +264,43 @@ def collect(bboxes):
                 # map labels it.
                 st = row.get('StopType')
                 kind = 'rail' if st in ('RLY', 'RSE', 'PLT') else 'metro'
-                prev = per_city[city].get(name)
+                # KEYED CASE-INSENSITIVELY, and the display name is chosen
+                # rather than taken from whichever row arrived first. NaPTAN
+                # spells the same stop both ways: "Besses o'th'Barn" and
+                # "Besses o'th'barn" were both published, one Metrolink stop
+                # listed twice. An exact-string key is what audit I19 is about;
+                # the directional strip fixed one shape of it and this is the
+                # other. Preferring the spelling with more capitals keeps
+                # "Besses o'th'Barn" over "...barn" and is deterministic, which
+                # matters because this file is diffed on every rebuild.
+                key = name.casefold()
+                prev = per_city[city].get(key)
                 if prev is None:
-                    per_city[city][name] = [round(lon, 5), round(lat, 5), kind]
+                    per_city[city][key] = [round(lon, 5), round(lat, 5), kind, name]
                     kept += 1
-                elif kind == 'rail' and prev[2] != 'rail':
-                    prev[2] = 'rail'
+                else:
+                    if kind == 'rail' and prev[2] != 'rail':
+                        prev[2] = 'rail'
+                    caps = sum(1 for c in name if c.isupper())
+                    if (caps, name) > (sum(1 for c in prev[3] if c.isupper()), prev[3]):
+                        prev[3] = name
                 break
-    print(f'  scanned {scanned:,} NaPTAN nodes, kept {kept:,} stations')
+    # A FLOOR ON THE EXCLUSION, not just on the intake. A scan that kept
+    # stations and found no inactive ones means the Status values changed
+    # shape (title case, a new vocabulary) and the filter is passing
+    # everything - which reads exactly like a clean dataset.
+    if kept and not skipped_inactive:
+        sys.exit(
+            f'scanned {scanned:,} NaPTAN nodes and kept {kept:,} stations '
+            'without excluding a single inactive one. NaPTAN publishes 806 '
+            'inactive rail-type nodes, so the Status vocabulary has changed '
+            'and this filter is no longer filtering.'
+        )
+    print(f'  scanned {scanned:,} NaPTAN nodes, kept {kept:,} stations '
+          f'({skipped_inactive:,} skipped as inactive)')
     return {
-        c: [{'name': n, 'coords': v[:2], 'type': v[2]} for n, v in sorted(st.items())]
+        c: [{'name': v[3], 'coords': v[:2], 'type': v[2]}
+            for _key, v in sorted(st.items())]
         for c, st in per_city.items()
     }
 

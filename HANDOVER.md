@@ -1,11 +1,273 @@
 # Handover — resuming on another machine
 
-**Written 2026-08-12.** Read this first if you are picking the repo up on a
-laptop, or starting a fresh session on this desktop.
+**Written 2026-08-12; §1 rewritten 2026-09-01.** Read this first if you are
+picking the repo up on a laptop, or starting a fresh session on this desktop.
+
+**As of 2026-09-01 there is a large UNCOMMITTED, UNDEPLOYED wave in the
+working tree.** §1 is the whole of it.
 
 ---
 
-## 1. PICK UP HERE - the 29 August audit, 2 of 45 findings addressed
+## 1. PICK UP HERE - 2026-09-01, a big uncommitted wave. READ THIS WHOLE SECTION FIRST.
+
+**NOTHING IS COMMITTED AND NOTHING IS DEPLOYED.** The working tree holds
+13 modified files and 3 new ones. Every published number below changed in the
+SOURCE only; the live site and the live API still serve the old figures. Do not
+start new work until the four steps in §1.1 are done, because two of them are
+blocking gates that are currently RED by construction.
+
+### 1.1 Steps 1-3 are DONE. **ONLY THE DEPLOY IS LEFT.**
+
+1. ~~Rebuild the 99 static area pages.~~ **DONE** - `python
+   scripts/build_area_pages.py --write` wrote 99 pages + index + sitemap
+   against the corrected data.
+2. ~~Run the full gate.~~ **DONE** - `sh scripts/preflight.sh`, exit code read
+   directly and never piped. **RESULT: green except two - `area pages match the live API`, which is red until step 4 by construction, and `UK cities get UK panel content`, a transient live-TfL timeout that passes standalone (verified immediately after)**.
+3. ~~Commit.~~ **DONE**, staged file by file, no `git add -A`.
+4. **DEPLOY BOTH HALVES, BACKEND FIRST. THIS IS THE ONLY STEP LEFT, AND IT HAS
+   NOT BEEN DONE** (the 1 Sep session was explicitly asked not to deploy). SAM
+   for the Lambda, then `make web-deploy-all` + a CloudFront invalidation
+   (`export MSYS_NO_PATHCONV=1` FIRST - see the warning block in CLAUDE.md).
+   Backend-then-web is the order the aircraft-raster runbook already uses: it
+   flips `/v1/score` while the site still shows the old numbers, which is the
+   safe direction. Deploying the site first shows users figures the API cannot
+   reproduce.
+
+**Two stages are red until step 4 runs, and that is CORRECT.** `area pages
+match the live API` and `site == /v1/score` compare the tree against the
+DEPLOYED tier, which still serves the old numbers. They are the normal state
+mid-wave, not a defect - and they are the stages that will confirm the deploy
+worked.
+
+### 1.2 What changed - four published-number corrections, all with evidence
+
+Every one of these reproduces a figure the 31 August audit computed BY HAND,
+which is the strongest evidence available that the fix is the right one.
+
+| | Fix | Reproduced |
+|---|---|---|
+| **C1** | The aircraft near-field floor was a **DISC** compared against runway-shaped contours. It now tests the borough against the >=55 dB cells in that airport's own DEFRA GeoTIFF | Rushcliffe **10.43 km2, max 65.6 dB**; North Tyneside **0.32 / 57.1**; Solihull **9.21** - all three to 2 dp. Rushcliffe scores **balanced 5.0 -> 3.4, quietlife 6.4 -> 4.0**, exactly the audit's prediction |
+| **C2** | Neighbourhood medians included HM Land Registry **Category B**. Filtered to category A, the basis HMLR and the UK HPI use - and the basis `avgPrice` beside it was already on | **TS26 Hartlepool 125k -> 175k (+40.0%)**, WV2 150k -> 190k, LS2 184k -> 150k. All three match the audit exactly |
+| **F38** | Borough bands were weighted by **TERMINATED** postcodes | **915,867 excluded, 578,940 live remain - 38.7%**, against the audit's hand count of 39.2% |
+| **I3** | DEFRA road `0.0` means "surveyed, below the lowest band" and was dropped from the SHARE's own denominator, so the share was computed among the noisier postcodes only | `roadNoiseCoverage` reaches **100.0** in boroughs that read 92-99% before |
+
+**Combined effect: 811 fields updated across BOTH holders**
+(`data/borough-extra.json` and the Lambda), plus 3 aircraft bands.
+
+**Three bands moved and one of them moved the OPTIMISTIC way**, which is the one
+to check if you are suspicious: Knowsley `moderate -> low`. It is not the disc's
+error in reverse - Knowsley's boundary is **0.76 km clear** of the nearest
+>=55 dB cell, measured. Rushcliffe and North Tyneside both moved `low ->
+moderate`.
+
+**Teesside and Cardiff keep the disc**, and that is deliberate and recorded in
+the data file: MME and CWL are **not mapped by DEFRA Round 4 at all**, so there
+is no contour to test against. "No contour published" and "not measured here"
+are different things and the file says which.
+
+### 1.3 What changed - correctness, with no published-number effect
+
+- **I2** 34 provenance strings said `May 2026 vintage` while the Lambda has
+  served **June** figures since the 25 August roll. Corrected, and
+  `build_hpi_prices.py --check` now asserts the PROSE names the vintage it
+  verified the NUMBERS against. Proven red on one stale string; restore
+  sha256-verified.
+- **I18** `score_bulk.py` - the Enterprise deliverable - crashed on
+  `app._LOCAL_POSTCODE_SERVED` on **every run since 22 August**. Fixed, and the
+  silent half with it: attribution is thread-local, the workers hold it and the
+  main thread writes the `.sources.txt`, so the OGL file credited postcodes.io
+  for lookups ONS served. Workers now report it and main aggregates.
+  **The suite passed throughout** because its `_FakeApp` stub still carried the
+  attribute the Lambda had deleted - a stale stub is a stale claim about an
+  interface, and reads exactly like a correct one.
+- **I28** City of London's crime rate is Sky Score's own estimate and
+  `liveResolution` still said `measured`. `crimeEstimated` was published, read by
+  the `sources` line, and read by NOTHING else. **The wording needed two passes**:
+  demoting the input made the existing "partial" string claim the weight was
+  redistributed, which is false - the estimate still scores. It now names the
+  estimate instead. `partial - 2/4 inputs measured; the crime rate is a Sky Score
+  estimate carrying its full weight`.
+- **I29** A caller could not opt into `env` weights - a five-key set failed a
+  set-equality check, fell back to `balanced`, and said nothing. `env` is now an
+  optional fifth key, and a rejected override returns **400 with a reason**
+  instead of scoring under a model the caller did not ask for. There is a
+  round-trip test against `PERSONAS['balanced']` rather than a five-key literal,
+  so a sixth component cannot repeat this.
+- **I31** EPC `extract_rows` returned `[]` for both "no certificates here" and
+  "we cannot read this envelope", so one upstream rename would have answered
+  **"no certificates on record" for every postcode in the country**, with a 200.
+  Three-way now, and `pagination.totalRecords` - already forwarded to callers -
+  is finally READ, so a payload claiming 42 certificates and returning none is
+  refused. 3 tests.
+- **I33** The favourites list rendered **"No saved locations yet"** on an API
+  failure, and filed every non-NYC favourite under a heading reading **"London"**.
+  Both fixed; grouping is per-city from the registry.
+- **I34** The tooltip said "four components" over five; "Four factors" is now
+  counted from what the panel will actually render (3, 4 or 5 depending on the
+  borough's input floors); the ranking header is built from the persona's own
+  weights, so it can no longer sum to 82-86%.
+
+### 1.4 Accessibility: D5 and D7 were the visible tip of 46
+
+`tests/panel-contrast.mjs` is **new and blocking-worthy** (not yet wired into
+`preflight.sh` - see §1.6). It opens the borough panel and the area panel at two
+viewports and measures the effective contrast of every visible text node itself.
+
+**It found 46 nodes below AA, not the 2 the audit named**, and all 46 are now
+fixed. The repeat offenders were the `↗` link arrow at **2.11:1** (seven per
+panel), the live line-status rows, and the rating badges at 4.44:1.
+
+**Why the existing gate could not see any of it, measured:**
+
+- **axe reported `colour-contrast` as INCOMPLETE for 66 nodes and as violations
+  for 0.** `incomplete` is axe declining to answer because it could not resolve
+  an effective background, and a gate reading `violations` counts every one of
+  those as a pass.
+- **`a11y-source.mjs`'s "borough selected" state opens the AREA panel.** It
+  clicks `.borough-list-item, .rank-table tbody tr`; the first survives in CSS
+  only (its own comment says so) and the second opens `Cheam (SM3 8BD)`. The
+  borough panel - where D5, D7 and D8 all live - had never been opened.
+  **So §3b of the audit is INVERTED**: it says the panel "has never been scanned
+  by anything", when the truth is that it HAS been scanned since 24 August and
+  the thing scanned was a different panel. Ninth instance of a recorded finding
+  being the inverse of the code.
+- **The new gate reproduced that same defect inside itself on the first run.**
+  Its borough route fell back to a ranking row when `BOROUGH_DATA` turned out not
+  to be a global, so both states measured the same panel while the report named
+  two. **Identical node counts across two states was the tell** (204/204). It now
+  drives `selectBoroughByName`, fails rather than falls back, and asserts the
+  panel title matches the state it claims.
+
+The fix used tokens that **already existed**: `--orange-text` / `--green-text` /
+`--yellow-text` were added on 2026-08-12 with a comment saying "now they are
+tokens so the next use inherits the fix instead of repeating the defect". The
+call sites never adopted them.
+
+**D8 is half done.** `document.title` never changed - measured on both viewports
+with a borough selected - and now names the subject through one holder,
+`setPanelSubject()`. **The mobile half is NOT done**: at 390px the panel's `<h2>`
+is `display: none` because `.sidebar-header` is hidden in `data-mview='search'`,
+and I could not reach the tabbed *analysis* view from the console
+(`setMobileView` is not a global). **Do not fix this from the description - reach
+the state first**, the way a user does.
+
+### 1.5 Still open, nothing started
+
+**I19 and I25 were on this list and are now CLOSED - see §1.6a.**
+
+- **I17** `POST /favourites` is unauthenticated, **unthrottled** (no per-method
+  entry, so 50 RPS) and writes permanently into a PITR-backed, TTL-less,
+  `Retain` table. 4.32M writes/day at the ceiling. `template.yaml`. **This is
+  the largest thing left on the list.**
+- **I26 / F8** `?compare=previous` explains every score under the **balanced**
+  persona, so an `investor` request gets an explanation contradicting its own
+  `scoreChange`.
+- **F26** London's aircraft raster is declared painted from an href attribute
+  and the gate reads the same attribute.
+- **D9** four visual systems across nine page types (narrowed slightly by the
+  token work above, not closed). **D10** country tabs are 14px tall against the
+  WCAG 2.5.8 24x24 minimum. **D11** dark mode exists on the area pages only and
+  declares no `color-scheme`.
+- **The N1 7SX site/API divergence** (§5b). Still undiagnosed, and the obvious
+  explanation is still wrong - identify the differing RAW value before writing
+  any fix.
+
+### 1.6 The three gates are WIRED IN - done 2026-09-01
+
+All three are in `scripts/preflight.sh`, and **each was run before being wired**,
+which is what turned up the rest of the day's work.
+
+| Stage | Kind | Result on this tree |
+|---|---|---|
+| `panel contrast, borough (AA)` | **blocking** `check` | 134 nodes at desktop, 87 at phone, 0 below AA |
+| `panel contrast, area (AA)` | **blocking** `net_check` | 174-204 nodes at desktop, 127-143 at phone, 0 below AA |
+| `neighbourhood medians == PPD` | advisory | **481 medians across 9 cities, 0 differ** - the C2 fix verified end to end |
+| `aircraft footprint == DEFRA` | advisory | 48 boroughs across 8 cities reproduce from the GeoTIFFs |
+
+**The contrast gate is TWO stages, and finding out why is the useful part.** It
+reds intermittently, and "flaky" was not the diagnosis. It allowed a FIXED
+1200 ms settle before asking whether the panel had rendered; measured warm, the
+area panel renders **113-147 ms** after the click, but on a cold run the same
+sequence overran the budget and it printed `could not open` against a tree whose
+panel was fine. It polls for the state now, bounded at 15 s, and a state that
+never opens still reds - proven by breaking the selector.
+
+**Re-run with every offsite request aborted, the reason appeared**: the borough
+panel measures 134 and 87 nodes, and **both area states fail with the exact
+signature of the intermittent red**. The area panel is reached by a ranking-row
+click that runs `triggerSearch()`, which resolves the district through
+`api.postcodes.io`. So a stage documented as needing no network needed one for
+half of what it measured. The honest fix was not an in-gate skip - that is
+"nothing wrong here" meaning "I could not look" - but `--only=<state>` and two
+preflight stages, reusing the `check` / `net_check` split that already prints a
+skipped stage in its own position and marks the run INCOMPLETE.
+
+**`--skip-e2e` now skips FIVE stages, not four**, and CLAUDE.md says so. Count
+the `net_check` call sites; do not trust the sentence.
+
+### 1.6a Also closed on 2026-09-01, after the wave above
+
+- **I25 - METHODOLOGY.md was a SIXTH free-tier mirror and was in no list.** It
+  advertised **100 requests/month against an enforced 10,000**, 1/s sustained
+  against 2, and explained the batch multiplier **removed on 2026-08-21** - so
+  its stated reason for the 10,000-score ceiling was the inverse of the
+  mechanism producing it. It is now in `template.yaml`'s list and in
+  `FreeTierQuotaDriftTests`, read **by section**, because the file also quotes a
+  third party's quota (AviationStack, "1000 req/month") that must not be forced
+  to match ours; `_page` fails if the heading moves rather than returning an
+  empty string. **Two gate defects surfaced on the first run**: the quota
+  pattern read "5 requests per second burst" as a monthly quota of 5 - a rate is
+  not a quota, and no other mirror spells a rate out in words - and **the
+  per-second rates were never asserted against the plan at all**, which is
+  exactly what let the wrong sustained rate survive. Both directions proven red.
+- **I19 - one tram stop published as five stations.** Measured first: **170 of
+  943 published entries were a place already listed, 166 of them South
+  Yorkshire**, whose Supertram names each DIRECTION as its own NaPTAN node
+  ("Attercliffe", "... From City", "... To City", "... Platform to City",
+  "... Platform to Meadowhall"). South Yorkshire **268 -> 102**, the product
+  **1,651 -> 1,415**. Separately **806 retired nodes** were published as current
+  because `Status` was never read. The strip is anchored to the end and was
+  proven safe first - of 180 names changed, **175 merge into a place listed
+  within 800 m** and the other 5 keep a real place name. Both guards are
+  two-directional and red-proven: an absent `Status` column fails, and so does a
+  scan that keeps stations while excluding none.
+- **A third instance appeared the moment the new gate ran** - Manchester
+  published `"Besses o'th'Barn"` AND `"Besses o'th'barn"`, one stop, one capital
+  letter apart. The dedup key is `casefold()`ed now and the display spelling is
+  chosen deterministically. **"Hardening a gate finds a new defect, every time"
+  is now four for four.**
+- **`tests/test_station_lists.py` is new** and in the root pytest suite: 7
+  offline tests reading the SHIPPED arrays (the builder needs the 101 MB
+  gitignored NaPTAN, and a test that only runs where the raw data is present is
+  a test that does not run), plus the two `collect()` guards exercised against a
+  synthetic NaPTAN.
+- **One removal is worth knowing about before anyone re-derives.** Grange Hill
+  is a live Central line station that London no longer lists: its ACTIVE nodes
+  sit 50 m **outside** the boundary polygon while the RETIRED one fell inside,
+  so it had only ever been published by accident. The limitation that exposes -
+  point-in-polygon containment never lists a station just outside a city - is
+  real and PRE-DATES this fix.
+
+### 1.7 Two environment gotchas that cost time today
+
+- **The Bash tool mangles heredocs.** `\n` inside a quoted heredoc arrives as a
+  real newline, and non-ASCII characters (`±`, em dashes) break the heredoc
+  outright. Every multi-line patch script today had to be written with the Write
+  tool and then run. Do that from the start.
+- **`backend/lambdas/epc/app.py` is CRLF; everything else is LF.** An exact-match
+  patch written with `\n` silently matches zero times there. Normalise on read
+  and restore on write.
+- **`nohup ... &` returns the wrapper, not the Python process**, so the "task
+  completed" notification fires immediately and means nothing. Poll the log file.
+
+---
+
+## 1b. SUPERSEDED (was "PICK UP HERE", 2026-08-29). Kept for the still-open items.
+
+> The flood georeferencing fix in point 1 below **shipped on 2026-08-30**
+> and the verification in point 2 was overtaken by the 31 August audit.
+> Read §1 above for the current state; this section survives because its
+> "other criticals" paragraph still lists open work.
 
 **Read `AUDIT_REPORT.md` first.** 45 findings (9 critical / 21 important / 15
 minor). All four of today's waves are committed, pushed, deployed and verified;

@@ -1947,13 +1947,27 @@ A status page at `status.skyscore.com` is planned for general-availability launc
 
 ### Rate limits and quotas
 
-The free-tier `SkyScoreFreeTierKey`:
-- 100 requests per month (lowered from 1,000 on 2026-07-29)
+The free-tier `SkyScoreFreeTierKey`, as enforced by `ScoreFreeUsagePlan` in
+`backend/template.yaml`:
+- 10,000 requests per month
 - 5 requests per second burst
-- 1 request per second sustained
-- **10,000 scores per month**, the figure that actually matters: the quota
-  meters *requests*, and a `/v1/score/batch` request carries up to 100
-  queries while still costing one request
+- 2 requests per second sustained
+- **10,000 scores per month, because for a free key a request and a score are
+  the same unit.** `/v1/score/batch` is denied to this plan per-method
+  (`RateLimit: 0`, which the gateway answers with 429), so a single request
+  cannot carry more than one query.
+
+Until 2026-09-01 this block advertised a monthly quota one hundredth of the
+enforced one, half the sustained rate, and explained the score ceiling as a
+request quota multiplied by a hundred-query batch - the figures and the
+mechanism from before 2026-08-21, when batch was denied to free keys. Every
+figure here but the burst was wrong, in the document an integrator's auditor
+reads.
+
+The superseded numerals are deliberately not restated. A drift gate cannot
+distinguish a quoted historical figure from a live claim, and neither can a
+reader skimming for the limit. Every figure above is now asserted against
+`ScoreFreeUsagePlan` by `FreeTierQuotaDriftTests`, which reads this section.
 
 Paid tiers introduced when first paying integrator commits.
 

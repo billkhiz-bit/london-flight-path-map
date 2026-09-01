@@ -463,6 +463,39 @@ net_check "area pages match the live API" node tests/area-page-freshness.mjs
 # default, under-painting is a borough whose data the map cannot find.
 check "layers paint only real data"   node tests/layer-honesty.mjs
 check "panel says what it measured"  node tests/panel-caveat.mjs
+# MEASURED contrast over the two panel states, rather than asked of axe.
+#
+# `WCAG source scan` runs axe over this page already and cannot see this: asked
+# for `color-contrast` with the detail panel open it returns 0 violations and
+# 66 INCOMPLETE, and `incomplete` is axe declining to answer because it could
+# not resolve an effective background. A gate reading `violations` counts every
+# one of those as a pass, which is how `.score-explain` shipped at 4.47:1
+# across five rows of every borough panel.
+#
+# It also reaches a state nothing else does. a11y-source's "borough selected"
+# state clicks `.borough-list-item, .rank-table tbody tr` - the first survives
+# in CSS only, the second opens the AREA panel - so the BOROUGH panel had never
+# been scanned by anything. 46 nodes were below AA when this was first pointed
+# at them.
+#
+# TWO STAGES, because the two panel states have DIFFERENT NETWORK NEEDS and
+# burying that inside the gate would make it lie in one direction or the other.
+# Measured 2026-09-01 with every offsite request aborted: the borough panel
+# measures 134 nodes at desktop and 87 at phone, while BOTH area states fail
+# with `opened=ranking row, score rows=0` - the area panel is reached by a
+# ranking-row click that runs triggerSearch(), which resolves the district
+# through api.postcodes.io. That is also the exact signature of the
+# intermittent red this gate produced on its first run here, against a tree
+# whose panel was fine.
+#
+# So the borough half - the state NOTHING had ever scanned, where D5, D7 and D8
+# all live - stays blocking and offline-capable, and the area half is a
+# net_check that prints its own SKIPPED line and marks the run INCOMPLETE. The
+# alternative was an in-gate skip on an unreachable resolver, which is this
+# repo's most-repeated defect wearing a new hat: reporting "nothing wrong here"
+# to mean "I could not look".
+check "panel contrast, borough (AA)"  node tests/panel-contrast.mjs --only=borough
+net_check "panel contrast, area (AA)" node tests/panel-contrast.mjs --only=area
 # The blocking half of the responsive audit, against the working tree over the
 # server started above. See the long note on the advisory live run further up.
 # Covers EVERY public page since 2026-08-22, not just the homepage - widening
@@ -530,6 +563,32 @@ advise "p8 == DfE KS4 2023/24"          python scripts/build_progress8.py --chec
 # them. 59s measured 2026-08-24 with the data present, during which it still
 # reds on any drifted band before a commit.
 advise "borough bands == sources"       python scripts/build_borough_bands.py --check
+
+# The 481 published neighbourhood medians against HM Land Registry Price Paid.
+# Advisory for the same data reason as the two stages above: it re-derives from
+# the 155 MB PPD cache, which is gitignored, so a fresh clone cannot run it. It
+# reports INCONCLUSIVE rather than PASS when the file is absent - a check that
+# compared nothing must never read as agreement, which this repo has paid for
+# three times.
+#
+# It exists because until 2026-09-01 the medians included HM Land Registry
+# CATEGORY B - repossessions, power-of-sale transfers, and every property-type
+# 'O' row - which HMLR's own median statistics and the UK HPI both exclude. One
+# product published two price bases: a borough avgPrice on category A, gated
+# against HPI, beside a neighbourhood price on A+B in the same panel. 412 of
+# 485 published prices were wrong, TS26 Hartlepool by 40%.
+advise "neighbourhood medians == PPD"   python scripts/build_city_neighbourhoods.py --check
+
+# The checked-in aircraft footprint file against the DEFRA GeoTIFFs it was
+# measured from. Advisory because those rasters are 2.6-29 MB and gitignored.
+#
+# The FILE is what makes `aircraft bands == geometry` blocking on a fresh
+# clone - same shape as district-msoa-names.json - so this is the stage that
+# stops the file and the rasters drifting apart. It refuses to report a zero
+# footprint from an absent raster rather than measuring one, which is the
+# distinction that mattered: an absent key and a measured zero are the same
+# shape in JSON.
+advise "aircraft footprint == DEFRA"    python scripts/measure_aircraft_footprint.py --verify
 
 # Compares all 14 publicly-served files against what CloudFront actually
 # serves. Advisory because drift is the EXPECTED state between committing and

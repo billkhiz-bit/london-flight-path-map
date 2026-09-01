@@ -2,7 +2,40 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-01 (**D3 LANDED; the parked "one CSS declaration"
+**Last reviewed:** 2026-09-01, later the same day (**THE FOUR PUBLISHED-NUMBER
+CORRECTIONS ARE DONE IN SOURCE AND ARE UNCOMMITTED AND UNDEPLOYED.** Read
+`HANDOVER.md` §1 before anything else - it carries the four steps that must
+happen next, in order, starting with rebuilding the 99 area pages.)
+
+**All four of the items this file listed as "STILL OPEN AND NEEDING A DEPLOY
+WINDOW" are now fixed in source, except the last:**
+
+- **The aircraft near-field DISC (C1) is gone.** It tests the borough against
+  the >=55 dB cells in that airport's own DEFRA GeoTIFF now. Rushcliffe scores
+  **balanced 3.4 / quietlife 4.0** - the exact pair the audit predicted by hand.
+- **Category B (C2) is filtered out of the neighbourhood medians.** TS26
+  Hartlepool **125k -> 175k**, matching the audit's hand figure; 485 published
+  rows became 481, the four drops being districts that fell below the 30-sale
+  floor once repossessions and buy-to-lets stopped propping them up.
+- **F38's retired postcodes are gone**: 915,867 excluded, 578,940 live remain.
+- **N1 7SX is still undiagnosed** and still must not be fixed from the obvious
+  explanation, which the report already disproves.
+
+**811 borough fields moved across both holders**, so the 99 area pages must be
+rebuilt before any gate run - they bake their scores.
+
+Also closed the same day: I2, I3, I18, I28, I29, I31, I33, I34, D5, D7 and the
+`document.title` half of D8 - plus **44 contrast failures beyond the two the
+audit found**, surfaced by a new gate that measures contrast itself because axe
+returns `incomplete` for 66 nodes in this panel and a gate reading `violations`
+counts those as passes.
+
+**Two of the audit's own findings turned out INVERTED** and are corrected in
+`AUDIT_REPORT.md` §4a: the borough panel HAS been scanned since 24 August (the
+scan opens the wrong panel), and the panel DOES name the borough on desktop
+(what never changed was `document.title`).
+
+**Previously reviewed:** 2026-09-01 (**D3 LANDED; the parked "one CSS declaration"
 was the wrong element.** See the LANDED note below and `AUDIT_REPORT.md` §D3.
 Source-only, live untouched.)
 
@@ -57,7 +90,8 @@ carve-out had been accepting a **26px legend of 427px content** at 568x320.
 Proven red three ways. A brace-move that had silently carried `.map-controls`
 into the wrong media block was found and reverted in the same pass.
 
-**STILL OPEN AND NEEDING A DEPLOY WINDOW:** the aircraft near-field **disc**
+**[SUPERSEDED 2026-09-01 - three of these four are fixed in source; see the top
+of this file.] STILL OPEN AND NEEDING A DEPLOY WINDOW:** the aircraft near-field **disc**
 (Rushcliffe publishes `Quiet skies 10.0/10` over 10.43 km2 at >=55 dB, should be
 3.4), the neighbourhood medians including HM Land Registry **Category B** (412 of
 485 prices wrong, Hartlepool by 40%), **F38**'s 904,453 retired postcodes, and
@@ -83,7 +117,16 @@ width breakpoint appears) rather than left in a comment. `native-sim-render` and
 `live-mobile-verify` were in **no runner at all** - the 3rd and 4th orphaned
 gates found here after `failure-path` on 27 Aug - and two of the three contexts
 inside the first asserted **nothing**, so the App Store layout could break in any
-way and it still exited 0. `check_deploy_drift` covered **3 of the 20** assets
+way and it still exited 0. **On 1 Sep a 5th, 6th and 7th were wired the day they
+were written** (`panel-contrast`, `measure_aircraft_footprint --verify`,
+`build_city_neighbourhoods --check`), and running them before wiring is what
+found the rest of that day's work: the contrast gate reds intermittently on a
+FIXED 1200 ms settle while the area panel it opens resolves a district through
+`api.postcodes.io` (measured warm at 113-147 ms), so a stage documented as
+needing no network needed one for half of what it measured. It polls for the
+state now and is TWO stages, `check` plus `net_check`, rather than carrying an
+in-gate skip - "nothing wrong here" must never be how a gate says "I could not
+look". `check_deploy_drift` covered **3 of the 20** assets
 whose atomic `cache.addAll()` decides whether the PWA installs; it now derives
 the set from `sw.js` and proves reachability (live: **20 of 20 present**).
 **Two lessons cost more than the fixes.** F43's first red-proof PASSED and the

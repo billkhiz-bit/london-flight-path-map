@@ -291,12 +291,26 @@ class TestReadPostcodes:
 class _FakeApp:
     """Stands in for the score Lambda. Returns a canned (body, status) per
     postcode, and raises for one specific input so the run-survives-a-bad-row
-    guarantee is exercised rather than assumed."""
+    guarantee is exercised rather than assumed.
 
-    def __init__(self, responses, explode=None):
+    THIS STUB HID A CRASH FOR TEN DAYS, and that is the lesson worth keeping.
+    `score_bulk` read `app._LOCAL_POSTCODE_SERVED`; the real Lambda replaced that
+    module global with `local_postcode_served()` on 2026-08-22 and the attribute
+    stopped existing, so every real run died with an AttributeError - AFTER
+    writing its CSV, which is why it looked like a successful export with a
+    traceback stapled on. This class went on carrying the old surface, so the
+    suite kept passing over a script that could not run.
+
+    A stub is a claim about the real object's interface, and an out-of-date
+    claim is indistinguishable from a correct one until something outside the
+    tests exercises it.
+    """
+
+    def __init__(self, responses, explode=None, served_locally=False):
         self.responses = responses
         self.explode = explode
         self.calls = []
+        self._served_locally = served_locally
 
     def resolve_query(self, query):
         postcode = query['postcode']
@@ -304,6 +318,13 @@ class _FakeApp:
         if postcode == self.explode:
             raise RuntimeError('upstream exploded')
         return self.responses.get(postcode, (NOT_FOUND_BODY, 404))
+
+    def local_postcode_served(self):
+        """Mirrors the Lambda's thread-local attribution accessor."""
+        return self._served_locally
+
+    def mark_local_postcode_served(self):
+        self._served_locally = True
 
 
 class TestScoreBook:
@@ -373,3 +394,35 @@ class TestScoreBook:
             score_bulk.app_query_defaults.update(original)
         assert app.calls[0]['persona'] == 'family'
         assert app.calls[0]['includeTerminated'] is True
+
+
+class TestLocalTierAttribution:
+    """Audit I18. The OGL attribution file must reflect what ANSWERED.
+
+    Attribution is thread-local in the Lambda, the pool means the thread that
+    resolves a postcode is never the thread that writes `.sources.txt`, and
+    `write_sources_file` runs on the main thread - so the credit for every
+    ONS-served lookup was invisible at the moment it was needed. That file is
+    a licensing obligation that "MUST accompany the CSV", not a log line.
+    """
+
+    def _run(self, app):
+        sink = io.StringIO()
+        writer = csv.DictWriter(
+            sink, fieldnames=score_bulk.OUTPUT_COLUMNS, extrasaction='ignore')
+        writer.writeheader()
+        return score_bulk.score_book(
+            app, [(1, 'SW11 1AA', {})], writer, threading.Lock(),
+            workers=2, progress=False)
+
+    def test_worker_side_local_hits_are_counted(self):
+        app = _FakeApp({'SW11 1AA': (SCORED_BODY, 200)}, served_locally=True)
+        counters = self._run(app)
+        assert counters['local_served'] == 1
+
+    def test_no_local_hit_is_reported_as_none(self):
+        # The other direction, so the counter cannot be a constant: a run that
+        # never touched NSPL must not credit ONS.
+        app = _FakeApp({'SW11 1AA': (SCORED_BODY, 200)}, served_locally=False)
+        counters = self._run(app)
+        assert counters['local_served'] == 0

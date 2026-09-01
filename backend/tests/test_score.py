@@ -52,45 +52,85 @@ class CrimeToScoreTests(unittest.TestCase):
 
 
 class ParseWeightsTests(unittest.TestCase):
-    """Custom weights override must sum to 1.0 ±0.01 across exactly four keys."""
+    """Custom weights: the four required keys, `env` optional, summing to 1.0.
+
+    Returns (weights, reason). The reason half is audit I29: a rejected
+    override used to return a bare None and the caller silently scored under
+    `balanced`, so a request naming one scoring model was answered under
+    another with nothing in the response to say so.
+    """
+
+    def weights(self, raw):
+        parsed, reason = app.parse_weights(raw)
+        self.assertIsNone(reason, f'unexpected rejection: {reason}')
+        return parsed
+
+    def rejection(self, raw):
+        parsed, reason = app.parse_weights(raw)
+        self.assertIsNone(parsed)
+        # A rejection with no reason is the defect, not the fix.
+        self.assertTrue(reason, 'a rejected override must say why')
+        return reason
 
     def test_valid_string(self):
-        result = app.parse_weights('quiet:0.5,afford:0.2,growth:0.1,live:0.2')
+        result = self.weights('quiet:0.5,afford:0.2,growth:0.1,live:0.2')
         self.assertEqual(result, {'quiet': 0.5, 'afford': 0.2, 'growth': 0.1, 'live': 0.2})
 
+    def test_env_is_accepted_as_a_fifth_key(self):
+        # I29. `env` has been a SCORED component since v3.9 and the response's
+        # own `weights` field publishes five keys - so the exact object the API
+        # hands back could not be sent back to it. Round-tripping your own
+        # output is the first thing an integrator tries.
+        result = self.weights('quiet:0.30,afford:0.26,growth:0.10,live:0.20,env:0.14')
+        self.assertEqual(result['env'], 0.14)
+        self.assertAlmostEqual(sum(result.values()), 1.0, places=6)
+
+    def test_balanced_persona_round_trips(self):
+        # The stronger form of the same check: whatever `balanced` weights are
+        # today, feeding them back in must be accepted. A literal five-key
+        # fixture would keep passing while a sixth component was added and
+        # silently rejected.
+        parsed = self.weights(dict(app.PERSONAS['balanced']))
+        self.assertEqual(set(parsed), set(app.PERSONAS['balanced']))
+
     def test_invalid_sum_returns_none(self):
-        # Sum 1.5, outside tolerance, falls back
-        self.assertIsNone(app.parse_weights('quiet:0.5,afford:0.5,growth:0.3,live:0.2'))
+        reason = self.rejection('quiet:0.5,afford:0.5,growth:0.3,live:0.2')
+        self.assertIn('sum', reason)
 
     def test_missing_key_returns_none(self):
-        self.assertIsNone(app.parse_weights('quiet:0.5,afford:0.5'))
+        self.assertIn('missing', self.rejection('quiet:0.5,afford:0.5'))
 
     def test_extra_key_returns_none(self):
-        self.assertIsNone(app.parse_weights('quiet:0.3,afford:0.3,growth:0.2,live:0.1,extra:0.1'))
+        # Still rejected: `env` is the only addition, not "anything goes".
+        self.assertIn(
+            'unknown', self.rejection('quiet:0.3,afford:0.3,growth:0.2,live:0.1,extra:0.1')
+        )
 
     def test_within_tolerance(self):
         # Sum 1.005, within 1% tolerance, accepted
-        result = app.parse_weights('quiet:0.305,afford:0.25,growth:0.20,live:0.25')
-        self.assertIsNotNone(result)
+        self.assertIsNotNone(self.weights('quiet:0.305,afford:0.25,growth:0.20,live:0.25'))
 
     def test_empty_returns_none(self):
-        self.assertIsNone(app.parse_weights(''))
-        self.assertIsNone(app.parse_weights(None))
+        # No override asked for is NOT an error, so it carries no reason.
+        self.assertEqual(app.parse_weights(''), (None, None))
+        self.assertEqual(app.parse_weights(None), (None, None))
 
     def test_malformed_returns_none(self):
-        self.assertIsNone(app.parse_weights('not-a-weight-spec'))
+        self.assertTrue(self.rejection('not-a-weight-spec'))
 
     def test_negative_weight_returns_none(self):
         # Sums to 1.0 but individual weights outside [0, 1] are pathological
-        # (A-0724-M11) — must be rejected, not scored.
-        self.assertIsNone(app.parse_weights('quiet:-1,afford:2,growth:0,live:0'))
+        # (A-0724-M11) - must be rejected, not scored.
+        self.assertIn('between 0 and 1', self.rejection('quiet:-1,afford:2,growth:0,live:0'))
 
     def test_weight_above_one_returns_none(self):
-        self.assertIsNone(app.parse_weights('quiet:1.5,afford:-0.2,growth:-0.2,live:-0.1'))
+        self.assertIn(
+            'between 0 and 1', self.rejection('quiet:1.5,afford:-0.2,growth:-0.2,live:-0.1')
+        )
 
     def test_full_single_weight_accepted(self):
         # Boundary: a single component at exactly 1.0 is legitimate.
-        result = app.parse_weights('quiet:1,afford:0,growth:0,live:0')
+        result = self.weights('quiet:1,afford:0,growth:0,live:0')
         self.assertEqual(result, {'quiet': 1.0, 'afford': 0.0, 'growth': 0.0, 'live': 0.0})
 
 
@@ -650,10 +690,23 @@ class CalcScoreTests(unittest.TestCase):
         # +0.49, which lifts schools 6.65 -> 7.45 and `live` 8.3 -> 8.6; at 35%
         # of the balanced persona that is the +0.1 headline. Currency, not a
         # re-basing - 72 of 79 boroughs moved and none by more than 0.20.
+        # 6.3 -> 6.2 on 2026-09-01, when the bands stopped being weighted
+        # by TERMINATED postcodes (audit F38) and the road-noise share
+        # stopped dropping DEFRA's surveyed-but-quiet 0 dB readings from
+        # its own denominator (audit I3). Wandsworth moves on both, and in
+        # both directions:
+        #   transportWithin800mPct  83.0 -> 74.8  (`excellent` -> `good`)
+        #   floodMediumOrHighPct    7.04 -> 2.14
+        #   roadNoiseAboveWhoPct    55.3 -> 58.7  (coverage 99.5 -> 100.0)
+        # so `live` falls 8.6 -> 7.8 and `env` rises 4.7 -> 5.6. The
+        # transport and flood direction is the interesting half and it is
+        # not noise: terminated postcodes cluster in redeveloped inner-urban
+        # land, which is both nearer the stations and nearer the Thames than
+        # the live stock, so dropping them lowers transport and lowers flood.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.3)
-        self.assertEqual(result['components']['env'], 4.7)
+        self.assertEqual(result['score'], 6.2)
+        self.assertEqual(result['components']['env'], 5.6)
         self.assertEqual(result['components']['quiet'], 5.0)
         # 6.7 under the May vintage; the June roll moved the cohort.
         self.assertEqual(result['components']['afford'], 6.5)
@@ -676,7 +729,10 @@ class CalcScoreTests(unittest.TestCase):
         # and over three-quarters within 500 m of a GP, so both reach the top
         # band. Together they are 35% of the liveability composite.
         # 8.3 -> 8.6 on the 2023/24 Progress 8 roll; see the headline note above.
-        self.assertEqual(result['components']['live'], 8.6)
+        # 8.6 -> 7.8 on 2026-09-01 (F38). Transport is 0.25 of this composite
+        # and Wandsworth's 800 m share fell 83.0% -> 74.8% once terminated
+        # postcodes stopped counting, taking the band `excellent` -> `good`.
+        self.assertEqual(result['components']['live'], 7.8)
         # 660000 under the May vintage; June puts Wandsworth at 680105.
         self.assertEqual(result['context']['avgPriceGbp'], 680105)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')

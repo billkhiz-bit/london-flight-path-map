@@ -1058,11 +1058,39 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         'api/index.html',
         'score-demo/index.html',
         'score-demo/openapi.yaml',
+        'METHODOLOGY.md',
     )
+
+    # METHODOLOGY.md is a SIXTH mirror and appeared in NO list - not the one in
+    # template.yaml, not the one this class opens with - until 2026-09-01, when
+    # it was found still advertising "100 requests per month" and explaining the
+    # batch multiplier removed on 2026-08-21. Every figure but the burst was
+    # wrong. That is the same defect as score-demo/index.html on 2026-08-22, in
+    # the one document written for an integrator's auditor.
+    #
+    # It is read by SECTION, unlike the four pages above which are read whole,
+    # because the file also quotes a THIRD PARTY's quota - AviationStack at
+    # "1000 req/month" in the OpenSky note - and forcing someone else's limits
+    # to equal ours would be a false drift signal that gets the file dropped
+    # from the list again. Narrowing the read is only safe if it fails when the
+    # heading moves, so `_page` asserts the heading is still there rather than
+    # returning an empty string, which would read as a clean page.
+    QUOTA_SECTIONS = {'METHODOLOGY.md': '### Rate limits and quotas'}
 
     def _page(self, rel):
         with open(os.path.join(self.REPO, rel), encoding='utf-8') as handle:
-            return handle.read()
+            text = handle.read()
+        heading = self.QUOTA_SECTIONS.get(rel)
+        if heading is None:
+            return text
+        import re  # noqa: PLC0415
+        self.assertIn(
+            heading, text,
+            f'{rel} no longer contains "{heading}", so this gate is reading '
+            'nothing from it. Fix the heading, do not drop the file.')
+        rest = text[text.index(heading) + len(heading):]
+        nxt = re.search(r'^#{1,3} ', rest, re.MULTILINE)
+        return rest[:nxt.start()] if nxt else rest
 
     def test_every_published_request_figure_matches_a_real_limit(self):
         """No page may quote a request quota that is not one we actually offer."""
@@ -1083,7 +1111,15 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             # page, with this gate green throughout (found 2026-08-27; the
             # enforced plan reads 10,000 from the live API). A drift gate that
             # only reads the long form is checking the WORDING, not the number.
-            pattern = r'([\d,]+)\s*(k?)\s*(?:requests|req/mo|req/month)'
+            # A RATE IS NOT A QUOTA. The negative lookahead was added
+            # 2026-09-01 with METHODOLOGY.md, the first mirror to spell a rate
+            # out in words: "5 requests per second burst" was read here as a
+            # monthly quota of 5 and failed against the enforced 10,000. The
+            # rates have their own assertion below, against the plan's own
+            # Throttle block, so excluding them here narrows this pattern
+            # without leaving them unchecked.
+            pattern = (r'([\d,]+)\s*(k?)\s*(?:requests|req/mo|req/month)'
+                       r'(?!\s*(?:per|a)\s+second)')
             for digits, suffix in re.findall(pattern, self._page(rel)):
                 found_any = True
                 value = as_int(digits, suffix)
@@ -1099,6 +1135,40 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             'this gate is now checking nothing. Fix the pattern, do not delete it.',
         )
 
+    def test_published_per_second_rates_match_the_plan(self):
+        """A page quoting a rate must quote the one the plan throttles at.
+
+        This did not exist until 2026-09-01, and its absence is exactly what
+        let METHODOLOGY.md publish "1 request per second sustained" against an
+        enforced 2 - the figure was corrected in the plan on 2026-08-21 with a
+        comment explaining why, and the document nobody re-read kept the old
+        one. The signup Lambda's rates were asserted from the day this class
+        was written; the pages' were not.
+        """
+        import re  # noqa: PLC0415
+
+        expected = {
+            'burst': self._plan_int('BurstLimit'),
+            'sustained': self._plan_int('RateLimit'),
+        }
+        found_any = False
+        for rel in self.QUOTA_PAGES:
+            for digits, kind in re.findall(
+                    r'([\d,]+)\s*requests?\s*per\s*second\s*(burst|sustained)',
+                    self._page(rel), re.IGNORECASE):
+                found_any = True
+                self.assertEqual(
+                    int(digits.replace(',', '')), expected[kind.lower()],
+                    f'{rel} advertises {digits} requests/second {kind.lower()}, '
+                    f'but the plan throttles at {expected[kind.lower()]}')
+        # A floor, for the reason every other count in this file carries one:
+        # if the wording moves, this silently checks nothing and reads green.
+        self.assertTrue(
+            found_any,
+            'no "N requests per second" phrase found on any mirror - the '
+            'wording changed and this gate is checking nothing. Fix the '
+            'pattern, do not delete it.')
+
     def test_no_page_promises_batch_on_the_free_tier(self):
         """The plan denies /v1/score/batch per-method; the pages must agree.
 
@@ -1108,13 +1178,23 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         """
         if '/v1/score/batch/POST:' not in self.plan:
             self.skipTest('free plan no longer denies batch; this claim would be true')
-        for rel in ('score-demo/index.html', 'pricing.html', 'api/index.html'):
+        # METHODOLOGY.md joined this list on 2026-09-01. It carried the claim
+        # in its own words - "while still costing one request" - which the
+        # verbatim phrase below could never have matched, so the wording is a
+        # LIST now. A single-phrase check is checking one page's sentence, not
+        # the entitlement.
+        claims = (
+            'batch request carries up to 100 addresses and counts as one request',
+            'while still costing one request',
+        )
+        for rel in ('score-demo/index.html', 'pricing.html', 'api/index.html',
+                    'METHODOLOGY.md'):
             text = self._page(rel).lower()
-            self.assertNotIn(
-                'batch request carries up to 100 addresses and counts as one request',
-                text,
-                f'{rel} still sells free-tier batch, which the usage plan denies',
-            )
+            for claim in claims:
+                self.assertNotIn(
+                    claim, text,
+                    f'{rel} still sells free-tier batch, which the usage plan denies',
+                )
 
     def test_score_ceiling_is_the_product_of_the_two(self):
         limits = self._signup_limits()

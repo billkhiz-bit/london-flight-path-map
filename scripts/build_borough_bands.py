@@ -244,11 +244,36 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
         raise SystemExit(f'NSPL not found at {NSPL_CSV}')
     out = defaultdict(lambda: defaultdict(list))
     extra_coords = {}
-    seen = 0
+    seen = retired = 0
     with NSPL_CSV.open(newline='', encoding='utf-8-sig') as fh:
-        for idx, row in enumerate(csv.DictReader(fh)):
+        reader = csv.DictReader(fh)
+        cols = {c.lower(): c for c in (reader.fieldnames or [])}
+        c_term = cols.get('doterm')
+        if not c_term:
+            # HARD FAIL, not a silent skip. Every band this script derives is a
+            # SHARE over these points, so losing the filter silently re-weights
+            # air quality, road noise, flood and transport for all 99 boroughs
+            # at once - which is precisely what had been happening. A guard that
+            # degrades quietly on a vintage roll would restore the defect on the
+            # day nobody is looking for it.
+            raise SystemExit(
+                'NSPL has no doterm column, so terminated postcodes cannot be excluded. '
+                'Every borough band is a share over these points; refusing to derive '
+                'bands weighted by postcodes nobody lives at.'
+            )
+        for idx, row in enumerate(reader):
             if limit and idx >= limit:
                 break
+            # F38. NSPL keeps TERMINATED postcodes, with real coordinates, and
+            # they were being counted: 904,453 of them, 39.2% of the sampled
+            # rows. A terminated postcode is a place addresses used to be, so
+            # the bands were weighted toward demolished estates and redeveloped
+            # industrial land. The (99.999, 0.0) guard below catches only the
+            # UNLOCATABLE ones, which is why this looked handled and was not -
+            # four sibling scripts already read this column.
+            if (row.get(c_term) or '').strip():
+                retired += 1
+                continue
             if extra_postcodes:
                 pc = (row.get('pcds') or '').replace(' ', '').upper()
                 if pc in extra_postcodes:
@@ -269,18 +294,39 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
             city, borough = entry
             out[city][borough].append((lat, lon))
             seen += 1
-    print(f'  {seen:,} postcodes across {len(out)} cities')
+    print(f'  {seen:,} live postcodes across {len(out)} cities ({retired:,} terminated, excluded)')
+    if seen and not retired:
+        # 39.2% of a full NSPL scan is terminated. Zero of them, having kept
+        # anything, means the column stopped meaning what it means.
+        raise SystemExit('FAIL: read NSPL and found no terminated postcodes - check the doterm column.')
     if extra_postcodes:
         print(f'  {len(extra_coords):,}/{len(extra_postcodes):,} GP postcodes geocoded')
     return out, extra_coords
 
 
 def sample_raster(tif_path, points):
-    """Sample a GeoTIFF at (lat, lon) points. Returns a list of valid values.
+    """Sample a GeoTIFF at (lat, lon) points.
 
-    Values of 0 or nodata mean 'below the lowest mapped band', which is an
-    absence of noise rather than a reading of zero, so they are dropped rather
-    than averaged in as silence.
+    Returns (mapped, surveyed, inside):
+      mapped    values above the lowest mapped contour, for the MEDIAN. A 0 is
+                not a decibel reading and averaging it in as silence would
+                report a dB nobody measured.
+      surveyed  how many points the raster gave ANY answer for, zeros included,
+                for the SHARE. This is the half that was wrong.
+      inside    how many points fell within the raster bounds at all.
+
+    I3, fixed 2026-09-01. DEFRA road Lden publishes 0 for ground it SURVEYED and
+    found below the lowest mapped band - roughly 40 dB. This function dropped
+    those, and `roadNoiseAboveWhoPct` divided by what was left, so the share
+    over WHO's 53 dB was computed among the noisier postcodes only and came out
+    inflated by up to 5.5 points. Every dropped reading was a quiet one, so the
+    error had a direction: it made boroughs look louder than DEFRA measured.
+    London's Sutton moved 50.2 -> 49.7 on the fix, `moderate` -> `low`.
+
+    Its sibling `sample_codes` twenty lines below already explains the identical
+    trap for flood, where 0 means "not in any modelled risk polygon", and
+    deliberately keeps it - mirrored code, one of them corrected, which this
+    repo has now paid for four times.
     """
     import numpy as np
     import rasterio
@@ -304,10 +350,11 @@ def sample_raster(tif_path, points):
     inside = (rows >= 0) & (rows < height) & (cols >= 0) & (cols < width)
     vals = np.full(len(points), np.nan)
     vals[inside] = band[rows[inside], cols[inside]]
-    good = np.isfinite(vals) & (vals > 0)
+    surveyed = np.isfinite(vals) & (np.abs(vals) < 1e30)
     if nodata is not None:
-        good &= vals != nodata
-    return vals[good], int(inside.sum())
+        surveyed &= vals != nodata
+    mapped = surveyed & (vals > 0)
+    return vals[mapped], int(surveyed.sum()), int(inside.sum())
 
 
 def sample_codes(tif_path, points):
@@ -603,14 +650,23 @@ def derive(limit=None):
             rec = {'postcodes': len(points)}
 
             if have_road:
-                vals, inside = sample_raster(tif, points)
-                if vals.size:
-                    exposed = 100.0 * float((vals >= WHO_ROAD_LDEN_DB).sum()) / vals.size
-                    rec['roadNoiseLdenMedian'] = round(float(np.median(vals)), 1)
+                vals, surveyed, _inside = sample_raster(tif, points)
+                if surveyed:
+                    # DENOMINATOR IS `surveyed`, NOT `vals.size`. A postcode
+                    # DEFRA surveyed and found below 40 dB is a postcode below
+                    # the WHO guideline, and it belongs in the share exactly as
+                    # much as a loud one. See sample_raster's docstring.
+                    exposed = 100.0 * float((vals >= WHO_ROAD_LDEN_DB).sum()) / surveyed
                     rec['roadNoiseAboveWhoPct'] = round(exposed, 1)
                     rec['roadNoise'] = road_band(exposed)
-                    rec['roadNoiseCoverage'] = round(100 * vals.size / len(points), 1)
+                    rec['roadNoiseCoverage'] = round(100 * surveyed / len(points), 1)
                     rec['roadNoiseVintage'] = ROAD_VINTAGE
+                    # The MEDIAN stays over mapped readings only: 0 means
+                    # "below the lowest contour", not "0 dB", so it cannot enter
+                    # a decibel statistic. Display-only since v4.0 - the SHARE
+                    # above is what scores.
+                    if vals.size:
+                        rec['roadNoiseLdenMedian'] = round(float(np.median(vals)), 1)
 
             if have_flood:
                 codes, _inside = sample_codes(flood_tif, points)

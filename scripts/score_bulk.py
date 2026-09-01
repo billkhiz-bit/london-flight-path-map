@@ -410,7 +410,7 @@ def score_book(app, rows, writer, write_lock, workers, progress=True, sources_ce
     their input postcode, so the customer can join; if input order ever needs
     preserving, sort the output afterwards rather than serialising the pool.
     """
-    counters = {'scored': 0, 'failed': 0, 'omitted': 0}
+    counters = {'scored': 0, 'failed': 0, 'omitted': 0, 'local_served': 0}
 
     def _one(item):
         _number, postcode, passthrough = item
@@ -420,6 +420,14 @@ def score_book(app, rows, writer, write_lock, workers, progress=True, sources_ce
             body, status = app.resolve_query(query)
         except Exception as exc:  # noqa: BLE001 - one bad row must not kill the run
             body, status = {'error': f'{type(exc).__name__}: {exc}'}, 500
+
+        # READ IN THE WORKER, where the lookup happened. Attribution is
+        # thread-local (it became so on 2026-08-22, when one container crediting
+        # ONS for every later response was fixed), and the pool means the thread
+        # that answers is never the thread that writes the .sources.txt. So the
+        # main thread's view is False no matter what ONS served, and the OGL
+        # file credited postcodes.io for lookups ONS actually performed.
+        served_locally = app.local_postcode_served()
 
         output_row = classify_outcome(postcode, body, status)
         if output_row is not None:
@@ -431,6 +439,8 @@ def score_book(app, rows, writer, write_lock, workers, progress=True, sources_ce
             output_row.update(passthrough)
 
         with write_lock:
+            if served_locally:
+                counters['local_served'] += 1
             if output_row is None:
                 counters['omitted'] += 1
             else:
@@ -537,6 +547,14 @@ def main():
         # Written last, so build_sources() reflects what the run actually used
         # rather than what was configured — the same honesty rule the API's
         # `sources` array follows.
+        #
+        # Hand the workers' finding to the thread that writes the file. Without
+        # this, `build_sources()` runs on a thread that never resolved a
+        # postcode and omits the ONS credit from an export built entirely on ONS
+        # centroids - a licensing claim, not a log line, and the file says it
+        # MUST accompany the CSV.
+        if counters['local_served']:
+            app.mark_local_postcode_served()
         sources_path = write_sources_file(app, args.output)
         print(f'  sources:  {sources_path}')
         print()
@@ -545,7 +563,12 @@ def main():
     # The local tier is credited only once it has actually served a lookup,
     # never merely because the table is configured — the same honesty rule
     # the API applies to its `sources` array.
-    if not app._LOCAL_POSTCODE_SERVED and total:
+    # `app._LOCAL_POSTCODE_SERVED` until 2026-09-01, which stopped existing on
+    # 2026-08-22 - so this line raised AttributeError and the Enterprise
+    # deliverable crashed AFTER writing its CSV on every run for ten days. It is
+    # the last statement in main(), which is why the failure looked like a
+    # successful export with a traceback stapled to it.
+    if not counters['local_served'] and total:
         print()
         print('WARNING: the local NSPL tier never served a lookup. Every postcode '
               'went to postcodes.io. Check AWS credentials and POSTCODE_TABLE.')

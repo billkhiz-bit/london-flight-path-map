@@ -129,6 +129,39 @@ def handler(event, context):
 
         rows = extract_rows(data)
 
+        if rows is None:
+            # Answered, and unreadable. Never "no certificates on record".
+            return response(
+                502,
+                {
+                    'postcode': postcode,
+                    'available': False,
+                    'message': (
+                        'The EPC register answered in a shape this service does not '
+                        'recognise, so we cannot say whether certificates exist here.'
+                    ),
+                    'sources': [OGL_ATTRIBUTION],
+                },
+            )
+
+        declared = declared_total(data)
+        if not rows and declared:
+            # The payload counts certificates and hands us none of them. Both
+            # halves came from the same response, so one of them is wrong and we
+            # do not know which - which is exactly the case for saying so.
+            return response(
+                502,
+                {
+                    'postcode': postcode,
+                    'available': False,
+                    'message': (
+                        f'The EPC register reports {declared} certificates for this '
+                        'postcode and returned none of them.'
+                    ),
+                    'sources': [OGL_ATTRIBUTION],
+                },
+            )
+
         if not rows:
             return response(
                 200,
@@ -234,12 +267,34 @@ def handler(event, context):
         return response(500, {'error': 'Internal server error'})
 
 
+ROW_KEYS = ('rows', 'results', 'data', 'items', 'certificates')
+
+
 def extract_rows(data):
+    """The certificate list, or None if this payload has no list we recognise.
+
+    THE RETURN VALUE IS THREE-WAY AND THAT IS THE POINT (audit I31, fixed
+    2026-09-01). It used to return `[]` for both "MHCLG answered and this
+    postcode has no certificates" and "MHCLG answered in a shape we cannot
+    read", and the caller published the first message for both. So a single
+    upstream rename - `rows` to anything not in ROW_KEYS - would have made this
+    service answer "no certificates on record" for EVERY POSTCODE IN THE
+    COUNTRY, with a 200 and an `available: true`, indefinitely and silently.
+
+    That is verbatim the `sold_prices` scar this repo already carries, and the
+    reason the distinction is worth six lines: an empty list is a measurement,
+    an unreadable envelope is an outage, and only one of them may be published
+    as fact.
+
+      list          -> that list (may legitimately be empty)
+      dict + key    -> that list (may legitimately be empty)
+      anything else -> None, meaning "we could not read it"
+    """
     if isinstance(data, list):
         return data
     if not isinstance(data, dict):
-        return []
-    for key in ('rows', 'results', 'data', 'items', 'certificates'):
+        return None
+    for key in ROW_KEYS:
         value = data.get(key)
         if isinstance(value, list):
             return value
@@ -248,7 +303,31 @@ def extract_rows(data):
                 inner_value = value.get(inner)
                 if isinstance(inner_value, list):
                     return inner_value
-    return []
+    return None
+
+
+def declared_total(data):
+    """What the payload SAYS it holds, or None if it does not say.
+
+    MHCLG returns `pagination.totalRecords` and this handler already passes it
+    through to callers untouched - so the evidence that contradicts an empty
+    parse was in our own response body all along, published beside the claim it
+    disproves. Read it rather than only forwarding it.
+    """
+    if not isinstance(data, dict):
+        return None
+    pagination = data.get('pagination')
+    if not isinstance(pagination, dict):
+        return None
+    for key in ('totalRecords', 'total_records', 'total', 'totalCount'):
+        value = pagination.get(key)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str) and value.isdigit():
+            return int(value)
+    return None
 
 
 def pick(row, *keys_with_default):

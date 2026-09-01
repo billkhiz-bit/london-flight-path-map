@@ -1,0 +1,303 @@
+{
+  "cities": {
+    "bristol": {
+      "airport": "BRS",
+      "boroughs": {
+        "Bath and North East Somerset": {
+          "cells": 286,
+          "km2": 0.0286,
+          "maxDb": 56.4
+        },
+        "City of Bristol": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "North Somerset": {
+          "cells": 100184,
+          "km2": 10.0184,
+          "maxDb": 91.4
+        },
+        "South Gloucestershire": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    },
+    "leicester": {
+      "airport": "EMA",
+      "boroughs": {
+        "Blaby": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Charnwood": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Harborough": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Hinckley and Bosworth": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Leicester": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Melton": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "North West Leicestershire": {
+          "cells": 189556,
+          "km2": 18.9556,
+          "maxDb": 94.6
+        },
+        "Oadby and Wigston": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    },
+    "manchester": {
+      "airport": "MAN",
+      "boroughs": {
+        "Bolton": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Bury": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Manchester": {
+          "cells": 61698,
+          "km2": 6.1698,
+          "maxDb": 86.5
+        },
+        "Oldham": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Rochdale": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Salford": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Stockport": {
+          "cells": 63815,
+          "km2": 6.3815,
+          "maxDb": 67.5
+        },
+        "Tameside": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Trafford": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Wigan": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    },
+    "merseyside": {
+      "airport": "LPL",
+      "boroughs": {
+        "Knowsley": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Liverpool": {
+          "cells": 31597,
+          "km2": 3.1597,
+          "maxDb": 88.8
+        },
+        "Sefton": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "St Helens": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Wirral": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    },
+    "nottingham": {
+      "airport": "EMA",
+      "boroughs": {
+        "Broxtowe": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "City of Nottingham": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Gedling": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Rushcliffe": {
+          "cells": 104316,
+          "km2": 10.4316,
+          "maxDb": 65.6
+        }
+      }
+    },
+    "tyneandwear": {
+      "airport": "NCL",
+      "boroughs": {
+        "Gateshead": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Newcastle upon Tyne": {
+          "cells": 78320,
+          "km2": 7.832,
+          "maxDb": 87.3
+        },
+        "North Tyneside": {
+          "cells": 3195,
+          "km2": 0.3195,
+          "maxDb": 57.1
+        },
+        "South Tyneside": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Sunderland": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    },
+    "westmidlands": {
+      "airport": "BHX",
+      "boroughs": {
+        "Birmingham": {
+          "cells": 60464,
+          "km2": 6.0464,
+          "maxDb": 69.8
+        },
+        "Coventry": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Dudley": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Sandwell": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Solihull": {
+          "cells": 92109,
+          "km2": 9.2109,
+          "maxDb": 87.2
+        },
+        "Walsall": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Wolverhampton": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    },
+    "westyorkshire": {
+      "airport": "LBA",
+      "boroughs": {
+        "Bradford": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Calderdale": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Kirklees": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        },
+        "Leeds": {
+          "cells": 57327,
+          "km2": 5.7327,
+          "maxDb": 83.3
+        },
+        "Wakefield": {
+          "cells": 0,
+          "km2": 0.0,
+          "maxDb": null
+        }
+      }
+    }
+  },
+  "contourDb": 55.0,
+  "generatedBy": "scripts/measure_aircraft_footprint.py",
+  "licence": "Open Government Licence v3.0",
+  "note": "km2 of each borough at or above the contour, from cell centres in EPSG:27700. Used by build_aircraft_bands.py for the near-field floor, which until 2026-09-01 compared the borough against a DISC of equivalent radius and so missed Rushcliffe by 180 m while 10.43 km2 of it sat above 55 dB.",
+  "source": "DEFRA Strategic Noise Mapping Round 4 (2021 traffic), per-airport Lden coverages",
+  "unmapped": {
+    "cardiff": {
+      "code": "CWL",
+      "reason": "airport is not mapped by DEFRA Round 4, so no contour exists to test"
+    },
+    "southyorkshire": {
+      "code": null,
+      "reason": "no operating commercial airport"
+    },
+    "teesside": {
+      "code": "MME",
+      "reason": "airport is not mapped by DEFRA Round 4, so no contour exists to test"
+    }
+  }
+}

@@ -354,24 +354,57 @@ for (const city of cities) {
   // the scale actually visible - rather than from the `aircraftScalePainted`
   // flag the fix introduced. Reading that flag would be taking the expectation
   // from the code under test, which is this repo's most repeated defect.
-  const air = await page.evaluate(() => {
-    const img = document.getElementById('defra-aircraft-img');
-    const tiles = document.getElementById('us-aircraft-tiles');
-    const hasRaster = Boolean(
-      (img && (img.getAttribute('href') || img.getAttribute('xlink:href'))) ||
-        // image[data-loaded], not image. A tile element whose href has not come
-        // back yet paints NOTHING, so counting elements reports a surface that
-        // is not on the map - which is the very thing this check exists to
-        // catch, made by the checker. The attribute is set in the tile's own
-        // onload, so it is per-tile ground truth about the DOM and not the
-        // `aircraftScalePainted` flag this file deliberately refuses to read.
-        (tiles && tiles.querySelectorAll('image[data-loaded]').length > 0)
-    );
-    const scale = document.getElementById('legend-noise-scale');
-    const scaleShown = Boolean(scale) && getComputedStyle(scale).display !== 'none';
-    const title = (document.getElementById('legend-noise-title') || {}).textContent || '';
-    return { hasRaster, scaleShown, saysNoData: /\(NO DATA\)/.test(title) };
-  });
+  //
+  // POLLED TO SETTLEMENT, not read at one instant. networkidle is not the end
+  // of this layer: renderTileGrid's onSettle fires only once every appended
+  // tile has loaded or failed, or after its own 20 SECOND hung-tile deadline,
+  // and networkidle can fire in a gap BEFORE the tile requests are issued.
+  // Measured 2026-09-01: one run reached networkidle at 4,891 ms with all tiles
+  // loaded and agreeing for 35 s straight, while a preflight run caught NYC
+  // mid-settle and reported "scale hidden but a dB surface IS painted" - the
+  // very message this file's comment records from an earlier failed fix.
+  //
+  // THIS IS NOT "ASSERT UNTIL TRUE". The property is "once settled, the legend
+  // matches the map". A disagreement during settle is not a defect; a
+  // persistent one is, and BOTH defects this check exists for are persistent -
+  // NYC's flag set before a tile had loaded, and a stale callback relabelling
+  // another city's legend. Neither self-heals, so neither can be waited out.
+  // The deadline is past the app's own 20 s so a hung tile resolves inside it.
+  const readAir = () =>
+    page.evaluate(() => {
+      const img = document.getElementById('defra-aircraft-img');
+      const tiles = document.getElementById('us-aircraft-tiles');
+      const hasRaster = Boolean(
+        (img && (img.getAttribute('href') || img.getAttribute('xlink:href'))) ||
+          // image[data-loaded], not image. A tile element whose href has not
+          // come back yet paints NOTHING, so counting elements reports a
+          // surface that is not on the map - which is the very thing this check
+          // exists to catch, made by the checker. The attribute is set in the
+          // tile's own onload, so it is per-tile ground truth about the DOM and
+          // not the `aircraftScalePainted` flag this file refuses to read.
+          (tiles && tiles.querySelectorAll('image[data-loaded]').length > 0)
+      );
+      const scale = document.getElementById('legend-noise-scale');
+      const scaleShown = Boolean(scale) && getComputedStyle(scale).display !== 'none';
+      const title = (document.getElementById('legend-noise-title') || {}).textContent || '';
+      return { hasRaster, scaleShown, saysNoData: /\(NO DATA\)/.test(title) };
+    });
+
+  const AIR_SETTLE_MS = 25000;
+  const airDeadline = Date.now() + AIR_SETTLE_MS;
+  let air = await readAir();
+  let airWaited = 0;
+  while (air.scaleShown !== air.hasRaster && Date.now() < airDeadline) {
+    await page.waitForTimeout(500);
+    airWaited += 500;
+    air = await readAir();
+  }
+  // Reported, never swallowed: a reading that needed seconds to settle is worth
+  // knowing about even when it ends up agreeing, because it is the shape that
+  // precedes a flake.
+  if (airWaited >= 2000) {
+    console.log(`  ~ ${city.id}: aircraft layer took ${airWaited}ms to settle`);
+  }
   if (air.scaleShown !== air.hasRaster) {
     fail += 1;
     console.log(

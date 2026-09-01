@@ -88,6 +88,20 @@ data/*
 # machine that has neither the 806 MB NSPL nor a network; keeping it local-only
 # would leave the gate unable to run anywhere except here.
 !data/district-msoa-names.json
+# DEFRA Round 4 aircraft footprint per borough (16 KB), written by
+# scripts/measure_aircraft_footprint.py --write. Checked in for exactly the
+# reason above: `build_aircraft_bands.py --check` is a BLOCKING preflight stage
+# and now reads this file for the near-field floor, while the GeoTIFFs it is
+# derived from are 2.6-29 MB each and stay gitignored. Local-only would leave
+# the blocking gate unable to run anywhere but this machine - and the gate
+# REFUSES to fall back to the old disc if the file is missing, so an unignored
+# line here is what stops a fresh clone going red. `--verify` re-derives it
+# from the rasters, which is what keeps the two from drifting.
+# NOT named `*-boroughs.json`, and that is deliberate: five scripts
+# enumerate the cities by globbing that pattern, so a non-city file
+# matching it invents a phantom city. It did, on 2026-09-01, and the
+# blocking flood gate caught it the same day.
+!data/aircraft-footprint.json
 # Greater Manchester borough boundaries (66 KB), from the spike branch's ONS
 # LAD extract. Checked in for the same reason as the two above, and the failure
 # mode without it is quiet rather than loud: `data/*` ignores this directory, so

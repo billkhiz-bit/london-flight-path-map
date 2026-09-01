@@ -217,3 +217,65 @@ class TestHandlerSuccess:
         event = make_api_event("GET", query_params={"postcode": "SE1 7PB"})
         result = handler(event, None)
         assert result["statusCode"] == 502
+
+
+class TestUnreadableEnvelopeIsNotAnAbsence:
+    """Audit I31. `extract_rows` returned [] for two different things.
+
+    "MHCLG answered and there are no certificates here" and "MHCLG answered in
+    a shape we cannot read" produced the SAME 200 with `available: true` and
+    "no certificates on record". So one upstream rename of the `rows` key would
+    have had this service confidently report every postcode in the country as
+    having no EPC, for as long as nobody looked.
+
+    Both tests below pass on the pre-fix handler if the assertion is only
+    "something came back"; they are written against the STATUS and the MESSAGE
+    because that is the part that was lying.
+    """
+
+    @pytest.fixture(autouse=True)
+    def set_env(self, monkeypatch):
+        monkeypatch.setenv("EPC_BEARER_TOKEN", "test-token")
+
+    @staticmethod
+    def _serving(payload):
+        def _mock(req, timeout=10):
+            resp = io.BytesIO(json.dumps(payload).encode())
+            resp.__enter__ = lambda s: s
+            resp.__exit__ = lambda s, *a: None
+            return resp
+
+        return _mock
+
+    def test_renamed_envelope_is_reported_not_published_as_empty(self, monkeypatch):
+        # Exactly the live payload, with `rows` renamed to something we do not
+        # know. Pre-fix: 200, available true, count 0.
+        monkeypatch.setattr(app, "urlopen", self._serving({"records": [{"currentEnergyEfficiencyBand": "C"}]}))
+        result = handler(make_api_event("GET", query_params={"postcode": "SE1 7PB"}), None)
+        body = json.loads(result["body"])
+        assert result["statusCode"] == 502
+        assert body["available"] is False
+        assert "cannot say" in body["message"]
+
+    def test_declared_total_contradicting_zero_rows_is_refused(self, monkeypatch):
+        # The payload counts 42 certificates and hands over none. The count was
+        # already being forwarded to callers; now it is also read.
+        monkeypatch.setattr(
+            app, "urlopen", self._serving({"rows": [], "pagination": {"totalRecords": 42}})
+        )
+        result = handler(make_api_event("GET", query_params={"postcode": "SE1 7PB"}), None)
+        body = json.loads(result["body"])
+        assert result["statusCode"] == 502
+        assert body["available"] is False
+        assert "42" in body["message"]
+
+    def test_a_genuinely_empty_postcode_still_reports_zero(self, monkeypatch):
+        # The other half of the contract: a recognised envelope holding an empty
+        # list is a MEASUREMENT and must still be published as one, or the fix
+        # has simply moved the dishonesty.
+        monkeypatch.setattr(app, "urlopen", self._serving({"rows": [], "pagination": {"totalRecords": 0}}))
+        result = handler(make_api_event("GET", query_params={"postcode": "SE1 7PB"}), None)
+        body = json.loads(result["body"])
+        assert result["statusCode"] == 200
+        assert body["available"] is True
+        assert body["count"] == 0

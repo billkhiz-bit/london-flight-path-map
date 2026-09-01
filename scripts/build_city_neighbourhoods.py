@@ -136,6 +136,27 @@ def boroughs_for_city(city):
 
 # PPD column indices. The bulk CSV has no header row.
 C_PRICE, C_DATE, C_POSTCODE, C_LOCALITY, C_TOWN, C_DISTRICT = 1, 2, 3, 10, 11, 12
+C_CATEGORY = 14
+
+# HM Land Registry's PPD category type. 'A' is a standard price-paid entry;
+# 'B' is their ADDITIONAL class - repossessions, power-of-sale transfers,
+# buy-to-lets identified by mortgage, transfers to non-private individuals,
+# and everything whose property type is 'O' (other/non-residential).
+#
+# WE PUBLISH CATEGORY A ONLY, and the reason is that the product already
+# publishes a Category-A number beside these. HM Land Registry's own median
+# price statistics and the UK HPI use Category A alone, and `avgPrice` in
+# `borough-extra.json` is validated against HPI by a BLOCKING gate. So while
+# this scan kept both classes, one product published two price bases: a
+# borough figure on A and a neighbourhood figure on A+B, in the same panel.
+#
+# Measured over pp-2025.csv when the filter was added (2026-09-01): 16.5% of
+# rows are Category B, the national median is GBP295,000 on A against
+# GBP210,000 on B, and every one of the 45,371 property-type-'O' rows is B.
+# Rows that were inside published medians include
+# `GBP76,000 M9 7EP THE PALLET STORE TELECOMMUNICATIONS MAST SITE`.
+# 412 of 485 published medians rose, 40 fell; TS26 Hartlepool by 40.0%.
+PPD_CATEGORY_A = 'A'
 
 # Display names for postal districts whose Royal Mail `locality` field is blank,
 # so the fallback would be the post town and 17 different places would all read
@@ -233,7 +254,6 @@ NAME_OVERRIDES_BY_CITY['westmidlands'] = {
     'B3': 'Birmingham City Centre',
     'B5': 'Digbeth & Park Central',
     'B6': 'Aston & Birchfield',
-    'B7': 'Nechells',
     'B8': 'Saltley & Washwood Heath',
     'B9': 'Bordesley Green',
     'B11': 'Sparkhill & Sparkbrook',
@@ -322,7 +342,6 @@ NAME_OVERRIDES_BY_CITY['merseyside'] = {
     'CH62': 'Bromborough & Eastham',
     'CH63': 'Bebington',
     'L1': 'Liverpool City Centre',
-    'L2': 'Pier Head',
     'L3': 'Vauxhall',
     'L4': 'Walton & Anfield',
     'L5': 'Kirkdale & Everton',
@@ -345,7 +364,6 @@ NAME_OVERRIDES_BY_CITY['merseyside'] = {
     'L24': 'Speke',
     'L25': 'Woolton & Gateacre',
     'L27': 'Netherley',
-    'L28': 'Stockbridge Village',
     'L30': 'Netherton',
     'L31': 'Maghull',
     'L32': 'Kirkby South',
@@ -448,7 +466,6 @@ NAME_OVERRIDES_BY_CITY['tyneandwear'] = {
     'NE34': 'Whiteleas & Cleadon Park',
     'NE37': 'Concord & Sulgrave',
     'NE38': 'Washington Town Centre',
-    'SR1': 'Sunderland City Centre',
     'SR2': 'Hendon & Ryhope',
     'SR3': 'Silksworth & Herrington',
     'SR4': 'Pallion & Pennywell',
@@ -502,6 +519,12 @@ NAME_OVERRIDES_BY_CITY['teesside'] = {
     'TS25': 'Seaton Carew & Owton Manor',
     'TS27': 'Blackhall & Elwick',
 }
+
+# Share of a city's published rows `--check` must actually re-derive before it
+# is allowed to report ok. Per CITY, and a share rather than a count, because a
+# global `compared > 0` is satisfied by one district in one city - the failure
+# mode this repo has hit five times.
+CHECK_MIN_SHARE = 0.95
 
 # A median under this many transactions is not reported. 30 is a judgement,
 # stated rather than hidden: it keeps every district whose median moves less
@@ -602,7 +625,7 @@ def collect_sales(paths, borough_maps):
     per_city = {city: defaultdict(
         lambda: {'prices': [], 'boroughs': defaultdict(int), 'localities': defaultdict(int)}
     ) for city in borough_maps}
-    seen = kept = 0
+    seen = kept = dropped_b = 0
     for path in paths:
         with open(path, newline='', encoding='utf-8', errors='replace') as fh:
             for row in csv.reader(fh):
@@ -615,6 +638,12 @@ def collect_sales(paths, borough_maps):
                 city, borough = hit
                 out = outward(row[C_POSTCODE])
                 if not out:
+                    continue
+                if len(row) <= C_CATEGORY or row[C_CATEGORY].strip().upper() != PPD_CATEGORY_A:
+                    # Category B. See PPD_CATEGORY_A - this is the filter that
+                    # puts the neighbourhood median on the same basis as the
+                    # borough avgPrice the HPI gate already validates.
+                    dropped_b += 1
                     continue
                 try:
                     price = int(row[C_PRICE])
@@ -633,6 +662,13 @@ def collect_sales(paths, borough_maps):
                 kept += 1
     total = sum(len(v) for v in per_city.values())
     print(f'  scanned {seen:,} transactions, kept {kept:,} across {total} districts in {len(per_city)} cities')
+    print(f'  dropped {dropped_b:,} rows outside PPD category {PPD_CATEGORY_A} (see PPD_CATEGORY_A)')
+    if kept and not dropped_b:
+        # Category B is 16.5% of the national file. Zero of them in a scan that
+        # kept anything means the column moved or the file changed shape, and
+        # the medians would silently go back onto the mixed basis this filter
+        # exists to remove.
+        sys.exit('FAIL: kept transactions but dropped no category-B rows - check column C_CATEGORY.')
     return per_city
 
 
@@ -834,7 +870,7 @@ def _label_words(label):
     return re.findall(r"[A-Za-z][A-Za-z'\-]*", label)
 
 
-def check_names():
+def check_names(publishable=None):
     """Corroborate every curated label against its own district's MSOA names.
 
     THE RULE: each word of a curated label must appear somewhere in that
@@ -851,6 +887,20 @@ def check_names():
     It cannot see a bad compass claim ("Darlington East" for a western
     district), which is why the compass words are only ever allowed ALONGSIDE
     a post town rather than as a whole label. Returns the number of failures.
+
+    `publishable` is city -> the outward codes THIS build will publish, and it
+    exists because a label for a district we no longer publish is dead config,
+    not a false claim: it reaches no user, and there is nothing to corroborate
+    it against, since the evidence file only covers published districts. Four
+    labels became exactly that on 2026-09-01 when the category-A filter dropped
+    L2, L28, SR1 and B7 below the 30-sale floor - the floor working, reported by
+    the name check as four failures.
+
+    The inverse hazard is why this is a SET and not a blanket skip: a district
+    that IS published and has no evidence is a real gap and still fails. Pass
+    None (standalone --check-names) and every curated label must corroborate,
+    which is the stricter reading and the right one when there is no build to
+    say what will ship.
     """
     if not os.path.exists(DISTRICT_MSOA_PATH):
         sys.exit(
@@ -875,10 +925,13 @@ def check_names():
         failures += len(unknown)
     for city in sorted(NAME_OVERRIDES_BY_CITY):
         overrides = NAME_OVERRIDES_BY_CITY[city]
-        bad = []
+        bad, unused = [], []
         for district, label in sorted(overrides.items()):
             rec = evidence.get(district)
             if not rec:
+                if publishable is not None and district not in publishable.get(city, set()):
+                    unused.append((district, label))
+                    continue
                 bad.append((district, label, ['no MSOA evidence for this district']))
                 continue
             haystack = ' '.join(rec['msoa'] + [rec['postTown']]).lower()
@@ -889,7 +942,11 @@ def check_names():
             if unmatched:
                 bad.append((district, label, unmatched))
         n = len(overrides)
-        print(f'  {city:16} {n:3} curated, {n - len(bad):3} corroborated, {len(bad):3} unmatched')
+        suffix = f', {len(unused):3} unused' if unused else ''
+        print(f'  {city:16} {n:3} curated, {n - len(bad) - len(unused):3} corroborated, '
+              f'{len(bad):3} unmatched{suffix}')
+        for district, label in unused:
+            print(f'     {district:6} {label!r} - district no longer published (below a floor)')
         for district, label, unmatched in bad:
             top = ', '.join(evidence.get(district, {}).get('msoa', [])[:4]) or '(none)'
             print(f'     {district:6} {label!r} - no source for {unmatched}')
@@ -980,6 +1037,118 @@ def _cities_with_markers():
 DEFAULT_CITIES = _cities_with_markers()
 
 
+def published_entries(city):
+    """One city's generated neighbourhood rows, read back out of index.html.
+
+    Joined across the two blocks the writer emits: AREA_MAP carries the outward
+    code, DETAIL carries the price and the sale count, and the label is the key
+    shared by both. Read from index.html rather than the JSON by-product in
+    `data/`, because index.html is the file that is DEPLOYED - a check against
+    the by-product would agree with itself while the site published anything.
+    """
+    prefix = city.upper()
+    with open(INDEX_PATH, encoding='utf-8') as fh:
+        src = fh.read()
+    out = {}
+    for name, target in (('area', 'AREA_MAP'), ('detail', 'NEIGHBOURHOOD_DETAIL')):
+        needle = f'Object.assign({prefix}_{target}, '
+        a = src.find(needle)
+        if a < 0:
+            sys.exit(f'FAIL: {prefix}_{target} block not found in index.html')
+        start = a + len(needle)
+        depth, i = 0, start
+        while i < len(src):
+            if src[i] == '{':
+                depth += 1
+            elif src[i] == '}':
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        out[name] = json.loads(src[start:i + 1])
+    rows = {}
+    for label, area in out['area'].items():
+        detail = out['detail'].get(label)
+        if detail is None:
+            sys.exit(f'FAIL: {label} is in {prefix}_AREA_MAP with no DETAIL row')
+        rows[label] = {'outward': area['code'], 'price': detail['price'], 'sales': detail['sales']}
+    return rows
+
+
+def check_prices(cities, args):
+    """Re-derive every published median from Price Paid and compare.
+
+    THE GATE THIS REPLACES DID NOT EXIST. `preflight.sh` claimed a wrong price
+    would red `prices == HM Land Registry`; that stage compares BOROUGH avgPrice
+    against the HPI and never touches a postcode district, so the neighbourhood
+    medians - 485 published numbers driving ~31% of the ranked "best value"
+    list - were derived by a script nothing checked. They spent months on a
+    mixed A+B basis with every gate green.
+
+    No NSPL pass: containment and coordinates are not re-derived, only the
+    price and the count of sales it rests on. That is the half that can be
+    wrong without any other surface noticing, and it keeps the check to one
+    scan of the Price Paid file.
+
+    THE FLOOR IS PER CITY, and per city it is a SHARE of that city's published
+    rows, not a count. This repo has now been bitten five times by a global
+    `compared > 0`: it is satisfied by 104 of 114 bands, by 9 of 10 boroughs,
+    and here it would be satisfied by one district in one of nine cities.
+    """
+    missing = [y for y in args.years if not os.path.exists(os.path.join(CACHE_DIR, f'pp-{y}.csv'))]
+    if missing:
+        # Not a pass. A gate whose input is absent has measured nothing, and
+        # this file is a 155 MB gitignored download, so absent is the normal
+        # state on a fresh clone - which is exactly why the preflight stage
+        # that runs this is advisory rather than blocking.
+        print(f'INCONCLUSIVE: Price Paid cache missing for {missing}. Nothing compared.')
+        print('  Run `python scripts/build_city_neighbourhoods.py` once to populate data/pp-<year>.csv.')
+        return 2
+
+    borough_maps = {c: boroughs_for_city(c) for c in cities}
+    per_city = collect_sales([os.path.join(CACHE_DIR, f'pp-{y}.csv') for y in args.years], borough_maps)
+
+    total_compared = total_differ = 0
+    failed_cities = []
+    for city in cities:
+        rows = published_entries(city)
+        compared = differ = unresolved = 0
+        for label, row in sorted(rows.items()):
+            rec = per_city[city].get(row['outward'])
+            if rec is None or not rec['prices']:
+                # A published district we cannot re-derive at all. Reported, not
+                # skipped: "no rows" is what a broken district join looks like.
+                unresolved += 1
+                print(f'  {city}: {label} published price {row["price"]}k, no category-A rows found')
+                continue
+            compared += 1
+            want_price = round(statistics.median(rec['prices']) / 1000)
+            want_sales = len(rec['prices'])
+            if want_price != row['price'] or want_sales != row['sales']:
+                differ += 1
+                print(
+                    f'  {city}: {label} publishes {row["price"]}k on {row["sales"]} sales, '
+                    f'Price Paid category A gives {want_price}k on {want_sales}'
+                )
+        total_compared += compared
+        total_differ += differ + unresolved
+        share = compared / len(rows) if rows else 0.0
+        status = 'ok' if (share >= CHECK_MIN_SHARE and not differ and not unresolved) else 'FAIL'
+        print(f'  {city}: {compared} of {len(rows)} rows compared ({share:.0%}), {differ} differ, {unresolved} unresolved [{status}]')
+        if status == 'FAIL':
+            failed_cities.append(city)
+
+    print('')
+    print(f'compared {total_compared} published medians across {len(cities)} cities')
+    if failed_cities:
+        print(f'FAIL: {", ".join(failed_cities)}.')
+        print('A published median that does not reproduce from category-A Price Paid is')
+        print('either a stale index.html or a changed basis. Re-run with --write-index.')
+        return 1
+    print(f'OK: every published median reproduces from HM Land Registry category-A Price Paid ({args.years}).')
+    return 0
+
+
 def build_city(city, keep_by_city, placement, dropped_thin, args):
     """Turn one city's kept districts into entries, JSON and an index block."""
     name_overrides = NAME_OVERRIDES_BY_CITY.get(city, {})
@@ -1028,7 +1197,10 @@ def build_city(city, keep_by_city, placement, dropped_thin, args):
         'city': city,
         'priceSource': 'HM Land Registry Price Paid Data',
         'priceVintage': ', '.join(str(y) for y in args.years),
-        'priceBasis': 'median sale price per postcode district',
+        'priceBasis': (
+            'median sale price per postcode district, HM Land Registry PPD '
+            'category A only (the basis HM Land Registry and the UK HPI use)'
+        ),
         'coordinateSource': 'ONS National Statistics Postcode Lookup (live postcodes, mean centroid)',
         'nameSource': (
             'Royal Mail locality most transactions use, or a curated postal-district '
@@ -1092,6 +1264,11 @@ def main():
         action='store_true',
         help='corroborate the curated area labels against published MSOA names and exit',
     )
+    ap.add_argument(
+        '--check',
+        action='store_true',
+        help='re-derive every published median from Price Paid and compare; no writes',
+    )
     args = ap.parse_args()
 
     if args.check_names:
@@ -1109,6 +1286,12 @@ def main():
         return 0
 
     cities = [args.city] if args.city else list(DEFAULT_CITIES)
+
+    if args.check:
+        print('Published neighbourhood medians vs HM Land Registry Price Paid (category A)')
+        print(f'  cities: {", ".join(cities)}; vintage {", ".join(str(y) for y in args.years)}')
+        return check_prices(cities, args)
+
     print(f'Neighbourhoods from HM Land Registry Price Paid for: {", ".join(cities)}')
     print(f'  vintage: {", ".join(str(y) for y in args.years)}')
 
@@ -1212,8 +1395,13 @@ def main():
     # cannot see the other cities' evidence, so it is skipped there rather than
     # reported as a pile of false failures.
     if not args.city:
-        print('\nCorroborating curated area names against MSOA names')
-        failures = check_names()
+        print('')
+        print('Corroborating curated area names against MSOA names')
+        publishable = {
+            city: {out for out in keep_by_city[city] if (city, out) in placement}
+            for city in cities
+        }
+        failures = check_names(publishable)
         if failures:
             print(
                 f'\nFAIL: {failures} curated names could not be corroborated; nothing written.\n'

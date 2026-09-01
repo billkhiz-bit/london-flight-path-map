@@ -1,5 +1,213 @@
 # Changelog
 
+## 2026-09-01 (later) - the four wrong numbers, and 46 contrast defects
+
+**IN SOURCE ONLY. Not committed, not deployed.** `HANDOVER.md` §1 carries the
+four steps that must run next, starting with rebuilding the 99 area pages.
+
+### Four published-number corrections, each reproducing a hand-computed figure
+
+- **The aircraft near-field floor was a DISC** (audit C1). `footprint_for()`
+  returns an equivalent radius and the floor compared the borough ring against
+  it, while Round 4 contours are strips along the runway centreline - East
+  Midlands' is 21.2 x 3.8 km against a disc of r = 3.46 km. **Rushcliffe missed
+  the disc by 180 m** and published `Quiet skies 10.0/10` over **10.43 km2 at
+  >=55 dB peaking at 65.6 dB**, while Solihull published `moderate-high` on a
+  comparable 9.21 km2. The floor now tests the borough against the >=55 dB cells
+  in that airport's own GeoTIFF, via a checked-in measurement whose `--verify`
+  re-derives it from the rasters. **Rushcliffe scores balanced 5.0 -> 3.4 and
+  quietlife 6.4 -> 4.0**, exactly as predicted. Knowsley moved the optimistic
+  way and was checked, not accepted: **0.76 km clear** of the nearest loud cell.
+  Teesside and Cardiff keep the disc because Round 4 maps neither airport.
+- **Neighbourhood medians included HM Land Registry Category B** (audit C2) -
+  repossessions, power-of-sale transfers, mortgage-identified buy-to-lets and
+  every property-type-'O' row. HMLR's own statistics and the UK HPI use category
+  A alone, and `avgPrice` beside it was already validated against HPI by a
+  blocking gate, so **one product published two price bases**. **TS26 Hartlepool
+  125k -> 175k (+40.0%)**, WV2 +26.7%, LS2 -18.5%. 485 rows -> 481; the four
+  drops fell below the 30-sale floor once the repossessions stopped propping
+  them up.
+- **Borough bands were weighted by TERMINATED postcodes** (audit F38):
+  **915,867 excluded, 578,940 live remain - 38.7%.** The `(99.999, 0.0)` guard
+  catches only the unlocatable ones, which is why it looked handled.
+- **DEFRA road `0.0` was dropped from the share's own denominator** (audit I3).
+  0 means "surveyed, below the lowest mapped band" - a quiet reading - so
+  `roadNoiseAboveWhoPct` was computed among the noisier postcodes only. Its
+  flood sibling twenty lines away had explained the identical trap all along.
+
+**811 fields updated across both holders, plus 3 aircraft bands.** Wandsworth
+6.3 -> 6.2: transport 83.0% -> 74.8% (`excellent` -> `good`), flood 7.04 ->
+2.14, road 55.3 -> 58.7. The direction is not noise - terminated postcodes
+cluster in redeveloped inner-urban land, nearer both the stations and the river.
+
+### 46 contrast failures, where the audit found 2
+
+`tests/panel-contrast.mjs` measures effective contrast itself over the borough
+panel and the area panel at two viewports. **Axe reports `colour-contrast` as
+INCOMPLETE for 66 nodes in this state and as violations for 0**, and a gate
+reading `violations` counts every one of those as a pass - which is how
+`.score-explain` shipped at 4.47:1 under five rows of every panel and the
+persona switch at 2.71:1. The worst was the `↗` link arrow at **2.11:1**, seven
+per panel. The fix needed no new colours: `--orange-text` / `--green-text` /
+`--yellow-text` were added on 2026-08-12 under a comment saying the next use
+would inherit the fix. The call sites never adopted them.
+
+**Two of the audit's own findings were INVERTED** and are corrected in
+`AUDIT_REPORT.md` §4a: the borough panel HAS been scanned since 24 August - the
+scan opens the AREA panel and calls it the borough one - and the panel DOES name
+the borough on desktop. What never changed is `document.title`, now fixed.
+
+**The new gate reproduced that same defect inside itself on its first run** -
+its borough route fell back to a ranking row, so both states measured one panel
+while the report named two. Identical node counts (204/204) was the tell.
+
+### Also fixed
+
+- **I2** 34 provenance strings said `May 2026 vintage` against June figures
+  served since the 25 August roll; `build_hpi_prices.py --check` now asserts the
+  prose names the vintage it verified the numbers against.
+- **I18** `score_bulk.py` had crashed on every run since 22 August, and its OGL
+  attribution file credited postcodes.io for lookups ONS served.
+- **I28** City of London's crime rate is a Sky Score estimate and
+  `liveResolution` said `measured`. The wording took two passes: demoting the
+  input made the existing string claim the weight was redistributed, which is
+  false - the estimate still scores.
+- **I29** `env` is accepted as an optional fifth weight, and a rejected override
+  returns 400 with a reason instead of silently scoring under `balanced`.
+- **I31** EPC returned "no certificates on record" for an envelope it could not
+  read - one upstream rename from saying it about every postcode in the country.
+- **I33** favourites rendered "No saved locations yet" on an API failure, and
+  filed every non-NYC favourite under a heading reading "London".
+- **I34** "four components" over five rendered rows, and a ranking header whose
+  percentages summed to 82-86%.
+
+### The first full preflight of this wave was RED, and found three real defects
+
+The wave had never faced a complete gate run. All three below are consequences
+of it, and none was in the handover's list of expected reds.
+
+- **NYC's late tile callback relabelled ANOTHER city's legend.** `layer-honesty`
+  failed on whichever city came after New York - random across runs until
+  instrumenting made it deterministic (West Midlands, twice of two,
+  `scaleShown=true hasRaster=false`). Only the NYC branch fetches tiles, and it
+  guards its callback with `generation !== aircraftTileGeneration` so a later
+  NYC render owns the legend - but the counter was incremented **only inside
+  that branch**, so switching to a city that paints no raster never bumped it.
+  geo.dot.gov was measured at 11.6 s, so the callback routinely lands after the
+  switch: the new city hides the scale correctly, and NYC's callback turns it
+  back on and leaves it on. **A five-band decibel scale over a map with no dB
+  surface** - the exact defect that file's own comment describes NYC having had,
+  by the one route its guard could not see. Every entry into the branch chain
+  now owns the legend.
+- **And the gate that caught it was itself measuring an instant, not a state.**
+  With the app fixed, the next full run failed on NYC in the OPPOSITE
+  direction - "scale hidden but a dB surface IS painted", the exact message this
+  file's own comment records from an earlier failed fix attempt. `networkidle`
+  is not the end of this layer: `renderTileGrid`'s `onSettle` fires only once
+  every appended tile has loaded or failed, or after its own **20 second**
+  hung-tile deadline, and networkidle can fire in a gap BEFORE the tile requests
+  are issued. Measured: one run reached networkidle at **4,891 ms** with all
+  tiles loaded and agreeing for 35 s straight. The gate now polls to
+  settlement - **which is not "assert until true"**, because the property is
+  "once settled, the legend matches the map" and both defects it exists for are
+  PERSISTENT: neither the flag-set-before-load nor the stale-callback case
+  self-heals. Proven by reinstating the generation defect: it reds, having
+  waited the full 25 s, and the new `~ took 25000ms to settle` line is that
+  signature.
+- **`data/aircraft-footprint-boroughs.json` invented a phantom city.**
+  `<city>-boroughs.json` is a convention, not a filename: **five scripts**
+  enumerate cities by globbing it (`check_flood_georef`, `fetch_ea_flood_risk`,
+  `fetch_defra_road_noise`, `fit_city_projection`, `build_city_stations`). The
+  blocking flood gate found a city called "aircraft-footprint", had no mosaic
+  for it, and refused to pass under its own rule that an untested class is not
+  an agreeing one - the gate working exactly as designed. Renamed to
+  `data/aircraft-footprint.json`, because the file is a measurement per borough
+  and not a city's geometry; an exclusion list in five places would have to be
+  remembered by whoever adds the next data file. `.gitignore` now says why.
+- **Four curated area labels became dead config.** The category-A filter took
+  L2, L28, SR1 and B7 below the 30-sale floor, so their labels described
+  districts we no longer publish and `--check-names` reported four
+  uncorroborated names. `check_names(publishable)` already skips those during a
+  build, but preflight runs it STANDALONE, where every label must corroborate -
+  deliberately, because that is the stricter reading when no build says what
+  will ship. So the dead labels go rather than the check being loosened. **281
+  curated names, all corroborated.**
+
+### I19 - one tram stop published as five stations
+
+**Measured first, on the published arrays: 943 stations, 170 of them a place
+already listed, 166 in South Yorkshire.** Sheffield Supertram names each
+direction as its own NaPTAN node and nothing stripped them, so **Attercliffe
+shipped as five "stations"** and a quarter of "nearest four stations" panels
+filled four rows with fewer than four places. South Yorkshire **268 -> 102**,
+the whole product **1,651 -> 1,415**.
+
+Separately, **NaPTAN keeps retired nodes with real names and coordinates** and
+`Status` was never read: **806 excluded**, among them Oldham Werneth (closed
+2009), North Woolwich and Silvertown (2006), Angel Road (2019) and Garston
+(Merseyside). The reader now **hard-fails on an absent `Status` column, and
+again if a scan that kept stations excluded no inactive ones** - the same
+two-directional guard the terminated-postcode reader carries.
+
+**The strip was proven safe before shipping**, because `clean_name`'s docstring
+records a strip that edited a name: of 180 names changed, **175 merge into a
+place listed within 800 m**, and the 5 with no sibling keep a real place name.
+
+**`tests/test_station_lists.py` is new, offline, and in the root pytest suite** -
+it reads the SHIPPED arrays rather than re-running the builder, because the
+builder needs the 101 MB gitignored NaPTAN CSV and a test that only runs where
+the raw data is present is a test that does not run. **It found a third instance
+on its first run**: Manchester published "Besses o'th'Barn" and
+"Besses o'th'barn" - one stop, two entries, one capital letter apart. The dedup
+key is `casefold()`ed now and the display spelling is chosen rather than taken
+from whichever row arrived first.
+
+**And one removal is worth knowing about.** Grange Hill is an open Central line
+station that London no longer lists: its ACTIVE nodes are 50 m outside the
+boundary polygon while the RETIRED one was inside, so it had only ever been
+published by accident. The limitation it exposes - containment never lists a
+station just outside a city - is pre-existing and now written down.
+
+### The three new gates are wired in, and the contrast one had to be split
+
+All three were written on 2026-09-01 and **none was in `scripts/preflight.sh`**.
+This repo has had four orphaned gates already, so wiring them was the same day's
+work, not a follow-up. Each was run before being wired, which is how the last
+two items below were found.
+
+- **`panel contrast, borough (AA)`** blocking, **`panel contrast, area (AA)`**
+  as a `net_check`. **`aircraft footprint == DEFRA`** and
+  **`neighbourhood medians == PPD`** advisory, on their gitignored inputs alone -
+  the GeoTIFFs and the 155 MB Price Paid cache. Both were run with their data
+  present and both are green: the footprint file reproduces across **48 boroughs
+  in 8 cities**, and **481 published medians across 9 cities reproduce from
+  category-A Price Paid, 0 differing** - which is the C2 fix verified end to end
+  rather than asserted.
+- **The contrast gate reds intermittently, and "flaky" was not the diagnosis.**
+  It allowed a fixed 1200 ms settle before asking whether the panel had
+  rendered. Measured warm, the area panel renders **113-147 ms** after the
+  click; on a cold run the same sequence overran the budget and the gate printed
+  `could not open` against a tree whose panel was fine. It polls for the state
+  now, bounded at 15 s. A state that never opens still reds - proven, by
+  breaking the selector.
+- **Which uncovered the real finding: the two states have different network
+  needs.** Re-run with every offsite request aborted, the borough panel measures
+  134 nodes at desktop and 87 at phone, while **both area states fail with the
+  exact signature of the intermittent red** - the area panel is reached by a
+  ranking-row click that runs `triggerSearch()`, which resolves the district
+  through `api.postcodes.io`. So a stage documented as needing no network needed
+  one for half of what it measured. The honest fix was not an in-gate skip -
+  that is "nothing wrong here" meaning "I could not look" - but `--only=<state>`
+  and two preflight stages, reusing the `check` / `net_check` split that already
+  prints a skipped stage on its own line and marks the run INCOMPLETE. The
+  borough half - the state nothing had ever scanned - stays blocking and
+  offline-capable.
+- Same pass, **CLAUDE.md's advisory list named four of the six advisory stages**
+  that existed, having never been updated when `p8` and `borough bands` were
+  added. Corrected to all eight, with the instruction to count the call sites
+  rather than trust the sentence - the same treatment the `net_check` list got
+  on 2026-08-30 for the identical reason.
+
 ## 2026-08-29 (later) - the audit, and the panel nothing had ever rendered
 
 **Full audit: 45 findings, 9 critical.** Report in `AUDIT_REPORT.md`, previous

@@ -28,6 +28,32 @@ carries the finder's own evidence and should be re-measured before it is acted
 on — a finder's `critical` is a hypothesis, and this repo has a standing lesson
 that [a recorded finding can be the inverse of the code](./AUDIT_REPORT_2026-08-29.md).
 
+### STATUS, 2026-09-01: both criticals closed, plus 8 importants and 46 contrast defects
+
+**Source only. Nothing is committed and nothing is deployed** - see
+`HANDOVER.md` §1, which is the operative document for picking this up.
+
+| Closed 2026-09-01 | |
+|---|---|
+| **C1** | the aircraft near-field disc, replaced by a real contour test |
+| **C2** | Category B in the neighbourhood medians |
+| **F38** | bands weighted by terminated postcodes (carried from 29 Aug; the largest single item in either report) |
+| **I3** | DEFRA road `0.0` dropped from the share's own denominator |
+| **I2, I18, I28, I29, I31, I33, I34** | see §4a |
+| **D5, D7** | and **44 more contrast failures the audit did not find** - see §4a |
+| **D8** | half: `document.title`. The mobile heading is NOT done and must not be fixed from the description |
+
+| **I19, I25** | closed 2026-09-01, after the wave above - see §4b |
+
+Still open and untouched: **I17, I26/F8, F26, D9, D10, D11**, and the
+N1 7SX divergence in §5b.
+
+**Two findings in this report are INVERTED and are corrected in §4a**: the §3b
+claim that the borough panel "has never been scanned by anything", and D8's
+claim that the panel never names the borough in a heading.
+
+---
+
 ### What is different about this audit
 
 The last three audits found their richest seam in **gates that cannot fail**.
@@ -310,13 +336,13 @@ contractual claim, or a gate's meaning.
 | I16 | `chat`'s boto3 clients have **no timeout config** — botocore defaults are 60s connect + 60s read with up to 5 retries, against a 28s function budget. Both degraded-response branches are unreachable for a Bedrock throttle, so the caller gets a raw 502 with no CORS headers instead of the 503 the code exists to give | `chat/app.py:109-118` | Same class as audit I3, one level in |
 | I17 | `POST /favourites` is unauthenticated (the device token is self-asserted and unregistered), **unthrottled** (no per-method entry, so 50 RPS), and writes permanently into a PITR-backed, TTL-less, `Retain` table. 4.32M writes/day at the ceiling | `favourites/app.py:97`, `template.yaml:52` | The file's own comment states the exposure and bounds only item size |
 | I18 | `score_bulk.py` — **the Enterprise deliverable has crashed on every run for nine days** (`_LOCAL_POSTCODE_SERVED` became thread-local on 22 Aug). The silent half is worse: attribution is thread-local, scoring runs in workers, and `write_sources_file` runs on the main thread — so the OGL file that "MUST accompany the CSV" credits postcodes.io for lookups ONS served | `score_bulk.py:548,377` | |
-| I19 | Station lists de-duplicate by exact cleaned name, so **24.5% of "nearest four stations" panels show fewer than four places** and 14 show one place four times (Attercliffe appears as five "stations"). Nine explicitly closed stations and two heritage-railway halts ship as current — NaPTAN `Status` is never read | `build_city_stations.py:117,202` | `uk-city-panel.mjs` asserts `length > 0` |
+| I19 | **FIXED 2026-09-01.** Station lists de-duplicate by exact cleaned name, so **24.5% of "nearest four stations" panels show fewer than four places** and 14 show one place four times (Attercliffe appears as five "stations"). Nine explicitly closed stations and two heritage-railway halts ship as current — NaPTAN `Status` is never read. **Reproduced on the published arrays: 170 of 943 entries were a place already listed, 166 of them South Yorkshire, whose Supertram names each DIRECTION as its own node. South Yorkshire 268 → 102; the product 1,651 → 1,419; 806 inactive nodes excluded.** The strip is anchored to the end and was proven safe first — of 180 names changed, 175 merge into a place listed within 800 m and the other 5 keep a real place name. Both guards are two-directional: absent `Status` column fails, and so does a scan that kept stations while excluding none. **4 of the 11 outright removals are not closures**, and one is Grange Hill — a live Central line station whose ACTIVE nodes fall 50 m outside London's polygon while the RETIRED one fell inside, so it had only ever been published by accident | `build_city_stations.py:117,202` | `uk-city-panel.mjs` asserts `length > 0` |
 | I20 | **RE-VERIFIED, FIXED.** README said "Six endpoints. Four are API-key gated. Two are deliberately public" against its own table of **seven** rows with **three** marked Public. Live: 3 gated (`/v1/score`, `/v1/score/batch`, `/v1/chat`), 4 public | `README.md:119` | Wrong in all three numbers |
 | I21 | **RE-VERIFIED, FIXED.** LICENSING recorded the **v3.9** environment weights (air 0.65 / flood 0.35) against the live 0.45/0.35/0.20, and had **no row at all** for DEFRA road Lden — the dataset carrying the second-largest scored environmental share | `LICENSING.md:75-76` | Integrator licensing review surface |
 | I22 | **RE-VERIFIED, FIXED.** METHODOLOGY §2 published Greater Manchester as resting on "2 of the 4" liveability inputs with "no Greater Manchester source" for road noise, flood or air quality. All ten boroughs carry **4 of 4 and 3 of 3**; §7.1–§7.3 of the same document already said so | `METHODOLOGY.md` §2 | |
 | I23 | **RE-VERIFIED, FIXED.** METHODOLOGY listed eight already-live cities as "Planned", 61 lines after listing them as supported. Only Edinburgh, Glasgow and Belfast remain | `METHODOLOGY.md` §2 | |
 | I24 | **RE-VERIFIED, FIXED.** Four statements that `/v1/score` "does not implement" the heliport term. `HELIPORTS_LONDON` has been wired into `calc_postcode_quiet` since 2026-08-03, kept identical to the site by `test_heliports_match_the_site`. The document advertised a live site/API divergence over 14.1% of London for four weeks after it closed | `METHODOLOGY.md` §4.5, §11 | |
-| I25 | METHODOLOGY §16's free-tier block has **every figure wrong** (100 requests/month, 1/s sustained, a usable batch multiplier) against 10,000/month, 2/s, and batch **denied**. `template.yaml` names five mirrors of these numbers and **METHODOLOGY is not one of them**, so `FreeTierQuotaDriftTests` cannot see it | `METHODOLOGY.md` §16 | "A list of mirrors that omits a mirror", recurring |
+| I25 | **FIXED 2026-09-01.** METHODOLOGY §16's free-tier block has **every figure wrong** (100 requests/month, 1/s sustained, a usable batch multiplier) against 10,000/month, 2/s, and batch **denied**. `template.yaml` names five mirrors of these numbers and **METHODOLOGY is not one of them**, so `FreeTierQuotaDriftTests` cannot see it. **It is the SIXTH mirror and is now in both the template's list and the gate.** It is read by SECTION, because the file also quotes a third party's quota (AviationStack, "1000 req/month") which must not be forced to match ours, and `_page` fails if the heading moves rather than returning an empty string. **Two gate defects surfaced on the first run**: the quota pattern read "5 requests per second burst" as a monthly quota of 5 — a rate is not a quota, and no other mirror spells a rate out in words — and the per-second rates were **never asserted against the plan at all**, which is precisely what let "1 request per second sustained" survive against an enforced 2. Both directions proven red | `METHODOLOGY.md` §16 | "A list of mirrors that omits a mirror", recurring |
 | I26 | `?compare=previous` explains every score under the **balanced** persona, so an `investor` request gets an explanation contradicting its own `scoreChange` | `score/app.py:398` | Carried forward as F8; still open |
 | I27 | `sourceBreakdown.live` credits DfE for boroughs with **no Progress 8** — 7 of Leicester's 8 today — contradicting `liveResolution` and `sources` in the same response. Verbatim the 2026-08-24 defect; the fix reached `_live_sources_line` and not its sibling `_live_breakdown_line` | `score/app.py:4647` | |
 | I28 | City of London's crime rate is Sky Score's **own estimate**, scored at full weight and counted as "measured" — 0.9 points of a live headline score. `live_resolution`'s own docstring names this exact case as fixed; only the schools half was | `score/app.py:1267,5779` | `crimeEstimated` is read by nothing |
@@ -632,6 +658,102 @@ mobile behaviour is unchanged by it. The late repainter has not been
 identified. The gate asserts the panel at both viewports and the highlight only
 where it is guaranteed, rather than reddening on a defect the fix does not own.
 | F34/F35/F31/F43/F14/F15 (29 Aug) | See the previous report's Status section | All proven red |
+
+---
+
+## 4a. Fixed 2026-09-01 - and what the fixes turned up
+
+Every published-number fix below reproduces a figure this report computed BY
+HAND, which is the strongest available evidence that the diagnosis was right.
+
+| # | Fix | Reproduced / proven |
+|---|---|---|
+| C1 | `footprint_for()`'s equivalent-radius DISC replaced by a test against the >=55 dB cells in that airport's own DEFRA GeoTIFF, via a checked-in measurement (`scripts/measure_aircraft_footprint.py`, `data/aircraft-footprint.json`) whose `--verify` re-derives it from the rasters | Rushcliffe **10.43 km2 / 65.6 dB**, North Tyneside **0.32 / 57.1**, Solihull **9.21** - all to 2 dp. Scores: Rushcliffe **balanced 5.0 -> 3.4, quietlife 6.4 -> 4.0**, both exactly as predicted |
+| C2 | `row[14] == 'A'` in `build_city_neighbourhoods.py`, plus a `--check` with a per-city 95% floor | **TS26 125k -> 175k (+40.0%)**, WV2 150k -> 190k, LS2 184k -> 150k. Gate proven red at 485/485 differing, green at 481/481 |
+| F38 | `doterm` read in `build_borough_bands.py`; hard-fails if the column is absent or if a scan that kept rows found no terminated ones | **915,867 terminated excluded, 578,940 live** - 38.7% against the hand count of 39.2% |
+| I3 | `sample_raster` returns `(mapped, surveyed, inside)`; the share's denominator is `surveyed`, the median stays over mapped readings | `roadNoiseCoverage` reaches **100.0** where it read 92-99% |
+| I2 | 34 strings corrected to `June 2026 vintage`, and `build_hpi_prices.py --check` now asserts the PROSE names the vintage it verified the NUMBERS against | Proven red on one stale string; restore sha256-verified |
+| I18 | `score_bulk.py`'s crash, and the silent half: workers now report local-tier attribution and main aggregates it before writing the OGL file | |
+| I28 | `crimeEstimated` is finally read by `live_resolution` | City of London `measured` -> `partial - 2/4 ... the crime rate is a Sky Score estimate carrying its full weight`; Camden stays `measured` |
+| I29 | `env` accepted as an optional fifth weight; a rejected override returns **400 with a reason** instead of silently scoring under `balanced` | Round-trip test against `PERSONAS['balanced']`, not a five-key literal |
+| I31 | `extract_rows` is three-way; `pagination.totalRecords` is read, not merely forwarded | 3 tests, including that a genuinely empty postcode still reports zero |
+| I33 | favourites load-state; per-city grouping from the registry | |
+| I34 | tooltip count, `factorCount()`, and a ranking header built from the persona's weights | |
+
+**Combined data effect: 811 fields updated across both holders, plus 3 aircraft
+bands.** Wandsworth 6.3 -> 6.2 (transport 83.0 -> 74.8 `excellent` -> `good`,
+flood 7.04 -> 2.14, road 55.3 -> 58.7).
+
+**One band moved the OPTIMISTIC way and was checked rather than accepted.**
+Knowsley `moderate -> low`: its boundary is **0.76 km clear** of the nearest
+>=55 dB cell, measured. Teesside and Cardiff keep the disc because MME and CWL
+are **not mapped by Round 4 at all** - recorded in the data file, because "no
+contour published" and "not measured here" are different claims.
+
+### The contrast finding was 23x larger than D5 and D7
+
+`tests/panel-contrast.mjs` measures effective contrast itself - walking
+ancestors for the first opaque background, compositing alpha - over the borough
+panel and the area panel at two viewports. On its first run it found **46 text
+nodes below AA, not 2**. The worst were the `↗` link arrow at **2.11:1**, seven
+per panel, and the live line-status rows.
+
+All 46 are fixed, and the fix needed no new colours: `--orange-text`,
+`--green-text` and `--yellow-text` were added on **2026-08-12** under a comment
+reading *"now they are tokens so the next use inherits the fix instead of
+repeating the defect"*. The call sites never adopted them.
+
+### Why the bulk scorer's crash survived a passing suite
+
+`tests/test_score_bulk.py`'s `_FakeApp` stub still carried
+`_LOCAL_POSTCODE_SERVED`, the module global the Lambda replaced with a
+thread-local accessor on 2026-08-22. So the suite exercised the old interface
+and passed, over a script that could not complete a single real run.
+
+**A stub is a claim about the real object's interface, and a stale claim is
+indistinguishable from a correct one** until something outside the tests
+exercises it. Updating the stub to the real surface made all three
+`TestScoreBook` cases fail immediately - the failure that should have appeared
+ten days earlier. Two new tests cover the silent half (worker-side attribution
+reaching the OGL file) in both directions.
+
+### CORRECTION to §3b: the borough panel HAS been scanned, and that is worse
+
+§3b says *"`a11y-source.mjs` scans the app's landing state only, so the borough
+panel - where D5, D6, D7 and D8 all live - has never been scanned by anything."*
+**It has been scanned since 2026-08-24.** The real defects are two, and both are
+more instructive than the claim:
+
+1. **axe cannot see this page's contrast.** In that state it returns
+   `violations: 0` and **`colour-contrast` INCOMPLETE for 66 nodes**.
+   `incomplete` is axe declining to answer because it could not resolve an
+   effective background; a gate reading `violations` scores every one as a pass.
+2. **The state it opens is not the state it names.** It clicks
+   `.borough-list-item, .rank-table tbody tr`. The first survives in CSS only -
+   its own comment says so - and the second opens the AREA panel,
+   `Cheam (SM3 8BD)`. `updateSidebar()` was never reached.
+
+Ninth instance of a recorded finding being the inverse of the code.
+
+**The new gate reproduced defect 2 inside itself on its first run**, which is
+worth more than the finding: its borough route fell back to a ranking row when
+`BOROUGH_DATA` turned out not to be a global, so both states measured the same
+panel while the report named two. **Identical node counts (204/204) was the
+tell.** It now drives `selectBoroughByName`, fails rather than falls back, and
+asserts the panel title matches the state it claims.
+
+### CORRECTION to D8: the panel does name the borough - on desktop
+
+`#sidebar-title` has carried the borough name all along. Measured at 1440x900
+with Hounslow selected: `HOUNSLOW`, visible. Two things are genuinely wrong:
+
+- **`document.title` never changed**, on either viewport - confirmed by
+  measurement. Fixed through one holder, `setPanelSubject()`.
+- **At 390px the heading is `display: none`**, because `.sidebar-header` is
+  hidden in `data-mview='search'`. **This half is NOT fixed**: reaching the
+  tabbed *analysis* view needs the real user path (`setMobileView` is not a
+  global), and this repo's own standing lesson is to reproduce the path before
+  reporting - or fixing - the defect.
 
 ---
 

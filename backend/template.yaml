@@ -493,11 +493,18 @@ Resources:
     Properties:
       UsagePlanName: SkyScoreFreeTier
       Description: Free tier, 10000 requests/month = 10000 scores, 5 req/sec burst.
-      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. FIVE places mirror
+      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. SIX places mirror
       # these numbers and none of them can read the plan at runtime:
       # backend/lambdas/signup/app.py (the signup response), pricing.html,
-      # api/index.html, score-demo/openapi.yaml and score-demo/index.html.
-      # Change them together.
+      # api/index.html, score-demo/openapi.yaml, score-demo/index.html and
+      # METHODOLOGY.md section 16. Change them together.
+      #
+      # METHODOLOGY.md was added on 2026-09-01, having been in no list at all
+      # while carrying "100 requests per month", "1 request per second
+      # sustained" and the 100-query batch multiplier removed on 2026-08-21 -
+      # every figure but the burst wrong. It is the SECOND mirror this list has
+      # omitted, after score-demo/index.html, and both were found only by
+      # reading the pages rather than the list.
       #
       # score-demo/index.html was missing from this list until 2026-08-22, and
       # it was the one that drifted: it advertised "100 requests / month, 5

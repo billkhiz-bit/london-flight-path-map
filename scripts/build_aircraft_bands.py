@@ -311,6 +311,51 @@ def footprint_for(code):
     return FOOTPRINT_RADIUS_KM.get(code, UNMAPPED_FOOTPRINT_KM)
 
 
+FOOTPRINT_PATH = Path("data/aircraft-footprint.json")
+
+
+def contour_hits(city):
+    """km2 of each borough at or above 55 dB Lden, or None if DEFRA maps nothing.
+
+    THE DISC IS THE DEFECT THIS REPLACES. FOOTPRINT_RADIUS_KM is an EQUIVALENT
+    radius, sqrt(area/pi), and the near-field floor compared the borough ring
+    against it as though the contour were a circle centred on the airport. Round
+    4 contours are strips along the runway centreline - East Midlands' is
+    21.2 x 3.8 km against a disc of r = 3.46 km - so the test was wrong in both
+    directions at once. Measured 2026-08-31: RUSHCLIFFE missed the disc by 180 m
+    and published `Quiet skies 10.0/10` over 10.43 km2 at or above 55 dB,
+    peaking at 65.6 dB, while SOLIHULL published `moderate-high` on a comparable
+    9.21 km2. Not a threshold - an inconsistency.
+
+    Read from a checked-in measurement rather than the GeoTIFF, because the
+    rasters are gitignored and `--check` is BLOCKING in preflight; see
+    scripts/measure_aircraft_footprint.py, whose --verify re-derives this file
+    from the rasters and is what stops the two drifting.
+
+    None means DEFRA PUBLISHES NO CONTOUR for this airport (Teesside, Cardiff)
+    or there is no airport at all. That is not "measured zero", and the caller
+    must not treat it as one: with no contour the disc is the only estimate
+    available, and the report says so.
+    """
+    if not FOOTPRINT_PATH.exists():
+        raise SystemExit(
+            f"{FOOTPRINT_PATH} missing. Run scripts/measure_aircraft_footprint.py --write. "
+            "Refusing to fall back to the disc silently: that is the defect this file exists "
+            "to remove, and a silent fallback would reinstate it on every fresh clone."
+        )
+    payload = json.loads(FOOTPRINT_PATH.read_text(encoding="utf-8"))
+    block = payload.get("cities", {}).get(city)
+    if block is None:
+        if city in payload.get("unmapped", {}):
+            return None
+        raise SystemExit(
+            f"{city} is in neither the measured nor the unmapped half of {FOOTPRINT_PATH}. "
+            "A city missing from both is a city nobody decided about - re-run "
+            "scripts/measure_aircraft_footprint.py --write."
+        )
+    return {name: rec["km2"] for name, rec in block["boroughs"].items()}
+
+
 def dist_to_polygon(geom, lat, lon):
     """Great-circle km from a point to the nearest vertex of a polygon, or 0.0
     if the point is inside it. Vertex distance overstates slightly on a coarse
@@ -450,13 +495,20 @@ def derive(city):
     pts = corridor(airport)
     scale = scale_for(airport["code"])
     footprint = footprint_for(airport["code"])
+    hits = contour_hits(city)
     rows = []
     for f in gj["features"]:
         lon, lat = centroid(f["geometry"])
+        name = f["properties"]["name"]
         d_air = hav(lat, lon, airport["lat"], airport["lon"])
         d_cor = min(hav(lat, lon, p[0], p[1]) for p in pts)
         base = band_for(d_air, scale)
-        floored = dist_to_polygon(f["geometry"], airport["lat"], airport["lon"]) < footprint
+        if hits is None:
+            # No published contour for this airport, so the disc is the only
+            # estimate there is. Kept explicitly rather than by omission.
+            floored = dist_to_polygon(f["geometry"], airport["lat"], airport["lon"]) < footprint
+        else:
+            floored = hits.get(name, 0.0) > 0.0
         if floored and ORDER.index(base) < ORDER.index(NEAR_FIELD_FLOOR):
             base = NEAR_FIELD_FLOOR
         # The LATERAL width does not scale and the ALONG-TRACK reach does. A
@@ -466,7 +518,7 @@ def derive(city):
         # same total-energy question the radial ladder answers.
         under = d_cor < CORRIDOR_LATERAL_KM and d_air < CORRIDOR_MAX_RANGE_KM * scale
         band = ORDER[min(ORDER.index(base) + 1, len(ORDER) - 1)] if under else base
-        rows.append((d_air, f["properties"]["name"], d_cor, band, base, under, floored))
+        rows.append((d_air, name, d_cor, band, base, under, floored))
     return rows, airport, scale, footprint
 
 
@@ -636,6 +688,7 @@ def main() -> int:
         ap_arg.error("--city is required unless --check or --write is given")
 
     rows, airport, scale, footprint = derive(args.city)
+    hits = contour_hits(args.city) if airport is not None else None
     if airport is None:
         print(f"# {args.city}: NO operating commercial airport. Every borough is 'low'.")
         print("# Doncaster Sheffield is `type=closed` in OurAirports (commercial flights")
@@ -653,7 +706,9 @@ def main() -> int:
     for d_air, name, d_cor, band, base, under, floored in sorted(rows):
         note = f"# {d_air:5.1f} km to {airport['code']} (x{scale:.2f}), {d_cor:5.1f} km off corridor"
         if floored:
-            note += f", inside the {footprint:.2f} km 55 dB footprint (floored)"
+            hit = hits.get(name) if hits is not None else None
+            note += (f", {hit:.2f} km2 inside the 55 dB contour (floored)" if hit
+                     else f", inside the {footprint:.2f} km disc - NO Round 4 contour (floored)")
         if under:
             note += f" (under approach: {base} -> {band})"
         print(f"    '{name}': '{band}',".ljust(42) + note)
