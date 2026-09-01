@@ -162,6 +162,40 @@ Resources:
           ResourcePath: /v1/score/batch
           ThrottlingRateLimit: 10
           ThrottlingBurstLimit: 20
+        # /favourites (audit I17, 2026-09-01). All three routes inherited the
+        # 50 RPS '*/*' ceiling - the same gap /epc had before 2026-07-24 and
+        # /badge before 2026-08-21, on a route with the same no-key posture.
+        #
+        # It cannot be key-gated: the consumer site calls it from the browser
+        # with an X-Device-Token and no API key, so ApiKeyRequired would break
+        # saving on skyscore.co.uk. Throttling is the control, as it is for
+        # /epc, /v1/environment and /badge.
+        #
+        # POST and DELETE are the writes, and POST is the one that matters:
+        # FavouritesTable is PITR-backed, TTL-less and DeletionPolicy: Retain,
+        # so every row is permanent and PAY_PER_REQUEST bills each one. At the
+        # inherited ceiling one unauthenticated source could add 4.32M rows a
+        # day. 2 RPS / 5 burst is far beyond a person tapping save - it is
+        # 172,800 a day - while removing the unbounded case.
+        #
+        # GET is a read and gets more room: the page loads a device's whole
+        # list on open, and a tight limit there would 429 a real user before it
+        # inconvenienced anyone else.
+        #
+        # ONE ENTRY PER ROUTE, appended at the END of this list. See the
+        # /v1/score block above for what a duplicate costs.
+        - HttpMethod: POST
+          ResourcePath: /favourites
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        - HttpMethod: DELETE
+          ResourcePath: /favourites
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        - HttpMethod: GET
+          ResourcePath: /favourites
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
 
   # --- Bedrock Lambdas REMOVED 2026-05-07 ---
   # ChatFunction, MultiAgentFunction, AnalyzeImageFunction,

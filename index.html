@@ -9017,9 +9017,11 @@
           // window resize. Per-pan calls hit this guard and return immediately.
           // visual fix-DEFRA-1.
           if (aircraftRasterLoadedFor === 'london') {
-            // Already fetched and still on the map, so the scale is live even
-            // though this call does no work.
-            aircraftScalePainted = true;
+            // Already REQUESTED - which is not the same as painted, so ask the
+            // element whether its image actually arrived rather than assuming
+            // it did. `data-loaded` is set in the onload below.
+            const doneEl = document.getElementById('defra-aircraft-img');
+            aircraftScalePainted = Boolean(doneEl && doneEl.hasAttribute('data-loaded'));
           }
           if (aircraftRasterLoadedFor !== 'london') {
             const lb = LONDON_AIRCRAFT_BBOX;
@@ -9039,6 +9041,38 @@
             const tl = projection([lb.minLon, lb.maxLat]); // top-left
             const br = projection([lb.maxLon, lb.minLat]); // bottom-right
             if (tl && br) {
+              // AN <image> ELEMENT IS NOT A PAINTED SURFACE (audit F26).
+              //
+              // This used to set `aircraftScalePainted = true` on the line
+              // after assigning the href, so London advertised a five-band
+              // decibel scale the instant the fetch was REQUESTED - and kept
+              // advertising it if the PNG 404'd. That is the same defect the
+              // NYC branch above was fixed for on 2026-08-29, in its sibling,
+              // and the comment that used to sit here already said the raster
+              // had not loaded yet. The flag comes from the OUTCOME now.
+              const imgEl = document.getElementById('defra-aircraft-img');
+              if (imgEl) {
+                imgEl.removeAttribute('data-loaded');
+                imgEl.onload = function () {
+                  // Ground truth about the DOM, the same signal NYC's tiles
+                  // set, and what tests/layer-honesty.mjs reads.
+                  this.setAttribute('data-loaded', '1');
+                  aircraftScalePainted = true;
+                  markLayerCoverage();
+                };
+                imgEl.onerror = function () {
+                  // Take the surface off the map as well as the scale: a
+                  // broken <image> is not a reading, and leaving the href
+                  // would let the gate below count a surface that is not
+                  // there. The city keeps its geometry-derived corridors and
+                  // the legend says "(NO DATA)", which is true.
+                  this.removeAttribute('data-loaded');
+                  this.removeAttribute('href');
+                  this.removeAttribute('xlink:href');
+                  aircraftScalePainted = false;
+                  markLayerCoverage();
+                };
+              }
               d3.select('#defra-aircraft-img')
                 .attr('xlink:href', url)
                 .attr('href', url)
@@ -9046,11 +9080,13 @@
                 .attr('y', tl[1])
                 .attr('width', br[0] - tl[0])
                 .attr('height', br[1] - tl[1]);
+              // Set at REQUEST time, deliberately: this is the fetch-once
+              // guard, not the painted flag, and it is cleared on city switch.
+              // Re-assigning the href on every repaint would restart the fetch.
               aircraftRasterLoadedFor = 'london';
-              aircraftScalePainted = true;
               // The legend is drawn before the raster finishes loading, so it
-              // has to be told again once it has. Without this London shows
-              // "(NO DATA)" over its own contours until the next repaint.
+              // has to be told again once it has - which is what the onload
+              // above now does. This call reflects the not-yet-loaded state.
               markLayerCoverage();
             }
           }

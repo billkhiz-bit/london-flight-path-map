@@ -590,6 +590,84 @@ class TrendsFeatureTests(unittest.TestCase):
         total = round(sum(f['contribution'] for f in comp['attribution']), 2)
         self.assertLess(abs(comp['scoreChange'] - total), 0.2)
 
+    # A SUBJECT THAT ACTUALLY MOVED. The first version of these two tests used
+    # Ealing and PASSED against the pre-fix code, which is how they were caught
+    # being checks that could not fail. Ealing's investor scoreChange is -0.1
+    # and its pre-fix attribution was EMPTY (balanced weights growth at 0.00, so
+    # the factor is skipped as zero-weight): the sum test compared 0 against
+    # -0.1, inside its own 0.2 tolerance, and the weights test looped over an
+    # empty list. Both examined nothing and reported agreement.
+    #
+    # Lewisham moves -1.0 across TWO factors, so the arithmetic has something to
+    # disagree about, and the floor below refuses a vacuous pass outright.
+    ATTRIBUTION_SUBJECT = 'Lewisham'
+
+    def _comparison(self, persona):
+        body, status = app.resolve_query({
+            'borough': self.ATTRIBUTION_SUBJECT, 'compare': 'previous', 'persona': persona,
+        })
+        self.assertEqual(status, 200)
+        return body['comparison']
+
+    def test_attribution_reconciles_under_every_persona(self):
+        """The parts must add up to the whole for the persona the CALLER asked for.
+
+        `test_compare_previous_includes_attribution` has asserted this identity
+        since it was written and could never have caught audit I26/F8, because
+        it exercises the DEFAULT persona - which is balanced, the very value
+        that was hardcoded. A passing test read as evidence the explanation
+        matched the score.
+
+        `scoreChange` came from two calc_score runs under the caller's weights
+        while the explanation was built under `PERSONAS['balanced']`. Growth
+        carries 0.00 for every persona but investor, so an investor's biggest
+        driver was dropped from its own explanation as a zero-weight factor.
+        """
+        checked = 0
+        for persona in sorted(app.PERSONAS):
+            with self.subTest(persona=persona):
+                comp = self._comparison(persona)
+                total = round(sum(f['contribution'] for f in comp['attribution']), 2)
+                self.assertLess(
+                    abs(comp['scoreChange'] - total), 0.2,
+                    f'{persona}: attribution sums to {total} against a '
+                    f"scoreChange of {comp['scoreChange']}")
+                checked += len(comp['attribution'])
+        # NO VACUOUS PASS. An empty attribution sums to zero and agrees with a
+        # zero change, so without this the whole loop can succeed having
+        # explained nothing - which is exactly how the first draft of this test
+        # passed against the defect it was written for.
+        self.assertGreater(
+            checked, 0,
+            f'no persona produced a single attribution factor for '
+            f'{self.ATTRIBUTION_SUBJECT} - this test examined nothing. Pick a '
+            'subject that moved between vintages; do not relax the assertion.')
+
+    def test_attribution_uses_the_requested_personas_weights(self):
+        """Stronger than the sum: the weight each factor was multiplied by.
+
+        Two personas can reconcile to similar totals by coincidence, and a
+        dropped factor reconciles to nothing at all. This asserts the value
+        that was actually wrong.
+        """
+        investor = self._comparison('investor')
+        # Investor is the discriminating case BY CONSTRUCTION: it is the only
+        # persona with a non-zero growth weight, so under the balanced weights
+        # this used to use, growth is skipped entirely.
+        self.assertTrue(
+            any(f['factor'] == 'growth' for f in investor['attribution']),
+            'investor explained a score change without growth, which only '
+            'happens when the explanation is built under another persona - '
+            'growth is 0.00 for every persona but this one')
+        for persona in sorted(app.PERSONAS):
+            with self.subTest(persona=persona):
+                expected = app.PERSONAS[persona]
+                for factor in self._comparison(persona)['attribution']:
+                    self.assertEqual(
+                        factor['weight'], expected[factor['factor']],
+                        f"{persona}: {factor['factor']} explained at weight "
+                        f"{factor['weight']}, but this persona weights it "
+                        f"{expected[factor['factor']]}")
 
 class NormaliseBoroughTests(unittest.TestCase):
     def test_canonical_london(self):

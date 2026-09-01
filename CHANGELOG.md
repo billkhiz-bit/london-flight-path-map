@@ -81,6 +81,43 @@ while the report named two. Identical node counts (204/204) was the tell.
 - **I34** "four components" over five rendered rows, and a ranking header whose
   percentages summed to 82-86%.
 
+### Three more audit findings closed - F26, I17, I26/F8
+
+- **F26 - London's aircraft raster was declared painted from an href**, and the
+  gate read the same attribute, so it could never disagree. Measured against the
+  committed tree with the PNG **failing entirely**: London rendered the
+  five-band decibel scale under the title "DEFRA AIRCRAFT NOISE (dB Lden)" with
+  no "(NO DATA)" - a confident scale over a map with no surface - and did the
+  same when the PNG succeeded, because the flag never depended on the load
+  either way. `#defra-aircraft-img` now has `onload`/`onerror`: the flag comes
+  from the outcome, a failed load takes the href off the map as well as the
+  scale, and the gate counts `data-loaded`, exactly as NYC's tiles already did.
+  Honest in both directions, verified by aborting the request.
+- **I17 - `/favourites` had no per-method throttle**, so all three routes
+  inherited the 50 RPS stage ceiling while POST writes permanently into a
+  PITR-backed, TTL-less, `Retain` table. Now 2 RPS on the writes, 5 on the read.
+  **The guard is the real outcome**: this is the third instance of the shape
+  after /epc and /badge, so `test_route_throttles.py` now asserts that every
+  unauthenticated route is throttled or explicitly listed - and running it found
+  **five more** on the ceiling (/nhs, /sold-prices, /transport, /v1/regions,
+  /v1/changes). Those are listed with reasons rather than throttled blind: three
+  are called by the consumer site on every postcode lookup, and picking a limit
+  too low 429s real visitors. A TTL is NOT added - that deletes user data on a
+  schedule and is the owner's call.
+- **I26/F8 - `?compare=previous` explained every score under `balanced`** while
+  `scoreChange` came from the caller's persona. Growth is 0.00 for every persona
+  but investor, so an investor's biggest driver was dropped from its own
+  explanation as a zero-weight factor, and the parts could not add up to the
+  whole. `weights` is threaded through and is required and positional.
+  **Two tests could not fail before this one could.**
+  `test_compare_previous_includes_attribution` asserted the identity all along
+  and exercises the DEFAULT persona, which is balanced - the hardcoded value.
+  And the replacement's first draft used Ealing, whose investor change is -0.1
+  with an empty pre-fix attribution: the sum test compared 0 against -0.1 inside
+  its own tolerance, and the weights test looped over an empty list. It uses
+  Lewisham now, which moves -1.0 across two factors, and carries a floor that
+  refuses a vacuous pass. Red-proven against the committed code.
+
 ### The first full preflight of this wave was RED, and found three real defects
 
 The wave had never faced a complete gate run. All three below are consequences

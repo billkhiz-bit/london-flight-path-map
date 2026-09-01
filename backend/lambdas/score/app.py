@@ -358,13 +358,27 @@ def previous_dataset(city):
     return merged
 
 
-def build_comparison(current, previous, city, name=None):
+def build_comparison(current, previous, city, weights, name=None):
     """Assemble the ?compare=previous response block from two calc_score
     results computed under identical formula + weights.
 
     `name` is the resolved borough. Passing it is what lets the explanation say
     "Barking and Dagenham went from 1st to 17th" rather than "this area", and
     what enables the growth rank at all.
+
+    `weights` MUST be the weights the two results were scored under (audit
+    I26/F8). Until 2026-09-01 this function passed `PERSONAS['balanced']` to
+    both build_why and build_attribution while `scoreChange` came from the
+    caller's own persona - so an `investor` request got an explanation of a
+    different number than the one printed beside it. build_attribution's
+    docstring calls the identity `delta_score == sum(w_i * delta_component_i)`
+    the thing that makes it an explanation rather than a narrative; under a
+    mismatched persona the parts cannot add up to the whole. Growth is 0.00 for
+    every persona but investor, so an investor's biggest driver was being
+    dropped from its own explanation as a zero-weight factor.
+
+    It is required and positional on purpose. A default would let the next
+    caller silently reinstate `balanced`, which is the defect itself.
     """
     currency = 'avgPriceUsd' if CITIES[city]['currency'] == 'USD' else 'avgPriceGbp'
     cur_price = current['context'].get(currency)
@@ -383,7 +397,7 @@ def build_comparison(current, previous, city, name=None):
     cur_ranks = growth_ranks(CITIES[city]['boroughs'])
     prev_ranks = growth_ranks(prev_set)
     why = build_why(
-        current, previous, city, PERSONAS['balanced'], name, cur_bm, prev_bm, cur_ranks, prev_ranks
+        current, previous, city, weights, name, cur_bm, prev_bm, cur_ranks, prev_ranks
     )
     return {
         'currentVintage': SNAPSHOT_VINTAGE,
@@ -395,7 +409,7 @@ def build_comparison(current, previous, city, name=None):
         'priceChangePct': price_change,
         'previousTrendPct': previous['context'].get('priceTrendPct'),
         'note': COMPARISON_NOTE,
-        'attribution': build_attribution(current, previous, PERSONAS['balanced']),
+        'attribution': build_attribution(current, previous, weights),
         'explanation': why['summary'],
         'why': why,
     }
@@ -6937,7 +6951,7 @@ def resolve_query(query):
                 postcode_clean=pc_clean,
                 boroughs_override=prev_set,
             )
-            comparison = build_comparison(score_data, prev_data, city, borough)
+            comparison = build_comparison(score_data, prev_data, city, weights, borough)
 
     body = {
         **score_data,

@@ -151,19 +151,22 @@ and I could not reach the tabbed *analysis* view from the console
 (`setMobileView` is not a global). **Do not fix this from the description - reach
 the state first**, the way a user does.
 
-### 1.5 Still open, nothing started
+### 1.5 Still open
 
-**I19 and I25 were on this list and are now CLOSED - see §1.6a.**
+**I19, I25, I17, I26/F8 and F26 were all on this list and are now CLOSED** -
+see §1.6a and the 2026-09-01 entries in `CHANGELOG.md`. What is left is the
+design cluster and one undiagnosed divergence.
 
-- **I17** `POST /favourites` is unauthenticated, **unthrottled** (no per-method
-  entry, so 50 RPS) and writes permanently into a PITR-backed, TTL-less,
-  `Retain` table. 4.32M writes/day at the ceiling. `template.yaml`. **This is
-  the largest thing left on the list.**
-- **I26 / F8** `?compare=previous` explains every score under the **balanced**
-  persona, so an `investor` request gets an explanation contradicting its own
-  `scoreChange`.
-- **F26** London's aircraft raster is declared painted from an href attribute
-  and the gate reads the same attribute.
+**Two things a future session should pick up from the I17 work rather than
+re-derive.** The throttle guard (`backend/tests/test_route_throttles.py`) found
+**five more unauthenticated routes on the 50 RPS stage ceiling** - `/nhs`,
+`/sold-prices`, `/transport`, `/v1/regions`, `/v1/changes` - and they are LISTED
+rather than throttled, because three of them are called by the consumer site on
+every postcode lookup and a limit set too low 429s real visitors. **Pick those
+numbers from measured traffic, not by eye.** And `FavouritesTable` still has no
+TTL: adding one deletes user data on a schedule, so it is Bill's decision, not
+a fix to slip into a throttling change.
+
 - **D9** four visual systems across nine page types (narrowed slightly by the
   token work above, not closed). **D10** country tabs are 14px tall against the
   WCAG 2.5.8 24x24 minimum. **D11** dark mode exists on the area pages only and

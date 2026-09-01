@@ -375,7 +375,12 @@ for (const city of cities) {
       const img = document.getElementById('defra-aircraft-img');
       const tiles = document.getElementById('us-aircraft-tiles');
       const hasRaster = Boolean(
-        (img && (img.getAttribute('href') || img.getAttribute('xlink:href'))) ||
+        // `data-loaded`, NOT href (audit F26). The London branch ASSIGNS the
+        // href, so reading it here took the expectation from the code under
+        // test - this check could never have caught a London PNG that 404'd,
+        // which is precisely the failure it exists for. The attribute is set
+        // in the image's own onload, exactly as NYC's tiles do below.
+        (img && img.hasAttribute('data-loaded')) ||
           // image[data-loaded], not image. A tile element whose href has not
           // come back yet paints NOTHING, so counting elements reports a
           // surface that is not on the map - which is the very thing this check
