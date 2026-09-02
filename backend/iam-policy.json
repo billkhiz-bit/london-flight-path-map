@@ -193,6 +193,25 @@
                 "logs:DeleteLogGroup"
             ],
             "Resource": "arn:aws:logs:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:log-group:/aws/lambda/london-flight-map-*"
+        },
+        {
+            "Sid": "Observability",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:DescribeAlarmsForMetric",
+                "cloudwatch:GetMetricData",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:DeleteAlarms",
+                "lambda:ListFunctions",
+                "logs:StartQuery",
+                "logs:GetQueryResults",
+                "logs:StopQuery",
+                "logs:DescribeQueries"
+            ],
+            "Resource": "*"
         }
     ]
 }

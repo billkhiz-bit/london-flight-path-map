@@ -451,23 +451,51 @@ other two.
 - ~~No DLQ on async Lambdas (audit item I6).~~ **Closed 2026-07-24 as moot** —
   all 7 Lambdas are APIGW-synchronous, so there is no async invocation for a
   DLQ to catch.
-- **No log read for the deploy user** (added 2026-07-26). This is the most
-  consequential gap in this list: it makes `/aws-debug` inoperable and turns
-  routine incident triage into inference. See Section 6.
+- ~~**No log read for the deploy user** (added 2026-07-26).~~ **NOT TRUE as of
+  2026-09-02** — re-measured against a real log group and proven by reading
+  production output. `/aws-debug` works. The old entry had been recording a
+  stale log-group NAME as a permissions wall; see Section 6.
+- **No metrics or alarms for the deploy user** (measured 2026-09-02). This is
+  what remains of the gap above, and it is the real one:
+  `cloudwatch:DescribeAlarms`, `cloudwatch:ListMetrics` / `GetMetricData` and
+  `lambda:ListFunctions` are denied, so **error rate and latency cannot be
+  observed from the CLI at all** and no alarm can be created or even
+  enumerated. Logs answer "why did this one request fail"; metrics answer "is
+  something failing right now", and only the first is available. Apply the
+  `Observability` statement in `backend/iam-policy.json` (console; the deploy
+  user cannot grant itself IAM).
 
 ---
 
 ## 6. Common Debugging Recipes
 
-> **⚠ READ FIRST — `flightmap-dev` cannot read logs.** Verified 2026-07-26:
-> `logs:FilterLogEvents`, `logs:GetLogEvents`, `logs:DescribeLogStreams`,
-> `cloudtrail:LookupEvents`, `iam:GetRolePolicy`, `lambda:ListFunctions` and
-> `cloudformation:DescribeStackResource` are **all denied** for the deploy
-> user. Only `logs:DescribeLogGroups` (names only) works. **The `/aws-debug`
-> skill therefore cannot function on this account**, and steps 1-3 below used
-> to be the recipe but are not runnable as written. Use the AWS **console**
-> (which authenticates as the root/admin identity) or grant the deploy user
-> log read — see `AUDIT_REPORT.md`, open item.
+> **✅ CORRECTED 2026-09-02 — `flightmap-dev` CAN read logs, and could not on
+> 2026-07-26.** Re-measured against a REAL log group and proven by reading
+> production output: `logs:FilterLogEvents`, `logs:GetLogEvents` and
+> `logs:DescribeLogStreams` are **ALLOWED**. **`/aws-debug` works**; steps 1-3
+> below are runnable as written.
+>
+> **Why the old claim survived, and the trap to avoid repeating.** The probe
+> that "verified" the denial used the log-group name written down in
+> `CLAUDE.md` — `.../ScoreFunction-LuxoNSLxJMva`. **A Lambda's log-group suffix
+> changes whenever CloudFormation REPLACES the function rather than updating
+> it**, and that name no longer exists; the live one is
+> `.../ScoreFunction-AQH1Sxwg3LaF`. Querying a non-existent group returns
+> `ResourceNotFoundException`, and a probe that treats any non-zero exit as
+> "denied" records it as a permissions wall. **Resolve the name from
+> `describe-log-groups` first; never hardcode a log-group suffix.**
+>
+> **What IS still denied** (re-measured the same day, distinguishing
+> `AccessDenied` from every other error): `cloudwatch:DescribeAlarms`,
+> `cloudwatch:ListMetrics` / `GetMetricData`, and `lambda:ListFunctions`. So
+> logs are readable but **metrics and alarms are not** — the `Observability`
+> statement in `backend/iam-policy.json` covers exactly these and needs
+> applying in the console.
+>
+> The general lesson this repo already records for the log-retention work
+> applies here too: **re-measure a recorded blocker before working around it.**
+> This one cost the product a documented "we cannot support customers" gap that
+> had stopped being true.
 >
 > Git Bash also mangles the leading slash in `/aws/lambda/...` arguments;
 > prefix any such command with `export MSYS_NO_PATHCONV=1` or it fails with a
