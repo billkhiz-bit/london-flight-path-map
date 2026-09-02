@@ -61,7 +61,28 @@ jobs:
       #
       # The scripts under test import them lazily inside functions, so nothing
       # else in the suite needs them and the module-level imports stay stdlib.
-      - run: pip install pytest pytest-mock boto3 numpy pillow
+      # pyproj added 2026-09-02, and PyYAML made explicit at the same time.
+      # This job had been RED on EVERY run since at least 31 August - twelve
+      # consecutive failures nobody looked at - on
+      # `ModuleNotFoundError: No module named 'pyproj'`. Six tests reach it
+      # through scripts/build_borough_bands.py `points_within()` and
+      # scripts/build_city_stations.py `bng_to_wgs84()`, both of which import it
+      # lazily inside the function, so the failure is invisible at collection
+      # time and the suite passes locally where pyproj is installed.
+      #
+      # THIS IS THE SECOND TIME. The comment above records exactly the same
+      # discovery for numpy + pillow on 31 August, and pyproj was missed in the
+      # same pass - so the fix that was supposed to give CI a usable
+      # correctness signal produced twelve more red runs instead. A
+      # hand-written dependency list in a YAML file is the same shape as every
+      # other frozen list this repo has paid for (copy-web.mjs's REQUIRED_DATA,
+      # the deploy-target table, the free-tier mirrors): it is correct on the
+      # day it is written and nothing makes it stay correct.
+      #
+      # PyYAML is not a new need - backend/tests imports it and passes today
+      # only because the ubuntu runner image happens to ship it. Naming it means
+      # a runner image change cannot quietly take the backend suite down.
+      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml
       # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend
