@@ -14,7 +14,7 @@ Last verification, after the second deploy: `check_deploy_drift.sh` reports
 
 ---
 
-## 0. PICK UP HERE - 2026-09-02. The 1 Sep wave is LIVE; a second wave is in the tree.
+## 0. PICK UP HERE - 2026-09-02. BOTH waves are live, committed and pushed.
 
 **The four corrected numbers are now serving users.** Verified from the ORIGIN,
 not from the deploy's exit code:
@@ -130,7 +130,11 @@ Running the CURRENT Lambda at that postcode gives
 measured `env 5.2` and a score of **7.1**. Both holders carry identical env
 inputs for Hackney (air 2.56, road 65.1, flood 1.17), so **the 1 Sep wave moved
 env by 0.1 and carried the total clear of the boundary**. The divergence looks
-incidentally closed. `site == /v1/score` should confirm it on the next run.
+incidentally closed - and it is: `site == /v1/score` now reports **N1 7SX OK at
+7/10** and 6 of 6 probes clean, over **three consecutive runs**. (One run inside
+preflight exited non-zero; `advise()` pipes advisory output to /dev/null and
+judges on exit code alone, so a transient there leaves nothing to diagnose with.
+Three clean direct runs are the measurement.)
 
 **The finding worth keeping is that this was never a bad value.** The published
 components summed to **7.045 - five thousandths under the 7.05 rounding
