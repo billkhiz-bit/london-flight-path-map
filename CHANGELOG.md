@@ -1,9 +1,78 @@
 # Changelog
 
+## 2026-09-02 - the 1 Sep wave goes live, and the deploy finds two more defects
+
+**DEPLOYED AND VERIFIED FROM THE ORIGIN.** Backend first (SAM: Score, Epc,
+Transport, Chat all `UPDATE_COMPLETE`), then the web half, then every
+invalidation waited to `Completed`. `area/nottingham/rushcliffe/` now publishes
+**3.4 / `Quiet skies 5.0` / `Moderate`** where it published 5.0 / 10.0 / `Low`,
+and `area pages match the live API` went from **FAIL, 48 stale** to **99 of 99**.
+
+### `area-deploy` never invalidated CloudFront - the deploy looked done
+
+It was the **only** deploy target with no `create-invalidation`, and no other
+target's paths covered `/area/*`. All 100 pages uploaded, every command reported
+success, and the origin went on serving the old figures - so the first
+verification still showed Rushcliffe at `Quiet skies 10.0/10`, the exact number
+C1 exists to correct.
+
+`--cache-control "public,max-age=3600"` is what made it silent: the stale window
+closes by itself within the hour, so the same deploy looks broken if checked
+immediately and fine if checked later. That reads as a flaky check rather than a
+missing step. **Same shape as the 2026-08-26 incident** - uploads succeed, cache
+is not cleared. `area-deploy` was also **absent from CLAUDE.md's deploy table
+entirely**; both fixed.
+
+### The drift gate could not see 117 of the surfaces it seemed to cover
+
+`check_deploy_drift.sh` reported **"5 of 16 surfaces differ"** on a morning when
+**all 100 area pages and `data/borough-extra.json` also differed** - roughly 106,
+not 5. Its `SURFACES` list held 16 PAGES and none of the 17 files
+`make data-deploy` uploads. `tests/area-page-freshness.mjs` did not cover the gap
+either: it reads the SOURCE off disk, so a rebuilt-but-undeployed set passes it.
+
+Now **133 surfaces**, both new lists DERIVED (data from the Makefile target,
+area by walking `area/`) so neither can freeze the way `copy-web.mjs` did (F41).
+Per-pass floors of 17 and 100, **all proven red** - wrong origin, data floor at
+zero, area floor at zero.
+
+### D8's mobile half, measured before it was fixed
+
+At 390x844 with a borough selected, `#sidebar-title` was **0x0** and the panel
+carried **no h1 and no h2 at all** - six h3s and nothing over them. There is **no
+tabbed "analysis" view** to reach: the result renders as a card inside
+`data-mview='search'`, which is what defeated the previous attempt. Fixed with
+flex `order` - the first `order:` declarations in the file - because simply
+un-hiding `.sidebar-header` places it in the map chrome band, the collision this
+file has shipped three times. `#tab-analysis`'s `padding-top` was deliberately
+left alone: it is load-bearing for the absolutely-positioned `.result-close`.
+Re-measured: phone shows `<h2> HOUNSLOW`, desktop unchanged, `responsive.mjs`
+**71/71 clean**, `panel-contrast` 88 phone nodes and **0 below AA**.
+
+### D11: no page declared `color-scheme` at all
+
+The 99 area pages carry a `prefers-color-scheme` block and repaint for dark
+mode, but without `color-scheme` the browser still drew its own furniture in
+light. Added to both templates in `build_area_pages.py`. Whether the 9 main
+pages should have dark mode is D9 and remains open.
+
+### N1 7SX diagnosed - both obvious causes refuted
+
+A tier mismatch was refuted (`ldenDb: 35` is the pre-2026-08-03 **nodata fill**;
+`_RASTER_MIN_PLAUSIBLE_DB = 40.0` rejects it, so the API uses geometry too), and
+so were differing coordinates (NSPL and postcodes.io agree to 6 dp). The
+components summed to **7.045**, five thousandths under a rounding boundary; the
+1 Sep wave moved Hackney's `env` 5.2 -> 5.1 and carried it clear. **The finding
+is the sensitivity, not the value**: the two sides compute postcode quiet through
+separate geometry implementations, and `SiteApiGeometryParityTests` compares the
+waypoints, not the arithmetic.
+
+---
+
 ## 2026-09-01 (later) - the four wrong numbers, and 46 contrast defects
 
-**IN SOURCE ONLY. Not committed, not deployed.** `HANDOVER.md` §1 carries the
-four steps that must run next, starting with rebuilding the 99 area pages.
+**DEPLOYED 2026-09-02** - see the entry above. (This section said "IN SOURCE
+ONLY. Not committed, not deployed" until then.)
 
 ### Four published-number corrections, each reproducing a hand-computed figure
 

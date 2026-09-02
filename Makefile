@@ -365,6 +365,21 @@ area-deploy:
 		s3://$(S3_BUCKET)/area/ \
 		--content-type "text/html" --cache-control "public,max-age=3600" \
 		--delete --region $(AWS_REGION)
+	# THE INVALIDATION WAS MISSING UNTIL 2026-09-02, and this was the only
+	# deploy target without one. Found by deploying: all 100 pages uploaded
+	# to S3 and CloudFront went on serving the old copies, so the verified
+	# origin still published Rushcliffe at `Quiet skies 10.0/10, Low` - the
+	# exact number the C1 fix existed to correct - while every upload
+	# reported success.
+	#
+	# `max-age=3600` above is what makes it silent rather than obvious: the
+	# stale window closes by itself within the hour, so a deploy checked
+	# immediately looks broken and the same deploy checked later looks fine,
+	# which reads as a flaky check rather than a missing step. Same shape as
+	# the 2026-08-26 incident recorded in CLAUDE.md - uploads succeed, cache
+	# is not cleared, and the deploy looks done.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/area/*'
 
 meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp robots.txt \

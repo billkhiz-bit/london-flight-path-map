@@ -30,8 +30,15 @@ that [a recorded finding can be the inverse of the code](./AUDIT_REPORT_2026-08-
 
 ### STATUS, 2026-09-01: both criticals closed, plus 8 importants and 46 contrast defects
 
-**Source only. Nothing is committed and nothing is deployed** - see
-`HANDOVER.md` §1, which is the operative document for picking this up.
+**DEPLOYED AND VERIFIED 2026-09-02.** C1 and C2 are now serving users:
+`area/nottingham/rushcliffe/` publishes **3.4 / `Quiet skies 5.0` / `Moderate`**
+where it published 5.0 / 10.0 / `Low`, and all 99 area pages match the live API
+(they were 48 stale). See `HANDOVER.md` §0, the operative document.
+
+**The deploy itself uncovered two more findings**, both now closed: `area-deploy`
+was the only target that never invalidated CloudFront, and
+`check_deploy_drift.sh` could not see 117 of the surfaces it implicitly claimed
+to cover. **D8 and D11's fixable half also closed on 2026-09-02.**
 
 | Closed 2026-09-01 | |
 |---|---|
@@ -45,8 +52,10 @@ that [a recorded finding can be the inverse of the code](./AUDIT_REPORT_2026-08-
 
 | **I19, I25** | closed 2026-09-01, after the wave above - see §4b |
 
-Still open and untouched: **D9, D11**, and the
-N1 7SX divergence in §5b.
+Still open: **D9** (four visual systems across nine page types), and the
+main-page dark-mode question - **D11's `color-scheme` half is CLOSED**, no page
+declared it at all. **The N1 7SX divergence in §5b is DIAGNOSED**, and both
+obvious causes were refuted by measurement - see `HANDOVER.md` §0.5.
 
 **Two findings in this report are INVERTED and are corrected in §4a**: the §3b
 claim that the borough panel "has never been scanned by anything", and D8's

@@ -3,41 +3,133 @@
 **Written 2026-08-12; §1 rewritten 2026-09-01.** Read this first if you are
 picking the repo up on a laptop, or starting a fresh session on this desktop.
 
-**As of 2026-09-01 there is a large UNCOMMITTED, UNDEPLOYED wave in the
-working tree.** §1 is the whole of it.
+**The 1 September wave is DEPLOYED AND VERIFIED as of 2026-09-02.** §1 records
+what shipped and what the deploy itself uncovered. There is a second, smaller
+wave in the tree from 2 September - see §0.
 
 ---
 
-## 1. PICK UP HERE - 2026-09-01, a big uncommitted wave. READ THIS WHOLE SECTION FIRST.
+## 0. PICK UP HERE - 2026-09-02. The 1 Sep wave is LIVE; a second wave is in the tree.
 
-**NOTHING IS COMMITTED AND NOTHING IS DEPLOYED.** The working tree holds
-13 modified files and 3 new ones. Every published number below changed in the
-SOURCE only; the live site and the live API still serve the old figures. Do not
-start new work until the four steps in §1.1 are done, because two of them are
-blocking gates that are currently RED by construction.
+**The four corrected numbers are now serving users.** Verified from the ORIGIN,
+not from the deploy's exit code:
 
-### 1.1 Steps 1-3 are DONE. **ONLY THE DEPLOY IS LEFT.**
+| | Before | Live now |
+|---|---|---|
+| `area/nottingham/rushcliffe/` | 5.0, `Quiet skies 10.0/10`, band `Low` | **3.4**, `Quiet skies 5.0/10`, band **`Moderate`** |
+| `area pages match the live API` | FAIL, 48 stale | **OK, 99 of 99** |
+| 8 spot-checked surfaces | 5+ drifting | **all match source (sha256)** |
+| `/v1/regions` | - | `methodologyVersion 4.0`, 13 cities |
 
-1. ~~Rebuild the 99 static area pages.~~ **DONE** - `python
-   scripts/build_area_pages.py --write` wrote 99 pages + index + sitemap
-   against the corrected data.
-2. ~~Run the full gate.~~ **DONE** - `sh scripts/preflight.sh`, exit code read
-   directly and never piped. **RESULT: green except two - `area pages match the live API`, which is red until step 4 by construction, and `UK cities get UK panel content`, a transient live-TfL timeout that passes standalone (verified immediately after)**.
-3. ~~Commit.~~ **DONE**, staged file by file, no `git add -A`.
-4. **DEPLOY BOTH HALVES, BACKEND FIRST. THIS IS THE ONLY STEP LEFT, AND IT HAS
-   NOT BEEN DONE** (the 1 Sep session was explicitly asked not to deploy). SAM
-   for the Lambda, then `make web-deploy-all` + a CloudFront invalidation
-   (`export MSYS_NO_PATHCONV=1` FIRST - see the warning block in CLAUDE.md).
-   Backend-then-web is the order the aircraft-raster runbook already uses: it
-   flips `/v1/score` while the site still shows the old numbers, which is the
-   safe direction. Deploying the site first shows users figures the API cannot
-   reproduce.
+Backend went first (SAM: Score, Epc, Transport, Chat all `UPDATE_COMPLETE`),
+then the web half, then **all 8 invalidations waited to `Completed`**.
 
-**Two stages are red until step 4 runs, and that is CORRECT.** `area pages
-match the live API` and `site == /v1/score` compare the tree against the
-DEPLOYED tier, which still serves the old numbers. They are the normal state
-mid-wave, not a defect - and they are the stages that will confirm the deploy
-worked.
+### 0.1 THE DEPLOY UNCOVERED A REAL DEFECT - `area-deploy` never invalidated
+
+`make area-deploy` was the **only** deploy target with no
+`cloudfront create-invalidation`, and no other target's paths covered
+`/area/*`. So all 100 pages uploaded to S3, every command reported success, and
+**CloudFront went on serving the old copies** - the verified origin still
+published Rushcliffe at `Quiet skies 10.0/10` after a "successful" deploy.
+
+`--cache-control "public,max-age=3600"` is what made it silent rather than
+obvious: the stale window closes by itself within the hour, so the same deploy
+looks broken if you check immediately and fine if you check later, which reads
+as a flaky check rather than a missing step. **Same shape as the 2026-08-26
+incident** already recorded in CLAUDE.md - uploads succeed, cache is not
+cleared, the deploy looks done. Fixed in the Makefile.
+
+### 0.2 The gate that should have caught it could not see 117 of its surfaces
+
+`scripts/check_deploy_drift.sh` reported **"5 of 16 surfaces differ"** while the
+true figure was ~106: its `SURFACES` list held 16 PAGES and **zero** of the 17
+files `make data-deploy` uploads, and none of the 100 area pages. Measured that
+morning: **all 100 area pages differed from the origin** and the gate said
+nothing, because neither `borough-extra.json` nor `area/` is a "page".
+
+`tests/area-page-freshness.mjs` does not cover it either - it reads the SOURCE
+off disk and compares to the live API, so a rebuilt-but-never-deployed set
+passes it.
+
+Now compares **133 surfaces** (16 pages + 17 data + 100 area). Both new lists
+are DERIVED - the data list from the Makefile target that deploys it, the area
+list by walking `area/` - so neither can freeze the way
+`mobile/scripts/copy-web.mjs` did (F41). **Proven red three ways**: a wrong
+origin (0/17 and 0/100), the data floor at 0, and the area floor at 0 with data
+satisfied.
+
+### 0.3 Also in this second wave
+
+- **D8 mobile half CLOSED.** Measured first, at 390x844 with a borough
+  selected: `#sidebar-title` was **0x0** and the panel carried **no h1 and no
+  h2 at all** - six h3s and nothing over them. There is **no tabbed "analysis"
+  view** to reach; the result renders as a card inside `data-mview='search'`,
+  which is what defeated the previous attempt. Fixed with flex `order` (the
+  first `order:` declarations in the file), because simply un-hiding
+  `.sidebar-header` puts it in the map chrome band. Re-measured: phone now
+  shows `<h2> HOUNSLOW`, desktop unchanged, `responsive.mjs` **71/71 clean**,
+  `panel-contrast` 88 phone nodes and **0 below AA**.
+- **D11's fixable half CLOSED.** **No page declared `color-scheme` at all.**
+  The 99 area pages repaint for dark mode but the browser still drew its own
+  furniture light. Added to both templates in `build_area_pages.py`. Whether
+  the 9 MAIN pages should get dark mode at all is D9 and remains Bill's call.
+
+### 0.4 Still open
+
+- **D9**, four visual systems across nine page types, and the main-page dark
+  mode question above.
+- **Throttle limits for five unauthenticated routes** on the 50 RPS ceiling
+  (`/nhs`, `/sold-prices`, `/transport`, `/v1/regions`, `/v1/changes`).
+  **Blocked, not forgotten**: the numbers must come from measured traffic and
+  `flightmap-dev` is denied the observability permissions. Three are called on
+  every consumer postcode lookup, so a limit picked by eye 429s real visitors.
+- **`FavouritesTable` TTL** - deletes user data on a schedule, so Bill's call.
+- **The flood gate takes twice what it claims.** Its own comment promises
+  "under seven minutes"; measured 2026-09-02 it took **15m46s** with the EA
+  service healthy throughout (0.29-0.39s per request). The arithmetic points at
+  something worth looking at rather than a stale comment: the top-up loop
+  breaks BEFORE sleeping when `compared >= MIN_COMPARED`, so with 4 samples per
+  class it should rarely pause, yet `11 cities x 2 classes x 2 rounds x 20s`
+  accounts for **14.7 of the 15.7 minutes**. That means top-ups are firing for
+  most classes - two or more of every four samples coming back unusable - so
+  the gate is passing while sitting on its own `MIN_COMPARED` floor of 3.
+  **Measure what those samples return before touching `PAUSE_S` or `WORKERS`;
+  the timing is the symptom, not the finding.**
+
+### 0.5 N1 7SX - DIAGNOSED 2026-09-02. Both obvious causes were wrong.
+
+The old §1.5 said "the obvious explanation is still wrong - identify the
+differing RAW value before writing any fix." That was right twice over.
+
+| Hypothesis | How it was tested | Result |
+|---|---|---|
+| Tier mismatch: site on geometry, API on the raster | `dynamodb get-item` on the noise table | **REFUTED.** The row exists with `ldenDb: 35`, but **35.0 is the pre-2026-08-03 NODATA FILL** - `lden_from_row`'s own docstring says 89.5% of London carries it - and `_RASTER_MIN_PLAUSIBLE_DB = 40.0` rejects it. The API falls to geometry too; `quietResolution: postcode` confirms it |
+| Different coordinates: NSPL vs postcodes.io | both queried directly | **REFUTED.** Identical to 6 dp - 51.533144, -0.094648, Hackney |
+
+Running the CURRENT Lambda at that postcode gives
+`score 7.0 | quiet 7.0 afford 7.3 growth 5.5 live 7.8 env 5.1`. The audit
+measured `env 5.2` and a score of **7.1**. Both holders carry identical env
+inputs for Hackney (air 2.56, road 65.1, flood 1.17), so **the 1 Sep wave moved
+env by 0.1 and carried the total clear of the boundary**. The divergence looks
+incidentally closed. `site == /v1/score` should confirm it on the next run.
+
+**The finding worth keeping is that this was never a bad value.** The published
+components summed to **7.045 - five thousandths under the 7.05 rounding
+boundary** - so the two sides only had to disagree in the invisible digits to
+publish different headline scores. Site and API compute postcode `quiet` through
+SEPARATE geometry implementations, and `SiteApiGeometryParityTests` compares the
+FLIGHT_PATHS waypoints, i.e. the DATA, not the arithmetic. **Any postcode
+landing that close to a boundary can diverge again for an unrelated reason.**
+The real choice - accept a cosmetic +/-0.1, or have one side defer to the other
+- changes published numbers and is Bill's.
+
+---
+
+## 1. THE 1 SEPTEMBER WAVE - what it changed. DEPLOYED 2026-09-02 (see §0).
+
+Kept in full because the evidence below is what makes each correction
+checkable. Its §1.1 (the four-step ship checklist) is GONE - all four steps
+are done and §0 records the outcome.
 
 ### 1.2 What changed - four published-number corrections, all with evidence
 
@@ -151,7 +243,14 @@ and I could not reach the tabbed *analysis* view from the console
 (`setMobileView` is not a global). **Do not fix this from the description - reach
 the state first**, the way a user does.
 
-### 1.5 Still open
+### 1.5 Still open - SUPERSEDED, read §0.4 instead
+
+> Left in place for the two paragraphs of I17 detail below, which are
+> still accurate. The list itself has moved on: D8 and D11's fixable
+> half closed on 2026-09-02, and the N1 7SX divergence is diagnosed
+> (see §0.5).
+
+#### (superseded list)
 
 **I19, I25, I17, I26/F8 and F26 were all on this list and are now CLOSED** -
 see §1.6a and the 2026-09-01 entries in `CHANGELOG.md`. What is left is the

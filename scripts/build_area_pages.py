@@ -238,7 +238,14 @@ PAGE = """<!doctype html>
 <meta property="og:type" content="article" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
-  :root {{ --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
+  /* `color-scheme` declared 2026-09-02 (audit D11). These pages carry a
+     prefers-color-scheme block below, so they REPAINT for dark mode - but
+     without this the browser still renders its own furniture (scrollbars,
+     and the canvas painted before our CSS applies) in light, so a dark-mode
+     reader gets a white flash and a light scrollbar against a #141414 page.
+     Declaring it is what makes the dark block honest. */
+  :root {{ color-scheme: light dark;
+    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
   * {{ box-sizing:border-box; }}
   body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
   .wrap {{ max-width:720px; margin:0 auto; padding:24px 20px 64px; }}
@@ -360,7 +367,9 @@ INDEX = """<!doctype html>
 <link rel="canonical" href="{site}/area/" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
-  :root {{ --dark:#141414; --mid:#636363; --line:#e7e5e4; --orange:#c2410c; }}
+  /* See the note on the borough template: same reason, same fix. */
+  :root {{ color-scheme: light dark;
+    --dark:#141414; --mid:#636363; --line:#e7e5e4; --orange:#c2410c; }}
   body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); line-height:1.6; }}
   .wrap {{ max-width:720px; margin:0 auto; padding:24px 20px 64px; }}
   a {{ color:var(--orange); }}

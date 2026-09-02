@@ -3253,6 +3253,66 @@
         .app[data-mview='search'] .first-hint {
           display: none;
         }
+
+        /* THE RESULT CARD NAMES ITS SUBJECT ON A PHONE TOO (2026-09-02, D8).
+           MEASURED before writing this, at 390x844 with a borough selected:
+           `#sidebar-title` was 0x0 under the blanket hide above, and the panel
+           carried NO h1 and NO h2 at all - six h3s and nothing over them. So
+           the heading outline started at level 3 and the one element naming
+           the borough was invisible, while `document.title` (fixed on 1 Sep)
+           named it correctly. Desktop had both all along.
+
+           There is NO tabbed "analysis" view to switch to - the result renders
+           as a card INSIDE data-mview='search' (see `#tab-analysis` below), and
+           `data-mview` stays 'search' for the life of the result. That is what
+           defeated the previous attempt to reach this state.
+
+           WHY `order` AND NOT JUST UNHIDING IT. `.sidebar-header` precedes
+           `.search-box` in DOM order, so simply revealing it puts the heading
+           at the top of the transparent sidebar overlay - straight into the map
+           chrome band (title y36-59, country tabs y70-94, city chips y96-140).
+           That is the collision this file has already shipped three times:
+           `.first-hint` over the title, `.site-footer` through the layer
+           toggles, and the legend growing up into the nav.
+
+           NEGATIVE orders on three elements, leaving every other child at the
+           default 0 so their DOM order is untouched. `.install-prompt` is
+           hidden above and `.tab-bar` is `display:none` under `.is-tabbed`, so
+           `#tab-analysis` is the next thing painted - the card. */
+        .app[data-mview='search'] > .sidebar > .sheet-handle {
+          order: -3;
+        }
+        .app[data-mview='search'] > .sidebar > .search-box {
+          order: -2;
+        }
+        /* Revealed ONLY when a result exists. `.empty-state` inside
+           `#tab-analysis` is this file's own existing marker for "no result"
+           (already used by the `.result-close` rules below), so the condition
+           cannot drift from what the panel actually renders. `#sidebar-title`
+           stays the single holder, written only by `setPanelSubject()`. */
+        .app[data-mview='search'] > .sidebar:not(:has(#tab-analysis .empty-state)) > .sidebar-header {
+          display: block;
+          order: -1;
+          margin: 8px 8px 0;
+          padding: 10px 12px 8px;
+          background: var(--cream, #ebe8e1);
+          border: 1px solid var(--dark);
+          border-bottom: none;
+          border-radius: 12px 12px 0 0;
+        }
+        /* ...and the card joins onto it, so the two read as one object rather
+           than a floating label above a floating card. */
+        .app[data-mview='search'] > .sidebar:not(:has(#tab-analysis .empty-state)) > #tab-analysis {
+          margin-top: 0;
+          border-top: none;
+          border-radius: 0 0 12px 12px;
+          /* `padding-top` is deliberately NOT touched. The card's 36px is
+             load-bearing for `.result-close`, which is absolutely positioned
+             at `top: 36px` inside this box (audit D2, 2026-08-31) - reducing
+             the padding slides the content up under the close button instead
+             of clearing it. */
+        }
+
         /* Floating search card pinned to the top of the screen */
         .app[data-mview='search'] .search-box {
           position: sticky;
