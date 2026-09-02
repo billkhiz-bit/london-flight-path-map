@@ -195,7 +195,7 @@
             "Resource": "arn:aws:logs:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:log-group:/aws/lambda/london-flight-map-*"
         },
         {
-            "Sid": "Observability",
+            "Sid": "ObservabilityReadOnlyNoResourceScope",
             "Effect": "Allow",
             "Action": [
                 "cloudwatch:DescribeAlarms",
@@ -203,15 +203,30 @@
                 "cloudwatch:GetMetricData",
                 "cloudwatch:GetMetricStatistics",
                 "cloudwatch:ListMetrics",
-                "cloudwatch:PutMetricAlarm",
-                "cloudwatch:DeleteAlarms",
                 "lambda:ListFunctions",
-                "logs:StartQuery",
                 "logs:GetQueryResults",
                 "logs:StopQuery",
                 "logs:DescribeQueries"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "ObservabilityInsightsQueriesOwnGroupsOnly",
+            "Effect": "Allow",
+            "Action": [
+                "logs:StartQuery"
+            ],
+            "Resource": "arn:aws:logs:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:log-group:/aws/lambda/london-flight-map-*"
+        },
+        {
+            "Sid": "ObservabilityManageProjectAlarmsOnly",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:DeleteAlarms",
+                "cloudwatch:SetAlarmState"
+            ],
+            "Resource": "arn:aws:cloudwatch:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:alarm:london-flight-map-*"
         }
     ]
 }

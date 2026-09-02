@@ -443,6 +443,44 @@ other two.
   console if investigating an abuse case.
 - Billing alarm: see `AWS_BILLING_ALARM_SETUP.md`.
 
+**Alarms, created 2026-09-02 (CLI, `flightmap-dev`):**
+
+| Alarm | Metric | Fires when |
+|---|---|---|
+| `london-flight-map-lambda-errors` | `AWS/Lambda` `Errors`, Sum, no dimension | any error across all 8 functions, >0 in 5 min |
+| `london-flight-map-lambda-duration` | `AWS/Lambda` `Duration`, Maximum | >25 s, i.e. approaching the **29 s API Gateway integration cap**, before requests start 504-ing |
+| `london-flight-map-api-5xx` | `AWS/ApiGateway` `5XXError`, Sum, `ApiName=london-flight-map` | any 5xx, >0 in 5 min |
+
+All three notify **`arn:aws:sns:eu-west-2:072674217857:sky-score-alerts`** (email
+to Bill) on BOTH `ALARM` and `OK`, and all three use
+`--treat-missing-data notBreaching` so a quiet API does not page anyone.
+
+**The `london-flight-map-` prefix is load-bearing.** The `FlightMapObservability`
+policy scopes `PutMetricAlarm` / `DeleteAlarms` / `SetAlarmState` to
+`alarm:london-flight-map-*`, deliberately EXCLUDING the `sky-score-*` billing
+alarms - so a leaked deploy key cannot delete the controls that notice a runaway
+spend. **A new alarm named anything else cannot be managed by the deploy user.**
+
+**THE PATH IS TESTED, NOT ASSUMED.** Forced to `ALARM` with `set-alarm-state` and
+back to `OK`; both emails delivered. Re-test after any change to the topic or its
+subscription:
+
+```
+export MSYS_NO_PATHCONV=1
+AWS_PROFILE=flightmap aws cloudwatch set-alarm-state --region eu-west-2   --alarm-name london-flight-map-lambda-errors --state-value ALARM   --state-reason "path test, not a real fault"
+# ...then set it back to OK
+```
+
+**Why testing it was not optional.** The subscription sat at
+`PendingConfirmation` for its first hour, and EVERY surface said the setup
+worked: the topic existed, all three alarms pointed at it, and `Publish message`
+returned a MessageId and a green success banner. SNS accepts publishes to a topic
+with zero confirmed subscribers, because that is a legal state. The only field
+that disagreed was the subscription ARN, which literally reads
+`PendingConfirmation` instead of an ARN, on a tab nobody visits. **Alerting is
+the one system where no-error and working are furthest apart** - confirm the
+subscription and force a transition, or the alarms are decorative.
+
 **Gaps (deferred, see `AUDIT_REPORT.md`):**
 - No centralised dashboard.
 - No latency / error-rate SLO tracking.
@@ -455,15 +493,14 @@ other two.
   2026-09-02** — re-measured against a real log group and proven by reading
   production output. `/aws-debug` works. The old entry had been recording a
   stale log-group NAME as a permissions wall; see Section 6.
-- **No metrics or alarms for the deploy user** (measured 2026-09-02). This is
-  what remains of the gap above, and it is the real one:
-  `cloudwatch:DescribeAlarms`, `cloudwatch:ListMetrics` / `GetMetricData` and
-  `lambda:ListFunctions` are denied, so **error rate and latency cannot be
-  observed from the CLI at all** and no alarm can be created or even
-  enumerated. Logs answer "why did this one request fail"; metrics answer "is
-  something failing right now", and only the first is available. Apply the
-  `Observability` statement in `backend/iam-policy.json` (console; the deploy
-  user cannot grant itself IAM).
+- ~~**No metrics or alarms for the deploy user**~~ **CLOSED 2026-09-02.** The
+  `FlightMapObservability` managed policy is created and attached to
+  `flightmap-dev`; CloudWatch metrics, alarms and `lambda:ListFunctions` all
+  work, and the three alarms above exist. Kept as a SEPARATE managed policy
+  rather than merged into `FlightMapDeployPolicy`: AWS unions permissions across
+  attached policies, so a mistake here cannot break deploys, and it detaches
+  cleanly. **`apigateway:GET` is still denied** - read API dimension values from
+  `cloudwatch list-metrics` instead, which is the authoritative source anyway.
 
 ---
 
