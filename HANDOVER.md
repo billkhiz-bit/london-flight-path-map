@@ -3,9 +3,14 @@
 **Written 2026-08-12; §1 rewritten 2026-09-01.** Read this first if you are
 picking the repo up on a laptop, or starting a fresh session on this desktop.
 
-**The 1 September wave is DEPLOYED AND VERIFIED as of 2026-09-02.** §1 records
-what shipped and what the deploy itself uncovered. There is a second, smaller
-wave in the tree from 2 September - see §0.
+**Everything is DEPLOYED AND VERIFIED as of 2026-09-02.** Both the 1 September
+wave and the 2 September wave that followed it are live and committed
+(`00737af`, pushed). Nothing is outstanding. §0 is the current state; §1 records
+what the 1 Sep wave changed and why.
+
+Last verification, after the second deploy: `check_deploy_drift.sh` reports
+**16 pages, 17 data files and 100 area pages all matching the live origin**, and
+`site == /v1/score` is **6 of 6 clean over three consecutive runs**.
 
 ---
 
@@ -38,6 +43,20 @@ looks broken if you check immediately and fine if you check later, which reads
 as a flaky check rather than a missing step. **Same shape as the 2026-08-26
 incident** already recorded in CLAUDE.md - uploads succeed, cache is not
 cleared, the deploy looks done. Fixed in the Makefile.
+
+### 0.1a The stale-generated-script trap, hit immediately afterwards
+
+Worth knowing because it will happen again. `make` is not on PATH in Git Bash
+here, so the web deploy is run by having GnuWin32 make PRINT its recipes
+(`make -n web-deploy-all`) and executing them in bash - GnuWin32 make runs
+recipes through `cmd.exe`, which cannot parse the `VAR=x cmd` inline
+assignments these recipes use.
+
+That captured script is a SNAPSHOT. The second deploy of the day reused the one
+captured before the Makefile was fixed, so it shipped **without the `/area/*`
+invalidation** - reproducing, within the hour, the exact defect §0.1 had just
+closed. Regenerate the script after any Makefile change, or the fix exists in
+git and not in what actually runs.
 
 ### 0.2 The gate that should have caught it could not see 117 of its surfaces
 
