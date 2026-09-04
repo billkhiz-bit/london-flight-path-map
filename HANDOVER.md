@@ -3,10 +3,10 @@
 **Written 2026-08-12; §1 rewritten 2026-09-01.** Read this first if you are
 picking the repo up on a laptop, or starting a fresh session on this desktop.
 
-**BLOCKED ON ONE CONSOLE ACTION as of 2026-09-03.** A substantial wave of work
-is finished, verified and **UNCOMMITTED**, because a blocking gate cannot run:
-`FlightMapDeployPolicy` no longer grants the deploy user anything outside the
-Observability statements. Read §0 before anything else.
+**BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04.** The wave below is finished,
+verified and **COMMITTED AND PUSHED** as `2b08ba9`. What is still blocked is the
+DEPLOY: `FlightMapDeployPolicy` no longer grants the deploy user anything
+outside the Observability statements. Read §0 before anything else.
 
 ---
 
@@ -47,16 +47,27 @@ itself denied - the live policy cannot be read from here at all. **There is no
 admin profile on this machine**; `default` holds an invalid token, so this is
 Bill-in-the-console work.
 
-### 0.1 What is uncommitted, and why it is safe to commit once AWS is back
+### 0.1 The wave is COMMITTED AND PUSHED. Only the deploy is blocked.
 
-12 files modified, 3 new scripts, 99 rebuilt area pages. Every gate that can
-run offline is green: pytest 372+152 and 266, ESLint, html-validate, ruff,
-responsive 71/71, WCAG 109 pages, `area pages match the live API` 99/99,
-`openapi == score engine`, and the repaced flood gate. The ONLY red is the
-log-retention gate above.
+**Committed 2026-09-04 as `2b08ba9`**, pushed to origin/master: 17 source and
+doc files, 3 new gate scripts, 99 rebuilt area pages.
 
-**Nothing here is deployed.** After committing, the deploy is the usual
-`make web-deploy-all` plus `make area-deploy` (which DOES invalidate now).
+The full preflight ran: **38 of 39 blocking stages PASS**, including every
+network stage - `score sanity (live API)`, `flood == EA service (georef)`,
+Playwright e2e, `area pages match the live API` 99/99, `responsive, live`.
+The single FAIL is `log retention == privacy.html`, and its own output says
+why: `AccessDeniedException ... logs:DescribeLogGroups`. **The gate reports
+UNVERIFIED, not a disagreement with the page.**
+
+**Committing was a deliberate, authorised exception**, recorded in the commit
+message. Committing source changes nothing about what `/privacy` serves, so
+the exposure that gate guards is identical either way - while holding the
+wave back kept it on ONE MACHINE ONLY, which is the failure the multi-device
+rule exists to prevent, and which has already cost this repo 21 stalled
+commits once.
+
+**Nothing here is deployed.** Once the policy is restored, the deploy is the
+usual `make web-deploy-all` plus `make area-deploy` (which DOES invalidate now).
 
 ### 0.2 What the day produced
 
