@@ -292,9 +292,15 @@ def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
     Lden — a road pass would silently delete every aircraft value it touched.
     UpdateItem with SET merges, leaving other attributes intact. Verified
     against the live table before this change, because `dynamodb:UpdateItem`
-    appearing in backend/iam-policy.json proves nothing: `BatchWriteItem` is in
-    that same file and is denied on the live policy, which is exactly how the
-    NSPL load ended up on the slow path.
+    appearing in backend/iam-policy.json proves nothing on its own - that file
+    is a record of INTENT, and on 2026-09-03 it described a policy that had
+    been replaced wholesale.
+
+    (The example this used to give - BatchWriteItem being denied while present
+    in the file - stopped being true on 2026-09-04, when the policy was
+    restored and the grant went live. The POINT stands: verify against the
+    live account with scripts/check_aws_permissions.py, never against the
+    file.)
 
     SURVIVES A DROPPED CONNECTION (2026-08-09). Every write used to be
     unguarded, so `list(ex.map(...))` re-raised the first worker exception and

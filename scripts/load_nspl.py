@@ -166,12 +166,17 @@ EXPECTED RUNTIME, COST AND RESUMABILITY:
   replaces it — this docstring has already been wrong by 10x once, in the
   optimistic direction, for exactly this reason.
 
-  That speedup needs dynamodb:BatchWriteItem, which is present in
-  backend/iam-policy.json but must actually be applied to the flightmap-dev
-  user before it takes effect. Until it is, the loader detects the denial on
-  its first chunk and completes on the old per-item path at the old ~129
-  rows/s, so it is safe to run either side of the IAM change. A run that took
-  ~6 hours is the signal the grant has not landed.
+  That speedup needs dynamodb:BatchWriteItem. GRANTED as of 2026-09-04,
+  verified by probing with an empty request - a validation error rather than
+  a write, which returns ValidationException and therefore proves the call
+  reached the service - after FlightMapDeployPolicy was restored. So a roll
+  should now take the fast path.
+
+  The runtime detection below is KEPT rather than deleted. It costs one
+  chunk, and this permission has been recorded wrong in BOTH directions
+  inside four days, so the loader should still degrade rather than die if it
+  is ever revoked. A run that takes ~6 hours is now the signal the grant has
+  gone away again.
 
   A brand-new PAY_PER_REQUEST table also ramps its capacity rather than
   starting at full throughput, so the first few minutes are slower still.

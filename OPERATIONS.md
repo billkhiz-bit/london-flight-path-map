@@ -499,8 +499,9 @@ subscription and force a transition, or the alarms are decorative.
   work, and the three alarms above exist. Kept as a SEPARATE managed policy
   rather than merged into `FlightMapDeployPolicy`: AWS unions permissions across
   attached policies, so a mistake here cannot break deploys, and it detaches
-  cleanly. **`apigateway:GET` is still denied** - read API dimension values from
-  `cloudwatch list-metrics` instead, which is the authoritative source anyway.
+  cleanly. **`apigateway:GET` was denied until 2026-09-04 and is now granted.**
+  `cloudwatch list-metrics` remains the authoritative source for API dimension
+  values regardless.
 
 ---
 
@@ -522,12 +523,21 @@ subscription and force a transition, or the alarms are decorative.
 > "denied" records it as a permissions wall. **Resolve the name from
 > `describe-log-groups` first; never hardcode a log-group suffix.**
 >
-> **What IS still denied** (re-measured the same day, distinguishing
-> `AccessDenied` from every other error): `cloudwatch:DescribeAlarms`,
-> `cloudwatch:ListMetrics` / `GetMetricData`, and `lambda:ListFunctions`. So
-> logs are readable but **metrics and alarms are not** — the `Observability`
-> statement in `backend/iam-policy.json` covers exactly these and needs
-> applying in the console.
+> **NOTHING PROBED IS DENIED, as of 2026-09-04.** This paragraph listed
+> `cloudwatch:DescribeAlarms`, `ListMetrics`/`GetMetricData` and
+> `lambda:ListFunctions` as denied; all three are granted now, and so is
+> `apigateway:GET`.
+>
+> **The history between matters more than the list.** On 3 September all four
+> LOG verbs were denied as well, because `FlightMapDeployPolicy` had been
+> REPLACED by its Observability statements rather than extended by them - so
+> no deploy of any kind could run either. It was restored from
+> `backend/iam-policy.json` on 4 September, and
+> `scripts/check_aws_permissions.py` now reports **18 granted, 0 denied**.
+>
+> **Run that probe rather than reading this paragraph.** A permission is a
+> timestamp, not a property, and this one has been recorded wrong in BOTH
+> directions inside four days.
 >
 > The general lesson this repo already records for the log-retention work
 > applies here too: **re-measure a recorded blocker before working around it.**

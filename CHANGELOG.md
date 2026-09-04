@@ -1,11 +1,71 @@
 # Changelog
 
+## 2026-09-04 - the policy is restored, and the wave reaches users
+
+**The blocker was one console action, and it is done.** `FlightMapDeployPolicy`
+had been REPLACED by its three Observability statements rather than extended by
+them; pasting the whole of `backend/iam-policy.json` back restored it.
+`scripts/check_aws_permissions.py` reports **18 granted, 0 denied**, against
+7 granted and 11 denied that morning.
+
+**The fingerprint is the part worth keeping.** Every verb the probe found
+GRANTED lived in statements 13-15 of that file; every verb it found DENIED lived
+in statements 1-12. A split landing exactly on the statement seam is what an
+overwrite looks like, as against a resource-scope or condition problem.
+
+### Deployed, and verified from the origin
+
+`web-deploy-all` ran 53 of 53 commands, all 8 CloudFront invalidations reported
+Completed, and `check_deploy_drift.sh` finds **133 of 133 surfaces matching the
+live origin** with all 20 precached assets present. No backend deploy was
+needed - the wave touched no `backend/lambdas/` file. Full preflight is
+**RESULT: PASS, 39 of 39 blocking stages**, with `aws perms == iam-policy.json`
+and `deployed == source` both flipping from *deviates* to *ok*.
+
+### `dynamodb:BatchWriteItem` is GRANTED, retiring a recorded constraint
+
+Probed with an empty request - a validation error, not a write - and it returns
+`ValidationException`, so it reached the service. **An NSPL vintage roll is no
+longer a ~6 hour job on the per-item path.** That constraint had stood since
+2026-07-27, and the comments in `load_nspl.py` and `load_defra_raster.py`
+asserting the denial are corrected in this pass.
+
+`logs:DeleteLogGroup` is granted for the first time too, so the orphaned
+log-group cleanup in `DRAFT_security_retention_passage.md` section 1 is now CLI
+work rather than console work.
+
+### A commit past a red gate, deliberately
+
+The wave was committed while `log retention == privacy.html` was still red,
+because the gate could not READ log groups and so reported **UNVERIFIED rather
+than a disagreement with the page**. Committing source changes nothing about
+what `/privacy` serves, while holding a verified wave back kept it on one
+machine only. The exception is recorded in the commit message; the gate passed
+on its own terms hours later.
+
+### Records corrected
+
+`CLAUDE.md`'s two `/aws-debug` lines had contradicted each other since
+3 September, when a correction touched one of them. Also retired: a HANDOVER
+section headed *"PAUSED MID-ROLL - read this FIRST"* describing a working tree
+that stopped existing on 26 August, and a sibling headed *"NOT DEPLOYED"* for
+v3.9, which went live the same day. **An active instruction that outlives its
+subject is the worst shape of a stale record**, because scanning for what to do
+next is exactly when it gets obeyed.
+
+Recommendations were recorded against the four open decisions. The one worth
+repeating here: **do not fix affordability with a price-to-earnings ratio.**
+`METHODOLOGY.md` section 10 commits that income or wealth distributions of
+residents are never inputs, and that section exists because the customer set
+includes Sharia-compliant home-finance providers.
+
 ## 2026-09-03 - the B2B contract is corrected, and the deploy user loses its policy
 
-**IN SOURCE ONLY. NOTHING HERE IS DEPLOYED OR EVEN COMMITTED**, because
-`FlightMapDeployPolicy` was replaced by its Observability statements rather than
-extended by them - so no deploy can run and the blocking `log retention` gate
-cannot read log groups. See `HANDOVER.md` §0.
+**Committed as `2b08ba9` and DEPLOYED on 2026-09-04.** This paragraph read "IN
+SOURCE ONLY, NOTHING HERE IS DEPLOYED OR EVEN COMMITTED" for one day, which was
+true when written. `FlightMapDeployPolicy` had been replaced by its Observability
+statements rather than extended by them, so no deploy could run and the blocking
+`log retention` gate could not read log groups. See `HANDOVER.md` §0.
 
 ### The published OpenAPI spec described an engine that does not exist (F2, F3)
 

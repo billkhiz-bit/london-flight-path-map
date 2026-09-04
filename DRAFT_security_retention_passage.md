@@ -20,8 +20,16 @@ against the tree; verify each section against `SECURITY.md` before acting on it.
 
 ## 1. Do the console work first
 
-Region **eu-west-2**, account **072674217857**, signed in as root/admin. `flightmap-dev` cannot
-do any of this — it lacks `logs:PutRetentionPolicy` and `logs:DeleteLogGroup`.
+Region **eu-west-2**, account **072674217857**.
+
+> **UPDATED 2026-09-04: this is no longer console-only.** `flightmap-dev` now holds BOTH
+> `logs:PutRetentionPolicy` and `logs:DeleteLogGroup`, granted by statement 12 of the
+> restored `FlightMapDeployPolicy`, so the deletions below are runnable from the CLI.
+> Confirm with `python scripts/check_aws_permissions.py` before relying on it - this
+> permission has been recorded wrong in both directions inside four days.
+
+Historically `flightmap-dev` could not do any of this, which is why the steps are
+written for a root/admin console session.
 
 ### Delete these 7 log groups
 
