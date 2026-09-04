@@ -681,7 +681,9 @@ worth starting before you need it.
 
 ---
 
-## 2a-quater. METHODOLOGY v3.9 SHIPPED TO SOURCE, NOT DEPLOYED, 2026-08-26
+## 2a-quater. SUPERSEDED - v3.9 was DEPLOYED and verified live on 2026-08-26
+
+_(was: METHODOLOGY v3.9 SHIPPED TO SOURCE, NOT DEPLOYED, 2026-08-26)_
 
 **The June roll (2a-ter below) is DONE - deployed, verified, committed. That
 section is closed; do not re-run it.** What sits in the working tree now is
@@ -766,7 +768,15 @@ So the v3.9 deploy runbook is the roll's, plus a rebuild:
 - **Rank guard is returned, not enforced.** `context.environmentSingleInput` is
   published; no ranking surface consumes it yet.
 
-## 2a-ter. PAUSED MID-ROLL, 2026-08-25 - read this FIRST
+## 2a-ter. SUPERSEDED - historical record only, do NOT re-raise
+
+**The June vintage roll described below was COMPLETED, deployed and verified
+on 2026-08-26.** Its "what is in the tree (uncommitted)" table describes a
+working tree that stopped existing that day, and this heading told every
+reader to "read this FIRST" for the ten days after the work landed. Kept for
+the runbook detail; **act on nothing in it.**
+
+_(was: PAUSED MID-ROLL, 2026-08-25 - read this FIRST)_
 
 **The working tree carries a finished-but-undeployed vintage roll and fix set.
 Live is UNTOUCHED and internally consistent on the May vintage.** Bill logged

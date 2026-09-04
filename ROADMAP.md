@@ -2,12 +2,15 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-03 (**EVERYTHING IS BLOCKED ON ONE AWS CONSOLE
+**Last reviewed:** 2026-09-04 (**THE DEPLOY IS BLOCKED ON ONE AWS CONSOLE
 ACTION.** `FlightMapDeployPolicy` was REPLACED by the Observability statements
 rather than extended, so the deploy user can no longer reach S3, CloudFormation,
 Lambda, API Gateway, DynamoDB or CloudWatch Logs - **no deploy of any kind can
-run**, and the blocking `log retention` gate reds, which gates every commit. A
-full day of verified work sits uncommitted behind it. Read `HANDOVER.md` §0,
+run**. The blocking `log retention` gate also reds, but it reports UNVERIFIED
+rather than a disagreement with the page - it cannot READ log groups - so the
+day's verified work was **COMMITTED AND PUSHED on 2026-09-04 (`2b08ba9`)**
+with the exception recorded in the commit message. **Only the DEPLOY is still
+blocked.** Read `HANDOVER.md` §0,
 which carries the paste-ready policy and the verification order.)
 
 **Previously reviewed:** 2026-09-01, later the same day (the four published-number
