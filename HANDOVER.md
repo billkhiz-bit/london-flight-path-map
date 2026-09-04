@@ -10,13 +10,20 @@ outside the Observability statements. Read §0 before anything else.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-03. AWS IS THE ONLY BLOCKER.
+## 0. PICK UP HERE - 2026-09-04. AWS RESOLVED, WAVE DEPLOYED. DECISIONS REMAIN.
 
-### 0.0 The one thing to do first
+### 0.0 DONE 2026-09-04 - the policy was restored
 
-**`FlightMapDeployPolicy` was REPLACED by the Observability statements rather
-than extended by them.** Measured, not inferred: every action inside those
-statements is granted and every action outside them is denied.
+**RESOLVED.** The whole of `backend/iam-policy.json` was pasted into
+`FlightMapDeployPolicy`, and `scripts/check_aws_permissions.py` now reports
+**18 granted, 0 denied**. The diagnosis below is kept because the
+FINGERPRINT is worth recognising again: a perfect split along the statement
+seam is what a console edit that OVERWRITES looks like, as against one that
+appends.
+
+**`FlightMapDeployPolicy` had been REPLACED by the Observability statements
+rather than extended by them.** Measured, not inferred: every action inside
+those statements was granted and every action outside them was denied.
 
 | Granted | Denied |
 |---|---|
@@ -47,7 +54,7 @@ itself denied - the live policy cannot be read from here at all. **There is no
 admin profile on this machine**; `default` holds an invalid token, so this is
 Bill-in-the-console work.
 
-### 0.1 The wave is COMMITTED AND PUSHED. Only the deploy is blocked.
+### 0.1 The wave is COMMITTED, PUSHED AND DEPLOYED.
 
 **Committed 2026-09-04 as `2b08ba9`**, pushed to origin/master: 17 source and
 doc files, 3 new gate scripts, 99 rebuilt area pages.
@@ -66,8 +73,20 @@ wave back kept it on ONE MACHINE ONLY, which is the failure the multi-device
 rule exists to prevent, and which has already cost this repo 21 stalled
 commits once.
 
-**Nothing here is deployed.** Once the policy is restored, the deploy is the
-usual `make web-deploy-all` plus `make area-deploy` (which DOES invalidate now).
+**DEPLOYED 2026-09-04.** `web-deploy-all` ran all 53 commands - it CHAINS
+`area-deploy`, so that is not a separate step - all 8 CloudFront
+invalidations reported Completed, and `sh scripts/check_deploy_drift.sh`
+reports **133 of 133 surfaces matching the live origin** with all 20
+precached assets present. Verified from the ORIGIN, never from the deploy's
+exit code. No backend deploy was needed: the wave touched no
+`backend/lambdas/` file.
+
+**`make` is still not on PATH in Git Bash here**, so the run went through a
+runner that derives the recipes from the Makefile rather than a hand-copied
+list. One trap worth keeping if that is ever rebuilt: Python's
+`subprocess(shell=True)` on Windows is **cmd.exe**, which cannot parse the
+POSIX `VAR=value command` prefix every recipe here uses - it answers
+`'AWS_PROFILE' is not recognized` and dies on line 1. It must be `sh -c`.
 
 ### 0.2 What the day produced
 
