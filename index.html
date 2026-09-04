@@ -13059,8 +13059,28 @@
           if (dr > 0 && dp > 0) priceDominance = num / Math.sqrt(dr * dp);
         }
         // 0.6 is the line between "price is one factor" and "price IS the
-        // ordering". Measured: London -0.23, NYC -0.06, every generated city
-        // 0.67 to 0.89 - there is nothing in between to be arbitrary about.
+        // ordering".
+        //
+        // RE-MEASURED 2026-09-03, and the original justification no longer
+        // holds. It read: "London -0.23, NYC -0.06, every generated city 0.67
+        // to 0.89 - there is nothing in between to be arbitrary about." The
+        // nine generated cities are still 0.65-0.89 and still disclose, but
+        // **London is now +0.55**, having been -0.23 on 2026-08-12. It sits
+        // 0.05 below this threshold, squarely inside the gap that was said to
+        // be empty.
+        //
+        // The cause is the `environment` component, added at v3.9 and
+        // recomposed at v4.0: prime central London scores badly on NO2, so
+        // Mayfair, Belgravia and Marylebone fell to the bottom of the ranking
+        // and the rank-to-price relationship inverted. Measured top: Cheam
+        // GBP 470k at 9.1; measured bottom: Mayfair GBP 2.5M at 4.6.
+        //
+        // Nothing is over-claimed today - the threshold is evaluated at render
+        // time, so London simply has not crossed it and says nothing. But the
+        // NUMBER IS NOW ARBITRARY in a way it was not when chosen, and a
+        // further scoring change of this size flips the disclosure on London's
+        // 128 neighbourhoods. Re-measure before adjusting it, and do not
+        // reason from the old figures.
         const priceLed = priceDominance !== null && priceDominance >= 0.6;
 
         const areaLabel = rankingView === 'neighbourhood' ? 'Neighbourhood' : 'Borough';

@@ -2,10 +2,16 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-01, later the same day (**THE FOUR PUBLISHED-NUMBER
-CORRECTIONS ARE DONE IN SOURCE AND ARE UNCOMMITTED AND UNDEPLOYED.** Read
-`HANDOVER.md` §1 before anything else - it carries the four steps that must
-happen next, in order, starting with rebuilding the 99 area pages.)
+**Last reviewed:** 2026-09-03 (**EVERYTHING IS BLOCKED ON ONE AWS CONSOLE
+ACTION.** `FlightMapDeployPolicy` was REPLACED by the Observability statements
+rather than extended, so the deploy user can no longer reach S3, CloudFormation,
+Lambda, API Gateway, DynamoDB or CloudWatch Logs - **no deploy of any kind can
+run**, and the blocking `log retention` gate reds, which gates every commit. A
+full day of verified work sits uncommitted behind it. Read `HANDOVER.md` §0,
+which carries the paste-ready policy and the verification order.)
+
+**Previously reviewed:** 2026-09-01, later the same day (the four published-number
+corrections - all now deployed and verified, see `HANDOVER.md` §0z.)
 
 **All four of the items this file listed as "STILL OPEN AND NEEDING A DEPLOY
 WINDOW" are now fixed in source, except the last:**
@@ -581,7 +587,7 @@ and insurance all proceed as Sky Score / Cubitt33 Ltd.
 which **Sky Ltd** holds registered in **classes 9, 16, 28, 35, 36, 38, 41, 42
 and 45**. Classes 9 and 42 are ours. Same shape as **SkyDrive → OneDrive** and
 **Skyscape → UKCloud**, both forced rebrands. Secondary reason independent of
-law: the name describes aircraft noise while the product scores four components.
+law: the name describes aircraft noise while the product scores five components.
 
 **Work this decision GATES — check this list before starting anything that puts
 the name somewhere new (added 2026-08-07).** The rebrand was decided on 5 August
@@ -743,6 +749,33 @@ for the domain than none.
 ---
 
 ## Open decisions
+
+### Raised 2026-09-03 - four that change PUBLISHED NUMBERS
+
+1. **Affordability scaling.** Min-max WITHIN each city, so every city's
+   cheapest borough scores 10.0 and its priciest 0.0 whatever the money.
+   **Barking and Dagenham publishes 10.0 at GBP 371,030 while Stockton-on-Tees
+   publishes 0.0 at GBP 170,923** - 2.2x cheaper, reading as least affordable.
+   The ten points cover GBP 40k of spread in Merseyside and GBP 879k in London.
+   Now disclosed on the API, the site and all 99 area pages. The open question
+   is whether to CHANGE it: a national anchor, wider cohorts for the 1.2-1.3x
+   cities, or leave it relative and rely on the disclosure. Note the codebase
+   already accepts the argument once - Leicester's cohort was widened because
+   "min-max over a narrow cohort manufactures spread it has not measured".
+2. **Published weights do not reproduce the published score** where a component
+   is absent: the engine renormalises and publishes un-renormalised weights, so
+   `sum(components * weights)` yields **3.9 against 4.5 for Brooklyn** and 5.4
+   against 6.3 for Cardiff. Documented in the OpenAPI spec and pinned by a gate.
+   Fixing it (renormalised weights, or a separate `weightsApplied`) changes a
+   response field integrators may already read.
+3. **The 0.60 price-led threshold.** Chosen because "nothing sat between -0.23
+   and 0.67". London moved **-0.23 -> +0.55** when `environment` shipped and now
+   sits 0.05 below the line, inside that gap. Nothing is over-claimed - the
+   threshold is measured at render time - but the constant is now arbitrary.
+4. **Flood-gate caching.** ~15 minutes on a BLOCKING stage, irreducible at 88
+   requests against a host sustaining one per 10s. Caching on mosaic sha256 with
+   an expiry would fix it; a cache is also how a gate quietly stops checking.
+
 
 | Decision | Default | Resolve when |
 |---|---|---|

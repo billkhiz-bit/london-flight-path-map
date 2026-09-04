@@ -3,18 +3,109 @@
 **Written 2026-08-12; §1 rewritten 2026-09-01.** Read this first if you are
 picking the repo up on a laptop, or starting a fresh session on this desktop.
 
-**Everything is DEPLOYED AND VERIFIED as of 2026-09-02.** Both the 1 September
-wave and the 2 September wave that followed it are live and committed
-(`00737af`, pushed). Nothing is outstanding. §0 is the current state; §1 records
-what the 1 Sep wave changed and why.
-
-Last verification, after the second deploy: `check_deploy_drift.sh` reports
-**16 pages, 17 data files and 100 area pages all matching the live origin**, and
-`site == /v1/score` is **6 of 6 clean over three consecutive runs**.
+**BLOCKED ON ONE CONSOLE ACTION as of 2026-09-03.** A substantial wave of work
+is finished, verified and **UNCOMMITTED**, because a blocking gate cannot run:
+`FlightMapDeployPolicy` no longer grants the deploy user anything outside the
+Observability statements. Read §0 before anything else.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-02. BOTH waves are live, committed and pushed.
+## 0. PICK UP HERE - 2026-09-03. AWS IS THE ONLY BLOCKER.
+
+### 0.0 The one thing to do first
+
+**`FlightMapDeployPolicy` was REPLACED by the Observability statements rather
+than extended by them.** Measured, not inferred: every action inside those
+statements is granted and every action outside them is denied.
+
+| Granted | Denied |
+|---|---|
+| `cloudwatch:*` read, `lambda:ListFunctions`, `logs:StartQuery`/`DescribeQueries` | `s3:*`, `cloudformation:*`, `lambda:GetFunction`, `apigateway:GET`, `dynamodb:*`, all four `logs` read verbs |
+
+So **no deploy of any kind can run** - not `make web-deploy-all` (needs
+`s3:PutObject`), not SAM (needs `cloudformation:*`, `iam:PassRole`), not a
+CloudFront invalidation - and `log retention == privacy.html` reds because it
+cannot read log groups, which gates **every commit in the repo**.
+
+**Fix:** IAM -> Users -> `flightmap-dev` -> `FlightMapDeployPolicy` -> Edit ->
+JSON, and paste the WHOLE of `backend/iam-policy.json` with
+`REPLACE_WITH_YOUR_AWS_ACCOUNT_ID` -> `072674217857`. It is 4,940 non-whitespace
+characters against a 6,144 limit. The three Observability statements are already
+in that file, so nothing currently working is lost.
+
+**Then verify, in this order:**
+
+```
+python scripts/check_aws_permissions.py     # expect 18 granted, 0 denied
+sh scripts/check_log_retention.sh           # the blocking gate
+sh scripts/preflight.sh                     # ~25 min, then commit
+```
+
+`scripts/check_aws_permissions.py` is NEW and is what found this. It is a
+capability PROBE, not a policy diff, because `iam:ListAttachedUserPolicies` is
+itself denied - the live policy cannot be read from here at all. **There is no
+admin profile on this machine**; `default` holds an invalid token, so this is
+Bill-in-the-console work.
+
+### 0.1 What is uncommitted, and why it is safe to commit once AWS is back
+
+12 files modified, 3 new scripts, 99 rebuilt area pages. Every gate that can
+run offline is green: pytest 372+152 and 266, ESLint, html-validate, ruff,
+responsive 71/71, WCAG 109 pages, `area pages match the live API` 99/99,
+`openapi == score engine`, and the repaced flood gate. The ONLY red is the
+log-retention gate above.
+
+**Nothing here is deployed.** After committing, the deploy is the usual
+`make web-deploy-all` plus `make area-deploy` (which DOES invalidate now).
+
+### 0.2 What the day produced
+
+- **The estimator's accuracy is published** to B2B buyers - MAE **1.879** over
+  all 35,352 London postcodes DEFRA measured, with median 1.5, p90 4.2 and a
+  signed bias of **-1.74 meaning it reads LOUDER than DEFRA**. Backed by
+  `scripts/check_quiet_estimate_error.py`, which reproduces every figure.
+  **Do not quote it as a global accuracy figure** - it describes postcodes near
+  airports, the only population where a comparison exists.
+- **Audit F2 and F3 CLOSED.** The published OpenAPI spec contained the string
+  `env` **zero times** while every UK response outside Cardiff and NYC carries
+  the component, and declared `enum: [london, nyc]` in **four** places against
+  thirteen served cities. Now gated by `check_openapi_matches_engine.py`
+  (blocking), which walks the document for enums rather than checking known
+  paths - and caught a fourth city enum the hand fix had missed.
+- **The flood gate's 403 diagnosed.** Not latency: a token bucket returned as
+  403, sustaining ~1 request per 10s. `WORKERS` 2->1, `PAUSE_S` 0.8->10.
+  London went from 3/3 and 5/5 with four samples lost, to **4/4 and 4/4 with
+  none lost, and faster**.
+- **The 99 area pages** gained the Environment row (90 carry it; the 9 without
+  are exactly Cardiff and NYC) and a cohort-scaling caveat.
+- **`a11y-source.mjs`** had the same fixed-1200ms settle that `panel-contrast`
+  was fixed for on 1 Sep. Now a bounded poll, proven red.
+
+### 0.3 FOUR DECISIONS WAITING ON BILL - all change published numbers
+
+1. **Affordability scaling.** Min-max WITHIN each city, so every city's
+   cheapest borough scores 10.0 and its priciest 0.0. **Barking and Dagenham
+   publishes 10.0 at GBP 371,030 while Stockton-on-Tees publishes 0.0 at
+   GBP 170,923** - 2.2x cheaper, reading as least affordable. The ten points
+   cover GBP 40k in Merseyside and GBP 879k in London. Now DISCLOSED on every
+   surface; whether to change the scaling (national anchor? wider cohorts for
+   the 1.2x cities?) is open.
+2. **Weights do not reproduce the score** where a component is absent. The
+   engine renormalises and publishes un-renormalised weights, so
+   `sum(components * weights)` gives **3.9 against a published 4.5 for
+   Brooklyn** and 5.4 against 6.3 for Cardiff. Documented in the spec and
+   pinned by the gate; the fix (renormalised weights? a `weightsApplied`
+   field?) is a response-contract change.
+3. **The 0.60 price-led threshold.** Its justification has expired - London
+   moved **-0.23 -> +0.55** when `environment` shipped and now sits 0.05 below
+   the line, inside the gap the comment called empty.
+4. **Flood-gate caching.** ~15 min on a blocking stage, irreducible at 88
+   requests. Caching on mosaic sha256 with an expiry would fix it, but a cache
+   is also how a gate stops checking.
+
+---
+
+## 0z. The 2026-09-02 state, superseded by §0 above
 
 **The four corrected numbers are now serving users.** Verified from the ORIGIN,
 not from the deploy's exit code:
@@ -103,17 +194,58 @@ satisfied.
   `flightmap-dev` is denied the observability permissions. Three are called on
   every consumer postcode lookup, so a limit picked by eye 429s real visitors.
 - **`FavouritesTable` TTL** - deletes user data on a schedule, so Bill's call.
-- **The flood gate takes twice what it claims.** Its own comment promises
-  "under seven minutes"; measured 2026-09-02 it took **15m46s** with the EA
-  service healthy throughout (0.29-0.39s per request). The arithmetic points at
-  something worth looking at rather than a stale comment: the top-up loop
-  breaks BEFORE sleeping when `compared >= MIN_COMPARED`, so with 4 samples per
-  class it should rarely pause, yet `11 cities x 2 classes x 2 rounds x 20s`
-  accounts for **14.7 of the 15.7 minutes**. That means top-ups are firing for
-  most classes - two or more of every four samples coming back unusable - so
-  the gate is passing while sitting on its own `MIN_COMPARED` floor of 3.
-  **Measure what those samples return before touching `PAUSE_S` or `WORKERS`;
-  the timing is the symptom, not the finding.**
+- **The flood gate: DIAGNOSED AND FIXED 2026-09-03.** It promised "under
+  seven minutes" and took **15m46s**. The old note here guessed that
+  top-ups were firing and said to measure the samples before touching
+  `PAUSE_S` or `WORKERS`. That was the right instruction and the guess
+  was half right.
+
+  **What the samples returned: HTTP 403 from
+  `Microsoft-Azure-Application-Gateway/v2`, in ~0.09s, for 65% of
+  requests.** A bare `except Exception` in `service_band` had been
+  discarding the cause since the file was written, so a 403, a timeout
+  and a malformed body were all just "unreachable".
+
+  **It is a rate limit, but not the shape the retry design assumed** -
+  and that distinction is the finding. It is returned as 403, not 429,
+  so nothing recognised it; and it is a TOKEN BUCKET, so slowing to a
+  2.5s pause made it **worse** (75% blocked), because a steady 0.4 req/s
+  still outruns the refill. Measured recovery: after 30s idle, three
+  consecutive calls succeed. Sustainable rate is about **one request per
+  10 seconds**.
+
+  **The runtime was never the defect.** 88 requests at 0.1 req/s is ~15
+  minutes, which is exactly what was observed. The defect was that most
+  of those minutes were spent FAILING and recovering, so each class
+  scraped `MIN_COMPARED` (3) instead of comparing every point it drew -
+  and at `MIN_AGREE` 0.80 a class scraping to 3 needs 3/3 unanimous. Real
+  evidence, but thin, at full price.
+
+  **Fixed**: `WORKERS` 2 -> 1, `PAUSE_S` 0.8 -> 10.0, a 403 no longer
+  burns four retries of backoff, and the causes are tallied and printed.
+  Measured on London at `--per-class 4`, after an idle period:
+
+  | | before | after |
+  |---|---|---|
+  | medium-or-high | 3/3, **1 lost** | **4/4, 0 lost** |
+  | not-moh | 5/5, **3 lost** | **4/4, 0 lost** |
+  | 403s | 4 | **0** |
+  | time | 2m26 | **1m25** |
+
+  The old `WORKERS` comment claimed "a GetFeatureInfo takes ~8s, so the
+  run is latency-bound, not politeness-bound" and concluded concurrency
+  was free. **An accepted call returns in 0.10s median** - the 8s was
+  retry backoff around rejected calls, read as service latency. That one
+  misreading justified a second worker, which doubled the request rate
+  against the thing that was already the binding constraint.
+
+  **Still open, and worth a decision:** the full 11-city run is still
+  ~15 minutes on a BLOCKING stage, because 88 requests at the host's
+  sustainable rate cannot go faster. The structural answer is to cache
+  the verification against each mosaic's sha256 with a staleness window,
+  so it re-runs when a mosaic changes rather than on every commit. Not
+  built: a cache is also how a gate quietly stops checking, so it needs
+  the expiry and a skipped-line printed in its own position.
 
 ### 0.5 N1 7SX - DIAGNOSED 2026-09-02. Both obvious causes were wrong.
 

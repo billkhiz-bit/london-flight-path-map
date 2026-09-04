@@ -248,6 +248,25 @@ check "site == Lambda (91 boroughs)"   node tests/borough-score-parity.mjs
 # reds it, and so does a dict keyed to a city nobody looks up, which is how 163
 # of the names were dead on arrival while the check still read all-green.
 check "area names == MSOA names"       python scripts/build_city_neighbourhoods.py --check-names
+# Added 2026-09-03, closing audit F2 and F3 (29 Aug), which had been open five
+# weeks. score-demo/openapi.yaml is the artefact integrators generate clients
+# from, and it contained the string `env` ZERO times while every UK response
+# outside Cardiff and New York carried the component - so a strict client
+# flagged an undocumented field on all of them and a lenient one dropped
+# 0.14-0.18 of the score. It also declared `enum: [london, nyc]` while the API
+# served THIRTEEN cities.
+#
+# BLOCKING, and it needs no network: the expectation is derived in-process from
+# app.PERSONAS / app.CITIES / app.METHODOLOGY_VERSION and from borough queries
+# the Lambda answers from its own tables. A published contract should not be
+# deployable while it describes an engine that does not exist.
+#
+# It finds enums by RECURSIVE WALK keyed on contents, never by known path,
+# because the spec's own comment records that "three enums in this spec listed
+# personas and only one was complete". That paid immediately: it found a FOURTH
+# city enum (BatchRequest) that the hand fix had missed. Proven red five ways,
+# including one-enum-short-with-three-complete and a no-enums-matched floor.
+check "openapi == score engine"        python scripts/check_openapi_matches_engine.py
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
 check "no em dashes (all pages)"       sh scripts/check_no_em_dash.sh
@@ -589,6 +608,32 @@ advise "neighbourhood medians == PPD"   python scripts/build_city_neighbourhoods
 # distinction that mattered: an absent key and a measured zero are the same
 # shape in JSON.
 advise "aircraft footprint == DEFRA"    python scripts/measure_aircraft_footprint.py --verify
+# Added 2026-09-02. `Quiet Skies` is the headline component and for most
+# postcodes it is an ESTIMATE; its accuracy had been measured ONCE during the
+# v3.8 work and recorded only in CLAUDE.md prose. api/index.html now PUBLISHES
+# that figure to B2B buyers, so it needs a derivation that can go red - a
+# published accuracy claim backed by nothing runnable is the shape this repo
+# has closed four times. Advisory because data/nspl.csv is gitignored (805 MB)
+# and a fresh clone cannot run it; it reports INCONCLUSIVE, never PASS, when
+# the input is absent. --max-mae gates the number the page states.
+advise "quiet estimate == DEFRA"        python scripts/check_quiet_estimate_error.py --sample 3000 --max-mae 2.2
+# Added 2026-09-03, and it found a live outage on its first run: the console
+# edit that applied the Observability statements REPLACED FlightMapDeployPolicy
+# instead of extending it, so S3, DynamoDB, CloudFormation, Lambda, CloudFront,
+# API Gateway and all four log-read verbs were denied - no deploy of any kind
+# could have run. Nothing detected it, because `backend/iam-policy.json` is a
+# record of INTENT and nothing compared it to the live account.
+#
+# A capability probe rather than a policy diff, because reading the live policy
+# is itself denied (`iam:ListAttachedUserPolicies`). It classifies on the ERROR
+# CODE, never on exit status, and treats ResourceNotFoundException as GRANTED -
+# authorisation precedes resource lookup, and reading that error as a wall is
+# precisely what produced a false "no log access" claim here for five weeks.
+#
+# Advisory, not blocking: it needs credentials a fresh clone has not got, and
+# it reports INCONCLUSIVE rather than PASS when it cannot measure. Promote it
+# to `check` once the policy is restored and it has a green track record.
+advise "aws perms == iam-policy.json" python scripts/check_aws_permissions.py
 
 # Compares all 14 publicly-served files against what CloudFront actually
 # serves. Advisory because drift is the EXPECTED state between committing and

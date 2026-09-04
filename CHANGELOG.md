@@ -1,5 +1,125 @@
 # Changelog
 
+## 2026-09-03 - the B2B contract is corrected, and the deploy user loses its policy
+
+**IN SOURCE ONLY. NOTHING HERE IS DEPLOYED OR EVEN COMMITTED**, because
+`FlightMapDeployPolicy` was replaced by its Observability statements rather than
+extended by them - so no deploy can run and the blocking `log retention` gate
+cannot read log groups. See `HANDOVER.md` §0.
+
+### The published OpenAPI spec described an engine that does not exist (F2, F3)
+
+Closing two audit findings open since 29 August. `score-demo/openapi.yaml` is the
+artefact integrators generate clients from, and it contained the string `env`
+**zero times** - across `Components`, `Weights` and `sourceBreakdown` - while
+every UK response outside Cardiff and New York has carried the component since
+v3.9 on 26 August. A strict generated client flagged an undocumented field on all
+of them; a lenient one silently dropped 0.14-0.18 of the score.
+
+Also corrected there: `enum: [london, nyc]` in **four** places against thirteen
+served cities, so a generated client rejected eleven of them; a `quiet`
+description still denying that road noise is scored (false at v4.0, where road is
+0.35 of `env`); the three `Context` keys the API emits and the spec never declared
+(`liveResolution`, `environmentResolution`, `environmentSingleInput`); and a
+`methodologyVersion` example of 3.2 against a live 4.0.
+
+`api/index.html` said "four components" and its sample payload - captioned "field
+names as the live API emits them" - carried the pre-v3.9 `family` weights. The
+browser demo drew four bars summing to **0.86**, so a prospect saw a headline they
+could not reproduce; it now draws five, and `compRow` gained the null guard that
+had to come first, since `value.toFixed` would otherwise throw on exactly the
+cities where `env` is legitimately absent.
+
+**Gated by `scripts/check_openapi_matches_engine.py`, blocking.** It derives the
+expectation from `app.PERSONAS`, `app.CITIES` and `app.METHODOLOGY_VERSION`, and
+finds enums by RECURSIVE WALK keyed on contents rather than by known path -
+because the spec's own comment records that "three enums in this spec listed
+personas and only one was complete". That paid on its first run: it caught a
+FOURTH city enum, in `BatchRequest`, that the hand fix had missed.
+
+### `Quiet Skies` accuracy is now published, and derivable
+
+The headline component is a geometry ESTIMATE for most postcodes, and its error
+had been measured ONCE during the v3.8 work and recorded only in prose. It is now
+published on the API landing page and reproduced by
+`scripts/check_quiet_estimate_error.py`: over all **35,352** London postcodes
+DEFRA measured, **MAE 1.879**, median 1.5, p90 4.2, and a signed bias of **-1.74
+meaning the estimate reads LOUDER than DEFRA** - pessimistic, the safe direction
+for a noise product. **It is not a global accuracy figure**: it describes
+postcodes near airports, the only population where DEFRA published anything to
+compare against, and some share of the bias is COVID-suppressed traffic in Round
+4 rather than estimator error.
+
+### Affordability and growth are cohort-relative, and the area pages now say so
+
+Both are min-max scaled WITHIN each city, so the cheapest borough of every city
+scores 10.0 and the priciest 0.0 whatever the money involved. Measured: **Barking
+and Dagenham published `Affordability 10.0` at GBP 371,030 while Stockton-on-Tees
+published `0.0` at GBP 170,923** - a borough 2.2x cheaper reading as the least
+affordable, with the price in the same table. The ten points cover **GBP 40k of
+spread in Merseyside and GBP 879k in London**.
+
+Nothing is miscomputed and the API provenance, `index.html` and METHODOLOGY all
+disclosed it. The 99 area pages did not, and they are the surface a stranger
+reaches from a search engine. Every affordability and growth row now carries
+"Scaled within this city only - 10 is the cheapest of N areas here, not
+nationally". **Whether to change the scaling itself is open** - see ROADMAP.
+
+### The area pages gained the fifth component
+
+`build_area_pages.py` added four component rows against the API's five, so the
+arithmetic a reader could do never reached the headline: Camden's five weighted
+components give 6.57 -> 6.6, while renormalising the four shown gives 6.92. **90
+of 99 pages now carry an Environment row, and the 9 that do not are exactly
+Cardiff (4) and New York (5)** - matching the recorded coverage without the
+builder being told to expect it.
+
+### Two gates were measuring less than they claimed
+
+**The flood georeferencing gate** promised "under seven minutes" and took 15m46s.
+The cause was not latency: the EA host answers **HTTP 403 from an Azure
+Application Gateway** for most requests at the old pacing, and a bare
+`except Exception` had been discarding the cause since the file was written. It is
+a rate limit, but a TOKEN BUCKET returned as 403 rather than 429 - slowing to a
+2.5s pause made it WORSE (75% blocked against 65%), because a steady 0.4 req/s
+still outruns the refill. Measured recovery: three consecutive calls succeed after
+30s idle, so the sustainable rate is about one request per 10 seconds. **The
+runtime was never the defect** - 88 requests at that rate IS 15 minutes. The
+defect was that most of it was spent failing and recovering, so each class scraped
+the `MIN_COMPARED` floor of 3 instead of comparing every point it drew. With
+`WORKERS` 2->1 and `PAUSE_S` 0.8->10, London went from 3/3 and 5/5 with four
+samples lost to **4/4 and 4/4 with none lost, and faster**.
+
+**`tests/a11y-source.mjs`** carried the same fixed `waitForTimeout(1200)` that
+`panel-contrast.mjs` was fixed for on 1 September, justified by a comment claiming
+the render is synchronous - which, if true, would make the sleep unnecessary. Now
+a bounded 15s poll, proven red against an unreachable panel.
+
+### A new gate: the deploy user's permissions
+
+`scripts/check_aws_permissions.py` (advisory) probes what the deploy user can
+ACTUALLY do and compares it to `backend/iam-policy.json`. **It found a live outage
+on its first run** - the policy replacement above. It is a capability probe rather
+than a policy diff because `iam:ListAttachedUserPolicies` is itself denied, and it
+classifies on the ERROR CODE, treating `ResourceNotFoundException` as GRANTED:
+authorisation precedes resource lookup, and reading that error as a wall is
+exactly what produced a false "no log access" claim in this repo for five weeks.
+It reports **18 probed of 110 declared**, and says so - the other 92 are
+destructive or stateful and are deliberately not exercised.
+
+### Corrected figures that had expired
+
+- **Rank-to-price correlation**: London was recorded at **-0.23** and is **+0.55**
+  today, because `environment` scores prime central London badly on NO2 and sank
+  Mayfair and Belgravia. The nine generated cities are still 0.65-0.89 and still
+  disclose, so **no city crossed the 0.60 threshold** - but the constant was
+  chosen because "nothing sat between -0.23 and 0.67", and London now sits in that
+  gap, 0.05 from flipping the disclosure on 128 neighbourhoods.
+- **Affordability weight**: METHODOLOGY and CLAUDE.md both said "~31% of the
+  balanced score". It has been **0.27** since v3.9 multiplied every other weight
+  by 0.86 to make room for `env`.
+
+
 ## 2026-09-02 - the 1 Sep wave goes live, and the deploy finds two more defects
 
 **DEPLOYED AND VERIFIED FROM THE ORIGIN.** Backend first (SAM: Score, Epc,

@@ -80,12 +80,18 @@ exactly one city — WN4 and WN5 had been published twice, WN5 as both
 
 **The neighbourhood ranking is BEST VALUE outside London and New York, and the
 site now says so (2026-08-12).** Measured over the rendered ordering, the
-correlation between rank position and price is **0.67 to 0.89 for every
-generated city**, against **-0.23 for London** and -0.06 for New York. The cause
+correlation between rank position and price is **0.65 to 0.89 for every
+generated city** (re-measured 2026-09-03). London was **-0.23** when this was
+written on 2026-08-12 and is **+0.55** today; New York is -0.06. The London
+move is the `environment` component arriving at v3.9: prime central scores
+badly on NO2, so Mayfair and Belgravia fell to the bottom of the ordering.
+London remains below the 0.60 disclosure threshold and so still carries no
+"best value" note - but it is 0.05 away, and the threshold is re-evaluated on
+every render rather than declared per city. The cause
 is structural: a generated city's neighbourhood is a postcode district carrying
 `crime: 0` - sub-borough crime is not published at that geography - and a
 liveability inherited from its borough, so districts within a city differ mainly
-by price and aircraft quiet, while affordability is ~31% of the balanced score.
+by price and aircraft quiet, while affordability is 27% of the balanced score.
 No figure is miscomputed; the ordering is exactly what §5.1's weights produce.
 What over-claimed was the label, so where price leads the heading reads "best
 value" and the note states plainly what the ordering rests on. The threshold is

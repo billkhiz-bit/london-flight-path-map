@@ -839,7 +839,148 @@ of the attribute the app sets. Measured against the pre-fix tree with the PNG
 the same wave: **915,867 terminated postcodes excluded, 38.7% of the scan.**
 
 Still carried forward: the Important/Minor rows not marked FIXED in
-[`AUDIT_REPORT_2026-08-29.md`](./AUDIT_REPORT_2026-08-29.md).
+[`AUDIT_REPORT_2026-08-29.md`](./AUDIT_REPORT_2026-08-29.md). **Two of them
+hit INTEGRATORS rather than users, and are re-verified live 2026-09-03.**
+They are named here because a generic "the rows not marked FIXED" is
+precisely the shape that let them sit unread for five weeks.
+
+- **F3 is CLOSED (2026-09-03)**, and so is **F2**, and the gate they asked
+  for exists: `scripts/check_openapi_matches_engine.py`, **blocking**.
+  Fixed in the spec: `env` added to `Components`, `Weights` and
+  `sourceBreakdown` (deliberately NOT to `required` - it is legitimately
+  absent for NYC and Cardiff, exactly as the finding advised); the `quiet`
+  description no longer denies that road noise is scored; the three
+  `Context` keys the API emits and the spec never declared
+  (`liveResolution`, `environmentResolution`, `environmentSingleInput`)
+  are declared; and the stale `methodologyVersion` example 3.2 is 4.0.
+  `api/index.html` and the demo's fifth bar are fixed too - `compRow`
+  needed a null guard FIRST, since `value.toFixed` would have thrown on
+  the very cities where `env` is legitimately absent.
+- **The gate found a FOURTH city enum on its first run.** The hand fix
+  corrected three; `BatchRequest.queries.items.city` was missed, so
+  `/v1/score/batch` would still have rejected 11 of 13 cities in a
+  generated client. The recursive walk is why - see the note in the file.
+- **The gate's own first version was wrong**, and running it is what
+  showed that: it applied one persona set to request and response enums.
+  `custom` is a RESPONSE value; `persona=custom` measurably returns 200
+  and silently scores `balanced`, so listing it as an accepted input
+  would advertise a parameter value that quietly does something else.
+
+- **NEW, found while closing F3, and the remaining choice is BILL'S.**
+  The engine renormalises when a component is absent, and publishes the
+  UN-renormalised weights beside it. So `sum(components * weights)`
+  yields **3.9 against a published 4.5 for Brooklyn** and **5.4 against
+  6.3 for Cardiff** - the nine boroughs that have no `env`. The SCORE is
+  correct; the published contract does not reproduce it, which is the
+  same shape as C6 (a published formula that does not yield a published
+  number). Now documented in the spec `Weights` description and **pinned
+  by the gate as an OUTPUT assertion** - proven red on a 0.7-point
+  offset - so the two halves cannot drift further apart while each stays
+  individually correct. The remaining DECISION - publish renormalised
+  weights, add a separate `weightsApplied` field, or leave it documented
+  - changes a published response field and is not mine to make.
+
+### London's ranking is now price-led-ish, and the threshold's own justification has expired (measured 2026-09-03)
+
+The neighbourhood ranking discloses *"this ordering is led by price"* 
+above a rank-to-price correlation of **0.60**, measured at render time 
+rather than written per city - a deliberate design so a city that gains 
+a differentiating input drops the disclosure by itself.
+
+**Re-measured after the 1 Sep corrections and the v3.9/v4.0 scoring 
+changes**, over the rendered rows:
+
+| | recorded 2026-08-12 | measured 2026-09-03 |
+|---|---|---|
+| London | **-0.23** | **+0.55** |
+| 9 generated cities | 0.67-0.89 | **0.65-0.89, all still disclosing** |
+
+**No city changed side of the threshold**, so nothing is being 
+over-claimed and the self-measuring design is doing its job. But 
+London has moved 0.78 and now sits **0.05 below the line**.
+
+The cause is visible in the ranking: `environment` (v3.9, recomposed 
+v4.0) scores prime central London badly on NO2, so Mayfair (GBP 2.5M, 
+4.6), Belgravia (GBP 2M, 5.4) and Marylebone fell to the bottom while 
+Cheam (GBP 470k, 9.1) and Orpington lead. Cheap-but-noisy is at the 
+bottom too - Uxbridge and West Drayton, under Heathrow - so the 
+ordering is "affordable AND quiet first", not "cheapest first".
+
+**What actually needs correcting is the justification for the constant.** 
+The comment at `index.html` read *"there is nothing in between to be 
+arbitrary about"* - and London at 0.55 now sits squarely in that gap. 
+The threshold is no longer chosen from a bimodal distribution; it is a 
+number 0.05 away from flipping a disclosure on 128 neighbourhoods. 
+Corrected in place, with the measurement and its cause, so nobody 
+reasons from the stale figures. **A stale number inside the comment 
+that justifies a constant is this repo's most-repeated defect.**
+
+**Not changed**: the constant itself. Moving it changes what 128 London 
+rows say about themselves and is a judgement call, not a fix.
+
+### Cohort scaling was undisclosed on the 99 area pages - CLOSED 2026-09-03
+
+**Affordability and growth are min-max scaled WITHIN each city**, so the
+cheapest borough of every city scores 10.0 and the priciest 0.0 whatever
+the money involved. Nothing is miscomputed and the API provenance says so
+plainly, as do `index.html` and METHODOLOGY. **The 99 area pages did not -
+zero mentions - and they are the surface a stranger reaches from a search
+engine with no other context.**
+
+| Published | Affordability | Average price |
+|---|---|---|
+| Barking and Dagenham | **10.0 / 10** | GBP 371,030 |
+| Stockton-on-Tees | **0.0 / 10** | GBP 170,923 |
+
+A borough **2.2x cheaper reading as the least affordable**, with the price
+in the same table for a reader to notice the contradiction. The ten points
+cover **GBP 40k in Merseyside (1.22x) and GBP 879k in London (3.37x)** - a
+22x difference in what one affordability point is worth.
+
+Every affordability and growth row now carries *"Scaled within this city
+only - 10 is the cheapest of N areas here, not nationally"*, with N per
+city. Deliberately NOT wrapped in `uk_note()`: it is a methodology caveat,
+not a UK source attribution, and it is equally true of the Bronx scoring
+10.0 at USD 420,000. **Same defect shape as the rest of this report** - an
+unlabelled relative score reads as an absolute one, exactly like the
+neighbourhood ranking's "best value" label and the legend's "NO DATA".
+
+**OPEN, AND BILL'S CALL: whether to change the scaling itself.** A national
+anchor, a wider cohort for the 1.2-1.3x cities, or leave it cohort-relative
+and rely on the disclosure. It changes every published affordability and
+growth number, so it is not mine to decide. Note the codebase already
+accepts the argument in one place: Leicester's cohort was widened to eight
+districts because "min-max over a narrow cohort manufactures spread it has
+not measured" - reasoning that applies at least as strongly to **Merseyside
+at 1.22x** and South Yorkshire at 1.29x, and has not been revisited there.
+
+**The headline score is therefore a HYBRID** - quiet, liveability and
+environment are absolute and comparable across cities; affordability
+(~27% of `balanced`) and growth (up to 34% for `investor`) are city-
+relative. Two boroughs in different cities showing 6.8 are not making the
+same claim. Inherent to cohort scaling rather than a bug, but worth
+stating where a customer will read it.
+
+**F3 IS NOW FULLY CLOSED IN SOURCE (2026-09-03).** The last piece - the
+99 area pages carrying four component rows against the API's five - is
+done: `build_area_pages.py` adds `Environment`, and all 99 pages were
+rebuilt. **90 carry the row and the 9 that do not are exactly Cardiff (4)
+and New York (5)**, which matches the recorded `env` coverage exactly -
+a clean cross-check rather than an assertion, since `add()` skips a
+`None` and was never told which cities to expect. The arithmetic a reader
+could previously do never reached the headline: Camden's five weighted
+components give 6.57 -> **6.6**, while renormalising the four shown gives
+**6.92**. `area pages carry real data` passes, and `area pages match the
+live API` is **99 of 99** - adding a row does not move a score, which is
+the invariant that check exists to hold. **It still needs a deploy**, and
+the deploy is blocked on the AWS policy.
+
+**The lesson to keep**: assert that the union
+of keys the engine can emit in `components` appears in the spec's
+`Components` schema. Fixing the strings alone leaves the sixth component to
+repeat this. Both are *a correction applied in one holder and not its
+mirror* - the single largest cluster in this report, and the consumer half
+(I34) was closed on 1 September while the B2B half was not.
 
 **F38 is the largest single open item in either report.** It moves published
 bands across all 91 boroughs and both score holders, and it is a one-line read

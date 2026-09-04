@@ -361,7 +361,34 @@ for (const viewport of VIEWPORTS) {
       if (el) el.click();
       return !!el;
     });
-    await page.waitForTimeout(1200);
+    // WAIT FOR THE STATE, NOT THE CLOCK - bounded at 15s.
+    //
+    // This was a fixed `waitForTimeout(1200)`, justified by the note below
+    // that "updateSidebar() runs synchronously on the click". If that were
+    // true a slow machine could not affect it - and on 2026-09-03 this stage
+    // reported `score rows rendered 0` for this state INSIDE preflight while
+    // the same tree passed standalone three times, with every one of the three
+    // failing states rendering in under 0.5s when measured on its own. The
+    // reasoning was contradicted by the evidence, so the clock goes.
+    //
+    // `panel-contrast.mjs` was fixed for exactly this on 2026-09-01 and the
+    // change was not carried to its sibling - mirror drift, the largest
+    // cluster in the 31 Aug audit. Polling is strictly stronger in both
+    // directions: a synchronous render satisfies it on the first tick, so
+    // nothing gets slower, and a panel that never opens still reds at the
+    // bound rather than being waved through by a generous sleep.
+    try {
+      await page.waitForFunction(
+        () =>
+          document.querySelectorAll('#sidebar-content .score-breakdown .score-row')
+            .length > 0,
+        null,
+        { timeout: 15000 }
+      );
+    } catch {
+      // Deliberately swallowed: the count is read below and a zero is REPORTED
+      // as a failure. Throwing here would lose the diagnostic line.
+    }
     // NOT REACHING THE STATE IS A FAILURE, never a quiet pass - the rule the
     // renderedWhen pages above already enforce, applied to the click this
     // state depends on. Until 2026-08-24 a null match simply skipped the

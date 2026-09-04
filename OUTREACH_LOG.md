@@ -407,11 +407,11 @@ These are the public-facing launch drafts. Different audience, different tone fr
 >
 > I built Sky Score because the structural information asymmetry in UK property bothered me. Listings sites earn commission when sales close, so they're not incentivised to surface the things that might cause a buyer to walk away, aircraft noise being the obvious one. So I built the data layer they won't.
 >
-> What it does: take any UK postcode (or NYC ZIP) and return a 0-10 score across four components, Quiet, Affordability, Growth, Liveability, plus the underlying data lineage. Free consumer site, separate B2B API for integrators.
+> What it does: take a postcode from any of 13 UK city-regions (or a NYC ZIP) and return a 0-10 score across five components, Quiet, Affordability, Growth, Liveability and Environment, plus the underlying data lineage. Free consumer site, separate B2B API for integrators.
 >
 > A few things that might be technically interesting:
 >
-> - **Per-postcode quiet score.** Most "noise score" tools you've seen use borough-level averages. Within a borough, Lden can vary 10-15 dB. Sky Score uses Haversine distances to actual flight-path geometry (Heathrow stacks, JFK approaches) at the postcode centroid for a much finer signal. v3.1 also reads from a DEFRA raster table when populated.
+> - **Per-postcode quiet score.** Most "noise score" tools you've seen use borough-level averages. Within a borough, Lden can vary 10-15 dB. Sky Score uses Haversine distances to actual flight-path geometry (Heathrow stacks, JFK approaches) at the postcode centroid for a much finer signal. Where DEFRA published a contour we serve the measured raster reading instead, and the response says which tier answered in `context.quietResolution`. We publish how wrong the estimate is: mean absolute error 1.879 points against DEFRA over the 35,352 London postcodes where both exist.
 > - **Methodology fully published.** Every threshold and weight points back to a public source: DEFRA Lden bands, WHO night-noise guidelines, Ofsted, ONS crime medians, TfL PTAL, Land Registry HPI. The methodology doc has a worked example for SW11 1AA you can reproduce by hand.
 > - **OpenAPI 3.0 + Swagger UI.** Real B2B endpoint with API-key auth. Free tier 1000 req/month. Anyone can poke at the schema.
 > - **Halal-finance-aware affordability model.** No riba assumptions in the affordability calculation, because some target customers (Sharia-compliant home-finance providers) operate without conventional mortgages.

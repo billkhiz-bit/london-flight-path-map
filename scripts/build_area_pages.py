@@ -161,11 +161,48 @@ def gather(city: str, borough: str) -> dict | None:
             return
         facts.append({'label': label, 'value': value, 'note': note})
 
+    # AFFORDABILITY AND GROWTH ARE COHORT-RELATIVE, AND THESE PAGES DID NOT SAY
+    # SO (2026-09-03). Both are min-max scaled WITHIN the city, so the cheapest
+    # borough of every city scores 10.0 and the priciest 0.0 whatever the money
+    # involved. Measured: Barking and Dagenham published `Affordability 10.0`
+    # at GBP 371,030 while Stockton-on-Tees published `0.0` at GBP 170,923 - a
+    # borough 2.2x CHEAPER reading as the least affordable - with the price in
+    # the same table for a reader to notice the contradiction.
+    #
+    # Nothing was miscomputed and `index.html` and METHODOLOGY both disclose the
+    # scaling. These 99 pages did not, and they are the surface a stranger
+    # reaches from a search engine with no other context, so an unlabelled
+    # relative score reads as an absolute one. Same distinction as the
+    # neighbourhood ranking's "best value" label.
+    #
+    # NOT wrapped in uk_note(): this is a methodology caveat, not a UK source
+    # attribution, and it is just as true of New York, where the Bronx scores
+    # 10.0 at USD 420,000.
+    prices = [r.get('avgPrice') for r in app.CITIES[city]['boroughs'].values()
+              if r.get('avgPrice')]
+    cohort_note = None
+    if len(prices) > 1:
+        cohort_note = (
+            f'Scaled within this city only - 10 is the cheapest of '
+            f'{len(prices)} areas here, not nationally'
+        )
+
     add('Sky Score', f"{body['score']} / 10")
     add('Quiet skies', f"{comp.get('quiet')} / 10" if comp.get('quiet') is not None else None)
-    add('Affordability', f"{comp.get('afford')} / 10" if comp.get('afford') is not None else None)
-    add('Growth', f"{comp.get('growth')} / 10" if comp.get('growth') is not None else None)
+    add('Affordability', f"{comp.get('afford')} / 10" if comp.get('afford') is not None else None,
+        cohort_note)
+    add('Growth', f"{comp.get('growth')} / 10" if comp.get('growth') is not None else None,
+        cohort_note)
     add('Liveability', f"{comp.get('live')} / 10" if comp.get('live') is not None else None)
+    # The FIFTH component, missing from all 99 pages until 2026-09-03 (audit F3).
+    # `env` has scored since v3.9 and the pages showed four rows, so the
+    # arithmetic a reader could do never reached the headline: Camden's five
+    # weighted components give 6.57 -> 6.6, while renormalising the four shown
+    # gives 6.92. No note, matching the four components above - the three
+    # environment INPUTS below carry their own source lines, and this is their
+    # composite. `add` skips None, so New York and Cardiff, which have no `env`,
+    # correctly get no row rather than a zero.
+    add('Environment', f"{comp.get('env')} / 10" if comp.get('env') is not None else None)
     # THE PER-FACT NOTE IS A UK LITERAL, AND IT WAS PRINTED FOR NEW YORK TOO
     # (2026-08-31, audit C3).
     #

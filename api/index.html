@@ -160,7 +160,16 @@
     line-height: 1.6;
     color: var(--text);
   }
-  code { font-family: 'Geist Mono', monospace; color: var(--amber); font-size: 0.95em; }
+  /* overflow-wrap: a long command or path is ONE unbreakable token, and a
+     grid item defaults to min-width:auto - so it cannot shrink below that
+     token and pushes the whole document sideways. Caught 2026-09-03 at
+     320px by tests/responsive.mjs: <code>python
+     scripts/check_quiet_estimate_error.py</code> measured 274px against a
+     277px card, overflowing the page by 23px. Fixed on the RULE, not the
+     element: the sibling <ul> above carries an inline padding:0 for the
+     same class of reason, and the next <code> added would have inherited
+     nothing. */
+  code { font-family: 'Geist Mono', monospace; color: var(--amber); font-size: 0.95em; overflow-wrap: anywhere; }
 
   .audience-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 720px) { .audience-list { grid-template-columns: 1fr; } }
@@ -221,7 +230,7 @@
     <div class="three-up">
       <div class="card">
         <h3>0-10 score per postcode</h3>
-        <p>UK postcodes across <strong>12 city-regions and 94 boroughs</strong> - London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4) and Nottingham (4) - plus NYC ZIPs (~182 residential). Single composite + four components: quiet, affordability, growth, liveability. Coverage is not uniform across cities and each response says what it rests on.</p>
+        <p>UK postcodes across <strong>12 city-regions and 94 boroughs</strong> - London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4) and Nottingham (4) - plus NYC ZIPs (~182 residential). Single composite + five components: quiet, affordability, growth, liveability, environment. Coverage is not uniform across cities and each response says what it rests on.</p>
       </div>
       <div class="card">
         <h3>Methodology fully published</h3>
@@ -236,7 +245,15 @@
           <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
           <li><strong>Vintage.</strong> DEFRA Round 4 is published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. Re-anchoring needs Round 5, expected around 2027.</li>
         </ul>
-        <p style="margin-top:8px;">The Haversine tier that answers today is unaffected by any of this and is documented in full in METHODOLOGY section 4.5.</p>
+        <p style="margin-top:8px;">The geometry tier is documented in full in METHODOLOGY section 4.5. It is not a DEFRA reading and does not inherit the vintage caveat directly, but it is not independent of it either: since v3.8 each airport's distance ladder is scaled by that airport's measured Round 4 footprint.</p>
+        <p style="margin-top:8px;"><strong>How wrong is the estimate? Measured, not asserted.</strong> Where DEFRA published a contour we hold both numbers for the same postcode, so the estimator can be scored against the measurement rather than argued about. Across all <strong>35,352</strong> London postcodes DEFRA measured:</p>
+        <ul>
+          <li><strong>Mean absolute error 1.879 points</strong> on the 0-10 scale; median 1.5, 90th percentile 4.2.</li>
+          <li><strong>37.5%</strong> land within 1.0 point of the DEFRA value, <strong>61.2%</strong> within 2.0.</li>
+          <li><strong>Signed bias &minus;1.74: the estimate reads LOUDER than DEFRA measured</strong>, so where it is wrong it is usually pessimistic about noise rather than optimistic. For a noise product that is the safer direction to err, and it is stated here rather than left for you to discover.</li>
+        </ul>
+        <p style="margin-top:8px;">Two things that figure is <em>not</em>. It describes postcodes <strong>near airports</strong>, because that is the only population where DEFRA published anything to compare against, not a global accuracy figure. And the bias is not purely estimator error: Round 4 maps a COVID-suppressed year, so some share of that &minus;1.74 is real traffic reduction in the measurement rather than overstatement in the estimate. We do not apply a correction for it, because the split is not measurable from the data we hold.</p>
+        <p style="margin-top:8px;">Reproduce it yourself against our published dataset: <code>python scripts/check_quiet_estimate_error.py</code>.</p>
       </div>
     </div>
   </section>
@@ -254,14 +271,15 @@
 # Returns (shape and field names as the live API emits them; the values are
 # illustrative, not a captured response):
 # {
-#   "score": 6.7,
-#   "components": { "quiet": 5.0, "afford": 7.2, "growth": 7.8, "live": 7.2 },
+#   "score": 7.1,
+#   "components": { "quiet": 7.0, "afford": 7.3, "growth": 5.5, "live": 7.8, "env": 5.1 },
 #   "context": { "noiseImpactBand": "low", "quietResolution": "postcode",
-#                "liveResolution": "measured", "avgPriceGbp": 608000, ... },
+#                "liveResolution": "measured", "environmentResolution": "measured",
+#                "avgPriceGbp": 605442, ... },
 #   "location": { "city": "london", "postcode": "N1 7SX", "borough": "Hackney", ... },
 #   "persona": "family",
-#   "weights": { "quiet": 0.22, "afford": 0.22, "growth": 0.0, "live": 0.56 },
-#   "methodologyVersion": "3.8",
+#   "weights": { "quiet": 0.18, "afford": 0.18, "growth": 0.0, "live": 0.46, "env": 0.18 },
+#   "methodologyVersion": "4.0",
 #   "sources": [...]
 # }</pre>
     <p style="margin-top:12px;">More examples in the <a href="/score-demo/api-docs.html" style="color:var(--amber);">Swagger UI reference</a>.</p>

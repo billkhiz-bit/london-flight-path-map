@@ -278,7 +278,7 @@ Use when no warm intro is available. Subject is everything.
 
 > Hi [first name],
 >
-> I run **Sky Score** (skyscore.co.uk), a UK property noise + livability data API. We score any UK postcode 0-10 across four components — quiet, affordability, growth, liveability — anchored to DEFRA Strategic Noise Mapping, Ofsted, ONS, Land Registry HPI. Methodology published; OpenAPI 3.0 spec live.
+> I run **Sky Score** (skyscore.co.uk), a UK property noise + livability data API. We score any postcode across 13 city-regions 0-10 on five components — quiet, affordability, growth, liveability and environment — anchored to DEFRA Strategic Noise Mapping, DfE Progress 8, ONS, Land Registry HPI and Environment Agency flood risk. Methodology published; OpenAPI 3.0 spec live.
 >
 > [Company]'s conveyancing search reports include flood, planning, environmental — but as far as I can tell, no honest aircraft / road noise component (the kind that materially affects a buyer's quality of life and rarely shows up before exchange). Sky Score plugs that gap as a single `/v1/score` call per property.
 >

@@ -43,6 +43,7 @@ import json
 import random
 import sys
 import time
+import urllib.error
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -61,30 +62,45 @@ NOT_MOH = {0, 1, 2}
 SERVICE_MOH = {'Medium', 'High'}
 
 ERODE_M = 150      # a sample must sit this far inside a homogeneous region
-PAUSE_S = 0.8      # the service is free and shared; be unhurried about it
+# 10s, matched to the MEASURED refill of the host's token bucket (see the note
+# above service_band). It was 0.8s with two workers - about 2.5 req/s against a
+# service that sustains 0.1 - so roughly two thirds of every sample set was
+# rejected 403 and thrown away. This is not politeness for its own sake: at
+# this rate requests SUCCEED, and the same wall clock returns a full sample
+# instead of one scraping MIN_COMPARED.
+PAUSE_S = 10.0
 MIN_AGREE = 0.80   # per city, per direction
 # A class that reached the service only once or twice has not been tested, and
 # must not report 'ok'. Throttling shrinks the sample silently - at three
 # workers, half of one London class came back unreachable - so the floor is
 # stated rather than left to whatever survived.
 MIN_COMPARED = 3
-# When the service throttles, the answer is to ASK AGAIN MORE GENTLY, not to go
-# red. Measured 2026-08-30: a standalone run reached every point, and the same
-# gate inside preflight - after an afternoon of fetching, two proof runs and a
-# re-derive against the same host - had Bristol down to 2 of 6 reached and
-# failed on the floor. Nothing was wrong with the mosaic; every city that could
-# be reached agreed 100%. A gate that reds because a free shared service rate-
-# limited us is a gate that gets switched off, and then it protects nothing.
-# So an under-reached class draws FRESH points and retries, serially and
-# unhurried. It still fails if it genuinely cannot gather enough evidence.
+# A FALLBACK now, not the normal path. The reasoning below still holds - a gate
+# that reds because a free shared service rate-limited us is a gate that gets
+# switched off, and then it protects nothing - but with PAUSE_S matched to the
+# host's actual refill, samples SUCCEED and top-ups should almost never fire.
+#
+# Measured 2026-09-03, London at --per-class 4, after an idle period:
+#   before (PAUSE_S 0.8, WORKERS 2):  3/3 and 5/5, FOUR samples lost to 403, 2m26
+#   after  (PAUSE_S 10,  WORKERS 1):  4/4 and 4/4, ZERO lost,                1m25
+# A full sample, no rejected requests, and faster - because the old run spent
+# its time failing and recovering rather than asking at a rate it would be
+# answered at.
+#
+# If top-ups start firing again, that is the signal that the host's limit has
+# changed - raise PAUSE_S, and do not add workers. The pause is 30s to match the
+# measured recovery: after 30s idle, three consecutive calls succeed.
 TOPUP_ROUNDS = 2
-TOPUP_PAUSE_S = 20.0
-# A GetFeatureInfo here takes ~8 s, so the run is latency-bound, not politeness-
-# bound: serial, one city was 2 minutes and all eleven were 22, which is a
-# blocking stage long enough that someone disables it - and a disabled gate is
-# how this repo's defects reach production. Three concurrent queries is modest
-# against a public WMS and brings the suite under seven minutes.
-WORKERS = 2
+TOPUP_PAUSE_S = 30.0
+# SERIAL, and it must stay serial. The comment here used to read "a
+# GetFeatureInfo takes ~8s, so the run is latency-bound, not politeness-bound"
+# and concluded that concurrency was free. Measured 2026-09-03, a call that is
+# ACCEPTED returns in 0.10s median - the 8s was the retry backoff around
+# rejected calls being mistaken for service latency. The run is bound by the
+# host's rate limit and nothing else, so a second worker does not halve the
+# wall clock; it doubles the request rate against a bucket that is already the
+# binding constraint, and every extra request comes back 403.
+WORKERS = 1
 
 
 # Erosion runs on a DECIMATED view, one cell per DECIMATE pixels. The full
@@ -143,6 +159,40 @@ def contains(ring, x, y):
     return inside
 
 
+# Why a sample was unreachable, tallied across the whole run. The bare
+# `except Exception` this replaced returned None for a 403, a timeout, a DNS
+# failure and a malformed body alike, so the run could report "2 unreachable"
+# eleven times and never say what was wrong.
+#
+# It hid a real finding for as long as it existed. Measured 2026-09-03: the EA
+# host answers **HTTP 403 from Microsoft-Azure-Application-Gateway/v2**, in
+# ~0.09s, for the majority of requests at this file's old pacing - 65% blocked
+# at PAUSE_S 0.8 with two workers.
+#
+# It IS a rate limit, but not the shape the retry design assumed, and the
+# distinction is the whole finding:
+#
+#   * It is returned as 403, not 429, so nothing in the stack recognised it.
+#   * It is a TOKEN BUCKET, not a per-request delay. Slowing to a 2.5s pause
+#     made it WORSE (75% blocked), because a steady 0.4 req/s still outruns the
+#     refill. Measured recovery: after 30s idle, three consecutive calls
+#     succeed, and again after a further 60s idle.
+#   * So the sustainable rate is about ONE REQUEST PER 10 SECONDS, and the only
+#     thing that buys throughput is idling - not pausing between bursts.
+#
+# The consequence for this gate's old numbers: 88 requests at 0.1 req/s is
+# ~15 minutes, which is exactly the 15m46s that was observed and attributed to
+# waste. The runtime was never the defect. The defect was that most of those
+# 15 minutes were spent FAILING and recovering rather than succeeding, so each
+# class scraped MIN_COMPARED instead of comparing every point it drew. Pacing
+# deliberately costs the same wall time and returns a full sample.
+FAILURE_CAUSES = {}
+
+
+def _note_failure(cause):
+    FAILURE_CAUSES[cause] = FAILURE_CAUSES.get(cause, 0) + 1
+
+
 def service_band(e, n, retries=4):
     """The band the EA publishes at this BNG coordinate, or None if unreachable."""
     url = (
@@ -151,13 +201,34 @@ def service_band(e, n, retries=4):
         f'&bbox={e - 100},{n - 100},{e + 100},{n + 100}'
         f'&width=101&height=101&x=50&y=50&info_format=application/json&feature_count=25'
     )
+    cause = 'unknown'
     for attempt in range(retries):
         try:
             doc = json.loads(fetch_bytes(url, 120))
             break
-        except Exception:
+        except urllib.error.HTTPError as ex:
+            cause = f'HTTP {ex.code}'
+            # A 403 from the WAF is not a rate limit and does not clear inside
+            # this loop's backoff - measured. Retrying it four times buys
+            # nothing and costs 30s per sample; give up on this point and let
+            # the caller draw a different one.
+            if ex.code == 403:
+                _note_failure(cause)
+                return None
+            time.sleep(3.0 * (attempt + 1))
+        except urllib.error.URLError as ex:
+            cause = f'URLError {type(ex.reason).__name__}'
+            time.sleep(3.0 * (attempt + 1))
+        except ValueError as ex:
+            # json.loads on a body that is not JSON - an HTML error page slipped
+            # through with a 200, which is how a WAF sometimes answers.
+            cause = f'bad body ({type(ex).__name__})'
+            time.sleep(3.0 * (attempt + 1))
+        except Exception as ex:  # noqa: BLE001 - classify, never swallow
+            cause = type(ex).__name__
             time.sleep(3.0 * (attempt + 1))
     else:
+        _note_failure(cause)
         return None
     for feature in doc.get('features', []):
         geom = feature.get('geometry') or {}
@@ -386,6 +457,19 @@ def main():
             checked += 1
 
     print()
+    # Say WHY samples were lost. Without this the run reports "2 unreachable"
+    # eleven times over and the cause is unknowable - which is how a 403 rate
+    # limit was diagnosed as service latency and answered with a 20s sleep.
+    if FAILURE_CAUSES:
+        total = sum(FAILURE_CAUSES.values())
+        causes = ', '.join(f'{v}x {k}' for k, v in
+                           sorted(FAILURE_CAUSES.items(), key=lambda kv: -kv[1]))
+        print(f'{total} sample(s) unreachable: {causes}')
+        if any(k == 'HTTP 403' for k in FAILURE_CAUSES):
+            print('  HTTP 403 here is the host\'s RATE LIMIT, not a block on us:')
+            print('  a token bucket that refills at about one request per 10s.')
+            print('  If this is a large share, raise PAUSE_S - do not add workers.')
+        print()
     if not checked:
         print('FAIL: no city was compared. A gate that compares nothing cannot go red.')
         print(f'  expected {len(cities)} cities: {", ".join(cities)}')

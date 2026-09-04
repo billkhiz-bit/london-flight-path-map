@@ -557,6 +557,15 @@
     const w = d.weights || {};
     const compRow = (key, label) => {
       const value = d.components[key];
+      // A component the engine did not score is ABSENT, not zero.
+      // `env` has no value for New York (DEFRA and the EA are UK
+      // sources) or for a borough below the two-input floor, and
+      // drawing a 0.0 bar there would publish a reading nobody took
+      // - the same defect this repo closed in the map fill layers.
+      // It is also load-bearing for the line below: `value.toFixed`
+      // throws on undefined, so an unguarded fifth row would break
+      // the whole panel on exactly those cities.
+      if (value == null) return '';
       const weight = w[key] || 0;
       const pct = Math.max(0, Math.min(100, value * 10));
       const dim = weight < 0.15 ? ' weighted-low' : '';
@@ -591,6 +600,7 @@
         ${compRow('afford', 'Affordability')}
         ${compRow('growth', 'Growth')}
         ${compRow('live', 'Liveability')}
+        ${compRow('env', 'Environment')}
       </div>
       <div class="context">
         <div class="context-cell">

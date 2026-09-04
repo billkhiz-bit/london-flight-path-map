@@ -371,7 +371,9 @@ paths:
           description: City context for borough lookup.
           schema:
             type: string
-            enum: [london, nyc]
+            enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
+                   merseyside, tyneandwear, bristol, leicester, teesside,
+                   cardiff, nottingham]
             default: london
         - name: persona
           in: query
@@ -649,7 +651,7 @@ components:
           $ref: '#/components/schemas/Weights'
         methodologyVersion:
           type: string
-          example: "3.2"
+          example: "4.0"
         methodologyUrl:
           type: string
           format: uri
@@ -682,6 +684,8 @@ components:
               type: string
             live:
               type: string
+            env:
+              type: string
         plannedComponents:
           type: object
           description: |
@@ -713,7 +717,9 @@ components:
             properties:
               id:
                 type: string
-                enum: [london, nyc]
+                enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
+                       merseyside, tyneandwear, bristol, leicester, teesside,
+                       cardiff, nottingham]
               name:
                 type: string
               country:
@@ -746,6 +752,12 @@ components:
 
     Components:
       type: object
+      # `env` is deliberately NOT in `required`: it is legitimately
+      # absent for New York (DEFRA and the EA are UK sources) and below
+      # the two-input floor for Cardiff. Every other UK response carries
+      # it, so a client that treats it as optional-but-expected is
+      # correct and one that omits it entirely loses 0.14-0.18 of the
+      # score. Absent from this spec entirely until 2026-09-03.
       required: [quiet, afford, growth, live]
       properties:
         quiet:
@@ -754,8 +766,10 @@ components:
           minimum: 0
           maximum: 10
           description: >-
-            Aircraft noise impact, 10 = quietest. Aircraft ONLY - road noise is a
-            map layer on the consumer site and is not a score input.
+            Aircraft noise impact, 10 = quietest. Aircraft ONLY. Road noise is
+            NOT part of this component - it is scored separately, as 0.35 of
+            `env` (see below). It was a display-only map layer until v4.0,
+            which is what this description used to say.
         afford:
           type: number
           format: float
@@ -774,6 +788,18 @@ components:
           minimum: 0
           maximum: 10
           description: Liveability composite (35% schools + 30% crime + 25% transport + 10% healthcare).
+        env:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: >-
+            Environment composite, 10 = best (45% air quality against the WHO
+            2021 guidelines, 35% share of addresses over the WHO 53 dB road
+            Lden guideline, 20% share at Environment Agency Medium-or-High
+            flood risk). Scored since methodology v3.9; re-composed at v4.0.
+            Absent for New York, and for boroughs below the two-input floor -
+            `context.environmentResolution` says which.
 
     Context:
       type: object
@@ -792,6 +818,22 @@ components:
           type: string
           enum: [low, low-moderate, moderate, moderate-high, high, severe]
           description: DEFRA Lden band classification (borough-aggregate).
+        liveResolution:
+          type: string
+          description: >-
+            Whether the liveability inputs were measured for this borough,
+            and if partial, which are missing and why.
+        environmentResolution:
+          type: string
+          description: >-
+            Whether the three environment inputs were measured. `unavailable`
+            for New York; `partial` where fewer than three are held.
+        environmentSingleInput:
+          type: boolean
+          description: >-
+            Present when `env` rests on ONE input of three. Ranking surfaces
+            must exclude these from "best environment" comparisons: the absent
+            input is not missing at random.
         quietResolution:
           type: string
           enum: [borough, postcode, raster]
@@ -819,7 +861,9 @@ components:
       properties:
         city:
           type: string
-          enum: [london, nyc]
+          enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
+                 merseyside, tyneandwear, bristol, leicester, teesside,
+                 cardiff, nottingham]
         postcode:
           type: string
         borough:
@@ -864,6 +908,21 @@ components:
 
     Weights:
       type: object
+      description: >-
+        The persona weight table as DEFINED, which is not the same as the
+        weights applied to this particular response. A component absent
+        from `components` still appears here with its persona weight, and
+        the score is computed by redistributing it proportionally across
+        the components that ARE present. To reproduce `score`, divide the
+        weighted sum by the total weight of the components present:
+        sum(components[k] * weights[k]) / sum(weights[k] for k in
+        components). This is only visible where a component is missing -
+        New York (5 boroughs) and Cardiff (4), which have no `env` - and
+        there the naive un-normalised sum understates the published score
+        by 0.6 to 0.9 points. Measured 2026-09-03.
+      # A caller-supplied `weights` override may pass four keys or five;
+      # `env` is an optional fifth and a rejected override returns 400
+      # with a reason rather than silently scoring under `balanced`.
       required: [quiet, afford, growth, live]
       properties:
         quiet:
@@ -879,6 +938,10 @@ components:
           minimum: 0
           maximum: 1
         live:
+          type: number
+          minimum: 0
+          maximum: 1
+        env:
           type: number
           minimum: 0
           maximum: 1
@@ -900,7 +963,9 @@ components:
                 type: string
               city:
                 type: string
-                enum: [london, nyc]
+                enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
+                       merseyside, tyneandwear, bristol, leicester, teesside,
+                       cardiff, nottingham]
               persona:
                 type: string
                 enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, laterlife]
