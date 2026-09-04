@@ -112,6 +112,7 @@ POSIX `VAR=value command` prefix every recipe here uses - it answers
   was fixed for on 1 Sep. Now a bounded poll, proven red.
 
 ### 0.3 FOUR DECISIONS WAITING ON BILL - all change published numbers
+###     (recommendations added 2026-09-04, below the four)
 
 1. **Affordability scaling.** Min-max WITHIN each city, so every city's
    cheapest borough scores 10.0 and its priciest 0.0. **Barking and Dagenham
@@ -132,6 +133,72 @@ POSIX `VAR=value command` prefix every recipe here uses - it answers
 4. **Flood-gate caching.** ~15 min on a blocking stage, irreducible at 88
    requests. Caching on mosaic sha256 with an expiry would fix it, but a cache
    is also how a gate stops checking.
+
+**RECOMMENDATIONS, 2026-09-04.** Each is a recommendation, not a decision -
+all four still change published numbers and all four are Bill's call.
+
+1. **Affordability - national anchor with percentile clamping, AND publish the
+   within-city rank separately.** The diagnosis is that **affordability is the
+   only component not anchored on a published external threshold**: quiet uses
+   measured DEFRA footprints, liveability uses DfE's 0.0 anchor and crime per
+   1,000, environment uses WHO 2021 and the EA's 10% Medium-or-High cut.
+   Affordability alone is "relative to cohort", and that exception IS the
+   Barking/Stockton result. Clamp at the national p10/p90 of the 99 borough
+   medians rather than raw min-max, so a single outlier cannot set the scale.
+   Keep the within-city signal as an EXPLICIT RANK ("3rd cheapest of 33 in
+   London") rather than a disguised score - pure national anchoring flattens
+   most of London to 0.0, and choosing WITHIN a city is the dominant consumer
+   use case. Surface both with honest labels; an optional field beside a wrong
+   one is the `lineStatusAvailable` failure, which this repo has now hit four
+   times.
+
+   > **DO NOT reach for a price-to-earnings ratio**, the standard UK
+   > affordability measure and the obvious fix. `METHODOLOGY.md` section 10
+   > commits publicly that **"income or wealth distributions of residents"**
+   > are NEVER inputs, and that section exists because the customer set
+   > includes **Sharia-compliant home-finance providers** - regulated lenders,
+   > where indirect discrimination is a live compliance question. ONS's ratio
+   > uses WORKPLACE-based earnings, which is arguably a different thing from
+   > resident income, so this is genuinely arguable - but it is a fine line to
+   > walk in a published fairness commitment, and crossing it means rewriting
+   > section 10 deliberately rather than as a side effect.
+
+   Changes every published affordability number, so it is a v5.0 bump. Use the
+   existing `?compare=previous` and `/v1/changes` machinery to explain the
+   movement, and **do this LAST of the four** - the other three are cheap.
+
+2. **Weights - make `weights` the APPLIED (renormalised) weights**, so
+   `sum(components * weights) == score` holds by construction, with a gate
+   asserting that invariant for every persona x city INCLUDING the
+   absent-component cases. **Not a separate `weightsApplied` field.** That is
+   precisely the shape this repo has been burned by: the producing comment for
+   `lineStatusAvailable` said "consumers can upgrade to read the flag; none is
+   required to", which made the second half optional and it never happened. An
+   optional correct field leaves the naive computation wrong for everyone who
+   does not know to switch. Keep the persona's NOMINAL weights in the spec,
+   where they are a definition rather than a reproduction aid.
+
+3. **The 0.60 threshold - delete the constant, use a STRUCTURAL test.** The
+   real question is not the correlation but whether anything besides price
+   distinguishes the rows, and for the nine generated cities that is knowable
+   without measuring: `crime` is 0 (not published at district geography) and
+   liveability is inherited from the borough, so price and aircraft quiet are
+   all that vary. London and NYC carry curated medians and a hand-assigned
+   crime modifier, so they hold a real differentiator. A structural test is
+   deterministic, cannot expire the way 0.60 did, and settles London cleanly
+   wherever its correlation drifts next. Same move that dissolved
+   `min-height: 380px` in the D3 landscape fix: **a magic number whose job is
+   to approximate a fact you can read straight off the data holder dissolves
+   when you read it.**
+
+4. **Flood gate - content-key the cache, plus a rotating full check.** Key on
+   each mosaic's sha256 so an unchanged city is skipped, **always verify one
+   rotating city regardless**, and hard-expire the whole cache at 7 days. Most
+   runs drop to near-zero, all 11 cities still get a real EA round-trip within
+   ~11 runs, and the gate cannot silently stop checking - which is the actual
+   risk named. Print skipped cities **in their own position**, per the
+   `--skip-e2e` lesson: a stage that vanishes from a report is
+   indistinguishable from one that passed.
 
 ---
 

@@ -494,6 +494,32 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 >    settled and already public. Nothing is left to decide.
 
 
+### Legal items - RECOMMENDED SEQUENCING, 2026-09-04
+
+**Two of the three are gated on a pilot that has not started.** Outreach has
+never been sent - 0 of 5 drafts since 21 May. That reframes the priority: these
+read like blockers, but the bottleneck is upstream of all three.
+
+1. **ICO fee, GBP 52 - PAY NOW**, in Cubitt33 Ltd's name. Genuinely unblocked
+   since 2026-08-07, and re-raised as open work three times since. It is the
+   only one of the three carrying **live** exposure, because signup processes
+   email addresses today. **This may be larger than recorded**: the Signup
+   CloudWatch log group holds 2,671 bytes and `privacy.html` section 2b
+   discloses DynamoDB and API-key metadata, not CloudWatch. If those bytes
+   contain addresses it is an Article 13 gap on top, and worth establishing
+   BEFORE filing, since it changes what is disclosed. (The group was created
+   2026-08-21, so the "26 Jun - 23 Jul" range in the gate's warning text is
+   stale prose, not a live finding.)
+2. **IP assignment deed - worth doing, not urgent today.** Still waiting on
+   Dad's confirmation of connected-party tax treatment. It becomes a diligence
+   failure when a pilot lands, not before.
+3. **Solicitor review of `terms.html` - DEFER** until a pilot is actually in
+   prospect. Paying for review before a single outreach email has gone out is
+   spending ahead of the risk.
+
+**If the pilot track matters this quarter, OUTREACH is the item, not the
+paperwork.**
+
 **Not legal advice; these are verified gaps.** Full reasoning in
 `memory/project-legal-liability-gaps.md`.
 
@@ -754,6 +780,7 @@ for the domain than none.
 ## Open decisions
 
 ### Raised 2026-09-03 - four that change PUBLISHED NUMBERS
+### Recommendations added 2026-09-04; still undecided
 
 1. **Affordability scaling.** Min-max WITHIN each city, so every city's
    cheapest borough scores 10.0 and its priciest 0.0 whatever the money.
@@ -778,6 +805,72 @@ for the domain than none.
 4. **Flood-gate caching.** ~15 minutes on a BLOCKING stage, irreducible at 88
    requests against a host sustaining one per 10s. Caching on mosaic sha256 with
    an expiry would fix it; a cache is also how a gate quietly stops checking.
+
+**RECOMMENDATIONS, 2026-09-04.** Each is a recommendation, not a decision -
+all four still change published numbers and all four are Bill's call.
+
+1. **Affordability - national anchor with percentile clamping, AND publish the
+   within-city rank separately.** The diagnosis is that **affordability is the
+   only component not anchored on a published external threshold**: quiet uses
+   measured DEFRA footprints, liveability uses DfE's 0.0 anchor and crime per
+   1,000, environment uses WHO 2021 and the EA's 10% Medium-or-High cut.
+   Affordability alone is "relative to cohort", and that exception IS the
+   Barking/Stockton result. Clamp at the national p10/p90 of the 99 borough
+   medians rather than raw min-max, so a single outlier cannot set the scale.
+   Keep the within-city signal as an EXPLICIT RANK ("3rd cheapest of 33 in
+   London") rather than a disguised score - pure national anchoring flattens
+   most of London to 0.0, and choosing WITHIN a city is the dominant consumer
+   use case. Surface both with honest labels; an optional field beside a wrong
+   one is the `lineStatusAvailable` failure, which this repo has now hit four
+   times.
+
+   > **DO NOT reach for a price-to-earnings ratio**, the standard UK
+   > affordability measure and the obvious fix. `METHODOLOGY.md` section 10
+   > commits publicly that **"income or wealth distributions of residents"**
+   > are NEVER inputs, and that section exists because the customer set
+   > includes **Sharia-compliant home-finance providers** - regulated lenders,
+   > where indirect discrimination is a live compliance question. ONS's ratio
+   > uses WORKPLACE-based earnings, which is arguably a different thing from
+   > resident income, so this is genuinely arguable - but it is a fine line to
+   > walk in a published fairness commitment, and crossing it means rewriting
+   > section 10 deliberately rather than as a side effect.
+
+   Changes every published affordability number, so it is a v5.0 bump. Use the
+   existing `?compare=previous` and `/v1/changes` machinery to explain the
+   movement, and **do this LAST of the four** - the other three are cheap.
+
+2. **Weights - make `weights` the APPLIED (renormalised) weights**, so
+   `sum(components * weights) == score` holds by construction, with a gate
+   asserting that invariant for every persona x city INCLUDING the
+   absent-component cases. **Not a separate `weightsApplied` field.** That is
+   precisely the shape this repo has been burned by: the producing comment for
+   `lineStatusAvailable` said "consumers can upgrade to read the flag; none is
+   required to", which made the second half optional and it never happened. An
+   optional correct field leaves the naive computation wrong for everyone who
+   does not know to switch. Keep the persona's NOMINAL weights in the spec,
+   where they are a definition rather than a reproduction aid.
+
+3. **The 0.60 threshold - delete the constant, use a STRUCTURAL test.** The
+   real question is not the correlation but whether anything besides price
+   distinguishes the rows, and for the nine generated cities that is knowable
+   without measuring: `crime` is 0 (not published at district geography) and
+   liveability is inherited from the borough, so price and aircraft quiet are
+   all that vary. London and NYC carry curated medians and a hand-assigned
+   crime modifier, so they hold a real differentiator. A structural test is
+   deterministic, cannot expire the way 0.60 did, and settles London cleanly
+   wherever its correlation drifts next. Same move that dissolved
+   `min-height: 380px` in the D3 landscape fix: **a magic number whose job is
+   to approximate a fact you can read straight off the data holder dissolves
+   when you read it.**
+
+4. **Flood gate - content-key the cache, plus a rotating full check.** Key on
+   each mosaic's sha256 so an unchanged city is skipped, **always verify one
+   rotating city regardless**, and hard-expire the whole cache at 7 days. Most
+   runs drop to near-zero, all 11 cities still get a real EA round-trip within
+   ~11 runs, and the gate cannot silently stop checking - which is the actual
+   risk named. Print skipped cities **in their own position**, per the
+   `--skip-e2e` lesson: a stage that vanishes from a report is
+   indistinguishable from one that passed.
 
 
 | Decision | Default | Resolve when |
