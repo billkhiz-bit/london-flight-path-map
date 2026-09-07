@@ -104,13 +104,68 @@ CITY_PFA = {
     # takes a tuple, so this needs no new machinery - but the include-list is
     # what stops it collecting the whole of South Wales and Gwent.
     'cardiff': ('South Wales', 'Gwent'),
-    # Nottingham is NOT here on purpose. ONS publishes `Nottingham` and
-    # `South Nottinghamshire`, and Broxtowe, Gedling and Rushcliffe are inside
-    # that one combined row rather than published separately. Spreading a single
-    # rate across three boroughs would render one measurement as three, which is
-    # the defect class this whole file exists to prevent. Decide it explicitly
-    # before adding it.
+    # Nottingham, added 2026-09-07. The reason it was held back was sound and
+    # covered only THREE of its four boroughs: ONS publishes `Nottingham` and
+    # `South Nottinghamshire`, and Broxtowe, Gedling and Rushcliffe sit inside
+    # that one combined row, so spreading a single rate across three boroughs
+    # would render one measurement as three. That is still true and they are
+    # still not compared - they publish `crimeRate: None`, so there is nothing
+    # to compare.
+    #
+    # But `City of Nottingham` has its OWN CSP row and publishes **124.9**, and
+    # the note that deferred the decision left that figure gated by nothing for
+    # as long as the city has existed. A reason that applies to part of a city
+    # kept the whole city out. The include-list below takes the one separable
+    # row; the guard under CITY_PFA now fails if a NEW city is added and
+    # silently skipped the same way.
+    'nottingham': ('Nottinghamshire',),
 }
+
+# Every city the engine serves must be compared against ONS, or be listed here
+# with the reason it cannot be. Added 2026-09-07: until then a city absent from
+# CITY_PFA was simply dropped from `--all`, and `City of Nottingham` published a
+# crime rate that this BLOCKING gate had never once looked at. The omission was
+# recorded in a comment, which is not a check.
+#
+# Same shape as `ON_THE_STAGE_CEILING` in backend/tests/test_route_throttles.py,
+# and for the same reason: a route in neither list must fail.
+NO_ONS_COMPARISON = {
+    'nyc': 'ONS Table C4 is a UK release; NYC rates are NYPD CompStat-derived.',
+}
+
+
+def _assert_every_city_is_accounted_for():
+    """Fail if the engine serves a city this gate neither checks nor excuses.
+
+    The floor below is per-city and per-borough, but both only ever run over
+    `CITY_PFA` - so a city missing from that dict was invisible to every floor
+    in the file. This is the floor on the LIST ITSELF.
+    """
+    import types
+
+    path = Path('backend/lambdas/score/app.py')
+    mod = types.ModuleType('score_app_city_list')
+    mod.__file__ = str(path)
+    exec(  # noqa: S102
+        compile(path.read_text(encoding='utf-8'), str(path), 'exec'), mod.__dict__
+    )
+    engine = set(mod.CITIES)
+    unaccounted = sorted(engine - set(CITY_PFA) - set(NO_ONS_COMPARISON))
+    if unaccounted:
+        raise SystemExit(
+            f'FAIL: the engine serves {", ".join(unaccounted)}, which this gate '
+            f'neither compares against ONS nor lists in NO_ONS_COMPARISON.\n'
+            f'      A city absent from CITY_PFA is dropped from --all silently, '
+            f'so its crime rate is published under a blocking gate that has '
+            f'never read it. Add it to one list or the other.'
+        )
+    stale = sorted(set(NO_ONS_COMPARISON) & set(CITY_PFA))
+    if stale:
+        raise SystemExit(
+            f'FAIL: {", ".join(stale)} is both compared and excused. Remove it '
+            f'from NO_ONS_COMPARISON - an excuse that no longer applies is how '
+            f'a list stops describing anything.'
+        )
 
 # CSP rows that are NOT boroughs. Greater Manchester publishes ELEVEN: the ten
 # metropolitan boroughs plus `Manchester Airport`, which is its own partnership.
@@ -143,6 +198,12 @@ CSP_INCLUDE = {
         'Leicester', 'Blaby', 'Charnwood', 'Harborough', 'Hinckley and Bosworth',
         'Melton', 'North West Leicestershire', 'Oadby and Wigston',
     }),  # Leicestershire Police also covers Rutland
+    # Nottinghamshire Police covers the whole county. ONE row is taken: ONS's
+    # `Nottingham`, which is the separately-published city. `South
+    # Nottinghamshire` is deliberately NOT here - it is one rate covering
+    # Broxtowe, Gedling and Rushcliffe together, and admitting it would mean
+    # publishing one measurement as three.
+    'nottingham': frozenset({'Nottingham'}),
     'teesside': frozenset({
         'Hartlepool', 'Middlesbrough', 'Redcar and Cleveland', 'Stockton-on-Tees',
         'Darlington',
@@ -153,6 +214,9 @@ CSP_INCLUDE = {
 CSP_RENAME = {
     'bristol': {'Bristol, City of': 'City of Bristol'},
     'merseyside': {'St. Helens': 'St Helens'},
+    # ONS names the partnership `Nottingham`; the registry calls the borough
+    # `City of Nottingham`, as it does for Bristol above.
+    'nottingham': {'Nottingham': 'City of Nottingham'},
 }
 
 
@@ -369,7 +433,16 @@ def compare_city(city, write=False):
     # or explicitly unresolved (ONS suppresses the City of London rate). One
     # that is neither was never checked, and the city-level `compared == 0`
     # floor cannot see it.
-    unaccounted = sorted(b for b in london if b not in seen)
+    # A borough that publishes NO rate cannot drift from ONS, and demanding a
+    # comparison for one would mean inventing a figure to compare. Nottingham's
+    # Broxtowe, Gedling and Rushcliffe are exactly that case: ONS publishes them
+    # only inside a combined `South Nottinghamshire` row, so the registry holds
+    # `crimeRate: None` and this gate must not require them. Boroughs that DO
+    # publish a rate are still all required - that is the per-borough floor.
+    unaccounted = sorted(
+        b for b, rec in london.items()
+        if b not in seen and rec.get('crimeRate') is not None
+    )
     if unaccounted:
         print(f'  NOT COMPARED AT ALL: {unaccounted}')
     print(f'  boroughs whose rate differs from ONS: {len(drift)}')
@@ -417,6 +490,11 @@ def main():
     if args.write and args.city != 'london':
         print(f'--write is London-only; {args.city} has no borough-extra.json entry.')
         return 2
+
+    # The floor on the LIST, before any per-city floor can run. A city missing
+    # from CITY_PFA was silently dropped from --all, so no floor in this file
+    # could see it.
+    _assert_every_city_is_accounted_for()
 
     cities = sorted(CITY_PFA) if args.all else [args.city]
 

@@ -89,6 +89,7 @@ entry alone is not evidence of use. All six below are genuinely fetched.
 | 15 | **US Environmental Protection Agency** (`gispub.epa.gov`) | Air-quality non-attainment-area layer for the NYC view (`index.html:5501`). | Visitor **IP address** and map viewport bbox. | **US.** | Public-sector open data. |
 | 16 | **FEMA** (`hazards.fema.gov`) | National Flood Hazard Layer for the NYC view (`index.html:5495`). | Visitor **IP address** and map viewport bbox. | **US.** | Public-sector open data. |
 | 17 | **GoatCounter script host** (`gc.zgo.at`) | Serves `count.js` for the analytics in row 3 (`index.html:9074`). Named separately because row 3 covers the *count* endpoint (`cubitt33.goatcounter.com`) and a reviewer checking the CSP will find this host too. | Visitor **IP address** while fetching the script. | EU (operated by offshootbv, Netherlands). | As row 3. |
+| 18 | **AWS Bedrock** (`bedrock-runtime.us-east-1.amazonaws.com`) | Generates the answer for the key-gated `POST /v1/chat` retrieval assistant (`backend/lambdas/chat/app.py`). The model is never the source of data: context comes from invoking the score function directly, and `verify_answer()` discards any reply containing a number absent from that payload. | The caller's **question text** and **postcode**. | **US (us-east-1).** Third-country transfer, covered by the AWS DPA and its Standard Contractual Clauses. | Added 2026-09-07. The route existed from 2026-08-06, when `/v1/chat` was restored, and was unrecorded here until an audit found §5 still claiming a single intra-EEA transfer. Denied to every self-service key (`RateLimit: 0` on `ScoreFreeUsagePlan`), so no consumer or free-tier caller reaches it. `BEDROCK_REGION` is an env var, so an EEA region is a configuration change. |
 
 Rows 14-16 serve the **NYC** map layers only; a UK-only visitor who never switches
 city does not trigger them. They are listed unconditionally because the code path is
@@ -110,7 +111,7 @@ Documented to make procurement reviews faster:
 | Sentry / Datadog / New Relic | Error monitoring not yet wired up; would be a future sub-processor addition with prior notice. |
 | Stripe / any payment processor | Free tier only; no commercial sub-processor today. |
 | HubSpot / Salesforce / Mailchimp | No marketing automation; outreach is hand-curated. |
-| OpenAI / Anthropic / any LLM provider | All AI features were removed from the consumer site on 2026-05-07; no LLM provider receives any customer data. |
+| OpenAI / Anthropic / any LLM provider | **No THIRD-PARTY LLM provider is used.** AWS Bedrock is used, and it is AWS - see row 18. The consumer site's AI features were removed on 2026-05-07 and have not returned; the key-gated B2B endpoint `POST /v1/chat` was restored on 2026-08-06 as a retrieval-only assistant and calls Bedrock. Corrected 2026-09-07: this row read "no LLM provider receives any customer data" for a month after that restoration. |
 | OpenSky Network | Live-flight tracking removed end-to-end on 2026-05-07 pending OpenSky's required written licensing agreement. Re-introduction would trigger a sub-processor notification. |
 
 ---
@@ -139,13 +140,29 @@ Removing a sub-processor: noted here on the same business day.
 - All customer **state** (DynamoDB) is in `eu-west-2` (London).
 - All customer **compute** (Lambda) is in `eu-west-2` (London).
 - API requests terminate at API Gateway in `eu-west-2`.
-- **Processing is not wholly UK-resident.** One outbound route leaves the UK:
-  the healthcare component sends **lat/lon to `overpass-api.de` (Germany)**, row 11.
-  Germany is an EU member state, so this is an intra-EEA transfer rather than a
-  third-country transfer, and no Article 46 safeguard is required — but it is a
-  transfer, and a buyer requiring UK-only processing must know about it. The
-  endpoint is environment-configurable (`OVERPASS_URL`), so it can be repointed to
-  a UK-hosted Overpass instance **without a code change** if a contract requires it.
+- **Processing is not wholly UK-resident. TWO outbound routes leave the UK,
+  and one of them leaves the EEA.** Corrected 2026-09-07: this section said
+  "One outbound route" and concluded that no Article 46 safeguard was required.
+  That was true when written and stopped being true on 2026-08-06.
+
+  1. **`overpass-api.de` (Germany)** — the healthcare component sends
+     **lat/lon**, row 11. Germany is an EU member state, so this is an
+     intra-EEA transfer. The endpoint is environment-configurable
+     (`OVERPASS_URL`), so it can be repointed to a UK-hosted Overpass instance
+     **without a code change** if a contract requires it.
+  2. **AWS Bedrock in `us-east-1` (United States)** — `POST /v1/chat` sends the
+     caller's **question text and postcode** to a model hosted in North
+     Virginia (`backend/lambdas/chat/app.py`, `BEDROCK_REGION`). This is a
+     **third-country transfer**. It is covered by the AWS DPA and its Standard
+     Contractual Clauses rather than by nothing, but it is a transfer this
+     document previously said did not exist, and a buyer requiring UK- or
+     EEA-only processing must know about it.
+
+     `/v1/chat` is **API-key gated and denied to every self-service key**
+     (`RateLimit: 0` on `ScoreFreeUsagePlan`), so no consumer-site visitor and
+     no free-tier integrator can reach it. `BEDROCK_REGION` is an environment
+     variable, so moving inference into an EEA region is a configuration change
+     rather than a code change — subject to the model being offered there.
 - The other four upstream routes (rows 8-10, and row 4) are **UK-resident**: TfL,
   MHCLG, HM Land Registry and postcodes.io.
 - **Static** marketing assets (the `index.html` file, CSS, JS bundles)

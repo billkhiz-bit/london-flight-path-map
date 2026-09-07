@@ -484,9 +484,42 @@ def load_naptan_grid():
         )
     grid = defaultdict(list)
     kept = 0
+    inactive = 0
     with NAPTAN_CSV.open(newline='', encoding='utf-8-sig', errors='replace') as fh:
-        for row in csv.DictReader(fh):
+        reader = csv.DictReader(fh)
+        # RETIRED NODES ARE EXCLUDED (2026-09-07, audit I1).
+        #
+        # NaPTAN keeps decommissioned stops with real names and real
+        # coordinates, marked `Status: inactive` - 806 of the 11,163
+        # rail/metro/tram rows. `build_city_stations.py` learned to drop them on
+        # 2026-09-01, when the station LIST a user reads was cleaned up. This
+        # reader, twenty lines away in a different file and reading the same
+        # CSV, did not - and it is the half that writes a SCORED field:
+        # `transport` is 0.25 of liveability and lives in BOTH score holders.
+        #
+        # The fix reached the surface with the visible symptom and missed the
+        # one with the blast radius. Measured effect of excluding them: the
+        # share moves by at most 1.02pp, 12 boroughs shift, and one band changes
+        # - City of Nottingham `good` -> `moderate`.
+        #
+        # HARD-FAIL ON AN ABSENT COLUMN, never `row.get('Status')` falling
+        # through, and hard-fail again on a scan that kept nodes and found no
+        # inactive ones. Both spellings of a silent fall-through look exactly
+        # like a clean run - the same two-directional guard the stations builder
+        # and the terminated-postcode reader carry.
+        if 'Status' not in (reader.fieldnames or []):
+            raise SystemExit(
+                f'{NAPTAN_CSV} has no Status column - it was renamed or this is '
+                'not a NaPTAN access-node export. Refusing to continue: without '
+                'it, retired stations count as current service in a scored '
+                'field. Columns seen: '
+                f'{sorted(reader.fieldnames or [])[:12]}'
+            )
+        for row in reader:
             if row.get('StopType') not in NAPTAN_RAIL_TYPES:
+                continue
+            if (row.get('Status') or '').strip().lower() != 'active':
+                inactive += 1
                 continue
             try:
                 e, n = float(row['Easting']), float(row['Northing'])
@@ -494,7 +527,16 @@ def load_naptan_grid():
                 continue
             grid[(int(e // 1000), int(n // 1000))].append((e, n))
             kept += 1
-    print(f'  {kept:,} rail/metro/tram access nodes indexed')
+    print(f'  {kept:,} ACTIVE rail/metro/tram access nodes indexed '
+          f'({inactive:,} retired excluded)')
+    if kept and not inactive:
+        raise SystemExit(
+            f'{NAPTAN_CSV} yielded {kept:,} nodes and ZERO inactive ones. '
+            'NaPTAN publishes retired stops in every edition, so finding none '
+            'means the Status values changed spelling and the filter above is '
+            'now passing everything. That is the defect this guard exists to '
+            'catch, wearing the shape of a clean run.'
+        )
     # ZERO ROWS IS A FAILED READ, not a country with no stations. The
     # file-exists check above passes for a NaPTAN export whose StopType or
     # Easting column has been renamed upstream - it opens, it parses, it yields

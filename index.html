@@ -511,10 +511,27 @@
           text-transform: uppercase;
           color: var(--mid);
           text-align: center;
+          /* TRANSPARENT TO THE FINGER EXCEPT ON ITS LINKS (2026-09-07).
+             This footer is full-width inside #sidebar, which is itself
+             `pointer-events: none` for exactly this reason - the sheet overlays
+             the map and must not swallow taps meant for it. Un-hiding the
+             footer (audit C2) reintroduced that swallowing on the SHORTEST
+             landscape phone: measured at 568x320 the footer occupies y 100-181
+             and #layers-trigger sits at y 158-194, so elementFromPoint at the
+             trigger's centre returned `footer.sheet-footer` and Playwright
+             refused the click outright. At 844x390 the footer ends at 155 and
+             the trigger starts at 228, so it only bites where the viewport is
+             short enough for the two bands to meet.
+             Same idiom as the sidebar: the container is transparent to
+             pointers, the interactive children opt back in. */
+          pointer-events: none;
         }
         .sheet-footer a {
           color: var(--mid);
           text-decoration: none;
+          /* The links take pointer events; the footer's empty width does not -
+             see the rule above. */
+          pointer-events: auto;
           /* Inline links in a text row: padding (not min-height) keeps the
              tap target near 24px without breaking the line box. */
           padding: 6px 2px;
@@ -528,9 +545,42 @@
           color: var(--orange-text);
         }
         .sheet-footer .sep {
-          color: rgba(99, 99, 99, 0.5);
+          /* SOLID, not 0.5 alpha (2026-09-07 audit, I11 follow-on). At
+             rgba(99,99,99,0.5) over the panel this measured 1.97:1 against a
+             4.5:1 requirement - seven nodes per viewport. --mid is #636363,
+             which is 4.68:1 on this surface, so any alpha at all drops it
+             under; de-emphasis has to come from size and spacing here, not
+             from transparency.
+
+             It was invisible to every gate until today for the plainest
+             reason: this footer was `display: none` on mobile web from
+             2026-08-28, so there was no rendered node to measure. Un-hiding it
+             (audit C2) is what exposed this. A fix that restores a surface
+             restores its defects with it. */
+          color: var(--mid);
         }
-        .is-tabbed .sheet-footer {
+        /* NATIVE ONLY, and the distinction is load-bearing (2026-09-07 audit,
+           C2). This was `.is-tabbed .sheet-footer`, which was correct when it
+           landed on 2026-08-26: `.is-tabbed` was set on the NATIVE app alone,
+           where the comment above is right - the app has its own bottom nav and
+           needs neither footer.
+
+           `.is-tabbed` became the WEB default at <=900px two days later, and
+           nothing re-read this rule. From then until today the mobile web
+           homepage rendered exactly ONE visible link - the skip link - because
+           the block above hides `.site-footer` and this hid the `.sheet-footer`
+           that the A-0724-I6 fix had added specifically to replace it. Measured
+           at 390x844 and 844x390: 1 visible link, no /privacy, no /terms, no
+           /pricing, against 10 with `?tabbed=0` and 13 on desktop.
+
+           Consequences beyond the links: the three `*-footer-click` analytics
+           events could not fire on mobile at all, so the funnel under-counted
+           by construction, and the homepage emitted no internal links to a
+           crawler rendering at a phone viewport.
+
+           Keyed on `.is-native` so it tracks the thing it is actually about.
+           `tests/mobile-legal-links.mjs` now asserts the links are reachable. */
+        .is-native .sheet-footer {
           display: none;
         }
       }
@@ -2839,8 +2889,32 @@
          this arithmetic goes stale - and `responsive.mjs` reds at 844x390 and
          568x320, which is how this collision was found. */
       @media (max-width: 900px) and (max-height: 500px) {
+        /* THE RIGHT EDGE BELONGS TO THE MAP CONTROLS (2026-09-07).
+           On a landscape phone the nine footer links wrap to five rows - 133px
+           tall at 568x320 - and the bottom rows reach across the full width,
+           under `#layers-trigger` at x 472..560. Measured: elementFromPoint at
+           the trigger's centre returned a footer `a`.
+           Reserving the control column keeps the links centred in what is left
+           (content box ends at 448px of 568) rather than hiding any of them:
+           these are the legal and funnel links, and hiding them at one
+           orientation is the defect this footer was just restored to fix. */
+        .sheet-footer {
+          padding-right: 120px;
+        }
+        /* See the legend-toggle handler: on a short viewport the expanded
+           legend and this footer cannot both have the band, and the legend is
+           what the user just asked for. */
+        .legend-open .sheet-footer {
+          display: none;
+        }
         .map-legend {
-          max-height: calc(100dvh - 126px - 146px);
+          /* The second term was the literal `146px`, meaning "the bottom of the
+             nav band". It is now the measured bottom of `.sheet-footer`, which
+             sits in that band and whose height depends on how many of its nine
+             links wrap. `updateFooterInset()` publishes it and falls back to
+             146px when the footer is not rendered, so native - where the footer
+             is hidden by design - keeps exactly the old geometry. */
+          max-height: calc(100dvh - 126px - var(--sheet-footer-bottom, 146px));
         }
       }
 
@@ -2865,6 +2939,25 @@
              Matches the panel's dark mobile surface. */
           z-index: 3;
           background: rgba(20, 20, 20, 0.98);
+          /* AND THE FOREGROUND HAS TO COME WITH IT (2026-09-07 audit, I11).
+             `.legend-toggle` is `color: var(--dark)` at its declaration, and
+             the `var(--white)` correction that pairs with this dark pill lives
+             in `@media (max-width: 480px)` - which a landscape phone does not
+             match. So at 568x320, 667x375, 844x390, 896x414 and 900x500 the
+             control rendered rgb(20,20,20) on rgb(25,25,25): 1.04:1 against a
+             4.5:1 requirement, at 11px, and it is the ONLY thing visible in the
+             legend in that state. The ::after chevron took the same colour and
+             was equally invisible.
+
+             FOURTH instance in this file of a mobile rule keyed on WIDTH where
+             HEIGHT is the failing dimension, after the sheet peek, the layers
+             popover and the legend cap. The background moved into this
+             height-gated block and the colour that pairs with it did not.
+
+             No contrast measurement had ever run at a landscape viewport -
+             a11y-source.mjs and panel-contrast.mjs both ran 1440x900 and
+             390x844 only. Both now include landscape. */
+          color: var(--white);
         }
         .legend-toggle[aria-expanded='false'] ~ * {
           display: none !important;
@@ -3243,6 +3336,20 @@
         .app[data-mview='search'] > .sidebar > * {
           pointer-events: auto;
         }
+        /* ...EXCEPT THE FOOTER, WHICH IS MOSTLY EMPTY WIDTH (2026-09-07).
+           The rule above is what the comment describes for a card or a header:
+           a child that fills its own box. `.sheet-footer` is a full-width row
+           of centred inline links, so re-enabling the ELEMENT hands it a band
+           of dead space across the whole viewport - and un-hiding it (audit C2)
+           put that band over the map controls on the shortest landscape phone.
+           Measured at 568x320: footer y 100-181, #layers-trigger y 158-194,
+           and elementFromPoint at the trigger's centre returned
+           `footer.sheet-footer`; Playwright refused the click outright.
+           The links opt back in individually (`.sheet-footer a`), which is the
+           same container-transparent/child-opaque idiom as the sidebar itself. */
+        .app[data-mview='search'] > .sidebar > .sheet-footer {
+          pointer-events: none;
+        }
         .app[data-mview='search'] .sidebar-header,
         .app[data-mview='search'] .install-prompt,
         .app[data-mview='search'] .disclaimer,
@@ -3319,7 +3426,23 @@
           /* Clears the country + city bands above it. Was 8px, which put the
              card on the same line as the chips and covered them. */
           top: calc(env(safe-area-inset-top) + 54px);
-          margin: 8px;
+          /* THE TOP MARGIN MATCHES THE STICKY OFFSET, and that is the whole
+             point (2026-09-07, audit C2 follow-on).
+             `margin: 8px` left this card's FLOW SLOT 38px above where sticky
+             actually pins it, so the card hung over whatever came next. Nothing
+             came next while `.sheet-footer` was `display: none` on mobile web;
+             the moment the footer was restored, its first row of links rendered
+             at y 115-141 underneath a card occupying 54-138, and
+             `elementFromPoint` on "Pricing" returned `div.search-box`. The links
+             were visible and unclickable - which is why the first version of
+             tests/mobile-legal-links.mjs passed: it asked whether they were
+             VISIBLE, not whether they were HIT-TESTABLE.
+             54px, not the measured 38px overhang: the env() term cancels
+             because the sidebar's own padding-top already carries it, so flow
+             top and pinned top now resolve to the same value on a notched
+             device as well as a flat one. The card does not move; everything
+             after it moves down by the overhang it was hidden under. */
+          margin: 54px 8px 8px;
           padding: 10px 12px;
           background: var(--white, #ffffff);
           border: 1px solid var(--dark);
@@ -3451,6 +3574,24 @@
           .layers-trigger[aria-expanded='true'] ~ #layer-toggles {
             top: 146px;
             bottom: auto;
+            /* OPENS BESIDE THE TRIGGER, NOT OVER IT (2026-09-07 audit, I12).
+               At `right: 8px` this popover covered its own trigger at every
+               landscape phone size - measured with elementFromPoint at the
+               trigger's centre, which returned `button.layer-toggle` at
+               568x320, 667x375, 844x390 and 896x414. A second tap could not
+               close it and Escape did nothing, so the only way out was a tap on
+               the map, which selects a borough as a side effect.
+
+               The constraint is VERTICAL, not horizontal: this viewport is
+               short, and at 844x390 it is 844px WIDE with a 150px panel. So the
+               popover moves left of the trigger column and keeps its height,
+               rather than the alternative of capping it above the trigger,
+               which at 390px tall leaves ~74px and 1.5 visible toggles.
+
+               88px is the trigger's width and 8px its right offset; +8px gap.
+               Fifth instance in this file of a mobile rule keyed on WIDTH where
+               the failing dimension is HEIGHT. */
+            right: 112px;
             /* Clears the BOTTOM chrome as well as the top. Capping only against
                the card left the popover running to y=382 in a 390px viewport
                while the bottom nav starts at ~334, so the last two toggles were
@@ -12435,11 +12576,35 @@
        */
       function updateFooterInset() {
         const footer = document.querySelector('.site-footer');
-        if (!footer) return;
-        const h = footer.getBoundingClientRect().height;
+        if (footer) {
+          const h = footer.getBoundingClientRect().height;
+          document.documentElement.style.setProperty(
+            '--footer-inset',
+            h > 0 ? `${Math.round(h) + 8}px` : '0px'
+          );
+        }
+        // THE SHEET FOOTER IS MEASURED TOO (2026-09-07, audit C2 follow-on).
+        //
+        // The legend's landscape cap was `calc(100dvh - 126px - 146px)`, where
+        // 146px meant "the bottom of the nav band" - and it was correct while
+        // `.sheet-footer` was `display: none` on mobile web. Restoring that
+        // footer put it at 146..201 at 844x390, so an EXPANDED legend and the
+        // footer's link row occupied the same pixels and `responsive.mjs`
+        // reported `#legend-toggle covered by a.for-devs`.
+        //
+        // The height cannot be a constant: it depends on how many of the nine
+        // links wrap, which depends on the viewport - 55px at 844x390 and 133px
+        // at 568x320. Measured for the same reason `--footer-inset` above is
+        // measured, and the comment on that one says it: a constant is right at
+        // one width and wrong at every other.
+        const sheetFooter = document.querySelector('.sheet-footer');
+        const visible =
+          sheetFooter && sheetFooter.getBoundingClientRect().height > 0;
         document.documentElement.style.setProperty(
-          '--footer-inset',
-          h > 0 ? `${Math.round(h) + 8}px` : '0px'
+          '--sheet-footer-bottom',
+          visible
+            ? `${Math.round(sheetFooter.getBoundingClientRect().bottom) + 8}px`
+            : '146px'
         );
       }
 
@@ -13503,6 +13668,27 @@
           legendToggle.addEventListener('click', () => {
             const expanded = legendToggle.getAttribute('aria-expanded') === 'true';
             legendToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            // THE FOOTER YIELDS TO AN OPEN LEGEND ON A SHORT VIEWPORT
+            // (2026-09-07). On a landscape phone the expanded legend and the
+            // restored `.sheet-footer` want the same band and there is not room
+            // for both: measured at 844x390, giving the footer its 55px left
+            // the legend 33px against the 40px floor `responsive.mjs` enforces,
+            // and giving the legend its 118px put the footer's links over
+            // `#legend-toggle`.
+            //
+            // The legend wins while it is open, because it is the thing the
+            // user has just asked for; the footer is persistent and comes back
+            // the moment the legend closes. The class is only ACTED ON inside
+            // the `(max-width: 900px) and (max-height: 500px)` block, so no
+            // other viewport changes at all.
+            //
+            // `updateFooterInset()` is re-run so `--sheet-footer-bottom`
+            // re-measures: with the footer hidden it falls back to 146px and
+            // the legend gets the full band the D3 fix computed for it. The
+            // variable does the arithmetic - nothing here hardcodes either
+            // number.
+            document.documentElement.classList.toggle('legend-open', !expanded);
+            updateFooterInset();
             // Height just changed by the whole body of the legend.
             updateLegendFade();
           });
@@ -13547,6 +13733,22 @@
             ev.stopPropagation();
             const open = layersTrigger.getAttribute('aria-expanded') === 'true';
             layersTrigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+          });
+          // ESCAPE CLOSES IT (2026-09-07 audit, I12). It did not, and on a
+          // landscape phone the popover also covered its own trigger, so the
+          // only exit was a tap on the map - which selects a borough. Two
+          // dismissal routes were broken at once and the remaining one had a
+          // side effect. The CSS fix beside this restores the tap; this
+          // restores the keyboard, which is also what a external keyboard or a
+          // switch-control user reaches for first.
+          //
+          // Focus returns to the trigger, or the dismissal strands focus on an
+          // element that has just been hidden.
+          document.addEventListener('keydown', (ev) => {
+            if (ev.key !== 'Escape') return;
+            if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
+            layersTrigger.setAttribute('aria-expanded', 'false');
+            layersTrigger.focus();
           });
           // Close popover when tapping anywhere outside it - and SWALLOW the
           // tap when it lands on the map (2026-08-24). This used to run in the

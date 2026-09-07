@@ -155,21 +155,29 @@ A request for a postcode outside the supported geography returns a 404 with a `s
 
 Each component is bounded in 0-10 with floating-point precision internally and one-decimal display precision in the API response.
 
-> **Correction, 2026-08-04: `quiet` measures aircraft noise only.** The row above read
-> *"Aviation + road noise impact"*, and `README.md` said the same. **There is no road-noise term
-> in the scoring engine** — `backend/lambdas/score/app.py` contains no road-noise code at all, and
-> §4.1/§4.5 describe only aircraft sources (DEFRA aircraft Lden, distance to airports,
-> flight-path geometry, heliports).
+> **`quiet` measures aircraft noise only. Road noise IS scored, but in
+> `environment`, not here.** Corrected 2026-08-04, and corrected again
+> 2026-09-07 (audit C8) — the 2026-08-04 correction became the false claim.
 >
-> The confusion has a real origin: DEFRA publishes aircraft **and** road contours, the loader
-> script documents both datasets, and the consumer site renders a **road-noise map overlay** as a
-> separate visual layer. None of that reaches the score. A buyer comparing this document against
-> a competitor's road-noise product would have been misled about what the number contains, which
-> matters more than a typical doc error because it is a claim about the headline component.
+> The row above once read *"Aviation + road noise impact"*, and `README.md` said
+> the same. That was wrong then and the fix stands: `quiet` is aircraft only —
+> DEFRA aircraft Lden, distance to airports, flight-path geometry, heliports
+> (§4.1, §4.5). A buyer comparing this document against a competitor's
+> road-noise product must not read road exposure into the headline component.
 >
-> Road noise remains a genuine candidate for a future version — the loader already documents the
-> logarithmic dB sum for combining the two rasters — but it is **not implemented**, and this
-> document will say so until it is.
+> **What changed underneath this box:** methodology **v4.0** (2026-08-29) made
+> road noise a scored input. `_ENV_WEIGHTS` in `backend/lambdas/score/app.py` is
+> `{'airQuality': 0.45, 'roadNoise': 0.35, 'flood': 0.20}`, and `environment`
+> carries 0.14 of six personas and 0.18 of `family`/`laterlife`. The quantity
+> scored is `roadNoiseAboveWhoPct` — the SHARE of a borough's addresses over the
+> WHO 53 dB Lden road guideline, not a median dB. `/v1/score` says so itself:
+> `sourceBreakdown.env` returns *"Air quality (0.45), Road noise (0.35), Flood
+> risk (0.20)"*. See §4.7 and the v4.0 entry, which have described it correctly
+> throughout.
+>
+> So this box said "not implemented" for nine days after it was implemented, in
+> a document §4.7 of which contradicted it. **A correction written as a dated
+> box beside the old text survives the thing it was correcting.**
 
 ## 4. Component formulas, anchored values
 
@@ -1296,7 +1304,7 @@ For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
 
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
-| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England. The **road** Lden surface is published in the same round and drives the consumer-site road-noise overlay and the `roadNoise` borough band, never the score — see §3 and §7.1 | Open Government Licence v3.0 | 5-yearly (next: 2027) |
+| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England, scored in `quiet`. The **road** Lden surface is published in the same round; it drives the consumer-site road-noise overlay, the `roadNoise` borough band, and — since methodology v4.0 (2026-08-29) — **0.35 of the `environment` component**, via the share of addresses over the WHO 53 dB Lden guideline. It does not enter `quiet`. See §4.7 and §7.1 | Open Government Licence v3.0 | 5-yearly (next: 2027) |
 | **DEFRA background pollution maps (2022 annual mean, 1 km grid)** | NO₂ and PM2.5 concentrations behind the `airQuality` borough band and the `/v1/environment` measurements. **Not** the Daily Air Quality Index, which is a daily station reading and describes today's weather as much as the place | Open Government Licence v3.0 | Annual |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **MHCLG Energy Performance Certificates** (new "Get energy performance of buildings data" service from 2026-05-30) | Per-property EPC bands | Open Government Licence v3.0 | Quarterly |
@@ -1570,7 +1578,7 @@ if they drift.
 > would have put two-thirds of the country on one number. Both were removed
 > from `plannedComponents` in the same release.
 >
-> **Road noise is unchanged and still does not score.** It reaches nothing but
+> **Road noise did not score at v3.9.** It began scoring at **v4.0** (2026-08-29) as 0.35 of `environment`; at the version this note describes it reached nothing but
 > `/v1/environment`, and is scheduled for the v4.0 noise composite.
 
 These three bands drive **map overlays and the borough detail panel only**, and
@@ -1921,7 +1929,7 @@ Sky Score's positioning combines noise + livability composite scoring with halal
 - The B2B API (`/v1/score` and `/v1/score/batch`) does not return per-property data, borough-level scoring keyed by postcode. No personal data exposed.
 - Per-property EPC data may include household-identifiable address fields. The consumer site shows aggregated postcode-level summaries by default; per-address detail rendered only when explicitly searched.
 - Future per-UPRN endpoint, if introduced, will require authenticated customers with documented lawful basis (typically UK GDPR Article 6(1)(f) legitimate-interest for due diligence).
-- All data processed in **AWS eu-west-2 (London)** for UK data residency. **AWS is the sole sub-processor of customer data.** Cloudflare provides DNS and domain registration services (no access to API requests, responses, or customer data); GoatCounter handles consumer-site analytics on the marketing surface only (no API traffic) and stores no PII.
+- All data processed in **AWS eu-west-2 (London)** for UK data residency. **AWS is the sole sub-processor of customer data for the scoring path**, and Bedrock in `us-east-1` is an AWS service reached only by the key-gated `POST /v1/chat`. It is **not** the only sub-processor overall: `SUBPROCESSORS.md` lists eighteen rows, including Overpass in Germany for `/nhs`. Corrected 2026-09-07; `SECURITY.md` had this same sentence corrected on 2026-08-03 and this copy was missed. Cloudflare provides DNS and domain registration services (no access to API requests, responses, or customer data); GoatCounter handles consumer-site analytics on the marketing surface only (no API traffic) and stores no PII.
 - A Data Processing Agreement (DPA) is signed with B2B customers handling personal data through the API.
 
 ## 16. API contract and stability

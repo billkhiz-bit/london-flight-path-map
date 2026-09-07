@@ -34,6 +34,7 @@ value is read from the thing it checks, which this repo has shipped nine times.
   python scripts/check_openapi_matches_engine.py
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -205,6 +206,48 @@ def main():
         failures.append(
             f'methodologyVersion: spec example is {example!r}, engine serves '
             f'{live!r}')
+
+    # ---- THE PROSE, WHICH THIS GATE COULD NOT SEE UNTIL 2026-09-07 ----
+    #
+    # Audit I5. This gate walks SCHEMAS and ENUMS, and passed 18 comparisons
+    # green while the very first paragraph of the file it guards said the score
+    # was "computed from four components" and that coverage was "33 London
+    # boroughs ... 5 NYC boroughs". Five components, thirteen cities and
+    # ninety-nine boroughs were served at the time. Its own docstring names
+    # "described a FOUR-component score" as the defect it exists to prevent.
+    #
+    # `info.description` is the first thing a human integrator reads and it is
+    # rendered at /score-demo/api-docs.html, which all 99 area pages link to.
+    # A machine-readable document can be perfectly correct and still mislead
+    # every reader through the one field no schema check looks at.
+    #
+    # Derived, not literal: the count word and the coverage numbers come from
+    # the engine.
+    WORDS = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six',
+             7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten'}
+    prose = str(spec.get('info', {}).get('description', ''))
+    checks += 1
+    if not prose.strip():
+        failures.append('info.description is empty, so the prose cannot be checked')
+    else:
+        want_word = WORDS.get(len(engine_components), str(len(engine_components)))
+        for said in re.findall(r'([A-Za-z]+)\s+components\b', prose):
+            if said.lower() in WORDS.values() and said.lower() != want_word:
+                failures.append(
+                    f'info.description says "{said} components"; the engine emits '
+                    f'{len(engine_components)} ({want_word}): '
+                    f'{sorted(engine_components)}')
+        total_boroughs = sum(len(c['boroughs']) for c in app.CITIES.values())
+        for label, number in (('cities', len(engine_cities)),
+                              ('boroughs', total_boroughs)):
+            checks += 1
+            if str(number) not in prose:
+                failures.append(
+                    f'info.description never states the real {label} count '
+                    f'({number}). The Coverage paragraph is where a prospect '
+                    f'decides whether the product reaches their market, and it '
+                    f'under-claimed by eleven cities and sixty-one boroughs for '
+                    f'as long as nothing read it.')
 
     print('Published OpenAPI spec vs the score engine')
     print('==========================================')

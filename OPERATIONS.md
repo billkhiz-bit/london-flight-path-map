@@ -402,6 +402,83 @@ that bullet describing a state that did not exist is what the finding was.
 
 ---
 
+### 3.8 - Close the deploy user's privilege-escalation path - **OPEN, raised 2026-09-07**
+
+**Found by the 2026-09-07 audit (C3), verified by reading the live policy.
+NOT applied, deliberately - see "why this is not already done" below.**
+
+`FlightMapDeployPolicy` statement `IAMRolesForLambda` grants:
+
+```
+iam:CreateRole, iam:PassRole, iam:AttachRolePolicy, iam:PutRolePolicy, ...
+Resource:  arn:aws:iam::072674217857:role/london-flight-map-*
+Condition: NONE
+```
+
+The resource constrains the **role**, not the **policy being attached**, and
+there is no permissions boundary. So a holder of these credentials can:
+
+1. `iam:AttachRolePolicy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess`
+   onto `london-flight-map-ScoreFunctionRole-*` (or `iam:PutRolePolicy` an
+   inline `Action: "*"`), then
+2. `lambda:UpdateFunctionCode` on that function - already granted - and invoke
+   it via `/badge`.
+
+That turns "can deploy this stack" into "owns the account": S3 outside the
+project prefix, IAM users, billing, CloudTrail. **The same credential is in
+`.env` on this laptop AND in GitHub Actions secrets on a repository confirmed
+public** (`gh repo view` reports `visibility: PUBLIC`), so the escalation is one
+credential leak away. See also §3.7, which proposes moving CI to OIDC and would
+remove the GitHub half.
+
+**The escalation was NOT exercised.** It is a path read off the policy document
+and confirmed to be the live policy by a prefix-scope probe (`iam:GetRole`
+succeeds inside `london-flight-map-*` and is denied outside it).
+
+**Related, same policy, same audit (I2):** `apigateway:GET` is granted on
+`arn:aws:apigateway:eu-west-2::*` with no condition, which covers
+`GET /apikeys?includeValues=true` - so the deploy credential can read every
+customer API key in plaintext. Confirmed by listing key metadata; values were
+deliberately not requested.
+
+#### Why this is not already done
+
+Because it cannot be tested from here, and the untested version of this change
+is what caused the 2026-09-03 outage.
+
+- **The obvious fix breaks the deploy.** A blanket `Deny` on
+  `arn:aws:apigateway:eu-west-2::/apikeys*` looks free, but `template.yaml:606`
+  declares an `AWS::ApiGateway::ApiKey` and CloudFormation reads it back during
+  every deploy. Denying the collection alone may still break drift detection.
+- **The correct fix cannot be authored blind.** Restricting
+  `iam:AttachRolePolicy` needs a `Condition` on `iam:PolicyARN` naming the
+  managed policies SAM actually attaches - and `iam:ListAttachedRolePolicies`
+  is **denied** to this user, so the list cannot be read from here. Guessing it
+  produces a policy that passes review and fails the next deploy.
+- **`iam:PutRolePolicy` cannot be closed by an ARN condition at all** (inline
+  policies have no ARN). Closing that half needs a **permissions boundary** on
+  every role SAM creates, which is a `Globals: Function: PermissionsBoundary`
+  change plus a boundary policy - a real deploy, not a paste.
+
+#### The procedure, when it is done
+
+1. In the console, read `london-flight-map-ScoreFunctionRole-*` and record the
+   **exact** managed-policy ARNs attached. That list is the allow-list.
+2. Add a `Condition` to `IAMRolesForLambda` restricting `iam:PolicyARN` to
+   those ARNs. Budget: the policy is **5,140 non-whitespace characters against
+   a 6,144 limit**, so there is room, but not much.
+3. Create a permissions boundary policy and require it via
+   `iam:PermissionsBoundary` on `CreateRole`, plus `Globals` in the template.
+4. **Verify in this order, and do not skip the third:**
+   ```
+   python scripts/check_aws_permissions.py     # expect 18 granted, 0 denied
+   cd backend && sam build && sam deploy        # a REAL deploy, no-op is fine
+   sh scripts/check_deploy_drift.sh             # 133 surfaces
+   ```
+   A permissions probe passing is not evidence that a deploy still works: the
+   probe exercises 18 safely-probeable actions and says nothing about the other
+   92, which is exactly the gap the 2026-09-03 outage lived in.
+
 ## 4. Disaster Recovery
 
 | Scenario | RTO | RPO | Procedure |

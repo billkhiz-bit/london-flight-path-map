@@ -128,7 +128,32 @@ EXPECT_CITY = {
     '10001': 'nyc',
 }
 
-COMPONENTS = ('quiet', 'afford', 'growth', 'live')
+# The components this gate has ALWAYS covered. Kept only as a floor - see
+# `components_in()` below, which derives the real list from the responses.
+KNOWN_COMPONENTS = ('quiet', 'afford', 'growth', 'live')
+
+
+def components_in(rows):
+    """Every component the live API actually returned, across all probes.
+
+    DERIVED, not written down (2026-09-07 audit, C6). This was the literal
+    tuple `('quiet', 'afford', 'growth', 'live')` from the day it was written
+    until today, so when `env` became a scored component at v3.9 - 0.14 of six
+    personas and 0.18 of `family`/`laterlife` - it landed outside the only gate
+    in the suite that reads the live API. The check below exists because three
+    separate components have collapsed onto one value in production; the newest
+    one was exempt from it for ten days.
+
+    Taken from the RESPONSES rather than from `app.PERSONAS` deliberately. A
+    locally-derived expectation would go red on any tree that is ahead of the
+    deploy, which is the normal state between a commit and a deploy, and this
+    is a blocking stage. Reading what the API returned cannot drift that way,
+    and a component that VANISHES from the API is still caught by the floor.
+    """
+    seen = set()
+    for _pc, _city, body in rows:
+        seen.update((body.get('components') or {}).keys())
+    return tuple(sorted(seen))
 
 
 def fetch(base, key, postcode, timeout=30, attempts=4):
@@ -270,9 +295,23 @@ def main():
     # 2. Every component must discriminate. Growth once floored 14 boroughs onto
     #    one value, schools published 2 distinct scores citywide, and the raster
     #    put 98% of London on a single quiet value. Same defect, three times.
-    for comp in COMPONENTS:
+    components = components_in(rows)
+    # The floor on the LIST itself. Deriving the components from the responses
+    # means a component that stops being returned simply stops being checked -
+    # silently - so the set the gate has always covered must still be in it.
+    missing = [c for c in KNOWN_COMPONENTS if c not in components]
+    check('long-standing components still returned', not missing,
+          f'the live API returned {list(components)}; these have gone: {missing}. '
+          f'A component that disappears from the response would otherwise drop '
+          f'out of every check below without failing one.')
+    print(f'  {"components discovered":<46}{", ".join(components)}')
+    for comp in components:
         vals = {(b.get('components') or {}).get(comp) for _, _, b in rows}
         vals.discard(None)
+        # `env` is legitimately absent for New York (5 boroughs) and below the
+        # two-input floor for Cardiff, so a component may be present on some
+        # probes and not others. Discarding None above is what makes that safe;
+        # the distinct-value bar then applies to the cities that DO carry it.
         check(f'{comp} takes >= 4 distinct values', len(vals) >= 4,
               f'{comp} produced only {len(vals)} distinct values across '
               f'{len(rows)} postcodes: {sorted(vals)}')

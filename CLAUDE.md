@@ -611,6 +611,64 @@ a simple request. It bites the first time a caller adds a custom header. Left
 open on purpose - it LOOSENS auth, so it is Bill's call, not a side effect of a
 throttle change.
 
+## The 2026-09-07 audit wave - 8 criticals and 11 importants closed
+
+Full detail in `AUDIT_REPORT.md`. The things a future session must not undo:
+
+- **`.is-native .sheet-footer`, NOT `.is-tabbed`.** For ten days the mobile web
+  homepage rendered **exactly ONE visible link** - the skip link - so /privacy
+  and /terms were unreachable from every phone. The rule was correct when
+  written: `.is-tabbed` meant "native app", which has its own nav. It came to
+  mean "any phone" two days later and nothing re-read it. **A rule keyed on a
+  class whose meaning changes is a rule that expires silently.**
+  `tests/mobile-legal-links.mjs` asserts REACHABILITY, which nothing did -
+  `responsive.mjs`'s four detectors are all about a control that IS rendered.
+- **Un-hiding that footer exposed two more defects**, both fixed: its `.sep`
+  separators measured **1.97:1** (any alpha under 1 on `--mid` fails AA), and
+  its full-width pointer-events band swallowed taps meant for `#layers-trigger`
+  at 568x320. *A fix that restores a surface restores its defects with it.*
+- **Retired NaPTAN nodes no longer count in the SCORED transport share.** The
+  2026-09-01 fix reached `build_city_stations.py` (the list a user READS) and
+  not `build_borough_bands.py` (the field that SCORES, 0.25 of liveability, in
+  both holders). **City of Nottingham `good` -> `moderate`, live 5.3 -> 4.5,
+  score 8.3 -> 8.0.** The reader now hard-fails on an absent `Status` column
+  AND on a scan that kept nodes while finding no inactive ones.
+- **London credits HM Land Registry again.** The 2026-08-25 edit removed
+  'Sold prices: HM Land Registry' reasoning that HMLR backs `/epc` and
+  `/sold-prices` "not this response" - right about sold prices, wrong about
+  `avgPrice` and `trend`, which are HPI. The flagship city credited no price
+  source at all while `sourceBreakdown.afford` named HMLR four lines away.
+  APPENDED, never inserted: the postcode line is index 2 by contract.
+- **`/v1/chat` calls Bedrock in `us-east-1`** and four documents said that could
+  not be happening. Now SUBPROCESSORS row 18 and a rewritten s5 (TWO outbound
+  routes, one leaving the EEA). `backend/tests/test_data_residency.py` compares
+  the CODE's regions against the REGISTER, so a new region reds on the day it
+  lands.
+- **Nottingham crime is gated for the first time.** It sat outside `CITY_PFA`
+  under a comment whose reason covered only THREE of its four boroughs;
+  `City of Nottingham` published 124.9 under a blocking gate that had never
+  looked at it. Now compared (it agrees). `NO_ONS_COMPARISON` makes any future
+  omission declared rather than silent.
+- **Three blocking gates were checking less than they claimed**, all now
+  derived: `area-page-freshness` passed on **zero pages**, `score sanity` never
+  checked `env`, and borough parity floored at **60 against a real 91**.
+- **preflight distinguishes INCONCLUSIVE from PASS.** Three gates deliberately
+  exit 0 when they cannot verify, and the runner printed PASS and discarded the
+  reason.
+- **`lookup_postcode` rejects anything but `[A-Z0-9]{1,8}`.** `quote()` defaults
+  to `safe='/'`, so `../outcodes/SW11` traversed into the postcodes.io PATH and
+  returned a **500 with a JSON body** from `/badge` - the one thing that
+  endpoint's docstring says must never happen, because it renders in an <img>
+  on a customer page.
+- **Both contrast gates now run a landscape viewport.** No contrast measurement
+  had ever run at one; a control at **1.04:1** was living there.
+
+**Still open and deliberately not done:** the IAM privilege-escalation path
+(`OPERATIONS.md` s3.8 - it needs a console session and a REAL deploy to verify,
+and an untested IAM edit is what caused the 3 Sep outage), the
+`healthcareWithin1kmPct` field name (it measures 500 m; renaming a published
+field is a contract change), and METHODOLOGY s6, whose worked example
+transposes `quiet` and the total.
 ## Absence must never render as a measurement — the 2026-08-22 sweep
 
 **Shipped and verified live the same day.** Four Lambdas via SAM, six public

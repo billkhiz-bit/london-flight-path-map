@@ -389,7 +389,25 @@ def render(data: dict) -> str:
         borough_q=e(data['borough'].replace(' ', '+')),
         score=e(data['score']),
         rows=rows,
-        sources=e('; '.join(str(s) for s in data['sources'][:6]) or 'See methodology.'),
+        # EVERY source, not the first six (2026-09-07, audit I7). The `[:6]`
+        # cap silently dropped the tail of the attribution array, and the tail
+        # is where the environment datasets sit:
+        #
+        #   Environment Agency RoFRS   dropped from 90 pages that publish its
+        #                              flood band
+        #   DEFRA road Lden            dropped from 43
+        #   DEFRA PCM air quality      dropped from 10
+        #
+        # Each affected page PRINTS the row it had just dropped the credit for -
+        # "Flood risk | Medium | Environment Agency RoFRS, risk after defences" -
+        # and bakes it into the Environment score above it. OGL v3.0 grants
+        # reuse ON CONDITION of attribution, and these are our own pages, in our
+        # own sitemap.
+        #
+        # A cap on an attribution list is a cap on a licence obligation, and it
+        # was invisible because the array grew past six only when `environment`
+        # started scoring at v3.9.
+        sources=e('; '.join(str(s) for s in data['sources']) or 'See methodology.'),
         methodology=e(data['methodology'] or ''),
     )
 

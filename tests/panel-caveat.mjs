@@ -82,7 +82,18 @@ async function check(city, country, borough, expectCaveat, drop = null, mustName
       updateSidebar(d);
       const rows = [...document.querySelectorAll('.score-explain')];
       const row = rows.find((r) => /Air quality, road noise and flood risk/.test(r.textContent));
-      text = row ? row.textContent.trim() : '(no environment row)';
+      // NOT-FOUND IS A FAILURE, NOT A STRING (2026-09-07 audit, I14).
+      //
+      // This used to fall back to the literal '(no environment row)', which
+      // contains no 'undefined', no 'only here' and matches any name regex
+      // by vacuity - so THREE of the four cases below went green having
+      // rendered nothing. The row is found by a copy string
+      // (/Air quality, road noise and flood risk/); rewording that sentence
+      // or renaming .score-explain would silently switch off the only gate
+      // that has ever opened the borough detail panel - the gate written
+      // because 'undefined only here' shipped to production.
+      if (!row) return { err: `no environment row rendered (found ${rows.length} .score-explain rows). The row is located by its copy string; if that wording changed, update this test - do not let it pass` };
+      text = row.textContent.trim();
     } finally {
       // Restore even if rendering threw, so one failing case cannot corrupt
       // the records every later case reads.

@@ -65,6 +65,7 @@ FAILED=""
 PASSED=""
 ADVISORY=""
 SKIPPED_NET=""
+INCONCLUSIVE=""
 
 # Run a blocking check. Output is shown only on failure, so a green run stays
 # readable — but it is NEVER piped, so $? is the real status of the command.
@@ -72,9 +73,37 @@ check() {
   name="$1"; shift
   printf '  %-34s' "$name"
   out=$("$@" 2>&1)
-  if [ $? -eq 0 ]; then
-    printf 'PASS\n'
-    PASSED="$PASSED $name"
+  status=$?
+  if [ $status -eq 0 ]; then
+    # A GATE THAT COULD NOT RUN IS NOT A GATE THAT PASSED (2026-09-07, I10).
+    #
+    # Three gates deliberately distinguish "I checked and it agrees" from "I
+    # could not check", and exit 0 for the second so that a missing optional
+    # input does not block every commit in the repo. This runner then printed
+    # PASS and threw the explanation away, because output is shown only on
+    # failure - so the distinction those gates take trouble to draw was
+    # erased at the last step:
+    #
+    #   check_openapi_matches_engine.py  returns 0 when PyYAML is absent,
+    #                                    saying "INCONCLUSIVE: ... That is NOT
+    #                                    the same as the spec being correct."
+    #   tests/demo-key-scope.mjs         exits 0 whenever `unproven` is set,
+    #                                    and SKY_SCORE_FREE_TIER_KEY is unset
+    #                                    locally - so the deny that file calls
+    #                                    load-bearing has never once run
+    #   check_quiet_estimate_error.py    returns 0 on INCONCLUSIVE
+    #
+    # Still not blocking - the exit code is still the gate's own answer - but
+    # it prints as INCONCLUSIVE, shows the reason, and is named in the
+    # summary, so a green run cannot quietly contain one.
+    if printf '%s' "$out" | grep -qiE '^[[:space:]]*(INCONCLUSIVE|UNVERIFIED)\b'; then
+      printf 'INCONCLUSIVE\n'
+      INCONCLUSIVE="$INCONCLUSIVE|$name"
+      printf '%s\n' "$out" | grep -iE '^[[:space:]]*(INCONCLUSIVE|UNVERIFIED)\b' | head -3 | sed 's/^/      /'
+    else
+      printf 'PASS\n'
+      PASSED="$PASSED $name"
+    fi
   else
     printf 'FAIL\n'
     FAILED="$FAILED|$name"
@@ -421,6 +450,20 @@ check "selector tiers do not overlap" node tests/selector-widths.mjs
 # Deliberately data-driven, unlike the stage above: no count to keep in step,
 # so city ten is covered the day it is added. Both defects re-proven red.
 check "every city switches"           node tests/city-switch.mjs
+# The legal pages must be reachable from the homepage on a phone. From
+# 2026-08-28 to 2026-09-07 the mobile web homepage rendered exactly ONE
+# visible link - the skip link - because `.is-tabbed .sheet-footer` was
+# written when `.is-tabbed` meant "native app" and kept applying after it
+# came to mean "any phone". No /privacy, no /terms, no /pricing, at any
+# phone width, in any state.
+#
+# Nothing could see it: responsive.mjs's four detectors are all about a
+# control that IS rendered, and axe has no rule for a link that used to be
+# here. This asserts REACHABILITY, which nothing else in the suite did.
+# Both directions - the native sim must still hide the web footer, or
+# deleting the native rule outright would pass. Proven red against the
+# original defect: 1 visible link at four viewports.
+check "legal links reachable on a phone" node tests/mobile-legal-links.mjs
 # DOES THE MAP FIT THE BOX IT IS DRAWN IN? Added 2026-08-24.
 #
 # "every city switches" counts outlines, and the count is right whether or
@@ -710,8 +753,19 @@ if [ -n "$SKIPPED_NET" ]; then
   echo "$SKIPPED_NET" | tr '|' '
 ' | sed '/^$/d' | sed 's/^/  not run: /'
   echo "  Re-run without --skip-e2e before committing."
+elif [ -n "$INCONCLUSIVE" ]; then
+  # A stage that could not check is reported here, in its own words. It is
+  # not a failure - the gate itself chose to exit 0 - but "PASS" was the
+  # wrong summary for it, and the reason was being discarded.
+  echo "RESULT: PASS (INCOMPLETE - stage(s) could not verify)"
+  echo "$INCONCLUSIVE" | tr '|' '
+' | sed '/^$/d' | sed 's/^/  inconclusive: /'
 else
   echo "RESULT: PASS"
+fi
+if [ -n "$INCONCLUSIVE" ] && [ -n "$SKIPPED_NET" ]; then
+  echo "$INCONCLUSIVE" | tr '|' '
+' | sed '/^$/d' | sed 's/^/  inconclusive: /'
 fi
 if [ -n "$ADVISORY" ]; then
   echo "$ADVISORY" | tr '|' '\n' | sed '/^$/d' | sed 's/^/  advisory: /'

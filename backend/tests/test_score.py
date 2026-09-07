@@ -1359,6 +1359,112 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
             'a sibling batch worker inherited another thread NSPL attribution',
         )
 
+    def test_postcode_never_reaches_a_url_as_a_path(self):
+        """A crafted postcode must not traverse the postcodes.io URL path.
+
+        Live defect, 2026-09-07 (audit I15): `quote()` defaults to `safe='/'`
+        and `.` is always safe, so `../outcodes/SW11` survived into a PATH
+        segment, reached a different postcodes.io endpoint whose payload has a
+        different shape, and crashed the handler:
+
+            /badge?postcode=../outcodes/SW11  ->  500  application/json
+            /badge?postcode=A/B               ->  404
+
+        The 500 is the part that matters. `/badge` renders inside an <img> on a
+        third-party listing page, and its own docstring says an unresolvable
+        postcode must return a BADGE rather than an error, "because a 404
+        renders as exactly that broken image".
+
+        Asserted on `lookup_postcode`, the single funnel both tiers pass
+        through, so a new caller cannot reintroduce it.
+        """
+        for hostile in ('../outcodes/SW11', '../../x', 'A/B', 'AB.CD', 'SW11%2F..',
+                        'a b/c', '../', 'SW11?x=1', 'SW11#f'):
+            self.assertIsNone(
+                app.lookup_postcode(hostile),
+                f'{hostile!r} was not rejected before reaching a URL',
+            )
+        # ...and the gate must not reject real input. A test that only proves
+        # rejection passes just as well when everything is rejected.
+        with patch.object(app, '_lookup_postcode_local', return_value=None), \
+             patch.object(app, '_fetch_postcode', return_value={'ok': True}) as fetch:
+            for good in ('SW1A 1AA', 'sw1a1aa', 'M1 1AE', 'EC1A1BB'):
+                self.assertIsNotNone(
+                    app.lookup_postcode(good), f'{good!r} should still resolve')
+            self.assertTrue(fetch.called, 'no real postcode reached the resolver')
+
+    def test_every_scored_dataset_named_in_the_breakdown_is_also_in_sources(self):
+        """A dataset the breakdown says it scored must be credited in `sources`.
+
+        The defect (audit C7, 2026-09-07): London's `sources` credited NO price
+        source at all for a fortnight, while `sourceBreakdown.afford` in the
+        same response said "HM Land Registry House Price Index (HPI)" and
+        `context.avgPriceGbp` carried HPI data. All eleven other UK cities
+        carried the line. `terms.html` obliges integrators to carry `sources`
+        through to their own users, so an integrator following the terms
+        exactly republished HMLR data with no HMLR attribution.
+
+        Nothing could see it: `test_every_city_has_its_own_provenance` compares
+        the breakdown's KEYS against the components, never the two lists'
+        CONTENTS against each other. The correction and the omission lived four
+        lines apart in one dict literal.
+
+        Keyed on the licensor's name rather than on an exact string, because the
+        vintage in the sources line rolls quarterly and an exact match would
+        turn every vintage roll into a test edit.
+        """
+        # The body of `sources` names organisations; the breakdown names them
+        # again per component. Any organisation the breakdown relies on must
+        # appear somewhere in the credits.
+        LICENSORS = {
+            'HM Land Registry': 'prices and price trend',
+            'DEFRA': 'aircraft noise, air quality, road noise',
+            'NaPTAN': 'transport access',
+            'NHS': 'healthcare access',
+        }
+        # A BREAKDOWN THAT NAMES A LICENSOR IS OFTEN DENYING IT. New York's says
+        # "NOT HM Land Registry, which holds England and Wales only", and for
+        # env "NOT scored for this city. DEFRA and the Environment Agency
+        # publish for the UK only" - precisely so its provenance cannot be read
+        # as a UK Crown-copyright claim. A substring test reads those denials as
+        # reliance and fails the city that is most careful about this, which is
+        # the audit's own signature error committed inside the gate written to
+        # catch it.
+        #
+        # Two filters, and BOTH are needed. Only components the city actually
+        # SCORES are examined - a breakdown entry for an absent component is a
+        # disclaimer by definition, and that is what METHODOLOGY §18 obliges it
+        # to be. Within those, a sentence naming the licensor alongside "NOT" is
+        # still a denial rather than a credit.
+        def relies_on(text, licensor):
+            for sentence in str(text).replace('—', '.').split('.'):
+                if licensor in sentence and 'NOT' not in sentence:
+                    return True
+            return False
+
+        for city in app.CITIES:
+            borough = next(iter(app.CITIES[city]['boroughs']))
+            body, status = app.resolve_query({'city': city, 'borough': borough})
+            self.assertEqual(status, 200, f'{city}/{borough} did not resolve')
+            scored = set(body['components'])
+            self.assertTrue(scored, f'{city} scored nothing, so this proves nothing')
+
+            sources = ' | '.join(str(s) for s in app.build_sources(city))
+            breakdown = {
+                k: v for k, v in app.build_source_breakdown(city).items() if k in scored
+            }
+            for licensor, what in LICENSORS.items():
+                if not any(relies_on(v, licensor) for v in breakdown.values()):
+                    continue  # this city does not rest on that dataset
+                self.assertIn(
+                    licensor, sources,
+                    f'{city}: sourceBreakdown says {licensor} supplies {what}, but '
+                    f'`sources` never names {licensor}. Integrators are obliged by '
+                    f'terms.html to pass `sources` through to their own users, so '
+                    f'this publishes {licensor} data with no attribution.\n'
+                    f'  sources: {sources[:300]}',
+                )
+
     def test_every_city_has_its_own_provenance(self):
         """Adding a city without provenance must fail here, not in production.
 

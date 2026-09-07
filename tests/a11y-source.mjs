@@ -157,9 +157,12 @@ await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
 // reports the page clean because those rules never apply.
 //
 // 390x844 is a current iPhone; 1440x900 is the desktop the audit already used.
+// LANDSCAPE ADDED 2026-09-07 (audit I11): a whole orientation had never been
+// scanned by anything measuring colour, and a 1.04:1 control was living there.
 const VIEWPORTS = [
   { label: 'desktop', width: 1440, height: 900 },
   { label: 'mobile', width: 390, height: 844 },
+  { label: 'mobile landscape', width: 844, height: 390 },
 ];
 
 // Moderate-impact rules that MUST fail the build.

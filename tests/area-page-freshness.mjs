@@ -99,7 +99,41 @@ for (const cityDir of readdirSync(areaRoot)) {
 }
 
 console.log(`\nArea page freshness\n===================\n`);
-console.log(`  ${pages.length} pages to check, in ${Math.ceil(pages.length / CHUNK)} batch request(s)\n`);
+
+// THE FLOOR, AND IT IS DERIVED (2026-09-07 audit, C4).
+//
+// Until today `pages` was walked off disk and its length was never asserted.
+// With area/ present but empty this gate printed
+//   "OK: all 0 area pages match the live API"
+// and exited 0 having made ZERO HTTP requests - a blocking stage reporting
+// agreement it had not looked for. Its sibling tests/area-pages.mjs has carried
+// `pages.length > 50` all along.
+//
+// The expectation comes from /v1/regions, not from a constant: the pages exist
+// to mirror the boroughs the API serves, so the API is the authority on how
+// many there should be. A literal here would be right today and wrong on the
+// day a city lands - which is exactly when a stale area/ directory matters
+// most. /v1/regions needs no API key.
+const regions = await fetch(`${API}/v1/regions`).then((r) => r.json());
+const expected = (regions.regions || regions.cities || []).reduce(
+  (n, c) => n + (c.boroughs?.length ?? c.boroughCount ?? 0),
+  0,
+);
+if (!expected) {
+  console.error('FAIL: /v1/regions returned no borough count, so there is no');
+  console.error('      expectation to compare against. Not a pass - the floor');
+  console.error('      itself could not be established.');
+  process.exit(1);
+}
+if (pages.length !== expected) {
+  console.error(`FAIL: found ${pages.length} area pages, but /v1/score serves ${expected} boroughs.`);
+  console.error('      Every borough the API scores should have a page baking that');
+  console.error('      score. A shortfall means area/ was never rebuilt (run');
+  console.error('      scripts/build_area_pages.py --write); a surplus means a page');
+  console.error('      survives for a borough the API no longer serves.');
+  process.exit(1);
+}
+console.log(`  ${pages.length} pages to check (matches ${expected} boroughs on /v1/regions), in ${Math.ceil(pages.length / CHUNK)} batch request(s)\n`);
 
 // --- what the API says today ------------------------------------------------
 const live = new Map();

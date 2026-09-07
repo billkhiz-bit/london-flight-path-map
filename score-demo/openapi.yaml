@@ -3,10 +3,13 @@ info:
   title: Sky Score API
   description: |
     Sky Score is a noise + livability data API for UK property. The score
-    is a 0-10 holistic property quality signal computed from four
+    is a 0-10 holistic property quality signal computed from five
     components: Quiet (aircraft noise only), Affordability (cohort-relative
-    price), Growth (price-trend signal), and Liveability (schools, crime,
-    transport, healthcare).
+    price), Growth (price-trend signal), Liveability (schools, crime,
+    transport, healthcare), and Environment (air quality, road noise, flood
+    risk). Environment is absent where fewer than two of its three inputs are
+    held - New York and Cardiff today - and the remaining components are
+    rescaled rather than the missing one being treated as zero.
 
     **Authentication.** Most endpoints require an API key passed in the
     `X-Api-Key` header. Two do not: `/v1/signup`, which is how you get a key,
@@ -28,10 +31,15 @@ info:
     The methodology is reproducible: a worked example walks through every
     calculation against a real postcode.
 
-    **Coverage.** 33 London boroughs by UK postcode resolution (postcodes.io).
-    5 NYC boroughs by borough-name lookup or 5-digit US ZIP auto-detection
-    (~182 residential ZIPs covered; ~110 with per-ZIP centroid for finer
-    quiet-score resolution).
+    **Coverage.** 13 city-regions, 99 boroughs. 94 UK boroughs across 12
+    city-regions - London (33), Greater Manchester (10), West Midlands (7),
+    Leicester (8), West Yorkshire (5), Merseyside (5), Tyne and Wear (5),
+    Teesside (5), South Yorkshire (4), Bristol (4), Cardiff (4) and
+    Nottingham (4) - resolved by UK postcode, plus 5 NYC boroughs by
+    borough-name lookup or 5-digit US ZIP auto-detection (~182 residential
+    ZIPs covered; ~110 with per-ZIP centroid for finer quiet-score
+    resolution). GET /v1/regions returns the authoritative list and needs no
+    API key.
   version: "1.1"
   contact:
     name: Sky Score
@@ -378,7 +386,7 @@ paths:
         - name: persona
           in: query
           description: |
-            Persona preset that determines the weighting of the four
+            Persona preset that determines the weighting of the five
             components. See the methodology document for the precise weight
             values. Ignored if `weights` is provided.
           schema:
@@ -423,20 +431,20 @@ paths:
             type: string
             enum: [previous]
             example: previous
-        - name: methodology
-          in: query
-          description: |
-            Pin the response to a specific methodology version for
-            reproducibility during integration / change-grace-period.
-            When omitted, the latest methodology applies. Documented in
-            METHODOLOGY.md §16 (API contract and stability) — prior
-            methodology versions remain accessible for 14 days after a
-            new version's release. Best-effort: if the requested version
-            is not retained, the latest is used and `methodologyVersion`
-            in the response indicates which version actually applied.
-          schema:
-            type: string
-            example: "3.2"
+        # `methodology` REMOVED 2026-09-07 (audit I9). This documented a
+        # 14-day version-pinning guarantee and cited METHODOLOGY.md §16 as its
+        # authority - but §16 was rewritten on 2026-08-04 to retract exactly
+        # that claim ("No such parameter exists, so no grace period was ever
+        # technically available"), and the spec was not. `resolve_query` reads
+        # eight query parameters and `methodology` is not one of them: measured
+        # live, `?methodology=3.9`, `3.8`, `3.2` and the nonsense value `9.9`
+        # all return the current methodologyVersion with no error.
+        #
+        # Removed rather than documented-as-unimplemented: a parameter listed
+        # in a spec is a parameter a generated client exposes, and an
+        # integrator building a reproducibility strategy on a silently-ignored
+        # argument is worse off than one who knows the capability is absent.
+        # If pinning is built, add it back with the behaviour it then has.
         - name: includeTerminated
           in: query
           description: |

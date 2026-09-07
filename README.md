@@ -216,10 +216,11 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 
 | Component | Description | Anchored to |
 |---|---|---|
-| **Quiet** | **Aircraft noise only.** Road noise is a map overlay and a reported measurement, and is **not** a score input | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
+| **Quiet** | **Aircraft noise only.** Road noise is scored too, but in **Environment**, not here (v4.0, 2026-08-29) | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
 | **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
 | **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
 | **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2023/24); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
+| **Environment** | Air quality (45%) + road noise (35%) + flood risk (20%). Scored since v3.9 (2026-08-26); road noise added at v4.0 (2026-08-29). Needs at least two of the three, so it is absent for New York and below the floor for Cardiff | DEFRA background pollution maps (PCM) against **WHO 2021** guidelines; DEFRA Round 4 **road** Lden, share of addresses over the **WHO 53 dB** guideline; Environment Agency Risk of Flooding from Rivers and Sea, share at Medium-or-High |
 
 The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and the persona weights in §5.1, against the current data snapshot.
 

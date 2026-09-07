@@ -1604,7 +1604,7 @@ TEESSIDE_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 3.47, 'roadNoiseAboveWhoPct': 43.2},
+    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 3.47, 'roadNoiseAboveWhoPct': 43.2},
     'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 0.75, 'roadNoiseAboveWhoPct': 37.1},
     'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.7, 'floodMediumOrHighPct': 2.41, 'roadNoiseAboveWhoPct': 28.3},
     'Rushcliffe': {'impact': 'moderate', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.59, 'roadNoiseAboveWhoPct': 28.9},
@@ -4711,6 +4711,24 @@ CITY_PROVENANCE = {
             # real sources; only this coarse line lagged.
             _BOROUGH_METADATA_SENTINEL,
             'Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0',
+            # RESTORED 2026-09-07 (audit C7). The 2026-08-25 edit above removed
+            # 'Sold prices: HM Land Registry' on the reasoning that HMLR "backs
+            # /epc and /sold-prices, not this response". That was right about
+            # SOLD PRICES and wrong about avgPrice and trend, which are the UK
+            # House Price Index - a different HMLR product, feeding `afford`
+            # (0.27 of the balanced score) and `growth` in THIS response. The
+            # breakdown four lines below has said 'HM Land Registry House Price
+            # Index (HPI)' throughout, so the correction and the omission sat in
+            # one dict literal, and London - the flagship city - was the only
+            # one of twelve UK cities crediting no price source at all.
+            #
+            # terms.html obliges integrators to carry `sources` through to their
+            # own users, so an integrator obeying the terms exactly republished
+            # HMLR data with no HMLR attribution.
+            #
+            # APPENDED, not inserted: the postcode line above is index 2 by
+            # contract and test_score.py asserts that position directly.
+            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
         ],
         'breakdown': {
             'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
@@ -5690,6 +5708,21 @@ _COVERAGE_NOTICES = {
         'flight-path geometry, not measured. DEFRA publishes contours for '
         'part of this area and this postcode falls outside them.'
     ),
+    # OUTSIDE EVERY COVERED CITY (2026-09-07, audit I4). The 'postcode' notice
+    # above says "DEFRA publishes contours for part of this area", which is a
+    # claim about a city we cover. For a coordinate in no covered city it was
+    # served beside `aircraftQuietBasis` reading "outside every city Sky Score
+    # covers" - one payload asserting both. Measured live at TR1 1DT (Truro).
+    #
+    # This is 68% of live UK postcodes by the file's own count, and it is the
+    # surface the public browser extension renders. The previous fix to this
+    # string removed the CITY NAME and left the COVERAGE CLAIM, which is the
+    # half that was wrong here.
+    'postcode-uncovered': (
+        'Aircraft noise here is estimated from distance to the nearest airports '
+        'we hold and from flight-path geometry, not measured. This location is '
+        'outside every city Sky Score covers, so no measured contour applies.'
+    ),
     # New York gets its own sentence: the one above names DEFRA, a UK
     # regulator with no product covering any US city - the same city-blind
     # provenance shape as the 2026-07 NYC/OGL incident, one field over.
@@ -6460,6 +6493,31 @@ def lookup_postcode(postcode, include_terminated=False):
     clean = postcode.strip().replace(' ', '').upper()
     if not clean:
         return None
+    # CHARSET GATE (2026-09-07, audit I15). A UK postcode is letters and digits
+    # only, and `clean` goes on to be interpolated into a postcodes.io URL
+    # PATH via `quote()` - whose default is `safe='/'`, so `/` survives, and `.`
+    # is always safe. `../outcodes/SW11` therefore traversed to a different
+    # postcodes.io endpoint, whose payload has a different shape
+    # (`admin_district` is a list, not a string), and crashed on an unhashable
+    # dict key:
+    #
+    #   /badge?postcode=../outcodes/SW11  ->  500  application/json
+    #   /badge?postcode=A/B               ->  404  (so it was not "any slash")
+    #
+    # That 500 defeats `/badge`'s whole contract. Its own docstring says an
+    # unresolvable postcode must return a BADGE, never an error, because the
+    # badge renders inside an <img> on a third-party listing page and a
+    # non-image response is a broken image on a customer's site.
+    #
+    # Rejected HERE rather than at each caller: this is the single funnel every
+    # tier goes through, and the value must never reach a URL. Length is bounded
+    # too - the longest UK postcode is 7 characters without the space.
+    # `str.isalnum()` is deliberately NOT used: it is true for Cyrillic letters
+    # and Arabic-Indic digits, so it would answer a question about characters
+    # when the question is about ASCII. The longest UK postcode is 7 characters
+    # without the space; 8 leaves headroom without admitting a path.
+    if not re.fullmatch(r'[A-Z0-9]{1,8}', clean):
+        return None
     cached = _postcode_cache_get(clean)
     if cached is not None:
         # RE-CREDIT ONS ON A CACHE HIT (2026-08-31, audit I30).
@@ -7204,10 +7262,28 @@ def handle_changes(event):
             'methodologyVersion': METHODOLOGY_VERSION,
             'methodologyUrl': METHODOLOGY_URL,
             'apiVersion': API_VERSION,
-            # /v1/changes covers the London cohort only — previous_dataset() has
-            # no vintage for any other city — so London's provenance is the
+            # /v1/changes covers the London cohort only - previous_dataset() has
+            # no vintage for any other city - so London's provenance is the
             # accurate claim here rather than a default that happens to fit.
-            'sources': build_sources('london'),
+            #
+            # THE POSTCODE LINE IS DROPPED (2026-09-07, audit I3). This route
+            # resolves no postcode at all, so the line describing which resolver
+            # answered describes nothing that happened. Worse, it was WRONG and
+            # STUCK: `_postcode_source_line` reads a `threading.local()` flag
+            # that `handle_changes` never sets and never resets, so it published
+            # whatever the container's last /v1/score request happened to leave
+            # behind - and then froze that into `_CHANGES_BODY` for the life of
+            # the container. Measured live: 3 of 3 requests credited "ONS
+            # National Statistics Postcode Lookup ... with postcodes.io as
+            # fallback" on a route that looks up neither.
+            #
+            # Removing it is the fix rather than resetting the flag: a correct
+            # value for a lookup that did not happen is still a claim about
+            # nothing. Attribution follows what ANSWERED.
+            'sources': [
+                line for line in build_sources('london')
+                if 'Postcode resolution' not in str(line)
+            ],
     }
     # `generatedAt` is stamped per response, NOT cached with the body. Freezing
     # it would have the payload claim it was generated at container start for
@@ -7339,9 +7415,17 @@ def handle_environment(event):
         if estimated is not None:
             env['aircraftQuietEstimated'] = estimated
             env['aircraftQuietBasis'] = basis
-        notices.append(
-            _COVERAGE_NOTICES['postcode-nyc' if city == 'nyc' else 'postcode']
-        )
+        # Keyed on the same `city` the basis above was resolved from. It used
+        # to be `'postcode-nyc' if city == 'nyc' else 'postcode'`, which has no
+        # branch for `city is None` - so the uncovered case fell through to a
+        # notice claiming DEFRA coverage, contradicting the basis string set
+        # eight lines earlier in the same response.
+        if city == 'nyc':
+            notices.append(_COVERAGE_NOTICES['postcode-nyc'])
+        elif city:
+            notices.append(_COVERAGE_NOTICES['postcode'])
+        else:
+            notices.append(_COVERAGE_NOTICES['postcode-uncovered'])
     if 'roadNoiseLdenDb' not in env:
         notices.append(
             'Road noise has not been measured for this postcode, or is still '

@@ -185,14 +185,14 @@
       <header>
         <a href="/">&larr; Sky Score</a>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-07-23 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-09-07 · Effective: 2026-05-09</p>
       </header>
 
       <main>
 
       <div class="tldr">
         <p><strong>TL;DR</strong></p>
-        <p>Browsing and scoring collect no personal data, accounts, or tracking IDs.</p>
+        <p>Browsing and scoring collect no personal data and need no account. If you SAVE a place, your browser generates a random device token so your own saved list comes back to you - it identifies a device, not a person, and it is never used for tracking or advertising. See &sect;2e.</p>
         <p>The one exception: if you request a free API key, we store the email address you give us to issue and manage that key.</p>
         <p>We don't sell anything to anyone.</p>
         <p>Your location stays on your device unless you tap "Score where I am" - then it's used once to find your postcode and discarded.</p>
@@ -220,7 +220,7 @@
       <h3>2a. Data you actively give us</h3>
       <p>
         <strong>Browsing and scoring: none.</strong> Using the Sky Score website or apps does not require an account, email address,
-        name, phone number, or any other identifying information. There are no payment forms or surveys. Searching a postcode does
+        name, phone number, or any other identifying information. <strong>Saving a place is the one exception</strong> and is covered in &sect;2e. There are no payment forms or surveys. Searching a postcode does
         not collect anything; the optional score-update list described below is the only place the consumer site asks for an
         address, and it is never a condition of seeing a score.
       </p>
@@ -251,6 +251,7 @@
       </p>
 
       <h3>2b. Data the app uses temporarily, on your device only</h3>
+      <p><strong>Postcode lookups.</strong> Whenever you search a postcode on the website, and as you type in the search box, the text you enter is sent to <a href="https://api.postcodes.io">api.postcodes.io</a> to resolve it to a location. It is not stored by us. Corrected 2026-09-07: this section previously described that lookup as something only the native app did.</p>
       <p>When you tap <strong>"Score where I am"</strong> in the native iOS or Android app:</p>
       <ul>
         <li>Your device's GPS coordinates (latitude + longitude) are read by the app</li>
@@ -274,6 +275,32 @@
         access logging, so no separate access log of source IPs and user agents is kept. Execution logs are retained for
         <strong>30 days</strong> and then deleted automatically. They are used solely for debugging and to
         investigate suspected abuse, and we do not link them to identities.
+      </p>
+
+      <h3>2e. Saved places (the device token)</h3>
+      <p>
+        Added 2026-09-07. If you tap <strong>save</strong> on a place, your browser generates a random
+        token (a <code>device token</code>) and stores it locally. That token is sent with each request to our
+        favourites endpoint so the list of places <em>you</em> saved comes back to you and not to
+        somebody else. The saved places and the token are stored on our side, in DynamoDB in
+        <code>eu-west-2</code>.
+      </p>
+      <ul>
+        <li>It is created only when you save something. Browsing and scoring never generate one.</li>
+        <li>It identifies a <strong>device</strong>, not a person. It is not linked to your email, your
+            API key, or anything you type.</li>
+        <li>It is never used for advertising, profiling, or tracking you across sites, and it is never
+            shared. See &sect;3.</li>
+        <li>Clearing your browser storage discards it. Your saved list becomes unreachable at that
+            point, because the token was the only thing pointing at it.</li>
+        <li>To have the stored list deleted, contact us (&sect;6) - though note that without the token
+            we cannot tell which list is yours, so send the request from the device that holds it.</li>
+      </ul>
+      <p>
+        <strong>This section corrects an omission.</strong> Until 2026-09-07 this notice said browsing
+        and scoring collected "no tracking IDs" and that we almost certainly hold nothing about you.
+        The token has existed for as long as saving has, and it is stored server-side, so those
+        statements were wrong for anyone who had saved a place.
       </p>
 
       <h2>3. What data we do NOT collect</h2>
@@ -425,7 +452,7 @@
       <h2>6. Your rights (UK GDPR)</h2>
       <p>Even though we hold very little data about you, your UK GDPR rights apply. You can:</p>
       <ul>
-        <li>Ask what data we hold about you (almost certainly: nothing)</li>
+        <li>Ask what data we hold about you. For most visitors this is nothing; if you have saved a place it is that list and its device token (&sect;2e), and if you requested an API key it is your email address</li>
         <li>Ask us to delete any data we do hold (we'll do it within 30 days)</li>
         <li>Withdraw consent to anything we're processing under consent (uninstalling the app revokes location consent)</li>
         <li>Lodge a complaint with the Information Commissioner's Office: <a href="https://ico.org.uk">ico.org.uk</a></li>

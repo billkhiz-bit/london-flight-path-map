@@ -238,6 +238,65 @@ check(
       : ''),
 );
 
+// EVERY DATASET A PAGE CITES MUST ALSO BE CREDITED ON IT (2026-09-07, audit I7).
+//
+// `build_area_pages.py` capped the attribution line at `data['sources'][:6]`,
+// which dropped the tail of the array - and the tail is where the environment
+// datasets landed once `environment` began scoring at v3.9. Measured before the
+// fix: the Environment Agency was credited on ZERO of the 90 pages that publish
+// its flood band, DEFRA road Lden on none of 43, DEFRA air quality on none of
+// 10. Each page printed the row - "Flood risk | Medium | Environment Agency
+// RoFRS, risk after defences" - and baked it into the Environment score above.
+//
+// OGL v3.0 grants reuse ON CONDITION of attribution, and these are our own
+// pages, in our own sitemap. Nothing checked it: this file asserted richness,
+// title uniqueness and sitemap agreement, never whether a credit survived.
+//
+// Keyed on the licensor named in the ROW, so it tracks whatever the page
+// actually publishes rather than a list maintained here.
+const CITED = [
+  [/Environment Agency/i, 'Environment Agency'],
+  [/DEFRA/i, 'DEFRA'],
+  [/NaPTAN/i, 'NaPTAN'],
+  [/HM Land Registry/i, 'HM Land Registry'],
+  [/NHS/i, 'NHS'],
+];
+const uncredited = [];
+// COUNTED, because the first version of this check read `page.html`, which does
+// not exist on these objects - every page fell through the `continue` and the
+// check reported "99 pages" while examining NONE. Proven by reinstating the
+// `[:6]` cap: it still passed. The detail string was a page COUNT, not an
+// EXAMINED count, which is the exact shape this repo keeps auditing out of
+// other people's gates.
+let examined = 0;
+for (const page of pages) {
+  const html = readFileSync(page.file, 'utf8');
+  // The credits block is `<p class="sources">`, built from `data['sources']`.
+  // A page without one is a FAILURE, not a skip: the first version of this
+  // check searched for a literal "Sources:" label that the template never
+  // emits, hit `continue` on all 99 pages, and still reported them examined.
+  const idx = html.indexOf('class="sources"');
+  if (idx === -1) {
+    uncredited.push(`${page.url}: no credits block at all`);
+    continue;
+  }
+  examined += 1;
+  const body = html.slice(0, idx);
+  const credits = html.slice(idx);
+  for (const [re, name] of CITED) {
+    if (re.test(body) && !re.test(credits)) {
+      uncredited.push(`${page.url}: cites ${name} in a fact row, credits it nowhere`);
+    }
+  }
+}
+check(
+  'every dataset a page cites is credited on that page',
+  uncredited.length === 0 && examined === pages.length,
+  uncredited.length
+    ? `${uncredited.length}: ${uncredited.slice(0, 4).join('; ')}`
+    : `${examined} of ${pages.length} pages examined`,
+);
+
 console.log('');
 if (failures.length) {
   console.error(`FAIL: ${failures.length} check(s) failed`);

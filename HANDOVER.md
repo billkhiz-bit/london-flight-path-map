@@ -324,7 +324,26 @@ satisfied.
   red. **A second gate for one invariant would have been the mirror-drift
   defect this repo has hit three times.**
 
-  **DEPLOY REQUIRED**: a template-only change does nothing until `sam deploy`.
+  **DEPLOYED AND VERIFIED 2026-09-07.** Only `FlightMapApiprodStage` updated -
+  no Lambda replacement, so no log-group churn. Verified by reading
+  `apigateway get-stage` back, NOT from the deploy's exit code: 15 live
+  `methodSettings` entries, the five reading `nhs/GET 2/5`, `sold-prices/GET
+  3/6`, `transport/GET 2/5`, `v1/regions/GET 5/10`, `v1/changes/GET 5/10`. All
+  five answer 200 to a normal request.
+
+  **They bound SUSTAINED abuse, not a sub-second burst, and say so.** 60
+  genuinely concurrent requests against a ~13.6-token budget produced one 429
+  on `/v1/regions` and none on `/v1/changes` - API Gateway's bucket is
+  distributed and documented best-effort. **The control is what made that
+  readable**: `/badge`, unchanged at 5/10 since 21 August, threw 17 of 60 -
+  more, because it is SLOWER (2.90s vs 0.71s), so more requests overlap against
+  a shared bucket. Testing only the new routes would have read as "not
+  enforcing"; testing only `/badge` as "enforcing". Neither alone is the answer.
+
+  **The burst test surfaced something separate**: `ScoreFunction` returned
+  **500** under concurrency - 13 of 60 on `/badge`, 2 on `/v1/changes`. Induced
+  by a burst no real traffic produces (measured peak is 15/min), so not acted
+  on here, but it is a real error path and nothing else has ever exercised it.
 - **`FavouritesTable` TTL** - deletes user data on a schedule, so Bill's call.
 - **The flood gate: DIAGNOSED AND FIXED 2026-09-03.** It promised "under
   seven minutes" and took **15m46s**. The old note here guessed that

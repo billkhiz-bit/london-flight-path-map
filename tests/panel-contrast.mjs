@@ -59,12 +59,22 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
-// Both viewports, because three separate mobile rules in this repo have been
-// keyed on width while the failing dimension was height, and because the
-// borough panel renders different chrome in the tabbed mobile layout.
+// Three viewports, because mobile rules in this repo keep being keyed on WIDTH
+// while the failing dimension is HEIGHT, and because the borough panel renders
+// different chrome in the tabbed mobile layout.
+//
+// LANDSCAPE ADDED 2026-09-07 (audit I11). Until then no contrast measurement
+// had ever run at a landscape viewport - this file and a11y-source.mjs both ran
+// 1440x900 and 390x844 only, and responsive.mjs gained the landscape entries on
+// 2026-08-31 but measures geometry, not colour. What was living in that gap:
+// `.legend-toggle` rendering rgb(20,20,20) on rgb(25,25,25) - 1.04:1 at 11px -
+// at every landscape phone size, as the only visible thing in the legend. Its
+// dark pill is set in a height-gated block and the `var(--white)` that pairs
+// with it sat in `@media (max-width: 480px)`.
 const VIEWPORTS = [
   { label: 'desktop', width: 1440, height: 900 },
   { label: 'phone', width: 390, height: 844 },
+  { label: 'phone landscape', width: 844, height: 390 },
 ];
 
 // The two panel states, reached by DIFFERENT routes on purpose. The area panel

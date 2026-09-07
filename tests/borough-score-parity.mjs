@@ -43,6 +43,23 @@ const PY = `
 import json, sys
 sys.path.insert(0, 'backend/lambdas/score')
 import app
+# BACKEND_ONLY_CITIES has ONE holder, tests/test_borough_data_parity.py,
+# whose own test asserts it is declared rather than discovered. READ from
+# that file rather than copied here: a second copy is correct the day it
+# is written and wrong at the next one-way door. Parsed rather than
+# imported because that module uses a package-relative conftest import
+# and will not load standalone.
+import ast
+_src = open('tests/test_borough_data_parity.py', encoding='utf-8').read()
+backend_only = None
+for _n in ast.walk(ast.parse(_src)):
+    if isinstance(_n, ast.Assign) and any(
+            getattr(t, 'id', None) == 'BACKEND_ONLY_CITIES' for t in _n.targets):
+        _v = _n.value
+        _v = _v.args[0] if isinstance(_v, ast.Call) and _v.args else _v
+        backend_only = set(ast.literal_eval(_v))
+if backend_only is None:
+    raise SystemExit('BACKEND_ONLY_CITIES not found in its holder - the floor below cannot tell a deliberate absence from a regression')
 out = {}
 for city, cfg in app.CITIES.items():
     out[city] = {}
@@ -52,10 +69,16 @@ for city, cfg in app.CITIES.items():
 # London's holder says 'Barking', the Lambda says 'Barking and Dagenham'. That
 # is a NAMING difference, not a scoring one, so the alias table the Lambda
 # already maintains is exported rather than a match being invented here.
-print(json.dumps({'scores': out, 'aliases': app.BOROUGH_ALIASES}))
+# BACKEND_ONLY_CITIES is exported so the floor below can tell a city that
+# is DELIBERATELY absent from the site from one that has silently fallen
+# out of CITY_DATA - which used to shrink this comparison without
+# failing it.
+print(json.dumps({'scores': out, 'aliases': app.BOROUGH_ALIASES,
+                  'backendOnly': sorted(backend_only)}))
 `;
 const dumped = JSON.parse(execFileSync('python', ['-c', PY], { encoding: 'utf-8', cwd: ROOT }));
 const lambdaScores = dumped.scores;
+const BACKEND_ONLY = dumped.backendOnly;
 // canonical -> every site-side spelling that resolves to it
 const altNames = {};
 for (const [alias, canonical] of Object.entries(dumped.aliases)) {
@@ -138,10 +161,33 @@ if (pageErrors.length) {
 
 console.log(`compared ${compared} boroughs across ${shared.length} cities: ${shared.join(', ')}`);
 
-// A run that measures almost nothing is a failure, not a pass - the same guard
-// site-api-parity.mjs carries, for the same reason.
-if (compared < 60) {
-  console.log(`FAIL: only ${compared} boroughs compared; expected the full set.`);
+// THE FLOOR, AND IT IS DERIVED (2026-09-07 audit, I13).
+//
+// This was `compared < 60` against a real total of 91, and there was no floor
+// at all on `shared.length`. So Greater Manchester (10), West Midlands (7),
+// Leicester (8) and Teesside (5) could ALL drop out of CITY_DATA together and
+// this still printed "PASS: the site and the Lambda agree on every borough" -
+// the one-way-door guarantee, asserted over two thirds of the boroughs.
+//
+// The expectation is now the boroughs the Lambda actually serves for the
+// cities the site actually offers, so it tracks a city being added or removed
+// with no edit here, and a CITY DROPPING OUT of the site is caught by the
+// second check rather than silently shrinking the first.
+const expectedCities = Object.keys(lambdaScores).filter((c) => !BACKEND_ONLY.includes(c));
+const missingCities = expectedCities.filter((c) => !shared.includes(c));
+if (missingCities.length) {
+  console.log(`FAIL: the site no longer offers ${missingCities.join(', ')}, which the`);
+  console.log('      Lambda scores and which are not declared backend-only. A city');
+  console.log('      that vanishes from CITY_DATA takes its boroughs out of this');
+  console.log('      comparison without failing it.');
+  process.exit(1);
+}
+const expected = shared.reduce((n, c) => n + Object.keys(lambdaScores[c]).length, 0);
+if (compared !== expected) {
+  console.log(`FAIL: compared ${compared} boroughs, but the Lambda serves ${expected}`);
+  console.log(`      across those ${shared.length} cities. Every borough the API scores`);
+  console.log('      must be rendered and compared - a borough the site cannot draw is');
+  console.log('      exactly the divergence this gate exists to catch.');
   process.exit(1);
 }
 if (pageErrors.length || failures.length) {
