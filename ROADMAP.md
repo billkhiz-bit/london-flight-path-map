@@ -2,7 +2,24 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-04 (**NOTHING IS BLOCKED. The wave is committed,
+**Last reviewed:** 2026-09-07 (**A FULL AUDIT RAN AND ITS FINDINGS ARE CLOSED
+AND DEPLOYED.** Three commits - `b69406a`, `9f8b57b`, `05bca67`. **8 criticals
+and 11 importants**, plus the whole second tier: everything the audit found
+that did not need a decision. Preflight went 39 -> **43 blocking stages**, all
+green; deploy drift **133 of 133**. The consumer site had been serving a
+mobile homepage with **ONE visible link** for ten days - /privacy and /terms
+unreachable from every phone - and the SCORED transport share was counting
+retired stations (City of Nottingham 8.3 -> 8.0). Full list in
+`AUDIT_REPORT.md`; the lessons in `memory/project-audit-2026-09-07.md`.
+
+**THREE THINGS NEED A DECISION AND NOTHING ELSE DOES:** the IAM
+privilege-escalation path (`OPERATIONS.md` s3.8 - it needs a console session
+AND a real deploy to verify, and an untested IAM edit is what caused the 3 Sep
+outage), the `healthcareWithin1kmPct` field name (it measures 500 m; renaming
+a published field is a contract change), and the four numeric decisions below,
+which are unchanged.
+
+Previous review 2026-09-04: (**NOTHING IS BLOCKED. The wave is committed,
 pushed and DEPLOYED.** `FlightMapDeployPolicy` had been REPLACED by the
 Observability statements rather than extended; it was restored from
 `backend/iam-policy.json` and `check_aws_permissions.py` reports **18
@@ -774,6 +791,41 @@ two of them itself. D2 needed XML escaping, because an SVG is a script-capable
 document served from our origin onto someone else's page. D4 needed a
 duplicate-content floor, because 99 thin pages is a doorway network and worse
 for the domain than none.
+
+---
+
+## Closed 2026-09-07 - the audit wave
+
+Recorded here so the "what next" list does not carry finished work. Detail in
+`AUDIT_REPORT.md`, which marks every finding by whether it was re-verified by
+hand or carries only the finder's evidence.
+
+| | Was | Now |
+|---|---|---|
+| Mobile web homepage | **1 visible link**; /privacy and /terms unreachable on every phone since 28 Aug | 9 hit-testable links, gated by `tests/mobile-legal-links.mjs` |
+| Scored transport share | counted **806 retired** NaPTAN nodes | active only; City of Nottingham `good`->`moderate`, 8.3 -> 8.0 |
+| `/v1/chat` residency | Bedrock in `us-east-1` while four documents denied it | disclosed; gated by `test_data_residency.py` |
+| London `/v1/score` | credited **no price source at all** | credits HM Land Registry; gated |
+| Nottingham crime | never compared against ONS | compared, and it agrees |
+| `area pages match the live API` | passed on **zero pages** | floor derived from `/v1/regions` |
+| `score sanity` | never checked `env` | components derived from live responses |
+| Borough parity floor | `< 60` against a real **91** | derived from the Lambda |
+| `/badge` path injection | **500** with a JSON body | 404 |
+| Area-page attribution | Environment Agency credited on **0** of 90 pages | 90 of 90 |
+| METHODOLOGY s6 | transposed `quiet` and the total; broken 3 times | rebuilt at v4.0 and **gated** |
+| Orphaned gates | `pwa-check` and `changes-why` in no runner | both wired in |
+
+**Two things that only showed up by doing the work**, both worth remembering:
+
+- **Restoring a hidden surface restores its defects with it.** Un-hiding the
+  mobile footer produced three further defects in sequence - 1.97:1
+  separators, a pointer-events band swallowing taps meant for the map, and
+  links parked under the sticky search card - each only findable once the
+  previous was fixed.
+- **METHODOLOGY s6 kept drifting for a structural reason**, not carelessness:
+  at SW11 1AA the live `quiet` comes from the DEFRA raster, not the geometry
+  the example hand-derived, so every growth in raster coverage diverged it
+  again. Check `quietResolution` before hand-deriving quiet for any postcode.
 
 ---
 

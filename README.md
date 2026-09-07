@@ -179,36 +179,66 @@ Response shape (single):
 
 ```json
 {
-  "score": 6.4,
-  "components": { "quiet": 5.0, "afford": 7.2, "growth": 7.8, "live": 7.2, "env": 6.4 },
+  "score": 7.0,
+  "components": {
+    "quiet": 7.0,
+    "afford": 7.3,
+    "growth": 5.5,
+    "live": 7.8,
+    "env": 5.1
+  },
   "context": {
-    "avgPriceGbp": 608000,
-    "priceTrendPct": 2.8,
+    "avgPriceGbp": 605442,
+    "priceTrendPct": 0.4,
     "noiseImpactBand": "low",
     "quietResolution": "postcode",
-    "liveResolution": "measured"
+    "liveResolution": "measured",
+    "environmentResolution": "measured"
   },
-  "location": { "city": "london", "borough": "Hackney", "postcode": "N1 7SX" },
+  "location": {
+    "city": "london",
+    "borough": "Hackney",
+    "postcode": "N1 7SX"
+  },
   "persona": "balanced",
-  "weights": { "quiet": 0.38, "afford": 0.31, "growth": 0.00, "live": 0.31 },
-  "methodologyVersion": "3.5",
+  "weights": {
+    "quiet": 0.32,
+    "afford": 0.27,
+    "growth": 0.0,
+    "live": 0.27,
+    "env": 0.14
+  },
+  "methodologyVersion": "4.0",
   "apiVersion": "1.0",
-  "sources": [ "EPC data: MHCLG, Open Government Licence v3.0", "..." ],
+  "sources": [
+    "Transport access: DfT NaPTAN, Open Government Licence v3.0",
+    "..."
+  ],
   "sourceBreakdown": {
-    "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 raster sample -> v3.0 Haversine to airports + flight-path geometry -> v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
+    "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
     "afford": "HM Land Registry House Price Index (HPI), borough cohort min-max scaling",
     "growth": "HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative",
-    "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24. Crime: ONS Crime in England and Wales, PFA data tables, Table C4. Transport: NaPTAN, share of postcodes within 800m of a rail/metro/tram node. Healthcare: curated tiers."
+    "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.",
+    "env": "Air quality (0.45), Road noise (0.35), Flood risk (0.20). Weights are re-normalised over the inputs a borough actually has; a borough below the two-input floor omits the component entirely."
   }
 }
 ```
 
-> **Captured from the live API on 2026-08-04, not hand-written.** The block above previously
-> carried `score: 7.7` with `methodologyVersion: "3.3"` and every component value stale, and its
+> **Captured from the live API on 2026-09-07, not hand-written.** Re-capture it when the
+> methodology version moves rather than editing values by hand - and that instruction was
+> broken between those two dates. The 2026-08-04 block was later hand-edited to add
+> `"env": 6.4` while leaving `methodologyVersion: "3.5"`, four-key `weights` summing to 1.00,
+> and every other value untouched. `env` did not exist on 2026-08-04, so the block could not
+> have been the capture it claimed to be, and it advertised a five-component response under a
+> four-component weights object. A caption that forbids hand-editing does not prevent it; only
+> re-capturing does. The block above is a verbatim `/v1/score?postcode=N1+7SX` response with
+> the `sources` array elided for length.
+>
+> An earlier version carried `score: 7.7` with `methodologyVersion: "3.3"` and every
+> component value stale, and its
 > `sourceBreakdown` credited **Home Office** for crime (re-sourced to ONS Table C4 in v3.5),
 > **NHS** for healthcare (curated tiers), and **Price Paid Data** for affordability and growth
 > where the engine uses **HPI** — while the table further down this same file already said HPI.
-> Re-capture it when the methodology version moves rather than editing values by hand.
 
 **Eight** named persona presets: `balanced`, `family`, `investor`, `firsttime`, `quietlife`,
 `renter`, `commuter`, `laterlife`. The `?weights=` parameter lets integrators apply their own

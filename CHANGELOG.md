@@ -1,5 +1,116 @@
 # Changelog
 
+## 2026-09-07 - a full audit, closed and deployed in two waves
+
+Three commits: `b69406a`, `9f8b57b`, `05bca67`, preceded by `441111d` which
+throttled the last five open API routes. **8 criticals and 11 importants**,
+then the whole second tier - everything the audit found that did not need a
+decision. Preflight **39 -> 43 blocking stages**, all green. Deploy drift
+**133 of 133 surfaces**, verified from the origin rather than from an exit
+code.
+
+### The two with the widest blast radius
+
+**The mobile web homepage had exactly ONE visible link, for ten days.**
+`.is-tabbed .sheet-footer { display: none }` was correct the day it was
+written: `.is-tabbed` was set on the NATIVE app, which has its own bottom nav.
+Two days later the class became the web default at <=900px and nothing re-read
+the rule, so it hid the `.sheet-footer` that had been added specifically to
+restore those links on mobile. /privacy and /terms were unreachable from every
+phone, the three `*-footer-click` events could not fire, and a crawler
+rendering at a mobile viewport saw no internal links. Measured 1 -> 10.
+
+**A rule keyed on a class whose meaning changes expires silently.** New
+category here, alongside "gates that cannot fail" and "docs that contradict
+code".
+
+**Retired stations were inflating a SCORED field.** The 2026-09-01 NaPTAN fix
+excluded 806 inactive nodes from the station LIST a user reads and not from
+the share that SCORES - 0.25 of liveability, in both holders. City of
+Nottingham `good` -> `moderate`, live 5.3 -> 4.5, **published score 8.3 ->
+8.0**. The half that got the fix had the visible symptom; the half that missed
+it had the blast radius.
+
+### Wave 1 - the criticals
+
+- **`/v1/chat` calls Bedrock in `us-east-1`** and four published documents said
+  that could not be happening. SUBPROCESSORS gained row 18 and a rewritten s5
+  (TWO outbound routes, one leaving the EEA); SECURITY.md and METHODOLOGY s15
+  corrected. `backend/tests/test_data_residency.py` compares the CODE's regions
+  to the REGISTER, so a new region reds on the day it lands.
+- **London's `/v1/score` credited no price source at all.** The 2026-08-25 edit
+  removed HM Land Registry reasoning it backs `/epc` and `/sold-prices` "not
+  this response" - right about sold prices, wrong about `avgPrice` and `trend`,
+  which are HPI. Every other UK city carried the line.
+- **Nottingham's crime rate had never been compared.** It sat outside
+  `CITY_PFA` under a comment whose reason covered three of its four boroughs.
+  Now compared, and it agrees with ONS.
+- **Three blocking gates checked less than they claimed**, all now derived:
+  `area pages match the live API` passed on ZERO pages, `score sanity` never
+  checked `env`, borough parity floored at 60 against a real 91.
+- **An unauthenticated 500 on `/badge`** via path injection - `quote()` defaults
+  to `safe='/'`, so `../outcodes/SW11` traversed into the postcodes.io PATH.
+  That 500 defeats the badge's whole contract: it renders in an `<img>` on a
+  customer's page.
+- **METHODOLOGY denied that road noise scores**, in four places. It is 0.35 of
+  `environment`, and the first of those statements was itself a dated
+  correction that had become the false claim.
+
+### Wave 2 - the second tier
+
+- **METHODOLOGY s6 rebuilt and GATED.** The worked example an auditor executes
+  had broken its own reproducibility claim three times.
+  `scripts/check_worked_example.py` re-derives every input, both cohort bounds,
+  the components, the weights and the arithmetic. **Rebuilding it found the
+  structural cause:** at SW11 1AA the live `quiet` comes from the DEFRA RASTER,
+  not the geometry the example hand-derived, so every growth in raster coverage
+  diverged it again.
+- **Two more orphaned gates wired in**, the 5th and 6th here. `pwa-check` was
+  reachable only through `make`, absent from PATH in Git Bash, so it had never
+  run. `changes-why` found a STALE ASSERTION rather than a defect: it required
+  the copy to say "market fell", and the mean trend moved -3.35% -> -3.03%, so
+  the market did not fall and the page had rightly stopped saying it had.
+  **A direction word in an assertion is scheduled staleness, like a count.**
+- **LICENSING.md** gained five datasets in live use - including the curated New
+  York SCORED inputs, five boroughs of a commercial API with no licensing
+  position recorded anywhere - and its TfL row was corrected: NaPTAN has
+  supplied the transport sub-score since v3.6 and `score/app.py` makes no TfL
+  call at all.
+- **PROJECT_DOCUMENTATION.md** described the live, key-gated, billable
+  `POST /v1/chat` as removed, and was stale on every headline fact.
+- **`build_borough_bands.py`** still had the single substring borough lookup
+  `index.html` was corrected away from on 2026-08-12, and it is the half that
+  WRITES: proven, the old pass sends North West Leicestershire to Leicester's
+  record. Also `--check --write-lambda` no longer rewrites `app.py`.
+- The device token moved to `crypto.getRandomValues` (it IS the favourites
+  partition key); `security.txt` `Policy:` pointed researchers at a licence
+  table; `status.html` reported "Up" for a route a keyless probe never reached;
+  `color-scheme` declared on all 8 hand-written pages; extension UI text
+  rebranded to Sky Score.
+
+### Four lessons, all paid for
+
+1. **Restoring a hidden surface restores its defects with it.** Un-hiding the
+   footer produced three further defects in sequence, each only findable once
+   the previous was fixed.
+2. **A check must know WHO IS SPEAKING.** Four times a check read
+   content-under-test as a verdict - New York's "NOT HM Land Registry" as a
+   credit, a correction quoting its own withdrawn sentence, and the app's
+   "Line status could not be checked" notice as a gate's confession.
+3. **A gate's summary must count what it DID, not what it was handed.** Two new
+   gates reported "99 pages" while examining zero, both because the detail
+   string quoted `pages.length` instead of `examined`.
+4. **A derived artefact is only as trustworthy as the assertion you make about
+   it.** A grep-derived deploy script silently dropped the multi-line recipes,
+   reproducing the 2 Sep partial-deploy trap; counting expected surfaces caught
+   it before it ran.
+
+### Still open, deliberately
+
+The IAM privilege-escalation path (`OPERATIONS.md` s3.8 - needs a console
+session AND a real deploy to verify, and an untested IAM edit is what caused
+the 3 Sep outage), the `healthcareWithin1kmPct` field name, and the four
+numeric decisions from 4 September.
 ## 2026-09-04 - the policy is restored, and the wave reaches users
 
 **The blocker was one console action, and it is done.** `FlightMapDeployPolicy`
