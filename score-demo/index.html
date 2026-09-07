@@ -26,6 +26,16 @@
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root {
+      /* Declared 2026-09-07 (audit). No page carried `color-scheme` at
+         all, so a visitor whose OS is set to dark got UA-LIGHT scrollbars,
+         form controls and pre-CSS canvas over a near-black page - the
+         flash of white before the stylesheet applies being the visible
+         part. The 99 generated pages under area/ have declared it since
+         2026-09-02; the hand-written ones were missed.
+         Each page commits to the scheme it actually paints: measured,
+         these render identically under both OS preferences, so claiming
+         `light dark` would promise an adaptation that does not happen. */
+      color-scheme: dark;
     --bg: #06070d;
     --panel: #0d0f1a;
     --border: #1f2333;

@@ -397,9 +397,17 @@ paths:
           in: query
           description: |
             Custom weights override. Format: `quiet:W,afford:X,growth:Y,live:Z`
-            where W+X+Y+Z must equal 1.0 (within ±0.01). If invalid, the
-            persona preset (or balanced) is used. When applied, the response
-            indicates `persona: "custom"`.
+            where the values must sum to 1.0 (within ±0.01). An optional fifth
+            key, `env`, is accepted since methodology v3.9.
+
+            An INVALID set returns **HTTP 400** with the reason and a
+            `weightsKeys` object - it does NOT fall back to the persona preset.
+            Corrected 2026-09-07: this documented a silent fallback, which is
+            the one documented behaviour here that breaks a client at runtime.
+            A caller sending a bad weight string gets an error, not a score.
+
+            When a valid override is applied the response indicates
+            `persona: "custom"`.
           schema:
             type: string
             example: "quiet:0.5,afford:0.2,growth:0.1,live:0.2"
@@ -835,13 +843,27 @@ components:
           type: string
           description: >-
             Whether the three environment inputs were measured. `unavailable`
-            for New York; `partial` where fewer than three are held.
+            for New York AND for any city below the two-input floor (Cardiff
+            returns `unavailable — 1/3 inputs measured`); `partial` at exactly
+            TWO of three. Corrected 2026-09-07: this said `unavailable` was New
+            York only and that `partial` covered "fewer than three".
         environmentSingleInput:
           type: boolean
           description: >-
-            Present when `env` rests on ONE input of three. Ranking surfaces
-            must exclude these from "best environment" comparisons: the absent
-            input is not missing at random.
+            Always present; `true` would mean `env` rested on ONE input of
+            three.
+
+            Corrected 2026-09-07. This said "Present when..." and instructed
+            ranking surfaces to exclude such boroughs. Both halves were wrong:
+            the field is emitted on every response (`false` on London), and
+            since the environment floor became TWO inputs at methodology v4.0,
+            a single input means `env` is omitted from the response entirely -
+            so `environmentSingleInput: true` cannot coexist with a published
+            `env`. An integrator implementing the mandated exclusion wrote dead
+            code.
+
+            To exclude thinly-measured boroughs, read `environmentResolution`,
+            which reports `partial` at exactly two of three.
         quietResolution:
           type: string
           enum: [borough, postcode, raster]
@@ -849,17 +871,21 @@ components:
             Which resolution tier produced the `quiet` score. Resolves
             highest-precision-first:
               `raster`, DEFRA Lden raster sample at postcode centroid (v3.1)
-                        — NOT CURRENTLY RETURNED, see the note below
               `postcode`, Haversine to airports + flight-path geometry (v3.0)
               `borough`, Borough-aggregate Lden band (v2.x fallback)
 
-            NOTE (August 2026): the `raster` tier is bypassed while a coverage
-            problem is resolved, so this field returns `postcode` or `borough`
-            only. DEFRA's aircraft contours cover roughly a tenth of London and
-            the unmapped remainder was being treated as quiet. `raster` is kept
-            in the enum because it is a valid value of the contract and will
-            return once the tier is restored — do not treat its absence as
-            permanent, and do not filter on it expecting results today.
+            The `raster` tier is LIVE and returning. Corrected 2026-09-07: this
+            said "NOT CURRENTLY RETURNED" and described the tier as bypassed
+            while a coverage problem was resolved. That quarantine was lifted on
+            2026-08-06 (`RASTER_TIER_QUARANTINED = False`), and SW11 1AA returns
+            `quietResolution: "raster"` today. An integrator filtering for the
+            highest-precision tier was told to expect nothing from it for a
+            month.
+
+            This matters for reproduction: where `raster` answers, `quiet` is a
+            DEFRA measurement at that postcode and is NOT derivable from the
+            flight-path geometry in METHODOLOGY §4.5. Check this field before
+            hand-deriving quiet.
 
             Integrators can use this to surface precision metadata to end
             users or filter for higher-precision results.

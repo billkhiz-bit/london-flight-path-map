@@ -1156,7 +1156,7 @@ The eight named personas reflect typical buyer-segment priorities. Each is docum
 
 ### 5.3 Custom weights
 
-The API accepts `?weights=quiet:W,afford:X,growth:Y,live:Z` where the four values must sum to 1.0 (within ±0.01 tolerance). Invalid sums silently fall back to the persona preset (default: balanced) and the response indicates `persona: "custom"` only when a valid override is applied.
+The API accepts `?weights=quiet:W,afford:X,growth:Y,live:Z` where the four values must sum to 1.0 (within ±0.01 tolerance). **An invalid set returns HTTP 400**, with the reason and a `weightsKeys` object; it does NOT fall back to the persona preset. Corrected 2026-09-07 - this said "invalid sums silently fall back", which is the one documented behaviour in this section that breaks a client at runtime, since a caller sending a bad weight string gets an error rather than a score. A fifth key, `env`, is also accepted since v3.9. The response indicates `persona: "custom"` when a valid override is applied.
 
 ### 5.4 Rounding policy
 
@@ -1164,141 +1164,185 @@ Internal computation uses unrounded floating-point values. Display values in the
 
 ## 6. Worked example
 
-A real end-to-end calculation, using `SW11 1AA` (Battersea, Wandsworth borough).
+A real end-to-end calculation at **methodology v4.0**, using `SW11 1AA`
+(Battersea, in the London Borough of Wandsworth). Every figure below was taken
+from the live API on 2026-09-07 and re-derived from the engine.
+
+> **This section is now GATED.** `scripts/check_worked_example.py` re-derives
+> every number here from `backend/lambdas/score/app.py` and fails if any of them
+> drifts. That gate exists because this example has broken its own
+> reproducibility claim **three times** - twice on 2026-08-03, and again between
+> v3.2 and v4.0, during which it asserted `quiet: 5.0` and a total of `6.4`
+> while the API returned `6.4` and `6.7`. The two figures were transposed, every
+> borough input beside them was stale, and the section still ended with "the
+> methodology is reproducible against the live API".
+>
+> An example that a reader executes is a claim like any other. Prose cannot hold
+> it current; a check can.
 
 ### Step 1, Postcode resolution
 
-The API calls `postcodes.io` to translate the postcode into administrative geography:
-
 ```
-GET https://api.postcodes.io/postcodes/SW111AA
-→ admin_district: "Wandsworth", longitude: -0.1643, latitude: 51.4644
-```
+GET /v1/score?postcode=SW11+1AA
 
-### Step 2, Borough data lookup
-
-Wandsworth's structural inputs (from the embedded London dataset; see [§7](#7-data-sources)):
-
-```
-impact: 'moderate' # DEFRA Lden 60-65 dB band
-avgPrice: £680,000
-trend: 2.1%
-schools: 'excellent' # >25% Outstanding rate per Ofsted
-crimeRate: 82 # police-recorded offences per 1,000 (ONS 2023)
-transport: 'excellent' # PTAL 6 band, multiple lines, Crossrail
-healthcare: 'good' # St George's full A&E, good GP coverage
+resolved -> Wandsworth, London
+context.quietResolution: "raster"
 ```
 
-### Step 3, Component calculations
+Resolution is tiered: the local ONS NSPL table answers first, with
+`api.postcodes.io` as the fallback (see §7). The response's `sources` array
+names whichever actually answered, so provenance follows the tier that ran.
 
-**Quiet (v3.0, postcode resolution)**, postcodes.io returned lat/lon (51.4644, -0.1643) for SW11 1AA, so the API uses per-postcode Haversine scoring (§4.5):
+### Step 2, Borough inputs
 
-- Nearest airport: LCY at **15.87 km** → noise_score += 1 (15-20 km band)
-- Major airport (LHR): **20.10 km** → no bonus (>15 km)
-- Nearest flight-path waypoint: **2.38 km**, on the *Dep SE (Detling)* departure route → noise_score += 2 (2-4 km band)
-- Nearest rotary site: **London Heliport (Battersea) at 1.13 km** → noise_score += 2 (§4.5 top tier, within 3 km)
-- Total noise_score: **5**
-- Quiet = 10 − 5 = **5.0**
-
-The live API returns `quiet: 5.0` and a balanced total of `6.4` for SW11 1AA, which is what the arithmetic above produces — no adjustment, no clipping. **The borough Lden band remains 'moderate'** in the response's `context.noiseImpactBand` for transparency, but does not affect the score itself.
-
-> **Second correction, 2026-08-03 (later the same day).** The heliport step above was added when
-> the rotary term was ported from the consumer site to `/v1/score`. Until that port this example
-> derived **7.0** and matched the API; the port changed SW11 1AA to **5.0** and left this section
-> asserting the old figure for several hours. SW11 1AA sits 1.13 km from the London Heliport, so
-> it is one of the postcodes the term moves most — the worked example was, by coincidence, the
-> worst possible one to leave unchecked. Recorded rather than quietly amended because "the score
-> is fully reproducible" is a claim this document has now broken twice in one day, both times by
-> changing the engine without re-running the example.
-
-> **Correction, 2026-08-03.** This example previously stated the nearest flight-path
-> waypoint was "~6 km → noise_score += 0", giving a total of 1 and a quiet score of
-> 9 — then reconciled that against the live 7.0 by asserting the result was
-> "clipped to 7.0 in practice", with the Battersea heliport supplying "residual
-> context the airport+path proxy doesn't capture". Both claims were wrong. The
-> nearest waypoint is 2.38 km, not ~6 km, so the correct total was always 3 and the
-> formula yields 7.0 directly. There is no clipping step in the code and the API
-> does not model heliports at all; that sentence was a post-hoc rationalisation of
-> an arithmetic slip, and it was this document's only mention of heliports. The
-> formula was reproducible all along — this worked example was not. Recomputed here
-> against the live geometry (`CITY_GEOMETRY['london']`) rather than by hand.
-
-(The pre-v3.0 borough-aggregate value was `quiet: 5.0`, derived from `IMPACT_TO_QUIET['moderate']`. v3.0 reflects that Battersea is south of major LHR flight paths and away from LCY corridors.)
-
-**Affordability**, across the 33 London boroughs, `min_price` = £340,000, `max_price` = £1,350,000:
-```
-afford = ((1,350,000 − 680,000) / (1,350,000 − 340,000)) × 10
-       = (670,000 / 1,010,000) × 10
-       = 6.6336…
-       → displayed as 6.6
-```
-
-**Growth**, across the cohort, `max_trend` = 5.8%:
-```
-growth = (2.1 / 5.8) × 10
-       = 3.6206…
-       → displayed as 3.6
-```
-
-> **This worked example reproduces v3.0 and is retained as a historical trace.** It is internally consistent at that version — including the v3.0 balanced weights below — but it no longer matches the live API, and has not since v3.2. Three later changes affect it: the v3.2 clamp, the v3.3 weighting (balanced now carries `growth` at 0.00, not 0.20), and the v3.4 dual-anchor formula in §4.3, under which this borough's growth would be `5 + (2.1 / 5.8) × 5 = 6.8`, not 3.6. The cohort bounds have also moved with each quarterly refresh. To reproduce the *current* numbers by hand, use §4.3 and the persona weights in §5.1 against the present snapshot.
-
-**Liveability**, sub-scores:
-- Schools `excellent` → 9 (Ofsted distribution: >25% Outstanding)
-- Crime rate 82 → `10 − (82 − 50) / 15 = 7.867` (calibrated to London median 88 → 7.5)
-- Transport `excellent` → 10 (PTAL 6)
-- Healthcare `good` → 7 (full A&E, good GP)
+Wandsworth's scored inputs, as `CITIES['london']['boroughs']['Wandsworth']`
+holds them:
 
 ```
-live = 9 × 0.35 + 7.867 × 0.30 + 10 × 0.25 + 7 × 0.10
-     = 3.150 + 2.360 + 2.500 + 0.700
-     = 8.71
-     → displayed as 8.7
+avgPrice:             680105      # HM Land Registry UK HPI, 2026-06 vintage
+trend:                -5.2        # annualised %, same source
+p8:                   0.49        # DfE Key Stage 4 Progress 8, 2023/24 Revised
+crimeRate:            76.4        # ONS Table C4, offences per 1,000
+transport:            'good'      # NaPTAN, share of postcodes within 800 m
+healthcare:           'excellent' # NHS ODS, GP practices within 500 m
+airQualityWhoRatio:   2.27        # DEFRA PCM, worse of NO2/PM2.5 vs WHO 2021
+roadNoiseAboveWhoPct: 58.7        # DEFRA Round 4 road Lden, share over 53 dB
+floodMediumOrHighPct: 2.14        # EA RoFRS, share at Medium-or-High
+impact:               'moderate'  # borough aircraft band, reported not scored here
 ```
 
-### Step 4, Score combination (balanced persona, v3.0)
+### Step 3, The five components
+
+**Quiet = 6.4, and it is MEASURED, not derived.** `quietResolution` is
+`raster`: DEFRA sampled aircraft Lden at this postcode, so the score comes from
+that reading through the ramp in §4.5. It is **not** reproducible from the
+flight-path geometry in this document, and it should not be - the geometry tier
+exists to stand in for the raster where the raster has no coverage. The field
+that tells you which ran is `context.quietResolution`, and `coverage.quiet`
+carries `measuredAtLocation: true` here.
+
+> Earlier editions of this section hand-derived `quiet` from distance to
+> airports and got a different number every time the raster's coverage grew.
+> That was the mechanism behind two of the three corrections. **Check
+> `quietResolution` before hand-deriving quiet for any postcode.**
+
+**Affordability = 6.5.** Min-max against the London cohort (§4.2), 33 boroughs,
+`min = 371,030`, `max = 1,250,149`:
 
 ```
-score = 7.0 × 0.30 + 6.6336 × 0.25 + 3.6206 × 0.20 + 8.71 × 0.25
-      = 2.100 + 1.658 + 0.724 + 2.178
-      = 6.660
-      → displayed as 6.7
+afford = (1,250,149 - 680,105) / (1,250,149 - 371,030) x 10
+       = 570,044 / 879,119 x 10
+       = 6.484...
+       -> 6.5
 ```
 
-### Step 5, Verification against the live v3.0 API
+**Growth = 4.0.** Dual anchor (§4.3) against the cohort's widest absolute
+bound, `min = -25.4`, `max = 4.3`, so the anchor is 25.4:
 
-Calling the live API with the same parameters returns:
+```
+growth = 5 + (-5.2 / 25.4) x 5
+       = 5 - 1.024
+       = 3.976
+       -> 4.0
+```
+
+Growth carries **weight 0.00** in every persona but `investor` (§5.1), so it
+does not move this score at all. It is still published, because a reader
+comparing quarters needs it.
+
+**Liveability = 7.8.** Sub-scores, weighted schools 0.35 / crime 0.30 /
+transport 0.25 / healthcare 0.10:
+
+```
+schools     p8 0.49          -> 7.45   (§4.4, anchored on the DfE 0.0 average)
+crime       76.4 per 1,000   -> 8.24   (§4.4)
+transport   'good'           -> 7      (TRANSPORT_SCORE)
+healthcare  'excellent'      -> 10     (HEALTH_SCORE)
+
+live = 7.45 x 0.35 + 8.24 x 0.30 + 7 x 0.25 + 10 x 0.10
+     = 2.6075 + 2.472 + 1.750 + 1.000
+     = 7.8295
+     -> 7.8
+```
+
+**Environment = 5.6.** Air quality 0.45 / road noise 0.35 / flood 0.20 (§4.7),
+each anchored on a published threshold:
+
+```
+air quality  ratio 2.27 vs WHO 2021    -> 5.767
+road noise   58.7% over WHO 53 dB Lden -> 4.130
+flood        2.14% at Medium-or-High   -> 7.860
+
+env = 5.767 x 0.45 + 4.130 x 0.35 + 7.860 x 0.20
+    = 2.595 + 1.446 + 1.572
+    = 5.6125
+    -> 5.6
+```
+
+### Step 4, Score combination (balanced persona, v4.0)
+
+Balanced weights are `quiet 0.32 / afford 0.27 / growth 0.00 / live 0.27 /
+env 0.14`:
+
+```
+score = 6.4 x 0.32 + 6.5 x 0.27 + 4.0 x 0.00 + 7.8 x 0.27 + 5.6 x 0.14
+      = 2.048 + 1.755 + 0.000 + 2.106 + 0.784
+      = 6.693
+      -> 6.7
+```
+
+### Step 5, Verification against the live API
 
 ```
 GET /v1/score?postcode=SW11+1AA
-→ {
-    score: 6.7,
-    components: { quiet: 7.0, afford: 6.6, growth: 3.6, live: 8.7 },
-    context: {
-      avgPriceGbp: 680000,
-      priceTrendPct: 2.1,
-      noiseImpactBand: "moderate",
-      quietResolution: "postcode"
-    },
-    methodologyVersion: "3.0",
-    ...
-  }
+-> {
+     "score": 6.7,
+     "components": { "quiet": 6.4, "afford": 6.5, "growth": 4.0,
+                     "live": 7.8, "env": 5.6 },
+     "weights":    { "quiet": 0.32, "afford": 0.27, "growth": 0.00,
+                     "live": 0.27, "env": 0.14 },
+     "context": {
+       "avgPriceGbp": 680105,
+       "priceTrendPct": -5.2,
+       "noiseImpactBand": "moderate",
+       "quietResolution": "raster",
+       "liveResolution": "measured",
+       "environmentResolution": "measured"
+     },
+     "methodologyVersion": "4.0"
+   }
 ```
 
-The hand-calculated values match the live API response within the documented rounding tolerance. The `quietResolution: "postcode"` field confirms the score used per-postcode Haversine geometry rather than borough-aggregate Lden. **The methodology is reproducible against the live API.**
+The hand calculation reproduces the published score exactly. Four of the five
+components are reproducible from this document alone; `quiet` is a DEFRA
+measurement and is reproducible only against the raster, which is what
+`quietResolution` exists to tell you.
 
-### Comparison: same postcode, different persona
+**Where a component is absent** - New York has no `environment`, Cardiff falls
+below its two-input floor - the engine **drops it and rescales the survivors**
+rather than treating it as zero. `weights` reports the persona's nominal
+weights, so for those boroughs `sum(components x weights)` will not equal
+`score`; see §5.1.
 
-For SW11 1AA with v3.0 quiet=7.0 (postcode resolution):
+### Comparison: same postcode, every persona
 
-| Persona | Weights (q/a/g/l) | Score | Notes |
+All eight taken from the live API on 2026-09-07, and each reproduces from the
+components above under its own weights:
+
+| Persona | q / a / g / l / e | Score | Why it differs |
 |---|---|---|---|
-| `balanced` | 30/25/20/25 | **6.7** | Default |
-| `family` | 20/20/10/50 | **7.4** | Excellent schools (9) and excellent transport (10) dominate the heavy `live` weight |
-| `investor` | 10/30/40/20 | **5.6** | Penalised by Wandsworth's modest 2.1% trend; growth is weighted 40% |
-| `firsttime` | 15/40/20/25 | **6.2** | Weighted heavy on affordability (6.6) but Wandsworth isn't cheap |
-| `quietlife` | 50/20/10/20 | **6.9** | Heavy on quiet, v3.0 Battersea quiet of 7.0 supports a strong score in this profile |
+| `balanced` | 0.32 / 0.27 / 0.00 / 0.27 / 0.14 | **6.7** | Default |
+| `commuter` | 0.21 / 0.30 / 0.00 / 0.35 / 0.14 | **6.8** | Leans on liveability, where Wandsworth is strongest |
+| `family` | 0.18 / 0.18 / 0.00 / 0.46 / 0.18 | **6.9** | Highest: liveability at 0.46, and excellent healthcare |
+| `firsttime` | 0.16 / 0.43 / 0.00 / 0.27 / 0.14 | **6.7** | Affordability at 0.43, and 6.5 is mid-cohort |
+| `investor` | 0.09 / 0.26 / 0.34 / 0.17 / 0.14 | **5.7** | Lowest: the only persona weighting growth, and the trend is -5.2% |
+| `laterlife` | 0.36 / 0.14 / 0.00 / 0.32 / 0.18 | **6.7** | Quiet-leaning, and the raster reading is mid-range |
+| `quietlife` | 0.48 / 0.19 / 0.00 / 0.19 / 0.14 | **6.6** | Nearly half the weight on a 6.4 |
+| `renter` | 0.26 / 0.30 / 0.00 / 0.30 / 0.14 | **6.7** | Sits between commuter and balanced |
 
-(In pre-v3.0 borough-only scoring with quiet=5.0, the `quietlife` persona would have scored 5.9, the v3.0 per-postcode resolution materially changes results in profiles that emphasise the `quiet` component.)
+The spread is **1.2 points on one postcode**, entirely from weighting. That is
+the persona system doing its job, and it is why a single headline number is
+always published alongside the weights that produced it.
 
 ## 7. Data sources
 

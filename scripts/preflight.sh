@@ -296,6 +296,22 @@ check "area names == MSOA names"       python scripts/build_city_neighbourhoods.
 # city enum (BatchRequest) that the hand fix had missed. Proven red five ways,
 # including one-enum-short-with-three-complete and a no-enums-matched floor.
 check "openapi == score engine"        python scripts/check_openapi_matches_engine.py
+# METHODOLOGY section 6 is the reproduction procedure a B2B auditor runs,
+# and README calls that document "the document that closes B2B audits". The
+# example has broken its own reproducibility claim THREE times: twice on
+# 2026-08-03, and then across v3.2..v4.0 while asserting `quiet: 5.0` and a
+# total of `6.4` when the API returned 6.4 and 6.7 - the two transposed,
+# every borough input beside them stale, under a closing sentence saying
+# "The methodology is reproducible against the live API".
+#
+# Each correction was written as a dated note BESIDE the old text, so the
+# old text survived every time. Re-derives every input, both cohort bounds,
+# the components, the weights and the final arithmetic from the engine.
+# `quiet` is deliberately exempt - it is raster-resolved at this postcode
+# and needs DynamoDB - but the gate asserts the document SAYS so, which is
+# the claim that was wrong. No network, so it blocks. Proven red on a
+# transposed score and on a stale input.
+check "worked example reproduces"      python scripts/check_worked_example.py
 # Author preference, enforced 2026-08-03: no em dashes on any deployed page.
 # 184 were removed in one pass; a gate is the only thing that keeps them out.
 check "no em dashes (all pages)"       sh scripts/check_no_em_dash.sh
@@ -464,6 +480,24 @@ check "every city switches"           node tests/city-switch.mjs
 # deleting the native rule outright would pass. Proven red against the
 # original defect: 1 visible link at four viewports.
 check "legal links reachable on a phone" node tests/mobile-legal-links.mjs
+# TWO ORPHANED GATES, WIRED IN 2026-09-07. Both existed, both worked, and
+# neither was in any runner - the 5th and 6th found orphaned in this repo
+# after failure-path, native-sim-render and live-mobile-verify.
+#
+# `pwa-check` was referenced ONLY from the Makefile, and `make` is not on
+# PATH in Git Bash on this machine, so it had never run here at all. What
+# kept it out was a hardcoded port; it honours SMOKE_BASE now, like every
+# other source-pointed gate, and reuses the server started above.
+#
+# `changes-why` reads the LIVE /changes page, so it is a net_check. Running
+# it for the first time found a stale assertion rather than a defect: it
+# asserted the copy contains "market fell", which pins a direction word to
+# whichever quarter is being shown. The mean trend moved -3.35% -> -3.03%
+# this vintage, so the market did NOT fall, the page correctly stopped
+# saying it had, and the gate was red on a page that was right. It now
+# asserts the move is QUANTIFIED, which holds in any direction.
+check "PWA installable (manifest + SW)" env "SMOKE_BASE=http://127.0.0.1:$smoke_port" node tests/pwa-check.mjs
+net_check "changes page explains why"  node tests/changes-why.mjs
 # DOES THE MAP FIT THE BOX IT IS DRAWN IN? Added 2026-08-24.
 #
 # "every city switches" counts outlines, and the count is right whether or

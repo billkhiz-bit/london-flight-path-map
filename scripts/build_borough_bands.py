@@ -192,6 +192,20 @@ GP_JSON = DATA / 'nhs-gp-practices.json'
 #     600 m 30.8-97.5   800 m 42.8-100.0
 # 500 m has the widest spread (67.5 points) and a median near the middle of the
 # range, so the three bands each carry boroughs.
+# 500 m, and the field it feeds is called `healthcareWithin1kmPct`.
+#
+# THE NAME IS WRONG, THE VALUE IS RIGHT (2026-09-07 audit, I2). Recorded
+# here rather than renamed, because that key is published in
+# `data/borough-extra.json`, which is a DEPLOYED asset - renaming it is a
+# contract change and a product decision, not a defect fix. The 86 published
+# values span 15.7-89.8, which matches a 500 m radius and is impossible at
+# 1 km (this script's own docstring records 1 km putting 68 of 81 boroughs
+# in `excellent`).
+#
+# Three options when it is decided: rename and migrate the readers, publish
+# the correctly-named key alongside and deprecate the old one, or widen the
+# radius to match the name - which would change every published healthcare
+# band and is therefore the largest of the three.
 GP_RADIUS_M = 500.0
 HEALTH_EXCELLENT_SHARE = 75.0
 HEALTH_GOOD_SHARE = 50.0
@@ -723,6 +737,9 @@ def derive(limit=None):
 
             gp_share = points_within(gp_grid, points, GP_RADIUS_M)
             if gp_share is not None:
+                # Named `...1kmPct`, measured at GP_RADIUS_M = 500 m. See the
+                # note on that constant: the name is a known defect awaiting a
+                # naming decision, not a measurement error.
                 rec['healthcareWithin1kmPct'] = round(gp_share, 1)
                 rec['healthcare'] = health_band(gp_share)
                 rec['healthcareVintage'] = HEALTH_VINTAGE
@@ -849,12 +866,37 @@ def apply_to_extra(results, write):
                 # up is the key we write to. London's holder calls Barking and
                 # Dagenham 'Barking'; writing an exact-match-only key would put
                 # the borough's data somewhere the map never reads.
+                #
+                # EXACT MATCH FIRST, THEN SUBSTRING (2026-09-07 audit, I16).
+                # This was a SINGLE pass that returned on the first substring
+                # hit, which is the version `getExtraData()` was corrected away
+                # from on 2026-08-12 - because 'north west leicestershire'
+                # contains 'leicester', and `Leicester` is key #1 in that
+                # block, so North West Leicestershire was served Leicester's
+                # record: crime 110.0 against its true 59.2, and a Progress 8
+                # badge for a district that publishes none.
+                #
+                # The comment above claimed this WAS the same rule as the
+                # frontend's. It stopped being so the day the frontend was
+                # fixed, and this half is the one that WRITES - so where the
+                # site rendered a wrong value, this would persist one into
+                # borough-extra.json under the wrong borough's name, and
+                # report the diff under that name too.
+                #
+                # Latent rather than live only because every borough currently
+                # has an exact key; it fires the moment one is missing, which
+                # is what a rename or a new city build produces.
                 lower = borough.lower()
                 for key in extra[city]:
-                    k = key.lower()
-                    if lower == k or lower in k or k in lower:
+                    if lower == key.lower():
                         target = extra[city][key]
                         break
+                else:
+                    for key in extra[city]:
+                        k = key.lower()
+                        if lower in k or k in lower:
+                            target = extra[city][key]
+                            break
             if target is None:
                 diffs.append(f'{city}.{borough}: not in borough-extra.json')
                 continue
@@ -1120,7 +1162,26 @@ def main():
         print('\n(report only; pass --write to update borough-extra.json)')
         return 0
 
+    # `--check --write-lambda` USED TO WRITE app.py (2026-09-07 audit).
+    #
+    # This was unconditional, so the two flags together gave a nominally
+    # read-only invocation that rewrote a source file. `--check` is what
+    # preflight runs and what a reader reaches for to ask "is the holder in
+    # step" - a mode that answers by CHANGING the thing it was asked about
+    # cannot answer it, and on a dirty tree it mixes a derivation into
+    # whatever else is uncommitted.
+    #
+    # Gated on --write now, which is the flag that already means "persist
+    # what you derived". `--write --write-lambda` is unchanged and remains
+    # the documented way to update both holders.
     if args.write_lambda:
+        if not args.write:
+            print(
+                '\n--write-lambda needs --write. On its own it would rewrite '
+                f'{SCORE_APP.name} during a check, which is not a check. '
+                'Re-run with --write --write-lambda to update both holders.'
+            )
+            return 2
         n = write_lambda(results, write=True)
         print(f'\n{n} field(s) written into {SCORE_APP.name}')
 

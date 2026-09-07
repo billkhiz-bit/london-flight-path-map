@@ -109,7 +109,21 @@ record('no placeholder subject leaks into the UI', !/This area/.test(await panel
 const market = page.locator('#market-context');
 record('market context visible', await market.isVisible());
 const marketText = ((await market.textContent()) || '').replace(/\s+/g, ' ');
-record('market context explains the city-wide move', /market fell/.test(marketText), marketText.slice(0, 110));
+// DIRECTION-AGNOSTIC (2026-09-07). This asserted /market fell/, which pins a
+// word that depends on the quarter: the mean 12-month trend moved from
+// -3.35% to -3.03% this vintage, so the market did not fall and the copy
+// correctly stopped saying it did. The gate went red on a page that was
+// right - and, being in no runner at all until today, nobody saw it.
+//
+// What actually matters is that the page QUANTIFIES the city-wide move, so
+// that is what is asserted: two signed percentages and the word `moved`
+// between them. That holds in a rising quarter, a falling one and a flat
+// one. Any count or direction in an assertion is scheduled staleness.
+record(
+  'market context quantifies the city-wide move',
+  /trend moved from\s*-?[\d.]+%\s*to\s*-?[\d.]+%/.test(marketText),
+  marketText.slice(0, 110),
+);
 record('market context shows the trend shift', /Average trend/.test(marketText));
 record('market context names the benchmark change', /Strongest grower/.test(marketText));
 

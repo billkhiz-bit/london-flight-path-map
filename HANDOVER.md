@@ -10,7 +10,55 @@ outside the Observability statements. Read §0 before anything else.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-04. AWS RESOLVED, WAVE DEPLOYED. DECISIONS REMAIN.
+## 0. PICK UP HERE - 2026-09-07. AUDIT WAVE DEPLOYED AND VERIFIED.
+
+**Commit `b69406a`, pushed. Backend via SAM, then 145 web uploads and 8
+CloudFront invalidations, all Completed. `check_deploy_drift.sh`: 133 of 133
+surfaces match the live origin.** Verified from the ORIGIN throughout, never
+from a deploy's exit code.
+
+**8 criticals and 11 importants closed** - see `AUDIT_REPORT.md` for the full
+list and `memory/project-audit-2026-09-07.md` for the lessons. Verified live:
+
+| | |
+|---|---|
+| Nottingham | `score 8.0, live 4.5` (was 8.3 / 5.3) - retired stations were in the SCORED transport share |
+| London `/v1/score` | credits HM Land Registry again |
+| `/badge?postcode=../outcodes/SW11` | **404** (was a 500 with a JSON body) |
+| `/v1/changes` | no longer credits a postcode resolver it never calls |
+| mobile homepage | **9 reachable links** at both phone orientations incl. /privacy /terms (was **1**) |
+| `area/london/wandsworth/` | credits the Environment Agency (90 pages do; 0 did) |
+| `area pages match the live API` | **99 of 99** - the one red stage, now green |
+
+Preflight at commit time: **38 of 39 blocking stages pass.** The single FAIL
+was `area pages match the live API`, correctly reporting the Nottingham page
+baking 8 against a live API still serving 8.3 - source ahead of deploy. It is
+green now.
+
+### THREE ITEMS LEFT OPEN ON PURPOSE
+
+1. **The IAM privilege-escalation path** - `OPERATIONS.md` s3.8 has the
+   procedure. `flightmap-dev` can attach `AdministratorAccess` to a Lambda role
+   it may create and then `UpdateFunctionCode`; the same credential is in
+   GitHub Actions secrets on a repo confirmed **PUBLIC**. Not fixed from here
+   because the condition needs `iam:ListAttachedRolePolicies` (denied) and a
+   permissions boundary, and a blanket Deny on `/apikeys*` would break
+   CloudFormation. **Needs a console session AND a real deploy to verify** -
+   the permissions probe covers 18 of 110 actions and says nothing about a
+   deploy. An untested IAM edit is what caused the 3 Sep outage.
+2. **`healthcareWithin1kmPct` measures 500 m.** 86 published values in a
+   deployed asset; renaming is a contract change. Rename, alias, or widen the
+   radius - a decision, not a bug fix.
+3. **METHODOLOGY s6 does not reproduce.** It says the API returns `quiet: 5.0`
+   and a total of `6.4`; live is `6.4` and `6.7`, and every input in Step 2 is
+   stale. The ENGINE reproduces exactly - s6 is the section an auditor
+   executes, and it needs regenerating rather than patching.
+
+**The four decisions from 2026-09-04 are still open and unchanged** - see s0.3
+below.
+
+---
+## 0z2. The 2026-09-04 state - 2026-09-04. AWS RESOLVED, WAVE DEPLOYED. DECISIONS REMAIN.
 
 ### 0.0 DONE 2026-09-04 - the policy was restored
 

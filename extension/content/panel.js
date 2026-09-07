@@ -1212,7 +1212,7 @@ function buildPanel(listing, plan) {
   const panel = el('div', null);
   panel.id = PANEL_ID;
   panel.setAttribute('role', 'complementary');
-  panel.setAttribute('aria-label', 'cubitt33 property data');
+  panel.setAttribute('aria-label', 'Sky Score property data');
   // tabindex="-1" makes the panel focusable by script but NOT a tab stop, which
   // is what lets the badge hand focus over on open. Without it, opening the
   // panel destroys the element the keyboard was on and focus resets to <body> -
@@ -1235,7 +1235,7 @@ function buildPanel(listing, plan) {
   toggle.type = 'button';
   toggle.setAttribute('aria-expanded', 'true');
   toggle.appendChild(badgeMark());
-  toggle.appendChild(el('span', 'c33-title', 'cubitt33'));
+  toggle.appendChild(el('span', 'c33-title', 'Sky Score'));
   // Drawn, not the '⌄' character. That glyph has no consistent metrics across
   // the system-ui stack and rendered as a small lowercase "v" sitting off the
   // baseline - visible in the 2026-08-08 screenshot. A path has the shape it
@@ -1268,7 +1268,7 @@ function buildPanel(listing, plan) {
 
   const close = el('button', 'c33-close', '×');
   close.type = 'button';
-  close.setAttribute('aria-label', 'Close cubitt33 panel');
+  close.setAttribute('aria-label', 'Close Sky Score panel');
   close.addEventListener('click', () => {
     removePanel();
     // The badge is what replaces the panel, so it is where focus belongs. The
@@ -1535,8 +1535,8 @@ function showBadge(listing, { focus = false } = {}) {
   badge.id = BADGE_ID;
   badge.type = 'button';
   badge.appendChild(badgeMark());
-  badge.appendChild(el('span', 'c33-badge-word', 'cubitt33'));
-  badge.setAttribute('aria-label', 'Show cubitt33 property data for this listing');
+  badge.appendChild(el('span', 'c33-badge-word', 'Sky Score'));
+  badge.setAttribute('aria-label', 'Show Sky Score property data for this listing');
 
   badge.addEventListener('click', () => {
     const plan = decidePresentation(listing);

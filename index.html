@@ -108,6 +108,16 @@
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {
+      /* Declared 2026-09-07 (audit). No page carried `color-scheme` at
+         all, so a visitor whose OS is set to dark got UA-LIGHT scrollbars,
+         form controls and pre-CSS canvas over a near-black page - the
+         flash of white before the stylesheet applies being the visible
+         part. The 99 generated pages under area/ have declared it since
+         2026-09-02; the hand-written ones were missed.
+         Each page commits to the scheme it actually paints: measured,
+         these render identically under both OS preferences, so claiming
+         `light dark` would promise an adaptation that does not happen. */
+      color-scheme: light;
         --bg: #e4e3e0;
         --dark: #141414;
         --mid: #636363;
@@ -12179,8 +12189,26 @@
         if (!id || !_UUID_RE.test(id)) {
           id =
             (crypto.randomUUID && crypto.randomUUID()) ||
-            // Fallback for ancient browsers, 32 hex chars from Math.random;
-            // weaker entropy but still passes the Lambda's format check.
+            // FALLBACK VIA crypto.getRandomValues, NOT Math.random
+            // (2026-09-07 audit). This token is the ONLY authorisation the
+            // favourites store has - it IS the DynamoDB partition key - so it
+            // is a security value, and Math.random is V8's xorshift128+, whose
+            // internal state is recoverable from a short run of outputs. The
+            // old comment called that "weaker entropy but still passes the
+            // Lambda's format check", which is true and is the wrong test: the
+            // format check is not what the token is for.
+            //
+            // getRandomValues is available in EVERY browser that lacks
+            // randomUUID, including non-secure contexts where randomUUID is
+            // undefined but crypto is not, which is the case this branch
+            // actually exists to serve.
+            (crypto.getRandomValues &&
+              Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
+                b.toString(16).padStart(2, '0')
+              ).join('')) ||
+            // Last resort only if crypto is absent entirely. Kept so the app
+            // still works rather than throwing; it cannot be reached in any
+            // browser that supports the rest of this page.
             Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
           writeFlag('flightmap_device_token', id);
         }

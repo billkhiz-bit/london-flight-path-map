@@ -23,6 +23,16 @@
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root {
+      /* Declared 2026-09-07 (audit). No page carried `color-scheme` at
+         all, so a visitor whose OS is set to dark got UA-LIGHT scrollbars,
+         form controls and pre-CSS canvas over a near-black page - the
+         flash of white before the stylesheet applies being the visible
+         part. The 99 generated pages under area/ have declared it since
+         2026-09-02; the hand-written ones were missed.
+         Each page commits to the scheme it actually paints: measured,
+         these render identically under both OS preferences, so claiming
+         `light dark` would promise an adaptation that does not happen. */
+      color-scheme: dark;
     --bg: #06070d;
     --panel: #0d0f1a;
     --border: #1f2333;
@@ -294,9 +304,20 @@
       const r = await fetch(endpoint.url, opts);
       const elapsed = Math.round(performance.now() - t0);
       // 403 on a keyless probe is the AUTHORIZER WORKING, not a failure.
-      const ok = keyless
-        ? (r.status === 403 || (r.status >= 200 && r.status < 400))
-        : r.status >= 200 && r.status < 400;
+      //
+      // BUT IT IS NOT EVIDENCE THE ROUTE IS UP (2026-09-07). A 403 is returned
+      // by API Gateway BEFORE the Lambda is invoked, so a keyless probe cannot
+      // distinguish a healthy /v1/score from one 500ing on every call - the
+      // condition this file's own comment calls "down" is structurally
+      // unreachable on that path. Combined with `firstSweep` flipping after the
+      // first pass, an open tab would have read "All systems operational"
+      // indefinitely through a total outage of the primary paid route.
+      //
+      // A keyless 403 is now reported as UNVERIFIED rather than Up: the gate is
+      // confirmed to be holding, and nothing is claimed about what sits behind
+      // it. Same distinction preflight draws between PASS and INCONCLUSIVE.
+      const gatedNotProbed = keyless && r.status === 403;
+      const ok = gatedNotProbed || (r.status >= 200 && r.status < 400);
       // A keyless probe of a route DECLARED key-gated that answers 2xx means
       // no key was required. Both outcomes were previously rendered as a bare
       // "Up", so a gate silently opening looked identical to a gate holding -
@@ -309,7 +330,11 @@
       // middle: if /v1/score ever appears here, that is a real finding.
       const openRoute = keyless && ok && r.status >= 200 && r.status < 400;
       let data = null;
-      if (endpoint.captureBody && ok) {
+      // NOT on a gated probe. API Gateway's 403 body is valid JSON
+      // (`{"message":"Forbidden"}`), so this used to capture it, `scoreCheck`
+      // below still matched, and the page rendered its two version rows from a
+      // response that contains neither.
+      if (endpoint.captureBody && ok && !gatedNotProbed) {
         try { data = await r.json(); } catch {}
       }
       return {
@@ -320,9 +345,14 @@
         elapsed,
         keyless,
         openRoute,
+        // "Up (auth enforced)" was the old label for a gated probe, and it
+        // still asserted UP for a route the probe never reached: the 403 comes
+        // from API Gateway before the Lambda runs, so this path cannot see a
+        // 500. Renamed to say what was actually established - the gate holds -
+        // and nothing about what is behind it.
         statusText: ok
-          ? (keyless && r.status === 403
-              ? 'Up (auth enforced)'
+          ? (gatedNotProbed
+              ? 'Gated (key required, not probed)'
               : openRoute
                 ? 'Up (no key required)'
                 : 'Up')
@@ -353,10 +383,22 @@
     // Pull methodology version from the body captured during the check -
     // no extra key'd request (A-0724-I2).
     const scoreCheck = results.find(r => r.name.includes('London') && r.ok && r.data);
-    if (scoreCheck) {
-      document.getElementById('methodologyVersion').textContent = scoreCheck.data.methodologyVersion || ', ';
-      document.getElementById('apiVersion').textContent = scoreCheck.data.apiVersion || ', ';
-    }
+    // FIVE MINUTES AFTER LOAD THESE RENDERED AS A BARE COMMA (2026-09-07).
+    //
+    // `firstSweep` goes false after the first pass, so from then on the
+    // /v1/score rows are probed WITHOUT a key. API Gateway answers 403 with a
+    // valid JSON body (`{"message":"Forbidden"}`), so `r.json()` succeeds,
+    // `scoreCheck` still matches, and both fallbacks fired - leaving the page's
+    // only two data claims reading `, `. A fallback whose value is punctuation
+    // reads as a rendering bug rather than as missing data, which is the worst
+    // of both.
+    //
+    // Guarded on the FIELD rather than on the response: a keyless 403 body has
+    // no methodologyVersion, so this now says so instead of printing a comma.
+    const mv = scoreCheck && scoreCheck.data && scoreCheck.data.methodologyVersion;
+    const av = scoreCheck && scoreCheck.data && scoreCheck.data.apiVersion;
+    document.getElementById('methodologyVersion').textContent = mv || 'not reported';
+    document.getElementById('apiVersion').textContent = av || 'not reported';
   }
 
   function renderEndpoints(results) {

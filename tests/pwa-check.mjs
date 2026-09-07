@@ -2,9 +2,17 @@
 // page, verify the manifest is reachable + parseable, the SW registers,
 // and the install affordance markup is present. Run via:
 //   node tests/pwa-check.mjs
+//
+// SMOKE_BASE overrides the target, matching the other source-pointed gates
+// (failure-path, responsive, a11y-source). Added 2026-09-07 so preflight can
+// reuse the server it already starts: this file was referenced ONLY from the
+// Makefile, and `make` is not on PATH in Git Bash on this machine, so it had
+// never run here. The hardcoded port was the thing keeping it out.
 import { chromium } from 'playwright';
 
-const URL = 'http://localhost:8765/';
+const URL = process.env.SMOKE_BASE
+  ? `${process.env.SMOKE_BASE.replace(/\/$/, '')}/`
+  : 'http://localhost:8765/';
 
 async function main() {
   const browser = await chromium.launch();

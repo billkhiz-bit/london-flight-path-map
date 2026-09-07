@@ -1,5 +1,7 @@
 # Sky Score - Complete Project Documentation
 
+> **Refreshed 2026-09-07** against the live stack after an audit found this file stale on every headline fact - Lambda count, methodology version, component count, city coverage, the crime source, the transport source, and `POST /v1/chat`, which it described as removed while it was deployed and billable. `README.md` markets this repo as "source-available for inspection and methodology audit", which makes this a diligence artefact.
+
 _Last full refresh: 2026-07-24 (audit item I14)._
 
 ## Project Overview
@@ -13,7 +15,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 
 **Live URL:** https://skyscore.co.uk
 **API:** https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/
-**Methodology:** [METHODOLOGY.md](./METHODOLOGY.md) (v3.1)
+**Methodology:** [METHODOLOGY.md](./METHODOLOGY.md) (**v4.0**, 2026-08-29)
 **GitHub:** https://github.com/billkhiz-bit/london-flight-path-map
 **Origin + pivot:** Built for the Amazon Nova AI Hackathon (March 2026, won $200 AWS credits, blog category). Productised post-hackathon as a B2B API; consumer-side AI features (chat, multi-agent, document analysis, AI report) removed from the UI in May 2026 to align the consumer narrative with the methodology-defensibility positioning of the B2B API. The Bedrock Lambda code and template entries now live in git history only (verified 2026-07-23: `template.yaml` holds just the 7 active functions); re-introduction means restoring both from history.
 
@@ -25,7 +27,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 
 | Service | Purpose | Region |
 |---------|---------|--------|
-| **AWS Lambda** | 7 functions (Python 3.11); the 5 former Bedrock AI Lambdas live in git history only | eu-west-2 |
+| **AWS Lambda** | **8** functions (Python 3.11); 4 of the 5 former Bedrock AI Lambdas live in git history only, `chat` having been restored 2026-08-06 | eu-west-2 |
 | **Amazon API Gateway** | REST API with CORS, per-route throttling, Usage Plans | eu-west-2 |
 | **Amazon S3** | Static website hosting | eu-west-2 |
 | **Amazon CloudFront** | Global CDN with HTTPS, custom domain `skyscore.co.uk` | Global |
@@ -40,7 +42,7 @@ Coverage today: 33 London boroughs (postcode resolution via DEFRA Lden raster + 
 
 **London:**
 1. **DEFRA Strategic Noise Maps** - Official UK government aircraft and road noise contours (WMS)
-2. **Met Police Crime Statistics** - Curated borough-level crime rates
+2. **ONS *Crime in England and Wales*, Table C4** - offences per 1,000 residents, per Community Safety Partnership. Corrected 2026-09-07: this said "Met Police Crime Statistics - curated", which is neither the source nor the method since methodology v3.5, and `refresh_crime_from_ons.py --check --all` has been a blocking gate against Table C4 since 2026-08-24
 3. **TfL Unified API** - Live nearest stations, line status, distances
 4. **MHCLG EPC service** - Energy Performance Certificates by postcode (`get-energy-performance-data.communities.gov.uk`; replaced Open Data Communities, retired 2026-05-30)
 5. **HM Land Registry** - Price Paid Data for sold property prices
@@ -132,9 +134,9 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 
 ### Dormant (git history only) — 2026-05-07
 
-The five Lambdas below were removed from `template.yaml` and the working tree; code and template entries live in git history only (verified 2026-07-23). Their per-Lambda detail is preserved here for reference if any feature is re-introduced; numbering continues from the active list for historical continuity.
+**FOUR of the five Lambdas below are removed** from `template.yaml` and the working tree; their code and template entries live in git history only. **`chat` is NOT one of them: it was restored on 2026-08-06** as a retrieval-only assistant, is declared in `template.yaml`, is API-key gated and is live. Corrected 2026-09-07 - this section described a deployed, billable endpoint as removed, in the document a diligence reader is pointed at. See the note under ChatFunction below. Their per-Lambda detail is preserved here for reference if any feature is re-introduced; numbering continues from the active list for historical continuity.
 
-#### 8. ChatFunction (`/chat` POST) — DORMANT
+#### 8. ChatFunction (`POST /v1/chat`) — **LIVE since 2026-08-06, not dormant**
 - **File:** `backend/lambdas/chat/app.py`
 - **Purpose:** AI chatbot with multi-turn conversation and auto-insights
 - **Models:** Nova 2 Lite (simple) + Nova Pro (complex, auto-routed)
@@ -194,13 +196,13 @@ The five Lambdas below were removed from `template.yaml` and the working tree; c
 - **Autocomplete** with debounced API calls and keyboard navigation
 
 #### Postcode-Specific Buyer Value Score (1-10)
-Each searchable area gets a score computed from four factors:
+Each searchable area gets a score computed from **five** components (Environment was added at methodology v3.9, 2026-08-26, and road noise entered it at v4.0):
 1. **Quiet Skies** - actual geographic distance (Haversine formula) to airports and flight path corridors
 2. **Affordability** - neighbourhood-specific median prices (not borough averages)
 3. **Growth** - annual price trend percentage
 4. **Liveability** - composite of schools (35%), crime safety (30%), transport access (25%), and healthcare (10%)
 
-**Eight Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life, Renter, Commuter, Later Life) dynamically reweight all four factors and instantly re-rank every postcode / borough / neighbourhood.
+**Eight Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life, Renter, Commuter, Later Life) dynamically reweight all **five** components and instantly re-rank every postcode / borough / neighbourhood.
 
 #### Interactive Map Data Layers (Toggle On/Off)
 | Layer | London Source | NYC Source |
@@ -433,7 +435,7 @@ Sky Score/
 |-- CLAUDE.md # Claude Code project config
 |-- LICENSE # MIT License
 |-- backend/
-    |-- template.yaml # SAM/CloudFormation template (7 functions, 3 tables)
+    |-- template.yaml # SAM/CloudFormation template (8 functions, 4 tables)
     |-- iam-policy.json # IAM deployment policy (v6)
     |-- tests/ # Maintained suite (handlers + score engine)
     |-- lambdas/
@@ -455,7 +457,7 @@ Sky Score/
 | Service | Monthly Cost (low traffic) |
 |---------|--------------------------|
 | S3 + CloudFront | ~$0.05 (free tier covers most) |
-| Lambda (7 functions) | ~$0.01 (free tier: 1M requests) |
+| Lambda (8 functions) | ~$0.01 (free tier: 1M requests) |
 | API Gateway | ~$0.01 (free tier: 1M calls) |
 | DynamoDB (3 tables) | ~$0.01 (PAY_PER_REQUEST, minimal reads/writes; + ~$0.20/GB-month PITR backup on tiny tables) |
 | Bedrock | $0.00 (no active surface invokes Bedrock) |
@@ -466,8 +468,8 @@ Sky Score/
 ## Product capabilities (current state)
 
 1. **Productised B2B API**, `/v1/score` and `/v1/score/batch` with API-key auth, plus the public `/v1/changes`, `/v1/environment` and - contrary to what this line said until 2026-08-21 - `/v1/regions`, and a published OpenAPI 3.0 spec (self-hosted Swagger UI). Free tier is **10,000 requests/month** capped via API Gateway UsagePlan, and that is also **10,000 scores/month**, because `/v1/score/batch` is denied to free keys per-method so a request cannot carry more than one query; self-service signup at `/v1/signup`. *(Corrected twice. On 2026-08-04 it overstated the quota tenfold. On 2026-09-01 the correction itself had gone stale: it still advertised the pre-2026-08-21 quota and the ×100 batch multiplier that was removed that day, so a note written to fix a wrong number spent five weeks publishing another one. The superseded figures are not restated here — see `BATCH_METERING_DECISION.md` for the history.)*
-2. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO noise guidelines, **DfE Key Stage 4 Progress 8**, **ONS *Crime in England and Wales* Table C4**, TfL PTAL, HM Land Registry HPI). See `METHODOLOGY.md`. *(Corrected 2026-08-04: previously credited "Ofsted distribution" and "ONS crime medians". Ofsted bands were retired in v3.5 — they were editorial and unreproducible — and crime is sourced from Table C4 rates, not medians.)*
-3. **Multi-city**, London (33 boroughs) + NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution for both.
+2. **Methodologically defensible**, every threshold and weight in the score is anchored to a published source (DEFRA Strategic Noise Mapping, WHO noise guidelines, **DfE Key Stage 4 Progress 8**, **ONS *Crime in England and Wales* Table C4**, **DfT NaPTAN** - not TfL PTAL, corrected 2026-09-07; the transport sub-score has come from NaPTAN since methodology v3.6 and `score/app.py` makes no TfL call at all - HM Land Registry HPI). See `METHODOLOGY.md`. *(Corrected 2026-08-04: previously credited "Ofsted distribution" and "ONS crime medians". Ofsted bands were retired in v3.5 — they were editorial and unreproducible — and crime is sourced from Table C4 rates, not medians.)*
+3. **Multi-city**, **13 city-regions and 99 boroughs** - 94 UK boroughs across 12 city-regions plus NYC (5 boroughs, ~182 ZIPs auto-detected). Postcode-level resolution throughout. Corrected 2026-09-07: this said London plus NYC, under-claiming by eleven cities. `GET /v1/regions` is the authoritative list and needs no API key.
 4. **DEFRA raster resolution (v3.1)**, score Lambda samples DynamoDB Lden values per postcode, falling back to Haversine then borough averages. Loader in `scripts/load_defra_raster.py`.
 5. **Live and deployed**, fully serverless on AWS: S3 + CloudFront frontend, 7 Lambda functions behind API Gateway, 4 DynamoDB tables.
 6. **Halal-finance-aware**, affordability model makes no riba assumptions; cohort-relative price-to-income with no mortgage-rate dependency. Aimed at Sharia-compliant home-finance providers as one of the target B2B segments.

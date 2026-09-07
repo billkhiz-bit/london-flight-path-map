@@ -119,7 +119,12 @@ Sky Score is the ethical alternative data layer:
 
 Seven endpoints returning JSON, listed below. **Three are API-key gated** —
 `/v1/score`, `/v1/score/batch` and `/v1/chat`, the routes that cost money to
-serve. The other four are deliberately public, each for its own reason:
+serve. **`/v1/chat` is additionally denied to every SELF-SERVICE key**
+(`RateLimit: 0` on `ScoreFreeUsagePlan`, verified live), and `signup` issues
+every self-service key onto that plan - so no self-service customer can reach
+it at all. Noted 2026-09-07; it had been listed simply as key-gated, which
+reads as "reachable with a key". The other four are deliberately public, each
+for its own reason:
 `/v1/regions` is discovery, so a client can find out what is supported before it
 holds a key; `/v1/changes`, so anyone can audit what moved between vintages
 without one; `/v1/environment`, because it serves a browser extension that cannot

@@ -10,5 +10,10 @@ Contact: mailto:support@skyscore.co.uk
 Expires: 2027-05-07T00:00:00.000Z
 Preferred-Languages: en
 Canonical: https://skyscore.co.uk/.well-known/security.txt
-Policy: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md
+# RFC 9116 `Policy` is the VULNERABILITY DISCLOSURE policy. This pointed at
+# LICENSING.md until 2026-09-07, so a researcher following the file was shown
+# a data-source licence table instead of the safe-harbour terms, the
+# acknowledgement window and the triage timeline - which is exactly what they
+# open this field to find before deciding whether to test anything.
+Policy: https://github.com/billkhiz-bit/london-flight-path-map/blob/master/SECURITY.md
 # Acknowledgments: (none yet — will list publicly-credited reporters once first valid report arrives)

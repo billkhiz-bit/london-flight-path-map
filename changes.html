@@ -24,6 +24,16 @@
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root {
+      /* Declared 2026-09-07 (audit). No page carried `color-scheme` at
+         all, so a visitor whose OS is set to dark got UA-LIGHT scrollbars,
+         form controls and pre-CSS canvas over a near-black page - the
+         flash of white before the stylesheet applies being the visible
+         part. The 99 generated pages under area/ have declared it since
+         2026-09-02; the hand-written ones were missed.
+         Each page commits to the scheme it actually paints: measured,
+         these render identically under both OS preferences, so claiming
+         `light dark` would promise an adaptation that does not happen. */
+      color-scheme: dark;
     --bg: #06070d;
     --panel: #0d0f1a;
     --border: #1f2333;
@@ -437,12 +447,21 @@
       renderMarketContext(d.marketContext);
 
       const noteEl = document.getElementById('method-note');
+      // The 87% is a HISTORICAL measurement, not a running one. It was
+      // phrased as "87% of last quarter's score movement" until 2026-09-07,
+      // which read as a live figure for whichever quarter the page happened to
+      // be showing - beside a table in which growth carries weight 0.00 and
+      // therefore contributed nothing at all. It is the finding that MOTIVATED
+      // v3.3 dropping growth from the balanced weights, and it is stated as
+      // that now. Everything else on this page renders from the live response
+      // and cannot drift; this sentence was the exception.
       noteEl.textContent = 'Honesty note: ' + d.note +
-        ' Scores here use the balanced view, which since methodology v3.3 does not weight price growth -' +
-        ' growth describes the market rather than the property, and it was responsible for 87% of last' +
-        " quarter's score movement while nothing physical about these places changed. That is why the score" +
-        ' column moves very little and the market movement is reported separately above. Select "why" on any' +
-        ' row to see growth movement reported even where it carries no weight.';
+        ' Scores here use the balanced view, which since methodology v3.3 does not weight price growth.' +
+        ' Growth describes the market rather than the property: when it was last weighted, it accounted' +
+        ' for 87% of all score movement in a quarter during which nothing physical about these places' +
+        ' changed, and that measurement is why it now carries no weight here. So the score column moves' +
+        ' very little and the market movement is reported separately above. Select "why" on any row to' +
+        ' see growth movement reported even where it carries no weight.';
       noteEl.hidden = false;
 
       document.getElementById('rows').innerHTML = d.changes.map((c, i) => (
