@@ -285,11 +285,46 @@ satisfied.
 
 - **D9**, four visual systems across nine page types, and the main-page dark
   mode question above.
-- **Throttle limits for five unauthenticated routes** on the 50 RPS ceiling
-  (`/nhs`, `/sold-prices`, `/transport`, `/v1/regions`, `/v1/changes`).
-  **Blocked, not forgotten**: the numbers must come from measured traffic and
-  `flightmap-dev` is denied the observability permissions. Three are called on
-  every consumer postcode lookup, so a limit picked by eye 429s real visitors.
+- ~~**Throttle limits for five unauthenticated routes**~~ **CLOSED IN SOURCE
+  2026-09-07, NOT YET DEPLOYED.** The recorded blocker - "the numbers must come
+  from measured traffic and `flightmap-dev` is denied the observability
+  permissions" - **stopped being true on 2026-09-04**, when the deploy policy
+  was restored. `cloudwatch:GetMetricStatistics` and `ListMetrics` came back
+  with everything else, and nothing re-read this line. *A recorded blocker is a
+  timestamp, not a property* - the same lesson the permissions entry carries,
+  now proven in the other direction too.
+
+  **The numbers are measured**, by `scripts/measure_route_traffic.py` (new).
+  Each of the three consumer-path routes has its OWN Lambda, so `Invocations`
+  IS that route's request count; `/epc` is measured beside them as a
+  CALIBRATION ANCHOR, because index.html fetches it on the same postcode
+  lookup and it has run at 3 RPS / 6 burst since 2026-07-24 without a reported
+  429. Over 30 days to 2026-09-07: `/nhs` 3,402 requests peaking at 14/min,
+  `/sold-prices` 3,553 at 14/min, `/transport` 2,322 at 12/min, against
+  `/epc`'s 3,731 at 15/min. So the anchor is a busier route surviving a
+  tighter limit, not a guess.
+
+  Set: `/sold-prices` **3/6** (mirrors /epc - one HMLR call, no published
+  quota), `/nhs` **2/5** (Overpass is donated, ~10k/day per IP over SHARED AWS
+  egress addresses), `/transport` **2/5** (TWO TfL calls per request, and we
+  call TfL unregistered). `/v1/regions` and `/v1/changes` get **5/10** on a
+  STRUCTURAL argument, said plainly because they cannot be measured: both are
+  served by ScoreFunction alongside four other paths, no per-resource metrics
+  are enabled and no handler logs a path, so Invocations gives a six-route
+  total and nothing finer. Neither makes any upstream call.
+
+  **`backend/tests/test_route_throttles.py` already guarded this**, with all
+  five on a documented `ON_THE_STAGE_CEILING` allow-list reading "limit
+  unmeasured". It did its job: it kept the omission visible instead of
+  accidental, and it went red the moment the routes were throttled and the
+  list went stale. The list is now EMPTY and the mechanism is kept. Two checks
+  were added to the same file rather than to a second gate - a phantom
+  `ResourcePath` (free text, so a typo limits nothing while the real route
+  keeps the ceiling) and an entry at or above the stage ceiling - both proven
+  red. **A second gate for one invariant would have been the mirror-drift
+  defect this repo has hit three times.**
+
+  **DEPLOY REQUIRED**: a template-only change does nothing until `sam deploy`.
 - **`FavouritesTable` TTL** - deletes user data on a schedule, so Bill's call.
 - **The flood gate: DIAGNOSED AND FIXED 2026-09-03.** It promised "under
   seven minutes" and took **15m46s**. The old note here guessed that

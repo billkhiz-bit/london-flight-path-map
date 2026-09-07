@@ -196,6 +196,98 @@ Resources:
           ResourcePath: /favourites
           ThrottlingRateLimit: 5
           ThrottlingBurstLimit: 10
+        # The last five open routes (2026-09-07). Same gap as /epc before
+        # 2026-07-24, /badge before 2026-08-21 and /favourites before
+        # 2026-09-01 - which is FOUR occasions, each closed by an audit and
+        # each recording the pattern in a comment rather than in a check.
+        # `scripts/check_route_throttles.py` is that check, and it derives the
+        # requirement from the Api events, so a sixth route is covered on the
+        # day it is added rather than at the next audit.
+        #
+        # THE NUMBERS ARE MEASURED, not picked. CloudWatch Lambda Invocations
+        # over 30 days to 2026-09-07 - each of these three routes has its OWN
+        # function, so Invocations IS the route's request count:
+        #
+        #   route          30d total   peak/hr   peak/min   peak RPS*
+        #   /nhs                3402        97         14      0.233
+        #   /sold-prices        3553       106         14      0.233
+        #   /transport          2322        63         12      0.200
+        #   /epc [reference]    3731       115         15      0.250
+        #
+        # * a FLOOR. CloudWatch standard resolution is 60s, so a burst inside
+        #   one minute cannot be seen at all. Bursts carry headroom over it.
+        #   Re-derive with `python scripts/measure_route_traffic.py`; do not
+        #   read these figures back out of this comment in a year.
+        #
+        # /epc is the calibration anchor rather than a guess: index.html
+        # fetches it on the SAME postcode lookup as the other three, so their
+        # traffic is a subset of its own, and it has run at 3 RPS / 6 burst
+        # since 2026-07-24 with no 429 reported. Anything at or below that is
+        # backed by six weeks of production evidence on a busier sibling.
+        #
+        # /sold-prices: one HM Land Registry call per request, 10s timeout, no
+        # published upstream quota. Structurally identical to /epc, so it gets
+        # /epc's proven envelope. 3 RPS is 12.8x the observed peak minute.
+        - HttpMethod: GET
+          ResourcePath: /sold-prices
+          ThrottlingRateLimit: 3
+          ThrottlingBurstLimit: 6
+        # /nhs: TIGHTER than /epc because the upstream is donated. Overpass
+        # documents a guideline of ~10,000 requests per day per IP, and Lambda
+        # egress uses AWS-managed SHARED addresses, so our real share of that
+        # is a fraction we neither know nor control (the Lambda's own comment
+        # calls it "a shared-IP lottery"). Legitimate traffic barely touches
+        # it - the whole of Greater London ships bundled with the function and
+        # answers with no network call - so only out-of-London coordinates
+        # reach Overpass, and an abuser can send those deliberately.
+        #
+        # No throttle in this range keeps a determined abuser inside a DAILY
+        # guideline: even 1 RPS is 86,400/day. What this bounds is the
+        # INSTANTANEOUS pressure against Overpass's small per-IP slot queue,
+        # and the handler already degrades to nhs.uk search links when
+        # Overpass refuses. 2 RPS is 8.6x the observed peak minute.
+        - HttpMethod: GET
+          ResourcePath: /nhs
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        # /transport: tighter for a different reason - each request makes TWO
+        # TfL calls, StopPoint then Line/{ids}/Status, and we call TfL
+        # UNREGISTERED. The Lambda's own comment records that a key is
+        # "optional for higher rate limits", so the unregistered budget is the
+        # one we are spending, and TfL does not publish the number on its API
+        # portal (checked 2026-09-07). Doubling every request against an
+        # unknown, unregistered budget is the argument for 2 RPS, not the
+        # traffic - 2 RPS is 10x the observed peak minute either way.
+        #
+        # If /transport ever needs more room, the fix is a TfL app key, not a
+        # higher number here.
+        - HttpMethod: GET
+          ResourcePath: /transport
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        # /v1/regions and /v1/changes CANNOT be measured per route: both are
+        # served by ScoreFunction alongside four other paths, the template
+        # sets no per-resource CloudWatch metrics, and neither handler logs a
+        # path - so Lambda Invocations gives a six-route total (14,753 over the
+        # same 30 days) and nothing finer. Said plainly rather than presented
+        # as a measurement, because an unmeasurable quantity reported as a
+        # number is the failure this repo keeps finding.
+        #
+        # They are sized STRUCTURALLY instead, which is knowable: neither makes
+        # any upstream call. `handle_changes` is computed once per container
+        # and never reads `event`; `handle_regions` answers from the registry.
+        # One fetch per page load - changes.html and score-demo/status.html.
+        # So 5/10, matching /badge and /v1/environment, the other two open
+        # ScoreFunction routes, and well under the 40 RPS that GET /v1/score
+        # needs out of the shared stage bucket.
+        - HttpMethod: GET
+          ResourcePath: /v1/regions
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+        - HttpMethod: GET
+          ResourcePath: /v1/changes
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
 
   # --- Bedrock Lambdas REMOVED 2026-05-07 ---
   # ChatFunction, MultiAgentFunction, AnalyzeImageFunction,

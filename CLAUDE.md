@@ -550,6 +550,67 @@ key off a route, since **API Gateway keys authorise per STAGE, not per route**.
 `tests/demo-key-scope.mjs` asks the RUNNING API whether 0 denies, because the
 template cannot answer that. **Verify after every deploy.**
 
+**EVERY UNAUTHENTICATED ROUTE CARRIES ITS OWN THROTTLE as of 2026-09-07 - all
+twelve.** A route with no per-method `MethodSettings` entry inherits the
+stage-wide `*/*` ceiling of **50 RPS / 100 burst**, which is the whole-API
+circuit breaker, not a route limit - and with no API key there is nothing else
+holding it. That gap has been found **four** times: `/epc` (2026-07-24 soak),
+`/badge` (2026-08-21), all three `/favourites` methods (2026-09-01, audit I17),
+and the last five on 2026-09-07. **The fourth was caught by a check rather than
+an audit**, which is the whole point of `backend/tests/test_route_throttles.py`.
+
+- **The numbers are MEASURED, by `scripts/measure_route_traffic.py`.**
+  `/nhs`, `/sold-prices` and `/transport` each have their OWN Lambda, so
+  `Invocations` IS that route's request count. **`/epc` is the calibration
+  anchor**: `index.html` fetches it on the same postcode lookup, so its traffic
+  is an upper bound on theirs, and it has run at 3/6 since 2026-07-24 without a
+  reported 429 - six weeks of production evidence on a busier sibling beats any
+  number picked by eye. 30 days to 2026-09-07: **/epc 15/min, /nhs 14, /sold
+  14, /transport 12.** Set 3/6, 2/5 and 2/5 - the two tighter ones because
+  Overpass is a DONATED service (~10k/day per IP, over shared AWS egress
+  addresses) and because `/transport` makes **TWO** TfL calls per request while
+  calling TfL **unregistered**. If /transport needs more room the fix is a TfL
+  app key, not a bigger number.
+- **`/v1/regions` and `/v1/changes` CANNOT be measured per route**, and the
+  template says so rather than implying a figure: both are ScoreFunction
+  alongside four other paths, no per-resource API Gateway metrics are enabled,
+  and neither handler logs a path. They are sized structurally (no upstream
+  call at all, one fetch per page load) at 5/10, matching their two open
+  siblings.
+- **Two CloudWatch traps, both silent, both hit while measuring.** Retention is
+  **per resolution** - 60s data lives 15 days, 300s 63, 3600s 455 - so a 60s
+  query into a 22-day-old hour returns an EMPTY list, and `default=0` renders
+  that as `0.000 RPS`. *An empty index is not a zero reading*, for the second
+  time in this repo. And **1,440 datapoints per call is a hard cap**: 30 days
+  at 300s asks for 8,640 and the API refuses the **whole request**, so an
+  unchunked reader returns nothing rather than a short series.
+- **The guard was already there and it worked.** All five sat on
+  `ON_THE_STAGE_CEILING` with the reason "limit unmeasured", and the list's own
+  staleness test went red the moment they were throttled. It is EMPTY now;
+  **keep the mechanism** - a route in neither list still fails. The two new
+  checks went into that same file, NOT a second gate: a phantom `ResourcePath`
+  (free text, so a typo limits nothing while the real route keeps the ceiling)
+  and an entry at or above the ceiling. Both proven red. **One invariant, one
+  holder** - a parallel gate is the mirror-drift defect this repo has hit three
+  times.
+- **Its parse floor hid a defect while passing.** `len(entries) >= 5` was green
+  while the regex was missing the `*/*` ceiling itself - every entry carries a
+  comment block above `ThrottlingRateLimit`, so "four consecutive lines" matched
+  every route EXCEPT the one value the rest of the test compares against. A
+  count floor says how many you parsed, never WHICH you lost; the explicit
+  `assertIsNotNone(ceiling)` is what caught it.
+
+**`OPTIONS /v1/environment` returns 403 live, and its two siblings do not.** It
+declares `Auth: ApiKeyRequired: true` while `EnvironmentGet` beside it is
+deliberately unauthenticated (the extension is a public artefact and cannot hold
+a key); `/v1/signup` answers 200 and `/v1/chat` 204. **A CORS preflight cannot
+carry an API key** - the browser sends it without credentials by specification -
+so any caller that triggers one is blocked outright. Nothing triggers one today:
+the extension uses `host_permissions` (CORS bypassed) and a header-free `GET` is
+a simple request. It bites the first time a caller adds a custom header. Left
+open on purpose - it LOOSENS auth, so it is Bill's call, not a side effect of a
+throttle change.
+
 ## Absence must never render as a measurement — the 2026-08-22 sweep
 
 **Shipped and verified live the same day.** Four Lambdas via SAM, six public

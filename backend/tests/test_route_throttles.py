@@ -2,7 +2,7 @@
 
 WHY THIS EXISTS. A route with no `ApiKeyRequired` and no per-method entry in
 `MethodSettings` inherits the stage-wide `'*'/'*'` ceiling of 50 RPS. That has
-now been found three times, each as a one-off:
+now been found four times, the first three each as a one-off:
 
   * /epc     - 2026-07-24, after a soak showed an anonymous flood could exhaust
                the MHCLG bearer quota AND starve GET /v1/score through the
@@ -10,6 +10,10 @@ now been found three times, each as a one-off:
   * /badge   - 2026-08-21, "the same gap /epc had"
   * /favourites - 2026-09-01 (audit I17), where POST writes permanently into a
                PITR-backed, TTL-less, DeletionPolicy: Retain table
+  * /nhs, /sold-prices, /transport, /v1/regions, /v1/changes - throttled
+               2026-09-07 from measured traffic, and the FOURTH occasion was
+               caught by this file rather than by an audit, which is the whole
+               reason it was written.
 
 Three instances of one shape is a class, and the fix for a class is a check.
 Nothing asserted this, so the next unauthenticated route inherits 50 RPS
@@ -37,13 +41,18 @@ TEMPLATE = os.path.abspath(
 # Unauthenticated routes deliberately left on the stage-wide ceiling, with the
 # reason each is still open. Move a route OUT of here by giving it a
 # `MethodSettings` entry - not by deleting the line.
-ON_THE_STAGE_CEILING = {
-    ('/nhs', 'GET'): 'consumer site calls it per postcode lookup; limit unmeasured',
-    ('/sold-prices', 'GET'): 'consumer site calls it per postcode lookup; limit unmeasured',
-    ('/transport', 'GET'): 'consumer site calls it per postcode lookup; limit unmeasured',
-    ('/v1/regions', 'GET'): 'static metadata, no upstream and no write',
-    ('/v1/changes', 'GET'): 'static metadata, no upstream and no write',
-}
+#
+# EMPTY SINCE 2026-09-07, and the emptying is the point: this list held all
+# five remaining routes with the reason "limit unmeasured", which was true and
+# was blocked on `flightmap-dev` being denied the CloudWatch verbs. The deploy
+# policy was restored on 2026-09-04, the traffic was measured the same week
+# with `scripts/measure_route_traffic.py`, and every route got a number derived
+# from it. The list did exactly what its docstring promised - it kept a known
+# omission visible until the thing it waited on arrived.
+#
+# Leave the mechanism here. An empty allow-list is not a dead one: the next
+# unauthenticated route still fails unless it is throttled or listed.
+ON_THE_STAGE_CEILING: dict[tuple[str, str], str] = {}
 
 
 def _read():
@@ -86,9 +95,20 @@ def _routes(text):
     return out
 
 
+def _unquote(value):
+    """The wildcard entry is written `HttpMethod: '*'` / `ResourcePath: '/*'`.
+
+    YAML needs the quotes there; a regex reading the raw text captures them, so
+    the catch-all arrives as "'/*'" and compares equal to nothing. Every other
+    entry is unquoted, which is why this went unnoticed - the one row it
+    mangles is the one row nothing looked up.
+    """
+    return value.strip('\'"')
+
+
 def _throttled(text):
     return {
-        (m.group(2), m.group(1).upper())
+        (_unquote(m.group(2)), _unquote(m.group(1)).upper())
         for m in re.finditer(r'- HttpMethod: (\S+)\n\s*ResourcePath: (\S+)', text)
     }
 
@@ -151,6 +171,70 @@ class RouteThrottleTests(unittest.TestCase):
             elif key in self.throttled:
                 stale.append(f'{key[1]} {key[0]} - now throttled; remove it from the list')
         self.assertEqual([], stale, '\n  '.join(stale))
+
+    def test_no_throttle_points_at_a_route_that_does_not_exist(self):
+        """`ResourcePath` is free text, so a typo declares a limit on nothing.
+
+        This is the gap this whole file guards, wearing a disguise: the entry
+        looks present in review, CloudFormation accepts it without complaint,
+        and the real route quietly keeps the 50 RPS ceiling. The sibling test
+        above cannot see it - it asks whether a path is throttled and a
+        misspelled path answers for a route nobody called.
+        """
+        declared = {(p, m) for p, m, _k in self.routes}
+        phantom = [
+            f'{method} {path}'
+            for path, method in sorted(self.throttled)
+            if path != '/*' and (path, method) not in declared
+        ]
+        self.assertEqual(
+            [], phantom,
+            'MethodSettings throttles a path with no matching Api event, so the '
+            'limit applies to nothing and the route it was meant for still '
+            'inherits the stage ceiling:\n  ' + '\n  '.join(phantom))
+
+    def test_no_per_route_limit_is_at_or_above_the_stage_ceiling(self):
+        """An entry at the ceiling reads as a control and constrains nothing.
+
+        It is worse than no entry, because the sibling tests then report the
+        route as throttled and the allow-list stops naming it - a route can go
+        from a visible omission to an invisible one without any value changing
+        by more than the difference between 50 and 50.
+        """
+        text = _read()
+        # The comment-skipping group is load-bearing, not defensive. Every
+        # entry added since 2026-07-24 carries its rationale ABOVE
+        # `ThrottlingRateLimit`, and the `'*' '/*'` ceiling has eleven comment
+        # lines there - so a regex demanding four consecutive lines matched
+        # every route EXCEPT the ceiling, which is the one value the rest of
+        # this test is compared against.
+        entries = re.findall(
+            r'- HttpMethod: (\S+)\n\s*ResourcePath: (\S+)\n'
+            r'(?:\s*#[^\n]*\n)*'
+            r'\s*ThrottlingRateLimit: (\d+)\n\s*ThrottlingBurstLimit: (\d+)',
+            text)
+        self.assertGreaterEqual(
+            len(entries), 5,
+            f'only {len(entries)} complete rate/burst entries parsed - the '
+            'MethodSettings layout changed, so this is checking nothing.')
+        entries = [
+            (_unquote(m), _unquote(p), r, b) for m, p, r, b in entries
+        ]
+        ceiling = {
+            (p, m.upper()): (int(r), int(b)) for m, p, r, b in entries
+        }.get(('/*', '*'))
+        self.assertIsNotNone(
+            ceiling, "no '*' '/*' entry parsed, so there is no ceiling to "
+                     'compare against and this test proves nothing.')
+        useless = [
+            f'{m} {p} at {r}/{b}'
+            for m, p, r, b in entries
+            if p != '/*' and (int(r) >= ceiling[0] or int(b) >= ceiling[1])
+        ]
+        self.assertEqual(
+            [], useless,
+            f'declared at or above the {ceiling[0]}/{ceiling[1]} stage ceiling, '
+            'so they are not per-route limits at all:\n  ' + '\n  '.join(useless))
 
     def test_no_route_is_throttled_twice(self):
         """CFN renders MethodSettings into ORDERED patches; the later wins.
