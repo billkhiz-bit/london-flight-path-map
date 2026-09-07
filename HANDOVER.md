@@ -35,6 +35,38 @@ was `area pages match the live API`, correctly reporting the Nottingham page
 baking 8 against a live API still serving 8.3 - source ahead of deploy. It is
 green now.
 
+### SECOND WAVE, same day - commit `9f8b57b`, DEPLOYED AND VERIFIED
+
+Everything in it was a correction to something false or a latent defect, so
+none of it needed a decision. **Preflight 43 of 43**, none skipped, none
+inconclusive. 45 uploads, 8 invalidations, drift check 133 of 133.
+
+- **METHODOLOGY s6 rebuilt and GATED.** It had broken its own reproducibility
+  claim three times. `scripts/check_worked_example.py` re-derives every input,
+  both cohort bounds, the components, the weights and the final arithmetic;
+  proven red on a transposed score and a stale input. **Why it kept drifting:**
+  at SW11 1AA the live `quiet` comes from the DEFRA RASTER, not the geometry
+  the example hand-derived, so every growth in raster coverage diverged it
+  again. Check `quietResolution` before hand-deriving quiet for any postcode.
+- **Two more orphaned gates wired in** (5th and 6th here). `pwa-check` was
+  reachable only via `make`, absent from PATH in Git Bash, so it had never run;
+  it takes `SMOKE_BASE` now. `changes-why` found a STALE ASSERTION, not a
+  defect: it required "market fell", but the mean trend moved -3.35% -> -3.03%
+  so the market did not fall and the page rightly stopped saying it had.
+- **LICENSING.md** gained five datasets in live use, including the curated New
+  York scored inputs - five boroughs of a commercial API scored from inputs
+  with no licensing position recorded anywhere. The TfL row credited TfL for a
+  sub-score NaPTAN has supplied since v3.6.
+- **PROJECT_DOCUMENTATION.md** described the live, key-gated, billable
+  `POST /v1/chat` as removed, and was stale on every headline fact.
+- **`security.txt` `Policy:`** pointed researchers at a licence table.
+- **The device token** now uses `crypto.getRandomValues`; it IS the favourites
+  partition key, so it is a security value, and the old comment defended
+  `Math.random` as "still passes the format check" - the wrong test.
+- **`build_borough_bands.py`** got exact-match-first borough lookup. It kept
+  the single substring pass `index.html` was corrected away from on 2026-08-12,
+  and it is the half that WRITES: proven, the old pass sends North West
+  Leicestershire to Leicester's record.
 ### THREE ITEMS LEFT OPEN ON PURPOSE
 
 1. **The IAM privilege-escalation path** - `OPERATIONS.md` s3.8 has the
