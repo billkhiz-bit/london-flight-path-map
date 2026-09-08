@@ -67,7 +67,22 @@ inconclusive. 45 uploads, 8 invalidations, drift check 133 of 133.
   the single substring pass `index.html` was corrected away from on 2026-08-12,
   and it is the half that WRITES: proven, the old pass sends North West
   Leicestershire to Leicester's record.
-### THREE ITEMS LEFT OPEN ON PURPOSE
+### TWO ITEMS LEFT OPEN ON PURPOSE
+
+> **This list said THREE until 2026-09-08, and the third had been closed by the
+> commit that wrote the list.** Item 3 was "METHODOLOGY s6 does not reproduce" -
+> while the SECOND WAVE section forty lines above, in this same file, records
+> s6 being rebuilt and gated by `scripts/check_worked_example.py`. The gate is
+> green: 16 comparisons, every input, bound, component, weight and the final
+> arithmetic agreeing with the engine. `AUDIT_REPORT.md` carried the same ghost
+> as I6.
+>
+> Nothing was wrong with the work; the RECORD was wrong, and a to-do that has
+> already been done costs a session to disprove every time it is read. This is
+> the same failure the near-term task list carries a standing warning about -
+> *"the stale record is what does the damage, not the missing work"* - and it
+> has now produced a phantom twice. **When a wave closes an item, delete it from
+> the open list in the same commit that closes it.**
 
 1. **The IAM privilege-escalation path** - `OPERATIONS.md` s3.8 has the
    procedure. `flightmap-dev` can attach `AdministratorAccess` to a Lambda role
@@ -81,11 +96,6 @@ inconclusive. 45 uploads, 8 invalidations, drift check 133 of 133.
 2. **`healthcareWithin1kmPct` measures 500 m.** 86 published values in a
    deployed asset; renaming is a contract change. Rename, alias, or widen the
    radius - a decision, not a bug fix.
-3. **METHODOLOGY s6 does not reproduce.** It says the API returns `quiet: 5.0`
-   and a total of `6.4`; live is `6.4` and `6.7`, and every input in Step 2 is
-   stale. The ENGINE reproduces exactly - s6 is the section an auditor
-   executes, and it needs regenerating rather than patching.
-
 **The four decisions from 2026-09-04 are still open and unchanged** - see s0.3
 below.
 

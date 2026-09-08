@@ -2,7 +2,21 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-07 (**A FULL AUDIT RAN AND ITS FINDINGS ARE CLOSED
+**Last reviewed:** 2026-09-08 (**TWO AUDIT-MINOR a11y DEFECTS CLOSED, AND A
+PHANTOM TO-DO RETIRED.** Source only - not yet deployed. `#country-selector`
+stopped claiming to be a `role="tablist"` (there was no panel any tab could
+name: `switchCountry()` swaps the whole application), and the locator's ten
+markers left the tab order, where they had been stops **14-23 of 51** at
+**5.2 CSS px**, 6.4 px apart - WCAG 2.2 2.5.8 fails by size AND by the spacing
+exception, and no enlargement can fix it inside a 112 px silhouette. **Both
+fixes REMOVE a claim the code could not keep**, which is the inverse of what
+each finding implied; see `memory/project-a11y-selector-and-locator-2026-09-08.md`.
+Two new gates, both proven red. **`METHODOLOGY` s6 was listed as open in TWO
+documents while its blocking gate was green** - `HANDOVER.md` contradicted
+itself forty lines apart. Corrected in both, each saying it was wrong.
+**One new decision below: WCAG 2.2 or 2.1?**)
+
+**Previously reviewed:** 2026-09-07 (**A FULL AUDIT RAN AND ITS FINDINGS ARE CLOSED
 AND DEPLOYED.** Three commits - `b69406a`, `9f8b57b`, `05bca67`. **8 criticals
 and 11 importants**, plus the whole second tier: everything the audit found
 that did not need a decision. Preflight went 39 -> **43 blocking stages**, all
@@ -830,6 +844,29 @@ hand or carries only the finder's evidence.
 ---
 
 ## Open decisions
+
+### Raised 2026-09-08 - does Sky Score claim WCAG 2.2 AA, or 2.1 AA?
+
+**No WCAG 2.2 rule has ever run against this codebase.** `AXE_TAGS` in
+`tests/a11y-source.mjs` is `['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa',
+'best-practice']`, and axe tags `target-size` - the rule for the locator
+defect closed on 8 Sep - as **`wcag22aa`**. The gate did not weigh those ten
+5.2 px targets and pass them; **it never evaluated them.** Same mechanism as
+`FAIL_MODERATE` sitting unreachable for want of `best-practice`, which that
+same file documents: *a rule that does not run cannot fail.*
+
+**Deliberately not changed as a side effect of the fix** - the comment beside
+`AXE_TAGS` warns in terms against that, and promoting an unknown number of 2.2
+rules to blocking across 109 pages is a scope change that should be chosen.
+The public pages make no conformance claim today, so either level is
+defensible.
+
+**Recommendation:** add `wcag22aa`, run the gate **advisory for one pass** to
+size the backlog, then decide what blocks - the same staged move used when
+`best-practice` was added. 2.2's level-AA additions (target size, focus
+appearance, dragging movements) are the kind that fire on real UI, so expect
+findings; that is the point of sizing it first. Cheap, and unlike the four
+below it changes **no published number**.
 
 ### Raised 2026-09-03 - four that change PUBLISHED NUMBERS
 ### Recommendations added 2026-09-04; still undecided

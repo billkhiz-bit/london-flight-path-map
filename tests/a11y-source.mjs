@@ -222,6 +222,65 @@ function failing(results) {
   });
 }
 
+/**
+ * Every role="tablist" must actually have panels. axe cannot see this.
+ *
+ * `aria-required-children` is satisfied by role="tab" children ALONE, so a
+ * tablist whose tabs control nothing passes every rule in the ruleset. That is
+ * how `#country-selector` spent months announcing "tab 1 of 2" over a control
+ * that re-rendered the whole application, with no arrow keys and no panel any
+ * tab could have pointed at. A rule that does not run cannot fail; here the
+ * rules ran and had nothing to say, which is the quieter version of the same
+ * problem.
+ *
+ * The invariant is the RELATIONSHIP the role promises: each tab names, through
+ * aria-controls, an element that exists and is a tabpanel. Deliberately NOT
+ * "#country-selector is a group" - that would mirror the fix, pass forever, and
+ * say nothing about the next tablist anyone writes. This holds `.tab-bar` to
+ * the same bar, which it already meets.
+ *
+ * Returned in axe's violation shape so it reports through the one existing
+ * path rather than growing a second one.
+ */
+async function tablistDefects(page) {
+  const rows = await page.evaluate(() => {
+    const out = [];
+    const name = (el) =>
+      el.id ? `#${el.id}` : `${el.tagName.toLowerCase()}.${el.className || '(unclassed)'}`;
+    for (const list of document.querySelectorAll('[role="tablist"]')) {
+      const tabs = [...list.querySelectorAll('[role="tab"]')];
+      if (!tabs.length) {
+        out.push({ target: name(list), why: 'role="tablist" contains no role="tab"' });
+        continue;
+      }
+      for (const tab of tabs) {
+        const id = tab.getAttribute('aria-controls');
+        const panel = id && document.getElementById(id);
+        const where = `${name(list)} > "${(tab.textContent || '').trim() || 'tab'}"`;
+        if (!panel) {
+          out.push({
+            target: where,
+            why: `role="tab" names no panel (aria-controls=${id ? `"${id}", which does not exist` : 'absent'})`,
+          });
+        } else if (panel.getAttribute('role') !== 'tabpanel') {
+          out.push({
+            target: where,
+            why: `aria-controls points at #${id}, whose role is ${panel.getAttribute('role') || 'unset'}, not tabpanel`,
+          });
+        }
+      }
+    }
+    return out;
+  });
+  return rows.map((r) => ({
+    id: 'tablist-has-panels',
+    impact: 'serious',
+    help: r.why,
+    tags: ['wcag2a', 'sky-score-custom'],
+    nodes: [{ target: [r.target] }],
+  }));
+}
+
 const browser = await chromium.launch();
 
 // WAIT FOR ANIMATIONS TO FINISH BEFORE SCANNING (2026-08-24).
@@ -325,7 +384,10 @@ for (const viewport of VIEWPORTS) {
     if (disableRules) builder = builder.disableRules(disableRules);
     await settleAnimations(page);
     const results = await builder.analyze();
-    violations = failing(results);
+    // Concatenated AFTER failing(), not through it: these are already curated,
+    // and routing them through the tag/impact filter would need a synthetic tag
+    // that lies about where the finding came from.
+    violations = failing(results).concat(await tablistDefects(page));
   } catch (e) {
     // A page that cannot be loaded or scanned is a FAILURE, not a skip. A
     // swallowed error here would be a check that cannot go red.

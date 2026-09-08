@@ -2266,12 +2266,16 @@
         fill: color-mix(in srgb, var(--mid) 42%, transparent);
         stroke: none;
       }
-      .locator .cty {
+      /* Scoped to [data-city], which only a LIVE city's marker carries. It
+         was on every .cty, so the planned discs (Cardiff, Nottingham, and any
+         future entry) offered a pointer cursor for a click that does nothing.
+         That mattered more once the markers left the accessibility tree: the
+         cursor is now the ONLY affordance they have, so it has to be honest
+         about which dots act. The :focus-visible rule that sat here is gone
+         with the tab stops it styled - a dead rule for a removed capability is
+         the `.layer-transport` shape this file has already been caught by. */
+      .locator .cty[data-city] {
         cursor: pointer;
-      }
-      .locator .cty:focus-visible circle {
-        outline: 2px solid var(--orange);
-        outline-offset: 1px;
       }
       /* Two lines: the region identifies the shape, the count reports coverage.
          One line would run to ~200px in a 112px column. */
@@ -3812,7 +3816,19 @@
              line and the locator inset already hides across it, so this makes
              navigation agree with the data model rather than treating the
              difference as cosmetic. -->
-        <div class="country-selector" id="country-selector" role="tablist" aria-label="Select country"></div>
+        <!-- role="group" + aria-pressed, NOT role="tablist" (2026-09-08).
+             A tablist promises "layered sections of content, one panel
+             displayed at a time", and there were no panels to display:
+             switchCountry() calls switchCity(), which re-projects the map and
+             swaps the boroughs, the scores, the ranking and the provenance -
+             the whole application, not a region of it. No element could
+             honestly have been named as the tabpanel, so the role announced
+             "tab 1 of 2" over a control that does not behave like one, and
+             offered no arrow keys to match the promise.
+             The city chips one line below do the SAME KIND of thing and were
+             already modelled correctly, so the two tiers of one switcher now
+             agree rather than describing themselves differently. -->
+        <div class="country-selector" id="country-selector" role="group" aria-label="Select country"></div>
         <div class="city-selector" id="city-selector" role="group" aria-label="Select city"></div>
 
         <!-- Locator inset: where the current city sits nationally, and which
@@ -3821,13 +3837,20 @@
              goes empty. Hidden outside the UK, since an England & Wales
              silhouette says nothing useful on a New York view. -->
         <div class="locator" id="locator" hidden>
-          <!-- role="group", NOT role="img". An img role is a LEAF: assistive
-               tech announces the label and stops descending, so the ten city
-               markers inside - which carry tabindex="0" and role="button" -
-               were reachable by keyboard while being unreachable by a screen
-               reader. axe flags that as `nested-interactive` (serious). The
-               city-selector one line above already had the right pattern. -->
-          <svg id="locator-svg" viewBox="0 0 130 168" role="group" aria-label="Coverage across England and Wales">
+          <!-- role="img" since 2026-09-08. The reasoning that made this
+               role="group" has EXPIRED rather than been overruled, which is
+               worth stating because the old comment reads as a standing
+               prohibition on role="img". It was correct while the ten markers
+               carried tabindex="0" and role="button": an img role is a LEAF,
+               so AT announces the label and stops descending, which would have
+               left interactive children reachable by keyboard and invisible to
+               a screen reader - axe's `nested-interactive`, serious.
+               The markers are no longer interactive to AT (see loadLocator),
+               so the leaf is now the honest description: this is a PICTURE of
+               national coverage. Nothing is lost by not descending - the
+               region name and the covered-city count are real text in
+               .locator-cap, outside the SVG, and are still announced. -->
+          <svg id="locator-svg" viewBox="0 0 130 168" role="img" aria-label="Coverage across England and Wales">
             <path id="locator-land" d="" />
             <g id="locator-cities"></g>
           </svg>
@@ -12453,8 +12476,10 @@
           const b = document.createElement('button');
           b.type = 'button';
           b.className = 'country-btn' + (country === active ? ' active' : '');
-          b.setAttribute('role', 'tab');
-          b.setAttribute('aria-selected', String(country === active));
+          // aria-pressed, exactly as renderCitySelector does below. See the
+          // container comment in the markup for why this tier stopped claiming
+          // to be a tablist.
+          b.setAttribute('aria-pressed', String(country === active));
           b.dataset.country = country;
           // Falls back to the full name rather than to nothing, so a country
           // added to the registry without a short label still renders.
@@ -12736,16 +12761,31 @@
           const node = document.createElementNS(NS, 'g');
           node.setAttribute('class', 'cty');
           if (target) {
-            node.setAttribute('tabindex', '0');
-            node.setAttribute('role', 'button');
-            node.setAttribute('aria-label', `Switch to ${c.name}`);
+            // CLICK ONLY, and deliberately NOT a tab stop (2026-09-08).
+            //
+            // MEASURED, not judged: these markers render at 5.2 CSS px across
+            // (r=3 in a 130-unit viewBox shown 112 px wide) and the closest
+            // pair, Nottingham/Leicester, sit 6.4 px apart centre-to-centre.
+            // WCAG 2.2 2.5.8 offers two ways out and this fails both - the
+            // targets are far under 24 px, and the 24 px spacing exception
+            // needs non-intersecting circles, which 6.4 px apart cannot give.
+            // Neither is fixable by enlarging: the whole England & Wales
+            // silhouette is 112 px wide, so a compliant target would swallow
+            // its neighbours and start sending clicks to the wrong city.
+            //
+            // So the ten markers left the tab order, where they had been stops
+            // 14-23 of 51, DUPLICATING the city chips immediately above them.
+            // The function is not lost and 2.1.1 is not traded away: every one
+            // of these cities is reachable from .city-btn, a real <button> at
+            // a real size. What is removed is a second, worse route to the
+            // same place.
+            //
+            // data-city marks a live marker, NOT role="button". It names WHICH
+            // city, so locator-verify.mjs can assert the relationship instead
+            // of a count, and it makes no ARIA promise about something the
+            // keyboard deliberately cannot reach.
+            node.dataset.city = target;
             node.addEventListener('click', () => switchCity(target));
-            node.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                switchCity(target);
-              }
-            });
           }
           if (active) {
             const ring = document.createElementNS(NS, 'circle');

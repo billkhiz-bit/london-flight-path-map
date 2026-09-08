@@ -36,7 +36,22 @@ const read = () => page.evaluate(() => {
   return {
     hidden: box.hasAttribute('hidden'),
     markers: document.querySelectorAll('#locator-cities .cty').length,
-    clickable: document.querySelectorAll('#locator-cities .cty[role="button"]').length,
+    // Keyed on [data-city], which replaced role="button" on 2026-09-08 when the
+    // markers left the tab order. The attribute is the better hook anyway: it
+    // names WHICH city, so the click check below can address one marker instead
+    // of scanning aria-labels for a substring.
+    clickable: document.querySelectorAll('#locator-cities .cty[data-city]').length,
+    // The inset must not put anything in the tab order. Ten markers at 5.2 CSS
+    // px, 6.4 px apart, cannot satisfy WCAG 2.2 2.5.8 by size or by spacing, and
+    // they duplicated the city chips above. Asserted in BOTH spellings because
+    // removing tabindex while leaving role="button" would still announce ten
+    // buttons a keyboard cannot reach - a worse state than either end.
+    focusable: document.querySelectorAll(
+      '#locator-svg [tabindex]:not([tabindex="-1"]), #locator-svg a[href], #locator-svg button'
+    ).length,
+    ariaInteractive: document.querySelectorAll(
+      '#locator-svg [role="button"], #locator-svg [role="link"], #locator-svg [role="tab"]'
+    ).length,
     highlighted: rings.length,
     caption: [document.getElementById('locator-region').textContent, document.getElementById('locator-count').textContent].filter(Boolean).join(' - '),
     landLength: (document.getElementById('locator-land').getAttribute('d') || '').length,
@@ -106,22 +121,30 @@ for (const city of ['london', 'nyc', 'manchester']) {
   const want = expect[city];
   const ok =
     r.hidden === want.hidden &&
+    // Outside the hidden guard on purpose: a locator that is not drawn must
+    // still not be holding tab stops.
+    r.focusable === 0 &&
+    r.ariaInteractive === 0 &&
     (want.hidden ||
       (r.markers === want.markers &&
         r.highlighted === want.highlighted &&
         r.clickable === want.clickable &&
         r.landLength > 1000));
   if (!ok) fail++;
-  console.log(`${city.padEnd(11)} ${ok ? 'OK  ' : 'FAIL'} hidden=${r.hidden} markers=${r.markers} clickable=${r.clickable} highlighted=${r.highlighted} land=${r.landLength} "${r.caption}"`);
+  console.log(`${city.padEnd(11)} ${ok ? 'OK  ' : 'FAIL'} hidden=${r.hidden} markers=${r.markers} clickable=${r.clickable} highlighted=${r.highlighted} focusable=${r.focusable} ariaInteractive=${r.ariaInteractive} land=${r.landLength} "${r.caption}"`);
 }
 
 // The inset must be able to drive a switch, not just report one.
 await page.click('.city-btn[data-city="manchester"]');
 await page.waitForTimeout(1200);
 await page.evaluate(() => {
-  const first = [...document.querySelectorAll('#locator-cities .cty[role="button"])'.replace(')', ''))]
-    .find((n) => n.getAttribute('aria-label')?.includes('London'));
-  first?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  // Addressed by data-city rather than found by scanning aria-labels for
+  // "London" - the labels went with the role on 2026-09-08, and a substring
+  // match would have picked the first marker whose NAME merely contained the
+  // word in any case.
+  document
+    .querySelector('#locator-cities .cty[data-city="london"]')
+    ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 });
 await page.waitForTimeout(1600);
 const after = await page.evaluate(() => ({

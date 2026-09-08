@@ -61,8 +61,15 @@ proven red against the defect it guards, unless noted.
 
 **Still open:** C3 (IAM, needs a console session and a verified deploy - see
 `OPERATIONS.md` s3.8), I2 (`healthcareWithin1kmPct` names a 500 m radius - a
-public field, so renaming is a contract change), I6 (METHODOLOGY s6 worked
-example does not reproduce), and the Minor list in s4.
+public field, so renaming is a contract change), and part of the Minor list in
+s4 - see the note under it.
+
+**I6 was listed here as open until 2026-09-08 and had been closed the same day
+it was written**, by `scripts/check_worked_example.py`, which is blocking in
+preflight and reports 16 comparisons agreeing with the engine. `HANDOVER.md`
+carried the identical ghost as item 3 of its "THREE ITEMS LEFT OPEN ON
+PURPOSE". Both are corrected. *An item closed by a wave has to leave the open
+list in the commit that closes it, or it is rediscovered as work.*
 
 **Two fixes exposed further defects, both now closed.** Un-hiding the mobile
 footer (C2) restored its `.sep` separators at **1.97:1** and gave it a
@@ -591,6 +598,54 @@ overwritten, reported under a different borough's name. Latent today.
 - **`Math.random()` fallback** for the device token, the only authorisation the
   favourites table has (`index.html:12043`). `crypto.getRandomValues` is a
   one-line swap.
+
+### Minor list re-measured 2026-09-08 — most of it was already closed
+
+**Read this before working any item above.** The list was written on 7 Sep and
+several entries were closed by the second wave later the same day, so it has
+been describing finished work as outstanding. Each line below was checked
+against the code, not against a changelog.
+
+| Item | State |
+|---|---|
+| `security.txt` `Policy:` → LICENSING | **Closed** — points at `SECURITY.md` |
+| `Math.random()` device token | **Closed** — `crypto.getRandomValues` |
+| `changes.html` hard-coded 87% | **Closed** — reframed as a historical measurement |
+| `status.html` reports "Up" on a 403 | **Closed** — reports UNVERIFIED; the bare `", "` half of that entry was NOT reproduced and needs re-checking before it is worked |
+| Extension branded "cubitt33" | **Closed** — every visible string and accessible name reads "Sky Score"; what remains is internal DOM ids (`cubitt33-panel`) and code comments, which are not public-facing UI text |
+| `#country-selector` tablist with no panels | **Closed 2026-09-08** — now `role="group"` + `aria-pressed`, matching the city chips. Gated by `tablist-has-panels` in `a11y-source.mjs`, proven red |
+| Ten locator markers focusable at 5×5 px | **Closed 2026-09-08** — click-only, out of the tab order. Gated by `locator-verify.mjs`, proven red at `focusable=10` |
+| `npm audit`: 3 advisories | **Corrected** — `npm audit --omit=dev` reports **0 vulnerabilities**. The 3 are dev-only, which the entry itself said; the headline number was the production-facing read |
+| Four pages never declare `color-scheme` | **Mostly closed** — `pricing`, `changes`, `api/`, `score-demo/index`, `score-demo/status` all declare `color-scheme: dark`. **`score-demo/api-docs.html` still does not.** One page, not four |
+| `index.html` size and headers | **Partly** — the "~8,200 lines" claim in CLAUDE.md is corrected to a measured **14,390 lines / 926 KB**. The **missing `Cache-Control`** and the 30%-comment payload are genuinely open, and are the substantive half |
+| EPC key in public git history at `7eb1984` | **Open, and unfixable in place** — history is immutable without a rewrite of a public repo. The legacy host 301s, so the key is very likely dead; the decision is whether to rotate-and-document or rewrite |
+
+*Two of these were closed by the commit that published the list naming them.
+The pattern is the one recorded at the top of §1: an item has to leave the open
+list in the commit that closes it, or it is rediscovered as work.*
+
+#### NEW, and it needs a decision: `AXE_TAGS` has no `wcag22aa`
+
+**Nothing in this repo has ever run a WCAG 2.2 rule.** `AXE_TAGS` in
+`tests/a11y-source.mjs` is `['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa',
+'best-practice']`, and axe tags `target-size` — the rule for the locator defect
+above — as **`wcag22aa`**. So the gate did not weigh those ten 5.2 px targets
+and pass them; it never evaluated them. That is the identical mechanism the
+same file already documents for `FAIL_MODERATE`: *"a rule that does not run
+cannot fail"*, one tag along.
+
+`target-size` is not the only 2.2 rule, and the level-AA additions in 2.2 are
+the kind that fire on real UI (target size, focus appearance, dragging
+movements). **Deliberately NOT added here as a side effect of this fix** — the
+comment beside `AXE_TAGS` warns in terms against exactly that, and promoting an
+unknown number of new rules to blocking across 109 pages is a scope change that
+should be chosen rather than inherited.
+
+**The decision is whether Sky Score claims WCAG 2.2 AA or 2.1 AA.** The public
+pages make no version claim today, so either is defensible. Suggested route if
+2.2 is wanted: add `wcag22aa` to `AXE_TAGS` and run the gate ADVISORY for one
+pass to size the backlog before deciding what blocks — the same staged move
+that was used when `best-practice` was added.
 
 ---
 
