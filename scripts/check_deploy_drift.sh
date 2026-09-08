@@ -323,8 +323,14 @@ fi
 # string: `no-cache`, `max-age=0` and `must-revalidate` all satisfy the
 # requirement, and pinning the literal would red on a defensible change.
 HEADER_FAILED=0
-SHELL_CC=$(curl -fsSI "$BASE/index.html" 2>/dev/null | tr -d '\r' \
-  | grep -i '^cache-control:' | cut -d' ' -f2-)
+
+# ONE request, several passes. The four checks below all interrogate the same
+# response, so fetching per header would be four round-trips saying the same
+# thing - and could disagree with itself if a deploy landed between them.
+SHELL_HEADERS=$(curl -fsSI "$BASE/index.html" 2>/dev/null | tr -d '\r')
+hdr() { printf '%s\n' "$SHELL_HEADERS" | grep -i "^$1:" | head -1 | cut -d' ' -f2-; }
+
+SHELL_CC=$(hdr 'cache-control')
 if [ -z "$SHELL_CC" ]; then
   printf '  shell cache-control: ABSENT - index.html is browser-pinnable\n'
   printf 'FAIL: index.html is served with no Cache-Control header.\n'
@@ -340,6 +346,74 @@ else
   printf '  The app shell must revalidate; see the note in the Makefile.\n'
   HEADER_FAILED=1
 fi
+
+# SECURITY HEADERS AT THE ORIGIN (2026-09-08).
+#
+# These come from a CloudFront RESPONSE HEADERS POLICY, not from anything in
+# this repo, so no amount of source review can tell you what is actually being
+# served - and a policy is edited in a console, by hand, months apart. The
+# distribution ran on the AWS MANAGED SecurityHeadersPolicy
+# (67f7725c-6f97-4210-82d7-5512b31e9d03), which cannot be edited and carries no
+# Permissions-Policy: those headers were not removed, that policy never had
+# them.
+#
+# PRESENCE, not exact values, for the four below. They are a floor that must not
+# silently drop when someone swaps the policy - the failure mode this pass
+# exists for, and one the drift hashes above are blind to because the BODY is
+# unchanged.
+for h in strict-transport-security x-content-type-options referrer-policy x-frame-options; do
+  v=$(hdr "$h")
+  if [ -z "$v" ]; then
+    printf '  shell %s: ABSENT\n' "$h"
+    printf 'FAIL: %s is not served on index.html.\n' "$h"
+    printf '  Check the response headers policy on distribution EGSSPJKLFL33M.\n'
+    HEADER_FAILED=1
+  else
+    printf '  shell %s: %s\n' "$h" "$v"
+  fi
+done
+
+# X-Frame-Options carries the CSPs' STATED intent, because theirs cannot.
+# Every page declares `frame-ancestors 'none'` in a <meta> CSP, where that
+# directive is IGNORED - so this header is the only thing actually refusing to
+# be framed. DENY matches what the pages claim; SAMEORIGIN is the weaker state
+# that was inherited from the managed policy and is accepted so this does not
+# red before the console work lands. Anything else is a misconfiguration.
+XFO=$(hdr 'x-frame-options' | tr 'A-Z' 'a-z')
+case "$XFO" in
+  deny|sameorigin|'') ;;
+  *)
+    printf 'FAIL: x-frame-options is "%s", expected DENY or SAMEORIGIN.\n' "$XFO"
+    HEADER_FAILED=1
+    ;;
+esac
+
+# DECLARED PENDING, and the declaration is checked in BOTH directions.
+#
+# Same shape as ON_THE_STAGE_CEILING in backend/tests/test_route_throttles.py:
+# a known-absent header is listed here with the work identified, so this pass
+# does not go permanently red on outstanding console work and become a signal
+# nobody reads. The other direction is the point - once the header IS served,
+# this reds until it is removed from the list, so the list cannot rot into a
+# permanent exemption. A header in neither the loop above nor this list is
+# simply unguarded, which is why new ones belong in one or the other.
+#
+# permissions-policy: needs a CUSTOM response headers policy, because the
+# managed one cannot carry it and cannot be edited. flightmap-dev is denied
+# cloudfront:CreateResponseHeadersPolicy, so this is console work. The value to
+# set is in ROADMAP under the CloudFront item.
+PENDING_HEADERS="permissions-policy"
+for h in $PENDING_HEADERS; do
+  if [ -n "$(hdr "$h")" ]; then
+    printf '  shell %s: %s\n' "$h" "$(hdr "$h")"
+    printf 'FAIL: %s is now served but is still declared PENDING.\n' "$h"
+    printf '  Remove it from PENDING_HEADERS so the header becomes guarded\n'
+    printf '  rather than exempt - that is what this list is for.\n'
+    HEADER_FAILED=1
+  else
+    printf '  shell %s: pending (declared; needs the custom policy)\n' "$h"
+  fi
+done
 
 # ONE verdict, covering ALL passes, so a run always reports everything it
 # measured rather than stopping at whichever finding came first.

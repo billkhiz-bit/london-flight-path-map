@@ -204,66 +204,152 @@ AWS_PROFILE=flightmap aws dynamodb describe-continuous-backups \
 ```
 Look for `"PointInTimeRecoveryStatus": "ENABLED"`.
 
-### 3.2 — CloudFront Response-Headers Policy (HSTS + Permissions-Policy)
+### 3.2 — CloudFront Response-Headers Policy (Permissions-Policy + X-Frame-Options)
 
-**Why:** `Strict-Transport-Security` and `Permissions-Policy` cannot be set
-via `<meta>` tags — browsers ignore them when not delivered as real HTTP
-headers. CloudFront's "response-headers policy" feature adds them at the
-edge without changing origin S3 objects.
+**REWRITTEN 2026-09-08 against what is actually served.** The version below
+had three problems, all of the kind this repo keeps finding: it did not say
+what the distribution already had, it prescribed a `geolocation=()` that would
+break a shipped feature, and it omitted the one header now doing load-bearing
+work. Corrections are called out inline so the old advice is not silently
+replaced.
+
+**Measured state.** The distribution runs on the AWS **managed**
+`SecurityHeadersPolicy`, id `67f7725c-6f97-4210-82d7-5512b31e9d03`, which
+already serves **HSTS `max-age=31536000`, `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`
+and `X-XSS-Protection: 1; mode=block`**. A managed policy **cannot be edited**,
+which is the whole reason `Permissions-Policy` is absent: nobody removed it,
+that policy never had it. So this is a CREATE-a-custom-policy job, not an edit.
+
+**This is console work and cannot be scripted from here.** `flightmap-dev` is
+denied `cloudfront:CreateResponseHeadersPolicy`, `GetResponseHeadersPolicy` and
+`ListResponseHeadersPolicies` (probed 2026-09-08). `UpdateDistribution` IS
+granted, so once the policy exists the attach step can be done from the CLI.
 
 **Steps:**
 
-1. CloudFront console → Policies → Response headers policies → Create.
-2. Name: `SkyScoreSecurityHeaders`.
-3. Strict-Transport-Security: `max-age=63072000; includeSubDomains; preload`
-   (2 years, the value that gets you eligible for the
-   [HSTS preload list](https://hstspreload.org/)).
-4. X-Content-Type-Options: `nosniff` (also already in `<meta>` — belt &
-   braces; the header version takes precedence).
-5. Referrer-Policy: `strict-origin-when-cross-origin`.
-6. Custom header — Permissions-Policy:
-   `geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()`
-   (we use none of these — explicit deny stops third-party libraries from
-   silently asking for them).
-7. Attach the policy to the `EGSSPJKLFL33M` distribution's default cache
-   behaviour. CloudFront will invalidate and serve new headers within
-   ~5 minutes.
+1. CloudFront console → Policies → Response headers → Create.
+2. Name: `sky-score-security-headers`.
+3. Tick the security headers and reproduce the five values above, so nothing
+   the managed policy provided is lost in the swap. **Keep HSTS at
+   `max-age=31536000` for now.** The old version of this section said to set
+   `max-age=63072000; includeSubDomains; preload` in the same breath as warning
+   at the bottom not to preload for six months - `includeSubDomains` binds
+   every present and future subdomain immediately, so it is its own decision
+   and does not belong inside an unrelated change.
+4. **X-Frame-Options: `DENY`**, not SAMEORIGIN. Every page's CSP declares
+   `frame-ancestors 'none'`, and that directive is **IGNORED in a `<meta>` CSP** -
+   so this header is the only thing actually refusing to be framed, and
+   SAMEORIGIN is weaker than what all ten pages claim. Verified safe: there is
+   **not one `<iframe>` anywhere** in the repo. (The `/badge` SVG is consumed
+   through third-party `<img>` tags, which X-Frame-Options does not affect.)
+5. Custom header — Permissions-Policy:
 
-**Verification:**
+   ```
+   geolocation=(self), camera=(), microphone=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()
+   ```
+
+   **`geolocation=(self)`, NOT `geolocation=()`.** The old value here was
+   written when "we use none of these" was true; the app has since shipped
+   "Score where I am". It reaches GPS through `cap.Plugins.Geolocation`
+   (`index.html:4631`), and while the native build does not load from
+   CloudFront, **the PWA does** - and an installed PWA is precisely where a
+   locate button is wanted. `interest-cohort=()` is dropped: FLoC was
+   withdrawn, so it is a no-op that only dates the header.
+6. Attach to the `EGSSPJKLFL33M` distribution's **default** cache behaviour.
+   There is exactly one behaviour and no extras, so it governs every path -
+   which is also why **no CSP goes in this policy**; see 3.3.
+
+**Verification** - `scripts/check_deploy_drift.sh` now checks all of this at
+the origin, which no amount of source review can do, since these headers exist
+only in a console-edited policy:
+
 ```bash
-curl -sI https://skyscore.co.uk | grep -iE 'strict-transport|permissions-policy|referrer|content-type-options'
+sh scripts/check_deploy_drift.sh   # reports each header, and fails on absence
 ```
 
-If you ever want to apply for HSTS preload: only do that *after* the
-header has been live for 6+ months without issue and you're certain
-every subdomain (incl. future `status.skyscore.co.uk`, `api.skyscore.co.uk`)
-will always be HTTPS-only.
+`permissions-policy` is listed in that script's `PENDING_HEADERS` so the pass
+does not sit permanently red on outstanding console work. **Once the header is
+live, remove it from that list** - the check fails in that direction too, on
+purpose, so the exemption cannot rot into a permanent hole. Same shape as
+`ON_THE_STAGE_CEILING` in `backend/tests/test_route_throttles.py`.
 
-### 3.3 — CSP Report-URI Endpoint
+HSTS preload, if ever wanted, stays a separate decision: only after the header
+has been live 6+ months and every subdomain (`api.skyscore.co.uk`, any future
+`status.`) is certainly HTTPS-only.
 
-**Why:** Today CSP is enforcing across all 5 HTML pages but violations
-log only to the user's browser DevTools console — invisible to us.
-Adding a `report-uri` directive routes violation reports to a collector.
+### 3.3 — CSP Report-URI Endpoint — **THE PRESCRIBED FIX DOES NOT WORK**
 
-**Cheapest path:** [report-uri.com](https://report-uri.com) free tier
-(10k reports/month, sufficient for our scale). Sign up, copy the unique
-endpoint URL, then update CSP on each HTML page:
+**Corrected 2026-09-08.** The steps below told you to add `report-uri` to the
+`<meta>` CSP on each page. **`report-uri` and `report-to` are header-only
+directives and are IGNORED in a `<meta>` CSP** - the identical rule that makes
+`frame-ancestors` inert there, which is the finding that led here. Following
+this section would have produced no reports and no error, and looked done.
 
-```html
-<meta http-equiv="Content-Security-Policy" content="…existing rules…; report-uri https://YOUR-ID.report-uri.com/r/d/csp/enforce;">
-```
+It was also stale on scale: it says "all 5 HTML pages"; there are **ten** pages
+carrying CSP metas, and **seven distinct policies** among them.
 
-Each of the 5 HTML files needs the same `report-uri` token added. Re-deploy
-to S3 + invalidate. Reports start flowing within minutes.
+**Why CSP cannot simply move to a response header.** The obvious fix - put CSP
+in the 3.2 policy - would break the site. The distribution has **one** cache
+behaviour, so one policy governs every path, and when a header CSP and a meta
+CSP are both present browsers enforce **both**: a resource must satisfy each.
+The header would therefore become a ceiling on all seven tailored policies.
+Concretely, `prototype/index.html` loads Three.js 0.162.0 from
+`cdn.jsdelivr.net` through an importmap (line ~883) and its own CSP allows it,
+while `index.html`'s does not - so shipping index's CSP as a distribution-wide
+header leaves the prototype a blank screen. Verified live, not reasoned about.
+
+**Options, in order of honesty:**
+
+1. **Close it as won't-fix, with this reason recorded.** Cheapest, and the
+   finding is a reporting gap, not an enforcement gap - CSP is enforcing
+   correctly on all ten pages today.
+2. **Per-path cache behaviours**, each with its own response-headers policy
+   carrying that path's CSP. This works, and it duplicates seven hand-tuned
+   policies into CloudFront where they will drift from the source metas. Only
+   worth it if CSP reporting becomes genuinely needed.
+
+**Do not** add `report-uri` to a meta tag. If someone re-raises this, the
+disproof is one line: the directive is not supported in `<meta>`.
+
+**Alternative collector**, if option 2 is ever taken:
+[report-uri.com](https://report-uri.com) free tier (10k reports/month), or a
+small Lambda + API Gateway endpoint dumping the JSON POST to CloudWatch.
 
 **Alternative path:** A tiny Lambda + API Gateway endpoint that accepts
 the JSON POST and dumps it to CloudWatch Logs. ~30 min build, but adds
 a moving piece to maintain.
 
-### 3.4 — Billing Alarm
+### 3.4 — Billing Alarm — **NOT CREATED (measured 2026-09-08)**
 
 See `AWS_BILLING_ALARM_SETUP.md` (must be created in `us-east-1`, requires
 billing-data alarm permissions).
+
+**It does not exist, and §7 of this file said it did.** Measured with
+`flightmap-dev`, which has CloudWatch *read*:
+
+```
+aws cloudwatch describe-alarms --region us-east-1 --query 'length(MetricAlarms)'   -> 0
+aws cloudwatch describe-alarms-for-metric --namespace AWS/Billing \
+    --metric-name EstimatedCharges --region us-east-1                              -> 0 alarms
+```
+
+`AWS/Billing` metrics publish **only** to `us-east-1`, so a billing metric
+alarm can live nowhere else. The alarm the runbook names,
+`sky-score-billing-over-20-usd`, has never been created.
+
+**Why it looked done.** Three alarms DO exist, created 2026-09-02 in
+`eu-west-2`: `london-flight-map-api-5xx`, `london-flight-map-lambda-duration`,
+`london-flight-map-lambda-errors`. A glance at the CloudWatch console shows
+alarms and reads as covered. They are operational alarms and none of them
+watches spend.
+
+**One thing this could NOT rule out:** an AWS **Budget** would achieve the same
+end through a different service, and `budgets:ViewBudget` is denied to
+`flightmap-dev`, so this credential cannot see one. **Check the Billing console
+before creating a duplicate** — "I could not look" is not "it is absent", and
+that distinction is the whole of §I10. If a Budget is there, fix §7's wording
+instead and say which mechanism holds.
 
 ### 3.5 — Refresh DEFRA Aircraft Noise PNG (every ~5 years)
 
@@ -518,7 +604,9 @@ other two.
   Alarm: `> 0` over 1 hour.
 - API Gateway access logs disabled (cost reasons); enable via the APIGW
   console if investigating an abuse case.
-- Billing alarm: see `AWS_BILLING_ALARM_SETUP.md`.
+- Billing alarm: see `AWS_BILLING_ALARM_SETUP.md`. **NOT CREATED as of
+  2026-09-08** — verified absent in `us-east-1`, the only region billing
+  metrics publish to. See §3.4.
 
 **Alarms, created 2026-09-02 (CLI, `flightmap-dev`):**
 
@@ -676,7 +764,18 @@ through April 2027:
 | CloudFront (low-egress) | <$0.50 |
 | **Total** | **<$1/month at zero traffic** |
 
-Billing alarm is set at $20 USD as a tripwire.
+**There is no billing alarm.** This line read "Billing alarm is set at $20 USD
+as a tripwire" until 2026-09-08, stated flatly, and `ROADMAP.md` went on to
+reason from "the $20 billing alarm" as an existing control while arguing about
+free-tier drain. Measured: **zero CloudWatch alarms in `us-east-1`**, which is
+the only region `AWS/Billing` publishes to, and zero alarms on
+`EstimatedCharges` anywhere. The three alarms that exist are operational and
+live in `eu-west-2`.
+
+At <$1/month steady state the exposure is small, but the tripwire exists
+precisely for the abnormal month — and a documented control that is not there
+is worse than a known gap, because it is planned around. See §3.4 for the
+creation steps and for the one thing this measurement could not rule out.
 
 ---
 
