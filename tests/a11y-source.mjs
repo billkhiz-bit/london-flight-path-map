@@ -24,6 +24,7 @@
  *     node tests/a11y-source.mjs
  */
 import { chromium } from '@playwright/test';
+import { writeFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { createServer } from 'node:http';
 import { readdir, readFile } from 'node:fs/promises';
@@ -205,7 +206,15 @@ const FAIL_MODERATE = new Set([
 //
 // `best-practice` is here so the four rules above can fire AT ALL. It is not
 // here to enlist the ~30 other best-practice rules as blocking - see failing().
-const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'];
+// `wcag22aa` joined this list on 2026-09-08 so the WCAG 2.2 rules RUN AT ALL.
+// Until then NONE ever had. axe tags `target-size` as `wcag22aa`, so the ten
+// 5.2 px locator markers closed that day were never evaluated - the gate did
+// not weigh them and pass them. That is the FAIL_MODERATE mechanism documented
+// above, one tag along: a rule that does not run cannot fail.
+//
+// It is deliberately NOT in WCAG_TAGS below, so nothing 2.2-only blocks yet -
+// see assess().
+const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
 const WCAG_TAGS = new Set(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
 
 function failing(results) {
@@ -220,6 +229,90 @@ function failing(results) {
     if (!v.tags.some((t) => WCAG_TAGS.has(t))) return false;
     return v.impact === 'critical' || v.impact === 'serious';
   });
+}
+
+// WCAG 2.2 IS ADVISORY, AND THAT IS A DELIBERATE FIRST STEP (2026-09-08).
+//
+// Adding `wcag22aa` to AXE_TAGS makes the rules run; adding it to WCAG_TAGS
+// would make them block. Doing both in one move would promote an unknown
+// number of new rules to blocking across every scanned state, as a side effect
+// of a bug fix - which is precisely what the comment above AXE_TAGS warns
+// against, and it would red on rules the project has never agreed to.
+//
+// So this pass MEASURES the backlog instead. Whether Sky Score claims WCAG 2.2
+// AA or 2.1 AA is an open decision (ROADMAP, "Open decisions"). When it is
+// taken, the change is one tag in WCAG_TAGS and the deletion of this block.
+const WCAG22_TAG = 'wcag22aa';
+const BACKLOG_FILE = '.wcag22-backlog.txt';
+const wcag22 = new Map();
+
+/**
+ * Tally 2.2-only violations, then return the blocking set unchanged.
+ *
+ * One holder for all four axe call sites, so the tally cannot cover three of
+ * them and look complete - this file already carries that lesson about
+ * `FAIL_MODERATE`, and the repo carries it about lists of mirrors.
+ */
+function assess(results, where) {
+  for (const v of results.violations) {
+    if (!v.tags.includes(WCAG22_TAG)) continue;
+    // 2.2-ONLY. A rule also carrying a 2.0/2.1 tag already blocks through
+    // failing(), and counting it here would inflate the backlog with work that
+    // is not new. Same for the four structural rules, which block regardless.
+    if (v.tags.some((t) => WCAG_TAGS.has(t)) || FAIL_MODERATE.has(v.id)) continue;
+    const row = wcag22.get(v.id) ||
+      { impact: v.impact, help: v.help, nodes: 0, where: new Set(), targets: new Set() };
+    row.nodes += v.nodes.length;
+    row.where.add(where);
+    for (const n of v.nodes) row.targets.add(n.target.join(' > '));
+    wcag22.set(v.id, row);
+  }
+  return failing(results);
+}
+
+/**
+ * Print the 2.2 backlog, and LEAVE IT WHERE PREFLIGHT CAN SEE IT.
+ *
+ * NEVER touches `failed` - see assess().
+ *
+ * The file is the point. preflight's check() shows a stage's output only on
+ * failure and advise() discards it entirely, so an advisory tally printed here
+ * alone is invisible in the one run everybody actually does - a report whose
+ * only reader is its producer, which is the `lineStatusAvailable` shape this
+ * repo has now hit four times. `WCAG 2.2 backlog` reads this file and reports
+ * `deviates`, which names it in the advisory summary and sends the reader here.
+ * Truncated to empty when clean, so a stale file cannot report a backlog that
+ * has been fixed.
+ */
+function reportWcag22() {
+  if (!wcag22.size) {
+    console.log('\nWCAG 2.2 (ADVISORY): 0 violations across every scanned state.');
+    writeFileSync(BACKLOG_FILE, '');
+    return;
+  }
+  const rows = [...wcag22.entries()].sort((a, b) => b[1].nodes - a[1].nodes);
+  const total = rows.reduce((n, [, r]) => n + r.nodes, 0);
+  console.log('\nWCAG 2.2 (ADVISORY - these RUN but do not block)');
+  for (const [id, r] of rows) {
+    console.log(`  [${(r.impact || 'n/a').toUpperCase()}] ${id}: ${r.nodes} nodes - ${r.help}`);
+    // NAME the states and the elements, never just count them. Its first run
+    // reported "16 nodes in 1 state(s)" and sent the reader hunting through
+    // 134 of them - the `covered by div` failure this repo has already lost a
+    // day to. A tally that cannot be acted on is not a sized backlog.
+    console.log(`      states: ${[...r.where].sort().join(', ')}`);
+    for (const t of [...r.targets].slice(0, 6)) console.log(`      - ${t}`);
+    if (r.targets.size > 6) console.log(`      ... and ${r.targets.size - 6} more`);
+  }
+  console.log(
+    `  ${rows.length} rule(s), ${total} nodes. Size this before deciding whether ` +
+      `'${WCAG22_TAG}' joins WCAG_TAGS.`
+  );
+  writeFileSync(
+    BACKLOG_FILE,
+    rows
+      .map(([id, r]) => `${id}\t${r.nodes} nodes\t${[...r.where].sort().join(', ')}\t${r.help}`)
+      .join('\n') + '\n'
+  );
 }
 
 /**
@@ -387,7 +480,7 @@ for (const viewport of VIEWPORTS) {
     // Concatenated AFTER failing(), not through it: these are already curated,
     // and routing them through the tag/impact filter would need a synthetic tag
     // that lies about where the finding came from.
-    violations = failing(results).concat(await tablistDefects(page));
+    violations = assess(results, path).concat(await tablistDefects(page));
   } catch (e) {
     // A page that cannot be loaded or scanned is a FAILURE, not a skip. A
     // swallowed error here would be a check that cannot go red.
@@ -484,7 +577,7 @@ for (const viewport of VIEWPORTS) {
     } else {
       await settleAnimations(page);
       const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-      const v = failing(results);
+      const v = assess(results, 'borough panel');
       if (v.length) failed++;
       console.log(
         `${'/ (borough selected)'.padEnd(28)} ${v.length ? 'FAIL' : 'OK  '} rendered detail panel` +
@@ -589,7 +682,7 @@ for (const viewport of VIEWPORTS) {
     } else {
       await settleAnimations(page);
       const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-      const v = failing(results);
+      const v = assess(results, 'legend expanded');
       if (v.length) failed++;
       console.log(
         `${'/ (legend expanded)'.padEnd(28)} ${v.length ? 'FAIL' : 'OK  '} all four layer legends` +
@@ -691,7 +784,7 @@ if (widthBreakpoints.length) {
     try {
       await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
       const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-      const v = failing(results);
+      const v = assess(results, path);
       if (v.length) {
         areaFailed++;
         failed++;
@@ -714,6 +807,7 @@ if (widthBreakpoints.length) {
 
 await browser.close();
 server.close();
+reportWcag22();
 console.log(
   `\nRESULT: ${failed === 0 ? 'PASS' : 'FAIL'} ` +
     `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection ` +

@@ -310,9 +310,40 @@ if [ "$PRECACHE_MISSING" -gt 0 ]; then
   PRECACHE_FAILED=1
 fi
 
+# CACHE-CONTROL ON THE SHELL, checked at the ORIGIN (2026-09-08, audit s4).
+#
+# A hash comparison cannot see this: index.html can match byte-for-byte and
+# still be served with no freshness directive, which is the state the audit
+# found and this pass now prevents returning. Browsers fall back to heuristic
+# caching without one, so the shell can pin for an arbitrary period - and
+# neither a CloudFront invalidation nor an sw.js bump reaches the browser's
+# HTTP cache. This is the borough-extra.json defect, on the shell.
+#
+# Asserts PRESENCE of a revalidating directive, deliberately not an exact
+# string: `no-cache`, `max-age=0` and `must-revalidate` all satisfy the
+# requirement, and pinning the literal would red on a defensible change.
+HEADER_FAILED=0
+SHELL_CC=$(curl -fsSI "$BASE/index.html" 2>/dev/null | tr -d '\r' \
+  | grep -i '^cache-control:' | cut -d' ' -f2-)
+if [ -z "$SHELL_CC" ]; then
+  printf '  shell cache-control: ABSENT - index.html is browser-pinnable\n'
+  printf 'FAIL: index.html is served with no Cache-Control header.\n'
+  printf '  Browsers apply heuristic freshness, so the app shell can pin for an\n'
+  printf '  arbitrary period. Neither a CloudFront invalidation nor an sw.js\n'
+  printf '  bump can evict it. Redeploy via `make web-deploy`.\n'
+  HEADER_FAILED=1
+elif printf '%s' "$SHELL_CC" | grep -qiE 'no-cache|no-store|max-age=0|must-revalidate'; then
+  printf '  shell cache-control: %s (revalidates)\n' "$SHELL_CC"
+else
+  printf '  shell cache-control: %s\n' "$SHELL_CC"
+  printf 'FAIL: index.html is served cacheable without revalidation (%s).\n' "$SHELL_CC"
+  printf '  The app shell must revalidate; see the note in the Makefile.\n'
+  HEADER_FAILED=1
+fi
+
 # ONE verdict, covering ALL passes, so a run always reports everything it
 # measured rather than stopping at whichever finding came first.
-if [ "$DRIFT_FAILED" -ne 0 ] || [ "$DATA_FAILED" -ne 0 ] || [ "$PRECACHE_FAILED" -ne 0 ]; then
+if [ "$DRIFT_FAILED" -ne 0 ] || [ "$DATA_FAILED" -ne 0 ] || [ "$PRECACHE_FAILED" -ne 0 ] || [ "$HEADER_FAILED" -ne 0 ]; then
   exit 1
 fi
 

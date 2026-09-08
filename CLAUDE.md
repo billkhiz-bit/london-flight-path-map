@@ -933,7 +933,13 @@ AWS_PROFILE=flightmap aws s3 cp fonts/ s3://london-flight-map-frontend/fonts/ --
 AWS_PROFILE=flightmap aws s3 cp fonts/fonts.css s3://london-flight-map-frontend/fonts/fonts.css --content-type "text/css" --cache-control "public,max-age=86400" --region eu-west-2
 
 # Frontend, upload to S3 then invalidate CloudFront
-AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --region eu-west-2
+# --cache-control is LOAD-BEARING here too (added 2026-09-08). index.html
+# shipped with NO Cache-Control header at all, so browsers applied HEURISTIC
+# freshness and could pin the whole app shell indefinitely - a CloudFront
+# invalidation does not reach the browser's HTTP cache, and neither does an
+# sw.js bump, which evicts Cache Storage instead. Identical to the
+# borough-extra.json trap recorded above, on the shell rather than the data.
+AWS_PROFILE=flightmap aws s3 cp index.html s3://london-flight-map-frontend/index.html --content-type "text/html" --cache-control "no-cache" --region eu-west-2
 AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths "/*"
 
 # Pricing + privacy + changes pages — MUST target <name>/index.html keys (the

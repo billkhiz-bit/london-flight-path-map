@@ -100,9 +100,24 @@ web-deploy:
 		s3://$(S3_BUCKET)/js/api-base.js \
 		--content-type "application/javascript" \
 		--cache-control "no-cache" --region $(AWS_REGION)
+	# --cache-control "no-cache" added 2026-09-08 (audit s4). index.html
+	# shipped with NO Cache-Control at all - verified against the live origin,
+	# which returned Content-Type and nothing else - so browsers fell back to
+	# HEURISTIC freshness (commonly a tenth of the Last-Modified age) and could
+	# pin the entire application shell for an arbitrary period. A CloudFront
+	# invalidation cannot reach that copy, and neither can an sw.js bump: the
+	# service worker's Cache Storage is a different layer, which is exactly how
+	# borough-extra.json served a user days-stale crime figures and took 14
+	# bumps that were powerless to fix it.
+	# `no-cache` means "store it, but revalidate before use", NOT "do not
+	# store" - so this costs a conditional request and returns 304, and never
+	# a stale shell. Same reasoning, same value, as borough-extra.json in
+	# data-deploy. index.html is in sw.js SHELL_ASSETS, so the offline path is
+	# unaffected either way.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp index.html \
 		s3://$(S3_BUCKET)/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	# NB: the CloudFront function sky-score-rewrite-index rewrites
 	# extensionless paths to <path>/index.html, so these MUST land at
 	# <name>/index.html keys. A flat "privacy" key is never served (the

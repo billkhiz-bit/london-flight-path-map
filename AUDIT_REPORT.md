@@ -611,18 +611,63 @@ against the code, not against a changelog.
 | `security.txt` `Policy:` → LICENSING | **Closed** — points at `SECURITY.md` |
 | `Math.random()` device token | **Closed** — `crypto.getRandomValues` |
 | `changes.html` hard-coded 87% | **Closed** — reframed as a historical measurement |
-| `status.html` reports "Up" on a 403 | **Closed** — reports UNVERIFIED; the bare `", "` half of that entry was NOT reproduced and needs re-checking before it is worked |
+| `status.html` reports "Up" on a 403 | **Closed**, both halves — reports UNVERIFIED, and the bare `", "` is gone: `methodologyVersion`/`apiVersion` render `'not reported'`, guarded on the FIELD rather than the response, because a keyless 403 body carries neither. (This row said the second half "was NOT reproduced and needs re-checking"; it was re-checked on 8 Sep and is closed.) |
 | Extension branded "cubitt33" | **Closed** — every visible string and accessible name reads "Sky Score"; what remains is internal DOM ids (`cubitt33-panel`) and code comments, which are not public-facing UI text |
 | `#country-selector` tablist with no panels | **Closed 2026-09-08** — now `role="group"` + `aria-pressed`, matching the city chips. Gated by `tablist-has-panels` in `a11y-source.mjs`, proven red |
 | Ten locator markers focusable at 5×5 px | **Closed 2026-09-08** — click-only, out of the tab order. Gated by `locator-verify.mjs`, proven red at `focusable=10` |
 | `npm audit`: 3 advisories | **Corrected** — `npm audit --omit=dev` reports **0 vulnerabilities**. The 3 are dev-only, which the entry itself said; the headline number was the production-facing read |
-| Four pages never declare `color-scheme` | **Mostly closed** — `pricing`, `changes`, `api/`, `score-demo/index`, `score-demo/status` all declare `color-scheme: dark`. **`score-demo/api-docs.html` still does not.** One page, not four |
-| `index.html` size and headers | **Partly** — the "~8,200 lines" claim in CLAUDE.md is corrected to a measured **14,390 lines / 926 KB**. The **missing `Cache-Control`** and the 30%-comment payload are genuinely open, and are the substantive half |
+| Four pages never declare `color-scheme` | **Closed 2026-09-08.** Five pages already declared it; `score-demo/api-docs.html` did not, and was missed because **the finding said "four pages" when it was five** — the count, not the fix, was the thing that was wrong |
+| `index.html` size and headers | **Header closed 2026-09-08**, payload still open. Verified live that the origin returned `Content-Type` and **no `Cache-Control` at all**, so browsers applied heuristic freshness and could pin the whole app shell — unreachable by a CloudFront invalidation *or* an `sw.js` bump, which is the `borough-extra.json` defect on the shell. Now `no-cache` (revalidate, not "don't store"), guarded at the ORIGIN by `check_deploy_drift.sh`, which a hash comparison could never see. The "~8,200 lines" claim is corrected to a measured **14,390 lines / 926 KB**; the 30%-comment payload is genuinely open |
 | EPC key in public git history at `7eb1984` | **Open, and unfixable in place** — history is immutable without a rewrite of a public repo. The legacy host 301s, so the key is very likely dead; the decision is whether to rotate-and-document or rewrite |
 
 *Two of these were closed by the commit that published the list naming them.
 The pattern is the one recorded at the top of §1: an item has to leave the open
 list in the commit that closes it, or it is rediscovered as work.*
+
+#### NEW, 2026-09-08: a blocking gate's fixed clock had drifted under the real latency
+
+**`UK cities get UK panel content` went red on a defect-free tree**, reporting
+`transport panel reads "Loading from TfL API..."` — which reads as a broken
+panel rather than a slow one, and sends the reader hunting inside the panel.
+
+`tests/uk-city-panel.mjs` waited `waitForTimeout(6000)` under a comment reading
+*"6s is what the slowest of those needs from a cold container"*. Measured that
+day: **`/transport` alone answered HTTP 200 in 6.16 s** — it makes **two** TfL
+calls, **unregistered**, behind a cold Lambda. The comment was true when
+written and nothing could show it stale.
+
+**Fifth instance of a blocking gate riding on a live third party's latency**,
+and simultaneously an instance of a justifying number expiring. Fixed the way
+`panel-contrast.mjs` was on 2026-09-01: a short settle so the fetches start and
+paint their spinners, then **poll for the terminal state**, bounded at 25 s.
+Terminal means "no longer fetching", not "succeeded", so an error state still
+reaches the assertions and fails there with its own message. **Proven red**: with
+the poll given no time, all four cities still fail on the loading panel, so the
+bound cannot mask what the stage exists to catch.
+
+#### NEW, 2026-09-08: a live-pointed gate reported PASS on a tree it contradicts
+
+**`Playwright e2e` runs against the LIVE site, so it green-lit a source tree
+whose contract its own assertions denied.** When `#country-selector` moved from
+`aria-selected` to `aria-pressed` in source, `tests/e2e/city-switch.spec.js`
+kept passing - it was still reading the previously-deployed `index.html`. A
+full preflight reported **43 of 43** on that tree. The stage only went red
+after the deploy made the site match the source, at which point the *test* was
+the stale artefact.
+
+This is the documented live-vs-source hazard **running backwards**. The known
+direction - a live-pointed gate going red on a tree that has already fixed the
+defect - is why `responsive` and `a11y` were each split into a blocking
+source-pointed half and an advisory live one. The inverse is worse, because a
+false red is investigated and a false green is not.
+
+`tests/city-switch.mjs` is the source-pointed sibling and passed legitimately:
+it asserts rendering and outline counts, not ARIA, so it could not have caught
+this either. **No gate reads the working tree's ARIA contract for the
+switcher.** Recorded rather than fixed - giving this spec a source-pointed twin
+duplicates a suite, and the cheaper habit is the one now written at the top of
+the spec: when changing an attribute the frontend publishes, grep
+`tests/e2e/` as well as `tests/*.mjs`.
 
 #### NEW, and it needs a decision: `AXE_TAGS` has no `wcag22aa`
 
@@ -642,10 +687,16 @@ unknown number of new rules to blocking across 109 pages is a scope change that
 should be chosen rather than inherited.
 
 **The decision is whether Sky Score claims WCAG 2.2 AA or 2.1 AA.** The public
-pages make no version claim today, so either is defensible. Suggested route if
-2.2 is wanted: add `wcag22aa` to `AXE_TAGS` and run the gate ADVISORY for one
-pass to size the backlog before deciding what blocks — the same staged move
-that was used when `best-practice` was added.
+pages make no version claim today, so either is defensible.
+
+**SIZED 2026-09-08.** `wcag22aa` is now in `AXE_TAGS` (rules run) and not in
+`WCAG_TAGS` (nothing 2.2-only blocks). Across all 134 scanned page-states the
+whole backlog is **1 rule, 16 nodes, 1 state**: `target-size`, every node on
+**`/score-demo/api-docs.html`** — the vendored Swagger UI. Nothing else in 2.2
+fires anywhere, including the 99 area pages and the borough panel. So the
+question is not "audit the product for 2.2" but "override vendored Swagger UI
+CSS, or scope the claim to exclude the embedded API reference". See ROADMAP,
+"Open decisions".
 
 ---
 

@@ -613,6 +613,13 @@ check "responsive, source"            node tests/responsive.mjs "http://127.0.0.
 # Proven able to fail: flipping #locator-svg back to role="img" reds it with
 # "[SERIOUS] nested-interactive" on `/` alone and exits 1.
 check "WCAG source scan (all pages)"  node tests/a11y-source.mjs
+# WCAG 2.2 runs but does not block (2026-09-08). The scan above writes what it
+# found to .wcag22-backlog.txt; this reports whether that file is empty, which
+# is the only way the tally reaches a normal preflight run - check() prints a
+# stage's output only on failure. See the note on WCAG22_TAG in
+# tests/a11y-source.mjs, and "Open decisions" in ROADMAP for whether 2.2 should
+# start blocking. Deliberately AFTER the scan, so it never reads a stale file.
+advise "WCAG 2.2 backlog"            test ! -s .wcag22-backlog.txt
 kill "$smoke_pid" 2>/dev/null || true
 
 echo

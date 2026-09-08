@@ -861,12 +861,33 @@ rules to blocking across 109 pages is a scope change that should be chosen.
 The public pages make no conformance claim today, so either level is
 defensible.
 
-**Recommendation:** add `wcag22aa`, run the gate **advisory for one pass** to
-size the backlog, then decide what blocks - the same staged move used when
-`best-practice` was added. 2.2's level-AA additions (target size, focus
-appearance, dragging movements) are the kind that fire on real UI, so expect
-findings; that is the point of sizing it first. Cheap, and unlike the four
-below it changes **no published number**.
+**DONE, and the backlog is SIZED - 2026-09-08.** `wcag22aa` is in `AXE_TAGS`
+so the rules run, and deliberately NOT in `WCAG_TAGS`, so nothing 2.2-only
+blocks. Measured across all 134 scanned page-states:
+
+> **1 rule, 16 nodes, 1 state.** `target-size` (serious), every node on
+> **`/score-demo/api-docs.html`**. Nothing else in WCAG 2.2 fires anywhere -
+> not on the homepage, not on the borough panel, not on any of the 99 area
+> pages.
+
+**That one page is the vendored Swagger UI**, so the 16 controls are a third
+party's markup rendered through `score-demo/vendor/swagger-ui.css`, not our
+own components. The decision is therefore smaller and different from what it
+looked like: it is not "audit the product for 2.2", it is **"do we override
+vendored Swagger UI CSS, or scope the claim to exclude the API reference"**.
+
+**Recommendation:** raise the hit areas with a local override in that page's
+existing `<style>` block - it already restyles roughly twenty Swagger UI
+selectors, so this needs no new mechanism - then add `wcag22aa` to
+`WCAG_TAGS` so 2.2 starts blocking, and delete the advisory tally. If the
+override proves brittle against the vendored stylesheet, the honest fallback
+is to claim 2.2 AA for the product and say plainly that the embedded API
+reference is third-party. Changes **no published number** either way.
+
+The backlog is reported by preflight's `WCAG 2.2 backlog` advisory stage,
+which reads `.wcag22-backlog.txt` written by the scan - because `check()`
+prints a stage's output only on failure and `advise()` discards it, so a tally
+printed to stdout alone would have been read by nobody.
 
 ### Raised 2026-09-03 - four that change PUBLISHED NUMBERS
 ### Recommendations added 2026-09-04; still undecided

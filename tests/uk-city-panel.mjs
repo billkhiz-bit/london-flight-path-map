@@ -128,9 +128,41 @@ for (const c of CASES) {
   await page.waitForTimeout(1200);
   await page.fill('#search-input', c.postcode);
   await page.press('#search-input', 'Enter');
-  // The panel fans out to postcodes.io, EPC and Land Registry; 6s is what the
-  // slowest of those needs from a cold container.
-  await page.waitForTimeout(6000);
+
+  // WAIT FOR THE STATE, NOT THE CLOCK (2026-09-08).
+  //
+  // This was `waitForTimeout(6000)`, under a comment reading "6s is what the
+  // slowest of those needs from a cold container". Measured the day it was
+  // changed: ONE leg, /transport, took 6.16s by itself - it makes TWO TfL
+  // calls, unregistered, behind a cold Lambda. So the clock had drifted under
+  // the real latency and this stage went red on a defect-free tree, reporting
+  // `transport panel reads "Loading from TfL API..."` - which reads as a broken
+  // panel rather than a slow one, and sends the reader hunting for a defect in
+  // the panel.
+  //
+  // Both recorded failure modes at once: a blocking gate riding on a live
+  // third party's latency (fifth instance here), and a number in a justifying
+  // comment that was correct when written and had nothing to make it stale.
+  // Same fix panel-contrast.mjs took on 2026-09-01.
+  //
+  // The short settle stays and is doing a different job: it lets the fetches
+  // START and paint their spinners. Without it the poll below can satisfy
+  // itself on the instant before any request is in flight, which would be a
+  // check that passes by arriving early.
+  await page.waitForTimeout(1500);
+  await page
+    .waitForFunction(
+      () => {
+        const sb = document.querySelector('#sidebar') || document.body;
+        // TERMINAL means "no longer fetching", NOT "succeeded". An error or
+        // empty state resolves this and then meets the checks below, which
+        // fail with their own message. This cannot mask what the stage exists
+        // to catch - a panel that never resolves still reds, at the bound.
+        return !/Loading from|Finding nearest/i.test(sb.innerText);
+      },
+      { timeout: 25000 },
+    )
+    .catch(() => {});
 
   const panel = await page.evaluate(() => {
     const sb = document.querySelector('#sidebar') || document.body;

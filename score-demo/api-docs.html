@@ -28,6 +28,15 @@
 <meta property="og:site_name" content="Sky Score">
 <link rel="stylesheet" href="./vendor/swagger-ui.css">
 <style>
+  /* Declared 2026-09-08. The 7 Sep audit found four permanently-dark pages
+     with no `color-scheme`; the fix reached the other five and missed this
+     one, so a visitor whose OS is set to dark still got UA-LIGHT scrollbars,
+     form controls and pre-CSS canvas over a near-black page. `dark`, not
+     `light dark`: this page renders identically under both OS preferences, so
+     claiming an adaptation it does not make would be a second false statement.
+     The audit said "four pages"; it was five, and the count is why the last
+     one was missed - the list, not the fix, was the thing that was wrong. */
+  :root { color-scheme: dark; }
   body { margin: 0; background: #06070d; }
   .topbar {
     background: #0d0f1a;
