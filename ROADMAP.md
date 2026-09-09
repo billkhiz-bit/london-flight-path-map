@@ -1058,9 +1058,23 @@ printed to stdout alone would have been read by nobody.
    and 0.67". London moved **-0.23 -> +0.55** when `environment` shipped and now
    sits 0.05 below the line, inside that gap. Nothing is over-claimed - the
    threshold is measured at render time - but the constant is now arbitrary.
-4. **Flood-gate caching.** ~15 minutes on a BLOCKING stage, irreducible at 88
-   requests against a host sustaining one per 10s. Caching on mosaic sha256 with
-   an expiry would fix it; a cache is also how a gate quietly stops checking.
+4. ~~**Flood-gate caching.**~~ **DONE 2026-09-09.** Measured back to back:
+   a cold run is **17m28s**, a warm one **1m24s** - a 92% cut on a BLOCKING
+   stage whose cost was being paid four times in a single session. Keyed on
+   each mosaic's sha256 plus `--per-class` and `--seed`, since a cached run
+   at 4 samples says nothing about one at 12.
+
+   **Every guard against "a cache is how a gate quietly stops checking" was
+   PROVEN, not asserted:** a corrupt cache, a wrong-shaped one and an
+   8-day-old one each return zero entries so everything re-verifies; one
+   stale entry among eleven expires alone; a tampered key re-verified that
+   city and left the other ten cached; and the rotation covers all eleven
+   cities across eleven consecutive days. Only PASSES are cached. Skipped
+   cities print **in their own position**, per the `--skip-e2e` lesson. The
+   run **fails outright if no city reached the EA service**, which the
+   rotating city makes unreachable by construction - asserted precisely
+   because the construction is what a future edit would remove. `--no-cache`
+   forces a full run.
 
 **RECOMMENDATIONS, 2026-09-04.** Each is a recommendation, not a decision -
 all four still change published numbers and all four are Bill's call.

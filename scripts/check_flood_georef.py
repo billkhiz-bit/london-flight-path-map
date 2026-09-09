@@ -39,12 +39,14 @@ displaced one lands in the wrong class rather than on a defensible edge.
 """
 
 import argparse
+import hashlib
 import json
 import random
 import sys
 import time
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -377,6 +379,88 @@ def check_city(city, mosaic_dir, per_class, seed):
     return results
 
 
+
+# ---------------------------------------------------------------------------
+# CONTENT-KEYED CACHE (2026-09-09, ROADMAP open decision 4)
+#
+# This stage is BLOCKING and takes ~15 minutes, because the EA host is a token
+# bucket refilling at roughly one request per 10s and there are 88 samples. That
+# is a real tax on every commit, and it was paid four times in one session.
+#
+# A cache is also how a gate quietly stops checking, which is the named risk. So
+# it is built to fail toward MORE verification, never less:
+#
+#   * keyed on the mosaic's sha256, so any change to the file re-verifies;
+#   * one ROTATING city is verified every run whatever the cache says, so all
+#     eleven get a real EA round-trip within about eleven runs;
+#   * the whole cache hard-expires at 7 days;
+#   * only PASSES are cached - a failure is never remembered;
+#   * an unreadable or malformed cache verifies everything;
+#   * skipped cities print IN THEIR OWN POSITION, per the --skip-e2e lesson: a
+#     stage that vanishes from a report is indistinguishable from one that
+#     passed.
+CACHE_PATH = Path('.flood-georef-cache.json')
+CACHE_TTL_DAYS = 7
+
+
+def mosaic_fingerprint(city, mosaic_dir, per_class, seed):
+    """sha256 of the mosaic, plus the parameters that change what is compared.
+
+    per_class and seed are in the key because a cached run at --per-class 4 says
+    nothing about a run at 12: the samples are different points.
+    """
+    tif = mosaic_dir / f'ea_flood_risk_{city}.tif'
+    if not tif.exists():
+        return None
+    h = hashlib.sha256()
+    with open(tif, 'rb') as fh:
+        for block in iter(lambda: fh.read(1 << 20), b''):
+            h.update(block)
+    return f'{h.hexdigest()}:{per_class}:{seed}'
+
+
+def load_cache():
+    """Verified entries that have not expired. Any problem returns {} - an
+    empty cache costs time, a wrong one costs correctness."""
+    try:
+        raw = json.loads(CACHE_PATH.read_text(encoding='utf-8'))
+        entries = raw['verified']
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
+    cutoff = time.time() - CACHE_TTL_DAYS * 86400
+    out = {}
+    for city, rec in entries.items():
+        try:
+            if float(rec['at']) >= cutoff and isinstance(rec['key'], str):
+                out[city] = rec
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
+def save_cache(entries):
+    try:
+        CACHE_PATH.write_text(
+            json.dumps({'verified': entries}, indent=1, sort_keys=True), encoding='utf-8'
+        )
+    except OSError as exc:
+        # Never fatal: failing to WRITE a cache must not fail a gate whose
+        # actual job is comparing mosaics against the EA service.
+        print(f'  (cache not written: {exc})')
+
+
+def rotating_city(cities):
+    """The one city verified every run regardless of the cache.
+
+    Keyed on the date so it advances daily and is stable within a day - two runs
+    an hour apart do not re-verify two different cities, and a week covers the
+    whole set. Deterministic, so a failure is reproducible on the day it happens.
+    """
+    if not cities:
+        return None
+    return cities[date.today().toordinal() % len(cities)]
+
+
 def main():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -385,6 +469,11 @@ def main():
     ap.add_argument('--all', action='store_true')
     ap.add_argument('--per-class', type=int, default=6, help='samples per class per city')
     ap.add_argument('--seed', type=int, default=11)
+    ap.add_argument(
+        '--no-cache',
+        action='store_true',
+        help='verify every city against the EA service, ignoring the content cache',
+    )
     ap.add_argument(
         '--mosaic-dir',
         default=str(DATA),
@@ -401,10 +490,35 @@ def main():
     else:
         ap.error('pass --city <key> or --all')
 
+    cache = {} if args.no_cache else load_cache()
+    rotate = rotating_city(cities)
+    fresh = dict(cache)
+    skipped = []
+
     print(f'mosaics: {mosaic_dir}')
+    if args.no_cache:
+        print('cache: DISABLED (--no-cache), every city verified')
+    else:
+        print(f'cache: {len(cache)} city(ies) verified within {CACHE_TTL_DAYS}d; '
+              f'{rotate} re-verified regardless (rotates daily)')
     print(f'{"city":<16} {"class":<15} agreement')
     checked, failed = 0, []
     for city in cities:
+        key = mosaic_fingerprint(city, mosaic_dir, args.per_class, args.seed)
+        # SKIPPED CITIES PRINT IN THEIR OWN POSITION, not as a summary line
+        # at the end - a stage that vanishes from a report reads exactly
+        # like one that passed.
+        if (
+            not args.no_cache
+            and city != rotate
+            and key is not None
+            and cache.get(city, {}).get('key') == key
+        ):
+            age = (time.time() - float(cache[city]['at'])) / 86400
+            print(f'{city:<16} {"(cached)":<15} mosaic unchanged, verified {age:.1f}d ago')
+            skipped.append(city)
+            checked += 1
+            continue
         res = check_city(city, mosaic_dir, args.per_class, args.seed)
         if res is None:
             # A MISSING MOSAIC IS A FAILURE, NOT A SKIP (2026-08-31).
@@ -455,6 +569,11 @@ def main():
             failed.append(f'{city} COMPARED NOTHING')
         else:
             checked += 1
+            # ONLY A PASS IS REMEMBERED. Caching a failure would let a
+            # disagreeing mosaic go quiet on the next run, which is the
+            # precise way a cache turns a gate off.
+            if key is not None:
+                fresh[city] = {'key': key, 'at': time.time()}
 
     print()
     # Say WHY samples were lost. Without this the run reports "2 unreachable"
@@ -487,7 +606,27 @@ def main():
         if untested:
             print('An untested class is not an agreeing one: these were never compared.')
         return 1
-    print(f'flood georeferencing verified against the EA service for {checked} cities')
+    live = checked - len(skipped)
+    # A RUN THAT REACHED THE EA SERVICE FOR NO CITY HAS VERIFIED NOTHING,
+    # however many cities the cache vouches for. The rotating city makes this
+    # unreachable by construction, which is exactly why it is asserted: the
+    # construction is what a future edit would remove, and the cache would
+    # then answer for all eleven cities forever without one round-trip. Same
+    # shape as the `if not checked` floor above, one layer out.
+    if live == 0:
+        print('FAIL: every city came from the cache; nothing was compared against')
+        print('      the EA service this run. The rotating city should have made')
+        print('      that impossible - re-run with --no-cache and fix the rotation.')
+        return 1
+    if not args.no_cache:
+        # Written only on a clean run, and only for cities that passed in it
+        # or were already valid. A run with any failure leaves the cache
+        # alone rather than recording a state it did not establish.
+        save_cache(fresh)
+    print(
+        f'flood georeferencing verified against the EA service for {checked} cities'
+        + (f' ({live} this run, {len(skipped)} cached)' if skipped else '')
+    )
     return 0
 
 

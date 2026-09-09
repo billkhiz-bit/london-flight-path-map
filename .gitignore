@@ -190,3 +190,8 @@ aircraftload.err
 # curl -sL -o design/vendor/maplibre-gl.js https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js
 design/vendor/
 
+
+# Written by scripts/check_flood_georef.py: which mosaics were verified against
+# the EA service and when. Content-keyed, hard-expires at 7 days, and never
+# records a failure - see the comment on CACHE_PATH.
+.flood-georef-cache.json

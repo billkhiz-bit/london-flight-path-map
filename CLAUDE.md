@@ -1177,6 +1177,24 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
+**THE FLOOD GATE IS CONTENT-CACHED SINCE 2026-09-09, and the guards are the
+point.** A cold run is **17m28s**, a warm one **1m24s** - measured back to
+back. Keyed on each mosaic's sha256 **plus `--per-class` and `--seed`**,
+because a cached run at 4 samples says nothing about one at 12. `--no-cache`
+forces a full run; `.flood-georef-cache.json` is gitignored.
+
+A cache is also how a gate quietly stops checking, which is the risk the
+decision named, so it fails toward MORE verification and every guard was
+proven rather than asserted: **one ROTATING city is verified every run**
+whatever the cache says (date-keyed, so it advances daily and covers all
+eleven in eleven days); the cache **hard-expires at 7 days**, per entry;
+**only passes are cached**; a corrupt, wrong-shaped or expired cache returns
+**zero** entries; a tampered key re-verified that city alone and left the
+other ten cached; and **the run FAILS if no city reached the EA service**,
+which the rotation makes unreachable by construction - asserted because the
+construction is what a future edit would remove. Skipped cities print **in
+their own position**, never as an end-of-run summary.
+
 **AFFORDABILITY IS NATIONAL AND LOG-SCALED SINCE METHODOLOGY v5.0
 (2026-09-09), not min-max within each city.** `afford` is now
 `clamp((ln(p95) - ln(price)) / (ln(p95) - ln(p5)), 0, 1) x 10` against the

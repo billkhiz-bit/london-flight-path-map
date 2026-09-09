@@ -251,6 +251,23 @@ check "crime == ONS Table C4"          python scripts/refresh_crime_from_ons.py 
 # still one above the MIN_COMPARED floor of 3, and the top-up pass adds more
 # points when the service throttles, so the cut costs evidence only when the
 # service is healthy - exactly when the extra points were least needed.
+#
+# CONTENT-CACHED since 2026-09-09, and the numbers are why: a cold run is
+# 17m28s and a warm one 1m24s, measured back to back. That tax was paid four
+# times in a single session, which is the pressure that makes someone reach
+# for --skip-e2e - and a gate that gets skipped protects nothing.
+#
+# A cache is also how a gate quietly stops checking, so it is built to fail
+# toward MORE verification: keyed on each mosaic's sha256 (plus --per-class
+# and --seed, since a cached run at 4 says nothing about one at 12), one
+# ROTATING city verified every run whatever the cache says, a 7-day hard
+# expiry, passes only, and an unreadable cache verifies everything. All of
+# those were proven: corrupt, wrong-shape and 8-day-old caches each return
+# zero entries, a tampered key re-verified that city alone, and the rotation
+# covers all eleven cities across eleven consecutive days. The run also fails
+# outright if NO city reached the service, which the rotation should make
+# impossible - asserted because the construction is what a future edit would
+# remove. Pass --no-cache to force a full run.
 net_check "flood == EA service (georef)" python scripts/check_flood_georef.py --all --per-class 4
 # The OUTPUT check the Manchester incident needed and nothing had. Input parity
 # (tests/test_borough_data_parity.py) passed throughout that defect, because
