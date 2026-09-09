@@ -1142,6 +1142,67 @@ all four still change published numbers and all four are Bill's call.
    `--skip-e2e` lesson: a stage that vanishes from a report is
    indistinguishable from one that passed.
 
+### Raised 2026-09-09 - v5.0 COLLAPSED WITHIN-CITY DISCRIMINATION, and South Yorkshire can no longer be ranked
+
+**Measured AFTER the deploy, which is the wrong order and is the first thing to
+note.** Before shipping v5.0 I measured affordability spread per city. I did not
+measure COMPOSITE spread, and the composite is what colours the map, orders the
+ranking and bakes into the 99 area pages.
+
+| City | composite spread before | after | change |
+|---|---|---|---|
+| South Yorkshire | 2.3 | **0.1** | -2.2 |
+| Teesside | 4.0 | 1.7 | -2.3 |
+| Cardiff | 4.7 | 2.5 | -2.2 |
+| Tyne and Wear | 4.8 | 2.7 | -2.1 |
+| London | 4.6 | 3.9 | -0.7 |
+
+**Twelve of thirteen cities lost internal discrimination.** South Yorkshire's
+four boroughs now span **0.1 points** with three sharing a published score, so
+its ranking is an artefact of rounding. Mean gap 0.033 against a published
+precision of 0.1; every other city clears it (London 0.122 is the next lowest).
+
+**REWEIGHTING WAS TESTED AND MAKES IT WORSE - do not reach for it.** The obvious
+read is that `quiet` 0.32 + `afford` 0.27 = 0.59 crowds out `live` at 0.27. But a
+weight can only amplify variation that exists, and measured per-component
+within-city spread says `quiet` varies MOST (5.0-10.0 in most cities) while
+`live` and `env` vary LEAST (0.8-2.7 and 0.0-1.4). Three candidate sets, all
+shifting weight to liveability, **reduced** spread in twelve of thirteen cities
+(London 3.9 -> 3.0, Manchester 2.7 -> 1.5) and left South Yorkshire at 0.1-0.2.
+Its ceiling under ANY weighting is 3.0, and only by putting all weight on growth,
+which `balanced` deliberately zeroes. South Yorkshire's `quiet` spread is
+**0.0** - Doncaster Sheffield closed to commercial flights in 2022, so all four
+boroughs are equally quiet. None of the candidates put a London borough back in
+the national top 12 either.
+
+**The honest reading favours v5.0.** The old 2.3-point spread was almost entirely
+affordability, MANUFACTURED by min-max forcing 0-10 across a narrow price band.
+Strip that out and the remaining inputs barely differ across those four
+boroughs. So this is a finding about **how little we measure that separates
+similar places**, not about the anchor - and it is the Leicester argument again,
+one level up.
+
+**Recommendation: disclose it, measured at render time.** A note on the borough
+ranking when the mean gap between adjacent boroughs falls below the published
+precision - derived from 0.1, never a chosen constant, because the `priceLed`
+0.60 sitting a few lines away in `index.html` is a standing warning about
+exactly that and has already expired once. Today it fires for South Yorkshire
+alone and no city's numbers change.
+
+> **BUILT AND REVERTED THE SAME DAY, for want of a working gate.** The
+> disclosure was implemented in `renderBoroughRanking()` and verified by hand
+> (London 33 rows, Manchester 10, correct view, ESLint clean with no new
+> warnings). `tests/ranking-separability.mjs` was written to assert the
+> RELATIONSHIP - a city discloses iff its rendered scores are too close to rank,
+> recomputed from the DOM - and could not be made to render the table after a
+> city switch, despite the identical sequence working in a standalone harness.
+> Rather than ship a claim with no check, both were reverted. **The gate is the
+> work here, not the notice**: it needs the borough view reached
+> (`#tab-ranking` ships `display:none`, and `rankingView` defaults to
+> `neighbourhood`, so two states must be entered before anything is
+> measurable), and the two-tier switcher walked. `tests/borough-score-parity.mjs`
+> drives the same page successfully and is the model to copy.
+
 ### Raised 2026-09-09 - a FIFTH numeric decision, surfaced by fixing the second
 
 **Should `score` be computed from the ROUNDED components, so the published

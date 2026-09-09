@@ -1,5 +1,90 @@
 # Changelog
 
+## 2026-09-09 - affordability goes national (v5.0), applied weights, WCAG 2.2
+
+Three commits: `5556619`, `31d2dc1`, `f6aeac1`. Deployed and verified from the
+origin the same day - drift **133 of 133**, area pages **99 of 99** against the
+live API, `site == /v1/score` agreeing on every component of 6 postcodes.
+
+### METHODOLOGY v5.0: affordability is priced against the country
+
+`afford = clamp((ln(p95) - ln(price)) / (ln(p95) - ln(p5)), 0, 1) x 10` over the
+whole currency pool - 94 sterling boroughs, p5 GBP 158,231, p95 GBP 717,369 -
+replacing min-max within each city.
+
+Barking and Dagenham **10.0 -> 4.4** at GBP 371,030; Stockton-on-Tees
+**0.0 -> 9.5** at GBP 170,923. All **1,619 of 4,371** cross-city borough pairs
+that were inverted - a cheaper borough scoring lower than a dearer one - are
+gone. **737 of 792 composite scores moved**, London -1.55 mean, Teesside +1.28.
+
+**The recommended curve was measured and rejected.** ROADMAP specified linear
+p10/p90; it flattened FOUR of thirteen cities to under a point of internal
+spread (Teesside to exactly 0.0) and pinned 22 of 99 boroughs. Log p5/p95
+flattens one. The within-city signal is published as `context.priceRankInCity`
+rather than smuggled into a score that also claims to mean something nationally.
+
+### Three gates were green while blind, and all three are fixed
+
+- **`check_worked_example.py` had never compared affordability.** It read
+  `app.calc_afford(...) if hasattr(app, 'calc_afford') else None`, and there is
+  no `calc_afford` - the guard was permanently False, the loop skips a None, and
+  the stage printed "every input, bound, component, weight and the final
+  arithmetic agree" against a section 6 still showing the min-max formula.
+  Second `hasattr()`-on-a-nonexistent-name here; the first dropped seven fields
+  from all 99 area pages.
+- **The OpenAPI gate divided by the weight of the components present**, and that
+  division cannot tell the nominal and applied tables apart - it recovers the
+  same score either way, so it sat green for the whole period the response
+  published the wrong one. It asserts the published total is 1.0 now.
+- **The first five unit tests written for applied weights passed against the
+  live defect**, because they read `calc_score`, which was always right. The bug
+  was one line later in the response. The guarding test goes through
+  `resolve_query`.
+
+### `weights` is now the APPLIED table
+
+`sum(components * weights)` reaches `score` on every borough: Brooklyn
+**3.9 -> 4.5**, Cardiff **5.4 -> 6.3**, worst error **1.518 -> 0.069**. The whole
+response-side fix was deleting one line - `'weights': weights` sat after the
+`**score_data` spread and overrode the applied set the engine already returned.
+The spec now carries two schemas because they are two objects: `Weights` is what
+a caller sends, `AppliedWeights` what a response returns.
+
+**"Holds by construction" turned out to be unreachable**, and the reason predates
+the defect: the engine weights full-precision components and rounds once, while
+publishing each at 1dp, so **37 of 720 complete sets already failed to
+reproduce**. The gate asserts a DERIVED 0.10 bound, never the observed 0.069.
+
+### WCAG 2.2 AA now blocks
+
+`wcag22aa` joined `WCAG_TAGS` a day after joining `AXE_TAGS`, and keeping the
+steps apart is the transferable part: running the rules first turned an
+open-ended scope question into a measurement, and the measurement changed the
+question - the whole backlog was **16 `target-size` nodes on the vendored
+Swagger UI page** and nothing else across 134 page-states.
+
+It was a **nested-interactive** defect, so raising only the anchors would have
+made it worse: Swagger nests `a.nostyle` inside `button.opblock-summary-control`,
+so 15 nodes were the anchors failing on height while the 16th was the button, at
+an ample 306x29, obscured by that anchor down to 306x15. Row to 56px and anchor
+to 24px together.
+
+### Four phantom to-dos retired
+
+`ROADMAP` said the 09-08 wave was undeployed when the origin served it
+byte-for-byte; `HANDOVER`'s top banner said the deploy was BLOCKED five days and
+three deploys after the policy was restored; `CLAUDE.md` carried the same
+blocker on the area-page half. **A blocker note that does not name what would
+retire it expires silently** - the banner now names the probe that retires it.
+
+### Measured after the fact, and recorded rather than fixed
+
+v5.0 also collapsed WITHIN-city discrimination in twelve of thirteen cities -
+South Yorkshire from 2.3 points to **0.1**, three of four boroughs sharing a
+score. Reweighting was tested and makes it worse in twelve of thirteen. A
+measured disclosure was built and reverted the same day for want of a working
+gate; see ROADMAP "Open decisions".
+
 ## 2026-09-07 - a full audit, closed and deployed in two waves
 
 Three commits: `b69406a`, `9f8b57b`, `05bca67`, preceded by `441111d` which
