@@ -19,20 +19,26 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-09. METHODOLOGY v5.0 IS IN SOURCE AND NOT DEPLOYED.
+## 0. PICK UP HERE - 2026-09-09. METHODOLOGY v5.0 IS DEPLOYED AND VERIFIED.
 
-> **THE ONE THING THAT MATTERS ON PICKING THIS UP: v5.0 changes 737 of 792
-> published scores and has not shipped.** Source and the live API disagree on
-> purpose. Two blocking stages will be RED until the deploy, and they are
-> reporting the truth rather than a defect:
-> `area pages match the live API` and `site == /v1/score`.
+> **NOTHING IS OUTSTANDING FROM THIS WAVE.** v5.0 changed 737 of 792 published
+> scores and is live. Verified from the ORIGIN throughout, never from a deploy's
+> exit code: drift **133 of 133**, `area pages match the live API` **99 of 99**,
+> `site == /v1/score` agreeing on every component of 6 postcodes, `score sanity`
+> **28 postcodes**. Barking serves **4.4**, Wandsworth **0.4 / 4.6**, and
+> SW11 1AA serves **5.0** - METHODOLOGY s6's worked example exactly.
 >
-> **Deploy order matters.** The backend goes first (`sam build && sam deploy`),
-> because the site's `index.html` already computes v5.0 scores locally: shipping
-> the frontend first would put the site ahead of the API on every borough. Then
-> `make web-deploy-all`, which covers `area-deploy` and its 100 rebuilt pages.
-> Re-run `sh scripts/check_deploy_drift.sh` and `node tests/area-page-freshness.mjs`
-> afterwards and expect both green.
+> **Deploy order was backend first, and that is not optional.** `index.html`
+> computes v5.0 locally, so a frontend-first deploy puts the site ahead of the
+> API on every borough. `make` is not on PATH in Git Bash, so the uploads were
+> the manual equivalents of `web-deploy` / `area-deploy` / `meta-deploy` /
+> `demo-deploy`, and `export MSYS_NO_PATHCONV=1` before every
+> `create-invalidation` is load-bearing.
+>
+> **`check_deploy_drift.sh` caught a surface I had missed** -
+> `score-demo/api-docs.html`, the WCAG target-size fix from the earlier commit.
+> Run it after every deploy; a deploy that reports success is not a deploy that
+> shipped everything.
 
 **What v5.0 is.** Affordability is a LOG scale against the 5th-95th percentile
 of borough medians across the whole currency pool, replacing min-max within each

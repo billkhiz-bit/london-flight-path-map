@@ -1184,9 +1184,14 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 Barking and Dagenham **10.0 -> 4.4** at GBP 371,030, Stockton-on-Tees
 **0.0 -> 9.5** at GBP 170,923; all **1,619 of 4,371 inverted cross-city pairs**
 are gone. **737 of 792 composite scores move**: London falls a mean 1.55,
-Teesside rises 1.28. **UNDEPLOYED as of this writing** - the live API serves
-v4.0, so `area pages match the live API` and `site == /v1/score` red until it
-ships.
+Teesside rises 1.28. **DEPLOYED AND VERIFIED LIVE 2026-09-09**: backend via SAM
+first (the site computes v5.0 locally, so a frontend-first deploy would put the
+site ahead of the API on every borough), then 104 web uploads and 4 CloudFront
+invalidations, all Completed. Verified from the ORIGIN, never from an exit code:
+drift **133 of 133**, `area pages match the live API` **99 of 99**,
+`site == /v1/score` agreeing on every component of 6 postcodes, `score sanity`
+**28 postcodes**. SW11 1AA serves **5.0 with afford 0.4**, which is METHODOLOGY
+s6's worked example exactly.
 
 - **LOG, and the linear p10/p90 that ROADMAP recommended was measured and
   REJECTED.** UK borough medians are right-skewed, so a linear scale flattened
@@ -1306,7 +1311,11 @@ adds `Environment` and all 99 pages are rebuilt: **90 carry it, and the 9
 that do not are exactly Cardiff (4) and New York (5)** - matching the
 recorded `env` coverage without the builder being told to expect that.
 `area pages match the live API` stays **99 of 99**, because a row is not
-a score. **Undeployed**: the deploy is blocked on the AWS policy.
+a score. ~~**Undeployed**: the deploy is blocked on the AWS policy.~~
+**DEPLOYED.** That blocker was the 3 Sep IAM outage, resolved 2026-09-04; this
+line outlived it by five days and several deploys. A blocker note that does not
+name what retires it is a note that expires silently - the same failure this
+file records twice more on 2026-09-09.
 
 See `AUDIT_REPORT.md` (**last full audit 2026-08-31**; previous archived as `AUDIT_REPORT_2026-08-29.md`) for the live list. **Those two wrong numbers are FIXED AND DEPLOYED (2026-09-02).** The aircraft near-field floor was a DISC compared against runway-shaped contours (Rushcliffe published `Quiet skies 10.0/10` over 10.43 km2 at >=55 dB; it now publishes **3.4 / `Quiet skies 5.0` / `Moderate`**, verified live), and the neighbourhood medians included HM Land Registry **Category B** transactions, which HMLR's own statistics exclude - 412 of 485 published prices were wrong, so the product carried two price bases. **Both were SHAPE errors, not drift**, which is why a full re-derivation reproduced `borough-extra.json` with 0 disagreements and every gate stayed green throughout - the lesson to keep, since the next one will also be invisible to a consistency check. The long-standing trio closed 2026-07-24: I4 (borough metadata duplication — resolved by removal, `score/app.py` is the single holder), I6 (DLQ on async Lambdas — moot, all 7 functions are APIGW-synchronous), I14 (`PROJECT_DOCUMENTATION.md` — fully refreshed).
 

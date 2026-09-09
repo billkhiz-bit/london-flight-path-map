@@ -1003,8 +1003,11 @@ printed to stdout alone would have been read by nobody.
      that: the formulas were bit-identical, the two holders simply disagreed
      about *who is in the country*. And `check_worked_example.py` had **never
      compared affordability at all** - see the note below.
-   - **Undeployed.** The live API still serves v4.0, so `area pages match the
-     live API` and `site == /v1/score` will red until it ships.
+   - **DEPLOYED AND VERIFIED LIVE 2026-09-09.** Backend first, then 104 web
+     uploads and 4 invalidations. Drift **133 of 133**, area pages **99 of 99**
+     against the live API, `site == /v1/score` agreeing on every component of
+     6 postcodes, `score sanity` 28 postcodes. Barking serves **4.4**, Wandsworth
+     **0.4 / score 4.6**, and SW11 1AA serves **5.0** - METHODOLOGY s6 exactly.
 
    > **A BLOCKING GATE HAD NEVER CHECKED AFFORDABILITY.**
    > `check_worked_example.py` read
