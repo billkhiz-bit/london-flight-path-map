@@ -1203,19 +1203,31 @@ precision - derived from 0.1, never a chosen constant, because the `priceLed`
 exactly that and has already expired once. Today it fires for South Yorkshire
 alone and no city's numbers change.
 
-> **BUILT AND REVERTED THE SAME DAY, for want of a working gate.** The
-> disclosure was implemented in `renderBoroughRanking()` and verified by hand
-> (London 33 rows, Manchester 10, correct view, ESLint clean with no new
-> warnings). `tests/ranking-separability.mjs` was written to assert the
-> RELATIONSHIP - a city discloses iff its rendered scores are too close to rank,
-> recomputed from the DOM - and could not be made to render the table after a
-> city switch, despite the identical sequence working in a standalone harness.
-> Rather than ship a claim with no check, both were reverted. **The gate is the
-> work here, not the notice**: it needs the borough view reached
-> (`#tab-ranking` ships `display:none`, and `rankingView` defaults to
-> `neighbourhood`, so two states must be entered before anything is
-> measurable), and the two-tier switcher walked. `tests/borough-score-parity.mjs`
-> drives the same page successfully and is the model to copy.
+> **SHIPPED 2026-09-09, gated, after one false start worth recording.** The
+> disclosure lives in `renderBoroughRanking()` and
+> `tests/ranking-separability.mjs` asserts the RELATIONSHIP in both directions
+> - a city discloses iff its rendered scores are too close to rank, recomputed
+> from the DOM rather than read off the flag the fix sets. **Proven red both
+> ways**: unwiring the note reds on South Yorkshire, forcing it on reds on the
+> six separable cities.
+>
+> **The first attempt was abandoned on a WRONG DIAGNOSIS, and both bugs were
+> in the harness rather than the page.** It reported "the ranking did not
+> draw" for every city, which read as a rendering fault; the table was drawing
+> perfectly.
+>
+> 1. **The score cell renders `<span aria-hidden>GLYPH</span> 7.9`**, so a
+>    bare `parseFloat(td.textContent)` hits the glyph and returns NaN for
+>    every row. Take the TRAILING number.
+> 2. **The poll waited on a condition the previous city already satisfied**
+>    ("more than one score cell exists"), so every reading came back one city
+>    stale. Comparing counts as well is not enough either - Merseyside and
+>    Tyne and Wear both have five boroughs and alias. Wait until the rendered
+>    `data-rank-name`s ARE the target city's borough set.
+>
+> Two states must still be reached before anything is measurable:
+> `#tab-ranking` ships `display:none`, and `rankingView` defaults to
+> `neighbourhood`, whose scores the national anchor never touched.
 
 ### Raised 2026-09-09 - a FIFTH numeric decision, surfaced by fixing the second
 

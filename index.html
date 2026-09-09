@@ -13357,6 +13357,11 @@
         // over live readings on seven legends.
         let priceDominance = null;
         const rankPrice = [];
+        // Filled by the borough branch below and read by the separability
+        // disclosure after it. Declared here so the neighbourhood branch leaves
+        // it EMPTY rather than carrying the previous city's numbers into a
+        // different view.
+        let boroughScores = [];
 
         if (rankingView === 'neighbourhood') {
           // Neighbourhood-level scoring with computed noise, price, crime, transport
@@ -13376,6 +13381,7 @@
         } else {
           // Borough-level view
           const sorted = Object.entries(activeData).sort((a, b) => b[1].score - a[1].score);
+          boroughScores = sorted.map(([, d]) => d.score).filter((s) => typeof s === 'number');
           sorted.forEach(([name, data], i) => {
             tableRows += `<tr data-rank-name="${esc(name)}" data-rank-action="borough" style="cursor:pointer;">
         <td>${i + 1}</td>
@@ -13426,6 +13432,57 @@
         // reason from the old figures.
         const priceLed = priceDominance !== null && priceDominance >= 0.6;
 
+        // WHEN A CITY'S BOROUGHS CANNOT BE SEPARATED AT THE PRECISION WE PUBLISH
+        // (added 2026-09-09, after methodology v5.0).
+        //
+        // Moving affordability to a national anchor removed spread that
+        // within-city min-max had MANUFACTURED, and in the cheapest cities there
+        // was very little underneath it. Measured across all thirteen cities:
+        // composite spread fell in twelve, and South Yorkshire went from 2.3
+        // points to 0.1 with three of its four boroughs sharing a published
+        // score. A numbered list of four boroughs differing by 0.1 presents an
+        // ordering the data cannot support - the same over-claim as the "best
+        // value" label on a price-led ranking, whose disclosure sits beside this
+        // one.
+        //
+        // Reweighting does NOT fix it and was measured before this was written:
+        // `quiet` varies most within a city and `live` and `env` least, so
+        // shifting weight toward liveability reduced spread in twelve of
+        // thirteen cities. South Yorkshire's `quiet` spread is 0.0 - Doncaster
+        // Sheffield closed to commercial flights in 2022 - so no weighting
+        // recovers a ranking there. The honest move is to say so.
+        //
+        // THE THRESHOLD IS DERIVED, NOT CHOSEN. The comment on `priceLed`'s 0.60
+        // a few lines above is a standing warning about picking a number, and
+        // that constant has already expired once. This question can be read
+        // straight off the data: if the average gap between adjacent boroughs is
+        // smaller than the smallest number we print, consecutive ranks differ by
+        // less than one rounding step and their order is an artefact of
+        // rounding. Hence `meanGap < SCORE_PRECISION`, where SCORE_PRECISION is
+        // the 0.1 these scores are already rounded to. Nothing to re-measure.
+        //
+        // MEASURED AT RENDER TIME from the rows actually drawn, never a per-city
+        // string: a city that gains a differentiating input drops this notice by
+        // itself, which is the markLayerCoverage() principle. Today it fires for
+        // South Yorkshire alone; London's mean gap of 0.122 clears it.
+        const SCORE_PRECISION = 0.1;
+        let notSeparable = false;
+        let tiedCount = 0;
+        let scoreSpread = 0;
+        if (rankingView !== 'neighbourhood' && boroughScores.length > 1) {
+          scoreSpread = Math.max(...boroughScores) - Math.min(...boroughScores);
+          notSeparable = scoreSpread / (boroughScores.length - 1) < SCORE_PRECISION;
+          const seen = new Map();
+          for (const s of boroughScores) seen.set(s, (seen.get(s) || 0) + 1);
+          for (const k of seen.values()) if (k > 1) tiedCount += k;
+        }
+        const separabilityNote = notSeparable
+          ? ` <strong>These scores are too close to rank.</strong> All ${boroughScores.length} boroughs here fall within ` +
+            `${scoreSpread.toFixed(1)} of one another` +
+            (tiedCount > 1 ? ` and ${tiedCount} share the same score` : '') +
+            ', so the order below is not a meaningful difference. Compare the individual measurements instead.'
+          : '';
+
         const areaLabel = rankingView === 'neighbourhood' ? 'Neighbourhood' : 'Borough';
         // The price column is a MEDIAN in the neighbourhood view and a genuine
         // average in the borough view, and one header served both. Neighbourhood
@@ -13458,6 +13515,7 @@
           (priceLed
             ? ' <strong>This ordering is led by price.</strong> Districts here share their borough&rsquo;s liveability and carry no sub-borough crime figure &mdash; that is not published at postcode-district geography &mdash; so they differ mainly by price and aircraft noise. Read it as best value, not as which area is best.'
             : '') +
+          separabilityNote +
           '</p></div>' +
           `<div style="margin-bottom:10px;"><button type="button" onclick="toggleRankingView()" style="background:none;border:1px solid var(--mid);color:var(--dark);font-size:11px;padding:5px 12px;border-radius:3px;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;">${toggleLabel}</button></div>` +
           '<table class="rank-table"><thead><tr>' +

@@ -576,6 +576,19 @@ net_check "area pages match the live API" node tests/area-page-freshness.mjs
 # default, under-painting is a borough whose data the map cannot find.
 check "layers paint only real data"   node tests/layer-honesty.mjs
 check "panel says what it measured"  node tests/panel-caveat.mjs
+# The borough ranking must not claim an order its scores cannot support.
+# Methodology v5.0 took affordability national, which removed spread that
+# within-city min-max had MANUFACTURED: composite spread fell in twelve of
+# thirteen cities and South Yorkshire went from 2.3 points to 0.1, three of
+# its four boroughs sharing a published score. The page discloses that, with
+# a threshold DERIVED from the 0.1 publishing precision rather than chosen -
+# the `priceLed` 0.60 beside it is a standing warning about picking a number.
+#
+# Asserts the RELATIONSHIP in both directions - disclose iff the rendered
+# scores are too close to rank - recomputing from the DOM rather than reading
+# the flag the fix sets. Proven red both ways: unwiring the note reds on
+# South Yorkshire, forcing it on reds on the six separable cities.
+check "ranking claims only real order" node tests/ranking-separability.mjs
 # MEASURED contrast over the two panel states, rather than asked of axe.
 #
 # `WCAG source scan` runs axe over this page already and cannot see this: asked

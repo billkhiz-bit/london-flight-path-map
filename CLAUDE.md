@@ -1177,6 +1177,38 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
+**THE BOROUGH RANKING DISCLOSES WHEN ITS SCORES CANNOT BE RANKED (2026-09-09,
+after v5.0).** v5.0's national anchor removed spread that within-city min-max
+had MANUFACTURED, and composite spread fell in **twelve of thirteen cities**:
+South Yorkshire 2.3 -> **0.1**, three of four boroughs sharing a published
+score. `renderBoroughRanking()` now says so, and the threshold is **DERIVED**
+- if the mean gap between adjacent boroughs is under the 0.1 the scores are
+printed at, their order is an artefact of rounding. Do not replace it with a
+chosen constant; the `priceLed` 0.60 beside it is a standing warning and has
+already expired once. Measured at render time, so a city that gains a
+differentiating input drops the notice by itself. Fires for South Yorkshire
+alone today. Gated by `tests/ranking-separability.mjs`, proven red BOTH ways.
+
+- **REWEIGHTING DOES NOT FIX IT - measured, do not reach for it.** `quiet`
+  varies MOST within a city (5.0-10.0) and `live`/`env` LEAST (0.8-2.7,
+  0.0-1.4), so shifting weight toward liveability **reduced** spread in twelve
+  of thirteen cities. South Yorkshire's `quiet` spread is **0.0** - Doncaster
+  Sheffield closed to commercial flights in 2022 - so no weighting recovers a
+  ranking there. Its ceiling under any weighting is 3.0, and only with all
+  weight on growth, which `balanced` zeroes.
+- **THE GATE'S TWO TRAPS, both of which read as "the page is broken" and are
+  not.** The score cell renders `<span aria-hidden>GLYPH</span> 7.9`, so a
+  bare `parseFloat(td.textContent)` is NaN on every row - take the TRAILING
+  number. And a poll on "more than one score cell exists" is satisfied by the
+  PREVIOUS city's table, so every reading comes back one city stale; comparing
+  counts too still aliases (Merseyside and Tyne and Wear both have five), so
+  wait until the rendered `data-rank-name`s ARE the target city's borough set.
+  **Poll for the state you want, never one already true.**
+- **Two states must be reached first**: `#tab-ranking` ships `display:none`,
+  and `rankingView` defaults to `neighbourhood`, whose scores use WITHIN-city
+  neighbourhood prices and are untouched by the national anchor - so a gate
+  stopping at the tab measures the one view this does not apply to.
+
 **THE FLOOD GATE IS CONTENT-CACHED SINCE 2026-09-09, and the guards are the
 point.** A cold run is **17m28s**, a warm one **1m24s** - measured back to
 back. Keyed on each mosaic's sha256 **plus `--per-class` and `--seed`**,
