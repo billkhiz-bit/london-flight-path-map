@@ -121,9 +121,17 @@ def main():
     require('components (emitted)', emitted_components,
             set(schemas['Components'].get('properties') or {}),
             'Components.properties')
-    require('weights', engine_components,
+    require('weights (request override)', engine_components,
             set(schemas['Weights'].get('properties') or {}),
             'Weights.properties')
+    # The RESPONSE table became its own schema on 2026-09-09, because it is a
+    # different object: `Weights` is what a caller may SEND, `AppliedWeights` is
+    # what the engine actually multiplied by. Both must still describe every
+    # component the engine can emit, or a response carries a weight the spec
+    # never defines.
+    require('weights (applied, response)', engine_components,
+            set(schemas['AppliedWeights'].get('properties') or {}),
+            'AppliedWeights.properties')
     require('context', emitted_context,
             set(schemas['Context'].get('properties') or {}),
             'Context.properties')
@@ -170,11 +178,19 @@ def main():
 
     # ---- the reproducibility formula the spec now publishes ----
     #
-    # `Weights` documents how to reproduce `score` from `components`: the
-    # weighted sum divided by the total weight of the components PRESENT,
-    # because a missing component's weight is redistributed. That only bites
-    # where a component is absent - NYC and Cardiff, which have no `env` -
-    # and there the naive sum understates by 0.6 to 0.9 points.
+    # `AppliedWeights` documents that `score` reproduces DIRECTLY from the
+    # response - sum(components[k] * weights[k]), with no renormalising step,
+    # because the weights published ARE the ones the engine multiplied by.
+    #
+    # THE DENOMINATOR ASSERTION BELOW IS THE LOAD-BEARING HALF (2026-09-09).
+    # Until today this divided by the weight of the components present, and
+    # that division CANNOT TELL THE TWO TABLES APART: rescaled or not, dividing
+    # by the present total recovers the same score. So this check sat green for
+    # the entire period the response published the persona's nominal row
+    # against an engine scoring with a rescaled one - it was verifying
+    # arithmetic that normalised the defect away. Asserting the published total
+    # is 1.0, and that the key sets match, is what makes it a check of the
+    # CONTRACT.
     #
     # Asserted here because the spec now tells an integrator to compute it this
     # way, and `terms.html` obliges them to rely on it. This is the same shape
@@ -186,16 +202,27 @@ def main():
         if not isinstance(body, dict) or status != 200:
             continue
         comp, wts = body.get('components') or {}, body.get('weights') or {}
-        denom = sum(v for k, v in wts.items() if k in comp)
-        if not denom:
+        if not comp:
             continue
         checks += 1
-        got = round(sum(comp[k] * wts[k] for k in comp if k in wts) / denom, 1)
-        if abs(got - body['score']) > 0.05:
+        if set(wts) != set(comp):
+            failures.append(
+                f'applied weights: {q} publishes weights {sorted(wts)} against '
+                f'components\n      {sorted(comp)} - they must name the same set')
+            continue
+        total = sum(wts.values())
+        if abs(total - 1.0) > 1e-4:
+            failures.append(
+                f'applied weights: {q} publishes weights summing to {total:.4f}, '
+                f'not 1.0.\n      The response must carry the APPLIED table, not the '
+                f'persona nominal one')
+        # 0.05 for 1dp component rounding, 0.05 for rounding the total. The spec
+        # states this bound; nothing tighter is honest while components are 1dp.
+        got = sum(comp[k] * wts[k] for k in comp)
+        if abs(got - body['score']) > 0.1 + 1e-9:
             failures.append(
                 f'reproducibility: {q} publishes score {body["score"]} but the '
-                f'formula the spec\n      documents yields {got} '
-                f'(weights present sum to {denom:.2f})')
+                f'formula the spec\n      documents yields {got:.4f}')
 
     # ---- the version example, a mirror that has gone stale before ----
     checks += 1

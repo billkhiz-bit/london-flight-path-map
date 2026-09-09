@@ -103,6 +103,41 @@
   #swagger-ui .opblock-patch .opblock-summary-method { background: #0f6f6f; }
   #swagger-ui .btn.execute { background: #0f7b4f; border-color: #0f7b4f; }
   #swagger-ui .btn > span { color: #3b4151; }
+
+  /* WCAG 2.2 SC 2.5.8 target size (2026-09-09).
+     This page was the ENTIRE WCAG 2.2 backlog: 1 rule, 16 nodes, 1 state, and
+     nothing in 2.2 fired anywhere else - not the homepage, not the borough
+     panel, not any of the 99 area pages. So `wcag22aa` could join WCAG_TAGS
+     and start BLOCKING the moment these were fixed.
+
+     IT IS A NESTED-INTERACTIVE DEFECT, NOT A SMALL-CONTROL ONE, and that is
+     why only raising the anchors would have made it worse. Swagger UI nests
+     `a.nostyle` (deep-link to the operation) inside
+     `button.opblock-summary-control` (expands the operation), so the two
+     targets occupy the same pixels: 15 of the 16 nodes were the 5 anchors at
+     3 viewports failing on HEIGHT (19px desktop, 14px mobile - the WIDTH was
+     always fine at 59-132px), and the 16th was the button itself, at a
+     perfectly adequate 306x29, failing because the anchor OBSCURED it down to
+     306x15. Every pixel the anchor gains is a pixel the button loses, so
+     `min-height: 24px` on the anchor alone moves the failure rather than
+     clearing it.
+
+     Hence BOTH rules: the row grows to 56px so a 24px anchor and a >=24px
+     unobstructed band can coexist inside it. Measured, not reasoned about -
+     axe's obstruction geometry decides this, and the pair was verified to
+     take all three viewports to zero before it was written here. It also
+     makes the rows easier to hit on a phone, which is the point of the SC.
+
+     Scoped to this page's own <style> block deliberately: `vendor/swagger-ui.css`
+     is VENDORED and must stay byte-identical to upstream, or the next refresh
+     silently reverts the fix. */
+  #swagger-ui .opblock-summary { min-height: 56px; }
+  #swagger-ui .opblock-summary-path a.nostyle,
+  #swagger-ui .opblock-summary-path__deprecated a.nostyle {
+    display: inline-block;
+    min-height: 24px;
+    line-height: 24px;
+  }
 </style>
 </head>
 <body>

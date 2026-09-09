@@ -2,8 +2,33 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-08 (**TWO AUDIT-MINOR a11y DEFECTS CLOSED, AND A
-PHANTOM TO-DO RETIRED.** Source only - not yet deployed. `#country-selector`
+**Last reviewed:** 2026-09-09 (**WCAG 2.2 AA IS NOW CLAIMED AND ENFORCED, AND
+THE 2026-09-08 WAVE IS DEPLOYED THOUGH THIS FILE SAID IT WAS NOT.**
+
+- **The WCAG 2.2 decision below is CLOSED.** `wcag22aa` is in `WCAG_TAGS`, so
+  2.2 blocks preflight. The entire backlog - 16 `target-size` nodes on the
+  vendored Swagger UI page - is fixed, **proven red** before and green after
+  across 134 page-states. It turned out to be a **nested-interactive** defect,
+  not a small-control one: the deep-link anchor sits *inside* the expand
+  button, so raising only the anchors would have pushed the button further out
+  of conformance. Changed no published number. The advisory tally that sized
+  it is deleted with its machinery.
+- **Two stale records corrected by measurement, not by reading.** This header
+  said the 09-08 wave was *"Source only - not yet deployed"* and `HANDOVER.md`'s
+  top banner said the deploy was **BLOCKED**; the origin serves source
+  byte-for-byte (133 of 133 surfaces) and `check_aws_permissions.py` reports
+  **18 granted, 0 denied**. Third and fourth phantoms in eight days.)
+
+**Previously reviewed:** 2026-09-08 (**TWO AUDIT-MINOR a11y DEFECTS CLOSED, AND A
+PHANTOM TO-DO RETIRED.** ~~Source only - not yet deployed.~~ **DEPLOYED - the
+origin was asked on 2026-09-09 and disagreed with this line.** Live
+`index.html` is byte-identical to source (sha256 `69245f00f48d085b...`), it
+serves `Cache-Control: no-cache`, and `#country-selector` reads
+`role="group"` on the live site; `check_deploy_drift.sh` reports **133 of 133
+surfaces plus five origin headers**. **The stale record survived exactly one
+day**, in the file whose own commit (`2848cab`) wrote *"when a wave closes an
+item, delete it from the open list in the commit that closes it"* - the
+deploy-status half of the same sentence was left behind. `#country-selector`
 stopped claiming to be a `role="tablist"` (there was no panel any tab could
 name: `switchCountry()` swaps the whole application), and the locator's ten
 markers left the tab order, where they had been stops **14-23 of 51** at
@@ -847,7 +872,38 @@ hand or carries only the finder's evidence.
 
 ## Open decisions
 
-### Raised 2026-09-08 - does Sky Score claim WCAG 2.2 AA, or 2.1 AA?
+### ~~Raised 2026-09-08 - does Sky Score claim WCAG 2.2 AA, or 2.1 AA?~~ DECIDED AND SHIPPED 2026-09-09: **2.2 AA, and it BLOCKS**
+
+> **CLOSED. `wcag22aa` is in `WCAG_TAGS`, so WCAG 2.2 AA now fails preflight
+> like 2.0 and 2.1.** The whole backlog - 16 nodes of `target-size` on
+> `/score-demo/api-docs.html` - is fixed, and the gate was **proven red**
+> against the un-fixed page (`RESULT: FAIL`, exit 1, `[SERIOUS] target-size`
+> at all three viewports) and green after.
+>
+> **The recommendation below was followed, and the diagnosis under it was
+> wrong in a way worth keeping.** It read as "raise the hit areas" - a
+> small-control problem. It is a **nested-interactive** one: Swagger puts
+> `a.nostyle` (deep-link) *inside* `button.opblock-summary-control` (expand),
+> so the two targets share pixels. 15 of the 16 nodes were the 5 anchors at 3
+> viewports failing on HEIGHT (19px desktop, 14px mobile; the WIDTH was always
+> fine at 59-132px), and the 16th was the button at a perfectly adequate
+> **306x29**, failing because the anchor **obscured** it to 306x15. Every pixel
+> the anchor gains, the button loses - so `min-height: 24px` on the anchor
+> alone would have moved the failure, not cleared it. The fix grows the ROW to
+> 56px *and* the anchor to 24px together, leaving a 42px unobstructed band.
+> Measured at both viewports, and screenshotted: the rows read better than
+> before, which is the point of the SC.
+>
+> **The two-step promotion is the transferable part.** Running the rules first
+> (8 Sep) without gating them turned an open-ended scope question into a
+> measurement, and *the measurement changed the question* - not "audit the
+> product for 2.2" but "override ~20 lines of vendored Swagger CSS". The
+> advisory `WCAG 2.2 backlog` stage, `.wcag22-backlog.txt` and the tally
+> machinery in `a11y-source.mjs` are **deleted**: a mechanism whose only job
+> was to size a backlog that is now empty is dead weight a reader still has to
+> understand.
+>
+> Changed **no published number**, as predicted. The original text follows.
 
 **No WCAG 2.2 rule has ever run against this codebase.** `AXE_TAGS` in
 `tests/a11y-source.mjs` is `['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa',
@@ -904,12 +960,40 @@ printed to stdout alone would have been read by nobody.
    cities, or leave it relative and rely on the disclosure. Note the codebase
    already accepts the argument once - Leicester's cohort was widened because
    "min-max over a narrow cohort manufactures spread it has not measured".
-2. **Published weights do not reproduce the published score** where a component
-   is absent: the engine renormalises and publishes un-renormalised weights, so
-   `sum(components * weights)` yields **3.9 against 4.5 for Brooklyn** and 5.4
-   against 6.3 for Cardiff. Documented in the OpenAPI spec and pinned by a gate.
-   Fixing it (renormalised weights, or a separate `weightsApplied`) changes a
-   response field integrators may already read.
+2. ~~**Published weights do not reproduce the published score**~~ **DONE
+   2026-09-09, in source.** The response now publishes the APPLIED
+   (renormalised) table, so `sum(components * weights)` reaches `score` on every
+   borough: Brooklyn **4.4826 -> 4.5** (was 3.9 against 4.5), Cardiff **6.2953
+   -> 6.3** (was 5.4). Not a separate `weightsApplied` field - that is the
+   `lineStatusAvailable` shape, and an optional correct field leaves the naive
+   computation wrong for everyone who does not know to switch. The whole
+   response-side fix was **deleting one line**: `'weights': weights` sat *after*
+   the `**score_data` spread and overrode the applied set `calc_score` had
+   computed all along.
+
+   - **Changes no score**, and no weight on the 720 complete combinations - the
+     applied values are rounded to 6dp so a complete set republishes the
+     declared `0.32` rather than `0.32000000000000006`. Only the 72
+     absent-component combinations move, and they move to the truth.
+   - **The spec now has two schemas**, because they are two objects:
+     `Weights` is what a caller may SEND, `AppliedWeights` what the response
+     carries back. Callers using the documented divide-by-the-present-weights
+     workaround need change nothing - that denominator is now 1.0.
+   - **Both gates were proven red**, and one of them could not have caught this
+     before: `check_openapi_matches_engine.py` divided by the present weights,
+     and **that division cannot tell the two tables apart** - it recovers the
+     same score either way, so it sat green throughout. It asserts the
+     published total is 1.0 now, and that the key sets match.
+   - **The engine-level tests could not catch it either**, and the first five I
+     wrote went green against the live defect: they read `calc_score`, which
+     was always right. The guarding test goes through `resolve_query`.
+   - **Found while measuring, and NOT fixed - a decision, not a bug.**
+     Reproduction is exact only **to the last published digit**: components are
+     published at 1dp while the engine weights them unrounded, so the sum can
+     sit up to 0.1 from `score` (worst observed **0.069**). Making it exact
+     means computing `score` from the ROUNDED components, which **moves 43 of
+     792 published scores by 0.1** (19 in London) and rounds twice where the
+     engine now rounds once. **This is a fifth numeric decision - see below.**
 3. **The 0.60 price-led threshold.** Chosen because "nothing sat between -0.23
    and 0.67". London moved **-0.23 -> +0.55** when `environment` shipped and now
    sits 0.05 below the line, inside that gap. Nothing is over-claimed - the
@@ -951,7 +1035,21 @@ all four still change published numbers and all four are Bill's call.
    existing `?compare=previous` and `/v1/changes` machinery to explain the
    movement, and **do this LAST of the four** - the other three are cheap.
 
-2. **Weights - make `weights` the APPLIED (renormalised) weights**, so
+2. **DONE 2026-09-09 — but one premise of this recommendation was wrong, and
+   measuring is what showed it.** *"holds by construction"* is not achievable by
+   renormalising alone, and the reason was **already live and unnoticed**:
+   `calc_score` weights the FULL-PRECISION components and rounds once at the
+   end, while publishing each component at 1dp. So **37 of the 720 COMPLETE
+   sets already failed to reproduce**, with no absent component anywhere near
+   them. Publishing applied weights fixes the absent-component half completely
+   (worst error **1.518 -> 0.069**) and cannot close a residual that comes from
+   component rounding — which is why the residual is identical whether the
+   weights are published at 3dp or 6dp. **The gate therefore asserts a DERIVED
+   bound of 0.10** (0.05 component rounding + 0.05 rounding the total) rather
+   than the observed 0.069, which would have been a magic number with an expiry
+   date — the trap decision 3 below is about. Original recommendation follows.
+
+   **Weights - make `weights` the APPLIED (renormalised) weights**, so
    `sum(components * weights) == score` holds by construction, with a gate
    asserting that invariant for every persona x city INCLUDING the
    absent-component cases. **Not a separate `weightsApplied` field.** That is
@@ -983,6 +1081,44 @@ all four still change published numbers and all four are Bill's call.
    risk named. Print skipped cities **in their own position**, per the
    `--skip-e2e` lesson: a stage that vanishes from a report is
    indistinguishable from one that passed.
+
+### Raised 2026-09-09 - a FIFTH numeric decision, surfaced by fixing the second
+
+**Should `score` be computed from the ROUNDED components, so the published
+arithmetic reproduces the published number EXACTLY rather than to within 0.1?**
+
+Found by measuring, and it had been true and unnoticed since long before the
+weights work: `calc_score` weights the full-precision components and rounds once
+at the end, but publishes each component at 1dp. So a customer adding up what we
+give them can land up to 0.1 away from the score beside it, **and this is not
+caused by the absent-component defect just fixed** — 37 of the 720 COMPLETE
+persona-borough sets already did not reproduce.
+
+| | |
+|---|---|
+| Today, after the applied-weights fix | **43 of 792** combinations do not reproduce at 1dp; worst residual **0.069** |
+| If `score` were computed from rounded components | **0 fail** - reproduction becomes exact |
+| Cost | **43 of 792 published scores move by 0.1** (london 19, nyc 4, leicester 4, teesside 3, then 2s and 1s) |
+
+**The trade is real in both directions, which is why it is a decision.** Exact
+reproducibility is worth something to a B2B integrator whose auditor is checking
+our arithmetic, and `terms.html` obliges them to carry our numbers through.
+Against that, scoring from rounded components **rounds twice where the engine
+now rounds once**, which is straightforwardly less accurate: the 1dp component
+is up to 0.05 from the value actually measured, and that error would become part
+of the score rather than being averaged out of it.
+
+**Recommendation: do NOT change it. Publish the bound instead** - which is now
+done, in METHODOLOGY §6 and the `AppliedWeights` schema, stated as "exact to the
+last published digit, worst observed 0.069". The precedent is already in this
+codebase and is the honest one: `attribution` has always published
+`roundingResidual` beside itself rather than forcing the parts to add up. **A
+number that is 0.069 out and says so is better than one that is exact and less
+accurate.** If it is ever revisited, the cheaper alternative is to publish
+components at 2dp, which shrinks the residual tenfold and moves no score at all.
+
+**Nothing is over-claimed today** - the bound is documented and gated - so this
+is a "could be better", not a defect.
 
 
 | Decision | Default | Resolve when |

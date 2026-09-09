@@ -190,5 +190,3 @@ aircraftload.err
 # curl -sL -o design/vendor/maplibre-gl.js https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js
 design/vendor/
 
-# Written by tests/a11y-source.mjs; read by preflight's "WCAG 2.2 backlog" stage.
-.wcag22-backlog.txt

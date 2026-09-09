@@ -3,14 +3,46 @@
 **Written 2026-08-12; §1 rewritten 2026-09-01.** Read this first if you are
 picking the repo up on a laptop, or starting a fresh session on this desktop.
 
-**BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04.** The wave below is finished,
-verified and **COMMITTED AND PUSHED** as `2b08ba9`. What is still blocked is the
-DEPLOY: `FlightMapDeployPolicy` no longer grants the deploy user anything
-outside the Observability statements. Read §0 before anything else.
+**NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
+reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
+
+> **This banner said "BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04" until
+> 2026-09-09** - naming a `FlightMapDeployPolicy` that was restored *that same
+> day*, five days and three successful deploys ago. **It was the first thing a
+> fresh session read, and §0 four lines below it already said the opposite.**
+> Kept as a marker rather than deleted, because the failure is structural: a
+> banner is written at the moment of maximum alarm and is the last thing anyone
+> re-reads once the alarm passes. **A blocker note must name what would retire
+> it** - here, `check_aws_permissions.py` returning 0 denied. Run the probe;
+> never read a permission out of a document.
+> [[reference-flightmap-dev-aws-permissions]]
 
 ---
 
-## 0. PICK UP HERE - 2026-09-07. AUDIT WAVE DEPLOYED AND VERIFIED.
+## 0. PICK UP HERE - 2026-09-09. THE 09-08 WAVE IS DEPLOYED; WCAG 2.2 IN PROGRESS.
+
+**Verified from the ORIGIN, not from a note.** Live `index.html` is
+byte-identical to source (sha256 `69245f00f48d085b...`), serves
+`Cache-Control: no-cache`, and `#country-selector` reads `role="group"`.
+`check_deploy_drift.sh`: **133 of 133 surfaces plus five origin headers.**
+
+`ROADMAP.md` said the 09-08 wave was *"Source only - not yet deployed"* and the
+banner above said the deploy was blocked. **Both were false, and both were
+corrected by asking the origin and the IAM probe** rather than by reading the
+next document along. That is now the third and fourth phantom in eight days;
+see the note at the head of §0's open list.
+
+**Still genuinely outstanding** - console-only, `flightmap-dev` cannot do them:
+
+| | |
+|---|---|
+| `Permissions-Policy` | absent. The distribution runs the AWS **managed** `SecurityHeadersPolicy`, which cannot be edited and never carried one. Needs a **custom** policy; `CreateResponseHeadersPolicy` is DENIED, `UpdateDistribution` is GRANTED, so only the create step needs a console. Use `geolocation=(self)`, **not** `geolocation=()` - the PWA ships "Score where I am" |
+| `X-Frame-Options` | serves `SAMEORIGIN`; **`DENY` is the honest fix**, since every page's CSP *claims* `frame-ancestors 'none'` and cannot deliver it from a meta tag. Safe - there is not one `<iframe>` in the repo |
+| Billing alarm | **DOES NOT EXIST**, though `OPERATIONS.md` s7 stated it flatly and ROADMAP reasoned from it. Zero alarms in us-east-1, the only region `AWS/Billing` publishes to. `budgets:ViewBudget` is denied, so an AWS **Budget** could exist unseen - *"I could not look" is not "it is absent"* |
+
+---
+
+## 0y. The 2026-09-07 state - AUDIT WAVE DEPLOYED AND VERIFIED.
 
 **Commit `b69406a`, pushed. Backend via SAM, then 145 web uploads and 8
 CloudFront invalidations, all Completed. `check_deploy_drift.sh`: 133 of 133

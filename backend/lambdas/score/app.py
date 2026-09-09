@@ -6086,6 +6086,33 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
 
     return {
         'score': round_1dp(total),
+        # THE APPLIED WEIGHTS, NOT THE PERSONA'S NOMINAL ONES (2026-09-09).
+        #
+        # These are `effective` - what actually multiplied the components above -
+        # so `sum(components x weights)` reproduces `score`. Until today the
+        # response published the persona's NOMINAL row while the engine scored
+        # with this rescaled one, so wherever a component was dropped the
+        # published arithmetic did not reach the published number: Brooklyn
+        # `balanced` summed to 3.9 against a published 4.5, Cardiff 5.4 against
+        # 6.3. Measured across all 792 persona x borough combinations, the worst
+        # gap was **1.518 points**.
+        #
+        # NOT a second `weightsApplied` field beside a wrong `weights`. That is
+        # the `lineStatusAvailable` shape this repo has hit four times - an
+        # optional correct field leaves the naive computation wrong for everyone
+        # who does not know to switch, and "consumers can upgrade to read it"
+        # makes the second half optional, so it never happens. The persona's
+        # NOMINAL row stays in the OpenAPI spec, where it is a definition rather
+        # than a reproduction aid.
+        #
+        # ROUNDED TO 6dp FOR PUBLICATION ONLY - `total` above uses the unrounded
+        # values. 6dp is not a precision compromise: measured, the residual is
+        # identical at 3dp and 6dp (0.069), because what remains is NOT weight
+        # precision but COMPONENT rounding - see the note on the gate in
+        # test_score.py. It also restores the persona's exact 2dp figures for a
+        # complete set, whose division by a total of 0.9999999999999999 would
+        # otherwise publish 0.32000000000000006.
+        'weights': {k: round(v, 6) for k, v in effective.items()},
         # `live` is OMITTED, not null and not defaulted, when it could not be
         # computed - the same convention build_environment uses below and for
         # the same reason: a placeholder in a numeric field is how "not
@@ -7009,7 +7036,17 @@ def resolve_query(query):
                 postcode_clean=pc_clean,
                 boroughs_override=prev_set,
             )
-            comparison = build_comparison(score_data, prev_data, city, weights, borough)
+            # APPLIED weights, matching what the response now publishes. This
+            # function's own docstring already required "the weights the two
+            # results were scored under" (audit note), and `weights` was the
+            # nominal row - so wherever a component was dropped, every
+            # `contribution` was computed against a weight the engine had not
+            # used, and `attributionSum` could not reconcile. Taking the CURRENT
+            # result's set is right for the components build_attribution keeps:
+            # it already skips anything absent from either vintage.
+            comparison = build_comparison(
+                score_data, prev_data, city, score_data['weights'], borough
+            )
 
     body = {
         **score_data,
@@ -7017,7 +7054,14 @@ def resolve_query(query):
         **({'comparisonUnavailable': comparison_unavailable} if comparison_unavailable else {}),
         'location': location_meta,
         'persona': persona_label,
-        'weights': weights,
+        # `weights` COMES FROM score_data - deliberately not re-stated here.
+        #
+        # It used to be `'weights': weights`, the persona's nominal row, written
+        # AFTER the `**score_data` spread and therefore overriding the applied
+        # set calc_score computes. Removing this line is the whole fix on the
+        # response side: one holder, and it is the holder that did the
+        # arithmetic. Re-adding a nominal `weights` here silently reinstates a
+        # published sum that does not reach the published score.
         'methodologyVersion': METHODOLOGY_VERSION,
         'methodologyUrl': METHODOLOGY_URL,
         'apiVersion': API_VERSION,
@@ -7184,10 +7228,22 @@ def handle_changes(event):
     prev_ranks = growth_ranks(prev_set)
     market = market_context(CITIES['london']['boroughs'], prev_set)
     changes = []
+    # Seeded with the nominal row so the name is always bound, then replaced by
+    # the APPLIED set each borough was actually scored under. London carries all
+    # five components, so the two are identical today - the point is that this
+    # endpoint cannot become the last surface publishing nominal weights if that
+    # ever stops being true.
+    applied_weights = bal
     for name in CITIES['london']['boroughs']:
         cur = calc_score(name, 'london', bal)
+        applied_weights = cur['weights']
         prev = calc_score(name, 'london', bal, boroughs_override=prev_set)
-        attribution = build_attribution(cur, prev, bal)
+        # `cur['weights']`, not `bal`. Identical today - every London borough
+        # carries all five components, so the applied set IS the nominal one -
+        # but DERIVED rather than restated, so this cannot become the surface
+        # that still uses nominal weights if London ever loses a component. A
+        # second holder of the same idea is how mirrored code drifts here.
+        attribution = build_attribution(cur, prev, cur['weights'])
         attribution_sum = round(sum(f['contribution'] for f in attribution), 2)
         score_change = round(cur['score'] - prev['score'], 1)
         changes.append(
@@ -7220,9 +7276,11 @@ def handle_changes(event):
                 'attributionSum': attribution_sum,
                 'roundingResidual': round(score_change - attribution_sum, 2),
                 'explanation': describe_change(
-                    cur, prev, 'london', bal, name, cur_bm, prev_bm, cur_ranks, prev_ranks
+                    cur, prev, 'london', cur['weights'], name, cur_bm, prev_bm, cur_ranks, prev_ranks
                 ),
-                'why': build_why(cur, prev, 'london', bal, name, cur_bm, prev_bm, cur_ranks, prev_ranks),
+                'why': build_why(
+                    cur, prev, 'london', cur['weights'], name, cur_bm, prev_bm, cur_ranks, prev_ranks
+                ),
             }
         )
     changes.sort(key=lambda c: abs(c['scoreChange']), reverse=True)
@@ -7239,7 +7297,15 @@ def handle_changes(event):
             # Published so a caller can reproduce every `attribution`
             # contribution as weight x component change, and verify the parts
             # sum to scoreChange.
-            'weights': bal,
+            #
+            # DERIVED from a scored result, not restated from `bal`. Identical
+            # today because every London borough carries all five components,
+            # but /v1/score publishes APPLIED weights as of 2026-09-09 and this
+            # endpoint must not become the one surface still publishing nominal
+            # ones. `changes` is London-only, so one borough's set speaks for
+            # the page - and a per-borough divergence would show up in the
+            # roundingResidual each row already publishes.
+            'weights': applied_weights,
             # The city-wide picture, so a reader can see that most boroughs fell
             # because the market fell — without it, 25 of 33 dropping reads as a
             # scoring fault rather than a description of the quarter.

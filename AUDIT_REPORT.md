@@ -669,7 +669,26 @@ duplicates a suite, and the cheaper habit is the one now written at the top of
 the spec: when changing an attribute the frontend publishes, grep
 `tests/e2e/` as well as `tests/*.mjs`.
 
-#### NEW, and it needs a decision: `AXE_TAGS` has no `wcag22aa`
+#### ~~NEW, and it needs a decision: `AXE_TAGS` has no `wcag22aa`~~ CLOSED 2026-09-09
+
+> **DECIDED AND SHIPPED: Sky Score claims WCAG 2.2 AA, and the gate enforces
+> it.** `wcag22aa` is in both `AXE_TAGS` and `WCAG_TAGS`, so a 2.2 violation at
+> critical or serious fails `WCAG source scan` like any other. All 16
+> `target-size` nodes on `/score-demo/api-docs.html` are fixed; the gate was
+> **proven red** on the un-fixed page (exit 1, `[SERIOUS] target-size`, three
+> viewports) and green after, across 134 page-states.
+>
+> **The finding named the right gap and implied the wrong fix**, which is this
+> repo's ninth instance of that. It reads as a size problem; it is a
+> **nested-interactive** one - Swagger nests the deep-link `a.nostyle` inside
+> the expand `button.opblock-summary-control`, so 15 nodes were the 5 anchors
+> failing on height while the 16th was the *button*, at an ample 306x29,
+> obscured by that anchor down to 306x15. Raising only the anchors would have
+> taken the button further out of conformance. Row to 56px and anchor to 24px,
+> together. See ROADMAP "Open decisions" for the full write-up.
+>
+> The advisory tally that sized this (`WCAG 2.2 backlog`,
+> `.wcag22-backlog.txt`) is deleted with its machinery. Original finding follows.
 
 **Nothing in this repo has ever run a WCAG 2.2 rule.** `AXE_TAGS` in
 `tests/a11y-source.mjs` is `['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa',

@@ -1129,6 +1129,27 @@ The component is still computed and still published, so `investor` weights it at
 
 **This is an editorial choice.** It is not derived from a regression against home-buyer outcomes (we don't have that data); it reflects the product team's positioning. Customers with different priors should use a persona preset or `?weights=` override.
 
+**What the API publishes in `weights` is the APPLIED table, not the nominal one
+above (changed 2026-09-09).** The two differ only where a component could not be
+computed: the engine drops it and rescales the survivors in proportion, so
+Brooklyn — which has no `env` — is scored under
+`{quiet: 0.372093, afford: 0.313953, growth: 0.0, live: 0.313953}` rather than
+the `balanced` row printed above. Publishing the applied table is what makes
+`sum(components x weights) == score` true on **every** borough rather than only
+on the complete ones.
+
+Until that date the response returned the nominal row while the engine scored
+with the rescaled one, so the published arithmetic did not reach the published
+number wherever a component was missing — **Brooklyn summed to 3.9 against a
+published 4.5, Cardiff 5.4 against 6.3**, worst case 1.518 points over all 792
+persona-borough combinations. The nominal rows remain documented here, where
+they are a *definition*; they are no longer offered as a reproduction aid.
+
+**The two tables are identical for every complete borough**, which is 720 of the
+792 combinations — the applied values are rounded to 6dp precisely so a complete
+set publishes the declared `0.32`, not the `0.32000000000000006` that dividing
+through a total of 0.9999999999999999 produces.
+
 ### 5.2 Persona presets
 
 The eight named personas reflect typical buyer-segment priorities. Each is documented openly so customers can decide whether the preset matches their use case.
@@ -1320,9 +1341,25 @@ measurement and is reproducible only against the raster, which is what
 
 **Where a component is absent** - New York has no `environment`, Cardiff falls
 below its two-input floor - the engine **drops it and rescales the survivors**
-rather than treating it as zero. `weights` reports the persona's nominal
-weights, so for those boroughs `sum(components x weights)` will not equal
-`score`; see §5.1.
+rather than treating it as zero. **Since 2026-09-09 the `weights` field reports
+the APPLIED (rescaled) weights**, so `sum(components x weights)` reproduces
+`score` on every borough, including those. It previously reported the persona's
+NOMINAL row, which for those boroughs did not reach the published number -
+Brooklyn `balanced` summed to 3.9 against a published 4.5, worst case 1.518
+points. See §5.1.
+
+**Reproduction is exact to the last published digit, not to the bit.**
+`components` are published rounded to 1dp while the engine weights them
+unrounded, so the sum can sit up to **0.1** from `score` - 0.05 for component
+rounding and 0.05 for rounding the total. Measured across all 792
+persona-borough combinations, the worst residual is **0.069**. This is the same
+limitation `roundingResidual` reports for `attribution`, and it is not fixed by
+publishing weights to more decimal places: measured, the residual is identical
+at 3dp and 6dp, because what remains is component rounding rather than weight
+precision. **Making it exact would mean computing `score` from the rounded
+components**, which would move 43 of the 792 published scores by 0.1 and round
+twice where the engine currently rounds once - a published-number change, and
+therefore a decision rather than a fix.
 
 ### Comparison: same postcode, every persona
 

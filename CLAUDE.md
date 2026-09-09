@@ -315,7 +315,11 @@ without an airport needs that path to stay intact.
 
 4. **The city switcher is TWO TIERS** (country chips above city chips) and both are **generated from `CITY_DATA`** by `renderCitySelector()` / `renderCountrySelector()` — there is no city markup to edit. A new country needs a `COUNTRY_SHORT` entry or its chip shows the full name. **Neither tier is a `tablist`, and the top one stopped claiming to be on 2026-09-08.** `#country-selector` was `role="tablist"` with `role="tab"` children for months, announcing "tab 1 of 2" with no arrow keys and **no panel any tab could point at** — `switchCountry()` calls `switchCity()`, which re-projects the map and swaps the boroughs, scores, ranking and provenance, so the "panel" would have been the whole application. It is `role="group"` + `aria-pressed` now, identical to the city tier one line below: **two tiers of one control describe themselves the same way.** Do not restore the tab roles; `tablist-has-panels` in `tests/a11y-source.mjs` fails any `role="tablist"` whose tabs do not name a real `role="tabpanel"`, and it holds the genuine `.tab-bar` to the same bar (which it passes). The **locator inset** (`data/uk-locator.json` and `data/usa-locator.json`, both checked in; `scripts/build_locator.py` generates them from a boundary GeoJSON - the UK file predates it and has not been regenerated) draws the ten UK core-city markers, and the USA file draws New York alone: add the city to `LOCATOR_TO_CITY` or it stays a "planned" light disc. The file is deliberately **not** in `SHELL_ASSETS` — decorations must not be able to stop an atomic `cache.addAll()` — but it does have a `data-deploy` line. **The ten markers are CLICK-ONLY and must stay out of the tab order (2026-09-08).** They render at **5.2 CSS px** across and the closest pair, Nottingham/Leicester, sit **6.4 px** apart centre-to-centre, so WCAG 2.2 §2.5.8 fails by size AND by the spacing exception — and neither is fixable by enlarging them, because the whole silhouette is 112 px wide and a compliant target would swallow its neighbours and send clicks to the wrong city. They had been tab stops **14-23 of 51**, duplicating the city chips directly above. Nothing is lost: every city here is keyboard-reachable from `.city-btn`, a real `<button>` at a real size, so 2.1.1 is satisfied by the chips. A live marker is marked by **`data-city`, not `role="button"`** — it names WHICH city, so the gate asserts a relationship rather than a count, and it makes no ARIA promise the keyboard cannot keep. That is also why `#locator-svg` is `role="img"` again: the comment forbidding it was right only while the markers were interactive. Guarded by `tests/locator-verify.mjs` (which asserts `focusable=0` and `ariaInteractive=0`, proven red at 10) and `tests/selector-widths.mjs`, both in preflight.
 
-   **The a11y gate could not have caught the target size, and still cannot.** `AXE_TAGS` omits `wcag22aa`, and axe tags `target-size` as exactly that — so the rule never ran. Same mechanism as `FAIL_MODERATE` being unreachable for want of `best-practice`. Whether to claim WCAG 2.2 AA is an open decision; see `AUDIT_REPORT.md` §4.
+   **The a11y gate could not have caught the target size. IT CAN NOW, AND IT BLOCKS (2026-09-09).** The original note read *"and still cannot"* — true when written on 8 Sep and false by the end of that same day, because `wcag22aa` joined `AXE_TAGS` hours later. Left uncorrected it would have told every future session that 2.2 is unreachable here, which is the inverse of the truth. The mechanism it describes is still worth keeping: axe tags `target-size` as `wcag22aa`, so while the tag was absent **the rule was never evaluated at all** — the gate did not weigh those ten 5.2px markers and pass them. Same shape as `FAIL_MODERATE` being unreachable for want of `best-practice`: *a rule that does not run cannot fail.*
+
+   **The promotion was done in TWO deliberate steps, a day apart, and that is the part to copy.** 8 Sep: `wcag22aa` into `AXE_TAGS` only, so the rules RUN but nothing 2.2-only blocks — which converted "audit the product for 2.2" from an open-ended scope question into a **measurement**. The measurement came back as **1 rule, 16 nodes, 1 state**: `target-size`, every node on `/score-demo/api-docs.html`, the vendored Swagger UI, and nothing in 2.2 firing anywhere else across 134 page-states. 9 Sep: those 16 fixed, then `wcag22aa` into `WCAG_TAGS`, so **WCAG 2.2 AA now blocks preflight**. Promoting an *unknown* backlog to blocking would have been a scope change arriving as a side effect of a bug fix; promoting a known and emptied one is not. **Measure the backlog before deciding whether to gate it** — measuring changed the question here, not just the estimate. The advisory `WCAG 2.2 backlog` stage and `.wcag22-backlog.txt` that sized it are **deleted**, machinery and all: a mechanism whose only job was to answer a question that has been answered is the `.layer-transport` dead-rule shape.
+
+   **The Swagger fix is a NESTED-INTERACTIVE fix, not a bigger-button one**, and only raising the anchors would have made it worse. Swagger nests `a.nostyle` (deep-link) inside `button.opblock-summary-control` (expand), so both targets sit in the same pixels: 15 of the 16 nodes were the 5 anchors at 3 viewports failing on **height** (19px desktop, 14px mobile — width was always fine), and the 16th was the button at a perfectly adequate 306x29, failing because the anchor **obscured** it down to 306x15. Every pixel the anchor gains is one the button loses. So the row grows to 56px *and* the anchor to 24px, together — verified to take all three viewports to zero before being written down. It lives in that page's own `<style>` block because `vendor/swagger-ui.css` must stay byte-identical to upstream or the next refresh silently reverts it.
 
 5. **There is now ONE frontend city registry, and there used to be two.** `CITIES` held the projection `center`/`scale` for **three** cities while `CITY_DATA` held nine, so the six regions shipped on 2026-08-10 threw `Cannot read properties of undefined (reading 'center')` inside `switchCity()` — **title changed, map did not, six of nine cities dead on the live site**. `CITIES` is deleted; `center` and `scale` are CITY_DATA fields, which puts them under the key-parity assertion in point 3. Derive a new city's pair with `python scripts/fit_city_projection.py --city <key>` rather than picking numbers by eye — it fits the region into the same on-screen box London occupies at scale 48000.
 6. **Corridors: the frontend key is `coordinates`, the Lambda's is `coords`.** Porting a corridor block across without renaming throws `Cannot read properties of undefined (reading 'map')` and draws no corridors. This bit five cities, and the throw was **invisible until the `center` bug above was fixed** — the first exception aborted the render before the second could fire. South Yorkshire was the only new city unaffected, *because it has no airports*.
@@ -1172,6 +1176,46 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 - **Android — pending.** AAB stale relative to master; rebuild via `npm run build:android` (now fixed for Windows — uses `gradlew.bat`; needs `JAVA_HOME` = Android Studio JBR + `SKY_SCORE_KEYSTORE_PATH`/`SKY_SCORE_KEYSTORE_PASSWORD` env vars, password in Bitwarden) to carry the iPad fix + mobile redesign, then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md`.
 
 ## Known Issues
+
+**`weights` IS THE APPLIED TABLE SINCE 2026-09-09, not the persona's nominal
+row.** `sum(components * weights)` now reaches `score` on every borough -
+Brooklyn **4.4826 -> 4.5** (was 3.9 against 4.5), Cardiff **6.2953 -> 6.3**.
+The engine had always dropped an uncomputable component and rescaled the
+survivors; only the RESPONSE published the un-rescaled row, and the whole
+response-side fix was **deleting one line** - `'weights': weights` sat after the
+`**score_data` spread and overrode the applied set `calc_score` returns.
+Deliberately **not** a second `weightsApplied` field: that is the
+`lineStatusAvailable` shape, where an optional correct field leaves the naive
+computation wrong for everyone who does not know to switch.
+
+- **No score moved, and no weight on the 720 complete combinations** - applied
+  values are rounded to **6dp** so a complete set republishes the declared
+  `0.32`, not the `0.32000000000000006` that dividing by a total of
+  0.9999999999999999 produces. Only the 72 absent-component ones change.
+- **The spec now carries TWO schemas** because they are two objects: `Weights`
+  is what a caller may SEND, `AppliedWeights` what a response returns. Callers
+  using the old divide-by-the-present-weights workaround need change nothing -
+  that denominator is now 1.0.
+- **Two gates, both proven red, and BOTH had been blind to this.**
+  `check_openapi_matches_engine.py` divided by the present weights, and **that
+  division cannot tell the two tables apart** - it recovers the same score
+  either way, so it sat green for the whole period. It asserts the published
+  total is 1.0 now. And the first five engine-level unit tests I wrote went
+  green against the live defect, because they read `calc_score`, which was
+  always right; **the guarding test goes through `resolve_query`**. Same lesson
+  as "measure the DOM, not the flag", in the backend.
+- **REPRODUCTION IS EXACT TO THE LAST PUBLISHED DIGIT, NOT TO THE BIT, and that
+  is a separate open decision.** Components are published at 1dp while the
+  engine weights them unrounded, so the sum can sit up to **0.1** from `score`
+  (0.05 + 0.05; worst observed **0.069**). This predates the weights work and
+  is unrelated to it: **37 of the 720 COMPLETE sets already did not reproduce**.
+  Making it exact means scoring from the ROUNDED components, which moves **43
+  of 792 published scores by 0.1** and rounds twice where the engine rounds
+  once - so it is a decision, and the recommendation is *don't*, publish the
+  bound instead (done: METHODOLOGY s6 and the `AppliedWeights` schema). Same
+  honesty `roundingResidual` already applies to `attribution`.
+- **The gate's tolerance is DERIVED (0.10), never the measured 0.069** - an
+  observed worst case asserted as a constant is the `0.60 threshold` trap.
 
 **F2 and F3 are CLOSED (2026-09-03), and the gate is the part that matters.**
 Every public B2B surface had described a FOUR-component score since v3.9

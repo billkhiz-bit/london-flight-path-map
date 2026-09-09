@@ -3889,6 +3889,172 @@ class CompositeRenormalisationTests(unittest.TestCase):
         self.assertGreater(compared, 500, f'only {compared} complete sets compared')
 
 
+class PublishedWeightsReproduceTheScoreTests(unittest.TestCase):
+    """`sum(components x weights)` must reach `score` from the RESPONSE ALONE.
+
+    Closes the second of the four numeric decisions (2026-09-09). The engine
+    drops a component it cannot compute and rescales the survivors, but the
+    response published the persona's NOMINAL row - so for every borough missing
+    `live` or `env` the published arithmetic did not reach the published number.
+    Measured over all 792 persona x borough combinations before the fix: 72
+    failed, worst gap **1.518 points** (Brooklyn `balanced` summed to 3.9
+    against a published 4.5; Cardiff 5.4 against 6.3).
+
+    THE TOLERANCE IS DERIVED, NOT MEASURED, and that distinction is the point.
+    It would be easy to assert the observed worst residual - 0.069 - and that
+    number would be a magic constant with an expiry date, exactly the trap the
+    0.60 price-led threshold fell into. The real bound comes from what the
+    response contains:
+
+      * each component is published rounded to 1dp, so it is within 0.05 of the
+        value the engine weighted;
+      * the weights sum to 1, so that error carries through the sum unamplified;
+      * `score` is itself `round_1dp` of the unrounded total, a further 0.05.
+
+    Hence 0.10, and nothing tighter is honest while components are published at
+    1dp. Reproduction is therefore exact to the LAST PUBLISHED DIGIT, not to the
+    bit - and a renormalisation defect misses by ~1.5, fifteen times the bound,
+    so the loose tolerance costs nothing in detection. This is the same honesty
+    `roundingResidual` already applies to `attribution`.
+
+    PROVEN RED: publishing the nominal row again (the one-line revert of
+    removing `'weights': weights` from the response body) fails this at 72
+    combinations.
+    """
+
+    def _combinations(self):
+        for city_id, cfg in app.CITIES.items():
+            for name in cfg['boroughs']:
+                for persona, weights in app.PERSONAS.items():
+                    yield city_id, name, persona, app.calc_score(name, city_id, weights)
+
+    def test_published_weights_reproduce_the_published_score(self):
+        # 0.05 for component rounding + 0.05 for rounding the total. See above.
+        bound = 0.10 + 1e-9
+        bad = []
+        for city_id, name, persona, result in self._combinations():
+            comps, weights = result['components'], result['weights']
+            total = sum(comps[k] * weights[k] for k in comps)
+            if abs(total - result['score']) > bound:
+                bad.append(
+                    f'{city_id}/{name}/{persona}: sum={total:.4f} '
+                    f'vs score={result["score"]} (out by {total - result["score"]:+.4f})'
+                )
+        self.assertEqual(bad[:10], [], f'{len(bad)} combinations do not reproduce')
+
+    def test_weights_describe_exactly_the_components_published(self):
+        """A weight for an absent component, or a component with no weight,
+        both break reproduction - and neither shows up as a wrong TOTAL, so the
+        sum test above cannot see them. `env` was absent from every custom
+        weight set written before v3.9, which is why this is asserted as a set
+        rather than assumed."""
+        for city_id, name, persona, result in self._combinations():
+            self.assertEqual(
+                set(result['weights']),
+                set(result['components']),
+                f'{city_id}/{name}/{persona}: weights and components disagree',
+            )
+
+    def test_published_weights_sum_to_one(self):
+        """What "applied" MEANS. A set that reproduces the score by accident
+        while summing to 0.86 is still telling the caller something false about
+        how the components were combined."""
+        for city_id, name, persona, result in self._combinations():
+            self.assertAlmostEqual(
+                sum(result['weights'].values()),
+                1.0,
+                places=5,
+                msg=f'{city_id}/{name}/{persona} weights sum to '
+                f'{sum(result["weights"].values())!r}',
+            )
+
+    def test_a_complete_set_still_publishes_the_personas_own_figures(self):
+        """Renormalising a complete set is arithmetically a no-op and is NOT one
+        in floating point - the persona rows sum to 0.9999999999999999, so
+        dividing through publishes 0.32000000000000006 where the spec says 0.32.
+        Rounding to 6dp restores the declared figures exactly, so a customer on
+        a complete borough sees the numbers the OpenAPI spec documents. Same
+        defect live_weights_for was given a short-circuit for."""
+        checked = 0
+        for city_id, name, persona, result in self._combinations():
+            nominal = app.PERSONAS[persona]
+            if set(result['components']) != set(nominal):
+                continue  # genuinely incomplete: the weights SHOULD differ
+            checked += 1
+            self.assertEqual(
+                result['weights'],
+                {k: round(v, 6) for k, v in nominal.items()},
+                f'{city_id}/{name}/{persona} moved a complete weight set',
+            )
+        self.assertGreater(checked, 500, f'only {checked} complete sets compared')
+
+    def test_the_RESPONSE_reproduces_it_not_just_the_engine(self):
+        """THE TEST THAT ACTUALLY GUARDS THE DEFECT, and the four above do not.
+
+        They read `calc_score`, which has computed the applied weights all
+        along - the bug was one line LATER, in `resolve_query`, where
+        `'weights': weights` was written after the `**score_data` spread and
+        overrode them with the persona's nominal row. Every assertion above
+        passes against that defect, because none of them looks at what the
+        customer receives. Written after noticing the first five went green on a
+        tree that still had the bug, which is this repo's "measure the DOM, not
+        the flag" in the backend.
+
+        Goes through `resolve_query`, so it fails if anyone re-states `weights`
+        anywhere in the response assembly. PROVEN RED: restoring that one line
+        fails this at every incomplete borough.
+        """
+        bound = 0.10 + 1e-9
+        bad = []
+        checked = incomplete = 0
+        for city_id, cfg in app.CITIES.items():
+            for name in cfg['boroughs']:
+                for persona in app.PERSONAS:
+                    body, status = app.resolve_query(
+                        {'city': city_id, 'borough': name, 'persona': persona}
+                    )
+                    self.assertEqual(status, 200, f'{city_id}/{name}/{persona} -> {status}')
+                    comps, weights = body['components'], body['weights']
+                    self.assertEqual(
+                        set(weights),
+                        set(comps),
+                        f'{city_id}/{name}/{persona}: response weights != components',
+                    )
+                    checked += 1
+                    if set(comps) != set(app.PERSONAS[persona]):
+                        incomplete += 1
+                    total = sum(comps[k] * weights[k] for k in comps)
+                    if abs(total - body['score']) > bound:
+                        bad.append(
+                            f'{city_id}/{name}/{persona}: sum={total:.4f} '
+                            f'vs score={body["score"]}'
+                        )
+        self.assertEqual(bad[:10], [], f'{len(bad)} of {checked} responses do not reproduce')
+        # Per-unit floors on BOTH populations - the defect was invisible in the
+        # complete one, so a run that covered only those would prove nothing.
+        self.assertGreater(checked, 700, f'only {checked} responses checked')
+        self.assertGreater(incomplete, 40, f'only {incomplete} incomplete responses checked')
+
+    def test_the_incomplete_case_is_actually_exercised(self):
+        """A per-unit floor. The whole defect lived in boroughs with a dropped
+        component; a suite that happened to cover only complete ones would pass
+        exactly as loudly while testing nothing that ever broke."""
+        incomplete = [
+            f'{c}/{n}/{p}'
+            for c, n, p, r in self._combinations()
+            if set(r['components']) != set(app.PERSONAS[p])
+        ]
+        self.assertGreater(
+            len(incomplete), 40, f'only {len(incomplete)} incomplete sets exercised'
+        )
+        # And they must be the ones we think: NYC has no UK environment data,
+        # Cardiff falls below the env two-input floor.
+        self.assertTrue(
+            any(c.startswith('nyc/') for c in incomplete),
+            'no NYC borough exercised the dropped-component path',
+        )
+
+
 class PerBoroughProvenanceTests(unittest.TestCase):
     """sourceBreakdown must describe the BOROUGH, not the city's best case.
 
