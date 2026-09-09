@@ -45,9 +45,23 @@ INPUT NEEDED:
   Save the extracted CSV as `data/nspl.csv`. `data/*` is gitignored, so the
   805 MB file never enters the repository.
 
-  Columns read (stable across NSPL editions): pcds, doterm, gridind,
-  lad25cd, ctry25cd, rgn25cd, lat, long. The 2026-02 edition has 36
-  columns and 2,723,596 data rows.
+  Columns read: pcds, doterm, gridind, lat, long, plus the geography
+  triple lad/ctry/rgn - WHICH CARRY A YEAR SUFFIX THAT MOVES. This said
+  "stable across NSPL editions" and named lad25cd/ctry25cd/rgn25cd until
+  2026-09-09, when the August 2026 edition renamed them lad26cd/ctry26cd/
+  rgn26cd and the loader could not read a single geography field. They are
+  resolved by PREFIX now - see resolve_columns() - so February will not
+  break it again. The CODES are unchanged: all 94 LAD_TO_BOROUGH entries
+  appear in both editions and both hold 363 distinct LADs.
+
+  Edition sizes differ too, so neither is asserted as an equality: the
+  2026-02 edition has 36 columns and 2,723,596 data rows; 2026-08 has 35
+  columns and 2,729,090.
+
+  The single combined CSV is `Data/NSPL_AUG_2026_UK.csv` inside the zip -
+  the download also carries a `Data/multi_csv/` split of 182 per-area files
+  which is NOT what this loader wants. Save the combined one as
+  `data/nspl.csv`.
 
   LICENCE: Office for National Statistics, National Statistics Postcode
   Lookup, released under the Open Government Licence v3.0. Contains OS
@@ -289,14 +303,61 @@ BWI_MAX_ITEMS = 25  # BatchWriteItem's hard per-request cap; not tunable
 BWI_MAX_ATTEMPTS = 10  # UnprocessedItems retries before a chunk is declared failed
 CHECKPOINT_PATH = Path('.nspl_load_checkpoint')
 CHECKPOINT_EVERY = 1000
-NSPL_VINTAGE = '2026-02'
+NSPL_VINTAGE = '2026-08'
 META_KEY = '__META__'
 EXCLUDED_COUNTRIES = {'L93000001', 'M83000003'}  # Channel Islands, Isle of Man
 LAT_SENTINEL = 99.0  # unpositioned rows carry lat 99.999999
 
-# Expected NSPL header width and the subset of columns we actually read.
-EXPECTED_HEADER_LEN = 36
-REQUIRED_COLUMNS = ('pcds', 'doterm', 'gridind', 'lad25cd', 'ctry25cd', 'rgn25cd', 'lat', 'long')
+# THE GEOGRAPHY COLUMNS CARRY A YEAR SUFFIX AND IT MOVES (learned 2026-09-09).
+#
+# This file used to name `lad25cd`, `ctry25cd` and `rgn25cd` outright, under a
+# docstring calling the read columns "stable across NSPL editions". They are
+# not: the August 2026 edition renamed them `lad26cd`, `ctry26cd`, `rgn26cd`
+# (and `cty`, `wd`, `sicbl` with them), so a roll that had worked in February
+# could not read a single geography field. The CODES are unchanged - all 94
+# LAD_TO_BOROUGH entries appear in both editions, and both hold 363 distinct
+# LADs - so only the header moved.
+#
+# Resolved by PREFIX rather than pinned to 26, or this breaks again in
+# February. Each prefix must match EXACTLY ONE column: two matches is a schema
+# change worth stopping on, not something to guess through.
+FIXED_COLUMNS = ('pcds', 'doterm', 'gridind', 'lat', 'long')
+YEARED_PREFIXES = ('lad', 'ctry', 'rgn')
+
+# The header WIDTH is no longer asserted as an equality. It was 36 in February
+# and is 35 in August - ONS dropped a column - and an exact width is a
+# regression guard that fires on every edition whether or not anything we read
+# has moved. The real invariant is that the columns we read resolve, which
+# resolve_columns() checks directly; the floor below only catches a truncated
+# or wrong-format file.
+MIN_HEADER_LEN = 30
+
+
+def resolve_columns(header):
+    """Map our field names onto this edition's header. Raises on ambiguity.
+
+    Returns {'pcds': 'pcds', ..., 'lad': 'lad26cd', 'ctry': 'ctry26cd', ...}.
+    """
+    import re as _re
+
+    resolved = {}
+    missing = []
+    for name in FIXED_COLUMNS:
+        if name in header:
+            resolved[name] = name
+        else:
+            missing.append(name)
+    for prefix in YEARED_PREFIXES:
+        hits = [c for c in header if _re.fullmatch(prefix + r'\d{2}cd', c)]
+        if len(hits) == 1:
+            resolved[prefix] = hits[0]
+        elif not hits:
+            missing.append(prefix + 'NNcd')
+        else:
+            # Ambiguity is a schema change, not a coin toss. Picking the
+            # highest year would silently choose for you.
+            missing.append(f'{prefix}NNcd (ambiguous: {", ".join(sorted(hits))})')
+    return resolved, missing
 
 # LAD25 code -> canonical London borough name.
 #
@@ -513,12 +574,15 @@ def self_test():
     )
 
     # 2. Header width and the columns we actually read.
-    missing = [c for c in REQUIRED_COLUMNS if c not in header]
+    resolved, missing = resolve_columns(header)
     check(
-        2, len(header) == EXPECTED_HEADER_LEN and not missing,
-        f'header has {EXPECTED_HEADER_LEN} columns and all required columns present',
-        f'got {len(header)} columns; missing: {missing or "none"}',
+        2, len(header) >= MIN_HEADER_LEN and not missing,
+        f'every column we read resolves (>= {MIN_HEADER_LEN} columns present)',
+        f'got {len(header)} columns; unresolved: {missing or "none"}',
     )
+    if not missing:
+        print(f'  resolved geography columns: '
+              f"{resolved['lad']}, {resolved['ctry']}, {resolved['rgn']}")
 
     check_borough_map()
 
@@ -572,6 +636,24 @@ def self_test():
     print('\nSelf-test passed. Schema, borough map and sentinel rule all check out.')
 
 
+# Set once from the real header by bind_columns(), before any row is read.
+# Seeded with the February-2026 names so an unbound run fails loudly on the
+# FIRST row of an August file rather than half-way through.
+_COLS = {'lad': 'lad25cd', 'ctry': 'ctry25cd', 'rgn': 'rgn25cd'}
+
+
+def bind_columns(header):
+    """Resolve this edition's geography columns and hold them for the run."""
+    resolved, missing = resolve_columns(header)
+    if missing:
+        raise SystemExit(
+            f'NSPL header does not carry the columns this loader reads: {missing}. '
+            'Run --self-test for the full report.'
+        )
+    _COLS.update({k: resolved[k] for k in YEARED_PREFIXES})
+    return _COLS
+
+
 def _row_to_item(row):
     """Map one NSPL CSV row to a DynamoDB item, or None if the row is skipped.
 
@@ -597,10 +679,13 @@ def _row_to_item(row):
     try:
         pcds = row['pcds']
         gridind = row['gridind']
-        lad = row['lad25cd']
-        ctry = row['ctry25cd']
+        # Year-suffixed and the suffix MOVES between editions - see
+        # resolve_columns(). _COLS is set once from the real header before
+        # the run starts, so this stays a dict lookup per row.
+        lad = row[_COLS['lad']]
+        ctry = row[_COLS['ctry']]
         doterm = row['doterm']
-        rgn = row['rgn25cd']
+        rgn = row[_COLS['rgn']]
     except KeyError:
         # Column absent from the header entirely, i.e. a schema change. The
         # self-test exists to catch this before a full run starts.
@@ -1121,6 +1206,12 @@ def run_load(limit, dry_run, workers):
 
     with open(NSPL_CSV_PATH, newline='', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
+        # BIND BEFORE THE FIRST ROW. The geography columns carry a year suffix
+        # that moves between editions (lad25cd -> lad26cd in August 2026), and
+        # _row_to_item returns None on a KeyError - so an unbound run would not
+        # crash, it would skip EVERY row and report a clean load of nothing.
+        # This raises instead, before a single write.
+        bind_columns(reader.fieldnames or [])
         for idx, row in enumerate(tqdm(reader, desc='postcodes', initial=resume_from)):
             if idx < resume_from:
                 continue

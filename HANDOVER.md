@@ -19,7 +19,90 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-09. METHODOLOGY v5.0 IS DEPLOYED AND VERIFIED.
+## 0. PICK UP HERE - 2026-09-09 EVENING. AN NSPL LOAD IS IN FLIGHT.
+
+> ## THE ONE THING TO DO FIRST: check whether the load finished.
+>
+> ```sh
+> ps -ef | grep -c '[l]oad_nspl'     # 1 = still running
+> tail -c 200 nsplload.log | tr '' '
+' | tail -2
+> cat .nspl_load_checkpoint          # absent = it completed
+> ```
+>
+> It was at **2,097,827 of 2,729,090 rows (77%)** at 22:20 on 2026-09-09,
+> running ~776 rows/s, started 21:34. **It is resumable**: if it died, re-run
+> `AWS_PROFILE=flightmap python -u scripts/load_nspl.py` and it continues from
+> the checkpoint. A death mid-load is not damaging - the table is an UPSERT of
+> valid rows either way, and the score Lambda falls through to postcodes.io on
+> any miss.
+
+**WHAT IS BEING LOADED.** The **August 2026** NSPL, replacing the February 2026
+edition the table has held since July. Measured before loading: **+5,494
+postcodes, 0 removed**, live 1,807,729 -> **1,810,364**, 72,554 positions
+refined (median 20.5 m), and **81 LAD reassignments touching a borough we
+score**. A routine currency roll.
+
+### THREE THINGS ARE STILL OUTSTANDING, IN THIS ORDER
+
+1. **`NSPL_VINTAGE` is still `'2026-02'` in `scripts/load_nspl.py`, and it must
+   NOT be changed until the run finishes.** The checkpoint carries the vintage
+   and the loader refuses to resume a checkpoint whose vintage disagrees with
+   the constant - that guard is right, and editing the constant mid-run would
+   force a restart from row 0. Once the run completes, set it to `'2026-08'`.
+
+2. **The `__META__` provenance row will be stamped `2026-02`, which is wrong.**
+   The end-of-run block reads the constant from the process's memory, so this
+   run will label August data as February. It is one row; re-stamp it after
+   updating the constant. Current shape:
+
+   ```
+   loadedAt 2026-07-26T19:28:52Z   vintage 2026-02
+   rowsWritten 2699393   rowsSkipped 24203
+   source   ONS NSPL via Geoportal, Open Government Licence v3.0
+   policy   UK-wide; gridind=9 excluded; terminated loaded and tagged via dt
+   ```
+
+3. **THE DERIVED SHARES ARE NOT UPDATED BY THE LOAD.**
+   `transportWithin800mPct`, `airQualityWhoRatio`, `roadNoiseAboveWhoPct` and
+   `floodMediumOrHighPct` come from a scan of `data/nspl.csv` by
+   `build_borough_bands.py`, **not** from DynamoDB. Until that is re-run they
+   describe February's geography while the table describes August's. Run
+   `python scripts/build_borough_bands.py --check` FIRST to size the movement,
+   then `--write --write-lambda` if it is real, then rebuild the area pages
+   (`build_area_pages.py --write`) because they bake scores, then preflight and
+   deploy backend-first.
+
+### THE SCHEMA TRAP THIS ROLL EXPOSED - read before the next roll
+
+**The NSPL geography columns carry a year suffix and it MOVES.** February
+publishes `lad25cd`/`ctry25cd`/`rgn25cd`; August publishes `lad26cd`/`ctry26cd`/
+`rgn26cd`, and the file went 36 columns to 35. The CODES are unchanged - all 94
+`LAD_TO_BOROUGH` entries appear in both editions - so only the header moved.
+
+**Four scripts read those columns and only one survived it.**
+`build_city_neighbourhoods.py` already resolved by prefix; the other three were
+pinned. All four resolve by prefix now, and `load_nspl.py` binds the columns
+before the first row rather than per-row.
+
+**`build_borough_bands.py` would have failed SILENTLY**, which is the part to
+remember: it read `row.get('lad25cd', '')`, and `.get` with a default returns
+`''` instead of raising. Every postcode would have missed its borough, an empty
+map would have been returned, and the only symptom was `0 live postcodes across
+0 cities`. Its floor was `if seen and not retired`, which never fires when
+`seen` is 0. This is the script that WRITES BOTH SCORE HOLDERS. There is an
+`if not seen` floor now. *A `.get` with a default is a silent skip wearing a
+guard's clothes.*
+
+**The download is not one file.** The Geoportal zip carries a combined
+`Data/NSPL_AUG_2026_UK.csv` (964 MB) AND a `Data/multi_csv/` split of 182
+per-area files. The loader wants the combined one at `data/nspl.csv`. The
+February file is preserved as `data/nspl-feb2026.csv` for exactly the
+before/after diff this roll needed.
+
+---
+
+## 0w. METHODOLOGY v5.0 IS DEPLOYED AND VERIFIED.
 
 > **NOTHING IS OUTSTANDING FROM THIS WAVE.** v5.0 changed 737 of 792 published
 > scores and is live. Verified from the ORIGIN throughout, never from a deploy's

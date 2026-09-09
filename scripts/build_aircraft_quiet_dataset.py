@@ -31,6 +31,7 @@ detectable rather than silent, and the site refuses the file when it disagrees.
 
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -148,7 +149,11 @@ def build_regions():
     with NSPL.open(encoding='utf-8', errors='replace') as fh:
         reader = csv.DictReader(fh)
         cols = {c.lower(): c for c in reader.fieldnames}
-        c_lad = cols.get('lad25cd')
+        # Year-suffixed and it MOVES between editions (lad25cd -> lad26cd in
+        # August 2026). Resolved by prefix, as build_city_neighbourhoods.py does.
+        c_lad = cols.get('lad25cd') or next(
+            (cols[c] for c in cols if re.fullmatch(r'lad\d\dcd', c)), None
+        )
         c_term = cols.get('doterm')
         for row in reader:
             if c_term and row[c_term].strip():

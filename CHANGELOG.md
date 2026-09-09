@@ -1,5 +1,48 @@
 # Changelog
 
+## 2026-09-09 (evening) - the August 2026 NSPL roll, and a silent schema trap
+
+The postcode table had held the **February 2026** NSPL since July - the one
+genuinely stale dataset in the product. The August edition is loading.
+
+**Measured before writing anything**, Feb -> Aug: **+5,494 postcodes and 0
+removed**; live postcodes 1,807,729 -> **1,810,364**; 72,554 positions refined
+at a median of **20.5 m**; and **81 LAD reassignments touching a borough we
+score**, 0.004% of live postcodes. Routine currency.
+
+**A first pass reported 597,960 changed positions**, which would have implied a
+national re-grid. That compared the lat/long TEXT; comparing coordinates gives
+72,554. The difference is trailing-zero formatting, and the wrong number was
+the alarming one.
+
+### The schema trap: a year suffix that moves
+
+February publishes `lad25cd`/`ctry25cd`/`rgn25cd`; August publishes
+`lad26cd`/`ctry26cd`/`rgn26cd`, and the file went 36 columns to 35. The loader's
+docstring called these columns *"stable across NSPL editions"*. The CODES are
+unchanged - all 94 `LAD_TO_BOROUGH` entries appear in both editions - so only
+the header moved.
+
+**Four scripts read them and only one survived.** `build_city_neighbourhoods.py`
+already resolved by prefix and exits if it cannot; the other three were pinned.
+
+**`build_borough_bands.py` would have failed SILENTLY**, and it is the script
+that writes both score holders. It read `row.get('lad25cd', '')` - and `.get`
+with a default **returns `''` rather than raising**. Every postcode would have
+missed its borough, an empty map would have been returned, and the only symptom
+was a line reading `0 live postcodes across 0 cities`. Its floor was `if seen
+and not retired`, which never fires when `seen` is 0. **A `.get` with a default
+is a silent skip wearing a guard's clothes.**
+
+All four resolve by prefix now, copying the idiom that already existed in the
+one script that survived rather than inventing a second one.
+
+### And a blocker that had expired
+
+`BatchWriteItem` is granted - the load runs at ~776 rows/s against the recorded
+129 rows/s per-item fallback, about an hour rather than 5.8. The record saying
+otherwise had been wrong since the 4 Sep policy restore.
+
 ## 2026-09-09 - affordability goes national (v5.0), applied weights, WCAG 2.2
 
 Three commits: `5556619`, `31d2dc1`, `f6aeac1`. Deployed and verified from the

@@ -26,6 +26,7 @@ import csv
 import glob
 import json
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -158,7 +159,11 @@ def main():
         cols = {c.lower(): c for c in rd.fieldnames}
         c_lat, c_lon = cols['lat'], cols['long']
         c_term = cols.get('doterm')
-        c_lad = cols.get('lad25cd')
+        # Year-suffixed and it MOVES between editions (lad25cd -> lad26cd in
+        # August 2026). Resolved by prefix, as build_city_neighbourhoods.py does.
+        c_lad = cols.get('lad25cd') or next(
+            (cols[c] for c in cols if re.fullmatch(r'lad\d\dcd', c)), None
+        )
         for row in rd:
             n += 1
             if args.limit and n > args.limit:

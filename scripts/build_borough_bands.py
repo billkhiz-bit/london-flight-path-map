@@ -147,6 +147,7 @@ import argparse
 import csv
 import importlib.util
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -275,6 +276,20 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
                 'Every borough band is a share over these points; refusing to derive '
                 'bands weighted by postcodes nobody lives at.'
             )
+        # THE GEOGRAPHY COLUMNS CARRY A YEAR SUFFIX AND IT MOVES. February 2026
+        # published `lad25cd`; August 2026 publishes `lad26cd`. Resolved by
+        # prefix rather than pinned, the same way build_city_neighbourhoods.py
+        # already does it, or this breaks again next February. Hard-fails like
+        # `doterm` above: without it every row silently fails to match a
+        # borough, which is worse than stopping.
+        c_lad = cols.get('lad25cd') or next(
+            (cols[c] for c in cols if re.fullmatch(r'lad\d\dcd', c)), None
+        )
+        if not c_lad:
+            raise SystemExit(
+                f'NSPL has no ladNNcd column; header starts '
+                f'{list(cols)[:12]}. Every borough band is keyed on it.'
+            )
         for idx, row in enumerate(reader):
             if limit and idx >= limit:
                 break
@@ -295,7 +310,7 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
                         extra_coords[pc] = (float(row['lat']), float(row['long']))
                     except (KeyError, ValueError):
                         pass
-            entry = lad_map.get(row.get('lad25cd', ''))
+            entry = lad_map.get(row.get(c_lad, ''))
             if not entry:
                 continue
             try:
@@ -309,6 +324,21 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
             out[city][borough].append((lat, lon))
             seen += 1
     print(f'  {seen:,} live postcodes across {len(out)} cities ({retired:,} terminated, excluded)')
+    # A SCAN THAT MATCHED NOTHING IS NOT A COUNTRY WITH NO POSTCODES.
+    #
+    # The guard below only fires when rows were KEPT, so `seen == 0` slipped
+    # past it entirely - and that is what the August 2026 NSPL would have
+    # produced: the geography columns gained a new year suffix (`lad25cd` ->
+    # `lad26cd`) and this read the old name through a `.get(name, '')` that
+    # returns '' rather than raising. Every row would have been skipped, an
+    # empty map returned, and the only symptom a line reading '0 live
+    # postcodes across 0 cities'.
+    if not seen:
+        raise SystemExit(
+            f'FAIL: read {retired + seen:,} NSPL rows and matched NO postcode to any '
+            f'borough via {c_lad!r}. That is a schema change or a wrong lad_map, '
+            'not a country with no postcodes.'
+        )
     if seen and not retired:
         # 39.2% of a full NSPL scan is terminated. Zero of them, having kept
         # anything, means the column stopped meaning what it means.
