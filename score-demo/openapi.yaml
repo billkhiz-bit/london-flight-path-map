@@ -4,8 +4,8 @@ info:
   description: |
     Sky Score is a noise + livability data API for UK property. The score
     is a 0-10 holistic property quality signal computed from five
-    components: Quiet (aircraft noise only), Affordability (cohort-relative
-    price), Growth (price-trend signal), Liveability (schools, crime,
+    components: Quiet (aircraft noise only), Affordability (price against a
+    NATIONAL band), Growth (price-trend signal), Liveability (schools, crime,
     transport, healthcare), and Environment (air quality, road noise, flood
     risk). Environment is absent where fewer than two of its three inputs are
     held - New York and Cardiff today - and the remaining components are
@@ -249,13 +249,21 @@ paths:
         error. Only price and trend move between quarterly vintages, so
         `afford` and `growth` are the only factors that can appear.
 
-        **Two factors are relative, which explains large swings.** Growth is
-        scored against the strongest-growing borough and affordability against
-        the cheapest and dearest, so a modest change in an input can move a
-        score a long way — and an area that IS the benchmark scores the maximum
-        by definition, leaving it nowhere to go but down. `why.drivers[]`
-        therefore carries `workings`: the actual sum with the reference point
-        named, e.g. `+0.9% ÷ +5.0% (Waltham Forest, the strongest) × 10 = 1.8`.
+        **Growth is cohort-relative, which explains large swings.** It is
+        scored against the strongest-growing borough of the same city, so a
+        modest change in an input can move a score a long way — and an area that
+        IS the benchmark scores the maximum by definition, leaving it nowhere to
+        go but down. `why.drivers[]` therefore carries `workings`: the actual
+        sum with the reference point named, e.g.
+        `+0.9% ÷ +5.0% (Waltham Forest, the strongest) × 10 = 1.8`.
+
+
+        **Affordability stopped being cohort-relative at methodology v5.0** and
+        is anchored on a national price band, so it no longer swings when a
+        neighbouring borough moves. Its `workings` show the log sum against that
+        band. A quarter-over-quarter affordability change can still come from
+        the national distribution shifting rather than from this borough, which
+        is why `marketContext` is published beside it.
         Use `why.caveats[]` for limits worth surfacing to an end user — most
         importantly that a negative trend floors growth at 0, so a slight dip
         and a steep fall are indistinguishable on that factor.
@@ -667,7 +675,7 @@ components:
           $ref: '#/components/schemas/AppliedWeights'
         methodologyVersion:
           type: string
-          example: "4.0"
+          example: "5.0"
         methodologyUrl:
           type: string
           format: uri
@@ -791,7 +799,19 @@ components:
           format: float
           minimum: 0
           maximum: 10
-          description: Cohort-relative affordability, 10 = cheapest in cohort.
+          description: >-
+            Affordability against a NATIONAL price band, on a log scale
+            (methodology v5.0, 2026-09-09). 10 is at or below the 5th percentile
+            of borough medians across every city sharing this one's currency, 0
+            at or above the 95th; the scale between is logarithmic because
+            borough medians are strongly right-skewed. Comparable BETWEEN
+            cities, which the previous within-city min-max scaling was not - it
+            inverted 1,619 of the 4,371 cross-city borough pairs, publishing
+            Barking and Dagenham at 10.0 for GBP 371,030 while Stockton-on-Tees
+            took 0.0 at GBP 170,923. The within-city standing that scaling used
+            to imply is now published explicitly as `context.priceRankInCity`.
+            Note the currency pools are separate and NOT comparable with each
+            other: the USD pool is New York's five boroughs.
         growth:
           type: number
           format: float
@@ -830,6 +850,25 @@ components:
         priceTrendPct:
           type: number
           description: Annualised price growth percentage.
+        priceRankInCity:
+          type: object
+          description: >-
+            Where this borough sits by price among the boroughs of its own city,
+            cheapest first (methodology v5.0). This is the within-city signal
+            that affordability carried until v5.0 moved that component to a
+            national anchor; it is published as a rank rather than folded into a
+            score so it cannot be mistaken for a national one. Ties share the
+            better rank.
+          required: [rank, of]
+          properties:
+            rank:
+              type: integer
+              minimum: 1
+              description: 1 is the cheapest borough in the city.
+            of:
+              type: integer
+              minimum: 1
+              description: Number of boroughs in that city.
         noiseImpactBand:
           type: string
           enum: [low, low-moderate, moderate, moderate-high, high, severe]

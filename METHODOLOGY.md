@@ -255,23 +255,49 @@ The score values are spaced to reflect the inverse-square-ish relationship betwe
 > **§4.6**. Two rows here remain unreachable from raster data regardless: nothing in London reaches
 > 75 dB, and only four postcodes reach 70.
 
-### 4.2 Affordability, min-max scaled across the cohort
+### 4.2 Affordability, log-scaled against a national price band (v5.0)
 
-Affordability is computed by min-max scaling the borough's average sold price against the cohort min/max:
+Affordability is the borough's average sold price on a **logarithmic** scale between the **5th and 95th percentile** of borough medians across every city sharing its currency, clamped at both ends:
 
 ```
-afford = ((max_price - avg_price) / (max_price - min_price)) × 10
+afford = clamp( (ln(p95) − ln(price)) / (ln(p95) − ln(p5)), 0, 1 ) × 10
 ```
 
-For London at the time of methodology v2.1:
-- `min_price` = £340,000 (Barking and Dagenham)
-- `max_price` = £1,350,000 (Kensington and Chelsea)
+For the sterling pool at methodology v5.0 (94 boroughs across 12 city-regions):
+- `p5`  = £158,231
+- `p95` = £717,369
 
 The borough average values are derived from **HM Land Registry's UK House Price Index (HPI)**, see [Reference 7, §19](#19-references), the official monthly publication of UK property prices. HPI is preferred over raw Price Paid Data here because it controls for compositional changes (mix of property types) and is the standard reference used by mortgage lenders, the Bank of England, and the Office for National Statistics for residential price tracking.
 
-This is a deliberate cohort-relative scale, not an absolute one. A property at £660k (Wandsworth's 2026-Q2 average) scores 6.7/10 because it sits two-thirds of the way down from London's most expensive borough, *relative to London*. The same price would score very differently against a national or NYC cohort.
+**The pools are per currency, and that is a limit worth stating plainly.** Sterling prices and New York's curated USD medians are never pooled, so the USD band is computed over New York's five boroughs alone — New York being the only city Sky Score covers outside the UK. A US score and a UK score are therefore **not** comparable with each other, even though UK scores are now comparable with one another.
 
-**Why min-max rather than a different normalisation?** Min-max scaling is the simplest interpretable approach for a bounded relative measure. Alternatives considered: log-scaled (penalises mid-range too aggressively), z-score (negative values are uninterpretable as "10 = cheapest"), percentile (loses absolute differentiation between price clusters). Min-max wins on transparency: any user can verify the formula against the published cohort min/max.
+#### Why this replaced within-city min-max
+
+Until v5.0 each city was scaled against its own cohort, so the cheapest borough of any city scored 10.0 and the priciest 0.0 whatever the money involved. Measured over the 4,371 cross-city borough pairs in the sterling pool, **1,619 of them were inverted** — a cheaper borough scoring *lower* than a dearer one. The clearest case: Barking and Dagenham published **10.0 at £371,030** while Stockton-on-Tees published **0.0 at £170,923**, a borough 2.2× cheaper reading as the least affordable in the product. A national anchor takes those inversions to **zero**.
+
+Affordability was also the only component not anchored on something external: quiet uses measured DEFRA footprints, liveability uses DfE's 0.0 Progress 8 anchor and crime per 1,000, environment uses WHO 2021 guidelines and the Environment Agency's 10% Medium-or-High cut. "Relative to whichever boroughs happen to share a page" was the exception, and that exception *was* the Barking/Stockton result.
+
+#### Why log, and why percentiles
+
+UK borough medians are strongly right-skewed — £130,271 minimum, £273,480 median, £717,369 at the 95th percentile, £1,250,149 maximum — and a **linear** scale over that range piles boroughs against both rails. Four candidates were measured before choosing:
+
+| Anchor | Cross-city inversions | Mean within-city spread | Cities flattened below 1.0 point | Boroughs pinned at 0 or 10 |
+|---|---|---|---|---|
+| Within-city min-max (v4.0 and earlier) | **1,619 of 4,371** | 10.0 | 0 | — |
+| Linear, p10–p90 | 0 | 2.9 | **4 of 13** | **22 of 99** |
+| Linear, p5–p95 | 0 | 2.6 | 4 of 13 | 13 |
+| **Log, p5–p95 (chosen)** | 0 | **3.1** | **1 of 13** | 14 |
+| Log, min–max | 0 | 2.6 | 1 of 13 | 4 |
+
+Log p5–p95 removes every inversion while keeping the most internal spread of the candidates tested, and it clamps at percentiles so a single outlier cannot set the scale. **Compression inside a narrow cohort is correct, not a defect**: Teesside's five boroughs genuinely sit between £171k and £200k, and this document already accepts that argument in §4.2's cohort note for Leicester, whose cohort was widened because min-max over a narrow cohort *manufactures spread it has not measured*.
+
+The earlier objection to log — *"penalises mid-range too aggressively"* — was recorded when the scale was within-city, where the price range is narrow and log buys little. Across a national range spanning nearly 10×, it is the transform that keeps the mid-range legible rather than the one that crushes it.
+
+**The within-city signal is not lost.** It is published as `context.priceRankInCity` — an explicit rank, cheapest first, with the cohort size beside it — rather than being smuggled into a score that also claims to mean something nationally.
+
+#### What this is not
+
+It is **not** a price-to-earnings ratio, the standard UK affordability measure and the obvious reach. §10 commits publicly that income and wealth distributions of residents are never inputs to any score, and that commitment exists because the customer set includes Sharia-compliant home-finance providers, where indirect discrimination is a live compliance question. Changing it would mean rewriting §10 deliberately, not as a side effect.
 
 ### 4.3 Growth, dual-anchor scale
 
@@ -1247,15 +1273,23 @@ carries `measuredAtLocation: true` here.
 > That was the mechanism behind two of the three corrections. **Check
 > `quietResolution` before hand-deriving quiet for any postcode.**
 
-**Affordability = 6.5.** Min-max against the London cohort (§4.2), 33 boroughs,
-`min = 371,030`, `max = 1,250,149`:
+**Affordability = 0.4.** Log scale against the NATIONAL price band (§4.2) since
+methodology v5.0, not the London cohort: the 5th and 95th percentiles of all 94
+borough medians in the sterling pool, `p5 = 158,231`, `p95 = 717,369`:
 
 ```
-afford = (1,250,149 - 680,105) / (1,250,149 - 371,030) x 10
-       = 570,044 / 879,119 x 10
-       = 6.484...
-       -> 6.5
+afford = ln(717,369 / 680,105) / ln(717,369 / 158,231) x 10
+       = 0.05334 / 1.51154 x 10
+       = 0.3529...
+       -> 0.4
 ```
+
+This is the figure that moves most at v5.0, and the direction is the point.
+Wandsworth's GBP 680,105 was mid-table among 33 London boroughs and scored
+**6.5**; it sits just under the national 95th percentile and scores **0.4**.
+Nothing about Wandsworth changed - it is now priced against the country rather
+than against its neighbours. Its within-city standing is published separately as
+`context.priceRankInCity`, which for Wandsworth is 27 of 33.
 
 **Growth = 4.0.** Dual anchor (§4.3) against the cohort's widest absolute
 bound, `min = -25.4`, `max = 4.3`, so the anchor is 25.4:
@@ -1300,37 +1334,42 @@ env = 5.767 x 0.45 + 4.130 x 0.35 + 7.860 x 0.20
     -> 5.6
 ```
 
-### Step 4, Score combination (balanced persona, v4.0)
+### Step 4, Score combination (balanced persona, v5.0)
 
 Balanced weights are `quiet 0.32 / afford 0.27 / growth 0.00 / live 0.27 /
 env 0.14`:
 
 ```
-score = 6.4 x 0.32 + 6.5 x 0.27 + 4.0 x 0.00 + 7.8 x 0.27 + 5.6 x 0.14
-      = 2.048 + 1.755 + 0.000 + 2.106 + 0.784
-      = 6.693
-      -> 6.7
+score = 6.4 x 0.32 + 0.4 x 0.27 + 4.0 x 0.00 + 7.8 x 0.27 + 5.6 x 0.14
+      = 2.048 + 0.108 + 0.000 + 2.106 + 0.784
+      = 5.046
+      -> 5.0
 ```
+
+The whole of the 1.7-point fall from v4.0's 6.7 is affordability, 6.5 -> 0.4.
+No other component moved, and no input changed: Wandsworth is now priced against
+the country instead of against the other 32 London boroughs.
 
 ### Step 5, Verification against the live API
 
 ```
 GET /v1/score?postcode=SW11+1AA
 -> {
-     "score": 6.7,
-     "components": { "quiet": 6.4, "afford": 6.5, "growth": 4.0,
+     "score": 5.0,
+     "components": { "quiet": 6.4, "afford": 0.4, "growth": 4.0,
                      "live": 7.8, "env": 5.6 },
      "weights":    { "quiet": 0.32, "afford": 0.27, "growth": 0.00,
                      "live": 0.27, "env": 0.14 },
      "context": {
        "avgPriceGbp": 680105,
        "priceTrendPct": -5.2,
+       "priceRankInCity": { "rank": 27, "of": 33 },
        "noiseImpactBand": "moderate",
        "quietResolution": "raster",
        "liveResolution": "measured",
        "environmentResolution": "measured"
      },
-     "methodologyVersion": "4.0"
+     "methodologyVersion": "5.0"
    }
 ```
 

@@ -7936,10 +7936,94 @@
         return Math.max(0, Math.min(10, score));
       }
 
+      // Linear-interpolated percentile. Mirrors `_percentile` in the score
+      // Lambda, including the interpolation method - a different convention at
+      // the tails is exactly where the two holders would diverge, and the tails
+      // are the only place this is read.
+      function percentileOf(values, q) {
+        const ordered = [...values].sort((a, b) => a - b);
+        if (ordered.length === 1) return ordered[0];
+        const pos = (ordered.length - 1) * q;
+        const low = Math.floor(pos);
+        const high = Math.min(low + 1, ordered.length - 1);
+        return ordered[low] + (ordered[high] - ordered[low]) * (pos - low);
+      }
+
+      // BACKEND-ONLY BOROUGH PRICES, IN THE NATIONAL POOL ONLY (v5.0).
+      //
+      // `/v1/score` covers THIRTEEN cities; this site renders ELEVEN. Cardiff
+      // and Nottingham are `BACKEND_ONLY_CITIES` - Cardiff has no Progress 8
+      // because it is an England measure, and Nottingham publishes on two
+      // inputs where the site should not claim four. They have no CITY_DATA
+      // entry, no map, no chip.
+      //
+      // They must still be in the affordability pool, because the pool is the
+      // API's coverage and the site must reproduce the API's score exactly.
+      // Without these eight the site pools 86 sterling boroughs against the
+      // Lambda's 94, which moves p5/p95 and therefore moves scores: measured,
+      // it disagreed on FOUR boroughs by 0.1 - Waltham Forest, City of London,
+      // Harrow and Stockport - and borough-score-parity.mjs caught it.
+      //
+      // They are PRICES ONLY. Nothing here renders, and adding a city to the
+      // site means adding it to CITY_DATA, not here.
+      //
+      // MAINTAINED BY `scripts/build_hpi_prices.py --write`, between the
+      // markers below, for the same reason every other price in this file is:
+      // a vintage roll that updates one holder and not the other is the
+      // divergence this repo has shipped three times. Do not hand-edit.
+      // BACKEND-ONLY-PRICES:START
+      const BACKEND_ONLY_PRICES = {
+        cardiff: [270094, 297999, 230505, 197272],
+        nottingham: [192172, 253021, 250279, 331451],
+      };
+      // BACKEND-ONLY-PRICES:END
+
+      // v5.0 affordability anchor: the 5th and 95th percentile borough median
+      // across every city sharing this one's CURRENCY.
+      //
+      // Pooling by currency and not globally is the point - NYC's medians are
+      // curated USD, not HM Land Registry sterling, so a single pool would be a
+      // category error rather than a wider cohort. It also means the USD pool
+      // is exactly NYC's five boroughs, which METHODOLOGY says plainly instead
+      // of implying a US-national comparison the data cannot support.
+      //
+      // Derived from the registry, never a hardcoded pair: a new city changes
+      // the national distribution, and a constant here would silently keep
+      // scoring against the distribution as it was on the day it was written.
+      const _nationalBounds = {};
+      function nationalPriceBounds(cityId) {
+        const currency = cityOf(cityId).currency;
+        if (!_nationalBounds[currency]) {
+          const prices = [];
+          for (const id of Object.keys(CITY_DATA)) {
+            if (cityOf(id).currency !== currency) continue;
+            for (const d of Object.values(cityOf(id).boroughRaw())) prices.push(d.avg_price);
+          }
+          // The API-only cities. Sterling pool only - both are UK, and pooling
+          // them into the USD band would be the category error the comment on
+          // this function warns about.
+          if (currency === '£') {
+            for (const list of Object.values(BACKEND_ONLY_PRICES)) prices.push(...list);
+          }
+          _nationalBounds[currency] = [percentileOf(prices, 0.05), percentileOf(prices, 0.95)];
+        }
+        return _nationalBounds[currency];
+      }
+
+      // Cheaper is higher; 10.0 at or below p5, 0.0 at or above p95. LOG, not
+      // linear, because UK borough medians are strongly right-skewed and a
+      // linear scale piles boroughs at both rails - measured, linear p10/p90
+      // flattened four of thirteen cities to under a point of internal spread.
+      // Must stay identical to `afford_score` in the score Lambda; the two are
+      // compared borough-for-borough by tests/borough-score-parity.mjs.
+      function affordScore(price, p5, p95) {
+        if (!(p95 > p5) || !(price > 0)) return 5;
+        const span = Math.log(p95) - Math.log(p5);
+        return Math.max(0, Math.min(1, (Math.log(p95) - Math.log(price)) / span)) * 10;
+      }
+
       function calcScores(data, city) {
-        const prices = Object.values(data).map((d) => d.avg_price);
-        const maxPrice = Math.max(...prices);
-        const minPrice = Math.min(...prices);
+        const [affordP5, affordP95] = nationalPriceBounds(city || 'london');
         const trends = Object.values(data).map((d) => d.trend);
         const maxTrend = Math.max(...trends);
         const minTrend = Math.min(...trends);
@@ -7948,7 +8032,7 @@
         const result = {};
         for (const [name, d] of Object.entries(data)) {
           const quiet = IMPACT_TO_QUIET[d.impact] ?? 5;
-          const afford = ((maxPrice - d.avg_price) / (maxPrice - minPrice)) * 10;
+          const afford = affordScore(d.avg_price, affordP5, affordP95);
           // Growth is still computed under v3.3+, but only `investor` weights
           // it: growth caused 87% of Q1→Q2 score movement while nothing physical
           // about any borough changed, so it describes the market rather than
@@ -8405,7 +8489,28 @@
           }
           const quiet = Math.max(0, Math.min(10, 10 - noiseScore));
 
-          // 2. AFFORDABILITY - from neighbourhood-specific price
+          // 2. AFFORDABILITY - from neighbourhood-specific price.
+          //
+          // STILL WITHIN-CITY MIN-MAX, AND THAT IS NOW A DIFFERENT SCALE FROM
+          // THE BOROUGH ONE (v5.0, 2026-09-09). The borough component moved to
+          // a NATIONAL log p5/p95 anchor; this ranking did not. Deliberate, and
+          // recorded in ROADMAP as a follow-up rather than left to be
+          // discovered:
+          //
+          //   - This list is explicitly a WITHIN-CITY "best value" ranking and
+          //     is site-only; no API endpoint publishes it, so it is not part
+          //     of the /v1/score contract that the national anchor exists to
+          //     make comparable.
+          //   - Both transforms are monotonically decreasing in price, so the
+          //     ORDER this component imposes inside a city is identical either
+          //     way. What would change is the SPREAD, and therefore how far
+          //     affordability can move a row against the other components.
+          //   - That spread is exactly what the price-led disclosure threshold
+          //     measures, so changing it here would move the data underneath an
+          //     open decision while that decision is still open.
+          //
+          // If it is ever unified, use affordScore() and the national bounds -
+          // do not write a third formula.
           const afford = maxPrice === minPrice ? 5 : ((maxPrice - price) / (maxPrice - minPrice)) * 10;
 
           // 3. GROWTH - inherited from borough. Mirrors the borough-path formula
@@ -11620,7 +11725,12 @@
           <div class="score-bar-track"><div class="score-bar-fill" style="width:${a * 10}%;background:${scoreColor(a)};"></div></div>
           <span class="score-row-value">${a}/10</span>
         </div>
-        <div class="score-explain">${priceFull} average. Cheapest=10, priciest=0. Weight: <strong>${Math.round(pw.afford * 100)}%</strong></div>
+        <!-- v5.0: this said "Cheapest=10, priciest=0", which described the
+             within-city min-max scale and became false the moment the anchor
+             went national. It is not a cohort ranking any more, so it no longer
+             claims to be one - the within-city standing is the rank line below,
+             which says what it is. -->
+        <div class="score-explain">${priceFull} average, scored against borough prices nationally. Weight: <strong>${Math.round(pw.afford * 100)}%</strong></div>
 
         <div class="score-row" style="margin-top:10px;">
           <span class="score-row-label">Growth</span>

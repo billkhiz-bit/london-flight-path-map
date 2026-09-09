@@ -551,6 +551,87 @@ def write(city: str, hpi: dict[str, dict]) -> int:
             f"Wrote {SCORE_APP}. Now regenerate the site block: "
             f"python scripts/build_city_frontend_block.py --city {city} --insert"
         )
+    # The site needs the BACKEND-ONLY cities' prices too, since v5.0 - they are
+    # in the national affordability pool even though nothing renders them. This
+    # runs on EVERY city's write, not just theirs: rolling any city changes the
+    # Lambda dict, and the site's copy of Cardiff/Nottingham must be refreshed
+    # from that same dict whichever city triggered the roll.
+    refresh_backend_only_prices()
+    return 0
+
+
+# The site holds a prices-only copy of the BACKEND_ONLY_CITIES so its national
+# affordability pool matches the Lambda's. Without it the site pools 86 sterling
+# boroughs against the Lambda's 94, which moves p5/p95 and therefore moves
+# published scores - measured at 4 boroughs by 0.1 when v5.0 first landed.
+BACKEND_ONLY_START = "// BACKEND-ONLY-PRICES:START"
+BACKEND_ONLY_END = "// BACKEND-ONLY-PRICES:END"
+# The ONE holder of which cities are API-only. Read from it, never copied:
+# `tests/test_borough_data_parity.py` has its own test asserting the set is
+# DECLARED rather than discovered, and a second copy here would be correct the
+# day it was written and wrong at the next one-way door. Parsed rather than
+# imported because that module uses a package-relative conftest import and will
+# not load standalone - the same reason tests/borough-score-parity.mjs parses it.
+BACKEND_ONLY_HOLDER = Path("tests/test_borough_data_parity.py")
+
+
+def _backend_only_cities() -> set[str]:
+    import ast  # noqa: PLC0415
+
+    tree = ast.parse(BACKEND_ONLY_HOLDER.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(
+            getattr(t, "id", None) == "BACKEND_ONLY_CITIES" for t in node.targets
+        ):
+            value = node.value
+            if isinstance(value, ast.Call) and value.args:
+                value = value.args[0]
+            return set(ast.literal_eval(value))
+    raise SystemExit(
+        f"BACKEND_ONLY_CITIES not found in {BACKEND_ONLY_HOLDER}. Refusing to "
+        "guess: writing an empty block would silently shrink the site's "
+        "affordability pool and move every published score."
+    )
+
+
+def refresh_backend_only_prices() -> int:
+    """Rewrite index.html's BACKEND_ONLY_PRICES block from the Lambda registry.
+
+    Called after every --write. The alternative - a reminder to update it by
+    hand - is the shape this repo has been caught by repeatedly, and here it
+    would go wrong silently in the worst direction: every published score moves
+    slightly, nothing errors, and only `tests/borough-score-parity.mjs` notices.
+    That gate IS the backstop, but a gate that reds with no way to fix it costs
+    a session to diagnose.
+    """
+    sys.path.insert(0, str(Path("backend/lambdas/score").resolve()))
+    import app  # noqa: PLC0415
+
+    backend_only = _backend_only_cities()
+    site = SITE_HOLDER.read_text(encoding="utf-8")
+    if BACKEND_ONLY_START not in site:
+        print(
+            f"  NOTE: {BACKEND_ONLY_START} not found in {SITE_HOLDER}; "
+            "backend-only prices not refreshed.",
+            file=sys.stderr,
+        )
+        return 1
+
+    lines = [f"      {BACKEND_ONLY_START}", "      const BACKEND_ONLY_PRICES = {"]
+    for city_id in sorted(backend_only):
+        prices = [b["avgPrice"] for b in app.CITIES[city_id]["boroughs"].values()]
+        lines.append(f"        {city_id}: [{', '.join(str(int(p)) for p in prices)}],")
+    lines.append("      };")
+    lines.append(f"      {BACKEND_ONLY_END}")
+
+    start = site.index(BACKEND_ONLY_START) - len("      ")
+    end = site.index(BACKEND_ONLY_END) + len(BACKEND_ONLY_END)
+    updated = site[:start] + "\n".join(lines) + site[end:]
+    if updated == site:
+        print("  backend-only prices already current.")
+        return 0
+    SITE_HOLDER.write_text(updated, encoding="utf-8", newline="")
+    print(f"  Refreshed BACKEND_ONLY_PRICES in {SITE_HOLDER}.")
     return 0
 
 

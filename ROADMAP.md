@@ -2,7 +2,21 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-09 (**WCAG 2.2 AA IS NOW CLAIMED AND ENFORCED, AND
+**Last reviewed:** 2026-09-09 (**METHODOLOGY v5.0: AFFORDABILITY IS NATIONAL
+AND LOG-SCALED. Plus WCAG 2.2 AA enforced, applied weights published, and two
+stale records corrected.**
+
+- **v5.0 affordability, decision 1 of the four, CLOSED IN SOURCE AND NOT YET
+  DEPLOYED.** All 1,619 inverted cross-city pairs are gone; **737 of 792
+  composite scores move**, London -1.55 mean, Teesside +1.28. The linear
+  p10/p90 this file recommended was **measured and rejected** - it flattened
+  four of thirteen cities. `context.priceRankInCity` carries the within-city
+  signal. Two defects surfaced doing it: the site pooled 86 boroughs against
+  the Lambda's 94, and `check_worked_example.py` had **never compared
+  affordability at all**.
+- **Applied weights, decision 2, CLOSED.** See below.
+
+**WCAG 2.2 AA IS NOW CLAIMED AND ENFORCED, AND
 THE 2026-09-08 WAVE IS DEPLOYED THOUGH THIS FILE SAID IT WAS NOT.**
 
 - **The WCAG 2.2 decision below is CLOSED.** `wcag22aa` is in `WCAG_TAGS`, so
@@ -950,16 +964,59 @@ printed to stdout alone would have been read by nobody.
 ### Raised 2026-09-03 - four that change PUBLISHED NUMBERS
 ### Recommendations added 2026-09-04; still undecided
 
-1. **Affordability scaling.** Min-max WITHIN each city, so every city's
-   cheapest borough scores 10.0 and its priciest 0.0 whatever the money.
-   **Barking and Dagenham publishes 10.0 at GBP 371,030 while Stockton-on-Tees
-   publishes 0.0 at GBP 170,923** - 2.2x cheaper, reading as least affordable.
-   The ten points cover GBP 40k of spread in Merseyside and GBP 879k in London.
-   Now disclosed on the API, the site and all 99 area pages. The open question
-   is whether to CHANGE it: a national anchor, wider cohorts for the 1.2-1.3x
-   cities, or leave it relative and rely on the disclosure. Note the codebase
-   already accepts the argument once - Leicester's cohort was widened because
-   "min-max over a narrow cohort manufactures spread it has not measured".
+1. ~~**Affordability scaling.**~~ **DONE 2026-09-09 as METHODOLOGY v5.0, in
+   source.** Affordability is now a **LOG scale against the 5th-95th percentile
+   of borough medians across the whole currency pool**, not min-max within each
+   city. Barking and Dagenham **10.0 -> 4.4** at GBP 371,030; Stockton-on-Tees
+   **0.0 -> 9.5** at GBP 170,923. All **1,619 inverted cross-city pairs** (of
+   4,371) are gone.
+
+   - **LOG, and NOT the linear p10/p90 this file recommended** - that was
+     measured and rejected. UK borough medians are strongly right-skewed, and a
+     linear scale over them flattened **four of thirteen cities** to under a
+     point of internal spread (Teesside to exactly 0.0, all five on 10.0) and
+     pinned 22 of 99 boroughs at a rail. Log p5/p95 flattens one city, keeps
+     the best mean internal spread of the four candidates (3.1), and still
+     clamps at percentiles so one outlier cannot set the scale. Table in
+     METHODOLOGY s4.2.
+   - **The within-city rank IS published**, as the recommendation asked:
+     `context.priceRankInCity` = `{rank, of}`, cheapest first. One nested
+     object rather than two flat keys, so the pair cannot drift apart.
+   - **Scale of the change: 737 of 792 composite scores move (93%).** London
+     falls a mean **1.55** (afford 7.6 -> 1.8), Teesside rises **1.28**, Tyne
+     and Wear 1.10; overall mean -0.28. This is the change working - London
+     stops reading as affordable and the North stops reading as expensive.
+   - **A city cohort compressing is CORRECT, not a defect.** Teesside really is
+     171k-200k. The codebase already accepted that argument for Leicester:
+     "min-max over a narrow cohort manufactures spread it has not measured".
+   - **Pools are per CURRENCY**, so the USD pool is New York's five boroughs -
+     the only city outside the UK. UK scores are comparable with each other and
+     **not** with New York's, and METHODOLOGY says so rather than implying a US
+     national comparison the data cannot support.
+   - **Price-to-earnings stays ruled out.** METHODOLOGY s10 commits that
+     resident income and wealth are never inputs, because the customer set
+     includes Sharia-compliant home-finance providers.
+   - **Two defects surfaced while doing it**, both now closed. The site pooled
+     **86** sterling boroughs against the Lambda's **94** - it has no CITY_DATA
+     entry for the backend-only Cardiff and Nottingham - so p5/p95 differed and
+     four boroughs disagreed by 0.1. Only `borough-score-parity.mjs` could see
+     that: the formulas were bit-identical, the two holders simply disagreed
+     about *who is in the country*. And `check_worked_example.py` had **never
+     compared affordability at all** - see the note below.
+   - **Undeployed.** The live API still serves v4.0, so `area pages match the
+     live API` and `site == /v1/score` will red until it ships.
+
+   > **A BLOCKING GATE HAD NEVER CHECKED AFFORDABILITY.**
+   > `check_worked_example.py` read
+   > `app.calc_afford(...) if hasattr(app, 'calc_afford') else None`, and there
+   > is no `calc_afford` in the engine - affordability was inline in
+   > `calc_score`. The guard was permanently False, the value permanently None,
+   > and the loop skips a None. The stage still printed *"every input, bound,
+   > component, weight and the final arithmetic agree"*, and it passed on a
+   > METHODOLOGY s6 that still showed the min-max formula after the engine had
+   > stopped using it. **Second instance of a `hasattr()` guard on a name that
+   > does not exist** - the first dropped seven fields from all 99 area pages.
+   > It compares 17 things now, up from 16, and was proven red.
 2. ~~**Published weights do not reproduce the published score**~~ **DONE
    2026-09-09, in source.** The response now publishes the APPLIED
    (renormalised) table, so `sum(components * weights)` reaches `score` on every

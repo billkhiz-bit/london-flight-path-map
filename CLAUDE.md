@@ -1177,6 +1177,62 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
+**AFFORDABILITY IS NATIONAL AND LOG-SCALED SINCE METHODOLOGY v5.0
+(2026-09-09), not min-max within each city.** `afford` is now
+`clamp((ln(p95) - ln(price)) / (ln(p95) - ln(p5)), 0, 1) x 10` against the
+5th-95th percentile of borough medians across the whole **currency** pool.
+Barking and Dagenham **10.0 -> 4.4** at GBP 371,030, Stockton-on-Tees
+**0.0 -> 9.5** at GBP 170,923; all **1,619 of 4,371 inverted cross-city pairs**
+are gone. **737 of 792 composite scores move**: London falls a mean 1.55,
+Teesside rises 1.28. **UNDEPLOYED as of this writing** - the live API serves
+v4.0, so `area pages match the live API` and `site == /v1/score` red until it
+ships.
+
+- **LOG, and the linear p10/p90 that ROADMAP recommended was measured and
+  REJECTED.** UK borough medians are right-skewed, so a linear scale flattened
+  **four of thirteen cities** to under a point of internal spread (Teesside to
+  exactly 0.0) and pinned 22 of 99 boroughs at a rail. Log p5/p95 flattens one.
+  Do not "simplify" it back to linear; the comparison table is METHODOLOGY s4.2.
+- **A compressed city cohort is the honest answer, not a defect.** Teesside
+  really is 171k-200k. Same argument the repo already accepted when it widened
+  Leicester's cohort: *min-max over a narrow cohort manufactures spread it has
+  not measured.*
+- **The within-city signal is published, not deleted**:
+  `context.priceRankInCity` = `{rank, of}`, cheapest first, ONE nested object so
+  the pair cannot drift.
+- **Pools are per CURRENCY.** The USD pool is New York's five boroughs, so US
+  and UK scores are NOT comparable with each other; the provenance says so.
+  Never pool currencies to "widen" the cohort.
+- **THE SITE NEEDS `BACKEND_ONLY_PRICES` AND IT IS EASY TO LOSE.** `/v1/score`
+  covers 13 cities, the site renders 11, so the site pooled **86** sterling
+  boroughs against the Lambda's **94** - moving p5/p95 and disagreeing on four
+  boroughs by 0.1. index.html carries a prices-only block for Cardiff and
+  Nottingham between `BACKEND-ONLY-PRICES` markers, **maintained by
+  `build_hpi_prices.py --write`** (which reads `BACKEND_ONLY_CITIES` from its
+  single holder, `tests/test_borough_data_parity.py`, by AST rather than
+  copying it). A national anchor makes every score depend on every other
+  borough's price, so **input parity is not enough** - only
+  `tests/borough-score-parity.mjs`, which compares OUTPUT, could see this.
+- **`check_worked_example.py` HAD NEVER COMPARED AFFORDABILITY.** It read
+  `app.calc_afford(...) if hasattr(app, 'calc_afford') else None` and there is
+  no `calc_afford` - the guard was permanently False and the loop skips a None,
+  while the stage printed "every input, bound, component, weight and the final
+  arithmetic agree". **Second `hasattr()`-on-a-nonexistent-name in this repo**;
+  the first dropped seven fields from all 99 area pages. 17 comparisons now.
+- **The provenance line is DERIVED**, replacing THIRTEEN hand-written strings
+  whose whole point was an incomparability caveat that v5.0 makes false in
+  thirteen places at once. `SNAPSHOT_VINTAGE_LABEL` is the one holder for
+  "June 2026", which those thirteen also each hardcoded.
+- **Quarter-over-quarter affordability now mixes two movements.** Wandsworth's
+  price ROSE 660,000 -> 680,105 and its affordability ALSO rose 0.3 -> 0.4,
+  because the national p95 rose faster. That is what "affordable relative to the
+  country" means; `marketContext` on `/v1/changes` exists to make it visible.
+- **The NEIGHBOURHOOD ranking is still within-city min-max, deliberately.** It
+  is site-only, no endpoint publishes it, and changing it would move the data
+  under the still-open price-led-threshold decision. Both transforms are
+  monotonic in price, so the order inside a city is identical either way. If it
+  is ever unified, call `affordScore()` - do not write a third formula.
+
 **`weights` IS THE APPLIED TABLE SINCE 2026-09-09, not the persona's nominal
 row.** `sum(components * weights)` now reaches `score` on every borough -
 Brooklyn **4.4826 -> 4.5** (was 3.9 against 4.5), Cardiff **6.2953 -> 6.3**.

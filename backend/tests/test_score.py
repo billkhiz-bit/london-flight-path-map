@@ -195,7 +195,36 @@ class TrendsFeatureTests(unittest.TestCase):
         # re-pinning - it is derived from DEFRA and EA data that does not move
         # on a quarterly HPI roll. If this pin ever changes because `env`
         # differed between vintages, that is a real defect and not a re-pin.
-        self.assertEqual(comp['scoreChange'], -0.1)
+        #
+        # RE-PINNED -0.1 -> 0.0 at v5.0, and the REASON is worth reading before
+        # re-pinning it again, because it is a genuine property of a national
+        # anchor rather than an artefact.
+        #
+        # Wandsworth's price ROSE, 660,000 -> 680,105, and its affordability
+        # also rose, 0.3 -> 0.4. That is not inverted. Affordability is now
+        # measured against the national p5-p95 band, and between these two
+        # vintages the top of that band rose by MORE than Wandsworth did - only
+        # London refreshed, and London is where the expensive tail lives. A
+        # borough whose price rises more slowly than the national ceiling really
+        # has become more affordable relative to the country, which is what the
+        # component now claims to measure.
+        #
+        # The consequence to keep in mind: a quarter-over-quarter change now
+        # mixes "this borough moved" with "the national distribution moved".
+        # `marketContext` on /v1/changes exists to make that visible, and the
+        # attribution block still decomposes the score change exactly.
+        self.assertEqual(comp['scoreChange'], 0.0)
+        # Asserted so the 0.0 above cannot pass on a comparison that computed
+        # nothing: the vintages genuinely differ, and the component that moved
+        # is affordability. A bare 0.0 is indistinguishable from a broken
+        # comparison, which is why the NYC zero-change test is a separate case
+        # with its own reason.
+        previous = app.calc_score(
+            'Wandsworth', 'london', app.PERSONAS['balanced'],
+            boroughs_override=app.previous_dataset('london'),
+        )
+        self.assertEqual(previous['components']['afford'], 0.3)
+        self.assertEqual(body['components']['afford'], 0.4)
         self.assertEqual([u['factor'] for u in comp['why']['unweighted']], ['growth'])
         self.assertIn('did not change the score', comp['why']['unweighted'][0]['note'])
 
@@ -329,7 +358,14 @@ class TrendsFeatureTests(unittest.TestCase):
         newham = self._investor_why('Newham')
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
         self.assertGreater(afford['change'], 0, 'affordability improved')
-        self.assertIn('9.5 → 9.6', afford['title'])
+        # 9.5 -> 9.6 became 3.6 -> 3.8 at v5.0. Newham at GBP 403k was near the
+        # cheap end of LONDON and is mid-table NATIONALLY, so the same borough
+        # scores far lower against the country than against its own city. The
+        # PROPERTY this test exists for is unchanged and is the assertion above:
+        # its price fell, so affordability improved, while the headline score
+        # dropped - the explanation must not flatten every factor into the
+        # direction of the headline.
+        self.assertIn('3.6 → 3.8', afford['title'])
         self.assertTrue(any('price here fell' in st for st in afford['steps']), afford['steps'])
 
     def test_changes_publishes_weights_so_attribution_is_checkable(self):
@@ -394,10 +430,28 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertIn('steepest fall', growth['workings'])
         self.assertIn('= 4.9', growth['workings'])
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
-        self.assertIn('= 9.6', afford['workings'])
-        # The cheapest/dearest endpoints are named in the prose steps, so the
-        # reader knows what the scale runs between.
+        # = 9.6 became = 3.8 at v5.0, and the FORMULA behind it changed too:
+        # min-max over the city cohort became a log scale against the national
+        # p5-p95 band.
+        #
+        # ASSERTED AS AN IDENTITY, NOT A STRING, because a string match is
+        # exactly what failed to catch the v5.0 defect. The `workings` line kept
+        # printing the OLD min-max arithmetic with the NEW value appended, so
+        # the shown sum no longer reached its own stated answer - and a test
+        # looking for '= 9.6' reports that as "the number changed", which reads
+        # like a re-pin rather than a published falsehood. This checks the thing
+        # that must be true of any formula: the sum ends in the score it claims.
+        self.assertTrue(
+            afford['workings'].endswith(f'= {afford["after"]}'),
+            f'workings must end in the score they produce: {afford["workings"]!r} '
+            f'against after={afford["after"]}',
+        )
+        self.assertIn('log(', afford['workings'])
+        # The national band is what the score runs between, and the city's own
+        # cheapest/dearest are still named as CONTEXT - the reader needs both,
+        # and needs to know which one sets the number.
         steps = ' '.join(afford['steps'])
+        self.assertIn('across the whole country', steps)
         self.assertIn('cheapest', steps)
         self.assertIn('dearest', steps)
 
@@ -781,13 +835,27 @@ class CalcScoreTests(unittest.TestCase):
         # not noise: terminated postcodes cluster in redeveloped inner-urban
         # land, which is both nearer the stations and nearer the Thames than
         # the live stock, so dropping them lowers transport and lowers flood.
+        # 6.2 -> 4.6 at METHODOLOGY v5.0 (2026-09-09), entirely from
+        # affordability: 6.5 -> 0.4. Nothing about Wandsworth changed. The
+        # anchor did - affordability is scored against the 5th-95th percentile
+        # of borough medians NATIONALLY now, on a log scale, instead of min-max
+        # within the London cohort. Wandsworth's GBP 680,105 sat mid-table among
+        # 33 London boroughs and sits just under the national p95 of GBP
+        # 717,369, so a mid-cohort score becomes a near-floor national one.
+        #
+        # That is the change working, not a regression. Under the old scale a
+        # cheaper borough scored LOWER than a dearer one in 1,619 of the 4,371
+        # cross-city pairs; it is 0 now. London falls by a mean of 1.55 points
+        # and Teesside rises 1.28, which is what pricing London against the
+        # country rather than against itself is FOR.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 6.2)
+        self.assertEqual(result['score'], 4.6)
         self.assertEqual(result['components']['env'], 5.6)
         self.assertEqual(result['components']['quiet'], 5.0)
-        # 6.7 under the May vintage; the June roll moved the cohort.
-        self.assertEqual(result['components']['afford'], 6.5)
+        # 6.7 under the May vintage, 6.5 under June's, 0.4 under the v5.0
+        # national log anchor. The vintage moved the cohort; v5.0 replaced it.
+        self.assertEqual(result['components']['afford'], 0.4)
         # 4.3 until 2026-08-10: Wandsworth's trend was -4.2%, and correcting
         # London to HM Land Registry HPI 2026-05 put it at -6.1%. The headline
         # assertion above is unchanged at 6.4, which is the invariant this

@@ -161,38 +161,47 @@ def gather(city: str, borough: str) -> dict | None:
             return
         facts.append({'label': label, 'value': value, 'note': note})
 
-    # AFFORDABILITY AND GROWTH ARE COHORT-RELATIVE, AND THESE PAGES DID NOT SAY
-    # SO (2026-09-03). Both are min-max scaled WITHIN the city, so the cheapest
-    # borough of every city scores 10.0 and the priciest 0.0 whatever the money
-    # involved. Measured: Barking and Dagenham published `Affordability 10.0`
-    # at GBP 371,030 while Stockton-on-Tees published `0.0` at GBP 170,923 - a
-    # borough 2.2x CHEAPER reading as the least affordable - with the price in
-    # the same table for a reader to notice the contradiction.
+    # GROWTH IS COHORT-RELATIVE; AFFORDABILITY IS NOT, SINCE v5.0 (2026-09-09).
     #
-    # Nothing was miscomputed and `index.html` and METHODOLOGY both disclose the
-    # scaling. These 99 pages did not, and they are the surface a stranger
-    # reaches from a search engine with no other context, so an unlabelled
-    # relative score reads as an absolute one. Same distinction as the
-    # neighbourhood ranking's "best value" label.
+    # These pages carried ONE note over both rows, added 2026-09-03 when both
+    # components were min-max scaled within the city. Affordability moved to a
+    # NATIONAL log anchor at v5.0, so that note became false on the row it was
+    # written for while staying true on the row beside it - which is exactly the
+    # shape that lets a caveat outlive its reason. Two notes now, each saying
+    # what its own row does.
     #
-    # NOT wrapped in uk_note(): this is a methodology caveat, not a UK source
-    # attribution, and it is just as true of New York, where the Bronx scores
-    # 10.0 at USD 420,000.
+    # The original defect is worth keeping in view: Barking and Dagenham
+    # published `Affordability 10.0` at GBP 371,030 while Stockton-on-Tees
+    # published `0.0` at GBP 170,923 - 2.2x cheaper, reading as least
+    # affordable - with the price in the same table for a reader to notice the
+    # contradiction. v5.0 removes the contradiction rather than disclosing it,
+    # and the within-city standing the old scale implied is now published as an
+    # explicit rank.
+    #
+    # NEITHER is wrapped in uk_note(): these are methodology caveats, not UK
+    # source attributions, and both are just as true of New York.
     prices = [r.get('avgPrice') for r in app.CITIES[city]['boroughs'].values()
               if r.get('avgPrice')]
-    cohort_note = None
+    growth_note = None
     if len(prices) > 1:
-        cohort_note = (
-            f'Scaled within this city only - 10 is the cheapest of '
+        growth_note = (
+            f'Scaled within this city only - 10 is the fastest-rising of '
             f'{len(prices)} areas here, not nationally'
         )
+
+    # Derived from the response, never recomputed here: a second implementation
+    # of the same rank is a second thing to keep in step.
+    rank = (body.get('context') or {}).get('priceRankInCity') or {}
+    afford_note = 'Scored against borough prices across the whole country, not just this city'
+    if rank.get('rank') and rank.get('of', 0) > 1:
+        afford_note += f' - {rank["rank"]} of {rank["of"]} here by price, cheapest first'
 
     add('Sky Score', f"{body['score']} / 10")
     add('Quiet skies', f"{comp.get('quiet')} / 10" if comp.get('quiet') is not None else None)
     add('Affordability', f"{comp.get('afford')} / 10" if comp.get('afford') is not None else None,
-        cohort_note)
+        afford_note)
     add('Growth', f"{comp.get('growth')} / 10" if comp.get('growth') is not None else None,
-        cohort_note)
+        growth_note)
     add('Liveability', f"{comp.get('live')} / 10" if comp.get('live') is not None else None)
     # The FIFTH component, missing from all 99 pages until 2026-09-03 (audit F3).
     # `env` has scored since v3.9 and the pages showed four rows, so the

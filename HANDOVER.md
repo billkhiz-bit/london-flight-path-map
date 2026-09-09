@@ -19,7 +19,47 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-09. THE 09-08 WAVE IS DEPLOYED; WCAG 2.2 IN PROGRESS.
+## 0. PICK UP HERE - 2026-09-09. METHODOLOGY v5.0 IS IN SOURCE AND NOT DEPLOYED.
+
+> **THE ONE THING THAT MATTERS ON PICKING THIS UP: v5.0 changes 737 of 792
+> published scores and has not shipped.** Source and the live API disagree on
+> purpose. Two blocking stages will be RED until the deploy, and they are
+> reporting the truth rather than a defect:
+> `area pages match the live API` and `site == /v1/score`.
+>
+> **Deploy order matters.** The backend goes first (`sam build && sam deploy`),
+> because the site's `index.html` already computes v5.0 scores locally: shipping
+> the frontend first would put the site ahead of the API on every borough. Then
+> `make web-deploy-all`, which covers `area-deploy` and its 100 rebuilt pages.
+> Re-run `sh scripts/check_deploy_drift.sh` and `node tests/area-page-freshness.mjs`
+> afterwards and expect both green.
+
+**What v5.0 is.** Affordability is a LOG scale against the 5th-95th percentile
+of borough medians across the whole currency pool, replacing min-max within each
+city. Barking and Dagenham **10.0 -> 4.4** at GBP 371,030; Stockton-on-Tees
+**0.0 -> 9.5** at GBP 170,923. All **1,619 of 4,371 inverted cross-city pairs**
+are gone. London falls a mean **1.55**, Teesside rises **1.28**.
+`context.priceRankInCity` is new and carries the within-city standing.
+
+**The linear p10/p90 that ROADMAP recommended was measured and REJECTED** - it
+flattened four of thirteen cities. Do not "simplify" the log back to linear; the
+comparison table is METHODOLOGY s4.2. Full detail in
+`memory/project-affordability-v50-2026-09-09.md`.
+
+**Two defects found while doing it, both closed.** The site pooled **86**
+sterling boroughs against the Lambda's **94** (it has no CITY_DATA entry for the
+backend-only Cardiff and Nottingham), so four boroughs disagreed by 0.1 - only
+`borough-score-parity.mjs` could see it, because the formulas were bit-identical
+and the holders merely disagreed about who is in the country. And
+`check_worked_example.py` had **never compared affordability**: a `hasattr()`
+guard on `calc_afford`, a name the engine does not have.
+
+Also in this wave and already covered below: WCAG 2.2 AA now blocks, and the
+response publishes APPLIED weights.
+
+---
+
+## 0x. The 09-08 wave - DEPLOYED; WCAG 2.2 closed 09-09.
 
 **Verified from the ORIGIN, not from a note.** Live `index.html` is
 byte-identical to source (sha256 `69245f00f48d085b...`), serves

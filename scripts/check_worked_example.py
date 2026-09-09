@@ -99,9 +99,18 @@ def main():
               if b.get('avgPrice')]
     trends = [b['trend'] for b in app.CITIES[CITY]['boroughs'].values()
               if b.get('trend') is not None]
+    # v5.0: affordability is anchored on the NATIONAL price band, so the cohort
+    # min/max price it used to quote is no longer part of the derivation and is
+    # not checked - the p5/p95 pair is. Growth is still cohort-relative, so its
+    # trend bounds are unchanged. Keeping a stale price-cohort check here would
+    # hold section 6 to arithmetic the engine has stopped doing.
+    afford_p5, afford_p95 = app.national_price_bounds(
+        CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
+    )
+    del prices
     for label, pattern, real in (
-        ('cohort min price', r'`min = ([\d,]+)`', min(prices)),
-        ('cohort max price', r'`max = ([\d,]+)`', max(prices)),
+        ('national p5 price', r'`p5 = ([\d,]+)`', round(afford_p5)),
+        ('national p95 price', r'`p95 = ([\d,]+)`', round(afford_p95)),
         ('cohort min trend', r'`min = (-?[\d.]+)`', min(trends)),
         ('cohort max trend', r'`max = (-?[\d.]+)`', max(trends)),
     ):
@@ -119,9 +128,29 @@ def main():
         if said is not None:
             stated[comp] = said
 
-    # Re-derive the four that do not need the raster.
+    # Re-derive the ones that do not need the raster.
+    #
+    # `afford` WAS NEVER COMPARED HERE UNTIL 2026-09-09, and the gate said it
+    # was. The line read:
+    #
+    #     'afford': app.calc_afford(bd, CITY) if hasattr(app, 'calc_afford') else None
+    #
+    # and there is no `calc_afford` in the engine - affordability was inline in
+    # `calc_score`. So the guard was permanently False, the value permanently
+    # None, and the loop below skips any component whose derived value is None.
+    # The stage still printed "every input, bound, component, weight and the
+    # final arithmetic agree". A hasattr() guard on a name that does not exist
+    # is a silent opt-out, and this is the SECOND instance in this repo - the
+    # first read `app.BOROUGH_EXTRA` and dropped seven fields from all 99 area
+    # pages while passing its own --check.
+    #
+    # It is derived properly now, through the same helpers the engine uses, so
+    # it cannot silently stop comparing again.
+    afford_p5, afford_p95 = app.national_price_bounds(
+        CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
+    )
     derived = {
-        'afford': app.calc_afford(bd, CITY) if hasattr(app, 'calc_afford') else None,
+        'afford': app.afford_score(bd['avgPrice'], afford_p5, afford_p95),
         'live': app.get_live_score(bd),
         'env': app.get_env_score(bd),
     }

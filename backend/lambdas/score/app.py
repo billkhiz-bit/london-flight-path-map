@@ -103,7 +103,7 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2023/24), scored
 #            continuously by school_score() on absolute anchors. London goes
 #            from 2 distinct schools sub-scores to 25.
-METHODOLOGY_VERSION = '4.0'
+METHODOLOGY_VERSION = '5.0'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -274,6 +274,12 @@ PERSONAS = {
 # previous dataset is the current one overlaid with these two fields.
 # ---------------------------------------------------------------------------
 SNAPSHOT_VINTAGE = '2026-Q3'  # June 2026 UK HPI (published 19 Aug 2026), applied 2026-08-25
+# The same vintage in the words a customer reads. It was written out by hand in
+# THIRTEEN provenance strings until 2026-09-09, one per city, so a roll had to
+# remember all thirteen - and the Progress 8 roll has already been caught
+# updating London's and leaving a sibling eleven cities down saying the old
+# year. Rolling the quarter means changing both lines here and nothing else.
+SNAPSHOT_VINTAGE_LABEL = 'June 2026'
 PREVIOUS_VINTAGE = '2026-Q2'
 SNAPSHOT_REFRESHED_AT = '2026-08-25'
 # One-off caveat for this quarter's comparison: v3.2 also clamped the
@@ -487,8 +493,13 @@ def _money(value, city):
 # ever saying what they measure, which assumes the reader already knows.
 FACTOR_MEANINGS = {
     'quiet': 'How free this area is from aircraft noise.',
-    'afford': 'How cheap this area is, ranked against every other London borough.',
-    'growth': 'How fast property prices are rising here, ranked against every other London borough.',
+    # v5.0: affordability is NATIONAL now, so "against every other London
+    # borough" stopped being true - and it had only ever been true of London
+    # anyway, in a dict served to thirteen cities. Growth below is still
+    # cohort-relative, so it keeps its comparison and gains the city it is
+    # actually relative to.
+    'afford': 'How cheap this area is, against borough prices across the whole country.',
+    'growth': 'How fast property prices are rising here, ranked against the other boroughs of this city.',
     'live': 'Schools, crime and transport, combined.',
 }
 
@@ -848,18 +859,34 @@ def build_why(
                     f"The average price here did not change ({_money(cur_price, city)}). What moved was the rest "
                     'of London.'
                 )
+            # v5.0. This used to say affordability was "a league table: the
+            # cheapest borough scores 10 and the dearest scores 0", and show the
+            # min-max sum over the CITY cohort. Both became false when the
+            # anchor went national, and the workings became false in the worst
+            # way available: the printed arithmetic no longer equalled the
+            # printed result, because the value beside it was already coming
+            # from the new formula. A shown sum that does not reach its own
+            # answer is worse than no sum, so this reproduces the real one.
+            afford_p5, afford_p95 = national_price_bounds(
+                city, CITIES[city]['boroughs'], CITIES[city]['currency']
+            )
+            driver['steps'].append(
+                'Affordability is measured against borough prices across the whole country, not just this '
+                f'city: {_money(afford_p5, city)} or less scores 10, {_money(afford_p95, city)} or more '
+                'scores 0, and the scale between them is logarithmic because prices are bunched at the '
+                'cheap end and stretched at the dear end.'
+            )
             if cur_bm:
                 driver['steps'].append(
-                    'Affordability is also a league table: the cheapest borough scores 10 and the dearest scores '
-                    f'0, with everywhere else in between. Right now that runs from {cur_bm["cheapestArea"]} at '
-                    f'{_money(cur_bm["cheapestAvgPrice"], city)} up to {cur_bm["dearestArea"]} at '
-                    f'{_money(cur_bm["dearestAvgPrice"], city)}.'
+                    f'For local context, the cheapest borough in this city is {cur_bm["cheapestArea"]} at '
+                    f'{_money(cur_bm["cheapestAvgPrice"], city)} and the dearest is {cur_bm["dearestArea"]} '
+                    f'at {_money(cur_bm["dearestAvgPrice"], city)}; context.priceRankInCity says where this '
+                    'borough sits in that list. That local range no longer sets the score - it is context.'
                 )
-                driver['workings'] = (
-                    f'({_money(cur_bm["dearestAvgPrice"], city)} − {_money(cur_price, city)}) ÷ '
-                    f'({_money(cur_bm["dearestAvgPrice"], city)} − {_money(cur_bm["cheapestAvgPrice"], city)}) '
-                    f'× 10 = {f["after"]}'
-                )
+            driver['workings'] = (
+                f'log({_money(afford_p95, city)} ÷ {_money(cur_price, city)}) ÷ '
+                f'log({_money(afford_p95, city)} ÷ {_money(afford_p5, city)}) × 10 = {f["after"]}'
+            )
         elif f['factor'] in ('quiet', 'live'):
             driver['steps'].append('The underlying data for this factor was refreshed this quarter.')
 
@@ -4690,6 +4717,58 @@ def _live_breakdown_line(city, bd=None):
             'count per response.')
 
 
+def _afford_breakdown_line(city, bd=None):
+    """Affordability lineage, DERIVED for every city (v5.0, 2026-09-09).
+
+    This replaced THIRTEEN hand-written strings, and the replacement is the
+    point rather than a tidy-up. Every one of them existed mainly to carry the
+    incomparability caveat that within-city min-max forced - *"scaled WITHIN
+    this city cohort, so the numbers are not comparable across cities: the
+    priciest borough in any cohort scores 0.0 whatever it costs"* - and v5.0
+    makes that sentence false in thirteen places at once. Thirteen mirrored
+    strings is how this repo has repeatedly shipped a claim that stopped being
+    true in twelve of them; a derived line cannot say something the anchor is
+    not doing.
+
+    The bounds are read from the live pool, so a new city that shifts the
+    national distribution re-describes every city's lineage by itself.
+    """
+    currency = CITIES[city]['currency']
+    p5, p95 = national_price_bounds(city, CITIES[city]['boroughs'], currency)
+    pool = sum(len(c['boroughs']) for c in CITIES.values() if c['currency'] == currency)
+    unit = 'GBP' if currency == 'GBP' else 'USD'
+
+    if currency == 'GBP':
+        source = (
+            f'HM Land Registry UK House Price Index, {SNAPSHOT_VINTAGE_LABEL} vintage, '
+            'Open Government Licence v3.0'
+        )
+        scope = (
+            f'Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile '
+            f'of borough medians across ALL {pool} boroughs in the sterling pool '
+            f'({unit} {p5:,.0f} to {unit} {p95:,.0f}), not against this city cohort. '
+            'Affordability is therefore comparable BETWEEN cities: a cheaper borough '
+            'always scores higher than a dearer one, which within-city min-max did not '
+            'deliver - it inverted 1,619 of the 4,371 cross-city borough pairs. '
+            'context.priceRankInCity carries the within-city standing that scaling used '
+            'to imply.'
+        )
+    else:
+        source = (
+            'Curated New York borough median sale prices (USD). NOT HM Land Registry, '
+            'which holds England and Wales only'
+        )
+        scope = (
+            f'Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile '
+            f'of the {unit} pool ({unit} {p5:,.0f} to {unit} {p95:,.0f}). Stated plainly: '
+            f'that pool is New York\'s {pool} boroughs, because New York is the only city '
+            'Sky Score covers outside the United Kingdom - so this is a within-New-York '
+            'scale, and it is NOT comparable with the sterling scores, which are anchored '
+            'on a 94-borough national pool. Prices in different currencies are not pooled.'
+        )
+    return f'{source}. {scope}'
+
+
 CITY_PROVENANCE = {
     'london': {
         'sources': [
@@ -4732,7 +4811,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
-            'afford': 'HM Land Registry House Price Index (HPI), borough cohort min-max scaling',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
             'live': 'Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.',
         },
@@ -4747,7 +4826,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': 'Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. NOT DEFRA — no published Lden survey covers New York, so the dB thresholds in METHODOLOGY §3 are not directly applicable. The chosen resolution is reported in context.quietResolution.',
-            'afford': 'Curated New York borough median sale prices (USD), borough cohort min-max scaling. NOT HM Land Registry, which holds England and Wales only.',
+            'afford': _afford_breakdown_line,
             'growth': 'Curated New York borough annualised price trend. NOT HM Land Registry HPI.',
             'live': 'NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS — none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.',
         },
@@ -4761,7 +4840,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': 'PROVISIONAL ESTIMATE derived from Birmingham Airport (BHX) runway 15/33 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced for this city. The distance ladder is calibrated on Heathrow, which is several times Birmingham\'s size, so these bands reach further than the airport really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London and Greater Manchester, but scaled WITHIN the West Midlands cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. The West Midlands has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4775,7 +4854,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Leeds Bradford Airport (LBA) runway 14/32 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4797,7 +4876,7 @@ CITY_PROVENANCE = {
                 'ladder is calibrated on Heathrow, several times EMA in size, so these bands '
                 'reach further than the airport really does and the estimate is PESSIMISTIC.'
             ),
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. The cohort is Leicester plus all seven Leicestershire districts rather than the city and its three contiguous boroughs, because a four-authority cohort spans only 230k-281k and min-max over a narrow cohort manufactures spread it has not measured. Not comparable across cities; compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting a fabricated zero change.',
             'live': _live_breakdown_line,
         },
@@ -4818,7 +4897,7 @@ CITY_PROVENANCE = {
                 'so these bands reach further than the airport really does and the estimate is '
                 'PESSIMISTIC - Stockton-on-Tees reads `severe` on approach geometry alone.'
             ),
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling across the five Tees Valley unitaries. Not comparable across cities; compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting a fabricated zero change.',
             'live': _live_breakdown_line,
         },
@@ -4832,7 +4911,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "NO OPERATING COMMERCIAL AIRPORT. Doncaster Sheffield Airport is listed `type=closed` by OurAirports, commercial flights having ceased in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is therefore banded `low`. That is a MEASURED ABSENCE of a noise source rather than an unmeasured city, and it is stated so that a flat band cannot be read as a survey result. NOT a DEFRA sample.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4846,7 +4925,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Liverpool John Lennon Airport (LPL) runway 09/27 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4860,7 +4939,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Newcastle Airport (NCL) runway 07/25 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4874,7 +4953,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Bristol Airport (BRS) runway 09/27 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4888,7 +4967,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Cardiff Airport (CWL) runway 12/30 alignment and its extended approach centreline. NOT a DEFRA sample: DEFRA's Round 4 mapping does not cover Cardiff Airport at all - it is below the traffic threshold the Environmental Noise Directive maps at - so no raster exists to sample and the ladder is floored at the smallest published footprint, exactly as the sources line says.  So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN this city cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs. Compare boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
@@ -4902,7 +4981,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from East Midlands Airport (EMA) runway 09/27 alignment and its extended approach centreline. The airport lies OUTSIDE the city region, in Leicestershire, so no borough here is nearer than 16 km and none is banded above low-moderate. NOT sampled from the DEFRA Round 4 raster, so the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The ladder is calibrated on Heathrow and is therefore PESSIMISTIC rather than optimistic. Indicative only.",
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling across Greater Nottingham (the city plus Broxtowe, Gedling and Rushcliffe). Scaled WITHIN this cohort, so figures are not comparable across cities; compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. No previous vintage exists for this city, so ?compare=previous declines rather than reporting zero change.',
             'live': 'Liveability IS served here since v3.6/v3.7 (2026-08-11) - trust context.liveResolution over any sentence, including this one, which spent thirteen days claiming the score beside it did not exist. The CITY OF NOTTINGHAM measures all four inputs (DfE Progress 8; ONS Table C4; NaPTAN rail, metro and tram access within 800 m; NHS ODS GP practices within 500 m). Broxtowe, Gedling and Rushcliffe measure TWO: ONS folds their crime into the combined South Nottinghamshire partnership row (publishing that figure three times would render one measurement as three, so it is left absent), and Progress 8 publishes for Nottinghamshire, the upper-tier authority, not for its districts. Absent inputs have their weight redistributed, never defaulted.',
         },
@@ -4933,7 +5012,7 @@ CITY_PROVENANCE = {
         ],
         'breakdown': {
             'quiet': 'PROVISIONAL ESTIMATE derived from Manchester Airport (MAN) runway alignment and approach geometry. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY §3 are not evidenced for this city. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
-            'afford': 'HM Land Registry UK House Price Index, June 2026 vintage, borough cohort min-max scaling. Same vintage and source as London, but scaled WITHIN the Greater Manchester cohort, so the numbers are not comparable across cities: the priciest borough in any cohort scores 0.0 whatever it costs, and Trafford at GBP 393k scores as London\'s most expensive borough does at several times that. Compare boroughs to boroughs of the same city, or compare context.avgPriceGbp directly.',
+            'afford': _afford_breakdown_line,
             'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. Greater Manchester has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': 'MEASURED on all four inputs, matching London. Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (methodology v3.6). Healthcare: NHS Organisation Data Service, share of postcodes within 500 m of a GP practice (v3.7).',
         },
@@ -5947,6 +6026,114 @@ def live_resolution(bd, english=True):
     )
 
 
+def _percentile(values, q):
+    """Linear-interpolated percentile, matching numpy's default method.
+
+    Written out rather than imported: this Lambda has no numpy, and
+    `statistics.quantiles` cuts a distribution into n equal groups rather than
+    answering "the value at q", which is a different question and returns
+    different numbers at the tails - exactly where this is used.
+    """
+    ordered = sorted(values)
+    if len(ordered) == 1:
+        return float(ordered[0])
+    pos = (len(ordered) - 1) * q
+    low = int(pos)
+    high = min(low + 1, len(ordered) - 1)
+    return float(ordered[low] + (ordered[high] - ordered[low]) * (pos - low))
+
+
+# Cache for the CURRENT-vintage national bounds, which are static per process.
+# An override (a previous vintage) recomputes, because its pool is different.
+_NATIONAL_AFFORD_BOUNDS = {}
+
+
+def national_price_bounds(city, boroughs, currency):
+    """The 5th and 95th percentile borough median price across the whole
+    currency pool - v5.0's affordability anchor.
+
+    THE POOL IS PER CURRENCY, NOT GLOBAL. New York's medians are curated USD
+    figures, not HM Land Registry sterling, so pooling them with the UK would be
+    a category error rather than a wider cohort. In practice that makes the USD
+    pool exactly NYC's five boroughs, and the methodology says so instead of
+    implying a national US comparison the data cannot support.
+
+    `boroughs` stands in for `city`'s own slice, so scoring a previous vintage
+    anchors on the previous-vintage pool. Only London has a real previous
+    dataset (`previous_dataset` returns the current set for every other city),
+    so substituting one city's slice reproduces what the whole pool looked like
+    at that vintage.
+    """
+    override = boroughs is not CITIES[city]['boroughs']
+    if not override and currency in _NATIONAL_AFFORD_BOUNDS:
+        return _NATIONAL_AFFORD_BOUNDS[currency]
+    prices = []
+    for other, cfg in CITIES.items():
+        if cfg['currency'] != currency:
+            continue
+        source = boroughs if other == city else cfg['boroughs']
+        prices.extend(b['avgPrice'] for b in source.values())
+    bounds = (_percentile(prices, 0.05), _percentile(prices, 0.95))
+    if not override:
+        _NATIONAL_AFFORD_BOUNDS[currency] = bounds
+    return bounds
+
+
+def afford_score(price, p5, p95):
+    """Methodology v5.0: affordability on a LOG scale between national p5/p95.
+
+    Cheaper is higher, 10.0 at or below p5 and 0.0 at or above p95.
+
+    WHY THIS REPLACED WITHIN-CITY MIN-MAX (2026-09-09). Until v5.0 every city
+    was scaled against its own cohort, so the cheapest borough of any city
+    scored 10.0 and the priciest 0.0 whatever the money. Measured across the
+    4,371 cross-city borough pairs in the GBP pool, **1,619 of them were
+    inverted** - a cheaper borough scoring LOWER than a dearer one. The headline
+    case: Barking and Dagenham published 10.0 at GBP 371,030 while
+    Stockton-on-Tees published 0.0 at GBP 170,923, 2.2x cheaper. A national
+    anchor takes those inversions to zero.
+
+    WHY LOG, AND WHY NOT THE LINEAR p10/p90 THAT WAS FIRST PROPOSED. UK borough
+    medians are strongly right-skewed - min 130k, median 273k, p90 610k, max
+    1.25M - and a linear scale over that range piles boroughs at both ends.
+    Measured, linear p10/p90 flattened FOUR of thirteen cities to under one
+    point of internal spread (Teesside to exactly 0.0, all five boroughs on
+    10.0) and pinned 22 of 99 boroughs at a rail. Affordability is 27% of the
+    composite, so that would stop it separating boroughs inside a city at all -
+    the dominant consumer use case. Log p5/p95 flattens ONE city, keeps the best
+    mean internal spread of the four candidates tested (3.1 points), and still
+    clamps at percentiles so a single outlier cannot set the scale.
+
+    A NARROW COHORT GENUINELY SHOULD COMPRESS. Teesside's five boroughs really
+    do sit inside 171k-200k, and the codebase has already accepted this argument
+    once: Leicester's cohort was widened because "min-max over a narrow cohort
+    manufactures spread it has not measured". The within-city signal is not
+    lost - it is published as an explicit `priceRankInCity` rather than being
+    smuggled into a score that also claims to mean something nationally.
+
+    NOT a price-to-earnings ratio, which is the standard UK affordability
+    measure and the obvious reach. METHODOLOGY 10 commits publicly that income
+    and wealth distributions of residents are never inputs, and that section
+    exists because the customer set includes Sharia-compliant home-finance
+    providers, where indirect discrimination is a live compliance question.
+    """
+    if p95 <= p5 or price <= 0:
+        return 5.0
+    span = math.log(p95) - math.log(p5)
+    return max(0.0, min(1.0, (math.log(p95) - math.log(price)) / span)) * 10
+
+
+def price_rank_in_city(price, boroughs):
+    """This borough's price rank within its own city, 1 = cheapest.
+
+    The within-city signal v5.0 took out of the affordability SCORE, published
+    as what it is. Ties share the better (lower) rank, so two boroughs at the
+    same median cannot be ordered by an accident of dict iteration.
+    """
+    prices = sorted(b['avgPrice'] for b in boroughs.values())
+    return {'rank': prices.index(price) + 1, 'of': len(prices)}
+
+
 def growth_score(trend, max_trend, min_trend):
     """Methodology v3.4: dual-anchor growth on a 0-10 scale.
 
@@ -6029,12 +6216,11 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     else:
         quiet = borough_quiet
 
-    prices = [b['avgPrice'] for b in boroughs.values()]
-    max_price, min_price = max(prices), min(prices)
-    if max_price == min_price:
-        afford = 5.0
-    else:
-        afford = ((max_price - bd['avgPrice']) / (max_price - min_price)) * 10
+    # v5.0: NATIONAL log anchor, not the city cohort. See afford_score() for the
+    # 1,619 inverted cross-city pairs this replaced, and for why the linear
+    # p10/p90 first proposed was rejected on measurement.
+    p5, p95 = national_price_bounds(city, boroughs, CITIES[city]['currency'])
+    afford = afford_score(bd['avgPrice'], p5, p95)
 
     trends = [b['trend'] for b in boroughs.values()]
     max_trend, min_trend = max(trends), min(trends)
@@ -6130,6 +6316,16 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
         'context': {
             currency_field: bd['avgPrice'],
             'priceTrendPct': bd['trend'],
+            # v5.0. The within-city signal that affordability used to carry, now
+            # published as what it IS rather than smuggled into a score that
+            # also claims to mean something nationally. `rank` is 1 for the
+            # cheapest borough of the city; `of` is the cohort size.
+            #
+            # ONE nested object, not two flat keys, deliberately: a pair that
+            # can be updated independently is a pair that drifts, and this repo
+            # has lost days to exactly that. They are read together or not at
+            # all.
+            'priceRankInCity': price_rank_in_city(bd['avgPrice'], boroughs),
             'noiseImpactBand': bd['impact'],
             'quietResolution': quiet_source,
             'liveResolution': live_resolution(bd, english=(city != 'nyc')),

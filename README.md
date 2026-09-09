@@ -208,7 +208,7 @@ Response shape (single):
     "live": 0.27,
     "env": 0.14
   },
-  "methodologyVersion": "4.0",
+  "methodologyVersion": "5.0",
   "apiVersion": "1.0",
   "sources": [
     "Transport access: DfT NaPTAN, Open Government Licence v3.0",
@@ -216,7 +216,7 @@ Response shape (single):
   ],
   "sourceBreakdown": {
     "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
-    "afford": "HM Land Registry House Price Index (HPI), borough cohort min-max scaling",
+    "afford": "HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of borough medians across ALL 94 boroughs in the sterling pool (GBP 158,231 to GBP 717,369), not against this city cohort. Affordability is therefore comparable BETWEEN cities... context.priceRankInCity carries the within-city standing that scaling used to imply.",
     "growth": "HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative",
     "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.",
     "env": "Air quality (0.45), Road noise (0.35), Flood risk (0.20). Weights are re-normalised over the inputs a borough actually has; a borough below the two-input floor omits the component entirely."
