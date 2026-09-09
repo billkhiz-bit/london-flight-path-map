@@ -1036,7 +1036,7 @@ components:
         `components` are published rounded to 1dp while the engine weights them
         unrounded, so the sum can sit up to 0.1 away from `score` - 0.05 for
         component rounding, 0.05 for rounding the total. The observed worst
-        case is 0.069. This is the same limitation `roundingResidual` already
+        case is under 0.07. This is the same limitation `roundingResidual` already
         reports for `attribution`, and it is why these values carry six decimal
         places rather than more: extra precision cannot close a gap that is not
         about weight precision.

@@ -4103,6 +4103,66 @@ class PublishedWeightsReproduceTheScoreTests(unittest.TestCase):
         self.assertGreater(checked, 700, f'only {checked} responses checked')
         self.assertGreater(incomplete, 40, f'only {incomplete} incomplete responses checked')
 
+    def test_the_published_residual_figure_does_not_understate_reality(self):
+        """METHODOLOGY s6 and the OpenAPI schema both print a WORST-CASE residual.
+
+        Decision 5 of the numeric decisions was settled on 2026-09-09 as
+        won't-change: `score` keeps being computed from the FULL-PRECISION
+        components and rounded once, rather than from the 1dp components a
+        customer can see. Rounding twice would make reproduction exact and the
+        score less accurate, and it would move 43 of 792 published scores by
+        0.1. The precedent for the other choice is already in this codebase -
+        `attribution` has always published `roundingResidual` beside itself
+        rather than forcing the parts to add up.
+
+        WHAT THAT DECISION LEAVES BEHIND IS A PUBLISHED NUMBER WITH NO GATE.
+        Both documents state a measured worst case, and a measured number in a
+        customer-facing document is exactly the thing this repo keeps finding
+        stale: a vintage roll, a new city or a scoring change can grow the
+        residual past what they claim, and nothing would notice.
+
+        Asserted as "the claim must not UNDERSTATE", not "the claim equals
+        0.069". A residual that shrinks leaves the documents merely
+        conservative, which is honest; one that grows past them makes both
+        false. Pinning equality would be a magic number with an expiry date -
+        the trap decision 3 was about.
+        """
+        worst = 0.0
+        for _c, _n, _p, result in self._combinations():
+            comps, weights = result['components'], result['weights']
+            total = sum(comps[k] * weights[k] for k in comps)
+            worst = max(worst, abs(total - result['score']))
+
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        sources = {
+            'METHODOLOGY.md': r'worst residual is \*\*under ([\d.]+)\*\*',
+            os.path.join('score-demo', 'openapi.yaml'): r'case is under ([\d.]+)\.',
+        }
+        checked = 0
+        for rel, pattern in sources.items():
+            path = os.path.join(root, rel)
+            with open(path, encoding='utf-8') as fh:
+                text = fh.read()
+            found = re.search(pattern, text)
+            self.assertIsNotNone(
+                found,
+                f'{rel} no longer states a worst-case residual. It is a published '
+                f'claim about reproducibility - if it has been reworded, update this '
+                f'pattern; if it has been deleted, the documents stopped telling '
+                f'integrators how exact the arithmetic is.',
+            )
+            claimed = float(found.group(1))
+            checked += 1
+            self.assertGreaterEqual(
+                claimed,
+                round(worst, 3),
+                f'{rel} claims a worst-case residual of {claimed}, but the engine '
+                f'now produces {worst:.4f}. The published figure UNDERSTATES the '
+                f'real one, so the document is false. Re-measure and update both '
+                f'documents together.',
+            )
+        self.assertEqual(checked, 2, 'both published claims must be compared')
+
     def test_the_incomplete_case_is_actually_exercised(self):
         """A per-unit floor. The whole defect lived in boroughs with a dropped
         component; a suite that happened to cover only complete ones would pass

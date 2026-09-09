@@ -181,14 +181,87 @@ for (const city of chips) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// SECOND PASS: the NEIGHBOURHOOD view's price-led disclosure.
+//
+// That flag became STRUCTURAL on 2026-09-09, replacing a rank-to-price
+// correlation measured against a 0.60 constant whose own comment recorded it
+// going arbitrary (London drifted to +0.55, inside the gap said to be empty,
+// 0.05 from flipping the notice on 128 neighbourhoods). The structural question
+// is whether anything besides price distinguishes the rows: a generated
+// neighbourhood carries no sub-borough crime modifier and inherits its
+// borough's liveability, so two districts in the same borough differ only by
+// price and aircraft quiet.
+//
+// Asserted as the RELATIONSHIP against the data holder, never against a list of
+// cities: disclose iff the city's neighbourhood detail carries no non-zero
+// crime modifier. A city that gains one drops the notice by itself.
+await page.evaluate(() => {
+  if (rankingView !== 'neighbourhood') toggleRankingView();
+});
+await page.waitForTimeout(600);
+const ledRows = [];
+for (const city of chips) {
+  await page.locator(`.city-btn[data-city="${city}"]`).click({ force: true });
+  await page.evaluate(() => {
+    if (rankingView !== 'neighbourhood') toggleRankingView();
+  });
+  try {
+    await page.waitForFunction(
+      (want) => {
+        if (currentCity !== want || rankingView !== 'neighbourhood') return false;
+        const held = new Set(calcNeighbourhoodScores(want).map((n) => n.name));
+        const drawn = [...document.querySelectorAll('#borough-ranking tbody tr[data-rank-name]')]
+          .map((tr) => tr.dataset.rankName);
+        return drawn.length > 0 && drawn.length === held.size && drawn.every((n) => held.has(n));
+      },
+      city,
+      { timeout: 15000 }
+    );
+  } catch {
+    failures.push(`${city}: neighbourhood view never reached its own district set`);
+    continue;
+  }
+  const seen = await page.evaluate(() => ({
+    // Computed from the DATA HOLDER, never from the flag the fix sets.
+    hasCrimeSignal: Object.values(cityOf(currentCity).neighbourhoodDetail() || {}).some(
+      (d) => (d.crime || 0) !== 0
+    ),
+    disclosed: (document.getElementById('borough-ranking')?.textContent || '').includes(
+      'ordering is led by price'
+    ),
+  }));
+  ledRows.push(
+    `  ${city.padEnd(16)} sub-borough crime signal: ${seen.hasCrimeSignal ? 'yes' : 'no '}` +
+      `  ${seen.disclosed ? 'PRICE-LED' : '-'}`
+  );
+  if (!seen.hasCrimeSignal && !seen.disclosed) {
+    failures.push(
+      `${city}: nothing but price and quiet separates its districts, and the ranking does not say so`
+    );
+  }
+  if (seen.hasCrimeSignal && seen.disclosed) {
+    failures.push(
+      `${city}: carries a sub-borough crime modifier, so it is NOT price-led, but the ranking says it is`
+    );
+  }
+}
+
 console.log('Borough ranking separability');
 console.log('============================');
 console.log(rows.join('\n'));
+console.log();
+console.log('Neighbourhood ranking, price-led disclosure (structural)');
+console.log('=======================================================');
+console.log(ledRows.join('\n'));
 
 // Per-unit floors. A run that drew no table, or that lost most of the chips,
 // passes every comparison above by making none of them.
 if (rows.length < 10) {
   failures.push(`only ${rows.length} cities produced a ranking; expected every UK city to draw one`);
+}
+if (ledRows.length < 10) {
+  failures.push(`only ${ledRows.length} cities produced a neighbourhood ranking`);
 }
 if (chips.length < cities.length - 1) {
   failures.push(`only ${chips.length} chips rendered against ${cities.length} cities in the registry`);

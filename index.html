@@ -13355,8 +13355,36 @@
         // because a hand-written "this is price-driven" sentence is wrong the
         // moment a city gains an input - the same staleness that put "NO DATA"
         // over live readings on seven legends.
-        let priceDominance = null;
-        const rankPrice = [];
+        // STRUCTURAL SINCE 2026-09-09, replacing a rank-to-price CORRELATION
+        // measured against a 0.60 constant.
+        //
+        // The correlation worked, and its own comment recorded the constant
+        // going arbitrary: 0.60 was picked because "nothing sat between -0.23
+        // and 0.67", and London then moved to +0.55 - inside the gap said to
+        // be empty, 0.05 from flipping the disclosure on 128 neighbourhoods.
+        // A threshold that has to be re-measured after every scoring change is
+        // a liability, and v5.0 moved every affordability number.
+        //
+        // The real question is not how strongly rank tracks price, it is
+        // WHETHER ANYTHING ELSE DISTINGUISHES THESE ROWS - and that is
+        // knowable without measuring. A generated neighbourhood carries no
+        // sub-borough crime figure (it is not published at postcode-district
+        // geography) and inherits its borough's liveability, so two districts
+        // in the same borough differ only by price and aircraft quiet. London
+        // and New York carry a hand-assigned crime modifier, which is a real
+        // sub-borough differentiator. That is exactly what the sentence this
+        // flag prints already says, so the test now matches its own wording.
+        //
+        // Deterministic, reads straight off the data holder, and cannot expire
+        // the way 0.60 did. Measured on the day it replaced the correlation, it
+        // reproduces it exactly: London 71 non-zero modifiers and NYC 88 (not
+        // price-led), all nine generated cities 0 (price-led) - the same split
+        // the correlation gave at +0.55, -0.06 and 0.65-0.89.
+        const priceLed =
+          rankingView === 'neighbourhood' &&
+          !Object.values(cityOf(currentCity).neighbourhoodDetail() || {}).some(
+            (d) => (d.crime || 0) !== 0
+          );
         // Filled by the borough branch below and read by the separability
         // disclosure after it. Declared here so the neighbourhood branch leaves
         // it EMPTY rather than carrying the previous city's numbers into a
@@ -13367,9 +13395,6 @@
           // Neighbourhood-level scoring with computed noise, price, crime, transport
           const neighbourhoods = calcNeighbourhoodScores(currentCity);
           neighbourhoods.forEach((n, i) => {
-            if (typeof n.avg_price === 'number' && n.avg_price > 0) {
-              rankPrice.push([i + 1, n.avg_price]);
-            }
             tableRows += `<tr data-rank-name="${esc(n.name)}" data-rank-action="search" style="cursor:pointer;">
         <td>${i + 1}</td>
         <td>${esc(n.name)}<span style="display:block;font-size:10px;color:var(--mid);">${esc(n.borough)}</span></td>
@@ -13393,44 +13418,6 @@
           });
         }
 
-        if (rankPrice.length >= 8) {
-          const n = rankPrice.length;
-          const mr = rankPrice.reduce((t, x) => t + x[0], 0) / n;
-          const mp = rankPrice.reduce((t, x) => t + x[1], 0) / n;
-          let num = 0;
-          let dr = 0;
-          let dp = 0;
-          for (const [r, pr] of rankPrice) {
-            num += (r - mr) * (pr - mp);
-            dr += (r - mr) ** 2;
-            dp += (pr - mp) ** 2;
-          }
-          if (dr > 0 && dp > 0) priceDominance = num / Math.sqrt(dr * dp);
-        }
-        // 0.6 is the line between "price is one factor" and "price IS the
-        // ordering".
-        //
-        // RE-MEASURED 2026-09-03, and the original justification no longer
-        // holds. It read: "London -0.23, NYC -0.06, every generated city 0.67
-        // to 0.89 - there is nothing in between to be arbitrary about." The
-        // nine generated cities are still 0.65-0.89 and still disclose, but
-        // **London is now +0.55**, having been -0.23 on 2026-08-12. It sits
-        // 0.05 below this threshold, squarely inside the gap that was said to
-        // be empty.
-        //
-        // The cause is the `environment` component, added at v3.9 and
-        // recomposed at v4.0: prime central London scores badly on NO2, so
-        // Mayfair, Belgravia and Marylebone fell to the bottom of the ranking
-        // and the rank-to-price relationship inverted. Measured top: Cheam
-        // GBP 470k at 9.1; measured bottom: Mayfair GBP 2.5M at 4.6.
-        //
-        // Nothing is over-claimed today - the threshold is evaluated at render
-        // time, so London simply has not crossed it and says nothing. But the
-        // NUMBER IS NOW ARBITRARY in a way it was not when chosen, and a
-        // further scoring change of this size flips the disclosure on London's
-        // 128 neighbourhoods. Re-measure before adjusting it, and do not
-        // reason from the old figures.
-        const priceLed = priceDominance !== null && priceDominance >= 0.6;
 
         // WHEN A CITY'S BOROUGHS CANNOT BE SEPARATED AT THE PRECISION WE PUBLISH
         // (added 2026-09-09, after methodology v5.0).

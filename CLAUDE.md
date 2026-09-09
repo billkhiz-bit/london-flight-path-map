@@ -1177,6 +1177,39 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
+**THE PRICE-LED DISCLOSURE IS STRUCTURAL SINCE 2026-09-09, not a correlation.**
+`priceLed` was a rank-to-price correlation tested against **0.60**, a constant
+whose own comment recorded it going arbitrary - it was chosen because "nothing
+sat between -0.23 and 0.67", and London then drifted to **+0.55**, inside that
+gap and 0.05 from flipping the notice on 128 neighbourhoods. A city is now
+price-led iff its neighbourhood detail carries **no non-zero sub-borough crime
+modifier**: without one, a generated district differs from its neighbours only
+by price and aircraft quiet, because it inherits its borough's liveability and
+crime is not published at postcode-district geography. **The code now matches
+the sentence it prints**, which already described exactly that condition.
+
+- **It reproduced the correlation exactly** the day it replaced it: London 71
+  non-zero modifiers, NYC 88 (not price-led), all nine generated cities 0
+  (price-led) - the same split as +0.55 / -0.06 / 0.65-0.89. No disclosure moved.
+- **`priceDominance` and `rankPrice` are DELETED**, not left dangling; nothing
+  else read them. Do not reintroduce a correlation.
+- Gated by the second pass in `tests/ranking-separability.mjs`, computed from
+  the DATA HOLDER rather than the flag the fix sets, proven red by forcing the
+  flag on.
+
+**SCORING FROM ROUNDED COMPONENTS: DECIDED WON'T-CHANGE (2026-09-09), and the
+published bound is GATED.** `score` keeps being computed from full-precision
+components and rounded once; rounding twice would make reproduction exact and
+the score less accurate, and would move 43 of 792 published scores by 0.1. What
+the decision left behind was a published number with no check - METHODOLOGY s6
+and the `AppliedWeights` schema both state a worst-case residual.
+`test_the_published_residual_figure_does_not_understate_reality` fails if either
+claim drops **below** the measured worst. Asserted as "must not understate",
+never as equality - pinning it would be the magic-number trap. Measuring for it
+corrected the figure: against the weights **as published** (6dp) the worst is
+**0.0674**, not the 0.069 computed from unrounded ones, so both documents now
+say "under 0.07".
+
 **THE BOROUGH RANKING DISCLOSES WHEN ITS SCORES CANNOT BE RANKED (2026-09-09,
 after v5.0).** v5.0's national anchor removed spread that within-city min-max
 had MANUFACTURED, and composite spread fell in **twelve of thirteen cities**:

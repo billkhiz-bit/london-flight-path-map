@@ -1391,7 +1391,8 @@ points. See §5.1.
 `components` are published rounded to 1dp while the engine weights them
 unrounded, so the sum can sit up to **0.1** from `score` - 0.05 for component
 rounding and 0.05 for rounding the total. Measured across all 792
-persona-borough combinations, the worst residual is **0.069**. This is the same
+persona-borough combinations, the worst residual is **under 0.07** (0.0674 as
+measured against the weights as published, which are rounded to 6dp). This is the same
 limitation `roundingResidual` reports for `attribution`, and it is not fixed by
 publishing weights to more decimal places: measured, the residual is identical
 at 3dp and 6dp, because what remains is component rounding rather than weight

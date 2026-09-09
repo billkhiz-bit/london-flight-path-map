@@ -1134,7 +1134,29 @@ all four still change published numbers and all four are Bill's call.
    does not know to switch. Keep the persona's NOMINAL weights in the spec,
    where they are a definition rather than a reproduction aid.
 
-3. **The 0.60 threshold - delete the constant, use a STRUCTURAL test.** The
+3. ~~**The 0.60 threshold**~~ **DONE 2026-09-09.** The rank-to-price
+   correlation and its 0.60 constant are DELETED - the dead
+   `priceDominance`/`rankPrice` machinery with them, since nothing else read
+   it. `priceLed` is now structural: a city is price-led iff its
+   neighbourhood detail carries **no non-zero sub-borough crime modifier**,
+   because without one a generated district differs from its neighbours only
+   by price and aircraft quiet - it inherits its borough's liveability and
+   crime is not published at postcode-district geography.
+
+   - **It reproduces the correlation exactly** on the day it replaced it:
+     London 71 non-zero modifiers and New York 88 (not price-led), all nine
+     generated cities 0 (price-led) - the same split the correlation gave at
+     +0.55, -0.06 and 0.65-0.89. So no city's disclosure changed.
+   - **The code now matches the sentence it prints.** That notice already
+     said districts "share their borough's liveability and carry no
+     sub-borough crime figure", which is the structural condition - the flag
+     was measuring a correlation instead.
+   - **Gated** by a second pass in `tests/ranking-separability.mjs`, computed
+     from the DATA HOLDER rather than the flag the fix sets, and **proven
+     red** by forcing the flag on (London reds).
+
+   Original recommendation follows. **The 0.60 threshold - delete the
+   constant, use a STRUCTURAL test.** The
    real question is not the correlation but whether anything besides price
    distinguishes the rows, and for the nine generated cities that is knowable
    without measuring: `crime` is 0 (not published at district geography) and
@@ -1254,6 +1276,25 @@ Against that, scoring from rounded components **rounds twice where the engine
 now rounds once**, which is straightforwardly less accurate: the 1dp component
 is up to 0.05 from the value actually measured, and that error would become part
 of the score rather than being averaged out of it.
+
+> **DECIDED 2026-09-09: WON'T CHANGE, and the bound is now GATED.** `score`
+> keeps being computed from the full-precision components and rounded once.
+> What that decision left behind was a **published number with no check** -
+> METHODOLOGY s6 and the `AppliedWeights` schema both state a measured worst
+> case, and a vintage roll, a new city or a scoring change could grow the
+> residual past what they claim with nothing noticing.
+>
+> `test_the_published_residual_figure_does_not_understate_reality` reads both
+> documents and fails if either claim is **below** the measured worst. Asserted
+> as "must not understate", never as equality: a residual that shrinks leaves
+> the documents conservative, which is honest, while pinning the figure would
+> be a magic number with an expiry date - the trap decision 3 was about.
+> **Proven red** by lowering the claim to 0.010.
+>
+> Measuring for the gate also corrected the figure: the worst residual against
+> the weights **as published** (rounded to 6dp) is **0.0674**, not the 0.069
+> computed from unrounded ones. Both documents now say "under 0.07", which is
+> true, stable, and not spuriously precise.
 
 **Recommendation: do NOT change it. Publish the bound instead** - which is now
 done, in METHODOLOGY §6 and the `AppliedWeights` schema, stated as "exact to the
