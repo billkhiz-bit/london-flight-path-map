@@ -1091,7 +1091,16 @@ The `.env` file is gitignored. The EPC SAM parameter uses `NoEcho: true` so the 
     terminated postcodes would be writes nothing can read. **The aircraft runbook
     must NOT copy that flag** - `/v1/score` reads `ldenDb` off a terminated
     postcode. Guarded by `tests/test_load_defra_raster.py` (the loader's first
-    tests, proven red on a 45 dB floor) and `RoadSurveyedQuietTests`.
+    tests, proven red on a 45 dB floor), `RoadSurveyedQuietTests` (the Lambda,
+    through `handle_environment`), and **`tests/extension-panel-render.mjs`**
+    (blocking `extension panel per env state`): it loads `panel.js` into a
+    blank Chromium page with its boot call stripped and renders
+    `renderEnvironment()` from each documented shape - bound, reading, both,
+    neither - because the extension e2e drives real listings against the LIVE
+    endpoint, neither fixture sits on a surveyed-quiet postcode, a listing
+    there cannot be manufactured, and the fetch runs in the service worker
+    behind a six-hour cache that `page.route()` never reaches. Proven red on
+    the pre-change panel (6 of 12).
   - `score`, B2B scoring engine. API-key gated on `/v1/score` and `/v1/score/batch`. **`/v1/regions` and `/v1/changes` are NOT gated** - both answer 200 with no key, re-verified live 2026-08-27. This line claimed otherwise for months, and `template.yaml` and the `handle_regions` docstring were corrected on 2026-08-21 while THIS one was not, so the falsehood survived in the file sessions actually read. Whether they SHOULD be gated is open (audit I1); the deployment is the authority, not this sentence. **`/v1/environment?lat=&lon=` is UNAUTHENTICATED** (added 2026-08-06): it reverse-geocodes a coordinate and returns MEASUREMENTS only (aircraft/road Lden, NO2, PM2.5, each with its WHO guideline) - no weights, no persona, no composite score, because the browser extension is a public artefact and cannot hold a key. Throttled 5 RPS.
   - `chat`, **retrieval-only** assistant (`POST /v1/chat`, API-key gated), restored 2026-08-06 from `6bad8ce`. The model never supplies data: context comes from invoking `ScoreFunction` DIRECTLY, and `verify_answer()` DISCARDS any reply containing a number absent from the retrieved payload. That control fired in production on the third live question - a 2030 price forecast the prompt had forbidden. Do NOT "simplify" it to a free-form call.
   - `signup`, self-service API-key issuance

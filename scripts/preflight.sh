@@ -366,6 +366,13 @@ check "self-hosted fonts (9 pages)"    node tests/fonts-selfhosted.mjs
 # This proves the code is not broken. It CANNOT prove Rightmove still looks like
 # the fixtures — only a browser can, via scripts/build_extraction_probe.sh.
 check "extension extraction"           node tests/extension-extraction.mjs
+# The panel's Environment section rendered from documented /v1/environment
+# shapes, in a real Chromium page with the boot call stripped. Added 2026-09-10
+# with the surveyed-quiet road state (roadNoiseBelowDb -> "< 40 dB Lden"): the
+# e2e below drives real listings against the LIVE endpoint and neither fixture
+# sits on a surveyed-quiet postcode, so nothing else can reach that row. Proven
+# red against the pre-change panel.js. Needs no network.
+check "extension panel per env state"    node tests/extension-panel-render.mjs
 
 # The three stages below that need the network are marked with net_check.
 # Everything else here runs against the working tree and must NOT be

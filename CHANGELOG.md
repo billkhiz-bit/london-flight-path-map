@@ -60,9 +60,9 @@ dot at the bound. `scripts/load_road_rasters.sh` loads all eleven cities,
 `--live-only`: `/v1/score` never reads `roadLdenDb` and `/v1/environment`
 reaches a postcode only through a reverse geocode, which returns live ones, so
 the 61% of the scan that is terminated postcodes would be writes nothing can
-read. The aircraft runbook must not copy that flag. The loader gained its first
-tests; the 45 dB refusal is proven red.
-
+read. The aircraft runbook must not copy that flag. The loader gained its first
+tests; the 45 dB refusal is proven red.
+
 ### Every bulk load in this repo's history ran ~50x slower than it should have
 
 Found because Nottingham's road tier took 17 minutes at ~35 rows/s while the
@@ -78,8 +78,8 @@ enough to meet a laptop sleep - and of every "~1 hour" estimate that never came
 true. `ddb_write.MAX_WORKERS` is the one holder for the width, `make_client`
 sizes the pool to it, both loaders import it rather than writing `25`, and a
 test reads the pool off the CONSTRUCTED client. Teesside's remaining slice
-loaded in 37 seconds. The docstring number had never been measured.
-
+loaded in 37 seconds. The docstring number had never been measured.
+
 ### The roll's postcode-level residue, closed
 
 Eight scripts read `nspl.csv` and the morning's re-derivation touched one.
@@ -100,6 +100,16 @@ after they had finished - it looked under `/tmp` for August's logs, and the
 air-quality loader has never printed the `Done.` it grepped for. It reads
 repo-root logs, both loaders' summary lines and all eleven road checkpoints
 now, and says what it looked for when it cannot tell.
+
+**And a gate for the bound the panel renders.** `tests/extension-panel-render.mjs`
+loads `panel.js` into a blank page with its boot call stripped and renders the
+Environment section from each documented `/v1/environment` shape - bound,
+reading, both, neither - asserting `< 40 dB Lden`, the within-guideline
+colour, the screen-reader label and the quiet-not-missing note. The e2e could
+not reach it: it drives real listings against the live endpoint, neither
+fixture sits on a surveyed-quiet postcode, and the fetch lives in the service
+worker behind a six-hour cache. Blocking in preflight; 6 of 12 red on the
+pre-change panel.
 
 ## 2026-09-09 (evening) - the August 2026 NSPL roll, and a silent schema trap
 
