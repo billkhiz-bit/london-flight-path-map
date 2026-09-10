@@ -1253,8 +1253,8 @@ crimeRate:            76.4        # ONS Table C4, offences per 1,000
 transport:            'good'      # NaPTAN, share of postcodes within 800 m
 healthcare:           'excellent' # NHS ODS, GP practices within 500 m
 airQualityWhoRatio:   2.27        # DEFRA PCM, worse of NO2/PM2.5 vs WHO 2021
-roadNoiseAboveWhoPct: 58.7        # DEFRA Round 4 road Lden, share over 53 dB
-floodMediumOrHighPct: 2.14        # EA RoFRS, share at Medium-or-High
+roadNoiseAboveWhoPct: 58.8        # DEFRA Round 4 road Lden, share over 53 dB
+floodMediumOrHighPct: 2.11        # EA RoFRS, share at Medium-or-High
 impact:               'moderate'  # borough aircraft band, reported not scored here
 ```
 
@@ -1325,14 +1325,20 @@ each anchored on a published threshold:
 
 ```
 air quality  ratio 2.27 vs WHO 2021    -> 5.767
-road noise   58.7% over WHO 53 dB Lden -> 4.130
-flood        2.14% at Medium-or-High   -> 7.860
+road noise   58.8% over WHO 53 dB Lden -> 4.120
+flood        2.11% at Medium-or-High   -> 7.890
 
-env = 5.767 x 0.45 + 4.130 x 0.35 + 7.860 x 0.20
-    = 2.595 + 1.446 + 1.572
-    = 5.6125
+env = 5.767 x 0.45 + 4.120 x 0.35 + 7.890 x 0.20
+    = 2.595 + 1.442 + 1.578
+    = 5.615
     -> 5.6
 ```
+
+> The road and flood shares here moved on the **August 2026 NSPL roll**
+> (2026-09-10): 58.7 -> 58.8 and 2.14 -> 2.11, from 72,554 postcode positions
+> refined by a median of 20.5 m. Neither `env` nor the score moved. An
+> auditor reproducing from the February 2026 edition of this section will
+> land 0.003 away on `env` and on the same published figures.
 
 ### Step 4, Score combination (balanced persona, v5.0)
 
@@ -1768,6 +1774,22 @@ limiting pollutant, rather than an average of unlike quantities:
 **No band is a percentile or a tertile.** A band defined relative to the other
 boroughs cannot return "all of them are loud", which is the answer that would
 matter most.
+
+**Every band is cut on the UNROUNDED share, and the figure beside it is
+published rounded** - shares to one decimal, the air-quality ratio to two. So a
+figure printed exactly on a boundary can carry either band: Dudley publishes
+`50.0%` over 53 dB with the band `low`, because the share is 49.9x% and the
+`moderate` cut is `>= 50`; Bury, Leeds and South Gloucestershire each print
+`1.50x WHO` with `moderate`, because the ratio is 1.50x and the `good` cut is
+`<= 1.5`. Measured 2026-09-10: **4 of 258** band/figure pairs. This is the same
+choice §6 makes for the score - compute at full precision and round ONCE at
+publication - and banding from the rounded figure would be the "round twice"
+that §6 rejects, moving the effective cut to 49.95%. Reproduce a band from the
+unrounded share via `scripts/build_borough_bands.py --check`, not from the
+printed figure. (Dudley crossed the line on the August 2026 NSPL roll: 72,554
+postcode positions were refined by a median of 20.5 m, and a borough sitting
+0.0x% from a cut can change band on that alone. It is the only band that
+moved.)
 
 **Coverage is honest in both directions.** A borough with no reading is **not
 painted at all** rather than defaulted, the legend title gains a measured

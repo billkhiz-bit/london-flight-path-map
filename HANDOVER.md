@@ -19,59 +19,72 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 ---
 
-## 0. PICK UP HERE - 2026-09-09 EVENING. AN NSPL LOAD IS IN FLIGHT.
+## 0. THE AUGUST 2026 NSPL ROLL IS COMPLETE - table, derived shares, area pages. 2026-09-10.
 
-> ## THE ONE THING TO DO FIRST: check whether the load finished.
->
-> ```sh
-> ps -ef | grep -c '[l]oad_nspl'     # 1 = still running
-> tail -c 200 nsplload.log | tr '' '
-' | tail -2
-> cat .nspl_load_checkpoint          # absent = it completed
-> ```
->
-> It was at **2,097,827 of 2,729,090 rows (77%)** at 22:20 on 2026-09-09,
-> running ~776 rows/s, started 21:34. **It is resumable**: if it died, re-run
-> `AWS_PROFILE=flightmap python -u scripts/load_nspl.py` and it continues from
-> the checkpoint. A death mid-load is not damaging - the table is an UPSERT of
-> valid rows either way, and the score Lambda falls through to postcodes.io on
-> any miss.
+> **Nothing is outstanding from the roll.** The load finished at 22:33 on
+> 2026-09-09 (2,704,825 rows in 58 minutes, `__META__` re-stamped `2026-08`,
+> `NSPL_VINTAGE` moved AFTER the run - commit `94329a9`), and the DERIVED
+> SHARES were re-run on 2026-09-10, which is the half the load could not do.
+> **DEPLOYED AND VERIFIED FROM THE ORIGIN the same day**: backend first
+> (`ScoreFunction` alone changed), then `borough-extra.json`, `area/` and
+> `sitemap.xml` with one invalidation, Completed. Merton serves **5.9** on
+> `/v1/score` and on its area page, Dudley's deployed record reads `low`,
+> `area pages match the live API` **99 of 99**, deploy drift **133 of 133**,
+> `site == /v1/score` agreeing on every component of 6 postcodes.
 
-**WHAT IS BEING LOADED.** The **August 2026** NSPL, replacing the February 2026
-edition the table has held since July. Measured before loading: **+5,494
+**WHAT THE ROLL WAS.** The **August 2026** NSPL, replacing the February 2026
+edition the table had held since July. Measured before loading: **+5,494
 postcodes, 0 removed**, live 1,807,729 -> **1,810,364**, 72,554 positions
 refined (median 20.5 m), and **81 LAD reassignments touching a borough we
 score**. A routine currency roll.
 
-### THREE THINGS ARE STILL OUTSTANDING, IN THIS ORDER
+### WHAT THE RE-DERIVATION MOVED - measured from the git diff, not the check
 
-1. **`NSPL_VINTAGE` is still `'2026-02'` in `scripts/load_nspl.py`, and it must
-   NOT be changed until the run finishes.** The checkpoint carries the vintage
-   and the loader refuses to resume a checkpoint whose vintage disagrees with
-   the constant - that guard is right, and editing the constant mid-run would
-   force a restart from row 0. Once the run completes, set it to `'2026-08'`.
+`build_borough_bands.py --check` reported **241 disagreements** against the
+February-derived holder and truncates its list at 40, so the movement was
+sized from `git diff` after `--write --write-lambda`:
 
-2. **The `__META__` provenance row will be stamped `2026-02`, which is wrong.**
-   The end-of-run block reads the constant from the process's memory, so this
-   run will label August data as February. It is one row; re-stamp it after
-   updating the constant. Current shape:
+| Field | Boroughs moved | Largest move |
+|---|---|---|
+| `roadNoiseAboveWhoPct` | 61 | 0.4 (Darlington 53.7 -> 53.3) |
+| `healthcareWithin1kmPct` | 53 | 1.0 (Dudley 40.3 -> 39.3) |
+| `floodMediumOrHighPct` | 48 | 0.45 (Tower Hamlets 1.17 -> 0.72) |
+| `transportWithin800mPct` | 38 | 0.2 (Ealing 69.4 -> 69.2) |
+| `floodCoverage` / `roadNoiseLdenMedian` / NO2 / PM2.5 | 21 / 16 / 1 / 2 | <= 0.2 |
 
-   ```
-   loadedAt 2026-07-26T19:28:52Z   vintage 2026-02
-   rowsWritten 2699393   rowsSkipped 24203
-   source   ONS NSPL via Geoportal, Open Government Licence v3.0
-   policy   UK-wide; gridind=9 excluded; terminated loaded and tagged via dt
-   ```
+**240 numeric moves, none of the four SCORED fields by more than 0.5, and ONE
+band flip.** Published effect on the 99 area pages: six `Environment`
+components move by 0.1 (Barking and Dagenham, Hackney, Haringey, Merton, Tower
+Hamlets, Salford), **one headline score moves - Merton 6.0 -> 5.9** - and
+Dudley's road-noise label reads `Low`. That is the whole of it: a 20 m median
+position refinement produces tenth-of-a-point moves, and the one composite
+that crossed a rounding boundary is the number to verify live.
 
-3. **THE DERIVED SHARES ARE NOT UPDATED BY THE LOAD.**
-   `transportWithin800mPct`, `airQualityWhoRatio`, `roadNoiseAboveWhoPct` and
-   `floodMediumOrHighPct` come from a scan of `data/nspl.csv` by
-   `build_borough_bands.py`, **not** from DynamoDB. Until that is re-run they
-   describe February's geography while the table describes August's. Run
-   `python scripts/build_borough_bands.py --check` FIRST to size the movement,
-   then `--write --write-lambda` if it is real, then rebuild the area pages
-   (`build_area_pages.py --write`) because they bake scores, then preflight and
-   deploy backend-first.
+**Dudley is a hairline, not a defect, and it exposed a standing property worth
+knowing.** It publishes `roadNoiseAboveWhoPct: 50.0` BEFORE AND AFTER while the
+band went `moderate -> low`: the unrounded share crossed the `>= 50` cut under a
+rounded figure that did not move. Measured across every published band: **4 of
+258 band/figure pairs** disagree with the band their own printed figure implies
+- Dudley, plus Bury, Leeds and South Gloucestershire, which print `1.5x WHO`
+with `moderate` because the ratio is 1.50x and the `good` cut is `<= 1.5`.
+Three of the four pre-date this roll. **Bands are cut on the unrounded share**,
+deliberately - banding from the rounded figure would be the "round twice" §6 of
+METHODOLOGY rejects for the score - and §7.1 now says so. Do not "fix" it by
+rounding first.
+
+### THE ORDER OF OPERATIONS, for the next roll
+
+1. Load the table (`load_nspl.py`, checkpointed, ~1 h at the batch-write rate).
+2. `NSPL_VINTAGE` only AFTER the run; re-stamp `__META__`.
+3. `build_borough_bands.py --check` to size it, `--write --write-lambda` to
+   land it in BOTH holders (never `--sync-lambda`, which skips Cardiff and
+   Nottingham), `tests/test_borough_data_parity.py` to prove they agree.
+4. `build_area_pages.py --write` - the pages BAKE scores.
+5. Preflight. **Expect `area pages match the live API` red until the backend
+   is deployed** - the source is ahead of the Lambda, which is the correct
+   state to be in before a backend-first deploy, not a defect.
+6. Deploy backend (SAM), then `borough-extra.json`, then `area/` with its
+   invalidation. Verify from the origin: drift, freshness, Merton.
 
 ### THE SCHEMA TRAP THIS ROLL EXPOSED - read before the next roll
 

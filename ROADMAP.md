@@ -2,12 +2,18 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-09, evening (**THE AUGUST 2026 NSPL ROLL IS IN
-FLIGHT.** The postcode table had held the February 2026 edition since July -
-the one genuinely stale dataset in the product. Measured before loading:
-**+5,494 postcodes, 0 removed**, live 1,807,729 -> **1,810,364**, 72,554
-positions refined (median 20.5 m), **81 LAD reassignments touching a borough
-we score**. Routine currency, not a re-basing.
+**Last reviewed:** 2026-09-10 (**THE AUGUST 2026 NSPL ROLL IS COMPLETE**,
+table and derived shares both. The postcode table had held the February 2026
+edition since July - the one genuinely stale dataset in the product. Measured
+before loading: **+5,494 postcodes, 0 removed**, live 1,807,729 -> **1,810,364**,
+72,554 positions refined (median 20.5 m), **81 LAD reassignments touching a
+borough we score**. Routine currency, not a re-basing - and the re-derivation
+proved it: **240 numeric field moves across both holders, none of the four
+scored shares by more than 0.5, six `Environment` components move 0.1, ONE
+headline score moves (Merton 6.0 -> 5.9) and ONE band flips** (Dudley road
+noise `moderate -> low`, on an unrounded share that crossed 50% under a printed
+`50.0` that did not move - a hairline, and METHODOLOGY s7.1 now records that
+bands are cut on the unrounded share by design, same as s6's rounding rule).
 
 - **The recorded ~6-hour blocker was dead.** `BatchWriteItem` is granted, so
   the load runs at ~776 rows/s rather than the 129 rows/s per-item fallback -
@@ -18,10 +24,11 @@ we score**. Routine currency, not a re-basing.
   script that writes BOTH score holders - would have failed silently**, because
   `.get(name, '')` returns `''` rather than raising. All four resolve by prefix
   now and the bands builder has a zero floor.
-- **STILL OUTSTANDING**: `NSPL_VINTAGE` -> `'2026-08'` (only AFTER the run, or
-  the resume guard forces a restart), re-stamp the `__META__` row, and re-run
-  `build_borough_bands.py --check` - **the load does not update the derived
-  shares**, so they still describe February until it does. See `HANDOVER.md` s0.
+- **All three follow-ups landed**: `NSPL_VINTAGE` -> `'2026-08'` after the run,
+  `__META__` re-stamped, and the derived shares re-run on 2026-09-10 - **the
+  load does not update them**, and until that re-run both score holders
+  described February's geography against an August table. The order of
+  operations for the next roll is written down in `HANDOVER.md` s0.
 
 Earlier the same day: **METHODOLOGY v5.0: AFFORDABILITY IS NATIONAL
 AND LOG-SCALED. Plus WCAG 2.2 AA enforced, applied weights published, and two

@@ -880,6 +880,15 @@ def apply_to_extra(results, write):
     # NHS register or the DEFRA grids at all.
     compared = Counter()
     holder_only = Counter()
+    # SIZE THE MOVEMENT IN THE TABLE, NOT THE TRUNCATED LIST (2026-09-10).
+    # The disagreement list below is capped at 40 and the August 2026 NSPL roll
+    # produced 241, so "how big is this" had to be answered from `git diff`
+    # after a write. The per-field table is the place: how many boroughs moved
+    # and the largest single move, so a currency roll (tenths, one band) reads
+    # differently from a broken raster (whole points, everywhere) before
+    # anything is written.
+    moved = Counter()
+    largest = defaultdict(lambda: (0.0, ''))
     for city, boroughs in results.items():
         if city not in extra:
             # Cardiff and Nottingham are BACKEND_ONLY_CITIES: scored by the API,
@@ -944,6 +953,15 @@ def apply_to_extra(results, write):
                 compared[key] += 1
                 if old != new:
                     diffs.append(f'{city}.{borough}.{key}: {old!r} -> {new!r}')
+                    moved[key] += 1
+                    if isinstance(old, (int, float)) and isinstance(new, (int, float)):
+                        delta = abs(new - old)
+                        if delta > largest[key][0]:
+                            largest[key] = (delta, f'{city}.{borough} {old!r} -> {new!r}')
+                    else:
+                        # A band or a vintage string: there is no distance, and
+                        # a flip is the thing to name - it is what the map paints.
+                        largest[key] = (float('inf'), f'{city}.{borough} {old!r} -> {new!r}')
                     if write:
                         target[key] = new
 
@@ -954,10 +972,17 @@ def apply_to_extra(results, write):
     # SAY WHAT WAS COMPARED, ALWAYS. A run that compared everything and a run
     # whose loop never executed used to print the same sentence.
     print()
-    print(f'{"field":<26} {"compared":>8}  {"holder-only":>11}')
+    print(f'{"field":<26} {"compared":>8}  {"holder-only":>11}  {"moved":>5}  largest move')
     for key in DERIVED_KEYS:
         flag = '' if compared[key] else '   <- NOTHING COMPARED'
-        print(f'{key:<26} {compared[key]:>8}  {holder_only[key]:>11}{flag}')
+        delta, where = largest[key]
+        big = ''
+        if where:
+            big = f'{"band/text" if delta == float("inf") else f"{delta:.2f}"}  {where}'
+        print(
+            f'{key:<26} {compared[key]:>8}  {holder_only[key]:>11}  '
+            f'{moved[key]:>5}  {big}{flag}'
+        )
 
     if not write:
         # PER-FIELD FLOOR, not a global one. A global `compared > 0` is
