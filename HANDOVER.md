@@ -75,6 +75,15 @@ Aircraft is read off a terminated postcode by `/v1/score`.
 > `/v1/score` and on its area page, Dudley's deployed record reads `low`,
 > `area pages match the live API` **99 of 99**, deploy drift **133 of 133**,
 > `site == /v1/score` agreeing on every component of 6 postcodes.
+>
+> **What is left, and WHEN each item is safe to do, is a table in
+> `ROADMAP.md` under "Open decisions" (written 2026-09-10).** Next
+> time-triggered item: the July 2026 HPI, ~16 Sep. Everything else there is
+> either Bill's decision or needs the console. Two things the table also
+> corrects: the `healthcareWithin1kmPct` rename is NOT a contract change
+> (the key lives in `borough-extra.json` alone, nothing of ours reads it by
+> name), and gating `/v1/regions`/`/v1/changes` is NOT a template change
+> (two public pages call them with no key).
 
 **WHAT THE ROLL WAS.** The **August 2026** NSPL, replacing the February 2026
 edition the table had held since July. Measured before loading: **+5,494

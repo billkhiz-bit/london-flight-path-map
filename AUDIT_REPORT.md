@@ -60,9 +60,14 @@ proven red against the defect it guards, unless noted.
 | **I15** | `/badge` path injection closed at `lookup_postcode`; regression test asserts both directions |
 
 **Still open:** C3 (IAM, needs a console session and a verified deploy - see
-`OPERATIONS.md` s3.8), I2 (`healthcareWithin1kmPct` names a 500 m radius - a
-public field, so renaming is a contract change), and part of the Minor list in
-s4 - see the note under it.
+`OPERATIONS.md` s3.8), I2 (`healthcareWithin1kmPct` names a 500 m radius -
+~~a public field, so renaming is a contract change~~ **measured 2026-09-10: it
+lives in `data/borough-extra.json` alone; `/v1/score`, `/v1/environment` and
+`openapi.yaml` never emit or name it, and `index.html` does not read it by
+name - only `design/` prototypes do. No contract, no notice period; a one-commit
+rename whenever convenient, see ROADMAP "when each open item is safe"**), and
+part of the Minor list in s4 - see the note under it. **When each of these is
+safe to do, and how, is the table under "Open decisions" in `ROADMAP.md`.**
 
 **I6 was listed here as open until 2026-09-08 and had been closed the same day
 it was written**, by `scripts/check_worked_example.py`, which is blocking in
