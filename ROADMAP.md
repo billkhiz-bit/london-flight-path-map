@@ -11,7 +11,12 @@ with the sentinels, so 11,281 quiet postcodes read "not measured" (audit I3, one
 tier down). Now a BOUND, `roadNoiseBelowDb`, *quiet not missing*. Runbook
 `scripts/load_road_rasters.sh`, `--live-only`; see `HANDOVER.md` s0a for the
 resume check. And the loaders were ~50x slower than they should have been -
-25 threads on boto3's default 10-connection pool - fixed in `ddb_write`.)
+25 threads on boto3's default 10-connection pool - fixed in `ddb_write`. With
+that fixed, the roll's POSTCODE-level residue closed the same afternoon: the
+aircraft and air-quality tables re-sampled at August positions, both client
+quiet datasets regenerated and deployed - London 35,352 -> 35,441 measured
+postcodes - and the neighbourhood centroids rebuilt. **Every reader of
+`nspl.csv` is on August 2026**; `HANDOVER.md` s0 step 7 lists the eight.)
 Earlier the same day: **THE AUGUST 2026 NSPL ROLL IS COMPLETE**,
 table and derived shares both. The postcode table had held the February 2026
 edition since July - the one genuinely stale dataset in the product. Measured

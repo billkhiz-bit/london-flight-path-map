@@ -129,6 +129,25 @@ rounding first.
    state to be in before a backend-first deploy, not a defect.
 6. Deploy backend (SAM), then `borough-extra.json`, then `area/` with its
    invalidation. Verify from the origin: drift, freshness, Merton.
+7. **The POSTCODE-level tiers, which steps 3-6 do not touch (closed for this
+   roll on 2026-09-10 afternoon).** Eight scripts read `nspl.csv`; the bands
+   builder is one. The others sample DEFRA at postcode POSITIONS and write
+   per-postcode rows, so a roll leaves them describing the old edition until
+   re-run: **1,520 new live postcodes in covered cities had no air-quality row
+   and 154 sat on an aircraft contour but scored from geometry** (B13 0FF
+   served no NO2 while B13 0FD, 1 km away, served 13.1). With the connection
+   pool fixed these are minutes, not days: London aircraft export 70 s, seven
+   per-airport coverages ~20 s each, air quality ~40 min live-only. Then
+   `build_aircraft_quiet_dataset.py` (both files) - the site must move with
+   the table, and it did: **London 35,352 -> 35,441 measured postcodes, 186
+   re-read; regions 7,339 -> 7,332, 150 re-read**, the largest moves all
+   traceable to ONS position corrections (E16 1QF moved 873 m under the City
+   Airport approach, 10.0 -> 5.0). Both deployed with `no-cache` and
+   invalidated the moment the table held them. And
+   `build_city_neighbourhoods.py --write-index`: 421 of 481 centroids moved,
+   median 3 m, largest 55 m, nothing added, dropped or re-priced - kept so
+   every NSPL-derived artefact is on one edition. `data/district-msoa-names.json`
+   regenerates with it. **Every consumer of `nspl.csv` is now on August 2026.**
 
 ### THE SCHEMA TRAP THIS ROLL EXPOSED - read before the next roll
 

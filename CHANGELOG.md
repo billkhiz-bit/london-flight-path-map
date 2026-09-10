@@ -78,7 +78,28 @@ enough to meet a laptop sleep - and of every "~1 hour" estimate that never came
 true. `ddb_write.MAX_WORKERS` is the one holder for the width, `make_client`
 sizes the pool to it, both loaders import it rather than writing `25`, and a
 test reads the pool off the CONSTRUCTED client. Teesside's remaining slice
-loaded in 37 seconds. The docstring number had never been measured.
+loaded in 37 seconds. The docstring number had never been measured.
+
+### The roll's postcode-level residue, closed
+
+Eight scripts read `nspl.csv` and the morning's re-derivation touched one.
+The per-postcode DEFRA tiers sample at postcode POSITIONS, so after the roll
+**1,520 new live postcodes in covered cities had no air-quality row and 154
+sat on an aircraft contour but scored from geometry**. With the pool fixed the
+re-runs were minutes: London aircraft export 70 s, the seven per-airport
+coverages ~20 s each, air quality ~40 min live-only. The client datasets were
+regenerated so the site moves with the table - **London 35,352 -> 35,441
+measured postcodes, 186 re-read after position refinement; regions 7,339 ->
+7,332, 150 re-read** - every large move traceable to an ONS position
+correction (E16 1QF moved 873 m under the City Airport approach, 10.0 -> 5.0;
+DE74 2QG 1.9 km by East Midlands). E14 0XX and E1 0FJ now answer
+`quietResolution: raster`. The neighbourhood centroids were rebuilt too: 421
+of 481 moved, median 3 m, largest 55 m, nothing added, dropped or re-priced.
+`load_status.sh` said "not started" about both DEFRA loads that morning, weeks
+after they had finished - it looked under `/tmp` for August's logs, and the
+air-quality loader has never printed the `Done.` it grepped for. It reads
+repo-root logs, both loaders' summary lines and all eleven road checkpoints
+now, and says what it looked for when it cannot tell.
 
 ## 2026-09-09 (evening) - the August 2026 NSPL roll, and a silent schema trap
 

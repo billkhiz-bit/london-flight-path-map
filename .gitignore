@@ -176,6 +176,9 @@ tests/fixtures/*
 
 # stderr from the detached DEFRA air-quality loader (see scripts/load_status.sh)
 aqload.err
+# Start-Process stdout/stderr redirects for detached loads (2026-09-10)
+*.out
+*.err
 aqload.log
 roadfetch.log
 floodfetch.log

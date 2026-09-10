@@ -91,11 +91,15 @@ report() {
     # log paths pointed at /tmp from an August run and a missing log fell
     # through to the confident wording. An absent log is not evidence of
     # anything; the line now says what it looked for and where.
-    if [ -f "$log" ] && grep -q "Done\." "$log" 2>/dev/null; then
-      printf '%s: COMPLETE (last Done line in %s)\n' "$name" "$(basename "$log")"
-      tr '\r' '\n' < "$log" | grep -E "^Done\." | tail -1 | sed 's/^/  /'
+    # "Done." is the raster loader's word and "Wrote:" the air-quality
+    # loader's; matching only the first meant the aq load could never be
+    # reported COMPLETE, from the day this script was written.
+    if [ -f "$log" ] && tr '\r' '\n' < "$log" | grep -qE "^(Done\.|Wrote:)" 2>/dev/null; then
+      printf '%s: COMPLETE (last summary line in %s)\n' "$name" "$(basename "$log")"
+      # Two lines, because a road pass prints readings then markers.
+      tr '\r' '\n' < "$log" | grep -E "^(Done\.|Wrote:)" | tail -2 | sed 's/^/  /'
     elif [ -f "$log" ]; then
-      printf '%s: no checkpoint; %s has no Done line. Last line:\n' "$name" "$(basename "$log")"
+      printf '%s: no checkpoint; %s has no summary line. Last line:\n' "$name" "$(basename "$log")"
       tr '\r' '\n' < "$log" | grep -v '^$' | tail -1 | cut -c1-100 | sed 's/^/  /'
     else
       printf '%s: no checkpoint and no %s - never run here, or run elsewhere. Verify with get-item.\n' \
