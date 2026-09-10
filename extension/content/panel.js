@@ -130,7 +130,7 @@ function svgEl(tag, attrs) {
  * so it survives WCAG 1.4.1. Colour reinforces it. The aria-label carries the
  * whole sentence, because a bar announces nothing on its own.
  */
-function scaleBar({ value, guideline, unit, max }) {
+function scaleBar({ value, guideline, unit, max, prefix = '' }) {
   const ceiling = guideline ? guideline * 2 : max;
   const clamped = Math.min(Math.max(value / ceiling, 0), 1);
   const over = typeof guideline === 'number' && value > guideline;
@@ -153,7 +153,7 @@ function scaleBar({ value, guideline, unit, max }) {
     // which is precisely the ambiguity the visible row was just fixed for. The
     // unit's trailing word ("/10 noise" -> "noise") names what is being scored.
     'aria-label': guideline
-      ? `${value} ${unit}, ${over ? 'above' : 'within'} the WHO guideline of ${guideline} ${unit}`
+      ? `${prefix}${value} ${unit}, ${over ? 'above' : 'within'} the WHO guideline of ${guideline} ${unit}`
       : `${value} out of ${max}${/^\/\d+\s+(.+)$/.exec(unit || '') ? ` for ${/^\/\d+\s+(.+)$/.exec(unit)[1]}` : ''}`,
   });
 
@@ -748,13 +748,29 @@ function renderEnvironment(result) {
         : aircraftNotice || '',
     ],
     ['Road noise', env.roadNoiseLdenDb, 'dB Lden', env.roadNoiseWhoGuidelineDb, mapsCovidYear, ''],
+    // Surveyed-quiet (2026-09-10): DEFRA mapped this postcode and found it
+    // under the lowest level its road map records. The endpoint publishes
+    // that as a BOUND, roadNoiseBelowDb, never as roadNoiseLdenDb - and this
+    // row renders it as "< 40", dot at the bound, so the reader sees a quiet
+    // reading rather than the missing row the numeric filter below would
+    // otherwise leave. Only when there is no reading: a row holds one or
+    // the other, and a reading is what DEFRA mapped.
+    [
+      'Road noise',
+      typeof env.roadNoiseLdenDb === 'number' ? undefined : env.roadNoiseBelowDb,
+      'dB Lden',
+      env.roadNoiseWhoGuidelineDb,
+      mapsCovidYear,
+      'Surveyed by DEFRA and below the lowest level its road map records: a quiet reading, not a missing one.',
+      '< ',
+    ],
     ['Nitrogen dioxide', env.no2AnnualMeanUgm3, 'ug/m3', env.no2WhoGuidelineUgm3, false, ''],
     ['Fine particles (PM2.5)', env.pm25AnnualMeanUgm3, 'ug/m3', env.pm25WhoGuidelineUgm3, false, ''],
   ].filter((r) => typeof r[1] === 'number');
 
   if (rows.length) {
     const list = el('ul', 'c33-list');
-    for (const [label, value, unit, guideline, vintage, note] of rows) {
+    for (const [label, value, unit, guideline, vintage, note, prefix = ''] of rows) {
       const item = el('li', 'c33-item');
       const row = el('div', 'c33-row');
       const name = el('span', 'c33-name', label);
@@ -777,7 +793,7 @@ function renderEnvironment(result) {
       const readout = el(
         'span',
         'c33-dist',
-        unit.startsWith('/') ? `${value}${unit}` : `${value} ${unit}`
+        unit.startsWith('/') ? `${value}${unit}` : `${prefix}${value} ${unit}`
       );
       // Colour states a fact, not a verdict: whether the measurement is above
       // the cited guideline. No "good"/"bad" wording, because the guideline is
@@ -794,7 +810,7 @@ function renderEnvironment(result) {
       // boilerplate. The same fact is now positional, and the aria-label still
       // says it in words for anyone the bar cannot reach.
       if (typeof guideline === 'number') {
-        item.appendChild(scaleBar({ value, guideline, unit }));
+        item.appendChild(scaleBar({ value, guideline, unit, prefix }));
       } else if (unit.startsWith('/')) {
         // The 0-10 quiet estimate: a scale by construction, so it gets a bar
         // with no guideline tick. There is nothing to compare it to, and

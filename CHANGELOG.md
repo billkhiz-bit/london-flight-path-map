@@ -1,5 +1,85 @@
 # Changelog
 
+## 2026-09-10 - the NSPL roll completed, and the road tier reaches every city
+
+### The derived shares, re-run
+
+The 9 Sep entry below ends with the load in flight. It finished at 22:33 that
+night; what the load could NOT do is update the four shares
+(`transportWithin800mPct`, `airQualityWhoRatio`, `roadNoiseAboveWhoPct`,
+`floodMediumOrHighPct`) that `build_borough_bands.py` derives from a scan of the
+same CSV, so both score holders went on describing February's geography against
+an August table until this morning. The advisory `borough bands == sources`
+stage was the only thing saying so.
+
+**Measured from the git diff after `--write --write-lambda`** (the check
+truncates at 40 of its 241 disagreements): **240 numeric field moves, none of
+the four scored shares by more than 0.5**, six `Environment` components move
+0.1, **one headline score moves - Merton 6.0 -> 5.9** - and one band flips.
+That is the whole of a 20 m median position refinement, which is what a
+currency roll should look like. Deployed backend-first and verified from the
+origin: freshness 99 of 99, drift 133 of 133.
+
+**The band is Dudley road noise, `moderate -> low`, and it prints `50.0%`
+before AND after.** The unrounded share crossed the `>= 50` cut under a rounded
+figure that did not move. Measured across every published band: 4 of 258
+band/figure pairs sit on a boundary that way, three of them pre-dating the
+roll. **Bands are cut on the unrounded share by design** - banding from the
+printed figure would be the round-twice METHODOLOGY s6 rejects for the score -
+and s7.1 now says so. `worked example reproduces` went red on Wandsworth's
+shares (58.7 -> 58.8, 2.14 -> 2.11) and s6 was re-derived from the engine, not
+patched; `env` and the score did not move. The check's per-field table now
+carries `moved` and `largest move` columns, so the next roll is sized before
+anything is written.
+
+### The per-postcode road tier was London-only, and a DEFRA zero is a reading
+
+Found by asking `/v1/environment` at one of the roll's 1,520 new postcodes:
+**SW11 serves 69.1 dB, M2 4NG serves `None`** with "not measured, or still
+being loaded". The road pass had only ever been run against the London mosaic,
+though all eleven city mosaics had been on disk since August, and nothing
+recorded the gap as open.
+
+**Measured before loading** (`scripts/probe_road_raster_coverage.py`): 100% of
+live postcodes in every English city are inside their mosaic and surveyed -
+549,336 readings. **And 2.0% of them are zeros** (11,281; 0.7% London to 5.4%
+Leicester): ground DEFRA surveyed and found under its lowest mapped band, which
+is **40.00 dB in every mosaic, measured**. The loader dropped those with the
+sentinels (`raw < LDEN_MIN`), so a surveyed-QUIET postcode got no row and was
+told its road noise had not been measured. Audit I3 - the borough share, fixed
+1 Sep - one tier down. Small, and every one of them quiet, which is the bad
+kind of small.
+
+Road mode now writes the zero as a **bound**, `roadLdenBelowDb = 40.0`, under
+its own attribute, after asserting the open raster bottoms out at 40.00 (a
+re-fetched mosaic with a 45 dB floor is refused, not published as "under 40").
+The Lambda publishes it as **`roadNoiseBelowDb`** - never as a decibel figure,
+because nobody measured 40 dB there, they measured "less than" - with a notice
+that says *quiet, not missing*; the extension renders `< 40 dB Lden` with the
+dot at the bound. `scripts/load_road_rasters.sh` loads all eleven cities,
+`--live-only`: `/v1/score` never reads `roadLdenDb` and `/v1/environment`
+reaches a postcode only through a reverse geocode, which returns live ones, so
+the 61% of the scan that is terminated postcodes would be writes nothing can
+read. The aircraft runbook must not copy that flag. The loader gained its first
+tests; the 45 dB refusal is proven red.
+
+### Every bulk load in this repo's history ran ~50x slower than it should have
+
+Found because Nottingham's road tier took 17 minutes at ~35 rows/s while the
+docstring promised throughput "comparable to BatchWriteItem" from a 25-thread
+executor. **boto3's default connection pool is 10.** Fifteen of the twenty-five
+threads found it full on every batch, urllib3 discarded their connections and
+each call paid a fresh TLS handshake. Measured against the live table with the
+loaders' own client: **sequential 17 ms/call (~60/s); 25 threads on a pool of
+10, 13/s; 25 threads on a pool of 25, 675/s.** The executor was making things
+FIVE TIMES SLOWER than no executor at all. That is the untold half of the
+air-quality runs that died at 14 h and 18 h - they had to be running long
+enough to meet a laptop sleep - and of every "~1 hour" estimate that never came
+true. `ddb_write.MAX_WORKERS` is the one holder for the width, `make_client`
+sizes the pool to it, both loaders import it rather than writing `25`, and a
+test reads the pool off the CONSTRUCTED client. Teesside's remaining slice
+loaded in 37 seconds. The docstring number had never been measured.
+
 ## 2026-09-09 (evening) - the August 2026 NSPL roll, and a silent schema trap
 
 The postcode table had held the **February 2026** NSPL since July - the one

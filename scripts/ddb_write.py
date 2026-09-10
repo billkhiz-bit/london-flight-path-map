@@ -46,16 +46,46 @@ MAX_STALL_S = 1800
 # which per-item writes at 25 threads will meet on a PAY_PER_REQUEST table.
 RETRY_CONFIG = {'max_attempts': 10, 'mode': 'adaptive'}
 
+# THE CONNECTION POOL MUST BE AT LEAST AS WIDE AS THE EXECUTOR (2026-09-10).
+#
+# Both DEFRA loaders write each batch of 25 through a ThreadPoolExecutor of 25,
+# and their docstrings say that gives throughput "comparable to BatchWriteItem".
+# It did the opposite. boto3's default pool is 10 connections, so 15 of the 25
+# threads found the pool full on every batch, urllib3 discarded their
+# connections and each call paid a fresh TLS handshake. Measured against the
+# live table with this exact client, a batch of 25 GetItems:
+#
+#   sequential, one thread     17 ms each  ->  ~60/s
+#   25 threads, pool of 10   1995 ms/batch ->   13/s     (the loaders, until now)
+#   25 threads, pool of 25     37 ms/batch ->  675/s
+#
+# Fifty-fold from one field, and the executor was making things FIVE TIMES
+# SLOWER than no executor at all. Every bulk load this repo has run paid it:
+# the "~1 hour" road pass, the air-quality runs that died at 14 h and 18 h
+# (they had to be running long enough to meet a laptop sleep), the 17-minute
+# Nottingham road load that should have been under two. The docstring number
+# was never measured - feedback-numbers-in-justifying-comments-expire, again.
+#
+# One holder for the width, so the executor and the pool cannot drift apart:
+# a loader that raises its worker count without the pool following silently
+# reinstates the churn. Both loaders import this rather than writing 25.
+MAX_WORKERS = 25
+
 
 def make_client(region):
-    """A DynamoDB client configured to survive a multi-hour run."""
+    """A DynamoDB client configured to survive a multi-hour run.
+
+    The pool is sized to MAX_WORKERS, and that is the load-bearing line - see
+    the comment above it. Adaptive retry is the other half: it backs off on
+    throttling rather than dying, which a bare client did twice.
+    """
     import boto3
     from botocore.config import Config
 
     return boto3.client(
         'dynamodb',
         region_name=region,
-        config=Config(retries=RETRY_CONFIG),
+        config=Config(retries=RETRY_CONFIG, max_pool_connections=MAX_WORKERS),
     )
 
 

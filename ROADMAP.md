@@ -2,7 +2,17 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-10 (**THE AUGUST 2026 NSPL ROLL IS COMPLETE**,
+**Last reviewed:** 2026-09-10 afternoon (**THE PER-POSTCODE ROAD TIER COVERS
+ALL ELEVEN CITIES, loaded and verified** - it had been London-only since August, unrecorded
+anywhere: M2 4NG served `None` on `/v1/environment` while SW11 served 69.1 dB.
+Measured first: 100% of live postcodes surveyed in every English city, and **2.0%
+of them are DEFRA zeros** - surveyed, under 40.00 dB - which the loader dropped
+with the sentinels, so 11,281 quiet postcodes read "not measured" (audit I3, one
+tier down). Now a BOUND, `roadNoiseBelowDb`, *quiet not missing*. Runbook
+`scripts/load_road_rasters.sh`, `--live-only`; see `HANDOVER.md` s0a for the
+resume check. And the loaders were ~50x slower than they should have been -
+25 threads on boto3's default 10-connection pool - fixed in `ddb_write`.)
+Earlier the same day: **THE AUGUST 2026 NSPL ROLL IS COMPLETE**,
 table and derived shares both. The postcode table had held the February 2026
 edition since July - the one genuinely stale dataset in the product. Measured
 before loading: **+5,494 postcodes, 0 removed**, live 1,807,729 -> **1,810,364**,

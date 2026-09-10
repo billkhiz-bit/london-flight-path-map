@@ -3418,6 +3418,66 @@ class RoadLdenPlausibilityTests(unittest.TestCase):
         self.assertFalse(hasattr(app, '_road_cache_get'))
 
 
+class RoadSurveyedQuietTests(unittest.TestCase):
+    """A DEFRA zero is "surveyed, under 40 dB" - a quiet reading, not a gap.
+
+    The road loader used to drop the mosaic's 0 cells with the sentinels, so
+    2.0% of covered postcodes (11,281, all quiet) got no row and were told the
+    noise had "not been measured". Since 2026-09-10 the loader writes the
+    BOUND under roadLdenBelowDb and this publishes it as roadNoiseBelowDb.
+    Audit I3 on the borough share, one tier down; see _ROAD_BELOW_MIN_DB.
+    """
+
+    def test_bound_is_published_under_its_own_key_never_as_a_reading(self):
+        env = app.build_environment({'lden': None, 'roadLden': None, 'roadLdenBelow': 40.0})
+        self.assertEqual(env['roadNoiseBelowDb'], 40.0)
+        self.assertNotIn('roadNoiseLdenDb', env)
+        # The reference and the source travel with the bound as with a figure.
+        self.assertEqual(env['roadNoiseWhoGuidelineDb'], 53)
+        self.assertIn('Surveyed', env['roadNoiseSource'])
+
+    def test_a_reading_wins_when_both_are_present(self):
+        # A row holds one or the other; if a stale marker ever coexists with a
+        # reading, the reading is what DEFRA mapped and the bound is history.
+        env = app.build_environment({'lden': None, 'roadLden': 56.3, 'roadLdenBelow': 40.0})
+        self.assertEqual(env['roadNoiseLdenDb'], 56.3)
+        self.assertNotIn('roadNoiseBelowDb', env)
+
+    def test_bound_is_range_guarded_like_its_siblings(self):
+        # A sentinel in this column is as publishable as in any other.
+        self.assertIsNone(app.road_below_from_row({'roadLdenBelow': -3.4e38}))
+        self.assertIsNone(app.road_below_from_row({'roadLdenBelow': 3.4e38}))
+        self.assertIsNone(app.road_below_from_row({'roadLdenBelow': 0.0}))
+        self.assertEqual(app.road_below_from_row({'roadLdenBelow': 40.0}), 40.0)
+        self.assertEqual(app.build_environment({'roadLden': None, 'roadLdenBelow': 0.0}), {})
+
+    def _environment(self, row):
+        event = {'queryStringParameters': {'lat': '51.4613', 'lon': '-0.1673'}}
+        loc = {'postcode': 'SW11 1PX', 'ladCode': 'E09000032', 'adminDistrict': 'Wandsworth'}
+        with patch.object(app, 'reverse_geocode', return_value=loc), \
+                patch.object(app, '_lookup_noise_row', return_value=row):
+            res = app.handle_environment(event)
+        self.assertEqual(res['statusCode'], 200)
+        return json.loads(res['body'])
+
+    def test_surveyed_quiet_notice_denies_the_absence_it_replaces(self):
+        body = self._environment({'lden': None, 'roadLden': None, 'roadLdenBelow': 40.0})
+        road = [n for n in body['notices'] if 'road noise' in n.lower()]
+        self.assertEqual(len(road), 1, body['notices'])
+        self.assertIn('surveyed', road[0].lower())
+        self.assertIn('40 dB', road[0])
+        self.assertIn('quiet reading, not a missing one', road[0])
+        self.assertNotIn('not been measured', road[0])
+
+    def test_no_row_at_all_still_says_not_measured(self):
+        # The absence notice is still the truthful one for ground with no row:
+        # nodata cells, Wales, NYC, and postcodes newer than the last load.
+        body = self._environment({'lden': None, 'roadLden': None, 'roadLdenBelow': None})
+        road = [n for n in body['notices'] if 'road noise' in n.lower()]
+        self.assertEqual(len(road), 1, body['notices'])
+        self.assertIn('not been measured', road[0])
+
+
 class BadgeTests(unittest.TestCase):
     """The embeddable SVG badge - D2, 2026-08-21.
 

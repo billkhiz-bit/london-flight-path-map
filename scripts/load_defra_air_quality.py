@@ -110,6 +110,14 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     p.add_argument('--limit', type=int, default=None, metavar='N')
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument(
+        '--live-only', action='store_true',
+        help='Skip TERMINATED postcodes (NSPL doterm set). These rows are read by '
+             '/v1/environment alone, which reaches a postcode only through a reverse '
+             'geocode of live postcodes, so a row for a terminated one serves nobody - '
+             'and terminated rows are a third of the scan. Same reasoning as the road '
+             'pass in load_defra_raster.py; the AIRCRAFT pass must not copy it.',
+    )
     args = p.parse_args()
 
     try:
@@ -157,7 +165,9 @@ def main():
                 ExpressionAttributeValues=values,
             )
 
-        with ThreadPoolExecutor(max_workers=25) as ex:
+        # Width from ddb_write, never a literal - see ddb_write.MAX_WORKERS for
+        # the fifty-fold cost of the pool and the executor drifting apart.
+        with ThreadPoolExecutor(max_workers=ddb_write.MAX_WORKERS) as ex:
             landed = list(ex.map(lambda it: ddb_write.guarded_put(_put, it), batch))
 
         stalled = [
@@ -181,6 +191,8 @@ def main():
                 continue
             if args.limit and idx >= args.limit:
                 break
+            if args.live_only and row.get('doterm'):
+                continue
             try:
                 lat, lon = float(row['lat']), float(row['long'])
             except (KeyError, TypeError, ValueError):

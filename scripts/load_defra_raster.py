@@ -161,6 +161,73 @@ BATCH_SIZE = 25 # DynamoDB BatchWriteItem max
 LDEN_MIN = 30.0
 LDEN_MAX = 100.0
 
+# ROAD MODE: A ZERO IS A READING, NOT A SENTINEL (2026-09-10).
+#
+# The road mosaics (scripts/fetch_defra_road_noise.py) carry THREE states, and
+# the comment above is right about only two of them. nodata (-96.0) is ground
+# DEFRA did not map. A value > 0 is a reading. And 0 is ground DEFRA SURVEYED
+# and found below its lowest mapped band - the mosaics' minimum positive value
+# is exactly 40.00 dB in every city, measured, so 0 means "under 40 dB Lden".
+# That is the quietest answer the survey can give, and it is an answer.
+#
+# `raw < LDEN_MIN` dropped it with the sentinels, so a surveyed-quiet postcode
+# got no row and /v1/environment told its reader the road noise "has not been
+# measured". Audit I3 closed the same trap in build_borough_bands.py for the
+# SHARE on 2026-09-01; this is the per-postcode tier of it. Measured before
+# fixing (scripts/probe_road_raster_coverage.py): 2.0% of live postcodes in the
+# ten English cities, 0.7% London to 5.4% Leicester - 11,281 postcodes, every
+# one of them quiet. Small, and directional, which is the bad kind of small.
+#
+# Written as a BOUND under its own attribute, never as a decibel figure: nobody
+# measured 40 dB there, they measured "less than". The Lambda publishes it as
+# roadNoiseBelowDb. Aircraft rasters are untouched - their below-contour cells
+# are nodata, not 0 - so this is keyed on the attribute, not on the value.
+ROAD_ATTRIBUTE = 'roadLdenDb'
+ROAD_BELOW_ATTRIBUTE = 'roadLdenBelowDb'
+ROAD_LOWEST_MAPPED_DB = 40.0
+
+
+def classify_cell(raw, nodata, attribute):
+    """One raster cell -> ('nodata' | 'below' | 'anomalous' | 'reading', value).
+
+    Pulled out of the loop so the road-mode zero can be tested without a
+    raster or a table. `below` is returned for road mode only; in aircraft
+    mode a literal 0 stays `anomalous`, which is what it has always been.
+    """
+    if raw > 1e30 or (nodata is not None and raw == nodata):
+        return 'nodata', None
+    if attribute == ROAD_ATTRIBUTE and raw == 0.0:
+        return 'below', ROAD_LOWEST_MAPPED_DB
+    if raw < LDEN_MIN or raw > LDEN_MAX:
+        return 'anomalous', None
+    return 'reading', raw
+
+
+def assert_lowest_mapped(band, nodata):
+    """Refuse a road load whose raster does not bottom out at 40.00 dB.
+
+    The bound written for every zero is ROAD_LOWEST_MAPPED_DB, and it is only
+    true if the raster's lowest positive value is that number. Read it off the
+    data every run rather than trusting the constant: a re-fetched mosaic with
+    a different lower band would otherwise publish "under 40" over ground that
+    is really "under 45", and nothing downstream could tell.
+    """
+    import numpy as np
+
+    ok = np.isfinite(band) & (np.abs(band) < 1e30) & (band > 0)
+    if nodata is not None:
+        ok &= band != nodata
+    if not ok.any():
+        raise SystemExit('road raster has no positive cells at all; refusing to load')
+    lowest = float(band[ok].min())
+    if abs(lowest - ROAD_LOWEST_MAPPED_DB) > 0.01:
+        raise SystemExit(
+            f'road raster bottoms out at {lowest:.2f} dB, not '
+            f'{ROAD_LOWEST_MAPPED_DB:.2f}; the "below" bound would be wrong. '
+            'Re-measure with scripts/probe_road_raster_coverage.py before loading.'
+        )
+    return lowest
+
 
 def checkpoint_path_for(geotiff):
     """Resume checkpoint, namespaced per raster.
@@ -222,6 +289,16 @@ def parse_args():
              'aircraft value. Pair this with --geotiff; getting one right and '
              'the other wrong writes road decibels into the aircraft column, '
              'which nothing downstream would flag.',
+    )
+    p.add_argument(
+        '--live-only', action='store_true',
+        help='Skip TERMINATED postcodes (NSPL doterm set). Off by default because the '
+             'aircraft tier needs them: /v1/score resolves a terminated postcode and reads '
+             'ldenDb off its row. Road noise is different - /v1/score never reads roadLdenDb, '
+             'and /v1/environment reaches a postcode only through a reverse geocode, which '
+             'returns LIVE postcodes - so a road row for a terminated postcode serves nobody. '
+             'Measured 2026-09-10: 918,726 terminated against 579,439 live across the twelve '
+             'cities, i.e. 61%% of a road pass would be writes nothing can read.',
     )
     p.add_argument(
         '--self-test', action='store_true',
@@ -287,6 +364,14 @@ def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
     via a ThreadPoolExecutor. ~25 concurrent writes get us throughput
     comparable to BatchWriteItem within DynamoDB's PAY_PER_REQUEST mode.
 
+    THAT SENTENCE WAS FALSE FROM THE DAY IT WAS WRITTEN, UNTIL 2026-09-10.
+    The client's connection pool was boto3's default of 10, so 15 of the 25
+    threads churned TLS connections on every batch: measured 13 writes/s,
+    against ~60/s for ONE thread and 675/s once the pool matched the
+    executor. The width now lives in ddb_write.MAX_WORKERS, which also sizes
+    the pool, and a test holds the two together. Nothing here was measured
+    before the claim was made; the number in this docstring is the reason.
+
     UPDATEITEM, NOT PUTITEM (2026-08-06). PutItem REPLACES the whole item, so
     the moment a second metric shares this table — road Lden alongside aircraft
     Lden — a road pass would silently delete every aircraft value it touched.
@@ -323,7 +408,10 @@ def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
             ExpressionAttributeValues={':v': {'N': item['value']}},
         )
 
-    with ThreadPoolExecutor(max_workers=25) as ex:
+    # Width from ddb_write, never a literal: the client's connection pool is
+    # sized to the same constant, and 25 threads on a 10-connection pool ran
+    # FIVE TIMES SLOWER than one thread (see ddb_write.MAX_WORKERS).
+    with ThreadPoolExecutor(max_workers=ddb_write.MAX_WORKERS) as ex:
         landed = list(ex.map(lambda it: ddb_write.guarded_put(_put, it), items))
 
     stalled = [
@@ -336,7 +424,7 @@ def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
     return len(items) - len(stalled)
 
 
-def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
+def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', live_only=False):
     """Sample the raster at NSPL postcode centroids and write to DynamoDB.
 
     When `dry_run` is True the DynamoDB writes are skipped and the script
@@ -388,6 +476,14 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
 
     print(f'Raster: {raster_band.shape[1]}x{raster_band.shape[0]} pixels, CRS={raster_crs}')
 
+    road_mode = attribute == ROAD_ATTRIBUTE
+    if road_mode:
+        lowest = assert_lowest_mapped(raster_band, raster.nodata)
+        print(
+            f'Road mode: lowest mapped value {lowest:.2f} dB; surveyed zeros are '
+            f'written as {ROAD_BELOW_ATTRIBUTE} = {ROAD_LOWEST_MAPPED_DB:.1f}'
+        )
+
     # Postcode WGS84 → raster CRS (likely BNG / EPSG:27700)
     transformer = Transformer.from_crs('EPSG:4326', raster_crs, always_xy=True)
 
@@ -403,7 +499,13 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
 
     # Stream NSPL
     batch = []
+    # Road mode only: surveyed zeros, written under ROAD_BELOW_ATTRIBUTE. A
+    # second list because _flush_batch takes ONE attribute per call, and the
+    # two must never share one - a bound written into the decibel column is a
+    # 40 dB reading nobody took.
+    below_batch = []
     written = 0
+    below_written = 0
     skipped = 0
     nodata_skipped = 0
     samples_logged = 0
@@ -416,6 +518,11 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
                 continue
             if limit and (idx - checkpoint) >= limit:
                 break
+
+            if live_only and row.get('doterm'):
+                # See --live-only. Counted with the skips, not silently.
+                skipped += 1
+                continue
 
             try:
                 pc = row['pcds'].replace(' ', '').upper()
@@ -460,11 +567,12 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
             # reporting them as loud. Twickenham was the trigger case:
             # close to LHR but below DEFRA's contour, yet Haversine
             # said quiet=1.0 because of geometric distance.
-            nodata = raster.nodata
-            is_nodata = (raw_lden > 1e30) or (
-                nodata is not None and raw_lden == nodata
-            )
-            if is_nodata:
+            # Classification lives in classify_cell() since 2026-09-10 so the
+            # road-mode zero can be tested; the branches below are unchanged
+            # for aircraft mode. The long comment under `nodata` is kept
+            # because it records WHY nodata is skipped rather than filled.
+            state, lden = classify_cell(raw_lden, raster.nodata, attribute)
+            if state == 'nodata':
                 # CHANGED 2026-08-03. This used to write lden = 35.0, chosen so
                 # lden_db_to_quiet() returned 10.0, on the reasoning above that a
                 # postcode outside every contour is quiet. The reasoning holds for
@@ -491,12 +599,26 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
                 # blanket claim that unmapped means silent.
                 nodata_skipped += 1
                 continue
-            elif raw_lden < LDEN_MIN or raw_lden > LDEN_MAX:
+            elif state == 'anomalous':
                 # Anomalous value (negative, etc) — skip rather than guess
                 skipped += 1
                 continue
-            else:
-                lden = raw_lden
+            elif state == 'below':
+                # Surveyed, under the lowest mapped band. Its own batch and
+                # its own attribute - see ROAD_BELOW_ATTRIBUTE.
+                if dry_run and samples_logged < SAMPLE_LOG_LIMIT:
+                    print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → below {lden:.0f} dB')
+                    samples_logged += 1
+                below_batch.append({'postcode': pc, 'value': f'{lden:.1f}'})
+                if len(below_batch) >= BATCH_SIZE:
+                    if dry_run:
+                        below_written += len(below_batch)
+                    else:
+                        below_written += _flush_batch(
+                            ddb, below_batch, ROAD_BELOW_ATTRIBUTE, failures_file
+                        )
+                    below_batch.clear()
+                continue
 
             if dry_run and samples_logged < SAMPLE_LOG_LIMIT:
                 print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
@@ -528,6 +650,11 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
             written += len(batch)
         else:
             written += _flush_batch(ddb, batch, attribute, failures_file)
+    if below_batch:
+        if dry_run:
+            below_written += len(below_batch)
+        else:
+            below_written += _flush_batch(ddb, below_batch, ROAD_BELOW_ATTRIBUTE, failures_file)
 
     # Clean up checkpoint on success, only on a full uninterrupted run
     if not limit and not dry_run:
@@ -535,7 +662,11 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb'):
 
     raster.close()
     verb = 'Would have written' if dry_run else 'Wrote'
-    print(f'\nDone. {verb}: {written:,} postcodes. Skipped: {skipped:,}.')
+    print(f'\nDone. {verb}: {written:,} postcodes. Skipped: {skipped:,}. Nodata: {nodata_skipped:,}.')
+    if road_mode:
+        # Say it even when zero. A road load that found no surveyed-quiet
+        # postcodes in a whole city is a raster to look at, not a clean run.
+        print(f'{verb}: {below_written:,} surveyed-quiet postcodes as {ROAD_BELOW_ATTRIBUTE}.')
 
     if not dry_run and failures_file.exists():
         stalled = len(failures_file.read_text(encoding='utf-8').split())
@@ -563,6 +694,7 @@ def main():
         dry_run=args.dry_run,
         geotiff=args.geotiff,
         attribute=args.attribute,
+        live_only=args.live_only,
     )
 
 

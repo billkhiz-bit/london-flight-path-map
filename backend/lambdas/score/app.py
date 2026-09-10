@@ -4104,7 +4104,27 @@ def _lookup_lden_raster(postcode_clean):
 # for B2B integrators, which METHODOLOGY §7 says gets a version bump and 14
 # days' notice. That is a product decision, not one to make in passing while
 # wiring up a data source.
+#
+# LONDON-ONLY UNTIL 2026-09-10. The per-postcode pass had been run against the
+# London mosaic alone, so M2 4NG answered None with "not measured, or still
+# being loaded" while SW11 answered 69.1 dB - though all eleven city mosaics had
+# been on disk since August. Measured before loading
+# (scripts/probe_road_raster_coverage.py): 100% of live postcodes in every
+# English city are inside their mosaic and surveyed.
+#
+# THE SURVEYED-QUIET STATE, `roadLdenBelowDb`. DEFRA's road mosaic carries a 0
+# for ground it SURVEYED and found under its lowest mapped band - 40.00 dB in
+# every city, measured - and the loader used to drop those with the sentinels,
+# so 2.0% of covered postcodes (11,281, every one of them quiet) told their
+# reader the noise had "not been measured". Audit I3 on the borough SHARE, one
+# tier down. The loader now writes the bound under its own attribute, and it is
+# published here as `roadNoiseBelowDb`, never as a decibel reading: nobody
+# measured 40 dB there, they measured "less than". The range on the reader is a
+# guard on the BOUND (a re-fetched mosaic with a 45 dB floor would publish
+# "under 45"), not a plausibility band for a level.
 _ROAD_MIN_PLAUSIBLE_DB = 40.0
+_ROAD_BELOW_MIN_DB = 30.0
+_ROAD_BELOW_MAX_DB = 60.0
 
 
 
@@ -4119,7 +4139,7 @@ def _lookup_noise_row(postcode_clean):
     road separately doubled the count and that test caught it immediately, which
     is why this exists rather than two independent readers.
 
-    Returns {'lden': float|None, 'roadLden': float|None}, or None if the table
+    Returns {'lden', 'roadLden', 'roadLdenBelow', 'no2', 'pm25'}, each float|None, or None if the table
     is unavailable. Callers apply their own plausibility rules — the aircraft
     tier has a quarantine and a nodata sentinel the road tier does not share.
     """
@@ -4139,7 +4159,7 @@ def _lookup_noise_row(postcode_clean):
         result = ddb.get_item(
             TableName=NOISE_RASTER_TABLE,
             Key={'postcode': {'S': postcode_clean}},
-            ProjectionExpression='ldenDb, roadLdenDb, no2Ugm3, pm25Ugm3',
+            ProjectionExpression='ldenDb, roadLdenDb, roadLdenBelowDb, no2Ugm3, pm25Ugm3',
         )
     except (BotoCoreError, ClientError) as exc:
         logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
@@ -4159,6 +4179,10 @@ def _lookup_noise_row(postcode_clean):
     return {
         'lden': _num('ldenDb'),
         'roadLden': _num('roadLdenDb'),
+        # Surveyed-quiet bound, written by the road loader for DEFRA's zero
+        # cells (2026-09-10). A row carries roadLden OR roadLdenBelow, never
+        # both; see road_below_from_row.
+        'roadLdenBelow': _num('roadLdenBelowDb'),
         'no2': _num('no2Ugm3'),
         'pm25': _num('pm25Ugm3'),
     }
@@ -4230,6 +4254,20 @@ def road_lden_from_row(row, postcode_clean=''):
     """
     return _plausible_from_row(
         row, 'roadLden', _ROAD_MIN_PLAUSIBLE_DB, _RASTER_MAX_PLAUSIBLE_DB,
+        'SCORE_ROAD_DEGRADED', postcode_clean)
+
+
+def road_below_from_row(row, postcode_clean=''):
+    """The surveyed-quiet BOUND off a pre-fetched row, or None.
+
+    Read only when road_lden_from_row gave nothing - a row holds one or the
+    other. The value is the level the postcode is UNDER (40.0 today), so it is
+    published as roadNoiseBelowDb and must never be handed to anything that
+    wants a reading. Same range machinery as its siblings, because a sentinel
+    in this column is as publishable as one in any other.
+    """
+    return _plausible_from_row(
+        row, 'roadLdenBelow', _ROAD_BELOW_MIN_DB, _ROAD_BELOW_MAX_DB,
         'SCORE_ROAD_DEGRADED', postcode_clean)
 
 
@@ -5858,6 +5896,19 @@ def build_environment(noise_row, postcode_clean=''):
             'DEFRA Strategic Noise Mapping Round 4, road Lden. '
             'Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.'
         )
+    else:
+        # Surveyed and under the lowest mapped level. A BOUND, under its own
+        # key - a reader summing or charting roadNoiseLdenDb must not find a
+        # 40 here and plot it as a reading. The WHO reference and the source
+        # travel with it for the same reason they travel with the figure.
+        road_below = road_below_from_row(noise_row, postcode_clean)
+        if road_below is not None:
+            env['roadNoiseBelowDb'] = round(road_below, 1)
+            env['roadNoiseWhoGuidelineDb'] = 53
+            env['roadNoiseSource'] = (
+                'DEFRA Strategic Noise Mapping Round 4, road Lden. Surveyed; '
+                'below the lowest level the map records. Published 2022, maps 2021.'
+            )
 
     # Air quality: DEFRA PCM background maps, annual mean, 2022, 1 km grid.
     #
@@ -7688,7 +7739,17 @@ def handle_environment(event):
             notices.append(_COVERAGE_NOTICES['postcode'])
         else:
             notices.append(_COVERAGE_NOTICES['postcode-uncovered'])
-    if 'roadNoiseLdenDb' not in env:
+    if 'roadNoiseBelowDb' in env:
+        # Quiet, and KNOWN to be. The old notice below was what a surveyed
+        # zero produced until 2026-09-10, and "has not been measured" was
+        # false for every one of them.
+        notices.append(
+            f'DEFRA surveyed this postcode and mapped no road noise at or above '
+            f'{env["roadNoiseBelowDb"]:.0f} dB Lden, the lowest level its Round 4 '
+            'road map records - under the WHO guideline of 53 dB. That is a quiet '
+            'reading, not a missing one, so no figure is shown.'
+        )
+    elif 'roadNoiseLdenDb' not in env:
         notices.append(
             'Road noise has not been measured for this postcode, or is still '
             'being loaded. No figure is shown rather than an assumed one.'

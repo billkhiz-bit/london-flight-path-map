@@ -219,7 +219,11 @@ geocode server-side, which is the one thing the extension cannot do for itself.
 
 - **Aircraft noise** - DEFRA Round 4 Lden where measured (~9% of London
   postcodes; the contours are localised lobes around airports)
-- **Road noise** - DEFRA Round 4 road Lden (92.2% coverage; roads are everywhere)
+- **Road noise** - DEFRA Round 4 road Lden (92.2% coverage; roads are everywhere).
+  **Every English city since 2026-09-10, not London alone**, and a postcode DEFRA
+  surveyed and found under its lowest mapped level renders as `< 40 dB Lden` with
+  the dot at the bound - the endpoint publishes that as `roadNoiseBelowDb`, a
+  bound, never as `roadNoiseLdenDb`. Quiet and known to be, not missing.
 - **NO2 and PM2.5** - DEFRA PCM background maps, annual mean, each shown against
   its WHO guideline, because a bare concentration means nothing without one.
   **Being loaded as of 2026-08-07 22:09 and not yet complete**: the loader had

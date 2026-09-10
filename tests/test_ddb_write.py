@@ -20,6 +20,7 @@ the backoff can be asserted without spending the wall-clock time it describes.
 import importlib.util
 import os
 import sys
+from pathlib import Path
 
 import pytest
 from botocore.exceptions import ClientError, EndpointConnectionError
@@ -175,3 +176,25 @@ def test_record_failures_no_op_on_empty(tmp_path):
     path = tmp_path / 'failures'
     ddb_write.record_failures(path, [])
     assert not path.exists(), 'a clean run must not leave a failures file'
+
+def test_connection_pool_is_at_least_as_wide_as_the_executor():
+    """25 threads on boto3's default 10-connection pool ran FIVE TIMES SLOWER
+    than one thread (13/s against 60/s sequential and 675/s with a matching
+    pool, measured 2026-09-10). The client is built here and the width lives
+    here, so this is the one place the two can be held together. Reads the
+    pool off the constructed client rather than off the config, because the
+    config is what we asked for and the client is what we got."""
+    import re
+
+    client = ddb_write.make_client('eu-west-2')
+    pool = client._client_config.max_pool_connections
+    assert pool >= ddb_write.MAX_WORKERS, (
+        f'pool {pool} narrower than {ddb_write.MAX_WORKERS} workers: every '
+        'batch will churn TLS connections'
+    )
+    # And the loaders must be reading the width from here, not writing 25.
+    for name in ('load_defra_raster.py', 'load_defra_air_quality.py'):
+        src = Path(REPO_ROOT, 'scripts', name).read_text(encoding='utf-8')
+        assert 'max_workers=ddb_write.MAX_WORKERS' in src, name
+        assert not re.search(r'max_workers=\d', src), f'{name} hardcodes a width'
+

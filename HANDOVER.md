@@ -19,6 +19,50 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 ---
 
+## 0a. THE PER-POSTCODE ROAD TIER COVERS ALL ELEVEN CITIES - loaded and verified 2026-09-10
+
+> **COMPLETE.** `scripts/load_road_rasters.sh` ran 14:06-14:52 on 2026-09-10:
+> **764,131 readings and 18,895 surveyed-quiet markers**, no failures file, no
+> checkpoint left. Verified live: **M2 4NG 59.8 dB** (it served `None` that
+> morning), LS1 62.2, BS1 48.2, TS1 67.9, NG11 8AH `roadNoiseBelowDb: 40.0`
+> with the quiet-not-missing notice, SW18 2RW carrying the London marker.
+> The Lambda that publishes the bound was deployed first (SAM, 14:29).
+>
+> **Two things found while it ran.** (1) `Start-Process sh.exe` inherits a
+> bare Windows PATH - no `dirname`/`tee`/`date` - so the runbook died in a
+> second with the only trace in `roadload.err`; prepend Git's `usr/bin` to
+> `$env:PATH` first. (2) **Every bulk load in this repo's history ran ~50x
+> slower than it should have**: 25 threads on boto3's default 10-connection
+> pool churned TLS on every batch (13/s, against 60/s for ONE thread and 675/s
+> once the pool matched). Nottingham took 17 min on the old client; the other
+> ten took 21 min on the fixed one. `ddb_write.MAX_WORKERS` is the holder now.
+
+**What it is.** `roadLdenDb` in `london-flight-map-noise-raster` had only ever
+been loaded from the London mosaic: SW11 answered 69.1 dB on `/v1/environment`
+while **M2 4NG answered `None`** with "not measured, or still being loaded",
+though all eleven `defra_road_lden_<city>.tif` had been on disk since August.
+Nothing recorded it as open; it surfaced from probing one of the NSPL roll's
+new postcodes. **Measured before loading** with the new
+`scripts/probe_road_raster_coverage.py`: 100% of live postcodes in every
+English city inside their mosaic and surveyed, 549,336 readings, ~370k new
+writes. Order: nottingham, teesside, leicester, tyneandwear, bristol,
+southyorkshire, merseyside, westmidlands, westyorkshire, manchester, london
+(last - it only gains markers).
+
+**A DEFRA zero is a reading, and 2.0% of postcodes are zeros.** Surveyed and
+under the lowest mapped band - **40.00 dB in every mosaic, measured** - and the
+loader dropped them with the sentinels, so 11,281 quiet postcodes read "not
+measured". Audit I3 one tier down. Road mode now writes them as a BOUND,
+`roadLdenBelowDb = 40.0`, after asserting the raster bottoms out at 40.00; the
+Lambda publishes `roadNoiseBelowDb` with a *quiet, not missing* notice; the
+extension renders `< 40 dB Lden`. **The Lambda half is a SAM deploy** - see
+the status line under the load's for whether it is live. Either order is safe.
+
+**`--live-only`, and the aircraft runbook must not copy it**: 61% of the scan
+is terminated postcodes, which `/v1/score` never reads road for and
+`/v1/environment` cannot reach (reverse geocode returns live postcodes).
+Aircraft is read off a terminated postcode by `/v1/score`.
+
 ## 0. THE AUGUST 2026 NSPL ROLL IS COMPLETE - table, derived shares, area pages. 2026-09-10.
 
 > **Nothing is outstanding from the roll.** The load finished at 22:33 on

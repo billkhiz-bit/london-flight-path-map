@@ -85,11 +85,21 @@ report() {
     # No checkpoint means either never started, or finished — the loader
     # deletes it on a clean full run. Distinguish, because "done" and "never
     # ran" look identical otherwise and only one of them needs action.
+    #
+    # And SAY when it cannot distinguish (2026-09-10). This printed "not
+    # started" for two loads that had completed weeks earlier, because the
+    # log paths pointed at /tmp from an August run and a missing log fell
+    # through to the confident wording. An absent log is not evidence of
+    # anything; the line now says what it looked for and where.
     if [ -f "$log" ] && grep -q "Done\." "$log" 2>/dev/null; then
-      printf '%s: COMPLETE\n' "$name"
+      printf '%s: COMPLETE (last Done line in %s)\n' "$name" "$(basename "$log")"
       tr '\r' '\n' < "$log" | grep -E "^Done\." | tail -1 | sed 's/^/  /'
+    elif [ -f "$log" ]; then
+      printf '%s: no checkpoint; %s has no Done line. Last line:\n' "$name" "$(basename "$log")"
+      tr '\r' '\n' < "$log" | grep -v '^$' | tail -1 | cut -c1-100 | sed 's/^/  /'
     else
-      printf '%s: not started\n' "$name"
+      printf '%s: no checkpoint and no %s - never run here, or run elsewhere. Verify with get-item.\n' \
+             "$name" "$(basename "$log")"
     fi
     echo
     return
@@ -125,13 +135,25 @@ report() {
 }
 
 echo
-report 'Road noise (aircraft table, roadLdenDb)' \
-       "$ROOT/.defra_load_checkpoint_defra_road_lden_london" \
-       '/tmp/roadload.log' '390,743'
+# ROAD IS ELEVEN CITIES SINCE 2026-09-10, one checkpoint per mosaic, run by
+# scripts/load_road_rasters.sh into roadload.log. Report whichever city is
+# mid-load; with none in flight, fall back to the log. The London-only line
+# this replaced named one checkpoint and one expected-writes figure, both of
+# which stopped describing the load the day it grew - and pointed at a /tmp
+# log from August, which is why it said "not started" about a finished load.
+road_ckpt=$(ls "$ROOT"/.defra_load_checkpoint_defra_road_lden_* 2>/dev/null | head -1)
+if [ -n "$road_ckpt" ]; then
+  city=$(basename "$road_ckpt" | sed 's/.*defra_road_lden_//')
+  report "Road noise (roadLdenDb + roadLdenBelowDb), city: $city" \
+         "$road_ckpt" "$ROOT/roadload.log" ''
+else
+  report 'Road noise (roadLdenDb + roadLdenBelowDb), all cities' \
+         "$ROOT/.defra_load_checkpoint_defra_road_lden_none" "$ROOT/roadload.log" ''
+fi
 
 report 'Air quality (NO2 + PM2.5)' \
        "$ROOT/.defra_aq_checkpoint" \
-       '/tmp/aqload.log' ''
+       "$ROOT/aqload.log" ''
 
 echo 'A postcode gains its value the moment it is written - the Lambda reads the'
 echo 'table live, so nothing needs deploying or restarting as these progress.'
