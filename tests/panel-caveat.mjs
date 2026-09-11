@@ -77,7 +77,7 @@ async function check(city, country, borough, expectCaveat, drop = null, mustName
       saved = rec[dropField];
       delete rec[dropField];
     }
-    let text;
+    let text, panel = '';
     try {
       updateSidebar(d);
       const rows = [...document.querySelectorAll('.score-explain')];
@@ -94,15 +94,32 @@ async function check(city, country, borough, expectCaveat, drop = null, mustName
       // because 'undefined only here' shipped to production.
       if (!row) return { err: `no environment row rendered (found ${rows.length} .score-explain rows). The row is located by its copy string; if that wording changed, update this test - do not let it pass` };
       text = row.textContent.trim();
+      // THE WHOLE PANEL, NOT JUST THIS ROW (2026-09-11).
+      //
+      // updateSidebar() renders the entire sidebar and this gate then threw
+      // all of it away but one .score-explain row, so the `undefined` check
+      // below - the check this file exists for - only ever saw the
+      // Environment sentence. Four sibling interpolations in the same
+      // function (data.note, data.property, extra.crime, extra.schoolNote)
+      // were unguarded, and 53 of 91 boroughs rendered the literal word
+      // `undefined`, including `UNDEFINED` in the rating-high colour under
+      // CRIME. It rendered here on every run and nothing looked at it.
+      //
+      // Rendering a surface is not asserting it. The caveat checks stay
+      // scoped to the row; `undefined` is now asked of the whole panel.
+      panel = (document.querySelector('#sidebar-content')?.innerText || '').trim();
     } finally {
       // Restore even if rendering threw, so one failing case cannot corrupt
       // the records every later case reads.
       if (rec && had) rec[dropField] = saved;
     }
-    return { text };
+    return { text, panel };
   }, [borough, city, drop]);
   if (out.err) { console.log(`  ! ${borough}: ${out.err}`); fail++; return; }
-  const hasUndef = /undefined/i.test(out.text);
+  // Asked of the WHOLE panel, not just the environment row - see the note in
+  // the evaluate above. `out.text` is a substring of `out.panel`, so testing
+  // the panel strictly widens what this catches.
+  const hasUndef = /undefined/i.test(out.panel || out.text);
   const hasCaveat = /only here/.test(out.text);
   const named = mustName ? mustName.test(out.text) : true;
   const ok = !hasUndef && hasCaveat === expectCaveat && named;

@@ -11767,7 +11767,7 @@
       <h3>AIRCRAFT NOISE</h3>
       <span class="noise-indicator ${noiseClass}">${(data.impact || 'UNKNOWN').toUpperCase()}</span>
       <div class="noise-bar"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
-      <p class="property-note">${data.note}</p>
+      ${data.note ? `<p class="property-note">${escapeHtml(data.note)}</p>` : ''}
       <div class="defra-badge">${escapeHtml(cityOf(currentCity).contourBadge)}</div>
     </div>
 
@@ -11777,7 +11777,7 @@
         <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
         <div class="stat"><div class="stat-value">${data.trend_pct || data.trend}</div><div class="stat-label">ANNUAL GROWTH</div></div>
       </div>
-      <p class="property-note" style="margin-top:12px;">${data.property}</p>
+      ${data.property ? `<p class="property-note" style="margin-top:12px;">${escapeHtml(data.property)}</p>` : ''}
     </div>
 
     ${(() => {
@@ -11787,7 +11787,7 @@
         `
     <div class="sidebar-section">
       <h3>CRIME</h3>
-      <span class="rating-badge ${ratingBadgeClass(extra.crime)}">${extra.crime}</span>
+      ${extra.crime ? `<span class="rating-badge ${ratingBadgeClass(extra.crime)}">${escapeHtml(extra.crime)}</span>` : ''}
       <div class="crime-summary">
         <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (${escapeHtml(extra.name)} BOROUGH)</div></div>
       </div>
@@ -11797,7 +11797,7 @@
     <div class="sidebar-section">
       <h3>SCHOOLS</h3>
       <span class="rating-badge ${schoolBadge(extra).cls}">${escapeHtml(schoolBadge(extra).text)}</span>
-      <p class="info-note" style="margin-top:6px;">${extra.schoolNote}</p>
+      ${extra.schoolNote ? `<p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>` : ''}
     </div>
     ` + buildOptionalSections(extra, 'bor')
       );

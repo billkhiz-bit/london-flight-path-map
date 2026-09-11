@@ -219,7 +219,6 @@ def main() -> int:
             # reported rather than silently skipped; see the floor below.
             skipped.append(f"{city} (no borough carries p8)")
             continue
-        compared += len(with_p8)
         got, _missing = for_city(city, p8)
         diffs = [
             f"{n}: registry {v} vs DfE {got[n]}"
@@ -227,12 +226,35 @@ def main() -> int:
             if n in got and abs(got[n] - v) > 0.005
         ]
         absent = [n for n in with_p8 if n not in got]
+        # COUNT WHAT WAS ACTUALLY COMPARED, NOT WHAT THE REGISTRY HOLDS
+        # (2026-09-11). This was `compared += len(with_p8)`, computed BEFORE
+        # for_city() ran - so it counted our own rows, not agreements with
+        # DfE. Combined with `bad += len(diffs)` (and `diffs` filtered by
+        # `if n in got`), a DfE side that resolved NOTHING gave diffs=[],
+        # bad=0, compared=79, and the floor below was satisfied by our own
+        # registry. Verified: with for_city() stubbed to resolve nothing it
+        # printed "Compared 79 Progress 8 value(s). / RESULT: PASS", exit 0.
+        #
+        # That is exactly the schema drift this repo hit TWICE in September -
+        # DfE renamed `gender` to `sex`, NSPL moved `lad25cd` to `lad26cd` -
+        # and p8 is 0.35 of `live` on 79 boroughs with no other cross-source
+        # check. The stage is `advise`, which sends all output to /dev/null,
+        # so the per-borough NOT PUBLISHED lines are invisible: the exit code
+        # is the only signal, and it has to carry this.
+        compared += sum(1 for n in with_p8 if n in got)
         print(f"{city}: {len(with_p8)} boroughs carry p8, {len(diffs)} differ, {len(absent)} not in DfE")
         for d in diffs:
             print(f"    DRIFT: {d}")
         for a in absent:
             print(f"    NOT PUBLISHED: {a}")
-        bad += len(diffs)
+        # AN UNCORROBORATED PUBLISHED VALUE IS A FAILURE, not a note. `absent`
+        # means the registry publishes a Progress 8 that DfE's own file does
+        # not list for that authority - which is the same claim `diffs` makes,
+        # one step weaker. It was printed and never counted. Measured
+        # 2026-09-11: absent is 0 across all 11 cities, so this cannot fire on
+        # today's data; if a legitimate absence ever appears it should be
+        # DECLARED, the way cardiff's no-p8 case already is above.
+        bad += len(diffs) + len(absent)
 
     # THE FLOOR. `if not with_p8: continue` meant that renaming the `p8` key
     # made every city skip and this print "RESULT: PASS" having compared

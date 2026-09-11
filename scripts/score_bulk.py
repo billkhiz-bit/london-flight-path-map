@@ -208,9 +208,23 @@ def read_postcodes(path):
 # ---------------------------------------------------------------------------
 
 # Column names mirror the API's own vocabulary (`quiet` / `afford` / `growth`
-# / `live` are the four components calc_score actually returns), so a customer
+# / `live` / `env` are the components calc_score returns), so a customer
 # reading this CSV alongside METHODOLOGY.md or a /v1/score response sees the
 # same words for the same things. Do not rename them to prettier synonyms.
+#
+# `env` WAS MISSING UNTIL 2026-09-11, and the comment above used to say "the
+# four components calc_score actually returns" - true when written, false from
+# methodology v3.9 (2026-08-26), when `environment` became a scored component
+# at 0.14-0.18 of every persona. The effect is the one this file's own
+# docstring calls unacceptable: a customer summing the published components
+# against the published weights missed the published `score` by a mean of
+# ~0.95 and up to ~1.15 points on the 90 boroughs that carry env, because the
+# CSV published four fifths of a five-part sum beside the whole answer.
+#
+# Fourth holder of the same drift. openapi.yaml and api/index.html were fixed
+# as F2/F3 on 2026-09-03 and the consumer site as I34 on 2026-09-01; this one
+# was missed because nothing gates it. If a sixth component is ever added,
+# grep for `'live':` across the repo - that is the list of holders.
 OUTPUT_COLUMNS = [
     'input_postcode',
     'status',
@@ -222,6 +236,7 @@ OUTPUT_COLUMNS = [
     'afford',
     'growth',
     'live',
+    'env',
     'avg_price_gbp',
     'price_trend_pct',
     'noise_impact_band',
@@ -285,6 +300,11 @@ def classify_outcome(postcode, body, status):
             'afford': components.get('afford'),
             'growth': components.get('growth'),
             'live': components.get('live'),
+            # Absent for New York (5 boroughs) and Cardiff (4), which are below
+            # the two-input floor - an empty cell, never a 0, because 0 is a
+            # real score on this scale and would read as the worst possible
+            # environment rather than as "not published here".
+            'env': components.get('env', ''),
             # avgPriceUsd for NYC, avgPriceGbp for London. One column holds
             # whichever the city produced; the `city` column disambiguates.
             'avg_price_gbp': context.get('avgPriceGbp', context.get('avgPriceUsd', '')),

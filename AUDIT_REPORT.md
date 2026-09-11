@@ -1,5 +1,24 @@
 # Audit Report — Sky Score
 
+> ## A NEWER AUDIT EXISTS: `AUDIT_REPORT_2026-09-11.md`
+>
+> A full audit ran on **2026-09-11** and its findings are in that file, **not
+> here**. This file was deliberately NOT overwritten: Bill was away, and
+> overwriting a generated report without confirmation is what the global safety
+> rule forbids. Nothing below is wrong - it is four days older.
+>
+> **To rotate on return:** copy this file to `AUDIT_REPORT_2026-09-07.md` and
+> promote the 09-11 one, matching the 08-21 / 08-29 archive convention.
+>
+> **The 09-11 audit fixed four things** (all committed, none deployed): the
+> borough panel printed the literal word `undefined` on **53 of 91 boroughs**,
+> including `UNDEFINED` in the worst rating colour under CRIME; the gate written
+> to catch exactly that rendered the whole panel and asserted only one row of
+> it; `build_progress8.py --check` could report PASS having compared **zero**
+> values against DfE; and the Enterprise bulk CSV omitted `env`, so its rows
+> could not reproduce their own `score` column. **Five criticals remain open**,
+> four of them one mechanism - a mirror left behind by a version bump.
+
 **Date:** 2026-09-07
 **Scope:** whole codebase — the 8 backend Lambdas and the scoring engine,
 `index.html` and the 8 other public pages, the 99 generated `area/` pages, the
