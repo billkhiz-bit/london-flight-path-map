@@ -2927,37 +2927,78 @@ class CoverageNoticeTests(unittest.TestCase):
     """
 
     def test_raster_hit_carries_no_notice(self):
-        cov = app.build_coverage('raster', 'measured')
+        cov = app.build_coverage('raster', 'measured', 'measured')
         self.assertEqual(cov['notices'], [])
         self.assertTrue(cov['quiet']['measuredAtLocation'])
 
     def test_geometric_estimate_discloses_it_is_not_measured(self):
-        cov = app.build_coverage('postcode', 'measured')
+        cov = app.build_coverage('postcode', 'measured', 'measured')
         self.assertEqual(len(cov['notices']), 1)
         self.assertIn('not measured', cov['notices'][0])
         self.assertFalse(cov['quiet']['measuredAtLocation'])
 
     def test_borough_average_says_so(self):
-        cov = app.build_coverage('borough', 'measured')
+        cov = app.build_coverage('borough', 'measured', 'measured')
         self.assertEqual(len(cov['notices']), 1)
         self.assertIn('borough-wide average', cov['notices'][0])
+
+    # THE REAL SENTENCE, NOT THE BARE TOKEN (2026-09-11, audit I9).
+    #
+    # These two called build_coverage with the literal 'unavailable'. That was
+    # what live_resolution returned when they were written; since the
+    # 2026-08-09 wording change it returns a full sentence, so the branch under
+    # test stopped being reachable in production and these kept passing on it.
+    # A test that constructs its own input can pin a state the system no longer
+    # produces - so the input is taken from live_resolution's own vocabulary.
+    LIVE_UNAVAILABLE = (
+        'unavailable — 1/4 inputs measured, too few to publish; '
+        'the component is omitted and its weight redistributed'
+    )
+    ENV_UNAVAILABLE = (
+        'unavailable — 1/3 inputs measured, too few to publish; '
+        'the component is omitted and its weight redistributed'
+    )
+
+    def test_live_resolution_still_starts_with_the_token_this_matches_on(self):
+        """The guard for the guard: build_coverage keys on a prefix, so a
+        reworded live_resolution must not silently switch the notice off again.
+        Reads the real function rather than a constructed string."""
+        bd = {'crimeRate': None, 'p8': None, 'transport': None, 'healthcare': None}
+        self.assertTrue(app.live_resolution(bd).startswith('unavailable'))
+        self.assertTrue(app.env_resolution({}).startswith('unavailable'))
 
     def test_unavailable_liveability_is_disclosed_as_a_gap(self):
         # The Greater Manchester case: a uniform 5.0 read as a finding rather
         # than an absence of inputs.
-        cov = app.build_coverage('raster', 'unavailable')
+        cov = app.build_coverage('raster', self.LIVE_UNAVAILABLE, 'measured')
         self.assertEqual(len(cov['notices']), 1)
-        self.assertIn('placeholder', cov['notices'][0])
+        self.assertIn('omitted from the score', cov['notices'][0])
+        self.assertNotIn('placeholder value', cov['notices'][0].split('It is not')[0])
         self.assertFalse(cov['live']['measuredAtLocation'])
 
+    def test_unavailable_environment_is_disclosed_as_a_gap(self):
+        """env was absent from `coverage` entirely until 2026-09-11 (audit I8),
+        while being dropped from the score for 9 of 99 boroughs."""
+        cov = app.build_coverage('raster', 'measured', self.ENV_UNAVAILABLE)
+        self.assertEqual(len(cov['notices']), 1)
+        self.assertIn('Environment inputs are unavailable', cov['notices'][0])
+        self.assertFalse(cov['env']['measuredAtLocation'])
+        self.assertEqual(cov['env']['basis'], self.ENV_UNAVAILABLE)
+
     def test_both_degraded_yields_both_notices(self):
-        cov = app.build_coverage('postcode', 'unavailable')
+        cov = app.build_coverage('postcode', self.LIVE_UNAVAILABLE, 'measured')
         self.assertEqual(len(cov['notices']), 2)
+
+    def test_all_three_degraded_yields_three_notices(self):
+        cov = app.build_coverage(
+            'postcode', self.LIVE_UNAVAILABLE, self.ENV_UNAVAILABLE
+        )
+        self.assertEqual(len(cov['notices']), 3)
 
     def test_basis_is_always_reported_even_when_clean(self):
         # A field that appears only on failure trains readers to ignore its
         # absence, so 'measured' is stated too.
-        cov = app.build_coverage('raster', 'measured')
+        cov = app.build_coverage('raster', 'measured', 'measured')
         self.assertEqual(cov['quiet']['basis'], 'raster')
         self.assertEqual(cov['live']['basis'], 'measured')
 

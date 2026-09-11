@@ -679,10 +679,35 @@ def build_why(
         )
     unweighted_caveat = None
     if unweighted:
-        moved = ' and '.join(u['label'] for u in unweighted)
+        # THE JUSTIFICATION IS PER-COMPONENT, not a fixed sentence (2026-09-11,
+        # audit I2). `unweighted` is built generically over EVERY zero-weight
+        # component, but the caveat hardcoded growth's reason - "weighted only
+        # for the investor persona, because past price growth describes the
+        # market rather than the property". A caller passing ?weights=afford:0.0
+        # (documented in METHODOLOGY s5.3 and sold on pricing.html and
+        # api/index.html) got that sentence about AFFORDABILITY, where both
+        # clauses are false: every persona weights it, and it is not price
+        # growth. Verified live on 22 of 33 London boroughs before the fix.
+        #
+        # Growth keeps its explanation, because for seven of the eight personas
+        # a zero weight on growth is the PRODUCT's decision and deserves a
+        # reason. Anything else is zero because the CALLER set it so, and the
+        # honest sentence says that rather than inventing a rationale.
+        labels = [u['label'] for u in unweighted]
+        moved = ' and '.join(labels)
+        # 'is'/'are' was always 'is', so two zero-weight components produced
+        # "Affordability and Growth moved ... but is not counted".
+        verb = 'is' if len(labels) == 1 else 'are'
+        them = 'it' if len(labels) == 1 else 'them'
+        if labels == ['Growth']:
+            because = (
+                ' — it is weighted only for the investor persona, because past price growth '
+                'describes the market rather than the property.'
+            )
+        else:
+            because = f' — the weights supplied with this request give {them} no weight.'
         unweighted_caveat = (
-            f'{moved} moved this quarter but is not counted in this view — it is weighted only for the '
-            'investor persona, because past price growth describes the market rather than the property.'
+            f'{moved} moved this quarter but {verb} not counted in this view{because}'
         )
 
     if not factors:
@@ -5854,9 +5879,30 @@ _COVERAGE_NOTICES = {
     ),
 }
 
+# THE TEXT MUST MATCH WHAT THE ENGINE DOES, and for a year it did not.
+# It said the component was "a neutral placeholder" - true before v3.8, which
+# stopped defaulting and started OMITTING an uncomputable component and
+# redistributing its weight. `live_resolution` has said so in its own returned
+# sentence since 2026-08-09; this notice, forty lines away, was not updated.
+# Corrected 2026-09-11 (audit I9) at the same time as the branch that emits it,
+# which could not fire at all - see build_coverage.
 _LIVE_UNAVAILABLE_NOTICE = (
-    'Liveability inputs are unavailable for this area, so that component is a '
-    'neutral placeholder rather than a measurement. Do not read it as average.'
+    'Liveability inputs are unavailable for this area, so that component is '
+    'omitted from the score and its weight is redistributed across the '
+    'components that were measured. It is not a placeholder value, and the '
+    'score is not directly comparable with a fully-measured borough.'
+)
+
+# Environment's sibling. Fires for the 9 boroughs below the two-input floor -
+# New York's 5 (no UK coverage at all) and Cardiff's 4 (England-only road and
+# flood coverages). Added 2026-09-11 with the `env` coverage block: the
+# component had been omitted from the score and from `coverage` alike, so the
+# one object a caller is told to read for limitations said nothing about it.
+_ENV_UNAVAILABLE_NOTICE = (
+    'Environment inputs are unavailable for this area, so that component is '
+    'omitted from the score and its weight is redistributed across the '
+    'components that were measured. It is not a placeholder value, and the '
+    'score is not directly comparable with a fully-measured borough.'
 )
 
 
@@ -5949,7 +5995,7 @@ def build_environment(noise_row, postcode_clean=''):
     return env
 
 
-def build_coverage(quiet_source, live_source):
+def build_coverage(quiet_source, live_source, env_source):
     """Per-component coverage statements plus any plain-English notices.
 
     Returned on every response, not only degraded ones: a field that appears
@@ -5963,13 +6009,24 @@ def build_coverage(quiet_source, live_source):
     if quiet_notice:
         notices.append(quiet_notice)
 
-    # 'unavailable' is live_resolution's way of saying no input was measured.
-    # It used to mean every one of them hit a 5.0 placeholder, which is how a
-    # uniform Greater Manchester 5.0 read as a finding rather than a gap; the
-    # component is now omitted outright rather than defaulted, and this notice
-    # is what says so in plain English.
-    if live_source == 'unavailable':
+    # 'unavailable' is live_resolution's way of saying too few inputs were
+    # measured to publish the component, which is then omitted and its weight
+    # redistributed - the fix for a uniform Greater Manchester 5.0 reading as a
+    # finding rather than a gap.
+    #
+    # STARTSWITH, NOT EQUALITY (2026-09-11, audit I9). This tested
+    # `live_source == 'unavailable'`, and live_resolution has returned a full
+    # SENTENCE - 'unavailable - n/4 inputs measured, too few to publish; ...' -
+    # since the 2026-08-09 wording change that the function's own comment
+    # records. So the bare token stopped being returned that day and this
+    # branch has fired ZERO times since, across all 99 boroughs. Two tests
+    # pinned the dead branch by calling build_coverage with the literal
+    # 'unavailable', so they passed green on a path production cannot enter;
+    # they pass the real sentence now.
+    if live_source.startswith('unavailable'):
         notices.append(_LIVE_UNAVAILABLE_NOTICE)
+    if env_source.startswith('unavailable'):
+        notices.append(_ENV_UNAVAILABLE_NOTICE)
 
     return {
         'quiet': {
@@ -5979,6 +6036,20 @@ def build_coverage(quiet_source, live_source):
         'live': {
             'basis': live_source,
             'measuredAtLocation': live_source == 'measured',
+        },
+        # ENV WAS ABSENT FROM THIS OBJECT ENTIRELY until 2026-09-11 (audit I8),
+        # although `environment` has been a scored component since v3.9 at
+        # 0.14-0.18 of every persona and is DROPPED for 9 of 99 boroughs. A
+        # Cardiff response published context.environmentResolution saying
+        # '1/3 inputs measured' while `coverage` - the one object
+        # filter_response refuses to let a caller strip, precisely so a
+        # limitation cannot be filtered away, and which terms.html s6 obliges
+        # integrators to carry through to their own users - said nothing about
+        # it. Two of three scored components were described and the third was
+        # not.
+        'env': {
+            'basis': env_source,
+            'measuredAtLocation': env_source == 'measured',
         },
         'notices': notices,
     }
@@ -6400,7 +6471,9 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
         # consumer surface can show a limitation without having to know what
         # 'postcode' means. See build_coverage.
         'coverage': build_coverage(
-            quiet_source, live_resolution(bd, english=(city != 'nyc'))
+            quiet_source,
+            live_resolution(bd, english=(city != 'nyc')),
+            env_resolution(bd),
         ),
     }
 

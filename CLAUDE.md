@@ -1296,6 +1296,24 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
+> ## ⚠️ TWO FIXES ARE COMMITTED AND NOT DEPLOYED (2026-09-11)
+>
+> **`make web-deploy` is the first thing to run.** `index.html` at the origin
+> still prints the literal word `undefined` in the borough detail panel on
+> **53 of 91 boroughs** - and `UNDEFINED` in the `rating-high` colour, the ink
+> the app uses for the WORST crime, directly above a correct rate. Fixed in
+> `fbe9841`, preflight PASS, **not pushed to CloudFront**: it is an
+> outward-facing deploy and Bill was away. Live since the cities shipped on
+> 11 Aug.
+>
+> **Then `make data-deploy`.** `data/borough-extra.json` carries
+> `healthcareWithin500mPct` in source and the old `healthcareWithin1kmPct` at
+> the origin (`165f20d`). Cosmetic only - `index.html` reads `healthcare` and
+> `healthcareNote`, never the share - so the origin is behind, not wrong.
+>
+> Verify after both: `sh scripts/check_deploy_drift.sh` at 133 of 133.
+
+
 **THE PRICE-LED DISCLOSURE IS STRUCTURAL SINCE 2026-09-09, not a correlation.**
 `priceLed` was a rank-to-price correlation tested against **0.60**, a constant
 whose own comment recorded it going arbitrary - it was chosen because "nothing
