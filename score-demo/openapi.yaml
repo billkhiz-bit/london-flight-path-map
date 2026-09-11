@@ -12,9 +12,11 @@ info:
     rescaled rather than the missing one being treated as zero.
 
     **Authentication.** Most endpoints require an API key passed in the
-    `X-Api-Key` header. Two do not: `/v1/signup`, which is how you get a key,
-    and `/v1/changes`, which is deliberately public so anyone can audit what
-    moved between data vintages without holding one. Free tier provides 10,000 requests/month, 5/sec burst,
+    `X-Api-Key` header. Three do not: `/v1/signup`, which is how you get a key;
+    `/v1/changes`, which is deliberately public so anyone can audit what
+    moved between data vintages without holding one; and `/v1/regions`, the
+    discovery endpoint, which is public for the same reason - a client needs
+    to know what is covered before it has a key to ask with. Free tier provides 10,000 requests/month, 5/sec burst,
     2/sec sustained. `/v1/score/batch` is NOT available on the free tier - it is
     denied per-method - so one request is one address and the free ceiling is
     10,000 scores/month, the same number by a simpler route.
@@ -208,6 +210,16 @@ paths:
   /v1/regions:
     get:
       tags: [Score]
+      # UNAUTHENTICATED, and this override is load-bearing: the spec sets a
+      # GLOBAL `security: [ApiKeyAuth]`, so silence here means "key required".
+      # It was silent until 2026-09-11 (audit C1) while the route answered 200
+      # with no key in production - the last surviving copy of a falsehood
+      # corrected in template.yaml and handle_regions' docstring on 2026-08-21.
+      # A spec is what integrators generate clients FROM, so it is the copy
+      # that costs most. Guarded both directions now by
+      # OpenApiAuthMatchesTemplateTests in backend/tests/test_route_throttles.py,
+      # which reads template.yaml's own ApiKeyRequired rather than a second list.
+      security: []
       summary: List supported cities and boroughs.
       description: |
         Discovery endpoint for integrators. Returns the supported cities,
@@ -220,8 +232,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RegionsResponse'
-        '403':
-          description: API key missing or invalid.
 
   /v1/changes:
     get:

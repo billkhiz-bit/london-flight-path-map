@@ -155,7 +155,12 @@ and cost decision, not a defect — raising it is a `template.yaml` change and a
 SAM deploy.
 
 
-### C1 — `openapi.yaml` declares `/v1/regions` key-gated; production serves it open **[V]**
+### ~~C1 — `openapi.yaml` declares `/v1/regions` key-gated; production serves it open~~ **FIXED 2026-09-11** **[V]**
+
+> Spec now carries `security: []` on `/v1/regions` and its unreachable `403` is gone; the auth prose says THREE open routes, not two.
+> **Gated by `OpenApiAuthMatchesTemplateTests`** in `backend/tests/test_route_throttles.py` - both directions, and red-proven
+> (it named `GET /v1/regions` before the fix). It lives in that file because it already owns the template parser; a second
+> parser is the mirror drift this repo keeps paying for.
 
 `score-demo/openapi.yaml`. The global default at `:55` is
 `security: - ApiKeyAuth: []`. `/v1/signup` (`:66`) and `/v1/changes` (`:275`)
@@ -178,7 +183,13 @@ components, weights, context keys, sources, cities and personas, never auth.
 **Fix:** add `security: []` to `/v1/regions`, drop its `403`, change "Two do not"
 to three. **Then gate it** — see the recommendation at the end.
 
-### C2 — the methodology version reads 3.7 / 4.0 / 5.0 across five surfaces **[V]**
+### ~~C2 — the methodology version reads 3.7 / 4.0 / 5.0 across five surfaces~~ **FIXED 2026-09-11** **[V]**
+
+> All five now read 5.0. **Gated by `backend/tests/test_methodology_version.py`**, which reads
+> `app.METHODOLOGY_VERSION` rather than hardcoding it, so the next bump reds until the documents follow.
+> It asserts each pattern matches EXACTLY ONCE separately from the values - a pattern that stops matching
+> would otherwise pass by vacuity, the `FAIL_MODERATE` shape. Red-proven on all four surfaces, and the
+> match-once test caught two of my own regexes being wrong.
 
 Engine: `backend/lambdas/score/app.py:106` → `METHODOLOGY_VERSION = '5.0'`, and
 every response carries `"methodologyVersion": "5.0"` (verified live).
@@ -202,7 +213,7 @@ defect being fixed once before; nothing asserts the string, so it drifted again.
 
 **Correct value: 5.0 on all five.**
 
-### C3 — README says road noise is not scored, 29 lines after saying it is **[V]**
+### ~~C3 — README says road noise is not scored, 29 lines after saying it is~~ **FIXED 2026-09-11** **[V]**
 
 `README.md:43`: *"**Road noise remains reported and not scored**; it is scheduled
 for the v4.0 noise composite."* `backend/lambdas/score/app.py:5571` →
@@ -210,7 +221,10 @@ for the v4.0 noise composite."* `backend/lambdas/score/app.py:5571` →
 `roadNoiseAboveWhoPct`. `README.md:9`, in the **same blockquote**, says *"Air
 quality, road noise and flood risk are all SCORED."* **Delete the sentence.**
 
-### C4 — README claims a coverage figure is derived and "cannot disagree"; it is hardcoded and disagrees **[V]**
+### ~~C4 — README claims a coverage figure is derived and "cannot disagree"~~ **FIXED 2026-09-11** **[V]**
+
+> Corrected to **79 measured / 20 partial / 0 unavailable**, with the cause named (New York's five have no `p8`)
+> and the false claim of derivation removed rather than quietly repaired.
 
 `README.md:56, :315`: *"all four are measured for **84 of 99** boroughs"*, with
 `:319` asserting *"That figure is **counted through the Lambda's own
@@ -234,7 +248,7 @@ README's two supporting counts are right (`p8` absent for exactly 20).
 of derivation that is not one is the most expensive kind of stale number, because
 it tells the next reader not to check.*
 
-### C5 — OPERATIONS.md records the NSPL reload as ~6 h and blocked on an ungranted IAM action **[V]**
+### ~~C5 — OPERATIONS.md records the NSPL reload as ~6 h and blocked on an ungranted IAM action~~ **FIXED 2026-09-11** **[V]**
 
 `OPERATIONS.md:587`: *"only once `dynamodb:BatchWriteItem` is applied to the live
 policy (it is in `backend/iam-policy.json`, **not yet applied**) … **a ~6 h run
@@ -315,7 +329,7 @@ argument.
 `vsLondonMedian` is computed from *that city's* medians while `index.html:9863`
 prints "x the London median".
 
-### I6 — OPERATIONS.md's resource inventory omits a Lambda and a table **[V]**
+### ~~I6 — OPERATIONS.md's resource inventory omits a Lambda and a table~~ **FIXED 2026-09-11** **[V]**
 
 `OPERATIONS.md:23` says **7 Lambdas** and omits `chat`; `:24` says **3 DynamoDB
 tables** and omits `postcodes`. Measured: `backend/lambdas/` holds **8**
@@ -324,7 +338,9 @@ directories, `template.yaml` holds **8** `AWS::Serverless::Function` blocks and
 file already says "the four DynamoDB tables" at `:580`; the top-of-file inventory
 — the first thing an operator reads — is the outlier.
 
-### I7 — The 403-diagnosis runbook lists 5 of 14 throttles, omitting the three tightest **[A]**
+### ~~I7 — The 403-diagnosis runbook lists 5 of 14 throttles~~ **FIXED 2026-09-11** **[V]**
+
+> Replaced with a dated snapshot of all 14, tightest first, extracted from `template.yaml`, and the authority named.
 
 `OPERATIONS.md:727-731` gives the stage ceiling plus four routes, "updated
 2026-07-26". `template.yaml` declares **14** per-route entries; the nine added on
@@ -352,7 +368,7 @@ it. **Two tests pin the dead branch**: `test_score.py:2945-2956` calls
 `build_coverage('raster', 'unavailable')` with the bare literal, so both pass
 green on a branch production cannot enter.
 
-### I10 — Counts that have drifted, all measured **[V]**
+### ~~I10 — Counts that have drifted~~ **FIXED 2026-09-11** **[V]** (485->481, 285->281, env coverage, HPI vintage, NSPL roll, 27->28 probes, two->three viewports)
 
 | Claim | Where | Measured |
 |---|---|---|
@@ -500,9 +516,13 @@ there), `toggleMetricDetail()` expanded, `renderScoreTip()` (I4 lives there),
 
 ## Summary
 
-- **Fixed this session: 5** (1 critical live user-visible, 2 gate-integrity, 1 B2B deliverable, and the demo-quota drain in C0)
-- **Critical open: 5** — plus C0, whose CAUSE is fixed but whose quota does not reset until 1 October
-- **Important open: 10**
+- **Fixed this session: 13.** F1-F4, C0-C5, I6, I7 and I10.
+- **Critical open: 0.** C0's cause is fixed but its quota does not reset until 1 October.
+- **Important open: 6** — I1 (six pages with no `Cache-Control`), I2, I3, I4, I5, I8, I9
+  were all open when this report was written; **I2, I8 and I9 shipped in the backend
+  deploy**, so what remains is I1, I3, I4 and I5, all frontend.
+- **Two new gates close a CLASS rather than an instance**: spec-vs-template auth, and
+  the methodology version against every document that quotes it.
 - **Minor open: ~21**
 
 None of the open items needs a deploy to be made safe; all are source or document

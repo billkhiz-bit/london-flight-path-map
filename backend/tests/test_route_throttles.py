@@ -257,5 +257,96 @@ class RouteThrottleTests(unittest.TestCase):
             'wins silently:\n  ' + '\n  '.join(dupes))
 
 
+class OpenApiAuthMatchesTemplateTests(unittest.TestCase):
+    """score-demo/openapi.yaml must agree with the template about who needs a key.
+
+    WHY THIS EXISTS (2026-09-11, audit C1). The spec declared `/v1/regions`
+    key-gated - no `security: []` override against a global default of
+    `ApiKeyAuth`, plus a documented `403` - while the route answers **200 with
+    no key** in production, verified live. It was the last surviving copy of a
+    falsehood corrected in `template.yaml` and in `handle_regions`' docstring
+    on 2026-08-21; the spec is the artefact integrators generate CLIENTS from,
+    so it is the copy that costs the most.
+
+    `check_openapi_matches_engine.py` could not catch it: that gate compares
+    components, weights, context keys, sources, cities and personas - shape,
+    never auth - and it passed throughout.
+
+    It lives HERE rather than in that script because this file already owns the
+    template parser (`_routes` returns key_required per route). A second parser
+    is the mirror-drift defect this repo has paid for repeatedly, most recently
+    in the four holders of the component list. One invariant, one holder.
+    """
+
+    SPEC = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', '..', 'score-demo', 'openapi.yaml'))
+
+    def setUp(self):
+        try:
+            import yaml
+        except ImportError:  # pragma: no cover - environment-dependent
+            self.skipTest('PyYAML not installed, so the spec was not parsed')
+        with open(self.SPEC, encoding='utf-8') as handle:
+            self.spec = yaml.safe_load(handle)
+        self.routes = _routes(_read())
+
+    def test_the_spec_was_actually_parsed(self):
+        """A floor, because every assertion below is vacuous on an empty spec."""
+        paths = self.spec.get('paths') or {}
+        self.assertGreaterEqual(
+            len(paths), 4,
+            f'only {len(paths)} paths parsed out of openapi.yaml - the parse '
+            'broke, and the comparisons below prove nothing')
+        self.assertTrue(
+            self.spec.get('security'),
+            'the spec declares no global `security`, so a per-path override '
+            'means something different from what this test assumes')
+
+    def test_every_open_route_is_declared_open_in_the_spec(self):
+        """A route with no ApiKeyRequired must carry `security: []`.
+
+        The spec sets a GLOBAL default of ApiKeyAuth, so silence means "key
+        required". A route that is open in the template and silent in the spec
+        therefore tells an integrator to send a key it does not need - and, via
+        the documented 403, to handle a status it will never see.
+        """
+        wrong = []
+        for path, method, key_required in self.routes:
+            if key_required:
+                continue
+            entry = ((self.spec.get('paths') or {}).get(path) or {}).get(method.lower())
+            if entry is None:
+                continue  # not documented at all; a different question
+            if entry.get('security') != []:
+                wrong.append(f'{method} {path}')
+        self.assertEqual(
+            [], wrong,
+            'these routes are UNAUTHENTICATED in template.yaml but the spec '
+            'does not override the global ApiKeyAuth for them, so it tells '
+            'integrators a key is required: ' + ', '.join(wrong))
+
+    def test_every_gated_route_is_declared_gated_in_the_spec(self):
+        """The other direction, which matters more.
+
+        A route the template GATES but the spec marks `security: []` tells an
+        integrator no key is needed; they ship a client that 403s on every
+        call. Asserted even though nothing violates it today - a gate that
+        checks one direction is half a gate, and this is the expensive half.
+        """
+        wrong = []
+        for path, method, key_required in self.routes:
+            if not key_required:
+                continue
+            entry = ((self.spec.get('paths') or {}).get(path) or {}).get(method.lower())
+            if entry is None:
+                continue
+            if entry.get('security') == []:
+                wrong.append(f'{method} {path}')
+        self.assertEqual(
+            [], wrong,
+            'these routes REQUIRE a key in template.yaml but the spec declares '
+            'them open: ' + ', '.join(wrong))
+
+
 if __name__ == '__main__':
     unittest.main()

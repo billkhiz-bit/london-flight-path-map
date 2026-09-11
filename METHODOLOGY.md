@@ -1,6 +1,6 @@
 # Sky Score Methodology
 
-> Version 4.0, last updated 2026-08-29.
+> Version 5.0, last updated 2026-09-09.
 > Public methodology for the Sky Score property scoring system. Maintained alongside the live API at `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/`. This document is the canonical reference for B2B integrations and audit conversations. Every numeric threshold and scoring weight is anchored to a published source, an official government index, or an explicitly-acknowledged editorial decision.
 
 ---
@@ -55,7 +55,7 @@ The product exists to address a structural information asymmetry in UK property:
 **Sub-borough granularity differs by city, and the consumer-site ranking says
 so per city.** London and New York rank *named areas* whose median prices are
 indicative and whose crime figure is a relative modifier rather than a measured
-rate. The nine UK city-regions rank **485 postcode districts** whose price is
+rate. The nine UK city-regions rank **481 postcode districts** whose price is
 the **median of real HM Land Registry transactions** in that district (built by
 `scripts/build_city_neighbourhoods.py`, on **two** floors, either of which omits
 the district rather than estimating it: minimum 30 sales, and minimum **50% of
@@ -99,7 +99,7 @@ measured at render time rather than declared per city, so a city that gains a
 differentiating input stops being labelled this way without an edit.
 
 **A district's displayed NAME is a label, not a measurement, and it is
-corroborated.** 285 of the 485 carry a curated postal-district name; the rest
+corroborated.** 281 of the 481 carry a curated postal-district name; the rest
 show the Royal Mail locality most of their transactions use. The outward code
 is printed beside every one, so a label can never claim more precision than the
 data. Since 2026-08-12 each curated name is asserted against that district's own
@@ -1894,7 +1894,7 @@ The DEFRA noise data is by far the slowest-refreshing input. This subsection mak
 | **DEFRA noise mapping** | **5 years** ← slowest |
 | MHCLG EPC | Continuous (per certificate issued) |
 
-**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"4.0"`). On any methodology change — including a new noise-mapping round — this version increments. (This line used to say Round 5 data would "jump to 4.0"; v4.0 was spent on the road-noise component on 2026-08-29, so a Round 5 roll takes the next number available at the time rather than a reserved one. Reserving a version for an event with no date is how a version number comes to disagree with what shipped.)
+**Versioning + reproducibility.** The API response includes `methodologyVersion` (currently `"5.0"`). On any methodology change — including a new noise-mapping round — this version increments. (This line used to say Round 5 data would "jump to 4.0"; v4.0 was spent on the road-noise component on 2026-08-29, so a Round 5 roll takes the next number available at the time rather than a reserved one. Reserving a version for an event with no date is how a version number comes to disagree with what shipped.)
 
 > **Corrected 2026-08-04.** Two errors in the sentence above. (1) It said "currently `3.1`", **stale by four versions** — the live API returns `3.5`. (2) It promised *"integrators can pin to a specific version via `?methodology=X.Y` (where supported)"*. **That parameter is not implemented anywhere.** `backend/lambdas/score/app.py` never reads it, so the request is silently ignored and the caller receives current-version numbers while believing they pinned. The hedge "(where supported)" was doing a great deal of work; it is nowhere supported.
 >

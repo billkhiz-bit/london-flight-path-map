@@ -148,7 +148,11 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
 
-// TWO VIEWPORTS, not one (2026-08-12).
+// THREE VIEWPORTS, not one (2026-08-12; landscape added 2026-09-07).
+//
+// This comment said TWO until 2026-09-11, a month after a third entry was
+// added below it for audit I11 - a count in a comment, sitting directly
+// above the array that answers it. Count the array.
 //
 // This scanned 1440x900 only, so nothing inside `@media (max-width:900px)` had
 // ever been audited. That is not a hypothetical gap: the mobile legend pill

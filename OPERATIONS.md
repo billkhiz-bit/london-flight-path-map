@@ -20,8 +20,8 @@ Companion to:
 | CDN | CloudFront `EGSSPJKLFL33M` | global |
 | Static origin | S3 `london-flight-map-frontend` | eu-west-2 |
 | API edge | API Gateway `2gjfdzg20c` | eu-west-2 |
-| Compute | 7 Lambdas (`score`, `signup`, `favourites`, `epc`, `sold_prices`, `transport`, `nhs`) | eu-west-2 |
-| State | 3 DynamoDB tables (signups, noise-raster, favourites), all on-demand | eu-west-2 |
+| Compute | **8** Lambdas (`score`, `chat`, `signup`, `favourites`, `epc`, `sold_prices`, `transport`, `nhs`) | eu-west-2 |
+| State | **4** DynamoDB tables (signups, noise-raster, **postcodes**, favourites), all on-demand | eu-west-2 |
 | Secrets | `EPC_BEARER_TOKEN` via SAM `NoEcho` parameter; `.env` locally | local + CFN |
 | Custom domain | `skyscore.co.uk` → CloudFront | DNS at registrar |
 
@@ -584,7 +584,7 @@ is what caused the 2026-09-03 outage.
 | `london-flight-map-signups` | Customer signup audit log + API keyIds | **PITR/backup only** — irreplaceable, these are real customers |
 | `london-flight-map-favourites` | User-saved properties, keyed to device tokens | **PITR/backup only** — device tokens cannot be reissued |
 | `london-flight-map-noise-raster` | 423,481 DEFRA Lden samples | Rebuildable from the source GeoTIFF, ~6 hours |
-| `london-flight-map-postcodes` | ~2.7M ONS NSPL rows | Rebuildable from `data/nspl.csv`. **5.80 h measured** on the per-item path; since 2026-07-27 the loader uses `BatchWriteItem` and should be far faster — **but only once `dynamodb:BatchWriteItem` is applied to the live `flightmap-dev` policy** (it is in `backend/iam-policy.json`, not yet applied). It falls back automatically, so **a ~6 h run means the grant never landed**. Next full load is unmeasured; do not quote a figure until one produces it. |
+| `london-flight-map-postcodes` | ~2.7M ONS NSPL rows | Rebuildable from `data/nspl.csv`. **MEASURED 58 minutes** for 2,704,825 rows on the `BatchWriteItem` path (the August 2026 roll, 2026-09-09). `dynamodb:BatchWriteItem` **IS granted** - re-probed 2026-09-11, `check_aws_permissions.py` reports 18 granted / 0 denied. ~~5.80 h on the per-item path~~ was the February 2026 figure and the fallback is no longer taken. This row claimed the grant was "not yet applied" and that "a ~6 h run means the grant never landed" until 2026-09-11, four days after a 58-minute run had disproved it - which would have had anyone planning the November roll budget six hours and a blocked prerequisite for an hour-long job with neither. **A permission is a timestamp, not a property: re-probe rather than reading this sentence.** |
 
 All four are `Retain`, so a stack-level failure will not destroy them. That
 protects the two irreplaceable tables and saves ~13 hours of reload on the
@@ -652,7 +652,7 @@ subscription and force a transition, or the alarms are decorative.
 - No external uptime checker (`status.skyscore.co.uk` subdomain
   recommended; not yet provisioned).
 - ~~No DLQ on async Lambdas (audit item I6).~~ **Closed 2026-07-24 as moot** —
-  all 7 Lambdas are APIGW-synchronous, so there is no async invocation for a
+  all 8 Lambdas are APIGW-synchronous, so there is no async invocation for a
   DLQ to catch.
 - ~~**No log read for the deploy user** (added 2026-07-26).~~ **NOT TRUE as of
   2026-09-02** — re-measured against a real log group and proven by reading
@@ -725,10 +725,33 @@ subscription and force a transition, or the alarms are decorative.
    key creation and rules out the downstream call entirely.
 
 **API returning 403 unexpectedly:**
-- Per-route APIGW throttle. Current declared values (`template.yaml`
-  `MethodSettings`, updated 2026-07-26): stage-wide `*/*` **50 RPS / 100
-  burst**, `GET /v1/score` **40/80**, `POST /v1/score/batch` **10/20**,
-  `POST /v1/signup` **1/5**, `GET /epc` **3/6**. A burst test will trip these.
+- Per-route APIGW throttle. **`backend/template.yaml` `MethodSettings` is the
+  authority and there are FOURTEEN per-route entries plus the ceiling.** This
+  list named five of them, "updated 2026-07-26", until 2026-09-11 - and the
+  nine it omitted (added 2026-09-07) include **the three tightest limits in the
+  whole API**, so the one lookup this section exists for failed on precisely
+  the routes most likely to trip. A list of mirrors that omits a mirror is
+  worse than no list, because it reads as complete.
+
+  Snapshot, 2026-09-11, tightest first - **re-read rather than trusting it**:
+
+  | RPS/burst | Routes |
+  |---|---|
+  | **1/5** | `POST /v1/signup` |
+  | **2/5** | `GET /nhs`, `GET /transport`, `POST /favourites`, `DELETE /favourites` |
+  | **3/6** | `GET /epc`, `GET /sold-prices` |
+  | **5/10** | `GET /badge`, `GET /favourites`, `GET /v1/changes`, `GET /v1/environment`, `GET /v1/regions` |
+  | **10/20** | `POST /v1/score/batch` |
+  | **40/80** | `GET /v1/score` |
+  | **50/100** | stage-wide `*/*` ceiling - the circuit breaker, NOT a route limit |
+
+  `/nhs` and `/transport` are deliberately the tightest: Overpass is a DONATED
+  service and `/transport` calls TfL **unregistered**, twice per request. If
+  `/transport` needs more room the fix is a TfL app key, not a bigger number.
+
+  Guarded by `backend/tests/test_route_throttles.py`, which fails on a route
+  with no entry, a phantom `ResourcePath`, and a duplicate declaration. A burst
+  test will trip these.
   Read the live values with
   `aws apigateway get-stage --rest-api-id 2gjfdzg20c --stage-name prod --query 'methodSettings'`
   — and note that `MethodSettings` is **last-wins** on duplicates, so never
@@ -757,9 +780,9 @@ through April 2027:
 
 | Resource | Cost |
 |---|---|
-| Lambda (on-demand, 7 fns) | <$0.10 |
+| Lambda (on-demand, 8 fns) | <$0.10 |
 | API Gateway | <$0.10 |
-| DynamoDB on-demand (3 tables, tiny) | <$0.25 |
+| DynamoDB on-demand (4 tables, tiny) | <$0.25 |
 | S3 (single 300 KB index.html, ~5 GB raster GeoTIFF as data only locally) | ~$0.05 |
 | CloudFront (low-egress) | <$0.50 |
 | **Total** | **<$1/month at zero traffic** |

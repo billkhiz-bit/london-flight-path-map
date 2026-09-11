@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26, gaining road noise at v4.0, 2026-08-29; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v4.0 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v5.0 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **Air quality, road noise and flood risk are all SCORED, not just drawn.**
 > They are the fifth component, `environment` — air quality 0.65 / flood 0.35
@@ -40,8 +40,10 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, qu
 > road Lden, the Environment Agency's Risk of Flooding from Rivers and Sea, and
 > DEFRA background pollution maps — so all three map layers are measured
 > everywhere instead of curated for London and defaulted elsewhere. **Road
-> noise remains reported and not scored**; it is scheduled for the v4.0 noise
-> composite alongside rail. What is
+> noise is SCORED**, at 0.35 of the `environment` component, since methodology
+> v4.0 (2026-08-29) - this line said it "remains reported and not scored" until
+> 2026-09-11, contradicting the sentence 29 lines above it in the same
+> blockquote. What is
 > still missing outside London and New York is **DEFRA-sampled aircraft noise**;
 > transport (v3.6, NaPTAN) and healthcare (v3.7, NHS ODS) are both derived
 > nationally now, and neighbourhood area search covers all nine generated
@@ -54,7 +56,7 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, qu
 > Teesside 0.190). Validated against the 35,352 London postcodes DEFRA did
 > measure: mean absolute error against the measurement falls from 3.230 to
 > 1.879. Liveability now rests on **all four
-> measured inputs** for 84 of 99 boroughs,
+> measured inputs** for 79 of 99 boroughs,
 > with `context.liveResolution` reporting that per response and the absent
 > inputs having their weight **redistributed** rather than filled with a
 > placeholder. Postcode resolution works for **every** city since 2026-08-10.
@@ -308,25 +310,30 @@ everywhere; the gap is the remaining five.
 | Flood risk | EA Risk of Flooding from Rivers and Sea | yes | curated | **yes** (2026-08-11) |
 | Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11); plus **1,415 stations in the detail panel's nearest-stations list**, display only. The map's transport LAYER was deleted on 2026-08-12 (the markers could not be clicked - the borough path took the event - and duplicated a signal already scored). The count fell from 1,651 on 2026-09-01, when audit I19 stopped publishing one tram stop as five and dropped 806 retired NaPTAN nodes |
 | Healthcare | **NHS ODS** GP practices within 500 m | yes | curated | **yes** (2026-08-11) |
-| Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 485 districts** (2026-08-12); 285 carry a curated area name corroborated against published MSOA names, and every district is majority inside the city publishing it |
+| Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 481 districts** (2026-08-12; 485 until the HMLR Category B filter of 2026-09-01 dropped four below the 30-sale floor); 281 carry a curated area name corroborated against published MSOA names, and every district is majority inside the city publishing it |
 | **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **yes where DEFRA published a contour** (2026-08-12): 7 per-airport coverages, 7,339 postcodes = 0.6–3.9% per city; the rest estimated from runway geometry |
 | **Crime breakdown (top offences)** | ONS | yes | no | **no** |
 
 Two of those five carry weight in the score. Liveability weights are schools
 0.35, crime 0.30, transport 0.25, healthcare 0.10 — and **all four are measured
-for 84 of 99 boroughs**, up from 38 before v3.6, which was 35% of the weight
+for 79 of 99 boroughs**, up from 38 before v3.6, which was 35% of the weight
 unmeasured.
 
-That figure is **counted through the Lambda's own `live_resolution()`**, not
-recomputed here, so it cannot disagree with the `context.liveResolution` each
-response carries. It read *78 of 86* until 2026-08-23 - correct when v3.7
-shipped on 11 August and stale from later the same day, when Leicester's 8
-boroughs and Teesside's 5 landed. The arithmetic checks out in both directions:
-86 + 13 = 99, and 6 of the 13 arrive fully measured, 78 + 6 = 84. The remaining
-15 are all `partial`, none `unavailable`: Progress 8 is missing for 20 boroughs
+**That figure is 79, and this paragraph said 84 while asserting it could not be
+wrong.** Corrected 2026-09-11 (audit C4) by RUNNING `app.live_resolution()`
+over all 99 records: **79 measured, 20 partial, 0 unavailable**. The old text
+claimed the number was *"counted through the Lambda's own `live_resolution()`,
+not recomputed here, so it cannot disagree"* - it was hand-written prose, it did
+disagree, and the claim of derivation is what made it expensive, because it told
+the reader not to check. The error was New York: its five boroughs were counted
+as fully measured (the per-city table above says "4 of 4"), but `p8` is `None`
+for all five, so `live_resolution` returns `partial - 3/4` for each. 84 - 5 = 79.
+
+The 20 partials are exactly the boroughs without Progress 8
 (Cardiff has none, Wales having no England measure, and Leicester and Nottingham
-sit under upper-tier county education authorities) and a published crime rate for
-3. The remaining gaps (measured aircraft noise, crime
+sit under upper-tier county education authorities, and New York publishes no
+England measure at all) and a published crime rate is missing for 3. **None is
+`unavailable`.** The remaining gaps (measured aircraft noise, crime
 breakdown) affect what the site can *show*, not what it scores.
 
 **The largest single win left is DEFRA aircraft sampling.** Round 4 covers all
