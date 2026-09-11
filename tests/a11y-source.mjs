@@ -24,6 +24,7 @@
  *     node tests/a11y-source.mjs
  */
 import { chromium } from '@playwright/test';
+import { stubLiveApi, assertStubFired } from './stub-live-api.mjs';
 import AxeBuilder from '@axe-core/playwright';
 import { createServer } from 'node:http';
 import { readdir, readFile } from 'node:fs/promises';
@@ -338,12 +339,18 @@ async function settleAnimations(page) {
 }
 
 let failed = 0;
+const stubHits = [];
 for (const viewport of VIEWPORTS) {
   // axe-core/playwright rejects the implicit context browser.newPage() creates.
   const context = await browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
   });
   const page = await context.newPage();
+  // score-demo/status.html probes the live API on load with the PUBLIC DEMO
+  // KEY. Left unstubbed, this gate spent that key's monthly quota on every
+  // run: measured 2026-09-11, it was exhausted and the public tester had been
+  // returning 429 to real prospects for two days. See tests/stub-live-api.mjs.
+  stubHits.push(await stubLiveApi(page));
   console.log(`\n--- ${viewport.label} (${viewport.width}x${viewport.height}) ---`);
   for (const { path, name, waitFor, renderedWhen, renderedWhenFn, disableRules } of PAGES) {
   let violations = [];
@@ -729,6 +736,13 @@ if (widthBreakpoints.length) {
 
 await browser.close();
 server.close();
+// The stub cannot tell you it was never used, so ask it. Every viewport loads
+// score-demo/status.html, which probes the API on load - so zero interceptions
+// means the route predicate stopped matching and this gate has quietly gone
+// back to spending the public demo key on every run.
+const totalStubbed = stubHits.reduce((n, h) => n + h.count, 0);
+if (!assertStubFired({ count: totalStubbed }, 'a11y-source')) failed += 1;
+
 console.log(
   `\nRESULT: ${failed === 0 ? 'PASS' : 'FAIL'} ` +
     `(${PAGES.length} pages x ${VIEWPORTS.length} viewports, plus the post-selection ` +

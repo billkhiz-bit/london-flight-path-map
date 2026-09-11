@@ -14,6 +14,9 @@
 //   node tests/responsive.mjs http://localhost:8000   (override the target)
 
 import { chromium } from '@playwright/test';
+import { stubLiveApi, assertStubFired } from './stub-live-api.mjs';
+
+const stubHits = [];
 
 const RAW_TARGET = process.argv[2] || 'https://d1oe4ftwutjpf.cloudfront.net/';
 
@@ -159,6 +162,11 @@ for (const meta of PAGES) {
   }
   for (const vp of meta.full ? VIEWPORTS : NARROW) {
   const page = await browser.newPage({ viewport: { width: vp.w, height: vp.h } });
+  // score-demo/status.html probes the live API on load with the PUBLIC
+  // DEMO KEY printed in its own source. Unstubbed, this gate spent that
+  // quota every run; it was exhausted 2026-09-11 and the public tester
+  // had been 429ing real prospects. See tests/stub-live-api.mjs.
+  stubHits.push(await stubLiveApi(page));
   const consoleErrors = [];
   page.on('pageerror', (e) => consoleErrors.push(e.message));
 
@@ -648,4 +656,11 @@ console.log(
     : `\n${failures} of ${results.length} page/viewport combinations overflow, strand or ` +
       `cover a control, or clip content above the fold.`
 );
+// A stub cannot report its own absence. Every run loads
+// score-demo/status.html, which probes the API on load, so zero
+// interceptions means the predicate stopped matching and this gate is
+// spending the public demo key again.
+const totalStubbed = stubHits.reduce((n, h) => n + h.count, 0);
+if (!assertStubFired({ count: totalStubbed }, 'responsive')) failures += 1;
+
 process.exit(failures === 0 ? 0 : 1);

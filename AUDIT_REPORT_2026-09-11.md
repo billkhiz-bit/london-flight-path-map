@@ -112,6 +112,49 @@ the two-input floor — 0 is a real score on this scale.
 
 ## CRITICAL — open
 
+### C0 — the public B2B demo has been returning `429` to prospects since 9 September, and our own gates drained it **[V]**
+
+**Found by running the post-deploy verification, not by the audit agents.**
+
+`GET /v1/score` with the demo key embedded in `score-demo/index.html` returns
+**`429 Limit Exceeded`** (measured live 2026-09-11). `ScoreDemoUsagePlan` is
+capped at **2,000/month** and API Gateway's own usage data shows it hit exactly
+2,000 and stopped:
+
+```
+1 Sep 511 | 2 Sep 146 | 3 Sep 195 | 4 Sep 142 | 5-6 Sep  0 (weekend)
+7 Sep 627 | 8 Sep 251 | 9 Sep 128 -> 0 remaining
+```
+
+**The cause is us.** `score-demo/status.html` probes `/v1/score` **twice on
+load** (`runAllChecks()` at `:439`, plus a `setInterval` at `:443`) with that
+demo key, and both `tests/a11y-source.mjs` and `tests/responsive.mjs` scan that
+page — a11y at 3 viewports, responsive at 5. Measured after stubbing:
+**responsive 10 requests per run, a11y 6**, about 16 per preflight run. At ~30
+runs on a wave day that is ~480, matching the 511 and 627 spikes. Visitor
+traffic does not take weekends off and does not spike on the days the gates ran
+most.
+
+**Third instance of `memory/feedback-gate-blocked-by-shared-quota.md`**, and
+the worst of the three, because the first two turned a gate red and were noticed
+within hours. This one left every gate green and broke only the thing no one
+monitors: a B2B prospect opening the API tester.
+
+**Fixed** (`tests/stub-live-api.mjs`): a `page.route()` URL predicate scoped to
+`/v1/score` alone, with a hit counter asserted at the end of each run, because a
+stub cannot report its own absence. Narrowed after a first version intercepted
+the whole API host and answered `/v1/changes` with a score-shaped payload —
+`changes.html` builds its entire body from that endpoint, so it rendered a
+different page and `responsive` went red on a 2px overflow. *Answer too little
+and you audit an error state; answer the wrong shape and you audit a wrong
+state.*
+
+**STILL OPEN and Bill's call: the quota resets on 1 October.** Until then the
+public demo is down. Whether 2,000/month suits a public B2B tester is a product
+and cost decision, not a defect — raising it is a `template.yaml` change and a
+SAM deploy.
+
+
 ### C1 — `openapi.yaml` declares `/v1/regions` key-gated; production serves it open **[V]**
 
 `score-demo/openapi.yaml`. The global default at `:55` is
@@ -457,8 +500,8 @@ there), `toggleMetricDetail()` expanded, `renderScoreTip()` (I4 lives there),
 
 ## Summary
 
-- **Fixed this session: 4** (1 critical live user-visible, 2 gate-integrity, 1 B2B deliverable)
-- **Critical open: 5**
+- **Fixed this session: 5** (1 critical live user-visible, 2 gate-integrity, 1 B2B deliverable, and the demo-quota drain in C0)
+- **Critical open: 5** — plus C0, whose CAUSE is fixed but whose quota does not reset until 1 October
 - **Important open: 10**
 - **Minor open: ~21**
 
