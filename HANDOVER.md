@@ -79,11 +79,12 @@ Aircraft is read off a terminated postcode by `/v1/score`.
 > **What is left, and WHEN each item is safe to do, is a table in
 > `ROADMAP.md` under "Open decisions" (written 2026-09-10).** Next
 > time-triggered item: the July 2026 HPI, ~16 Sep. Everything else there is
-> either Bill's decision or needs the console. Two things the table also
-> corrects: the `healthcareWithin1kmPct` rename is NOT a contract change
-> (the key lives in `borough-extra.json` alone, nothing of ours reads it by
-> name), and gating `/v1/regions`/`/v1/changes` is NOT a template change
-> (two public pages call them with no key).
+> either Bill's decision or needs the console. **Both of the things that
+> table corrected are now CLOSED (2026-09-11):** the field is renamed to
+> `healthcareWithin500mPct` (it was never a contract change), and audit I1 is
+> closed as **won't-fix** - `/v1/regions` and `/v1/changes` stay
+> unauthenticated because their consumers are two public pages and a blocking
+> preflight gate, the same argument that keeps `/v1/environment` open.
 
 **WHAT THE ROLL WAS.** The **August 2026** NSPL, replacing the February 2026
 edition the table had held since July. Measured before loading: **+5,494
@@ -100,10 +101,15 @@ sized from `git diff` after `--write --write-lambda`:
 | Field | Boroughs moved | Largest move |
 |---|---|---|
 | `roadNoiseAboveWhoPct` | 61 | 0.4 (Darlington 53.7 -> 53.3) |
-| `healthcareWithin1kmPct` | 53 | 1.0 (Dudley 40.3 -> 39.3) |
+| `healthcareWithin1kmPct` [^hcname] | 53 | 1.0 (Dudley 40.3 -> 39.3) |
 | `floodMediumOrHighPct` | 48 | 0.45 (Tower Hamlets 1.17 -> 0.72) |
 | `transportWithin800mPct` | 38 | 0.2 (Ealing 69.4 -> 69.2) |
 | `floodCoverage` / `roadNoiseLdenMedian` / NO2 / PM2.5 | 21 / 16 / 1 / 2 | <= 0.2 |
+
+[^hcname]: Named `healthcareWithin1kmPct` at the time of this roll; **renamed
+    to `healthcareWithin500mPct` on 2026-09-11** (audit I2 - the radius was
+    always 500 m). The row is left under its contemporary name because it is a
+    record of what moved on 9 Sep, not a description of the field today.
 
 **240 numeric moves, none of the four SCORED fields by more than 0.5, and ONE
 band flip.** Published effect on the 99 area pages: six `Environment`
@@ -339,9 +345,11 @@ inconclusive. 45 uploads, 8 invalidations, drift check 133 of 133.
    CloudFormation. **Needs a console session AND a real deploy to verify** -
    the permissions probe covers 18 of 110 actions and says nothing about a
    deploy. An untested IAM edit is what caused the 3 Sep outage.
-2. **`healthcareWithin1kmPct` measures 500 m.** 86 published values in a
-   deployed asset; renaming is a contract change. Rename, alias, or widen the
-   radius - a decision, not a bug fix.
+2. ~~**`healthcareWithin1kmPct` measures 500 m.**~~ **DONE 2026-09-11 -
+   renamed to `healthcareWithin500mPct`.** It was not a contract change: the
+   key lived in `data/borough-extra.json` alone, emitted and read by nothing
+   else. Verified by full re-derivation (86 compared, 0 moved). A new
+   orphaned-key guard covers the next rename - see AUDIT_REPORT I2.
 **The four decisions from 2026-09-04 are still open and unchanged** - see s0.3
 below.
 
@@ -1355,7 +1363,10 @@ All traced with evidence in `AUDIT_REPORT_2026-08-12.md`.
 2a. **`ReservedConcurrentExecutions` is the one part of I3 still open**, and it
    is blocked on a number this machine cannot read: `flightmap-dev` is denied
    `lambda:GetAccountSettings`, so the account's concurrency limit is unknown
-   and any reserve would be a guess. AWS also refuses to leave under 100
+   and any reserve would be a guess. **Re-probed 2026-09-11 and STILL denied**
+   - worth recording the date, because this claim pre-dates the 4 Sep policy
+   restore and a permission is a timestamp, not a property. It is not one of
+   the 18 actions `check_aws_permissions.py` covers, so probe it directly. AWS also refuses to leave under 100
    unreserved. Get the figure from the console, then reserve for
    `ScoreFunction` (protect the paid path) rather than capping the free ones.
    The timeout half of I3 is done: every function was over API Gateway's 29s

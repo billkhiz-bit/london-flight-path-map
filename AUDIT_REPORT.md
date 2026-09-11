@@ -60,14 +60,16 @@ proven red against the defect it guards, unless noted.
 | **I15** | `/badge` path injection closed at `lookup_postcode`; regression test asserts both directions |
 
 **Still open:** C3 (IAM, needs a console session and a verified deploy - see
-`OPERATIONS.md` s3.8), I2 (`healthcareWithin1kmPct` names a 500 m radius -
-~~a public field, so renaming is a contract change~~ **measured 2026-09-10: it
-lives in `data/borough-extra.json` alone; `/v1/score`, `/v1/environment` and
-`openapi.yaml` never emit or name it, and `index.html` does not read it by
-name - only `design/` prototypes do. No contract, no notice period; a one-commit
-rename whenever convenient, see ROADMAP "when each open item is safe"**), and
-part of the Minor list in s4 - see the note under it. **When each of these is
-safe to do, and how, is the table under "Open decisions" in `ROADMAP.md`.**
+`OPERATIONS.md` s3.8) and part of the Minor list in s4 - see the note under it.
+**When each of these is safe to do, and how, is the table under "Open
+decisions" in `ROADMAP.md`.**
+
+~~I2~~ **CLOSED 2026-09-11**: the field is `healthcareWithin500mPct` in both
+the builder and the holder, verified by a full re-derivation (86 compared, 0
+moved). The finding had sized itself as a contract change; it was not. See I2
+below - and note that closing it required a NEW guard, because the documented
+rename procedure would have left the old key published and frozen, which
+nothing could see.
 
 **I6 was listed here as open until 2026-09-08 and had been closed the same day
 it was written**, by `scripts/check_worked_example.py`, which is blocking in
@@ -360,12 +362,44 @@ liveability and lives in **both** score holders. Finder-measured effect: share
 inflated by ≤1.02 pp, 12 boroughs affected, **one band change** — `City of
 Nottingham` `good → moderate`, `live 5.3 → 4.5`, published score **8.3 → 8.0**.
 
-### I2 — `healthcareWithin1kmPct` is a **500 m** share — **VERIFIED**
+### I2 — `healthcareWithin1kmPct` is a **500 m** share — **CLOSED 2026-09-11**
 
 `GP_RADIUS_M = 500.0` (`build_borough_bands.py:195`) written into
-`rec['healthcareWithin1kmPct']` (`:684`); the log line even prints `% <1km`.
-86 published values, in `borough-extra.json`, a **deployed public asset**, so
-the key name is public. The values are right; the name claims twice the radius.
+`rec['healthcareWithin1kmPct']`; the log line even printed `% <1km`.
+86 published values, in `borough-extra.json`. The values were right; the name
+claimed twice the radius.
+
+**Renamed to `healthcareWithin500mPct`** — key, writer comment and log label —
+in `build_borough_bands.py`, the holder, and the four `design/` prototypes that
+read it. `--check` re-derives: **86 compared, 0 moved, 0 holder-only, exit 0**.
+
+**This finding's own sizing was wrong, and that is the part worth keeping.**
+It read *"a deployed public asset, so the key name is public"*, which framed a
+rename as a contract change and deferred it for four days. Measured 2026-09-10:
+the key lives in `borough-extra.json` **alone**. `/v1/score` does not emit it,
+`/v1/environment` does not, `score-demo/openapi.yaml` never names it, and
+`index.html` does not read it — it is deliberately in `DERIVED_KEYS` and not in
+`LAMBDA_FIELDS`, because only the `healthcare` **band** is scored. A deployed
+asset is not the same thing as a published contract. Ninth instance of
+`memory/feedback-recorded-findings-can-be-inverted.md`.
+
+**Doing it found a gap the roadmap believed was already covered.** `--write`
+only ever assigns keys **in** `DERIVED_KEYS`, and `--check`'s comparison loop
+only ever iterates `DERIVED_KEYS` — so a key that *leaves* that tuple stops
+being written and stops being compared **on the same edit**. The documented
+procedure ("run `--write` so the holder follows") would have shipped
+`healthcareWithin500mPct` beside a frozen `healthcareWithin1kmPct` on all 86
+boroughs, and ROADMAP's "if it goes wrong" column claimed `--check` catches
+exactly that. It could not: `holder_only` counts keys the **derivation** failed
+to produce, which is a different question.
+
+`FOREIGN_KEYS` + an **orphaned-key** check now close it: any key the holder
+publishes that neither this script derives nor another script is declared to
+own fails the gate, in both `--check` and `--write`. Declared, not discovered —
+a set computed from the file agrees with the file by construction. **Proven
+green on the renamed holder and red (1 finding, 86 boroughs) on a holder with
+the stale key injected.** It is deliberately not auto-deleting: removing a
+field from a deployed asset is a product decision.
 
 ### I3 — `/v1/changes` credits a postcode resolver on a route that resolves nothing, and freezes it — **VERIFIED**
 

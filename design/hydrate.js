@@ -47,7 +47,7 @@
     'air quality':    { kind: 'input', field: 'airQualityWhoRatio',     dp: 2, unit: 'x WHO',        max: 4 },
     'flood risk':     { kind: 'input', field: 'floodMediumOrHighPct',   dp: 2, unit: '% med/high',   max: 20 },
     'crime':          { kind: 'input', field: 'crimeRate',              dp: 1, unit: 'per 1,000',    max: 200 },
-    'healthcare':     { kind: 'input', field: 'healthcareWithin1kmPct', dp: 1, unit: '% GP <1km',    max: 100 }
+    'healthcare':     { kind: 'input', field: 'healthcareWithin500mPct', dp: 1, unit: '% GP <1km',    max: 100 }
   };
 
   var IMPACT_PCT = { low: 15, 'low-moderate': 35, moderate: 55, 'moderate-high': 72, high: 85, severe: 96 };
@@ -257,7 +257,7 @@
     var best = null, bestN = -1;
     Object.keys(recs || {}).forEach(function (b) {
       var n = ['airQualityWhoRatio', 'roadNoiseAboveWhoPct', 'floodMediumOrHighPct',
-               'crimeRate', 'transportWithin800mPct', 'healthcareWithin1kmPct']
+               'crimeRate', 'transportWithin800mPct', 'healthcareWithin500mPct']
         .filter(function (f) { return num(recs[b][f]) !== null; }).length;
       if (n > bestN) { bestN = n; best = b; }
     });

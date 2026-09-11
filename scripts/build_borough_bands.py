@@ -193,20 +193,24 @@ GP_JSON = DATA / 'nhs-gp-practices.json'
 #     600 m 30.8-97.5   800 m 42.8-100.0
 # 500 m has the widest spread (67.5 points) and a median near the middle of the
 # range, so the three bands each carry boroughs.
-# 500 m, and the field it feeds is called `healthcareWithin1kmPct`.
+# 500 m, and the field it feeds is now called `healthcareWithin500mPct`.
 #
-# THE NAME IS WRONG, THE VALUE IS RIGHT (2026-09-07 audit, I2). Recorded
-# here rather than renamed, because that key is published in
-# `data/borough-extra.json`, which is a DEPLOYED asset - renaming it is a
-# contract change and a product decision, not a defect fix. The 86 published
-# values span 15.7-89.8, which matches a 500 m radius and is impossible at
-# 1 km (this script's own docstring records 1 km putting 68 of 81 boroughs
-# in `excellent`).
+# RENAMED 2026-09-11, closing audit I2, and the audit's own sizing of it was
+# wrong. The finding recorded the key as "a public field, so a contract
+# change" and deferred it on that basis for four days. Measured before doing
+# it: the key lives in `data/borough-extra.json` ALONE. `/v1/score` does not
+# emit it, `/v1/environment` does not, `score-demo/openapi.yaml` never names
+# it, and `index.html` does not read it - it is in LAMBDA_FIELDS' sibling
+# DERIVED_KEYS below and deliberately not in LAMBDA_FIELDS itself, because
+# only the `healthcare` BAND is scored. The only readers outside this script
+# were four `design/` prototypes, renamed in the same commit. No integrator
+# contract existed to break, so there was no notice period to serve.
 #
-# Three options when it is decided: rename and migrate the readers, publish
-# the correctly-named key alongside and deprecate the old one, or widen the
-# radius to match the name - which would change every published healthcare
-# band and is therefore the largest of the three.
+# The value was never wrong: the 86 published shares span 15.7-89.8, which
+# matches a 500 m radius and is impossible at 1 km - this block's own
+# measurement table records 1 km putting 68 of 81 boroughs in `excellent`.
+# Widening the radius to match the old name was the third option and would
+# have moved every published healthcare band to make a misnomer true.
 GP_RADIUS_M = 500.0
 HEALTH_EXCELLENT_SHARE = 75.0
 HEALTH_GOOD_SHARE = 50.0
@@ -767,10 +771,7 @@ def derive(limit=None):
 
             gp_share = points_within(gp_grid, points, GP_RADIUS_M)
             if gp_share is not None:
-                # Named `...1kmPct`, measured at GP_RADIUS_M = 500 m. See the
-                # note on that constant: the name is a known defect awaiting a
-                # naming decision, not a measurement error.
-                rec['healthcareWithin1kmPct'] = round(gp_share, 1)
+                rec['healthcareWithin500mPct'] = round(gp_share, 1)
                 rec['healthcare'] = health_band(gp_share)
                 rec['healthcareVintage'] = HEALTH_VINTAGE
 
@@ -822,7 +823,7 @@ def report(results):
                 else 'tr NO DATA            '
             )
             hc = (
-                f"hc {r['healthcare']:9s} {r['healthcareWithin1kmPct']:5.1f}% <1km"
+                f"hc {r['healthcare']:9s} {r['healthcareWithin500mPct']:5.1f}% <500m"
                 if 'healthcare' in r
                 else 'hc NO DATA           '
             )
@@ -844,12 +845,50 @@ DERIVED_KEYS = (
     'transportWithin800mPct',
     'transportVintage',
     'healthcare',
-    'healthcareWithin1kmPct',
+    'healthcareWithin500mPct',
     'healthcareVintage',
     'flood',
     'floodMediumOrHighPct',
     'floodCoverage',
     'floodVintage',
+)
+
+# Keys the holder legitimately carries that THIS script does not derive.
+# DECLARED, NOT DISCOVERED - the same shape as BACKEND_ONLY_CITIES, and for
+# the same reason: a set computed from whatever happens to be in the file
+# agrees with the file by construction and can never disagree with it.
+#
+# WHY THIS EXISTS (2026-09-11, renaming healthcareWithin1kmPct). `--write`
+# only ever assigns keys that are IN DERIVED_KEYS, and `--check`'s comparison
+# loop only ever iterates DERIVED_KEYS - so a key that LEAVES that tuple stops
+# being written and stops being compared on the same edit, and the value it
+# last wrote sits in the published holder forever with nothing looking at it.
+# The rename would have shipped `healthcareWithin500mPct` alongside a frozen
+# `healthcareWithin1kmPct` on all 86 boroughs, and ROADMAP's own "if it goes
+# wrong" note claimed this check would catch that. It could not: `holder_only`
+# counts keys the DERIVATION failed to produce, which is a different question.
+#
+# `data/borough-extra.json` is served from CloudFront, so an orphan here is a
+# number the product publishes and no longer computes - the thing this file's
+# other gates exist to prevent.
+FOREIGN_KEYS = frozenset(
+    {
+        # refresh_crime_from_ons.py (ONS Table C4)
+        'crimeRate',
+        'crimeVintage',
+        'crimeTop',
+        # build_progress8.py (DfE KS4)
+        'p8',
+        'schoolsVintage',
+        # Curated London/NYC editorial, hand-written, no script behind them.
+        'aqNote',
+        'crime',
+        'floodNote',
+        'healthcareNote',
+        'schoolNote',
+        'schools',
+        'transportNote',
+    }
 )
 
 
@@ -982,6 +1021,28 @@ def apply_to_extra(results, write):
         print(
             f'{key:<26} {compared[key]:>8}  {holder_only[key]:>11}  '
             f'{moved[key]:>5}  {big}{flag}'
+        )
+
+    # ORPHANED KEYS: published, no longer computed (2026-09-11).
+    #
+    # Runs in BOTH modes and is deliberately NOT auto-deleted by `--write`.
+    # Removing a field from a deployed asset is a product decision - the same
+    # reasoning that keeps `holder_only` a report rather than a cleanup - so
+    # this names the key and the borough count and makes a human choose.
+    orphans = Counter()
+    known = frozenset(DERIVED_KEYS) | FOREIGN_KEYS
+    for boroughs in extra.values():
+        for rec in boroughs.values():
+            for key in rec:
+                if key not in known:
+                    orphans[key] += 1
+    for key, n in sorted(orphans.items()):
+        diffs.append(
+            f'ORPHANED KEY {key!r} on {n} borough(s): borough-extra.json '
+            'publishes it and no script derives it. Either add it to '
+            'DERIVED_KEYS (this script should write it), add it to '
+            'FOREIGN_KEYS (another script owns it), or delete it from the '
+            'holder. A renamed key leaves its old self here.'
         )
 
     if not write:

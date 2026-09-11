@@ -204,7 +204,7 @@
     transport: { label:'TRANSPORT', icon:'train',           field:'transportWithin800mPct', unit:'% within 800 m',
                  hi:100, worseIsHigher:false, fmt:function(v){return v.toFixed(1);},
                  src:'NaPTAN. Postcodes within 800 m of a rail, metro or tram node.', vintageKey:'transportVintage' },
-    healthcare:{ label:'HEALTHCARE', icon:'local_hospital', field:'healthcareWithin1kmPct', unit:'% within 1 km',
+    healthcare:{ label:'HEALTHCARE', icon:'local_hospital', field:'healthcareWithin500mPct', unit:'% within 1 km',
                  hi:100, worseIsHigher:false, fmt:function(v){return v.toFixed(1);},
                  src:'Postcodes within 1 km of a GP surgery or hospital.', vintageKey:'healthcareVintage' }
   };

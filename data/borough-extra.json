@@ -50,7 +50,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 61.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 52.2,
+      "healthcareWithin500mPct": 52.2,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Hillingdon": {
@@ -103,7 +103,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 40.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 47.5,
+      "healthcareWithin500mPct": 47.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Richmond upon Thames": {
@@ -156,7 +156,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 69.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 56.7,
+      "healthcareWithin500mPct": 56.7,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Ealing": {
@@ -209,7 +209,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 69.2,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 68.5,
+      "healthcareWithin500mPct": 68.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wandsworth": {
@@ -262,7 +262,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 74.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 77.4,
+      "healthcareWithin500mPct": 77.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Lambeth": {
@@ -315,7 +315,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 86.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 78.5,
+      "healthcareWithin500mPct": 78.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Lewisham": {
@@ -368,7 +368,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 82.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 61.6,
+      "healthcareWithin500mPct": 61.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Greenwich": {
@@ -421,7 +421,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 62.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 64.3,
+      "healthcareWithin500mPct": 64.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Tower Hamlets": {
@@ -474,7 +474,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 97.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 86.9,
+      "healthcareWithin500mPct": 86.9,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Camden": {
@@ -527,7 +527,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 97.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 87.4,
+      "healthcareWithin500mPct": 87.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Islington": {
@@ -580,7 +580,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 98.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 89.9,
+      "healthcareWithin500mPct": 89.9,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Hackney": {
@@ -633,7 +633,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 90.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 83.1,
+      "healthcareWithin500mPct": 83.1,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Barnet": {
@@ -686,7 +686,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 59.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 56.0,
+      "healthcareWithin500mPct": 56.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Croydon": {
@@ -739,7 +739,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 65.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 52.0,
+      "healthcareWithin500mPct": 52.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bromley": {
@@ -792,7 +792,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 52.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 39.0,
+      "healthcareWithin500mPct": 39.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Newham": {
@@ -845,7 +845,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 81.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 68.3,
+      "healthcareWithin500mPct": 68.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Southwark": {
@@ -898,7 +898,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 61.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 79.4,
+      "healthcareWithin500mPct": 79.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Hammersmith and Fulham": {
@@ -951,7 +951,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 88.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 81.4,
+      "healthcareWithin500mPct": 81.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Kensington and Chelsea": {
@@ -1004,7 +1004,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 88.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 88.0,
+      "healthcareWithin500mPct": 88.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Brent": {
@@ -1057,7 +1057,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 78.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 72.2,
+      "healthcareWithin500mPct": 72.2,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Haringey": {
@@ -1110,7 +1110,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 73.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 73.2,
+      "healthcareWithin500mPct": 73.2,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Waltham Forest": {
@@ -1163,7 +1163,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 65.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 68.2,
+      "healthcareWithin500mPct": 68.2,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Merton": {
@@ -1216,7 +1216,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 76.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 58.3,
+      "healthcareWithin500mPct": 58.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Redbridge": {
@@ -1269,7 +1269,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 61.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 56.6,
+      "healthcareWithin500mPct": 56.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Enfield": {
@@ -1322,7 +1322,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 67.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 49.3,
+      "healthcareWithin500mPct": 49.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Kingston upon Thames": {
@@ -1375,7 +1375,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 65.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 51.3,
+      "healthcareWithin500mPct": 51.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sutton": {
@@ -1428,7 +1428,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 60.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 47.7,
+      "healthcareWithin500mPct": 47.7,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Westminster": {
@@ -1481,7 +1481,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 99.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 81.6,
+      "healthcareWithin500mPct": 81.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "City of London": {
@@ -1511,7 +1511,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 100.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 37.4,
+      "healthcareWithin500mPct": 37.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Barking": {
@@ -1564,7 +1564,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 48.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 75.8,
+      "healthcareWithin500mPct": 75.8,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Havering": {
@@ -1617,7 +1617,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 33.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 46.4,
+      "healthcareWithin500mPct": 46.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bexley": {
@@ -1670,7 +1670,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 44.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 52.9,
+      "healthcareWithin500mPct": 52.9,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Harrow": {
@@ -1723,7 +1723,7 @@
       "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
       "transportWithin800mPct": 64.2,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
-      "healthcareWithin1kmPct": 56.8,
+      "healthcareWithin500mPct": 56.8,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -1833,7 +1833,7 @@
       "transportWithin800mPct": 64.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 54.6,
+      "healthcareWithin500mPct": 54.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Salford": {
@@ -1859,7 +1859,7 @@
       "transportWithin800mPct": 43.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 48.6,
+      "healthcareWithin500mPct": 48.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Stockport": {
@@ -1885,7 +1885,7 @@
       "transportWithin800mPct": 45.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 39.6,
+      "healthcareWithin500mPct": 39.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Trafford": {
@@ -1911,7 +1911,7 @@
       "transportWithin800mPct": 52.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 36.0,
+      "healthcareWithin500mPct": 36.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Tameside": {
@@ -1937,7 +1937,7 @@
       "transportWithin800mPct": 46.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 44.4,
+      "healthcareWithin500mPct": 44.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Oldham": {
@@ -1963,7 +1963,7 @@
       "transportWithin800mPct": 36.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 38.4,
+      "healthcareWithin500mPct": 38.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Rochdale": {
@@ -1989,7 +1989,7 @@
       "transportWithin800mPct": 33.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 42.5,
+      "healthcareWithin500mPct": 42.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bury": {
@@ -2015,7 +2015,7 @@
       "transportWithin800mPct": 32.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 34.0,
+      "healthcareWithin500mPct": 34.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bolton": {
@@ -2041,7 +2041,7 @@
       "transportWithin800mPct": 21.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 45.4,
+      "healthcareWithin500mPct": 45.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wigan": {
@@ -2067,7 +2067,7 @@
       "transportWithin800mPct": 17.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 38.4,
+      "healthcareWithin500mPct": 38.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2093,7 +2093,7 @@
       "transportWithin800mPct": 36.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 50.7,
+      "healthcareWithin500mPct": 50.7,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Coventry": {
@@ -2117,7 +2117,7 @@
       "transportWithin800mPct": 9.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 52.0,
+      "healthcareWithin500mPct": 52.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Dudley": {
@@ -2141,7 +2141,7 @@
       "transportWithin800mPct": 19.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 39.3,
+      "healthcareWithin500mPct": 39.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sandwell": {
@@ -2165,7 +2165,7 @@
       "transportWithin800mPct": 42.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 53.1,
+      "healthcareWithin500mPct": 53.1,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Solihull": {
@@ -2189,7 +2189,7 @@
       "transportWithin800mPct": 18.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 35.6,
+      "healthcareWithin500mPct": 35.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Walsall": {
@@ -2213,7 +2213,7 @@
       "transportWithin800mPct": 19.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 41.3,
+      "healthcareWithin500mPct": 41.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wolverhampton": {
@@ -2237,7 +2237,7 @@
       "transportWithin800mPct": 21.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 48.4,
+      "healthcareWithin500mPct": 48.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2263,7 +2263,7 @@
       "transportWithin800mPct": 25.6,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 43.4,
+      "healthcareWithin500mPct": 43.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Calderdale": {
@@ -2287,7 +2287,7 @@
       "transportWithin800mPct": 20.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 35.7,
+      "healthcareWithin500mPct": 35.7,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Kirklees": {
@@ -2311,7 +2311,7 @@
       "transportWithin800mPct": 17.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 40.5,
+      "healthcareWithin500mPct": 40.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Leeds": {
@@ -2335,7 +2335,7 @@
       "transportWithin800mPct": 15.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 43.1,
+      "healthcareWithin500mPct": 43.1,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wakefield": {
@@ -2359,7 +2359,7 @@
       "transportWithin800mPct": 28.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 31.4,
+      "healthcareWithin500mPct": 31.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2385,7 +2385,7 @@
       "transportWithin800mPct": 20.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 34.9,
+      "healthcareWithin500mPct": 34.9,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Doncaster": {
@@ -2409,7 +2409,7 @@
       "transportWithin800mPct": 14.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 32.4,
+      "healthcareWithin500mPct": 32.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Rotherham": {
@@ -2433,7 +2433,7 @@
       "transportWithin800mPct": 9.6,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 35.9,
+      "healthcareWithin500mPct": 35.9,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sheffield": {
@@ -2457,7 +2457,7 @@
       "transportWithin800mPct": 36.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 53.4,
+      "healthcareWithin500mPct": 53.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2483,7 +2483,7 @@
       "transportWithin800mPct": 39.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 42.6,
+      "healthcareWithin500mPct": 42.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Liverpool": {
@@ -2507,7 +2507,7 @@
       "transportWithin800mPct": 37.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 57.8,
+      "healthcareWithin500mPct": 57.8,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "St Helens": {
@@ -2531,7 +2531,7 @@
       "transportWithin800mPct": 32.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 37.3,
+      "healthcareWithin500mPct": 37.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sefton": {
@@ -2555,7 +2555,7 @@
       "transportWithin800mPct": 48.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 38.1,
+      "healthcareWithin500mPct": 38.1,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Wirral": {
@@ -2579,7 +2579,7 @@
       "transportWithin800mPct": 39.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 41.0,
+      "healthcareWithin500mPct": 41.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2605,7 +2605,7 @@
       "transportWithin800mPct": 20.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 38.6,
+      "healthcareWithin500mPct": 38.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Newcastle upon Tyne": {
@@ -2629,7 +2629,7 @@
       "transportWithin800mPct": 39.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 46.5,
+      "healthcareWithin500mPct": 46.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "North Tyneside": {
@@ -2653,7 +2653,7 @@
       "transportWithin800mPct": 49.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 38.1,
+      "healthcareWithin500mPct": 38.1,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "South Tyneside": {
@@ -2677,7 +2677,7 @@
       "transportWithin800mPct": 49.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 37.6,
+      "healthcareWithin500mPct": 37.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Sunderland": {
@@ -2701,7 +2701,7 @@
       "transportWithin800mPct": 20.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 34.2,
+      "healthcareWithin500mPct": 34.2,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2727,7 +2727,7 @@
       "transportWithin800mPct": 30.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 43.0,
+      "healthcareWithin500mPct": 43.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "Bath and North East Somerset": {
@@ -2751,7 +2751,7 @@
       "transportWithin800mPct": 16.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 34.8,
+      "healthcareWithin500mPct": 34.8,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "North Somerset": {
@@ -2775,7 +2775,7 @@
       "transportWithin800mPct": 14.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 29.4,
+      "healthcareWithin500mPct": 29.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     },
     "South Gloucestershire": {
@@ -2799,7 +2799,7 @@
       "transportWithin800mPct": 11.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 25.8,
+      "healthcareWithin500mPct": 25.8,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
     }
   },
@@ -2816,7 +2816,7 @@
       "transportWithin800mPct": 12.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
-      "healthcareWithin1kmPct": 60.3,
+      "healthcareWithin500mPct": 60.3,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.7,
@@ -2839,7 +2839,7 @@
       "transportWithin800mPct": 6.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 30.6,
+      "healthcareWithin500mPct": 30.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.2,
@@ -2862,7 +2862,7 @@
       "transportWithin800mPct": 19.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 35.1,
+      "healthcareWithin500mPct": 35.1,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.5,
@@ -2885,7 +2885,7 @@
       "transportWithin800mPct": 8.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 21.4,
+      "healthcareWithin500mPct": 21.4,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.9,
@@ -2908,7 +2908,7 @@
       "transportWithin800mPct": 10.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 29.9,
+      "healthcareWithin500mPct": 29.9,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.8,
@@ -2931,7 +2931,7 @@
       "transportWithin800mPct": 14.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 15.7,
+      "healthcareWithin500mPct": 15.7,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.3,
@@ -2954,7 +2954,7 @@
       "transportWithin800mPct": 0.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 18.7,
+      "healthcareWithin500mPct": 18.7,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.4,
@@ -2977,7 +2977,7 @@
       "transportWithin800mPct": 11.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 30.5,
+      "healthcareWithin500mPct": 30.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.3,
@@ -3003,7 +3003,7 @@
       "transportWithin800mPct": 15.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 36.0,
+      "healthcareWithin500mPct": 36.0,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 53.0,
@@ -3027,7 +3027,7 @@
       "transportWithin800mPct": 17.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 33.6,
+      "healthcareWithin500mPct": 33.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.4,
@@ -3051,7 +3051,7 @@
       "transportWithin800mPct": 22.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 26.5,
+      "healthcareWithin500mPct": 26.5,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.9,
@@ -3075,7 +3075,7 @@
       "transportWithin800mPct": 20.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 24.2,
+      "healthcareWithin500mPct": 24.2,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.7,
@@ -3099,7 +3099,7 @@
       "transportWithin800mPct": 28.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
-      "healthcareWithin1kmPct": 35.6,
+      "healthcareWithin500mPct": 35.6,
       "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,

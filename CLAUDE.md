@@ -671,10 +671,33 @@ Full detail in `AUDIT_REPORT.md`. The things a future session must not undo:
 
 **Still open and deliberately not done:** the IAM privilege-escalation path
 (`OPERATIONS.md` s3.8 - it needs a console session and a REAL deploy to verify,
-and an untested IAM edit is what caused the 3 Sep outage), the
-`healthcareWithin1kmPct` field name (it measures 500 m; renaming a published
-field is a contract change), and METHODOLOGY s6, whose worked example
-transposes `quiet` and the total.
+and an untested IAM edit is what caused the 3 Sep outage). **That is the ONLY
+item left in this paragraph.**
+
+~~METHODOLOGY s6, whose worked example transposes `quiet` and the total~~ -
+**that was audit I6 and it was closed on 2026-09-07, the day it was written**,
+by `scripts/check_worked_example.py`, which is BLOCKING in preflight and green.
+Verified against the live API 2026-09-11: SW11 1AA returns `score 5.0`,
+`quiet 6.4`, `afford 0.4`, `live 7.8`, `env 5.6`, `methodologyVersion 5.0` -
+exactly what s6 documents, nothing transposed. **`AUDIT_REPORT.md` records this
+same ghost outliving its own fix once already** ("I6 was listed here as open
+until 2026-09-08 and had been closed the same day it was written"); this file
+was the surviving copy, and `ROADMAP.md`'s closed-items table had it right
+("rebuilt at v4.0 and **gated**") the whole time. **Tenth instance of
+`memory/feedback-recorded-findings-can-be-inverted.md`** - three documents, one
+fact, and the one sessions actually read was the stale one.
+
+**The `healthcareWithin1kmPct` rename is DONE (2026-09-11): the field is
+`healthcareWithin500mPct`.** It was never a contract change - it lives in
+`data/borough-extra.json` alone, is in `DERIVED_KEYS` and deliberately NOT in
+`LAMBDA_FIELDS`, and no endpoint, spec or page emits or reads it. **Doing it
+exposed a real gap**: `--write` assigns only keys IN `DERIVED_KEYS` and
+`--check` compares only keys IN `DERIVED_KEYS`, so a key that LEAVES the tuple
+stops being written and stops being compared in the same edit - the documented
+procedure would have published the old key frozen beside the new one on all 86
+boroughs, invisibly. `FOREIGN_KEYS` + an orphaned-key check close it, proven red.
+**Do not rename a derived field by editing `DERIVED_KEYS` and running `--write`**
+- rename it in the holder too, then `--check`.
 ## Absence must never render as a measurement — the 2026-08-22 sweep
 
 **Shipped and verified live the same day.** Four Lambdas via SAM, six public

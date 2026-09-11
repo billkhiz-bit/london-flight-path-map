@@ -340,7 +340,7 @@
     flood:{label:'Flood risk',field:'floodMediumOrHighPct',unit:'% med or high',hi:20,tick:10,tickLabel:'EA cut',worseIsHigher:true,vintage:'floodVintage',src:'Environment Agency RoFRS. Risk AFTER defences.',fmt:function(v){return v.toFixed(2);}},
     crime:{label:'Crime',field:'crimeRate',unit:'per 1,000',hi:200,tick:0,tickLabel:'',worseIsHigher:true,vintage:'crimeVintage',src:'ONS Table C4, police recorded crime.',fmt:function(v){return v.toFixed(1);}},
     transport:{label:'Transport',field:'transportWithin800mPct',unit:'% within 800 m',hi:100,tick:0,tickLabel:'',worseIsHigher:false,vintage:'transportVintage',src:'NaPTAN. Postcodes within 800 m of a rail, metro or tram node.',fmt:function(v){return v.toFixed(1);}},
-    healthcare:{label:'Healthcare',field:'healthcareWithin1kmPct',unit:'% within 1 km',hi:100,tick:0,tickLabel:'',worseIsHigher:false,vintage:'healthcareVintage',src:'Postcodes within 1 km of a GP surgery or hospital.',fmt:function(v){return v.toFixed(1);}}
+    healthcare:{label:'Healthcare',field:'healthcareWithin500mPct',unit:'% within 1 km',hi:100,tick:0,tickLabel:'',worseIsHigher:false,vintage:'healthcareVintage',src:'Postcodes within 1 km of a GP surgery or hospital.',fmt:function(v){return v.toFixed(1);}}
   };
   var ORDER = ['air','road','flood','crime','transport','healthcare'];
   var VIEWS = ['overview'].concat(ORDER);   // 'overview' is a VIEW, not a measurement
