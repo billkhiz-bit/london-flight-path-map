@@ -606,8 +606,8 @@ an audit**, which is the whole point of `backend/tests/test_route_throttles.py`.
   count floor says how many you parsed, never WHICH you lost; the explicit
   `assertIsNotNone(ceiling)` is what caught it.
 
-**`OPTIONS /v1/environment` no longer declares a key (Bill's call, 2026-09-13;
-answers 403 live until the next SAM deploy).** It declared
+**`OPTIONS /v1/environment` no longer declares a key (Bill's call, deployed
+2026-09-13).** It declared
 `Auth: ApiKeyRequired: true` while `EnvironmentGet` beside it is deliberately
 unauthenticated (the extension is a public artefact and cannot hold a key);
 `/v1/signup` answers 200 and `/v1/chat` 204. **A CORS preflight cannot carry an
@@ -617,9 +617,10 @@ extension uses `host_permissions` (CORS bypassed) and a header-free `GET` is a
 simple request. It would have bitten the first caller to add a custom header.
 It was left open for a week on purpose - it LOOSENS auth, so it was Bill's
 call, not a side effect of a throttle change - and the `Auth` block is now
-removed, matching its two siblings. Verify after the deploy with
+removed, matching its two siblings. Deployed 2026-09-13; verified with
 `curl -X OPTIONS -H 'Origin: https://example.com' -H 'Access-Control-Request-Method: GET' .../v1/environment`
--> 204 with the CORS headers.
+-> **200** with the CORS headers (the score handler's OPTIONS answer, like
+`/v1/signup`; `/v1/chat` alone returns 204).
 
 ## The 2026-09-07 audit wave - 8 criticals and 11 importants closed
 
@@ -1300,38 +1301,32 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
-> ## ⚠️ THE 11-13 SEP WAVE IS COMMITTED AND NOT DEPLOYED - FIVE SURFACES
+> ## ~~THE 11-13 SEP WAVE IS COMMITTED AND NOT DEPLOYED~~ DEPLOYED 2026-09-13
 >
-> This said "TWO FIXES" on 11 Sep. **Measured 2026-09-13 with
-> `check_deploy_drift.sh` and a live `/v1/score` call, not recalled** - and
-> the measuring mattered: a first draft of this banner listed the score
-> Lambda's `coverage.env` change as undeployed because `git diff` showed it
-> changed since the last deploy this file knew about; the live API already
-> emits `coverage.env`, so the 11 Sep backend deploy happened and only the
-> template is behind. *A diff against a remembered deploy is not a diff
-> against the origin.* Deploy in this order:
+> All five surfaces went out on 13 Sep and were verified FROM THE ORIGIN, not
+> from exit codes: `check_deploy_drift.sh` **133 of 133** and its new pass
+> **`cache-control: 11 of 11 pages revalidate`** (it read 1 of 11 that
+> morning); the live `index.html` hash equals source, so the borough panel no
+> longer prints `undefined` on 53 boroughs; `/privacy` and `/terms` answer
+> `no-cache`; the SAM deploy modified the REST API, its deployment and the
+> stage and NO Lambda - which is how the claim that the 11 Sep backend had
+> already deployed was confirmed a second way; and a real CORS preflight to
+> `/v1/environment` answers **200** with the full CORS header set (was 403).
+> `demo-key-scope.mjs` reports what it did on 11 Sep - two checks UNPROVEN
+> behind the spent demo quota (audit C0, resets 1 Oct), CI-key batch PASS.
 >
-> 1. **SAM deploy.** Template only: it drops the key from
->    `OPTIONS /v1/environment`. The Lambda code at the origin is current.
-> 2. **`make web-deploy`.** `index.html` at the origin still prints the literal
->    word `undefined` in the borough detail panel on **53 of 91 boroughs** -
->    `UNDEFINED` in the `rating-high` colour, the ink for the WORST crime,
->    directly above a correct rate. Fixed in `fbe9841`; live since 11 Aug.
->    This deploy also applies `Cache-Control: no-cache` to the five pages
->    that had none (audit I1).
-> 3. **`make demo-deploy`.** `openapi.yaml` no longer documents `/v1/regions`
->    as key-gated (audit C1); the three demo pages and the spec gain
->    `no-cache`.
-> 4. **`make prototype-deploy`.** Header only - the page is unchanged.
-> 5. **`make data-deploy`.** `borough-extra.json` carries
->    `healthcareWithin500mPct` in source and the old name at the origin.
->    Cosmetic - nothing reads the share by name.
->
-> Verify after all five: `sh scripts/check_deploy_drift.sh` at 133 of 133
-> AND `cache-control: 11 of 11 pages revalidate` (it reads 1 of 11 today),
-> `node tests/demo-key-scope.mjs`, and the OPTIONS curl in the
-> `/v1/environment` note under "Public surfaces added 2026-08-21" -> 204.
-
+> **Two things from the deploy worth keeping.** `make` is on no PATH here, so
+> the targets were run by EXPANDING the Makefile's own recipes into `sh`
+> (`scratchpad/make_expand.py`) rather than retyping them - retyping is how
+> `OPERATIONS.md` s2 came to upload `privacy.html` to a dead key. The expander
+> was wrong twice before it was right: its variable regex excluded digits, so
+> `$(S3_BUCKET)` survived unexpanded and the check for leftovers, written with
+> the SAME regex, reported clean; and it did not strip make's `@` prefix, so
+> `data-deploy` died on line 3 under `set -e` with nothing uploaded. Neither
+> reached S3. *A check that shares the defect of the thing it checks passes.*
+> And the OPTIONS verification in this file and ROADMAP said "-> 204": the
+> score handler returns **200**, as `/v1/signup` does; only `/v1/chat` is 204.
+> A browser accepts any 2xx for a preflight, so nothing was wrong but the note.
 
 **THE PRICE-LED DISCLOSURE IS STRUCTURAL SINCE 2026-09-09, not a correlation.**
 `priceLed` was a rank-to-price correlation tested against **0.60**, a constant
