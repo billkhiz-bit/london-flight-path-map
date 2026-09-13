@@ -4367,6 +4367,108 @@ class AviationSourceLineMatchesTierTests(unittest.TestCase):
                     )
 
 
+class CoverageNoticeMatchesDefraMappingTests(unittest.TestCase):
+    """The estimate notice must describe THIS city's DEFRA situation.
+
+    Audit I3, 2026-09-13. _COVERAGE_NOTICES['postcode'] says "DEFRA publishes
+    contours for part of this area", and it was served for Teesside and
+    Cardiff - whose airports DEFRA Round 4 does not map (data/aircraft-
+    footprint.json records both as unmapped) - and by /v1/environment for
+    South Yorkshire, which has no airport and no estimate in the payload the
+    sentence sat beside. 38,195 live postcodes on /v1/score, 33,444 more on
+    /v1/environment. Third rewrite of that one sentence; this time the choice
+    is derived from the geometry registry against AIRPORT_NOISE_SCALE, so a
+    city added with an unmapped airport describes itself.
+    """
+
+    def test_contour_status_is_derived_from_the_registry(self):
+        self.assertEqual(app._defra_contour_status('manchester'), 'mapped')
+        self.assertEqual(app._defra_contour_status('london'), 'mapped')
+        self.assertEqual(app._defra_contour_status('teesside'), 'unmapped')
+        self.assertEqual(app._defra_contour_status('cardiff'), 'unmapped')
+        self.assertEqual(app._defra_contour_status('southyorkshire'), 'none')
+
+    def _score(self, city, lad, lat, lon, borough, probe):
+        # A DISTINCT probe per case: lookup_postcode is LRU-cached, so one
+        # postcode stubbed twice returns the first stub's row the second
+        # time - the ordering trap this file's provenance test already
+        # records under CONTROL THE CACHE.
+        original_local = app._lookup_postcode_local
+        original_fetch = app._fetch_postcode
+        original_noise = app._lookup_noise_row
+
+        def local(clean, include_terminated=False):
+            return {
+                'postcode': probe, 'latitude': lat, 'longitude': lon,
+                'admin_district': borough, 'region': 'x',
+                '_resolver': 'nspl', '_ladCode': lad,
+            }
+
+        app._lookup_postcode_local = local
+        app._fetch_postcode = lambda _p: (_ for _ in ()).throw(AssertionError('no network'))
+        app._lookup_noise_row = lambda _c: None  # geometry tier
+        try:
+            result = app.resolve_query({'postcode': probe})
+        finally:
+            app._lookup_postcode_local = original_local
+            app._fetch_postcode = original_fetch
+            app._lookup_noise_row = original_noise
+        body = result[0] if isinstance(result, tuple) else result
+        self.assertNotIn('error', body, body.get('error'))
+        self.assertEqual(body['location']['city'], city)
+        return body
+
+    def test_unmapped_airport_city_does_not_claim_defra_contours(self):
+        body = self._score('teesside', 'E06000002', 54.57, -1.23, 'Middlesbrough', 'ZZ96 6ZZ')
+        self.assertEqual(body['context']['quietResolution'], 'postcode')
+        notes = ' '.join(body['coverage']['notices'])
+        self.assertNotIn('DEFRA publishes contours', notes)
+        self.assertIn('no noise contours', notes)
+
+    def test_mapped_airport_city_keeps_the_contour_sentence(self):
+        body = self._score('manchester', 'E08000003', 53.36, -2.27, 'Manchester', 'ZZ95 5ZZ')
+        self.assertEqual(body['context']['quietResolution'], 'postcode')
+        self.assertIn('DEFRA publishes contours', ' '.join(body['coverage']['notices']))
+
+    def test_environment_says_no_estimate_where_there_is_no_airport(self):
+        event = {'queryStringParameters': {'lat': '53.3811', 'lon': '-1.4701'}}
+        loc = {'postcode': 'S1 1RQ', 'ladCode': 'E08000019', 'adminDistrict': 'Sheffield'}
+        with patch.object(app, 'reverse_geocode', return_value=loc), \
+                patch.object(app, '_lookup_noise_row', return_value=None):
+            res = app.handle_environment(event)
+        self.assertEqual(res['statusCode'], 200)
+        body = json.loads(res['body'])
+        self.assertNotIn('aircraftQuietEstimated', body['environment'])
+        notes = ' '.join(body['notices'])
+        self.assertIn('No commercial airport', notes)
+        self.assertNotIn('DEFRA publishes contours', notes)
+
+
+class PostcodeProvenanceCreditedEverywhereTests(unittest.TestCase):
+    """Every UK city's sources must name the datasets that resolved the query.
+
+    Audit I4, 2026-09-13. The postcode-resolution line (ONS NSPL, with
+    postcodes.io as fallback - both OGL v3.0) sat in London's provenance
+    alone, so twelve cities' responses credited neither body for the join
+    that every UK postcode query has made since 2026-08-12. Injected into
+    every UK city now, in the same loop as the environment lines.
+    """
+
+    def test_every_uk_city_and_no_us_city_carries_the_postcode_line(self):
+        for city, cd in app.CITIES.items():
+            lines = [line for line in app.build_sources(city) if line.startswith('Postcode resolution')]
+            with self.subTest(city=city):
+                if cd['country'] == 'United Kingdom':
+                    self.assertEqual(len(lines), 1, f'{city}: {lines}')
+                else:
+                    self.assertEqual(lines, [], f'{city} credits a UK postcode resolver')
+
+    def test_london_keeps_its_index_two_contract(self):
+        # Two older tests assert the London line's POSITION; the injection
+        # appends for the other cities and must not have touched London's.
+        self.assertTrue(app.build_sources('london')[2].startswith('Postcode resolution'))
+
+
 class PerBoroughProvenanceTests(unittest.TestCase):
     """sourceBreakdown must describe the BOROUGH, not the city's best case.
 

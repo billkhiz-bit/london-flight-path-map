@@ -5227,14 +5227,25 @@ def _env_breakdown_line(city):
 # would need someone to remember. Injection means it cannot be forgotten, and
 # both the breakdown line and the three source lines are DERIVED from the
 # borough records, so a city that gains or loses a dataset re-describes itself.
-for _prov in CITY_PROVENANCE.values():
+for _city_key, _prov in CITY_PROVENANCE.items():
     _prov['breakdown']['env'] = _env_breakdown_line
     _prov['sources'] = list(_prov['sources']) + [
         _env_source_line('airQuality'),
         _env_source_line('roadNoise'),
         _env_source_line('flood'),
     ]
-del _prov
+    # POSTCODE RESOLUTION, for every UK city (2026-09-13 audit, I4). The
+    # `_postcode_source_line` callable sat in London's list alone - at index 2,
+    # by a contract two tests assert - so twelve cities' responses never named
+    # ONS NSPL or postcodes.io, the two OGL datasets that have resolved every
+    # UK postcode query since 2026-08-12. Appended here, not inserted, so no
+    # city's existing indices move; London keeps its own copy at index 2 and
+    # is skipped. New York resolves ZIPs from its own table and credits
+    # neither body. Injected for the same reason the environment lines are:
+    # a per-city literal is what went stale.
+    if _city_key != 'london' and CITIES[_city_key]['country'] == 'United Kingdom':
+        _prov['sources'].append(lambda: _postcode_source_line(local_postcode_served()))
+del _prov, _city_key
 
 
 # The eight regional aviation lines in CITY_PROVENANCE describe the GEOMETRY
@@ -5908,7 +5919,56 @@ _COVERAGE_NOTICES = {
         'Aircraft noise here is a borough-wide average, not a figure for this '
         'address. Expect real variation of 10-15 dB within a borough.'
     ),
+    # A CITY WHOSE AIRPORT DEFRA DOES NOT MAP (2026-09-13 audit, I3). The
+    # 'postcode' notice above says "DEFRA publishes contours for part of this
+    # area" - true of the ten cities with a Round 4 airport and false of
+    # Teesside (MME) and Cardiff (CWL), whose airports sit below the size at
+    # which the mapping duty applies; data/aircraft-footprint.json records
+    # both as unmapped and the near-field floor uses a disc there for that
+    # reason. 38,195 live postcodes were told a contour existed nearby.
+    'postcode-unmapped': (
+        'Aircraft noise here is estimated from distance to this area\'s airport '
+        'and flight-path geometry, not measured. DEFRA publishes no noise '
+        'contours for that airport, so no measured value exists for any '
+        'postcode in this area.'
+    ),
+    # A CITY WITH NO AIRPORT (South Yorkshire: Doncaster Sheffield closed to
+    # commercial flights in 2022). /v1/environment served the 'postcode'
+    # sentence - "estimated from distance to airports ... DEFRA publishes
+    # contours for part of this area" - beside a payload carrying NO aircraft
+    # key at all, because there is nothing to estimate from.
+    'postcode-no-airport': (
+        'No commercial airport operates in this city region, so aircraft noise '
+        'is not estimated for this postcode; the score carries the borough-wide '
+        'band instead.'
+    ),
 }
+
+
+def _defra_contour_status(city):
+    """'mapped', 'unmapped' or 'none': does DEFRA Round 4 map any airport in
+    `city`? Derived from the geometry registry against AIRPORT_NOISE_SCALE,
+    whose keys are exactly the twelve airports DEFRA published a footprint
+    for - one holder, so a city added with an unmapped airport describes
+    itself correctly without anyone remembering to say so."""
+    codes = [a.get('code') for a in (CITY_GEOMETRY.get(city) or {}).get('airports', [])]
+    if not codes:
+        return 'none'
+    return 'mapped' if any(c in AIRPORT_NOISE_SCALE for c in codes) else 'unmapped'
+
+
+def _postcode_coverage_notice(city):
+    """The estimate notice that is TRUE for this city's DEFRA situation."""
+    if city == 'nyc':
+        return _COVERAGE_NOTICES['postcode-nyc']
+    if not city:
+        return _COVERAGE_NOTICES['postcode-uncovered']
+    status = _defra_contour_status(city)
+    if status == 'none':
+        return _COVERAGE_NOTICES['postcode-no-airport']
+    if status == 'unmapped':
+        return _COVERAGE_NOTICES['postcode-unmapped']
+    return _COVERAGE_NOTICES['postcode']
 
 # THE TEXT MUST MATCH WHAT THE ENGINE DOES, and for a year it did not.
 # It said the component was "a neutral placeholder" - true before v3.8, which
@@ -6026,7 +6086,7 @@ def build_environment(noise_row, postcode_clean=''):
     return env
 
 
-def build_coverage(quiet_source, live_source, env_source):
+def build_coverage(quiet_source, live_source, env_source, city=None):
     """Per-component coverage statements plus any plain-English notices.
 
     Returned on every response, not only degraded ones: a field that appears
@@ -6036,7 +6096,12 @@ def build_coverage(quiet_source, live_source, env_source):
     """
     notices = []
 
-    quiet_notice = _COVERAGE_NOTICES.get(quiet_source)
+    # The 'postcode' (geometry) tier's notice depends on whether DEFRA maps
+    # this city's airport at all; every other tier's notice is fixed.
+    quiet_notice = (
+        _postcode_coverage_notice(city) if quiet_source == 'postcode'
+        else _COVERAGE_NOTICES.get(quiet_source)
+    )
     if quiet_notice:
         notices.append(quiet_notice)
 
@@ -6505,6 +6570,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             quiet_source,
             live_resolution(bd, english=(city != 'nyc')),
             env_resolution(bd),
+            city=city,
         ),
     }
 
@@ -7840,12 +7906,10 @@ def handle_environment(event):
         # branch for `city is None` - so the uncovered case fell through to a
         # notice claiming DEFRA coverage, contradicting the basis string set
         # eight lines earlier in the same response.
-        if city == 'nyc':
-            notices.append(_COVERAGE_NOTICES['postcode-nyc'])
-        elif city:
-            notices.append(_COVERAGE_NOTICES['postcode'])
-        else:
-            notices.append(_COVERAGE_NOTICES['postcode-uncovered'])
+        # One holder for which estimate sentence is true here (I3): NYC, an
+        # uncovered coordinate, a city DEFRA does not map, a city with no
+        # airport at all, or the ordinary case.
+        notices.append(_postcode_coverage_notice(city))
     if 'roadNoiseBelowDb' in env:
         # Quiet, and KNOWN to be. The old notice below was what a surveyed
         # zero produced until 2026-09-10, and "has not been measured" was

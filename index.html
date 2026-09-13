@@ -8326,9 +8326,19 @@
         if (!_boroughExtraFailed) return '';
         return (
           '<p class="info-note" style="border-left:3px solid var(--orange);padding-left:8px;margin-bottom:10px;" role="status">' +
-          '<strong>Liveability data unavailable.</strong> Crime, schools, transport and healthcare ' +
-          'could not be loaded, so the Liveability score and the total below fall back to a neutral ' +
-          '5.0 and are not measurements. Quiet, affordability and growth are unaffected. Reload to retry.' +
+          // WHAT THE ENGINE DOES, NOT WHAT IT USED TO (2026-09-13 audit, I23).
+          // This said the scores "fall back to a neutral 5.0"; measured with
+          // borough-extra.json returning 503, Camden rendered Liveability and
+          // Environment as "no data" and a total of 5.4 = quiet and
+          // affordability rescaled over their own weights - no 5.0 anywhere.
+          // v3.8 stopped defaulting and started OMITTING. And Environment
+          // comes from the same file, so it was missing from the sentence.
+          // This notice carries role="status", so the sentence is exactly
+          // what a screen-reader user is told.
+          '<strong>Liveability and environment data unavailable.</strong> Crime, schools, transport, ' +
+          'healthcare, air quality, road noise and flood risk could not be loaded, so the Liveability ' +
+          'and Environment components are omitted and the total below is re-weighted over quiet, ' +
+          'affordability and growth alone. It is not comparable with a fully-measured borough. Reload to retry.' +
           '</p>'
         );
       }
@@ -11658,7 +11668,26 @@
           // v3.9. null, never 5, wherever the borough has neither input -
           // NYC, Cardiff and Nottingham. Same rule as lv above.
           ev = data.scores?.env ?? null;
-        const pw = PERSONAS[currentPersona].weights;
+        // THE APPLIED WEIGHTS, NOT THE PERSONA'S NOMINAL ROW (2026-09-13 audit,
+        // I20). The panel printed `pw.env * 100` beside "Environment: no data"
+        // on Brooklyn, so the displayed weights (32/27/0/27/14) did not
+        // reproduce the displayed score (4.0 - the rescaled sum; the nominal
+        // arithmetic gives 3.5). combineWeighted() drops an absent component
+        // and rescales the rest, exactly as the engine does, and the API
+        // stopped publishing the nominal row on 2026-09-09 for this reason.
+        // The same table, derived the same way, at the same 6dp.
+        const nominal = PERSONAS[currentPersona].weights;
+        const presentKeys = [
+          ['quiet', data.scores?.quiet], ['afford', data.scores?.afford],
+          ['growth', data.scores?.growth], ['live', lv], ['env', ev],
+        ].filter(([, v]) => v !== null && v !== undefined).map(([k]) => k);
+        const presentTotal = presentKeys.reduce((a, k) => a + nominal[k], 0);
+        const pw = Object.fromEntries(
+          Object.keys(nominal).map((k) => [
+            k,
+            presentKeys.includes(k) && presentTotal > 0 ? Math.round((nominal[k] / presentTotal) * 1e6) / 1e6 : 0,
+          ])
+        );
 
         document.getElementById('sidebar-content').innerHTML = `
     <div class="sidebar-section">

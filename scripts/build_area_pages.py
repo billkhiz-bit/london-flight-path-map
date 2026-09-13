@@ -236,8 +236,22 @@ def gather(city: str, borough: str) -> dict | None:
     trend = ctx.get('priceTrendPct')
     if isinstance(trend, (int, float)):
         add('Price trend', f'{trend:+.1f}% year on year', uk_note('HM Land Registry HPI'))
+    # THE BAND IS AN ESTIMATE, AND THE CAPTION SAID IT WAS A DEFRA SURVEY
+    # (2026-09-13 audit, I24). `noiseImpactBand` is the geometry distance
+    # ladder scaled by the airport's DEFRA Round 4 footprint - CLAUDE.md's
+    # `impact` row: "geometry ESTIMATE" - and for Teesside and Cardiff, whose
+    # airports DEFRA does not map, not even the scaling is a survey. 57 pages
+    # carried this caption twenty lines above a sources paragraph saying the
+    # opposite. Same mechanism as C3 of 31 Aug (a UK literal per fact row).
+    # Derived from the engine's own contour status so a city describes itself.
+    contour = app._defra_contour_status(city) if uk else None
+    aircraft_note = {
+        'mapped': 'Estimated from airport geometry, ladder scaled by the DEFRA Round 4 footprint',
+        'unmapped': 'Estimated from airport geometry; DEFRA Round 4 does not map this airport',
+        'none': 'No commercial airport in this city region',
+    }.get(contour)
     add('Aircraft noise band', (ctx.get('noiseImpactBand') or '').title() or None,
-        uk_note('DEFRA Strategic Noise Mapping Round 4'))
+        uk_note(aircraft_note))
 
     merged = {**painted, **{k: v for k, v in scoring.items() if v is not None}}
     for key, label, note in (

@@ -1219,7 +1219,9 @@ The API accepts `?weights=quiet:W,afford:X,growth:Y,live:Z` where the four value
 
 ### 5.4 Rounding policy
 
-Internal computation uses unrounded floating-point values. Display values in the response are rounded to one decimal place for components and the headline score. Multiplying displayed (rounded) component values by their displayed weights will not exactly reproduce the displayed score, the score is computed from unrounded internals, then rounded once at the end. This is intentional and standard practice; it preserves accuracy and avoids compound rounding error.
+Display values in the response are rounded to one decimal place for components and the headline score. Multiplying displayed (rounded) component values by their displayed weights will not exactly reproduce the displayed score; the bound on that residual is stated in §6.
+
+**What is and is not rounded before the weighted sum (corrected 2026-09-13, audit I5).** This section used to say "internal computation uses unrounded floating-point values ... rounded once at the end", and that is true of three of the five components, not five. `quiet`, `afford` and `growth` enter the weighted sum unrounded. `live` and `env` are themselves composites - `get_live_score()` and `get_env_score()` each return their weighted sub-total **rounded to one decimal place**, because that is the precision at which they are published - and it is the rounded value that enters the headline sum, which is then rounded once more. Measured across all 792 persona-borough combinations, leaving the two composites unrounded would move **65 headline scores by 0.1**, so the distinction is real. The site computes the same way, so site and API agree; only this sentence was wrong. The residual bound in §6 was measured against the engine as it is, so it stands.
 
 ## 6. Worked example
 
@@ -1416,8 +1418,11 @@ publishing weights to more decimal places: measured, the residual is identical
 at 3dp and 6dp, because what remains is component rounding rather than weight
 precision. **Making it exact would mean computing `score` from the rounded
 components**, which would move 43 of the 792 published scores by 0.1 and round
-twice where the engine currently rounds once - a published-number change, and
-therefore a decision rather than a fix.
+every component before weighting where the engine currently rounds only the
+two composites (§5.4) - a published-number change, and therefore a decision
+rather than a fix. (This said "round twice where the engine rounds once" until
+2026-09-13; the engine rounds `live` and `env` before weighting and the total
+after, so the honest contrast is three unrounded inputs against five.)
 
 ### Comparison: same postcode, every persona
 

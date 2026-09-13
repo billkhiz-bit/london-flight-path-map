@@ -367,7 +367,7 @@ def classify_outcome(postcode, body, status):
     return row
 
 
-def write_sources_file(app, output_path):
+def write_sources_file(app, output_path, cities=()):
     """Write the OGL v3.0 attribution that must travel with the exported CSV.
 
     NOT optional, and not a nicety. scripts/load_nspl.py spells the obligation
@@ -377,11 +377,19 @@ def write_sources_file(app, output_path):
     we hand a customer is a derived work under OGL v3.0 and OS/Royal Mail
     copyright. Shipping it bare would put the customer in breach as well as us.
 
-    Generated from the SAME `app.build_sources()` the live API puts in every
-    response, so the two cannot drift — and called AFTER the run, so it
-    reflects what was actually used: `build_sources()` only credits ONS once
-    the local NSPL tier has genuinely served a lookup, never merely because
-    the table is configured.
+    Generated from the SAME source builder the live API uses, so the two
+    cannot drift — and called AFTER the run, so it reflects what was actually
+    used: the postcode line only credits ONS once the local NSPL tier has
+    genuinely served a lookup, never merely because the table is configured.
+
+    PER CITY, through `app.build_batch_sources(cities)` (2026-09-13 audit,
+    I9). This called `app.build_sources()` with no city - London's list - for
+    every customer: a Manchester export credited five London-only lines and a
+    New York export carried all nine UK/OGL lines and none of its own, which
+    is the 2026-07 NYC/OGL defect in the one file that "MUST accompany the
+    CSV". `build_batch_sources` is what /v1/score/batch already uses for a
+    response spanning several cities: one city gives that city's exact list,
+    several give each line prefixed with the city it belongs to.
     """
     path = str(output_path) + SOURCES_SUFFIX
     lines = [
@@ -394,7 +402,8 @@ def write_sources_file(app, output_path):
         'DATA SOURCES AND ATTRIBUTION',
         '',
     ]
-    lines += [f'  - {line}' for line in app.build_sources()]
+    source_lines = app.build_batch_sources(sorted(cities)) if cities else app.build_sources()
+    lines += [f'  - {line}' for line in source_lines]
     lines += [
         '',
         'LICENCE',
@@ -431,6 +440,10 @@ def score_book(app, rows, writer, write_lock, workers, progress=True, sources_ce
     preserving, sort the output afterwards rather than serialising the pool.
     """
     counters = {'scored': 0, 'failed': 0, 'omitted': 0, 'local_served': 0}
+    # The cities this run scored, for the companion file (I9): provenance is
+    # per city, and a London list handed to a Manchester customer credits
+    # bodies that answered for nothing and omits the ones that did.
+    counters['cities'] = set()
 
     def _one(item):
         _number, postcode, passthrough = item
@@ -467,6 +480,8 @@ def score_book(app, rows, writer, write_lock, workers, progress=True, sources_ce
                 writer.writerow(output_row)
                 if status == 200:
                     counters['scored'] += 1
+                    if output_row.get('city'):
+                        counters['cities'].add(output_row['city'])
                 else:
                     counters['failed'] += 1
 
@@ -575,7 +590,7 @@ def main():
         # MUST accompany the CSV.
         if counters['local_served']:
             app.mark_local_postcode_served()
-        sources_path = write_sources_file(app, args.output)
+        sources_path = write_sources_file(app, args.output, cities=counters['cities'])
         print(f'  sources:  {sources_path}')
         print()
         print('OGL v3.0 attribution: the .sources.txt file MUST be sent with the CSV.')

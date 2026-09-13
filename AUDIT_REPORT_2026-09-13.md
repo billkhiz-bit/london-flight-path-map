@@ -82,13 +82,13 @@ credited no price source), one field over.
 |---|-------|-----------|----------|
 | I1 | Layers popover on every LANDSCAPE phone opens over the sheet-footer links: tapping "Flight paths" navigates to `/privacy` (844x390, 896x414), opens the App Store (667x375) | `index.html:3556-3585` vs `:2883`, `:487-497` | Frontend |
 | I2 | Every AREA search sends the display label (`Chelsea (SW3 5RZ)`) as the postcode to `/epc`, `/sold-prices` and `/badge`; the panel shows a "Not covered" badge and an EPC outage for an area it just scored, and the embed snippet copies the broken badge | `index.html:10905-10907, :12169-12176, :12257-12264` | Frontend |
-| I3 | `coverage.notices` says "DEFRA publishes contours for part of this area" for Teesside and Cardiff, whose airports DEFRA does not map; `/v1/environment` says "estimated" for South Yorkshire, where nothing was | `score/app.py:5848-5851, :6009, :7775` | Backend / provenance |
-| I4 | Postcode-resolution provenance (ONS NSPL, postcodes.io) is credited by London alone; 12 of 13 cities' `sources` never name the two OGL datasets that resolved the query | `score/app.py:4847` | Backend / provenance |
-| I5 | METHODOLOGY s5.4/s6 say internals are unrounded and rounded once; `live` and `env` are rounded to 1dp BEFORE weighting, and 65 of 792 published scores depend on it | `score/app.py:5521, :5765, :6395`; `METHODOLOGY.md:1222` | Backend / docs |
+| ~~I3~~ **FIXED 2026-09-13** | `coverage.notices` says "DEFRA publishes contours for part of this area" for Teesside and Cardiff, whose airports DEFRA does not map; `/v1/environment` says "estimated" for South Yorkshire, where nothing was | `score/app.py:5848-5851, :6009, :7775` | Backend / provenance |
+| ~~I4~~ **FIXED 2026-09-13** | Postcode-resolution provenance (ONS NSPL, postcodes.io) is credited by London alone; 12 of 13 cities' `sources` never name the two OGL datasets that resolved the query | `score/app.py:4847` | Backend / provenance |
+| ~~I5~~ **FIXED 2026-09-13** | METHODOLOGY s5.4/s6 say internals are unrounded and rounded once; `live` and `env` are rounded to 1dp BEFORE weighting, and 65 of 792 published scores depend on it | `score/app.py:5521, :5765, :6395`; `METHODOLOGY.md:1222` | Backend / docs |
 | ~~I6~~ **FIXED 2026-09-13** | The blocking `prices == HM Land Registry` gate cannot see `SNAPSHOT_VINTAGE_LABEL`; the July roll can go green with every UK `afford` lineage naming the wrong month | `scripts/build_hpi_prices.py:300-333`; `score/app.py:282, :4806` | Gate |
 | ~~I7~~ **FIXED 2026-09-13** | `build_hpi_prices.py --write` for a non-London city prints a site step that is a no-op, so the documented roll leaves 58 site boroughs on the old vintage | `build_hpi_prices.py:516-553`; `build_city_frontend_block.py:112-114` | Gate / runbook |
 | ~~I8~~ **FIXED 2026-09-13** | `advise()` in preflight prints `ok` for a stage that printed INCONCLUSIVE — the 7 Sep fix reached `check()` only; `aws perms` and `quiet estimate` both run under `advise` | `scripts/preflight.sh:141-150, :756, :773` | Gate |
-| I9 | `score_bulk.py` writes London's provenance into every customer's licence file (`build_sources()` with no city); the test pins the literal | `scripts/score_bulk.py:397`; `tests/test_score_bulk.py:229` | Backend / B2B |
+| ~~I9~~ **FIXED 2026-09-13** | `score_bulk.py` writes London's provenance into every customer's licence file (`build_sources()` with no city); the test pins the literal | `scripts/score_bulk.py:397`; `tests/test_score_bulk.py:229` | Backend / B2B |
 | ~~I10~~ **FIXED 2026-09-13** | `check_openapi_matches_engine.py` (blocking) exits 0 having resolved zero response samples — the half that caught the 9 Sep weights defect vanishes silently | `scripts/check_openapi_matches_engine.py:93-112, :200-225, :288` | Gate |
 | I11 | `chat.verify_answer()` passes any integer 0-10 and any figure whose stripped zeros match a payload number (`330,000` passes via `of: 33`) | `chat/app.py:168, :196` | Backend |
 | I12 | `POST /v1/chat` with a valid-JSON non-object body raises out of the handler: raw 502, no CORS; chat is the only Lambda with no final guard | `chat/app.py:244` | Backend |
@@ -99,11 +99,11 @@ credited no price source), one field over.
 | I17 | `/v1/signup` lets anyone subscribe, lock out or enumerate any email address, unauthenticated — F16 of 29 Aug, dropped from every report since | `signup/app.py:321-391, :434` | Security |
 | I18 | SECURITY.md and OPERATIONS s3.7/s3.8 say the deploy credential sits in GitHub Actions secrets on the public repo; the repo holds ZERO secrets and both deploy workflows have never run — and would deploy `index.html` with no `Cache-Control` | `SECURITY.md:33-49`; `.github/workflows/deploy-*.yml` | Security / docs |
 | I19 | Changing persona while a postcode result is open silently replaces it with the borough panel; the postcode panel's own copy sends the user to that action | `index.html:13273-13276` | Frontend |
-| I20 | The site prints the persona's NOMINAL weights beside "no data" rows, so the displayed weights do not reproduce the displayed score (Brooklyn: 14% beside "Environment no data", headline 4.0 not 3.5) — the `weights`-is-applied defect the API fixed 9 Sep, live on the site | `index.html:11685-11729` | Frontend |
+| ~~I20~~ **FIXED 2026-09-13** | The site prints the persona's NOMINAL weights beside "no data" rows, so the displayed weights do not reproduce the displayed score (Brooklyn: 14% beside "Environment no data", headline 4.0 not 3.5) — the `weights`-is-applied defect the API fixed 9 Sep, live on the site | `index.html:11685-11729` | Frontend |
 | I21 | Hover text at 2.60:1 / 2.38:1 on every ranking row and on today's saved-location buttons; the palette block records `--orange` as failing and provides `--orange-text` for this | `index.html:1285, :2349, :2366` | Frontend / a11y |
 | I22 | The postcode result is never announced to screen readers; `#result-status` stays empty or names the previous borough | `index.html:11881` vs `:11632, :10962` | Frontend / a11y |
-| I23 | The borough-extra failure notice describes a "neutral 5.0" fallback that no longer exists (measured: quiet+afford rescaled, 5.4) and omits Environment — I9 of 11 Sep, on the site | `index.html:8329-8331` | Frontend |
-| I24 | 57 area pages caption the aircraft band "DEFRA Strategic Noise Mapping Round 4" while their own sources paragraph calls it an estimate that is "NOT a DEFRA sample" — the C3 (31 Aug) mechanism one row over | `scripts/build_area_pages.py:239-240` | Provenance |
+| ~~I23~~ **FIXED 2026-09-13** | The borough-extra failure notice describes a "neutral 5.0" fallback that no longer exists (measured: quiet+afford rescaled, 5.4) and omits Environment — I9 of 11 Sep, on the site | `index.html:8329-8331` | Frontend |
+| ~~I24~~ **FIXED 2026-09-13** | 57 area pages caption the aircraft band "DEFRA Strategic Noise Mapping Round 4" while their own sources paragraph calls it an estimate that is "NOT a DEFRA sample" — the C3 (31 Aug) mechanism one row over | `scripts/build_area_pages.py:239-240` | Provenance |
 
 ### Notes on the Importants re-run in this session
 
@@ -313,7 +313,38 @@ UNVERIFIED/open item from every prior report until it is closed BY NAME.
   carries the marker. Against the committed engine: **11 failed**; fixed:
   3 passed.
 
-****Tier 1 of the backlog (roll safety) closed the same night, no deploy needed:**
+****Tier 2 of the backlog (live false statements) closed the same night; deployed - see the deploy note below:**
+
+- **I3** — `_defra_contour_status(city)` derives mapped / unmapped / none from
+  the geometry registry against `AIRPORT_NOISE_SCALE`; `build_coverage` and
+  `handle_environment` choose the estimate notice through one helper. Teesside
+  and Cardiff now say DEFRA publishes no contours for their airport; South
+  Yorkshire says no commercial airport operates and no estimate is made.
+  Guarded through `resolve_query` and `handle_environment`; 14 failures on the
+  committed engine.
+- **I4** — the postcode-resolution line is injected into every UK city's
+  `sources` in the same loop as the environment lines (appended, so no index
+  moves; London keeps its index-2 copy; NYC gets none). Guarded per city.
+- **I5** — METHODOLOGY §5.4 now says which components enter the sum rounded
+  (`live` and `env`, at their published 1dp) and which unrounded; §6's
+  contrast corrected to match.
+- **I9** — `score_bulk.py` records the cities it scored and writes the
+  companion file through `app.build_batch_sources(cities)`; the test that
+  pinned the literal `build_sources()` now asserts a Manchester export carries
+  Manchester Airport and not Heathrow or the Met, and a two-city export
+  prefixes each line.
+- **I20** — the borough panel prints the APPLIED weights, rescaled over the
+  components present exactly as `combineWeighted()` scores them: Brooklyn
+  reads 37/31/0/31/0 and those weights reproduce its 4.0; Camden unchanged.
+- **I23** — the borough-extra failure notice describes omission and
+  re-weighting, names Environment, and drops the "neutral 5.0" that v3.8
+  retired.
+- **I24** — the area-page aircraft caption is derived from the same contour
+  status: 82 pages "estimated from airport geometry, ladder scaled by the
+  DEFRA Round 4 footprint", 9 "DEFRA Round 4 does not map this airport",
+  4 "no commercial airport"; New York none. All 99 rebuilt.
+
+**Tier 1 of the backlog (roll safety) closed the same night, no deploy needed:**
 
 - **I6** — `check_vintage_words` now also asserts `SNAPSHOT_VINTAGE_LABEL`
   equals the vintage month. Red with the constant set to `May 2026` while all

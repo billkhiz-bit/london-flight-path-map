@@ -226,10 +226,24 @@ class TestAttribution:
         is what keeps the export from making a false provenance claim."""
         import inspect
         src = inspect.getsource(score_bulk.write_sources_file)
-        assert 'build_sources()' in src, (
-            'the companion file must be generated from the API\'s own source '
-            'list, not from a hardcoded copy that can drift'
+        # Through the engine's PER-CITY builder (I9, 2026-09-13): this pinned
+        # the literal `build_sources()` - London's list, for every customer.
+        assert 'build_batch_sources(' in src, (
+            'the companion file must be generated from the API\'s own per-city '
+            'source builder, not from a hardcoded copy that can drift'
         )
+
+    def test_companion_file_names_the_cities_that_were_scored(self, tmp_path):
+        """A Manchester export must carry Manchester's provenance, not London's."""
+        app = score_bulk._load_score_app()
+        out = tmp_path / 'book.csv'
+        path = score_bulk.write_sources_file(app, out, cities={'manchester'})
+        text = Path(path).read_text(encoding='utf-8')
+        assert 'Manchester Airport' in text, text
+        assert 'Heathrow' not in text and 'Metropolitan Police' not in text, text
+        both = score_bulk.write_sources_file(app, tmp_path / 'two.csv', cities={'manchester', 'nyc'})
+        text2 = Path(both).read_text(encoding='utf-8')
+        assert '[manchester]' in text2 and '[nyc]' in text2, text2
 
 
 class TestReadPostcodes:
