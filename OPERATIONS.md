@@ -32,69 +32,59 @@ CloudFront URL: `https://d1oe4ftwutjpf.cloudfront.net` (canonical: `https://skys
 
 ## 2. Routine Deploys
 
-**Frontend** (single HTML page):
+**The Makefile is the single holder of every deploy command; this section
+used to duplicate them and drifted (rewritten 2026-09-13).** Measured against
+the Makefile that day, the copy here uploaded `index.html` with no
+`Cache-Control` (the 2026-09-08 fix never reached it), uploaded `privacy.html`
+to the flat `privacy` key - a dead object, since the CloudFront function
+rewrites `/privacy` to `privacy/index.html` - and sourced `../.env`, which
+does not exist. A runbook that mirrors a Makefile is wrong within a month;
+one that names the target is not.
+
+**Frontend** - every publicly-served file has a target, and each sets the
+`Cache-Control` it needs (`no-cache` on every hand-edited page and the OpenAPI
+spec, `public,max-age=3600` on the 100 generated area pages, a year on the
+version-pinned fonts):
+
 ```bash
-AWS_PROFILE=flightmap aws s3 cp index.html \
-  s3://london-flight-map-frontend/index.html \
-  --content-type "text/html" --region eu-west-2
-AWS_PROFILE=flightmap aws cloudfront create-invalidation \
-  --distribution-id EGSSPJKLFL33M --paths '/*'
+make web-deploy-all        # fonts first (load-bearing), then every target below
+make web-deploy            # index.html, privacy, pricing, changes, terms, api/, js/
+make data-deploy           # data/*.json incl. borough-extra.json (no-cache)
+make pwa-deploy            # manifest, sw.js, icons
+make demo-deploy           # score-demo/ incl. openapi.yaml and vendored Swagger
+make prototype-deploy      # prototype/index.html
+make meta-deploy           # robots.txt, sitemap.xml, .well-known/
+make area-deploy           # area/ - 100 pages, sync --delete, invalidates
 ```
 
-**Backend** (Lambdas + APIGW + DDB):
+`make` is not on PATH in Git Bash on the dev machine; the manual equivalents
+are in `CLAUDE.md` under "Build & Deploy", and `export MSYS_NO_PATHCONV=1`
+before any `cloudfront create-invalidation` there or Git Bash rewrites the
+paths. **Verify from the origin, never from the exit code:**
+`sh scripts/check_deploy_drift.sh` compares 133 surfaces and asserts a
+revalidating `Cache-Control` on all 11 pages.
+
+**Backend** (Lambdas + APIGW + DDB) - `.env` is at the repo ROOT, and the
+whole block is one invocation because the Bash tool keeps the working
+directory between calls but not the environment:
+
 ```bash
-set -a && source ../.env && set +a
-cd backend && rm -rf .aws-sam
-AWS_PROFILE=flightmap sam build
-AWS_PROFILE=flightmap sam deploy \
-  --stack-name london-flight-map \
-  --capabilities CAPABILITY_IAM \
-  --resolve-s3 \
-  --region eu-west-2 \
-  --no-confirm-changeset \
-  --parameter-overrides EpcBearerToken="$EPC_BEARER_TOKEN"
+set -a && source .env && set +a &&   cd backend && rm -rf .aws-sam &&   AWS_PROFILE=flightmap sam build &&   AWS_PROFILE=flightmap sam deploy --parameter-overrides     EpcBearerToken="$EPC_BEARER_TOKEN"
 ```
 
 Always `rm -rf .aws-sam` first — stale build dirs will silently deploy old
 code if a Lambda's `requirements.txt` hasn't changed but the source has.
 
 **Pre-flight before deploy**: `/preflight` (linting, security scan, tests).
-Blocking: ESLint errors, html-validate errors, failing pytest.
+Blocking: ESLint errors, html-validate errors, failing pytest. After a deploy,
+`node tests/demo-key-scope.mjs` (the batch denial can only be verified against
+the running API) and `sh scripts/check_deploy_drift.sh`.
 
-**PWA assets** (one-off after Wave 13.1; rerun on icon/manifest changes):
-```bash
-# Manifest, MIME type matters — some browsers reject application/json
-AWS_PROFILE=flightmap aws s3 cp manifest.webmanifest \
-  s3://london-flight-map-frontend/manifest.webmanifest \
-  --content-type "application/manifest+json" --region eu-west-2
-
-# Icons (recursive)
-AWS_PROFILE=flightmap aws s3 cp icons/ \
-  s3://london-flight-map-frontend/icons/ \
-  --recursive --content-type "image/svg+xml" --region eu-west-2
-
-# Service worker — CRITICAL: must be no-cache, otherwise SW updates
-# never propagate (CloudFront caches the SW itself, then never refreshes)
-AWS_PROFILE=flightmap aws s3 cp sw.js \
-  s3://london-flight-map-frontend/sw.js \
-  --content-type "application/javascript" \
-  --cache-control "no-cache, no-store, must-revalidate" \
-  --region eu-west-2
-
-# Privacy policy page (referenced by store listings + native app)
-AWS_PROFILE=flightmap aws s3 cp privacy.html \
-  s3://london-flight-map-frontend/privacy \
-  --content-type "text/html" --region eu-west-2
-
-# Deep-link files — DO NOT deploy until placeholders are replaced with
-# real values (Apple Team ID, Android keystore SHA-256). See mobile/DEEP_LINKING.md.
-AWS_PROFILE=flightmap aws s3 cp .well-known/apple-app-site-association \
-  s3://london-flight-map-frontend/.well-known/apple-app-site-association \
-  --content-type "application/json" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp .well-known/assetlinks.json \
-  s3://london-flight-map-frontend/.well-known/assetlinks.json \
-  --content-type "application/json" --region eu-west-2
-```
+**Deep-link files** (`.well-known/apple-app-site-association`,
+`.well-known/assetlinks.json`) have their own target, `make deeplinks-deploy`,
+which REFUSES to upload while either file still carries a placeholder (Apple
+Team ID, Android keystore SHA-256). They are deliberately not in `meta-deploy`
+or `web-deploy-all`. See `mobile/DEEP_LINKING.md`.
 
 ### DONE one-off: demo key moved onto its own usage plan
 

@@ -266,7 +266,28 @@ prerequisite. `OPERATIONS.md:590` compounds it ("saves ~13 hours").
 
 ## IMPORTANT — open
 
-### I1 — Six deployed HTML pages ship with no `Cache-Control` header **[A]**
+### ~~I1 — Six deployed HTML pages ship with no `Cache-Control` header~~ **FIXED 2026-09-13** **[V]**
+
+**Verified at the origin before fixing, and the scope was wider than reported:
+NINE HTML pages plus `openapi.yaml`, not six.** `/score-demo/api-docs.html`,
+`/score-demo/status.html` and `/prototype/index.html` were in the same state
+- the agent read the `web-deploy` target and stopped there; `demo-deploy` and
+`prototype-deploy` had the same gap. `/area/` was fine at `public,max-age=3600`.
+
+**Fixed** in the Makefile: `--cache-control "no-cache"` on all nine pages and
+the spec, across `web-deploy`, `demo-deploy` and `prototype-deploy`. The three
+vendored Swagger files are left bare on purpose - they change only on a
+deliberate vendor refresh, which is the moment to version the filename as
+`d3.v7.min.js` is. **Gated**: `scripts/check_deploy_drift.sh` asserted the
+header on `index.html` alone, which is how the audit could find nine siblings
+bare three days after that check went green; it now asserts every HTML page
+and the spec in its own `SURFACES` list (derived, not a second list), with a
+floor so a filter matching nothing cannot pass. Proven red against the live
+origin (`1 of 11 pages revalidate`, exit 1) and red on a broken filter
+(`0 of 0`, exit 1). Applies at the next `make web-deploy` / `demo-deploy` /
+`prototype-deploy`.
+
+Original finding follows.
 
 `/privacy`, `/terms`, `/pricing`, `/changes`, `/api/`, `/score-demo/index.html`.
 `Makefile:117-126` added `--cache-control "no-cache"` to `index.html` on
@@ -278,7 +299,7 @@ reach the browser's HTTP cache**. The six `aws s3 cp` lines immediately below it
 `/terms` and `/privacy` are the legal documents: a reader can be pinned to a
 superseded version with no way for a deploy to dislodge it.
 
-### I2 — `?weights=` serves a caveat that is false about affordability **[V]**
+### ~~I2 — `?weights=` serves a caveat that is false about affordability~~ **FIXED 2026-09-11 (`8f6cd3f`), deployed** **[V]**
 
 `backend/lambdas/score/app.py:683-686`. `build_why` builds `unweighted`
 generically over **every** zero-weight component, then emits one hardcoded
@@ -349,7 +370,7 @@ file already says "the four DynamoDB tables" at `:580`; the top-of-file inventor
 returning 403 unexpectedly", so the one lookup it exists for fails on the routes
 most likely to trip.
 
-### I8 — `env` is missing from the `coverage` object entirely **[A]**
+### ~~I8 — `env` is missing from the `coverage` object entirely~~ **FIXED 2026-09-11 (`8f6cd3f`), deployed** **[V]** (live 13 Sep: Cardiff returns `coverage.env.basis` = `unavailable — 1/3 inputs measured…`)
 
 `backend/lambdas/score/app.py:5974-5984` returns `quiet` and `live` only. `env` is
 dropped for 9 of 99 boroughs and carries 0.14–0.18 of the score. A Cardiff
@@ -358,7 +379,7 @@ while `coverage` says nothing. `coverage` is the one surface `filter_response`
 refuses to let a caller strip, and `terms.html:294` obliges integrators to carry
 it through.
 
-### I9 — The liveability-unavailable notice can never fire, and its text is wrong **[A]**
+### ~~I9 — The liveability-unavailable notice can never fire, and its text is wrong~~ **FIXED 2026-09-11 (`8f6cd3f`), deployed** **[V]** (live 13 Sep: Cardiff carries the rewritten environment-unavailable notice)
 
 `app.py:5971` tests `live_source == 'unavailable'` by exact equality, but
 `live_resolution` has returned a full sentence since 2026-08-09. Across all 99
@@ -518,9 +539,11 @@ there), `toggleMetricDetail()` expanded, `renderScoreTip()` (I4 lives there),
 
 - **Fixed this session: 13.** F1-F4, C0-C5, I6, I7 and I10.
 - **Critical open: 0.** C0's cause is fixed but its quota does not reset until 1 October.
-- **Important open: 6** — I1 (six pages with no `Cache-Control`), I2, I3, I4, I5, I8, I9
+- **Important open: 3** — I1 (six pages with no `Cache-Control`), I2, I3, I4, I5, I8, I9
   were all open when this report was written; **I2, I8 and I9 shipped in the backend
-  deploy**, so what remains is I1, I3, I4 and I5, all frontend.
+  deploy** (verified 13 Sep: the live API emits `coverage.env`), and **I1 was fixed
+  and gated on 13 Sep** (nine pages, not six), so what remains is I3, I4 and I5, all
+  frontend.
 - **Two new gates close a CLASS rather than an instance**: spec-vs-template auth, and
   the methodology version against every document that quotes it.
 - **Minor open: ~21**

@@ -123,29 +123,46 @@ web-deploy:
 	# <name>/index.html keys. A flat "privacy" key is never served (the
 	# pre-2026-07-23 version of this target uploaded there — dead object,
 	# live /privacy was actually serving a manually-uploaded copy).
+	#
+	# --cache-control "no-cache" on EVERY page below, not index.html alone
+	# (2026-09-13, audit I1 of 2026-09-11). The 2026-09-08 fix above stopped
+	# at the shell; the five uploads directly beneath it in the SAME target
+	# were left bare, so /privacy and /terms - the legal documents - could pin
+	# in a reader's browser under heuristic freshness with no deploy able to
+	# dislodge them. Measured at the origin before this change: nine HTML
+	# pages served no Cache-Control at all (these five, the three under
+	# score-demo/ and prototype/). The reasoning is the block above; the
+	# value is the same so the policy is one policy: a hand-edited page
+	# revalidates, a generated area page (area-deploy) is cacheable for an
+	# hour. scripts/check_deploy_drift.sh asserts it on every page it lists.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp privacy.html \
 		s3://$(S3_BUCKET)/privacy/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp pricing.html \
 		s3://$(S3_BUCKET)/pricing/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp changes.html \
 		s3://$(S3_BUCKET)/changes/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	# terms.html added 2026-08-05. Same extensionless-key rule as privacy and
 	# pricing: it MUST land at terms/index.html or /terms is never served. This
 	# is the liability page, so an unpublished copy means the one document that
 	# allocates risk exists only in git.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp terms.html \
 		s3://$(S3_BUCKET)/terms/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	# api/index.html had NO target until 2026-08-03 - editable, deployed, and
 	# uploaded by hand. It is the B2B landing page, so a stale copy sells the
 	# product on claims the code no longer honours - exactly what it was doing
 	# (Ofsted as a live source, the DEFRA raster tier as primary).
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp api/index.html \
 		s3://$(S3_BUCKET)/api/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	# js/vendor/ likewise had no target, and this one can break the site rather
 	# than merely date it: d3.v7.min.js is in sw.js SHELL_ASSETS and cache.addAll()
 	# is ATOMIC, so if it is missing from the origin the service worker fails to
@@ -328,19 +345,32 @@ deeplinks-deploy:
 # api-docs.html reads it, so a stale copy documents an API that no longer
 # exists. Content type must stay application/yaml (matched to what the live
 # object already serves) or the browser downloads it instead of rendering.
+#
+# --cache-control "no-cache" on the three pages and the spec (2026-09-13,
+# audit I1). Same defect as web-deploy's pages: no directive at all, so a
+# browser applied heuristic freshness and could keep serving a spec whose
+# own header records drifting twice in one day. Swagger UI fetches the YAML
+# with a plain GET, so it is subject to exactly the same cache as the page.
+# The vendored Swagger files below are left bare on purpose: they change
+# only on a deliberate vendor refresh, and that is the moment to give the
+# filename a version, as js/vendor/d3.v7.min.js has.
 demo-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/index.html \
 		s3://$(S3_BUCKET)/score-demo/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/api-docs.html \
 		s3://$(S3_BUCKET)/score-demo/api-docs.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/status.html \
 		s3://$(S3_BUCKET)/score-demo/status.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/openapi.yaml \
 		s3://$(S3_BUCKET)/score-demo/openapi.yaml \
-		--content-type "application/yaml" --region $(AWS_REGION)
+		--content-type "application/yaml" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	# Vendored Swagger UI. Separate content types, so no --recursive here:
 	# one wrong type on the CSS and the reference page renders unstyled.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui.css \
@@ -362,7 +392,8 @@ demo-deploy:
 prototype-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp prototype/index.html \
 		s3://$(S3_BUCKET)/prototype/index.html \
-		--content-type "text/html" --region $(AWS_REGION)
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/prototype/*'
 

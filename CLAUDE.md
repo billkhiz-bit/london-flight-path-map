@@ -606,16 +606,20 @@ an audit**, which is the whole point of `backend/tests/test_route_throttles.py`.
   count floor says how many you parsed, never WHICH you lost; the explicit
   `assertIsNotNone(ceiling)` is what caught it.
 
-**`OPTIONS /v1/environment` returns 403 live, and its two siblings do not.** It
-declares `Auth: ApiKeyRequired: true` while `EnvironmentGet` beside it is
-deliberately unauthenticated (the extension is a public artefact and cannot hold
-a key); `/v1/signup` answers 200 and `/v1/chat` 204. **A CORS preflight cannot
-carry an API key** - the browser sends it without credentials by specification -
-so any caller that triggers one is blocked outright. Nothing triggers one today:
-the extension uses `host_permissions` (CORS bypassed) and a header-free `GET` is
-a simple request. It bites the first time a caller adds a custom header. Left
-open on purpose - it LOOSENS auth, so it is Bill's call, not a side effect of a
-throttle change.
+**`OPTIONS /v1/environment` no longer declares a key (Bill's call, 2026-09-13;
+answers 403 live until the next SAM deploy).** It declared
+`Auth: ApiKeyRequired: true` while `EnvironmentGet` beside it is deliberately
+unauthenticated (the extension is a public artefact and cannot hold a key);
+`/v1/signup` answers 200 and `/v1/chat` 204. **A CORS preflight cannot carry an
+API key** - the browser sends it without credentials by specification - so any
+caller that triggered one was blocked outright. Nothing triggered one: the
+extension uses `host_permissions` (CORS bypassed) and a header-free `GET` is a
+simple request. It would have bitten the first caller to add a custom header.
+It was left open for a week on purpose - it LOOSENS auth, so it was Bill's
+call, not a side effect of a throttle change - and the `Auth` block is now
+removed, matching its two siblings. Verify after the deploy with
+`curl -X OPTIONS -H 'Origin: https://example.com' -H 'Access-Control-Request-Method: GET' .../v1/environment`
+-> 204 with the CORS headers.
 
 ## The 2026-09-07 audit wave - 8 criticals and 11 importants closed
 
@@ -1296,22 +1300,37 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
-> ## ⚠️ TWO FIXES ARE COMMITTED AND NOT DEPLOYED (2026-09-11)
+> ## ⚠️ THE 11-13 SEP WAVE IS COMMITTED AND NOT DEPLOYED - FIVE SURFACES
 >
-> **`make web-deploy` is the first thing to run.** `index.html` at the origin
-> still prints the literal word `undefined` in the borough detail panel on
-> **53 of 91 boroughs** - and `UNDEFINED` in the `rating-high` colour, the ink
-> the app uses for the WORST crime, directly above a correct rate. Fixed in
-> `fbe9841`, preflight PASS, **not pushed to CloudFront**: it is an
-> outward-facing deploy and Bill was away. Live since the cities shipped on
-> 11 Aug.
+> This said "TWO FIXES" on 11 Sep. **Measured 2026-09-13 with
+> `check_deploy_drift.sh` and a live `/v1/score` call, not recalled** - and
+> the measuring mattered: a first draft of this banner listed the score
+> Lambda's `coverage.env` change as undeployed because `git diff` showed it
+> changed since the last deploy this file knew about; the live API already
+> emits `coverage.env`, so the 11 Sep backend deploy happened and only the
+> template is behind. *A diff against a remembered deploy is not a diff
+> against the origin.* Deploy in this order:
 >
-> **Then `make data-deploy`.** `data/borough-extra.json` carries
-> `healthcareWithin500mPct` in source and the old `healthcareWithin1kmPct` at
-> the origin (`165f20d`). Cosmetic only - `index.html` reads `healthcare` and
-> `healthcareNote`, never the share - so the origin is behind, not wrong.
+> 1. **SAM deploy.** Template only: it drops the key from
+>    `OPTIONS /v1/environment`. The Lambda code at the origin is current.
+> 2. **`make web-deploy`.** `index.html` at the origin still prints the literal
+>    word `undefined` in the borough detail panel on **53 of 91 boroughs** -
+>    `UNDEFINED` in the `rating-high` colour, the ink for the WORST crime,
+>    directly above a correct rate. Fixed in `fbe9841`; live since 11 Aug.
+>    This deploy also applies `Cache-Control: no-cache` to the five pages
+>    that had none (audit I1).
+> 3. **`make demo-deploy`.** `openapi.yaml` no longer documents `/v1/regions`
+>    as key-gated (audit C1); the three demo pages and the spec gain
+>    `no-cache`.
+> 4. **`make prototype-deploy`.** Header only - the page is unchanged.
+> 5. **`make data-deploy`.** `borough-extra.json` carries
+>    `healthcareWithin500mPct` in source and the old name at the origin.
+>    Cosmetic - nothing reads the share by name.
 >
-> Verify after both: `sh scripts/check_deploy_drift.sh` at 133 of 133.
+> Verify after all five: `sh scripts/check_deploy_drift.sh` at 133 of 133
+> AND `cache-control: 11 of 11 pages revalidate` (it reads 1 of 11 today),
+> `node tests/demo-key-scope.mjs`, and the OPTIONS curl in the
+> `/v1/environment` note under "Public surfaces added 2026-08-21" -> 204.
 
 
 **THE PRICE-LED DISCLOSURE IS STRUCTURAL SINCE 2026-09-09, not a correlation.**

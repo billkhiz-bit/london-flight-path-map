@@ -574,14 +574,21 @@ Resources:
             RestApiId: !Ref FlightMapApi
             Path: /v1/environment
             Method: get
+        # OPTIONS carries no Auth block, matching /v1/signup and /v1/chat
+        # (2026-09-13). It declared ApiKeyRequired: true from the day the route
+        # shipped, and a CORS preflight CANNOT carry an API key - the browser
+        # sends it without credentials by specification - so the method
+        # answered 403 to every preflight, measured live. Nothing triggered
+        # one: the extension uses host_permissions (CORS bypassed) and a
+        # header-free GET is a simple request. It would have bitten the first
+        # caller to add a custom header, and the GET beside it is deliberately
+        # open anyway, so gating the preflight protected nothing.
         EnvironmentOptions:
           Type: Api
           Properties:
             RestApiId: !Ref FlightMapApi
             Path: /v1/environment
             Method: options
-            Auth:
-              ApiKeyRequired: true
         ChangesGet:
           Type: Api
           Properties:

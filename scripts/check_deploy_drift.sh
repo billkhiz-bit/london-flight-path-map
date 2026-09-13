@@ -310,42 +310,82 @@ if [ "$PRECACHE_MISSING" -gt 0 ]; then
   PRECACHE_FAILED=1
 fi
 
-# CACHE-CONTROL ON THE SHELL, checked at the ORIGIN (2026-09-08, audit s4).
+# CACHE-CONTROL ON EVERY PAGE, checked at the ORIGIN (2026-09-08, audit s4;
+# widened from index.html alone to every page on 2026-09-13, audit I1).
 #
-# A hash comparison cannot see this: index.html can match byte-for-byte and
+# A hash comparison cannot see this: a page can match byte-for-byte and
 # still be served with no freshness directive, which is the state the audit
 # found and this pass now prevents returning. Browsers fall back to heuristic
-# caching without one, so the shell can pin for an arbitrary period - and
+# caching without one, so the page can pin for an arbitrary period - and
 # neither a CloudFront invalidation nor an sw.js bump reaches the browser's
-# HTTP cache. This is the borough-extra.json defect, on the shell.
+# HTTP cache. This is the borough-extra.json defect, on the pages.
+#
+# WHY EVERY PAGE. The 2026-09-08 version checked index.html and nothing else,
+# and the Makefile fix it verified stopped at the same line: the five uploads
+# directly beneath it in the same target stayed bare. Measured three days
+# later, NINE HTML pages served no Cache-Control at all - /privacy and /terms
+# among them, so a reader could be pinned to a superseded legal document with
+# no deploy able to reach them. A check scoped to the one surface that was
+# fixed is a check that cannot see the siblings that were not.
+#
+# The set is DERIVED from SURFACES above - every HTML page plus the OpenAPI
+# spec, which Swagger UI fetches with a plain GET and is therefore cached
+# exactly as a page is - so a page added to the drift list is asserted here
+# without a second list to keep in step. Not the non-page surfaces:
+# fonts.css is deliberately cacheable for a day, and robots.txt and the
+# sitemap are read by crawlers, not pinned by browsers.
 #
 # Asserts PRESENCE of a revalidating directive, deliberately not an exact
 # string: `no-cache`, `max-age=0` and `must-revalidate` all satisfy the
 # requirement, and pinning the literal would red on a defensible change.
 HEADER_FAILED=0
+CC_CHECKED=0
+CC_BAD=0
+for entry in $SURFACES; do
+  [ -z "$entry" ] && continue
+  local_path=$(printf '%s' "$entry" | cut -d'|' -f1)
+  url_path=$(printf '%s' "$entry" | cut -d'|' -f2)
+  case "$local_path" in
+    *.html|*.yaml) ;;
+    *) continue ;;
+  esac
+  CC_CHECKED=$((CC_CHECKED + 1))
+  page_cc=$(curl -fsSI "$BASE/$url_path" 2>/dev/null | tr -d '\r' \
+    | grep -i '^cache-control:' | head -1 | cut -d' ' -f2-)
+  if [ -z "$page_cc" ]; then
+    printf '  NO CACHE-CONTROL %s  (browser-pinnable)\n' "$url_path"
+    CC_BAD=$((CC_BAD + 1))
+  elif ! printf '%s' "$page_cc" | grep -qiE 'no-cache|no-store|max-age=0|must-revalidate'; then
+    printf '  CACHEABLE        %s  (%s - does not revalidate)\n' "$url_path" "$page_cc"
+    CC_BAD=$((CC_BAD + 1))
+  fi
+done
+printf '  cache-control: %d of %d pages revalidate\n' "$((CC_CHECKED - CC_BAD))" "$CC_CHECKED"
 
-# ONE request, several passes. The four checks below all interrogate the same
-# response, so fetching per header would be four round-trips saying the same
-# thing - and could disagree with itself if a deploy landed between them.
-SHELL_HEADERS=$(curl -fsSI "$BASE/index.html" 2>/dev/null | tr -d '\r')
-hdr() { printf '%s\n' "$SHELL_HEADERS" | grep -i "^$1:" | head -1 | cut -d' ' -f2-; }
-
-SHELL_CC=$(hdr 'cache-control')
-if [ -z "$SHELL_CC" ]; then
-  printf '  shell cache-control: ABSENT - index.html is browser-pinnable\n'
-  printf 'FAIL: index.html is served with no Cache-Control header.\n'
-  printf '  Browsers apply heuristic freshness, so the app shell can pin for an\n'
-  printf '  arbitrary period. Neither a CloudFront invalidation nor an sw.js\n'
-  printf '  bump can evict it. Redeploy via `make web-deploy`.\n'
-  HEADER_FAILED=1
-elif printf '%s' "$SHELL_CC" | grep -qiE 'no-cache|no-store|max-age=0|must-revalidate'; then
-  printf '  shell cache-control: %s (revalidates)\n' "$SHELL_CC"
-else
-  printf '  shell cache-control: %s\n' "$SHELL_CC"
-  printf 'FAIL: index.html is served cacheable without revalidation (%s).\n' "$SHELL_CC"
-  printf '  The app shell must revalidate; see the note in the Makefile.\n'
+# The floor is the number of pages in SURFACES today (nine HTML pages, the
+# spec, and the shell). Same reason as the >=16 floor above: a case pattern
+# that matches nothing would print "0 of 0 pages revalidate" and pass.
+if [ "$CC_CHECKED" -lt 11 ]; then
+  printf 'FAIL: asserted cache-control on only %d pages, expected at least 11.\n' "$CC_CHECKED"
+  printf '  The page filter above has stopped matching SURFACES; fix the filter.\n'
   HEADER_FAILED=1
 fi
+if [ "$CC_BAD" -gt 0 ]; then
+  printf 'FAIL: %d of %d pages are served without a revalidating Cache-Control.\n' \
+    "$CC_BAD" "$CC_CHECKED"
+  printf '  Browsers apply heuristic freshness, so those pages can pin for an\n'
+  printf '  arbitrary period. Neither a CloudFront invalidation nor an sw.js\n'
+  printf '  bump can evict them. Redeploy via the matching make target\n'
+  printf '  (web-deploy / demo-deploy / prototype-deploy); each sets no-cache.\n'
+  HEADER_FAILED=1
+fi
+
+# ONE request, several passes. The four security-header checks below all
+# interrogate the same response, so fetching per header would be four
+# round-trips saying the same thing - and could disagree with itself if a
+# deploy landed between them.
+SHELL_HEADERS=$(curl -fsSI "$BASE/index.html" 2>/dev/null | tr -d '\r')
+hdr() { printf '%s\n' "$SHELL_HEADERS" | grep -i "^$1:" | head -1 | cut -d' ' -f2-; }
 
 # SECURITY HEADERS AT THE ORIGIN (2026-09-08).
 #
