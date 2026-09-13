@@ -74,6 +74,24 @@ const PAGES = [
     settle: 2500,
     prepare: 'result',
   },
+  // THE SAME PAGE WITH THE LAYERS POPOVER OPEN, added 2026-09-13 (audit I1).
+  //
+  // Third time the same lesson: the COVERED detector existed and had never
+  // seen this state, so a popover that opened INTO the sheet-footer's links
+  // on every landscape phone - tapping "Flight paths" navigated to /privacy -
+  // sat green through every run. Only where the trigger EXISTS: the popover
+  // is served at `(max-width: 480px), (max-width: 900px) and (max-height:
+  // 500px)` - portrait phones and landscape phones - and the toggles are an
+  // inline strip everywhere else, so `where` mirrors that rule rather than
+  // a width alone (768x1024 and 900x800 have no trigger to open).
+  {
+    name: 'consumer app, layers open',
+    slug: 'index',
+    full: true,
+    settle: 2500,
+    prepare: 'layers',
+    where: (v) => v.w <= 480 || (v.w <= 900 && v.h <= 500),
+  },
   { name: 'pricing', slug: 'pricing' },
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
@@ -160,7 +178,9 @@ for (const meta of PAGES) {
     unresolved.push(meta);
     continue;
   }
-  for (const vp of meta.full ? VIEWPORTS : NARROW) {
+  // `where` narrows a full-viewport entry to the viewports where its state
+  // exists at all (the layers popover has a trigger on phones only).
+  for (const vp of (meta.full ? VIEWPORTS : NARROW).filter((v) => !meta.where || meta.where(v))) {
   const page = await browser.newPage({ viewport: { width: vp.w, height: vp.h } });
   // score-demo/status.html probes the live API on load with the PUBLIC
   // DEMO KEY printed in its own source. Unstubbed, this gate spent that
@@ -197,6 +217,29 @@ for (const meta of PAGES) {
       console.log(
         `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
           `borough-selected state (path ${reached}, score rows ${rendered})`
+      );
+      failures += 1;
+      await page.close();
+      continue;
+    }
+  }
+
+  if (meta.prepare === 'layers') {
+    // Open the popover the way a thumb does, and REPORT a state not reached.
+    const reached = await page.evaluate(() => {
+      const t = document.getElementById('layers-trigger');
+      if (!t || t.getBoundingClientRect().height === 0) return { trigger: false, open: false, toggles: 0 };
+      t.click();
+      const open = t.getAttribute('aria-expanded') === 'true';
+      const toggles = [...document.querySelectorAll('#layer-toggles .layer-toggle')]
+        .filter((b) => b.getBoundingClientRect().height > 0).length;
+      return { trigger: true, open, toggles };
+    });
+    await page.waitForTimeout(600);
+    if (!reached.trigger || !reached.open || reached.toggles === 0) {
+      console.log(
+        `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
+          `layers-open state (trigger ${reached.trigger}, open ${reached.open}, toggles ${reached.toggles})`
       );
       failures += 1;
       await page.close();

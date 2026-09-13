@@ -495,6 +495,21 @@
           padding: 6px 2px;
           display: inline-block;
         }
+        /* THE FOOTER YIELDS TO THE OPEN LAYERS POPOVER at every phone size
+           (2026-09-13 audit, I1). Its links opt back into pointer events, and
+           the popover opens into the band they occupy: measured, the first
+           toggle's centre was `a[href=/privacy]` at 844x390 and the App Store
+           link at 667x375 - and in portrait at 320x568 the Methodology link
+           sat under "Aircraft noise". The two 7 Sep fixes had collided: I11
+           reserved the trigger column for these links, I12 moved the popover
+           left, into them. The footer's z-order cannot be raised past the
+           popover (the sidebar is its own stacking context), so it yields
+           while the popover is open, exactly as it yields to the legend via
+           `legend-open`. In this general phone block, NOT the landscape one -
+           the first version was landscape-only and left 320x568 covered. */
+        .layers-open .sheet-footer {
+          display: none;
+        }
         .sheet-footer a:hover,
         .sheet-footer a:focus-visible {
           color: var(--dark);
@@ -959,7 +974,7 @@
         transition: color 0.15s;
       }
       .borough-list-item:hover {
-        color: var(--orange);
+        color: var(--orange-text); /* same rule; this class has no markup today */
       }
       .empty-state {
         padding: 40px 24px;
@@ -1281,8 +1296,15 @@
         outline: 2px solid var(--orange);
         outline-offset: 2px;
       }
+      /* --orange-text, not --orange (2026-09-13 audit, I21). Hover TEXT is
+         still text under WCAG 1.4.3 - there is no hover exemption - and
+         --orange on this ground measures 2.60:1 at 11px on four of five
+         cells of every ranking row. The palette block above records
+         --orange as failing as text and provides --orange-text (5.65:1) for
+         this. The contrast gates measure resting states, which is why this
+         sat green. */
       .rank-table tr:hover td {
-        color: var(--orange);
+        color: var(--orange-text);
       }
       .rank-table .col-score {
         text-align: right;
@@ -2346,7 +2368,7 @@
         transition: color 0.15s;
       }
       .fav-open:hover {
-        color: var(--orange);
+        color: var(--orange-text); /* hover text, AA - see .rank-table tr:hover td */
       }
       .fav-item:last-child {
         border-bottom: none;
@@ -2363,7 +2385,7 @@
         justify-content: center;
       }
       .fav-remove:hover {
-        color: var(--orange);
+        color: var(--orange-text); /* 2.38:1 as --orange on the button ground */
       }
 
       /* Audit F-A11Y-4: bottom-sheet sidebar on phones. Replaces the
@@ -8977,7 +8999,9 @@
       function renderSearchFailure(failure, query) {
         const safeQuery = escapeHtml(String(query || ''));
         const timedOut = failure === 'timeout';
+        panelSubject = { kind: 'none' };
         document.getElementById('sidebar-title').textContent = 'CONNECTION ISSUE';
+        document.title = 'Connection issue - Sky Score';
         announceResult(
           timedOut
             ? 'The lookup took too long to respond. Check your connection and try again.'
@@ -9689,6 +9713,9 @@
           ward: result.admin_ward,
           lsoa: result.lsoa,
           postcode: result.postcode,
+          // The display name for an AREA search ("Chelsea (SW3 5RZ)"); the
+          // real postcode above is what every fetch, badge and favourite uses.
+          label: result.label || result.postcode,
           nearestHeli,
           isOutcode: !!result._isOutcode,
         };
@@ -10912,7 +10939,17 @@
             // GM labels already end in their own postcode district, e.g.
             // "Didsbury & Withington (M20)", so the usual wrap would render
             // "... (M20) (M20)".
-            areaResult.postcode = areaKey.endsWith('(' + areaResult.postcode + ')')
+            //
+            // THE LABEL IS A SEPARATE FIELD (2026-09-13 audit, I2). This used
+            // to OVERWRITE `postcode` with "Chelsea (SW3 5RZ)", and every
+            // consumer downstream read that as the postcode: /epc,
+            // /sold-prices and /badge were fetched with the label (measured
+            // live - a "Not covered" badge and an EPC upstream 400 for an
+            // area the panel had just scored), the copyable embed snippet
+            // advertised the broken badge, and a saved favourite re-searched
+            // the label. The panel title reads `label`; everything that talks
+            // to an API or a store reads `postcode`.
+            areaResult.label = areaKey.endsWith('(' + areaResult.postcode + ')')
               ? areaKey
               : areaKey + ' (' + areaResult.postcode + ')';
             const analysis = analysePostcode(areaResult);
@@ -10968,7 +11005,9 @@
           return;
         }
         if (!result) {
+          panelSubject = { kind: 'none' };
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
+          document.title = 'Not found - Sky Score';
           announceResult('No results found for that search.');
           document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
@@ -11637,7 +11676,18 @@
         document.title = subject ? `${subject} - Sky Score` : BASE_DOCUMENT_TITLE;
       }
 
+      // WHAT THE PANEL IS SHOWING (2026-09-13 audit, I19). A persona change
+      // re-rendered "the selected borough", and a postcode search sets
+      // selectedBorough to the postcode's borough - so with SW11 1AA open,
+      // choosing "Family" silently replaced it with WANDSWORTH: postcode
+      // quiet, EPC, stations and badge all gone, a borough average under a
+      // different name, no notice. The postcode panel's own copy sent the
+      // user to that action ("Change buyer profile in Rankings tab"). The
+      // handler now asks what is showing and re-renders that.
+      let panelSubject = { kind: 'none' };
+
       function updateSidebar(data, { switchToAnalysis = true } = {}) {
+        panelSubject = { kind: 'borough' };
         setPanelSubject(data.name);
         announceResult('Results loaded for ' + data.name + '.');
         if (switchToAnalysis) switchTab('analysis');
@@ -11909,7 +11959,15 @@
       // the token working; it simply inherits the current sequence.
       function updateSidebarPostcode(analysis, boroughData, search) {
         const req = search || { token: searchSeq };
-        setPanelSubject(analysis.postcode);
+        panelSubject = { kind: 'postcode', analysis };
+        setPanelSubject(analysis.label || analysis.postcode);
+        // ANNOUNCED (2026-09-13 audit, I22). The borough panel and the
+        // not-found branch both feed #result-status; this one never did, so
+        // after a postcode search the live region was empty - or still said
+        // "Results loaded for Camden" from an earlier borough click while the
+        // panel showed SW11 1AA. The one outcome the search box's own
+        // placeholder asks for was the one a screen-reader user never heard.
+        announceResult('Results loaded for ' + (analysis.label || analysis.postcode) + '.');
         switchTab('analysis');
         revealSheetIfMobile();
 
@@ -12089,7 +12147,7 @@
       <div class="postcode-result">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${escapeHtml(analysis.postcode)}</div>
+            <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${escapeHtml(analysis.label || analysis.postcode)}</div>
             <div style="font-size:12px;color:var(--mid);">${escapeHtml(analysis.ward)}, ${escapeHtml(analysis.borough)}</div>
           </div>
           <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(analysis.noiseEstimate)}" data-fav-score="${boroughData ? pcScore : 0}">
@@ -13313,8 +13371,16 @@
           document.getElementById('persona-desc').textContent = PERSONAS[currentPersona].desc;
           recalcAllScores();
           renderBoroughRanking();
-          // Refresh sidebar if a borough is selected (stay on Rankings tab)
-          if (selectedBorough) {
+          // Refresh the sidebar for WHATEVER it is showing (stay on Rankings
+          // tab). A postcode result is re-rendered as a postcode result, with
+          // the borough record recalculated for the new persona - it was the
+          // borough panel that replaced it before (I19).
+          if (panelSubject.kind === 'postcode') {
+            const a = panelSubject.analysis;
+            const activeTab = document.querySelector('.tab.active')?.dataset.tab;
+            updateSidebarPostcode(a, matchBorough(a.borough) || null);
+            if (activeTab) switchTab(activeTab);
+          } else if (selectedBorough) {
             const data = getActiveBoroughData()[selectedBorough];
             if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false });
           }
@@ -13960,10 +14026,22 @@
         const layersTrigger = document.getElementById('layers-trigger');
         const layerTogglesPanel = document.getElementById('layer-toggles');
         if (layersTrigger) {
+          // ONE setter for the open state (2026-09-13 audit, I1). The popover
+          // is shown by a CSS sibling rule on aria-expanded, and the sheet
+          // footer needs to know too: on a landscape phone the two share the
+          // band y 146-227 and the footer LINKS opt back into pointer events,
+          // so a tap on the first toggle landed on /privacy (844x390, 896x414)
+          // or the App Store link (667x375) - measured. The footer's z-order
+          // cannot be fixed from here (the sidebar is its own stacking
+          // context above the map), so the footer yields while the popover is
+          // open, exactly as it yields to the legend via `legend-open`.
+          const setLayersOpen = (open) => {
+            layersTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+            document.documentElement.classList.toggle('layers-open', open);
+          };
           layersTrigger.addEventListener('click', (ev) => {
             ev.stopPropagation();
-            const open = layersTrigger.getAttribute('aria-expanded') === 'true';
-            layersTrigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+            setLayersOpen(layersTrigger.getAttribute('aria-expanded') !== 'true');
           });
           // ESCAPE CLOSES IT (2026-09-07 audit, I12). It did not, and on a
           // landscape phone the popover also covered its own trigger, so the
@@ -13978,7 +14056,7 @@
           document.addEventListener('keydown', (ev) => {
             if (ev.key !== 'Escape') return;
             if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
-            layersTrigger.setAttribute('aria-expanded', 'false');
+            setLayersOpen(false);
             layersTrigger.focus();
           });
           // Close popover when tapping anywhere outside it - and SWALLOW the
@@ -13997,7 +14075,7 @@
               if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
               if (layerTogglesPanel.contains(ev.target)) return;
               if (layersTrigger.contains(ev.target)) return;
-              layersTrigger.setAttribute('aria-expanded', 'false');
+              setLayersOpen(false);
               const onMap = ev.target.closest && ev.target.closest('#map-svg');
               if (onMap) {
                 ev.stopPropagation();

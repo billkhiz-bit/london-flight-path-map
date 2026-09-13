@@ -80,8 +80,8 @@ credited no price source), one field over.
 
 | # | Issue | File:Line | Category |
 |---|-------|-----------|----------|
-| I1 | Layers popover on every LANDSCAPE phone opens over the sheet-footer links: tapping "Flight paths" navigates to `/privacy` (844x390, 896x414), opens the App Store (667x375) | `index.html:3556-3585` vs `:2883`, `:487-497` | Frontend |
-| I2 | Every AREA search sends the display label (`Chelsea (SW3 5RZ)`) as the postcode to `/epc`, `/sold-prices` and `/badge`; the panel shows a "Not covered" badge and an EPC outage for an area it just scored, and the embed snippet copies the broken badge | `index.html:10905-10907, :12169-12176, :12257-12264` | Frontend |
+| ~~I1~~ **FIXED 2026-09-13** | Layers popover on every LANDSCAPE phone opens over the sheet-footer links: tapping "Flight paths" navigates to `/privacy` (844x390, 896x414), opens the App Store (667x375) | `index.html:3556-3585` vs `:2883`, `:487-497` | Frontend |
+| ~~I2~~ **FIXED 2026-09-13** | Every AREA search sends the display label (`Chelsea (SW3 5RZ)`) as the postcode to `/epc`, `/sold-prices` and `/badge`; the panel shows a "Not covered" badge and an EPC outage for an area it just scored, and the embed snippet copies the broken badge | `index.html:10905-10907, :12169-12176, :12257-12264` | Frontend |
 | ~~I3~~ **FIXED 2026-09-13** | `coverage.notices` says "DEFRA publishes contours for part of this area" for Teesside and Cardiff, whose airports DEFRA does not map; `/v1/environment` says "estimated" for South Yorkshire, where nothing was | `score/app.py:5848-5851, :6009, :7775` | Backend / provenance |
 | ~~I4~~ **FIXED 2026-09-13** | Postcode-resolution provenance (ONS NSPL, postcodes.io) is credited by London alone; 12 of 13 cities' `sources` never name the two OGL datasets that resolved the query | `score/app.py:4847` | Backend / provenance |
 | ~~I5~~ **FIXED 2026-09-13** | METHODOLOGY s5.4/s6 say internals are unrounded and rounded once; `live` and `env` are rounded to 1dp BEFORE weighting, and 65 of 792 published scores depend on it | `score/app.py:5521, :5765, :6395`; `METHODOLOGY.md:1222` | Backend / docs |
@@ -98,10 +98,10 @@ credited no price source), one field over.
 | I16 | `load_nspl.py` still runs 20 threads on boto3's default 10-connection pool; CLAUDE.md says every bulk load was fixed on 10 Sep and `ddb_write.py` says both loaders import it | `scripts/load_nspl.py:1176-1180, :866-871` | Scripts |
 | I17 | `/v1/signup` lets anyone subscribe, lock out or enumerate any email address, unauthenticated — F16 of 29 Aug, dropped from every report since | `signup/app.py:321-391, :434` | Security |
 | I18 | SECURITY.md and OPERATIONS s3.7/s3.8 say the deploy credential sits in GitHub Actions secrets on the public repo; the repo holds ZERO secrets and both deploy workflows have never run — and would deploy `index.html` with no `Cache-Control` | `SECURITY.md:33-49`; `.github/workflows/deploy-*.yml` | Security / docs |
-| I19 | Changing persona while a postcode result is open silently replaces it with the borough panel; the postcode panel's own copy sends the user to that action | `index.html:13273-13276` | Frontend |
+| ~~I19~~ **FIXED 2026-09-13** | Changing persona while a postcode result is open silently replaces it with the borough panel; the postcode panel's own copy sends the user to that action | `index.html:13273-13276` | Frontend |
 | ~~I20~~ **FIXED 2026-09-13** | The site prints the persona's NOMINAL weights beside "no data" rows, so the displayed weights do not reproduce the displayed score (Brooklyn: 14% beside "Environment no data", headline 4.0 not 3.5) — the `weights`-is-applied defect the API fixed 9 Sep, live on the site | `index.html:11685-11729` | Frontend |
-| I21 | Hover text at 2.60:1 / 2.38:1 on every ranking row and on today's saved-location buttons; the palette block records `--orange` as failing and provides `--orange-text` for this | `index.html:1285, :2349, :2366` | Frontend / a11y |
-| I22 | The postcode result is never announced to screen readers; `#result-status` stays empty or names the previous borough | `index.html:11881` vs `:11632, :10962` | Frontend / a11y |
+| ~~I21~~ **FIXED 2026-09-13** | Hover text at 2.60:1 / 2.38:1 on every ranking row and on today's saved-location buttons; the palette block records `--orange` as failing and provides `--orange-text` for this | `index.html:1285, :2349, :2366` | Frontend / a11y |
+| ~~I22~~ **FIXED 2026-09-13** | The postcode result is never announced to screen readers; `#result-status` stays empty or names the previous borough | `index.html:11881` vs `:11632, :10962` | Frontend / a11y |
 | ~~I23~~ **FIXED 2026-09-13** | The borough-extra failure notice describes a "neutral 5.0" fallback that no longer exists (measured: quiet+afford rescaled, 5.4) and omits Environment — I9 of 11 Sep, on the site | `index.html:8329-8331` | Frontend |
 | ~~I24~~ **FIXED 2026-09-13** | 57 area pages caption the aircraft band "DEFRA Strategic Noise Mapping Round 4" while their own sources paragraph calls it an estimate that is "NOT a DEFRA sample" — the C3 (31 Aug) mechanism one row over | `scripts/build_area_pages.py:239-240` | Provenance |
 
@@ -204,7 +204,7 @@ Agent-reported, marked [A] where executed and [U] where reasoned from code.
 | M32 | Phones have no visible heading on the landing state (the only `<h1>` is `display:none` in the search view); axe `page-has-heading-one` at 844x390 | `index.html:3596` | Frontend [A] |
 | M33 | Neighbourhood ranking table overflows its gutter by 1px at 320x568 with no x-scroller; `responsive.mjs` does not audit the ranking view | `index.html:1236` | Frontend [A] |
 | M34 | Extension panel: `#6b7c93` on white = 4.26:1 at 11-12px in eight rules (axe `color-contrast` ×10); `<header>` computes to a nested banner | `extension/content/panel.css:200-562`; `panel.js:1240` | Extension / a11y [A] |
-| M35 | NOT FOUND leaves `document.title` naming the previous result — the 11 Sep `renderSearchFailure()` item, also at the `!result` branch | `index.html:10961` | Frontend [A] |
+| ~~M35~~ **FIXED 2026-09-13** | NOT FOUND leaves `document.title` naming the previous result — the 11 Sep `renderSearchFailure()` item, also at the `!result` branch | `index.html:10961` | Frontend [A] |
 | M36 | Copy: both footers omit the separator between "Areas" and "Privacy"; the London postcode panel heading says "(LIVE TfL DATA)" when the NaPTAN fallback renders under it; `score-demo` inputs `outline:none` with border-only focus; `prototype/index.html` is in no gate (no landmarks/headings) | `index.html:4189, :12116`; `score-demo/index.html:126` | Frontend [A]/[U] |
 | M37 | `plannedComponents.crimeBreakdown: "planned"` while today's wave derived `crimeTop` for 85 of 91 boroughs into the site holder — planned for the API, so not a contradiction, but the next reader will "close" it | `score/app.py:7421-7431` | Docs [A] |
 
@@ -313,7 +313,34 @@ UNVERIFIED/open item from every prior report until it is closed BY NAME.
   carries the marker. Against the committed engine: **11 failed**; fixed:
   3 passed.
 
-****Tier 2 of the backlog (live false statements) closed the same night; deployed - see the deploy note below:**
+****Tier 3 of the backlog (user-facing frontend) closed the same night; deployed:**
+
+- **I1** — the sheet footer yields (`display: none`) while the layers popover
+  is open, via a `layers-open` class on `<html>` set by one `setLayersOpen()`
+  beside `aria-expanded` - the idiom the legend already uses. In the GENERAL
+  phone block, not the landscape one: the first version was landscape-only
+  and left 320x568 covered (the Methodology link under "Aircraft noise").
+  `tests/responsive.mjs` gained a `layers open` state scoped to the trigger's
+  own media rule (71 -> 78 combinations); it was red against the still-
+  deployed page (`Flight paths covered by a[href=/privacy]` at 844x390) and
+  clean on the source at every phone viewport.
+- **I2** — the area search keeps the REAL postcode in `postcode` and carries
+  the display name in a new `label`; the panel title and heading read the
+  label, every fetch, the badge, the embed snippet and the favourite read the
+  postcode. Measured: `/epc`, `/sold-prices` and `/badge` now receive
+  `SW3 5RZ` for a "Chelsea" search.
+- **I19** — the sidebar records what it is showing (`panelSubject`); a
+  persona change re-renders a postcode result AS a postcode result, with the
+  borough record recalculated, and stays on the tab the user was on. Measured:
+  title stays `CHELSEA (SW3 5RZ)`, LOCATION section present, ranking tab kept.
+- **I21** — hover text uses `--orange-text` (5.65:1) instead of `--orange`
+  (2.60:1 / 2.38:1) on the ranking rows and the saved-location buttons.
+- **I22** — `updateSidebarPostcode()` announces `Results loaded for <label>`
+  through the same live region the borough panel uses.
+- **M35** (with it) — both not-found paths set `document.title` and clear the
+  panel subject, so a persona change cannot resurrect a lost result.
+
+**Tier 2 of the backlog (live false statements) closed the same night; deployed - see the deploy note below:**
 
 - **I3** — `_defra_contour_status(city)` derives mapped / unmapped / none from
   the geometry registry against `AIRPORT_NOISE_SCALE`; `build_coverage` and
