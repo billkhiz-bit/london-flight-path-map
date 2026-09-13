@@ -175,10 +175,36 @@ for (const c of CASES) {
         : [],
       epc: !!document.getElementById('postcode-epc-data'),
       nhs: !!document.getElementById('postcode-nhs-data'),
+      // THE WHOLE PANEL, ASKED FOR THE WORD (2026-09-13, audit C1). This gate
+      // has rendered updateSidebarPostcode() for non-London cities on every
+      // run since it was written and asserted station names, EPC presence and
+      // NYC copy - never whether the panel printed `undefined`. It did, on
+      // every postcode result in nine cities, from three unguarded
+      // interpolations (`property`, `crime`, `schoolNote`) that exist on
+      // London and NYC records alone; and ratingBadgeClass(undefined) wrapped
+      // an EMPTY pill in the worst-crime colour. The 11 Sep F1 fix guarded the
+      // borough panel and widened panel-caveat.mjs to that panel; this is the
+      // sibling panel and its gate, one function and one file over.
+      undefinedCount: (sb.innerText.match(/undefined/g) || []).length,
+      emptyBadges: Array.from(sb.querySelectorAll('.rating-badge')).filter((b) => !b.textContent.trim()).length,
     };
   });
 
   console.log(`${c.city} (${c.postcode})`);
+
+  // Every city, London and NYC included: a fabricating default is a defect
+  // wherever it renders, and a record with every field is exactly where a
+  // regression would hide.
+  check(
+    `  ${c.city}: panel prints no "undefined"`,
+    panel.undefinedCount === 0,
+    panel.undefinedCount ? `${panel.undefinedCount} occurrence(s) in the rendered panel` : '',
+  );
+  check(
+    `  ${c.city}: no empty rating badge`,
+    panel.emptyBadges === 0,
+    panel.emptyBadges ? `${panel.emptyBadges} badge(s) with a colour class and no text` : '',
+  );
 
   if (c.uk) {
     check(

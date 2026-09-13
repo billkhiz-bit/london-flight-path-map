@@ -12030,7 +12030,16 @@
           <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
           <div class="stat"><div class="stat-value">${boroughData.trend_pct}</div><div class="stat-label">ANNUAL GROWTH</div></div>
         </div>
-        <p class="property-note" style="margin-top:12px;">${boroughData.property}</p>
+        ${
+          /* GUARDED (2026-09-13, audit C1). `property` exists on 38 of 91
+             records - London and NYC - so this line printed the literal
+             word `undefined` on every postcode result in nine cities. It is
+             the 11 Sep F1 defect in the SIBLING of the function that fix
+             reached: updateSidebar() guards the same four fields 300 lines
+             above and this function, which renders the primary "type a
+             postcode" flow, was never revisited. Mirrors :11745 exactly. */
+          boroughData.property ? `<p class="property-note" style="margin-top:12px;">${escapeHtml(boroughData.property)}</p>` : ''
+        }
       </div>`;
         }
 
@@ -12092,7 +12101,13 @@
         ? `
     <div class="sidebar-section">
       <h3>CRIME</h3>
-      <span class="rating-badge ${ratingBadgeClass(extra.crime)}">${escapeHtml(extra.crime)}</span>
+      ${
+        /* `crime` is a London/NYC-only curated band. On the 53 records
+           without it, ratingBadgeClass(undefined) returns `rating-high` -
+           the WORST-crime ink - around an EMPTY pill, directly above a
+           correct rate. Same guard as :11755 (2026-09-13, audit C1). */
+        extra.crime ? `<span class="rating-badge ${ratingBadgeClass(extra.crime)}">${escapeHtml(extra.crime)}</span>` : ''
+      }
       <div style="margin-top:8px;">
         <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">Per 1,000 residents/yr (${escapeHtml(extra.name)} borough)</div></div>
       </div>
@@ -12106,7 +12121,7 @@
     <div class="sidebar-section">
       <h3>SCHOOLS</h3>
       <span class="rating-badge ${schoolBadge(extra).cls}">${escapeHtml(schoolBadge(extra).text)}</span>
-      <p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>
+      ${extra.schoolNote ? `<p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>` : ''}
     </div>`
         : ''
     }

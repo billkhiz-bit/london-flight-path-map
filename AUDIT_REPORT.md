@@ -1,14 +1,24 @@
 # Audit Report — Sky Score
 
-> ## A NEWER AUDIT EXISTS: `AUDIT_REPORT_2026-09-11.md`
+> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-09-13.md`
 >
-> A full audit ran on **2026-09-11** and its findings are in that file, **not
-> here**. This file was deliberately NOT overwritten: Bill was away, and
-> overwriting a generated report without confirmation is what the global safety
-> rule forbids. Nothing below is wrong - it is four days older.
+> Full audits ran on **2026-09-11** (`AUDIT_REPORT_2026-09-11.md` - every
+> Critical and Important in it is now CLOSED and deployed, as of 13 Sep) and
+> on **2026-09-13** (`AUDIT_REPORT_2026-09-13.md` - 2 Critical, 24 Important,
+> 37 Minor; the two Criticals are the 11 Sep and 7 Sep fixes stopping one
+> function short of their family). Findings live in those files, **not
+> here**. This file was deliberately NOT overwritten either time: overwriting
+> a generated report without confirmation is what the global safety rule
+> forbids. Nothing below is wrong - it is six days older.
 >
-> **To rotate on return:** copy this file to `AUDIT_REPORT_2026-09-07.md` and
-> promote the 09-11 one, matching the 08-21 / 08-29 archive convention.
+> **To rotate on Bill's word:** copy this file to `AUDIT_REPORT_2026-09-07.md`
+> and promote the 09-13 one, matching the 08-21 / 08-29 archive convention.
+>
+> **Carried-forward items from OLDER reports that no later report closed**
+> (the 13 Sep audit found two had been dropped rather than closed): F16 and
+> F22 of `AUDIT_REPORT_2026-08-29.md` - unverified-third-party signup writes
+> and the orphaned-key path in `signup/app.py`. They are I17 and M2 of the
+> 13 Sep report now, and stay listed here until closed BY NAME.
 >
 > **The 09-11 audit fixed four things** (all committed, none deployed): the
 > borough panel printed the literal word `undefined` on **53 of 91 boroughs**,

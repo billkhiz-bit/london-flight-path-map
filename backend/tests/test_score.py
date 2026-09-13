@@ -4284,6 +4284,89 @@ class PublishedWeightsReproduceTheScoreTests(unittest.TestCase):
         )
 
 
+class AviationSourceLineMatchesTierTests(unittest.TestCase):
+    """The aviation `sources` line must say which tier scored the address.
+
+    Audit C2, 2026-09-13. The eight regional aviation lines were written for
+    the geometry tier and end "NOT a DEFRA sample at this address"; from
+    2026-08-12 the per-airport DEFRA rasters answered ~7,300 postcodes in
+    those cities and the line kept saying it. Verified live on M22 0AD:
+    quietResolution "raster", measuredAtLocation true, and that tail in the
+    same body. build_sources() had no way to know the tier.
+
+    Asserted THROUGH resolve_query, not on build_sources() alone: the 9 Sep
+    weights defect taught this suite that a unit which was always right
+    proves nothing about the response that never asked it. Both tiers are
+    asserted, so a fix that dropped the geometry line everywhere would also
+    fail.
+    """
+
+    PROBE = 'ZZ97 7ZZ'  # nothing else in the suite caches it
+
+    def _resolve(self, noise_row):
+        original_local = app._lookup_postcode_local
+        original_fetch = app._fetch_postcode
+        original_noise = app._lookup_noise_row
+
+        def local(clean, include_terminated=False):
+            # Shaped like a real _lookup_postcode_local row: Manchester
+            # (E08000003), admin_district resolved from the LAD as the reader
+            # does, a coordinate inside the city. The city derivation is not
+            # under test here, the tier is.
+            return {
+                'postcode': self.PROBE, 'latitude': 53.36, 'longitude': -2.27,
+                'admin_district': 'Manchester', 'region': 'North West',
+                '_resolver': 'nspl', '_ladCode': 'E08000003',
+            }
+
+        def fetch(_postcode):
+            raise AssertionError('postcodes.io must not be called when NSPL answered')
+
+        app._lookup_postcode_local = local
+        app._fetch_postcode = fetch
+        app._lookup_noise_row = lambda _clean: noise_row
+        try:
+            result = app.resolve_query({'postcode': self.PROBE})
+        finally:
+            app._lookup_postcode_local = original_local
+            app._fetch_postcode = original_fetch
+            app._lookup_noise_row = original_noise
+        body = result[0] if isinstance(result, tuple) else result
+        self.assertNotIn('error', body, body.get('error'))
+        self.assertEqual(body['location']['city'], 'manchester')
+        return body
+
+    def test_raster_tier_credits_defra_and_denies_nothing(self):
+        body = self._resolve({'lden': 62.0, 'roadLden': None, 'roadLdenBelow': None, 'no2': None, 'pm25': None})
+        self.assertEqual(body['context']['quietResolution'], 'raster')
+        aviation = [line for line in body['sources'] if line.startswith('Aviation noise context')]
+        self.assertEqual(len(aviation), 1, body['sources'])
+        self.assertNotIn('NOT a DEFRA sample', aviation[0])
+        self.assertIn('DEFRA Round 4', aviation[0])
+        self.assertIn('sampled at this postcode', aviation[0])
+
+    def test_geometry_tier_keeps_the_estimate_line(self):
+        body = self._resolve(None)
+        self.assertEqual(body['context']['quietResolution'], 'postcode')
+        aviation = [line for line in body['sources'] if line.startswith('Aviation noise context')]
+        self.assertEqual(len(aviation), 1, body['sources'])
+        self.assertIn('ESTIMATED', aviation[0])
+        self.assertIn('NOT a DEFRA sample', aviation[0])
+
+    def test_every_regional_estimate_line_carries_the_marker_the_substitution_keys_on(self):
+        """A city whose line drifted off the prefix would keep denying DEFRA on
+        the raster tier while this class, probing Manchester alone, stayed
+        green. So the marker is asserted across the registry."""
+        for city, prov in app.CITY_PROVENANCE.items():
+            lines = [s for s in prov['sources'] if isinstance(s, str) and 'NOT a DEFRA sample' in s]
+            for line in lines:
+                with self.subTest(city=city):
+                    self.assertTrue(
+                        line.startswith(app._AVIATION_ESTIMATE_PREFIX),
+                        f'{city}: the estimate line no longer starts with the marker build_sources substitutes on',
+                    )
+
+
 class PerBoroughProvenanceTests(unittest.TestCase):
     """sourceBreakdown must describe the BOROUGH, not the city's best case.
 

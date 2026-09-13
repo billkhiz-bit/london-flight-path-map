@@ -5237,7 +5237,25 @@ for _prov in CITY_PROVENANCE.values():
 del _prov
 
 
-def build_sources(city='london', bd=None):
+# The eight regional aviation lines in CITY_PROVENANCE describe the GEOMETRY
+# tier and end "NOT a DEFRA sample at this address". That was true of every
+# postcode until 2026-08-12, when the per-airport DEFRA rasters were loaded
+# for seven airports and the raster tier began answering ~7,300 postcodes in
+# those cities - and the line kept saying it. build_sources() had no way to
+# know which tier answered, so an integrator obeying terms.html republished a
+# denial of the dataset that scored the address, and that dataset was
+# credited nowhere (2026-09-13 audit, C2; verified live on M22 0AD:
+# quietResolution "raster", measuredAtLocation true, and this tail in the
+# same body). The prefix is the marker build_sources substitutes on.
+_AVIATION_ESTIMATE_PREFIX = 'Aviation noise context: ESTIMATED from '
+_AVIATION_RASTER_LINE = (
+    'Aviation noise context: DEFRA Round 4 strategic noise mapping, Lden sampled at '
+    'this postcode (Open Government Licence v3.0); the airport-geometry estimate '
+    'stands in only where DEFRA published no contour'
+)
+
+
+def build_sources(city='london', bd=None, quiet_source=None):
     """The response `sources` array, built per request and per city.
 
     Deliberately a function, not the import-time constant it replaced: the
@@ -5248,6 +5266,14 @@ def build_sources(city='london', bd=None):
     An unknown city says so rather than falling back to London's list — a
     silent default is how the original defect published UK provenance over
     New York data.
+
+    `quiet_source` is `context.quietResolution` for the response being built
+    ('raster', 'postcode', 'borough'). When the DEFRA raster answered, the
+    regional aviation line - written for the geometry tier - is replaced by
+    the line that credits the dataset that actually scored the address. None
+    (a caller with no scored query, e.g. the licence file) leaves the
+    geometry line, which is the honest default: it is what the great
+    majority of postcodes get.
     """
     prov = CITY_PROVENANCE.get(city)
     if prov is None:
@@ -5278,6 +5304,11 @@ def build_sources(city='london', bd=None):
     # city". Dropping it is the point: crediting DEFRA for New York would be
     # the 2026-07 defect that published UK provenance over US data, and
     # test_non_uk_city_never_credits_uk_bodies exists because of it.
+    if quiet_source == 'raster':
+        out = [
+            _AVIATION_RASTER_LINE if isinstance(line, str) and line.startswith(_AVIATION_ESTIMATE_PREFIX) else line
+            for line in out
+        ]
     return [line for line in out if line]
 
 
@@ -7389,7 +7420,10 @@ def resolve_query(query):
         # ONE record for both, so the sources array and the lineage cannot
         # disagree about which inputs this borough has - which is exactly what
         # they did before 2026-08-31.
-        'sources': build_sources(city, bd=_borough_record(city, borough)),
+        'sources': build_sources(
+            city, bd=_borough_record(city, borough),
+            quiet_source=score_data.get('context', {}).get('quietResolution'),
+        ),
         'sourceBreakdown': build_source_breakdown(city, _borough_record(city, borough)),
     }
     # Roadmap-visible placeholder components, let prospects see what's planned
