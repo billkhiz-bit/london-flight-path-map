@@ -53,9 +53,10 @@ const failures = [];
 // check means we learned nothing. Collapsing the two either blocks commits on
 // a consumable or reports evidence that was never gathered.
 const unproven = [];
-// Set by block 1 when the demo key's monthly quota is spent. While it is true,
-// a 429 from the deny probes below is ambiguous - it could be the per-method
-// RateLimit 0, or it could be the quota answering every route the same way.
+// Set by block 1 when the demo key's monthly quota is spent. It no longer
+// makes a 429 from the deny probes ambiguous - deny() reads the body, which
+// names the throttle or the quota - and is kept for the one case the body
+// cannot settle: a 429 with an unrecognised message.
 let quotaExhausted = false;
 
 function check(name, pass, detail) {
@@ -103,15 +104,53 @@ console.log('\nDemo key scope\n==============\n');
 }
 
 // The deny probes go through this rather than check(), because 429 means two
-// different things depending on whether the quota is spent, and only one of
-// them is evidence that the per-method deny is working.
-function deny(name, status, extra = '') {
-  if (quotaExhausted && status === 429) {
-    console.log(`  UNPROVEN  ${name}  status=429 (indistinguishable from the spent quota)`);
-    unproven.push(`${name} - 429 while the demo quota is exhausted, so the per-method deny was not tested`);
+// different things, and API Gateway SAYS WHICH in the body (measured
+// 2026-09-13, with the demo quota spent):
+//
+//   GET  /v1/score       -> 429 {"message":"Limit Exceeded"}
+//   POST /v1/score/batch -> 429 {"message":"Too Many Requests"}
+//   POST /v1/chat        -> 429 {"message":"Too Many Requests"}
+//
+// The per-method throttle is evaluated BEFORE the monthly quota. A route
+// whose RateLimit is 0 is refused by the throttle and never reaches the
+// quota, so it answers "Too Many Requests" whatever the quota holds; a route
+// with a real throttle falls through to the spent quota and answers "Limit
+// Exceeded". That ordering makes the deny provable during the outage this
+// file used to declare it unprovable in - which was 11 Sep to 1 Oct, every
+// month the demo is popular - and it makes the opposite case provable too:
+// "Limit Exceeded" on a RateLimit-0 route means the request PASSED the
+// method throttle, i.e. the deny is gone, and that is a FAILURE, not a pass.
+// Before this, a broken deny under a spent quota was reported UNPROVEN and
+// exit 0, which is the quieter of the two wrong answers.
+//
+// One caveat, so the message is not over-read: "Too Many Requests" is also
+// what the PLAN's own rate limit says (5 burst on the demo plan). A single
+// probe cannot trip that, and this file sends one request per route.
+function deny(name, r, extra = '') {
+  const detail = `status=${r.status}${extra}`;
+  if (r.status !== 429) {
+    check(name, BLOCKED_STATUS.has(r.status), detail);
     return;
   }
-  check(name, BLOCKED_STATUS.has(status), `status=${status}${extra}`);
+  let message = '';
+  try {
+    message = String(JSON.parse(r.text).message || '');
+  } catch {
+    /* an unparseable body is handled as unknown below */
+  }
+  if (/too many requests/i.test(message)) {
+    check(name, true, `${detail} "${message}" (per-method throttle fired before the quota)`);
+  } else if (/limit exceeded/i.test(message)) {
+    // Only reachable when the quota is spent AND the deny is missing: the
+    // request went past the method throttle and hit the quota instead.
+    check(name, false, `${detail} "${message}" <- REACHED THE QUOTA, SO RATE 0 IS NOT DENYING`);
+  } else if (quotaExhausted) {
+    console.log(`  UNPROVEN  ${name}  ${detail} (429 with an unrecognised body "${message}"; cannot tell throttle from quota)`);
+    unproven.push(`${name} - 429 with an unrecognised body while the quota is exhausted, so the per-method deny was not tested`);
+  } else {
+    // Quota not spent, so the only 429 a single probe can earn is the throttle.
+    check(name, true, `${detail} "${message}"`);
+  }
 }
 
 // 2. Batch must be refused. 100 scores per metered request is 20x the Free tier
@@ -123,7 +162,7 @@ function deny(name, status, extra = '') {
   });
   deny(
     'POST /v1/score/batch is refused',
-    r.status,
+    r,
     r.status === 200 ? ' <- RATE 0 IS NOT DENYING' : '',
   );
 }
@@ -138,7 +177,7 @@ function deny(name, status, extra = '') {
   });
   deny(
     'POST /v1/chat is refused',
-    r.status,
+    r,
     r.status === 200 ? ' <- A PUBLIC KEY IS REACHING BEDROCK' : '',
   );
 }
@@ -211,10 +250,13 @@ if (!FREE_KEY) {
       headers: { 'X-Api-Key': FREE_KEY, 'Content-Type': 'application/json' },
       body,
     });
-    check(
+    // Through deny(), not a bare status set: a free key whose own 10,000 is
+    // spent would answer 429 "Limit Exceeded" on a route the deny had
+    // stopped covering, and a status test would call that a working deny.
+    deny(
       name,
-      BLOCKED_STATUS.has(res.status),
-      `status=${res.status}${res.status === 200 ? ' <- A FREE KEY IS THROUGH THE DENY' : ''}`,
+      { status: res.status, text: await res.text().catch(() => '') },
+      res.status === 200 ? ' <- A FREE KEY IS THROUGH THE DENY' : '',
     );
   }
 }
@@ -240,6 +282,9 @@ if (failures.length) {
 //   true about COST, and it does not follow that they are evidence. This is
 //   the same distinction check_flood_georef.py draws with MIN_COMPARED: a
 //   class that reached the service twice has not been tested.
+//   RESOLVED 2026-09-13: the two 429s carry different bodies, and the method
+//   throttle is evaluated first, so deny() now tells them apart (see it). The
+//   UNPROVEN path survives only for a 429 whose body it does not recognise.
 //
 //   F15 - the free-tier denies, which the block above calls load-bearing
 //   ("if this deny stops working the free tier is 1,000,000 scores a month"),

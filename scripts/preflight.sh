@@ -87,10 +87,13 @@ check() {
     #   check_openapi_matches_engine.py  returns 0 when PyYAML is absent,
     #                                    saying "INCONCLUSIVE: ... That is NOT
     #                                    the same as the spec being correct."
-    #   tests/demo-key-scope.mjs         exits 0 whenever `unproven` is set,
-    #                                    and SKY_SCORE_FREE_TIER_KEY is unset
-    #                                    locally - so the deny that file calls
-    #                                    load-bearing has never once run
+    #   tests/demo-key-scope.mjs         exits 0 whenever `unproven` is set;
+    #                                    SKY_SCORE_FREE_TIER_KEY was unset
+    #                                    locally until 2026-09-13, so the deny
+    #                                    that file calls load-bearing had never
+    #                                    once run - it runs now, and reads the
+    #                                    429 body so a spent quota no longer
+    #                                    leaves anything unproven
     #   check_quiet_estimate_error.py    returns 0 on INCONCLUSIVE
     #
     # Still not blocking - the exit code is still the gate's own answer - but
