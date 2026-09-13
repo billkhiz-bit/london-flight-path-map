@@ -69,7 +69,11 @@ whole block is one invocation because the Bash tool keeps the working
 directory between calls but not the environment:
 
 ```bash
-set -a && source .env && set +a &&   cd backend && rm -rf .aws-sam &&   AWS_PROFILE=flightmap sam build &&   AWS_PROFILE=flightmap sam deploy --parameter-overrides     EpcBearerToken="$EPC_BEARER_TOKEN"
+set -a && source .env && set +a && \
+  cd backend && rm -rf .aws-sam && \
+  AWS_PROFILE=flightmap sam build && \
+  AWS_PROFILE=flightmap sam deploy --parameter-overrides \
+    EpcBearerToken="$EPC_BEARER_TOKEN"
 ```
 
 Always `rm -rf .aws-sam` first — stale build dirs will silently deploy old
@@ -516,6 +520,15 @@ succeeds inside `london-flight-map-*` and is denied outside it).
 `GET /apikeys?includeValues=true` - so the deploy credential can read every
 customer API key in plaintext. Confirmed by listing key metadata; values were
 deliberately not requested.
+
+#### Probed from the CLI on 2026-09-13 - step 1 cannot be done from here
+
+`cloudformation get-template --template-stage Processed` (which would list the
+post-transform `ManagedPolicyArns` per role), `iam list-attached-role-policies`
+and `iam list-role-policies` are all **AccessDenied** to `flightmap-dev`.
+`iam get-role` succeeds and confirms `PermissionsBoundary: null` on every one
+of the 8 roles. Do not retry those three; they are recorded here so the next
+session starts at the console.
 
 #### Why this is not already done
 
