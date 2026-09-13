@@ -126,10 +126,26 @@ def fetch_nearby_stations(lat, lon):
         logger.warning('TfL StopPoint lookup failed: %s', exc)
         return None
 
-    stops = data.get('stopPoints', [])
+    # THE ENVELOPE, DEFENSIVELY (2026-09-13 audit, I13): a TfL rename of
+    # `stopPoints` read as "no stations within 1.5 km" with a 200 and
+    # `available: true`. None is the outage signal the caller already
+    # handles; an unreadable body is an outage.
+    stops = data.get('stopPoints') if isinstance(data, dict) else None
+    if not isinstance(stops, list):
+        logger.warning('TfL StopPoint envelope unreadable: %s',
+                       sorted(data.keys()) if isinstance(data, dict) else type(data).__name__)
+        return None
     results = []
 
-    for stop in stops[:8]:
+    # ALL stops with a coordinate, sorted by distance below, THEN the nearest
+    # (audit M14): the `[:8]` slice came before the sort, so the candidates
+    # were TfL's first eight, and a coordinate-less stop computed a distance
+    # of 5,728 km from (0, 0).
+    for stop in stops:
+        if not isinstance(stop, dict):
+            continue
+        if not isinstance(stop.get('lat'), (int, float)) or not isinstance(stop.get('lon'), (int, float)):
+            continue
         dist = haversine(lat, lon, stop.get('lat', 0), stop.get('lon', 0))
         lines = []
         for lp in stop.get('lineModeGroups', []):

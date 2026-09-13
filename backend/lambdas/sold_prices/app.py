@@ -113,13 +113,39 @@ def handler(event, context):
                 },
             )
 
-        items = data.get('result', {}).get('items', [])
+        # THE ENVELOPE, DEFENSIVELY (2026-09-13 audit, I13). This read
+        # `data.get('result', {}).get('items', [])`, so a Land Registry rename
+        # of either key - or a body that is a list - answered 200 with
+        # `transactions: []`, which the site renders as "no recorded sales",
+        # for every postcode in the country, silently. epc/app.py:284 fixed
+        # this exact shape on 2026-08-31 and calls it "verbatim the
+        # sold_prices scar"; the scar itself was never closed. An empty list
+        # is a measurement; an unreadable envelope is an outage.
+        result = data.get('result') if isinstance(data, dict) else None
+        items = result.get('items') if isinstance(result, dict) else None
+        if not isinstance(items, list):
+            logger.warning('Land Registry envelope unreadable for %s: keys=%s', postcode,
+                           sorted(data.keys()) if isinstance(data, dict) else type(data).__name__)
+            return response(
+                502,
+                {
+                    'error': 'Sold-prices upstream returned an unexpected shape.',
+                    'postcode': postcode,
+                },
+            )
 
         results = []
         for item in items:
+            if not isinstance(item, dict):
+                continue
+            # A sale with no price is not a data point: publishing it as 0
+            # (audit M14) put a free house in the list two lines below a
+            # sibling that returns '' "rather than a placeholder".
+            if not isinstance(item.get('pricePaid'), (int, float)):
+                continue
             results.append(
                 {
-                    'price': item.get('pricePaid', 0),
+                    'price': item.get('pricePaid'),
                     'date': _iso_date(item.get('transactionDate', '')),
                     'address': item.get('propertyAddress', {}).get('paon', ''),
                     'street': item.get('propertyAddress', {}).get('street', ''),

@@ -811,7 +811,14 @@ Resources:
     Properties:
       CodeUri: lambdas/signup/
       Handler: app.handler
-      Timeout: 10
+      # 28, from 10 (2026-09-13 audit, I14). The key path makes four
+      # sequential AWS calls (GetItem, CreateApiKey, CreateUsagePlanKey,
+      # PutItem), and at 10s a single hung one killed the function before
+      # its own 503 branch could answer - the clients were on botocore's
+      # 60-second defaults. Each now carries a 5s budget (signup/app.py
+      # _BOTO_CONFIG) and 28 is the gateway-capped value every other
+      # function carries; InnerClientBudgetTests holds hops x budget under it.
+      Timeout: 28
       MemorySize: 256
       Environment:
         Variables:

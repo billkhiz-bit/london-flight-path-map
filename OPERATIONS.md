@@ -389,12 +389,21 @@ storage:
 Old tokens are not explicitly revoked by the rotation — MHCLG's UI just
 issues a new one and silently expires the old one.
 
-### 3.7 — Migrate CI from static keys to GitHub OIDC — **OPEN, prepared 2026-08-04**
+### 3.7 — Migrate CI from static keys to GitHub OIDC — **RE-SCOPED 2026-09-13: there is nothing to migrate yet**
 
-**Status:** the outstanding security remediation from audit finding A-0803-12.
-`SECURITY.md` once claimed CI already used OIDC; it does not. Both deploy
-workflows authenticate with `secrets.AWS_ACCESS_KEY_ID` /
-`AWS_SECRET_ACCESS_KEY`, which are long-lived credentials sitting in GitHub.
+**Status (2026-09-13, audit I18):** measured with `gh api` - the repository
+holds **zero** Actions secrets, has no `production` environment, and the two
+deploy workflows had **never run** (ci.yml: 293 runs). The "long-lived
+credentials sitting in GitHub" this section remediated did not exist; the
+workflow files referenced a secret nobody created. Both files are deleted
+(one could not have deployed at all, the other would have reverted the
+`Cache-Control` fix). The procedure below is kept as the design for CI
+deploys IF they are ever wanted - build them on OIDC from the start, and
+never add static keys to GitHub to revive the old files.
+
+**Previous status (2026-08-04):** the outstanding security remediation from
+audit finding A-0803-12. `SECURITY.md` once claimed CI already used OIDC;
+it did not - but nor did it use anything else.
 
 **Do the AWS side FIRST. Do not edit the workflows before the role exists** —
 they would fail on the next `workflow_dispatch` with an opaque credentials
@@ -442,9 +451,12 @@ production` already declared in both workflow files.
 CI authenticates without changing *what* it can do. Tightening the policy is a
 separate change and should not ride along with this one.
 
-**Step 4 — edit both workflows** (`.github/workflows/deploy-frontend.yml` and
-`deploy-backend.yml`). Add the `permissions` block at job level and swap the
-credential inputs:
+**Step 4 — write the deploy workflows** (the two that used to exist,
+`deploy-frontend.yml` and `deploy-backend.yml`, were deleted on 2026-09-13
+having never run; recover them from git history as a starting point, and
+note the frontend one must gain the `--cache-control` flags the Makefile
+targets carry, and the backend one the `EpcBearerToken` override). Add the
+`permissions` block at job level and use the OIDC credential inputs:
 
 ```yaml
     permissions:
@@ -506,10 +518,10 @@ there is no permissions boundary. So a holder of these credentials can:
 
 That turns "can deploy this stack" into "owns the account": S3 outside the
 project prefix, IAM users, billing, CloudTrail. **The same credential is in
-`.env` on this laptop AND in GitHub Actions secrets on a repository confirmed
-public** (`gh repo view` reports `visibility: PUBLIC`), so the escalation is one
-credential leak away. See also §3.7, which proposes moving CI to OIDC and would
-remove the GitHub half.
+`.env` on this laptop** - and NOT in GitHub Actions secrets, whatever this
+said until 2026-09-13: the repository holds zero secrets (measured, audit
+I18). The escalation is one laptop-credential leak away. §3.7 records why
+there is no GitHub half to remove.
 
 **The escalation was NOT exercised.** It is a path read off the policy document
 and confirmed to be the live policy by a prefix-scope probe (`iam:GetRole`

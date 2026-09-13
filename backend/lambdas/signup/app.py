@@ -40,6 +40,7 @@ import re
 from datetime import UTC, datetime
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
@@ -101,8 +102,23 @@ def cors_headers(event):
     }
 
 
-apigw = boto3.client('apigateway', region_name=AWS_REGION)
-ddb = boto3.client('dynamodb', region_name=AWS_REGION)
+# A CLIENT BUDGET THAT FITS INSIDE THE FUNCTION (2026-09-13 audit, I14).
+# Both clients were built on botocore's defaults - 60s connect, 60s read,
+# legacy retries - inside a function whose Timeout was 10s. One hung GetItem
+# was killed by Lambda at 10s; the 503 branches below never ran and the
+# consumer form saw a CORS failure. The /nhs class (22 Aug) and the chat
+# class (I16), in the two Lambdas those sweeps did not look at. The path
+# makes up to FOUR sequential calls (GetItem, CreateApiKey, CreateUsagePlanKey,
+# PutItem), so the budget is per hop and the function Timeout is 28 to hold
+# four of them; InnerClientBudgetTests asserts hops x budget < Timeout.
+_BOTO_CONFIG = Config(
+    connect_timeout=2,
+    read_timeout=3,
+    retries={'max_attempts': 1, 'mode': 'standard'},
+)
+_SEQUENTIAL_HOPS = 4
+apigw = boto3.client('apigateway', region_name=AWS_REGION, config=_BOTO_CONFIG)
+ddb = boto3.client('dynamodb', region_name=AWS_REGION, config=_BOTO_CONFIG)
 
 
 # --- Helpers ------------------------------------------------------------

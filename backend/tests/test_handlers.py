@@ -781,35 +781,43 @@ class InnerClientBudgetTests(unittest.TestCase):
     function-vs-gateway. This is that lesson one layer in.
     """
 
-    def test_chat_client_budget_fits_inside_the_function_timeout(self):
+    # EVERY Lambda that builds a boto3 client, HOP-AWARE (2026-09-13 audit,
+    # I14). This asserted chat alone, with one-hop arithmetic, while chat
+    # makes two sequential calls and signup and favourites built their
+    # clients on botocore's 60-second defaults inside 10s and 28s functions.
+    # Each module declares _SEQUENTIAL_HOPS beside its _BOTO_CONFIG, so the
+    # budget compared here is the one the code actually spends.
+    BUDGETED = (('chat', 'ChatFunction'), ('signup', 'SignupFunction'), ('favourites', 'FavouritesFunction'))
+
+    def test_every_client_budget_fits_inside_its_function_timeout(self):
         import importlib.util
 
-        chat_path = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), '..', 'lambdas', 'chat', 'app.py'))
-        spec = importlib.util.spec_from_file_location('chat_budget_probe', chat_path)
-        chat = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(chat)
-
-        cfg = chat._BOTO_CONFIG
-        attempts = (cfg.retries or {}).get('max_attempts', 1)
-        worst_case = (cfg.connect_timeout + cfg.read_timeout) * attempts
-
-        # Read the function's own timeout rather than hardcoding it, so the two
-        # cannot drift apart the way the client and the function did.
         template = os.path.abspath(os.path.join(
             os.path.dirname(__file__), '..', 'template.yaml'))
         with open(template, encoding='utf-8') as fh:
             text = fh.read()
-        block = text[text.index('  ChatFunction:'):]
-        match = re.search(r'Timeout:\s*(\d+)', block[:2000])
-        function_timeout = int(match.group(1)) if match else 28
-
-        self.assertLess(
-            worst_case, function_timeout,
-            f'chat boto3 budget is {worst_case}s of connect+read across '
-            f'{attempts} attempts, against a function Timeout of '
-            f'{function_timeout}s - the degraded-response branch cannot run',
-        )
+        for module, resource in self.BUDGETED:
+            with self.subTest(module=module):
+                path = os.path.abspath(os.path.join(
+                    os.path.dirname(__file__), '..', 'lambdas', module, 'app.py'))
+                spec = importlib.util.spec_from_file_location(f'{module}_budget_probe', path)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                cfg = mod._BOTO_CONFIG
+                hops = mod._SEQUENTIAL_HOPS
+                attempts = (cfg.retries or {}).get('max_attempts', 1)
+                worst_case = (cfg.connect_timeout + cfg.read_timeout) * attempts * hops
+                # Read the function's own timeout rather than hardcoding it,
+                # so the two cannot drift apart the way client and function did.
+                block = text[text.index(f'  {resource}:'):]
+                match = re.search(r'Timeout:\s*(\d+)', block[:2500])
+                function_timeout = int(match.group(1)) if match else 28
+                self.assertLess(
+                    worst_case, function_timeout,
+                    f'{module} boto3 budget is {worst_case}s (connect+read x {attempts} '
+                    f'attempts x {hops} sequential hops) against a function Timeout of '
+                    f'{function_timeout}s - the degraded-response branch cannot run',
+                )
 
 
 class ApiGatewayTimeoutCapTests(unittest.TestCase):
@@ -1386,6 +1394,35 @@ class ChatGroundingTests(unittest.TestCase):
         ok, _ = chat.verify_answer('There are 3 things worth noting.', self.CONTEXT)
         self.assertTrue(ok)
 
+    # AUDIT I11, 2026-09-13: three answers the audit showed passing as grounded
+    # with nothing in the payload behind them. The score scale is 0-10, so a
+    # 0-10 integer beside a SCORE CUE is a claim about the data; a bare count
+    # in prose (above) is not. And a rank pair {rank: 12, of: 33} grounded
+    # "120,000" and "330,000" through the trailing-zero equivalence.
+    RANKED = {
+        'total': 3.4,
+        'components': {'quiet': 3.4},
+        'context': {'avgPriceGbp': 465000, 'priceRankInCity': {'rank': 12, 'of': 33}},
+    }
+
+    def test_an_invented_score_on_the_zero_to_ten_scale_is_caught(self):
+        chat = self._chat()
+        ok, bad = chat.verify_answer('The quiet score is 9 out of 10.', self.RANKED)
+        self.assertFalse(ok)
+        self.assertIn('9', bad)
+
+    def test_a_score_that_is_in_the_payload_still_passes(self):
+        chat = self._chat()
+        ok, _ = chat.verify_answer('The quiet score is 3.4 out of 10.', self.RANKED)
+        self.assertTrue(ok)
+
+    def test_the_rank_pair_does_not_ground_a_price(self):
+        chat = self._chat()
+        for text in ('Homes here average about 330,000 pounds.', 'Prices are around 120,000 pounds.'):
+            with self.subTest(text=text):
+                ok, _ = chat.verify_answer(text, self.RANKED)
+                self.assertFalse(ok)
+
 
 class NhsBundleTests(unittest.TestCase):
     """London healthcare is served from a bundled snapshot, not a live call.
@@ -1510,6 +1547,107 @@ class SoldPricesParsingTests(unittest.TestCase):
 
         self.assertIn('WA2%208SN', captured['url'])
         self.assertNotIn('%2B', captured['url'])
+
+
+class UpstreamEnvelopeIsNotDataTests(unittest.TestCase):
+    """An unreadable upstream envelope is an outage, never an empty result.
+
+    Audit I13, 2026-09-13. epc/app.py closed this shape on 2026-08-31 and its
+    docstring calls it "verbatim the sold_prices scar"; the scar itself, and
+    transport's twin, were never closed. A Land Registry rename of `result`
+    or `items` answered 200 with `transactions: []` - which the site renders
+    as "no recorded sales" - and a TfL rename of `stopPoints` answered 200
+    with `stations: [], available: true`. Reproduced by the audit against the
+    handlers; guarded here the same way.
+    """
+
+    @staticmethod
+    def _body(payload):
+        import io as _io
+        body = _io.BytesIO(json.dumps(payload).encode())
+        body.__enter__ = lambda s: s
+        body.__exit__ = lambda s, *a: None
+        return body
+
+    def test_sold_prices_renamed_envelope_is_a_502_not_an_empty_list(self):
+        sp = _import_lambda('sold_prices')
+        for payload in ({'results': {'items': [{'pricePaid': 1}]}}, {'result': {'rows': []}}, [1, 2]):
+            with self.subTest(payload=payload), \
+                    patch.object(sp, 'urlopen', lambda *a, _p=payload, **k: self._body(_p)):
+                res = sp.handler({'queryStringParameters': {'postcode': 'WA2 8SN'}}, None)
+            self.assertEqual(res['statusCode'], 502, res['body'])
+            self.assertIn('unexpected shape', json.loads(res['body'])['error'])
+
+    def test_sold_prices_empty_list_is_still_a_measurement(self):
+        sp = _import_lambda('sold_prices')
+        with patch.object(sp, 'urlopen', lambda *a, **k: self._body({'result': {'items': []}})):
+            res = sp.handler({'queryStringParameters': {'postcode': 'WA2 8SN'}}, None)
+        self.assertEqual(res['statusCode'], 200)
+        self.assertEqual(json.loads(res['body'])['transactions'], [])
+
+    def test_sold_prices_drops_a_sale_with_no_price_rather_than_publishing_zero(self):
+        sp = _import_lambda('sold_prices')
+        payload = {'result': {'items': [
+            {'pricePaid': 250000, 'transactionDate': '2026-01-01', 'propertyAddress': {}},
+            {'transactionDate': '2026-01-02', 'propertyAddress': {}},
+        ]}}
+        with patch.object(sp, 'urlopen', lambda *a, _p=payload, **k: self._body(_p)):
+            res = sp.handler({'queryStringParameters': {'postcode': 'WA2 8SN'}}, None)
+        prices = [t['price'] for t in json.loads(res['body'])['transactions']]
+        self.assertEqual(prices, [250000])
+
+    def test_transport_renamed_envelope_is_none_not_an_empty_area(self):
+        tr = _import_lambda('transport')
+        for payload in ({'stops': []}, {'stopPoints': {'a': 1}}, [1]):
+            with self.subTest(payload=payload), \
+                    patch.object(tr, 'urlopen', lambda *a, _p=payload, **k: self._body(_p)):
+                self.assertIsNone(tr.fetch_nearby_stations(51.5, -0.1))
+
+    def test_transport_sorts_by_distance_before_slicing_and_skips_coordinateless_stops(self):
+        tr = _import_lambda('transport')
+        far = {'commonName': 'Far', 'lat': 51.6, 'lon': -0.1, 'lineModeGroups': []}
+        near = {'commonName': 'Near', 'lat': 51.501, 'lon': -0.1, 'lineModeGroups': []}
+        ghost = {'commonName': 'Ghost', 'lineModeGroups': []}  # no coordinate
+        payload = {'stopPoints': [far] * 7 + [ghost] + [near]}
+        with patch.object(tr, 'urlopen', lambda *a, _p=payload, **k: self._body(_p)):
+            out = tr.fetch_nearby_stations(51.5, -0.1)
+        self.assertEqual(out[0]['name'], 'Near', out)
+        self.assertNotIn('Ghost', [o['name'] for o in out])
+
+
+class ChatHandlerShapeTests(unittest.TestCase):
+    """POST /v1/chat must answer every body shape with a JSON envelope.
+
+    Audit I12, 2026-09-13. A valid-JSON non-object body raised AttributeError
+    on `.get` and escaped the handler - the only Lambda of seven with no
+    final guard - so the caller received a raw 502 with no CORS headers.
+    """
+
+    def _chat(self):
+        import importlib.util
+        import pathlib
+        path = pathlib.Path(__file__).resolve().parents[1] / 'lambdas' / 'chat' / 'app.py'
+        spec = importlib.util.spec_from_file_location('chat_shape_probe', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_non_object_and_mistyped_bodies_are_400_with_cors(self):
+        chat = self._chat()
+        for body in ('[1]', '"x"', '123', '{"question": 123, "postcode": "SW11 1AA"}',
+                     '{"question": "hi", "postcode": ["SW11 1AA"]}'):
+            with self.subTest(body=body):
+                res = chat.handler({'httpMethod': 'POST', 'body': body}, None)
+                self.assertEqual(res['statusCode'], 400, res)
+                self.assertIn('Access-Control-Allow-Origin', res['headers'])
+                self.assertIn('error', json.loads(res['body']))
+
+    def test_anything_that_escapes_is_a_500_with_cors_not_a_raw_502(self):
+        chat = self._chat()
+        with patch.object(chat, '_handle', side_effect=RuntimeError('boom')):
+            res = chat.handler({'httpMethod': 'POST', 'body': '{}'}, None)
+        self.assertEqual(res['statusCode'], 500)
+        self.assertIn('Access-Control-Allow-Origin', res['headers'])
 
 
 # ---------- Usage-plan route scoping (template half) ----------

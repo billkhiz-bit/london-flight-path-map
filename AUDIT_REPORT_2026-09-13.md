@@ -90,14 +90,14 @@ credited no price source), one field over.
 | ~~I8~~ **FIXED 2026-09-13** | `advise()` in preflight prints `ok` for a stage that printed INCONCLUSIVE — the 7 Sep fix reached `check()` only; `aws perms` and `quiet estimate` both run under `advise` | `scripts/preflight.sh:141-150, :756, :773` | Gate |
 | ~~I9~~ **FIXED 2026-09-13** | `score_bulk.py` writes London's provenance into every customer's licence file (`build_sources()` with no city); the test pins the literal | `scripts/score_bulk.py:397`; `tests/test_score_bulk.py:229` | Backend / B2B |
 | ~~I10~~ **FIXED 2026-09-13** | `check_openapi_matches_engine.py` (blocking) exits 0 having resolved zero response samples — the half that caught the 9 Sep weights defect vanishes silently | `scripts/check_openapi_matches_engine.py:93-112, :200-225, :288` | Gate |
-| I11 | `chat.verify_answer()` passes any integer 0-10 and any figure whose stripped zeros match a payload number (`330,000` passes via `of: 33`) | `chat/app.py:168, :196` | Backend |
-| I12 | `POST /v1/chat` with a valid-JSON non-object body raises out of the handler: raw 502, no CORS; chat is the only Lambda with no final guard | `chat/app.py:244` | Backend |
-| I13 | An upstream envelope rename collapses to "no data" with HTTP 200 in `sold_prices` and `transport` — the epc I31 fix never reached its siblings | `sold_prices/app.py:116`; `transport/app.py:129` | Backend |
-| I14 | `signup` and `favourites` build boto3 clients on botocore defaults (60s connect/read) inside 10s and 28s functions; the inner budget exceeds the outer, the /nhs 22 Aug class | `signup/app.py:104-105`; `favourites/app.py:44` | Backend |
+| ~~I11~~ **FIXED 2026-09-13** | `chat.verify_answer()` passes any integer 0-10 and any figure whose stripped zeros match a payload number (`330,000` passes via `of: 33`) | `chat/app.py:168, :196` | Backend |
+| ~~I12~~ **FIXED 2026-09-13** | `POST /v1/chat` with a valid-JSON non-object body raises out of the handler: raw 502, no CORS; chat is the only Lambda with no final guard | `chat/app.py:244` | Backend |
+| ~~I13~~ **FIXED 2026-09-13** | An upstream envelope rename collapses to "no data" with HTTP 200 in `sold_prices` and `transport` — the epc I31 fix never reached its siblings | `sold_prices/app.py:116`; `transport/app.py:129` | Backend |
+| ~~I14~~ **FIXED 2026-09-13** | `signup` and `favourites` build boto3 clients on botocore defaults (60s connect/read) inside 10s and 28s functions; the inner budget exceeds the outer, the /nhs 22 Aug class | `signup/app.py:104-105`; `favourites/app.py:44` | Backend |
 | ~~I15~~ **FIXED 2026-09-13** | Three Makefile targets' CloudFront invalidations fail under Git Bash (`'/index.html'`, `'/sw.js'`, `'/robots.txt'` are path-mangled); no `MSYS_NO_PATHCONV` in the file that CLAUDE.md says to prefer | `Makefile:176-177, :315-317, :440-442` | Runbook |
 | I16 | `load_nspl.py` still runs 20 threads on boto3's default 10-connection pool; CLAUDE.md says every bulk load was fixed on 10 Sep and `ddb_write.py` says both loaders import it | `scripts/load_nspl.py:1176-1180, :866-871` | Scripts |
-| I17 | `/v1/signup` lets anyone subscribe, lock out or enumerate any email address, unauthenticated — F16 of 29 Aug, dropped from every report since | `signup/app.py:321-391, :434` | Security |
-| I18 | SECURITY.md and OPERATIONS s3.7/s3.8 say the deploy credential sits in GitHub Actions secrets on the public repo; the repo holds ZERO secrets and both deploy workflows have never run — and would deploy `index.html` with no `Cache-Control` | `SECURITY.md:33-49`; `.github/workflows/deploy-*.yml` | Security / docs |
+| I17 (**DECISION, in ROADMAP**) | `/v1/signup` lets anyone subscribe, lock out or enumerate any email address, unauthenticated — F16 of 29 Aug, dropped from every report since | `signup/app.py:321-391, :434` | Security |
+| ~~I18~~ **FIXED 2026-09-13** | SECURITY.md and OPERATIONS s3.7/s3.8 say the deploy credential sits in GitHub Actions secrets on the public repo; the repo holds ZERO secrets and both deploy workflows have never run — and would deploy `index.html` with no `Cache-Control` | `SECURITY.md:33-49`; `.github/workflows/deploy-*.yml` | Security / docs |
 | ~~I19~~ **FIXED 2026-09-13** | Changing persona while a postcode result is open silently replaces it with the borough panel; the postcode panel's own copy sends the user to that action | `index.html:13273-13276` | Frontend |
 | ~~I20~~ **FIXED 2026-09-13** | The site prints the persona's NOMINAL weights beside "no data" rows, so the displayed weights do not reproduce the displayed score (Brooklyn: 14% beside "Environment no data", headline 4.0 not 3.5) — the `weights`-is-applied defect the API fixed 9 Sep, live on the site | `index.html:11685-11729` | Frontend |
 | ~~I21~~ **FIXED 2026-09-13** | Hover text at 2.60:1 / 2.38:1 on every ranking row and on today's saved-location buttons; the palette block records `--orange` as failing and provides `--orange-text` for this | `index.html:1285, :2349, :2366` | Frontend / a11y |
@@ -183,7 +183,7 @@ Agent-reported, marked [A] where executed and [U] where reasoned from code.
 | M11 | Stale numbers in comments: "10s Lambda timeout" (28), "Road Lden is reported, not scored" (0.35 of env since v4.0), "(chat, multi_agent) protected by throttling", "global 10 RPS" (50), "free tier 5 burst / 1 sustained" (2), nhs "45s Timeout" (28), transport "within 1km" (1500), "the 9 Lambdas" (8) | `score/app.py:8043, :5921`; `template.yaml:30, :60, :65`; `nhs/app.py:181`; `transport/app.py:39`; `test_handlers.py:1` | Docs [A] |
 | M12 | `/v1/environment` for Cardiff says road noise "has not been measured for this postcode, or is still being loaded" — Cardiff is excluded by name (`NO_ROAD_COVERAGE`); the load will never happen | `score/app.py`; `build_borough_bands.py:231` | Backend [A] |
 | M13 | `signup` `except ClientError: return None` with no log: with GetItem denied a KEY HOLDER on the consumer form gets 200 "already-subscribed" | `signup/app.py:157-158` | Backend [A] |
-| M14 | `sold_prices` publishes a missing price as `0`; `transport` slices `stops[:8]` before sorting (a coordinate-less stop → `distance: 5728222`); chat reports a ScoreFunction crash as "That location could not be resolved" (400) | `sold_prices/app.py:122`; `transport/app.py:132`; `chat/app.py:259-261` | Backend [A] |
+| ~~M14~~ **FIXED 2026-09-13 (first two parts; the chat 400 remains)** | `sold_prices` publishes a missing price as `0`; `transport` slices `stops[:8]` before sorting (a coordinate-less stop → `distance: 5728222`); chat reports a ScoreFunction crash as "That location could not be resolved" (400) | `sold_prices/app.py:122`; `transport/app.py:132`; `chat/app.py:259-261` | Backend [A] |
 | M15 | chat's comment says the clients were hoisted; only `_BOTO_CONFIG` was — `boto3.client()` runs per request twice | `chat/app.py:78-80, :139, :205` | Backend [A] |
 | M16 | `nhs` happy path publishes a `fallback: true` row for any empty bucket under `available: true`, so "no GP within 1.5 km" and an outage share a row shape | `nhs/app.py:274-277` | Backend [A] |
 | M17 | `favourites` OPTIONS branch unreachable (no event); live OPTIONS answers from the API MOCK with different headers; a test exercises the dead branch; `city` defaults to London and `buyerScore` to `'0'` for any non-site caller | `favourites/app.py:189-190, :228-231` | Backend [A] |
@@ -287,7 +287,7 @@ UNVERIFIED/open item from every prior report until it is closed BY NAME.
 
 - **Critical: 2** — C1 (postcode panel `undefined`, live, primary flow),
   C2 (sources deny the DEFRA sample, live, 8 cities). Both verified in-session.
-- **Important: 24** — 10 verified in-session, 14 agent-executed.
+- **Important: 24 found; 23 closed the same night, 1 (I17) is a decision in ROADMAP.**
 - **Minor: 37** — agent-reported.
 - **Categories clean:** 14, listed above with what was checked and how.
 
@@ -313,7 +313,44 @@ UNVERIFIED/open item from every prior report until it is closed BY NAME.
   carries the marker. Against the committed engine: **11 failed**; fixed:
   3 passed.
 
-****Tier 3 of the backlog (user-facing frontend) closed the same night; deployed:**
+****Tier 4 of the backlog (backend robustness + security) closed the same night; deployed:**
+
+- **I11** — `verify_answer()` tells a 0-10 integer beside a SCORE CUE
+  ("score", "rated", "out of 10", "/10") from a bare count in prose: the
+  former must be in the payload, the latter stays trivial, and the "10" of
+  "out of 10" is exempted as the scale. The `priceRankInCity` pair is
+  removed from the grounding haystack. The audit's three passes ("the quiet
+  score is 9", "330,000" via `of: 33`, "120,000" via `rank: 12`) now fail;
+  "3 things worth noting" still passes.
+- **I12** — a valid-JSON non-object body, or a mistyped field, is a 400 with
+  the CORS headers; and `handler()` wraps `_handle()` in the final guard the
+  other six Lambdas carry, so nothing escapes as a raw 502.
+- **I13** — `sold_prices` answers 502 "unexpected shape" when `result.items`
+  is not a list (an empty list is still a measurement), and drops a sale
+  with no numeric price rather than publishing `0` (M14); `transport`
+  returns `None` - the outage signal its caller already handles - when
+  `stopPoints` is not a list, and sorts ALL stops by distance before taking
+  the nearest, skipping any without a coordinate (M14).
+- **I14** — `signup` and `favourites` gained a `_BOTO_CONFIG`; `chat` drops
+  to one attempt; each module declares `_SEQUENTIAL_HOPS` and
+  `InnerClientBudgetTests` asserts hops x budget < the function's Timeout
+  for all three (it had asserted chat alone, one-hop). `SignupFunction`
+  Timeout 10 -> 28: four sequential calls cannot fit in ten seconds at any
+  honest per-call budget.
+- **I18** — `SECURITY.md` and `OPERATIONS.md` §3.7/§3.8 now say what
+  `gh api` measured: zero repository secrets, no `production` environment,
+  the two deploy workflows never run. Both workflow files are deleted (one
+  could not have deployed, the other would have reverted the Cache-Control
+  fix); §3.7 is kept as the OIDC design for CI deploys if they are ever
+  wanted.
+- **I17** — not coded: it needs a product decision (verification email, or
+  two lesser options). Written into ROADMAP's open-decisions table with the
+  trade-offs.
+
+Every guard was red on the committed Lambdas (18 failures) and green on the
+fix (419 backend tests).
+
+**Tier 3 of the backlog (user-facing frontend) closed the same night; deployed:**
 
 - **I1** — the sheet footer yields (`display: none`) while the layers popover
   is open, via a `layers-open` class on `<html>` set by one `setLayersOpen()`

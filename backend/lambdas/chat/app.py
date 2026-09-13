@@ -78,11 +78,17 @@ logger = logging.getLogger()
 # Hoisted to module scope for the second half of the finding: chat rebuilt a
 # client on EVERY invocation, which is 50-200ms of the same budget, while
 # favourites and signup already build theirs once.
+# ONE attempt, not two (2026-09-13 audit, I14): this function makes TWO
+# sequential calls (ScoreFunction invoke, then Bedrock), and (2+8) x 2
+# attempts x 2 hops is 40s against a 28s Timeout - the budget test modelled
+# one hop. A throttled Bedrock call now answers the 503 straight away, which
+# is the degraded response this endpoint exists to give.
 _BOTO_CONFIG = Config(
     connect_timeout=2,
     read_timeout=8,
-    retries={'max_attempts': 2, 'mode': 'standard'},
+    retries={'max_attempts': 1, 'mode': 'standard'},
 )
+_SEQUENTIAL_HOPS = 2
 logger.setLevel(logging.INFO)
 
 SYSTEM_PROMPT = """You answer questions about UK and NYC property locations for Sky Score.
@@ -173,6 +179,34 @@ def extract_numbers(text):
     return {n.replace(',', '').rstrip('.') for n in re.findall(r'\d[\d,]*\.?\d*', text or '')}
 
 
+_SCORE_CUE = re.compile(
+    r'(\bscore[sd]?\b|\brat(?:ed|ing)\b|\bout of (?:10|ten)\b|/\s*10\b)', re.IGNORECASE
+)
+
+
+def _numbers_with_score_cue(text):
+    """(number, near_score) for every number in `text`.
+
+    `near_score` is True when a score cue sits within 24 characters on
+    either side, which is how "the quiet score is 9" and "9 out of 10" are
+    told apart from "3 things worth noting" - the same integer, one of them a
+    claim about the data.
+    """
+    out = []
+    for m in re.finditer(r'\d[\d,]*\.?\d*', text or ''):
+        number = m.group(0).replace(',', '').rstrip('.')
+        # The 10 in "out of 10" / "/10" is the SCALE, not a claim - it is the
+        # cue, and must stay trivial or every grounded score would fail on
+        # its own denominator.
+        before = (text or '')[max(0, m.start() - 8):m.start()]
+        if number == '10' and re.search(r'(out of|/)\s*$', before, re.IGNORECASE):
+            out.append((number, False))
+            continue
+        window = (text or '')[max(0, m.start() - 24):m.end() + 24]
+        out.append((number, bool(_SCORE_CUE.search(window))))
+    return out
+
+
 def verify_answer(answer, context):
     """Check that every figure in the answer appears in the retrieved data.
 
@@ -185,13 +219,28 @@ def verify_answer(answer, context):
     that pairs a real number with the wrong label. It WILL catch the failure
     that matters most — a fluent, plausible figure that came from nowhere.
     """
-    haystack = extract_numbers(json.dumps(context))
+    # STRUCTURAL numbers are not evidence (2026-09-13 audit, I11). Every
+    # London payload carries priceRankInCity {rank: n, of: 33}, so "of: 33"
+    # let "330,000 pounds" pass (330000 -> strip zeros -> 33) and "rank: 12"
+    # let "120,000" pass. The rank pair is removed from the haystack, and the
+    # strip-trailing-zeros equivalence is applied to DECIMALS only - a figure
+    # like 330,000 is grounded by 330000 in the payload or not at all.
+    grounding = context
+    if isinstance(context, dict) and isinstance(context.get('context'), dict):
+        inner = {k: v for k, v in context['context'].items() if k != 'priceRankInCity'}
+        grounding = {**context, 'context': inner}
+    haystack = extract_numbers(json.dumps(grounding))
     # Rounded forms: the payload holds 7.0 and a natural answer says "7".
     haystack |= {n.rstrip('0').rstrip('.') for n in haystack if '.' in n}
 
     ungrounded = []
-    for number in extract_numbers(answer):
-        if number in _TRIVIAL_NUMBERS or number in haystack:
+    for number, near_score in _numbers_with_score_cue(answer):
+        # A 0-10 integer is trivial in PROSE ("3 things worth noting") and
+        # NOT trivial beside a score cue ("the quiet score is 9", "9 out of
+        # 10"), because the score scale is 0-10 too - the whole scale this
+        # endpoint exists to ground was passing unexamined (audit I11).
+        trivial = number in _TRIVIAL_NUMBERS and not near_score
+        if trivial or number in haystack:
             continue
         if number.rstrip('0').rstrip('.') in haystack:
             continue
@@ -228,6 +277,17 @@ def ask_model(question, context):
 
 
 def handler(event, context):
+    # The final guard the other six Lambdas carry and this one did not (I12):
+    # anything that escapes _handle is a 500 WITH the CORS headers and the
+    # JSON envelope, never a raw 502 from the runtime.
+    try:
+        return _handle(event, context)
+    except Exception as exc:  # pragma: no cover, final guard
+        logger.exception('Unhandled exception in chat handler: %s', exc)
+        return response(500, {'error': 'Internal server error'})
+
+
+def _handle(event, context):
     method = (event.get('httpMethod') or 'POST').upper()
     if method == 'OPTIONS':
         return {'statusCode': 204, 'headers': cors_headers(), 'body': ''}
@@ -240,6 +300,15 @@ def handler(event, context):
         payload = json.loads(raw)
     except (TypeError, ValueError):
         return response(400, {'error': 'Invalid or missing JSON body.'})
+    # A valid-JSON NON-OBJECT (`[1]`, `"x"`, `123`) raised AttributeError on
+    # `.get` below and escaped the handler - and this is the one Lambda of
+    # seven with no final guard, so the caller got a raw 502 with no CORS
+    # headers and no JSON envelope (2026-09-13 audit, I12). The I16 comment
+    # above names that exact failure for timeouts; this is the same door.
+    if not isinstance(payload, dict):
+        return response(400, {'error': 'JSON body must be an object.'})
+    if payload.get('question') is not None and not isinstance(payload.get('question'), str):
+        return response(400, {'error': 'question must be a string.'})
 
     question = (payload.get('question') or '').strip()
     if not question:
@@ -247,6 +316,11 @@ def handler(event, context):
     if len(question) > MAX_QUESTION_CHARS:
         return response(400, {'error': f'question exceeds {MAX_QUESTION_CHARS} characters.'})
 
+    # Typed fields, or a 400 that says which - a list where a string was
+    # expected also raised past the handler.
+    for key in ('postcode', 'borough', 'city', 'persona'):
+        if payload.get(key) is not None and not isinstance(payload.get(key), str):
+            return response(400, {'error': f'{key} must be a string.'})
     query = {
         'postcode': (payload.get('postcode') or '').strip(),
         'borough': (payload.get('borough') or '').strip(),

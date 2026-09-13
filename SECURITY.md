@@ -30,24 +30,24 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 - **No AWS access keys in source or git history.** Verified by `git log --all -S` across the
   full history for both `AKIA` and the EPC token: zero hits. `.env` and `backend/samconfig.toml`
   are gitignored and have never been committed.
-- **CI uses long-lived static access keys, not OIDC** (corrected 2026-08-03; this section
-  previously claimed "CI / deploy uses GitHub OIDC where applicable" and that `flightmap-dev`
-  had "read-only operational scope" — all three clauses were untrue). `.github/workflows/`
-  authenticates via `aws-actions/configure-aws-credentials@v4` with
-  `aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}`; there is no `id-token` permission or
-  `role-to-assume` anywhere in the repo. **Migrating to OIDC is the outstanding remediation.**
-  **Prepared 2026-08-04:** the full procedure is now `OPERATIONS.md` §3.7 — identity provider,
-  role trust policy scoped with `StringEquals` on
-  `repo:billkhiz-bit/london-flight-path-map:environment:production`, the workflow diff,
-  verification and rollback. **Not performed:** it needs IAM write, which `flightmap-dev` is
-  deliberately denied, so it is a console action. The workflows are intentionally left on static
-  keys until the role exists, because flipping them first breaks the next manual deploy. This
-  bullet will be updated when the migration is verified from the workflows, not when it is
-  scheduled.
+- **No AWS credential exists in GitHub, and CI does not deploy** (corrected 2026-09-13,
+  audit I18; measured with `gh api`: repository secrets `total_count: 0`, environments =
+  `github-pages` only - no `production` - and the two deploy workflows had **never run**,
+  against 293 runs of `ci.yml`). The only holder of the `flightmap-dev` credential is the
+  developer laptop's `.env` / AWS profile; every deploy is run from there. The previous
+  version of this bullet (2026-08-03) said the workflows authenticated with
+  `secrets.AWS_ACCESS_KEY_ID` "sitting in GitHub" and that migrating them to OIDC was the
+  outstanding remediation - it described workflow FILES that referenced a secret nobody
+  had ever created, and so overstated the exposure to a procurement reader. Both dead
+  workflows were deleted the same day (`deploy-backend.yml` could not have deployed - no
+  `EpcBearerToken` override and no `samconfig.toml`; `deploy-frontend.yml` would have
+  uploaded `index.html` with no `Cache-Control`, reintroducing a fixed defect). If CI
+  deploys are ever wanted, `OPERATIONS.md` §3.7 is the OIDC procedure to build them on;
+  static keys must not be added to GitHub to make the old files work.
 - **`flightmap-dev` is a deploy user, not a read-only one, and is not the Lambda runtime
   identity.** `backend/iam-policy.json` grants `cloudformation:DeleteStack`, `s3:DeleteBucket`,
-  `lambda:DeleteFunction`, `iam:CreateRole`, `iam:PutRolePolicy` and `iam:PassRole`. A leaked
-  Actions secret would therefore reach the full production stack. The Lambdas run under
+  `lambda:DeleteFunction`, `iam:CreateRole`, `iam:PutRolePolicy` and `iam:PassRole`. A leak
+  of the laptop credential would therefore reach the full production stack. The Lambdas run under
   per-function roles SAM generates from the `Policies:` blocks in `backend/template.yaml`;
   no explicit `Role:` is declared.
 

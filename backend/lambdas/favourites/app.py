@@ -36,12 +36,22 @@ from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.conditions import Key
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 TABLE_NAME = os.environ.get('FAVOURITES_TABLE', 'london-flight-map-favourites')
 
-dynamodb = boto3.resource('dynamodb', region_name='eu-west-2')
+# See signup/app.py _BOTO_CONFIG (audit I14): botocore's 60s defaults inside
+# a 28s function meant the 503 "storage temporarily unavailable" branch could
+# never run for a hung call. One DynamoDB hop per request.
+_BOTO_CONFIG = Config(
+    connect_timeout=2,
+    read_timeout=8,
+    retries={'max_attempts': 2, 'mode': 'standard'},
+)
+_SEQUENTIAL_HOPS = 1
+dynamodb = boto3.resource('dynamodb', region_name='eu-west-2', config=_BOTO_CONFIG)
 table = dynamodb.Table(TABLE_NAME)
 
 logger = logging.getLogger()
