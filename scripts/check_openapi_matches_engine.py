@@ -90,10 +90,21 @@ def main():
     engine_cities = set(app.CITIES)
 
     emitted_components, emitted_context, emitted_breakdown = set(), set(), set()
+    # RESOLVED SAMPLES ARE COUNTED (2026-09-13 audit, I10). Both sample loops
+    # `continue` past a query that does not resolve, and `checks` is
+    # incremented by the engine-side require() calls regardless - so with every
+    # SAMPLES entry answering 404 this script printed "comparisons made 17" and
+    # exited 0, having asserted nothing about the RESPONSE half: the applied
+    # weights, the 1.0 total and the reproducibility bound, which is the half
+    # that caught the 9 Sep weights defect. The `checks == 0` floor below can
+    # never fire for that, because the engine-side counts always run. Proven
+    # with every SAMPLES query stubbed to 404.
+    resolved = 0
     for q in SAMPLES:
         body, status = app.resolve_query(dict(q))
         if not isinstance(body, dict) or status != 200:
             continue
+        resolved += 1
         emitted_components |= set(body.get('components') or {})
         emitted_context |= set(body.get('context') or {})
         emitted_breakdown |= set(body.get('sourceBreakdown') or {})
@@ -284,10 +295,23 @@ def main():
           + (f'  ({", ".join(p for p, _ in city_enums)})' if city_enums else ''))
     print(f'  persona enums      {len(persona_enums)}')
     print(f'  comparisons made   {checks}')
+    print(f'  samples resolved   {resolved} of {len(SAMPLES)}')
 
     if checks == 0:
         print()
         print('FAIL: made 0 comparisons, so nothing was checked.')
+        return 1
+    if resolved < len(SAMPLES):
+        # EVERY sample, not "at least one": each names a different case
+        # (investor persona, NYC, a backend-only city, a partial-env city),
+        # and a sample that stops resolving is a defect in its own right - a
+        # renamed borough, a city that left the registry - not a reason to
+        # check less.
+        print()
+        print(f'FAIL: only {resolved} of {len(SAMPLES)} SAMPLES resolved to a 200, so the')
+        print('      response-side checks (applied weights, 1.0 total, reproducibility)')
+        print('      ran on fewer cases than this gate claims. A sample that does not')
+        print('      resolve is a defect, not a skip.')
         return 1
 
     if failures:

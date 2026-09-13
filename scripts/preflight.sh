@@ -137,11 +137,27 @@ net_check() {
 
 
 # Run an advisory check. Reported, never blocking.
+#
+# INCONCLUSIVE IS NOT OK HERE EITHER (2026-09-13 audit, I8). The 7 Sep fix
+# that made check() print INCONCLUSIVE instead of PASS for a gate that exits 0
+# having verified nothing reached check() alone; this runner kept discarding
+# output and mapping exit 0 to "ok". Two of the three gates that comment
+# names run HERE - `aws perms == iam-policy.json` and `quiet estimate ==
+# DEFRA` - so the permission probe that found the 3 Sep outage on its first
+# run read "ok" the day the profile broke (proven: --profile no-such-profile
+# prints INCONCLUSIVE, exits 0, and this printed ok). Same marker, same
+# summary line as check(), so a green run cannot quietly contain one.
 advise() {
   name="$1"; shift
   printf '  %-34s' "$name"
-  if "$@" >/dev/null 2>&1; then
-    printf 'ok\n'
+  if out=$("$@" 2>&1); then
+    if printf '%s' "$out" | grep -qiE '^[[:space:]]*(INCONCLUSIVE|UNVERIFIED)\b'; then
+      printf 'INCONCLUSIVE (advisory)\n'
+      INCONCLUSIVE="$INCONCLUSIVE|$name"
+      printf '%s\n' "$out" | grep -iE '^[[:space:]]*(INCONCLUSIVE|UNVERIFIED)\b' | head -3 | sed 's/^/      /'
+    else
+      printf 'ok\n'
+    fi
   else
     printf 'deviates (advisory, not blocking)\n'
     ADVISORY="$ADVISORY|$name"

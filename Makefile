@@ -173,7 +173,16 @@ web-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/vendor/ \
 		s3://$(S3_BUCKET)/js/vendor/ \
 		--recursive --content-type "application/javascript" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	# MSYS_NO_PATHCONV=1 ON THE COMMAND, in every target (2026-09-13 audit, I15).
+	# Git Bash rewrites any argument that looks like a Unix absolute path, so
+	# '/index.html' reaches CloudFront as C:/Program Files/Git/index.html and
+	# the whole batch is rejected - AFTER every upload has succeeded, which is
+	# the 2026-08-26 incident CLAUDE.md records. Wildcard paths ('/*',
+	# '/data/*') are not mangled, so six targets were safe by accident and
+	# three (this one, pwa-deploy, meta-deploy) were not. On the command
+	# rather than a Makefile-level export because make is not on PATH here
+	# and these recipes are run by pasting them into Git Bash.
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*'
 
 .PHONY: fonts-deploy
@@ -200,7 +209,7 @@ fonts-deploy:
 		s3://$(S3_BUCKET)/fonts/fonts.css \
 		--content-type "text/css" \
 		--cache-control "public,max-age=86400" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/fonts/*'
 
 .PHONY: data-deploy
@@ -295,7 +304,7 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-london-lden.png \
 		s3://$(S3_BUCKET)/data/aircraft-noise-london-lden.png \
 		--content-type "image/png" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/data/*'
 
 .PHONY: pwa-deploy
@@ -312,7 +321,7 @@ pwa-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp icons/ \
 		s3://$(S3_BUCKET)/icons/ \
 		--recursive --content-type "image/svg+xml" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/manifest.webmanifest' '/sw.js' '/icons/*'
 
@@ -330,7 +339,7 @@ deeplinks-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/assetlinks.json \
 		s3://$(S3_BUCKET)/.well-known/assetlinks.json \
 		--content-type "application/json" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/.well-known/*'
 
 .PHONY: demo-deploy
@@ -382,7 +391,7 @@ demo-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui-standalone-preset.js \
 		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui-standalone-preset.js \
 		--content-type "application/javascript" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/score-demo/*'
 
 .PHONY: prototype-deploy
@@ -394,7 +403,7 @@ prototype-deploy:
 		s3://$(S3_BUCKET)/prototype/index.html \
 		--content-type "text/html" \
 		--cache-control "no-cache" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/prototype/*'
 
 .PHONY: meta-deploy
@@ -424,7 +433,7 @@ area-deploy:
 	# which reads as a flaky check rather than a missing step. Same shape as
 	# the 2026-08-26 incident recorded in CLAUDE.md - uploads succeed, cache
 	# is not cleared, and the deploy looks done.
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) --paths '/area/*'
 
 meta-deploy:
@@ -437,7 +446,7 @@ meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/security.txt \
 		s3://$(S3_BUCKET)/.well-known/security.txt \
 		--content-type "text/plain" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*'
 

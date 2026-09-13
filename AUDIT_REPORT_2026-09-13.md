@@ -85,16 +85,16 @@ credited no price source), one field over.
 | I3 | `coverage.notices` says "DEFRA publishes contours for part of this area" for Teesside and Cardiff, whose airports DEFRA does not map; `/v1/environment` says "estimated" for South Yorkshire, where nothing was | `score/app.py:5848-5851, :6009, :7775` | Backend / provenance |
 | I4 | Postcode-resolution provenance (ONS NSPL, postcodes.io) is credited by London alone; 12 of 13 cities' `sources` never name the two OGL datasets that resolved the query | `score/app.py:4847` | Backend / provenance |
 | I5 | METHODOLOGY s5.4/s6 say internals are unrounded and rounded once; `live` and `env` are rounded to 1dp BEFORE weighting, and 65 of 792 published scores depend on it | `score/app.py:5521, :5765, :6395`; `METHODOLOGY.md:1222` | Backend / docs |
-| I6 | The blocking `prices == HM Land Registry` gate cannot see `SNAPSHOT_VINTAGE_LABEL`; the July roll can go green with every UK `afford` lineage naming the wrong month | `scripts/build_hpi_prices.py:300-333`; `score/app.py:282, :4806` | Gate |
-| I7 | `build_hpi_prices.py --write` for a non-London city prints a site step that is a no-op, so the documented roll leaves 58 site boroughs on the old vintage | `build_hpi_prices.py:516-553`; `build_city_frontend_block.py:112-114` | Gate / runbook |
-| I8 | `advise()` in preflight prints `ok` for a stage that printed INCONCLUSIVE — the 7 Sep fix reached `check()` only; `aws perms` and `quiet estimate` both run under `advise` | `scripts/preflight.sh:141-150, :756, :773` | Gate |
+| ~~I6~~ **FIXED 2026-09-13** | The blocking `prices == HM Land Registry` gate cannot see `SNAPSHOT_VINTAGE_LABEL`; the July roll can go green with every UK `afford` lineage naming the wrong month | `scripts/build_hpi_prices.py:300-333`; `score/app.py:282, :4806` | Gate |
+| ~~I7~~ **FIXED 2026-09-13** | `build_hpi_prices.py --write` for a non-London city prints a site step that is a no-op, so the documented roll leaves 58 site boroughs on the old vintage | `build_hpi_prices.py:516-553`; `build_city_frontend_block.py:112-114` | Gate / runbook |
+| ~~I8~~ **FIXED 2026-09-13** | `advise()` in preflight prints `ok` for a stage that printed INCONCLUSIVE — the 7 Sep fix reached `check()` only; `aws perms` and `quiet estimate` both run under `advise` | `scripts/preflight.sh:141-150, :756, :773` | Gate |
 | I9 | `score_bulk.py` writes London's provenance into every customer's licence file (`build_sources()` with no city); the test pins the literal | `scripts/score_bulk.py:397`; `tests/test_score_bulk.py:229` | Backend / B2B |
-| I10 | `check_openapi_matches_engine.py` (blocking) exits 0 having resolved zero response samples — the half that caught the 9 Sep weights defect vanishes silently | `scripts/check_openapi_matches_engine.py:93-112, :200-225, :288` | Gate |
+| ~~I10~~ **FIXED 2026-09-13** | `check_openapi_matches_engine.py` (blocking) exits 0 having resolved zero response samples — the half that caught the 9 Sep weights defect vanishes silently | `scripts/check_openapi_matches_engine.py:93-112, :200-225, :288` | Gate |
 | I11 | `chat.verify_answer()` passes any integer 0-10 and any figure whose stripped zeros match a payload number (`330,000` passes via `of: 33`) | `chat/app.py:168, :196` | Backend |
 | I12 | `POST /v1/chat` with a valid-JSON non-object body raises out of the handler: raw 502, no CORS; chat is the only Lambda with no final guard | `chat/app.py:244` | Backend |
 | I13 | An upstream envelope rename collapses to "no data" with HTTP 200 in `sold_prices` and `transport` — the epc I31 fix never reached its siblings | `sold_prices/app.py:116`; `transport/app.py:129` | Backend |
 | I14 | `signup` and `favourites` build boto3 clients on botocore defaults (60s connect/read) inside 10s and 28s functions; the inner budget exceeds the outer, the /nhs 22 Aug class | `signup/app.py:104-105`; `favourites/app.py:44` | Backend |
-| I15 | Three Makefile targets' CloudFront invalidations fail under Git Bash (`'/index.html'`, `'/sw.js'`, `'/robots.txt'` are path-mangled); no `MSYS_NO_PATHCONV` in the file that CLAUDE.md says to prefer | `Makefile:176-177, :315-317, :440-442` | Runbook |
+| ~~I15~~ **FIXED 2026-09-13** | Three Makefile targets' CloudFront invalidations fail under Git Bash (`'/index.html'`, `'/sw.js'`, `'/robots.txt'` are path-mangled); no `MSYS_NO_PATHCONV` in the file that CLAUDE.md says to prefer | `Makefile:176-177, :315-317, :440-442` | Runbook |
 | I16 | `load_nspl.py` still runs 20 threads on boto3's default 10-connection pool; CLAUDE.md says every bulk load was fixed on 10 Sep and `ddb_write.py` says both loaders import it | `scripts/load_nspl.py:1176-1180, :866-871` | Scripts |
 | I17 | `/v1/signup` lets anyone subscribe, lock out or enumerate any email address, unauthenticated — F16 of 29 Aug, dropped from every report since | `signup/app.py:321-391, :434` | Security |
 | I18 | SECURITY.md and OPERATIONS s3.7/s3.8 say the deploy credential sits in GitHub Actions secrets on the public repo; the repo holds ZERO secrets and both deploy workflows have never run — and would deploy `index.html` with no `Cache-Control` | `SECURITY.md:33-49`; `.github/workflows/deploy-*.yml` | Security / docs |
@@ -313,7 +313,26 @@ UNVERIFIED/open item from every prior report until it is closed BY NAME.
   carries the marker. Against the committed engine: **11 failed**; fixed:
   3 passed.
 
-**Both deployed the same evening and verified from the origin**: `web-deploy`
+****Tier 1 of the backlog (roll safety) closed the same night, no deploy needed:**
+
+- **I6** — `check_vintage_words` now also asserts `SNAPSHOT_VINTAGE_LABEL`
+  equals the vintage month. Red with the constant set to `May 2026` while all
+  24 literals still said June; green after.
+- **I7** — `--write` rewrites the site block for EVERY city that has one
+  (marker `const <CITY>_BOROUGH_DATA_RAW = {`) and fails loudly for a
+  non-backend-only city with none. Proven by perturbing Salford in both
+  holders and letting `--write --city manchester` put both back (no diff).
+- **I8** — `advise()` captures output and prints `INCONCLUSIVE (advisory)`,
+  naming the stage in the summary, exactly as `check()` does. Proven on the
+  permissions probe with a broken profile (INCONCLUSIVE) and the real one (ok).
+- **I10** — the OpenAPI gate counts resolved samples and fails unless ALL
+  resolve; a renamed borough in `SAMPLES` now fails (`4 of 5`) where it
+  passed with 17 comparisons.
+- **I15** — every `create-invalidation` recipe carries `MSYS_NO_PATHCONV=1` on
+  the command, so it survives being pasted into Git Bash; demonstrated on the
+  same mangling with `sts get-caller-identity --query '/index.html'`.
+
+Both deployed the same evening and verified from the origin**: `web-deploy`
 + invalidation, then `uk-city-panel.mjs` pointed at CloudFront - the run that
 was 6 FAIL an hour earlier is all PASS; SAM deploy (changeset: ScoreFunction,
 FlightMapApi, and the chat function that references the score ARN), then

@@ -316,7 +316,8 @@ def check_vintage_words(vintage: str) -> int:
     strings would satisfy "no wrong month found" while describing nothing.
     """
     year, month, _ = vintage.split("-")
-    want = f"{calendar.month_name[int(month)]} {year} vintage"
+    label = f"{calendar.month_name[int(month)]} {year}"
+    want = f"{label} vintage"
     text = SCORE_APP.read_text(encoding="utf-8")
     found = text.count(want)
     stale = sorted({
@@ -332,6 +333,24 @@ def check_vintage_words(vintage: str) -> int:
         print(f"FAIL: no provenance string names {want!r}. A vintage nobody states is")
         print("      one an integrator cannot audit, and a zero count is not agreement.")
         return 1
+    # THE CONSTANT, NOT ONLY THE LITERALS (2026-09-13 audit, I6). The counting
+    # above scans source text for "<Month> 20xx vintage", which every hand-
+    # written provenance string carries - and which the ONE DERIVED string,
+    # every UK response's sourceBreakdown.afford, does not: it is built at
+    # runtime from SNAPSHOT_VINTAGE_LABEL, and nothing read that constant. So
+    # a roll that updated the 23 literals this gate names and left the
+    # constant passed here at "24 strings say 'June 2026 vintage'" while the
+    # live afford lineage said May. Proven with a scratch copy of app.py.
+    m = re.search(r"^SNAPSHOT_VINTAGE_LABEL\s*=\s*'([^']+)'", text, re.MULTILINE)
+    if not m:
+        print("FAIL: SNAPSHOT_VINTAGE_LABEL not found in app.py - the derived afford lineage")
+        print("      reads it, so this gate must be able to as well.")
+        return 1
+    if m.group(1) != label:
+        print(f"FAIL: SNAPSHOT_VINTAGE_LABEL is {m.group(1)!r}; the numbers are HPI {vintage} ({label!r}).")
+        print("      Every UK sourceBreakdown.afford is derived from this constant at runtime.")
+        return 1
+    print(f"provenance constant: SNAPSHOT_VINTAGE_LABEL = {label!r}")
     return 0
 
 
@@ -514,24 +533,38 @@ def write(city: str, hpi: dict[str, dict]) -> int:
     bad_site_t: list[str] = []
     bad_site_p: list[str] = []
     site = None
-    if city == "london":
-        site = SITE_HOLDER.read_text(encoding="utf-8")
+    # EVERY SITE CITY, not London alone (2026-09-13 audit, I7). This branch was
+    # `if city == "london"`, and the else-branch below told the operator to run
+    # build_city_frontend_block.py --insert - which returns "already present in
+    # index.html; nothing written" for every city already on the site. So the
+    # documented roll updated the Lambda for a non-London city and left its
+    # 58 site boroughs on the old vintage, with the instruction reading as if
+    # it had done something. Under v5.0 a stale site price moves every
+    # rendered score (national p5/p95), and only the network-only
+    # borough-score-parity gate could have said so. The nine generated blocks
+    # share London's shape (`avg_price:` / `trend:` under `const
+    # <CITY>_BOROUGH_DATA_RAW = {`), so the same rewriter serves them; a city
+    # with no block (Cardiff, Nottingham) is backend-only and its prices reach
+    # the site through refresh_backend_only_prices() below.
+    site_marker = (
+        "const BOROUGH_DATA_RAW = {" if city == "london"
+        else f"const {city.upper()}_BOROUGH_DATA_RAW = {{"
+    )
+    site_src = SITE_HOLDER.read_text(encoding="utf-8")
+    if site_marker in site_src:
+        site = site_src
         site_t = {SITE_NAME.get(n, n): v for n, v in changed_t.items()}
         site_p = {SITE_NAME.get(n, n): f"{v:.0f}" for n, v in changed_p.items()}
         site, bad_site_t = _rewrite_trend(
-            site,
-            "const BOROUGH_DATA_RAW = {",
-            r"'?{name}'?: \{{",
-            r"\btrend: (-?\d+\.?\d*)",
-            site_t,
+            site, site_marker, r"'?{name}'?: \{{", r"\btrend: (-?\d+\.?\d*)", site_t,
         )
         site, bad_site_p = _rewrite_trend(
-            site,
-            "const BOROUGH_DATA_RAW = {",
-            r"'?{name}'?: \{{",
-            r"avg_price: (\d+)",
-            site_p,
+            site, site_marker, r"'?{name}'?: \{{", r"avg_price: (\d+)", site_p,
         )
+    elif city not in _backend_only_cities():
+        print(f"FAIL: {city} has no {site_marker!r} block in {SITE_HOLDER} and is not "
+              "backend-only; the site would be left on the old vintage.", file=sys.stderr)
+        return 1
 
     problems = bad_t + bad_p + bad_site_t + bad_site_p
     if problems:
@@ -547,10 +580,8 @@ def write(city: str, hpi: dict[str, dict]) -> int:
         SITE_HOLDER.write_text(site, encoding="utf-8", newline="")
         print(f"Wrote {SCORE_APP} and {SITE_HOLDER}. Re-run --check to confirm.")
     else:
-        print(
-            f"Wrote {SCORE_APP}. Now regenerate the site block: "
-            f"python scripts/build_city_frontend_block.py --city {city} --insert"
-        )
+        print(f"Wrote {SCORE_APP}. {city} is backend-only; its site copy is the "
+              "prices-only block refreshed below.")
     # The site needs the BACKEND-ONLY cities' prices too, since v5.0 - they are
     # in the national affordability pool even though nothing renders them. This
     # runs on EVERY city's write, not just theirs: rolling any city changes the

@@ -2,7 +2,14 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-10 afternoon (**THE PER-POSTCODE ROAD TIER COVERS
+**Last reviewed:** 2026-09-13 evening - every Critical and Important from the
+11 Sep audit closed and deployed; the demo quota raised to 5,000 and the demo
+scoring again; the real-terms growth adjustment COSTED (26 of 99 "rising"
+boroughs fall in real terms - see Open decisions); a fresh `/audit` run the
+same evening (2 Critical, both fixed and deployed within hours; 24 Important,
+37 Minor, in `AUDIT_REPORT_2026-09-13.md`). **The 24 Importants are the
+near-term list now - see "Audit backlog, 13 Sep" under Near-term tasks.**
+Previous review, 2026-09-10 afternoon (**THE PER-POSTCODE ROAD TIER COVERS
 ALL ELEVEN CITIES, loaded and verified** - it had been London-only since August, unrecorded
 anywhere: M2 4NG served `None` on `/v1/environment` while SW11 served 69.1 dB.
 Measured first: 100% of live postcodes surveyed in every English city, and **2.0%
@@ -586,6 +593,21 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | `/v1/score` Lambda extraction | 2026-05-22 | Unblocks both API track + buildathon pre-work | **Done 2026-05-05.** Plus on the same day: bulk endpoint (`POST /v1/score/batch`, up to 100 queries), NYC borough support, methodology v2.0 (iron-clad anchoring of every threshold), OpenAPI spec, Swagger UI, CORS opened to `*`. All verified live. Free-tier API key + Usage Plan (1000/month, 5 burst). |
 | OGL attribution on data Lambdas | done | Required for any B2B sale | Done 2026-05-05, `epc`, `sold_prices`, `transport`, `nhs` now return `sources` array |
 | Methodology document | done | Required for B2B audit / Buildathon judging | Done 2026-05-05, `METHODOLOGY.md` v1.0 |
+
+### Audit backlog, 13 Sep 2026 - the 24 Importants, in the order to take them
+
+Full detail per item in `AUDIT_REPORT_2026-09-13.md`. Grouped by what each
+tier protects; each tier is a preflight + commit, and tiers 2-4 need a deploy.
+Strike a row here when it closes, and close it BY NAME in the report.
+
+| Tier | Items | Why this order |
+|---|---|---|
+| ~~**1. Roll safety**~~ **CLOSED 2026-09-13, same night** | ~~I6, I7, I8, I10, I15~~ - each proven red before the fix and green after; no deploy needed (scripts, Makefile, preflight runner). | The July roll can now be done as documented: `--check --all` (which also asserts the constant), `--write --all` (both holders, every city), rebuild area pages, deploy backend first. |
+| **2. Live false statements** | I3 (coverage notice claims DEFRA contours for Teesside/Cardiff), I4 (12 cities' `sources` omit ONS NSPL / postcodes.io), I9 (`score_bulk.py` writes London provenance for every customer), I24 (57 area pages caption an estimate as DEFRA Round 4), I5 (METHODOLOGY "rounded once" vs `live`/`env` rounded before weighting), I20 (nominal weights beside "no data" rows), I23 (failure notice describes a fallback that no longer exists) | The same class as both of this audit's Criticals; the product's standing rule is that absence and estimates must never render as measurements. |
+| **3. User-facing frontend** | I1 (landscape popover taps navigate to `/privacy`), I2 (area search sends the display label as the postcode), I19 (persona change destroys an open postcode result), I21 (hover text 2.60:1), I22 (postcode result never announced) | Measured, reproducible, on the primary flow. |
+| **4. Backend robustness + security** | I11 (chat grounding passes any 0-10 integer), I12 (chat 502 on a non-object body), I13 (envelope renames read as "no data" in `sold_prices`/`transport`), I14 (boto defaults exceed the Lambda timeout in `signup`/`favourites`), I17 (`/v1/signup` unverified subscribe / lock-out / enumeration - needs a product call on verification), I18 (SECURITY.md says the credential is in GitHub; it is not - delete the two dead deploy workflows and correct the docs) | Each is a runtime or documentation defect; I17 is the one that needs a decision before code. |
+
+Then the 37 Minors, which the report lists with file:line.
 
 ### Legal & entity — blocks the first pilot invoice (raised 2026-08-04)
 
