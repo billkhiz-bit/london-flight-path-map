@@ -487,6 +487,18 @@ including every London borough. The denominator is ONS mid-year population
 estimates. The separate CSP-level dataset was discontinued; these figures now
 ship inside the Police Force Area workbook.
 
+**Offence breakdown (display only, not scored).** The borough panel names the
+three largest offence categories from the same Table C4 row, each with its
+rate per 1,000, its share of the borough's total, and its ratio to the
+**London** median for that offence. The London median is the comparator for
+every city, deliberately: the panel's headline sentence already compares each
+borough's total against the London median, so the breakdown uses the same
+yardstick and "x the London median" is true wherever it prints. Derived for
+all eleven site cities since 2026-09-13 (85 of 91 boroughs; the City of
+London, whose rate ONS suppresses, and New York carry none). Before that it
+was derived for London alone, and the panel described the other 53 boroughs'
+breakdown as "not published" - which it never was.
+
 **Calibration:**
 - `rate = 50` → `score = 10`
 - `rate ≈ 88` → `score ≈ 7.5` (close to the London median)

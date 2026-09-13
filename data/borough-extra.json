@@ -1834,7 +1834,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin500mPct": 54.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 51.9,
+          "shareOfTotal": 36.4,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 15.8,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 2.8
+        },
+        {
+          "offence": "Drug offences",
+          "ratePer1000": 11.4,
+          "shareOfTotal": 8.0,
+          "vsLondonMedian": 1.9
+        }
+      ]
     },
     "Salford": {
       "p8": -0.35,
@@ -1860,7 +1880,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 48.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 42.0,
+          "shareOfTotal": 39.7,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.2,
+          "shareOfTotal": 9.7,
+          "vsLondonMedian": 1.8
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 10.2,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 1.7
+        }
+      ]
     },
     "Stockport": {
       "p8": 0.09,
@@ -1886,7 +1926,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 39.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 29.2,
+          "shareOfTotal": 39.1,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.4,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 6.6,
+          "shareOfTotal": 8.9,
+          "vsLondonMedian": 0.9
+        }
+      ]
     },
     "Trafford": {
       "p8": 0.35,
@@ -1912,7 +1972,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 36.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 27.0,
+          "shareOfTotal": 36.1,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.5,
+          "shareOfTotal": 11.4,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.0,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 1.4
+        }
+      ]
     },
     "Tameside": {
       "p8": -0.21,
@@ -1938,7 +2018,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 44.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 41.6,
+          "shareOfTotal": 43.1,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.4,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.8,
+          "shareOfTotal": 8.1,
+          "vsLondonMedian": 1.3
+        }
+      ]
     },
     "Oldham": {
       "p8": -0.2,
@@ -1964,7 +2064,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 38.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 47.6,
+          "shareOfTotal": 44.7,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 11.1,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 2.0
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 8.8,
+          "shareOfTotal": 8.2,
+          "vsLondonMedian": 1.5
+        }
+      ]
     },
     "Rochdale": {
       "p8": -0.3,
@@ -1990,7 +2110,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 42.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 44.2,
+          "shareOfTotal": 42.2,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 11.2,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 2.0
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 8.5,
+          "shareOfTotal": 8.2,
+          "vsLondonMedian": 1.5
+        }
+      ]
     },
     "Bury": {
       "p8": -0.09,
@@ -2016,7 +2156,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 34.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 39.0,
+          "shareOfTotal": 42.4,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.1,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.8
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.8,
+          "shareOfTotal": 8.5,
+          "vsLondonMedian": 1.3
+        }
+      ]
     },
     "Bolton": {
       "p8": 0.05,
@@ -2042,7 +2202,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 45.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 42.7,
+          "shareOfTotal": 43.6,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.3,
+          "shareOfTotal": 10.5,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.6,
+          "shareOfTotal": 7.7,
+          "vsLondonMedian": 1.3
+        }
+      ]
     },
     "Wigan": {
       "p8": -0.32,
@@ -2068,7 +2248,27 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 38.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 39.8,
+          "shareOfTotal": 43.7,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 9.4,
+          "shareOfTotal": 10.3,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 9.0,
+          "shareOfTotal": 9.9,
+          "vsLondonMedian": 1.5
+        }
+      ]
     }
   },
   "westmidlands": {
@@ -2094,7 +2294,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin500mPct": 50.7,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 46.2,
+          "shareOfTotal": 40.4,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.3,
+          "shareOfTotal": 9.0,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 10.2,
+          "shareOfTotal": 8.9,
+          "vsLondonMedian": 1.3
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Coventry": {
       "crimeRate": 88.4,
@@ -2118,7 +2339,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin500mPct": 52.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 34.3,
+          "shareOfTotal": 38.9,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 9.3,
+          "shareOfTotal": 10.5,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 7.6,
+          "shareOfTotal": 8.6,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Dudley": {
       "crimeRate": 74.5,
@@ -2142,7 +2384,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 39.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.6,
+          "shareOfTotal": 41.0,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.3,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 6.9,
+          "shareOfTotal": 9.3,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Sandwell": {
       "crimeRate": 95.9,
@@ -2166,7 +2429,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin500mPct": 53.1,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 40.7,
+          "shareOfTotal": 42.5,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 9.4,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 9.0,
+          "shareOfTotal": 9.4,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Solihull": {
       "crimeRate": 79.5,
@@ -2190,7 +2474,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 35.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 26.1,
+          "shareOfTotal": 32.9,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 12.5,
+          "shareOfTotal": 15.7,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 9.6,
+          "shareOfTotal": 12.0,
+          "vsLondonMedian": 1.2
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Walsall": {
       "crimeRate": 92.9,
@@ -2214,7 +2519,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 41.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 35.6,
+          "shareOfTotal": 38.3,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 11.2,
+          "shareOfTotal": 12.1,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 9.2,
+          "shareOfTotal": 9.9,
+          "vsLondonMedian": 1.6
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
@@ -2238,7 +2564,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 48.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 38.6,
+          "shareOfTotal": 42.0,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 11.8,
+          "shareOfTotal": 12.9,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.7,
+          "shareOfTotal": 8.4,
+          "vsLondonMedian": 1.3
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "westyorkshire": {
@@ -2264,7 +2611,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 43.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 51.6,
+          "shareOfTotal": 44.1,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.3,
+          "shareOfTotal": 8.8,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 9.9,
+          "shareOfTotal": 8.4,
+          "vsLondonMedian": 1.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Calderdale": {
       "crimeRate": 103.4,
@@ -2288,7 +2656,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 35.7,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 45.6,
+          "shareOfTotal": 44.1,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.4,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 8.6,
+          "shareOfTotal": 8.3,
+          "vsLondonMedian": 1.5
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Kirklees": {
       "crimeRate": 87.6,
@@ -2312,7 +2701,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 40.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 38.8,
+          "shareOfTotal": 44.3,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.6,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.9,
+          "shareOfTotal": 7.9,
+          "vsLondonMedian": 1.2
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Leeds": {
       "crimeRate": 114.6,
@@ -2336,7 +2746,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 43.1,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 44.9,
+          "shareOfTotal": 39.2,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 11.9,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 9.6,
+          "shareOfTotal": 8.4,
+          "vsLondonMedian": 1.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Wakefield": {
       "crimeRate": 105.8,
@@ -2360,7 +2791,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 31.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 47.7,
+          "shareOfTotal": 45.1,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 9.6,
+          "shareOfTotal": 9.1,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.5,
+          "shareOfTotal": 8.0,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "southyorkshire": {
@@ -2386,7 +2838,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 34.9,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 36.6,
+          "shareOfTotal": 38.5,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 10.5,
+          "shareOfTotal": 11.0,
+          "vsLondonMedian": 1.8
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.6,
+          "shareOfTotal": 9.1,
+          "vsLondonMedian": 1.5
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Doncaster": {
       "crimeRate": 117.3,
@@ -2410,7 +2883,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 32.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 43.5,
+          "shareOfTotal": 37.1,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 11.8,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 2.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.9,
+          "shareOfTotal": 9.3,
+          "vsLondonMedian": 1.4
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Rotherham": {
       "crimeRate": 93.1,
@@ -2434,7 +2928,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 35.9,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 37.1,
+          "shareOfTotal": 39.9,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 9.2,
+          "shareOfTotal": 9.9,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.4,
+          "shareOfTotal": 9.1,
+          "vsLondonMedian": 1.5
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Sheffield": {
       "crimeRate": 96.9,
@@ -2458,7 +2973,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin500mPct": 53.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 34.4,
+          "shareOfTotal": 35.5,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.5,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 9.3,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 1.6
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "merseyside": {
@@ -2484,7 +3020,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 42.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 35.4,
+          "shareOfTotal": 43.3,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 9.2,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.6
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Liverpool": {
       "crimeRate": 124.1,
@@ -2508,7 +3065,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "good",
       "healthcareWithin500mPct": 57.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 45.6,
+          "shareOfTotal": 36.8,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Drug offences",
+          "ratePer1000": 15.4,
+          "shareOfTotal": 12.4,
+          "vsLondonMedian": 2.5
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 13.3,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 2.4
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "St Helens": {
       "crimeRate": 86.4,
@@ -2532,7 +3110,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 37.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 36.2,
+          "shareOfTotal": 41.9,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 9.3,
+          "shareOfTotal": 10.8,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 8.2,
+          "shareOfTotal": 9.5,
+          "vsLondonMedian": 1.4
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Sefton": {
       "crimeRate": 75.5,
@@ -2556,7 +3155,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 38.1,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 32.7,
+          "shareOfTotal": 43.3,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 11.7,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.6,
+          "shareOfTotal": 8.8,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Wirral": {
       "crimeRate": 71.1,
@@ -2580,7 +3200,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 41.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.7,
+          "shareOfTotal": 43.1,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.4,
+          "shareOfTotal": 11.8,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.3,
+          "shareOfTotal": 10.3,
+          "vsLondonMedian": 1.2
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "tyneandwear": {
@@ -2606,7 +3247,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 38.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.6,
+          "shareOfTotal": 34.8,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 11.2,
+          "shareOfTotal": 12.8,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 10.1,
+          "shareOfTotal": 11.5,
+          "vsLondonMedian": 1.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
@@ -2630,7 +3292,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 46.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 36.6,
+          "shareOfTotal": 34.1,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 14.1,
+          "shareOfTotal": 13.1,
+          "vsLondonMedian": 1.8
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 10.3,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 1.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "North Tyneside": {
       "crimeRate": 81.8,
@@ -2654,7 +3337,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 38.1,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 28.8,
+          "shareOfTotal": 35.2,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 12.4,
+          "shareOfTotal": 15.2,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 8.9,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.5
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "South Tyneside": {
       "crimeRate": 96.6,
@@ -2678,7 +3382,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 37.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 37.7,
+          "shareOfTotal": 39.0,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 12.7,
+          "shareOfTotal": 13.2,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 11.5,
+          "shareOfTotal": 11.9,
+          "vsLondonMedian": 2.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Sunderland": {
       "crimeRate": 93.6,
@@ -2702,7 +3427,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 34.2,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 33.5,
+          "shareOfTotal": 35.8,
+          "vsLondonMedian": 1.2
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 12.7,
+          "shareOfTotal": 13.6,
+          "vsLondonMedian": 1.6
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 11.3,
+          "shareOfTotal": 12.1,
+          "vsLondonMedian": 1.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "bristol": {
@@ -2728,7 +3474,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 43.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 47.4,
+          "shareOfTotal": 36.2,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 15.6,
+          "shareOfTotal": 11.9,
+          "vsLondonMedian": 2.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 12.8,
+          "shareOfTotal": 9.7,
+          "vsLondonMedian": 1.6
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
@@ -2752,7 +3519,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 34.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 31.5,
+          "shareOfTotal": 39.9,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.1,
+          "shareOfTotal": 12.8,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 9.2,
+          "shareOfTotal": 11.6,
+          "vsLondonMedian": 1.6
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "North Somerset": {
       "crimeRate": 81.8,
@@ -2776,7 +3564,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 29.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 35.2,
+          "shareOfTotal": 43.0,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 10.0,
+          "shareOfTotal": 12.2,
+          "vsLondonMedian": 1.8
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.9,
+          "shareOfTotal": 8.4,
+          "vsLondonMedian": 1.2
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
@@ -2800,7 +3609,28 @@
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcare": "moderate",
       "healthcareWithin500mPct": 25.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 30.0,
+          "shareOfTotal": 40.6,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 8.3,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.2,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "leicester": {
@@ -2826,7 +3656,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.34,
       "floodCoverage": 97.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 40.3,
+          "shareOfTotal": 36.6,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 13.0,
+          "shareOfTotal": 11.8,
+          "vsLondonMedian": 2.3
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 11.5,
+          "shareOfTotal": 10.5,
+          "vsLondonMedian": 2.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Blaby": {
       "crimeRate": 59.2,
@@ -2849,7 +3700,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.56,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 21.5,
+          "shareOfTotal": 36.4,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.0,
+          "shareOfTotal": 13.5,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 5.5,
+          "shareOfTotal": 9.3,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Charnwood": {
       "crimeRate": 67.9,
@@ -2872,7 +3744,28 @@
       "flood": "medium",
       "floodMediumOrHighPct": 2.06,
       "floodCoverage": 97.2,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 24.1,
+          "shareOfTotal": 35.4,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 7.9,
+          "shareOfTotal": 11.6,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.7,
+          "shareOfTotal": 11.3,
+          "vsLondonMedian": 1.3
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Harborough": {
       "crimeRate": 44.4,
@@ -2895,7 +3788,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.08,
       "floodCoverage": 99.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 15.8,
+          "shareOfTotal": 35.5,
+          "vsLondonMedian": 0.6
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 4.8,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 4.4,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 0.8
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Hinckley and Bosworth": {
       "crimeRate": 59.5,
@@ -2918,7 +3832,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.04,
       "floodCoverage": 99.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 23.9,
+          "shareOfTotal": 40.1,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.5,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 5.6,
+          "shareOfTotal": 9.3,
+          "vsLondonMedian": 1.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Melton": {
       "crimeRate": 56.8,
@@ -2941,7 +3876,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.64,
       "floodCoverage": 97.4,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 22.2,
+          "shareOfTotal": 39.0,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 6.8,
+          "shareOfTotal": 12.0,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.3,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "North West Leicestershire": {
       "crimeRate": 59.2,
@@ -2964,7 +3920,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.79,
       "floodCoverage": 99.0,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 23.0,
+          "shareOfTotal": 38.8,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.5,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.1
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 6.1,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 1.1
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Oadby and Wigston": {
       "crimeRate": 53.6,
@@ -2987,7 +3964,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.25,
       "floodCoverage": 99.5,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 21.2,
+          "shareOfTotal": 39.5,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 5.5,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 0.7
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 5.3,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 0.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   },
   "teesside": {
@@ -3013,7 +4011,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.41,
       "floodCoverage": 99.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 47.1,
+          "shareOfTotal": 35.1,
+          "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 23.7,
+          "shareOfTotal": 17.7,
+          "vsLondonMedian": 3.0
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 14.8,
+          "shareOfTotal": 11.0,
+          "vsLondonMedian": 2.5
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Middlesbrough": {
       "crimeRate": 150.0,
@@ -3037,7 +4056,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.55,
       "floodCoverage": 98.8,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 53.4,
+          "shareOfTotal": 35.6,
+          "vsLondonMedian": 1.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 19.7,
+          "shareOfTotal": 13.1,
+          "vsLondonMedian": 3.3
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 15.8,
+          "shareOfTotal": 10.5,
+          "vsLondonMedian": 2.0
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Redcar and Cleveland": {
       "crimeRate": 108.9,
@@ -3061,7 +4101,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 0.74,
       "floodCoverage": 99.2,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 38.2,
+          "shareOfTotal": 35.1,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 15.6,
+          "shareOfTotal": 14.4,
+          "vsLondonMedian": 2.7
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 13.3,
+          "shareOfTotal": 12.2,
+          "vsLondonMedian": 1.7
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Stockton-on-Tees": {
       "crimeRate": 107.9,
@@ -3085,7 +4146,28 @@
       "flood": "low",
       "floodMediumOrHighPct": 1.84,
       "floodCoverage": 99.6,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 40.2,
+          "shareOfTotal": 37.3,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 14.1,
+          "shareOfTotal": 13.1,
+          "vsLondonMedian": 1.8
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 11.2,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 1.9
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     },
     "Darlington": {
       "crimeRate": 91.0,
@@ -3109,7 +4191,28 @@
       "flood": "medium",
       "floodMediumOrHighPct": 6.15,
       "floodCoverage": 98.1,
-      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)"
+      "floodVintage": "Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)",
+      "crimeTop": [
+        {
+          "offence": "Violence against the person",
+          "ratePer1000": 35.0,
+          "shareOfTotal": 38.5,
+          "vsLondonMedian": 1.3
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 12.3,
+          "shareOfTotal": 13.6,
+          "vsLondonMedian": 2.1
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.5,
+          "shareOfTotal": 11.6,
+          "vsLondonMedian": 1.4
+        }
+      ],
+      "crimeVintage": "ONS Table C4, year ending March 2026"
     }
   }
 }

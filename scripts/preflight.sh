@@ -586,6 +586,14 @@ net_check "area pages match the live API" node tests/area-page-freshness.mjs
 # default, under-painting is a borough whose data the map cannot find.
 check "layers paint only real data"   node tests/layer-honesty.mjs
 check "panel says what it measured"  node tests/panel-caveat.mjs
+# Saved-location rows, RENDERED and driven by keyboard (2026-09-13, audit
+# I3). No gate had ever shown axe a populated favourites list, so a
+# role="button" row wrapping a real remove <button> - nested interactive,
+# with the row's preventDefault on Enter swallowing the button's own
+# activation - meant there was no keyboard route to delete a saved location.
+# Enter on the x switched city and re-ran the search. Loads the rows through
+# a stubbed favourites API, so it spends nothing and needs no device token.
+check "favourites: keyboard + not nested" node tests/favourites-keyboard.mjs
 # The borough ranking must not claim an order its scores cannot support.
 # Methodology v5.0 took affordability national, which removed spread that
 # within-city min-max had MANUFACTURED: composite spread fell in twelve of

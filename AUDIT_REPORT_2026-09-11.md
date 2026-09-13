@@ -311,7 +311,19 @@ Set `weights=afford:0.0` — a documented feature sold on `pricing.html` and
 of it. With two zero-weight components the grammar also breaks: *"Affordability
 and Growth moved … but **is** not counted"*.
 
-### I3 — Saved-location rows: nested interactive, and Remove is unreachable by keyboard **[A]**
+### ~~I3 — Saved-location rows: nested interactive, and Remove is unreachable by keyboard~~ **FIXED 2026-09-13** **[V]**
+
+**Verified by driving it**: `tests/favourites-keyboard.mjs` (new, blocking in
+preflight) loads two saved rows through a stubbed favourites API, asks axe for
+`nested-interactive`, focuses the remove × and presses Enter. Against the
+pre-fix page: axe named both rows, and Enter on the × ran the search for
+SW11 1AA and deleted nothing - the finding exactly. **Fixed** by making the
+row's primary action a real `<button class="fav-open">` beside the real
+`<button class="fav-remove">` - two siblings, no `role="button"` wrapper, no
+key handler at all, because a real button's Enter is the browser's. The mouse
+affordance is unchanged: the open button fills the space the row answered
+clicks on. Original finding follows.
+
 
 `index.html:12517` applies `makeKeyActivatable` (setting `role="button"`,
 `tabindex="0"`) to `.fav-item`, which already contains a real
@@ -323,7 +335,18 @@ saved location. Mouse is unaffected.
 
 No gate ever renders a populated favourites list, so axe has never seen it.
 
-### I4 — The score tooltip can never render, and the text screen readers get is wrong **[A]**
+### ~~I4 — The score tooltip can never render, and the text screen readers get is wrong~~ **FIXED 2026-09-13 by removal** **[V]**
+
+Confirmed from the markup: the tip was emitted after the trigger's whole
+`.sidebar-section`, so `~` could never match. **Removed rather than repaired**:
+the visible breakdown directly beneath the score already explains every
+component with its live weight and v5.0's wording, so a working popover would
+have been a second copy of content that is right and visible. Gone with it:
+the `cursor: help`, the tab stop that was first in the panel and led nowhere,
+the Escape handler, the `aria-describedby` and its "five components / cohort-
+relative" text. `panel-caveat`, `panel-contrast` and the WCAG source scan
+re-run over the panel in the same preflight. Original finding follows.
+
 
 `index.html:294-296` uses the sibling combinator `~`, but trigger and tip do not
 share a parent, so `:hover` / `:focus` can never match. `cursor: help`, a
@@ -336,7 +359,32 @@ as *"cohort-relative (cheapest = 10)"* — the scale v5.0 deliberately deleted, 
 lines away. **A screen-reader user is the only audience for this text and is the
 only one given the retired scale.**
 
-### I5 — "Offence breakdown not published for this area" is false for 53 boroughs **[A]**
+### ~~I5 — "Offence breakdown not published for this area" is false for 53 boroughs~~ **FIXED 2026-09-13** **[V]**
+
+**Premise verified**: `load_table(city)` returns the offence columns for every
+CSP row in every city; only `--write` was London-gated, on a reason that
+expired on 2026-08-11. **A worse sibling was beside it, unreported.** The
+attribution branch three lines below reads *no `crimeVintage` →* "Sky Score
+estimate - ONS publishes no recorded-crime rate for this area, so this figure
+is our own and is not attributable to them." `crimeVintage` existed for London
+and Greater Manchester only, so **43 boroughs disclaimed ONS on figures that
+are ONS's** - verified against ONS by the blocking preflight stage on every
+commit, under an OGL attribution obligation. Measured live on Birmingham
+before the fix.
+
+**Fixed** by widening `refresh_crime_from_ons.py --write` to every city with a
+holder block (`--write --all`; Cardiff and Nottingham named as skipped).
+Measured against the pre-write holder: **London 0 records changed, 0 rates
+moved, 53 boroughs gained `crimeTop`, 43 gained `crimeVintage`**; coverage 85
+of 91, the six without being NYC and the City of London, where the sentence
+is true. The latent trap this finding named is closed by design:
+`vsLondonMedian` divides by LONDON's per-offence medians for every city (one
+cached holder, refusing to write on a partial comparator), so the label "x
+the London median" stays true everywhere. `crimeNote()`'s "every major
+offence category sits at or below the London median", which was inferred
+from the TOTAL being 15% under, is now derived from the breakdown. Original
+finding follows.
+
 
 `index.html:9876` fires whenever `extra.crimeTop` is empty, which is every borough
 outside London. ONS Table C4 **does** publish the breakdown for those rows —
@@ -539,11 +587,15 @@ there), `toggleMetricDetail()` expanded, `renderScoreTip()` (I4 lives there),
 
 - **Fixed this session: 13.** F1-F4, C0-C5, I6, I7 and I10.
 - **Critical open: 0.** C0's cause is fixed but its quota does not reset until 1 October.
-- **Important open: 3** — I1 (six pages with no `Cache-Control`), I2, I3, I4, I5, I8, I9
+- **Important open: 0** — I1 (six pages with no `Cache-Control`), I2, I3, I4, I5, I8, I9
   were all open when this report was written; **I2, I8 and I9 shipped in the backend
-  deploy** (verified 13 Sep: the live API emits `coverage.env`), and **I1 was fixed
-  and gated on 13 Sep** (nine pages, not six), so what remains is I3, I4 and I5, all
-  frontend.
+  deploy** (verified 13 Sep: the live API emits `coverage.env`), **I1 was fixed
+  and gated on 13 Sep** (nine pages, not six), and **I3, I4 and I5 closed later the
+  same day** - I5 with a worse sibling (43 boroughs disclaiming ONS) found beside it.
+- **C0's gate is conclusive now.** The demo quota is still spent until 1 October, but
+  `demo-key-scope.mjs` reads the 429 body - the method throttle answers "Too Many
+  Requests" before the quota can answer "Limit Exceeded" - so its two denies are
+  PASS rather than UNPROVEN, and the free-tier denies ran for the first time.
 - **Two new gates close a CLASS rather than an instance**: spec-vs-template auth, and
   the methodology version against every document that quotes it.
 - **Minor open: ~21**

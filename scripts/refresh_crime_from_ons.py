@@ -22,10 +22,32 @@ tourism, or town centre activity" it said before.
 USAGE
 
     python scripts/refresh_crime_from_ons.py --check    # compare only, exit 1 on drift
-    python scripts/refresh_crime_from_ons.py --write    # update data/borough-extra.json
+    python scripts/refresh_crime_from_ons.py --write    # update data/borough-extra.json (London)
+    python scripts/refresh_crime_from_ons.py --write --city manchester
+    python scripts/refresh_crime_from_ons.py --write --all    # every city with a holder entry
     python scripts/refresh_crime_from_ons.py --check --city manchester
     python scripts/refresh_crime_from_ons.py --check --all   # every CITY_PFA city;
     #   the blocking preflight stage, with a per-city floor on zero comparisons
+
+--write WAS LONDON-ONLY UNTIL 2026-09-13, AND THAT GATE OUTLIVED ITS REASON.
+It was written when London was the only city in borough-extra.json. Eleven
+cities have held entries since 2026-08-11, and for the eight that had never
+been written the site rendered TWO false sentences from the absent fields:
+"Offence breakdown not published for this area" (audit I5 - Table C4 carries
+the breakdown for every CSP row, and --check has read those columns for every
+city since August) and, on the 43 boroughs with no `crimeVintage`, "Sky Score
+estimate - ONS publishes no recorded-crime rate for this area, so this figure
+is our own and is not attributable to them" - a DISCLAIMER of ONS on figures
+that are ONS's, verified against ONS by the blocking preflight stage on every
+commit, printed under an OGL attribution obligation. Measured live on
+Birmingham before the change. The publication was never missing; the
+derivation was.
+
+`vsLondonMedian` is LONDON's per-offence median for every city, on purpose:
+the site's headline sentence already compares every UK borough's total
+against the London median, so the breakdown uses the same yardstick and the
+label "x the London median" stays true everywhere. Computing each city's own
+medians under that label was the trap audit I5 named as latent.
 
 Run --check whenever ONS publishes (quarterly). Rates move with each release,
 so drift here is expected and is the signal to roll the vintage, not a bug.
@@ -338,33 +360,71 @@ def load_table(city='london'):
     return out
 
 
+_LONDON_MEDIANS = None
+
+
+def london_offence_medians():
+    """London's median rate per offence column, across the boroughs ONS
+    publishes. One holder for the comparator every city's `vsLondonMedian`
+    divides by, cached because --all loads it once per city otherwise."""
+    global _LONDON_MEDIANS
+    if _LONDON_MEDIANS is None:
+        import statistics
+        rows = load_table('london')
+        out = {}
+        for col in OFFENCE_COLS:
+            vals = [float(r[col]) for r in rows.values() if isinstance(r.get(col), (int, float))]
+            if vals:
+                out[col] = statistics.median(vals)
+        if len(out) < len(OFFENCE_COLS):
+            raise SystemExit(
+                f'London medians resolved for {len(out)} of {len(OFFENCE_COLS)} offence '
+                'columns - the workbook layout has changed; refusing to write ratios '
+                'against a partial comparator.')
+        _LONDON_MEDIANS = out
+    return _LONDON_MEDIANS
+
+
 def compare_city(city, write=False):
     """Compare one city's published rates against ONS Table C4.
 
-    Returns (drift, compared): the boroughs whose rate differs from ONS, and
-    the number actually compared. The caller owns the floor on `compared` -
-    see main(). With write=True (London only) borough-extra.json is rewritten.
+    Returns (drift, compared, unaccounted): the boroughs whose rate differs
+    from ONS, the number actually compared, and the boroughs the pass never
+    reached. The caller owns the floor on `compared` - see main(). With
+    write=True the city's block in borough-extra.json is rewritten: its rate,
+    its top-three offence breakdown and its vintage.
     """
     ons = load_table(city)
 
-    # Greater Manchester's ten rates were verified by hand on 2026-08-09 and all
-    # matched. Wiring that in is what stops it being a one-off: ONS republishes
-    # quarterly, and a check nobody can re-run decays into a claim.
-    if city != 'london':
+    # WHICH HOLDER. --check reads the Lambda's registry for every city but
+    # London, because that is the holder /v1/score answers from and the one
+    # that was verified by hand on 2026-08-09 for Greater Manchester; wiring
+    # that in is what stops it being a one-off. --write targets
+    # borough-extra.json for ANY city that has a block there - the eleven the
+    # site renders - and refuses the two that do not (Cardiff, Nottingham are
+    # backend-only) rather than inventing one. The two holders' rates are held
+    # in step by tests/test_borough_data_parity.py, so a roll written here and
+    # not mirrored into the Lambda reds there, which is the intended guard.
+    if write:
+        data = json.loads(EXTRA.read_text(encoding='utf-8'))
+        if city not in data:
+            raise SystemExit(
+                f'--write: {city} has no borough-extra.json block (backend-only city); '
+                'nothing to write to. Use --check for it.')
+        london = data[city]
+    elif city != 'london':
         data, london = None, lambda_rates(city)
     else:
         data = json.loads(EXTRA.read_text(encoding='utf-8'))
         london = data['london']
 
-    # London median per offence, computed across every borough ONS publishes a
-    # figure for. Recomputed from the release each run rather than hard-coded,
-    # so a vintage roll cannot leave the comparison anchored to a stale cohort.
-    import statistics
-    medians = {}
-    for col in OFFENCE_COLS:
-        vals = [float(r[col]) for r in ons.values() if isinstance(r.get(col), (int, float))]
-        if vals:
-            medians[col] = statistics.median(vals)
+    # LONDON'S median per offence, for every city - see the module docstring.
+    # Computed across every London borough ONS publishes a figure for, from
+    # the release each run rather than hard-coded, so a vintage roll cannot
+    # leave the comparison anchored to a stale cohort. For London itself this
+    # is the same table as `ons`, so London's output is unchanged by the
+    # 2026-09-13 widening.
+    medians = london_offence_medians()
 
     drift, unresolved = [], []
     compared = 0
@@ -459,8 +519,9 @@ def compare_city(city, write=False):
             json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
         )
         print(f'\n  wrote {EXTRA}')
-        print('  NB: backend/lambdas/score/app.py LONDON_BOROUGHS holds its own copy '
-              'and must be updated to match, or site and API will disagree.')
+        print(f'  NB: the Lambda registry (backend/lambdas/score/app.py CITIES[{city!r}]) '
+              'holds its own copy of crimeRate; if a rate moved above, mirror it or '
+              'tests/test_borough_data_parity.py fails the build.')
 
     return drift, compared, unaccounted
 
@@ -473,23 +534,34 @@ def main():
         '--city',
         default='london',
         choices=sorted(CITY_PFA),
-        help='city to check. london reads data/borough-extra.json and supports '
-             '--write; manchester is backend-only, so it reads CITIES directly '
-             'and is check-only.',
+        help='city to check or write. --check reads the Lambda registry for every '
+             "city but London; --write targets the city's block in "
+             'data/borough-extra.json and refuses a city with none (Cardiff, '
+             'Nottingham).',
     )
     ap.add_argument(
         '--all',
         action='store_true',
-        help='check every city in CITY_PFA in one run (check-only), the way '
-             'build_hpi_prices.py --check --all covers prices',
+        help='every city in CITY_PFA in one run, the way build_hpi_prices.py '
+             '--check --all covers prices; with --write, every city that has a '
+             'holder block',
     )
     args = ap.parse_args()
 
-    if args.all and args.write:
-        ap.error('--all is check-only; --write takes a single --city')
-    if args.write and args.city != 'london':
-        print(f'--write is London-only; {args.city} has no borough-extra.json entry.')
-        return 2
+    # --write --all writes every city that has a borough-extra.json block and
+    # names the ones it skips, so a vintage roll is one command rather than
+    # eleven - and so no city can be forgotten the way eight were from
+    # 2026-08-11 to 2026-09-13.
+    if args.write:
+        holder_cities = set(json.loads(EXTRA.read_text(encoding='utf-8')))
+        if args.all:
+            skipped = sorted(c for c in CITY_PFA if c not in holder_cities)
+            if skipped:
+                print(f'--write --all: skipping backend-only cities with no holder block: {skipped}')
+        elif args.city not in holder_cities:
+            print(f'--write: {args.city} has no borough-extra.json block (backend-only); '
+                  'nothing to write to.')
+            return 2
 
     # The floor on the LIST, before any per-city floor can run. A city missing
     # from CITY_PFA was silently dropped from --all, so no floor in this file
@@ -497,6 +569,8 @@ def main():
     _assert_every_city_is_accounted_for()
 
     cities = sorted(CITY_PFA) if args.all else [args.city]
+    if args.write and args.all:
+        cities = [c for c in cities if c in holder_cities]
 
     total_drift = 0
     floored = []

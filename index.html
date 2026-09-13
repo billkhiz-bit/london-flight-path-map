@@ -249,71 +249,19 @@
         letter-spacing: 1px;
       }
 
-      /* "How to read this score" tooltip - appears on hover/focus of the
-     summary verdict number. CSS-only show/hide; positioned absolutely
-     so it doesn't reflow the sidebar. */
-      .score-tip {
-        position: absolute;
-        left: 24px;
-        right: 24px;
-        background: var(--white);
-        border: 1px solid var(--dark);
-        padding: 14px 18px;
-        font-family: var(--font-sans);
-        font-size: 12px;
-        line-height: 1.55;
-        color: var(--dark);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        z-index: 30;
-        display: none;
-        margin-top: 6px;
-      }
-      .score-tip strong {
-        display: block;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        color: var(--orange);
-      }
-      .score-tip p {
-        margin: 0 0 8px;
-      }
-      .score-tip ul {
-        margin: 0 0 8px;
-        padding-left: 18px;
-      }
-      .score-tip li {
-        margin-bottom: 3px;
-      }
-      .score-tip a {
-        color: var(--orange);
-        text-decoration: underline;
-      }
-      .score-explain-trigger:hover ~ .score-tip,
-      .score-explain-trigger:focus ~ .score-tip,
-      .score-explain-trigger:focus-within ~ .score-tip {
-        display: block;
-      }
-      /* Show on tap (touch devices) when trigger is focused */
-      .score-tip:hover {
-        display: block;
-      }
-      /* F-UX-9: Esc dismiss support - once dismissed, the tip stays hidden
-         even if the trigger keeps focus, until focus moves elsewhere and
-         the .score-tip-dismissed class is removed by the keydown handler. */
-      .score-explain-trigger.score-tip-dismissed ~ .score-tip {
-        display: none !important;
-      }
-      /* F-UX-9: small-viewport overflow fix - on narrow sidebars (<= 320px)
-         the tip used to overflow the sidebar's right edge. Constrain via
-         max-width on the side columns. */
-      @media (max-width: 600px) {
-        .score-tip {
-          max-width: calc(100vw - 48px);
-        }
-      }
+      /* The "How to read this score" popover is DELETED (2026-09-13, audit
+         I4). It was CSS-only - `.score-explain-trigger:hover ~ .score-tip` -
+         and the trigger and the tip never shared a parent (the tip was
+         emitted after the trigger's whole .sidebar-section), so the sibling
+         combinator could not match and the popover had never once rendered.
+         What survived was the machinery: cursor: help, a tabindex="0" stop
+         that was the FIRST in the panel and led nowhere, an Escape handler
+         for a thing that could not appear, and an aria-describedby whose text
+         - the only audience it ever reached was screen-reader users - said
+         "five components" while listing four and described affordability on
+         the cohort-relative scale v5.0 deleted. The visible breakdown directly
+         beneath the score already explains every component with its live
+         weight, so nothing is lost by removing the second, invisible copy. */
 
       /* First-time use hint banner. Sits above the map until the user
      either dismisses it explicitly or interacts with anything (search
@@ -1328,7 +1276,8 @@
       .rank-table tbody tr:focus-visible td:last-child {
         box-shadow: inset -2px 0 0 var(--orange), inset 0 2px 0 var(--orange), inset 0 -2px 0 var(--orange);
       }
-      .fav-item:focus-visible {
+      .fav-open:focus-visible,
+      .fav-remove:focus-visible {
         outline: 2px solid var(--orange);
         outline-offset: 2px;
       }
@@ -2372,13 +2321,31 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 8px 0;
         border-bottom: 1px solid var(--bg);
         font-size: 11px;
+      }
+      /* The row's primary action is a REAL button that fills the row, not a
+         role="button" on the row itself (2026-09-13, audit I3). The row used
+         to be the control and the remove x sat inside it - nested
+         interactive - and makeKeyActivatable's preventDefault on Enter
+         swallowed the inner button's native activation, so Enter on the x
+         re-ran the search instead of removing. Two sibling buttons: every
+         action is reachable, and the mouse affordance is unchanged because
+         this one fills the space the row used to answer clicks on. */
+      .fav-open {
+        flex: 1 1 auto;
+        display: block;
+        text-align: left;
+        padding: 8px 0;
+        margin: 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
         cursor: pointer;
         transition: color 0.15s;
       }
-      .fav-item:hover {
+      .fav-open:hover {
         color: var(--orange);
       }
       .fav-item:last-child {
@@ -6998,23 +6965,6 @@
         return '#';
       }
 
-      // Tooltip explaining the 0-10 score on hover. The composite mixes
-      // absolute and cohort-relative components - surfacing this transparency
-      // is part of the methodology-defensibility positioning. Returns the
-      // markup; CSS styles it as a popover anchored to .score-explain-trigger.
-      function renderScoreTip() {
-        return `<div class="score-tip" id="score-tip" role="tooltip">
-    <strong>How to read this score</strong>
-    <p>The 0-10 number is a weighted summary of five components, each themselves on a 0-10 scale:</p>
-    <ul>
-      <li><strong>Quiet</strong> &mdash; absolute (DEFRA/FAA noise bands).</li>
-      <li><strong>Affordability</strong> &mdash; cohort-relative (cheapest = 10).</li>
-      <li><strong>Growth</strong> &mdash; cohort-relative (fastest growing = 10).</li>
-      <li><strong>Liveability</strong> &mdash; schools 35%, crime 30%, transport 25%, healthcare 10%.</li>
-    </ul>
-    <p>The weights change with the persona you've selected (currently <strong>${escapeHtml(PERSONAS[currentPersona].label)}</strong>). See the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" target="_blank" rel="noopener">methodology document</a> for full anchoring.</p>
-  </div>`;
-      }
 
       // Compact form for table rows where horizontal space is tight (rankings,
       // compare table). Still avoids the lossy K abbreviation by using a
@@ -9873,12 +9823,27 @@
           // contradiction manufactured entirely from missing data. Same class as
           // the DEFRA nodata fill: not-measured rendered as a favourable
           // measurement.
+          //
+          // TRUE ONLY WHERE IT FIRES, SINCE 2026-09-13 (audit I5). Until then it
+          // fired on 53 of 91 boroughs - every UK borough outside London - and
+          // was false on all of them: ONS Table C4 publishes the breakdown for
+          // every CSP row, and refresh_crime_from_ons.py had been READING those
+          // columns for every city since August while only WRITING London's.
+          // The publication was never missing; the derivation was. It now
+          // fires for the City of London (ONS suppresses the rate, note 8) and
+          // New York (a different source with no breakdown), which is what the
+          // sentence says.
           why = ' Offence breakdown not published for this area.';
-        } else if (ratio !== null && ratio <= 0.85) {
-          why = ' Every major offence category sits at or below the London median.';
+        } else if (extra.crimeTop.every((t) => typeof t.vsLondonMedian === 'number' && t.vsLondonMedian <= 1)) {
+          // Derived from the breakdown, not from the total. This used to fire
+          // on `ratio <= 0.85` - a claim about CATEGORIES drawn from a number
+          // that is not the categories - and a borough 15% under the median in
+          // total can still carry one offence well above it. The three largest
+          // categories are what the record holds, so that is what it says.
+          why = ' Its largest offence categories all sit at or below the London median.';
         } else {
           why =
-            ' No single offence type stands out - every major category is close to the London median.';
+            ' No single offence type stands out - each of its largest categories is within 1.5x the London median.';
         }
         // Never default the attribution. ONS explicitly declines to publish a rate
         // for the City of London (Table C4 note 8, small resident population), so
@@ -11699,14 +11664,14 @@
     <div class="sidebar-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict score-explain-trigger" style="color:${scoreTextColor(data.score)};cursor:help;" tabindex="0" aria-describedby="score-tip" aria-label="${scoreLabel(data.score).word} score: ${data.score} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 - ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
+          <div class="summary-verdict" style="color:${scoreTextColor(data.score)};"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 - ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
           ${getVerdict(data)}
         </div>
         <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}" style="margin-left:10px;">
           <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(data.name) ? 'SAVED' : 'SAVE'}
         </button>
       </div>
-    </div>${renderScoreTip()}
+    </div>
 
     <div class="sidebar-section">
       <h3>SCORE BREAKDOWN <span style="font-weight:400;font-size:11px;color:var(--mid);">${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} PROFILE</span></h3>
@@ -12465,11 +12430,11 @@
             favs
               .map(
                 (f) => `
-      <div class="fav-item" data-fav-postcode="${escapeHtml(f.postcode)}" data-fav-city="${escapeHtml(f.city || 'london')}">
-        <div>
+      <div class="fav-item">
+        <button type="button" class="fav-open" data-fav-postcode="${escapeHtml(f.postcode)}" data-fav-city="${escapeHtml(f.city || 'london')}" aria-label="Show scores for saved postcode ${escapeHtml(f.postcode)}">
           <div style="font-weight:600;">${escapeHtml(f.postcode)}</div>
           <div style="font-size:10px;color:var(--mid);">${escapeHtml(f.borough || '')} &middot; Noise: ${escapeHtml(f.noiseLevel || 'N/A')} &middot; Score: ${escapeHtml(f.buyerScore || 'N/A')}/10</div>
-        </div>
+        </button>
         <button type="button" class="fav-remove" data-fav-remove="${escapeHtml(f.postcode)}" aria-label="Remove ${escapeHtml(f.postcode)} from favourites">&times;</button>
       </div>
     `
@@ -12511,21 +12476,20 @@
             ? '<p class="info-note" style="margin-top:8px;">Some saved locations may be missing: the list could not be refreshed.</p>'
             : '');
 
-        // Bind handlers via dataset, no string interpolation in markup.
-        el.querySelectorAll('.fav-item').forEach((item) => {
-          const pc = item.dataset.favPostcode;
-          makeKeyActivatable(
-            item,
-            async () => {
-              await switchCity(item.dataset.favCity || 'london');
-              triggerSearch(pc);
-            },
-            { label: `Show scores for saved postcode ${pc}` }
-          );
+        // Bind handlers via dataset, no string interpolation in markup. Both
+        // are real <button>s, so Enter and Space are the browser's own
+        // activation and need no key handler - which is the point: the row
+        // used to go through makeKeyActivatable, whose preventDefault on
+        // Enter suppressed the native click of the remove button nested
+        // inside it (audit I3, 2026-09-13).
+        el.querySelectorAll('.fav-open').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            await switchCity(btn.dataset.favCity || 'london');
+            triggerSearch(btn.dataset.favPostcode);
+          });
         });
         el.querySelectorAll('.fav-remove').forEach((btn) => {
-          btn.addEventListener('click', (ev) => {
-            ev.stopPropagation();
+          btn.addEventListener('click', () => {
             removeFavourite(btn.dataset.favRemove);
           });
         });
@@ -14228,26 +14192,6 @@
         document.addEventListener('click', (e) => {
           if (!e.target.closest('.search-wrapper')) {
             closeAcDropdown();
-          }
-        });
-
-        // F-UX-9: Esc dismisses the score-explain tooltip when its trigger
-        // has focus. Adds .score-tip-dismissed which suppresses the tip via
-        // CSS. Cleared when the trigger loses focus, so re-tabbing shows it
-        // again - matches the behaviour users expect from native popovers.
-        document.addEventListener('keydown', (e) => {
-          if (e.key !== 'Escape') return;
-          const trig = document.activeElement;
-          if (trig && trig.classList && trig.classList.contains('score-explain-trigger')) {
-            trig.classList.add('score-tip-dismissed');
-            // Don't actually blur - that would lose the user's keyboard
-            // position. They can Tab away normally.
-            e.preventDefault();
-          }
-        });
-        document.addEventListener('focusout', (e) => {
-          if (e.target && e.target.classList && e.target.classList.contains('score-explain-trigger')) {
-            e.target.classList.remove('score-tip-dismissed');
           }
         });
 
