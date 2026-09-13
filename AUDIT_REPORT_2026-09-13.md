@@ -313,4 +313,10 @@ UNVERIFIED/open item from every prior report until it is closed BY NAME.
   carries the marker. Against the committed engine: **11 failed**; fixed:
   3 passed.
 
-Both deployed the same day - see the deploy note appended below.
+**Both deployed the same evening and verified from the origin**: `web-deploy`
++ invalidation, then `uk-city-panel.mjs` pointed at CloudFront - the run that
+was 6 FAIL an hour earlier is all PASS; SAM deploy (changeset: ScoreFunction,
+FlightMapApi, and the chat function that references the score ARN), then
+live `M22 0AD` returns `quietResolution: raster` beside "DEFRA Round 4
+strategic noise mapping, Lden sampled at this postcode" and `M1 1AE`
+(`postcode` tier) keeps the estimate line. `check_deploy_drift.sh` 133 of 133.
