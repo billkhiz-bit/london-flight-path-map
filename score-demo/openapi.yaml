@@ -650,7 +650,7 @@ components:
         = 10,000 scores/month, because batch is a paid feature so one request
         is one address; 5/sec burst, 2/sec sustained). The shared key embedded
         in /score-demo is NOT on that plan - it has its own SkyScoreDemoTier
-        at 2,000 req/month.
+        at 5,000 req/month.
         100,000 req/month under a fair-use ceiling of 1,000,000 scores/month.
         Contact for paid tiers.
 

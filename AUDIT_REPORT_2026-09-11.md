@@ -112,7 +112,18 @@ the two-input floor — 0 is a real score on this scale.
 
 ## CRITICAL — open
 
-### C0 — the public B2B demo has been returning `429` to prospects since 9 September, and our own gates drained it **[V]**
+### ~~C0 — the public B2B demo has been returning `429` to prospects since 9 September, and our own gates drained it~~ **CLOSED 2026-09-13** **[V]**
+
+The cause was fixed on 11 Sep (gates stubbed); the SYMPTOM outlived it,
+because the spent 2,000 did not reset until 1 October. Closed on 13 Sep by
+raising `ScoreDemoUsagePlan` to **5,000/month** in the template (one resource
+in the SAM changeset) - measured after: the demo key answers **200, score
+5.0** on SW11 1AA, 3,000 remaining for September, the live demo page and the
+spec both quote 5,000, and `FreeTierQuotaDriftTests` caught the two mirrors I
+had not found (a comment on the demo page and a line in `openapi.yaml`).
+`demo-key-scope.mjs` reads the 429 body now, so it is conclusive in either
+quota state; six of six PASS. Original finding follows.
+
 
 **Found by running the post-deploy verification, not by the audit agents.**
 
@@ -586,7 +597,7 @@ there), `toggleMetricDetail()` expanded, `renderScoreTip()` (I4 lives there),
 ## Summary
 
 - **Fixed this session: 13.** F1-F4, C0-C5, I6, I7 and I10.
-- **Critical open: 0.** C0's cause is fixed but its quota does not reset until 1 October.
+- **Critical open: 0.** C0's cause was fixed on 11 Sep and its symptom on 13 Sep (quota 2,000 -> 5,000; the demo scores again).
 - **Important open: 0** — I1 (six pages with no `Cache-Control`), I2, I3, I4, I5, I8, I9
   were all open when this report was written; **I2, I8 and I9 shipped in the backend
   deploy** (verified 13 Sep: the live API emits `coverage.env`), **I1 was fixed

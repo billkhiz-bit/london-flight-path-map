@@ -567,8 +567,13 @@ the method throttle), where before it was an exit-0 UNPROVEN. The free-tier
 checks that file calls load-bearing **ran for the first time the same day**:
 `SKY_SCORE_FREE_TIER_KEY` is set in `.env` (key `fk6klhfpm1`, minted through
 `/v1/signup` with `"source":"api"` - `.env.example` said `"consumer"`, which is
-the notify-me SUBSCRIPTION path and mints nothing). Five boundary checks,
-five PASS; the GET probe still WARNs on the spent quota, as a consumable must.
+the notify-me SUBSCRIPTION path and mints nothing). **The demo quota is
+5,000/month since 2026-09-13** (was 2,000, exhausted on 9 Sep mostly by our
+own gates; the public tester answered 429 to prospects for four days). The
+number lives in FOUR places - the template, the demo page's copy AND a comment
+on it, and `openapi.yaml` - and `FreeTierQuotaDriftTests` reads it from the
+template and fails on any page that quotes another, which is how the last two
+were found. Six boundary checks, six PASS, nothing unproven.
 
 **EVERY UNAUTHENTICATED ROUTE CARRIES ITS OWN THROTTLE as of 2026-09-07 - all
 twelve.** A route with no per-method `MethodSettings` entry inherits the

@@ -97,7 +97,7 @@ applies. Not an admin action: `flightmap-dev` holds `apigateway:POST` and
 Live plan ids as deployed: `SkyScoreFreeTier` = `sjtyz8` (10,000 req/month
 since 2026-08-21, when batch was denied to free keys and the quota was raised
 by the same factor so requests and scores became the same unit),
-`SkyScoreDemoTier` = `x88go8` (2,000 req/month).
+`SkyScoreDemoTier` = `x88go8` (5,000 req/month since 2026-09-13; 2,000 before, exhausted on 9 Sep 2026 largely by our own gates).
 
 The free tier was cut sharply on 2026-07-29 and restored to 10,000 on
 2026-08-21 (the superseded figure is deliberately not restated - this file is

@@ -739,7 +739,7 @@ Resources:
     DependsOn: FlightMapApiprodStage
     Properties:
       UsagePlanName: SkyScoreDemoTier
-      Description: Shared public demo key on /score-demo, 2000 requests/month.
+      Description: Shared public demo key on /score-demo, 5000 requests/month.
       ApiStages:
         - ApiId: !Ref FlightMapApi
           Stage: prod
@@ -755,8 +755,9 @@ Resources:
           #                        verify_answer() is not a second line: it
           #                        extracts NUMERIC tokens only, so any
           #                        digit-free reply passes as grounded.
-          #   POST /v1/score/batch MAX_BATCH_SIZE is 100, so 2,000 requests is
-          #                        200,000 scores - 20x the Free tier, without
+          #   POST /v1/score/batch MAX_BATCH_SIZE is 100, so the monthly quota
+          #                        x100 in scores - 200,000 at the 2,000 this
+          #                        was written at, 20x the Free tier - without
           #                        the email address Free asks for.
           #
           # RateLimit 0 is the only DECLARATIVE way to keep a key off a route;
@@ -781,8 +782,20 @@ Resources:
             /v1/score/batch/POST:
               BurstLimit: 0
               RateLimit: 0
+      # 5,000, from 2,000 (2026-09-13, audit C0). The 2,000 was exhausted on
+      # 9 September and the public tester answered 429 to every prospect for
+      # four days - and most of that 2,000 was spent by our own a11y and
+      # responsive gates loading status.html, not by prospects (measured from
+      # the plan's own per-day usage: 511, 146, 195, 142, then ZERO across a
+      # weekend). The gates are stubbed now (tests/stub-live-api.mjs), so the
+      # organic rate is what remains, and it is low. 5,000 is 2.5x headroom
+      # over a month that never had a real demand problem; the plan's own
+      # 2 rps / 5 burst below is the abuse ceiling for a key printed in page
+      # source, and 5,000 keyless scores stays well under the 10,000 that an
+      # email address buys on the free tier. Quoted on score-demo/index.html
+      # and held to this value by FreeTierQuotaDriftTests.
       Quota:
-        Limit: 2000
+        Limit: 5000
         Period: MONTH
       Throttle:
         BurstLimit: 5
