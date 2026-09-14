@@ -616,7 +616,7 @@ Strike a row here when it closes, and close it BY NAME in the report.
 
 Then the 37 Minors, which the report lists with file:line. **14 of 37 closed
 as of 2026-09-14** (M14 partial and M35 on the 13th; M4, M5, M8, M9, M10, M11,
-M12, M18, M21, M25, M26 and M29 on the 14th - the two gate-shaped ones first,
+M12, M18, M21, M25, M26 and M29 on the 14th, **deployed and verified from the origin the same afternoon** (SAM: five Lambdas UPDATE_COMPLETE; CORS from `capacitor://localhost` echoed live; Cardiff and Truro road notices live; drift 133 of 133) - the two gate-shaped ones first,
 then the "absence rendered as a measurement" one, then the comment-drift
 cluster in one pass; each struck BY NAME in the report). **Still open, 23:**
 M1-M3, M6, M7, M13, M15-M17, M19, M20, M22-M24, M27, M28, M30-M34, M36, M37,
