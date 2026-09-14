@@ -7,8 +7,15 @@
 scoring again; the real-terms growth adjustment COSTED (26 of 99 "rising"
 boroughs fall in real terms - see Open decisions); a fresh `/audit` run the
 same evening (2 Critical, both fixed and deployed within hours; 24 Important,
-37 Minor, in `AUDIT_REPORT_2026-09-13.md`). **The 24 Importants are the
-near-term list now - see "Audit backlog, 13 Sep" under Near-term tasks.**
+37 Minor, in `AUDIT_REPORT_2026-09-13.md`). **Then, the same night, 23 of the
+24 Importants were closed and deployed in four tiers - see "Audit backlog,
+13 Sep" under Near-term tasks, every tier struck through. What is left for the
+NEXT SESSION: (1) the I17 signup decision (Open decisions table - three
+options, Bill's call); (2) the July HPI roll once
+`Average-prices-2026-07.csv` answers 200 (~16 Sep; the roll is safe as
+documented now that I6/I7 are closed - `--check --all`, `--write --all`,
+rebuild area pages, backend first); (3) the CPI growth decision, costed;
+(4) the 37 Minors, less the few closed with the tiers; (5) the console items.**
 Previous review, 2026-09-10 afternoon (**THE PER-POSTCODE ROAD TIER COVERS
 ALL ELEVEN CITIES, loaded and verified** - it had been London-only since August, unrecorded
 anywhere: M2 4NG served `None` on `/v1/environment` while SW11 served 69.1 dB.
