@@ -1248,14 +1248,32 @@
       }
 
       /* Ranking table */
+      /* The ranking's own scroller (audit M33, 2026-09-14). At 320px the
+         five columns need 301px against a 272px content box, and with no
+         scroller here the overflow was absorbed by #sidebar's overflow-x:
+         auto - the WHOLE content pane slid 5px sideways and the table sat
+         in the gutter. The document never scrolled, so responsive.mjs's
+         page-level detector could not see it, and the controls-past-edge
+         detector correctly exempts anything inside a scrollable ancestor.
+         A table may be wider than the viewport only inside its OWN
+         overflow-x: auto box; this is that box. */
+      #borough-ranking {
+        overflow-x: auto;
+      }
       .rank-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 11px;
       }
+      /* 3px side padding, not 4 (audit M33): the five columns' minimum
+         widths sum to 301px at 4px against a 291px desktop sidebar box, so
+         the table overflowed its gutter on EVERY desktop width, not only on
+         phones - the detector that found it did so at 1280x800 too. At 3px
+         the sum is 291. Measured, and the wrapper's scroller above is the
+         net for a future city whose longest name pushes it back over. */
       .rank-table th {
         text-align: left;
-        padding: 6px 4px;
+        padding: 6px 3px;
         border-bottom: 2px solid var(--dark);
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -1263,7 +1281,7 @@
         font-weight: 500;
       }
       .rank-table td {
-        padding: 5px 4px;
+        padding: 5px 3px;
         border-bottom: 1px solid var(--bg);
         cursor: pointer;
         transition: color 0.15s;
@@ -1292,7 +1310,8 @@
         box-shadow: inset -2px 0 0 var(--orange), inset 0 2px 0 var(--orange), inset 0 -2px 0 var(--orange);
       }
       .fav-open:focus-visible,
-      .fav-remove:focus-visible {
+      .fav-remove:focus-visible,
+      #favourites-list:focus-visible {
         outline: 2px solid var(--orange);
         outline-offset: 2px;
       }
@@ -3613,10 +3632,28 @@
            and double-tap natively. The locate button (#locate-me, the
            App Store 4.2 GPS feature) survives as a floating circular
            button at the bottom-right, above the layer chips.
-           The map-title (large "SKY SCORE" mark) is hidden - the brand
-           is already in the PWA chrome / tab nav. */
+           The map-title (large "SKY SCORE" mark) is taken off the SCREEN
+           to give the map the space - but not out of the accessibility
+           tree (audit M32, 2026-09-14). It was display:none, under a
+           justification that the brand "is already in the PWA chrome / tab
+           nav": true inside the installed app, false in a browser tab, and
+           either way the h1 is the page's only heading, so a phone reader
+           landed on a page with no heading at all. Visually hidden with the
+           same declarations as .sr-only, so the heading is announced and
+           reachable and the map keeps every pixel it had. (Whether a small
+           visible wordmark belongs on the phone landing state is a design
+           judgement for Bill, not this fix.) */
         .app[data-mview='search'] .map-title {
-          display: none;
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          clip-path: inset(50%);
+          white-space: nowrap;
+          border: 0;
         }
 
         /* City switcher: compact horizontal chip in the top-right.
@@ -4161,10 +4198,18 @@
             </div>
           </div>
         </div>
+        <!--
+          role="img", not "application" (audit M31, 2026-09-14). An application
+          role tells a screen reader to hand every keystroke to the widget, and
+          this SVG has no focusable descendants and no key handlers - the
+          boroughs are mouse-only, and every one of them is keyboard-reachable
+          from the ranking table and the search box instead. Same reasoning as
+          #locator-svg on 8 Sep: make no ARIA promise the keyboard cannot keep.
+        -->
         <svg
           id="map-svg"
-          role="application"
-          aria-label="Interactive map of the selected city's boroughs, with overlay toggles for aircraft noise, road noise, flood risk and air quality. Not every overlay carries data in every city. Use the search box, layer toggles, or city switcher above to explore."
+          role="img"
+          aria-label="Map of the selected city's boroughs, with overlay toggles for aircraft noise, road noise, flood risk and air quality. Not every overlay carries data in every city. The map is mouse-only; use the search box, the ranking list, the layer toggles or the city switcher to explore by keyboard."
         >
           <title>Sky Score borough map</title>
         </svg>
@@ -4382,7 +4427,13 @@
         <div id="tab-favourites" role="tabpanel" aria-labelledby="tab-btn-favourites" style="display: none">
           <div class="sidebar-section">
             <h3>SAVED LOCATIONS</h3>
-            <div id="favourites-list">
+            <!-- Announces a removal (audit M30): the list re-renders and the
+                 control that was focused is destroyed, so without this a
+                 keyboard Remove is silent, and without the tabindex on the
+                 list below there is nowhere to put focus once the last row
+                 has gone. Same sr-only status pattern as #result-status. -->
+            <div id="favourites-status" class="sr-only" role="status" aria-atomic="true"></div>
+            <div id="favourites-list" tabindex="-1">
               <p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p>
             </div>
           </div>
@@ -11936,7 +11987,17 @@
         // defect for another. Inerting each child takes the thirteen controls
         // out of the tab order while leaving the landmark itself intact and
         // navigable.
-        for (const child of map.children) child.inert = covering;
+        //
+        // EXCEPT THE TITLE (audit M32's sibling, found 2026-09-14 the moment
+        // `page-has-heading-one` started blocking). `.map-title` holds the
+        // page's only <h1> and no control at all, and inert removes a subtree
+        // from the accessibility tree - so with a result open on a landscape
+        // phone the page had no heading. Same trade this comment already
+        // describes, one level down: a fix scoped to "the children" reached
+        // the one child that was never the problem.
+        for (const child of map.children) {
+          child.inert = covering && !child.classList.contains('map-title');
+        }
       }
 
       // The sheet animates, so the rect read immediately after a state change
@@ -12545,7 +12606,7 @@
               .map(
                 (f) => `
       <div class="fav-item">
-        <button type="button" class="fav-open" data-fav-postcode="${escapeHtml(f.postcode)}" data-fav-city="${escapeHtml(f.city || 'london')}" aria-label="Show scores for saved postcode ${escapeHtml(f.postcode)}">
+        <button type="button" class="fav-open" data-fav-postcode="${escapeHtml(f.postcode)}" data-fav-city="${escapeHtml(f.city || 'london')}">
           <div style="font-weight:600;">${escapeHtml(f.postcode)}</div>
           <div style="font-size:10px;color:var(--mid);">${escapeHtml(f.borough || '')} &middot; Noise: ${escapeHtml(f.noiseLevel || 'N/A')} &middot; Score: ${escapeHtml(f.buyerScore || 'N/A')}/10</div>
         </button>
@@ -12602,9 +12663,33 @@
             triggerSearch(btn.dataset.favPostcode);
           });
         });
+        // No aria-label on .fav-open (audit M30): a label REPLACES the
+        // accessible name, so "Show scores for saved postcode SW11 1AA" hid
+        // the borough, noise and score the sighted reader gets from the same
+        // row. The name is the row's content now, which is also what a voice
+        // user has to say to activate it (WCAG 2.5.3).
         el.querySelectorAll('.fav-remove').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            removeFavourite(btn.dataset.favRemove);
+          btn.addEventListener('click', async () => {
+            // Where focus goes AFTER the re-render, decided before it: the
+            // remove control is destroyed with its row, and a destroyed
+            // focused element drops focus onto <body> with nothing announced
+            // (audit M30). The row that takes this one's place inherits
+            // focus; with no rows left, the list itself does, so the
+            // empty-state sentence is read.
+            const removes = [...el.querySelectorAll('.fav-remove')];
+            const index = removes.indexOf(btn);
+            const postcode = btn.dataset.favRemove;
+            const ok = await removeFavourite(postcode);
+            if (!ok) return;
+            const remaining = [...el.querySelectorAll('.fav-remove')];
+            const status = document.getElementById('favourites-status');
+            if (status) {
+              status.textContent =
+                `Removed ${postcode} from saved locations. ` +
+                (remaining.length ? `${remaining.length} remaining.` : 'None remaining.');
+            }
+            const next = remaining[Math.min(index, remaining.length - 1)];
+            (next || el).focus();
           });
         });
       }

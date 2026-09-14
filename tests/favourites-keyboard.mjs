@@ -19,6 +19,15 @@
  *   3. Enter on a row's open button DOES run the search for that postcode.
  *      The positive half, so a fix that made every key inert would not pass.
  *
+ * Three more since 2026-09-14 (audit M30), each red on the 13 Sep tree:
+ *   4. After Enter on remove, focus is INSIDE the list - on the row that took
+ *      the removed one's place, or on the list itself once none remain -
+ *      never on <body>. A re-render destroys the focused control, and a
+ *      destroyed focused element drops focus silently.
+ *   5. The removal is ANNOUNCED: #favourites-status names the postcode.
+ *   6. The open button's accessible name carries the row's data (borough,
+ *      score), not an aria-label that replaced it.
+ *
  * Serves the WORKING TREE. RED-PROOF: `SKY_INDEX=<path>` serves that file as
  * /index.html instead, so the gate can be run against a checked-out pre-fix
  * copy - it was: axe named both rows as nested, and Enter on the remove
@@ -141,6 +150,41 @@ check(
   `searches=${JSON.stringify(after.searches)} switches=${JSON.stringify(after.switches)}`,
 );
 
+// 4-5. Focus survives the re-render, and the removal is announced.
+const focusAfter = await page.evaluate(() => {
+  const a = document.activeElement;
+  const list = document.getElementById('favourites-list');
+  return {
+    tag: a ? a.tagName.toLowerCase() : 'none',
+    inList: !!(a && list && list.contains(a)),
+    onRemove: !!(a && a.matches && a.matches('.fav-remove')),
+    postcode: a && a.dataset ? a.dataset.favRemove || null : null,
+    status: (document.getElementById('favourites-status') || {}).textContent || '',
+  };
+});
+check(
+  'after Enter on remove, focus is on the row that took its place',
+  focusAfter.inList && focusAfter.onRemove && focusAfter.postcode === 'M1 1AE',
+  `activeElement=${focusAfter.tag} inList=${focusAfter.inList} onRemove=${focusAfter.onRemove} postcode=${focusAfter.postcode}`,
+);
+check(
+  'the removal is announced by name',
+  /SW11 1AA/.test(focusAfter.status) && /1 remaining/.test(focusAfter.status),
+  `status="${focusAfter.status}"`,
+);
+
+// 6. The open button's accessible name is the row's data, not a label over it.
+const openName = await page.evaluate(() => {
+  const b = document.querySelector('#favourites-list [data-fav-postcode="M1 1AE"]');
+  if (!b) return null;
+  return { label: b.getAttribute('aria-label'), text: (b.textContent || '').replace(/\s+/g, ' ').trim() };
+});
+check(
+  'the open control is named by its content (borough and score audible)',
+  !!openName && openName.label === null && /Manchester/.test(openName.text) && /7\.7/.test(openName.text),
+  JSON.stringify(openName),
+);
+
 // 3. Enter on the open control runs the search - the positive half.
 const openBtn = page.locator('#favourites-list [data-fav-postcode="M1 1AE"]');
 const openCount = await openBtn.count();
@@ -156,6 +200,26 @@ if (openCount === 0) {
     opened.searches.length === 1 && opened.searches[0] === 'M1 1AE' && opened.switches[0] === 'manchester',
     `searches=${JSON.stringify(opened.searches)} switches=${JSON.stringify(opened.switches)}`,
   );
+}
+
+// 4b. Remove the LAST row too: focus must land on the list, whose empty-state
+// sentence is then what a screen reader gets, and the status must say so.
+const lastRemove = page.locator('#favourites-list [data-fav-remove="M1 1AE"]');
+if ((await lastRemove.count()) === 1) {
+  await lastRemove.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const empty = await page.evaluate(() => ({
+    onList: document.activeElement === document.getElementById('favourites-list'),
+    rows: document.querySelectorAll('#favourites-list .fav-item').length,
+    status: (document.getElementById('favourites-status') || {}).textContent || '',
+  }));
+  check(
+    'removing the last row puts focus on the list, not <body>',
+    empty.onList && empty.rows === 0,
+    `onList=${empty.onList} rows=${empty.rows} deletes=${deletes}`,
+  );
+  check('the last removal says none remain', /None remaining/.test(empty.status), `status="${empty.status}"`);
 }
 
 await browser.close();

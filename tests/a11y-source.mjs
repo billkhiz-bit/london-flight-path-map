@@ -196,11 +196,19 @@ const VIEWPORTS = [
 // public page had one, so this was never a house style; it was an unaudited
 // gap. `region` additionally requires all content to sit inside SOME landmark,
 // which is why the fix wraps rather than merely inserts a tag.
+//
+// `page-has-heading-one` joined on 2026-09-14 (audit M32). It had been running
+// since `best-practice` was added and REPORTING, not blocking - which is how
+// the phone landing state shipped with its only <h1> at display:none inside
+// the search view, and the gate's 844x390 pass said nothing. A page with no
+// heading is the same class of structural gap as a page with no <main>.
+// Proven red at the phone viewport on the pre-fix tree before promotion.
 const FAIL_MODERATE = new Set([
   'heading-order',
   'landmark-one-main',
   'region',
   'aria-allowed-role',
+  'page-has-heading-one',
 ]);
 
 // ONE HOLDER for what axe runs, hoisted 2026-08-31. This array was written out

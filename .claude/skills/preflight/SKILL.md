@@ -83,3 +83,21 @@ commit does not go out regardless of what else is green:
 
 - the signup race-recovery test (I-N6)
 - the `_safe_revoke_orphan_key` prefix guard (N-Code-1)
+
+## Gotchas
+
+- **A preflight that stops mid-run at `Playwright e2e` with no FAIL line is
+  usually the HARNESS, not the gate (2026-09-14).** Claude Code's background
+  runner kills a task when system memory runs low, and the Playwright stage
+  is where the headless Chromium workers push it over. It happened twice in a
+  row with ~6 GB free on a 32 GB machine while Chrome held 12 GB across 61
+  processes; the third run passed unchanged once Chrome was trimmed to ~9 GB.
+  Tell-tales: the log ends on a stage NAME with no verdict, the notification
+  says "stopped because the system is running low on memory", and every stage
+  before it is PASS. Do not read it as flaky, do not retry blind, and do not
+  reach for `--skip-e2e` (that is a green run by not looking). Check
+  `Get-Process | Group-Object Name` for the memory hog, ask Bill to close
+  tabs, kill any orphaned `chrome-headless-shell.exe` the dead run left
+  behind, then run ONCE more. Log the run to a file with the exit code
+  appended (`sh scripts/preflight.sh > log 2>&1; echo EXIT=$? >> log`) so a
+  killed run still shows how far it got.

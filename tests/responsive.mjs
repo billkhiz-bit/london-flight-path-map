@@ -92,6 +92,19 @@ const PAGES = [
     prepare: 'layers',
     where: (v) => v.w <= 480 || (v.w <= 900 && v.h <= 500),
   },
+  // THE SAME PAGE WITH THE RANKING VIEW OPEN, added 2026-09-14 (audit M33).
+  //
+  // Fourth time. The neighbourhood ranking table overflowed its gutter by
+  // 1px at 320x568 with no x-scroller, and no state here had ever opened the
+  // ranking - so the overflow detector, which caught changes.html's 402px
+  // and privacy.html's 149px on tables it COULD see, never saw this one.
+  {
+    name: 'consumer app, ranking open',
+    slug: 'index',
+    full: true,
+    settle: 2500,
+    prepare: 'ranking',
+  },
   { name: 'pricing', slug: 'pricing' },
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
@@ -244,6 +257,64 @@ for (const meta of PAGES) {
       failures += 1;
       await page.close();
       continue;
+    }
+  }
+
+  if (meta.prepare === 'ranking') {
+    // Reach the ranking the way the layout offers it: the mobile nav's
+    // Rankings tab where the tabbed layout renders one, the sidebar tab
+    // otherwise. REPORTED if neither produced rows, so a run that could not
+    // get there does not pass as a scan of the landing state.
+    const reached = await page.evaluate(() => {
+      const nav = document.querySelector('.mobile-nav-btn[data-mview="ranking"]');
+      const tab = document.getElementById('tab-btn-ranking');
+      const viaNav = Boolean(nav) && nav.getBoundingClientRect().height > 0;
+      (viaNav ? nav : tab)?.click();
+      return { via: viaNav ? 'mobile-nav' : tab ? 'sidebar-tab' : 'none' };
+    });
+    await page.waitForTimeout(1200);
+    const rows = await page.evaluate(
+      () => [...document.querySelectorAll('.rank-table tbody tr')].filter((r) => r.getBoundingClientRect().height > 0).length
+    );
+    if (reached.via === 'none' || rows === 0) {
+      console.log(
+        `PREP-FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} could not reach the ` +
+          `ranking-open state (via ${reached.via}, visible rows ${rows})`
+      );
+      failures += 1;
+      await page.close();
+      continue;
+    }
+    // A TABLE MUST RESPECT ITS GUTTER. The detectors below ask whether the
+    // document scrolls and whether a control is past the viewport with no
+    // scrollable ancestor - and this table's rows are controls INSIDE the
+    // scrolling sidebar, so a table 29px wider than its box was exempt: the
+    // whole content pane slid sideways instead and the gate read clean. The
+    // rule this file already states - a table may be wider only inside its
+    // own overflow-x: auto box - is asserted here directly, for every
+    // rendered table in the state. Proven red on the pre-fix tree at 320x568.
+    const tables = await page.evaluate(() =>
+      [...document.querySelectorAll('table')]
+        .filter((t) => t.getBoundingClientRect().height > 0)
+        .map((t) => {
+          const box = t.parentElement;
+          const cs = getComputedStyle(box);
+          return {
+            table: '#' + (t.closest('[id]')?.id || '?'),
+            width: Math.round(t.getBoundingClientRect().width),
+            boxWidth: box.clientWidth,
+            scroller: /auto|scroll/.test(cs.overflowX),
+          };
+        })
+        .filter((t) => t.width > t.boxWidth && !t.scroller)
+    );
+    for (const t of tables) {
+      console.log(
+        `FAIL ${String(vp.w).padStart(4)}x${String(vp.h).padEnd(5)} table in ${t.table} is ` +
+          `${t.width}px wide in a ${t.boxWidth}px box with no overflow-x scroller - it is ` +
+          `pushing whatever ancestor scrolls, and sitting in the gutter`
+      );
+      failures += 1;
     }
   }
 

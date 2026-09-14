@@ -1237,7 +1237,13 @@ function buildPanel(listing, plan) {
   // its first control also gets the role and label announced.
   panel.setAttribute('tabindex', '-1');
 
-  const header = el('header', 'c33-header');
+  // A <div>, not a <header> (audit M34, 2026-09-14). This panel is injected
+  // into the host page's <body>, where a <header> with no sectioning ancestor
+  // computes to role=banner - a second banner nested inside Rightmove's own,
+  // which axe flags and which announces this strip as the PAGE header. The
+  // panel's landmark is the `complementary` role on #cubitt33-panel above;
+  // the header strip is layout, not a landmark.
+  const header = el('div', 'c33-header');
 
   // The title is a BUTTON, not a span with a listener on the header. A bare
   // click handler on a <header> is invisible to the keyboard and announces

@@ -31,6 +31,15 @@
   --c33-brand-deep: #9c3f0a;
   --c33-brand-lift: #d35f16;
   --c33-brand-glow: #ffc08a;
+  /* Muted TEXT, two tiers, both AA on the white panel at the 10-12px the
+     rows use (WCAG 1.4.3 needs 4.5:1 there - none of it is "large text").
+     Until 2026-09-14 (audit M34) eight rules set #6b7c93 (4.26:1) and five
+     more #8a97a8 (2.97:1), one of which the 22 Aug attribution fix had
+     already corrected in isolation. Tokens, so the next rule that wants
+     "grey" reaches for a value that has been measured. Chart FILLS are not
+     these: they are non-text (1.4.11, 3:1) and sit in their own comment. */
+  --c33-muted: #5c6d82; /* 5.30:1 */
+  --c33-faint: #627386; /* 4.87:1 */
 }
 
 #cubitt33-badge {
@@ -197,7 +206,7 @@
   display: block;
   flex: none;
   margin-left: auto;
-  color: #6b7c93;
+  color: var(--c33-muted);
   transition: transform 140ms ease;
 }
 
@@ -283,7 +292,7 @@
   border: 0;
   font-size: 20px;
   line-height: 1;
-  color: #6b7c93;
+  color: var(--c33-muted);
   background: none;
   cursor: pointer;
 }
@@ -296,7 +305,7 @@
 #cubitt33-panel .c33-addr {
   margin: 0 0 10px;
   font-size: 12px;
-  color: #6b7c93;
+  color: var(--c33-muted);
 }
 
 /* The caveat is the honesty line — when a section is suppressed because the
@@ -321,7 +330,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6b7c93;
+  color: var(--c33-muted);
 }
 
 #cubitt33-panel .c33-h4 {
@@ -361,7 +370,7 @@
 #cubitt33-panel .c33-dist {
   flex: none;
   font-variant-numeric: tabular-nums;
-  color: #6b7c93;
+  color: var(--c33-muted);
 }
 
 /* A caveat belonging to one reading, sitting under its bar. Indented to the
@@ -371,13 +380,13 @@
   margin-top: 3px;
   font-size: 11px;
   line-height: 1.35;
-  color: #8a97a8;
+  color: var(--c33-faint);
 }
 
 #cubitt33-panel .c33-sub {
   margin-top: 1px;
   font-size: 11px;
-  color: #8a97a8;
+  color: var(--c33-faint);
 }
 
 #cubitt33-panel .c33-warn {
@@ -391,7 +400,7 @@
 
 #cubitt33-panel .c33-muted {
   margin: 0;
-  color: #6b7c93;
+  color: var(--c33-muted);
 }
 
 /* "Not available", compactly. Was a section heading plus a full sentence, so
@@ -402,7 +411,7 @@
 #cubitt33-panel .c33-none {
   margin: 0 0 10px;
   font-size: 12px;
-  color: #8a97a8;
+  color: var(--c33-faint);
 }
 
 /* The vintage tag, e.g. 2021 on DEFRA readings. Sits ON the row it qualifies,
@@ -440,7 +449,7 @@
   align-items: center;
   min-height: 24px;
   font-size: 12px;
-  color: #6b7c93;
+  color: var(--c33-muted);
   cursor: pointer;
   list-style: none;
 }
@@ -465,7 +474,7 @@
 #cubitt33-panel .c33-when {
   flex: none;
   font-size: 11px;
-  color: #8a97a8;
+  color: var(--c33-faint);
 }
 
 /* The MEES line on a letting. Neutral by default - "all certificates meet
@@ -490,7 +499,7 @@
 #cubitt33-panel .c33-common {
   margin: 2px 0 4px;
   font-size: 11px;
-  color: #8a97a8;
+  color: var(--c33-faint);
 }
 
 #cubitt33-panel .c33-note {
@@ -559,7 +568,7 @@
   margin: 4px 0 8px;
   font-size: 12px;
   line-height: 1.45;
-  color: #6b7c93;
+  color: var(--c33-muted);
 }
 
 #cubitt33-panel .c33-foot {
@@ -580,10 +589,12 @@
   margin-top: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;
-  /* 4.19:1, was #b3bdc9 at 1.90:1 - the lowest contrast on the panel. Debug
-     output is still text a person has to read, and this is the row that carries
-     the extraction diagnosis when a listing looks wrong. */
-  color: #727d8a;
+  /* Was #b3bdc9 at 1.90:1 - the lowest contrast on the panel - then #727d8a
+     at 4.19:1, which its own comment called fixed and which is still under
+     WCAG 1.4.3's 4.5 (audit M34). Debug output is still text a person has to
+     read, and this is the row that carries the extraction diagnosis when a
+     listing looks wrong. */
+  color: var(--c33-faint);
 }
 
 @media (prefers-reduced-motion: no-preference) {
