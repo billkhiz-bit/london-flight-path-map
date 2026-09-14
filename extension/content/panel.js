@@ -636,9 +636,11 @@ function renderNhs(result) {
       const li = el('li', 'c33-item');
       const row = el('div', 'c33-row');
       row.appendChild(el('span', 'c33-name', item.name));
-      // A fallback row has distance null — it is a link to nhs.uk, not a
-      // located facility, so showing "0 m" would be a lie.
-      row.appendChild(el('span', 'c33-dist', item.fallback ? '' : metres(item.distance)));
+      // A link row (an outage fallback, or a measured "none within 1.5 km" -
+      // audit M16) has distance null: it is a link to nhs.uk, not a located
+      // facility, so showing "0 m" would be a lie.
+      const isLink = item.link || item.fallback || item.noneNearby;
+      row.appendChild(el('span', 'c33-dist', isLink ? '' : metres(item.distance)));
       li.appendChild(row);
       list.appendChild(li);
     }

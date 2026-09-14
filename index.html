@@ -10553,7 +10553,9 @@
         }
         const renderGroup = (title, items) => {
           if (!items.length) return '';
-          if (items[0].fallback) {
+          // `link` covers both an outage fallback and a measured "none within
+          // 1.5 km" (audit M16); the row's own name says which.
+          if (items[0].link || items[0].fallback) {
             const url = safeUrl(items[0].website || items[0].url || 'https://www.nhs.uk/');
             const label = escapeHtml(items[0].name || 'Search NHS ' + title + ' services');
             return `<p class="info-note"><a href="${url}" target="_blank" rel="noopener" style="color:var(--orange);">${label} &rarr;</a></p>`;

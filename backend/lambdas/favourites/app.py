@@ -249,9 +249,15 @@ def handler(event, context):
             except json.JSONDecodeError as exc:
                 logger.warning('Invalid JSON body on DELETE: %s', exc)
                 return response(400, {'error': 'Invalid JSON body.'})
+            # A non-object body raised on `.get`, and a non-string postcode
+            # reached delete_item as a key of the wrong type - both answered
+            # 503 "storage backend temporarily unavailable" for what was a
+            # bad request (audit M3).
+            if not isinstance(body, dict):
+                return response(400, {'error': 'JSON body must be an object.'})
             postcode = body.get('postcode', '')
-            if not postcode:
-                return response(400, {'error': 'Postcode is required'})
+            if not isinstance(postcode, str) or not postcode.strip():
+                return response(400, {'error': 'Postcode is required and must be a string'})
             table.delete_item(Key={'userId': token, 'postcode': postcode})
             return response(200, {'message': 'Deleted'})
 

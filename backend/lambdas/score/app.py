@@ -8157,6 +8157,10 @@ def handle_batch(event, context=None):
     except json.JSONDecodeError:
         return response(400, {'error': 'Invalid JSON body'})
 
+    # A valid-JSON non-object (`[]`, `"x"`, `1`) raised AttributeError on
+    # `.get` and answered 500 (audit M3). Same guard chat gained on 13 Sep.
+    if not isinstance(payload, dict):
+        return response(400, {'error': 'Body must be a JSON object with a "queries" array.'})
     queries = payload.get('queries')
     if not isinstance(queries, list):
         return response(

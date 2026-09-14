@@ -87,6 +87,29 @@ logger = logging.getLogger()
 # attempts x 2 hops is 40s against a 28s Timeout - the budget test modelled
 # one hop. A throttled Bedrock call now answers the 503 straight away, which
 # is the degraded response this endpoint exists to give.
+# THE CLIENTS THEMSELVES are built once per container, lazily (audit M15).
+# The comment above said "hoisted to module scope" from 2026-09-13, and only
+# the Config was: both boto3.client() calls still ran on every request, so
+# the 50-200 ms the hoist was meant to save was still being spent twice.
+# Lazy rather than at import so a unit test that never reaches AWS builds
+# nothing, and so a missing region at import time cannot fail the module.
+_CLIENTS = {}
+
+
+def _lambda_client():
+    if 'lambda' not in _CLIENTS:
+        _CLIENTS['lambda'] = boto3.client('lambda', config=_BOTO_CONFIG)
+    return _CLIENTS['lambda']
+
+
+def _bedrock_client():
+    if 'bedrock' not in _CLIENTS:
+        _CLIENTS['bedrock'] = boto3.client(
+            'bedrock-runtime', region_name=BEDROCK_REGION, config=_BOTO_CONFIG
+        )
+    return _CLIENTS['bedrock']
+
+
 _BOTO_CONFIG = Config(
     connect_timeout=2,
     read_timeout=8,
@@ -146,8 +169,7 @@ def retrieve_context(query):
     }
 
     try:
-        client = boto3.client('lambda', config=_BOTO_CONFIG)
-        result = client.invoke(
+        result = _lambda_client().invoke(
             FunctionName=SCORE_FUNCTION_NAME,
             InvocationType='RequestResponse',
             Payload=json.dumps(event).encode(),
@@ -255,7 +277,7 @@ def verify_answer(answer, context):
 
 def ask_model(question, context):
     """Single Bedrock call. Returns (answer, error)."""
-    bedrock = boto3.client('bedrock-runtime', region_name=BEDROCK_REGION, config=_BOTO_CONFIG)
+    bedrock = _bedrock_client()
 
     user_text = (
         f'DATA (the only permitted source):\n{json.dumps(context, indent=1)}\n\n'

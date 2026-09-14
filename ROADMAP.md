@@ -628,9 +628,10 @@ blocking). **Then M19, M20, M22, M24, M27, M28 (25 of 37)**: both loaders
 hard-fail on schema drift and on an empty full run, checkpoint at the top of the
 loop, and refuse `--limit 0` (measured doing a full 2.7M-row dry pass); the
 aircraft runbook verifies from the origin; `airQualityCoverage` joins its two
-siblings. **Still open, 12:** M1-M3, M6, M7, M13, M15-M17, M36, M37, plus M14's
-chat-400 remainder - the backend error-path cluster (M2, M3, M13, M15, M16) is
-one pass with a SAM deploy; M1, M6, M7, M17, M36, M37 as they come.
+siblings. **Then the backend error-path cluster M2, M3, M13, M15, M16 (30 of
+37)**, held by `backend/tests/test_error_paths.py`, 9 of 9 red on the committed
+Lambdas. **Still open, 7:** M1, M6, M7, M17, M36, M37, plus M14's chat-400
+remainder.
 
 ### Legal & entity — blocks the first pilot invoice (raised 2026-08-04)
 

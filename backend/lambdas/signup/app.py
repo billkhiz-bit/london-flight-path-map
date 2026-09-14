@@ -41,7 +41,7 @@ from datetime import UTC, datetime
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -62,6 +62,10 @@ KEY_TAG_KEY = 'CreatedBy'
 KEY_TAG_VALUE = 'SignupLambda'
 
 _usage_plan_id_cache = None
+
+
+class SignupLookupError(Exception):
+    """The signups table could not be read, so nothing about the address is known."""
 
 # Pragmatic email regex, RFC 5322 compliance is overkill for a signup
 # form; this catches the common shape and rejects obvious garbage. The
@@ -185,8 +189,15 @@ def get_existing_signup(email):
             # keyId alone would risk a second key for a row missing keyId.
             ProjectionExpression='createdAt, keyId',
         )
-    except ClientError:
-        return None
+    except (ClientError, BotoCoreError) as e:
+        # NOT `return None` (audit M13). None means "no row", and the caller
+        # acts on it: a consumer form would proceed to the conditional put,
+        # hit the existing row, and answer 200 "already-subscribed" - to a
+        # KEY HOLDER who is on no list - while a denied GetItem went unlogged.
+        # A read that failed is a read that failed; the handler answers 503.
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[SIGNUP_LOOKUP_FAILED] code=%s', code)
+        raise SignupLookupError(code) from e
     return result.get('Item')
 
 
@@ -371,7 +382,12 @@ def handle_post(event):
     # createdAt is deliberately withheld from this body: /v1/signup is
     # unauthenticated, so anyone who guesses an address would otherwise
     # learn when its owner registered. It stays on the row for support.
-    existing = get_existing_signup(email)
+    try:
+        existing = get_existing_signup(email)
+    except SignupLookupError:
+        return response(
+            503, {'error': 'Could not check this address. Please try again later.'}, event
+        )
     # Which register does the existing row belong to? Consumer rows write
     # keyId as an explicit '' (record_signup below); key rows carry the real
     # id. Only an EXPLICIT marker changes a reply: a legacy row missing the
@@ -495,22 +511,28 @@ def handle_post(event):
 
     try:
         key_id, key_value = create_api_key(email, name)
-    except ClientError as e:
-        # Most common failure: limit on number of API keys per account.
-        # Surface the specific code so we can debug from logs.
+    except (ClientError, BotoCoreError) as e:
+        # Most common failure: limit on number of API keys per account. The
+        # code goes to the LOG, not the body (audit M2): /v1/signup is
+        # unauthenticated, and an AWS error code names the service behind
+        # it to whoever asks. BotoCoreError is here too - a transport fault
+        # escaped this clause as a raw 500 until 2026-09-14.
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[SIGNUP_CREATE_KEY_FAILED] code=%s', code)
         return response(
-            503,
-            {
-                'error': 'Could not create API key. Please try again later.',
-                'code': e.response.get('Error', {}).get('Code', 'Unknown'),
-            },
-            event,
+            503, {'error': 'Could not create API key. Please try again later.'}, event
         )
 
     try:
         record_signup(email, name, key_id, source='api')
-    except ClientError as e:
-        code = e.response.get('Error', {}).get('Code', '')
+    except (ClientError, BotoCoreError) as e:
+        # BotoCoreError joined ClientError here on 2026-09-14 (audit M2). A
+        # transport fault on the DDB write used to escape as a raw 500 AFTER
+        # create_api_key had succeeded: an enabled key with no row, and a
+        # caller who never received it and would try again - minting a
+        # second. It now takes the "other errors" branch below: the key is
+        # returned, and the orphaned audit row is logged by keyId.
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
         if code == 'ConditionalCheckFailedException':
             # Race detected, another in-flight signup wrote first. Revoke
             # the key we just created and return 409. Log the keyId only:

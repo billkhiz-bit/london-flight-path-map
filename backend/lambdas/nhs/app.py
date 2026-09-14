@@ -269,16 +269,38 @@ def partition_results(elements, lat, lon):
     return buckets
 
 
+def none_nearby(service_type):
+    """The HAPPY-PATH row for an empty bucket: Overpass answered, and maps
+    nothing of this type within SEARCH_RADIUS_M. Distinct from
+    fallback_links() by name, wording and flag (audit M16): until 2026-09-14
+    an empty bucket after a SUCCESSFUL query carried `fallback: True`, so
+    "no GP within 1.5 km here" and "we could not ask" were the same row,
+    and a reader in a well-served village was told the service was down.
+    Both renderers key on `link: True` to draw a link rather than a place."""
+    km = SEARCH_RADIUS_M / 1000
+    return [
+        {
+            'name': f'No {service_type} services within {km:g} km in OpenStreetMap - search nhs.uk',
+            'website': NHS_SEARCH_PAGES.get(service_type, 'https://www.nhs.uk/'),
+            'distance': None,
+            'fallback': False,
+            'noneNearby': True,
+            'link': True,
+        }
+    ]
+
+
 def fallback_links(service_type):
     """Return a single fallback row pointing at the canonical NHS search
     page when Overpass is unavailable. Used only when the upstream call
-    fails, happy path returns real OSM data."""
+    fails; the happy path uses none_nearby() for an empty bucket."""
     return [
         {
             'name': f'Search NHS {service_type} services on nhs.uk',
             'website': NHS_SEARCH_PAGES.get(service_type, 'https://www.nhs.uk/'),
             'distance': None,
             'fallback': True,
+            'link': True,
         }
     ]
 
@@ -372,9 +394,9 @@ def handler(event, context):
             200,
             {
                 'location': {'lat': lat, 'lon': lon},
-                'gp': buckets['gp'] or fallback_links('GP'),
-                'pharmacies': buckets['pharmacies'] or fallback_links('Pharmacy'),
-                'hospitals': buckets['hospitals'] or fallback_links('Hospital'),
+                'gp': buckets['gp'] or none_nearby('GP'),
+                'pharmacies': buckets['pharmacies'] or none_nearby('Pharmacy'),
+                'hospitals': buckets['hospitals'] or none_nearby('Hospital'),
                 'sources': [ATTRIBUTION],
                 'available': True,
             },

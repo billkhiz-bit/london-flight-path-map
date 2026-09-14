@@ -497,7 +497,8 @@ class SignupHandlerTests(unittest.TestCase):
                           return_value={'name': self.app.KEY_NAME_PREFIX + 'orphan_at_example_com'}), \
              patch.object(self.app.apigw, 'delete_api_key') as mock_delete, \
              patch.object(self.app.ddb, 'get_item', return_value={}), \
-             patch.object(self.app.ddb, 'put_item') as mock_put:
+             patch.object(self.app.ddb, 'put_item') as mock_put, \
+             self.assertLogs(level='ERROR') as logs:
             result = self.app.handler({
                 'httpMethod': 'POST',
                 'body': json.dumps({'email': 'orphan@example.com'}),
@@ -505,9 +506,13 @@ class SignupHandlerTests(unittest.TestCase):
 
         self.assertEqual(result['statusCode'], 503)
         payload = json.loads(result['body'])
-        # The upstream code is surfaced so this is diagnosable from the
-        # response alone — that is how the outage was finally identified.
-        self.assertEqual(payload['code'], 'AccessDeniedException')
+        # The upstream code goes to the LOG, where the outage is diagnosed,
+        # and NOT to the body (audit M2): /v1/signup is unauthenticated, and
+        # an AWS error code tells whoever asks which service sits behind it.
+        # This test asserted `payload['code'] == 'AccessDeniedException'`
+        # until 2026-09-14 - a passing test reading as evidence, again.
+        self.assertNotIn('code', payload)
+        self.assertTrue(any('AccessDeniedException' in line for line in logs.output), logs.output)
         # Rollback fired: no orphan key survives the failed signup.
         mock_delete.assert_called_once_with(apiKey='key-orphan')
         # No audit row for a signup that never completed, otherwise the
