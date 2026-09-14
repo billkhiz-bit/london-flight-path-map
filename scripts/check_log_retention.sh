@@ -36,9 +36,11 @@
 # does so silently, because nothing fails when a list is merely out of date.
 #
 # `flightmap-dev` CAN call logs:DescribeLogGroups — that grant exists and is
-# what makes this checkable without admin credentials. It CANNOT call
-# logs:PutRetentionPolicy or logs:DeleteLogGroup, so changing the
-# infrastructure is console work; see DRAFT_security_retention_passage.md §1.
+# what makes this checkable without admin credentials — and, since the
+# 2026-09-04 policy restore, logs:PutRetentionPolicy too (this comment said it
+# could not until 2026-09-14, audit M21; `scripts/check_aws_permissions.py`
+# is the authority, not this line). It still lacks logs:DeleteLogGroup, so
+# removing a group is console work; see DRAFT_security_retention_passage.md §1.
 #
 #   sh scripts/check_log_retention.sh
 
@@ -210,7 +212,6 @@ printf '%s\n' "$RAW" | tr -d '\r' > "$TMP"
 FAILED=0
 ORPHANS_FOUND=0
 STALE_FOUND=0
-SIGNUP_BYTES=""
 
 while IFS="$(printf '\t')" read -r NAME DAYS CREATED BYTES; do
   [ -z "$NAME" ] && continue
@@ -223,7 +224,6 @@ while IFS="$(printf '\t')" read -r NAME DAYS CREATED BYTES; do
       # creationTime is epoch millis; kept so the current generation of a
       # redeployed function can be told from its predecessors.
       printf '%s %s %s %s\n' "$LOGICAL" "$CREATED" "$NAME" "$DAYS" >> "$ROWS"
-      [ "$LOGICAL" = "SignupFunction" ] && SIGNUP_BYTES="$BYTES"
       ;;
     *)
       # WARN, not FAIL. Under an "indefinite" claim these groups do not
@@ -339,18 +339,14 @@ if [ "$MISSING_GROUPS" -gt 0 ]; then
   echo "  with zero transactions for its whole existence."
 fi
 
-# The signup group is NOT an orphan — signup is a live function — so this
-# warning is emitted on its own terms rather than folded into the count above,
-# which is where the previous version misfiled it. The byte figure is read from
-# AWS rather than quoted from a document, so it cannot drift.
-if [ -n "$SIGNUP_BYTES" ] && [ "$SIGNUP_BYTES" != "0" ] && [ "$SIGNUP_BYTES" != "None" ]; then
-  echo ""
-  echo "WARNING: the Signup log group holds $SIGNUP_BYTES bytes."
-  echo "  It contains raw email addresses from 26 Jun - 23 Jul 2026, in a"
-  echo "  location privacy.html does not disclose (2b names DynamoDB and API"
-  echo "  key metadata, not CloudWatch). Setting retention on it PRESERVES"
-  echo "  those entries for the window rather than removing them; deleting the"
-  echo "  group is what clears them. It is recreated empty on next invocation."
-fi
+# A warning about the Signup group holding raw email addresses (26 Jun -
+# 23 Jul 2026) stood here until 2026-09-14 (audit M21), keyed on the group
+# holding ANY bytes. The group that held those entries was deleted outright
+# (SECURITY.md, "Scope of the personal-data exposure, now cleared"), the
+# Lambda has logged the key ID only since 23 Jul, and every group is at 30
+# days - so the condition could not tell a clean entry from the ones it was
+# written for, and the warning printed on every run directly under the line
+# verifying the retention that made it moot. A byte count is not a content
+# claim; nothing here can see what a log line says.
 
 exit 0

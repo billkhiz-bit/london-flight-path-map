@@ -554,14 +554,22 @@ def growth_ranks(boroughs):
 
 
 def benchmarks(boroughs):
-    """The yardsticks the relative components are measured against.
+    """The yardsticks a vintage comparison is read against.
 
-    Two of the four factors are *relative*, not absolute: growth is scored
-    against the strongest-growing area and affordability against the cheapest
-    and dearest. Naming those reference points is what turns "growth fell 8.2"
-    from an assertion into something a reader can check — and it explains the
-    amplification, since an area that IS the benchmark scores the maximum by
-    definition, so it has nowhere to go but down.
+    Growth is *relative*: scored against the strongest-growing (and, since
+    v3.4, the steepest-falling) area of the same city. Naming those reference
+    points is what turns "growth fell 8.2" from an assertion into something a
+    reader can check — and it explains the amplification, since an area that
+    IS the benchmark scores the maximum by definition, so it has nowhere to go
+    but down.
+
+    Affordability is NOT relative to these any more (audit M9, corrected
+    2026-09-14): since methodology v5.0 it is anchored on the national
+    5th-95th percentile band, `national_price_bounds`, and this docstring
+    said "against the cheapest and dearest" for five days after that changed.
+    `cheapestArea`/`dearestArea` are still published, as the city's price
+    RANGE for context, not as the affordability anchor - see
+    `_afford_breakdown_line` for the anchor a response actually names.
     """
     trends = {name: bd['trend'] for name, bd in boroughs.items()}
     prices = {name: bd['avgPrice'] for name, bd in boroughs.items()}
@@ -4799,6 +4807,10 @@ def _afford_breakdown_line(city, bd=None):
     currency = CITIES[city]['currency']
     p5, p95 = national_price_bounds(city, CITIES[city]['boroughs'], currency)
     pool = sum(len(c['boroughs']) for c in CITIES.values() if c['currency'] == currency)
+    # The OTHER pool's size, for the sentence that contrasts the two. It was
+    # the literal '94-borough' three lines under the line deriving `pool`
+    # (audit M10) - right today, and the shape this docstring warns about.
+    gbp_pool = sum(len(c['boroughs']) for c in CITIES.values() if c['currency'] == 'GBP')
     unit = 'GBP' if currency == 'GBP' else 'USD'
 
     if currency == 'GBP':
@@ -4827,7 +4839,7 @@ def _afford_breakdown_line(city, bd=None):
             f'that pool is New York\'s {pool} boroughs, because New York is the only city '
             'Sky Score covers outside the United Kingdom - so this is a within-New-York '
             'scale, and it is NOT comparable with the sterling scores, which are anchored '
-            'on a 94-borough national pool. Prices in different currencies are not pooled.'
+            f'on a {gbp_pool}-borough national pool. Prices in different currencies are not pooled.'
         )
     return f'{source}. {scope}'
 
@@ -5970,6 +5982,41 @@ def _postcode_coverage_notice(city):
         return _COVERAGE_NOTICES['postcode-unmapped']
     return _COVERAGE_NOTICES['postcode']
 
+def _road_absence_notice(city):
+    """The sentence that is TRUE when a postcode has no road-noise row.
+
+    One holder, derived (audit M12, 2026-09-14). Until then every absence got
+    'has not been measured for this postcode, or is still being loaded' -
+    false for Cardiff, where DEFRA's Round 4 road map is an ENGLAND-ONLY
+    coverage (`NO_ROAD_COVERAGE` in build_borough_bands.py) and the load will
+    never happen; false outside the eleven mosaics, where the map exists and
+    Sky Score simply does not hold it; and stale inside them, where "still
+    being loaded" described the 10 Sep run. Whether a city HAS road coverage
+    is read off its borough records through _env_inputs_present - the same
+    holder the provenance reads - so no city is named here, and New York
+    falls out of the same branch as Cardiff without being special-cased.
+    """
+    if not city:
+        return (
+            "Sky Score holds DEFRA's road-noise map for the city-regions it "
+            'scores, and this postcode is outside all of them. No figure is '
+            'shown rather than an assumed one.'
+        )
+    name = CITIES[city]['name']
+    if 'roadNoise' not in _env_inputs_present(city):
+        return (
+            f"Road noise is not mapped for {name}: DEFRA's Round 4 road-noise "
+            'map is an England-only coverage and Sky Score holds no equivalent '
+            'here. No figure is shown rather than an assumed one.'
+        )
+    return (
+        "Road noise has not been loaded for this postcode. Sky Score holds DEFRA's "
+        f'road map for {name}, so this is a gap in the load - a postcode newer than '
+        'it, or ground the map leaves unmapped - not a measurement. No figure is '
+        'shown rather than an assumed one.'
+    )
+
+
 # THE TEXT MUST MATCH WHAT THE ENGINE DOES, and for a year it did not.
 # It said the component was "a neutral placeholder" - true before v3.8, which
 # stopped defaulting and started OMITTING an uncomputable component and
@@ -6006,10 +6053,14 @@ def build_environment(noise_row, postcode_clean=''):
     here and it was fine", which is the defect that quarantined the aircraft
     raster and the one this codebase has repeated most often.
 
-    Road Lden is reported, not scored. Folding it into the weighted total would
-    change every score the API has ever returned, which METHODOLOGY §7 treats as
-    a version bump with 14 days' notice to integrators — a product decision, not
-    a side effect of adding a data source.
+    The per-postcode road Lden here is reported and is not itself scored.
+    Road noise DOES score since methodology v4.0 - at BOROUGH level, as the
+    share of postcodes over WHO's 53 dB Lden, 0.35 of `environment` - so this
+    docstring's old "reported, not scored" (audit M11) was true of the
+    dataset only until 2026-08-29. Folding the postcode-level reading into the
+    weighted total as well would change every score the API returns, which
+    METHODOLOGY §7 treats as a version bump with 14 days' notice to integrators
+    — a product decision, not a side effect of holding a finer measurement.
     """
     env = {}
 
@@ -6277,10 +6328,16 @@ def national_price_bounds(city, boroughs, currency):
     implying a national US comparison the data cannot support.
 
     `boroughs` stands in for `city`'s own slice, so scoring a previous vintage
-    anchors on the previous-vintage pool. Only London has a real previous
-    dataset (`previous_dataset` returns the current set for every other city),
-    so substituting one city's slice reproduces what the whole pool looked like
-    at that vintage.
+    anchors on a pool with that slice at the previous vintage. That pool is an
+    APPROXIMATION of the previous-vintage pool, not a reproduction of it
+    (audit M8, corrected 2026-09-14): only London holds a real previous dataset
+    - `previous_dataset` returns the CURRENT set for every other city - so the
+    other 61 sterling boroughs enter at today's prices, and the June 2026 roll
+    moved 54 of those 61. Measured effect on the day it was written down: zero,
+    because p5 and p95 both land on boroughs the roll did not move. Latent
+    rather than absent - a roll that moves a percentile borough will make
+    `previousScore` for London drift by whatever the anchor moved, and the
+    honest fix is a previous-vintage price for every city, not this docstring.
     """
     override = boroughs is not CITIES[city]['boroughs']
     if not override and currency in _NATIONAL_AFFORD_BOUNDS:
@@ -7921,10 +7978,7 @@ def handle_environment(event):
             'reading, not a missing one, so no figure is shown.'
         )
     elif 'roadNoiseLdenDb' not in env:
-        notices.append(
-            'Road noise has not been measured for this postcode, or is still '
-            'being loaded. No figure is shown rather than an assumed one.'
-        )
+        notices.append(_road_absence_notice(city))
 
     return response(
         200,
@@ -8136,9 +8190,11 @@ def handle_batch(event, context=None):
             },
         )
 
-    # Parallel resolution. Each `resolve_query` call hits postcodes.io
-    # (network-bound, ~100-500 ms p95). Sequential at MAX_BATCH_SIZE=100
-    # would blow the 10s Lambda timeout above ~30 unique postcodes.
+    # Parallel resolution. Each `resolve_query` call may hit postcodes.io
+    # (network-bound, ~100-500 ms p95). Sequential at MAX_BATCH_SIZE=100 that
+    # is 10-50 s against the 28 s function Timeout in template.yaml - the
+    # API Gateway integration cap less one second - so a full batch of
+    # fallback-tier postcodes could not finish in series.
     # ThreadPoolExecutor with bounded workers gives us request-level
     # concurrency without overwhelming postcodes.io (which is generous
     # but unspecified on per-IP limits) or hitting Python GIL pressure.

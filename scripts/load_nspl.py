@@ -111,11 +111,13 @@ WHAT IT LOADS AND WHAT IT SKIPS:
         Greenwich meridian (SE10 9NF is -0.006020). `gridind == '9'` was
         verified to match the lat >= 99 set exactly, with no discrepancy.
 
-  SKIP  ctry25cd in {'L93000001', 'M83000003'}
+  SKIP  ctry<yy>cd in {'L93000001', 'M83000003'}
         Channel Islands and Isle of Man. Never positioned by ONS.
 
-  SKIP  blank lad25cd or blank ctry25cd
+  SKIP  blank lad<yy>cd or blank ctry<yy>cd
         No usable geography. 11,047 rows, of which 1,667 are LIVE.
+        (<yy> is the edition's own year suffix - lad26cd in August 2026 -
+        resolved by bind_columns(); the names are not fixed.)
 
   LOAD  terminated postcodes (doterm non-empty), tagged with `dt`.
         904,453 of the loadable rows.
@@ -949,9 +951,11 @@ def _read_checkpoint():
     # index was recorded WITHOUT regard to whether the write buffer had been
     # flushed: it can sit up to BATCH_SIZE-1 items ahead of what actually
     # reached DynamoDB. Resuming from it is what left silent holes in the first
-    # place, so it is not honoured. Re-scanning from row 0 costs ~6-7 hours and
-    # ~GBP 1.50 of idempotent re-writes; a hole costs a wrong answer that
-    # nothing detects.
+    # place, so it is not honoured. Re-scanning from row 0 costs about an
+    # hour on the BatchWriteItem path (58 min for 2,704,825 rows on
+    # 2026-09-09; ~6 hours on the per-item fallback, which is what "~6-7
+    # hours" here described until 2026-09-14) and ~GBP 1.50 of idempotent
+    # re-writes; a hole costs a wrong answer that nothing detects.
     #
     # The test sits HERE, after the parse, because that is where a bare index
     # actually lands: json.loads('5000') does not raise, it returns int 5000.

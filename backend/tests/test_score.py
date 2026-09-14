@@ -3492,31 +3492,71 @@ class RoadSurveyedQuietTests(unittest.TestCase):
         self.assertEqual(app.road_below_from_row({'roadLdenBelow': 40.0}), 40.0)
         self.assertEqual(app.build_environment({'roadLden': None, 'roadLdenBelow': 0.0}), {})
 
-    def _environment(self, row):
+    WANDSWORTH = {'postcode': 'SW11 1PX', 'ladCode': 'E09000032', 'adminDistrict': 'Wandsworth'}
+    CARDIFF = {'postcode': 'CF10 1EP', 'ladCode': 'W06000015', 'adminDistrict': 'Cardiff'}
+    # Elmbridge: a real English LAD in no city Sky Score covers.
+    UNCOVERED = {'postcode': 'KT10 9AD', 'ladCode': 'E07000207', 'adminDistrict': 'Elmbridge'}
+
+    def _environment(self, row, loc=WANDSWORTH):
         event = {'queryStringParameters': {'lat': '51.4613', 'lon': '-0.1673'}}
-        loc = {'postcode': 'SW11 1PX', 'ladCode': 'E09000032', 'adminDistrict': 'Wandsworth'}
         with patch.object(app, 'reverse_geocode', return_value=loc), \
                 patch.object(app, '_lookup_noise_row', return_value=row):
             res = app.handle_environment(event)
         self.assertEqual(res['statusCode'], 200)
         return json.loads(res['body'])
 
+    def _road_notice(self, body):
+        road = [n for n in body['notices'] if 'road' in n.lower()]
+        self.assertEqual(len(road), 1, body['notices'])
+        return road[0]
+
     def test_surveyed_quiet_notice_denies_the_absence_it_replaces(self):
         body = self._environment({'lden': None, 'roadLden': None, 'roadLdenBelow': 40.0})
-        road = [n for n in body['notices'] if 'road noise' in n.lower()]
-        self.assertEqual(len(road), 1, body['notices'])
-        self.assertIn('surveyed', road[0].lower())
-        self.assertIn('40 dB', road[0])
-        self.assertIn('quiet reading, not a missing one', road[0])
-        self.assertNotIn('not been measured', road[0])
+        road = self._road_notice(body)
+        self.assertIn('surveyed', road.lower())
+        self.assertIn('40 dB', road)
+        self.assertIn('quiet reading, not a missing one', road)
+        self.assertNotIn('not been measured', road)
 
-    def test_no_row_at_all_still_says_not_measured(self):
-        # The absence notice is still the truthful one for ground with no row:
-        # nodata cells, Wales, NYC, and postcodes newer than the last load.
-        body = self._environment({'lden': None, 'roadLden': None, 'roadLdenBelow': None})
-        road = [n for n in body['notices'] if 'road noise' in n.lower()]
-        self.assertEqual(len(road), 1, body['notices'])
-        self.assertIn('not been measured', road[0])
+    # The absence notice is DERIVED per city (audit M12). It used to be one
+    # sentence - "not been measured for this postcode, or is still being
+    # loaded" - for every absence, and the test that stood here called it
+    # "truthful for Wales, NYC": it was not. Cardiff is excluded from the
+    # England-only coverage by name and will never be loaded.
+    NO_ROW = {'lden': None, 'roadLden': None, 'roadLdenBelow': None}
+
+    def test_no_row_in_a_covered_city_is_a_gap_in_the_load(self):
+        road = self._road_notice(self._environment(self.NO_ROW))
+        self.assertIn('not been loaded', road)
+        self.assertIn('London', road)
+        self.assertNotIn('still being loaded', road)
+        self.assertNotIn('not been measured', road)
+
+    def test_no_row_in_cardiff_names_the_england_only_coverage(self):
+        # Derived, not declared: Cardiff's borough records carry no
+        # roadNoiseAboveWhoPct, and that is what the branch reads.
+        self.assertNotIn('roadNoise', app._env_inputs_present('cardiff'))
+        road = self._road_notice(self._environment(self.NO_ROW, loc=self.CARDIFF))
+        self.assertIn('Cardiff', road)
+        self.assertIn('England-only', road)
+        self.assertNotIn('loaded', road)
+        self.assertNotIn('not been measured', road)
+
+    def test_no_row_outside_every_city_says_so(self):
+        self.assertIsNone(app.derive_city('E07000207', 'Elmbridge'))
+        road = self._road_notice(self._environment(self.NO_ROW, loc=self.UNCOVERED))
+        self.assertIn('outside all of them', road)
+        self.assertNotIn('loaded', road)
+        self.assertNotIn('not been measured', road)
+
+    def test_absence_notice_follows_the_borough_records(self):
+        # A city that GAINS road coverage changes its own sentence: the branch
+        # keys on the records, so the day Cardiff's boroughs carry the field
+        # the "England-only" sentence stops without anyone editing a list.
+        stub = {'name': 'Cardiff', 'boroughs': {'x': {'roadNoiseAboveWhoPct': 12.0}}}
+        with patch.dict(app.CITIES, {'cardiff': stub}):
+            self.assertIn('not been loaded', app._road_absence_notice('cardiff'))
+        self.assertIn('England-only', app._road_absence_notice('cardiff'))
 
 
 class BadgeTests(unittest.TestCase):

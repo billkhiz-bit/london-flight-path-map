@@ -89,7 +89,7 @@ entry alone is not evidence of use. All six below are genuinely fetched.
 | 15 | **US Environmental Protection Agency** (`gispub.epa.gov`) | Air-quality non-attainment-area layer for the NYC view (`index.html:5501`). | Visitor **IP address** and map viewport bbox. | **US.** | Public-sector open data. |
 | 16 | **FEMA** (`hazards.fema.gov`) | National Flood Hazard Layer for the NYC view (`index.html:5495`). | Visitor **IP address** and map viewport bbox. | **US.** | Public-sector open data. |
 | 17 | **GoatCounter script host** (`gc.zgo.at`) | Serves `count.js` for the analytics in row 3 (`index.html:9074`). Named separately because row 3 covers the *count* endpoint (`cubitt33.goatcounter.com`) and a reviewer checking the CSP will find this host too. | Visitor **IP address** while fetching the script. | EU (operated by offshootbv, Netherlands). | As row 3. |
-| 18 | **AWS Bedrock** (`bedrock-runtime.us-east-1.amazonaws.com`) | Generates the answer for the key-gated `POST /v1/chat` retrieval assistant (`backend/lambdas/chat/app.py`). The model is never the source of data: context comes from invoking the score function directly, and `verify_answer()` discards any reply containing a number absent from that payload. | The caller's **question text** and **postcode**. | **US (us-east-1).** Third-country transfer, covered by the AWS DPA and its Standard Contractual Clauses. | Added 2026-09-07. The route existed from 2026-08-06, when `/v1/chat` was restored, and was unrecorded here until an audit found §5 still claiming a single intra-EEA transfer. Denied to every self-service key (`RateLimit: 0` on `ScoreFreeUsagePlan`), so no consumer or free-tier caller reaches it. `BEDROCK_REGION` is an env var, so an EEA region is a configuration change. |
+| 18 | **AWS Bedrock** (`bedrock-runtime.us-east-1.amazonaws.com`) | Generates the answer for the key-gated `POST /v1/chat` retrieval assistant (`backend/lambdas/chat/app.py`). The model is never the source of data: context comes from invoking the score function directly, and `verify_answer()` discards any reply containing a number absent from that payload. | The caller's **question text** and **postcode**. | **US.** Third-country transfer, covered by the AWS DPA and its Standard Contractual Clauses. The request is sent to the `us-east-1` endpoint, but the model ID is a `us.` **cross-region inference profile** (`us.amazon.nova-2-lite-v1:0`), so Bedrock may fulfil it from any of the US regions AWS assigns to that profile - all inside the United States, so the country-level claim is unchanged (recorded 2026-09-14, audit M18; the row said `us-east-1` alone). | Added 2026-09-07. The route existed from 2026-08-06, when `/v1/chat` was restored, and was unrecorded here until an audit found §5 still claiming a single intra-EEA transfer. Denied to every self-service key (`RateLimit: 0` on `ScoreFreeUsagePlan`), so no consumer or free-tier caller reaches it. `BEDROCK_REGION` is an env var, so an EEA region is a configuration change. |
 
 Rows 14-16 serve the **NYC** map layers only; a UK-only visitor who never switches
 city does not trigger them. They are listed unconditionally because the code path is
@@ -150,9 +150,12 @@ Removing a sub-processor: noted here on the same business day.
      intra-EEA transfer. The endpoint is environment-configurable
      (`OVERPASS_URL`), so it can be repointed to a UK-hosted Overpass instance
      **without a code change** if a contract requires it.
-  2. **AWS Bedrock in `us-east-1` (United States)** — `POST /v1/chat` sends the
-     caller's **question text and postcode** to a model hosted in North
-     Virginia (`backend/lambdas/chat/app.py`, `BEDROCK_REGION`). This is a
+  2. **AWS Bedrock in the United States** — `POST /v1/chat` sends the
+     caller's **question text and postcode** to the `us-east-1` endpoint
+     (`backend/lambdas/chat/app.py`, `BEDROCK_REGION`), where the model ID is
+     a `us.` cross-region inference profile: AWS may serve the request from
+     any of the US regions it assigns to that profile, not North Virginia
+     alone. The country is fixed; the region within it is not. This is a
      **third-country transfer**. It is covered by the AWS DPA and its Standard
      Contractual Clauses rather than by nothing, but it is a transfer this
      document previously said did not exist, and a buyer requiring UK- or

@@ -208,8 +208,8 @@ check "score sanity (live API)"        python scripts/check_score_sanity.py
 check "demo key reaches only /v1/score" node tests/demo-key-scope.mjs
 # Borough avgPrice and trend against HM Land Registry HPI, keyed on ONS codes.
 # Placed with the offline gates rather than in the --skip-e2e block: it needs no
-# browser and no live site, only data/hpi-average-prices.csv, which it fetches
-# once and caches.
+# browser and no live site, only data/hpi-average-prices-<vintage>.csv, which
+# it fetches once per vintage and caches.
 #
 # The only gate that can catch a PARTIAL VINTAGE ROLL, and it was written
 # because there was one. Until 2026-08-10 London's avgPrice matched HPI 2026-05
@@ -788,8 +788,9 @@ advise "quiet estimate == DEFRA"        python scripts/check_quiet_estimate_erro
 # to `check` once the policy is restored and it has a green track record.
 advise "aws perms == iam-policy.json" python scripts/check_aws_permissions.py
 
-# Compares all 14 publicly-served files against what CloudFront actually
-# serves. Advisory because drift is the EXPECTED state between committing and
+# Compares every publicly-served surface - 16 pages, the 17 data files and
+# the 100 area pages, 133 in all, counted by the script itself - against what
+# CloudFront actually serves. Advisory because drift is the EXPECTED state between committing and
 # deploying — blocking it would go red on nearly every run and be ignored
 # inside a week, the same trap the Prettier line above describes.
 #

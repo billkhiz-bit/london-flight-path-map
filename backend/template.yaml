@@ -27,9 +27,10 @@ Globals:
   Api:
     # CORS opened to any origin so third-party browser integrations can call
     # the public B2B endpoints (/v1/score and /v1/score/batch) directly.
-    # The score endpoints are API-key-gated; the Bedrock-using endpoints
-    # (chat, multi_agent) are protected by per-stage API Gateway throttling
-    # rather than CORS. CORS does not protect against server-side abuse, so
+    # The score endpoints are API-key-gated, and so is /v1/chat (the one
+    # Bedrock-using function still deployed; multi_agent and its siblings
+    # live in git history only). Every other route carries its own per-method
+    # throttle. CORS does not protect against server-side abuse, so
     # the previous CloudFront-only origin restriction was protecting against
     # browser abuse only, opening it does not materially change the threat
     # model. Tighten via per-Lambda origin checks if browser-from-other-origin
@@ -57,14 +58,15 @@ Resources:
           # ~5-6 successful req/s regardless of its usage plan — a single
           # bursty Professional integration (or two customers at once) would
           # 429 constantly. Per-customer fairness comes from usage-plan
-          # throttles (free tier: 5 burst / 1 sustained), not this ceiling;
+          # throttles (free tier: 5 burst / 2 sustained), not this ceiling;
           # this is the whole-API circuit breaker. Signup keeps its own
           # 1 RPS override below.
           ThrottlingRateLimit: 50
           ThrottlingBurstLimit: 100
         # Per-method override on /v1/signup (audit N-Code-2). The
-        # global 10 RPS would let an attacker pump ~600 keys/min into
-        # the AWS-account API-key quota (default 10,000) before the
+        # stage ceiling above (50 RPS) would let an attacker pump
+        # ~3,000 keys/min into the AWS-account API-key quota (default
+        # 10,000) before the
         # quota errors start. 1 RPS / 5 burst is generous for human
         # signups but gates abuse to ~60/min.
         - HttpMethod: POST

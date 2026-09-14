@@ -17,7 +17,11 @@
 set -u
 
 ROOT="$(dirname "$0")/.."
-NSPL_ROWS=2723596
+# Rows in the current NSPL edition (August 2026: 2,729,090 data rows; the
+# file is one longer for its header). Only a progress denominator - the
+# loaders count for themselves - so a stale value skews a percentage and
+# nothing else. It was the February figure until 2026-09-14 (audit M29).
+NSPL_ROWS=2729090
 
 # A checkpoint file outlives the process that wrote it. The loaders delete it
 # only on a clean full finish, so every interrupted run leaves one behind and

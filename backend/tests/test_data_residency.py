@@ -36,6 +36,12 @@ LAMBDAS = os.path.join(ROOT, 'backend', 'lambdas')
 HOME_REGION = 'eu-west-2'
 REGISTER = os.path.join(ROOT, 'SUBPROCESSORS.md')
 
+# A Bedrock CROSS-REGION INFERENCE PROFILE id: a geography prefix on the
+# model id (`us.`, `eu.`, `apac.`), which lets Bedrock serve the call from
+# any region in that geography. REGION_RE cannot see it - the code names one
+# endpoint region and the profile widens it silently (audit M18).
+PROFILE_RE = re.compile(r"['\"]((?:us|eu|apac)\.)[a-z0-9.\-]+:\d+['\"]")
+
 # An AWS region code: two-or-three letter area, a compass word, a digit.
 REGION_RE = re.compile(r"\b((?:af|ap|ca|eu|il|me|sa|us)-[a-z]+-\d)\b")
 
@@ -108,6 +114,37 @@ class DataResidencyTests(unittest.TestCase):
                 f'SUBPROCESSORS.md mentions {region} but the surrounding text '
                 f'never calls it a transfer. A region named in a table cell is '
                 f'not a residency disclosure; §5 is where a buyer looks.')
+
+
+    def test_cross_region_inference_profiles_are_disclosed_as_such(self):
+        # A `us.` profile is not "us-east-1": it is "somewhere in the US, AWS
+        # decides". The register must say so beside every region it names for
+        # that Lambda, or a buyer reading `us-east-1` is told a precision the
+        # deployment does not have.
+        with open(REGISTER, encoding='utf-8') as fh:
+            register = fh.read().lower()
+        found = []
+        for rel, src in _sources():
+            for prefix in PROFILE_RE.findall(src):
+                found.append((rel, prefix))
+                self.assertIn(
+                    'inference profile', register,
+                    f'{rel} uses a `{prefix}` cross-region inference profile and '
+                    f'SUBPROCESSORS.md never says "inference profile" - it names a '
+                    f'single region the model is not pinned to.')
+                area = prefix.rstrip('.')
+                geo = 'ap' if area == 'apac' else area
+                for region in REGION_RE.findall(src):
+                    if region == HOME_REGION:
+                        continue
+                    self.assertTrue(
+                        region.startswith(geo + '-'),
+                        f'{rel} sends to {region} under a `{prefix}` profile; the '
+                        f'geography prefix and the endpoint region disagree.')
+        # The scan must have found the one profile the code is known to carry;
+        # a regex that matches nothing passes every assertion above vacuously.
+        self.assertTrue(found, 'no inference-profile model id found in any Lambda - '
+                               'the chat Lambda carries one, so PROFILE_RE is broken')
 
 
 class EnvironmentNoticeTests(unittest.TestCase):

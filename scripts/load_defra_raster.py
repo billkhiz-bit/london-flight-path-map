@@ -105,17 +105,17 @@ WHAT IT DOES:
   2. Streams the NSPL CSV row-by-row (postcode, lat, lon)
   3. For each postcode, projects lat/lon to the raster's CRS and samples
      the Lden value at that pixel
-  4. Batch-writes (postcode, ldenDb) tuples to DynamoDB (25 per request,
-     the AWS BatchWriteItem max)
+  4. Writes (postcode, ldenDb) rows to DynamoDB - one PutItem per row, in
+     batches of 25 fanned across ddb_write.MAX_WORKERS threads (the
+     docstring on _flush_batch below records why it is not BatchWriteItem)
   5. Logs progress to stdout via tqdm; resumable from a checkpoint if
      interrupted
 
 VERIFICATION AFTER LOAD:
 
-  # Confirm row count (should be ~1.7M minus skipped no-data pixels):
-  AWS_PROFILE=flightmap aws dynamodb describe-table \\
-    --table-name london-flight-map-noise-raster \\
-    --query 'Table.ItemCount' --region eu-west-2
+  # Do NOT read describe-table's ItemCount to confirm the load: it refreshes
+  # about six-hourly and reads 0 throughout a run (the note at the resume
+  # check below says the same). Verify with get-item on a known postcode:
 
   # Confirm a known postcode resolves via raster (not the v3.0 fallback):
   curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=TW6+2GA' \\

@@ -39,7 +39,11 @@ from botocore.config import Config
 
 CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
-# Nova models live in us-east-1; the rest of the stack is eu-west-2.
+# The endpoint is us-east-1; the rest of the stack is eu-west-2. The model
+# ID's `us.` prefix is a CROSS-REGION INFERENCE PROFILE, so Bedrock may serve
+# the call from any US region in that profile - a disclosure SUBPROCESSORS.md
+# row 18 and s5 carry, and test_data_residency.py asserts (audit M18). The
+# country is the residency claim; the region within it is AWS's choice.
 BEDROCK_REGION = os.environ.get('BEDROCK_REGION', 'us-east-1')
 NOVA_LITE_MODEL_ID = os.environ.get('NOVA_LITE_MODEL_ID', 'us.amazon.nova-2-lite-v1:0')
 

@@ -30,6 +30,29 @@ def load_lambda(name, module_alias=None):
     return mod
 
 
+SCRIPTS_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), os.pardir, "scripts")
+)
+
+
+def load_script(name, module_alias=None):
+    """Import scripts/<name>.py from source, the way load_lambda does for a
+    Lambda, so a test can assert what a builder DERIVES rather than what it
+    wrote last time. Scripts import their heavy dependencies (rasterio, boto3)
+    inside the functions that need them, so importing one is cheap.
+    """
+    alias = module_alias or f"script_{name}"
+    if alias in sys.modules:
+        return sys.modules[alias]
+
+    script_path = os.path.join(SCRIPTS_DIR, f"{name}.py")
+    spec = importlib.util.spec_from_file_location(alias, script_path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[alias] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
 # ---------------------------------------------------------------------------
 # Helper: build an API Gateway-style event dict
 # ---------------------------------------------------------------------------

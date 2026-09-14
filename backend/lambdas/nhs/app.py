@@ -178,7 +178,7 @@ def query_overpass(lat, lon):
     # rate-limited. The same query at [timeout:25] returned 200 in ~3s.
     #
     # It must stay below the urlopen timeout below, which must stay below the
-    # function Timeout in template.yaml (45s). Ordering matters: if Overpass's
+    # function Timeout in template.yaml (28s). Ordering matters: if Overpass's
     # budget exceeds ours we abandon a query it is still paying to run, which is
     # the least polite possible way to use a free shared service.
     query = (
@@ -200,8 +200,6 @@ def query_overpass(lat, lon):
             'User-Agent': 'sky-score/1.0 (https://d1oe4ftwutjpf.cloudfront.net)',
         },
     )
-    # 30s, above Overpass's own 25s budget so it finishes rather than being
-    # abandoned mid-flight, and below the 45s function Timeout.
     # 26s, not 30. It must sit ABOVE Overpass's own [timeout:25] budget so we
     # do not cut the upstream off just as it answers, and BELOW the function's
     # 28s ceiling so the fallback branch has room to build a response. At 30 it

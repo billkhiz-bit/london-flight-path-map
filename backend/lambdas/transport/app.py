@@ -36,7 +36,7 @@ def handler(event, context):
         if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
             return response(400, {'error': 'lat/lon out of range'})
 
-        # 1. Find nearest stations (tube, rail, DLR) within 1km.
+        # 1. Find nearest stations (tube, rail, DLR) within 1.5 km (radius=1500).
         # None means TfL was unreachable — distinct from "no stations nearby"
         # so the frontend never renders an outage as confident emptiness
         # (A-0724-I5).

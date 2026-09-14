@@ -614,7 +614,15 @@ Strike a row here when it closes, and close it BY NAME in the report.
 | ~~**3. User-facing frontend**~~ **CLOSED 2026-09-13, same night, deployed** | ~~I1, I2, I19, I21, I22~~ (+ M35) - the responsive gate gained a layers-open state (78 combinations), red on the deployed page and clean on the source. | Measured, reproducible, on the primary flow. |
 | ~~**4. Backend robustness + security**~~ **CLOSED 2026-09-13 bar I17, deployed** | ~~I11, I12, I13, I14, I18~~ - 18 red on the committed Lambdas, green on the fix; the two dead workflows deleted. **I17 is a decision row in Open decisions** (verification email, or two lesser options). | Each is a runtime or documentation defect; I17 is the one that needs a decision before code. |
 
-Then the 37 Minors, which the report lists with file:line.
+Then the 37 Minors, which the report lists with file:line. **14 of 37 closed
+as of 2026-09-14** (M14 partial and M35 on the 13th; M4, M5, M8, M9, M10, M11,
+M12, M18, M21, M25, M26 and M29 on the 14th - the two gate-shaped ones first,
+then the "absence rendered as a measurement" one, then the comment-drift
+cluster in one pass; each struck BY NAME in the report). **Still open, 23:**
+M1-M3, M6, M7, M13, M15-M17, M19, M20, M22-M24, M27, M28, M30-M34, M36, M37,
+plus M14's chat-400 remainder. The a11y five (M30-M34) are one pass with the
+two contrast gates run after; the runbook two (M19, M20) before the next raster
+load; the rest as they come.
 
 ### Legal & entity — blocks the first pilot invoice (raised 2026-08-04)
 

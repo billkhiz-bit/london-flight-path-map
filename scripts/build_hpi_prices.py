@@ -39,8 +39,16 @@ Usage
 
 `--check` compares what the score Lambda holds against HPI and exits non-zero on
 drift, so it can sit in preflight. `--emit` prints a paste-ready borough block
-for a city that does not exist yet. Re-run `--check` after every HPI release
-(monthly); drift is the signal to roll the vintage, not a bug.
+for a city that does not exist yet.
+
+THE SIGNAL TO ROLL IS A NEWER FILE ANSWERING 200, AND `--check` PROBES FOR IT.
+This docstring used to say "re-run --check after every HPI release; drift is
+the signal to roll the vintage". It could not be (audit M26, 2026-09-14): the
+check fetches the file NAMED BY THE VINTAGE, which never changes once
+published, so a registry that agreed with June kept agreeing with June however
+many months HMLR released after it. `--check` now asks whether the month after
+the checked vintage is published and says so in its output; it is information,
+not a failure, because a roll is a deliberate step (HANDOVER.md s0).
 """
 
 from __future__ import annotations
@@ -56,7 +64,51 @@ from pathlib import Path
 
 # The vintage the registry claims, in CITY_PROVENANCE and in CLAUDE.md.
 DEFAULT_VINTAGE = "2026-06-01"  # June 2026 UK HPI, rolled 2026-08-25
-CACHE = Path("data/hpi-average-prices.csv")
+# One cache file PER VINTAGE. It was a single `data/hpi-average-prices.csv`
+# for every vintage until 2026-09-14 (audit M26): fetch() returned early on
+# any existing file, so `--vintage 2026-07` against a June cache could only
+# refuse ("delete it and re-run"), and a July cache asked for June answered
+# from the July file's REVISED June rows - HPI revises prior months - which is
+# a different number under the same name. Keying on the vintage makes both
+# cases fetch the file they name.
+CACHE_DIR = Path("data")
+
+
+def cache_path(vintage: str) -> Path:
+    year, month, _ = vintage.split("-")
+    return CACHE_DIR / f"hpi-average-prices-{year}-{month}.csv"
+
+
+def vintage_url(vintage: str) -> str:
+    year, month, _ = vintage.split("-")
+    return URL_TEMPLATE.format(year=year, month=month)
+
+
+def next_vintage(vintage: str) -> str:
+    year, month, day = (int(x) for x in vintage.split("-"))
+    year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def newer_vintage_published(vintage: str) -> str | None:
+    """The month after `vintage` if HMLR has published it, else None.
+
+    A single ranged GET, because the host answers a plain HEAD inconsistently
+    and one byte is enough to know the file exists. Raises on anything that is
+    not a clean yes or a clean 404, so a host outage is reported as "could not
+    probe", never as "nothing newer" - an empty index is not a zero reading.
+    """
+    candidate = next_vintage(vintage)
+    req = urllib.request.Request(vintage_url(candidate), headers={"Range": "bytes=0-0"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            if resp.status in (200, 206):
+                return candidate
+            raise RuntimeError(f"unexpected HTTP {resp.status}")
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
 SCORE_APP = Path("backend/lambdas/score/app.py")
 
 # The "Average prices" file, not "UK-HPI-full-file": it carries exactly the two
@@ -233,25 +285,27 @@ PRICE_TOLERANCE = 500.0
 TREND_TOLERANCE = 0.05
 
 
-def fetch(vintage: str) -> None:
-    """Download the HPI average-prices file for `vintage` if not cached."""
-    if CACHE.exists():
-        return
-    year, month, _ = vintage.split("-")
-    url = URL_TEMPLATE.format(year=year, month=month)
+def fetch(vintage: str) -> Path:
+    """Download the HPI average-prices file for `vintage` unless that vintage
+    is already cached. Returns the cache path."""
+    cache = cache_path(vintage)
+    if cache.exists():
+        return cache
+    url = vintage_url(vintage)
     print(f"fetching {url} ...", file=sys.stderr)
-    CACHE.parent.mkdir(parents=True, exist_ok=True)
+    cache.parent.mkdir(parents=True, exist_ok=True)
     with urllib.request.urlopen(url, timeout=300) as resp:
-        CACHE.write_bytes(resp.read())
+        cache.write_bytes(resp.read())
+    return cache
 
 
 def load_hpi(vintage: str) -> dict[str, dict]:
     """{area code: {name, price, trend}} for one month of the HPI series."""
-    fetch(vintage)
+    cache = fetch(vintage)
     out: dict[str, dict] = {}
     # utf-8-sig: the file carries a BOM, and without this the first column name
     # reads as '﻿Date' and every row lookup misses.
-    with CACHE.open(newline="", encoding="utf-8-sig") as fh:
+    with cache.open(newline="", encoding="utf-8-sig") as fh:
         for row in csv.DictReader(fh):
             if row["Date"] != vintage:
                 continue
@@ -263,10 +317,11 @@ def load_hpi(vintage: str) -> dict[str, dict]:
                 "trend": round(float(trend), 1) if trend else None,
             }
     if not out:
-        raise SystemExit(
-            f"No rows dated {vintage} in {CACHE}. The cache may predate the "
-            f"vintage - delete it and re-run to refetch."
-        )
+        # Unreachable while the cache is keyed by vintage - the file named
+        # {vintage} carries rows dated {vintage} by construction - but a
+        # truncated download or an upstream re-layout would land here, and
+        # "compared nothing" must not read as "agrees".
+        raise SystemExit(f"No rows dated {vintage} in {cache}. Delete it and re-run to refetch.")
     return out
 
 
@@ -709,6 +764,17 @@ def main() -> int:
     bad = sum(check(city, hpi, args.vintage) for city in cities)
     bad += check_vintage_words(args.vintage)
     print(f"\nChecked {len(cities)} city/cities against HPI {args.vintage}.")
+    # The roll signal. Informational: a newer month is a decision to make
+    # (ROADMAP "Open decisions", HANDOVER.md s0), not a defect in this tree.
+    try:
+        newer = newer_vintage_published(args.vintage)
+    except (urllib.error.URLError, OSError, RuntimeError) as exc:
+        print(f"could not probe for a newer HPI vintage: {exc}")
+    else:
+        if newer:
+            print(f"NEWER HPI VINTAGE PUBLISHED: {newer[:7]} - roll when ready (HANDOVER.md s0).")
+        else:
+            print(f"no HPI vintage newer than {args.vintage[:7]} is published yet.")
     print(f"RESULT: {'PASS' if bad == 0 else f'FAIL ({bad} disagreements)'}")
     return 0 if bad == 0 else 1
 

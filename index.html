@@ -8114,13 +8114,24 @@
       // flight-path geometry below, which is what every postcode used before.
       const AIRCRAFT_QUIET = {};
 
-      // Must match METHODOLOGY_VERSION in backend/lambdas/score/app.py. The file
-      // ships the COMPUTED quiet score, not decibels, so this page never
-      // reimplements the 45-to-63 dB ramp. That duplication is how the site and
-      // /v1/score came to publish different numbers before. The trade is that
-      // the file goes stale when the ramp changes, so the version is checked and
-      // a mismatched file is refused rather than trusted.
-      const AIRCRAFT_QUIET_METHODOLOGY = '3.6';
+      // The RAMP the two aircraft-quiet files were built under, as a fingerprint
+      // of lden_db_to_quiet in backend/lambdas/score/app.py: its output over
+      // every 1-dp input it can receive, hashed (scripts/
+      // build_aircraft_quiet_dataset.py, ramp_identity). The files ship the
+      // COMPUTED quiet score, not decibels, so this page never reimplements
+      // the 45-to-63 dB ramp - that duplication is how the site and /v1/score
+      // came to publish different numbers before. The trade is that a file
+      // goes stale when the ramp changes, so its fingerprint is checked and a
+      // mismatched file is refused rather than trusted.
+      //
+      // tests/test_aircraft_quiet_dataset.py asserts this value against the
+      // Lambda's ramp and against both shipped files, so a ramp change reds
+      // the build until the files are regenerated and this constant follows.
+      // Until 2026-09-14 this was METHODOLOGY_VERSION, held at '3.6' against
+      // a Lambda at '5.0' - the wrong key. That version moves for reasons that
+      // never touch the ramp, so matching it would have refused 42,773
+      // measured postcodes on every unrelated bump, with nothing looking wrong.
+      const AIRCRAFT_QUIET_RAMP_FINGERPRINT = 'dba8036dd0b7321f';
 
       // Methodology v3.8. MUST MATCH AIRPORT_NOISE_SCALE in
       // backend/lambdas/score/app.py - this page computes quiet client-side
@@ -8218,17 +8229,18 @@
           if (!resp.ok) throw new Error('aircraft-quiet HTTP ' + resp.status);
           const data = await resp.json();
 
-          if (data.methodologyVersion !== AIRCRAFT_QUIET_METHODOLOGY) {
+          const fingerprint = data.ramp && data.ramp.fingerprint;
+          if (fingerprint !== AIRCRAFT_QUIET_RAMP_FINGERPRINT) {
             // Refuse rather than blend. Serving scores derived under one ramp
             // beside scores derived under another is precisely the site/API
             // divergence this file exists to close, with the added cost that
             // nothing would look wrong.
             console.warn(
-              'aircraft-quiet methodology mismatch: file %s, page expects %s. Ignoring file; ' +
+              'aircraft-quiet ramp mismatch: file %s, page expects %s. Ignoring file; ' +
                 'quiet falls back to flight-path geometry. Regenerate with ' +
                 'scripts/build_aircraft_quiet_dataset.py',
-              data.methodologyVersion,
-              AIRCRAFT_QUIET_METHODOLOGY
+              fingerprint,
+              AIRCRAFT_QUIET_RAMP_FINGERPRINT
             );
             return;
           }

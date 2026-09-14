@@ -55,14 +55,14 @@ Sky Score has three deployment surfaces sharing one codebase: web (skyscore.co.u
 
 - **API key required** on every `/v1/score*` endpoint (API Gateway Usage Plan; 10,000 requests/month free tier; per-key throttling at 2 req/s sustained, 5 burst). Requests and scores are the **same unit**: `/v1/score/batch` is denied to the free plan per-method (`RateLimit: 0`, answered as 429), so a request cannot carry more than one query. This corrects a line that survived until 2026-09-01 describing the quota and the ×100 batch multiplier as they stood before 2026-08-21.
 - **Per-route APIGW throttle** of 1 RPS / 5 burst on `/v1/signup` to gate self-service abuse (audit ID: N-Code-2).
-- **Self-service signup hardened**: CORS allow-listed to `https://skyscore.co.uk` and the legacy CloudFront URL only (no wildcard), one-key-per-email idempotency with consistent-read DDB, race-recovered orphan-key cleanup, structured `[SIGNUP_ORPHAN_KEY]` log prefix for CloudWatch alarming.
+- **Self-service signup hardened**: CORS allow-listed to `https://skyscore.co.uk`, the legacy CloudFront URL and the two Capacitor WebView origins (`capacitor://localhost` iOS, `https://localhost` Android - the native app runs the same notify form; neither origin is reachable from a web browser) with no wildcard, one-key-per-email idempotency with consistent-read DDB, race-recovered orphan-key cleanup, structured `[SIGNUP_ORPHAN_KEY]` log prefix for CloudWatch alarming.
 - **Favourites endpoint** uses an opaque `X-Device-Token` UUID header (audit C3 mitigation; capability-based, not identity-based — anyone learning a token can use it). Documented limitation; identity-based auth is on the roadmap if PII expands.
 
 ### Encryption + data residency
 
 - **All data processed in AWS eu-west-2 (London)** for UK data residency, **with two documented exceptions**: `/nhs` sends lat/lon to Overpass in Germany, and the key-gated `POST /v1/chat` sends the caller's question and postcode to AWS Bedrock in `us-east-1`. Both are recorded in `SUBPROCESSORS.md` §5 (rows 11 and 18). Corrected 2026-09-07: this line was unqualified for a month after `/v1/chat` was restored.
 - **TLS 1.2+** end-to-end (CloudFront, API Gateway, Lambda, S3 all default-on; HTTPS-only).
-- **DynamoDB encryption at rest** via AWS-managed KMS (default; customer-managed KMS available on Enterprise tier when required).
+- **DynamoDB encryption at rest** with the AWS-OWNED key - DynamoDB's default, which is what all four tables carry (`SSEDescription` is absent on every one, re-measured 2026-09-14). This said "AWS-managed KMS" until then (audit M5); that is a different key class, one the account would see in KMS and be billed for, and none is configured. Customer-managed KMS is available on the Enterprise tier when required.
 - **No card data, no special-category PII**. Sole PII processed is the email address provided to `/v1/signup` for API-key issuance.
 
 ### Application-layer defences
@@ -128,12 +128,16 @@ For a confirmed security incident affecting customer data or the production API:
 
 ### Data subject requests (GDPR)
 
-PII processed: email (and optionally name) for API key issuance, stored in the `london-flight-map-signups` DynamoDB table; CloudWatch logs containing the email for audit traceability.
+PII processed: email (and optionally name) for API key issuance. **Holders, inventoried 2026-09-14 (audit M5) - the erasure step below must reach every one:**
+
+- the `london-flight-map-signups` DynamoDB table row;
+- the API Gateway key itself, TWICE: its `name` is `SkyScoreUserKey-<email with @ and . substituted>` and its `description` carries the email verbatim (and the name if given). Deleting the key deletes both;
+- CloudWatch: the signup Lambda logs the API key ID only, never the email, since 2026-07-23 (the earlier entries were deleted with their log group - see above). The `chat` Lambda logs the first 120 characters of a **question** at WARNING when it discards an ungrounded answer (`[CHAT_UNGROUNDED]`), so a question that contains personal data is retained for the 30-day log window; questions are not otherwise stored.
 
 For an SAR / delete-my-data / data-export request, email `support@skyscore.co.uk` - the address privacy.html and SUBPROCESSORS.md both already publish. This page named a personal Gmail until 2026-08-03, so a data subject following the privacy notice and one following this document were told to write to different places. Manual workflow:
 
 1. **SAR (Subject Access Request)**: query the SignupsTable by email; export the row as JSON; redact internal log identifiers; reply within 30 days per Article 12.
-2. **Delete**: `apigateway:DELETE` the issued key; `dynamodb:DeleteItem` the SignupsTable row; scrub matching CloudWatch log events using a CloudWatch Logs Insights query and `delete-log-event` (best-effort; CloudWatch retains aggregate metrics that can't be deleted per-event).
+2. **Delete**: `apigateway:DELETE` the issued key (this removes the two copies of the email the key carries in its name and description); `dynamodb:DeleteItem` the SignupsTable row; then a CloudWatch Logs Insights query for the key ID across the signup group, and for the subject's address across the chat group's `[CHAT_UNGROUNDED]` lines, deleting matches with `delete-log-event` (best-effort; CloudWatch retains aggregate metrics that can't be deleted per-event, and the 30-day retention ages the rest out).
 3. **Data portability**: same as SAR, formatted as JSON.
 
 Lawful basis for processing the email: **Article 6(1)(f) legitimate interest** (issuing and managing access credentials for the API the user signed up to). LIA on file; available on request.
@@ -169,7 +173,7 @@ To be transparent (procurement teams catch overstated claims):
 | DPA template | 🔴 Not yet | CommonPaper / PandaDoc UK template; 2-3 hr legal review when first asked |
 | MSA template | 🔴 Not yet | CommonPaper SaaS MSA + Sky Score schedule; 1-day legal effort |
 | Professional indemnity / cyber liability insurance | 🔴 Not yet | Hiscox / Markel quote ~£400-800/yr for solo dev pre-revenue; purchase when a contract specifically requires it |
-| Customer-managed KMS encryption | 🟡 Available on request | Default is AWS-managed KMS |
+| Customer-managed KMS encryption | 🟡 Available on request | Default is the AWS-owned key (DynamoDB default; no KMS key in the account) |
 | Multi-region failover | 🟡 Available on Enterprise tier | Default is single-region eu-west-2 |
 | 99.9%+ uptime SLA | 🟡 Best-effort, not contractual | Will offer 99.5% on Professional / 99.9% on Enterprise once first customer commits |
 

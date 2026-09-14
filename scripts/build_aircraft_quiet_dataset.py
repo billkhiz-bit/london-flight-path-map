@@ -21,9 +21,22 @@ formula (see the SCHOOL_SCORE_P8 comment in index.html, which says so
 explicitly). Shipping the computed value means the two CANNOT disagree about the
 mapping; they can only disagree about the data, and the data is this one file.
 
-Consequence to respect: this file is derived from a methodology version and goes
-stale when the ramp changes. `methodologyVersion` is embedded so a mismatch is
-detectable rather than silent, and the site refuses the file when it disagrees.
+Consequence to respect: this file is derived from the RAMP and goes stale when
+the ramp changes. The file embeds `ramp` - the two anchors plus a fingerprint of
+lden_db_to_quiet's output over every 1-dp input it can receive - so a mismatch
+is detectable rather than silent: index.html refuses a file whose fingerprint is
+not the one it expects, and tests/test_aircraft_quiet_dataset.py fails the
+build when the shipped files or the page disagree with the Lambda's ramp.
+
+Until 2026-09-14 the key was `methodologyVersion`, held at '3.6' here and in
+index.html against a Lambda at '5.0', under comments claiming each "must match"
+the Lambda's constant. It could not have: METHODOLOGY_VERSION moves for reasons
+that never touch the ramp (v3.8 geometry, v3.9/v4.0 environment, v5.0
+affordability), so keying on it would have made the page discard 42,773
+measured postcodes on every unrelated bump, with nothing looking wrong. The
+fingerprint is derived from the ramp itself, so it moves exactly when the ramp
+does. The ramp is not mirrored here any more either - it is the Lambda's own
+function, loaded from backend/lambdas/score/app.py.
 
   pip install rasterio pyproj
   python scripts/build_aircraft_quiet_dataset.py
@@ -73,12 +86,6 @@ REGION_OUT = ROOT / 'data' / 'aircraft-quiet-regions.json'
 # decibel reading, so absence is tested by MAGNITUDE here.
 SENTINEL_MAGNITUDE = 1e30
 
-# Mirrors backend/lambdas/score/app.py. Kept as constants rather than inlined so
-# a future change is a two-line edit with a visible diff.
-QUIET_CEILING_DB = 45.0
-QUIET_FLOOR_DB = 63.0
-METHODOLOGY_VERSION = '3.6'
-
 # The raster's measured range is 40.0-88.9 dB. Anything outside that is a
 # sentinel — this GeoTIFF declares nodata as 3.4e38, the float32 maximum, and a
 # naive `>= 40.0` test passes it straight through. That mistake reported 100%
@@ -98,31 +105,51 @@ LDEN_MAX = 100.0
 BBOX = (51.25, -0.55, 51.72, 0.35)
 
 
-def lden_db_to_quiet(lden):
-    """Byte-for-byte the Lambda's ramp. Any drift here IS the divergence."""
-    if lden <= QUIET_CEILING_DB:
-        return 10.0
-    if lden >= QUIET_FLOOR_DB:
-        return 0.0
-    span = QUIET_FLOOR_DB - QUIET_CEILING_DB
-    return round(10.0 * (QUIET_FLOOR_DB - lden) / span, 1)
+def score_app():
+    """The score Lambda, loaded from source. The ONE holder of the ramp.
 
-
-def serviceable_lads():
-    """LAD codes /v1/score can actually resolve to a city.
-
-    Filtering on this is what keeps the regions file free of the Surrey, Beds
-    and Essex postcodes around Gatwick, Luton and Stansted: they carry a real
-    DEFRA reading and no city, so shipping them would grow the file for
-    postcodes the API answers with a 400.
+    Every quiet score this script writes comes from the Lambda's own
+    lden_db_to_quiet, so the file and /v1/score cannot disagree about the
+    mapping - the mirror that used to sit here could, and the docstring above
+    it ("byte-for-byte the Lambda's ramp") was the only thing saying it did not.
     """
     import importlib.util
 
+    alias = 'score_app_quiet'
+    if alias in sys.modules:
+        return sys.modules[alias]
     path = ROOT / 'backend' / 'lambdas' / 'score' / 'app.py'
-    spec = importlib.util.spec_from_file_location('score_app_quiet', path)
+    spec = importlib.util.spec_from_file_location(alias, path)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[alias] = module
     spec.loader.exec_module(module)
-    return set(module.LAD_TO_BOROUGH)
+    return module
+
+
+# The inputs the ramp can receive: readings are rounded to 1 dp before scoring
+# (see the note in main()), and the rasters bottom out at LDEN_MIN and are
+# capped at LDEN_MAX. 601 points, so the fingerprint sees every reachable input.
+FINGERPRINT_GRID_TENTHS = range(int(LDEN_MIN * 10), int(LDEN_MAX * 10) + 1)
+
+
+def ramp_identity(app):
+    """What the shipped file claims about the ramp that produced it.
+
+    `ceilingDb` and `floorDb` are for a human reading the file. `fingerprint`
+    is the guard: the ramp's output over every reachable 1-dp input, hashed.
+    Any change to lden_db_to_quiet - an anchor, the shape, the rounding - moves
+    it, and nothing else does. That is what makes it a safe key where a
+    version string was not: a string has to be remembered, a hash is derived.
+    """
+    import hashlib
+
+    outputs = [app.lden_db_to_quiet(tenths / 10) for tenths in FINGERPRINT_GRID_TENTHS]
+    digest = hashlib.sha256(json.dumps(outputs).encode('ascii')).hexdigest()
+    return {
+        'ceilingDb': app._QUIET_CEILING_DB,
+        'floorDb': app._QUIET_FLOOR_DB,
+        'fingerprint': digest[:16],
+    }
 
 
 def build_regions():
@@ -141,7 +168,13 @@ def build_regions():
                             'res_x': r.transform.a, 'res_y': -r.transform.e,
                             'w': r.width, 'h': r.height, 'nodata': r.nodata})
 
-    lads = serviceable_lads()
+    app = score_app()
+    # LAD codes /v1/score can actually resolve to a city. Filtering on this is
+    # what keeps the regions file free of the Surrey, Beds and Essex postcodes
+    # around Gatwick, Luton and Stansted: they carry a real DEFRA reading and
+    # no city, so shipping them would grow the file for postcodes the API
+    # answers with a 400.
+    lads = set(app.LAD_TO_BOROUGH)
     to_bng = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
     quiet = {}
     per_raster = {r['name']: 0 for r in rasters}
@@ -195,10 +228,10 @@ def build_regions():
             # Round to 1 dp BEFORE the ramp, matching what the loader stores;
             # see the note in main(). Feeding full precision here reproduces the
             # 0.1-point divergence this file exists to prevent.
-            quiet[row['pcds'].replace(' ', '').upper()] = lden_db_to_quiet(round(best[1], 1))
+            quiet[row['pcds'].replace(' ', '').upper()] = app.lden_db_to_quiet(round(best[1], 1))
 
     payload = {
-        'methodologyVersion': METHODOLOGY_VERSION,
+        'ramp': ramp_identity(app),
         'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden, per-airport coverages',
         'note': (
             'Quiet scores for the postcodes DEFRA measured around Birmingham, '
@@ -234,6 +267,7 @@ def main():
             print(f'ERROR: {path} not found')
             return 1
 
+    app = score_app()
     raster = rasterio.open(GEOTIFF)
     bounds = raster.bounds
     to_bng = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
@@ -264,10 +298,10 @@ def main():
             # 2.7 — a 0.1 divergence on exactly the measured postcodes this file
             # exists to make agree, and one that only appeared because the live
             # API was checked after deploying rather than the file being trusted.
-            quiet[row['pcds'].replace(' ', '').upper()] = lden_db_to_quiet(round(value, 1))
+            quiet[row['pcds'].replace(' ', '').upper()] = app.lden_db_to_quiet(round(value, 1))
 
     payload = {
-        'methodologyVersion': METHODOLOGY_VERSION,
+        'ramp': ramp_identity(app),
         'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden',
         'note': (
             'Quiet scores for the London postcodes DEFRA actually measured. '

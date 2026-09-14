@@ -1,4 +1,4 @@
-"""Handler-level smoke tests for the 9 Lambdas without dedicated test files.
+"""Handler-level smoke tests across the Lambdas without dedicated test files.
 
 Covers the cheap, high-leverage cases each handler should always get right:
 - 400 on missing required params
@@ -187,6 +187,35 @@ class SignupHandlerTests(unittest.TestCase):
         )
         self.assertEqual(result['headers']['Access-Control-Allow-Origin'],
                          'https://www.skyscore.co.uk')
+
+    def test_native_webview_origins_match_capacitor_config(self):
+        # The notify form runs inside the Capacitor WebView too, whose origin
+        # is `<scheme>://<hostname>` per platform (audit M4). DERIVED from
+        # mobile/capacitor.config.ts rather than written down, so changing
+        # `androidScheme` (or adding `iosScheme`/`hostname`) there without
+        # updating the allow-list reds here instead of failing in the app.
+        config_path = os.path.join(
+            os.path.dirname(__file__), '..', '..', 'mobile', 'capacitor.config.ts'
+        )
+        with open(config_path, encoding='utf-8') as fh:
+            config = fh.read()
+
+        def setting(key, default):
+            m = re.search(rf"^\s*{key}:\s*'([^']+)'", config, re.MULTILINE)
+            return m.group(1) if m else default
+
+        hostname = setting('hostname', 'localhost')
+        expected = {
+            f"{setting('iosScheme', 'capacitor')}://{hostname}",
+            f"{setting('androidScheme', 'https')}://{hostname}",
+        }
+        self.assertEqual(len(expected), 2, 'iOS and Android must have distinct origins')
+        for origin in sorted(expected):
+            with self.subTest(origin=origin):
+                result = self.app.handler(
+                    {'httpMethod': 'OPTIONS', 'headers': {'Origin': origin}}, None
+                )
+                self.assertEqual(result['headers']['Access-Control-Allow-Origin'], origin)
 
     def test_safe_revoke_orphan_key_refuses_non_prefix(self):
         # Belt-and-braces guard alongside the IAM tag-condition (N-Code-1):

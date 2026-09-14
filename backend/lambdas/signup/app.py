@@ -73,10 +73,25 @@ EMAIL_PATTERN = re.compile(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 # down from '*' (audit N-Sec-4): the form lives on skyscore.co.uk and
 # the legacy CloudFront URL only. Server-side abuse isn't gated by
 # CORS but the per-route APIGW throttle handles that case.
+#
+# The two `localhost` entries are the NATIVE APP (audit M4, 2026-09-14).
+# The same index.html runs inside a Capacitor WebView, which serves it
+# from `capacitor://localhost` on iOS and, with `androidScheme: 'https'`
+# in mobile/capacitor.config.ts, from `https://localhost` on Android -
+# and the consumer notify form (added 2026-08-21) POSTs JSON here, which
+# is a preflighted request. With neither origin listed the WebView was
+# answered `Access-Control-Allow-Origin: https://skyscore.co.uk` and
+# blocked the response, so the form could only ever fail in the app.
+# Neither origin is reachable from a web browser - no site is served
+# from them - so listing them widens nothing on the web.
+# `test_native_webview_origins_match_capacitor_config` derives both
+# from the Capacitor config, so a scheme change there reds here.
 ALLOWED_ORIGINS = {
     'https://skyscore.co.uk',
     'https://www.skyscore.co.uk',
     'https://d1oe4ftwutjpf.cloudfront.net',
+    'capacitor://localhost',
+    'https://localhost',
 }
 
 

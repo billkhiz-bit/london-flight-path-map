@@ -128,9 +128,32 @@ EXPECT_CITY = {
     '10001': 'nyc',
 }
 
-# The components this gate has ALWAYS covered. Kept only as a floor - see
-# `components_in()` below, which derives the real list from the responses.
-KNOWN_COMPONENTS = ('quiet', 'afford', 'growth', 'live')
+def engine_components():
+    """The components the LOCAL engine weights, and the methodology it claims.
+
+    This is the FLOOR under `components_in()`: the set that must come back
+    from the live API. Derived from `app.PERSONAS` rather than written down.
+    Until 2026-09-14 (audit M26) it was a literal `KNOWN_COMPONENTS` tuple of
+    the four the gate "had always covered" - which omitted `env`, so the one
+    component that had already slipped past this gate once (C6) was exempt
+    from the floor whose comment claimed to catch a vanishing component.
+
+    Why a local derivation is safe HERE and was not before: the floor is only
+    compared when the live API reports the same `methodologyVersion` as this
+    tree (see main()). A tree ahead of the deploy carries a newer version, and
+    then the comparison is INCONCLUSIVE rather than red - so this blocking
+    stage cannot go red on the normal state between a commit and a deploy.
+    """
+    import importlib.util
+
+    path = os.path.join(os.path.dirname(__file__), os.pardir, 'backend', 'lambdas', 'score', 'app.py')
+    spec = importlib.util.spec_from_file_location('score_app_sanity', path)
+    app = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app)
+    components = set()
+    for weights in app.PERSONAS.values():
+        components.update(weights)
+    return tuple(sorted(components)), str(app.METHODOLOGY_VERSION)
 
 
 def components_in(rows):
@@ -147,8 +170,10 @@ def components_in(rows):
     Taken from the RESPONSES rather than from `app.PERSONAS` deliberately. A
     locally-derived expectation would go red on any tree that is ahead of the
     deploy, which is the normal state between a commit and a deploy, and this
-    is a blocking stage. Reading what the API returned cannot drift that way,
-    and a component that VANISHES from the API is still caught by the floor.
+    is a blocking stage. Reading what the API returned cannot drift that way.
+    A component that VANISHES from the API is caught by the floor in
+    `engine_components()` - which IS derived from `app.PERSONAS`, and is safe
+    because it is compared only when live and local agree on the version.
     """
     seen = set()
     for _pc, _city, body in rows:
@@ -298,12 +323,26 @@ def main():
     components = components_in(rows)
     # The floor on the LIST itself. Deriving the components from the responses
     # means a component that stops being returned simply stops being checked -
-    # silently - so the set the gate has always covered must still be in it.
-    missing = [c for c in KNOWN_COMPONENTS if c not in components]
-    check('long-standing components still returned', not missing,
-          f'the live API returned {list(components)}; these have gone: {missing}. '
-          f'A component that disappears from the response would otherwise drop '
-          f'out of every check below without failing one.')
+    # silently - so every component the engine weights must be in it. The
+    # floor is the LOCAL engine's set, compared only when live and local claim
+    # the same methodology; otherwise the tree is ahead of the deploy and the
+    # right answer is INCONCLUSIVE, not red (engine_components() says why).
+    floor, local_version = engine_components()
+    live_versions = sorted({str(b.get('methodologyVersion')) for _, _, b in rows})
+    floor_name = 'engine-weighted components all returned'
+    if live_versions == [local_version]:
+        missing = [c for c in floor if c not in components]
+        check(floor_name, not missing,
+              f'the live API returned {list(components)}; the engine at v{local_version} '
+              f'weights {list(floor)}, so these have gone: {missing}. A component that '
+              f'disappears from the response would otherwise drop out of every check '
+              f'below without failing one.')
+    else:
+        print(f'  {floor_name:<46}INCONCLUSIVE')
+        print(f'INCONCLUSIVE: this tree is methodology v{local_version} and the live API '
+              f'serves {live_versions}, so the component floor cannot be compared - it is '
+              f'only meaningful between two engines at the same version. Deploy the '
+              f'backend, then re-run.')
     print(f'  {"components discovered":<46}{", ".join(components)}')
     for comp in components:
         vals = {(b.get('components') or {}).get(comp) for _, _, b in rows}
