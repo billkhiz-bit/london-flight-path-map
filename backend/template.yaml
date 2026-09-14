@@ -110,10 +110,18 @@ Resources:
           ResourcePath: /v1/environment
           ThrottlingRateLimit: 5
           ThrottlingBurstLimit: 10
-        # /badge: unauthenticated, and each UNIQUE postcode is one uncached
-        # Lambda invocation - CloudFront holds a rendered badge for 24h, so
-        # repeat traffic never reaches the origin and only new postcodes do.
-        # 5 RPS sustained is ~432k distinct postcode renders a day, far beyond
+        # /badge: unauthenticated, and EVERY request is a Lambda invocation.
+        # This said "CloudFront holds a rendered badge for 24h, so repeat
+        # traffic never reaches the origin" until 2026-09-14 (audit M1), and
+        # it does not: API Gateway's edge endpoint passes through CloudFront
+        # without caching unless API caching is enabled (it is not - a paid
+        # cache cluster), measured as `X-Cache: Miss` on three identical GETs.
+        # The 24h max-age is honoured by each viewer's BROWSER only. So this
+        # throttle is the one server-side bound, and a portal page with many
+        # concurrent first-time viewers can hit it - a 429 renders as a broken
+        # image. The fix is a decision (ROADMAP, Open decisions): a cached
+        # behaviour for /badge* on the site's own distribution, or API caching.
+        # 5 RPS sustained is ~432k badge renders a day, far beyond
         # any legitimate embedding pattern, while capping what an enumeration
         # of the postcode space (or a cache-busting query string) can spend of
         # the shared stage bucket. Until this entry the route inherited the
@@ -561,9 +569,10 @@ Resources:
         # already shows publicly and none of what the API sells. Same posture
         # as /v1/environment directly below.
         #
-        # Cached hard (24h) at the CDN because scores move on quarterly data
-        # vintages while a badge on a busy listing page renders constantly;
-        # without that, somebody else's traffic becomes our Lambda bill.
+        # max-age=86400 on the response because scores move on quarterly
+        # data vintages - but that caches in the BROWSER, not at the CDN (see
+        # the /badge throttle above, audit M1): on a busy listing page every
+        # distinct viewer's first render is still our Lambda invocation.
         BadgeGet:
           Type: Api
           Properties:

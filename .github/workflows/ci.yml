@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [master]
 
+# Least privilege for the GITHUB_TOKEN (audit M7). No job here writes to the
+# repo, opens issues or publishes anything; without this block the token
+# carries the repository default, which is read-write on older repositories.
+permissions:
+  contents: read
+
 jobs:
   lint-frontend:
     runs-on: ubuntu-latest

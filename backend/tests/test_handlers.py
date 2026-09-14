@@ -78,9 +78,12 @@ class FavouritesHandlerTests(unittest.TestCase):
     def setUp(self):
         self.app = _import_lambda('favourites')
 
-    def test_options_returns_200(self):
+    def test_options_is_not_this_functions_to_answer(self):
+        # API Gateway's MOCK integration answers /favourites preflights; this
+        # branch is unreachable in production and used to return 200 as if
+        # it were the live preflight (audit M17). It refuses explicitly now.
         result = self.app.handler({'httpMethod': 'OPTIONS', 'headers': {}}, None)
-        self.assertEqual(result['statusCode'], 200)
+        self.assertEqual(result['statusCode'], 405)
 
     def test_get_without_token_returns_401(self):
         result = self.app.handler(

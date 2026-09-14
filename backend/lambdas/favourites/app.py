@@ -196,8 +196,15 @@ def handler(event, context):
     method = event.get('httpMethod', 'GET')
 
     try:
+        # OPTIONS never reaches this function: the three /favourites methods
+        # in template.yaml are POST, GET and DELETE, and API Gateway answers
+        # the CORS preflight from its own MOCK integration with the Globals
+        # CORS headers. This branch was unreachable and a test exercised it
+        # as if it were the live preflight (audit M17). Kept as an explicit
+        # refusal so a future route wiring cannot fall through to the token
+        # check below and answer a preflight 401.
         if method == 'OPTIONS':
-            return response(200, {})
+            return response(405, {'error': 'Preflight is answered by API Gateway, not this function.'})
 
         # All non-OPTIONS methods require a valid device token.
         token = get_device_token(event)
@@ -230,15 +237,21 @@ def handler(event, context):
 
             postcode = body['postcode']
 
+            # No silent defaults for the two fields a reader interprets
+            # (audit M17): `city` defaulted to 'london', which filed any
+            # non-site caller's saved Manchester postcode under London, and
+            # `buyerScore` to '0', which reads as the worst possible score
+            # rather than "not given". Absent stays absent ('' for the
+            # string, '' for the score), and the site always sends both.
             item = {
                 'userId': token,  # partition key is the device token
                 'postcode': postcode,
                 'borough': body.get('borough', ''),
                 'noiseLevel': body.get('noiseLevel', ''),
-                'buyerScore': str(body.get('buyerScore', 0)),
+                'buyerScore': '' if body.get('buyerScore') is None else str(body.get('buyerScore')),
                 'notes': body.get('notes', ''),
                 'timestamp': datetime.now(UTC).isoformat(),
-                'city': body.get('city', 'london'),
+                'city': body.get('city', ''),
             }
             table.put_item(Item=item)
             return response(200, {'message': 'Saved', 'item': item})

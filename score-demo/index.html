@@ -124,7 +124,12 @@
     font-size: 14px;
   }
   input[type="text"]:focus, input[type="email"]:focus, select:focus {
-    outline: none;
+    /* No `outline: none` (audit M36): the border-colour change below is the
+       only focus cue, and a colour-only cue fails WCAG 2.4.7 for anyone who
+       cannot see the hue shift. A visible ring, offset so it does not clash
+       with the border. */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     border-color: var(--amber);
   }
   button {

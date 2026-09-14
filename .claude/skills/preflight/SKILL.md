@@ -62,7 +62,8 @@ API base-URL drift · Playwright at `--workers=2`.
   a gate gets ignored.
 - **`npm audit`.** `dependencies` is empty and the site has no build step, so
   nothing from `node_modules` ships. `npm audit --omit=dev` is 0; the dev tree
-  carries 4 high-severity advisories in the lint toolchain.
+  carries a changing handful of advisories in the lint toolchain (5 on
+  2026-09-14, 2 high) - read the number off `npm audit`, not off this line.
 
 If you change what blocks, change `scripts/preflight.sh` — not this file.
 

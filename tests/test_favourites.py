@@ -64,10 +64,15 @@ def _reset_mock_table():
 # OPTIONS (no token required — CORS preflight must always succeed)
 # ---------------------------------------------------------------------------
 class TestOptions:
-    def test_options_returns_200_without_token(self):
+    # API Gateway answers /favourites preflights from its MOCK integration;
+    # this branch is unreachable in production and used to answer 200 as if
+    # it were the live preflight (audit M17, 2026-09-14). It refuses now, and
+    # without demanding a token - a preflight never carries one.
+    def test_options_is_refused_without_demanding_a_token(self):
         event = make_api_event("OPTIONS")
         result = handler(event, None)
-        assert result["statusCode"] == 200
+        assert result["statusCode"] == 405
+        assert "API Gateway" in result["body"]
 
     def test_cors_on_options(self):
         event = make_api_event("OPTIONS")

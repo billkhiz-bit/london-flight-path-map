@@ -7583,7 +7583,12 @@ def resolve_query(query):
         },
         'crimeBreakdown': {
             'status': 'planned',
-            'source': 'ONS LSOA-level crime by category (planned, OGL v3.0)',
+            # "planned" FOR THIS RESPONSE. The consumer site already renders a
+            # per-borough offence breakdown (`crimeTop`, ONS Table C4, 85 of 91
+            # boroughs, in data/borough-extra.json since 2026-09-13); what is
+            # planned is publishing it through /v1/score. Said here so the next
+            # reader does not "close" this entry on seeing the panel (audit M37).
+            'source': 'ONS Table C4 offence groups per CSP (on the consumer site today; planned for this API, OGL v3.0)',
             'eta': 'roadmap',
         },
     }

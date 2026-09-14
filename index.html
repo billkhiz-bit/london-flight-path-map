@@ -4245,6 +4245,7 @@
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
           <a href="/area/">Areas</a>
+          <span class="sep">·</span>
           <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
           <a href="/terms">Terms</a>
@@ -4466,6 +4467,7 @@
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
           <a href="/area/">Areas</a>
+          <span class="sep">·</span>
           <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
           <a href="/terms">Terms</a>
@@ -10405,6 +10407,10 @@
             })
             .join('');
         }
+        // The heading is source-neutral, so the content says where it came
+        // from - as renderNaptanStations already does for its rows.
+        html +=
+          '<p class="info-note" style="margin-top:6px;font-size:11px;">Source: TfL Unified API, live.</p>';
         el.innerHTML = html;
       }
 
@@ -12278,7 +12284,10 @@
     ${
       currentCity === 'london'
         ? `<div class="sidebar-section">
-      <h3>NEAREST STATIONS (LIVE TfL DATA)</h3>
+      <!-- Source-neutral (audit M36): when TfL answers empty the NaPTAN
+           fallback renders under this heading, so "(LIVE TfL DATA)" named a
+           source the rows below were not from. Each renderer names its own. -->
+      <h3>NEAREST STATIONS</h3>
       <div id="postcode-transport-data"><span class="crime-loading">Loading from TfL API...</span></div>
     </div>
     <div class="sidebar-section">

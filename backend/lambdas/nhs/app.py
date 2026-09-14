@@ -352,6 +352,13 @@ def handler(event, context):
         if in_bundle_area(lat, lon):
             buckets = from_bundle(lat, lon)
             if any(buckets.values()):
+                # An empty bucket beside a populated one is a measured "none
+                # within 1.5 km" in the snapshot - the same row the Overpass
+                # branch below publishes for the same finding (audit M16), so
+                # the two paths cannot answer one meaning in two shapes.
+                for cat, label in (('gp', 'GP'), ('pharmacies', 'Pharmacy'), ('hospitals', 'Hospital')):
+                    if not buckets[cat]:
+                        buckets[cat] = none_nearby(label)
                 buckets.update(
                     {
                         'location': {'lat': lat, 'lon': lon},
