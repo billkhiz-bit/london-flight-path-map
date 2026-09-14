@@ -96,3 +96,23 @@ class TestAssertLowestMapped:
         # raster would "bottom out" at its own nodata value.
         band = np.array([[NODATA, 40.0]], dtype='float32')
         assert loader.assert_lowest_mapped(band, NODATA) == 40.0
+
+
+# --- audit M20 (2026-09-14): a schema change or an empty full run must not exit 0
+
+def test_missing_column_stops_the_run_before_any_row():
+    mod = _load()
+    with pytest.raises(SystemExit, match=r"lacks column\(s\) \['long'\]"):
+        mod.require_columns(['pcds', 'lat', 'lng'], 'x.csv')
+    mod.require_columns(['pcds', 'lat', 'long', 'doterm'], 'x.csv')  # extras are fine
+
+
+def test_a_full_run_that_wrote_nothing_fails():
+    mod = _load()
+    with pytest.raises(SystemExit, match='wrote nothing'):
+        mod.require_wrote_something(limit=None, wrote=0, skipped=2_700_000)
+    mod.require_wrote_something(limit=None, wrote=1, skipped=2_700_000)
+    # A --limit smoke run over Aberdeen rows legitimately writes nothing.
+    mod.require_wrote_something(limit=3000, wrote=0, skipped=3000)
+    # A resume with nothing left to scan is not a failed run either.
+    mod.require_wrote_something(limit=None, wrote=0, skipped=0)

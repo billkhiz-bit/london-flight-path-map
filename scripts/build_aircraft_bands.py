@@ -508,7 +508,21 @@ def derive(city):
             # estimate there is. Kept explicitly rather than by omission.
             floored = dist_to_polygon(f["geometry"], airport["lat"], airport["lon"]) < footprint
         else:
-            floored = hits.get(name, 0.0) > 0.0
+            # NOT hits.get(name, 0.0). An absent key and a measured zero are
+            # the same shape in JSON, and a borough whose NAME drifted from
+            # the measurement file would have read as "0 km2 inside the
+            # contour" - the floor off, band possibly `low`, exactly the
+            # Rushcliffe defect this file was built to remove (audit M24).
+            # 48 of 48 resolve today; this is for the day one does not.
+            if name not in hits:
+                raise SystemExit(
+                    f"{name} ({city}) is not in "
+                    f"{FOOTPRINT_PATH.name}'s measured boroughs. The boundary file and the "
+                    "measurement have drifted apart - re-run "
+                    "scripts/measure_aircraft_footprint.py --write rather than reading the "
+                    "gap as zero."
+                )
+            floored = hits[name] > 0.0
         if floored and ORDER.index(base) < ORDER.index(NEAR_FIELD_FLOOR):
             base = NEAR_FIELD_FLOOR
         # The LATERAL width does not scale and the ALONG-TRACK reach does. A

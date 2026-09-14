@@ -51,7 +51,8 @@
       "transportWithin800mPct": 61.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 52.2,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Hillingdon": {
       "crime": "low",
@@ -104,7 +105,8 @@
       "transportWithin800mPct": 40.4,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 47.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Richmond upon Thames": {
       "crime": "low",
@@ -157,7 +159,8 @@
       "transportWithin800mPct": 69.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 56.7,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Ealing": {
       "crime": "medium",
@@ -210,7 +213,8 @@
       "transportWithin800mPct": 69.2,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 68.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Wandsworth": {
       "crime": "medium",
@@ -263,7 +267,8 @@
       "transportWithin800mPct": 74.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 77.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Lambeth": {
       "crime": "high",
@@ -316,7 +321,8 @@
       "transportWithin800mPct": 86.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 78.5,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Lewisham": {
       "crime": "medium",
@@ -369,7 +375,8 @@
       "transportWithin800mPct": 82.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 61.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Greenwich": {
       "crime": "medium",
@@ -422,7 +429,8 @@
       "transportWithin800mPct": 62.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 64.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Tower Hamlets": {
       "crime": "high",
@@ -475,7 +483,8 @@
       "transportWithin800mPct": 97.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 86.9,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Camden": {
       "crime": "high",
@@ -528,7 +537,8 @@
       "transportWithin800mPct": 97.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 87.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Islington": {
       "crime": "high",
@@ -581,7 +591,8 @@
       "transportWithin800mPct": 98.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 89.9,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Hackney": {
       "crime": "high",
@@ -634,7 +645,8 @@
       "transportWithin800mPct": 90.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 83.1,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Barnet": {
       "crime": "low",
@@ -687,7 +699,8 @@
       "transportWithin800mPct": 59.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 56.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Croydon": {
       "crime": "medium",
@@ -740,7 +753,8 @@
       "transportWithin800mPct": 65.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 52.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Bromley": {
       "crime": "low",
@@ -793,7 +807,8 @@
       "transportWithin800mPct": 52.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 39.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Newham": {
       "crime": "high",
@@ -846,7 +861,8 @@
       "transportWithin800mPct": 81.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 68.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Southwark": {
       "crime": "high",
@@ -899,7 +915,8 @@
       "transportWithin800mPct": 61.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 79.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
@@ -952,7 +969,8 @@
       "transportWithin800mPct": 88.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 81.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Kensington and Chelsea": {
       "crime": "medium",
@@ -1005,7 +1023,8 @@
       "transportWithin800mPct": 88.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 88.0,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Brent": {
       "crime": "medium",
@@ -1058,7 +1077,8 @@
       "transportWithin800mPct": 78.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 72.2,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Haringey": {
       "crime": "medium",
@@ -1111,7 +1131,8 @@
       "transportWithin800mPct": 73.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 73.2,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Waltham Forest": {
       "crime": "medium",
@@ -1164,7 +1185,8 @@
       "transportWithin800mPct": 65.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 68.2,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Merton": {
       "crime": "low",
@@ -1217,7 +1239,8 @@
       "transportWithin800mPct": 76.5,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 58.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Redbridge": {
       "crime": "medium",
@@ -1270,7 +1293,8 @@
       "transportWithin800mPct": 61.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 56.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Enfield": {
       "crime": "medium",
@@ -1323,7 +1347,8 @@
       "transportWithin800mPct": 67.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 49.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Kingston upon Thames": {
       "crime": "low",
@@ -1376,7 +1401,8 @@
       "transportWithin800mPct": 65.1,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 51.3,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Sutton": {
       "crime": "low",
@@ -1429,7 +1455,8 @@
       "transportWithin800mPct": 60.9,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 47.7,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Westminster": {
       "crime": "high",
@@ -1482,7 +1509,8 @@
       "transportWithin800mPct": 99.7,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 81.6,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "City of London": {
       "crime": "high",
@@ -1512,7 +1540,8 @@
       "transportWithin800mPct": 100.0,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 37.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Barking": {
       "crime": "high",
@@ -1565,7 +1594,8 @@
       "transportWithin800mPct": 48.3,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 75.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Havering": {
       "crime": "low",
@@ -1618,7 +1648,8 @@
       "transportWithin800mPct": 33.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 46.4,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Bexley": {
       "crime": "low",
@@ -1671,7 +1702,8 @@
       "transportWithin800mPct": 44.8,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 52.9,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     },
     "Harrow": {
       "crime": "low",
@@ -1724,7 +1756,8 @@
       "transportWithin800mPct": 64.2,
       "transportVintage": "NaPTAN (DfT) rail, metro and tram access nodes",
       "healthcareWithin500mPct": 56.8,
-      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries"
+      "healthcareVintage": "NHS Organisation Data Service, active GP practices and branch surgeries",
+      "airQualityCoverage": 100.0
     }
   },
   "nyc": {
@@ -1854,7 +1887,8 @@
           "shareOfTotal": 8.0,
           "vsLondonMedian": 1.9
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Salford": {
       "p8": -0.35,
@@ -1900,7 +1934,8 @@
           "shareOfTotal": 9.6,
           "vsLondonMedian": 1.7
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Stockport": {
       "p8": 0.09,
@@ -1946,7 +1981,8 @@
           "shareOfTotal": 8.9,
           "vsLondonMedian": 0.9
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Trafford": {
       "p8": 0.35,
@@ -1992,7 +2028,8 @@
           "shareOfTotal": 10.7,
           "vsLondonMedian": 1.4
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Tameside": {
       "p8": -0.21,
@@ -2038,7 +2075,8 @@
           "shareOfTotal": 8.1,
           "vsLondonMedian": 1.3
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Oldham": {
       "p8": -0.2,
@@ -2084,7 +2122,8 @@
           "shareOfTotal": 8.2,
           "vsLondonMedian": 1.5
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Rochdale": {
       "p8": -0.3,
@@ -2130,7 +2169,8 @@
           "shareOfTotal": 8.2,
           "vsLondonMedian": 1.5
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Bury": {
       "p8": -0.09,
@@ -2176,7 +2216,8 @@
           "shareOfTotal": 8.5,
           "vsLondonMedian": 1.3
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Bolton": {
       "p8": 0.05,
@@ -2222,7 +2263,8 @@
           "shareOfTotal": 7.7,
           "vsLondonMedian": 1.3
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     },
     "Wigan": {
       "p8": -0.32,
@@ -2268,7 +2310,8 @@
           "shareOfTotal": 9.9,
           "vsLondonMedian": 1.5
         }
-      ]
+      ],
+      "airQualityCoverage": 100.0
     }
   },
   "westmidlands": {
@@ -2315,7 +2358,8 @@
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Coventry": {
       "crimeRate": 88.4,
@@ -2360,7 +2404,8 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Dudley": {
       "crimeRate": 74.5,
@@ -2405,7 +2450,8 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Sandwell": {
       "crimeRate": 95.9,
@@ -2450,7 +2496,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Solihull": {
       "crimeRate": 79.5,
@@ -2495,7 +2542,8 @@
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Walsall": {
       "crimeRate": 92.9,
@@ -2540,7 +2588,8 @@
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Wolverhampton": {
       "crimeRate": 92.0,
@@ -2585,7 +2634,8 @@
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "westyorkshire": {
@@ -2632,7 +2682,8 @@
           "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Calderdale": {
       "crimeRate": 103.4,
@@ -2677,7 +2728,8 @@
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Kirklees": {
       "crimeRate": 87.6,
@@ -2722,7 +2774,8 @@
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Leeds": {
       "crimeRate": 114.6,
@@ -2767,7 +2820,8 @@
           "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Wakefield": {
       "crimeRate": 105.8,
@@ -2812,7 +2866,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "southyorkshire": {
@@ -2859,7 +2914,8 @@
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Doncaster": {
       "crimeRate": 117.3,
@@ -2904,7 +2960,8 @@
           "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Rotherham": {
       "crimeRate": 93.1,
@@ -2949,7 +3006,8 @@
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Sheffield": {
       "crimeRate": 96.9,
@@ -2994,7 +3052,8 @@
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "merseyside": {
@@ -3041,7 +3100,8 @@
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Liverpool": {
       "crimeRate": 124.1,
@@ -3086,7 +3146,8 @@
           "vsLondonMedian": 2.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "St Helens": {
       "crimeRate": 86.4,
@@ -3131,7 +3192,8 @@
           "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Sefton": {
       "crimeRate": 75.5,
@@ -3176,7 +3238,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Wirral": {
       "crimeRate": 71.1,
@@ -3221,7 +3284,8 @@
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "tyneandwear": {
@@ -3268,7 +3332,8 @@
           "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Newcastle upon Tyne": {
       "crimeRate": 107.4,
@@ -3313,7 +3378,8 @@
           "vsLondonMedian": 1.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "North Tyneside": {
       "crimeRate": 81.8,
@@ -3358,7 +3424,8 @@
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "South Tyneside": {
       "crimeRate": 96.6,
@@ -3403,7 +3470,8 @@
           "vsLondonMedian": 2.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Sunderland": {
       "crimeRate": 93.6,
@@ -3448,7 +3516,8 @@
           "vsLondonMedian": 1.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "bristol": {
@@ -3495,7 +3564,8 @@
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Bath and North East Somerset": {
       "crimeRate": 79.0,
@@ -3540,7 +3610,8 @@
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "North Somerset": {
       "crimeRate": 81.8,
@@ -3585,7 +3656,8 @@
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "South Gloucestershire": {
       "crimeRate": 73.8,
@@ -3630,7 +3702,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "leicester": {
@@ -3677,7 +3750,8 @@
           "vsLondonMedian": 2.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Blaby": {
       "crimeRate": 59.2,
@@ -3721,7 +3795,8 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Charnwood": {
       "crimeRate": 67.9,
@@ -3765,7 +3840,8 @@
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Harborough": {
       "crimeRate": 44.4,
@@ -3809,7 +3885,8 @@
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Hinckley and Bosworth": {
       "crimeRate": 59.5,
@@ -3853,7 +3930,8 @@
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Melton": {
       "crimeRate": 56.8,
@@ -3897,7 +3975,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "North West Leicestershire": {
       "crimeRate": 59.2,
@@ -3941,7 +4020,8 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Oadby and Wigston": {
       "crimeRate": 53.6,
@@ -3985,7 +4065,8 @@
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   },
   "teesside": {
@@ -4032,7 +4113,8 @@
           "vsLondonMedian": 2.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Middlesbrough": {
       "crimeRate": 150.0,
@@ -4077,7 +4159,8 @@
           "vsLondonMedian": 2.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Redcar and Cleveland": {
       "crimeRate": 108.9,
@@ -4122,7 +4205,8 @@
           "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Stockton-on-Tees": {
       "crimeRate": 107.9,
@@ -4167,7 +4251,8 @@
           "vsLondonMedian": 1.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     },
     "Darlington": {
       "crimeRate": 91.0,
@@ -4212,7 +4297,8 @@
           "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026"
+      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "airQualityCoverage": 100.0
     }
   }
 }

@@ -563,7 +563,6 @@ DEFAULT_MIN_CONTAINMENT = 0.50
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NSPL_PATH = os.path.join(REPO, 'data', 'nspl.csv')
-OUT_PATH = os.path.join(REPO, 'data', 'manchester-neighbourhoods.json')
 CACHE_DIR = os.path.join(REPO, 'data')
 
 
@@ -1139,7 +1138,7 @@ def check_prices(cities, args):
             failed_cities.append(city)
 
     print('')
-    print(f'compared {total_compared} published medians across {len(cities)} cities')
+    print(f'compared {total_compared} published medians across {len(cities)} cities, {total_differ} differ or unresolved')
     if failed_cities:
         print(f'FAIL: {", ".join(failed_cities)}.')
         print('A published median that does not reproduce from category-A Price Paid is')

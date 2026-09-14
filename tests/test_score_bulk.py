@@ -53,7 +53,11 @@ score_bulk = _load_script(
 
 SCORED_BODY = {
     'score': 6.8,
-    'components': {'quiet': 10.0, 'afford': 6.7, 'growth': 0.0, 'live': 8.7},
+    # `env` joined the response at methodology v3.9 (2026-08-26). Until
+    # 2026-09-14 (audit M27) this fixture was still four-component, so the
+    # scorer's `env` column - and its deliberate '' for a below-floor city -
+    # had never been asserted against anything.
+    'components': {'quiet': 10.0, 'afford': 6.7, 'growth': 0.0, 'live': 8.7, 'env': 5.6},
     'context': {
         'avgPriceGbp': 660000,
         'priceTrendPct': -4.2,
@@ -98,7 +102,7 @@ class TestClassifyOutcome:
         assert row['score'] == 6.8
         assert row['borough'] == 'Wandsworth'
         assert row['matched_postcode'] == 'SW11 1AA'
-        assert (row['quiet'], row['afford'], row['growth'], row['live']) == (10.0, 6.7, 0.0, 8.7)
+        assert (row['quiet'], row['afford'], row['growth'], row['live'], row['env']) == (10.0, 6.7, 0.0, 8.7, 5.6)
         assert row['quiet_resolution'] == 'raster'
         assert row['methodology_version'] == '3.2'
         assert row['note'] == ''
@@ -111,6 +115,15 @@ class TestClassifyOutcome:
         row = score_bulk.classify_outcome('10001', body, 200)
         assert row['avg_price_gbp'] == 1_200_000
         assert row['city'] == 'nyc'
+
+    def test_env_absent_is_an_empty_cell_never_a_zero(self):
+        # New York and Cardiff are below the environment floor and the API
+        # omits the component. 0 is a real score on this scale - the worst
+        # environment there is - so the cell must be empty, not defaulted.
+        body = dict(SCORED_BODY, components={k: v for k, v in SCORED_BODY['components'].items() if k != 'env'})
+        row = score_bulk.classify_outcome('10001', body, 200)
+        assert row['env'] == ''
+        assert row['live'] == 8.7
 
     @pytest.mark.parametrize('body,status,expected', [
         (NOT_FOUND_BODY, 404, 'not_found'),

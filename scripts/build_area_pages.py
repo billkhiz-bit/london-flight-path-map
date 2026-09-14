@@ -510,6 +510,12 @@ def main() -> int:
         if not pages:
             print('FAIL: no pages generated at all')
             return 1
+        if thin:
+            # The module docstring has promised this since the file was
+            # written; the code failed only on ZERO pages (audit M24), so 98
+            # good pages and one doorway page read as OK.
+            print(f'FAIL: {len(thin)} page(s) would carry fewer than {MIN_FACTS} facts')
+            return 1
         print('OK')
         return 0
 

@@ -47,6 +47,9 @@ SELECTIVE = {
 }
 
 # Files we deliberately leave alone (infrastructure, deploy artefacts).
+# A RECORD, not a filter (audit M28): the rewrite below touches only the
+# files named in USER_FACING and SELECTIVE, so nothing here is ever
+# visited. It is printed at the end so the decision stays visible.
 SKIP = {
     '.claude/settings.local.json',
     'backend/lambdas/nhs/app.py',           # User-Agent header (metadata)
@@ -111,7 +114,7 @@ def main():
             print(f'  {rel}: {n} selective replacements')
 
     print(f'\nDone. {total_replaced} replacements across {files_touched} files.')
-    print(f'Skipped (kept CloudFront URL): {", ".join(sorted(SKIP))}')
+    print(f'Left alone by decision (kept CloudFront URL): {", ".join(sorted(SKIP))}')
 
 
 if __name__ == '__main__':

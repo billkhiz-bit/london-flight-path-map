@@ -259,10 +259,12 @@ def parse_args():
     )
     p.add_argument(
         '--limit', type=int, default=None, metavar='N',
-        help='Process only the first N rows of the NSPL CSV. Useful for '
-             'verifying the pipeline before committing to the full ~1.7M '
-             'postcode run. Counts toward the resumable checkpoint as if '
-             'it were a partial run.',
+        help='Process only the first N rows of the NSPL CSV (a positive '
+             'integer). Useful for verifying the pipeline before committing '
+             'to the full ~2.7M-row run. Writes NO checkpoint, so a smoke run '
+             'can never be resumed as if it were a partial full run. Note the '
+             'CSV is in postcode order - the first rows are Aberdeen - so a '
+             'small limit against an English raster legitimately writes 0.',
     )
     p.add_argument(
         '--dry-run', action='store_true',
@@ -424,6 +426,45 @@ def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
     return len(items) - len(stalled)
 
 
+REQUIRED_COLUMNS = ('pcds', 'lat', 'long')
+
+
+def require_columns(fieldnames, path=NSPL_CSV_PATH):
+    """Hard-fail on a CSV header the loader cannot read (audit M20).
+
+    The per-row parse used to catch KeyError with the ValueError it shares a
+    clause with, so a renamed column turned every row into a skip: "Wrote: 0
+    postcodes", exit 0, and a table quietly left as it was. A blank coordinate
+    is a row's problem; a missing column is the file's, and the file's
+    problems stop the run. Pure, so tests/test_load_defra_raster.py can prove
+    it without a raster.
+    """
+    missing = [c for c in REQUIRED_COLUMNS if c not in (fieldnames or [])]
+    if missing:
+        raise SystemExit(
+            f'{path} lacks column(s) {missing}; header is {fieldnames}. The '
+            f'loader reads {REQUIRED_COLUMNS}. Refusing to scan a file it cannot '
+            'read as a full run that wrote nothing.'
+        )
+
+
+def require_wrote_something(limit, wrote, skipped):
+    """A full run that scanned rows and wrote none is a failure (audit M20).
+
+    Every raster this repo loads has readings under real postcodes, so zero
+    writes over a real scan is a wrong raster, a wrong CRS or a checkpoint
+    already at the end of the file - never a clean run. It used to exit 0.
+    A `--limit` smoke run is exempt: the CSV is in postcode order and starts
+    in Aberdeen, so a small limit against an English raster writes nothing
+    and is right to.
+    """
+    if not limit and skipped and wrote == 0:
+        raise SystemExit(
+            f'FAIL: scanned {skipped:,} rows and wrote nothing. Check the raster, '
+            'its CRS and the checkpoint before trusting this run.'
+        )
+
+
 def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', live_only=False):
     """Sample the raster at NSPL postcode centroids and write to DynamoDB.
 
@@ -513,11 +554,39 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
 
     with open(NSPL_CSV_PATH, newline='', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
+        # SCHEMA IS CHECKED ONCE, HERE, AND HARD (audit M20). The per-row
+        # parse below used to catch KeyError with the ValueError it shares a
+        # clause with, so a renamed column turned every row into a skip:
+        # "Wrote: 0 postcodes", exit 0, and a table quietly left as it was.
+        # A blank coordinate is a row's problem; a missing column is the
+        # file's, and the file's problems stop the run.
+        require_columns(reader.fieldnames, NSPL_CSV_PATH)
         for idx, row in enumerate(tqdm(reader, desc='postcodes', initial=checkpoint)):
             if idx < checkpoint:
                 continue
             if limit and (idx - checkpoint) >= limit:
                 break
+
+            # CHECKPOINT AT THE TOP OF THE BODY, not the bottom (audit M20).
+            # It used to sit after the sampling, behind six `continue`s -
+            # live-only, unparseable, out-of-bounds, nodata - so over a long
+            # stretch of postcodes outside the raster's bbox no checkpoint was
+            # written at all, which is the exact failure the old comment said
+            # it had fixed by moving it out of the flush branch. Every 1000th
+            # index now checkpoints whatever happened to the rows before it.
+            # The batch is flushed FIRST so the index never runs ahead of
+            # what reached the table: a bare index written over an unflushed
+            # buffer is how load_nspl's pre-2026-07-25 checkpoints left holes.
+            if not limit and not dry_run and idx > 0 and idx % 1000 == 0:
+                if batch:
+                    written += _flush_batch(ddb, batch, attribute, failures_file)
+                    batch.clear()
+                if below_batch:
+                    below_written += _flush_batch(
+                        ddb, below_batch, ROAD_BELOW_ATTRIBUTE, failures_file
+                    )
+                    below_batch.clear()
+                checkpoint_file.write_text(str(idx))
 
             if live_only and row.get('doterm'):
                 # See --live-only. Counted with the skips, not silently.
@@ -528,7 +597,9 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
                 pc = row['pcds'].replace(' ', '').upper()
                 lat = float(row['lat'])
                 lon = float(row['long'])
-            except (KeyError, ValueError):
+            except ValueError:
+                # A blank or unparseable coordinate on THIS row. KeyError is
+                # deliberately not here any more - see the header check above.
                 skipped += 1
                 continue
 
@@ -636,14 +707,6 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
                     written += _flush_batch(ddb, batch, attribute, failures_file)
                 batch.clear()
 
-            # Checkpoint every 1000 NSPL rows, regardless of whether the
-            # batch flushed. Earlier this lived inside the flush branch,
-            # so for huge stretches of out-of-bbox postcodes the batch
-            # never filled, the flush never ran, and no checkpoint was
-            # written before an interrupt. With this we can resume mid-run.
-            if not limit and not dry_run and idx > 0 and idx % 1000 == 0:
-                checkpoint_file.write_text(str(idx))
-
     # Flush remainder
     if batch:
         if dry_run:
@@ -663,6 +726,7 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
     raster.close()
     verb = 'Would have written' if dry_run else 'Wrote'
     print(f'\nDone. {verb}: {written:,} postcodes. Skipped: {skipped:,}. Nodata: {nodata_skipped:,}.')
+    require_wrote_something(limit, written + below_written, skipped + nodata_skipped)
     if road_mode:
         # Say it even when zero. A road load that found no surveyed-quiet
         # postcodes in a whole city is a raster to look at, not a clean run.
@@ -686,6 +750,11 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
 
 def main():
     args = parse_args()
+    if args.limit is not None and args.limit <= 0:
+        # `if limit and ...` treats 0 as "no limit", so `--limit 0` was a full
+        # 2.7M-row load wearing a smoke test's flag (audit M20). load_nspl.py
+        # refuses it; so does this.
+        raise SystemExit('--limit must be a positive integer (0 would be a full run)')
     if args.self_test:
         self_test()
         return

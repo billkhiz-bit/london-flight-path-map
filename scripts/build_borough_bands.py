@@ -470,15 +470,21 @@ def sample_aq(grids, points):
 
     tr = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
     sums = {'no2': 0.0, 'pm25': 0.0}
-    counts = {'no2': 0, 'pm25': 0}
+    counts = {'no2': 0, 'pm25': 0, 'either': 0}
     for lat, lon in points:
         e, n = tr.transform(lon, lat)
         key = (int(e // 1000), int(n // 1000))
+        hit = False
         for k in ('no2', 'pm25'):
             v = grids[k].get(key)
             if v is not None and v >= 0:
                 sums[k] += v
                 counts[k] += 1
+                hit = True
+        # Postcodes with a DEFRA background cell for at least one pollutant:
+        # the denominator behind airQualityCoverage (audit M24 - road and
+        # flood reported theirs, air quality did not).
+        counts['either'] += hit
     return {
         k: (sums[k] / counts[k] if counts[k] else None) for k in ('no2', 'pm25')
     }, counts
@@ -790,6 +796,7 @@ def derive(limit=None):
                     rec['pm25AnnualMeanUgm3'] = round(aq['pm25'], 1)
                 rec['airQuality'] = band
                 rec['airQualityWhoRatio'] = round(worst, 2)
+                rec['airQualityCoverage'] = round(100 * counts['either'] / len(points), 1)
                 rec['airQualityVintage'] = AQ_VINTAGE
             city_out[borough] = rec
         results[city] = city_out
@@ -840,6 +847,7 @@ DERIVED_KEYS = (
     'pm25AnnualMeanUgm3',
     'airQuality',
     'airQualityWhoRatio',
+    'airQualityCoverage',
     'airQualityVintage',
     'transport',
     'transportWithin800mPct',

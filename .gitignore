@@ -152,6 +152,11 @@ data/*
 # harmless in itself, but it is exactly the noise that hides a real one.
 .defra_aq_checkpoint
 .defra_aq_failures
+# The road/aircraft loader's sibling: `.defra_load_failures_<raster stem>`
+# (load_defra_raster.py). Unignored until 2026-09-14 (audit M28), so a
+# failed batch would have appeared as an untracked file - the same noise
+# the two lines above were added to stop.
+.defra_load_failures_*
 
 # Raw browser-saved property pages used to derive extension fixtures.
 # Ctrl+S output is ~1 MB plus a _files/ directory of assets, none of which the

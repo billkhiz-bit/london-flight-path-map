@@ -9,10 +9,15 @@ Strategic Noise Mapping (Round 4, 2022) GeoTIFF. Report per-path:
     away from where DEFRA actually publishes contours)
   - flag paths where the path doesn't track real noise
 
-Paths are stored in index.html as JS arrays; rather than parse JS we
-mirror them here. Update this file when FLIGHT_PATHS in index.html
-changes (intentionally kept in sync, not auto-derived, because
-re-running the audit when paths change is the whole point).
+The paths are READ FROM THE SCORE LAMBDA (`CITY_GEOMETRY['london']['paths']`,
+the holder /v1/score actually scores against), not mirrored. Until
+2026-09-14 (audit M27) this file carried a hand copy "as of 2026-05-07":
+4-7 waypoints per path against the 11-23 the live geometry has carried
+since the 1 km resample of 2026-08-10, so the audit measured corridors
+the product had stopped using. The old note said the mirror was kept in
+sync deliberately, "because re-running the audit when paths change is the
+whole point" - and nothing re-ran it. Reading the holder means the audit
+cannot describe a corridor the engine does not have.
 
 Usage:
     python scripts/audit_flight_paths.py
@@ -28,42 +33,31 @@ DEFRA_GEOTIFF_PATH = Path('data/defra_lden_2022.tif')
 OUTPUT_PATH = Path('FLIGHT_PATHS_AUDIT.md')
 SAMPLES_PER_PATH = 50
 
-# Mirror of index.html FLIGHT_PATHS as of 2026-05-07 (after the trim
-# that scoped each polyline to its noise-relevant final-approach /
-# initial-departure portion only). Coordinates are [lng, lat] pairs.
-# Keep this in sync with index.html when paths change.
-FLIGHT_PATHS = [
-    {'name': 'Lambourne Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high',
-     'coordinates': [[-0.18, 51.52], [-0.25, 51.505], [-0.32, 51.495],
-                     [-0.38, 51.485], [-0.428, 51.4775]]},
-    {'name': 'Biggin Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high',
-     'coordinates': [[-0.22, 51.425], [-0.28, 51.44], [-0.34, 51.45],
-                     [-0.39, 51.46], [-0.428, 51.4644]]},
-    {'name': 'Ockham Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high',
-     'coordinates': [[-0.435, 51.37], [-0.435, 51.40], [-0.435, 51.42],
-                     [-0.435, 51.44], [-0.435, 51.4644]]},
-    {'name': 'Bovingdon Stack', 'airport': 'LHR', 'type': 'arrival', 'freq': 'high',
-     'coordinates': [[-0.49, 51.60], [-0.48, 51.56], [-0.47, 51.53],
-                     [-0.46, 51.505], [-0.45, 51.4775]]},
-    {'name': 'Dep West', 'airport': 'LHR', 'type': 'departure', 'freq': 'high',
-     'coordinates': [[-0.489, 51.4775], [-0.55, 51.48], [-0.62, 51.485], [-0.70, 51.49]]},
-    {'name': 'Dep SE (Detling)', 'airport': 'LHR', 'type': 'departure', 'freq': 'medium',
-     'coordinates': [[-0.428, 51.4775], [-0.35, 51.47], [-0.25, 51.46], [-0.15, 51.445]]},
-    {'name': 'Dep NE (BPK)', 'airport': 'LHR', 'type': 'departure', 'freq': 'medium',
-     'coordinates': [[-0.428, 51.4775], [-0.35, 51.49], [-0.25, 51.51], [-0.15, 51.53]]},
-    {'name': 'Approach East', 'airport': 'LCY', 'type': 'arrival', 'freq': 'medium',
-     'coordinates': [[0.20, 51.48], [0.17, 51.485], [0.14, 51.488], [0.11, 51.492],
-                     [0.09, 51.497], [0.07, 51.502], [0.0553, 51.5053]]},
-    {'name': 'Approach West', 'airport': 'LCY', 'type': 'arrival', 'freq': 'medium',
-     'coordinates': [[-0.02, 51.52], [-0.005, 51.517], [0.01, 51.513], [0.025, 51.51],
-                     [0.04, 51.508], [0.0553, 51.5053]]},
-    {'name': 'Dep East', 'airport': 'LCY', 'type': 'departure', 'freq': 'medium',
-     'coordinates': [[0.067, 51.5053], [0.09, 51.505], [0.12, 51.503], [0.16, 51.498],
-                     [0.21, 51.49]]},
-    # LGW Approach N + LTN Approach S removed 2026-05-07 after the
-    # audit confirmed they sit at altitudes (FL90+) where DEFRA shows
-    # zero ground noise. Documented in index.html.
-]
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_flight_paths():
+    """London's corridors from the score Lambda, in this file's [lng, lat] shape."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        'score_app_paths', ROOT / 'backend' / 'lambdas' / 'score' / 'app.py'
+    )
+    app = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app)
+    paths = app.CITY_GEOMETRY['london']['paths']
+    return [
+        {
+            'name': pth['name'],
+            'airport': pth['airport'],
+            'type': pth['type'],
+            'coordinates': [[lon, lat] for lat, lon in pth['coords']],
+        }
+        for pth in paths
+    ]
+
+
+FLIGHT_PATHS = load_flight_paths()
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -176,7 +170,7 @@ def main():
             'name': path['name'],
             'airport': path['airport'],
             'type': path['type'],
-            'freq': path['freq'],
+            'freq': path.get('freq', ''),
             'length_km': total_km,
             'in_bbox_pct': 100.0 * n_in_bbox / SAMPLES_PER_PATH,
             'in_contour_pct': 100.0 * n_in_contour / SAMPLES_PER_PATH,

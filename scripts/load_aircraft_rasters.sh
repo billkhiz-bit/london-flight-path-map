@@ -46,9 +46,27 @@ say() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" | tee -a "$LOG"; }
 
 say "=== aircraft raster load starting ==="
 
+# Wait on the checkpoint's AGE, not its existence (audit M19). A checkpoint
+# outlives the process that wrote it - that is the misreading load_status.sh
+# was rewritten to avoid - so a loader that died overnight would have parked
+# this runbook for ever, "still running" on a file nobody was writing. The
+# loader rewrites its checkpoint every 1000 rows (~65s at the slowest observed
+# cadence); 1800s of silence is load_status.sh's own STOPPED verdict.
+checkpoint_age() {
+  mtime=$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null)
+  [ -z "$mtime" ] && { echo 999999; return; }
+  echo $(( $(date +%s) - mtime ))
+}
 if [ -z "${SKIP_WAIT:-}" ]; then
   while [ -f "$AQ_CHECKPOINT" ]; do
-    say "air-quality loader still running ($(cat "$AQ_CHECKPOINT" 2>/dev/null) rows); waiting 5 min"
+    age=$(checkpoint_age "$AQ_CHECKPOINT")
+    if [ "$age" -ge 1800 ]; then
+      say "air-quality checkpoint is ${age}s old - that loader is STOPPED, not running."
+      say "Not waiting on a dead process. Restart it (sh scripts/load_status.sh), or"
+      say "re-run this with SKIP_WAIT=1 to load the aircraft rasters regardless."
+      exit 1
+    fi
+    say "air-quality loader still running ($(cat "$AQ_CHECKPOINT" 2>/dev/null) rows, checkpoint ${age}s old); waiting 5 min"
     sleep 300
   done
   say "air-quality loader finished; starting aircraft rasters"
@@ -87,20 +105,49 @@ if [ -n "${NO_DEPLOY:-}" ]; then
 fi
 
 say "deploying client dataset + index.html + sw.js"
+# Cache-Control on every object, matching the Makefile targets (audit M19).
+# index.html and sw.js went up here with NO header, which reverted the 8 Sep
+# `no-cache` on the shell: a browser applies heuristic freshness to a page
+# with no Cache-Control and can pin the app shell for days, and neither a
+# CloudFront invalidation nor an sw.js bump reaches the browser's HTTP cache.
 AWS_PROFILE=flightmap aws s3 cp data/aircraft-quiet-regions.json \
   s3://london-flight-map-frontend/data/aircraft-quiet-regions.json \
   --content-type "application/json" --cache-control "no-cache" \
   --region eu-west-2 >> "$LOG" 2>&1 || { say "data deploy FAILED"; exit 1; }
 AWS_PROFILE=flightmap aws s3 cp index.html \
   s3://london-flight-map-frontend/index.html \
-  --content-type "text/html" --region eu-west-2 >> "$LOG" 2>&1 \
+  --content-type "text/html" --cache-control "no-cache" \
+  --region eu-west-2 >> "$LOG" 2>&1 \
   || { say "index deploy FAILED"; exit 1; }
 AWS_PROFILE=flightmap aws s3 cp sw.js \
   s3://london-flight-map-frontend/sw.js \
-  --content-type "application/javascript" --region eu-west-2 >> "$LOG" 2>&1 \
+  --content-type "application/javascript" \
+  --cache-control "no-cache, no-store, must-revalidate" \
+  --region eu-west-2 >> "$LOG" 2>&1 \
   || { say "sw deploy FAILED"; exit 1; }
-AWS_PROFILE=flightmap aws cloudfront create-invalidation \
-  --distribution-id EGSSPJKLFL33M --paths "/*" >> "$LOG" 2>&1 \
+# MSYS_NO_PATHCONV: Git Bash rewrites "/*" into a Windows path and CloudFront
+# rejects the whole batch (CLAUDE.md, "Build & Deploy").
+INVALIDATION=$(MSYS_NO_PATHCONV=1 AWS_PROFILE=flightmap aws cloudfront create-invalidation \
+  --distribution-id EGSSPJKLFL33M --paths "/*" \
+  --query "Invalidation.Id" --output text 2>> "$LOG" | tr -d '\r') \
   || { say "invalidation FAILED"; exit 1; }
+say "invalidation $INVALIDATION created; waiting for it to complete"
+MSYS_NO_PATHCONV=1 AWS_PROFILE=flightmap aws cloudfront wait invalidation-completed \
+  --distribution-id EGSSPJKLFL33M --id "$INVALIDATION" >> "$LOG" 2>&1 \
+  || { say "invalidation did not complete"; exit 1; }
 
-say "=== done: loaded and deployed ==="
+# VERIFY FROM THE ORIGIN, not from the exit codes above (audit M19). An
+# upload that succeeded and a cache that still serves the old bytes look the
+# same from here; the hash the edge returns is the only thing a user gets.
+CF="https://d1oe4ftwutjpf.cloudfront.net"
+for f in data/aircraft-quiet-regions.json index.html sw.js; do
+  local_hash=$(sha256sum "$f" | cut -c1-16)
+  live_hash=$(curl -sf -H "Cache-Control: no-cache" "$CF/$f" | sha256sum | cut -c1-16)
+  if [ "$local_hash" != "$live_hash" ]; then
+    say "VERIFY FAILED: $f live $live_hash != local $local_hash"
+    exit 1
+  fi
+  say "  verified $f ($live_hash)"
+done
+
+say "=== done: loaded, deployed and verified from the origin ==="

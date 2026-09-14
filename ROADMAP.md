@@ -624,9 +624,13 @@ plus M14's chat-400 remainder. ~~The a11y five (M30-M34) are one pass with the
 two contrast gates run after~~ **M30-M34 closed later the same day (19 of 37)**:
 each proven red on the committed page, two gates widened (`favourites-keyboard`
 +5 checks, `responsive` +1 state +1 detector, `page-has-heading-one` now
-blocking). **Still open, 18:** M1-M3, M6, M7, M13, M15-M17, M19, M20, M22-M24,
-M27, M28, M36, M37, plus M14's chat-400 remainder. The runbook two (M19, M20)
-before the next raster load; the rest as they come.
+blocking). **Then M19, M20, M22, M24, M27, M28 (25 of 37)**: both loaders
+hard-fail on schema drift and on an empty full run, checkpoint at the top of the
+loop, and refuse `--limit 0` (measured doing a full 2.7M-row dry pass); the
+aircraft runbook verifies from the origin; `airQualityCoverage` joins its two
+siblings. **Still open, 12:** M1-M3, M6, M7, M13, M15-M17, M36, M37, plus M14's
+chat-400 remainder - the backend error-path cluster (M2, M3, M13, M15, M16) is
+one pass with a SAM deploy; M1, M6, M7, M17, M36, M37 as they come.
 
 ### Legal & entity — blocks the first pilot invoice (raised 2026-08-04)
 

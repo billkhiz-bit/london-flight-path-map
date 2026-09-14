@@ -42,9 +42,11 @@ from pathlib import Path
 # on sys.path. The fallback covers loading this file by path, as its tests do.
 try:
     import ddb_write
+    from load_defra_raster import require_columns, require_wrote_something
 except ImportError:  # pragma: no cover - depends on how the file was loaded
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import ddb_write
+    from load_defra_raster import require_columns, require_wrote_something
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -108,7 +110,10 @@ def load_grid(path, label):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    p.add_argument('--limit', type=int, default=None, metavar='N')
+    p.add_argument(
+        '--limit', type=int, default=None, metavar='N',
+        help='first N NSPL rows only; a positive integer, never checkpointed',
+    )
     p.add_argument('--dry-run', action='store_true')
     p.add_argument(
         '--live-only', action='store_true',
@@ -119,6 +124,11 @@ def main():
              'pass in load_defra_raster.py; the AIRCRAFT pass must not copy it.',
     )
     args = p.parse_args()
+    if args.limit is not None and args.limit <= 0:
+        # `if args.limit and ...` reads 0 as "no limit" (audit M20, as in the
+        # raster loader): `--limit 0 --dry-run` was measured doing a full
+        # 2,704,817-row pass on 2026-09-14. load_nspl.py refuses it; so does this.
+        raise SystemExit('--limit must be a positive integer (0 would be a full run)')
 
     try:
         from pyproj import Transformer
@@ -186,16 +196,32 @@ def main():
         return len(batch) - len(stalled)
 
     with NSPL_CSV.open(encoding='utf-8', errors='replace') as fh:
-        for idx, row in enumerate(csv.DictReader(fh)):
+        reader = csv.DictReader(fh)
+        # Schema checked once, hard, before any row - shared with the raster
+        # loader (audit M20). The per-row KeyError skip below used to turn a
+        # renamed column into "Wrote: 0 postcodes", exit 0.
+        require_columns(reader.fieldnames, NSPL_CSV)
+        for idx, row in enumerate(reader):
             if idx < start:
                 continue
             if args.limit and idx >= args.limit:
                 break
+            # Checkpoint at the TOP of the body, flushed first, never on a
+            # dry run - the same three reasons as load_defra_raster.py. It sat
+            # at the bottom behind four `continue`s, so a long stretch of rows
+            # with no grid cell never advanced it; and it carried no dry-run
+            # guard at all, reachable only by the accident that every dry-run
+            # row `continue`d before it.
+            if not args.limit and not args.dry_run and idx > start and idx % 1000 == 0:
+                if batch:
+                    written += flush()
+                    batch.clear()
+                CHECKPOINT.write_text(str(idx))
             if args.live_only and row.get('doterm'):
                 continue
             try:
                 lat, lon = float(row['lat']), float(row['long'])
-            except (KeyError, TypeError, ValueError):
+            except (TypeError, ValueError):
                 continue
             # NSPL uses 99.999999 for postcodes with no grid reference.
             if lat > 60.9 or lat < 49.8:
@@ -226,9 +252,6 @@ def main():
                 written += flush()
                 batch.clear()
 
-            if not args.limit and idx % 1000 == 0:
-                CHECKPOINT.write_text(str(idx))
-
     if batch and not args.dry_run:
         written += flush()
 
@@ -237,6 +260,7 @@ def main():
 
     verb = 'Would have written' if args.dry_run else 'Wrote'
     print(f'\n{verb}: {written:,} postcodes. No grid cell: {missed:,}.')
+    require_wrote_something(args.limit, written, missed)
     if failed:
         print(
             f'STALLED: {failed:,} postcodes could not be written and are NOT in '

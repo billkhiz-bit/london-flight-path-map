@@ -155,9 +155,21 @@ def main():
         'env': app.get_env_score(bd),
     }
     for comp, real in derived.items():
-        if real is None or comp not in stated:
-            continue
+        if comp not in stated:
+            continue  # find() has already recorded the missing statement
         checks += 1
+        if real is None:
+            # A None here is the engine saying it cannot derive the component
+            # for THIS borough - and this postcode is the worked example
+            # because every component is measured. Until 2026-09-14 (audit
+            # M22) it was `continue`, twenty lines under the comment
+            # explaining how a None had silently switched afford off: the
+            # same opt-out, kept for the other three.
+            failures.append(
+                f'component {comp}: the engine derives None for {BOROUGH}, so '
+                f'the {stated[comp]} in section 6 cannot be checked - and a worked '
+                f'example must be checkable in every component')
+            continue
         if abs(stated[comp] - float(real)) > 0.051:
             failures.append(
                 f'component {comp}: section 6 says {stated[comp]}, the engine '
@@ -209,14 +221,25 @@ def main():
     print('METHODOLOGY section 6 vs the engine')
     print('===================================')
     print(f'  postcode          {POSTCODE} ({BOROUGH}, {CITY})')
-    print(f'  comparisons made  {checks}')
+    # DERIVED from the comparison sites above, not written down: the inputs
+    # table, the four bounds, the three components re-derived here, and the
+    # three singletons (quietResolution, the weights block, the arithmetic).
+    # Asserted as EQUALITY in both directions. It was `checks < 15` against a
+    # maximum of 17 (audit M22), which let two comparisons vanish - proven by
+    # patching both composites to None: "comparisons made 15", OK, exit 0.
+    expected = len(stated_inputs) + 4 + len(derived) + 3
+    print(f'  comparisons made  {checks} of {expected}')
 
-    if checks < 15:
+    if checks != expected:
         print()
-        print(f'FAIL: only {checks} comparisons - section 6 was restructured and')
-        print('      this gate is no longer reading it. Fix the patterns rather')
-        print('      than lowering this floor: a gate that finds nothing to')
-        print('      compare reports agreement it never established.')
+        if checks < expected:
+            print(f'FAIL: only {checks} of {expected} comparisons - section 6 was')
+            print('      restructured and this gate is no longer reading part of it.')
+            print('      Fix the patterns rather than lowering the count: a gate that')
+            print('      finds nothing to compare reports agreement it never established.')
+        else:
+            print(f'FAIL: {checks} comparisons against {expected} expected - a comparison')
+            print('      site was added without adding it to the `expected` derivation.')
         return 1
 
     if failures:
