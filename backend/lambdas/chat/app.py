@@ -157,10 +157,23 @@ def retrieve_context(query):
 
     Direct invoke rather than an HTTP call to /v1/score: it runs the identical
     code path with no API key to provision, no egress, and no possibility of the
-    chat answer and the API disagreeing. Returns (context_dict, error_string).
+    chat answer and the API disagreeing. Returns (context_dict, error_string,
+    http_status): the status is what the CALLER should answer with, because
+    the two failure families are not the caller's to tell apart:
+
+      - the score API answered 4xx (postcode not recognised, city not covered)
+        -> 400, carrying the score API's own message so there is one wording;
+      - the score function CRASHED, answered 5xx, returned something that was
+        not a response, or could not be reached -> 502 naming the scoring
+        service. A crash arrives as the runtime's error envelope
+        (`{"errorMessage": ..., "errorType": ...}` with `FunctionError` set on
+        the invoke result), which carries no `statusCode` at all - and until
+        2026-09-15 that fell through to "That location could not be resolved"
+        as a 400, blaming the caller's postcode for our outage (13 Sep audit,
+        M14). A 400 is retried by nobody; a 502 is.
     """
     if not SCORE_FUNCTION_NAME:
-        return None, 'Scoring backend is not configured.'
+        return None, 'Scoring backend is not configured.', 500
 
     params = {k: v for k, v in query.items() if v}
     event = {
@@ -177,21 +190,31 @@ def retrieve_context(query):
         payload = json.loads(result['Payload'].read().decode())
     except Exception as exc:  # noqa: BLE001 — upstream shape is not ours to trust
         logger.exception('[CHAT_RETRIEVAL_FAILED] %r', exc)
-        return None, 'Could not reach the scoring service.'
+        return None, 'Could not reach the scoring service.', 502
 
-    if payload.get('statusCode') != 200:
+    if result.get('FunctionError') or not isinstance(payload, dict):
+        # The runtime's error envelope, not a response: the score function
+        # raised. Log the envelope (it names the exception) and say so.
+        logger.error('[CHAT_RETRIEVAL_CRASHED] %r', payload)
+        return None, 'The scoring service failed; try again shortly.', 502
+
+    status = payload.get('statusCode')
+    if status != 200:
         try:
             inner = json.loads(payload.get('body') or '{}')
         except (TypeError, ValueError):
             inner = {}
+        if not isinstance(status, int) or status >= 500:
+            logger.error('[CHAT_RETRIEVAL_UPSTREAM_5XX] status=%r body=%r', status, inner)
+            return None, 'The scoring service failed; try again shortly.', 502
         # Surfacing the score API's own message keeps one wording for
         # "postcode not recognised" rather than inventing a second.
-        return None, inner.get('error', 'That location could not be resolved.')
+        return None, inner.get('error', 'That location could not be resolved.'), 400
 
     try:
-        return json.loads(payload['body']), None
+        return json.loads(payload['body']), None, 200
     except (KeyError, TypeError, ValueError):
-        return None, 'Scoring service returned an unreadable response.'
+        return None, 'Scoring service returned an unreadable response.', 502
 
 
 # Numbers that carry no factual claim on their own. Without this, "2 or 3
@@ -356,9 +379,9 @@ def _handle(event, context):
     if not query['postcode'] and not query['borough']:
         return response(400, {'error': 'Provide either postcode or borough.'})
 
-    retrieved, err = retrieve_context(query)
+    retrieved, err, status = retrieve_context(query)
     if err:
-        return response(400, {'error': err})
+        return response(status, {'error': err})
 
     answer, err = ask_model(question, retrieved)
     if err:

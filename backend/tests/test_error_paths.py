@@ -193,5 +193,71 @@ class NhsEmptyBucketTests(unittest.TestCase):
         self.assertFalse(body['gp'][0]['fallback'])
 
 
+class ChatUpstreamFailureTests(unittest.TestCase):
+    """M14 (the chat half, closed 2026-09-15): a crashed or failing
+    ScoreFunction is a 502 naming the scoring service, never a 400 blaming the
+    caller's postcode. Driven through `handler` so the STATUS the caller gets
+    is what is asserted - `retrieve_context` alone could be right while the
+    handler still mapped every error to 400, which was the defect."""
+
+    EVENT = {
+        'httpMethod': 'POST',
+        'body': json.dumps({'question': 'Is it quiet?', 'postcode': 'SW11 1AA'}),
+    }
+
+    def _handle_with_invoke(self, invoke_result):
+        app = load_lambda('chat', 'chat_app_errors')
+        client = MagicMock()
+        client.invoke.return_value = invoke_result
+        with patch.object(app, 'SCORE_FUNCTION_NAME', 'ScoreFunction'), \
+             patch.object(app, '_lambda_client', return_value=client):
+            return app.handler(self.EVENT, None)
+
+    @staticmethod
+    def _invoke_result(payload, function_error=None):
+        body = MagicMock()
+        body.read.return_value = json.dumps(payload).encode()
+        result = {'StatusCode': 200, 'Payload': body}
+        if function_error:
+            result['FunctionError'] = function_error
+        return result
+
+    def test_a_crashed_score_function_is_a_502_not_a_400(self):
+        # The runtime's error envelope: no statusCode, FunctionError set.
+        result = self._handle_with_invoke(self._invoke_result(
+            {'errorMessage': "KeyError: 'avgPrice'", 'errorType': 'KeyError', 'stackTrace': []},
+            function_error='Unhandled',
+        ))
+        self.assertEqual(result['statusCode'], 502)
+        self.assertIn('scoring service', json.loads(result['body'])['error'])
+        self.assertNotIn('location', json.loads(result['body'])['error'])
+
+    def test_an_upstream_5xx_is_a_502(self):
+        result = self._handle_with_invoke(self._invoke_result(
+            {'statusCode': 500, 'body': json.dumps({'error': 'Internal server error'})},
+        ))
+        self.assertEqual(result['statusCode'], 502)
+
+    def test_an_unreachable_score_function_is_a_502(self):
+        app = load_lambda('chat', 'chat_app_errors')
+        client = MagicMock()
+        client.invoke.side_effect = EndpointConnectionError(endpoint_url='https://lambda.eu-west-2.amazonaws.com')
+        with patch.object(app, 'SCORE_FUNCTION_NAME', 'ScoreFunction'), \
+             patch.object(app, '_lambda_client', return_value=client):
+            result = app.handler(self.EVENT, None)
+        self.assertEqual(result['statusCode'], 502)
+
+    def test_the_score_apis_own_4xx_is_still_a_400_with_its_wording(self):
+        result = self._handle_with_invoke(self._invoke_result(
+            {'statusCode': 404, 'body': json.dumps({'error': 'Postcode not found.'})},
+        ))
+        self.assertEqual(result['statusCode'], 400)
+        self.assertEqual(json.loads(result['body'])['error'], 'Postcode not found.')
+
+    def test_every_response_carries_the_cors_headers(self):
+        result = self._handle_with_invoke(self._invoke_result({}, function_error='Unhandled'))
+        self.assertIn('Access-Control-Allow-Origin', result['headers'])
+
+
 if __name__ == '__main__':
     unittest.main()
