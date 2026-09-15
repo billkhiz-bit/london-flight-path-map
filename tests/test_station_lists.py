@@ -34,6 +34,9 @@ INDEX = os.path.join(REPO, 'index.html')
 # repeated lesson that an expectation read from the code it checks cannot
 # disagree with it.
 DIRECTIONAL = re.compile(r'\s*\b(?:platform\s+)?(?:to|from|towards)\s+.+$', re.I)
+# And the trailing qualifier `split_name` returns (audit M23): "(London)",
+# "(Circle Line)". Restated here for the same reason.
+QUALIFIER = re.compile(r'\s*\([^()]*\)\s*$')
 
 # Names NaPTAN itself marks as retired carry these in the clear. They are not
 # how the filter works - `Status` is - but if one appears in the shipped array
@@ -111,6 +114,40 @@ class StationListTests(unittest.TestCase):
             'these places are listed more than once, differing only by a trailing '
             'direction - a "four nearest stations" panel will show fewer than four '
             'places:\n  ' + '\n  '.join(duplicates))
+
+    def test_no_place_is_listed_twice_under_a_qualifier(self):
+        """One station, one entry - however NaPTAN tells its nodes apart (M23).
+
+        The I19 shape with a different suffix: "Abbey Wood" and "Abbey Wood
+        (London)" 28 m apart, "Shepherd's Bush" beside "(Central)" AND
+        "(Central Line)", Hammersmith once per Underground line. Measured
+        before the fix: 19 published entries, 15 of them London.
+
+        Same 800 m test as the directional one, for the same reason: "Hayes
+        (Kent)" and "Hayes & Harlington" are different stations that happen to
+        share a word, and a qualifier that EVERY node of a station carries is
+        that station's name - "Kensington (Olympia)" is listed once, under its
+        parenthetical, and must stay so. Only a qualified entry with a bare or
+        differently-qualified sibling in the same place is a duplicate.
+        """
+        duplicates = []
+        for city, rows in sorted(self.cities.items()):
+            by_core = {}
+            for row in rows:
+                core = ' '.join(QUALIFIER.sub('', row['name']).split()).strip(' -,').lower()
+                by_core.setdefault(core, []).append(row)
+            for core, members in by_core.items():
+                if len(members) < 2:
+                    continue
+                base = members[0]['coords']
+                near = [m for m in members if _metres(base, m['coords']) < 800]
+                if len(near) > 1:
+                    duplicates.append(
+                        f'{city}/{core}: ' + ', '.join(repr(m['name']) for m in near))
+        self.assertEqual(
+            [], duplicates,
+            'these places are listed more than once, differing only by a trailing '
+            'parenthetical:\n  ' + '\n  '.join(duplicates))
 
     def test_no_retired_station_is_published_as_current(self):
         """NaPTAN keeps retired nodes with real names and coordinates.

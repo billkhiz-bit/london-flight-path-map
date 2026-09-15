@@ -18,11 +18,15 @@ reasons that only show up if you look at what the numbers mean:
      of a rail/metro/tram node, at 0.25 of the component. Deriving a station
      list from the same register and letting it move the same score again
      counts one measurement twice.
-  2. LONDON'S LIST IS NOT THE SAME KIND OF THING. `STATIONS` in index.html is
-     18 hand-picked major interchanges - King's Cross, Bank, Waterloo - so
-     London's nudge means "distance to a major hub". A NaPTAN-derived list is
+  2. LONDON'S LIST WAS NOT THE SAME KIND OF THING. `STATIONS` in index.html
+     was 18 hand-picked major interchanges - King's Cross, Bank, Waterloo - so
+     London's nudge meant "distance to a major hub". A NaPTAN-derived list is
      every station. Filling the other cities that way would have made London
-     incomparable with them while looking like consistency.
+     incomparable with them while looking like consistency. (The nudge went
+     and London's array became NaPTAN's too, in the same commit as this
+     docstring, 2026-08-12 - it holds ~670 rows. This paragraph said "is 18
+     hand-picked" for a month after that, audit M23; it is the reason the
+     nudge was removed rather than a description of the array.)
 
 So this script emits stations for the DETAIL PANEL - "your nearest stations,
 with distances" - and the scoring nudge is removed rather than generalised.
@@ -114,8 +118,27 @@ def city_shapes():
     return out
 
 
+_DESCRIPTOR = re.compile(
+    r'\s*\b(?:rail station|railway station|underground station|metro station|'
+    r'metrolink station|tram stop|tram station|station entrance|station|interchange)\s*$',
+    re.I,
+)
+# A trailing parenthetical that the platform/operator strip above did not
+# recognise: "(London)", "(Kent)", "(Circle Line)", "(Olympia)". See split_name.
+_QUALIFIER = re.compile(r'\s*\(([^()]*)\)\s*$')
+
+
 def clean_name(raw):
     """'Manchester Piccadilly (Platform 13)' -> 'Manchester Piccadilly'.
+
+    The base name alone; `split_name` below also returns the qualifier.
+    """
+    return split_name(raw)[0]
+
+
+def split_name(raw):
+    """'Rainham (London) Rail Station' -> ('Rainham', 'London');
+    'Bank Underground Station' -> ('Bank', None).
 
     ONLY strips a trailing descriptor and parenthetical platform detail. An
     earlier version stripped the words anywhere in the string and turned
@@ -123,6 +146,25 @@ def clean_name(raw):
     "Beaconsfield Street" - real NaPTAN names mangled into something that reads
     like a fragment. Anchoring to the end is the difference between removing a
     suffix and editing a place name.
+
+    THE QUALIFIER IS SPLIT OFF LAST, AND IS RETURNED RATHER THAN DROPPED (audit
+    M23, 2026-09-15). NaPTAN writes a disambiguator or a line INSIDE the name -
+    "Edgware Road (Circle Line) Underground Station", "Rainham (London) Rail
+    Station" - so it is mid-string on the way in and only becomes trailing once
+    the descriptor has gone. Stripping it FIRST would mangle "Battersea Power
+    Station Underground Station" into "Battersea Power" (the descriptor strip
+    would then see a bare "Station"); stripping it last leaves that name alone
+    because it never had a parenthetical. Measured before this existed: 19
+    published entries were a listed place under a qualifier - 15 of them
+    London ("Abbey Wood" / "Abbey Wood (London)" 28 m apart, four Hammersmiths
+    one per line) - the I19 shape with a different suffix.
+
+    It is RETURNED, not dropped, because a qualifier every node of a station
+    shares is the station's name: "Kensington (Olympia)", "Hayes (Kent)",
+    "Bitton (Avon Valley Railway)". `collect` merges on the base and restores
+    the qualifier only when it is unanimous. Dropping it unconditionally would
+    have published "Hayes" for the Bromley station in the same list as "Hayes &
+    Harlington", which is a new ambiguity in exchange for the old duplicate.
     """
     s = raw or ''
     # Trailing parenthetical: platform detail, or the operator's own tag.
@@ -140,13 +182,7 @@ def clean_name(raw):
     # "Metrolink Station North West Ent".
     s = re.sub(r'\s*\b(?:metrolink|tram|metro)?\s*station\s+.*\bent(?:rance)?\.?\s*$', '', s, flags=re.I)
     s = re.sub(r'\s+-\s+(?:main\s+)?ent(?:rance)?\.?\s*$', '', s, flags=re.I)
-    s = re.sub(
-        r'\s*\b(?:rail station|railway station|underground station|metro station|'
-        r'metrolink station|tram stop|tram station|station entrance|station|interchange)\s*$',
-        '',
-        s,
-        flags=re.I,
-    )
+    s = _DESCRIPTOR.sub('', s)
     # "Darlington Rail Station - main ent" loses the entrance first, so by the
     # time the descriptor strip runs it sees "... Rail Station" and removes
     # only "Station". One more pass takes the orphaned "Rail".
@@ -168,7 +204,20 @@ def clean_name(raw):
     # Interchange To City" -> "Meadowhall Interchange". It runs LAST because
     # "X To City Rail Station" must lose the descriptor first.
     s = re.sub(r'\s*\b(?:platform\s+)?(?:to|from|towards)\s+.+$', '', s, flags=re.I)
-    return ' '.join(s.split()).strip(' -,')
+    # The qualifier, last (see the docstring). "Queen's Park Station (London)"
+    # still carries its descriptor at this point because the parenthetical was
+    # trailing on the way in and shielded it, so the descriptor strip runs once
+    # more on the base - and ONLY on this branch. "Rotherham Station To
+    # Parkgate" keeps its "Station" today because the directional strip runs
+    # after the descriptor one; a second descriptor pass on every name would
+    # reach it, and "Bradford Interchange" (Rail Station) is a station's name,
+    # not a suffix on one.
+    qualifier = None
+    m = _QUALIFIER.search(s)
+    if m:
+        qualifier = ' '.join(m.group(1).split()) or None
+        s = _DESCRIPTOR.sub('', s[: m.start()])
+    return ' '.join(s.split()).strip(' -,'), qualifier
 
 
 def _point_in_ring(lon, lat, ring):
@@ -247,7 +296,7 @@ def collect(bboxes):
                 lat, lon = bng_to_wgs84(float(row['Easting']), float(row['Northing']))
             except (KeyError, ValueError, TypeError):
                 continue
-            name = clean_name(row.get('CommonName'))
+            name, qualifier = split_name(row.get('CommonName'))
             if not name:
                 continue
             for city, ((min_lat, min_lon, max_lat, max_lon), geoms) in bboxes.items():
@@ -273,10 +322,14 @@ def collect(bboxes):
                 # other. Preferring the spelling with more capitals keeps
                 # "Besses o'th'Barn" over "...barn" and is deterministic, which
                 # matters because this file is diffed on every rebuild.
+                # KEYED ON THE BASE, with the qualifiers each node carried
+                # remembered (M23): "Rainham (London)" and "Rainham" are one
+                # key, as are the four Hammersmiths. What is DISPLAYED is
+                # decided once the scan is over, below.
                 key = name.casefold()
                 prev = per_city[city].get(key)
                 if prev is None:
-                    per_city[city][key] = [round(lon, 5), round(lat, 5), kind, name]
+                    per_city[city][key] = [round(lon, 5), round(lat, 5), kind, name, {qualifier}]
                     kept += 1
                 else:
                     if kind == 'rail' and prev[2] != 'rail':
@@ -284,6 +337,7 @@ def collect(bboxes):
                     caps = sum(1 for c in name if c.isupper())
                     if (caps, name) > (sum(1 for c in prev[3] if c.isupper()), prev[3]):
                         prev[3] = name
+                    prev[4].add(qualifier)
                 break
     # A FLOOR ON THE EXCLUSION, not just on the intake. A scan that kept
     # stations and found no inactive ones means the Status values changed
@@ -299,10 +353,21 @@ def collect(bboxes):
     print(f'  scanned {scanned:,} NaPTAN nodes, kept {kept:,} stations '
           f'({skipped_inactive:,} skipped as inactive)')
     return {
-        c: [{'name': v[3], 'coords': v[:2], 'type': v[2]}
+        c: [{'name': display_name(v[3], v[4]), 'coords': v[:2], 'type': v[2]}
             for _key, v in sorted(st.items())]
         for c, st in per_city.items()
     }
+
+
+def display_name(base, qualifiers):
+    """The qualifier comes back ONLY when every node of the station carried the
+    same one - then it is the station's name ("Kensington (Olympia)"). A bare
+    node, or two different qualifiers (one per line at Edgware Road), means the
+    parenthetical was NaPTAN telling nodes apart, and the reader wants the place.
+    """
+    if len(qualifiers) == 1 and None not in qualifiers:
+        return f'{base} ({next(iter(qualifiers))})'
+    return base
 
 
 def write_index(city, stations):
