@@ -1174,7 +1174,9 @@ nominal and saying so, growth provenance DERIVED (13 literals gone, 12 of
 them a literal 'June 2026'). Engine-measured: 25 of 77 'rising' flip, 78 of
 99 investor scores move (mean -0.53), balanced cannot. Three gates widened
 (worked example derives growth for the first time; HPI gate checks CPIH
-against ONS; parity compares investor). See CHANGELOG 2026-09-15.
+against ONS; parity compares investor). See CHANGELOG 2026-09-15. **DEPLOYED
+the same evening, verified from the origin (drift 133/133, score sanity 28,
+area 99/99, site == API, Cardiff investor 4.1 live).**
 
 **6. July HPI roll.** Blocked on HMLR publishing `Average-prices-2026-07.csv`
 (~16 Sep; 404 on 14 Sep). `build_hpi_prices.py --check` now prints **NEWER HPI
@@ -1238,8 +1240,8 @@ apostrophe and stay two entries.
 4 needs Bill's one protection
 command; 2A needs Bill to apply the prepared distribution config, THEN the
 index.html repoint; 6 waits on HMLR; 1 is A when there is an afternoon for
-SES - **the code for A is built and tested, flag off; OPERATIONS s3.9 is the
-flip**; **5 is DONE as v5.1 (deploy status in CHANGELOG / CLAUDE.md)**; 3
+SES - **the code for A is built, tested AND DEPLOYED with the flag off;
+OPERATIONS s3.9 is the flip**; **5 is DONE as v5.1 and DEPLOYED**; 3
 stands; 7's nine Dependabot PRs are reviewed and green, one merge command
 for Bill (the classifier refuses merges).
 

@@ -16,7 +16,8 @@ postcodes, THEN repoint index.html), the July HPI roll when HMLR publishes
 Sep - **and since v5.1 the roll must also add that month's CPIH to
 `CPIH_12M_PCT` and `SNAPSHOT_CPIH_PCT` in index.html; the gate reds without
 it**), and I17 option A when there is an afternoon for SES. Methodology v5.1
-(real-terms growth) landed 15 Sep - CHANGELOG has the effect and the guards.
+(real-terms growth) landed AND DEPLOYED 15 Sep - CHANGELOG has the effect,
+the guards and the origin verification. Nothing is undeployed.
 
 > **This banner said "BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04" until
 > 2026-09-09** - naming a `FlightMapDeployPolicy` that was restored *that same

@@ -84,6 +84,10 @@ sample; the 99 area pages rebuilt with a basis-aware growth note read from
 `SNAPSHOT_CPIH_PCT` beside it, and the panel printing "+2.5%, -0.3% after
 inflation" where the two differ.
 
+### Deployed
+
+DEPLOYED 2026-09-15 and verified from the origin: SAM modified ScoreFunction, SignupFunction (+ role) and the API (pending table ACTIVE, confirm route answering HTML, flag off); web + demo + area + meta targets run from the Makefile's own recipes, four invalidations completed; drift 133 of 133; score sanity PASS on 28 postcodes at matching versions; area pages 99 of 99; site == /v1/score on every component of 6 postcodes; demo-key scope 3 PASS; live index.html serves v5.1 with SNAPSHOT_CPIH_PCT 2.8; Cardiff investor 4.1 live, as measured.
+
 ### Notice
 
 Measured on the day: the signups register holds four rows - two consumer

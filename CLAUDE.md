@@ -1517,7 +1517,8 @@ The pending row is consumed by `DeleteItem(ReturnValues=ALL_OLD)` - read and
 burn in one hop, five hops total against the 28s Timeout. **Do not flip the
 flag by deploy alone**: with the SES identity unverified every signup 503s.
 OPERATIONS.md s3.9 is the runbook, and privacy.html s2a changes in the SAME
-deploy as the flip, not before.
+deploy as the flip, not before. **The code is DEPLOYED (2026-09-15, same SAM
+deploy as v5.1): the table exists, the route answers, the flag is off.**
 
 **GROWTH IS SCORED ON THE REAL-TERMS TREND SINCE METHODOLOGY v5.1 (2026-09-15).**
 The nominal HPI 12-month change is deflated by ONS CPIH for the SAME month -
@@ -1543,7 +1544,7 @@ literals; a constructed test cohort must set `trendReal` too, or the engine
 reads the copied record's real figure and the stub changes nothing.
 Measured: 25 of 77 'rising' boroughs fall in real terms, 78 of 99 investor
 scores move (mean -0.53), no other persona can. Worked example growth
-4.0 -> 3.6.
+4.0 -> 3.6. **DEPLOYED 2026-09-15 and verified from the origin: SAM modified ScoreFunction, SignupFunction (+ role) and the API (pending table ACTIVE, confirm route answering HTML, flag off); web + demo + area + meta targets run from the Makefile's own recipes, four invalidations completed; drift 133 of 133; score sanity PASS on 28 postcodes at matching versions; area pages 99 of 99; site == /v1/score on every component of 6 postcodes; demo-key scope 3 PASS; live index.html serves v5.1 with SNAPSHOT_CPIH_PCT 2.8; Cardiff investor 4.1 live, as measured.**
 
 **`weights` IS THE APPLIED TABLE SINCE 2026-09-09, not the persona's nominal
 row.** `sum(components * weights)` now reaches `score` on every borough -
