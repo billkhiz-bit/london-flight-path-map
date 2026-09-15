@@ -13,7 +13,10 @@ DEPLOYED, verified from the origin 15 Sep): Bill's one branch-
 protection command, the prepared CloudFront badge behaviour (apply, verify two
 postcodes, THEN repoint index.html), the July HPI roll when HMLR publishes
 (`build_hpi_prices.py --check` prints NEWER HPI VINTAGE PUBLISHED; 404 on 15
-Sep), and I17 option A when there is an afternoon for SES.
+Sep - **and since v5.1 the roll must also add that month's CPIH to
+`CPIH_12M_PCT` and `SNAPSHOT_CPIH_PCT` in index.html; the gate reds without
+it**), and I17 option A when there is an afternoon for SES. Methodology v5.1
+(real-terms growth) landed 15 Sep - CHANGELOG has the effect and the guards.
 
 > **This banner said "BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04" until
 > 2026-09-09** - naming a `FlightMapDeployPolicy` that was restored *that same

@@ -710,6 +710,15 @@
             setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
           });
         });
+      } else if (r.status === 201 && data.status === 'pending') {
+        // Verification-first signup (I17, behind SIGNUP_VERIFY on the API):
+        // the key arrives on the page the emailed link opens, not here.
+        trackEvent('signup-pending');
+        signupResult.className = 'signup-result success';
+        signupResult.innerHTML = `
+          <strong>Check your email</strong>
+          <div style="margin-top:6px;font-size:13px;">${escapeHtml(data.message || 'We have sent a link to confirm this address. Your key is shown when you open it.')}</div>
+        `;
       } else if (r.status === 409) {
         signupResult.className = 'signup-result error';
         signupResult.innerHTML = `

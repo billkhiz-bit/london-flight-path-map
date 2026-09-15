@@ -73,6 +73,14 @@ Resources:
           ResourcePath: /v1/signup
           ThrottlingRateLimit: 1
           ThrottlingBurstLimit: 5
+        # The confirm link (I17, 2026-09-15). Unauthenticated by nature - it
+        # is clicked from an email - and each click consumes its token, so
+        # the only thing to bound is guessing, which 2/5 makes hopeless
+        # against a 256-bit token. Sized structurally like /v1/regions.
+        - HttpMethod: GET
+          ResourcePath: /v1/signup/confirm
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
         # Per-method override on /epc. This route is intentionally
         # unauthenticated — the consumer site calls it from the browser with
         # no API key, so ApiKeyRequired here would go straight to a dark EPC
@@ -840,11 +848,34 @@ Resources:
           # container).
           USAGE_PLAN_NAME: SkyScoreFreeTier
           SIGNUPS_TABLE: !Ref SignupsTable
+          # I17 (2026-09-15): verification-first signup. OFF until the SES
+          # identity is verified and the account is out of the sandbox -
+          # with it on before that, every signup 503s at the send. The flip
+          # is `--parameter-overrides SignupVerify=on`, a runbook step in
+          # OPERATIONS.md, and it needs privacy.html s2a changed in the same
+          # deploy (consent is then given by the link, not the form).
+          SIGNUP_VERIFY: !Ref SignupVerify
+          PENDING_TABLE: !Ref SignupPendingTable
+          SES_FROM: !Ref SignupSenderAddress
       Policies:
         - DynamoDBWritePolicy:
             TableName: !Ref SignupsTable
         - DynamoDBReadPolicy:
             TableName: !Ref SignupsTable
+        # I17: the pending table is written on POST and consumed (deleted,
+        # returning the old row) on confirm. Crud rather than Write because
+        # DeleteItem with ReturnValues needs the read side too.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SignupPendingTable
+        # I17: one plain-text email per signup, from the verified domain
+        # identity. SendEmail only; no templates, no lists, no suppression
+        # management - the Lambda cannot enumerate or delete anything in SES.
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+              Resource:
+                - !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/*'
         - Statement:
             # CreateApiKey. Tag-conditioned — see below for why this
             # statement covers /apikeys ONLY.
@@ -978,6 +1009,15 @@ Resources:
             RestApiId: !Ref FlightMapApi
             Path: /v1/signup
             Method: options
+        # I17: the link in the confirmation email. GET, no key (a person
+        # clicks it from an email client), answers HTML. Throttled in
+        # MethodSettings above; test_route_throttles.py holds that.
+        SignupConfirmGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup/confirm
+            Method: get
 
   # NOTE on signup log retention: the log group /aws/lambda/<SignupFunction>
   # was auto-created by Lambda in May 2026, so CloudFormation cannot own it
@@ -1016,6 +1056,35 @@ Resources:
       # and the DR posture is meaningfully better. See OPERATIONS.md.
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+
+  # --- DynamoDB Table, PENDING signups awaiting an emailed confirmation ---
+  # I17 (2026-09-15). One row per unconfirmed request, keyed by the random
+  # token in the link, expired by TTL 24 h after it was written and deleted
+  # the moment it is used. Deliberately NOT retained and NOT backed up: it
+  # holds addresses whose owners have not yet consented, and the whole point
+  # of the row is to stop existing. Nothing in it is worth recovering.
+  SignupPendingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: london-flight-map-signup-pending
+      AttributeDefinitions:
+        - AttributeName: token
+          AttributeType: S
+      KeySchema:
+        - AttributeName: token
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # NO TimeToLiveSpecification YET, deliberately. flightmap-dev holds
+      # neither dynamodb:UpdateTimeToLive nor DescribeTimeToLive (probed
+      # 2026-09-15: AccessDeniedException), so a TTL here fails the WHOLE
+      # stack's deploy - including unrelated Lambdas - until the policy is
+      # extended in the console. Expiry is enforced in code on every
+      # confirm (`expiresAt` is checked before the row is used), so the only
+      # cost of the missing TTL is storage of dead rows, which is nothing.
+      # Once both verbs are granted (OPERATIONS.md, the SIGNUP_VERIFY
+      # runbook), add
+      #   TimeToLiveSpecification: {AttributeName: expiresAt, Enabled: true}
+      # and redeploy.
 
   # --- DynamoDB Table, DEFRA noise raster samples (v3.1) ---
   # Populated by an offline data-loader script that samples the DEFRA
@@ -1133,6 +1202,20 @@ Parameters:
     ConstraintDescription: 'EpcBearerToken must be non-empty. Get from get-energy-performance-data.communities.gov.uk My account, then pass via --parameter-overrides "EpcBearerToken=$EPC_BEARER_TOKEN".'
     NoEcho: true
     Description: Bearer token from get-energy-performance-data.communities.gov.uk (sign in via GOV.UK One Login, copy from the My account page). Pass at deploy time, never commit.
+  # I17 (2026-09-15). Both default to a deploy that changes nothing: the
+  # flag is off, and the sender is the address the SES identity will carry.
+  # Flip with `--parameter-overrides SignupVerify=on` once skyscore.co.uk is
+  # verified in SES eu-west-2 and the account is out of the sandbox.
+  SignupVerify:
+    Type: String
+    Default: 'off'
+    AllowedValues: ['on', 'off']
+    Description: 'on = every /v1/signup POST writes a pending row and emails a confirm link; nothing reaches the register until it is clicked.'
+  SignupSenderAddress:
+    Type: String
+    Default: 'Sky Score <noreply@skyscore.co.uk>'
+    AllowedPattern: '^.+$'
+    Description: 'From address for the confirmation email. Must belong to a verified SES identity.'
 
 Outputs:
   ApiUrl:

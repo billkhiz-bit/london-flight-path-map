@@ -1056,6 +1056,16 @@ day.
 - **C, take the consumer form off `/v1/signup`:** notify-me disappears until A.
 - **Recommendation: A.** B only if the lock-out hurts a real customer (the
   signups table holds a handful of rows - it does not today).
+- **A IS BUILT (2026-09-15), BEHIND `SignupVerify=off`.** `start_verification`
+  / `handle_confirm` / `complete_signup` in `signup/app.py`, the pending
+  table, the `GET /v1/signup/confirm` route with its throttle, SES send,
+  the demo page's `pending` branch, 13 tests. Deploying it changes NOTHING
+  until the flag is flipped, and the flip is **OPERATIONS.md s3.9**: SES
+  identity + DKIM at Cloudflare, sandbox exit, two IAM verbs for the TTL
+  (`UpdateTimeToLive`/`DescribeTimeToLive`, both denied today - the
+  classifier refused to edit `iam-policy.json`, so that edit is Bill's),
+  the privacy.html s2a wording in the same deploy, then
+  `--parameter-overrides SignupVerify=on`.
 - **Bill is leaning to A (2026-09-15). What A changes in the POLICIES, read
   from the pages:** `privacy.html` s2a says consent is given "by submitting
   the form" (`:241`) and "we collect the address and the postcode you
@@ -1154,9 +1164,17 @@ index.html (Python rounds halves to even, JS up - `borough-score-parity.mjs`
 is the gate), `/v1/changes` is unaffected (it recomputes `previousScore`
 under the current formula by design), and the decision INSIDE the decision
 is the contract: integrators read `trend` today, so it should stay nominal
-with a `trendReal` beside it rather than flip. **Recommendation: do it, as
-v5.1, but it is a scheduled item, not a same-day one** - the 14-day notice
-means the first action is the changelog entry announcing it.
+with a `trendReal` beside it rather than flip. **DONE AS v5.1 ON 2026-09-15**,
+the same day, because the notice turned out not to bind: the signups
+register was READ (four rows: two consumer subscriptions, two keys both
+Bill's) and no third party holds a key, so the changelog entry is the record
+exactly as for v4.0 and v5.0. `trend` nominal, `priceTrendRealPct` +
+`inflationPct` + `growthBasis` beside it, one CPIH per vintage, New York
+nominal and saying so, growth provenance DERIVED (13 literals gone, 12 of
+them a literal 'June 2026'). Engine-measured: 25 of 77 'rising' flip, 78 of
+99 investor scores move (mean -0.53), balanced cannot. Three gates widened
+(worked example derives growth for the first time; HPI gate checks CPIH
+against ONS; parity compares investor). See CHANGELOG 2026-09-15.
 
 **6. July HPI roll.** Blocked on HMLR publishing `Average-prices-2026-07.csv`
 (~16 Sep; 404 on 14 Sep). `build_hpi_prices.py --check` now prints **NEWER HPI
@@ -1220,7 +1238,10 @@ apostrophe and stay two entries.
 4 needs Bill's one protection
 command; 2A needs Bill to apply the prepared distribution config, THEN the
 index.html repoint; 6 waits on HMLR; 1 is A when there is an afternoon for
-SES; 5 is a scheduled v5.1; 3 stands.
+SES - **the code for A is built and tested, flag off; OPERATIONS s3.9 is the
+flip**; **5 is DONE as v5.1 (deploy status in CHANGELOG / CLAUDE.md)**; 3
+stands; 7's nine Dependabot PRs are reviewed and green, one merge command
+for Bill (the classifier refuses merges).
 
 **Two things from 10 Sep to know when reading the table.** The air-quality
 re-run was `--live-only`, so terminated postcodes still hold February's

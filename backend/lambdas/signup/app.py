@@ -31,12 +31,31 @@ form, then WAF rules. Not worth adding pre-emptively.
 Prompt-injection / IDOR risk is nil, the only DB write is keyed by
 email and the only data read out is the SignupTable. No user-supplied
 identifier is reflected in a response.
+
+VERIFICATION FIRST (audit I17, option A, built 2026-09-15, behind a flag).
+With SIGNUP_VERIFY=on nothing above happens on the POST. The address gets a
+PENDING row (its own table, 24 h TTL, random token) and ONE email with a
+confirm link, and every POST answers the same 201 whatever the register
+holds - so a stranger can no longer subscribe your address (privacy.html
+says consent is given by the person whose address it is), cannot lock you
+out of a later API signup by taking your row first, and cannot learn from
+the reply whether an address holds a key. The signup itself - key minting,
+the consumer list, the existing-row rules - runs UNCHANGED when the link is
+clicked (GET /v1/signup/confirm?token=), which renders a small HTML page
+from this Lambda rather than a JSON body, because a person arrives there
+from an email client. The flag defaults to OFF: with it on and the SES
+identity unverified, every signup would 503, so the flip is a runbook step
+(OPERATIONS.md) after the domain is verified and the account is out of the
+SES sandbox - not a deploy.
 """
 
+import html
 import json
 import logging
 import os
 import re
+import secrets
+import time
 from datetime import UTC, datetime
 
 import boto3
@@ -54,6 +73,17 @@ AWS_REGION = os.environ.get('AWS_REGION', 'eu-west-2')
 # → SignupFunction). Cached after first resolution per warm container.
 USAGE_PLAN_NAME = os.environ.get('USAGE_PLAN_NAME', 'SkyScoreFreeTier')
 SIGNUPS_TABLE = os.environ.get('SIGNUPS_TABLE', 'london-flight-map-signups')
+# I17: verification-first signup. OFF unless the template says otherwise; see
+# the module docstring for why the flip is a runbook step, not a deploy.
+SIGNUP_VERIFY = os.environ.get('SIGNUP_VERIFY', 'off').strip().lower() == 'on'
+PENDING_TABLE = os.environ.get('PENDING_TABLE', 'london-flight-map-signup-pending')
+SES_FROM = os.environ.get('SES_FROM', 'Sky Score <noreply@skyscore.co.uk>')
+# A confirm link lives a day. Long enough for an email to sit unread over a
+# night, short enough that a leaked link is not a standing door; the pending
+# table's TTL expires the row on the same clock, so an old token cannot be
+# replayed after the fact even if this check were skipped.
+PENDING_TTL_SECONDS = 24 * 3600
+TOKEN_PATTERN = re.compile(r'^[A-Za-z0-9_-]{20,64}$')
 KEY_NAME_PREFIX = 'SkyScoreUserKey-'
 # Tag applied to every key created by this Lambda (audit N-Code-1).
 # IAM policy on apigateway:DELETE has a matching tag-condition so a
@@ -135,9 +165,16 @@ _BOTO_CONFIG = Config(
     read_timeout=3,
     retries={'max_attempts': 1, 'mode': 'standard'},
 )
-_SEQUENTIAL_HOPS = 4
+# 5 since I17 (2026-09-15): the confirm path CONSUMES the pending row with one
+# DeleteItem(ReturnValues=ALL_OLD) - read and burn in a single call - and then
+# runs the four the key path always made. Five hops at a 5s budget is 25,
+# under the 28s Timeout; InnerClientBudgetTests holds it there.
+_SEQUENTIAL_HOPS = 5
 apigw = boto3.client('apigateway', region_name=AWS_REGION, config=_BOTO_CONFIG)
 ddb = boto3.client('dynamodb', region_name=AWS_REGION, config=_BOTO_CONFIG)
+# SES in the home region. The identity (skyscore.co.uk) is verified there;
+# SUBPROCESSORS.md row 1 names it. Built at import like its two siblings.
+ses = boto3.client('sesv2', region_name=AWS_REGION, config=_BOTO_CONFIG)
 
 
 # --- Helpers ------------------------------------------------------------
@@ -376,6 +413,16 @@ def handle_post(event):
     if len(email) > 254 or len(name) > 200:
         return response(400, {'error': 'Email or name exceeds maximum length.'}, event)
 
+    if SIGNUP_VERIFY:
+        return start_verification(email, name, source, postcode, event)
+    return complete_signup(email, name, source, postcode, event)
+
+
+def complete_signup(email, name, source, postcode, event):
+    """The signup proper: the existing-row rules, the key mint or the list
+    entry, the audit row. Called straight from the POST with SIGNUP_VERIFY
+    off, and from the confirm link with it on - the ONE holder of the rules,
+    so the two modes cannot drift on what a signup means."""
     # One key per email. If they already signed up, surface that with a
     # clear message, we cannot re-show the key (APIGW only returns the
     # value at creation time, not on subsequent reads).
@@ -625,6 +672,199 @@ def handle_post(event):
     )
 
 
+def confirm_url_base(event):
+    """Where the confirm link points, DERIVED from the request that asked for
+    it rather than configured: the API's own domain and stage, so a custom
+    domain (api.skyscore.co.uk, mapped to the stage at its root) and the raw
+    execute-api host both produce a link that resolves. CONFIRM_URL_BASE in
+    the environment overrides both, for the day the link should go through
+    the site's distribution instead."""
+    override = os.environ.get('CONFIRM_URL_BASE', '').strip()
+    if override:
+        return override.rstrip('/')
+    ctx = event.get('requestContext') or {}
+    domain = ctx.get('domainName') or ''
+    stage = ctx.get('stage') or ''
+    if not domain:
+        return ''
+    if 'execute-api' in domain and stage:
+        return f'https://{domain}/{stage}'
+    return f'https://{domain}'
+
+
+def start_verification(email, name, source, postcode, event):
+    """SIGNUP_VERIFY=on: write a pending row, send the link, answer 201.
+
+    THE 201 IS IDENTICAL FOR EVERY ADDRESS. The register is not consulted
+    here at all - not to warn, not to short-circuit - because a reply that
+    differs for a known address is the oracle audit I17 describes, and the
+    person who clicks the link will see the true state on the confirm page,
+    where only someone who controls the address can read it.
+    """
+    token = secrets.token_urlsafe(32)
+    now = int(time.time())
+    try:
+        ddb.put_item(
+            TableName=PENDING_TABLE,
+            Item={
+                'token': {'S': token},
+                'email': {'S': email},
+                'name': {'S': name},
+                'source': {'S': source},
+                'postcode': {'S': postcode},
+                'createdAt': {'N': str(now)},
+                'expiresAt': {'N': str(now + PENDING_TTL_SECONDS)},
+            },
+            ConditionExpression='attribute_not_exists(#t)',
+            ExpressionAttributeNames={'#t': 'token'},
+        )
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[SIGNUP_PENDING_WRITE_FAILED] code=%s', code)
+        return response(503, {'error': 'Could not start the signup. Please try again later.'}, event)
+
+    link = f'{confirm_url_base(event)}/v1/signup/confirm?token={token}'
+    try:
+        send_confirmation_email(email, source, postcode, link)
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[SIGNUP_EMAIL_FAILED] code=%s', code)
+        # Nothing to confirm without the email; do not leave a live token.
+        try:
+            ddb.delete_item(TableName=PENDING_TABLE, Key={'token': {'S': token}})
+        except (ClientError, BotoCoreError):
+            logger.warning('[SIGNUP_PENDING_ORPHAN] a pending row outlives a failed send; the TTL takes it')
+        return response(
+            503, {'error': 'Could not send the confirmation email. Please try again later.'}, event
+        )
+
+    return response(
+        201,
+        {
+            'status': 'pending',
+            'message': (
+                'Check your email for a link to confirm this address. '
+                'The link works for 24 hours.'
+            ),
+        },
+        event,
+    )
+
+
+def send_confirmation_email(email, source, postcode, link):
+    """One plain-text message. No tracking, no HTML part, no personal data
+    beyond the address it is sent to; the link carries the token alone."""
+    if source == 'consumer':
+        subject = 'Confirm your Sky Score updates'
+        what = (
+            f'Someone - probably you - asked for an email when the Sky Score for '
+            f'{postcode or "an area"} changes. Confirm it here:'
+        )
+    else:
+        subject = 'Confirm your Sky Score API key request'
+        what = 'Someone - probably you - asked for a free Sky Score API key. Confirm the address here:'
+    body = (
+        f'{what}\n\n{link}\n\n'
+        'The link works for 24 hours. If this was not you, ignore this email and '
+        'nothing is stored.\n\nSky Score - https://skyscore.co.uk\n'
+    )
+    ses.send_email(
+        FromEmailAddress=SES_FROM,
+        Destination={'ToAddresses': [email]},
+        Content={
+            'Simple': {
+                'Subject': {'Data': subject, 'Charset': 'UTF-8'},
+                'Body': {'Text': {'Data': body, 'Charset': 'UTF-8'}},
+            }
+        },
+    )
+
+
+_PAGE = (
+    '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+    '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    '<meta name="robots" content="noindex">'
+    '<title>{title} - Sky Score</title>'
+    '<style>body{{font:16px/1.5 system-ui,sans-serif;margin:0;padding:24px;max-width:36rem}}'
+    'code{{display:block;padding:12px;background:#f3f4f6;border-radius:6px;word-break:break-all;'
+    'font-size:15px}}h1{{font-size:22px}}a{{color:#1d4ed8}}</style></head>'
+    '<body><h1>{title}</h1>{body}<p><a href="https://skyscore.co.uk/">skyscore.co.uk</a></p>'
+    '</body></html>'
+)
+
+
+def html_page(status, title, body):
+    """A page, not a JSON envelope: the caller is a person who clicked a link
+    in an email. Everything interpolated is escaped, including our own
+    strings - the key is the one thing on the page that came from an API."""
+    return {
+        'statusCode': status,
+        'headers': {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff',
+            'Referrer-Policy': 'no-referrer',
+            'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
+        },
+        'body': _PAGE.format(title=html.escape(title), body=body),
+    }
+
+
+def handle_confirm(event):
+    """GET /v1/signup/confirm?token= : consume the pending row and finish."""
+    token = ((event.get('queryStringParameters') or {}).get('token') or '').strip()
+    if not TOKEN_PATTERN.match(token):
+        return html_page(400, 'That link is not valid', '<p>The confirmation link is incomplete. Open it exactly as it appears in the email.</p>')
+    try:
+        # Read AND burn in one call: a second click, or a second tab, finds
+        # nothing, so one email can never mint two keys.
+        old = ddb.delete_item(
+            TableName=PENDING_TABLE, Key={'token': {'S': token}}, ReturnValues='ALL_OLD'
+        ).get('Attributes')
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[SIGNUP_CONFIRM_LOOKUP_FAILED] code=%s', code)
+        return html_page(503, 'Please try again', '<p>We could not check that link just now. Try it again in a minute.</p>')
+    if not old or int(old.get('expiresAt', {}).get('N', '0')) < int(time.time()):
+        return html_page(
+            410, 'That link has expired or was already used',
+            '<p>Confirmation links work once, for 24 hours. '
+            '<a href="https://skyscore.co.uk/score-demo/">Request a new one</a>.</p>',
+        )
+    email = old['email']['S']
+    name = old.get('name', {}).get('S', '')
+    source = old.get('source', {}).get('S', 'api')
+    postcode = old.get('postcode', {}).get('S', '')
+
+    result = complete_signup(email, name, source, postcode, event)
+    try:
+        data = json.loads(result.get('body') or '{}')
+    except ValueError:
+        data = {}
+    status = result.get('statusCode', 500)
+    if status == 201 and data.get('apiKey'):
+        return html_page(
+            200, 'Your Sky Score API key',
+            f'<p>Address confirmed. This key is shown <strong>once</strong> - copy it now.</p>'
+            f'<code>{html.escape(data["apiKey"])}</code>'
+            f'<p>Send it as the <code>X-Api-Key</code> header on <code>/v1/score</code>. '
+            f'{html.escape(str(data.get("limits", {}).get("monthlyQuota", "")))} requests a month on the free tier. '
+            f'<a href="https://skyscore.co.uk/score-demo/api-docs.html">Docs</a>.</p>',
+        )
+    if status in (200, 201):
+        return html_page(200, 'Confirmed', f'<p>{html.escape(data.get("message", "Done."))}</p>')
+    if status == 409:
+        return html_page(
+            200, 'Already signed up',
+            f'<p>{html.escape(data.get("error", ""))} {html.escape(data.get("note", ""))}</p>',
+        )
+    return html_page(
+        503, 'Please try again',
+        '<p>Your address is confirmed but the signup could not be completed just now. '
+        '<a href="https://skyscore.co.uk/score-demo/">Request a new link</a> and try again.</p>',
+    )
+
+
 def handler(event, context):
     method = (event.get('httpMethod') or 'POST').upper()
     try:
@@ -632,6 +872,8 @@ def handler(event, context):
             return handle_options(event)
         if method == 'POST':
             return handle_post(event)
+        if method == 'GET' and (event.get('path') or '').rstrip('/').endswith('/confirm'):
+            return handle_confirm(event)
         return response(405, {'error': f'Method {method} not allowed.'}, event)
     except Exception as exc:
         # Top-level guard, never let an unhandled exception escape the

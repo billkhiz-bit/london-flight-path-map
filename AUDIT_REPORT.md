@@ -12,7 +12,9 @@
 > M14's chat half and M23 - which the 14 Sep count had MISSED, the one Minor
 > never struck in the table - are both closed, committed AND DEPLOYED (drift
 > 133 of 133, live hash == source, 1,390 stations served, 0 duplicates).
-> I17 alone is open, as a decision (Bill leaning A).** Findings live
+> I17 alone is open, as a decision (Bill leaning A) - **and by the evening
+> option A was BUILT behind `SignupVerify=off` (OPERATIONS.md s3.9 is the
+> flip; it closes on the day the flag goes on).** Findings live
 > in those files, **not here**. This file was deliberately NOT overwritten either time: overwriting
 > a generated report without confirmation is what the global safety rule
 > forbids. Nothing below is wrong - it is six days older.

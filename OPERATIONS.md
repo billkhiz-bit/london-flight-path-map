@@ -580,6 +580,66 @@ is what caused the 2026-09-03 outage.
    probe exercises 18 safely-probeable actions and says nothing about the other
    92, which is exactly the gap the 2026-09-03 outage lived in.
 
+### 3.9 - Turn on verification-first signup (`SignupVerify=on`) - **BUILT 2026-09-15, OFF until this runbook is done**
+
+**What it closes:** audit I17. With the flag off, `POST /v1/signup` writes any
+address unverified: a stranger can subscribe your address as a consented
+subscriber, take the row that makes your own later API signup answer 409,
+and learn from the three distinct replies whether an address holds a key.
+With it on, the POST writes only a pending row (`london-flight-map-signup-
+pending`, random token, 24 h) and sends ONE email; every address gets the
+same 201; the signup itself runs only when the link is clicked
+(`GET /v1/signup/confirm?token=`), and the confirm page is the only place the
+true state is shown - to someone who has just proven control of the address.
+`backend/tests/test_signup_verify.py` holds all of it.
+
+**Why it is a runbook and not a deploy:** with the flag on and the SES
+identity unverified, every signup 503s at the send. So the code, the table,
+the route and the throttle are deployed with the flag OFF (a no-op deploy),
+and the flip is the LAST step below.
+
+1. **SES identity (console, eu-west-2).** SES -> Identities -> Create ->
+   Domain `skyscore.co.uk`, Easy DKIM. Publish the three DKIM CNAMEs SES
+   prints at Cloudflare (DNS only), plus `v=spf1 include:amazonses.com ~all`
+   in the existing SPF TXT (merge, do not add a second SPF record) and a
+   DMARC TXT if none exists. Wait for "Verified".
+2. **Sandbox exit (console -> Support case, "SES sending limits").** In the
+   sandbox SES delivers only to verified addresses; a confirm email to a
+   prospect bounces. State: transactional confirmation emails, one per
+   signup, no marketing, no lists. Usually 1-2 days.
+3. **Two IAM verbs for the deploy user**, so the pending table can carry a
+   TTL: add `dynamodb:UpdateTimeToLive` and `dynamodb:DescribeTimeToLive`
+   to the DynamoDB statement of `backend/iam-policy.json` AND paste the
+   whole policy in the console (a partial paste is what caused the 3 Sep
+   outage). Probed 2026-09-15: both denied today. Then put
+   `TimeToLiveSpecification: {AttributeName: expiresAt, Enabled: true}`
+   on `SignupPendingTable` in the template. Until then expiry is enforced
+   in code and dead rows just sit there.
+4. **The pages, in the SAME deploy as the flip** (they describe the new
+   behaviour, so they are false a minute early and a minute late):
+   - `privacy.html` s2a, the score-update paragraph: "which you give by
+     submitting the form" -> "which you give by clicking the confirmation
+     link we email you; an address that is not confirmed within 24 hours is
+     deleted and never joins the list"; and "We collect the address and the
+     postcode you searched, and nothing else" -> add "plus, for those 24
+     hours, a random token that identifies the request". The API-key
+     paragraph needs no change (Art 6(1)(b) already covers issuing the key
+     by email).
+   - `SUBPROCESSORS.md` row 1: change "(SES) - NOT YET SENDING" to the live
+     wording; the row already names it.
+   - `privacy.html` s8 (cookies): NO change - the link carries its token in
+     the URL and the confirm page sets nothing.
+   - `score-demo/index.html` already renders the `pending` reply ("Check
+     your email"); the postcode panel prints `data.message` verbatim.
+5. **Flip:** `sam deploy --parameter-overrides EpcBearerToken=... SignupVerify=on`
+   (SAM keeps the other parameters). Verify with a real signup to an address
+   you own: 201 `pending`, the email arrives with DKIM pass (check the
+   headers), the link shows the key once, a second click is a 410.
+6. Optional, later: `CONFIRM_URL_BASE` env on the Lambda if the link should
+   go through the site's own distribution rather than the execute-api host.
+
+**Rollback** is `SignupVerify=off` on the next deploy; nothing else changes.
+
 ## 4. Disaster Recovery
 
 | Scenario | RTO | RPO | Procedure |
