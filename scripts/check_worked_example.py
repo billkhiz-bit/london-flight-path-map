@@ -78,6 +78,9 @@ def main():
     stated_inputs = {
         'avgPrice': r'avgPrice:\s+([\d,]+)',
         'trend': r'trend:\s+(-?[\d.]+)',
+        # v5.1: the deflated trend growth is actually scored on. Attached to the
+        # record at import, so it reads like any other input.
+        'trendReal': r'trendReal:\s+(-?[\d.]+)',
         'p8': r'p8:\s+(-?[\d.]+)',
         'crimeRate': r'crimeRate:\s+([\d.]+)',
         'airQualityWhoRatio': r'airQualityWhoRatio:\s+([\d.]+)',
@@ -97,7 +100,9 @@ def main():
     # ---- the cohort bounds affordability and growth are anchored on ----
     prices = [b['avgPrice'] for b in app.CITIES[CITY]['boroughs'].values()
               if b.get('avgPrice')]
-    trends = [b['trend'] for b in app.CITIES[CITY]['boroughs'].values()
+    # v5.1: the cohort extremes growth is scaled against are over the trend
+    # the engine SCORES - real terms where held - never the nominal one.
+    trends = [app.scored_trend(b) for b in app.CITIES[CITY]['boroughs'].values()
               if b.get('trend') is not None]
     # v5.0: affordability is anchored on the NATIONAL price band, so the cohort
     # min/max price it used to quote is no longer part of the derivation and is
@@ -113,6 +118,9 @@ def main():
         ('national p95 price', r'`p95 = ([\d,]+)`', round(afford_p95)),
         ('cohort min trend', r'`min = (-?[\d.]+)`', min(trends)),
         ('cohort max trend', r'`max = (-?[\d.]+)`', max(trends)),
+        # v5.1: the deflator section 6 quotes must be the one the engine holds
+        # for the current vintage, or the trendReal line is unreproducible.
+        ('CPIH for the vintage', r'after CPIH of ([\d.]+)%', app.CPIH_12M_PCT[app.SNAPSHOT_VINTAGE]),
     ):
         said = find(body, pattern, label, failures)
         if said is None:
@@ -151,6 +159,10 @@ def main():
     )
     derived = {
         'afford': app.afford_score(bd['avgPrice'], afford_p5, afford_p95),
+        # GROWTH WAS NEVER DERIVED HERE until v5.1 (2026-09-15) - only its two
+        # cohort bounds were checked, so a wrong growth figure with the right
+        # bounds beside it passed. Through the same helper the engine uses.
+        'growth': app.growth_score(app.scored_trend(bd), max(trends), min(trends)),
         'live': app.get_live_score(bd),
         'env': app.get_env_score(bd),
     }
@@ -227,7 +239,8 @@ def main():
     # Asserted as EQUALITY in both directions. It was `checks < 15` against a
     # maximum of 17 (audit M22), which let two comparisons vanish - proven by
     # patching both composites to None: "comparisons made 15", OK, exit 0.
-    expected = len(stated_inputs) + 4 + len(derived) + 3
+    # inputs + the bounds tuple (p5, p95, min, max, CPIH since v5.1) + derived + 3
+    expected = len(stated_inputs) + 5 + len(derived) + 3
     print(f'  comparisons made  {checks} of {expected}')
 
     if checks != expected:

@@ -103,7 +103,19 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            was 'excellent'. Now DfE Key Stage 4 Progress 8 (2023/24), scored
 #            continuously by school_score() on absolute anchors. London goes
 #            from 2 distinct schools sub-scores to 25.
-METHODOLOGY_VERSION = '5.0'
+#
+#   growth   v5.1 (2026-09-15): scored on the REAL-terms 12-month trend, the
+#            nominal HPI change deflated by ONS CPIH for the same month, where
+#            a national inflation series is held (every sterling city). The
+#            5.0 anchor now means "holding its value against prices in
+#            general", not "not falling in cash terms". Costed before deciding
+#            (scripts/cost_real_growth.py): at CPIH 2.8%, 26 of the 77
+#            boroughs the product called "rising" fall in real terms. `trend`
+#            stays nominal - it is a published field integrators read - and
+#            `trendReal` sits beside it. New York keeps NOMINAL growth: no US
+#            inflation series is held, and deflating dollars by a UK index
+#            would be a number nobody measured. See real_trend_pct().
+METHODOLOGY_VERSION = '5.1'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -282,6 +294,57 @@ SNAPSHOT_VINTAGE = '2026-Q3'  # June 2026 UK HPI (published 19 Aug 2026), applie
 SNAPSHOT_VINTAGE_LABEL = 'June 2026'
 PREVIOUS_VINTAGE = '2026-Q2'
 SNAPSHOT_REFRESHED_AT = '2026-08-25'
+# v5.1: the inflation each vintage's trend is deflated by. ONS CPIH 12-month
+# rate, all items (series L55O, dataset MM23), for the HPI MONTH the vintage
+# carries - June 2026 for 2026-Q3, May 2026 for 2026-Q2 - because a 12-month
+# price change and a 12-month price-level change over the SAME window is the
+# only pairing that means "real". Both vintages need an entry: ?compare=previous
+# recomputes the previous score under the current formula, and deflating May's
+# trend by June's inflation would manufacture movement that never happened.
+# Rolling the quarter means adding the new month here; `build_hpi_prices.py
+# --check` compares the current entry against the ONS series and fails on a
+# vintage this table does not know. Sterling only: New York's five boroughs
+# carry a curated trend and no US series is held, so they score nominal.
+CPIH_12M_PCT = {
+    '2026-Q3': 2.8,  # CPIH, June 2026
+    '2026-Q2': 3.0,  # CPIH, May 2026
+}
+
+
+def real_trend_pct(nominal_pct, inflation_pct):
+    """The 12-month price change after inflation, to 1dp.
+
+    ((1 + n) / (1 + i) - 1), not n - i: the difference is a few hundredths of
+    a point at these rates and the exact form costs nothing. Rounded ONCE
+    here and then used as an INPUT - published as `trendReal` and scored from
+    the same rounded value - so a reader reproducing growth_score() from the
+    response gets the engine's number, not one a rounding step away from it.
+    """
+    # The SAME tie rule as round_1dp() (halves away from zero, matching the
+    # site's Math.round) rather than Python's round(): this value has a JS
+    # holder, and two languages' defaults disagree on an exact .x5 tie.
+    # Inlined because round_1dp is defined below the import-time call.
+    return math.floor(((1 + nominal_pct / 100.0) / (1 + inflation_pct / 100.0) - 1) * 1000.0 + 0.5) / 10
+
+
+def with_real_trends(boroughs, vintage, currency):
+    """A copy of `boroughs` with `trendReal` on every record, deflated by the
+    CPIH entry for `vintage`. Returns the records UNCHANGED (no `trendReal`)
+    for a currency the series does not describe, or a vintage the table does
+    not know, so a city with no inflation series scores nominal by
+    construction rather than by a special case downstream."""
+    inflation = CPIH_12M_PCT.get(vintage) if currency == 'GBP' else None
+    if inflation is None:
+        return {name: dict(bd) for name, bd in boroughs.items()}
+    return {
+        name: {**bd, 'trendReal': real_trend_pct(bd['trend'], inflation)}
+        for name, bd in boroughs.items()
+    }
+
+
+def scored_trend(bd):
+    """The trend growth_score() reads: real where it exists, else nominal."""
+    return bd.get('trendReal', bd['trend'])
 # One-off caveat for this quarter's comparison: v3.2 also clamped the
 # growth formula, so previous scores are recomputed under the CURRENT
 # formula to isolate data movement from formula change.
@@ -361,7 +424,10 @@ def previous_dataset(city):
     for name, bd in current.items():
         prev = LONDON_PREVIOUS_PT.get(name)
         merged[name] = {**bd, **prev} if prev else dict(bd)
-    return merged
+    # v5.1: the overlay above replaces `trend` and leaves the CURRENT vintage's
+    # `trendReal` in place, which would score May's prices against June's
+    # inflation. Re-derive it from the previous vintage's own CPIH entry.
+    return with_real_trends(merged, PREVIOUS_VINTAGE, cfg['currency'])
 
 
 def build_comparison(current, previous, city, weights, name=None):
@@ -414,6 +480,9 @@ def build_comparison(current, previous, city, weights, name=None):
         f'previous{currency[0].upper()}{currency[1:]}': prev_price,
         'priceChangePct': price_change,
         'previousTrendPct': previous['context'].get('priceTrendPct'),
+        # v5.1: present only where the previous vintage was deflated too.
+        **({'previousTrendRealPct': previous['context']['priceTrendRealPct']}
+           if 'priceTrendRealPct' in previous['context'] else {}),
         'note': COMPARISON_NOTE,
         'attribution': build_attribution(current, previous, weights),
         'explanation': why['summary'],
@@ -499,7 +568,7 @@ FACTOR_MEANINGS = {
     # cohort-relative, so it keeps its comparison and gains the city it is
     # actually relative to.
     'afford': 'How cheap this area is, against borough prices across the whole country.',
-    'growth': 'How fast property prices are rising here, ranked against the other boroughs of this city.',
+    'growth': 'How fast property prices are rising here after inflation, ranked against the other boroughs of this city.',
     'live': 'Schools, crime and transport, combined.',
 }
 
@@ -547,8 +616,9 @@ def _fraction_words(share):
 
 
 def growth_ranks(boroughs):
-    """Rank every area by price trend, 1 = fastest rising. Ties share a rank."""
-    trends = {name: bd['trend'] for name, bd in boroughs.items()}
+    """Rank every area by the trend growth is SCORED on (real terms where held,
+    v5.1), 1 = fastest rising. Ties share a rank."""
+    trends = {name: scored_trend(bd) for name, bd in boroughs.items()}
     ordered = sorted(trends.values(), reverse=True)
     return {name: ordered.index(t) + 1 for name, t in trends.items()}
 
@@ -571,7 +641,10 @@ def benchmarks(boroughs):
     RANGE for context, not as the affordability anchor - see
     `_afford_breakdown_line` for the anchor a response actually names.
     """
-    trends = {name: bd['trend'] for name, bd in boroughs.items()}
+    # The trend growth is SCORED on - real terms where an inflation series is
+    # held (v5.1), nominal otherwise - because a yardstick in a different unit
+    # from the score it explains is not a yardstick.
+    trends = {name: scored_trend(bd) for name, bd in boroughs.items()}
     prices = {name: bd['avgPrice'] for name, bd in boroughs.items()}
     max_trend = max(trends.values())
     min_trend = min(trends.values())
@@ -589,6 +662,8 @@ def benchmarks(boroughs):
         'steepestFallArea': bottom[0],
         'steepestFallAreas': bottom,
         'steepestFallTrendPct': min_trend,
+        # v5.1: which unit the two trend yardsticks above are in.
+        'growthBasis': 'real' if any('trendReal' in bd for bd in boroughs.values()) else 'nominal',
         'dearestArea': dearest,
         'dearestAvgPrice': prices[dearest],
         'cheapestArea': cheapest,
@@ -604,6 +679,10 @@ def market_context(current_boroughs, previous_boroughs):
     falling prices went from 0 to 14. Without that, 25 boroughs dropping looks
     like a scoring fault rather than the market it is describing.
     """
+    # NOMINAL, deliberately, and unlike benchmarks(): this block describes
+    # what PRICES did ("the mean trend fell from +3.2% to -1.6%"), and a
+    # sentence about prices should be in the unit prices are quoted in. The
+    # score's own yardsticks are real-terms since v5.1 and say so.
     cur = [bd['trend'] for bd in current_boroughs.values()]
     prev = [bd['trend'] for bd in previous_boroughs.values()]
     cur_bm = benchmarks(current_boroughs)
@@ -755,6 +834,13 @@ def build_why(
     prev_price = _price_of(previous, city)
     cur_trend = current['context'].get('priceTrendPct')
     prev_trend = previous['context'].get('priceTrendPct')
+    # v5.1: what growth was SCORED on. Real terms where the response carries it
+    # (sterling cities), else the nominal trend - and the yardsticks in cur_bm /
+    # prev_bm are in the same unit, so step 3 below compares like with like.
+    # Step 1 keeps the nominal figures on purpose: it describes what PRICES did.
+    cur_scored = current['context'].get('priceTrendRealPct', cur_trend)
+    prev_scored = previous['context'].get('priceTrendRealPct', prev_trend)
+    inflation_pct = current['context'].get('inflationPct')
     price_moved = cur_price is not None and prev_price not in (None, 0) and cur_price != prev_price
 
     # Name the place in the driver text itself. A post-hoc string replace on the
@@ -818,57 +904,71 @@ def build_why(
                     f'{_ordinal(rank_before)} of {rank_of} to {_ordinal(rank_now)} of {rank_of}.'
                 )
 
+            # Step 2b (v5.1): name the deflation, so the figure step 3 works from
+            # is not a surprise next to the cash figure step 1 quoted.
+            if inflation_pct is not None and cur_scored is not None:
+                driver['steps'].append(
+                    f'Growth is scored in real terms (methodology v5.1): the cash trend of {cur_trend:+}% '
+                    f'less CPIH inflation of {inflation_pct}% over the same twelve months is {cur_scored:+}% '
+                    'after inflation, and that is the figure the score is built from.'
+                )
+
             # Step 3: why that drops the SCORE so far — the league-table model.
-            was_top = prev_bm and prev_trend >= prev_bm['strongestGrowthTrendPct']
-            if cur_trend < 0:
+            # v5.1: every 'rising'/'falling' in this step is about the REAL-terms
+            # figure where one exists, and says so - step 1 has just said 'still
+            # rising' in cash terms, and a sentence that then calls the same place
+            # falling has to name the difference.
+            rt = ' in real terms' if inflation_pct is not None else ''
+            was_top = prev_bm and prev_scored >= prev_bm['strongestGrowthTrendPct']
+            if cur_scored < 0:
                 fall_note = (
-                    'The growth score puts a flat market — prices neither rising nor falling — at 5 out of 10. '
-                    'Falling prices score below 5, scaled against the steepest fall in the city: the borough '
+                    f'The growth score puts a flat market — prices neither rising nor falling{rt} — at 5 out of 10. '
+                    f'Prices falling{rt} score below 5, scaled against the steepest fall in the city: the borough '
                     'falling fastest scores 0, and every other falling borough sits between.'
                 )
                 if was_top:
                     fall_note += (
-                        f' Last quarter {subject_lower} had the fastest-rising prices in London, so it held the '
+                        f' Last quarter {subject_lower} had the fastest-rising prices{rt} in London, so it held the '
                         'top score of 10 — which means it could only ever move down from there.'
                     )
                 steepest_pct = cur_bm['steepestFallTrendPct'] if cur_bm else None
                 if steepest_pct is not None and steepest_pct < 0:
                     fall_note += (
                         f' The steepest fall now is {cur_bm["steepestFallArea"]} at {steepest_pct:+}%, and '
-                        f'{cur_trend:+}% is about {_fraction_words(cur_trend / steepest_pct)} of that — '
+                        f'{cur_scored:+}% is about {_fraction_words(cur_scored / steepest_pct)} of that — '
                         f'so {f["after"]} out of 10.'
                     )
                     driver['workings'] = (
-                        f'5.0 − {cur_trend:+}% ÷ {steepest_pct:+}% '
+                        f'5.0 − {cur_scored:+}% ÷ {steepest_pct:+}% '
                         f'({cur_bm["steepestFallArea"]}, steepest fall) × 5 = {f["after"]}'
                     )
                 else:
-                    driver['workings'] = f'{cur_trend:+}% against a flat-market anchor of 5.0 = {f["after"]}'
+                    driver['workings'] = f'{cur_scored:+}% against a flat-market anchor of 5.0 = {f["after"]}'
                 driver['steps'].append(fall_note)
             elif cur_bm and cur_bm['strongestGrowthTrendPct'] > 0:
-                share = cur_trend / cur_bm['strongestGrowthTrendPct']
+                share = cur_scored / cur_bm['strongestGrowthTrendPct']
                 model = (
-                    'The growth score puts a flat market — prices neither rising nor falling — at 5 out of 10. '
-                    'Rising prices score above 5, scaled against the fastest riser in the city, which takes the '
+                    f'The growth score puts a flat market — prices neither rising nor falling{rt} — at 5 out of 10. '
+                    f'Prices rising{rt} score above 5, scaled against the fastest riser in the city, which takes the '
                     'full 10.'
                 )
                 if was_top:
                     model += (
-                        f' Last quarter that was {subject_lower} itself, at {prev_trend:+}% — so it took the full '
+                        f' Last quarter that was {subject_lower} itself, at {prev_scored:+}% — so it took the full '
                         '10, and the only direction available was down.'
                     )
                 model += (
                     f' The fastest now is {cur_bm["strongestGrowthArea"]} at {cur_bm["strongestGrowthTrendPct"]:+}%, '
-                    f'and {cur_trend:+}% is about {_fraction_words(share)} of that — so {f["after"]} out of 10.'
+                    f'and {cur_scored:+}% is about {_fraction_words(share)} of that — so {f["after"]} out of 10.'
                 )
                 driver['steps'].append(model)
                 driver['workings'] = (
-                    f'5.0 + {cur_trend:+}% ÷ {cur_bm["strongestGrowthTrendPct"]:+}% '
+                    f'5.0 + {cur_scored:+}% ÷ {cur_bm["strongestGrowthTrendPct"]:+}% '
                     f'({cur_bm["strongestGrowthArea"]}, fastest) × 5 = {f["after"]}'
                 )
-                if rank_now and rank_before and rank_now > rank_before and cur_trend > 0:
+                if rank_now and rank_before and rank_now > rank_before and cur_scored > 0:
                     caveats.append(
-                        f'{subject} did not get worse in absolute terms — prices are still rising. It fell '
+                        f'{subject} did not get worse in absolute terms — prices are still rising in real terms. It fell '
                         'because other boroughs are now rising faster.'
                     )
             # Rank can improve while the underlying number gets worse, if others
@@ -1912,6 +2012,18 @@ CITIES = {
         # 'hasHistory': False,
     },
 }
+
+# v5.1: the real-terms trend, attached to every sterling city's records here
+# rather than written into the thirteen borough tables above. IN PLACE, so the
+# module constants (LONDON_BOROUGHS, ...) and the registry keep sharing one
+# object - `build_hpi_prices.py --write` edits the constants' source text and
+# the tests read them by name, and a copy here would let the two disagree on
+# a field that scores. New York's records gain nothing (no series held) and
+# scored_trend() falls back to nominal for them by construction.
+for _cfg in CITIES.values():
+    for _name, _bd in with_real_trends(_cfg['boroughs'], SNAPSHOT_VINTAGE, _cfg['currency']).items():
+        _cfg['boroughs'][_name].update(_bd)
+del _cfg, _name, _bd
 
 # Guard against the silent-typo class. Every categorical liveability field is
 # read with `.get(value, 5)`, so an unrecognised token does not raise — it scores
@@ -4788,6 +4900,55 @@ def _live_breakdown_line(city, bd=None):
             'count per response.')
 
 
+def _growth_breakdown_line(city):
+    """Growth lineage, DERIVED for every city (v5.1, 2026-09-15).
+
+    Replaces thirteen hand-written strings, twelve of which carried the
+    literal 'June 2026' - the HPI roll due this month would have left every
+    one of them naming the wrong vintage, the exact defect
+    SNAPSHOT_VINTAGE_LABEL was introduced to end for the sources array. And
+    v5.1 changes what the line has to SAY (real terms, the deflator, the
+    city it is scaled within), which in thirteen places is thirteen chances
+    to drift. A derived line cannot describe a basis the engine is not using.
+    """
+    cfg = CITIES[city]
+    if cfg['currency'] == 'GBP':
+        inflation = CPIH_12M_PCT[SNAPSHOT_VINTAGE]
+        basis = (
+            f'HM Land Registry UK House Price Index, {SNAPSHOT_VINTAGE_LABEL} vintage, 12-month '
+            f'price trend deflated by ONS CPIH ({inflation}% for {SNAPSHOT_VINTAGE_LABEL}) - REAL-terms '
+            'growth since methodology v5.1, so a flat score of 5.0 means prices held their value '
+            'against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct '
+            'the figure scored. Cohort-relative: each tail is scaled against the real-terms '
+            f'fastest riser and steepest faller among the {len(cfg["boroughs"])} areas of this city'
+        )
+    else:
+        basis = (
+            'Curated New York borough annualised price trend, NOMINAL. NOT HM Land Registry HPI, '
+            'and not deflated: no US inflation series is held, and dividing dollars by a UK '
+            'index would be a number nobody measured. context.growthBasis says so. '
+            f'Cohort-relative among the {len(cfg["boroughs"])} New York boroughs'
+        )
+    if cfg.get('hasHistory'):
+        history = 'A previous vintage exists, so ?compare=previous reports real movement.'
+    else:
+        history = (
+            'No previous vintage exists for this city, so ?compare=previous declines rather '
+            'than reporting zero change.'
+        )
+    return f'{basis}. {history}'
+
+
+def _inflation_source_line(city):
+    """The CPIH line, only where growth was actually deflated by it."""
+    if CITIES[city]['currency'] != 'GBP':
+        return None
+    return (
+        f'Inflation: ONS CPIH 12-month rate, all items (series L55O, dataset MM23), '
+        f'{SNAPSHOT_VINTAGE_LABEL}, Open Government Licence v3.0'
+    )
+
+
 def _afford_breakdown_line(city, bd=None):
     """Affordability lineage, DERIVED for every city (v5.0, 2026-09-09).
 
@@ -4887,7 +5048,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry House Price Index (HPI), annualised price trend, cohort-relative',
             'live': 'Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.',
         },
     },
@@ -4902,7 +5062,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': 'Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. NOT DEFRA — no published Lden survey covers New York, so the dB thresholds in METHODOLOGY §3 are not directly applicable. The chosen resolution is reported in context.quietResolution.',
             'afford': _afford_breakdown_line,
-            'growth': 'Curated New York borough annualised price trend. NOT HM Land Registry HPI.',
             'live': 'NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS — none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.',
         },
     },
@@ -4916,7 +5075,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': 'PROVISIONAL ESTIMATE derived from Birmingham Airport (BHX) runway 15/33 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced for this city. The distance ladder is calibrated on Heathrow, which is several times Birmingham\'s size, so these bands reach further than the airport really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. The West Midlands has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -4930,7 +5088,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Leeds Bradford Airport (LBA) runway 14/32 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -4952,7 +5109,6 @@ CITY_PROVENANCE = {
                 'reach further than the airport really does and the estimate is PESSIMISTIC.'
             ),
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting a fabricated zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -4973,7 +5129,6 @@ CITY_PROVENANCE = {
                 'PESSIMISTIC - Stockton-on-Tees reads `severe` on approach geometry alone.'
             ),
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting a fabricated zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -4987,7 +5142,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "NO OPERATING COMMERCIAL AIRPORT. Doncaster Sheffield Airport is listed `type=closed` by OurAirports, commercial flights having ceased in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is therefore banded `low`. That is a MEASURED ABSENCE of a noise source rather than an unmeasured city, and it is stated so that a flat band cannot be read as a survey result. NOT a DEFRA sample.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -5001,7 +5155,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Liverpool John Lennon Airport (LPL) runway 09/27 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -5015,7 +5168,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Newcastle Airport (NCL) runway 07/25 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -5029,7 +5181,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Bristol Airport (BRS) runway 09/27 alignment and its extended approach centreline. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -5043,7 +5194,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from Cardiff Airport (CWL) runway 12/30 alignment and its extended approach centreline. NOT a DEFRA sample: DEFRA's Round 4 mapping does not cover Cardiff Airport at all - it is below the traffic threshold the Environmental Noise Directive maps at - so no raster exists to sample and the ladder is floored at the smallest published footprint, exactly as the sources line says.  So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. This city has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': _live_breakdown_line,
         },
     },
@@ -5057,7 +5207,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': "PROVISIONAL ESTIMATE derived from East Midlands Airport (EMA) runway 09/27 alignment and its extended approach centreline. The airport lies OUTSIDE the city region, in Leicestershire, so no borough here is nearer than 16 km and none is banded above low-moderate. NOT sampled from the DEFRA Round 4 raster, so the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The ladder is calibrated on Heathrow and is therefore PESSIMISTIC rather than optimistic. Indicative only.",
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. No previous vintage exists for this city, so ?compare=previous declines rather than reporting zero change.',
             'live': 'Liveability IS served here since v3.6/v3.7 (2026-08-11) - trust context.liveResolution over any sentence, including this one, which spent thirteen days claiming the score beside it did not exist. The CITY OF NOTTINGHAM measures all four inputs (DfE Progress 8; ONS Table C4; NaPTAN rail, metro and tram access within 800 m; NHS ODS GP practices within 500 m). Broxtowe, Gedling and Rushcliffe measure TWO: ONS folds their crime into the combined South Nottinghamshire partnership row (publishing that figure three times would render one measurement as three, so it is left absent), and Progress 8 publishes for Nottinghamshire, the upper-tier authority, not for its districts. Absent inputs have their weight redistributed, never defaulted.',
         },
     },
@@ -5088,7 +5237,6 @@ CITY_PROVENANCE = {
         'breakdown': {
             'quiet': 'PROVISIONAL ESTIMATE derived from Manchester Airport (MAN) runway alignment and approach geometry. Where context.quietResolution reads raster, the value IS a DEFRA Round 4 sample at this postcode: the per-airport coverages were sampled and loaded on 2026-08-12 (7,339 postcodes across eight cities). Where it reads postcode, this address sits outside those contour strips and the geometry estimate below applies. Trust the resolution field over any sentence here - a static string cannot know which tier answered. So the dB Lden thresholds in METHODOLOGY §3 are not evidenced for this city. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Treat as indicative only.',
             'afford': _afford_breakdown_line,
-            'growth': 'HM Land Registry UK House Price Index, June 2026 vintage, annualised price trend, cohort-relative. Greater Manchester has no previous vintage, so ?compare=previous declines rather than reporting zero change.',
             'live': 'MEASURED on all four inputs, matching London. Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, same release and year as London. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4 Community Safety Partnership rows, same release and period as London. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (methodology v3.6). Healthcare: NHS Organisation Data Service, share of postcodes within 500 m of a GP practice (v3.7).',
         },
     },
@@ -5241,10 +5389,14 @@ def _env_breakdown_line(city):
 # borough records, so a city that gains or loses a dataset re-describes itself.
 for _city_key, _prov in CITY_PROVENANCE.items():
     _prov['breakdown']['env'] = _env_breakdown_line
+    # v5.1: growth derived the same way, for the same reason - see
+    # _growth_breakdown_line. The CPIH line is None for New York and dropped.
+    _prov['breakdown']['growth'] = _growth_breakdown_line
     _prov['sources'] = list(_prov['sources']) + [
         _env_source_line('airQuality'),
         _env_source_line('roadNoise'),
         _env_source_line('flood'),
+        _inflation_source_line,
     ]
     # POSTCODE RESOLUTION, for every UK city (2026-09-13 audit, I4). The
     # `_postcode_source_line` callable sat in London's list alone - at index 2,
@@ -6497,12 +6649,17 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     p5, p95 = national_price_bounds(city, boroughs, CITIES[city]['currency'])
     afford = afford_score(bd['avgPrice'], p5, p95)
 
-    trends = [b['trend'] for b in boroughs.values()]
+    # v5.1: scored on the REAL-terms trend where the city has one (every
+    # sterling city), nominal where it does not (New York). The cohort
+    # extremes are taken over the same quantity, so the 5.0 anchor means "held
+    # its value against inflation" and the tails are scaled against the real
+    # fastest riser and steepest faller.
+    trends = [scored_trend(b) for b in boroughs.values()]
     max_trend, min_trend = max(trends), min(trends)
     # Methodology v3.4: dual-anchor — 0% growth sits at 5.0, each tail scaled
     # to its own extreme. See growth_score() for why the v3.2 single-anchor
     # formula collapsed 14 of 33 boroughs onto one value.
-    growth = growth_score(bd['trend'], max_trend, min_trend)
+    growth = growth_score(scored_trend(bd), max_trend, min_trend)
 
     live = get_live_score(bd, english=(city != 'nyc'))
 
@@ -6591,6 +6748,13 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
         'context': {
             currency_field: bd['avgPrice'],
             'priceTrendPct': bd['trend'],
+            # v5.1. The trend growth was SCORED on and the inflation behind it,
+            # present only where the deflation happened (sterling cities), so a
+            # consumer can reproduce growth_score() from the response and can
+            # tell a real-terms score from a nominal one by the key's presence.
+            **({'priceTrendRealPct': bd['trendReal'],
+                'inflationPct': CPIH_12M_PCT[SNAPSHOT_VINTAGE]} if 'trendReal' in bd else {}),
+            'growthBasis': 'real' if 'trendReal' in bd else 'nominal',
             # v5.0. The within-city signal that affordability used to carry, now
             # published as what it IS rather than smuggled into a score that
             # also claims to mean something nationally. `rank` is 1 for the
@@ -7744,6 +7908,8 @@ def handle_changes(event):
                 ),
                 'trendPct': cur['context']['priceTrendPct'],
                 'previousTrendPct': prev['context']['priceTrendPct'],
+                **({'previousTrendRealPct': prev['context']['priceTrendRealPct']}
+                   if 'priceTrendRealPct' in prev['context'] else {}),
                 'components': cur['components'],
                 'previousComponents': prev['components'],
                 # Why the score moved, decomposed. Contributions sum to

@@ -406,6 +406,48 @@ def check_vintage_words(vintage: str) -> int:
         print("      Every UK sourceBreakdown.afford is derived from this constant at runtime.")
         return 1
     print(f"provenance constant: SNAPSHOT_VINTAGE_LABEL = {label!r}")
+    return check_cpih(text, label)
+
+
+def check_cpih(text: str, label: str) -> int:
+    """v5.1: growth is scored on the HPI trend deflated by ONS CPIH for the SAME
+    month, held per vintage in the engine's CPIH_12M_PCT. A roll that moves the
+    HPI month and not the deflator scores June's prices against May's
+    inflation, and nothing else compares the two - so this does. The entry for
+    SNAPSHOT_VINTAGE must exist (a KeyError at request time otherwise) and must
+    equal the ONS L55O value for the label's month, read through the same
+    fetch-and-cache `cost_real_growth.py` uses. ADVISORY on the network half:
+    if the series cannot be fetched the entry's presence is still enforced and
+    the comparison reports INCONCLUSIVE rather than PASS.
+    """
+    m_v = re.search(r"^SNAPSHOT_VINTAGE\s*=\s*'([^']+)'", text, re.MULTILINE)
+    m_t = re.search(r"^CPIH_12M_PCT\s*=\s*\{(.*?)^\}", text, re.MULTILINE | re.DOTALL)
+    if not (m_v and m_t):
+        print("FAIL: SNAPSHOT_VINTAGE or CPIH_12M_PCT not found in app.py - growth is")
+        print("      deflated by that table since v5.1, so this gate must be able to read it.")
+        return 1
+    vintage = m_v.group(1)
+    entries = dict(re.findall(r"'([^']+)':\s*(-?[\d.]+)", m_t.group(1)))
+    if vintage not in entries:
+        print(f"FAIL: CPIH_12M_PCT has no entry for SNAPSHOT_VINTAGE {vintage!r} (has {sorted(entries)}).")
+        print("      Every sterling growth score reads it. Add the ONS L55O value for")
+        print(f"      {label} before rolling.")
+        return 1
+    held = float(entries[vintage])
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from cost_real_growth import cpih_for
+        published = cpih_for(label)
+    except SystemExit as exc:
+        print(f"INCONCLUSIVE: CPIH entry for {vintage} is {held} but the ONS series could not be read ({exc}).")
+        return 0
+    except Exception as exc:  # noqa: BLE001 - network or parse; the entry's presence is already enforced
+        print(f"INCONCLUSIVE: CPIH entry for {vintage} is {held} but the ONS series could not be read ({exc!r}).")
+        return 0
+    if abs(held - published) > 0.05:
+        print(f"FAIL: CPIH_12M_PCT[{vintage!r}] is {held}; ONS L55O for {label} is {published}.")
+        return 1
+    print(f"deflator: CPIH_12M_PCT[{vintage!r}] = {held} == ONS L55O for {label}")
     return 0
 
 

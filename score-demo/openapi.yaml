@@ -294,7 +294,8 @@ paths:
                   `summary` (counts + largest movers), `changes[]` (per
                   borough: score, previousScore, scoreChange, avgPriceGbp,
                   previousAvgPriceGbp, priceChangePct, trendPct,
-                  previousTrendPct, components, previousComponents,
+                  previousTrendPct, previousTrendRealPct where the previous
+                  vintage was deflated too (v5.1), components, previousComponents,
                   attribution[], attributionSum, roundingResidual,
                   explanation, why), `weights`, `marketContext`,
                   `attributionNote`, vintage identifiers, and the standard
@@ -685,7 +686,7 @@ components:
           $ref: '#/components/schemas/AppliedWeights'
         methodologyVersion:
           type: string
-          example: "5.0"
+          example: "5.1"
         methodologyUrl:
           type: string
           format: uri
@@ -827,7 +828,15 @@ components:
           format: float
           minimum: 0
           maximum: 10
-          description: Linear price trend scaled to cohort max.
+          description: >-
+            Dual-anchor growth on the REAL-terms 12-month price trend
+            (methodology v5.1): 5.0 means prices held their value against
+            inflation, rising areas spread 5-10 against the fastest real
+            riser in the city, falling areas 5-0 against the steepest real
+            faller. The figure scored is `context.priceTrendRealPct`;
+            `context.growthBasis` says `real` (sterling cities) or `nominal`
+            (New York, where no inflation series is held). Weighted for the
+            `investor` persona only.
         live:
           type: number
           format: float
@@ -859,7 +868,30 @@ components:
           description: Borough average price in USD (NYC).
         priceTrendPct:
           type: number
-          description: Annualised price growth percentage.
+          description: >-
+            12-month price change, NOMINAL, from the HM Land Registry UK HPI
+            for the vintage. Unchanged by methodology v5.1; growth is no
+            longer scored on it directly where `priceTrendRealPct` exists.
+        priceTrendRealPct:
+          type: number
+          description: >-
+            The 12-month price change after inflation, to 1dp -
+            ((1 + priceTrendPct/100) / (1 + inflationPct/100) - 1) x 100 -
+            and the figure `components.growth` is computed from (methodology
+            v5.1). Present for sterling cities only; absent, not null, where
+            growth is nominal.
+        inflationPct:
+          type: number
+          description: >-
+            The ONS CPIH 12-month rate (all items, series L55O) for the
+            vintage's month, used to derive `priceTrendRealPct`. Present
+            alongside it only.
+        growthBasis:
+          type: string
+          enum: [real, nominal]
+          description: >-
+            Which trend `components.growth` was scored on. `real` for every
+            sterling city since v5.1; `nominal` for New York.
         priceRankInCity:
           type: object
           description: >-

@@ -184,8 +184,15 @@ def gather(city: str, borough: str) -> dict | None:
               if r.get('avgPrice')]
     growth_note = None
     if len(prices) > 1:
+        # v5.1: say which trend the score is built on, READ from the response
+        # (context.growthBasis) rather than assumed - New York is nominal.
+        basis = (body.get('context') or {}).get('growthBasis')
+        basis_note = (
+            'after inflation (real terms), ' if basis == 'real'
+            else 'in cash terms, ' if basis == 'nominal' else ''
+        )
         growth_note = (
-            f'Scaled within this city only - 10 is the fastest-rising of '
+            f'Price trend {basis_note}scaled within this city only - 10 is the fastest-rising of '
             f'{len(prices)} areas here, not nationally'
         )
 

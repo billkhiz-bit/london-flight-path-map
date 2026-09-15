@@ -60,11 +60,17 @@ for _n in ast.walk(ast.parse(_src)):
         backend_only = set(ast.literal_eval(_v))
 if backend_only is None:
     raise SystemExit('BACKEND_ONLY_CITIES not found in its holder - the floor below cannot tell a deliberate absence from a regression')
+# TWO personas, not one (v5.1, 2026-09-15). 'balanced' weights growth at
+# 0.00, so a site/Lambda disagreement on growth - the component v5.1 moved
+# to real terms, with a JS mirror of the deflator - was invisible to this
+# gate by construction. 'investor' weights it at 0.34 and is the only
+# persona that does.
+PERSONAS = ['balanced', 'investor']
 out = {}
 for city, cfg in app.CITIES.items():
     out[city] = {}
     for b in cfg['boroughs']:
-        out[city][b] = app.calc_score(b, city, app.PERSONAS['balanced'])['score']
+        out[city][b] = {p: app.calc_score(b, city, app.PERSONAS[p])['score'] for p in PERSONAS}
 # The site keys some boroughs by a shorter name than the Lambda's canonical -
 # London's holder says 'Barking', the Lambda says 'Barking and Dagenham'. That
 # is a NAMING difference, not a scoring one, so the alias table the Lambda
@@ -74,10 +80,11 @@ for city, cfg in app.CITIES.items():
 # out of CITY_DATA - which used to shrink this comparison without
 # failing it.
 print(json.dumps({'scores': out, 'aliases': app.BOROUGH_ALIASES,
-                  'backendOnly': sorted(backend_only)}))
+                  'backendOnly': sorted(backend_only), 'personas': PERSONAS}))
 `;
 const dumped = JSON.parse(execFileSync('python', ['-c', PY], { encoding: 'utf-8', cwd: ROOT }));
 const lambdaScores = dumped.scores;
+const PERSONAS = dumped.personas;
 const BACKEND_ONLY = dumped.backendOnly;
 // canonical -> every site-side spelling that resolves to it
 const altNames = {};
@@ -125,28 +132,40 @@ for (const city of shared) {
   // borough-extra hydrates asynchronously; scoring before it lands compares
   // the site's DEFAULT scores and passes for the wrong reason.
   await page.waitForFunction(() => _boroughExtraHydrated === true, null, { timeout: 15000 });
-  const siteScores = await page.evaluate((c) => {
-    const scored = CITY_DATA[c].boroughData();
+  // One pass per persona. The switch is what the persona bar's click handler
+  // does: set the global and drop the per-city score cache, then score.
+  const siteScores = await page.evaluate(([c, personas]) => {
     const out = {};
-    for (const [name, d] of Object.entries(scored)) out[name] = d.score ?? null;
+    for (const p of personas) {
+      currentPersona = p;
+      recalcAllScores();
+      const scored = CITY_DATA[c].boroughData();
+      out[p] = {};
+      for (const [name, d] of Object.entries(scored)) out[p][name] = d.score ?? null;
+    }
+    currentPersona = 'balanced';
+    recalcAllScores();
     return out;
-  }, city);
+  }, [city, PERSONAS]);
 
-  for (const [borough, want] of Object.entries(lambdaScores[city])) {
-    let got = siteScores[borough];
-    if (got === undefined) {
-      for (const alt of altNames[borough] || []) {
-        if (siteScores[alt] !== undefined) {
-          got = siteScores[alt];
-          break;
+  for (const [borough, wants] of Object.entries(lambdaScores[city])) {
+    for (const persona of PERSONAS) {
+      const want = wants[persona];
+      let got = siteScores[persona][borough];
+      if (got === undefined) {
+        for (const alt of altNames[borough] || []) {
+          if (siteScores[persona][alt] !== undefined) {
+            got = siteScores[persona][alt];
+            break;
+          }
         }
       }
-    }
-    compared += 1;
-    if (got === undefined || got === null) {
-      failures.push(`${city}/${borough}: site renders no score (Lambda ${want})`);
-    } else if (Math.abs(got - want) > TOL) {
-      failures.push(`${city}/${borough}: site ${got} vs Lambda ${want} (${(got - want).toFixed(1)})`);
+      compared += 1;
+      if (got === undefined || got === null) {
+        failures.push(`${city}/${borough} [${persona}]: site renders no score (Lambda ${want})`);
+      } else if (Math.abs(got - want) > TOL) {
+        failures.push(`${city}/${borough} [${persona}]: site ${got} vs Lambda ${want} (${(got - want).toFixed(1)})`);
+      }
     }
   }
 }
@@ -159,7 +178,7 @@ if (pageErrors.length) {
   pageErrors.slice(0, 8).forEach((e) => console.log('  ' + e));
 }
 
-console.log(`compared ${compared} boroughs across ${shared.length} cities: ${shared.join(', ')}`);
+console.log(`compared ${compared} borough/persona pairs (${PERSONAS.join(' + ')}) across ${shared.length} cities: ${shared.join(', ')}`);
 
 // THE FLOOR, AND IT IS DERIVED (2026-09-07 audit, I13).
 //
@@ -182,9 +201,9 @@ if (missingCities.length) {
   console.log('      comparison without failing it.');
   process.exit(1);
 }
-const expected = shared.reduce((n, c) => n + Object.keys(lambdaScores[c]).length, 0);
+const expected = shared.reduce((n, c) => n + Object.keys(lambdaScores[c]).length, 0) * PERSONAS.length;
 if (compared !== expected) {
-  console.log(`FAIL: compared ${compared} boroughs, but the Lambda serves ${expected}`);
+  console.log(`FAIL: compared ${compared} borough/persona pairs, but the Lambda serves ${expected}`);
   console.log(`      across those ${shared.length} cities. Every borough the API scores`);
   console.log('      must be rendered and compared - a borough the site cannot draw is');
   console.log('      exactly the divergence this gate exists to catch.');

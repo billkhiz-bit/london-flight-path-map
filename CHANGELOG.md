@@ -1,5 +1,97 @@
 # Changelog
 
+## 2026-09-15 - methodology v5.1: growth is scored on the real-terms price trend
+
+### What changed and why
+
+`growth` read the nominal HM Land Registry HPI 12-month change, so a borough
+whose prices rose 2.2% while CPIH ran at 2.8% scored above the 5.0 "flat"
+anchor and the panel said "rising" - its homes had lost value. Costed on 13
+Sep before deciding (`scripts/cost_real_growth.py`); done on 15 Sep on the
+strength of the numbers: at CPIH 2.8% for June 2026, **25 of the 77 boroughs
+the product called rising were falling in real terms.**
+
+- `trendReal = ((1 + trend/100) / (1 + CPIH/100) - 1) x 100`, rounded once
+  to 1dp with the engine's own tie rule (`real_trend_pct`, halves away from
+  zero like the site's `Math.round` - not Python's `round`, which would send
+  a .x5 the other way from the JS mirror), attached to every sterling record
+  at import and used as the growth input. The cohort extremes are over the
+  same quantity.
+- `context.priceTrendPct` is UNCHANGED (nominal - a published field
+  integrators read). New: `context.priceTrendRealPct`, `context.inflationPct`,
+  `context.growthBasis` (`real` / `nominal`); the comparison block gains
+  `previousTrendRealPct` and a step that names the deflation, and its step-3
+  workings divide the real trend by the real yardstick. Step 1 ("what prices
+  did") stays in cash terms deliberately, and the model sentences say "in real
+  terms" so "still rising" and "falling prices score below 5" cannot sit in
+  one driver unexplained.
+- One deflator per vintage (`CPIH_12M_PCT`: June 2026 2.8%, May 2026 3.0%),
+  because `?compare=previous` recomputes the previous score under the current
+  formula and deflating May's trend by June's inflation would manufacture
+  movement. `previous_dataset()` re-derives `trendReal` after its overlay.
+- **New York stays nominal** and says so: no US inflation series is held, and
+  dividing dollars by a UK index would be a number nobody measured.
+- The growth provenance line is now DERIVED per city
+  (`_growth_breakdown_line`), replacing thirteen hand-written strings of which
+  twelve carried a literal "June 2026" that the July roll would have left
+  stale - the same replacement the afford line had at v5.0. A CPIH source
+  line is appended for sterling cities only.
+
+### Effect, measured across the 99 boroughs
+
+Growth moves a mean -1.21, worst -7.0 (Cardiff, +2.2% nominal to -0.6% real
+against a cohort whose real fastest riser is barely positive). **78 of 99
+`investor` scores move**, mean -0.53; largest Cardiff 6.8 -> 4.1, Rotherham
+7.4 -> 5.0, Hartlepool 7.0 -> 5.1. **No other persona moves** - growth is
+weighted for `investor` alone - and the worked example goes 4.0 -> 3.6 on
+growth with every other component unchanged.
+
+### Guards
+
+- `scripts/check_worked_example.py` re-derives growth - **it never had**;
+  only its two cohort bounds were checked, so a wrong growth figure beside
+  the right bounds passed - and checks `trendReal` and the CPIH figure s6
+  quotes. 20 comparisons, up from 17.
+- `build_hpi_prices.py --check` requires a `CPIH_12M_PCT` entry for
+  `SNAPSHOT_VINTAGE` and compares it with ONS L55O for the label's month
+  (advisory on the fetch, INCONCLUSIVE never PASS when unreachable). Proven
+  red on 2.9 against a published 2.8.
+- `tests/borough-score-parity.mjs` compares the `investor` persona as well as
+  `balanced` - balanced carries growth at 0.00, so a site/Lambda
+  disagreement on growth was invisible to the one-way-door gate by
+  construction. 182 pairs; proven red on a stale site deflator (52 investor
+  rows, 0 balanced).
+- `backend/tests/test_real_growth.py`: 17 tests - the ratio, the tie rule
+  against `round_1dp` on a sweep, attachment in place, New York's fallback,
+  the previous vintage's own month, the response shape, the derived
+  provenance, the comparison step.
+- Four existing tests pinned v5.0 numbers; three now derive their
+  expectation from the response, and the constructed cohort in the
+  amplification test sets `trendReal` too (it copied real records, which
+  carry it, so overriding `trend` alone changed nothing the engine reads -
+  the growth driver simply never fired).
+
+### Echoes
+
+METHODOLOGY s4.3, s6 (growth working, `trendReal` input, the persona table -
+which had been stale since v5.0, every row ~1.7 high on the old within-city
+affordability), s7, s12, s19, s20; LICENSING.md (ONS CPIH row); the OpenAPI
+spec (`priceTrendRealPct`, `inflationPct`, `growthBasis`, the growth
+component's description - which still said "linear price trend scaled to
+cohort max", v3.2 wording); README and the site footer to v5.1; `api/`
+sample; the 99 area pages rebuilt with a basis-aware growth note read from
+`context.growthBasis`; the site's `growthScore` fed by `scoredTrend()` with
+`SNAPSHOT_CPIH_PCT` beside it, and the panel printing "+2.5%, -0.3% after
+inflation" where the two differ.
+
+### Notice
+
+Measured on the day: the signups register holds four rows - two consumer
+subscriptions and two keys, both the author's own - so no third party holds
+a key and the 14-day notice METHODOLOGY s7 promises is satisfied by this
+entry as the record, as for v4.0 and v5.0. It becomes binding the moment a
+first customer holds a key.
+
 ## 2026-09-10 - the NSPL roll completed, and the road tier reaches every city
 
 ### The derived shares, re-run

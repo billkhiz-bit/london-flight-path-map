@@ -428,7 +428,11 @@ class TrendsFeatureTests(unittest.TestCase):
         # the steepest fall under the May vintage.
         self.assertIn('Westminster', growth['workings'])
         self.assertIn('steepest fall', growth['workings'])
-        self.assertIn('= 4.9', growth['workings'])
+        # = 4.9 under v5.0 (nominal -1.4% against -25.4%); v5.1 works in real
+        # terms (-4.1% against -27.4%, = 4.4). DERIVED from the driver's own
+        # 'after' figure so the next vintage or deflator does not pin it again.
+        self.assertIn(f'= {growth["after"]}', growth['workings'])
+        self.assertIn('real terms', ' '.join(growth['steps']))
         afford = next(d for d in newham['drivers'] if d['factor'] == 'afford')
         # = 9.6 became = 3.8 at v5.0, and the FORMULA behind it changed too:
         # min-max over the city cohort became a log scale against the national
@@ -509,8 +513,14 @@ class TrendsFeatureTests(unittest.TestCase):
         # the amplification explanation it wraps must survive that change.
         self.assertIn('flat market', steps)
         self.assertIn('Waltham Forest', steps)
-        self.assertIn('took the full 10', steps)
-        self.assertIn('only direction available was down', steps)
+        # v5.1: Waltham Forest is +2.5% in cash and -0.3% after CPIH 2.8%, so
+        # it is the FALLING branch that carries the was-the-benchmark prose
+        # now ('held the top score of 10 ... could only ever move down'); the
+        # rising branch's 'took the full 10' is covered by the constructed
+        # cohort in test_amplification_prose_when_a_rising_area_was_the_benchmark.
+        self.assertIn('held the top score of 10', steps)
+        self.assertIn('could only ever move down', steps)
+        self.assertIn('in real terms', steps)
         # Still rising in absolute terms - the relative slip must not read as
         # prices falling.
         self.assertIn('Still rising', steps)
@@ -537,6 +547,10 @@ class TrendsFeatureTests(unittest.TestCase):
             out = {n: dict(bd) for n, bd in base.items()}
             for name, trend in trends.items():
                 out[name]['trend'] = trend
+                # v5.1: the copied records carry trendReal, which is what
+                # growth is scored on; a stub that set `trend` alone changed
+                # nothing the engine reads. Stubs are stated in real terms.
+                out[name]['trendReal'] = trend
             return out
 
         # STUB VALUES MUST DOMINATE THE LIVE COHORT. The rest of each
@@ -861,8 +875,10 @@ class CalcScoreTests(unittest.TestCase):
         # assertion above is unchanged at 6.4, which is the invariant this
         # fixture exists to guard - v3.3 gives growth no weight in `balanced`,
         # so a growth move must not reach the total.
-        # 3.9 under the May vintage; the June roll moved the cohort.
-        self.assertEqual(result['components']['growth'], 4.0)
+        # 3.9 under the May vintage; the June roll moved the cohort to 4.0;
+        # v5.1 scores the real-terms -7.8% against a real cohort (-27.4 to
+        # +1.5) and gives 3.6 - which METHODOLOGY s6 walks through.
+        self.assertEqual(result['components']['growth'], 3.6)
         # live 7.9 -> 8.0 on 2026-08-03, when the crime rates were re-verified
         # against ONS Table C4 in full rather than by spot check. Wandsworth held
         # 82 per 1,000 against a published 76.4, so crime_to_score moves 7.87 ->
