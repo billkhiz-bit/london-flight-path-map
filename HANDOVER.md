@@ -8,8 +8,8 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 **WHERE TO START (2026-09-15):** ROADMAP -> Open decisions -> "What each open
 decision entails", corrected on 15 Sep against the code. Its closing
-paragraph says what is left: **deploy** (SAM for the chat 502, web for the
-station arrays - both committed 15 Sep, neither deployed), Bill's one branch-
+paragraph says what is left (the chat 502 and the station arrays are
+DEPLOYED, verified from the origin 15 Sep): Bill's one branch-
 protection command, the prepared CloudFront badge behaviour (apply, verify two
 postcodes, THEN repoint index.html), the July HPI roll when HMLR publishes
 (`build_hpi_prices.py --check` prints NEWER HPI VINTAGE PUBLISHED; 404 on 15

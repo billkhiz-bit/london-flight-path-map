@@ -7,7 +7,8 @@ AGAINST THE CODE and corrected in four places (badge cache is scriptable but
 the managed policy would 403 API Gateway; repo settings are all CLI; the July
 roll hides one decision; **M23 was missing from the list entirely**). Done
 the same day: M14's chat 502 and M23's station qualifiers (both red-proven,
-committed, **awaiting deploy**), Dependabot on, CI actions pinned to SHAs.
+committed, **deployed and verified from the origin the same evening**),
+Dependabot on, CI actions pinned to SHAs.
 Bill is leaning to I17 option A; the policy answer is in item 1. Previous:
 2026-09-14 evening - **36 of the 13 Sep audit's 37 Minors
 closed or converted to decisions, in five preflighted commits, all deployed and
@@ -1092,12 +1093,15 @@ image.
   forwarding settings (query string `postcode`, no headers, no cookies, TTL
   0/86400/31536000 so the origin's 24 h and 5 min rule). **And it must carry
   NO function**: the default behaviour's `sky-score-rewrite-index` turns an
-  extensionless `/badge` into `/badge/index.html`. The script that builds the
-  config is `cf_add_badge.py` (session scratchpad, 15 Sep; the classifier
-  refused to apply it, correctly - it is a production change). **ORDER: apply
-  the distribution change first, wait for Deployed, verify TWO different
-  postcodes both return `X-Cache: Hit from cloudfront` on their second call
-  and different SVGs from each other - THEN repoint index.html.** Repointing
+  extensionless `/badge` into `/badge/index.html`. **The script is
+  `scripts/cloudfront_badge_behaviour.py`** - `--plan` (read-only, run 15 Sep:
+  1 origin, 0 behaviours, ETag E1F83G8C2ARO7P), `--apply` (UpdateDistribution
+  with the ETag, waits for Deployed; the classifier refused to run it in
+  Claude's session, correctly - it is a production change, so it is Bill's
+  one command), `--verify` (proven red on the current state: 403 twice, no
+  hit). **ORDER: `--apply`, then `--verify` must PASS - TWO different
+  postcodes both `X-Cache: Hit` on their second call and different SVGs from
+  each other - THEN repoint index.html.** Repointing
   first breaks every badge. The verification has to be two postcodes: one
   postcode hitting twice also passes a cache that keys on nothing and serves
   the first badge to everyone for 24 hours.
@@ -1172,7 +1176,7 @@ quarter" a misnomer. **Recommendation: (a)** - `SNAPSHOT_VINTAGE` and
 s6's worked example (SW11 1AA, afford 0.4) may move; `check_worked_example.py`
 will say so.
 
-**7. M14 remainder. DONE 2026-09-15, awaiting the SAM deploy.** `/v1/chat`
+**7. M14 remainder. DONE AND DEPLOYED 2026-09-15.** `/v1/chat`
 reported a crashed ScoreFunction as 400 "That location could not be
 resolved". The crash arrives as the runtime's error envelope
 (`{"errorMessage": ...}`, `FunctionError` set) with no `statusCode` at all,
@@ -1186,8 +1190,8 @@ one); 500 when the function name is unset. `ChatUpstreamFailureTests` drives
 handler still mapped every error to 400 - 3 of 5 red on HEAD. `/v1/chat` is in
 no spec and has no site caller, so nothing else changes.
 
-**8. M23 - station qualifiers. NOT ON THE 14 SEP LIST, and DONE 2026-09-15,
-awaiting the web deploy.** The 13 Sep table had ONE Minor not struck through
+**8. M23 - station qualifiers. NOT ON THE 14 SEP LIST, and DONE AND DEPLOYED
+2026-09-15.** The 13 Sep table had ONE Minor not struck through
 and the write-up above said "36 of 37, only M14's half remains" - the
 "list that omits a member reads as complete" trap, in the list of remaining
 work. Measured: **19 published station entries were a listed place under a
@@ -1212,8 +1216,8 @@ arrays like its I19 sibling, red on the old ones with all 19 named. Observed
 and left: "Queen's Park" and "Queens Park (London)" differ by an
 apostrophe and stay two entries.
 
-**Where this stands after 15 Sep:** 7 and 8 are committed and need the deploy
-(SAM for chat; `index.html` for the stations); 4 needs Bill's one protection
+**Where this stands after 15 Sep:** 7 and 8 are **DEPLOYED 2026-09-15 and verified from the origin**: SAM modified `ChatFunction` alone; `index.html` uploaded `no-cache` and invalidated (completed); live hash == source; 1,390 stations served with 0 duplicates; `check_deploy_drift.sh` 133 of 133; live `/v1/chat` answers 400 with the score API's wording for a bad postcode and 200 for SW11 1AA.
+4 needs Bill's one protection
 command; 2A needs Bill to apply the prepared distribution config, THEN the
 index.html repoint; 6 waits on HMLR; 1 is A when there is an afternoon for
 SES; 5 is a scheduled v5.1; 3 stands.

@@ -10,7 +10,8 @@
 > 24 Importants and 36 of 37 Minors are closed or converted to a decision and
 > deployed; open are I17 (a decision) and M14's chat-400 half.** **2026-09-15:
 > M14's chat half and M23 - which the 14 Sep count had MISSED, the one Minor
-> never struck in the table - are both closed and committed, awaiting deploy.
+> never struck in the table - are both closed, committed AND DEPLOYED (drift
+> 133 of 133, live hash == source, 1,390 stations served, 0 duplicates).
 > I17 alone is open, as a decision (Bill leaning A).** Findings live
 > in those files, **not here**. This file was deliberately NOT overwritten either time: overwriting
 > a generated report without confirmation is what the global safety rule
