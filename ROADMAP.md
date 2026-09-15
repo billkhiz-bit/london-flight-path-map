@@ -2,7 +2,21 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-13 evening - every Critical and Important from the
+**Last reviewed:** 2026-09-15 - the open-decisions brief below was READ
+AGAINST THE CODE and corrected in four places (badge cache is scriptable but
+the managed policy would 403 API Gateway; repo settings are all CLI; the July
+roll hides one decision; **M23 was missing from the list entirely**). Done
+the same day: M14's chat 502 and M23's station qualifiers (both red-proven,
+committed, **awaiting deploy**), Dependabot on, CI actions pinned to SHAs.
+Bill is leaning to I17 option A; the policy answer is in item 1. Previous:
+2026-09-14 evening - **36 of the 13 Sep audit's 37 Minors
+closed or converted to decisions, in five preflighted commits, all deployed and
+verified from the origin** (drift 133/133). What is left is DECISIONS, and each
+is written up in practical terms under "What each open decision entails" at the
+foot of Open decisions: I17 signup verification, the badge edge cache, GoatCounter
+on the demo page, three repo settings, CPI real-terms growth, the July HPI roll
+(waiting on HMLR, ~16 Sep), and M14's chat-400 remainder. Bill: "will get back
+to this." Previous review, 2026-09-13 evening - every Critical and Important from the
 11 Sep audit closed and deployed; the demo quota raised to 5,000 and the demo
 scoring again; the real-terms growth adjustment COSTED (26 of 99 "rising"
 boroughs fall in real terms - see Open decisions); a fresh `/audit` run the
@@ -1013,6 +1027,196 @@ first, every time.
 | **Visual polish list** (layer-toggle colours, legend gating, DEFRA caption stacking, airport plates) | Any time, with Bill looking at the result - these are judgements, not defects. | One item per commit; `frontend-design` on the change; `a11y-source.mjs` and `panel-contrast.mjs` after, because the last three polish passes each found a contrast regression. | The two contrast gates green at desktop, phone and landscape. | Nothing structural. |
 | **Rebrand** (Sky Score -> CUBITT33, decided 5 Aug) | Before any COLD outreach, not before warm - `memory/project-outreach-never-sent.md`. A rename touches every deployed page, the App Store listing, `manifest.webmanifest`, the badge SVG and the `sources` strings integrators carry. | Grep the NAME across the tree first and count the surfaces; do the web in one deploy and the native binaries in their own release (2-4 week cadence). | `check_deploy_drift.sh` 133/133; `no em dashes`; the App Store lookup by bundle id. | Half-renamed surfaces - a public page saying one name and the API another. The grep count is the checklist. |
 | **Outreach** (5 drafts, 0 sent since 21 May) | Warm channels any time; cold channels after the rename. **DKIM verified before any send** - a first email that lands in spam is the most expensive one. | `memory/project-pilot-outreach-pack.md`; send gates in `OUTREACH_LOG.md`. | A test send to a personal address arrives with DKIM pass. | A bounced or spam-foldered first touch. |
+
+### What each open decision entails - written 2026-09-14, corrected 2026-09-15
+
+Bill asked for this expansion on 14 Sep and said he would come back to it. Each
+item below is a row in the table above; this is the practical half - what is
+wrong today, what each option means in work and cost, and the recommendation.
+Nothing here needs re-deriving: the measurements are in the audit report and
+the commits of 14 Sep.
+
+**1. I17 - `/v1/signup` writes any address unverified.** Anyone can POST
+`{"email": "you@example.com", "source": "consumer"}` and that address joins the
+score-updates list as a consented subscriber. Three consequences: privacy.html
+says consent is given "by submitting the form", untrue of an address a stranger
+submitted; the row makes the real owner's later API signup answer 409 "contact
+support" (a lock-out); and the three replies for a known address differ, so the
+route tells a caller which addresses hold API keys. 1 RPS = 86,400 addresses a
+day.
+- **A, verification email first (right):** nothing is written until the address
+  confirms. Needs SES - verify `skyscore.co.uk`, DKIM at Cloudflare, sandbox
+  exit, a pending-token table, a confirm endpoint, one identical 201 for every
+  address; key and subscription both arrive by email. Half a day plus SES
+  approval (1-2 days).
+- **B, same 201 for everyone + an API signup upgrades a consumer row:** closes
+  the lock-out and the consumer-side oracle in one Lambda change; a stranger
+  can still subscribe your address and "holds a key" stays detectable. ~1 hour.
+- **C, take the consumer form off `/v1/signup`:** notify-me disappears until A.
+- **Recommendation: A.** B only if the lock-out hurts a real customer (the
+  signups table holds a handful of rows - it does not today).
+- **Bill is leaning to A (2026-09-15). What A changes in the POLICIES, read
+  from the pages:** `privacy.html` s2a says consent is given "by submitting
+  the form" (`:241`) and "we collect the address and the postcode you
+  searched, and nothing else" - both sentences change (consent by clicking
+  the emailed link; an unconfirmed address held N hours then deleted), under
+  the SAME lawful basis, Art 6(1)(a). The API-key paragraph needs nothing:
+  Art 6(1)(b) contract already covers issuing the key, by email or otherwise.
+  `SUBPROCESSORS.md` row 1 (AWS) must name SES, in `eu-west-2` so
+  `test_data_residency.py` holds. **Cookies: no change** - s8's "does not use
+  cookies" stays true, the confirm link carries its token in the URL and the
+  confirm page sets nothing; under PECR a confirmation email is not
+  marketing. Not policy, but on the list: SPF/DKIM/DMARC at Cloudflare, SES
+  sandbox exit, `ses:SendEmail` in `iam-policy.json` AND the Lambda role, a
+  throttle on the new confirm route (`test_route_throttles.py` reds without
+  one), and the demo page's "your key is..." panel becoming "check your
+  email" (`FreeTierQuotaDriftTests` reads that page).
+
+**2. `/badge` has no edge cache (audit M1).** Every badge request is a Lambda
+invocation; the 24h `max-age` is honoured by each viewer's browser only.
+Measured 2026-09-14: `X-Cache: Miss` on every call. A busy listing page with
+many first-time viewers can pass the 5 RPS route throttle and render a broken
+image.
+- **A, cache behaviour on the site's CloudFront (`EGSSPJKLFL33M`):** add the API
+  (`2gjfdzg20c.execute-api.eu-west-2.amazonaws.com`) as a second origin with
+  origin path `/prod`, a `/badge` behaviour keyed on the `postcode` query
+  string that honours the origin's Cache-Control. Then point BOTH badge URLs
+  in index.html (`embedSnippet()` and the `badge-preview` img) at `/badge`,
+  same-origin. Cost nil. **Corrected 2026-09-15, having read the live config
+  (one origin, zero behaviours, default policy CachingOptimized which strips
+  query strings):** it is SCRIPTABLE - `GetDistributionConfig` and
+  `UpdateDistribution` are granted - but NOT with a managed cache policy. Both
+  `UseOriginCacheControlHeaders*` policies put the viewer `Host` header in the
+  cache key and forward it, and API Gateway answers 403 to a Host it does not
+  own; `CreateCachePolicy` is not granted. So the behaviour uses its own
+  forwarding settings (query string `postcode`, no headers, no cookies, TTL
+  0/86400/31536000 so the origin's 24 h and 5 min rule). **And it must carry
+  NO function**: the default behaviour's `sky-score-rewrite-index` turns an
+  extensionless `/badge` into `/badge/index.html`. The script that builds the
+  config is `cf_add_badge.py` (session scratchpad, 15 Sep; the classifier
+  refused to apply it, correctly - it is a production change). **ORDER: apply
+  the distribution change first, wait for Deployed, verify TWO different
+  postcodes both return `X-Cache: Hit from cloudfront` on their second call
+  and different SVGs from each other - THEN repoint index.html.** Repointing
+  first breaks every badge. The verification has to be two postcodes: one
+  postcode hitting twice also passes a cache that keys on nothing and serves
+  the first badge to everyone for 24 hours.
+- **B, API Gateway caching:** one stage setting, ~USD 14/month for the smallest
+  cluster, and it caches EVERY route unless disabled per method (`/v1/score`
+  would need opting out).
+- **C, accept** until a portal embeds one.
+- **Recommendation: A.**
+
+**3. GoatCounter on the key-minting page (audit M6).** `/score-demo/` loads
+`count.js`, a rolling third-party script with no SRI, on the page that mints
+and shows a free-tier key; a compromised GoatCounter could read it. Recorded in
+SECURITY.md on 14 Sep (option B), so nothing is undisclosed.
+- **A, remove the tag:** one line; the demo funnel events - the only measure of
+  B2B interest - go with it.
+- **B, keep, recorded:** done. Exposure is a free-tier key: `/v1/score` only,
+  10,000 requests a month.
+- **C, mint on a separate analytics-free page** linked from the demo. ~1 hour.
+- **Recommendation: B stands** unless a paid tier ever mints on that page.
+
+**4. Repo settings (audit M7). TWO OF THREE DONE 2026-09-15, all from the
+CLI** - the 14 Sep line said dashboard; `gh api` does all three. **Done:**
+Dependabot alerts + security updates enabled (`PUT /vulnerability-alerts`,
+`PUT /automated-security-fixes`, verified `enabled: true`); the NINE `uses:`
+lines (four actions) in `ci.yml` pinned to commit SHAs with `# vX.Y.Z`
+comments, resolved through the tags API; and `.github/dependabot.yml` for the
+`github-actions` ecosystem only, monthly, so the pins are updated by a PR
+rather than rotting - a pin nothing updates is a frozen list. **Left for
+Bill, one command** (the classifier refused it as a shared-resource change):
+`gh api -X PUT repos/billkhiz-bit/london-flight-path-map/branches/master/protection --input <file>`
+with the payload from `master-protection.json` (session scratchpad): required
+checks `lint-frontend`, `lint-backend`, `test-backend` - NOT `test-e2e`, which
+reads the LIVE site and would block a Dependabot PR on deploy drift -
+`enforce_admins: false`, no force-push, no deletion, linear history. **Why
+`enforce_admins` must be false:** required checks block DIRECT pushes whose
+commit has no passing run yet, which is every push from this machine; the
+owner bypass is what "allow the owner to push" means concretely. The checks
+then bind PRs - Dependabot's - which is where they matter.
+
+**5. CPI real-terms growth.** `growth` is nominal HPI trend; at CPIH 2.8%, 26
+of 99 boroughs the product calls "rising" fall in real terms
+(`python scripts/cost_real_growth.py` prints the per-borough before/after).
+Entails a methodology bump to v5.1, 14 days' notice to integrators
+(METHODOLOGY s7), CPIH as a new data source in LICENSING.md, a changelog entry,
+the worked example and all 99 area pages rebuilt, one backend-first deploy.
+Half a day. The question is whether `investor` - the one persona weighting
+growth - should see real or nominal movement. **Read against the code, 15
+Sep:** `growth_score()` is `score/app.py:6412` and has a JS mirror in
+index.html (Python rounds halves to even, JS up - `borough-score-parity.mjs`
+is the gate), `/v1/changes` is unaffected (it recomputes `previousScore`
+under the current formula by design), and the decision INSIDE the decision
+is the contract: integrators read `trend` today, so it should stay nominal
+with a `trendReal` beside it rather than flip. **Recommendation: do it, as
+v5.1, but it is a scheduled item, not a same-day one** - the 14-day notice
+means the first action is the changelog entry announcing it.
+
+**6. July HPI roll.** Blocked on HMLR publishing `Average-prices-2026-07.csv`
+(~16 Sep; 404 on 14 Sep). `build_hpi_prices.py --check` now prints **NEWER HPI
+VINTAGE PUBLISHED** the moment it exists (audit M26). Then, per HANDOVER s0
+steps 3-6: `--check --all`, `--write --all`, bump `DEFAULT_VINTAGE` and
+`SNAPSHOT_VINTAGE_LABEL`, rebuild area pages, backend-first deploy. About an
+hour. **Still 404 on 15 Sep** (HMLR publishes on Wednesdays). **"No
+decisions" was wrong - there is one, and it is small:** `/v1/changes` is a
+QUARTERLY comparison. The 25 Aug roll copied June's predecessor into
+`LONDON_PREVIOUS_PT` and moved `PREVIOUS_VINTAGE`/`SNAPSHOT_VINTAGE` Q2 -> Q3
+(`memory/project-trends-feature.md`, the three-step roll). A July roll either
+(a) keeps `2026-Q3` and refreshes the numbers under it, so `/changes` still
+compares against Q2 and `SNAPSHOT_VINTAGE_LABEL` alone moves to 'July 2026',
+or (b) treats every monthly roll as a snapshot roll, which makes "this
+quarter" a misnomer. **Recommendation: (a)** - `SNAPSHOT_VINTAGE` and
+`SNAPSHOT_VINTAGE_LABEL` being two constants already implies it. METHODOLOGY
+s6's worked example (SW11 1AA, afford 0.4) may move; `check_worked_example.py`
+will say so.
+
+**7. M14 remainder. DONE 2026-09-15, awaiting the SAM deploy.** `/v1/chat`
+reported a crashed ScoreFunction as 400 "That location could not be
+resolved". The crash arrives as the runtime's error envelope
+(`{"errorMessage": ...}`, `FunctionError` set) with no `statusCode` at all,
+and `retrieve_context` read "not 200" as "the score API rejected the
+postcode". It returns a third value now, the HTTP status the caller should
+answer with: 400 with the score API's own wording for its 4xx; **502 "the
+scoring service failed" for a crash, a 5xx, an unreadable response or an
+unreachable function** (three of those four were ALSO 400 before - M14 named
+one); 500 when the function name is unset. `ChatUpstreamFailureTests` drives
+`handler`, not the helper, because the helper could be right while the
+handler still mapped every error to 400 - 3 of 5 red on HEAD. `/v1/chat` is in
+no spec and has no site caller, so nothing else changes.
+
+**8. M23 - station qualifiers. NOT ON THE 14 SEP LIST, and DONE 2026-09-15,
+awaiting the web deploy.** The 13 Sep table had ONE Minor not struck through
+and the write-up above said "36 of 37, only M14's half remains" - the
+"list that omits a member reads as complete" trap, in the list of remaining
+work. Measured: **19 published station entries were a listed place under a
+parenthetical** (15 London - "Abbey Wood" / "Abbey Wood (London)" 28 m
+apart, Hammersmith once per Underground line - 2 West Midlands, 1 West
+Yorkshire, 1 Tyne and Wear), and `build_city_stations.py:22` + `CLAUDE.md`
+both still said London's array was "18 hand-picked interchanges" against
+693 NaPTAN rows - stale from the day it was written, since the same commit
+generated London's array. **The qualifier is split off LAST and RETURNED,
+not dropped**: NaPTAN writes it mid-name ("Edgware Road (Circle Line)
+Underground Station"), so it is only trailing once the descriptor has gone,
+and stripping it first would mangle "Battersea Power Station Underground
+Station" into "Battersea Power". `collect` merges on the base and restores
+the qualifier only when every node carries the same one - "Kensington
+(Olympia)", "Hayes (Kent)", "Bitton (Avon Valley Railway)" keep their
+names; dropping it unconditionally would publish "Hayes" beside "Hayes &
+Harlington", a new ambiguity for the old duplicate. **1,415 -> 1,390**, every
+departed name's base still listed, two names improved
+("Shackerstone Rail Station (Battlefield Line)" -> "Shackerstone (Battlefield
+Line)"). `test_no_place_is_listed_twice_under_a_qualifier` reads the SHIPPED
+arrays like its I19 sibling, red on the old ones with all 19 named. Observed
+and left: "Queen's Park" and "Queens Park (London)" differ by an
+apostrophe and stay two entries.
+
+**Where this stands after 15 Sep:** 7 and 8 are committed and need the deploy
+(SAM for chat; `index.html` for the stations); 4 needs Bill's one protection
+command; 2A needs Bill to apply the prepared distribution config, THEN the
+index.html repoint; 6 waits on HMLR; 1 is A when there is an afternoon for
+SES; 5 is a scheduled v5.1; 3 stands.
 
 **Two things from 10 Sep to know when reading the table.** The air-quality
 re-run was `--live-only`, so terminated postcodes still hold February's

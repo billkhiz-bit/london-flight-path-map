@@ -6,6 +6,15 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
+**WHERE TO START (2026-09-15):** ROADMAP -> Open decisions -> "What each open
+decision entails", corrected on 15 Sep against the code. Its closing
+paragraph says what is left: **deploy** (SAM for the chat 502, web for the
+station arrays - both committed 15 Sep, neither deployed), Bill's one branch-
+protection command, the prepared CloudFront badge behaviour (apply, verify two
+postcodes, THEN repoint index.html), the July HPI roll when HMLR publishes
+(`build_hpi_prices.py --check` prints NEWER HPI VINTAGE PUBLISHED; 404 on 15
+Sep), and I17 option A when there is an afternoon for SES.
+
 > **This banner said "BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04" until
 > 2026-09-09** - naming a `FlightMapDeployPolicy` that was restored *that same
 > day*, five days and three successful deploys ago. **It was the first thing a

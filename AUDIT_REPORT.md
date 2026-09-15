@@ -6,8 +6,13 @@
 > Critical and Important in it is now CLOSED and deployed, as of 13 Sep) and
 > on **2026-09-13** (`AUDIT_REPORT_2026-09-13.md` - 2 Critical, 24 Important,
 > 37 Minor; the two Criticals are the 11 Sep and 7 Sep fixes stopping one
-> function short of their family). Findings live in those files, **not
-> here**. This file was deliberately NOT overwritten either time: overwriting
+> function short of their family). **As of 2026-09-14: both Criticals, 23 of
+> 24 Importants and 36 of 37 Minors are closed or converted to a decision and
+> deployed; open are I17 (a decision) and M14's chat-400 half.** **2026-09-15:
+> M14's chat half and M23 - which the 14 Sep count had MISSED, the one Minor
+> never struck in the table - are both closed and committed, awaiting deploy.
+> I17 alone is open, as a decision (Bill leaning A).** Findings live
+> in those files, **not here**. This file was deliberately NOT overwritten either time: overwriting
 > a generated report without confirmation is what the global safety rule
 > forbids. Nothing below is wrong - it is six days older.
 >
@@ -18,7 +23,9 @@
 > (the 13 Sep audit found two had been dropped rather than closed): F16 and
 > F22 of `AUDIT_REPORT_2026-08-29.md` - unverified-third-party signup writes
 > and the orphaned-key path in `signup/app.py`. They are I17 and M2 of the
-> 13 Sep report now, and stay listed here until closed BY NAME.
+> 13 Sep report now, and stay listed here until closed BY NAME. **M2 (F22)
+> was closed on 2026-09-14** - `backend/tests/test_error_paths.py`. **F16 =
+> I17 is still open, as a decision.**
 >
 > **The 09-11 audit fixed four things** (all committed, none deployed): the
 > borough panel printed the literal word `undefined` on **53 of 91 boroughs**,
