@@ -1,0 +1,20 @@
+# Keeps the SHA-pinned `uses:` lines in ci.yml current (audit M7, 2026-09-15).
+#
+# The actions are pinned to commit SHAs so a compromised tag cannot move under
+# CI. A pin with nothing updating it is a frozen list - correct on the day it
+# is written and silently stale after - which is the shape this repo has paid
+# for four times (copy-web.mjs's REQUIRED_DATA, the deploy-target table, the
+# free-tier mirrors, the CI dependency list). Dependabot rewrites the SHA and
+# the `# vX.Y.Z` comment together, as a PR that CI must pass.
+#
+# Actions ONLY. npm and pip are covered by Dependabot SECURITY updates, enabled
+# on the repo the same day; version updates for them would open a PR a week
+# for a solo repo whose `index.html` is hand-maintained.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
