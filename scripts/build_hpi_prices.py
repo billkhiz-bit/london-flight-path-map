@@ -748,7 +748,8 @@ def _backend_only_cities() -> set[str]:
 
 
 def refresh_backend_only_prices() -> int:
-    """Rewrite index.html's BACKEND_ONLY_PRICES block from the Lambda registry.
+    """Rewrite index.html's BACKEND_ONLY_PRICES / BACKEND_ONLY_TRENDS block from
+    the Lambda registry.
 
     Called after every --write. The alternative - a reminder to update it by
     hand - is the shape this repo has been caught by repeatedly, and here it
@@ -756,9 +757,21 @@ def refresh_backend_only_prices() -> int:
     slightly, nothing errors, and only `tests/borough-score-parity.mjs` notices.
     That gate IS the backstop, but a gate that reds with no way to fix it costs
     a session to diagnose.
+
+    TRENDS TOO, since methodology v5.2 (2026-09-16): growth is anchored on the
+    national pool the way affordability has been since v5.0, so the site needs
+    the two API-only cities' NOMINAL trends in the pool as well as their prices
+    (it deflates them itself with SNAPSHOT_CPIH_PCT, exactly as it does its
+    own). Same block, same markers, one more constant.
+
+    Reads the Lambda from SOURCE TEXT (`_load_score_app`), not `import app`. It
+    used to import, and `write()` had already imported the module before
+    writing to it, so this saw the registry as it stood BEFORE the write and
+    refreshed the block one city behind - Cardiff's July prices only reached
+    index.html when Nottingham's write ran after it (2026-09-16). The text
+    loader has no cache to be stale.
     """
-    sys.path.insert(0, str(Path("backend/lambdas/score").resolve()))
-    import app  # noqa: PLC0415
+    app = _load_score_app()
 
     backend_only = _backend_only_cities()
     site = SITE_HOLDER.read_text(encoding="utf-8")
@@ -774,6 +787,12 @@ def refresh_backend_only_prices() -> int:
     for city_id in sorted(backend_only):
         prices = [b["avgPrice"] for b in app.CITIES[city_id]["boroughs"].values()]
         lines.append(f"        {city_id}: [{', '.join(str(int(p)) for p in prices)}],")
+    lines.append("      };")
+    lines.append("      // Nominal 12-month trends, same boroughs, same order (v5.2 growth pool).")
+    lines.append("      const BACKEND_ONLY_TRENDS = {")
+    for city_id in sorted(backend_only):
+        trends = [b["trend"] for b in app.CITIES[city_id]["boroughs"].values()]
+        lines.append(f"        {city_id}: [{', '.join(str(x) for x in trends)}],")
     lines.append("      };")
     lines.append(f"      {BACKEND_ONLY_END}")
 

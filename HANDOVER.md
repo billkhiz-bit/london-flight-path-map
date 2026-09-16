@@ -7,12 +7,13 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 **WHERE TO START (2026-09-16):** ROADMAP -> Open decisions -> "What each open
-decision entails". **The July HPI roll is DONE IN THE TREE (16 Sep, the
-morning HMLR published) - check `git log` and `check_deploy_drift.sh` for
-whether it has been DEPLOYED**; the classifier refused the SAM deploy from
-Claude's session, so the deploy is Bill's one command,
-`sh scripts/deploy_hpi_roll.sh` (backend -> freshness gate -> web -> area ->
-meta -> origin checks). CHANGELOG 2026-09-16 has the effect, the decision it
+decision entails". **The July HPI roll AND methodology v5.2 (growth anchored
+on the currency pool, ROADMAP item 9) are DONE IN THE TREE on 16 Sep - check
+`git log` and `check_deploy_drift.sh` for whether they have been DEPLOYED**;
+the classifier refused the SAM deploy from Claude's session, so the deploy is
+Bill's one command, `sh scripts/deploy_hpi_roll.sh` (backend -> freshness
+gate -> web -> area -> meta -> origin checks; it verifies SW11 1AA and the
+expected line in it is still right under v5.2, growth 3.2). CHANGELOG 2026-09-16 has the effect, the decision it
 carried (quarter key held at 2026-Q3, label and deflator moved) and the two
 things it shipped alongside. The roll surfaced ROADMAP item 9: `investor` swings hard in
 4-5 borough cohorts on ordinary monthly HPI noise (Hartlepool growth 0.0 ->

@@ -259,13 +259,16 @@ paths:
         error. Only price and trend move between quarterly vintages, so
         `afford` and `growth` are the only factors that can appear.
 
-        **Growth is cohort-relative, which explains large swings.** It is
-        scored against the strongest-growing borough of the same city, so a
-        modest change in an input can move a score a long way — and an area that
-        IS the benchmark scores the maximum by definition, leaving it nowhere to
-        go but down. `why.drivers[]` therefore carries `workings`: the actual
-        sum with the reference point named, e.g.
-        `+0.9% ÷ +5.0% (Waltham Forest, the strongest) × 10 = 1.8`.
+        **Growth is pool-relative, which explains large swings.** It is
+        scored against the strongest-growing (and steepest-falling) borough
+        across every borough Sky Score covers in the same currency (methodology
+        v5.2; the same city until then), so a change in the pool's extremes can
+        move a score without anything changing here — and an area that IS the
+        benchmark scores the maximum by definition, leaving it nowhere to go
+        but down. `why.drivers[]` therefore carries `workings`: the actual sum
+        with the reference point named, e.g.
+        `5.0 + +2.1% ÷ +6.3% (Trafford (Greater Manchester), fastest) × 5 = 6.7`.
+        A yardstick outside the borough's own city is qualified with its city.
 
 
         **Affordability stopped being cohort-relative at methodology v5.0** and
@@ -686,7 +689,7 @@ components:
           $ref: '#/components/schemas/AppliedWeights'
         methodologyVersion:
           type: string
-          example: "5.1"
+          example: "5.2"
         methodologyUrl:
           type: string
           format: uri
@@ -832,8 +835,13 @@ components:
             Dual-anchor growth on the REAL-terms 12-month price trend
             (methodology v5.1): 5.0 means prices held their value against
             inflation, rising areas spread 5-10 against the fastest real
-            riser in the city, falling areas 5-0 against the steepest real
-            faller. The figure scored is `context.priceTrendRealPct`;
+            riser, falling areas 5-0 against the steepest real faller - both
+            taken across EVERY borough in the currency pool since methodology
+            v5.2 (the 94 sterling boroughs; New York's five for USD), not the
+            borough's own city, so growth is comparable between cities and a
+            city's leader changing hands no longer flips a score across the
+            whole scale. The within-city standing is `context.growthRankInCity`.
+            The figure scored is `context.priceTrendRealPct`;
             `context.growthBasis` says `real` (sterling cities) or `nominal`
             (New York, where no inflation series is held). Weighted for the
             `investor` persona only.
@@ -907,6 +915,24 @@ components:
               type: integer
               minimum: 1
               description: 1 is the cheapest borough in the city.
+            of:
+              type: integer
+              minimum: 1
+              description: Number of boroughs in that city.
+        growthRankInCity:
+          type: object
+          description: >-
+            Where this borough sits by real-terms price trend among the
+            boroughs of its own city, fastest-rising first (methodology v5.2).
+            The within-city signal that growth carried until v5.2 moved that
+            component to the currency pool - the same move, and the same
+            reason, as `priceRankInCity` at v5.0. Ties share the better rank.
+          required: [rank, of]
+          properties:
+            rank:
+              type: integer
+              minimum: 1
+              description: 1 is the fastest real-terms riser in the city.
             of:
               type: integer
               minimum: 1
@@ -1078,7 +1104,7 @@ components:
         `components` are published rounded to 1dp while the engine weights them
         unrounded, so the sum can sit up to 0.1 away from `score` - 0.05 for
         component rounding, 0.05 for rounding the total. The observed worst
-        case is under 0.07. This is the same limitation `roundingResidual` already
+        case is under 0.08. (Measured 0.0721 at methodology v5.2; 0.0674 at v5.0.) This is the same limitation `roundingResidual` already
         reports for `attribution`, and it is why these values carry six decimal
         places rather than more: extra precision cannot close a gap that is not
         about weight precision.

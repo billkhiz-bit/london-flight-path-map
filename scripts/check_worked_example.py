@@ -100,15 +100,19 @@ def main():
     # ---- the cohort bounds affordability and growth are anchored on ----
     prices = [b['avgPrice'] for b in app.CITIES[CITY]['boroughs'].values()
               if b.get('avgPrice')]
-    # v5.1: the cohort extremes growth is scaled against are over the trend
-    # the engine SCORES - real terms where held - never the nominal one.
-    trends = [app.scored_trend(b) for b in app.CITIES[CITY]['boroughs'].values()
-              if b.get('trend') is not None]
+    # v5.1: the extremes growth is scaled against are over the trend the
+    # engine SCORES - real terms where held - never the nominal one.
+    # v5.2: and they are the CURRENCY POOL's, through the engine's own helper,
+    # never a list built here from London alone - which is what this read
+    # until 2026-09-16, and would have kept agreeing with a section 6 that
+    # quoted London's extremes after the engine had stopped using them.
+    max_trend, min_trend = app.national_trend_bounds(
+        CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
+    )
     # v5.0: affordability is anchored on the NATIONAL price band, so the cohort
     # min/max price it used to quote is no longer part of the derivation and is
-    # not checked - the p5/p95 pair is. Growth is still cohort-relative, so its
-    # trend bounds are unchanged. Keeping a stale price-cohort check here would
-    # hold section 6 to arithmetic the engine has stopped doing.
+    # not checked - the p5/p95 pair is. Keeping a stale price-cohort check here
+    # would hold section 6 to arithmetic the engine has stopped doing.
     afford_p5, afford_p95 = app.national_price_bounds(
         CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
     )
@@ -116,8 +120,8 @@ def main():
     for label, pattern, real in (
         ('national p5 price', r'`p5 = ([\d,]+)`', round(afford_p5)),
         ('national p95 price', r'`p95 = ([\d,]+)`', round(afford_p95)),
-        ('cohort min trend', r'`min = (-?[\d.]+)`', min(trends)),
-        ('cohort max trend', r'`max = (-?[\d.]+)`', max(trends)),
+        ('pool min trend', r'`min = (-?[\d.]+)`', min_trend),
+        ('pool max trend', r'`max = (-?[\d.]+)`', max_trend),
         # v5.1: the deflator section 6 quotes must be the one the engine holds
         # for the current vintage, or the trendReal line is unreproducible.
         ('CPIH for the vintage', r'after CPIH of ([\d.]+)%', app.CPIH_12M_PCT[app.SNAPSHOT_VINTAGE]),
@@ -162,7 +166,7 @@ def main():
         # GROWTH WAS NEVER DERIVED HERE until v5.1 (2026-09-15) - only its two
         # cohort bounds were checked, so a wrong growth figure with the right
         # bounds beside it passed. Through the same helper the engine uses.
-        'growth': app.growth_score(app.scored_trend(bd), max(trends), min(trends)),
+        'growth': app.growth_score(app.scored_trend(bd), max_trend, min_trend),
         'live': app.get_live_score(bd),
         'env': app.get_env_score(bd),
     }

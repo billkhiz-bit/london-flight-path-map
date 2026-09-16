@@ -1028,6 +1028,7 @@ first, every time.
 | **Visual polish list** (layer-toggle colours, legend gating, DEFRA caption stacking, airport plates) | Any time, with Bill looking at the result - these are judgements, not defects. | One item per commit; `frontend-design` on the change; `a11y-source.mjs` and `panel-contrast.mjs` after, because the last three polish passes each found a contrast regression. | The two contrast gates green at desktop, phone and landscape. | Nothing structural. |
 | **Rebrand** (Sky Score -> CUBITT33, decided 5 Aug) | Before any COLD outreach, not before warm - `memory/project-outreach-never-sent.md`. A rename touches every deployed page, the App Store listing, `manifest.webmanifest`, the badge SVG and the `sources` strings integrators carry. | Grep the NAME across the tree first and count the surfaces; do the web in one deploy and the native binaries in their own release (2-4 week cadence). | `check_deploy_drift.sh` 133/133; `no em dashes`; the App Store lookup by bundle id. | Half-renamed surfaces - a public page saying one name and the API another. The grep count is the checklist. |
 | **Outreach** (5 drafts, 0 sent since 21 May) | Warm channels any time; cold channels after the rename. **DKIM verified before any send** - a first email that lands in spam is the most expensive one. | `memory/project-pilot-outreach-pack.md`; send gates in `OUTREACH_LOG.md`. | A test send to a personal address arrives with DKIM pass. | A bounced or spam-foldered first touch. |
+| **Sell through AWS Marketplace** (raised by Bill 2026-09-16) | **After the rebrand, never before** - a Marketplace listing is the most public, permanent, indexed cold channel there is, and renaming a live listing later means a new listing. **It is a CLOSING mechanism for deals sourced elsewhere, with zero expected discovery value**: tens of thousands of listings in broad categories, buyers search for what they already know, and small-ISV Marketplace revenue is private offers to customers the seller found. The £2,500 pilot transacting on a buyer's existing AWS bill (committed-spend burn-down, no vendor onboarding) is the case for it. Marketing stays where the project already puts it: the consumer site, the 99 area pages, the badge, warm outreach. | The fit is unusually good: API Gateway has a NATIVE Marketplace integration - attach a product code to a usage plan and it meters to Marketplace - so the work is a registration endpoint (`ResolveCustomer` on the `x-amzn-marketplace-token`, mint the key against the right plan, as `/v1/signup` already does) plus an SNS listener for subscribe/unsubscribe: 1-2 days. Listing needs: seller registration as CUBITT33 LTD (W-8BEN-E, bank), pricing/privacy/terms pages (exist), an EULA (AWS Standard Contract is the low-effort route), a support contact, then a review measured in weeks. **Verify before writing a number down**: the SaaS listing fee (believed ~3% under the current schedule - not confirmed) and UK seller eligibility terms. | A Marketplace test subscription mints a key that scores; a private offer can be issued. | Listed under a name the rebrand then retires; a fee assumption that turns out wrong in the pricing page. |
 
 ### What each open decision entails - written 2026-09-14, corrected 2026-09-15
 
@@ -1242,7 +1243,15 @@ and left: "Queen's Park" and "Queens Park (London)" differ by an
 apostrophe and stay two entries.
 
 **9. `investor` is volatile month to month in the small cohorts - OBSERVED
-2026-09-16, not yet a decision.** The July roll moved 78 of 99 `investor` scores
+2026-09-16, MEASURED AND DECIDED THE SAME DAY: option (a), methodology v5.2.**
+`scripts/cost_growth_anchor.py` replayed 24 months under four designs: the
+city cohort's mean month-on-month growth change was 1.44 with 8.2% of
+transitions moving 5+ points and a within-city spread of 8.79/10 (one borough
+per city on each rail by construction); the national pool 0.76 / 0.2% / 3.64;
+a 3-month smoothed input 0.95 / 4.1% (the rails stay, and it publishes a trend
+no integrator can verify against HMLR). Bill chose (a). Cross-city inversions
+651 -> 0; `balanced` untouched; `investor` moves on 56 of 99, max 1.8.
+CHANGELOG 2026-09-16 (v5.2). *Original observation follows.* The July roll moved 78 of 99 `investor` scores
 (mean -0.24) while `balanced` moved 9 by 0.1. Growth scales each tail against
 the CITY cohort's real-terms extremes, and a 4-5 borough cohort re-orders on
 ordinary HPI month-to-month noise: Hartlepool's nominal trend went +0.8% ->
@@ -1259,6 +1268,12 @@ Measure first: the per-borough month-on-month growth deltas over June -> July
 are in `git diff 6439c65 -- backend/lambdas/score/app.py`. Recommendation
 pending the measurement; (a) is the one this repo has already accepted the
 reasoning for.
+
+**Where this stands after 16 Sep:** the July roll and v5.2 are COMMITTED; the
+deploy is `sh scripts/deploy_hpi_roll.sh` (backend first), which the classifier
+refuses to run from Claude's session. Items 2 (badge CloudFront apply), 4
+(branch protection), the nine Dependabot merges and 1 (I17 flip, needs SES)
+are still Bill's.
 
 **Where this stands after 15 Sep:** 7 and 8 are **DEPLOYED 2026-09-15 and verified from the origin**: SAM modified `ChatFunction` alone; `index.html` uploaded `no-cache` and invalidated (completed); live hash == source; 1,390 stations served with 0 duplicates; `check_deploy_drift.sh` 133 of 133; live `/v1/chat` answers 400 with the score API's wording for a bad postcode and 200 for SW11 1AA.
 4 needs Bill's one protection

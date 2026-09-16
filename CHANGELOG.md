@@ -1,5 +1,71 @@
 # Changelog
 
+## 2026-09-16 - methodology v5.2: growth is anchored on the currency pool
+
+### What changed and why
+
+The growth component's dual anchor scaled each city against ITS OWN fastest
+real-terms riser and steepest faller. By construction that put one borough
+per rising city at 10.0 and one per falling city at 0.0 every month - 22 of
+94 boroughs on a rail whatever their trend - and made a small cohort's leader
+changing hands a full-scale flip. The July HPI roll showed it the morning it
+landed: Hartlepool +0.8% -> +5.5% nominal took its growth 0.0 -> 10.0;
+Newport 8.5 -> 0.0; 78 of 99 investor scores moved on one ordinary release.
+
+**Measured before deciding**, over 24 months of HPI for all 94 sterling
+boroughs (`python scripts/cost_growth_anchor.py`, method in METHODOLOGY s4.3):
+
+| design | mean month-on-month change | moves of 5+ | within-city spread |
+|---|---|---|---|
+| city cohort (v5.1) | 1.44 | 8.2% | 8.79 / 10 |
+| **national pool (v5.2)** | **0.76** | **0.2%** | 3.64 |
+| 3-month smoothed input, city cohort | 0.95 | 4.1% | 8.60 |
+| both | 0.51 | 0.0% | 3.60 |
+
+Smoothing alone barely helps because the per-city rails stay, and it would
+publish a trend that no longer equals HMLR's own `Annual_Change`. The pool is
+the same move v5.0 made for affordability, for the same reason.
+
+- `max_trend` / `min_trend` are now over every borough sharing the currency
+  (`national_trend_bounds` in the Lambda, `nationalTrendBounds` on the site).
+  The 5.0 = flat anchor is unchanged. New York's USD pool is its own five.
+- New `context.growthRankInCity` `{rank, of}`, the within-city standing, as
+  `priceRankInCity` was for affordability.
+- `benchmarks`, `/v1/changes` `marketContext` and the `why` workings name the
+  POOL's yardsticks; one outside the borough's city is labelled with it:
+  `5.0 + +2.1% / +6.3% (Trafford (Greater Manchester), fastest) x 5 = 6.7`.
+- The site pools the two API-only cities' trends through
+  `BACKEND_ONLY_TRENDS`, written by `build_hpi_prices.py --write` beside the
+  prices block (and that refresh now reads the Lambda from source text, so it
+  is no longer one city behind the write that precedes it).
+
+### Effect, measured against v5.1 on the July data
+
+- **`balanced`: no score moves** (growth carries 0.00 weight).
+- **`investor`: 56 of 99 move**, mean +0.11, max 1.8 (Newport 4.2 -> 6.0,
+  Bradford 5.0 -> 6.7, North Somerset 7.1 -> 5.6).
+- Growth components at 10.0: 12 -> 2. At 0.0: 11 -> 1.
+- **Cross-city inversions (higher real trend, lower growth): 651 of 4,371
+  pairs -> 0.**
+- Worked example unchanged at growth 3.2 (Westminster is the steepest faller
+  in both London and the pool). Published worst-case reproduction residual
+  0.0674 -> 0.0721; both documents say "under 0.08".
+
+### Guards
+
+`check_worked_example.py` derives the bounds through the engine's helper
+(it built a London-only list, which would have kept agreeing with a stale
+s6); `check_openapi_matches_engine.py` caught the new context key before the
+spec had it; `borough-score-parity.mjs` agrees on 182 pairs; a new test
+gives a Teesside borough a London borough's trend and asserts equal growth,
+and bounds the rails. Two tests that borrowed London's fastest riser as the
+benchmark now construct their cohorts.
+
+### Notice
+
+The signups register was re-read today: four rows, none a third party's key.
+This entry is the record, as for v5.0 and v5.1.
+
 ## 2026-09-16 - July 2026 HPI roll: the first roll inside a quarter
 
 ### What changed

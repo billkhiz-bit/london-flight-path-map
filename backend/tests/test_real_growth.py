@@ -145,12 +145,56 @@ class ResponseShapeTests(unittest.TestCase):
         self.assertNotEqual(bd['trend'], bd['trendReal'], 'a flip is needed for this to test anything')
 
     def test_benchmarks_are_in_the_scored_unit_and_say_so(self):
-        bm = app.benchmarks(app.CITIES['london']['boroughs'])
+        bm = app.benchmarks(app.CITIES['london']['boroughs'], 'london')
         self.assertEqual(bm['growthBasis'], 'real')
-        reals = [b['trendReal'] for b in app.CITIES['london']['boroughs'].values()]
+        # v5.2: the yardsticks are the STERLING POOL's, not London's. Every
+        # sterling borough's real trend, through the same accessor the engine
+        # scores from.
+        reals = [
+            app.scored_trend(b)
+            for cfg in app.CITIES.values() if cfg['currency'] == 'GBP'
+            for b in cfg['boroughs'].values()
+        ]
         self.assertEqual(bm['strongestGrowthTrendPct'], max(reals))
         self.assertEqual(bm['steepestFallTrendPct'], min(reals))
-        self.assertEqual(app.benchmarks(app.CITIES['nyc']['boroughs'])['growthBasis'], 'nominal')
+        # A London response must still be able to FIND its yardstick: one
+        # outside London is labelled with its city. Asserted structurally, not
+        # on a name - who leads the pool changes every roll.
+        london = set(app.CITIES['london']['boroughs'])
+        for label in bm['strongestGrowthAreas'] + bm['steepestFallAreas']:
+            with self.subTest(label=label):
+                self.assertTrue(
+                    label in london or (label.endswith(')') and label.rsplit(' (', 1)[0] not in london),
+                    f'{label!r} is neither a London borough nor qualified with its city',
+                )
+        self.assertEqual(app.benchmarks(app.CITIES['nyc']['boroughs'], 'nyc')['growthBasis'], 'nominal')
+
+    def test_growth_is_anchored_on_the_pool_not_the_city(self):
+        # v5.2. Two boroughs with the same real trend in different cities must
+        # score the same growth; under the city cohort they did not, because
+        # each was scaled against its own city's extremes. Constructed: copy a
+        # Teesside record onto a London borough's trend and compare.
+        inv = app.PERSONAS['investor']
+        london = app.calc_score('Wandsworth', 'london', inv)['components']['growth']
+        tees = {n: dict(bd) for n, bd in app.CITIES['teesside']['boroughs'].items()}
+        w = app.CITIES['london']['boroughs']['Wandsworth']
+        tees['Hartlepool']['trend'] = w['trend']
+        tees['Hartlepool']['trendReal'] = w['trendReal']
+        hart = app.calc_score('Hartlepool', 'teesside', inv, boroughs_override=tees)['components']['growth']
+        self.assertEqual(london, hart)
+        # And no city has a borough on BOTH rails by construction any more:
+        # at most one borough in the whole pool sits at 10.0 and one at 0.0
+        # (ties aside), where the city cohort put one per city on each.
+        tops = bottoms = 0
+        for city, cfg in app.CITIES.items():
+            if cfg['currency'] != 'GBP':
+                continue
+            for name in cfg['boroughs']:
+                g = app.calc_score(name, city, inv)['components']['growth']
+                tops += g == 10.0
+                bottoms += g == 0.0
+        self.assertLessEqual(tops, 2)
+        self.assertLessEqual(bottoms, 2)
 
 
 class ProvenanceTests(unittest.TestCase):

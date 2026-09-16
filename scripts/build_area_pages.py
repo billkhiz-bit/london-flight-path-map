@@ -191,10 +191,24 @@ def gather(city: str, borough: str) -> dict | None:
             'after inflation (real terms), ' if basis == 'real'
             else 'in cash terms, ' if basis == 'nominal' else ''
         )
-        growth_note = (
-            f'Price trend {basis_note}scaled within this city only - 10 is the fastest-rising of '
-            f'{len(prices)} areas here, not nationally'
-        )
+        # v5.2: the anchor is the currency pool, not this city - the same move
+        # v5.0 made for affordability, for the same reason, and the note takes
+        # the same shape as afford_note below. New York's pool is its own five
+        # boroughs, so its note still says so. The within-city rank is READ
+        # from the response (context.growthRankInCity), like priceRankInCity.
+        if basis == 'real':
+            growth_note = (
+                f'Price trend {basis_note}scored against every borough Sky Score covers in this '
+                'currency, not just this city'
+            )
+        else:
+            growth_note = (
+                f'Price trend {basis_note}scaled among the {len(prices)} areas of this city, '
+                'which is the whole of its currency pool'
+            )
+        grank = (body.get('context') or {}).get('growthRankInCity') or {}
+        if grank.get('rank') and grank.get('of', 0) > 1:
+            growth_note += f' - {grank["rank"]} of {grank["of"]} here by trend, fastest-rising first'
 
     # Derived from the response, never recomputed here: a second implementation
     # of the same rank is a second thing to keep in step.

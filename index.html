@@ -127,7 +127,10 @@
         /* The brand orange as INK. #f27d26 is 2.60:1 on --white, so it fails
            WCAG AA (4.5) for any text - it is a fill and a border colour, not a
            text colour. This is the same hue darkened to 5.10:1, for the places
-           where the accent has to carry a word. Measured, not picked by eye. */
+           where the accent has to carry a word. Measured, not picked by eye.
+           ON --white ONLY: on --cream (#ebe8e1, the mobile panel) it is 4.35:1
+           and FAILS AA - measured 2026-09-16 when the /nhs fallback link tried
+           it. Text on the cream panel needs a darker ink or inherit. */
         --orange-ink: #a85416;
         --blue: #267df2;
         /* Darkened from #9a7400 on 2026-08-03. At 4.13:1 on the #fafaf9 sidebar it
@@ -4223,7 +4226,7 @@
             target="_blank"
             rel="noopener"
           >
-            Methodology v5.1
+            Methodology v5.2
           </a>
           <span class="sep">·</span>
           <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -7995,8 +7998,10 @@
       // it disagreed on FOUR boroughs by 0.1 - Waltham Forest, City of London,
       // Harrow and Stockport - and borough-score-parity.mjs caught it.
       //
-      // They are PRICES ONLY. Nothing here renders, and adding a city to the
-      // site means adding it to CITY_DATA, not here.
+      // They are PRICES AND NOMINAL TRENDS ONLY (trends since methodology v5.2,
+      // when growth joined affordability on the national pool). Nothing here
+      // renders, and adding a city to the site means adding it to CITY_DATA,
+      // not here.
       //
       // MAINTAINED BY `scripts/build_hpi_prices.py --write`, between the
       // markers below, for the same reason every other price in this file is:
@@ -8006,6 +8011,11 @@
       const BACKEND_ONLY_PRICES = {
         cardiff: [272252, 303112, 229200, 197272],
         nottingham: [190200, 253021, 241473, 324012],
+      };
+      // Nominal 12-month trends, same boroughs, same order (v5.2 growth pool).
+      const BACKEND_ONLY_TRENDS = {
+        cardiff: [2.7, 6.2, 2.0, 4.2],
+        nottingham: [-1.3, -0.8, 0.9, -1.5],
       };
       // BACKEND-ONLY-PRICES:END
 
@@ -8041,6 +8051,39 @@
         return _nationalBounds[currency];
       }
 
+      // v5.2 growth anchor: the fastest real-terms riser and steepest faller
+      // across every borough sharing this city's CURRENCY, mirroring
+      // `national_trend_bounds` in the score Lambda. Until v5.2 each city was
+      // scaled against its own extremes, which put one borough per city at
+      // 10.0 and one at 0.0 every month by construction - replayed over 24
+      // months of HPI, 8.2% of month-on-month growth changes were 5 points or
+      // more, and the July 2026 roll flipped Hartlepool 0.0 -> 10.0 on an
+      // ordinary release. Pooling halves the churn. Trends are DEFLATED here
+      // (scoredTrend) before pooling, the same quantity the Lambda pools; the
+      // two API-only cities enter through BACKEND_ONLY_TRENDS for the same
+      // reason their prices enter through BACKEND_ONLY_PRICES.
+      const _nationalTrendBounds = {};
+      function nationalTrendBounds(cityId) {
+        const currency = cityOf(cityId).currency;
+        if (!_nationalTrendBounds[currency]) {
+          const trends = [];
+          for (const id of Object.keys(CITY_DATA)) {
+            if (cityOf(id).currency !== currency) continue;
+            for (const d of Object.values(cityOf(id).boroughRaw())) trends.push(scoredTrend(d.trend, id));
+          }
+          if (currency === '£') {
+            // Both API-only cities are sterling and neither is in CITY_DATA,
+            // so scoredTrend's currency test is answered by passing a sterling
+            // city; the deflator is the same one constant either way.
+            for (const list of Object.values(BACKEND_ONLY_TRENDS)) {
+              for (const trend of list) trends.push(scoredTrend(trend, 'london'));
+            }
+          }
+          _nationalTrendBounds[currency] = [Math.max(...trends), Math.min(...trends)];
+        }
+        return _nationalTrendBounds[currency];
+      }
+
       // Cheaper is higher; 10.0 at or below p5, 0.0 at or above p95. LOG, not
       // linear, because UK borough medians are strongly right-skewed and a
       // linear scale piles boroughs at both rails - measured, linear p10/p90
@@ -8057,9 +8100,8 @@
         const [affordP5, affordP95] = nationalPriceBounds(city || 'london');
         // v5.1: the extremes and the borough's own trend are the REAL-terms
         // figures (scoredTrend), the same quantity the Lambda scales against.
-        const trends = Object.values(data).map((d) => scoredTrend(d.trend, city));
-        const maxTrend = Math.max(...trends);
-        const minTrend = Math.min(...trends);
+        // v5.2: the extremes are the currency POOL's, not this city's.
+        const [maxTrend, minTrend] = nationalTrendBounds(city || 'london');
         const w = PERSONAS[currentPersona].weights;
 
         const result = {};
@@ -8464,11 +8506,10 @@
         const maxPrice = Math.max(...allPrices);
         const minPrice = Math.min(...allPrices);
 
-        // Collect growth rates from boroughs
+        // Growth is inherited from the borough and anchored on the national
+        // pool (v5.2), the same call the borough path makes above.
         const boroughRaw = cityOf(city).boroughRaw();
-        const trendVals = Object.values(boroughRaw).map((d) => scoredTrend(d.trend, city));
-        const maxTrend = Math.max(...trendVals);
-        const minTrend = Math.min(...trendVals);
+        const [maxTrend, minTrend] = nationalTrendBounds(city);
 
         const results = [];
         for (const [name, info] of Object.entries(areaMap)) {
@@ -10584,10 +10625,21 @@
           if (!items.length) return '';
           // `link` covers both an outage fallback and a measured "none within
           // 1.5 km" (audit M16); the row's own name says which.
+          //
+          // INHERIT + underline, not the brand orange (2026-09-16). This link
+          // was --orange as TEXT - 2.60:1 on the panel, the exact failure the
+          // token comment at the top of the stylesheet warns about - and it
+          // shipped that way because the node exists only when /nhs answers
+          // "none within 1.5 km" for the probed area, so the contrast gate
+          // reached it on the run where Overpass happened to say so and not
+          // before. --orange-ink was tried first and is NOT enough here: 5.10:1
+          // on --white but 4.35:1 on the --cream the landscape panel paints.
+          // Inheriting .info-note's #555 measures 7.14 / 6.09; the underline
+          // keeps it identifiable as a link without relying on colour.
           if (items[0].link || items[0].fallback) {
             const url = safeUrl(items[0].website || items[0].url || 'https://www.nhs.uk/');
             const label = escapeHtml(items[0].name || 'Search NHS ' + title + ' services');
-            return `<p class="info-note"><a href="${url}" target="_blank" rel="noopener" style="color:var(--orange);">${label} &rarr;</a></p>`;
+            return `<p class="info-note"><a href="${url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">${label} &rarr;</a></p>`;
           }
           return (
             `<h3 style="margin-top:10px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:6px;">${escapeHtml(title)}</h3>` +
@@ -11863,7 +11915,7 @@
           <div class="score-bar-track"><div class="score-bar-fill" style="width:${gr * 10}%;background:${scoreColor(gr)};"></div></div>
           <span class="score-row-value">${gr}/10</span>
         </div>
-        <div class="score-explain">Annual price growth (${data.trend_pct || data.trend}${data.trend_real != null && String(data.trend_real) !== String(data.trend) ? `, ${data.trend_real >= 0 ? '+' : ''}${data.trend_real}% after inflation` : ''}). Weight: <strong>${Math.round(pw.growth * 100)}%</strong></div>
+        <div class="score-explain">Annual price growth (${data.trend_pct || data.trend}${data.trend_real != null && String(data.trend_real) !== String(data.trend) ? `, ${data.trend_real >= 0 ? '+' : ''}${data.trend_real}% after inflation` : ''}), scored against every covered borough, not just this city. Weight: <strong>${Math.round(pw.growth * 100)}%</strong></div>
 
         <div class="score-row" style="margin-top:10px;">
           <span class="score-row-label">Liveability</span>

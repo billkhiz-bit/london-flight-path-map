@@ -115,7 +115,7 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            `trendReal` sits beside it. New York keeps NOMINAL growth: no US
 #            inflation series is held, and deflating dollars by a UK index
 #            would be a number nobody measured. See real_trend_pct().
-METHODOLOGY_VERSION = '5.1'
+METHODOLOGY_VERSION = '5.2'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -477,8 +477,8 @@ def build_comparison(current, previous, city, weights, name=None):
     # rebuilt both benchmark sets, so a single request walked every borough four
     # times to produce the same two answers.
     prev_set = previous_dataset(city)
-    cur_bm = benchmarks(CITIES[city]['boroughs'])
-    prev_bm = benchmarks(prev_set)
+    cur_bm = benchmarks(CITIES[city]['boroughs'], city)
+    prev_bm = benchmarks(prev_set, city)
     cur_ranks = growth_ranks(CITIES[city]['boroughs'])
     prev_ranks = growth_ranks(prev_set)
     why = build_why(
@@ -581,7 +581,7 @@ FACTOR_MEANINGS = {
     # cohort-relative, so it keeps its comparison and gains the city it is
     # actually relative to.
     'afford': 'How cheap this area is, against borough prices across the whole country.',
-    'growth': 'How fast property prices are rising here after inflation, ranked against the other boroughs of this city.',
+    'growth': 'How fast property prices are rising here after inflation, against every borough Sky Score covers in this currency.',
     'live': 'Schools, crime and transport, combined.',
 }
 
@@ -636,15 +636,23 @@ def growth_ranks(boroughs):
     return {name: ordered.index(t) + 1 for name, t in trends.items()}
 
 
-def benchmarks(boroughs):
+def benchmarks(boroughs, city='london'):
     """The yardsticks a vintage comparison is read against.
 
     Growth is *relative*: scored against the strongest-growing (and, since
-    v3.4, the steepest-falling) area of the same city. Naming those reference
-    points is what turns "growth fell 8.2" from an assertion into something a
-    reader can check — and it explains the amplification, since an area that
-    IS the benchmark scores the maximum by definition, so it has nowhere to go
-    but down.
+    v3.4, the steepest-falling) area - of the same city until v5.2, of the
+    whole CURRENCY POOL since (2026-09-16, see national_trend_bounds). Naming
+    those reference points is what turns "growth fell 8.2" from an assertion
+    into something a reader can check — and it explains the amplification,
+    since an area that IS the benchmark scores the maximum by definition, so
+    it has nowhere to go but down.
+
+    `city` says whose slice `boroughs` is, so the pool can be assembled with
+    that slice standing in (a previous vintage) and so a yardstick outside the
+    city is labelled with its city - the London comparison may now name
+    "Trafford (Greater Manchester)" as the fastest riser. It defaults to
+    London because every caller that existed when the parameter was added was
+    London's; a new caller must pass its own.
 
     Affordability is NOT relative to these any more (audit M9, corrected
     2026-09-14): since methodology v5.0 it is anchored on the national
@@ -656,16 +664,18 @@ def benchmarks(boroughs):
     """
     # The trend growth is SCORED on - real terms where an inflation series is
     # held (v5.1), nominal otherwise - because a yardstick in a different unit
-    # from the score it explains is not a yardstick.
-    trends = {name: scored_trend(bd) for name, bd in boroughs.items()}
+    # from the score it explains is not a yardstick. v5.2: over the POOL, with
+    # `boroughs` standing in for this city's slice; the price range below stays
+    # the city's, because it is published as context and not as an anchor.
+    pool = national_trend_pool(city, boroughs, CITIES[city]['currency'])
     prices = {name: bd['avgPrice'] for name, bd in boroughs.items()}
-    max_trend = max(trends.values())
-    min_trend = min(trends.values())
-    top = sorted(n for n, t in trends.items() if t == max_trend)
+    max_trend = max(t for _, t in pool)
+    min_trend = min(t for _, t in pool)
+    top = sorted(label for label, t in pool if t == max_trend)
     # v3.4 scales each tail to its own extreme, so a falling area needs a bottom
     # yardstick just as a rising one needs the top. Under v3.2 every faller
     # scored 0 regardless, so only the top benchmark was ever needed.
-    bottom = sorted(n for n, t in trends.items() if t == min_trend)
+    bottom = sorted(label for label, t in pool if t == min_trend)
     dearest = max(prices, key=lambda n: prices[n])
     cheapest = min(prices, key=lambda n: prices[n])
     return {
@@ -712,8 +722,8 @@ def market_context(current_boroughs, previous_boroughs, score_changes=None):
     # score's own yardsticks are real-terms since v5.1 and say so.
     cur = [bd['trend'] for bd in current_boroughs.values()]
     prev = [bd['trend'] for bd in previous_boroughs.values()]
-    cur_bm = benchmarks(current_boroughs)
-    prev_bm = benchmarks(previous_boroughs)
+    cur_bm = benchmarks(current_boroughs, 'london')
+    prev_bm = benchmarks(previous_boroughs, 'london')
     return {
         'areas': len(cur),
         'meanTrendPct': round(sum(cur) / len(cur), 2),
@@ -726,7 +736,7 @@ def market_context(current_boroughs, previous_boroughs, score_changes=None):
             f'Across the {len(cur)} London boroughs the average 12-month price trend moved from '
             f'{round(sum(prev) / len(prev), 1):+}% to {round(sum(cur) / len(cur), 1):+}%, and the number with '
             f'falling prices went from {sum(1 for t in prev if t < 0)} to {sum(1 for t in cur if t < 0)}. '
-            f'Growth is scored relative to the strongest borough, which changed from '
+            f'Growth is scored against the strongest real-terms riser in the sterling pool, which changed from '
             f'{prev_bm["strongestGrowthArea"]} ({prev_bm["strongestGrowthTrendPct"]:+}%) to '
             f'{cur_bm["strongestGrowthArea"]} ({cur_bm["strongestGrowthTrendPct"]:+}%). '
             # What the SCORES did, counted from the caller's tally - never
@@ -961,12 +971,12 @@ def build_why(
             if cur_scored < 0:
                 fall_note = (
                     f'The growth score puts a flat market — prices neither rising nor falling{rt} — at 5 out of 10. '
-                    f'Prices falling{rt} score below 5, scaled against the steepest fall in the city: the borough '
-                    'falling fastest scores 0, and every other falling borough sits between.'
+                    f'Prices falling{rt} score below 5, scaled against the steepest fall among every borough Sky Score '
+                    'covers in this currency: the borough falling fastest scores 0, and every other falling borough sits between.'
                 )
                 if was_top:
                     fall_note += (
-                        f' Last quarter {subject_lower} had the fastest-rising prices{rt} in London, so it held the '
+                        f' Last quarter {subject_lower} had the fastest-rising prices{rt} of any covered borough, so it held the '
                         'top score of 10 — which means it could only ever move down from there.'
                     )
                 steepest_pct = cur_bm['steepestFallTrendPct'] if cur_bm else None
@@ -987,8 +997,8 @@ def build_why(
                 share = cur_scored / cur_bm['strongestGrowthTrendPct']
                 model = (
                     f'The growth score puts a flat market — prices neither rising nor falling{rt} — at 5 out of 10. '
-                    f'Prices rising{rt} score above 5, scaled against the fastest riser in the city, which takes the '
-                    'full 10.'
+                    f'Prices rising{rt} score above 5, scaled against the fastest riser among every borough Sky Score '
+                    'covers in this currency, which takes the full 10.'
                 )
                 if was_top:
                     model += (
@@ -4961,15 +4971,18 @@ def _growth_breakdown_line(city):
             f'price trend deflated by ONS CPIH ({inflation}% for {SNAPSHOT_VINTAGE_LABEL}) - REAL-terms '
             'growth since methodology v5.1, so a flat score of 5.0 means prices held their value '
             'against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct '
-            'the figure scored. Cohort-relative: each tail is scaled against the real-terms '
-            f'fastest riser and steepest faller among the {len(cfg["boroughs"])} areas of this city'
+            'the figure scored. Methodology v5.2 scales each tail against the real-terms fastest '
+            f'riser and steepest faller across ALL {_pool_size(cfg["currency"])} boroughs in the sterling '
+            'pool, not this city cohort - a city-sized cohort put one borough per city on each rail '
+            'every month by construction. Growth is therefore comparable BETWEEN cities; '
+            'context.growthRankInCity carries the within-city standing'
         )
     else:
         basis = (
             'Curated New York borough annualised price trend, NOMINAL. NOT HM Land Registry HPI, '
             'and not deflated: no US inflation series is held, and dividing dollars by a UK '
             'index would be a number nobody measured. context.growthBasis says so. '
-            f'Cohort-relative among the {len(cfg["boroughs"])} New York boroughs'
+            f'Cohort-relative among the {len(cfg["boroughs"])} New York boroughs - the USD pool is exactly them'
         )
     if cfg.get('hasHistory'):
         history = 'A previous vintage exists, so ?compare=previous reports real movement.'
@@ -6526,6 +6539,70 @@ def _percentile(values, q):
 # Cache for the CURRENT-vintage national bounds, which are static per process.
 # An override (a previous vintage) recomputes, because its pool is different.
 _NATIONAL_AFFORD_BOUNDS = {}
+_NATIONAL_GROWTH_BOUNDS = {}
+
+
+def national_trend_pool(city, boroughs, currency):
+    """Every borough in the currency pool with the trend growth is SCORED on,
+    as (label, trend) pairs - v5.2's growth cohort.
+
+    `boroughs` stands in for `city`'s own slice, exactly as in
+    national_price_bounds, so a previous-vintage comparison anchors on a pool
+    with that slice at the previous vintage. Labels outside `city` carry the
+    city's name - "Trafford (Greater Manchester)" - because a yardstick a
+    London response names may now be a Manchester borough, and a bare
+    "Trafford" in a London explanation reads as a borough the reader cannot
+    find on the London map.
+    """
+    pool = []
+    for other, cfg in CITIES.items():
+        if cfg['currency'] != currency:
+            continue
+        source = boroughs if other == city else cfg['boroughs']
+        for name, bd in source.items():
+            label = name if other == city else f"{name} ({cfg['name']})"
+            pool.append((label, scored_trend(bd)))
+    return pool
+
+
+def _pool_size(currency):
+    """How many boroughs share `currency` - the cohort size v5.2 growth names."""
+    return sum(len(cfg['boroughs']) for cfg in CITIES.values() if cfg['currency'] == currency)
+
+
+def national_trend_bounds(city, boroughs, currency):
+    """(max_trend, min_trend) across the whole currency pool - v5.2.
+
+    WHY THE COHORT WENT NATIONAL (2026-09-16). Until v5.2 each city's growth
+    was dual-anchored against ITS OWN fastest riser and steepest faller, so by
+    construction one borough per rising city scored 10.0 and one per falling
+    city 0.0 every month - 22 of 94 boroughs on a rail whatever their trend.
+    Replayed over 24 months of HPI (2024-08 .. 2026-07, all 94 sterling
+    boroughs): the mean month-on-month growth change was 1.44 points, 8.2% of
+    transitions moved 5 or more, and the mean within-city spread was 8.79 of
+    10. The July 2026 roll made it visible: Hartlepool's trend went +0.8% ->
+    +5.5% and its growth 0.0 -> 10.0 because Teesside's leader changed hands;
+    Newport 8.5 -> 0.0 for the same reason in Cardiff's four. Pooling the 94
+    real trends halves the churn (0.76 mean, 0.2% moving 5+) and leaves one
+    borough at each rail. Smoothing the input instead (a 3-month mean) was
+    measured and rejected: it barely touches the churn (0.95) because the
+    per-city rails stay, and it would publish a trend that no longer equals
+    HMLR's own Annual_Change, which is what an integrator verifies against.
+    Same argument as v5.0's affordability, same shape, same per-currency pool:
+    a narrow cohort manufactures spread it has not measured.
+
+    The 5.0 = flat anchor is unchanged and absolute; only the two tails'
+    extremes moved from the city to the pool. New York's USD pool is still its
+    own five boroughs, so nothing changes there.
+    """
+    override = boroughs is not CITIES[city]['boroughs']
+    if not override and currency in _NATIONAL_GROWTH_BOUNDS:
+        return _NATIONAL_GROWTH_BOUNDS[currency]
+    trends = [t for _, t in national_trend_pool(city, boroughs, currency)]
+    bounds = (max(trends), min(trends))
+    if not override:
+        _NATIONAL_GROWTH_BOUNDS[currency] = bounds
+    return bounds
 
 
 def national_price_bounds(city, boroughs, currency):
@@ -6709,12 +6786,13 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     afford = afford_score(bd['avgPrice'], p5, p95)
 
     # v5.1: scored on the REAL-terms trend where the city has one (every
-    # sterling city), nominal where it does not (New York). The cohort
-    # extremes are taken over the same quantity, so the 5.0 anchor means "held
-    # its value against inflation" and the tails are scaled against the real
-    # fastest riser and steepest faller.
-    trends = [scored_trend(b) for b in boroughs.values()]
-    max_trend, min_trend = max(trends), min(trends)
+    # sterling city), nominal where it does not (New York). The extremes are
+    # taken over the same quantity, so the 5.0 anchor means "held its value
+    # against inflation" and the tails are scaled against the real fastest
+    # riser and steepest faller.
+    # v5.2: those extremes are the CURRENCY POOL's, not the city's - see
+    # national_trend_bounds() for the 24-month replay that decided it.
+    max_trend, min_trend = national_trend_bounds(city, boroughs, CITIES[city]['currency'])
     # Methodology v3.4: dual-anchor — 0% growth sits at 5.0, each tail scaled
     # to its own extreme. See growth_score() for why the v3.2 single-anchor
     # formula collapsed 14 of 33 boroughs onto one value.
@@ -6824,6 +6902,14 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             # has lost days to exactly that. They are read together or not at
             # all.
             'priceRankInCity': price_rank_in_city(bd['avgPrice'], boroughs),
+            # v5.2: the same move for growth. The score is against the currency
+            # pool; the within-city standing is published beside it, as one
+            # nested object for the same reason as the line above. `rank` is 1
+            # for the fastest real-terms riser of the city (growth_ranks).
+            'growthRankInCity': {
+                'rank': growth_ranks(boroughs)[borough_name],
+                'of': len(boroughs),
+            },
             'noiseImpactBand': bd['impact'],
             'quietResolution': quiet_source,
             'liveResolution': live_resolution(bd, english=(city != 'nyc')),
@@ -7927,8 +8013,8 @@ def handle_changes(event):
 
     bal = PERSONAS['balanced']
     prev_set = previous_dataset('london')
-    cur_bm = benchmarks(CITIES['london']['boroughs'])
-    prev_bm = benchmarks(prev_set)
+    cur_bm = benchmarks(CITIES['london']['boroughs'], 'london')
+    prev_bm = benchmarks(prev_set, 'london')
     cur_ranks = growth_ranks(CITIES['london']['boroughs'])
     prev_ranks = growth_ranks(prev_set)
     changes = []

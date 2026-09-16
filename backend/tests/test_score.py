@@ -288,8 +288,8 @@ class TrendsFeatureTests(unittest.TestCase):
         prev = app.calc_score(borough, 'london', inv, boroughs_override=prev_set)
         return app.build_why(
             cur, prev, 'london', inv, borough,
-            app.benchmarks(app.CITIES['london']['boroughs']),
-            app.benchmarks(prev_set),
+            app.benchmarks(app.CITIES['london']['boroughs'], 'london'),
+            app.benchmarks(prev_set, 'london'),
             app.growth_ranks(app.CITIES['london']['boroughs']),
             app.growth_ranks(prev_set),
         )
@@ -418,8 +418,15 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertLess(m['meanTrendPct'], m['previousMeanTrendPct'])
         self.assertEqual(m['previousFallingAreas'], 20)
         self.assertEqual(m['fallingAreas'], 21)
-        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Barking and Dagenham')
-        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Waltham Forest')
+        # v5.2: the growth yardstick is the POOL's fastest real-terms riser,
+        # and a London page may now name a borough outside London - qualified
+        # with its city, so a reader can place it. Trafford, +6.3% real, July
+        # 2026. Both vintages resolve to it because only London's slice moves
+        # between them (previous_dataset is London-only) and no London borough
+        # beats +6.3% in either.
+        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Trafford (Greater Manchester)')
+        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Trafford (Greater Manchester)')
+        self.assertIn('sterling pool', m['summary'])
         s = body['summary']
         self.assertIn(f"{s['risers']} rose, {s['fallers']} fell", m['summary'])
         self.assertNotIn('Most scores fell', m['summary'])
@@ -530,31 +537,56 @@ class TrendsFeatureTests(unittest.TestCase):
     def test_why_explains_amplification_when_area_was_the_benchmark(self):
         """The main reason a big move looks extreme: the area WAS the yardstick.
 
-        The subject is whichever borough held rank 1 under the PREVIOUS vintage
-        and slipped - a role the market reassigns every roll. Under the Q1
-        snapshot it was Barking (falling branch); under the Q2/Q3 pair it is
-        Waltham Forest, still rising but overtaken by Barking's +4.3%, which is
-        the rising branch's own version of the prose: it took the full 10 last
-        quarter, so down was the only direction available.
+        The FALLING branch's version of the prose: the subject held the top
+        score last vintage and is now falling in real terms while still rising
+        in cash. This test read it off live data until v5.2 - Barking under the
+        Q1 snapshot, Waltham Forest under Q2/Q3 - because London's previous
+        fastest riser was always the yardstick. Under v5.2 the yardstick is the
+        POOL's fastest riser, which in July 2026 is Trafford, and only London
+        holds a previous vintage - so no live borough can reach this branch,
+        and reading it off live data would have quietly stopped exercising it
+        (memory: borrowed edge cases expire). CONSTRUCTED, like its rising
+        sibling below: the subject is given a previous real trend that beats
+        every real borough in the pool, and a current cash trend that is
+        positive but negative after inflation.
         """
-        wf = self._investor_why('Waltham Forest')
-        growth = next(d for d in wf['drivers'] if d['factor'] == 'growth')
+        subject = 'Waltham Forest'
+        base = app.CITIES['london']['boroughs']
+
+        def cohort(trends):
+            out = {n: dict(bd) for n, bd in base.items()}
+            for name, (cash, real) in trends.items():
+                out[name]['trend'] = cash
+                out[name]['trendReal'] = real
+            return out
+
+        # Previously the pool's fastest riser (Trafford is +6.3% real, July
+        # 2026; 9.0 outruns any plausible borough). Now +1.5% in cash and
+        # -1.6% after inflation.
+        prev_set = cohort({subject: (12.0, 9.0)})
+        cur_set = cohort({subject: (1.5, -1.6)})
+        inv = app.PERSONAS['investor']
+        cur = app.calc_score(subject, 'london', inv, boroughs_override=cur_set)
+        prev = app.calc_score(subject, 'london', inv, boroughs_override=prev_set)
+        why = app.build_why(
+            cur, prev, 'london', inv, subject,
+            app.benchmarks(cur_set, 'london'), app.benchmarks(prev_set, 'london'),
+            app.growth_ranks(cur_set), app.growth_ranks(prev_set),
+        )
+        growth = next(d for d in why['drivers'] if d['factor'] == 'growth')
         steps = ' '.join(growth['steps'])
         # v3.4 replaced the pure "league table" model with a flat-market anchor;
         # the amplification explanation it wraps must survive that change.
         self.assertIn('flat market', steps)
         self.assertIn('Waltham Forest', steps)
-        # v5.1: Waltham Forest is +2.5% in cash and -0.3% after CPIH 2.8%, so
-        # it is the FALLING branch that carries the was-the-benchmark prose
-        # now ('held the top score of 10 ... could only ever move down'); the
-        # rising branch's 'took the full 10' is covered by the constructed
-        # cohort in test_amplification_prose_when_a_rising_area_was_the_benchmark.
         self.assertIn('held the top score of 10', steps)
         self.assertIn('could only ever move down', steps)
         self.assertIn('in real terms', steps)
         # Still rising in absolute terms - the relative slip must not read as
         # prices falling.
         self.assertIn('Still rising', steps)
+        # v5.2: the yardstick sentence names the pool, not the city.
+        self.assertIn('every borough Sky Score covers', steps)
 
     def test_amplification_prose_when_a_rising_area_was_the_benchmark(self):
         """The rising tail's was-the-benchmark explanation, on a STUBBED cohort.
@@ -584,22 +616,24 @@ class TrendsFeatureTests(unittest.TestCase):
                 out[name]['trendReal'] = trend
             return out
 
-        # STUB VALUES MUST DOMINATE THE LIVE COHORT. The rest of each
-        # borough's data is real, so a stub of +4.0% stopped being the
-        # benchmark the moment a real borough hit +4.3% (Barking, 2026-Q3
-        # roll) and this test failed for the wrong reason. 9.0 outruns any
-        # plausible real London trend.
-        # Previously: subject is the fastest riser in the cohort.
-        prev_set = cohort({subject: 6.0, 'Havering': 2.0})
+        # STUB VALUES MUST DOMINATE THE LIVE POOL. The rest of each borough's
+        # data is real, so a stub of +4.0% stopped being the benchmark the
+        # moment a real borough hit +4.3% (Barking, 2026-Q3 roll) and this
+        # test failed for the wrong reason - and under v5.2 the pool is
+        # NATIONAL, so a stub of 6.0 lost to Trafford's real +6.3% (July 2026)
+        # the same way. 9.0 and 12.0 outrun any plausible real trend anywhere
+        # in the sterling pool.
+        # Previously: subject is the fastest riser in the pool.
+        prev_set = cohort({subject: 9.0, 'Havering': 2.0})
         # Now: subject is still rising, but Havering rises faster.
-        cur_set = cohort({subject: 1.5, 'Havering': 9.0})
+        cur_set = cohort({subject: 1.5, 'Havering': 12.0})
 
         inv = app.PERSONAS['investor']
         cur = app.calc_score(subject, 'london', inv, boroughs_override=cur_set)
         prev = app.calc_score(subject, 'london', inv, boroughs_override=prev_set)
         why = app.build_why(
             cur, prev, 'london', inv, subject,
-            app.benchmarks(cur_set), app.benchmarks(prev_set),
+            app.benchmarks(cur_set, 'london'), app.benchmarks(prev_set, 'london'),
             app.growth_ranks(cur_set), app.growth_ranks(prev_set),
         )
         growth = next(d for d in why['drivers'] if d['factor'] == 'growth')

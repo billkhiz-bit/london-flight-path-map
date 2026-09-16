@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26, gaining road noise at v4.0, 2026-08-29; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v5.1 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v5.2 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **Air quality, road noise and flood risk are all SCORED, not just drawn.**
 > They are the fifth component, `environment` — air quality 0.65 / flood 0.35
@@ -219,7 +219,7 @@ Response shape (single):
   "sourceBreakdown": {
     "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
     "afford": "HM Land Registry UK House Price Index, July 2026 vintage, Open Government Licence v3.0. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of borough medians across ALL 94 boroughs in the sterling pool (GBP 158,435 to GBP 720,241), not against this city cohort. Affordability is therefore comparable BETWEEN cities... context.priceRankInCity carries the within-city standing that scaling used to imply.",
-    "growth": "HM Land Registry UK House Price Index, July 2026 vintage, 12-month price trend deflated by ONS CPIH (3.1% for July 2026) - REAL-terms growth since methodology v5.1, so a flat score of 5.0 means prices held their value against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct the figure scored. Cohort-relative: each tail is scaled against the real-terms fastest riser and steepest faller among the 33 areas of this city. A previous vintage exists, so ?compare=previous reports real movement.",
+    "growth": "HM Land Registry UK House Price Index, July 2026 vintage, 12-month price trend deflated by ONS CPIH (3.1% for July 2026) - REAL-terms growth since methodology v5.1, so a flat score of 5.0 means prices held their value against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct the figure scored. Methodology v5.2 scales each tail against the real-terms fastest riser and steepest faller across ALL 94 boroughs in the sterling pool, not this city cohort - a city-sized cohort put one borough per city on each rail every month by construction. Growth is therefore comparable BETWEEN cities; context.growthRankInCity carries the within-city standing. A previous vintage exists, so ?compare=previous reports real movement.",
     "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.",
     "env": "Air quality (0.45), Road noise (0.35), Flood risk (0.20). Weights are re-normalised over the inputs a borough actually has; a borough below the two-input floor omits the component entirely."
   }
@@ -254,8 +254,8 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 | Component | Description | Anchored to |
 |---|---|---|
 | **Quiet** | **Aircraft noise only.** Road noise is scored too, but in **Environment**, not here (v4.0, 2026-08-29) | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
-| **Affordability** | Sold price relative to cohort | HM Land Registry House Price Index (HPI) |
-| **Growth** | Annualised price trend | HM Land Registry House Price Index (HPI) |
+| **Affordability** | Average price, log-scaled against the national p5-p95 band of borough medians (v5.0) - comparable between cities | HM Land Registry House Price Index (HPI) |
+| **Growth** | Real-terms 12-month price trend (HPI deflated by ONS CPIH, v5.1), dual-anchored against the fastest riser and steepest faller across the whole currency pool (v5.2) - comparable between cities; `investor` persona only | HM Land Registry House Price Index (HPI); ONS CPIH (L55O) |
 | **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2023/24); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
 | **Environment** | Air quality (45%) + road noise (35%) + flood risk (20%). Scored since v3.9 (2026-08-26); road noise added at v4.0 (2026-08-29). Needs at least two of the three, so it is absent for New York and below the floor for Cardiff | DEFRA background pollution maps (PCM) against **WHO 2021** guidelines; DEFRA Round 4 **road** Lden, share of addresses over the **WHO 53 dB** guideline; Environment Agency Risk of Flooding from Rivers and Sea, share at Medium-or-High |
 
@@ -344,9 +344,13 @@ far larger, so the bands reach further than the airport really does.
 
 Absent liveability inputs are **not** estimated: their weight is redistributed
 across the measured ones, and `context.liveResolution` states how many were
-measured. Affordability and growth are scaled **within** each city's cohort, so
-those two components are not comparable between cities — compare
-`context.avgPriceGbp` directly instead.
+measured. Affordability (since v5.0) and growth (since v5.2) are anchored on
+the **whole currency pool** - the 94 sterling boroughs, or New York's five -
+so both are comparable between cities; the within-city standing each used to
+imply is published as `context.priceRankInCity` and `context.growthRankInCity`.
+(This paragraph said both were scaled within each city's cohort until
+2026-09-16, a year's worth of methodology after it stopped being true of
+affordability.)
 
 ### Environmental measurements (`/v1/environment`), as at 2026-08-08
 

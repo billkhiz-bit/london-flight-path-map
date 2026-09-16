@@ -1526,6 +1526,32 @@ OPERATIONS.md s3.9 is the runbook, and privacy.html s2a changes in the SAME
 deploy as the flip, not before. **The code is DEPLOYED (2026-09-15, same SAM
 deploy as v5.1): the table exists, the route answers, the flag is off.**
 
+**GROWTH IS ANCHORED ON THE CURRENCY POOL SINCE METHODOLOGY v5.2 (2026-09-16),
+not the city cohort.** `national_trend_bounds()` beside `national_price_bounds()`,
+`nationalTrendBounds()` beside `nationalPriceBounds()` on the site; the two
+API-only cities enter the site's pool through **`BACKEND_ONLY_TRENDS`**, written
+by `build_hpi_prices.py --write` in the same block as their prices. New
+`context.growthRankInCity` `{rank, of}`. **Why:** the city cohort put one borough
+per city on EACH RAIL every month by construction (22 of 94), so a 4-5 borough
+cohort's leader changing hands was a 10-point flip - the July roll did exactly
+that to Hartlepool (0.0 -> 10.0) and Newport (8.5 -> 0.0). **Measured, not
+argued:** `scripts/cost_growth_anchor.py` replays 24 months under four designs;
+the pool halves the churn (1.44 -> 0.76 mean month-on-month, 8.2% -> 0.2%
+moving 5+) and takes cross-city inversions from 651 of 4,371 pairs to 0.
+Smoothing the input was measured and REJECTED - the rails stay, and it would
+publish a trend that no longer equals HMLR's `Annual_Change`. `balanced` cannot
+move on it (growth weight 0.00); `investor` moved on 56 of 99, max 1.8. **A
+yardstick outside the borough's city is labelled with it** - the London
+`/v1/changes` names "Trafford (Greater Manchester)" as the fastest riser - and
+`benchmarks()` takes the city so it can assemble the pool with a previous
+vintage's slice standing in. **Two tests borrowed London's fastest riser as
+"the" benchmark and now construct their cohorts**: nationally that role belongs
+to a city with no previous vintage, so live data can no longer reach the branch
+(`feedback-borrowed-edge-cases-expire`). The published reproduction residual
+moved 0.0674 -> 0.0721; both documents say "under 0.08" - the openapi gate's
+regex needs `under 0.08.` followed by a full stop, so a parenthetical after the
+number must be its own sentence.
+
 **GROWTH IS SCORED ON THE REAL-TERMS TREND SINCE METHODOLOGY v5.1 (2026-09-15).**
 The nominal HPI 12-month change is deflated by ONS CPIH for the SAME month -
 `real_trend_pct()`, `CPIH_12M_PCT` (one entry PER VINTAGE KEY, holding the CURRENT
