@@ -6,18 +6,28 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-09-15):** ROADMAP -> Open decisions -> "What each open
-decision entails", corrected on 15 Sep against the code. Its closing
-paragraph says what is left (the chat 502 and the station arrays are
-DEPLOYED, verified from the origin 15 Sep): Bill's one branch-
-protection command, the prepared CloudFront badge behaviour (apply, verify two
-postcodes, THEN repoint index.html), the July HPI roll when HMLR publishes
-(`build_hpi_prices.py --check` prints NEWER HPI VINTAGE PUBLISHED; 404 on 15
-Sep - **and since v5.1 the roll must also add that month's CPIH to
-`CPIH_12M_PCT` and `SNAPSHOT_CPIH_PCT` in index.html; the gate reds without
-it**), and I17 option A when there is an afternoon for SES. Methodology v5.1
-(real-terms growth) landed AND DEPLOYED 15 Sep - CHANGELOG has the effect,
-the guards and the origin verification. Nothing is undeployed.
+**WHERE TO START (2026-09-16):** ROADMAP -> Open decisions -> "What each open
+decision entails". **The July HPI roll is DONE IN THE TREE (16 Sep, the
+morning HMLR published) - check `git log` and `check_deploy_drift.sh` for
+whether it has been DEPLOYED**; the classifier refused the SAM deploy from
+Claude's session, so the deploy is Bill's one command,
+`sh scripts/deploy_hpi_roll.sh` (backend -> freshness gate -> web -> area ->
+meta -> origin checks). CHANGELOG 2026-09-16 has the effect, the decision it
+carried (quarter key held at 2026-Q3, label and deflator moved) and the two
+things it shipped alongside. The roll surfaced ROADMAP item 9: `investor` swings hard in
+4-5 borough cohorts on ordinary monthly HPI noise (Hartlepool growth 0.0 ->
+10.0) - an observation awaiting a measurement, not a defect. What is left:
+Bill's one branch-protection command, the prepared CloudFront badge behaviour
+(apply, verify two postcodes, THEN repoint index.html), the nine Dependabot
+merges, and I17 option A when there is an afternoon for SES. **Rolling a month
+inside a quarter, for next time:** `--check --all --vintage <new>` to size it,
+`--write --city X` for all 12 (it needs `--city`), `SNAPSHOT_VINTAGE_LABEL`,
+`CPIH_12M_PCT[current key]`, `SNAPSHOT_CPIH_PCT` in index.html, `DEFAULT_VINTAGE`
+in the script, the s6 worked example (`check_worked_example.py` names every
+figure that moved), `build_area_pages.py --write`, then the data-pinned tests -
+six moved this time and one of them held a rounding coincidence (Tower Hamlets
+-17.0 real in both vintages). The quarter KEY moves only when the month leaves
+the quarter (the three-step roll in memory/project-trends-feature.md).
 
 > **This banner said "BLOCKED ON ONE CONSOLE ACTION as of 2026-09-04" until
 > 2026-09-09** - naming a `FlightMapDeployPolicy` that was restored *that same

@@ -1009,7 +1009,7 @@ first, every time.
 
 | Item | Safe when | Do it like this | Verify | If it goes wrong |
 |---|---|---|---|---|
-| **UK HPI July 2026 roll** (prices + trend, both holders) | The moment `Average-prices-2026-07.csv` answers 200 - expected **~16 Sep** (June answered on 19 Aug). Until then `build_hpi_prices.py --check --all` is green on June and there is nothing to roll. | Exactly this morning's sequence, `HANDOVER.md` s0 steps 3-6: `--check --all` to size it, `--write` (both holders, `BACKEND_ONLY_PRICES` block included), `build_area_pages.py --write`, preflight (`area pages match the live API` reds until the backend deploys - correct), SAM first, then `borough-extra.json`, `area/`, `sitemap.xml`. A price roll also moves `afford` for EVERY borough (v5.0 pools nationally), so expect the whole table to move, not seven pages. | Drift 133/133, freshness 99/99, `site == /v1/score`, and re-read METHODOLOGY s6's Wandsworth example - `check_worked_example.py` goes red if the baked inputs moved. | Frontend-first puts the site ahead of the API on every borough. Redeploy the backend; nothing is destroyed. |
+| ~~**UK HPI July 2026 roll** (prices + trend, both holders)~~ **DONE 2026-09-16, the morning HMLR published** | Rolled as this row said, with one decision it did not name (item 6 below): the quarter KEY stayed `2026-Q3`, the LABEL and the deflator moved (CPIH 3.1). 177 of 188 fields moved; `balanced` moved 9 of 99 scores by 0.1, `investor` 78 of 99. Two things shipped alongside - the twelve literal price-source lines became one derived line, and `/v1/changes`' market summary stopped inferring score direction from trend direction (it was wrong for the first time this month). See CHANGELOG 2026-09-16. *Original row:* The moment `Average-prices-2026-07.csv` answers 200 - expected **~16 Sep** (June answered on 19 Aug). | Exactly this morning's sequence, `HANDOVER.md` s0 steps 3-6: `--check --all` to size it, `--write` (both holders, `BACKEND_ONLY_PRICES` block included), `build_area_pages.py --write`, preflight (`area pages match the live API` reds until the backend deploys - correct), SAM first, then `borough-extra.json`, `area/`, `sitemap.xml`. A price roll also moves `afford` for EVERY borough (v5.0 pools nationally), so expect the whole table to move, not seven pages. | Drift 133/133, freshness 99/99, `site == /v1/score`, and re-read METHODOLOGY s6's Wandsworth example - `check_worked_example.py` goes red if the baked inputs moved. | Frontend-first puts the site ahead of the API on every borough. Redeploy the backend; nothing is destroyed. |
 | **`/audit`** | Due **~14 Sep** (7 days after 7 Sep). Not before a roll lands the same day - an audit against a tree mid-change reports the change as findings. | `/audit`, then triage into `AUDIT_REPORT.md` as on 7 Sep. | Every finding has a measured number or a repro before it is called a finding. | Nothing deploys from an audit. |
 | **ONS crime, year ending June 2026** | When ONS publishes Table C4 for YE June (the YE March release landed in July; expect **~late October**). `refresh_crime_from_ons.py --check --all` fetches and caches the workbook, so it reds by itself if the URL or sheet changes. | `--check --all` first (per-city floor), then `--write`, then area pages, then backend-first deploy. | Same as HPI. Nottingham is compared since 7 Sep; `NO_ONS_COMPARISON` must stay empty. | A workbook restyle can make the parser read zeros - the per-city floor catches an empty compare; a WRONG column does not, so eyeball three boroughs against the sheet. |
 | **NSPL November 2026 edition** | When Geoportal lists it (quarterly: Feb/May/Aug/Nov, expect **mid-late Nov**). Diff FIRST: if `REMOVED` is non-zero the upsert is no longer safe, because nothing deletes a dropped postcode from the table. | `HANDOVER.md` s0 steps 1-7, and step 7 is the one the August roll almost missed: **eight scripts read `nspl.csv`**, and the per-postcode DEFRA tiers and the client quiet datasets all re-run. With the pool fixed the whole roll is ~2 h detached. The column suffix will be `lad27cd` in February - every reader resolves by prefix now, and the bands builder hard-fails if none matches. | `__META__` re-stamped; `borough bands == sources` green; B13 0FF-style spot check that a NEW postcode carries NO2 and road; datasets deployed before anyone looks at the site. | A roll that stops after the table leaves the shares and the postcode tiers on the old edition with only an advisory saying so - this is exactly what happened on 9-10 Sep. Finish the list. |
@@ -1178,7 +1178,12 @@ against ONS; parity compares investor). See CHANGELOG 2026-09-15. **DEPLOYED
 the same evening, verified from the origin (drift 133/133, score sanity 28,
 area 99/99, site == API, Cardiff investor 4.1 live).**
 
-**6. July HPI roll.** Blocked on HMLR publishing `Average-prices-2026-07.csv`
+**6. July HPI roll. DONE 2026-09-16, decision (a) taken.** The key stayed
+`2026-Q3`, `SNAPSHOT_VINTAGE_LABEL` moved to 'July 2026', `CPIH_12M_PCT['2026-Q3']`
+moved 2.8 -> 3.1 with it, and the Lambda's vintage comment now records the rule
+so the next in-quarter roll does not re-derive it. The three-step SNAPSHOT roll
+happens at the first Q4 release (October HPI, ~mid-December). What the roll
+surfaced is item 9 below. *Original entry follows.* Blocked on HMLR publishing `Average-prices-2026-07.csv`
 (~16 Sep; 404 on 14 Sep). `build_hpi_prices.py --check` now prints **NEWER HPI
 VINTAGE PUBLISHED** the moment it exists (audit M26). Then, per HANDOVER s0
 steps 3-6: `--check --all`, `--write --all`, bump `DEFAULT_VINTAGE` and
@@ -1235,6 +1240,25 @@ Line)"). `test_no_place_is_listed_twice_under_a_qualifier` reads the SHIPPED
 arrays like its I19 sibling, red on the old ones with all 19 named. Observed
 and left: "Queen's Park" and "Queens Park (London)" differ by an
 apostrophe and stay two entries.
+
+**9. `investor` is volatile month to month in the small cohorts - OBSERVED
+2026-09-16, not yet a decision.** The July roll moved 78 of 99 `investor` scores
+(mean -0.24) while `balanced` moved 9 by 0.1. Growth scales each tail against
+the CITY cohort's real-terms extremes, and a 4-5 borough cohort re-orders on
+ordinary HPI month-to-month noise: Hartlepool's nominal trend went +0.8% ->
++5.5% and its growth 0.0 -> 10.0 (investor 5.1 -> 8.5); Newport +5.0% -> +2.0%
+took growth 8.5 -> 0.0 (investor 7.5 -> 4.2); Bradford 7.4 -> 0.0; Gedling
+10.0 -> 2.7. London's 33-borough cohort barely moved. Nothing is miscomputed -
+these ARE the published trends - but a component that can swing 10 points on
+one monthly release, in one persona, is a property a B2B buyer would want
+named. Options, none costed: (a) anchor growth NATIONALLY as v5.0 did for
+affordability (pool the 94 real trends; the same argument - a narrow cohort
+manufactures spread); (b) smooth the input (HPI's own 3-month or annual
+average, which HMLR publishes); (c) accept and document in METHODOLOGY s4.3.
+Measure first: the per-borough month-on-month growth deltas over June -> July
+are in `git diff 6439c65 -- backend/lambdas/score/app.py`. Recommendation
+pending the measurement; (a) is the one this repo has already accepted the
+reasoning for.
 
 **Where this stands after 15 Sep:** 7 and 8 are **DEPLOYED 2026-09-15 and verified from the origin**: SAM modified `ChatFunction` alone; `index.html` uploaded `no-cache` and invalidated (completed); live hash == source; 1,390 stations served with 0 duplicates; `check_deploy_drift.sh` 133 of 133; live `/v1/chat` answers 400 with the score API's wording for a bad postcode and 200 for SW11 1AA.
 4 needs Bill's one protection

@@ -1269,9 +1269,9 @@ Wandsworth's scored inputs, as `CITIES['london']['boroughs']['Wandsworth']`
 holds them:
 
 ```
-avgPrice:             680105      # HM Land Registry UK HPI, 2026-06 vintage
-trend:                -5.2        # annualised %, same source (nominal)
-trendReal:            -7.8        # v5.1: after CPIH of 2.8% for June 2026 (ONS L55O)
+avgPrice:             686076      # HM Land Registry UK HPI, 2026-07 vintage
+trend:                -5.5        # annualised %, same source (nominal)
+trendReal:            -8.3        # v5.1: after CPIH of 3.1% for July 2026 (ONS L55O)
 p8:                   0.49        # DfE Key Stage 4 Progress 8, 2023/24 Revised
 crimeRate:            76.4        # ONS Table C4, offences per 1,000
 transport:            'good'      # NaPTAN, share of postcodes within 800 m
@@ -1297,38 +1297,46 @@ carries `measuredAtLocation: true` here.
 > That was the mechanism behind two of the three corrections. **Check
 > `quietResolution` before hand-deriving quiet for any postcode.**
 
-**Affordability = 0.4.** Log scale against the NATIONAL price band (§4.2) since
+**Affordability = 0.3.** Log scale against the NATIONAL price band (§4.2) since
 methodology v5.0, not the London cohort: the 5th and 95th percentiles of all 94
-borough medians in the sterling pool, `p5 = 158,231`, `p95 = 717,369`:
+borough medians in the sterling pool, `p5 = 158,435`, `p95 = 720,241`:
 
 ```
-afford = ln(717,369 / 680,105) / ln(717,369 / 158,231) x 10
-       = 0.05334 / 1.51154 x 10
-       = 0.3529...
-       -> 0.4
+afford = ln(720,241 / 686,076) / ln(720,241 / 158,435) x 10
+       = 0.04860 / 1.51424 x 10
+       = 0.3209...
+       -> 0.3
 ```
 
 This is the figure that moves most at v5.0, and the direction is the point.
-Wandsworth's GBP 680,105 was mid-table among 33 London boroughs and scored
-**6.5**; it sits just under the national 95th percentile and scores **0.4**.
-Nothing about Wandsworth changed - it is now priced against the country rather
-than against its neighbours. Its within-city standing is published separately as
-`context.priceRankInCity`, which for Wandsworth is 27 of 33.
+Wandsworth's GBP 686,076 is mid-table among 33 London boroughs and under the
+old within-city scale scored **6.5**; it sits just under the national 95th
+percentile and scores **0.3**. Nothing about Wandsworth changed - it is now
+priced against the country rather than against its neighbours. Its within-city
+standing is published separately as `context.priceRankInCity`, which for
+Wandsworth is 27 of 33.
 
-**Growth = 3.6.** Real-terms trend first (§4.3): `((1 − 0.052) / (1 + 0.028) − 1) × 100 = −7.78 → −7.8`.
-Then the dual anchor against the cohort's REAL-terms extremes, `min = -27.4`
-(Westminster), `max = 1.5` (Barking and Dagenham); Wandsworth is falling, so
+(At the June 2026 vintage this read 0.4 from GBP 680,105 against a band of
+158,231 to 717,369. Both the price and the band moved at the July roll, which
+is what a national anchor means: every borough's affordability depends on every
+other borough's price, so a vintage roll moves the whole table, not the seven
+boroughs whose own price moved most.)
+
+**Growth = 3.2.** Real-terms trend first (§4.3): `((1 − 0.055) / (1 + 0.031) − 1) × 100 = −8.34 → −8.3`.
+Then the dual anchor against the cohort's REAL-terms extremes, `min = -23.1`
+(Westminster), `max = 2.1` (Barking and Dagenham); Wandsworth is falling, so
 it is scaled against the steepest fall:
 
 ```
-growth = 5 - (-7.8 / -27.4) x 5
-       = 5 - 1.423
-       = 3.577
-       -> 3.6
+growth = 5 - (-8.3 / -23.1) x 5
+       = 5 - 1.797
+       = 3.203
+       -> 3.2
 ```
 
-(Under v5.0 this was 4.0, from the nominal −5.2% against a nominal cohort of
-−25.4 to +4.3. The 0.4 the borough loses is inflation.)
+(Nominal, this would be 3.7 from −5.5% against a nominal cohort of −20.7 to
++5.3. The 0.5 the borough loses is inflation. At the June vintage the real
+figure was 3.6, from −7.8% against −27.4 to +1.5.)
 
 Growth carries **weight 0.00** in every persona but `investor` (§5.1), so it
 does not move this score at all. It is still published, because a reader
@@ -1375,15 +1383,17 @@ Balanced weights are `quiet 0.32 / afford 0.27 / growth 0.00 / live 0.27 /
 env 0.14`:
 
 ```
-score = 6.4 x 0.32 + 0.4 x 0.27 + 4.0 x 0.00 + 7.8 x 0.27 + 5.6 x 0.14
-      = 2.048 + 0.108 + 0.000 + 2.106 + 0.784
-      = 5.046
+score = 6.4 x 0.32 + 0.3 x 0.27 + 3.2 x 0.00 + 7.8 x 0.27 + 5.6 x 0.14
+      = 2.048 + 0.081 + 0.000 + 2.106 + 0.784
+      = 5.019
       -> 5.0
 ```
 
-The whole of the 1.7-point fall from v4.0's 6.7 is affordability, 6.5 -> 0.4.
-No other component moved, and no input changed: Wandsworth is now priced against
-the country instead of against the other 32 London boroughs.
+The whole of the 1.7-point fall from v4.0's 6.7 is affordability, 6.5 -> 0.3.
+No other component moved: Wandsworth is now priced against the country instead
+of against the other 32 London boroughs. (The July 2026 roll moved affordability
+0.4 -> 0.3 and growth 3.6 -> 3.2; the total held at 5.0 because growth carries
+no weight here and 0.027 of affordability did not cross a rounding boundary.)
 
 ### Step 5, Verification against the live API
 
@@ -1391,20 +1401,23 @@ the country instead of against the other 32 London boroughs.
 GET /v1/score?postcode=SW11+1AA
 -> {
      "score": 5.0,
-     "components": { "quiet": 6.4, "afford": 0.4, "growth": 3.6,
+     "components": { "quiet": 6.4, "afford": 0.3, "growth": 3.2,
                      "live": 7.8, "env": 5.6 },
      "weights":    { "quiet": 0.32, "afford": 0.27, "growth": 0.00,
                      "live": 0.27, "env": 0.14 },
      "context": {
-       "avgPriceGbp": 680105,
-       "priceTrendPct": -5.2,
+       "avgPriceGbp": 686076,
+       "priceTrendPct": -5.5,
+       "priceTrendRealPct": -8.3,
+       "inflationPct": 3.1,
+       "growthBasis": "real",
        "priceRankInCity": { "rank": 27, "of": 33 },
        "noiseImpactBand": "moderate",
        "quietResolution": "raster",
        "liveResolution": "measured",
        "environmentResolution": "measured"
      },
-     "methodologyVersion": "5.0"
+     "methodologyVersion": "5.1"
    }
 ```
 
@@ -1441,16 +1454,17 @@ after, so the honest contrast is three unrounded inputs against five.)
 
 ### Comparison: same postcode, every persona
 
-All eight taken from the live API on 2026-09-07, and each reproduces from the
-components above under its own weights:
+All eight re-derived from the engine's own rounding at the July 2026 roll
+(2026-09-16), and each reproduces from the components above under its own
+weights:
 
 | Persona | q / a / g / l / e | Score | Why it differs |
 |---|---|---|---|
 | `balanced` | 0.32 / 0.27 / 0.00 / 0.27 / 0.14 | **5.0** | Default |
-| `commuter` | 0.21 / 0.30 / 0.00 / 0.35 / 0.14 | **5.0** | Liveability at 0.35 offsets the 0.30 on a 0.4 affordability |
+| `commuter` | 0.21 / 0.30 / 0.00 / 0.35 / 0.14 | **4.9** | Liveability at 0.35 offsets the 0.30 on a 0.3 affordability |
 | `family` | 0.18 / 0.18 / 0.00 / 0.46 / 0.18 | **5.8** | Liveability at 0.46, and excellent healthcare |
-| `firsttime` | 0.16 / 0.43 / 0.00 / 0.27 / 0.14 | **4.1** | Affordability at 0.43, and 0.4 is near the national floor |
-| `investor` | 0.09 / 0.26 / 0.34 / 0.17 / 0.14 | **4.0** | Lowest: the only persona weighting growth, and the real trend is -7.8% |
+| `firsttime` | 0.16 / 0.43 / 0.00 / 0.27 / 0.14 | **4.0** | Affordability at 0.43, and 0.3 is near the national floor |
+| `investor` | 0.09 / 0.26 / 0.34 / 0.17 / 0.14 | **3.9** | Lowest: the only persona weighting growth, and the real trend is -8.3% |
 | `laterlife` | 0.36 / 0.14 / 0.00 / 0.32 / 0.18 | **5.9** | Highest: quiet-leaning and the lightest affordability weight |
 | `quietlife` | 0.48 / 0.19 / 0.00 / 0.19 / 0.14 | **5.4** | Nearly half the weight on a 6.4 |
 | `renter` | 0.26 / 0.30 / 0.00 / 0.30 / 0.14 | **4.9** | Sits between firsttime and balanced |
@@ -1881,7 +1895,7 @@ York keeps its curated FEMA-derived flood bands for the same reason.
 
 ### Data refresh policy
 
-The API uses an **embedded snapshot** of structural inputs (price band averages, crime rates, school quality categorisations) for the supported boroughs. Price and trend data: **2026-Q3** (June 2026 UK HPI, published 19 August 2026, applied 2026-08-25 - the vintage-currency audit found the June release five days old and 179 of the twelve cities' price/trend fields moved; the roll was gated by `build_hpi_prices.py --check --all` going to 0 disagreements across all 12 cities and both holders). Previous quarter for `?compare=previous`: 2026-Q2 (May). School, crime, transport, healthcare classifications: 2026-Q1, next due at the annual refresh. Refresh policy:
+The API uses an **embedded snapshot** of structural inputs (price band averages, crime rates, school quality categorisations) for the supported boroughs. Price and trend data: **2026-Q3** (July 2026 UK HPI, published 16 September 2026, applied the same day; 177 of the twelve cities' price/trend fields moved, gated by `build_hpi_prices.py --check --all` going to 0 disagreements across all 12 cities and both holders. The quarter key was first filled by the June 2026 release on 2026-08-25 and refreshed in place by July: HMLR publishes monthly, the comparison is quarterly, so a roll inside a quarter moves the numbers and the month label under the same key). Previous quarter for `?compare=previous`: 2026-Q2 (May). School, crime, transport, healthcare classifications: 2026-Q1, next due at the annual refresh. Refresh policy:
 
 - **Annual full refresh** of school, crime, transport, healthcare classifications, aligned with ONS data publication
 - **Quarterly partial refresh** of price and trend data when material movement (≥3% change in cohort min/max) is observed
@@ -2202,6 +2216,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-09-16 (no version change)**, **monthly vintage roll to July 2026 HPI, all twelve cities - the first roll inside a quarter.** `avgPrice`/`trend` moved to HPI 2026-07 in BOTH holders (177 of 188 fields; 83 of 99 prices), the deflator to ONS CPIH for July (3.1%, from June's 2.8%), and every area page was rebuilt. **The quarter key did not move.** `SNAPSHOT_VINTAGE` stays `2026-Q3` and the previous snapshot stays May, so `?compare=previous` and `/v1/changes` now explain May-to-July movement under the same quarterly framing; `SNAPSHOT_VINTAGE_LABEL` alone moved to "July 2026". Effects: **`balanced` barely moves** - 9 of 99 scores by 0.1 (48 affordability components moved, the largest Redbridge by 0.3 on a 3.0% price fall; the national band moved 158,231-717,369 -> 158,435-720,241) - while **`investor` moves on 78 of 99**, mean -0.24, because growth reads the month's 12-month trend and the July release re-ordered several small cohorts: Hartlepool +0.8% -> +5.5% nominal took Teesside's growth top spot (0.0 -> 10.0, investor 5.1 -> 8.5), Newport +5.0% -> +2.0% lost Cardiff's (8.5 -> 0.0). In real terms 29 of the 65 nominally rising boroughs are falling. The worked example (§6) holds at 5.0 with affordability 0.4 -> 0.3 and growth 3.6 -> 3.2. Two things shipped with it. (1) The twelve hand-written `Prices: HM Land Registry ... vintage` source lines are one DERIVED line, the shape v5.1 gave the growth line, and `build_hpi_prices.py --check` now asserts what `build_sources()` EMITS for every city rather than counting literals. (2) `marketContext.summary` on `/v1/changes` read the direction of SCORES off the direction of the TREND ("Most scores fell because the market fell"); July is the first pair where they disagree - mean trend -3.35% -> -3.42% while 14 of 33 balanced scores rose - so the closing sentence is now counted from the published tally and names the mechanism (affordability against the national band; balanced weights trend at 0.00). No weight, threshold or formula changed.
 - **2026-09-15 (v5.1)**, **`growth` is scored on the real-terms price trend.** (1) *Defect:* `growth` read the nominal HPI 12-month change, so a borough whose prices rose 2.2% while CPIH ran at 2.8% scored above the 5.0 "flat" anchor and the panel said "rising", when its homes had lost value. Costed before deciding (`scripts/cost_real_growth.py`, 2026-09-13): at CPIH 2.8% for June 2026, **25 of the 77 boroughs the product called rising were falling in real terms**. (2) *Why nothing caught it:* nothing was wrong with the arithmetic - it was the definition; every gate compares the engine to itself or to the HPI source, both of which are nominal. (3) *Change:* `trendReal = ((1 + trend/100) / (1 + CPIH/100) − 1) × 100`, rounded once to 1dp and used as the growth input, with the cohort extremes taken over the same quantity. `context.priceTrendPct` is unchanged (nominal); `context.priceTrendRealPct`, `context.inflationPct` and `context.growthBasis` are new; the comparison block gains `previousTrendRealPct` and a step naming the deflation. The deflator is one entry per vintage (`CPIH_12M_PCT`: June 2026 2.8%, May 2026 3.0%) so `?compare=previous` deflates each vintage by its own month. **New York stays nominal** - no US series is held - and says so. The growth provenance line is now DERIVED per city, replacing thirteen hand-written strings of which twelve carried a literal "June 2026" that the July roll would have left stale. (4) *Effect, measured across 99 boroughs:* growth moves a mean −1.21, worst −7.0 (Cardiff, +2.2% nominal to −0.6% real against a cohort whose real fastest riser is barely positive); **78 of 99 `investor` scores move**, mean −0.53, largest Cardiff 6.8 → 4.1, Rotherham 7.4 → 5.0, Hartlepool 7.0 → 5.1. **No other persona moves** - growth is weighted for `investor` alone - and the worked example (§6) goes 4.0 → 3.6 on growth with every other component unchanged. (5) *Guard:* `scripts/check_worked_example.py` now re-derives growth (it never had) and checks `trendReal`; `build_hpi_prices.py --check` compares the current vintage's CPIH entry against the ONS series and fails on a vintage the table does not know; `tests/borough-score-parity.mjs` compares the `investor` persona as well as `balanced`, because balanced carries growth at 0.00 and could not see a site/Lambda disagreement on it. (6) *Caveat on comparisons:* `previousScore` is recomputed under v5.1 with the previous month's CPIH, so `scoreChange` isolates market movement as before. (7) *Notice:* measured on the day - the signups register holds no third-party key, so the 14-day notice is satisfied by this entry as the record, as for v4.0 and v5.0. It becomes binding the moment a first customer holds a key.
 - **2026-08-30 (data correction, no version bump)**, **The EA flood mosaic was mis-georeferenced in 10 of 11 cities.** No formula changed, so the methodology version does not move; the INPUT was wrong and the published numbers with it. (1) *Defect:* `scripts/fetch_ea_flood_risk.py` clipped edge tiles to the city bounding box but requested **every tile at 2000x2000 px** whatever ground it covered, then mosaicked at a uniform 10 m/px. A 5 km-wide edge tile was therefore rendered at 2.5 m/px and pasted as if 10 m/px - **stretched up to 5x**, dragging real flood polygons kilometres out of position. **London was the worst affected, not a footnote**: 6 of its 12 tiles clipped, 5.00x. Only Nottingham's 40x40 km bbox is an exact multiple of the 20 km tile, which is why it alone was correct. Flood has scored since v3.9 (2026-08-26) and banded the map since 2026-08-11, so live scores, the map and the 99 baked area pages all carried it. (2) *Fix:* `tile_px()` requests each tile at its real extent, so every tile is genuinely 10 m/px and the mosaic's existing assumption becomes true; the city bbox is snapped to 1 km, so the division is always exact. Verified by simulating the tile grid **before any fetch**: all 11 cities tile their mosaic with zero holes and zero overlaps. The tile cache key had to gain the extent too - tiles were named by origin alone and `fetch_tile` skips on existence, so the stale renders would have been served to every later run. (3) *Two further defects in the same file, both absence-as-measurement:* Bristol's edge tile was cached **all-zero** from before the blank-render guard existed - 2000x2000 of code 0, "surveyed, no flood risk", over 220 km², exactly what that guard's own comment predicted would outlive the outage; and the mosaic initialised to `np.zeros`, where **0 is a real reading** meaning no risk, now `255` (Unavailable). The second was unreachable while a failed tile aborted the city, and became load-bearing the moment a partial mosaic was legal. (4) *A city is no longer abandoned for one bad tile:* Bristol and Teesside are each held by one near-all-sea tile the service renders blank - **verified at 10, 5.5 and 5 m/px rather than assumed**. Bristol's lies outside all four boroughs; Teesside's clips one corner of Redcar and Cleveland. (5) *Effect:* **37 of 81 boroughs moved and 13 changed band**, none lost. Sefton `floodMediumOrHighPct` **31.39 -> 0.27**, `high -> low`; South Tyneside 10.94 -> 0.11; Doncaster 24.38 -> 6.39. On the `environment` component: 27 of 81 moved by 0.05 or more, mean **+0.154**, largest rise **+1.90** (Sefton 5.40 -> 7.30 and South Tyneside 5.20 -> 7.10). **The correction runs in both directions** - Rochdale, Oldham and Bolton each fall 0.10, their real risk having been understated. At env's 0.14 balanced weight the mean headline effect is about **0.02** and the worst about **0.27**, so this is below §7's 0.5 material-change threshold on average and above it for two boroughs. **Teesside gained flood for the first time**, taking coverage from 81 to **86 of 91** on the site and the `partial` tier to empty. (6) *The gate, which is the durable half:* `build_borough_bands.py --check` could never see this - it re-derives from the same mosaic, so the two things it compares are the file and itself, and it reported agreement throughout. `scripts/check_flood_georef.py` asks the **Environment Agency's own GetFeatureInfo** what `risk_band` it publishes at a British National Grid coordinate and compares that to our raster. It asserts MEDIUM-OR-HIGH - the scored quantity, not the five-band code, because a 50 m polygon edge is well inside a 10 m pixel's tolerance - in **both directions**, since "where we say flood, the service agrees" passes a mosaic that has lost its polygons entirely. Blocking in preflight as a `net_check`. (7) *The gate's first version could not fail, and that is the lesson:* it passed the known-bad London mosaic 9 of 9. The obvious trap was anticipated and beaten - 93% of a mosaic is `none`, so samples are drawn from eroded class interiors - but the real one was not: measured against the pre-fix file, **the six interior tile blocks were byte-identical** and only the top row and right column had moved, so half the samples proved nothing. `spread_samples()` draws one sample per grid cell, **periphery first**, because a tiling error accumulates at the edges by construction; re-proven red at 20-60% across cities. A `MIN_COMPARED` floor was added after parallelising made the service throttle one class down to 3 of 6 reached - **a class that reached the service twice has not been tested, and must report INCONCLUSIVE rather than `ok`.** *When a defect is confined to a subset of a structure, a gate that samples the structure uniformly is diluted by the correct part.*
 - **2026-08-29 (v4.0)**, **Road noise becomes the third scored `environment` input.** (1) *Defect:* road noise had been derived for every covered city since 2026-08-11, drawn as a map fill layer and reported by `/v1/environment`, and **nothing scored it** — the last input still measured-but-display-only, in a component whose other two had been wired in three days earlier. (2) *Fix:* `env` becomes air quality 0.45 / road noise 0.35 / flood 0.20, scoring `roadNoiseAboveWhoPct` on a ramp from 0% of a borough's postcodes over WHO 2018's 53 dB Lden road-traffic guideline (10) to 100% over it (0). Both ends are the natural limits of a share and the threshold defining it is WHO's. The top-level persona weights are **unchanged** — this re-composes the component, not the split. (3) *Field choice, measured:* `roadNoiseLdenMedian` looks the plottable one and is not — 41 distinct values against the share's 69, over an interquartile range of 1.7 dB, because a borough median of a 10 m raster averages the quiet streets into the arterials; they correlate at 0.931. Ramping the median 53→63 dB clamps 19 of 73 boroughs to a perfect 10. *"Continuous" was never the criterion; discrimination was.* (4) *Ramp choice, measured:* zeroing at the `high` band cut of 66.7% — mirroring what flood does with its own cut — clamps 11 of 73 to 0, because flood's distribution is crushed toward zero (median 1.05%) while road's median is 55.5%, the opposite shape. (5) *Floor raised from one input to two,* on a measurement: adding road noise lowers every borough that has road data and leaves untouched every borough that does not, so a borough missing an input rises by standing still. At a floor of one, the then-13 single-input boroughs would have moved from a median rank of 41 to **9 of 86** and Teesside would have held the top four places on one input of three. (6) *`env_single_input()` could not be the mitigation* — it is published as `environmentSingleInput` and read by **nothing**, the only other reference in the tree being a unit test asserting it is `false`; its docstring claimed it existed "so ranking surfaces can exclude them" and no ranking surface did. Same shape as `lineStatusAvailable`, 2026-08-27: **a field only its producer reads is not a fix.** It is now literal to its name, having previously been `0 < len(scores) < len(_ENV_FIELDS)`, which at three declared fields would report `true` for a borough with two. (7) *A recorded constraint that was not one:* Leicester and Teesside carried no road or flood band, and this document, `CLAUDE.md` and audit finding I6 all recorded that as a property of the data. Both fetch scripts are per-city against **England-wide** coverages, both cities are in England, both have boundary files, and neither was in `NO_ROAD_COVERAGE`/`NO_FLOOD_COVERAGE` — the rasters had simply never been fetched. Three of four landed; Teesside's flood is still outstanding on one near-all-sea tile that renders blank, which the C11 guard correctly refuses to cache. (8) *Effect:* median environment 8.00 → 6.65 over the 86 boroughs scored under both versions, mean −1.16, largest fall −2.10 (Darlington), largest rise **+0.50** (Sefton), 81 fell / 4 rose / 1 unchanged. Spread 2.9–8.2 across 90 published boroughs = **0.74 points** of total-score range at 0.14, above §7's 0.5 material-change threshold, so the 14-day notice provision applies; no third-party integrator holds a key, so this entry is the record. Cardiff's four boroughs are the only ones to *lose* the component, at 1 of 3 inputs. (9) *Coverage:* 85 `measured`, 5 `partial` (Teesside), 9 `unavailable` (NYC 5, Cardiff 4). (10) *Tests:* the three ramps and the floor gained their first direct unit tests (`EnvironmentComponentTests`, 18 cases) — v3.9 shipped `aq_to_score`, `flood_to_score`, `env_weights_for`, `env_component_scores`, `env_resolution` and `env_single_input` with no unit test between them.

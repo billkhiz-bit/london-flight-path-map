@@ -89,12 +89,25 @@ class PreviousVintageDeflationTests(unittest.TestCase):
         cpih_prev = app.CPIH_12M_PCT[app.PREVIOUS_VINTAGE]
         cpih_now = app.CPIH_12M_PCT[app.SNAPSHOT_VINTAGE]
         self.assertNotEqual(cpih_prev, cpih_now, 'the test needs two different months to mean anything')
+        coincidences = 0
         for name, bd in prev.items():
             with self.subTest(borough=name):
                 self.assertEqual(bd['trendReal'], app.real_trend_pct(bd['trend'], cpih_prev))
                 # And NOT the current vintage's figure left over from the overlay.
-                if app.real_trend_pct(bd['trend'], cpih_now) != bd['trendReal']:
-                    self.assertNotEqual(bd['trendReal'], app.CITIES['london']['boroughs'][name]['trendReal'])
+                # Guarded on the CURRENT record's figure, not on a re-deflation
+                # of the previous trend: the July 2026 roll put Tower Hamlets at
+                # -14.4% under CPIH 3.1 and its May figure was -14.5% under 3.0,
+                # both -17.0 real - two different vintages landing on one value.
+                # The equality assertion above already proves the previous row
+                # is right; this one can only add something when the two differ.
+                current = app.CITIES['london']['boroughs'][name]['trendReal']
+                if app.real_trend_pct(bd['trend'], cpih_prev) != current:
+                    self.assertNotEqual(bd['trendReal'], current)
+                else:
+                    coincidences += 1
+        # A leftover overlay would make EVERY borough coincide; a genuine
+        # coincidence is one or two. Bound it so the branch cannot go blind.
+        self.assertLess(coincidences, len(prev) // 4, f'{coincidences} of {len(prev)} previous rows equal the current')
 
     def test_a_city_without_history_still_declines_to_compare(self):
         self.assertIsNone(app.previous_dataset('manchester'))
@@ -105,8 +118,9 @@ class ResponseShapeTests(unittest.TestCase):
         r = app.calc_score('Wandsworth', 'london', app.PERSONAS['investor'])
         ctx = r['context']
         self.assertEqual(ctx['growthBasis'], 'real')
-        self.assertEqual(ctx['priceTrendPct'], -5.2)
-        self.assertEqual(ctx['priceTrendRealPct'], -7.8)
+        # July 2026 vintage: -5.5% nominal under CPIH 3.1 (was -5.2 / -7.8 for June).
+        self.assertEqual(ctx['priceTrendPct'], -5.5)
+        self.assertEqual(ctx['priceTrendRealPct'], -8.3)
         self.assertEqual(ctx['inflationPct'], app.CPIH_12M_PCT[app.SNAPSHOT_VINTAGE])
         # Reproducible from the response: the cohort extremes over the same quantity.
         trends = [app.scored_trend(b) for b in app.CITIES['london']['boroughs'].values()]

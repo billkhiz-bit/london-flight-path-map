@@ -100,7 +100,7 @@ each has a `--check` that can go red:
 
 | Input | Script | Status |
 |---|---|---|
-| avgPrice / trend | `build_hpi_prices.py --check --all` | HPI **2026-06** (rolled 2026-08-25; this said 2026-05 until 2026-09-11), **blocking preflight stage**, all agree |
+| avgPrice / trend | `build_hpi_prices.py --check --all` | HPI **2026-07** (rolled 2026-09-16, the day HMLR published; June was rolled 2026-08-25 and this row said 2026-05 until 2026-09-11), **blocking preflight stage**, all agree. **A monthly roll inside a quarter keeps `SNAPSHOT_VINTAGE` and moves `SNAPSHOT_VINTAGE_LABEL` + `CPIH_12M_PCT[current]` + `SNAPSHOT_CPIH_PCT` (index.html)**; `--check` reds on any of the three left behind. **Deploy with `sh scripts/deploy_hpi_roll.sh`** - backend first, then the freshness gate, then web/area/meta, then origin verification; written 2026-09-16 when the classifier refused the SAM deploy from Claude's session, so it is Bill's one command |
 | roadNoise / airQuality / flood bands | `build_borough_bands.py --check` | DEFRA Round 4 road Lden + DEFRA background maps + EA RoFRS. **Air quality is every city bar NYC; road noise now is too, and flood is everything bar NYC and Cardiff** (measured from `borough-extra.json` 2026-08-30: air 86, road 86, **flood 86** of 91 - Teesside's five joined when the georeferencing fix stopped one blank sea tile from abandoning the whole city). The old note here said Leicester 0/8 and Teesside 0/5 carried NEITHER, and recorded it as a property of the data - **it was an unrun script**. Both fetchers are per-city against ENGLAND-WIDE coverages and neither city was in `NO_ROAD_COVERAGE`/`NO_FLOOD_COVERAGE`; the rasters had simply never been fetched for the two cities that joined on 2026-08-11. **A measurement recorded without its cause reads as a constraint.** Teesside's blank sea tile is still refused by the C11 guard - correctly - but its area is now carried as Unavailable instead of failing the city, so the other seven tiles publish. `paintBoroughLayer()` skips what is missing, so the MAP is honest; this row was the thing over-claiming. **Since v3.9 the BANDS are still display-only but the CONTINUOUS fields beside them SCORE** - see the `environment` row below. |
 > ## FLOOD WAS MIS-GEOREFERENCED IN 10 OF 11 CITIES - FIXED 2026-08-30 (audit F24/F39)
 >
@@ -1494,11 +1494,17 @@ s6's worked example exactly.
 - **The provenance line is DERIVED**, replacing THIRTEEN hand-written strings
   whose whole point was an incomparability caveat that v5.0 makes false in
   thirteen places at once. `SNAPSHOT_VINTAGE_LABEL` is the one holder for
-  "June 2026", which those thirteen also each hardcoded.
+  the month label ("June 2026" then; "July 2026" since the 2026-09-16 roll),
+  which those thirteen also each hardcoded. **The twelve `Prices: HM Land
+  Registry ... vintage` SOURCE lines were the same shape and were derived on
+  2026-09-16** (`_hpi_source_line`); `build_hpi_prices.py --check` asserts
+  what `build_sources()` emits per city, since there is no literal to count.
 - **Quarter-over-quarter affordability now mixes two movements.** Wandsworth's
   price ROSE 660,000 -> 680,105 and its affordability ALSO rose 0.3 -> 0.4,
   because the national p95 rose faster. That is what "affordable relative to the
   country" means; `marketContext` on `/v1/changes` exists to make it visible.
+  (July 2026: 686,076 and 0.3 in both vintages at 1dp - the raw figure moved
+  0.027 and did not cross a rounding boundary.)
 - **The NEIGHBOURHOOD ranking is still within-city min-max, deliberately.** It
   is site-only, no endpoint publishes it, and changing it would move the data
   under the still-open price-led-threshold decision. Both transforms are
@@ -1522,7 +1528,8 @@ deploy as v5.1): the table exists, the route answers, the flag is off.**
 
 **GROWTH IS SCORED ON THE REAL-TERMS TREND SINCE METHODOLOGY v5.1 (2026-09-15).**
 The nominal HPI 12-month change is deflated by ONS CPIH for the SAME month -
-`real_trend_pct()`, `CPIH_12M_PCT` (one entry PER VINTAGE: June 2026 2.8, May
+`real_trend_pct()`, `CPIH_12M_PCT` (one entry PER VINTAGE KEY, holding the CURRENT
+month's rate: 2026-Q3 = July 2026 3.1 since the 16 Sep roll, was June 2.8; 2026-Q2 = May
 2026 3.0), `with_real_trends()` attaching `trendReal` to every sterling record
 IN PLACE at import, `scored_trend()` read by `calc_score`, `benchmarks`,
 `growth_ranks`. `trend` stays nominal; `context.priceTrendRealPct`,

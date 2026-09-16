@@ -63,7 +63,7 @@ import urllib.request
 from pathlib import Path
 
 # The vintage the registry claims, in CITY_PROVENANCE and in CLAUDE.md.
-DEFAULT_VINTAGE = "2026-06-01"  # June 2026 UK HPI, rolled 2026-08-25
+DEFAULT_VINTAGE = "2026-07-01"  # July 2026 UK HPI, rolled 2026-09-16
 # One cache file PER VINTAGE. It was a single `data/hpi-average-prices.csv`
 # for every vintage until 2026-09-14 (audit M26): fetch() returned early on
 # any existing file, so `--vintage 2026-07` against a June cache could only
@@ -369,25 +369,50 @@ def check_vintage_words(vintage: str) -> int:
 
     Counted, not merely searched. A rename upstream that leaves ZERO matching
     strings would satisfy "no wrong month found" while describing nothing.
+
+    EMITTED, NOT SCANNED, since the July roll (2026-09-16). Until then this
+    counted literal "<Month> 20xx vintage" strings in app.py - twelve of them,
+    one per sterling city's `sources` array, every one retyped at every roll.
+    They are one derived `_hpi_source_line` now, so a text count would read 0
+    and the docstring above would call that a failure. The check that matters
+    is what an integrator RECEIVES: build_sources(city) is called for every
+    city the Lambda holds, each sterling city must emit exactly one line naming
+    the vintage, and the dollar city must emit none. The text scan is kept for
+    what it can still catch - a stale month left in a comment or a string
+    somewhere else in the file.
     """
     year, month, _ = vintage.split("-")
     label = f"{calendar.month_name[int(month)]} {year}"
     want = f"{label} vintage"
     text = SCORE_APP.read_text(encoding="utf-8")
-    found = text.count(want)
     stale = sorted({
         m for m in re.findall(r"([A-Z][a-z]+ 20\d\d vintage)", text) if m != want
     })
     print("")
-    print(f"provenance prose: {found} strings say {want!r}")
     if stale:
-        print(f"FAIL: {len(stale)} other vintage(s) named in the same file: {', '.join(stale)}")
+        print(f"FAIL: {len(stale)} other vintage(s) named in app.py: {', '.join(stale)}")
         print(f"      The numbers are HPI {vintage}. Replace them with {want!r}.")
         return 1
-    if not found:
-        print(f"FAIL: no provenance string names {want!r}. A vintage nobody states is")
-        print("      one an integrator cannot audit, and a zero count is not agreement.")
-        return 1
+    app = _load_score_app()
+    bad = 0
+    emitted = 0
+    for city, meta in app.CITIES.items():
+        lines = [s for s in app.build_sources(city) if want in s]
+        sterling = meta.get("currency") == "GBP"
+        if sterling and len(lines) != 1:
+            print(f"FAIL: {city} sources name {want!r} {len(lines)} time(s); every sterling city must, once.")
+            bad += 1
+        elif not sterling and lines:
+            print(f"FAIL: {city} is not priced in sterling and must not credit HPI; it emits {lines[0]!r}.")
+            bad += 1
+        elif sterling:
+            emitted += 1
+    if not emitted:
+        print("FAIL: no city emitted a price-source line at all - a zero count is not agreement.")
+        return bad or 1
+    print(f"provenance emitted: {emitted} sterling cities' sources name {want!r}, derived from one holder")
+    if bad:
+        return bad
     # THE CONSTANT, NOT ONLY THE LITERALS (2026-09-13 audit, I6). The counting
     # above scans source text for "<Month> 20xx vintage", which every hand-
     # written provenance string carries - and which the ONE DERIVED string,

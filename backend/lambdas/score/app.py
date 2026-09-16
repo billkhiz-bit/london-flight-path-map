@@ -285,28 +285,41 @@ PERSONAS = {
 # transport / healthcare refresh annually and noise five-yearly, so the
 # previous dataset is the current one overlaid with these two fields.
 # ---------------------------------------------------------------------------
-SNAPSHOT_VINTAGE = '2026-Q3'  # June 2026 UK HPI (published 19 Aug 2026), applied 2026-08-25
-# The same vintage in the words a customer reads. It was written out by hand in
+SNAPSHOT_VINTAGE = '2026-Q3'  # July 2026 UK HPI (published 16 Sep 2026), applied 2026-09-16
+# The KEY is the quarter, the LABEL is the month, and they move at different
+# rates - decided 2026-09-16, the first roll where they differed. HMLR
+# publishes monthly; `/v1/changes` is a QUARTERLY comparison. A monthly roll
+# inside a quarter refreshes the numbers under the same key (June -> July, both
+# 2026-Q3) and moves the label alone, so `?compare=previous` keeps comparing
+# against Q2 and "this quarter" stays true. Treating every month as a snapshot
+# roll would have made the comparison month-on-month under a label saying
+# quarter. When the key next moves (an October-or-later HPI, 2026-Q4), the
+# current values are copied into the *_PREVIOUS_PT tables and PREVIOUS_VINTAGE
+# follows - the three-step roll in memory/project-trends-feature.md.
+#
+# The label in the words a customer reads. It was written out by hand in
 # THIRTEEN provenance strings until 2026-09-09, one per city, so a roll had to
 # remember all thirteen - and the Progress 8 roll has already been caught
 # updating London's and leaving a sibling eleven cities down saying the old
-# year. Rolling the quarter means changing both lines here and nothing else.
-SNAPSHOT_VINTAGE_LABEL = 'June 2026'
+# year. Rolling the month means changing this line and CPIH_12M_PCT below.
+SNAPSHOT_VINTAGE_LABEL = 'July 2026'
 PREVIOUS_VINTAGE = '2026-Q2'
-SNAPSHOT_REFRESHED_AT = '2026-08-25'
+SNAPSHOT_REFRESHED_AT = '2026-09-16'
 # v5.1: the inflation each vintage's trend is deflated by. ONS CPIH 12-month
 # rate, all items (series L55O, dataset MM23), for the HPI MONTH the vintage
-# carries - June 2026 for 2026-Q3, May 2026 for 2026-Q2 - because a 12-month
+# carries - July 2026 for 2026-Q3, May 2026 for 2026-Q2 - because a 12-month
 # price change and a 12-month price-level change over the SAME window is the
 # only pairing that means "real". Both vintages need an entry: ?compare=previous
 # recomputes the previous score under the current formula, and deflating May's
-# trend by June's inflation would manufacture movement that never happened.
-# Rolling the quarter means adding the new month here; `build_hpi_prices.py
-# --check` compares the current entry against the ONS series and fails on a
-# vintage this table does not know. Sterling only: New York's five boroughs
-# carry a curated trend and no US series is held, so they score nominal.
+# trend by July's inflation would manufacture movement that never happened.
+# Rolling the month means moving the current entry with the label (the key
+# stays); rolling the quarter means adding a new one. `build_hpi_prices.py
+# --check` compares the current entry against the ONS series for the LABEL's
+# month and fails on a vintage this table does not know. Sterling only: New
+# York's five boroughs carry a curated trend and no US series is held, so they
+# score nominal.
 CPIH_12M_PCT = {
-    '2026-Q3': 2.8,  # CPIH, June 2026
+    '2026-Q3': 3.1,  # CPIH, July 2026 (was 2.8 for June, rolled 2026-09-16)
     '2026-Q2': 3.0,  # CPIH, May 2026
 }
 
@@ -671,13 +684,27 @@ def benchmarks(boroughs):
     }
 
 
-def market_context(current_boroughs, previous_boroughs):
+def market_context(current_boroughs, previous_boroughs, score_changes=None):
     """City-wide movement, so an individual change is readable in context.
 
     The single most useful sentence about this vintage pair is not about any one
     borough: the mean trend fell from +3.2% to -1.6% and the number of areas with
     falling prices went from 0 to 14. Without that, 25 boroughs dropping looks
     like a scoring fault rather than the market it is describing.
+
+    `score_changes` is the per-borough scoreChange list the caller has already
+    computed, and the closing sentence is DERIVED from it. Until the July 2026
+    roll (2026-09-16) that sentence read the direction of the SCORES off the
+    direction of the TREND: "Most scores fell because the market fell" whenever
+    the mean trend fell. But `balanced` weights growth at 0.00, so a balanced
+    score cannot move on the trend at all - between vintages it moves on
+    affordability alone, a borough's price LEVEL against the national p5-p95
+    band (v5.0) - and the two quantities have no fixed sign relationship. July
+    was the first pair where they pointed opposite ways: the mean trend fell
+    -3.35% -> -3.42% while 14 of 33 scores ROSE and one fell, and the endpoint
+    published "most scores fell" three lines above a `summary` counting 14
+    risers. The 2026-08-25 fix made the tail direction-aware; it was aware of
+    the wrong direction.
     """
     # NOMINAL, deliberately, and unlike benchmarks(): this block describes
     # what PRICES did ("the mean trend fell from +3.2% to -1.6%"), and a
@@ -702,21 +729,32 @@ def market_context(current_boroughs, previous_boroughs):
             f'Growth is scored relative to the strongest borough, which changed from '
             f'{prev_bm["strongestGrowthArea"]} ({prev_bm["strongestGrowthTrendPct"]:+}%) to '
             f'{cur_bm["strongestGrowthArea"]} ({cur_bm["strongestGrowthTrendPct"]:+}%). '
-            # Direction-aware since 2026-08-25: the first vintage roll after
-            # this sentence was written moved the mean UP (-3.35% to -3.03%)
-            # and the unconditional tail kept saying the market fell - a
-            # falsehood one line after the numbers disproving it. The claim
-            # that carries either way is that scores move with the MARKET,
-            # not with reassessments of individual boroughs.
-            + (
-                'Most score movement reflects the market moving, not any one '
-                'borough being reassessed.'
-                if round(sum(cur) / len(cur), 1) >= round(sum(prev) / len(prev), 1)
-                else 'Most scores fell because the market fell, not because any '
-                'one borough was reassessed.'
-            )
+            # What the SCORES did, counted from the caller's tally - never
+            # inferred from the trend's sign (see the docstring). The mechanism
+            # is named because it is not obvious: only price and trend move
+            # between vintages, balanced does not weight trend, so the whole of
+            # a balanced score change is affordability against the national
+            # price band. Without the tally the neutral claim stands alone.
+            + _score_movement_sentence(score_changes)
         ),
     }
+
+
+def _score_movement_sentence(score_changes):
+    """The closing sentence of marketContext.summary, derived from the tally."""
+    mechanism = (
+        'Score movement between vintages comes from each borough\'s price against the '
+        'national price band, not from any one borough being reassessed.'
+    )
+    if not score_changes:
+        return mechanism
+    risers = sum(1 for c in score_changes if c > 0)
+    fallers = sum(1 for c in score_changes if c < 0)
+    unchanged = len(score_changes) - risers - fallers
+    return (
+        f'Of {len(score_changes)} borough scores, {risers} rose, {fallers} fell and '
+        f'{unchanged} did not move at one decimal place. {mechanism}'
+    )
 
 
 def build_why(
@@ -1076,8 +1114,8 @@ def describe_change(
 LONDON_BOROUGHS = {
     'Hounslow': {
         'impact': 'severe',
-        'avgPrice': 512888,
-        'trend': 1.1,
+        'avgPrice': 525435,
+        'trend': 1.7,
         'schools': 'good',
         'crimeRate': 87.4,
         'p8': 0.45,
@@ -1089,8 +1127,8 @@ LONDON_BOROUGHS = {
     },
     'Hillingdon': {
         'impact': 'severe',
-        'avgPrice': 474665,
-        'trend': -0.6,
+        'avgPrice': 470875,
+        'trend': -1.3,
         'schools': 'good',
         'crimeRate': 91.6,
         'p8': 0.24,
@@ -1102,8 +1140,8 @@ LONDON_BOROUGHS = {
     },
     'Richmond upon Thames': {
         'impact': 'high',
-        'avgPrice': 818949,
-        'trend': -0.3,
+        'avgPrice': 803249,
+        'trend': -0.8,
         'schools': 'excellent',
         'crimeRate': 57.3,
         'p8': 0.43,
@@ -1115,8 +1153,8 @@ LONDON_BOROUGHS = {
     },
     'Ealing': {
         'impact': 'high',
-        'avgPrice': 575814,
-        'trend': -2.7,
+        'avgPrice': 585216,
+        'trend': 0.8,
         'schools': 'good',
         'crimeRate': 80.5,
         'p8': 0.56,
@@ -1128,8 +1166,8 @@ LONDON_BOROUGHS = {
     },
     'Wandsworth': {
         'impact': 'moderate',
-        'avgPrice': 680105,
-        'trend': -5.2,
+        'avgPrice': 686076,
+        'trend': -5.5,
         'schools': 'excellent',
         'crimeRate': 76.4,
         'p8': 0.49,
@@ -1141,8 +1179,8 @@ LONDON_BOROUGHS = {
     },
     'Lambeth': {
         'impact': 'moderate',
-        'avgPrice': 548034,
-        'trend': -3.3,
+        'avgPrice': 536623,
+        'trend': -6.3,
         'schools': 'good',
         'crimeRate': 114.4,
         'p8': 0.0,
@@ -1154,8 +1192,8 @@ LONDON_BOROUGHS = {
     },
     'Lewisham': {
         'impact': 'low-moderate',
-        'avgPrice': 491259,
-        'trend': 0.6,
+        'avgPrice': 488658,
+        'trend': 0.7,
         'schools': 'good',
         'crimeRate': 94.2,
         'p8': 0.1,
@@ -1167,8 +1205,8 @@ LONDON_BOROUGHS = {
     },
     'Greenwich': {
         'impact': 'moderate',
-        'avgPrice': 465132,
-        'trend': -0.5,
+        'avgPrice': 462589,
+        'trend': -1.4,
         'schools': 'good',
         'crimeRate': 90.3,
         'p8': -0.01,
@@ -1180,8 +1218,8 @@ LONDON_BOROUGHS = {
     },
     'Tower Hamlets': {
         'impact': 'low-moderate',
-        'avgPrice': 456898,
-        'trend': -13.1,
+        'avgPrice': 447796,
+        'trend': -14.4,
         'schools': 'good',
         'crimeRate': 106.6,
         'p8': 0.13,
@@ -1193,8 +1231,8 @@ LONDON_BOROUGHS = {
     },
     'Camden': {
         'impact': 'low',
-        'avgPrice': 833067,
-        'trend': -7.1,
+        'avgPrice': 815159,
+        'trend': -10.1,
         'schools': 'excellent',
         'crimeRate': 173.3,
         'p8': -0.14,
@@ -1206,8 +1244,8 @@ LONDON_BOROUGHS = {
     },
     'Islington': {
         'impact': 'low',
-        'avgPrice': 673384,
-        'trend': -8.1,
+        'avgPrice': 674592,
+        'trend': -4.9,
         'schools': 'good',
         'crimeRate': 131.2,
         'p8': 0.15,
@@ -1220,7 +1258,7 @@ LONDON_BOROUGHS = {
     'Hackney': {
         'impact': 'low',
         'avgPrice': 605442,
-        'trend': 0.4,
+        'trend': -2.6,
         'schools': 'good',
         'crimeRate': 116.5,
         'p8': 0.51,
@@ -1232,8 +1270,8 @@ LONDON_BOROUGHS = {
     },
     'Barnet': {
         'impact': 'low-moderate',
-        'avgPrice': 603753,
-        'trend': -2.9,
+        'avgPrice': 600560,
+        'trend': -4.9,
         'schools': 'excellent',
         'crimeRate': 67.8,
         'p8': 0.61,
@@ -1245,8 +1283,8 @@ LONDON_BOROUGHS = {
     },
     'Croydon': {
         'impact': 'moderate',
-        'avgPrice': 394736,
-        'trend': -1.9,
+        'avgPrice': 390041,
+        'trend': -3.4,
         'schools': 'good',
         'crimeRate': 80.4,
         'p8': -0.04,
@@ -1258,8 +1296,8 @@ LONDON_BOROUGHS = {
     },
     'Bromley': {
         'impact': 'low',
-        'avgPrice': 518235,
-        'trend': -1.4,
+        'avgPrice': 511670,
+        'trend': -3.1,
         'schools': 'excellent',
         'crimeRate': 69.1,
         'p8': 0.05,
@@ -1271,8 +1309,8 @@ LONDON_BOROUGHS = {
     },
     'Newham': {
         'impact': 'moderate-high',
-        'avgPrice': 403032,
-        'trend': -0.7,
+        'avgPrice': 390349,
+        'trend': -5.0,
         'schools': 'good',
         'crimeRate': 104.0,
         'p8': 0.28,
@@ -1284,8 +1322,8 @@ LONDON_BOROUGHS = {
     },
     'Southwark': {
         'impact': 'low-moderate',
-        'avgPrice': 582473,
-        'trend': 2.2,
+        'avgPrice': 572478,
+        'trend': 0.1,
         'schools': 'good',
         'crimeRate': 120.8,
         'p8': 0.46,
@@ -1297,8 +1335,8 @@ LONDON_BOROUGHS = {
     },
     'Hammersmith and Fulham': {
         'impact': 'moderate-high',
-        'avgPrice': 725562,
-        'trend': -13.3,
+        'avgPrice': 738048,
+        'trend': -9.0,
         'schools': 'excellent',
         'crimeRate': 107.0,
         'p8': 0.52,
@@ -1310,8 +1348,8 @@ LONDON_BOROUGHS = {
     },
     'Kensington and Chelsea': {
         'impact': 'moderate',
-        'avgPrice': 1250149,
-        'trend': -14.7,
+        'avgPrice': 1232640,
+        'trend': -14.1,
         'schools': 'excellent',
         'crimeRate': 145.8,
         'p8': 0.3,
@@ -1323,8 +1361,8 @@ LONDON_BOROUGHS = {
     },
     'Brent': {
         'impact': 'low-moderate',
-        'avgPrice': 544174,
-        'trend': -3.4,
+        'avgPrice': 546135,
+        'trend': -2.6,
         'schools': 'good',
         'crimeRate': 89.3,
         'p8': 0.58,
@@ -1336,8 +1374,8 @@ LONDON_BOROUGHS = {
     },
     'Haringey': {
         'impact': 'low',
-        'avgPrice': 634000,
-        'trend': 2.5,
+        'avgPrice': 638690,
+        'trend': 1.0,
         'schools': 'good',
         'crimeRate': 104.6,
         'p8': 0.3,
@@ -1349,8 +1387,8 @@ LONDON_BOROUGHS = {
     },
     'Waltham Forest': {
         'impact': 'low',
-        'avgPrice': 522743,
-        'trend': 2.5,
+        'avgPrice': 529102,
+        'trend': 2.8,
         'schools': 'good',
         'crimeRate': 80.2,
         'p8': -0.1,
@@ -1362,8 +1400,8 @@ LONDON_BOROUGHS = {
     },
     'Merton': {
         'impact': 'low-moderate',
-        'avgPrice': 612681,
-        'trend': 0.5,
+        'avgPrice': 615890,
+        'trend': -0.9,
         'schools': 'good',
         'crimeRate': 59.3,
         'p8': 0.61,
@@ -1375,8 +1413,8 @@ LONDON_BOROUGHS = {
     },
     'Redbridge': {
         'impact': 'low',
-        'avgPrice': 496000,
-        'trend': 3.6,
+        'avgPrice': 481297,
+        'trend': -2.7,
         'schools': 'excellent',
         'crimeRate': 74.3,
         'p8': 0.52,
@@ -1389,7 +1427,7 @@ LONDON_BOROUGHS = {
     'Enfield': {
         'impact': 'low',
         'avgPrice': 471019,
-        'trend': 0.3,
+        'trend': 0.6,
         'schools': 'good',
         'crimeRate': 85.2,
         'p8': 0.09,
@@ -1401,8 +1439,8 @@ LONDON_BOROUGHS = {
     },
     'Kingston upon Thames': {
         'impact': 'low-moderate',
-        'avgPrice': 594498,
-        'trend': 2.9,
+        'avgPrice': 591555,
+        'trend': 3.3,
         'schools': 'excellent',
         'crimeRate': 66.8,
         'p8': 0.65,
@@ -1414,8 +1452,8 @@ LONDON_BOROUGHS = {
     },
     'Sutton': {
         'impact': 'low',
-        'avgPrice': 446775,
-        'trend': 0.4,
+        'avgPrice': 452654,
+        'trend': 0.6,
         'schools': 'excellent',
         'crimeRate': 60.3,
         'p8': 0.45,
@@ -1427,8 +1465,8 @@ LONDON_BOROUGHS = {
     },
     'Westminster': {
         'impact': 'moderate',
-        'avgPrice': 854198,
-        'trend': -25.4,
+        'avgPrice': 876788,
+        'trend': -20.7,
         'schools': 'good',
         'crimeRate': 355.5,
         'p8': 0.47,
@@ -1446,8 +1484,8 @@ LONDON_BOROUGHS = {
         # METHODOLOGY 11 records it as an open decision.
         'crimeEstimated': True,
         'impact': 'low-moderate',
-        'avgPrice': 712958,
-        'trend': -20.4,
+        'avgPrice': 710652,
+        'trend': -17.4,
         'schools': 'good',
         'crimeRate': 190,
         'transport': 'excellent',
@@ -1458,8 +1496,8 @@ LONDON_BOROUGHS = {
     },
     'Barking and Dagenham': {
         'impact': 'low',
-        'avgPrice': 371030,
-        'trend': 4.3,
+        'avgPrice': 375604,
+        'trend': 5.3,
         'schools': 'good',
         'crimeRate': 84.2,
         'p8': 0.24,
@@ -1471,8 +1509,8 @@ LONDON_BOROUGHS = {
     },
     'Havering': {
         'impact': 'low',
-        'avgPrice': 456759,
-        'trend': 3.9,
+        'avgPrice': 448648,
+        'trend': 2.1,
         'schools': 'good',
         'crimeRate': 68.3,
         'p8': 0.11,
@@ -1484,8 +1522,8 @@ LONDON_BOROUGHS = {
     },
     'Bexley': {
         'impact': 'low',
-        'avgPrice': 405477,
-        'trend': 1.2,
+        'avgPrice': 413343,
+        'trend': 2.0,
         'schools': 'good',
         'crimeRate': 60.2,
         'p8': -0.02,
@@ -1497,8 +1535,8 @@ LONDON_BOROUGHS = {
     },
     'Harrow': {
         'impact': 'low',
-        'avgPrice': 524160,
-        'trend': -1.4,
+        'avgPrice': 526493,
+        'trend': -2.8,
         'schools': 'excellent',
         'crimeRate': 59.5,
         'p8': 0.46,
@@ -1617,25 +1655,29 @@ NYC_BOROUGHS = {
 #                     Before that change a partial city scored WORSE than an
 #                     empty one, which is why this data sat unported for a week.
 MANCHESTER_BOROUGHS = {
-    'Manchester': {'impact': 'moderate', 'avgPrice': 251250, 'trend': 2.9, 'p8': 0.07, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.74, 'floodMediumOrHighPct': 1.2, 'roadNoiseAboveWhoPct': 57.3},
-    'Salford': {'impact': 'low', 'avgPrice': 231890, 'trend': -2.4, 'p8': -0.35, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 0.7, 'roadNoiseAboveWhoPct': 64.2},
-    'Stockport': {'impact': 'moderate-high', 'avgPrice': 314495, 'trend': 3.5, 'p8': 0.09, 'crimeRate': 74.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.43, 'roadNoiseAboveWhoPct': 44.9},
-    'Trafford': {'impact': 'moderate', 'avgPrice': 396811, 'trend': 9.7, 'p8': 0.35, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.48, 'floodMediumOrHighPct': 0.33, 'roadNoiseAboveWhoPct': 51.6},
-    'Tameside': {'impact': 'low', 'avgPrice': 211304, 'trend': 2.2, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.38, 'roadNoiseAboveWhoPct': 54.8},
-    'Oldham': {'impact': 'low', 'avgPrice': 214850, 'trend': 5.1, 'p8': -0.2, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.51, 'roadNoiseAboveWhoPct': 53.5},
-    'Rochdale': {'impact': 'low', 'avgPrice': 210083, 'trend': 4.6, 'p8': -0.3, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 1.09, 'roadNoiseAboveWhoPct': 53.3},
-    'Bury': {'impact': 'low', 'avgPrice': 238266, 'trend': 3.3, 'p8': -0.09, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 1.02, 'roadNoiseAboveWhoPct': 55.5},
-    'Bolton': {'impact': 'low', 'avgPrice': 202770, 'trend': 4.9, 'p8': 0.05, 'crimeRate': 98.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.69, 'roadNoiseAboveWhoPct': 54.4},
-    'Wigan': {'impact': 'low', 'avgPrice': 195557, 'trend': 6.6, 'p8': -0.32, 'crimeRate': 91.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.63, 'floodMediumOrHighPct': 1.34, 'roadNoiseAboveWhoPct': 46.8},
+    'Manchester': {'impact': 'moderate', 'avgPrice': 252309, 'trend': 1.2, 'p8': 0.07, 'crimeRate': 142.7, 'transport': 'good', 'healthcare': 'good', 'airQualityWhoRatio': 1.74, 'floodMediumOrHighPct': 1.2, 'roadNoiseAboveWhoPct': 57.3},
+    'Salford': {'impact': 'low', 'avgPrice': 229462, 'trend': 0.3, 'p8': -0.35, 'crimeRate': 105.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 0.7, 'roadNoiseAboveWhoPct': 64.2},
+    'Stockport': {'impact': 'moderate-high', 'avgPrice': 317913, 'trend': 4.2, 'p8': 0.09, 'crimeRate': 74.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.56, 'floodMediumOrHighPct': 0.43, 'roadNoiseAboveWhoPct': 44.9},
+    'Trafford': {'impact': 'moderate', 'avgPrice': 400688, 'trend': 9.6, 'p8': 0.35, 'crimeRate': 74.9, 'transport': 'good', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.48, 'floodMediumOrHighPct': 0.33, 'roadNoiseAboveWhoPct': 51.6},
+    'Tameside': {'impact': 'low', 'avgPrice': 209723, 'trend': -0.1, 'p8': -0.21, 'crimeRate': 96.4, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.38, 'roadNoiseAboveWhoPct': 54.8},
+    'Oldham': {'impact': 'low', 'avgPrice': 217171, 'trend': 4.7, 'p8': -0.2, 'crimeRate': 106.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.51, 'roadNoiseAboveWhoPct': 53.5},
+    'Rochdale': {'impact': 'low', 'avgPrice': 209389, 'trend': 4.5, 'p8': -0.3, 'crimeRate': 104.6, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 1.09, 'roadNoiseAboveWhoPct': 53.3},
+    'Bury': {'impact': 'low', 'avgPrice': 242437, 'trend': 2.8, 'p8': -0.09, 'crimeRate': 92.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 1.02, 'roadNoiseAboveWhoPct': 55.5},
+    'Bolton': {'impact': 'low', 'avgPrice': 204379, 'trend': 5.9, 'p8': 0.05, 'crimeRate': 98.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.69, 'roadNoiseAboveWhoPct': 54.4},
+    'Wigan': {'impact': 'low', 'avgPrice': 194551, 'trend': 3.9, 'p8': -0.32, 'crimeRate': 91.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.63, 'floodMediumOrHighPct': 1.34, 'roadNoiseAboveWhoPct': 46.8},
 }
 
 # West Midlands, the fourth city, 2026-08-10. Every field is generated, not
 # authored, and each has a script that re-derives it:
 #
-#   avgPrice / trend  REAL. HM Land Registry UK HPI, June 2026 vintage - the same
-#                     release London and Greater Manchester use, so the three
-#                     cohorts are on one vintage. `scripts/build_hpi_prices.py
-#                     --check --city westmidlands` is a blocking preflight stage.
+#   avgPrice / trend  REAL. HM Land Registry UK HPI, the vintage named by
+#                     SNAPSHOT_VINTAGE_LABEL - the same release London and
+#                     Greater Manchester use, so the three cohorts are on one
+#                     vintage. (This line named the June 2026 release until
+#                     the July roll; a month in a comment is a claim nothing
+#                     rolls.)
+#                     `scripts/build_hpi_prices.py --check --city westmidlands`
+#                     is a blocking preflight stage.
 #
 #   crimeRate         REAL. ONS Crime in England and Wales, Police Force Area
 #                     tables, Table C4, year ending March 2026 - Community
@@ -1658,58 +1700,58 @@ MANCHESTER_BOROUGHS = {
 #                     response. This city is thinner than Greater Manchester and
 #                     says so.
 WESTMIDLANDS_BOROUGHS = {
-    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 234150, 'trend': 2.2, 'crimeRate': 114.2, 'p8': 0.06, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.17, 'roadNoiseAboveWhoPct': 46.9},
-    'Coventry': {'impact': 'low', 'avgPrice': 223731, 'trend': 3.7, 'crimeRate': 88.4, 'p8': 0.01, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.61, 'floodMediumOrHighPct': 0.16, 'roadNoiseAboveWhoPct': 51.7},
-    'Dudley': {'impact': 'low', 'avgPrice': 230781, 'trend': 5.0, 'crimeRate': 74.5, 'p8': -0.12, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.54, 'floodMediumOrHighPct': 0.14, 'roadNoiseAboveWhoPct': 50.0},
-    'Sandwell': {'impact': 'low', 'avgPrice': 205743, 'trend': 0.6, 'crimeRate': 95.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.8, 'floodMediumOrHighPct': 0.41, 'roadNoiseAboveWhoPct': 58.7},
-    'Solihull': {'impact': 'moderate-high', 'avgPrice': 334966, 'trend': 4.2, 'crimeRate': 79.5, 'p8': -0.06, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.26, 'roadNoiseAboveWhoPct': 40.7},
-    'Walsall': {'impact': 'low', 'avgPrice': 214577, 'trend': 2.2, 'crimeRate': 92.9, 'p8': -0.22, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.69, 'floodMediumOrHighPct': 1.08, 'roadNoiseAboveWhoPct': 54.5},
-    'Wolverhampton': {'impact': 'low', 'avgPrice': 216339, 'trend': 8.2, 'crimeRate': 92.0, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.17, 'roadNoiseAboveWhoPct': 44.6},
+    'Birmingham': {'impact': 'moderate-high', 'avgPrice': 234150, 'trend': 2.5, 'crimeRate': 114.2, 'p8': 0.06, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.71, 'floodMediumOrHighPct': 1.17, 'roadNoiseAboveWhoPct': 46.9},
+    'Coventry': {'impact': 'low', 'avgPrice': 227679, 'trend': 3.7, 'crimeRate': 88.4, 'p8': 0.01, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.61, 'floodMediumOrHighPct': 0.16, 'roadNoiseAboveWhoPct': 51.7},
+    'Dudley': {'impact': 'low', 'avgPrice': 232196, 'trend': 3.5, 'crimeRate': 74.5, 'p8': -0.12, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.54, 'floodMediumOrHighPct': 0.14, 'roadNoiseAboveWhoPct': 50.0},
+    'Sandwell': {'impact': 'low', 'avgPrice': 205743, 'trend': -0.4, 'crimeRate': 95.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.8, 'floodMediumOrHighPct': 0.41, 'roadNoiseAboveWhoPct': 58.7},
+    'Solihull': {'impact': 'moderate-high', 'avgPrice': 337112, 'trend': 3.3, 'crimeRate': 79.5, 'p8': -0.06, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.26, 'roadNoiseAboveWhoPct': 40.7},
+    'Walsall': {'impact': 'low', 'avgPrice': 215329, 'trend': 1.5, 'crimeRate': 92.9, 'p8': -0.22, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.69, 'floodMediumOrHighPct': 1.08, 'roadNoiseAboveWhoPct': 54.5},
+    'Wolverhampton': {'impact': 'low', 'avgPrice': 220559, 'trend': 7.2, 'crimeRate': 92.0, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.55, 'floodMediumOrHighPct': 0.17, 'roadNoiseAboveWhoPct': 44.6},
 }
 
 WESTYORKSHIRE_BOROUGHS = {
-    'Bradford': {'impact': 'low', 'avgPrice': 185028, 'trend': 6.0, 'crimeRate': 117.0, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.43, 'floodMediumOrHighPct': 1.34, 'roadNoiseAboveWhoPct': 49.9},
-    'Calderdale': {'impact': 'low', 'avgPrice': 191540, 'trend': 9.4, 'crimeRate': 103.4, 'p8': 0.02, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 4.04, 'roadNoiseAboveWhoPct': 57.9},
-    'Kirklees': {'impact': 'low', 'avgPrice': 205971, 'trend': 5.4, 'crimeRate': 87.6, 'p8': 0.07, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.48, 'roadNoiseAboveWhoPct': 52.0},
-    'Leeds': {'impact': 'moderate', 'avgPrice': 249394, 'trend': 5.9, 'crimeRate': 114.6, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 0.87, 'roadNoiseAboveWhoPct': 51.1},
-    'Wakefield': {'impact': 'low', 'avgPrice': 198519, 'trend': 4.8, 'crimeRate': 105.8, 'p8': 0.04, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.08, 'roadNoiseAboveWhoPct': 49.0},
+    'Bradford': {'impact': 'low', 'avgPrice': 182766, 'trend': 2.5, 'crimeRate': 117.0, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.43, 'floodMediumOrHighPct': 1.34, 'roadNoiseAboveWhoPct': 49.9},
+    'Calderdale': {'impact': 'low', 'avgPrice': 191540, 'trend': 4.3, 'crimeRate': 103.4, 'p8': 0.02, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 4.04, 'roadNoiseAboveWhoPct': 57.9},
+    'Kirklees': {'impact': 'low', 'avgPrice': 208987, 'trend': 6.1, 'crimeRate': 87.6, 'p8': 0.07, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.48, 'roadNoiseAboveWhoPct': 52.0},
+    'Leeds': {'impact': 'moderate', 'avgPrice': 247695, 'trend': 3.8, 'crimeRate': 114.6, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 0.87, 'roadNoiseAboveWhoPct': 51.1},
+    'Wakefield': {'impact': 'low', 'avgPrice': 199347, 'trend': 4.1, 'crimeRate': 105.8, 'p8': 0.04, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.41, 'floodMediumOrHighPct': 1.08, 'roadNoiseAboveWhoPct': 49.0},
 }
 
 SOUTHYORKSHIRE_BOROUGHS = {
-    'Barnsley': {'impact': 'low', 'avgPrice': 175733, 'trend': 6.0, 'crimeRate': 95.1, 'p8': -0.32, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3, 'floodMediumOrHighPct': 0.93, 'roadNoiseAboveWhoPct': 44.1},
-    'Doncaster': {'impact': 'low', 'avgPrice': 170784, 'trend': 4.4, 'crimeRate': 117.3, 'p8': 0.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.25, 'floodMediumOrHighPct': 7.49, 'roadNoiseAboveWhoPct': 38.9},
-    'Rotherham': {'impact': 'low', 'avgPrice': 190069, 'trend': 2.4, 'crimeRate': 93.1, 'p8': -0.18, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 1.11, 'roadNoiseAboveWhoPct': 41.0},
-    'Sheffield': {'impact': 'low', 'avgPrice': 219539, 'trend': 5.0, 'crimeRate': 96.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 0.92, 'roadNoiseAboveWhoPct': 46.9},
+    'Barnsley': {'impact': 'low', 'avgPrice': 175733, 'trend': 3.5, 'crimeRate': 95.1, 'p8': -0.32, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3, 'floodMediumOrHighPct': 0.93, 'roadNoiseAboveWhoPct': 44.1},
+    'Doncaster': {'impact': 'low', 'avgPrice': 172305, 'trend': 4.7, 'crimeRate': 117.3, 'p8': 0.0, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.25, 'floodMediumOrHighPct': 7.49, 'roadNoiseAboveWhoPct': 38.9},
+    'Rotherham': {'impact': 'low', 'avgPrice': 191496, 'trend': 1.7, 'crimeRate': 93.1, 'p8': -0.18, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 1.11, 'roadNoiseAboveWhoPct': 41.0},
+    'Sheffield': {'impact': 'low', 'avgPrice': 219539, 'trend': 2.8, 'crimeRate': 96.9, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 0.92, 'roadNoiseAboveWhoPct': 46.9},
 }
 
 MERSEYSIDE_BOROUGHS = {
-    'Knowsley': {'impact': 'low', 'avgPrice': 188727, 'trend': 3.6, 'crimeRate': 81.8, 'p8': -0.9, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 0.21, 'roadNoiseAboveWhoPct': 46.0},
-    'Liverpool': {'impact': 'moderate', 'avgPrice': 185307, 'trend': 7.2, 'crimeRate': 124.1, 'p8': -0.48, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.61, 'floodMediumOrHighPct': 0.29, 'roadNoiseAboveWhoPct': 51.2},
-    'St Helens': {'impact': 'low', 'avgPrice': 186435, 'trend': 11.1, 'crimeRate': 86.4, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.29, 'roadNoiseAboveWhoPct': 46.3},
-    'Sefton': {'impact': 'low', 'avgPrice': 225433, 'trend': 5.2, 'crimeRate': 75.5, 'p8': -0.41, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.26, 'roadNoiseAboveWhoPct': 40.6},
-    'Wirral': {'impact': 'low', 'avgPrice': 215575, 'trend': 7.8, 'crimeRate': 71.1, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.34, 'floodMediumOrHighPct': 0.55, 'roadNoiseAboveWhoPct': 50.8},
+    'Knowsley': {'impact': 'low', 'avgPrice': 188727, 'trend': 0.9, 'crimeRate': 81.8, 'p8': -0.9, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 0.21, 'roadNoiseAboveWhoPct': 46.0},
+    'Liverpool': {'impact': 'moderate', 'avgPrice': 189036, 'trend': 8.1, 'crimeRate': 124.1, 'p8': -0.48, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.61, 'floodMediumOrHighPct': 0.29, 'roadNoiseAboveWhoPct': 51.2},
+    'St Helens': {'impact': 'low', 'avgPrice': 185154, 'trend': 7.3, 'crimeRate': 86.4, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.59, 'floodMediumOrHighPct': 0.29, 'roadNoiseAboveWhoPct': 46.3},
+    'Sefton': {'impact': 'low', 'avgPrice': 224289, 'trend': 3.7, 'crimeRate': 75.5, 'p8': -0.41, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.26, 'roadNoiseAboveWhoPct': 40.6},
+    'Wirral': {'impact': 'low', 'avgPrice': 221849, 'trend': 6.7, 'crimeRate': 71.1, 'p8': -0.16, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.34, 'floodMediumOrHighPct': 0.55, 'roadNoiseAboveWhoPct': 50.8},
 }
 
 TYNEANDWEAR_BOROUGHS = {
-    'Gateshead': {'impact': 'low', 'avgPrice': 158254, 'trend': 7.8, 'crimeRate': 87.8, 'p8': -0.14, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.45, 'floodMediumOrHighPct': 1.0, 'roadNoiseAboveWhoPct': 59.8},
-    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 208589, 'trend': 6.7, 'crimeRate': 107.4, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.1, 'roadNoiseAboveWhoPct': 60.0},
-    'North Tyneside': {'impact': 'moderate', 'avgPrice': 203813, 'trend': 6.0, 'crimeRate': 81.8, 'p8': -0.15, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.65, 'floodMediumOrHighPct': 0.2, 'roadNoiseAboveWhoPct': 59.3},
-    'South Tyneside': {'impact': 'low', 'avgPrice': 161372, 'trend': 4.8, 'crimeRate': 96.6, 'p8': -0.39, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.0, 'roadNoiseAboveWhoPct': 56.6},
-    'Sunderland': {'impact': 'low', 'avgPrice': 143216, 'trend': 4.6, 'crimeRate': 93.6, 'p8': -0.31, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 0.15, 'roadNoiseAboveWhoPct': 55.8},
+    'Gateshead': {'impact': 'low', 'avgPrice': 155550, 'trend': 3.7, 'crimeRate': 87.8, 'p8': -0.14, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.45, 'floodMediumOrHighPct': 1.0, 'roadNoiseAboveWhoPct': 59.8},
+    'Newcastle upon Tyne': {'impact': 'moderate-high', 'avgPrice': 207547, 'trend': 4.1, 'crimeRate': 107.4, 'p8': -0.28, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.57, 'floodMediumOrHighPct': 0.1, 'roadNoiseAboveWhoPct': 60.0},
+    'North Tyneside': {'impact': 'moderate', 'avgPrice': 205744, 'trend': 6.5, 'crimeRate': 81.8, 'p8': -0.15, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.65, 'floodMediumOrHighPct': 0.2, 'roadNoiseAboveWhoPct': 59.3},
+    'South Tyneside': {'impact': 'low', 'avgPrice': 161372, 'trend': 5.3, 'crimeRate': 96.6, 'p8': -0.39, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.0, 'roadNoiseAboveWhoPct': 56.6},
+    'Sunderland': {'impact': 'low', 'avgPrice': 147114, 'trend': 4.8, 'crimeRate': 93.6, 'p8': -0.31, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'floodMediumOrHighPct': 0.15, 'roadNoiseAboveWhoPct': 55.8},
 }
 
 BRISTOL_BOROUGHS = {
-    'City of Bristol': {'impact': 'low', 'avgPrice': 356824, 'trend': 3.5, 'crimeRate': 131.0, 'p8': -0.01, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.51, 'floodMediumOrHighPct': 0.96, 'roadNoiseAboveWhoPct': 34.7},
-    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 404480, 'trend': -0.1, 'crimeRate': 79.0, 'p8': 0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'floodMediumOrHighPct': 2.38, 'roadNoiseAboveWhoPct': 33.8},
-    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 314628, 'trend': 7.5, 'crimeRate': 81.8, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.28, 'floodMediumOrHighPct': 1.29, 'roadNoiseAboveWhoPct': 26.3},
-    'South Gloucestershire': {'impact': 'low', 'avgPrice': 340401, 'trend': 2.3, 'crimeRate': 73.8, 'p8': -0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 0.32, 'roadNoiseAboveWhoPct': 31.3},
+    'City of Bristol': {'impact': 'low', 'avgPrice': 352262, 'trend': 2.1, 'crimeRate': 131.0, 'p8': -0.01, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.51, 'floodMediumOrHighPct': 0.96, 'roadNoiseAboveWhoPct': 34.7},
+    'Bath and North East Somerset': {'impact': 'moderate', 'avgPrice': 409045, 'trend': -0.7, 'crimeRate': 79.0, 'p8': 0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'floodMediumOrHighPct': 2.38, 'roadNoiseAboveWhoPct': 33.8},
+    'North Somerset': {'impact': 'moderate-high', 'avgPrice': 313638, 'trend': 3.8, 'crimeRate': 81.8, 'p8': -0.05, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.28, 'floodMediumOrHighPct': 1.29, 'roadNoiseAboveWhoPct': 26.3},
+    'South Gloucestershire': {'impact': 'low', 'avgPrice': 341833, 'trend': 3.4, 'crimeRate': 73.8, 'p8': -0.16, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.5, 'floodMediumOrHighPct': 0.32, 'roadNoiseAboveWhoPct': 31.3},
 }
 
 CARDIFF_BOROUGHS = {
-    'Cardiff': {'impact': 'low', 'avgPrice': 270094, 'trend': 2.1, 'crimeRate': 93.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.85},
-    'Vale of Glamorgan': {'impact': 'moderate', 'avgPrice': 297999, 'trend': 3.3, 'crimeRate': 60.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.34},
-    'Newport': {'impact': 'low', 'avgPrice': 230505, 'trend': 5.0, 'crimeRate': 109.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.66},
-    'Caerphilly': {'impact': 'low', 'avgPrice': 197272, 'trend': 5.9, 'crimeRate': 85.3, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58},
+    'Cardiff': {'impact': 'low', 'avgPrice': 272252, 'trend': 2.7, 'crimeRate': 93.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.85},
+    'Vale of Glamorgan': {'impact': 'moderate', 'avgPrice': 303112, 'trend': 6.2, 'crimeRate': 60.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.34},
+    'Newport': {'impact': 'low', 'avgPrice': 229200, 'trend': 2.0, 'crimeRate': 109.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.66},
+    'Caerphilly': {'impact': 'low', 'avgPrice': 197272, 'trend': 4.2, 'crimeRate': 85.3, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58},
 }
 
 
@@ -1725,14 +1767,14 @@ CARDIFF_BOROUGHS = {
 # Partnership row - and transport and healthcare carry every borough over the
 # two-input floor regardless.
 LEICESTER_BOROUGHS = {
-    'Leicester': {'impact': 'low', 'avgPrice': 228618, 'trend': 1.7, 'crimeRate': 110.0, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.91, 'floodMediumOrHighPct': 1.34, 'roadNoiseAboveWhoPct': 35.5},
-    'Blaby': {'impact': 'low', 'avgPrice': 282918, 'trend': 0.3, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 0.56, 'roadNoiseAboveWhoPct': 40.7},
-    'Charnwood': {'impact': 'low-moderate', 'avgPrice': 276865, 'trend': 3.8, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.9, 'floodMediumOrHighPct': 2.06, 'roadNoiseAboveWhoPct': 31.4},
-    'Harborough': {'impact': 'low', 'avgPrice': 346278, 'trend': 9.7, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.08, 'roadNoiseAboveWhoPct': 33.9},
-    'Hinckley and Bosworth': {'impact': 'low', 'avgPrice': 261584, 'trend': 2.9, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.04, 'roadNoiseAboveWhoPct': 36.1},
-    'Melton': {'impact': 'low', 'avgPrice': 283892, 'trend': 2.2, 'crimeRate': 56.8, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 0.64, 'roadNoiseAboveWhoPct': 39.6},
-    'North West Leicestershire': {'impact': 'moderate', 'avgPrice': 282239, 'trend': 6.5, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.74, 'floodMediumOrHighPct': 0.79, 'roadNoiseAboveWhoPct': 33.0},
-    'Oadby and Wigston': {'impact': 'low', 'avgPrice': 259734, 'trend': -1.7, 'crimeRate': 53.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.9, 'floodMediumOrHighPct': 0.25, 'roadNoiseAboveWhoPct': 28.5},
+    'Leicester': {'impact': 'low', 'avgPrice': 227322, 'trend': -0.9, 'crimeRate': 110.0, 'p8': 0.1, 'transport': 'poor', 'healthcare': 'good', 'airQualityWhoRatio': 1.91, 'floodMediumOrHighPct': 1.34, 'roadNoiseAboveWhoPct': 35.5},
+    'Blaby': {'impact': 'low', 'avgPrice': 289282, 'trend': 1.9, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.73, 'floodMediumOrHighPct': 0.56, 'roadNoiseAboveWhoPct': 40.7},
+    'Charnwood': {'impact': 'low-moderate', 'avgPrice': 273945, 'trend': 2.3, 'crimeRate': 67.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.9, 'floodMediumOrHighPct': 2.06, 'roadNoiseAboveWhoPct': 31.4},
+    'Harborough': {'impact': 'low', 'avgPrice': 347010, 'trend': 8.5, 'crimeRate': 44.4, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.6, 'floodMediumOrHighPct': 0.08, 'roadNoiseAboveWhoPct': 33.9},
+    'Hinckley and Bosworth': {'impact': 'low', 'avgPrice': 260187, 'trend': 1.7, 'crimeRate': 59.5, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.76, 'floodMediumOrHighPct': 0.04, 'roadNoiseAboveWhoPct': 36.1},
+    'Melton': {'impact': 'low', 'avgPrice': 282521, 'trend': 1.5, 'crimeRate': 56.8, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.53, 'floodMediumOrHighPct': 0.64, 'roadNoiseAboveWhoPct': 39.6},
+    'North West Leicestershire': {'impact': 'moderate', 'avgPrice': 280530, 'trend': 3.2, 'crimeRate': 59.2, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.74, 'floodMediumOrHighPct': 0.79, 'roadNoiseAboveWhoPct': 33.0},
+    'Oadby and Wigston': {'impact': 'low', 'avgPrice': 251253, 'trend': -4.2, 'crimeRate': 53.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.9, 'floodMediumOrHighPct': 0.25, 'roadNoiseAboveWhoPct': 28.5},
 }
 
 # Teesside: the five Tees Valley unitaries. Darlington is included because it
@@ -1740,11 +1782,11 @@ LEICESTER_BOROUGHS = {
 # an include-list in the crime loader - Darlington is Durham Constabulary while
 # the other four are Cleveland.
 TEESSIDE_BOROUGHS = {
-    'Hartlepool': {'impact': 'low', 'avgPrice': 130271, 'trend': 0.8, 'crimeRate': 134.2, 'p8': -0.47, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'roadNoiseAboveWhoPct': 48.1, 'floodMediumOrHighPct': 0.41},
-    'Middlesbrough': {'impact': 'low', 'avgPrice': 138122, 'trend': 2.0, 'crimeRate': 150.0, 'p8': -0.45, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'roadNoiseAboveWhoPct': 53.6, 'floodMediumOrHighPct': 0.55},
-    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 153205, 'trend': 8.1, 'crimeRate': 108.9, 'p8': -0.36, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3, 'roadNoiseAboveWhoPct': 47.5, 'floodMediumOrHighPct': 0.74},
-    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 170923, 'trend': 3.9, 'crimeRate': 107.9, 'p8': -0.19, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.46, 'roadNoiseAboveWhoPct': 45.3, 'floodMediumOrHighPct': 1.84},
-    'Darlington': {'impact': 'moderate', 'avgPrice': 158188, 'trend': 3.8, 'crimeRate': 91.0, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.37, 'roadNoiseAboveWhoPct': 53.3, 'floodMediumOrHighPct': 6.15},
+    'Hartlepool': {'impact': 'low', 'avgPrice': 136894, 'trend': 5.5, 'crimeRate': 134.2, 'p8': -0.47, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.36, 'roadNoiseAboveWhoPct': 48.1, 'floodMediumOrHighPct': 0.41},
+    'Middlesbrough': {'impact': 'low', 'avgPrice': 140909, 'trend': 3.7, 'crimeRate': 150.0, 'p8': -0.45, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.58, 'roadNoiseAboveWhoPct': 53.6, 'floodMediumOrHighPct': 0.55},
+    'Redcar and Cleveland': {'impact': 'low', 'avgPrice': 151341, 'trend': 4.2, 'crimeRate': 108.9, 'p8': -0.36, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.3, 'roadNoiseAboveWhoPct': 47.5, 'floodMediumOrHighPct': 0.74},
+    'Stockton-on-Tees': {'impact': 'moderate', 'avgPrice': 170029, 'trend': 3.0, 'crimeRate': 107.9, 'p8': -0.19, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.46, 'roadNoiseAboveWhoPct': 45.3, 'floodMediumOrHighPct': 1.84},
+    'Darlington': {'impact': 'moderate', 'avgPrice': 159988, 'trend': 2.9, 'crimeRate': 91.0, 'p8': -0.32, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.37, 'roadNoiseAboveWhoPct': 53.3, 'floodMediumOrHighPct': 6.15},
 }
 
 # Nottingham (Greater Nottingham: the city plus the three boroughs of its
@@ -1764,10 +1806,10 @@ TEESSIDE_BOROUGHS = {
 # here - the omission is what forces that rather than letting a shared rate
 # become three measurements by default.
 NOTTINGHAM_BOROUGHS = {
-    'City of Nottingham': {'impact': 'low', 'avgPrice': 192172, 'trend': 0.5, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 3.47, 'roadNoiseAboveWhoPct': 43.0},
-    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': 2.1, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 0.75, 'roadNoiseAboveWhoPct': 36.9},
-    'Gedling': {'impact': 'low', 'avgPrice': 250279, 'trend': 5.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.7, 'floodMediumOrHighPct': 2.44, 'roadNoiseAboveWhoPct': 28.4},
-    'Rushcliffe': {'impact': 'moderate', 'avgPrice': 331451, 'trend': 1.6, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.58, 'roadNoiseAboveWhoPct': 28.7},
+    'City of Nottingham': {'impact': 'low', 'avgPrice': 190200, 'trend': -1.3, 'crimeRate': 124.9, 'p8': -0.25, 'transport': 'moderate', 'healthcare': 'good', 'airQualityWhoRatio': 1.82, 'floodMediumOrHighPct': 3.47, 'roadNoiseAboveWhoPct': 43.0},
+    'Broxtowe': {'impact': 'low-moderate', 'avgPrice': 253021, 'trend': -0.8, 'transport': 'moderate', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.75, 'floodMediumOrHighPct': 0.75, 'roadNoiseAboveWhoPct': 36.9},
+    'Gedling': {'impact': 'low', 'avgPrice': 241473, 'trend': 0.9, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.7, 'floodMediumOrHighPct': 2.44, 'roadNoiseAboveWhoPct': 28.4},
+    'Rushcliffe': {'impact': 'moderate', 'avgPrice': 324012, 'trend': -1.5, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.64, 'floodMediumOrHighPct': 0.58, 'roadNoiseAboveWhoPct': 28.7},
 }
 
 CITIES = {
@@ -4939,6 +4981,23 @@ def _growth_breakdown_line(city):
     return f'{basis}. {history}'
 
 
+def _hpi_source_line():
+    """The price-source line every sterling city carries, derived from the label.
+
+    Written out by hand in TWELVE city dicts until 2026-09-16 - the same shape
+    the growth line had until v5.1 and the environment lines until audit F1,
+    and the one the July roll reached first: `build_hpi_prices.py --check`
+    counted 13 strings naming the June 2026 release and every one of them had
+    to be found and retyped. Read at request time, so the label constant above is
+    the only holder; the gate now asserts what build_sources() EMITS for each
+    city rather than counting literals in this file.
+    """
+    return (
+        f'Prices: HM Land Registry UK House Price Index, {SNAPSHOT_VINTAGE_LABEL} vintage, '
+        'Open Government Licence v3.0'
+    )
+
+
 def _inflation_source_line(city):
     """The CPIH line, only where growth was actually deflated by it."""
     if CITIES[city]['currency'] != 'GBP':
@@ -5043,7 +5102,7 @@ CITY_PROVENANCE = {
             #
             # APPENDED, not inserted: the postcode line above is index 2 by
             # contract and test_score.py asserts that position directly.
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
         ],
         'breakdown': {
             'quiet': 'DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.',
@@ -5067,7 +5126,7 @@ CITY_PROVENANCE = {
     },
     'westmidlands': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Birmingham Airport runway geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5080,7 +5139,7 @@ CITY_PROVENANCE = {
     },
     'westyorkshire': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Leeds Bradford Airport (LBA) runway 14/32 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5093,7 +5152,7 @@ CITY_PROVENANCE = {
     },
     'leicester': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5114,7 +5173,7 @@ CITY_PROVENANCE = {
     },
     'teesside': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Teesside International Airport (MME) runway 05/23 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0. Cleveland for four authorities and Durham for Darlington, this city region spanning two forces',
             _live_sources_line,
@@ -5134,7 +5193,7 @@ CITY_PROVENANCE = {
     },
     'southyorkshire': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: NO operating commercial airport in the city region; Doncaster Sheffield closed to commercial flights in 2022',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5147,7 +5206,7 @@ CITY_PROVENANCE = {
     },
     'merseyside': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Liverpool John Lennon Airport (LPL) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5160,7 +5219,7 @@ CITY_PROVENANCE = {
     },
     'tyneandwear': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Newcastle Airport (NCL) runway 07/25 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5173,7 +5232,7 @@ CITY_PROVENANCE = {
     },
     'bristol': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Bristol Airport (BRS) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5186,7 +5245,7 @@ CITY_PROVENANCE = {
     },
     'cardiff': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Cardiff Airport (CWL) runway 12/30 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
             _live_sources_line,
@@ -5199,7 +5258,7 @@ CITY_PROVENANCE = {
     },
     'nottingham': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, CITY OF NOTTINGHAM ONLY, Open Government Licence v3.0',
             _live_sources_line,
@@ -5228,7 +5287,7 @@ CITY_PROVENANCE = {
     # inside the new one reds the gate on a correct value.
     'manchester': {
         'sources': [
-            'Prices: HM Land Registry UK House Price Index, June 2026 vintage, Open Government Licence v3.0',
+            _hpi_source_line,
             'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, with the distance ladder scaled by its measured DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
             'Schools: Department for Education, Key Stage 4 Progress 8, 2023/24, Open Government Licence v3.0',
             'Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0',
@@ -7872,7 +7931,6 @@ def handle_changes(event):
     prev_bm = benchmarks(prev_set)
     cur_ranks = growth_ranks(CITIES['london']['boroughs'])
     prev_ranks = growth_ranks(prev_set)
-    market = market_context(CITIES['london']['boroughs'], prev_set)
     changes = []
     # Seeded with the nominal row so the name is always bound, then replaced by
     # the APPLIED set each borough was actually scored under. London carries all
@@ -7935,6 +7993,11 @@ def handle_changes(event):
     moved = [c for c in changes if abs(c['scoreChange']) > 0.5]
     risers = [c for c in changes if c['scoreChange'] > 0]
     fallers = [c for c in changes if c['scoreChange'] < 0]
+    # Built AFTER the tally so its closing sentence can count what the scores
+    # did rather than infer it from the trend (see market_context).
+    market = market_context(
+        CITIES['london']['boroughs'], prev_set, [c['scoreChange'] for c in changes]
+    )
     _CHANGES_BODY = {
             'city': 'london',
             'persona': 'balanced',
@@ -7954,9 +8017,10 @@ def handle_changes(event):
             # the page - and a per-borough divergence would show up in the
             # roundingResidual each row already publishes.
             'weights': applied_weights,
-            # The city-wide picture, so a reader can see that most boroughs fell
-            # because the market fell — without it, 25 of 33 dropping reads as a
-            # scoring fault rather than a description of the quarter.
+            # The city-wide picture, so a reader can see how many boroughs
+            # moved and that the market moved with them - without it, 25 of 33
+            # dropping (or 14 rising while the trend fell, as in July 2026)
+            # reads as a scoring fault rather than a description of the quarter.
             'marketContext': market,
             'attributionNote': (
                 'Each attribution contribution is the factor weight multiplied by the change in that '

@@ -1,5 +1,74 @@
 # Changelog
 
+## 2026-09-16 - July 2026 HPI roll: the first roll inside a quarter
+
+### What changed
+
+`avgPrice` and `trend` for all 94 sterling boroughs moved to HM Land
+Registry UK HPI **2026-07**, published this morning, in BOTH holders (the
+score Lambda and `index.html`, including the backend-only Cardiff and
+Nottingham prices block): **177 of 188 fields, 83 of 99 prices.** The v5.1
+deflator moved with it - ONS CPIH for July is **3.1%** (June was 2.8%) - in
+the Lambda's `CPIH_12M_PCT` and the site's `SNAPSHOT_CPIH_PCT`. All 99 area
+pages rebuilt.
+
+**The quarter key did NOT move, and that is a decision, not an omission.**
+`SNAPSHOT_VINTAGE` stays `2026-Q3` and the previous snapshot stays May
+(`2026-Q2`), so `?compare=previous` and `/v1/changes` now describe
+May-to-July movement under the same quarterly framing. Only
+`SNAPSHOT_VINTAGE_LABEL` moved, to "July 2026". HMLR publishes monthly and
+the comparison is quarterly; treating each month as a snapshot roll would
+have made "this quarter" mean "this month". The key next moves at the first
+Q4 release (October HPI, ~mid-December), when the July values are copied
+into the previous-vintage tables (ROADMAP "Open decisions", item 6).
+
+### Effect, measured against the 15 Sep engine
+
+- **`balanced`: 9 of 99 scores move, all by 0.1** (5 up, 4 down). 48
+  affordability components moved, the largest Redbridge by 0.3; the national
+  p5-p95 band moved 158,231-717,369 -> 158,435-720,241.
+- **`investor`: 78 of 99 scores move, mean -0.24, largest 3.4.** Growth reads
+  the month's 12-month trend against the city cohort's extremes, and the
+  July release re-ordered several 4-5 borough cohorts: Hartlepool
+  +0.8% -> +5.5% nominal took Teesside's top spot (growth 0.0 -> 10.0,
+  investor 5.1 -> 8.5); Newport +5.0% -> +2.0% lost Cardiff's (8.5 -> 0.0);
+  Bradford 7.4 -> 0.0; Gedling 10.0 -> 2.7. In real terms **29 of the 65
+  nominally rising boroughs are falling** (25 of 77 at June).
+- Worked example (METHODOLOGY s6, SW11 1AA): total **holds at 5.0**;
+  affordability 0.4 -> 0.3, growth 3.6 -> 3.2, every other component
+  unchanged. Re-derived and gated (`check_worked_example.py`, 20 of 20).
+- London `/v1/changes`: mean trend -3.35% -> -3.42%, falling boroughs 20 -> 21,
+  14 scores rose and 1 fell.
+
+### Two things shipped with it
+
+- **The twelve `Prices: HM Land Registry UK House Price Index, <month>
+  vintage` source lines are one derived line.** They were hand-written per
+  sterling city - the exact shape v5.1 removed for the growth line and audit
+  F1 for environment - and this roll reached them first: `--check` reported
+  "13 strings say 'June 2026 vintage'" and every one needed retyping.
+  `_hpi_source_line()` reads `SNAPSHOT_VINTAGE_LABEL` at request time, and
+  `build_hpi_prices.py --check` now asserts what `build_sources()` EMITS for
+  every city (each sterling city once, New York never) rather than counting
+  literals in the file. Proven red three ways before the numbers were written.
+- **`marketContext.summary` on `/v1/changes` no longer infers what SCORES
+  did from what the TREND did.** Its tail read "Most scores fell because the
+  market fell" whenever the mean trend fell. `balanced` weights growth at
+  0.00, so a balanced score cannot move on the trend - between vintages it
+  moves on affordability alone - and July is the first pair where the two
+  point opposite ways: trend down, 14 of 33 scores UP, and the endpoint
+  published "most scores fell" three lines above a `summary` counting 14
+  risers. The sentence is now counted from that tally and names the
+  mechanism. The 25 Aug fix made it direction-aware; it was aware of the
+  wrong direction.
+
+Also: one test (`PreviousVintageDeflationTests`) assumed no borough could
+land on the same real-terms trend in two vintages; Tower Hamlets did (-17.0
+under both May/3.0 and July/3.1). Its guard now compares against the current
+record and bounds the number of coincidences instead.
+
+No weight, threshold or formula changed. `methodologyVersion` stays 5.1.
+
 ## 2026-09-15 - methodology v5.1: growth is scored on the real-terms price trend
 
 ### What changed and why
