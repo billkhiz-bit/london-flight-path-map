@@ -1552,7 +1552,17 @@ to a city with no previous vintage, so live data can no longer reach the branch
 (`feedback-borrowed-edge-cases-expire`). The published reproduction residual
 moved 0.0674 -> 0.0721; both documents say "under 0.08" - the openapi gate's
 regex needs `under 0.08.` followed by a full stop, so a parenthetical after the
-number must be its own sentence. **DEPLOYED 2026-09-16 with the July roll and verified from the origin** (drift 133/133, freshness 99/99, sanity 28, parity 6); `deploy_hpi_roll.sh` does not run `demo-deploy`, so a methodology change that touches `openapi.yaml` needs that target too.
+number must be its own sentence. **Same afternoon, `panel contrast, area (AA)`
+went red on a node it had never measured before**: the `/nhs` "none within
+1.5 km" link, brand orange as TEXT at 2.60:1, rendered only when Overpass
+happened to answer that way for the probed area - green in the morning, red in
+the afternoon, nothing changed between. Fixed (inherit + underline;
+`--orange-ink` is 4.35:1 on the `--cream` mobile panel and is NOT enough, now
+recorded on the token) and **the gate now REACHES that state on purpose**: a
+third state, `area panel, nhs none-nearby`, fulfils `/nhs` with the Lambda's
+own `none_nearby()` shape and asserts the three links rendered before
+measuring (`reached`), proven red at 3 nodes per viewport on the old colour.
+*A state reached by chance is a state not gated.* **DEPLOYED 2026-09-16 with the July roll and verified from the origin** (drift 133/133, freshness 99/99, sanity 28, parity 6); `deploy_hpi_roll.sh` does not run `demo-deploy`, so a methodology change that touches `openapi.yaml` needs that target too.
 
 **GROWTH IS SCORED ON THE REAL-TERMS TREND SINCE METHODOLOGY v5.1 (2026-09-15).**
 The nominal HPI 12-month change is deflated by ONS CPIH for the SAME month -

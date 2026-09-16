@@ -124,6 +124,65 @@ const STATES = [
     // ... and the area panel names a postcode district, e.g. "Cheam (SM3 8BD)".
     expect: (title) => /\(\w{1,2}\d/.test(title),
   },
+  {
+    // THE /nhs "NONE NEARBY" STATE, REACHED ON PURPOSE (2026-09-16). The area
+    // panel's healthcare section draws a LINK instead of a list when /nhs
+    // answers that OpenStreetMap maps nothing of a type within 1.5 km (or
+    // that Overpass could not be asked). That link was the brand orange as
+    // text - 2.60:1 - and it shipped because this gate only ever saw it when
+    // the live endpoint happened to answer that way for the probed area: green
+    // on the morning run, red on the afternoon one, nothing changed between.
+    // A state reached by chance is a state not gated. This one fulfils /nhs
+    // with the Lambda's own none_nearby() shape (backend/lambdas/nhs/app.py)
+    // for all three buckets, so the three links exist on every run. Named
+    // with the `area` prefix because it is the area panel and shares its
+    // postcodes.io dependency - `--only=area` runs both.
+    name: 'area panel, nhs none-nearby',
+    open: async (page) => {
+      const km = 1.5;
+      const row = (type, site) => [
+        {
+          name: `No ${type} services within ${km} km in OpenStreetMap - search nhs.uk`,
+          website: site,
+          distance: null,
+          fallback: false,
+          noneNearby: true,
+          link: true,
+        },
+      ];
+      await page.route(
+        (url) => url.hostname.endsWith('.amazonaws.com') && url.pathname.endsWith('/nhs'),
+        (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({
+              available: true,
+              gp: row('GP', 'https://www.nhs.uk/service-search/find-a-gp'),
+              pharmacies: row('Pharmacy', 'https://www.nhs.uk/service-search/pharmacy/find-a-pharmacy'),
+              hospitals: row('Hospital', 'https://www.nhs.uk/'),
+            }),
+          })
+      );
+      return page.evaluate(() => {
+        const row = document.querySelector('.rank-table tbody tr');
+        if (row) {
+          row.click();
+          return 'ranking row (nhs stubbed)';
+        }
+        return null;
+      });
+    },
+    expect: (title) => /\(\w{1,2}\d/.test(title),
+    // The state is only reached if the stubbed links actually rendered; a
+    // stub nothing read would let this state pass by measuring the plain
+    // area panel twice. Asserted on the DOM, not on the route having fired.
+    reached: async (page) =>
+      page.evaluate(
+        () => document.querySelectorAll('#postcode-nhs-data a').length >= 3
+      ),
+  },
 ];
 
 // WHICH STATES TO RUN. `--only=<prefix>` selects one; the default is all.
@@ -334,6 +393,23 @@ for (const vp of VIEWPORTS) {
       console.log(`${header} FAIL opened the wrong panel - title is "${panelTitle.trim()}"`);
       failures++;
       continue;
+    }
+    // A state that is a VARIANT of another (the nhs none-nearby state is the
+    // area panel plus three links) must prove its distinguishing content
+    // rendered, or it measures the base state twice and reports two. Polled,
+    // because that content arrives on a fetch after the panel opens.
+    if (state.reached) {
+      const until = Date.now() + READY_TIMEOUT_MS;
+      let ok = false;
+      while (!ok && Date.now() < until) {
+        ok = await state.reached(page);
+        if (!ok) await page.waitForTimeout(POLL_MS);
+      }
+      if (!ok) {
+        console.log(`${header} FAIL opened, but the state's own content never rendered`);
+        failures++;
+        continue;
+      }
     }
     statesReached++;
     const records = await page.evaluate(COLLECT);
