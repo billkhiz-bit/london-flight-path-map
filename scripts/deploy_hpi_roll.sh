@@ -14,6 +14,12 @@
 # `tests/site-api-parity.mjs` agrees at the end. Redeploying the backend is also
 # the whole of the recovery if anything below goes wrong; nothing is destroyed.
 #
+# WHAT IT DOES NOT COVER. `demo-deploy` (score-demo/, incl. openapi.yaml) and
+# `data-deploy` (borough-extra.json) - a PRICE roll touches neither. A
+# METHODOLOGY change alongside a roll usually changes openapi.yaml, and that
+# is how v5.2 left "1 of 16 surfaces differ" on 2026-09-16 until demo-deploy
+# was run by hand. Read the drift line at the end and run what it names.
+#
 # WHY `make` IS NOT USED. It is on no PATH in Git Bash here. The three web
 # targets below are the Makefile's own recipes (web-deploy, area-deploy,
 # meta-deploy) expanded verbatim - `data-deploy` is NOT needed for a price roll,

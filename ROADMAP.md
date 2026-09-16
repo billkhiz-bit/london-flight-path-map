@@ -1028,7 +1028,7 @@ first, every time.
 | **Visual polish list** (layer-toggle colours, legend gating, DEFRA caption stacking, airport plates) | Any time, with Bill looking at the result - these are judgements, not defects. | One item per commit; `frontend-design` on the change; `a11y-source.mjs` and `panel-contrast.mjs` after, because the last three polish passes each found a contrast regression. | The two contrast gates green at desktop, phone and landscape. | Nothing structural. |
 | **Rebrand** (Sky Score -> CUBITT33, decided 5 Aug) | Before any COLD outreach, not before warm - `memory/project-outreach-never-sent.md`. A rename touches every deployed page, the App Store listing, `manifest.webmanifest`, the badge SVG and the `sources` strings integrators carry. | Grep the NAME across the tree first and count the surfaces; do the web in one deploy and the native binaries in their own release (2-4 week cadence). | `check_deploy_drift.sh` 133/133; `no em dashes`; the App Store lookup by bundle id. | Half-renamed surfaces - a public page saying one name and the API another. The grep count is the checklist. |
 | **Outreach** (5 drafts, 0 sent since 21 May) | Warm channels any time; cold channels after the rename. **DKIM verified before any send** - a first email that lands in spam is the most expensive one. | `memory/project-pilot-outreach-pack.md`; send gates in `OUTREACH_LOG.md`. | A test send to a personal address arrives with DKIM pass. | A bounced or spam-foldered first touch. |
-| **Sell through AWS Marketplace** (raised by Bill 2026-09-16) | **After the rebrand, never before** - a Marketplace listing is the most public, permanent, indexed cold channel there is, and renaming a live listing later means a new listing. **It is a CLOSING mechanism for deals sourced elsewhere, with zero expected discovery value**: tens of thousands of listings in broad categories, buyers search for what they already know, and small-ISV Marketplace revenue is private offers to customers the seller found. The £2,500 pilot transacting on a buyer's existing AWS bill (committed-spend burn-down, no vendor onboarding) is the case for it. Marketing stays where the project already puts it: the consumer site, the 99 area pages, the badge, warm outreach. | The fit is unusually good: API Gateway has a NATIVE Marketplace integration - attach a product code to a usage plan and it meters to Marketplace - so the work is a registration endpoint (`ResolveCustomer` on the `x-amzn-marketplace-token`, mint the key against the right plan, as `/v1/signup` already does) plus an SNS listener for subscribe/unsubscribe: 1-2 days. Listing needs: seller registration as CUBITT33 LTD (W-8BEN-E, bank), pricing/privacy/terms pages (exist), an EULA (AWS Standard Contract is the low-effort route), a support contact, then a review measured in weeks. **Verify before writing a number down**: the SaaS listing fee (believed ~3% under the current schedule - not confirmed) and UK seller eligibility terms. | A Marketplace test subscription mints a key that scores; a private offer can be issued. | Listed under a name the rebrand then retires; a fee assumption that turns out wrong in the pricing page. |
+| **Sell through AWS Marketplace** (raised by Bill 2026-09-16) | **After the rebrand, never before** - a Marketplace listing is the most public, permanent, indexed cold channel there is, and renaming a live listing later means a new listing. **It is a CLOSING mechanism for deals sourced elsewhere, with zero expected discovery value**: tens of thousands of listings in broad categories, buyers search for what they already know, and small-ISV Marketplace revenue is private offers to customers the seller found. The £2,500 pilot transacting on a buyer's existing AWS bill (committed-spend burn-down, no vendor onboarding) is the case for it. Marketing stays where the project already puts it: the consumer site, the 99 area pages, the badge, warm outreach. | The fit is unusually good: API Gateway has a NATIVE Marketplace integration - attach a product code to a usage plan and it meters to Marketplace - so the work is a registration endpoint (`ResolveCustomer` on the `x-amzn-marketplace-token`, mint the key against the right plan, as `/v1/signup` already does) plus an SNS listener for subscribe/unsubscribe: 1-2 days. Listing needs: seller registration as CUBITT33 LTD (W-8BEN-E, bank), pricing/privacy/terms pages (exist), an EULA (AWS Standard Contract is the low-effort route), a support contact, then a review measured in weeks. **The fee is VERIFIED (AWS docs, read 2026-09-16): 3% on public SaaS subscriptions and on private offers under USD 1M TCV, 1.5% on private-offer renewals**, effective since 5 Jan 2024 - `docs.aws.amazon.com/marketplace/latest/userguide/listing-fees.html`. Still to verify: UK seller eligibility terms and the W-8BEN-E path for a UK Ltd. | A Marketplace test subscription mints a key that scores; a private offer can be issued. | Listed under a name the rebrand then retires; a fee assumption that turns out wrong in the pricing page. |
 
 ### What each open decision entails - written 2026-09-14, corrected 2026-09-15
 
@@ -1142,11 +1142,17 @@ comments, resolved through the tags API; and `.github/dependabot.yml` for the
 `github-actions` ecosystem only, monthly, so the pins are updated by a PR
 rather than rotting - a pin nothing updates is a frozen list. **Left for
 Bill, one command** (the classifier refused it as a shared-resource change):
-`gh api -X PUT repos/billkhiz-bit/london-flight-path-map/branches/master/protection --input <file>`
-with the payload from `master-protection.json` (session scratchpad): required
-checks `lint-frontend`, `lint-backend`, `test-backend` - NOT `test-e2e`, which
+```
+gh api -X PUT repos/billkhiz-bit/london-flight-path-map/branches/master/protection --input .github/branch-protection.master.json
+```
+The payload is CHECKED IN at `.github/branch-protection.master.json` since
+2026-09-16 - the 15 Sep copy lived in a session scratchpad and was gone by the
+next morning. Required checks `lint-frontend`, `lint-backend`, `test-backend`
+(the names GitHub reports on `71264c4`'s check runs) - NOT `test-e2e`, which
 reads the LIVE site and would block a Dependabot PR on deploy drift -
-`enforce_admins: false`, no force-push, no deletion, linear history. **Why
+`enforce_admins: false`, no force-push, no deletion, linear history. Verify
+with `gh api repos/billkhiz-bit/london-flight-path-map/branches/master/protection`
+(404 "Branch not protected" on 16 Sep). **Why
 `enforce_admins` must be false:** required checks block DIRECT pushes whose
 commit has no passing run yet, which is every push from this machine; the
 owner bypass is what "allow the owner to push" means concretely. The checks
@@ -1269,11 +1275,14 @@ are in `git diff 6439c65 -- backend/lambdas/score/app.py`. Recommendation
 pending the measurement; (a) is the one this repo has already accepted the
 reasoning for.
 
-**Where this stands after 16 Sep:** the July roll and v5.2 are COMMITTED; the
-deploy is `sh scripts/deploy_hpi_roll.sh` (backend first), which the classifier
-refuses to run from Claude's session. Items 2 (badge CloudFront apply), 4
-(branch protection), the nine Dependabot merges and 1 (I17 flip, needs SES)
-are still Bill's.
+**Where this stands after 16 Sep:** the July roll (`d82e96d`) and v5.2
+(`71264c4`) are **DEPLOYED and verified from the origin** - drift 133 of 133,
+area freshness 99 of 99, score sanity 28 postcodes at v5.2, site == API on 6.
+`scripts/deploy_hpi_roll.sh` is the runbook; a methodology change also needs
+`demo-deploy` for `openapi.yaml`, which it does not cover. Items 2 (badge
+CloudFront apply), 4 (branch protection), the nine Dependabot merges and 1
+(I17 flip, needs SES) are still Bill's. New row: sell through AWS Marketplace,
+after the rebrand, as a closing mechanism not a channel.
 
 **Where this stands after 15 Sep:** 7 and 8 are **DEPLOYED 2026-09-15 and verified from the origin**: SAM modified `ChatFunction` alone; `index.html` uploaded `no-cache` and invalidated (completed); live hash == source; 1,390 stations served with 0 duplicates; `check_deploy_drift.sh` 133 of 133; live `/v1/chat` answers 400 with the score API's wording for a bad postcode and 200 for SW11 1AA.
 4 needs Bill's one protection

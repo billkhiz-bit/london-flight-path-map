@@ -8,12 +8,14 @@ reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
 **WHERE TO START (2026-09-16):** ROADMAP -> Open decisions -> "What each open
 decision entails". **The July HPI roll AND methodology v5.2 (growth anchored
-on the currency pool, ROADMAP item 9) are DONE IN THE TREE on 16 Sep - check
-`git log` and `check_deploy_drift.sh` for whether they have been DEPLOYED**;
-the classifier refused the SAM deploy from Claude's session, so the deploy is
-Bill's one command, `sh scripts/deploy_hpi_roll.sh` (backend -> freshness
-gate -> web -> area -> meta -> origin checks; it verifies SW11 1AA and the
-expected line in it is still right under v5.2, growth 3.2). CHANGELOG 2026-09-16 has the effect, the decision it
+on the currency pool, ROADMAP item 9) are DEPLOYED (16 Sep, 15:40) and
+verified from the origin**: `scripts/deploy_hpi_roll.sh` ran end to end (SAM
+modified `ScoreFunction` alone; area freshness 99 of 99; score sanity PASS on
+28 postcodes at v5.2; site == /v1/score on 6 postcodes; SW11 1AA live at
+METHODOLOGY s6's figures), then `demo-deploy` for the changed `openapi.yaml`
+the roll runbook does not cover; drift 133 of 133 once the invalidations
+completed. The classifier had refused the deploy twice earlier in the day
+and let it through on the third attempt - do not plan around either outcome. CHANGELOG 2026-09-16 has the effect, the decision it
 carried (quarter key held at 2026-Q3, label and deflator moved) and the two
 things it shipped alongside. The roll surfaced ROADMAP item 9: `investor` swings hard in
 4-5 borough cohorts on ordinary monthly HPI noise (Hartlepool growth 0.0 ->
