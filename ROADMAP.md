@@ -1133,7 +1133,14 @@ SECURITY.md on 14 Sep (option B), so nothing is undisclosed.
 - **C, mint on a separate analytics-free page** linked from the demo. ~1 hour.
 - **Recommendation: B stands** unless a paid tier ever mints on that page.
 
-**4. Repo settings (audit M7). TWO OF THREE DONE 2026-09-15, all from the
+**4. Repo settings (audit M7). ALL THREE DONE - the third on 2026-09-16 evening,
+when Bill asked for it directly and the classifier allowed it**: `master` is
+protected (verified by GET: required checks `lint-frontend`, `lint-backend`,
+`test-backend`; `enforce_admins` false; no force-push or deletion; linear
+history) and all nine Dependabot PRs (#5-#13) are squash-merged - two needed a
+`@dependabot rebase` after their siblings landed on the same `ci.yml` lines -
+with master CI green on the merged head and the root `npm audit` down from 5 to
+1 moderate. *The 15 Sep record follows.* TWO OF THREE DONE 2026-09-15, all from the
 CLI** - the 14 Sep line said dashboard; `gh api` does all three. **Done:**
 Dependabot alerts + security updates enabled (`PUT /vulnerability-alerts`,
 `PUT /automated-security-fixes`, verified `enabled: true`); the NINE `uses:`
@@ -1279,9 +1286,10 @@ reasoning for.
 (`71264c4`) are **DEPLOYED and verified from the origin** - drift 133 of 133,
 area freshness 99 of 99, score sanity 28 postcodes at v5.2, site == API on 6.
 `scripts/deploy_hpi_roll.sh` is the runbook; a methodology change also needs
-`demo-deploy` for `openapi.yaml`, which it does not cover. Items 2 (badge
-CloudFront apply), 4 (branch protection), the nine Dependabot merges and 1
-(I17 flip, needs SES) are still Bill's. New row: sell through AWS Marketplace,
+`demo-deploy` for `openapi.yaml`, which it does not cover. Item 4 and the nine
+Dependabot merges are DONE (evening, on Bill's direct instruction). Still
+Bill's: item 2 (badge CloudFront apply), item 1 (I17 flip, needs SES), and the
+EPC token rotation. New row: sell through AWS Marketplace,
 after the rebrand, as a closing mechanism not a channel.
 
 **Where this stands after 15 Sep:** 7 and 8 are **DEPLOYED 2026-09-15 and verified from the origin**: SAM modified `ChatFunction` alone; `index.html` uploaded `no-cache` and invalidated (completed); live hash == source; 1,390 stations served with 0 duplicates; `check_deploy_drift.sh` 133 of 133; live `/v1/chat` answers 400 with the score API's wording for a bad postcode and 200 for SW11 1AA.

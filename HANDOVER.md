@@ -20,9 +20,10 @@ carried (quarter key held at 2026-Q3, label and deflator moved) and the two
 things it shipped alongside. The roll surfaced ROADMAP item 9: `investor` swings hard in
 4-5 borough cohorts on ordinary monthly HPI noise (Hartlepool growth 0.0 ->
 10.0) - an observation awaiting a measurement, not a defect. What is left:
-Bill's one branch-protection command, the prepared CloudFront badge behaviour
-(apply, verify two postcodes, THEN repoint index.html), the nine Dependabot
-merges, and I17 option A when there is an afternoon for SES. **Rolling a month
+the prepared CloudFront badge behaviour (apply, verify two postcodes, THEN
+repoint index.html), I17 option A when there is an afternoon for SES, and the
+EPC token rotation. Branch protection is ON and the nine Dependabot PRs are
+merged (16 Sep evening; master CI green on the merged head). **Rolling a month
 inside a quarter, for next time:** `--check --all --vintage <new>` to size it,
 `--write --city X` for all 12 (it needs `--city`), `SNAPSHOT_VINTAGE_LABEL`,
 `CPIH_12M_PCT[current key]`, `SNAPSHOT_CPIH_PCT` in index.html, `DEFAULT_VINTAGE`
