@@ -198,8 +198,8 @@ Agents run in parallel using `concurrent.futures.ThreadPoolExecutor`, then Nova 
 #### Postcode-Specific Buyer Value Score (1-10)
 Each searchable area gets a score computed from **five** components (Environment was added at methodology v3.9, 2026-08-26, and road noise entered it at v4.0):
 1. **Quiet Skies** - actual geographic distance (Haversine formula) to airports and flight path corridors
-2. **Affordability** - neighbourhood-specific median prices (not borough averages)
-3. **Growth** - annual price trend percentage
+2. **Affordability** - price on a log scale against the national 5th-95th percentile band of borough medians (methodology v5.0; neighbourhood rows use their own postcode-district medians)
+3. **Growth** - 12-month price trend after inflation (HPI deflated by ONS CPIH, v5.1), dual-anchored against the fastest riser and steepest faller across the whole currency pool (v5.2); weighted for the `investor` persona only
 4. **Liveability** - composite of schools (35%), crime safety (30%), transport access (25%), and healthcare (10%)
 
 **Eight Buyer Personas** (Balanced, Family, Investor, First-Time, Quiet Life, Renter, Commuter, Later Life) dynamically reweight all **five** components and instantly re-rank every postcode / borough / neighbourhood.

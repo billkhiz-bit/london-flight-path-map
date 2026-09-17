@@ -77,9 +77,12 @@ const VIEWPORTS = [
   { label: 'phone landscape', width: 844, height: 390 },
 ];
 
-// The two panel states, reached by DIFFERENT routes on purpose. The area panel
+// The panel states, reached by DIFFERENT routes on purpose. The area panel
 // comes from the neighbourhood ranking; the borough panel comes from
-// updateSidebar() and is the one no gate had ever opened.
+// updateSidebar() and is the one no gate had ever opened. The third (added
+// 2026-09-16) is the area panel with /nhs FORCED into its "none nearby" shape,
+// because the link that state draws was reached only when the live endpoint
+// happened to answer that way - see the state's own comment.
 const STATES = [
   {
     name: 'borough panel',

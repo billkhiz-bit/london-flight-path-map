@@ -32,6 +32,14 @@ CloudFront URL: `https://d1oe4ftwutjpf.cloudfront.net` (canonical: `https://skys
 
 ## 2. Routine Deploys
 
+**A vintage roll (HPI monthly, crime annually) deploys through
+`sh scripts/deploy_hpi_roll.sh`** (added 2026-09-16): backend first, then the
+freshness gate, then the Makefile's web / area / meta recipes, then origin
+verification (drift, score sanity, site == API, the s6 postcode). It does NOT
+run `demo-deploy` - a methodology change alongside a roll usually touches
+`openapi.yaml`, and that is how v5.2 left one surface behind until it was run
+by hand. Read the drift line at the end and run what it names.
+
 **The Makefile is the single holder of every deploy command; this section
 used to duplicate them and drifted (rewritten 2026-09-13).** Measured against
 the Makefile that day, the copy here uploaded `index.html` with no
