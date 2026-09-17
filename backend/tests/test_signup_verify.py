@@ -238,7 +238,11 @@ class ConfirmTests(unittest.TestCase):
 class FlagOffTests(unittest.TestCase):
     def test_flag_off_runs_the_pre_i17_path_directly(self):
         app = load_signup()
-        self.assertFalse(app.SIGNUP_VERIFY, 'the template default is off; a fresh clone must not start sending')
+        self.assertFalse(
+            app.SIGNUP_VERIFY,
+            'the CODE default is off: the flag arrives from the template as an env var at deploy time, '
+            'and a bare import of the module must not start sending',
+        )
         with patch.object(app, 'SIGNUP_VERIFY', False), \
              patch.object(app, 'start_verification', side_effect=AssertionError('verification ran with the flag off')), \
              patch.object(app, 'complete_signup', return_value=app.response(201, {'ok': True})) as done:

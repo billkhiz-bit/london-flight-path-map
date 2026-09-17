@@ -195,7 +195,7 @@
       <header>
         <a href="/">&larr; Sky Score</a>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-09-07 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-09-17 · Effective: 2026-05-09</p>
       </header>
 
       <main>
@@ -236,11 +236,14 @@
       </p>
       <p>
         <strong>Score-update list (optional, added 21 August 2026):</strong> after you search a postcode you may leave an email
-        address to be told when that area's score changes. We collect the address and the postcode you searched, and nothing else.
+        address to be told when that area's score changes. We collect the address and the postcode you searched, plus a random
+        token that identifies your request for the 24 hours you have to confirm it, and nothing else.
         We use it for that single purpose: to send you a short note when the underlying data is refreshed, which happens roughly
-        quarterly. Lawful basis: consent (UK GDPR Article 6(1)(a)), which you give by submitting the form and can withdraw at any
-        time by replying to any message or emailing us. It is never sold, never shared, and never used for marketing anything else.
-        Stored in the same signup register (DynamoDB) in our AWS account in <code>eu-west-2</code> (London), marked with the source
+        quarterly. Lawful basis: consent (UK GDPR Article 6(1)(a)), which you give by clicking the confirmation link we email you
+        and can withdraw at any time by replying to any message or emailing us; an address that is not confirmed within 24 hours is
+        deleted and never joins the list. It is never sold, never shared, and never used for marketing anything else.
+        Until you confirm, the request is held in a separate pending table in the same account; once you do, the address is
+        stored in the signup register (DynamoDB) in our AWS account in <code>eu-west-2</code> (London), marked with the source
         <code>consumer</code> so it is distinguishable from an API key signup. Kept until you ask us to remove it.
         Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> and we delete the record within 30 days.
         <strong>These notes are sent by hand.</strong> We say so because the alternative is implying an automated alerting service
@@ -253,7 +256,10 @@
         choose to give one). We use it solely to issue your key, enforce the one-key-per-email limit, contact you about your key if
         we ever need to (for example abuse or deprecation notices), and revoke the key on request. Lawful basis: performance of a
         contract (UK GDPR Article 6(1)(b)), you are asking us to issue and operate the key, with our legitimate interest in
-        preventing abuse (Article 6(1)(f)) for the rate-limit and one-key-per-email checks. The address is stored in our AWS account
+        preventing abuse (Article 6(1)(f)) for the rate-limit and one-key-per-email checks. We first email you a confirmation
+        link; until you click it, the address, any display name and a random token are held in a separate pending table for at
+        most 24 hours, no key is issued, and a request that is not confirmed within 24 hours is deleted. The key is shown once, on
+        the page that link opens. After that the address is stored in our AWS account
         in <code>eu-west-2</code> (London), in the signup register (DynamoDB) and in the API key's own metadata; it is never sold
         or shared for marketing, and is kept for as long as the key remains active.
         Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> to delete it; we revoke the key and remove the

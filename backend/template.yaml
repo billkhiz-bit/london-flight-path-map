@@ -848,12 +848,12 @@ Resources:
           # container).
           USAGE_PLAN_NAME: SkyScoreFreeTier
           SIGNUPS_TABLE: !Ref SignupsTable
-          # I17 (2026-09-15): verification-first signup. OFF until the SES
-          # identity is verified and the account is out of the sandbox -
-          # with it on before that, every signup 503s at the send. The flip
-          # is `--parameter-overrides SignupVerify=on`, a runbook step in
-          # OPERATIONS.md, and it needs privacy.html s2a changed in the same
-          # deploy (consent is then given by the link, not the form).
+          # I17 (2026-09-15): verification-first signup. Needs the SES
+          # identity verified and the account out of the sandbox - with it
+          # on before that, every signup 503s at the send. The parameter's
+          # default is the flip (OPERATIONS.md s3.9), and privacy.html s2a
+          # changes in the same deploy (consent is then given by the link,
+          # not the form); tests/test_signup_verify.py holds the two together.
           SIGNUP_VERIFY: !Ref SignupVerify
           PENDING_TABLE: !Ref SignupPendingTable
           SES_FROM: !Ref SignupSenderAddress
@@ -1205,13 +1205,16 @@ Parameters:
     ConstraintDescription: 'EpcBearerToken must be non-empty. Get from get-energy-performance-data.communities.gov.uk My account, then pass via --parameter-overrides "EpcBearerToken=$EPC_BEARER_TOKEN".'
     NoEcho: true
     Description: Bearer token from get-energy-performance-data.communities.gov.uk (sign in via GOV.UK One Login, copy from the My account page). Pass at deploy time, never commit.
-  # I17 (2026-09-15). Both default to a deploy that changes nothing: the
-  # flag is off, and the sender is the address the SES identity will carry.
-  # Flip with `--parameter-overrides SignupVerify=on` once skyscore.co.uk is
-  # verified in SES eu-west-2 and the account is out of the sandbox.
+  # I17. The default is ON since the branch that carries privacy.html's
+  # consent-by-link wording (OPERATIONS.md s3.9 step 4): the page and the flag
+  # describe one behaviour, so a fresh stack matches its pages and merging
+  # that branch is the flip. Before it, `off` and a deploy that changed
+  # nothing. Requires skyscore.co.uk verified in SES eu-west-2 and the
+  # account out of the sandbox, or every signup 503s at the send; rollback
+  # is `--parameter-overrides SignupVerify=off` on the next deploy.
   SignupVerify:
     Type: String
-    Default: 'off'
+    Default: 'on'
     AllowedValues: ['on', 'off']
     Description: 'on = every /v1/signup POST writes a pending row and emails a confirm link; nothing reaches the register until it is clicked.'
   SignupSenderAddress:
