@@ -610,19 +610,28 @@ and the flip is the LAST step below.
    Domain `skyscore.co.uk`, Easy DKIM. Publish the three DKIM CNAMEs SES
    prints at Cloudflare (DNS only), plus `v=spf1 include:amazonses.com ~all`
    in the existing SPF TXT (merge, do not add a second SPF record) and a
-   DMARC TXT if none exists. Wait for "Verified".
+   DMARC TXT if none exists (`v=DMARC1; p=none; rua=mailto:support@skyscore.co.uk`).
+   Wait for "Verified". **Since 2026-09-17 `python scripts/check_aws_permissions.py`
+   prints an "I17 readiness" block** - identity created / verified / DKIM
+   status, and the DKIM CNAMEs to publish if they are still pending - once
+   step 3's paste has landed (it grants three SES READS for exactly this).
 2. **Sandbox exit (console -> Support case, "SES sending limits").** In the
    sandbox SES delivers only to verified addresses; a confirm email to a
    prospect bounces. State: transactional confirmation emails, one per
-   signup, no marketing, no lists. Usually 1-2 days.
-3. **Two IAM verbs for the deploy user**, so the pending table can carry a
-   TTL: add `dynamodb:UpdateTimeToLive` and `dynamodb:DescribeTimeToLive`
-   to the DynamoDB statement of `backend/iam-policy.json` AND paste the
-   whole policy in the console (a partial paste is what caused the 3 Sep
-   outage). Probed 2026-09-15: both denied today. Then put
-   `TimeToLiveSpecification: {AttributeName: expiresAt, Enabled: true}`
-   on `SignupPendingTable` in the template. Until then expiry is enforced
-   in code and dead rows just sit there.
+   signup, no marketing, no lists. Usually 1-2 days. The same readiness
+   block prints `sandbox exit DONE` when `ProductionAccessEnabled` is true.
+3. **Paste the whole of `backend/iam-policy.json` in the console** (a partial
+   paste is what caused the 3 Sep outage). **The file already carries what
+   this step needs (2026-09-17)**: `dynamodb:UpdateTimeToLive` and
+   `dynamodb:DescribeTimeToLive` in the DynamoDB statement, and a
+   `SESReadOnlyForI17Readiness` statement (GetAccount, ListEmailIdentities,
+   GetEmailIdentity - reads, nothing that sends or creates). Until the paste,
+   `check_aws_permissions.py` reports four DENIED (UpdateTimeToLive is a write, so it stays unprobed) and preflight's
+   `aws perms == iam-policy.json` stage deviates - that is the signal, not a
+   fault. THEN put `TimeToLiveSpecification: {AttributeName: expiresAt,
+   Enabled: true}` on `SignupPendingTable` in the template (on the branch),
+   which turns `VerifyPagesAndTemplateTests` green. Until then expiry is
+   enforced in code and dead rows just sit there.
 4. **The pages, in the SAME deploy as the flip** (they describe the new
    behaviour, so they are false a minute early and a minute late). **PREPARED
    2026-09-17 on branch `i17-flip-verification-on`** (`gh pr view
@@ -648,6 +657,9 @@ and the flip is the LAST step below.
      there too. Bill's call whether to keep it; the gate does not assert it.
    - `SUBPROCESSORS.md` row 1: change "(SES) - NOT YET SENDING" to the live
      wording; the row already names it. The gate asserts this both ways.
+   - `changes.html` "Policy notices": add the dated line for this change -
+     privacy.html s10 promises it there since 2026-09-17 (it used to promise
+     an in-app notice nothing implemented). Same deploy, same reason.
    - `privacy.html` s8 (cookies): NO change - the link carries its token in
      the URL and the confirm page sets nothing.
    - `score-demo/index.html` already renders the `pending` reply ("Check

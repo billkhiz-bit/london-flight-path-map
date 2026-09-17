@@ -75,6 +75,11 @@
     background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--amber);
     border-radius: 8px; padding: 14px 18px; font-size: 14px; color: var(--muted); margin: 20px 0;
   }
+  .notices { margin: 32px 0 8px; }
+  .notices h2 { font-size: 18px; margin: 0 0 8px; }
+  .notices ul { margin: 0; padding-left: 20px; font-size: 14px; }
+  .notices li { margin: 6px 0; }
+  .notices time { font-variant-numeric: tabular-nums; }
   /* Audit finding I8, fixed 2026-08-22. `overflow-x: auto` alone did NOT
      contain this table: measured at 320px the wrapper was a correct 272px box
      with scrollWidth 722, every over-wide element had a clipping ancestor, and
@@ -248,6 +253,22 @@
       <tbody id="rows"></tbody>
     </table>
   </div>
+
+  <!-- Policy notices. privacy.html s10 says material changes to the privacy
+       policy are listed here, dated. STATIC and hand-maintained: the rest of
+       this page renders /v1/changes, and a policy change is not a score
+       change. Add a line in the SAME deploy as the policy edit (OPERATIONS.md
+       s3.9 step 4 for the I17 flip). Seeded from the dated corrections the
+       policy already carries, so the promise was true the day it was made. -->
+  <section class="notices" id="policy-notices" aria-labelledby="policy-notices-h">
+    <h2 id="policy-notices-h">Policy notices</h2>
+    <ul>
+      <li><time datetime="2026-09-07">7 September 2026</time> - Privacy policy s2b corrected: postcode lookups go to
+        api.postcodes.io from the website as well as the native app; the section had described it as native-only.</li>
+      <li><time datetime="2026-08-21">21 August 2026</time> - Privacy policy s2a: the optional score-update email list was
+        added, a new data type (an email address and the postcode searched), consent-based, never used for anything else.</li>
+    </ul>
+  </section>
 </main>
 
 <footer>

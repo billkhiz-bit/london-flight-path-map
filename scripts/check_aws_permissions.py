@@ -117,6 +117,7 @@ def build_probes(session):
     s3 = session.client('s3', region_name=REGION)
     cfr = session.client('cloudfront')
     apigw = session.client('apigateway', region_name=REGION)
+    ses = session.client('sesv2', region_name=REGION)
 
     return {
         # The observability cluster - the set that silently regressed.
@@ -173,7 +174,59 @@ def build_probes(session):
             StackName='london-flight-map'),
         'dynamodb:DescribeTable': lambda: ddb.describe_table(
             TableName='london-flight-map-favourites'),
+        # I17 (OPERATIONS.md s3.9 step 3). The TTL on the pending table needs
+        # two verbs; the DESCRIBE half is a read, so it is the one probed, and
+        # its denial is what stands between the branch and the flip.
+        'dynamodb:DescribeTimeToLive': lambda: ddb.describe_time_to_live(
+            TableName='london-flight-map-signup-pending'),
+        # I17 steps 1-2 are console work in SES; these three reads let the
+        # readiness line below say whether they have been done, from here.
+        # Reads only - the deploy user must not be able to send or create.
+        'ses:GetAccount': lambda: ses.get_account(),
+        'ses:ListEmailIdentities': lambda: ses.list_email_identities(PageSize=1),
+        'ses:GetEmailIdentity': lambda: ses.get_email_identity(
+            EmailIdentity=SES_IDENTITY),
     }
+
+
+SES_IDENTITY = 'skyscore.co.uk'
+
+
+def i17_readiness(session):
+    """The two SES preconditions of OPERATIONS.md s3.9, read from the account.
+
+    Printed only when the reads are granted; otherwise says so and nothing
+    else, because an AccessDenied here would otherwise read as 'not verified'.
+    """
+    from botocore.exceptions import ClientError
+
+    ses = session.client('sesv2', region_name=REGION)
+    print()
+    print('I17 readiness (SES, eu-west-2)')
+    try:
+        acct = ses.get_account()
+        prod = acct.get('ProductionAccessEnabled')
+        print(f'  sandbox exit   {"DONE" if prod else "NOT YET"} (ProductionAccessEnabled={prod})')
+    except ClientError as e:
+        code = e.response.get('Error', {}).get('Code', '?')
+        print(f'  sandbox exit   unprobed ({code})')
+    try:
+        ident = ses.get_email_identity(EmailIdentity=SES_IDENTITY)
+        verified = ident.get('VerifiedForSendingStatus')
+        dkim = (ident.get('DkimAttributes') or {}).get('Status')
+        print(f'  identity       {SES_IDENTITY}: {"VERIFIED" if verified else "NOT VERIFIED"} '
+              f'(VerifiedForSendingStatus={verified}, DKIM={dkim})')
+        tokens = (ident.get('DkimAttributes') or {}).get('Tokens') or []
+        if tokens and dkim != 'SUCCESS':
+            print('  DKIM CNAMEs to publish at Cloudflare (DNS only, not proxied):')
+            for t in tokens:
+                print(f'    {t}._domainkey.{SES_IDENTITY}  CNAME  {t}.dkim.amazonses.com')
+    except ClientError as e:
+        code = e.response.get('Error', {}).get('Code', '?')
+        if code in REACHED_THE_SERVICE:
+            print(f'  identity       {SES_IDENTITY}: NOT CREATED (step 1 of s3.9)')
+        else:
+            print(f'  identity       unprobed ({code})')
 
 
 def declared_actions():
@@ -298,6 +351,8 @@ def main():
     print(f'  UNPROBED  {len(unprobed_declared)} - destructive or stateful, so')
     print('            deliberately not exercised. This report says NOTHING')
     print('            about them; it is not full coverage of the policy.')
+
+    i17_readiness(session)
 
     if drift:
         print()

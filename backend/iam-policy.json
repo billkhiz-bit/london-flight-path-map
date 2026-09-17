@@ -167,9 +167,21 @@
                 "dynamodb:Query",
                 "dynamodb:Scan",
                 "dynamodb:UpdateItem",
-                "dynamodb:TagResource"
+                "dynamodb:TagResource",
+                "dynamodb:UpdateTimeToLive",
+                "dynamodb:DescribeTimeToLive"
             ],
             "Resource": "arn:aws:dynamodb:eu-west-2:REPLACE_WITH_YOUR_AWS_ACCOUNT_ID:table/london-flight-map-*"
+        },
+        {
+            "Sid": "SESReadOnlyForI17Readiness",
+            "Effect": "Allow",
+            "Action": [
+                "ses:GetAccount",
+                "ses:ListEmailIdentities",
+                "ses:GetEmailIdentity"
+            ],
+            "Resource": "*"
         },
         {
             "Sid": "CloudWatchLogs",
