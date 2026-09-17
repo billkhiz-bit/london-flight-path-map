@@ -1460,6 +1460,36 @@ class ChatGroundingTests(unittest.TestCase):
                 ok, _ = chat.verify_answer(text, self.RANKED)
                 self.assertFalse(ok)
 
+    # REHEARSAL, 2026-09-17: the third hole, found by a TRUE answer. Asked
+    # "what is the score out of 100?" the live model said "50 out of 100" -
+    # correct arithmetic, and `grounded: true`, because the answer-side
+    # equivalence stripped 50 to "5" and `score: 5.0` supplied the 5. The
+    # same path grounds "about 500,000 pounds" on a 686,076 price. I11 had
+    # narrowed the rule to decimals on the payload side only.
+    WHOLE = {
+        'total': 5.0,
+        'components': {'quiet': 6.4},
+        'context': {'avgPriceGbp': 686076},
+    }
+
+    def test_a_whole_number_component_does_not_ground_its_multiples_of_ten(self):
+        chat = self._chat()
+        for text in (
+            'The score is 50.',
+            'The score is 50 out of 100.',
+            'The average price is about 500,000 pounds.',
+        ):
+            with self.subTest(text=text):
+                ok, _ = chat.verify_answer(text, self.WHOLE)
+                self.assertFalse(ok)
+
+    def test_the_rounded_form_of_a_decimal_still_passes(self):
+        # The equivalence exists for "7.0" in the payload and "7" in prose;
+        # narrowing it must not take that with it.
+        chat = self._chat()
+        ok, _ = chat.verify_answer('The score is 5.', self.WHOLE)
+        self.assertTrue(ok)
+
 
 class NhsBundleTests(unittest.TestCase):
     """London healthcare is served from a bundled snapshot, not a live call.

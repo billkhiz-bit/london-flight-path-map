@@ -291,7 +291,14 @@ def verify_answer(answer, context):
         trivial = number in _TRIVIAL_NUMBERS and not near_score
         if trivial or number in haystack:
             continue
-        if number.rstrip('0').rstrip('.') in haystack:
+        # DECIMALS only on THIS side too (found rehearsing the AI Tinkerers
+        # demo, 2026-09-17). The I11 fix narrowed the equivalence above to
+        # decimals in the PAYLOAD and left this line stripping integers, so
+        # "The score is 50" and "about 500,000 pounds" both became "5" and
+        # were grounded by `score: 5.0` - any whole-number component grounded
+        # every multiple of ten of itself. The docstring's rule ("330,000 is
+        # grounded by 330000 in the payload or not at all") was half done.
+        if '.' in number and number.rstrip('0').rstrip('.') in haystack:
             continue
         ungrounded.append(number)
 
