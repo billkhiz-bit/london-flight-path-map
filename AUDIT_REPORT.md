@@ -16,9 +16,11 @@
 > option A was BUILT behind `SignupVerify=off` (OPERATIONS.md s3.9 is the
 > flip; it closes on the day the flag goes on).** **2026-09-16: M7 is fully
 > CLOSED** - `master` protected from `.github/branch-protection.master.json`
-> and all nine Dependabot PRs merged, master CI green on the merged head; **M1
-> (badge edge cache) stays open as a decision** with `cloudfront_badge_behaviour.py`
-> prepared. **One finding outside any audit was found and closed by a gate the
+> and all nine Dependabot PRs merged, master CI green on the merged head. **M1
+> (badge edge cache) CLOSED 2026-09-17**: option A applied to the distribution
+> and verified (two postcodes Miss -> Hit, different SVGs), both badge URLs
+> repointed at `skyscore.co.uk/badge`, `sw.js` passes the path through, gated
+> by `tests/test_badge_edge_cache.py`. **One finding outside any audit was found and closed by a gate the
 > same day**: the `/nhs` "none within 1.5 km" link rendered in the brand orange
 > at 2.60:1, reached by the contrast gate only when Overpass happened to answer
 > that way; fixed, and the gate now forces that state (`099ca20`). Findings live

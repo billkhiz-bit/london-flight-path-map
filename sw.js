@@ -362,6 +362,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Same-origin /badge: do not intercept (2026-09-17, audit M1). It is the
+  // API's SVG served through a CloudFront behaviour on this distribution
+  // whose whole point is the origin's Cache-Control - 24 h for a scored
+  // postcode, 5 min for an uncovered one - and cacheFirst below would pin
+  // the first render in Cache Storage, where that header cannot reach it:
+  // the borough-extra.json shape again, on an image. Left to the browser,
+  // the HTTP cache honours the header and CloudFront serves the rest.
+  if (url.origin === self.location.origin && url.pathname === '/badge') return;
+
   // Same-origin static assets: cache-first.
   if (url.origin === self.location.origin) {
     event.respondWith(cacheFirst(req));

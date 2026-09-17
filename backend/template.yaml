@@ -1080,7 +1080,10 @@ Resources:
       # stack's deploy - including unrelated Lambdas - until the policy is
       # extended in the console. Expiry is enforced in code on every
       # confirm (`expiresAt` is checked before the row is used), so the only
-      # cost of the missing TTL is storage of dead rows, which is nothing.
+      # OPERATIONAL cost of the missing TTL is storage of dead rows. The
+      # cost that matters is on privacy.html: the page cannot say an
+      # unconfirmed request is DELETED while the rows sit here forever, and
+      # tests/test_signup_verify.py holds that sentence and this key together.
       # Once both verbs are granted (OPERATIONS.md, the SIGNUP_VERIFY
       # runbook), add
       #   TimeToLiveSpecification: {AttributeName: expiresAt, Enabled: true}

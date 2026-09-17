@@ -17,7 +17,13 @@ Why each test is here:
     with the flag off, so the two modes cannot drift on the rules;
   - the confirm page is HTML with the key escaped, no-store, and a CSP;
   - with the flag OFF the POST is the pre-I17 path, byte for byte - the
-    existing handler tests cover that path and this file asserts the switch.
+    existing handler tests cover that path and this file asserts the switch;
+  - the PAGES and the FLAG move together (VerifyPagesAndTemplateTests):
+    privacy.html describes consent-by-link only when the template default is
+    `on`, says the pending request is DELETED only when the table carries the
+    TTL that deletes it, and SUBPROCESSORS.md says "NOT YET SENDING" only
+    while that is true. OPERATIONS.md s3.9 step 4 says the pages ship in the
+    same deploy as the flip; a runbook step is a note, and this is the guard.
 
 Offline: ddb, ses and the APIGW helpers are patched at the boundary.
 """
@@ -25,6 +31,7 @@ Offline: ddb, ses and the APIGW helpers are patched at the boundary.
 import importlib.util
 import json
 import os
+import re
 import sys
 import time
 import unittest
@@ -243,6 +250,99 @@ class FlagOffTests(unittest.TestCase):
         app = load_signup()
         r = app.handler({'httpMethod': 'GET', 'path': '/v1/signup', 'headers': {}}, None)
         self.assertEqual(r['statusCode'], 405)
+
+
+ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
+
+# The exact sentences the branch that flips the flag writes into privacy.html
+# s2a. Held here, not re-typed on the page, so the page and the gate cannot
+# describe two different promises.
+CONSENT_BY_LINK = 'by clicking the confirmation link we email you'
+PENDING_DELETED = 'not confirmed within 24 hours is deleted'
+REGISTER_NOT_SENDING = 'NOT YET SENDING'
+
+
+def read(rel):
+    with open(os.path.join(ROOT, rel), encoding='utf-8') as fh:
+        return fh.read()
+
+
+class VerifyPagesAndTemplateTests(unittest.TestCase):
+    """The flip is one deploy with three moving parts, and each pair is
+    asserted in BOTH directions so the tree can never describe a state the
+    stack is not in: a page a minute early is a privacy policy that overclaims,
+    a minute late is one that under-discloses.
+
+    The deletion clause is the one a runbook could not hold. The pending
+    table has no TTL until two IAM verbs are granted (template.yaml comment on
+    SignupPendingTable), and the template's own comment calls the missing TTL a
+    cost of "nothing" - true operationally, false the moment privacy.html says
+    the request is deleted. So the branch carrying the page edits is RED here
+    until the TTL lands, and cannot be merged early by accident.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.template = read(os.path.join('backend', 'template.yaml'))
+        cls.privacy = read('privacy.html')
+        cls.register = read('SUBPROCESSORS.md')
+        cls.policy = read(os.path.join('backend', 'iam-policy.json'))
+        m = re.search(r"^  SignupVerify:\n(?:    .*\n)*?    Default: '(on|off)'", cls.template, re.M)
+        assert m, 'SignupVerify parameter not found in template.yaml - the regex, not the flag, is what changed'
+        cls.flag = m.group(1)
+        # The block runs from its key to the first line that is neither
+        # indented under it nor blank - the next resource, or the comment
+        # banner above it. A blank line ends nothing in YAML.
+        block = re.search(r'^  SignupPendingTable:\n(?:(?:    .*|\s*)\n)*', cls.template, re.M)
+        assert block, 'SignupPendingTable block not found in template.yaml'
+        # Anchored to the line start: the template's comment on this table
+        # spells the key out as the thing to add, and a substring test read
+        # that comment as the TTL itself on the gate's first run.
+        cls.pending_ttl = re.search(r'^ +TimeToLiveSpecification:', block.group(0), re.M) is not None
+
+    def test_privacy_describes_consent_by_link_iff_the_flag_is_on(self):
+        claims = CONSENT_BY_LINK in self.privacy
+        if self.flag == 'on':
+            self.assertTrue(
+                claims,
+                'SignupVerify defaults to on but privacy.html s2a still says consent is '
+                'given by submitting the form - the page ships in the SAME deploy (s3.9 step 4)',
+            )
+        else:
+            self.assertFalse(
+                claims,
+                'privacy.html says consent is given by clicking an emailed link while the '
+                'template default is off - nobody is emailed a link',
+            )
+
+    def test_privacy_claims_deletion_only_when_the_table_deletes(self):
+        if PENDING_DELETED in self.privacy:
+            self.assertTrue(
+                self.pending_ttl,
+                'privacy.html says an unconfirmed request is deleted after 24 hours, '
+                'but SignupPendingTable has no TimeToLiveSpecification - expiry is '
+                'enforced in code and the row is never removed (s3.9 step 3)',
+            )
+
+    def test_a_ttl_in_the_template_has_the_verbs_that_deploy_it(self):
+        if self.pending_ttl:
+            for verb in ('dynamodb:UpdateTimeToLive', 'dynamodb:DescribeTimeToLive'):
+                self.assertIn(
+                    verb,
+                    self.policy,
+                    f'{verb} is missing from iam-policy.json; a TTL in the template '
+                    'fails the WHOLE stack deploy without it (s3.9 step 3)',
+                )
+
+    def test_register_says_not_yet_sending_iff_the_flag_is_off(self):
+        row = next((ln for ln in self.register.splitlines() if 'Simple Email Service' in ln), None)
+        self.assertIsNotNone(row, 'SUBPROCESSORS.md row 1 no longer names SES')
+        if self.flag == 'on':
+            self.assertNotIn(
+                REGISTER_NOT_SENDING, row, 'the flag is on and SUBPROCESSORS.md still says SES is not sending'
+            )
+        else:
+            self.assertIn(REGISTER_NOT_SENDING, row, 'SUBPROCESSORS.md describes SES as live while the flag is off')
 
 
 if __name__ == '__main__':

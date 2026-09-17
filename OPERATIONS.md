@@ -624,29 +624,50 @@ and the flip is the LAST step below.
    on `SignupPendingTable` in the template. Until then expiry is enforced
    in code and dead rows just sit there.
 4. **The pages, in the SAME deploy as the flip** (they describe the new
-   behaviour, so they are false a minute early and a minute late):
+   behaviour, so they are false a minute early and a minute late). **PREPARED
+   2026-09-17 on branch `i17-flip-verification-on`** (`gh pr view
+   i17-flip-verification-on`), which carries the page edits below, the
+   `SUBPROCESSORS.md` row, AND the template default `SignupVerify: 'on'` -
+   so **merging that branch IS the flip**, and a fresh stack matches its
+   pages. `VerifyPagesAndTemplateTests` in `backend/tests/test_signup_verify.py`
+   holds the three together in both directions and is **RED on the branch
+   until step 3's TTL is in the template** - the page says an unconfirmed
+   request is deleted, and without the TTL it is not - so the branch cannot
+   be merged early by accident. Do steps 1-3, add the TTL line, and it goes
+   green. Do not retype the wording: the gate holds the exact sentences.
    - `privacy.html` s2a, the score-update paragraph: "which you give by
      submitting the form" -> "which you give by clicking the confirmation
      link we email you; an address that is not confirmed within 24 hours is
      deleted and never joins the list"; and "We collect the address and the
      postcode you searched, and nothing else" -> add "plus, for those 24
      hours, a random token that identifies the request". The API-key
-     paragraph needs no change (Art 6(1)(b) already covers issuing the key
-     by email).
+     paragraph's LAWFUL BASIS needs no change (Art 6(1)(b) already covers
+     issuing the key by email) - but its list of WHERE the address is stored
+     gains the pending table for those 24 hours, and the key is now shown
+     once on the page the emailed link opens, so the branch adds one clause
+     there too. Bill's call whether to keep it; the gate does not assert it.
    - `SUBPROCESSORS.md` row 1: change "(SES) - NOT YET SENDING" to the live
-     wording; the row already names it.
+     wording; the row already names it. The gate asserts this both ways.
    - `privacy.html` s8 (cookies): NO change - the link carries its token in
      the URL and the confirm page sets nothing.
    - `score-demo/index.html` already renders the `pending` reply ("Check
-     your email"); the postcode panel prints `data.message` verbatim.
-5. **Flip:** `sam deploy --parameter-overrides EpcBearerToken=... SignupVerify=on`
-   (SAM keeps the other parameters). Verify with a real signup to an address
-   you own: 201 `pending`, the email arrives with DKIM pass (check the
-   headers), the link shows the key once, a second click is a 410.
+     your email"); the postcode panel prints `data.message` verbatim. So does
+     the consumer notify form on `index.html`, which since 2026-09-17 also
+     counts a pending 201 as `notify-pending`, not `notify-subscribed`.
+5. **Flip:** merge the branch (`gh pr merge i17-flip-verification-on
+   --rebase`; master requires linear history), then
+   `sam deploy --parameter-overrides EpcBearerToken=...` - the default is
+   `on` now, so no `SignupVerify` override is needed and SAM keeps the other
+   parameters - then `make web-deploy` for `privacy.html`, then
+   `sh scripts/check_deploy_drift.sh`. Verify with a real signup to an
+   address you own: 201 `pending`, the email arrives with DKIM pass (check
+   the headers), the link shows the key once, a second click is a 410.
 6. Optional, later: `CONFIRM_URL_BASE` env on the Lambda if the link should
    go through the site's own distribution rather than the execute-api host.
 
-**Rollback** is `SignupVerify=off` on the next deploy; nothing else changes.
+**Rollback** is `SignupVerify=off` on the next deploy AND `git revert` of the
+merge, in the same window: the override alone leaves a live privacy page
+describing consent by a link nobody is sent.
 
 ## 4. Disaster Recovery
 

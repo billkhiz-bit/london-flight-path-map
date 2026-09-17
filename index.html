@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://skyscore.co.uk https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -10236,12 +10236,23 @@
       // whole exercise, and wrapping means the backlink survives even when the
       // image does not load. rel="noopener" because it opens in a new tab;
       // NOT nofollow, since the referral is the mechanism.
+      //
+      // The image is served from the SITE's origin, not API_BASE (2026-09-17,
+      // audit M1): /badge is a CloudFront behaviour on this distribution that
+      // caches per postcode and honours the Lambda's Cache-Control, so a busy
+      // listing page costs one invocation a day rather than one per viewer.
+      // API_BASE bypasses that cache entirely. ABSOLUTE, in both places: the
+      // snippet is pasted onto other people's pages, and the preview below
+      // renders inside the native app at capacitor://localhost, where a
+      // relative /badge resolves to nothing. One holder, so the copy a site
+      // owner takes is what the preview above it showed.
+      const BADGE_BASE = 'https://skyscore.co.uk/badge';
       function embedSnippet(postcode) {
         const pc = encodeURIComponent(postcode);
         const site = 'https://skyscore.co.uk';
         return (
           `<a href="${site}/?postcode=${pc}" target="_blank" rel="noopener">` +
-          `<img src="${API_BASE}/badge?postcode=${pc}" ` +
+          `<img src="${BADGE_BASE}?postcode=${pc}" ` +
           `width="220" height="64" alt="Sky Score for ${postcode}"></a>`
         );
       }
@@ -10306,7 +10317,11 @@
               // existing one, and two copies of that wording would drift.
               out.textContent = data.message || 'Thanks, you are on the list.';
               form.style.display = 'none';
-              trackEvent('notify-subscribed');
+              // With verification-first signup on (OPERATIONS.md s3.9) a 201
+              // is only a request: nobody is subscribed until the emailed
+              // link is clicked, and counting it as a subscription would
+              // overstate the list by every address that never confirms.
+              trackEvent(data.status === 'pending' ? 'notify-pending' : 'notify-subscribed');
             } else {
               out.textContent = data.error || 'Could not save that. Please try again.';
               btn.disabled = false;
@@ -12419,7 +12434,7 @@
         ? `<div class="sidebar-section">
       <h3>PUT THIS ON YOUR SITE</h3>
       <p class="info-note" style="margin-top:0;">A badge for ${escapeHtml(analysis.postcode)}, free to embed. It is an image, so it works anywhere HTML does.</p>
-      <img class="badge-preview" src="${API_BASE}/badge?postcode=${encodeURIComponent(analysis.postcode)}" width="220" height="64" alt="Sky Score badge for ${escapeHtml(analysis.postcode)}" loading="lazy" />
+      <img class="badge-preview" src="${BADGE_BASE}?postcode=${encodeURIComponent(analysis.postcode)}" width="220" height="64" alt="Sky Score badge for ${escapeHtml(analysis.postcode)}" loading="lazy" />
       <label class="visually-hidden" for="badge-embed">Embed code for this badge</label>
       <textarea id="badge-embed" class="badge-embed" rows="3" readonly>${escapeHtml(embedSnippet(analysis.postcode))}</textarea>
       <button id="badge-copy" type="button" class="badge-copy">Copy embed code</button>

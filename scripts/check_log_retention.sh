@@ -63,13 +63,20 @@ export MSYS_NO_PATHCONV=1
 # Without this the <strong> tag and the sentence around it sit on different
 # lines and every pattern below misses, which would look like "unparseable"
 # rather than "no claim".
+#
+# `tr -d '\r'` first, for the same reason as the AWS CLI output further down:
+# with core.autocrlf=true a `git checkout privacy.html` rewrites the file
+# CRLF, git reports no change, and `tr '\n' ' '` then leaves
+# `retained for\r <strong>` - which no pattern below matches. Found
+# 2026-09-17 on a tree where the page was byte-identical to HEAD as far as
+# git could see.
 if [ ! -r "$PRIVACY" ]; then
   echo "FAIL: cannot read $PRIVACY, so the claim is UNKNOWN." >&2
   echo "      An unreadable notice is not a passing one." >&2
   exit 1
 fi
 
-FLAT=$(tr '\n' ' ' < "$PRIVACY" | tr -s ' ')
+FLAT=$(tr -d '\r' < "$PRIVACY" | tr '\n' ' ' | tr -s ' ')
 
 if echo "$FLAT" | grep -q 'Execution logs are currently retained <strong>indefinitely</strong>'; then
   CLAIM="indefinite"
