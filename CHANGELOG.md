@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-09-18 - runbooks that read the source, and a coverage field for the extension
+
+No score moves. Five operational changes, each replacing something retyped,
+hand-placed or prose-matched with something derived:
+
+- **`/v1/environment` publishes `aircraftQuietCoverage`** (`measured` /
+  `city` / `outside`), set in the same Lambda branch that writes
+  `aircraftQuietBasis`, so the extension's panel-wide caveat reads a field
+  instead of matching the phrase "outside every city Sky Score covers". The
+  phrase survives only as the fallback for bodies cached before the field
+  deployed (six-hour service-worker cache); the field is tested for
+  `typeof === 'string'`, never truthiness. `AircraftQuietCoverageTests` holds
+  field and prose together; the extension e2e asserts the classification and
+  prints which leg answered. Backend deploy pending.
+- **`scripts/make.py` runs any Makefile target without GNU Make**, which is
+  on no PATH here. It reads the Makefile (one holder), refuses `$(shell)`,
+  `ifeq`, `include` and friends rather than guessing, takes `NAME=value`
+  overrides, and `--dry-run` prints the expanded commands. Its expansion of
+  `web-deploy`, `area-deploy` and `meta-deploy` was diffed against the 15
+  commands `deploy_hpi_roll.sh` had retyped: identical, so the runbook now
+  names targets instead of carrying a copy. `npm run make -- <target>` is
+  the npm alias. `tests/test_make_runner.py` pins the two bugs the 13 Sep
+  throwaway expander had and parses the real Makefile on every preflight.
+- **`scripts/rotate_epc_token.sh`** deploys the token in `.env` and verifies
+  `/epc` from the origin on `available: true` AND `count > 0`, because a
+  rejected token is a deliberate 200 with `available: false`. It refuses a
+  token equal to the one the live stack has (`sam deploy` writes it to the
+  gitignored `backend/samconfig.toml`) and a dirty `backend/`. Guard proven
+  red against the unchanged token.
+- **`data/uk-locator.json` is regenerated, not traced.** The checked-in file
+  was a jagged raster trace on a 130x168 frame from an unknown source.
+  `sh scripts/build_uk_locator.sh` now derives it from the ONS LAD boundaries
+  (country = ONS code prefix E/W, a new `--keep-prefix`) with every marker at
+  the bbox centre of the city's own `<city>-boroughs.json` (new
+  `--city-bbox`); 130x148, 72 KB (was 82), real coastline, markers where the
+  cities are. Both locator gates green.
+- **Permissions-Policy + X-Frame-Options DENY are scripted**
+  (`scripts/cloudfront_security_headers.py`, `--plan`/`--apply`/`--verify`),
+  waiting on one IAM paste (`CloudFrontResponseHeadersPolicy` in
+  `backend/iam-policy.json`; `check_aws_permissions.py` probes the list verb).
+  `--verify` was proven red against the live origin and found the `/badge`
+  behaviour carrying NO response-headers policy, so the badge SVG answers on
+  skyscore.co.uk with no HSTS; the script repoints it too. CSP `report-uri`
+  is closed as won't-fix (OPERATIONS s3.3).
+
 ## 2026-09-16 - methodology v5.2: growth is anchored on the currency pool
 
 ### What changed and why

@@ -17,6 +17,7 @@
     "preflight": "sh scripts/preflight.sh",
     "preflight:fix": "sh scripts/preflight.sh --fix",
     "preflight:quick": "sh scripts/preflight.sh --skip-e2e",
+    "make": "python scripts/make.py",
     "lighthouse": "lighthouse https://d1oe4ftwutjpf.cloudfront.net --output=html --output-path=./reports/lighthouse.html --chrome-flags=\"--headless\"",
     "audit": "npm run lint && npm run lint:html && npm audit",
     "audit:security": "npm audit && eslint index.html && ruff check backend/lambdas/",

@@ -30,9 +30,12 @@
 #     documented fallback did not exist and the deploy commands had to be run
 #     by hand. That is a contributing cause of audit finding 38: eleven live
 #     files reached production by hand-upload with no deploy command anywhere.
-#     Until deploy:* aliases exist (ideally delegating to one shared script, as
-#     preflight already does, so they cannot drift), run the aws commands in
-#     the targets below directly, or use OPERATIONS.md section 2.
+#     RESOLVED 2026-09-18: `python scripts/make.py <target>` (or
+#     `npm run make -- <target>`) runs any target in THIS file without GNU
+#     Make. It reads the Makefile, so there is nothing to keep in step; it
+#     refuses constructs it does not implement ($(shell), ifeq, include...)
+#     rather than guessing, and tests/test_make_runner.py parses this whole
+#     file on every preflight. `--dry-run` prints the expanded commands.
 #   - AWS CLI v2 with `flightmap` profile configured
 #   - Node + npm (for the asset pipeline)
 #   - Android Studio (for the GUI-based AAB build) OR a JDK + the Android

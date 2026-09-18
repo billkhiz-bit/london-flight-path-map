@@ -560,20 +560,31 @@ function decidePresentation(listing) {
   return { show: 'full', sections: order, letting, caveat: null };
 }
 
-// The phrase /v1/environment uses for the one state this caveat is about:
-// a postcode that resolved, but to no city Sky Score covers, so the aircraft
-// estimate came from a union of every geometry we hold rather than from this
-// area's own airports and flight paths.
+// The one state this caveat is about: a postcode that resolved, but to no
+// city Sky Score covers, so the aircraft estimate came from a union of every
+// geometry we hold rather than from this area's own airports and flight paths.
 //
-// MATCHED AS PROSE, which is a real weakness and is GUARDED rather than noted.
-// The endpoint has no machine-readable coverage field today, and this repo has
-// already paid for one suppression keyed on wording (audit I12, where a caveat
-// deleted itself). So tests/extension-e2e.mjs asks the LIVE endpoint for a
-// known-uncovered coordinate and asserts this classifier returns 'outside' -
-// if DEFRA-side wording ever drifts, that gate reds rather than this quietly
-// returning null forever. Adding `aircraftQuietCoverage` to the response is
-// the better shape and would delete this constant.
+// /v1/environment names it by machine since 2026-09-18: `aircraftQuietCoverage`
+// is 'measured', 'city' or 'outside', set in the Lambda branch that also
+// writes the sentence, so the two cannot disagree. Before that this classifier
+// MATCHED PROSE in `aircraftQuietBasis`, guarded by an e2e probe of the live
+// endpoint - this repo has already paid for one suppression keyed on wording
+// (audit I12, where a caveat deleted itself).
+//
+// The phrase survives for ONE reason: the service worker caches responses for
+// six hours, so for six hours after the field deploys a cached body has no
+// `aircraftQuietCoverage` at all. Absent field -> fall back to the prose;
+// present field -> the field decides, whatever the prose says. Never test the
+// field for truthiness: a missing key is "older response", not "not outside".
 const OUTSIDE_COVERAGE_PHRASE = 'outside every city Sky Score covers';
+
+function isOutsideCoverage(env) {
+  if (typeof env.aircraftQuietCoverage === 'string') {
+    return env.aircraftQuietCoverage === 'outside';
+  }
+  const basis = env.aircraftQuietBasis;
+  return typeof basis === 'string' && basis.includes(OUTSIDE_COVERAGE_PHRASE);
+}
 
 /**
  * The panel-wide caveat, measured from what the endpoint answered.
@@ -588,8 +599,7 @@ const OUTSIDE_COVERAGE_PHRASE = 'outside every city Sky Score covers';
 function coverageCaveat(envResult) {
   if (!envResult || !envResult.ok) return null;
   const env = (envResult.data || {}).environment || {};
-  const basis = env.aircraftQuietBasis;
-  if (typeof basis !== 'string' || !basis.includes(OUTSIDE_COVERAGE_PHRASE)) return null;
+  if (!isOutsideCoverage(env)) return null;
   return (
     'This address is outside every area Sky Score covers, so the aircraft ' +
     'figure is estimated from the nearest airports we hold rather than from ' +

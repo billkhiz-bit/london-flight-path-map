@@ -127,6 +127,28 @@ def ring_area(points: list[tuple[float, float]]) -> float:
     return abs(total) / 2.0
 
 
+def bbox_centre(path: Path) -> tuple[float, float]:
+    """(lat, lon) at the centre of a boundary GeoJSON's bounding box.
+
+    Used to place a marker from the city's OWN boundary file rather than a
+    coordinate typed in by hand, so the UK command is derivable from files the
+    repo already holds. The bbox centre, not the area centroid: a marker on a
+    112px inset names a region, and the region's extent is what a reader sees.
+    """
+    source = json.loads(path.read_text(encoding="utf-8"))
+    features = source.get("features") or [source]
+    lons, lats = [], []
+    for feature in features:
+        for ring in rings(feature.get("geometry") or {}):
+            for c in ring:
+                if len(c) >= 2:
+                    lons.append(float(c[0]))
+                    lats.append(float(c[1]))
+    if not lons:
+        raise SystemExit(f"{path}: no coordinates found")
+    return (min(lats) + max(lats)) / 2, (min(lons) + max(lons)) / 2
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--src", required=True, help="boundary GeoJSON")
@@ -141,6 +163,19 @@ def main() -> int:
     ap.add_argument("--projection", default="albers-us", choices=sorted(PROJECTIONS))
     ap.add_argument("--name-key", default="name", help="feature property holding the name")
     ap.add_argument("--exclude", nargs="*", default=[], help="feature names to drop")
+    ap.add_argument(
+        "--code-key",
+        help="feature property holding an ONS-style code, e.g. LAD13CD; needed by --keep-prefix",
+    )
+    ap.add_argument(
+        "--keep-prefix",
+        nargs="*",
+        default=[],
+        metavar="PREFIX",
+        help="keep only features whose --code-key value starts with one of these. "
+        "ONS codes carry the country in their first letter (E/W/S/N), which is how "
+        "'England & Wales' is expressed without naming 32 Scottish authorities.",
+    )
     ap.add_argument("--width", type=int, default=170, help="viewBox width")
     ap.add_argument("--pad", type=float, default=2.0, help="padding in output units")
     ap.add_argument("--tolerance", type=float, default=0.30, help="simplify tolerance, output units")
@@ -152,16 +187,31 @@ def main() -> int:
         metavar="NAME:LAT:LON",
         help="marker, repeatable. Name may contain spaces but not a colon.",
     )
+    ap.add_argument(
+        "--city-bbox",
+        action="append",
+        default=[],
+        metavar="NAME:GEOJSON",
+        help="marker at the bbox centre of a boundary file, repeatable. The "
+        "UK markers are placed from data/<city>-boroughs.json this way.",
+    )
     args = ap.parse_args()
+    if args.keep_prefix and not args.code_key:
+        ap.error("--keep-prefix needs --code-key")
 
     project = PROJECTIONS[args.projection]
     source = json.loads(Path(args.src).read_text(encoding="utf-8"))
     excluded = {e.lower() for e in args.exclude}
+    prefixes = tuple(args.keep_prefix)
 
     kept, dropped = [], []
     for feature in source.get("features", []):
-        name = str((feature.get("properties") or {}).get(args.name_key, ""))
+        props = feature.get("properties") or {}
+        name = str(props.get(args.name_key, ""))
         if name.lower() in excluded:
+            dropped.append(name)
+            continue
+        if prefixes and not str(props.get(args.code_key, "")).startswith(prefixes):
             dropped.append(name)
             continue
         for ring in rings(feature.get("geometry") or {}):
@@ -208,6 +258,11 @@ def main() -> int:
     for spec in args.city:
         name, lat, lon = spec.rsplit(":", 2)
         x, y = to_view(*project(float(lon), float(lat)))
+        cities.append({"name": name, "x": round(x, 1), "y": round(y, 1)})
+    for spec in args.city_bbox:
+        name, geojson = spec.split(":", 1)
+        lat, lon = bbox_centre(Path(geojson))
+        x, y = to_view(*project(lon, lat))
         cities.append({"name": name, "x": round(x, 1), "y": round(y, 1)})
 
     out = {

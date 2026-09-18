@@ -3647,6 +3647,57 @@ class RoadSurveyedQuietTests(unittest.TestCase):
         self.assertIn('England-only', app._road_absence_notice('cardiff'))
 
 
+class AircraftQuietCoverageTests(unittest.TestCase):
+    """`aircraftQuietCoverage` names the basis of the aircraft figure, by machine.
+
+    Until 2026-09-18 the extension decided its panel-wide caveat by matching
+    the PHRASE "outside every city Sky Score covers" in `aircraftQuietBasis`,
+    with an e2e probe of the live endpoint standing guard over the wording -
+    a caveat keyed on prose is how audit I12's caveat deleted itself. The
+    field is set in the same branch that chooses the sentence, and this class
+    holds the two together so the prose can change without the classifier
+    silently returning null forever.
+    """
+
+    WANDSWORTH = RoadSurveyedQuietTests.WANDSWORTH
+    UNCOVERED = RoadSurveyedQuietTests.UNCOVERED
+    NO_ROW = {'lden': None, 'roadLden': None, 'roadLdenBelow': None, 'no2': None, 'pm25': None}
+
+    def _environment(self, row, loc):
+        event = {'queryStringParameters': {'lat': '51.4613', 'lon': '-0.1673'}}
+        with patch.object(app, 'reverse_geocode', return_value=loc), \
+                patch.object(app, '_lookup_noise_row', return_value=row):
+            res = app.handle_environment(event)
+        self.assertEqual(res['statusCode'], 200)
+        return json.loads(res['body'])['environment']
+
+    def test_measured_when_defra_has_the_postcode(self):
+        env = self._environment(dict(self.NO_ROW, lden=61.2), self.WANDSWORTH)
+        self.assertEqual(env['aircraftQuietCoverage'], 'measured')
+        self.assertIn('aircraftNoiseLdenDb', env)
+        self.assertNotIn('aircraftQuietBasis', env)
+
+    def test_city_when_estimated_from_the_resolved_citys_geometry(self):
+        env = self._environment(self.NO_ROW, self.WANDSWORTH)
+        self.assertEqual(env['aircraftQuietCoverage'], 'city')
+        self.assertNotIn('outside every city', env['aircraftQuietBasis'])
+
+    def test_outside_when_no_city_covers_the_postcode(self):
+        env = self._environment(self.NO_ROW, self.UNCOVERED)
+        self.assertEqual(env['aircraftQuietCoverage'], 'outside')
+        # The prose the extension USED to match. Kept in step with the field
+        # here, because panel.js still falls back to it for responses cached
+        # before the field existed.
+        self.assertIn('outside every city Sky Score covers', env['aircraftQuietBasis'])
+
+    def test_every_value_is_declared(self):
+        for row, loc in ((dict(self.NO_ROW, lden=61.2), self.WANDSWORTH),
+                         (self.NO_ROW, self.WANDSWORTH),
+                         (self.NO_ROW, self.UNCOVERED)):
+            self.assertIn(self._environment(row, loc)['aircraftQuietCoverage'],
+                          app.AIRCRAFT_QUIET_COVERAGE)
+
+
 class BadgeTests(unittest.TestCase):
     """The embeddable SVG badge - D2, 2026-08-21.
 

@@ -6115,6 +6115,16 @@ def env_resolution(bd):
 # Keyed by component so airQuality and roadNoise slot in unchanged when their
 # rasters land. Both are declared in plannedComponents today; neither has data
 # in this repo yet, so neither appears here.
+# The values `aircraftQuietCoverage` can take on /v1/environment, in the order a
+# reader would rank them. 'measured': DEFRA's raster has this postcode.
+# 'city': estimated from the resolved city's own airports and flight paths.
+# 'outside': the postcode resolved to no city Sky Score covers, so the estimate
+# is the loudest of every geometry held - a weaker claim, and the one state the
+# extension's panel-wide caveat is about. The key is absent when there is no
+# aircraft figure at all. Declared as a tuple so a test can assert the handler
+# never emits a fourth spelling.
+AIRCRAFT_QUIET_COVERAGE = ('measured', 'city', 'outside')
+
 _COVERAGE_NOTICES = {
     'raster': None,  # measured at this location — nothing to disclose
     # No city name in this sentence. It said "about 10% of London postcodes"
@@ -8213,6 +8223,13 @@ def handle_environment(event):
     if aircraft_lden is not None:
         env['aircraftNoiseLdenDb'] = round(aircraft_lden, 1)
         env['aircraftQuiet'] = lden_db_to_quiet(aircraft_lden)
+        # MACHINE-READABLE basis, one of AIRCRAFT_QUIET_COVERAGE, set in the
+        # same branch that decides the sentence so the two cannot disagree.
+        # Until 2026-09-18 the extension classified coverage by matching a
+        # PHRASE in aircraftQuietBasis, guarded by an e2e probe of the live
+        # endpoint - a caveat keyed on wording is how audit I12's caveat
+        # deleted itself. Consumers read this; the prose stays for people.
+        env['aircraftQuietCoverage'] = 'measured'
         # Same WHO 2018 document as the road figure above; this is the value
         # _QUIET_CEILING_DB is already anchored on, restated so a consumer does
         # not have to know the scoring internals to read the decibels.
@@ -8266,6 +8283,7 @@ def handle_environment(event):
                 lat, lon, city, postcode_clean, raster_lden=None
             )
             basis = 'flight-path geometry, not measured'
+            coverage = 'city'
         else:
             estimated = _quiet_across_all_geometry(lat, lon, postcode_clean)
             # A NOUN PHRASE, because the extension renders this as
@@ -8276,9 +8294,11 @@ def handle_environment(event):
                 'the nearest airports we hold, not measured - this postcode is '
                 'outside every city Sky Score covers'
             )
+            coverage = 'outside'
         if estimated is not None:
             env['aircraftQuietEstimated'] = estimated
             env['aircraftQuietBasis'] = basis
+            env['aircraftQuietCoverage'] = coverage
         # Keyed on the same `city` the basis above was resolved from. It used
         # to be `'postcode-nyc' if city == 'nyc' else 'postcode'`, which has no
         # branch for `city is None` - so the uncovered case fell through to a

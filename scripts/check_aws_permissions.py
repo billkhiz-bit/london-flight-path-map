@@ -164,6 +164,13 @@ def build_probes(session):
             Bucket='london-flight-map-frontend', MaxKeys=1),
         'cloudfront:GetDistribution': lambda: cfr.get_distribution(
             Id='EGSSPJKLFL33M'),
+        # Permissions-Policy (2026-09-18): the site is on the MANAGED
+        # SecurityHeadersPolicy, which cannot be edited, so the header needs a
+        # custom policy, and creating one was denied on 8 and 18 Sep. The
+        # LIST read is the probe; its grant is what lets
+        # scripts/cloudfront_security_headers.py --apply run from here.
+        'cloudfront:ListResponseHeadersPolicies': lambda: cfr.list_response_headers_policies(
+            Type='custom', MaxItems='1'),
         'apigateway:GET': lambda: apigw.get_rest_apis(limit=1),
         'dynamodb:GetItem': lambda: ddb.get_item(
             TableName='london-flight-map-postcodes', Key={'pc': {'S': 'N17SX'}}),

@@ -152,6 +152,18 @@
             "Resource": "*"
         },
         {
+            "Sid": "CloudFrontResponseHeadersPolicy",
+            "Effect": "Allow",
+            "Action": [
+                "cloudfront:CreateResponseHeadersPolicy",
+                "cloudfront:GetResponseHeadersPolicy",
+                "cloudfront:GetResponseHeadersPolicyConfig",
+                "cloudfront:ListResponseHeadersPolicies",
+                "cloudfront:UpdateResponseHeadersPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "DynamoDB",
             "Effect": "Allow",
             "Action": [

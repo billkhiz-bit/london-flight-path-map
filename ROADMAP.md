@@ -888,7 +888,7 @@ drafts landing in spam folders spends them for nothing.
 
 Brief summary; pick one or two next session:
 
-- **Security residual** (~10-30 min each), RE-MEASURED 2026-08-24 - the old list here was stale in both directions: **HSTS is DONE** (the live response carries it; this list still offered it), and `img-src` was tightened long ago. Still genuinely open: CSP `report-uri`, **Permissions-Policy** via the CloudFront response-headers policy, signup CAPTCHA. ~~per-route throttle on `/v1/score`~~ **- that one was already done when this line was written**: `GET /v1/score` has carried 40/80 since the 2026-07-24 soak, and `POST /v1/score/batch` 10/20. As of **2026-09-07 every unauthenticated route carries its own throttle** (the last five sized from measured traffic - see `HANDOVER.md` §0.4), guarded by `backend/tests/test_route_throttles.py`, whose allow-list is now empty. A third stale entry in a list this same sentence twice corrects for being stale in both directions.
+- **Security residual** (~10-30 min each), RE-MEASURED 2026-08-24 - the old list here was stale in both directions: **HSTS is DONE** (the live response carries it; this list still offered it), and `img-src` was tightened long ago. RE-MEASURED AGAIN 2026-09-18, and the three "still open" items were three different things: CSP `report-uri` is **won't-fix** (header-only directive, a distribution-wide CSP header blanks the prototype, no collector exists - OPERATIONS s3.3); **Permissions-Policy + X-Frame-Options DENY is SCRIPTED** (`scripts/cloudfront_security_headers.py`, `--verify` proven red, `--apply` waits on the `CloudFrontResponseHeadersPolicy` IAM paste - OPERATIONS s3.2; it also found the `/badge` behaviour on NO policy); signup CAPTCHA is **superseded by I17 option A** (a verification email is the stronger control and is built). ~~per-route throttle on `/v1/score`~~ **- that one was already done when this line was written**: `GET /v1/score` has carried 40/80 since the 2026-07-24 soak, and `POST /v1/score/batch` 10/20. As of **2026-09-07 every unauthenticated route carries its own throttle** (the last five sized from measured traffic - see `HANDOVER.md` §0.4), guarded by `backend/tests/test_route_throttles.py`, whose allow-list is now empty. A third stale entry in a list this same sentence twice corrects for being stale in both directions.
 - **Visual polish** (~5-15 min each): layer-toggle indicator colours per layer, aircraft-noise legend gating, DEFRA caption stacking, airport text plates.
 - ~~**A11y carry-forward**: layer toggle hover/active, heading hierarchy, skip-to-content, touch targets, `:focus-visible`, SR search-results count, `prefers-reduced-motion`.~~ **ALL CLOSED — verified against the code 2026-07-27, not against this list.** Every item was already implemented (some since Wave 10); the list was stale and had been making finished work look outstanding for weeks. `index.html` scans **0 violations at any severity** under axe WCAG 2.1 AA.
 
@@ -1298,6 +1298,23 @@ Measure first: the per-borough month-on-month growth deltas over June -> July
 are in `git diff 6439c65 -- backend/lambdas/score/app.py`. Recommendation
 pending the measurement; (a) is the one this repo has already accepted the
 reasoning for.
+
+**Where this stands after 18 Sep:** the technical backlog was worked
+through (CHANGELOG 2026-09-18): `aircraftQuietCoverage` on `/v1/environment`
+(backend deploy pending - it rides the next SAM deploy, which is the EPC
+rotation), `scripts/make.py` as the Makefile runner (`deploy_hpi_roll.sh` no
+longer retypes recipes), `scripts/rotate_epc_token.sh`, the UK locator
+regenerated from source, and `scripts/cloudfront_security_headers.py` ready
+behind one IAM paste. Both demos (22 and 23 Sep) were dry-run beat by beat
+against live; two text slips fixed (weekday, "58" -> 57 checks). **Still
+Bill's, unchanged**: I17 steps 1-3, the EPC token regenerate (then
+`sh scripts/rotate_epc_token.sh`), the `iam-policy.json` paste (now carries
+BOTH the I17 verbs and the CloudFront response-headers verbs - one paste
+closes both), second MFA, billing alarm, the s3.8 IAM review, PR #4 (close)
+and #14 (merge). The probe reads 5 DENIED until the paste lands. Not done,
+deliberately: `index.html` data extraction (needs its own deploy day),
+visual polish (needs Bill looking), NYC stations (needs an MTA licence
+read), the rebrand and everything behind it.
 
 **Where this stands after 17 Sep:** item 2 (badge edge cache) is DONE and
 verified live; the M1 row above is struck. Item 1 (I17) has its pages

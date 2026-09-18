@@ -646,26 +646,42 @@ check(
     .count()) === 1
 );
 
-// THE PROSE MATCH THIS DEPENDS ON, ASKED OF THE ENDPOINT DIRECTLY.
+// THE CLASSIFICATION THIS DEPENDS ON, ASKED OF THE ENDPOINT DIRECTLY.
 //
-// coverageCaveat() classifies by looking for a phrase in `aircraftQuietBasis`,
-// because /v1/environment has no machine-readable coverage field. That is a
-// real weakness - this repo has already had a caveat delete itself over a
-// suppression keyed on wording (audit I12) - so it is guarded rather than
-// noted. If the endpoint's wording drifts, this reds with the actual string in
-// the failure detail, instead of coverageCaveat() quietly returning null for
-// every listing forever.
+// coverageCaveat() reads `aircraftQuietCoverage` (since 2026-09-18) and falls
+// back to a phrase in `aircraftQuietBasis` only when the field is absent - a
+// response cached before the field deployed. This asks the LIVE endpoint for
+// a known-uncovered coordinate (Watford, WD17) and applies the panel's own
+// rule: the field decides when present, else the prose. The detail names
+// which leg answered, so "field absent" is visible rather than silently
+// passing on the fallback forever - the reason the field exists is that a
+// caveat keyed on wording once deleted itself (audit I12).
 const envProbe = await page.evaluate(async () => {
   const res = await fetch(
     'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.6565&lon=-0.3903'
   );
   const body = await res.json();
-  return (body.environment || {}).aircraftQuietBasis || null;
+  const env = body.environment || {};
+  return { coverage: env.aircraftQuietCoverage ?? null, basis: env.aircraftQuietBasis ?? null };
 });
+const outsideByField = envProbe.coverage === 'outside';
+const outsideByProse =
+  envProbe.coverage === null &&
+  typeof envProbe.basis === 'string' &&
+  envProbe.basis.includes('outside every city Sky Score covers');
 check(
-  'endpoint still uses the phrase coverageCaveat matches on',
-  typeof envProbe === 'string' && envProbe.includes('outside every city Sky Score covers'),
-  String(envProbe)
+  'endpoint classifies WD17 as outside coverage',
+  outsideByField || outsideByProse,
+  outsideByField
+    ? 'by aircraftQuietCoverage'
+    : outsideByProse
+      ? 'by prose only - aircraftQuietCoverage ABSENT (backend not yet deployed?)'
+      : JSON.stringify(envProbe)
+);
+check(
+  'aircraftQuietCoverage, when present, is a declared value',
+  envProbe.coverage === null || ['measured', 'city', 'outside'].includes(envProbe.coverage),
+  String(envProbe.coverage)
 );
 
 // A postcode DEFRA actually measured. The SW5 fixture above exercises only the

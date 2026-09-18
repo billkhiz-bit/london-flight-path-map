@@ -65,10 +65,13 @@ make meta-deploy           # robots.txt, sitemap.xml, .well-known/
 make area-deploy           # area/ - 100 pages, sync --delete, invalidates
 ```
 
-`make` is not on PATH in Git Bash on the dev machine; the manual equivalents
-are in `CLAUDE.md` under "Build & Deploy", and `export MSYS_NO_PATHCONV=1`
-before any `cloudfront create-invalidation` there or Git Bash rewrites the
-paths. **Verify from the origin, never from the exit code:**
+`make` is not on PATH in Git Bash on the dev machine: run the same targets as
+`python scripts/make.py <target>` (since 2026-09-18; `--dry-run` prints the
+expanded commands, and it sets `MSYS_NO_PATHCONV=1` itself). The manual
+equivalents in `CLAUDE.md` under "Build & Deploy" are the reference for what
+each target does; if you do retype one, `export MSYS_NO_PATHCONV=1` before any
+`cloudfront create-invalidation` or Git Bash rewrites the paths. **Verify from
+the origin, never from the exit code:**
 `sh scripts/check_deploy_drift.sh` compares 133 surfaces and asserts a
 revalidating `Cache-Control` on all 11 pages.
 
@@ -223,12 +226,24 @@ and `X-XSS-Protection: 1; mode=block`**. A managed policy **cannot be edited**,
 which is the whole reason `Permissions-Policy` is absent: nobody removed it,
 that policy never had it. So this is a CREATE-a-custom-policy job, not an edit.
 
-**This is console work and cannot be scripted from here.** `flightmap-dev` is
-denied `cloudfront:CreateResponseHeadersPolicy`, `GetResponseHeadersPolicy` and
-`ListResponseHeadersPolicies` (probed 2026-09-08). `UpdateDistribution` IS
-granted, so once the policy exists the attach step can be done from the CLI.
+**SCRIPTED since 2026-09-18, behind one IAM paste.**
+`scripts/cloudfront_security_headers.py` carries steps 2-6 below as a config
+(`--plan` prints what it would change, `--apply` creates the policy and
+repoints the behaviours and waits for Deployed, `--verify` asserts the five
+headers and the ABSENCE of a CSP header on `/index.html`, the badge and the
+prototype - proven red against the live origin before anything was applied).
+It needs the `CloudFrontResponseHeadersPolicy` statement in
+`backend/iam-policy.json` pasted into the console first: `flightmap-dev` was
+denied `cloudfront:CreateResponseHeadersPolicy` and `ListResponseHeadersPolicies`
+on 2026-09-08 and again on 2026-09-18, and `scripts/check_aws_permissions.py`
+now probes the list verb so the paste landing is visible from here.
+`UpdateDistribution` was already granted. **Two behaviours get the policy, not
+one**: `--verify` found the `/badge` behaviour (added 2026-09-17) carrying NO
+response-headers policy at all, so the badge SVG answered on skyscore.co.uk
+with no HSTS and no X-Frame-Options; the script repoints it too. The manual
+steps stay below as the reference for what the config says.
 
-**Steps:**
+**Steps (manual reference; the script does these):**
 
 1. CloudFront console → Policies → Response headers → Create.
 2. Name: `sky-score-security-headers`.
@@ -258,9 +273,11 @@ granted, so once the policy exists the attach step can be done from the CLI.
    CloudFront, **the PWA does** - and an installed PWA is precisely where a
    locate button is wanted. `interest-cohort=()` is dropped: FLoC was
    withdrawn, so it is a no-op that only dates the header.
-6. Attach to the `EGSSPJKLFL33M` distribution's **default** cache behaviour.
-   There is exactly one behaviour and no extras, so it governs every path -
-   which is also why **no CSP goes in this policy**; see 3.3.
+6. Attach to the `EGSSPJKLFL33M` distribution's **default** cache behaviour
+   AND the `/badge` behaviour (which has none). The default governs every
+   page, which is also why **no CSP goes in this policy**; see 3.3. (This
+   step said "exactly one behaviour and no extras" until 2026-09-18; the badge
+   behaviour had existed since the day before.)
 
 **Verification** - `scripts/check_deploy_drift.sh` now checks all of this at
 the origin, which no amount of source review can do, since these headers exist
@@ -391,11 +408,21 @@ storage:
 
 1. Regenerate at <https://get-energy-performance-data.communities.gov.uk>
    (My account page).
-2. Update local `.env`.
-3. Re-run the backend deploy in Section 2.
+2. Update local `.env`. Never paste the value into chat.
+3. `sh scripts/rotate_epc_token.sh` (since 2026-09-18). It replaces "re-run
+   the backend deploy in Section 2" with the same SAM deploy plus the guards
+   a rotation needs: it refuses a token equal to the one the LIVE stack has
+   (`sam deploy` writes its parameter overrides into the gitignored
+   `backend/samconfig.toml`, so that file is the record of what was last
+   deployed), refuses a dirty `backend/`, and verifies `/epc` from the origin
+   on `available: true` AND `count > 0` for N1 7SX.
 
-Old tokens are not explicitly revoked by the rotation — MHCLG's UI just
-issues a new one and silently expires the old one.
+Do steps 1-3 back to back: the old token expires the moment the new one is
+issued, so `/epc` answers `available: false` in between. That is why the
+verify reads the BODY - a rejected token is a deliberate 200 with
+`available: false` (`backend/lambdas/epc/app.py`), which a status check
+passes. MHCLG's UI does not offer an explicit revoke; issuing a new token
+silently expires the old one.
 
 ### 3.7 — Migrate CI from static keys to GitHub OIDC — **RE-SCOPED 2026-09-13: there is nothing to migrate yet**
 

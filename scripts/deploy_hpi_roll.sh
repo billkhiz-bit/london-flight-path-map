@@ -20,12 +20,13 @@
 # is how v5.2 left "1 of 16 surfaces differ" on 2026-09-16 until demo-deploy
 # was run by hand. Read the drift line at the end and run what it names.
 #
-# WHY `make` IS NOT USED. It is on no PATH in Git Bash here. The three web
-# targets below are the Makefile's own recipes (web-deploy, area-deploy,
-# meta-deploy) expanded verbatim - `data-deploy` is NOT needed for a price roll,
-# because avgPrice/trend live in index.html and the Lambda, not in
-# borough-extra.json. If the Makefile's recipes change, change these too, or
-# better, put `make` on PATH and delete this file.
+# THE WEB TARGETS RUN THROUGH `scripts/make.py` (since 2026-09-18). `make` is
+# on no PATH in Git Bash here, and until that date steps 3 and 4 carried the
+# Makefile's recipes (web-deploy, area-deploy, meta-deploy) retyped - a copy
+# that drifts on the next Makefile edit. The runner reads the Makefile itself,
+# so this file names TARGETS and the Makefile stays the one holder of what
+# each one uploads. `data-deploy` is NOT needed for a price roll, because
+# avgPrice/trend live in index.html and the Lambda, not in borough-extra.json.
 #
 # MSYS_NO_PATHCONV=1 is load-bearing on every invalidation: Git Bash rewrites
 # '/index.html' into a Windows path and CloudFront rejects the whole batch.
@@ -53,23 +54,10 @@ step "2. the gate that was red before the deploy must be green now"
 node tests/area-page-freshness.mjs
 
 step "3. web (index.html + the funnel pages) - the site follows"
-AWS_PROFILE=flightmap aws s3 cp js/api-base.js  s3://london-flight-map-frontend/js/api-base.js  --content-type "application/javascript"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp index.html  s3://london-flight-map-frontend/index.html  --content-type "text/html"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp privacy.html  s3://london-flight-map-frontend/privacy/index.html  --content-type "text/html"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp pricing.html  s3://london-flight-map-frontend/pricing/index.html  --content-type "text/html"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp changes.html  s3://london-flight-map-frontend/changes/index.html  --content-type "text/html"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp terms.html  s3://london-flight-map-frontend/terms/index.html  --content-type "text/html"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp api/index.html  s3://london-flight-map-frontend/api/index.html  --content-type "text/html"  --cache-control "no-cache" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp js/vendor/  s3://london-flight-map-frontend/js/vendor/  --recursive --content-type "application/javascript" --region eu-west-2
-AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*'
+python scripts/make.py web-deploy
 
 step "4. area pages (they BAKE scores) + sitemap"
-AWS_PROFILE=flightmap aws s3 sync area/  s3://london-flight-map-frontend/area/  --content-type "text/html" --cache-control "public,max-age=3600"  --delete --region eu-west-2
-AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths '/area/*'
-AWS_PROFILE=flightmap aws s3 cp robots.txt  s3://london-flight-map-frontend/robots.txt  --content-type "text/plain" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp sitemap.xml  s3://london-flight-map-frontend/sitemap.xml  --content-type "application/xml" --region eu-west-2
-AWS_PROFILE=flightmap aws s3 cp .well-known/security.txt  s3://london-flight-map-frontend/.well-known/security.txt  --content-type "text/plain" --region eu-west-2
-AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSPJKLFL33M --paths '/robots.txt' '/sitemap.xml' '/.well-known/*'
+python scripts/make.py area-deploy meta-deploy
 
 step "5. verify FROM THE ORIGIN, never from the exit codes above"
 echo "-- invalidations still in progress (should drain within a few minutes):"

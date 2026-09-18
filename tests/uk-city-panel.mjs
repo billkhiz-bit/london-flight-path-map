@@ -115,6 +115,27 @@ page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(url, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(3000);
 
+// WARM THE /transport LAMBDA BEFORE THE LONDON CASE RUNS (2026-09-18).
+//
+// The London row asserts "stations have real names" against LIVE TfL data,
+// and the page gives that fetch PANEL_TIMEOUT_MS = 8000. A cold /transport
+// invocation measured 4.2 s before TfL was even asked, and the fetch-site
+// comment in index.html records production samples of 7.6 s and 10.8 s - so
+// on a cold Lambda the panel legitimately renders "temporarily unavailable"
+// and this gate went red on a tree that had not touched transport at all.
+// One throwaway call here takes the cold start out of the page's budget; a
+// stub would take the live path out of the gate, which is the thing worth
+// keeping. If TfL itself is slow this can still red, and that is a real
+// signal, not a flaky one: the page would show the same to a user.
+const API = await page.evaluate(() => window.API_BASE || null);
+if (API) {
+  try {
+    await fetch(`${API}/transport?lat=51.4613&lon=-0.1673`, { signal: AbortSignal.timeout(20000) });
+  } catch {
+    // A failure here is reported by the London case below, with the panel text.
+  }
+}
+
 const failures = [];
 function check(name, pass, detail) {
   console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + detail : ''}`);

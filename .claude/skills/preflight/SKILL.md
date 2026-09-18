@@ -102,3 +102,15 @@ commit does not go out regardless of what else is green:
   behind, then run ONCE more. Log the run to a file with the exit code
   appended (`sh scripts/preflight.sh > log 2>&1; echo EXIT=$? >> log`) so a
   killed run still shows how far it got.
+- **`sed -i` on Git Bash strips EVERY CR from a CRLF file, even when the
+  substitution touches one line (2026-09-18).** The diff shows the one line
+  you meant; `file` shows "with CRLF line terminators" become plain "ASCII
+  text" across all 193 lines. Most of this repo's docs are CRLF in the working
+  tree (`CLAUDE.md`, `OPERATIONS.md`, `HANDOVER.md`, this file), so a sed on
+  any of them rewrites the whole file and the next `git checkout` or a
+  shell gate that compares bytes goes red on a tree that looks identical
+  (the 17 Sep `check_log_retention.sh` red was the same family). Use the
+  Edit tool on any CRLF file; if a sed is unavoidable, run `file` (or
+  `git ls-files --eol`) before and after and restore with `sed -i 's/$/\r/'`
+  on the now-LF file. Same lesson as memory
+  `feedback-bash-heredoc-and-crlf-patching`, sixth instance.
