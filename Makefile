@@ -253,6 +253,17 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-quiet-regions.json \
 		s3://$(S3_BUCKET)/data/aircraft-quiet-regions.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# stations.json, added 2026-09-18: the 1,390 NaPTAN stations that were
+	# eleven inline <CITY>_STATIONS constants in index.html, fetched on search
+	# intent like the two aircraft-quiet files above and, like them, NOT in
+	# sw.js SHELL_ASSETS (cache.addAll is atomic; the panel has a not-loaded
+	# state). no-cache for the same reason: a pinned stale copy would list
+	# retired stations after a NaPTAN rebuild. Deploy it with index.html - the
+	# page fetches it, so a page that expects it and an origin without it is
+	# "station list could not be loaded" on every search.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/stations.json \
+		s3://$(S3_BUCKET)/data/stations.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)

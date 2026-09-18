@@ -1,4 +1,4 @@
-"""The published `<CITY>_STATIONS` arrays in index.html — audit I19.
+"""The published station lists in data/stations.json — audit I19.
 
 WHY THIS EXISTS AND WHAT NOTHING ELSE COVERS.
 
@@ -14,10 +14,15 @@ Measured on the published arrays before the fix: **170 of 943 entries were a
 place already listed, 166 of them South Yorkshire.** South Yorkshire went
 268 -> 102 and the product 1,651 -> 1,419.
 
-These tests read the SHIPPED arrays rather than re-running the builder, on
+These tests read the SHIPPED file rather than re-running the builder, on
 purpose: the builder needs the 101 MB gitignored NaPTAN CSV, which a fresh
-clone does not have, and the defect was in what reached index.html. A test that
+clone does not have, and the defect was in what reached the page. A test that
 can only run where the raw data is present is a test that does not run.
+
+THE HOLDER MOVED on 2026-09-18: eleven inline `<CITY>_STATIONS` constants in
+index.html became one data/stations.json keyed by city, fetched on search
+intent. Same content (the extraction was byte-verified against a rebuild),
+same checks; only _load() changed.
 """
 
 import json
@@ -27,7 +32,7 @@ import re
 import unittest
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-INDEX = os.path.join(REPO, 'index.html')
+STATIONS = os.path.join(REPO, 'data', 'stations.json')
 
 # The same clause `clean_name` strips, restated here on purpose. Importing it
 # from the builder would make this test agree with the builder's bugs - the
@@ -59,14 +64,9 @@ def _metres(a, b):
 
 
 def _load():
-    with open(INDEX, encoding='utf-8', newline='') as handle:
-        src = handle.read()
-    cities = {}
-    for match in re.finditer(r'const ([A-Z_]*STATIONS) = (\[.*?\]);', src, re.S):
-        const = match.group(1)
-        city = 'london' if const == 'STATIONS' else const[: -len('_STATIONS')].lower()
-        cities[city] = json.loads(match.group(2))
-    return cities
+    with open(STATIONS, encoding='utf-8') as handle:
+        data = json.load(handle)
+    return {city: rows for city, rows in data.items() if isinstance(rows, list)}
 
 
 class StationListTests(unittest.TestCase):
@@ -79,9 +79,9 @@ class StationListTests(unittest.TestCase):
         """A parse that finds nothing must fail, not report every check clean."""
         self.assertGreaterEqual(
             len(self.cities), MIN_CITIES,
-            f'only {len(self.cities)} station arrays parsed out of index.html - the '
-            'constant naming or the JSON layout changed, so every test below is '
-            'checking nothing. Fix the pattern, do not delete it.')
+            f'only {len(self.cities)} city lists read from data/stations.json - the '
+            'layout changed, so every test below is checking nothing. Fix the '
+            'loader, do not delete it.')
         total = sum(len(v) for v in self.cities.values())
         self.assertGreaterEqual(
             total, MIN_STATIONS,

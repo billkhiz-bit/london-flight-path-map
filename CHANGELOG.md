@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-09-18 (later) - stations leave index.html; a TfL outage lists NaPTAN under the notice
+
+**Cut 1 of the `index.html` data extraction.** The eleven `<CITY>_STATIONS`
+constants - 1,390 NaPTAN stations, 92 KB inside a `no-cache` page re-sent on
+every deploy - are `data/stations.json`, keyed by city. The page fetches it on
+search intent exactly as it fetches the aircraft-quiet files (`ensureStations`
+beside `ensureAircraftQuiet` on both result paths, 6 s cap), not via
+`SHELL_ASSETS`, and `renderNaptanStations()` gained a not-loaded state that
+renders its own sentence, so a slow network cannot become "no station near
+this postcode". `build_city_stations.py --write` writes the file (skipping the
+two API-only cities, read by AST from `BACKEND_ONLY_CITIES`' one holder);
+`tests/test_station_lists.py` reads it; `make data-deploy` uploads it. The
+extraction was proven byte-identical to a rebuild from NaPTAN. Page 933 -> 841
+KB. Measured first: the page is 233 KB brotli and FCP is already 1.1 s since the
+d3 move, so the remaining cuts (neighbourhoods, borough inputs) buy cache
+granularity rather than first paint and keep their own day (ROADMAP row).
+**Deploy `data/stations.json` WITH `index.html`.**
+
+**A TfL outage now lists NaPTAN stations under the notice.**
+
+Until now a total `/transport` failure (5xx, or a stall past the page's 8 s
+deadline) showed a London reader "Live transport data is temporarily
+unavailable" and NO stations - while 708 London NaPTAN stations sat in
+memory, and the fetch's own catch block claimed a fallback to them that the
+renderer never performed. The partial outage (`lineStatusAvailable: false`)
+already listed the stations it got under a notice denying the false
+reading, and the ten non-London cities already list NaPTAN under its own
+source line; a total outage is the same situation minus TfL's rows. It now
+renders the notice FIRST ("...so line status was not checked. The stations
+below come from the national NaPTAN register instead.") and the four nearest
+NaPTAN stations beneath it. `tests/failure-path.mjs` asserts the intent it
+used to assert as "no station name at all" on the DOM instead: notice first,
+zero TfL-shaped rows, NaPTAN rows with the source named - proven red against
+the old page. Found by `uk-city-panel.mjs` going red on a cold `/transport`
+invocation (4.2 s before TfL was asked); that gate now warms the Lambda once
+before its London case.
+
 ## 2026-09-18 - runbooks that read the source, and a coverage field for the extension
 
 No score moves. Five operational changes, each replacing something retyped,
@@ -13,7 +50,10 @@ hand-placed or prose-matched with something derived:
   deployed (six-hour service-worker cache); the field is tested for
   `typeof === 'string'`, never truthiness. `AircraftQuietCoverageTests` holds
   field and prose together; the extension e2e asserts the classification and
-  prints which leg answered. Backend deploy pending.
+  prints which leg answered. **Deployed 2026-09-18 14:41 UTC** (ScoreFunction
+  alone) and verified from the origin: Watford `outside`, Manchester M1
+  `city`, SW11 `measured`; demo-key scope 6 PASS; score sanity 28; the e2e's
+  coverage check answers "by aircraftQuietCoverage".
 - **`scripts/make.py` runs any Makefile target without GNU Make**, which is
   on no PATH here. It reads the Makefile (one holder), refuses `$(shell)`,
   `ifeq`, `include` and friends rather than guessing, takes `NAME=value`

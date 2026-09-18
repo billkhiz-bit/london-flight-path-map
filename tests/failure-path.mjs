@@ -404,11 +404,40 @@ for (const [label, mode] of [
     text.slice(0, 130)
   );
   // The fabricated-success half: an outage must never render stations as
-  // though the network were fine.
+  // though the network were fine. Until 2026-09-18 that was asserted as
+  // "no station name at all" - and the panel showed a London reader nothing,
+  // while 708 NaPTAN stations sat in memory and the fetch's own comment
+  // promised them. It now lists NaPTAN UNDER the outage notice, the way the
+  // partial outage below and the ten non-London cities already do. So the
+  // intent is asserted on the DOM instead: the notice comes FIRST, the rows
+  // are NaPTAN-shaped (.transport-row, with its own source line), and no
+  // TfL-shaped row (.transport-station, line badges, metres) exists - a
+  // TfL row here would be an outage dressed as an answer.
+  const shape = await page3.evaluate(() => {
+    const el = document.getElementById('postcode-transport-data');
+    if (!el) return null;
+    const first = el.firstElementChild;
+    return {
+      noticeFirst: !!first && first.tagName === 'P' && /temporarily unavailable/i.test(first.textContent),
+      tflRows: el.querySelectorAll('.transport-station').length,
+      naptanRows: el.querySelectorAll('.transport-row').length,
+      namesSource: /NaPTAN/.test(el.textContent),
+    };
+  });
   record(
-    `/transport ${label} does not present an outage as stations`,
-    !/Clapham Junction/i.test(text),
-    text.slice(0, 130)
+    `/transport ${label} leads with the outage notice`,
+    !!shape && shape.noticeFirst,
+    JSON.stringify(shape)
+  );
+  record(
+    `/transport ${label} renders no TfL-shaped station row`,
+    !!shape && shape.tflRows === 0,
+    JSON.stringify(shape)
+  );
+  record(
+    `/transport ${label} lists NaPTAN stations under the notice, source named`,
+    !!shape && shape.naptanRows > 0 && shape.namesSource,
+    JSON.stringify(shape)
   );
 }
 

@@ -48,8 +48,14 @@ SOURCE
   into one entry per station name, because six Piccadilly Gardens platforms
   are one station to a reader.
 
-  python scripts/build_city_stations.py --write-index
+  python scripts/build_city_stations.py --write
   python scripts/build_city_stations.py --city manchester
+
+THE HOLDER IS data/stations.json SINCE 2026-09-18, keyed by city, not eleven
+`<CITY>_STATIONS` constants in index.html. index.html fetches it on search
+intent (see ensureStations there); tests/test_station_lists.py reads it; the
+Makefile's data-deploy uploads it. `--write-index` still works as an alias
+because runbooks name it, and writes the same file.
 """
 
 import argparse
@@ -61,7 +67,29 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAPTAN_CSV = os.path.join(REPO, 'data', 'naptan.csv')
-INDEX_PATH = os.path.join(REPO, 'index.html')
+STATIONS_PATH = os.path.join(REPO, 'data', 'stations.json')
+# The two API-only cities have boundary files (so collect() finds their
+# stations) but no CITY_DATA entry, so the site never renders their panel.
+# The holder is what the site serves; writing them in would be dead weight
+# on every visitor. Read from the ONE holder of that list, by AST, exactly as
+# build_hpi_prices.py does - never a second copy.
+BACKEND_ONLY_HOLDER = os.path.join(REPO, 'tests', 'test_borough_data_parity.py')
+
+
+def backend_only_cities():
+    import ast  # noqa: PLC0415
+
+    with open(BACKEND_ONLY_HOLDER, encoding='utf-8') as fh:
+        tree = ast.parse(fh.read())
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(
+            getattr(t, 'id', None) == 'BACKEND_ONLY_CITIES' for t in node.targets
+        ):
+            value = node.value
+            if isinstance(value, ast.Call) and value.args:
+                value = value.args[0]
+            return set(ast.literal_eval(value))
+    raise SystemExit(f'BACKEND_ONLY_CITIES not found in {BACKEND_ONLY_HOLDER}')
 
 # Same set as scripts/build_borough_bands.py. Kept identical deliberately: if
 # these two ever disagree, the panel would name a station the score does not
@@ -370,27 +398,28 @@ def display_name(base, qualifiers):
     return base
 
 
-def write_index(city, stations):
-    """Replace `const <CITY>_STATIONS = [...]` in index.html."""
-    const = 'STATIONS' if city == 'london' else f'{city.upper()}_STATIONS'
-    with open(INDEX_PATH, encoding='utf-8') as fh:
-        src = fh.read()
-    pattern = re.compile(
-        r'(const ' + re.escape(const) + r' = )\[.*?\](;)', re.S
-    )
-    if not pattern.search(src):
-        return 0
-    payload = json.dumps(stations, separators=(',', ':'))
-    out = pattern.sub(lambda m: m.group(1) + payload + m.group(2), src, count=1)
-    with open(INDEX_PATH, 'w', encoding='utf-8', newline='') as fh:
-        fh.write(out)
+def write_holder(city, stations):
+    """Set one city's list in data/stations.json, keeping every other city.
+
+    Compact JSON, no trailing newline - the same bytes the one-off extraction
+    from index.html wrote on 2026-09-18, so a rebuild that changes nothing is
+    a clean diff. Cities are written in sorted order for the same reason.
+    """
+    holder = {}
+    if os.path.exists(STATIONS_PATH):
+        with open(STATIONS_PATH, encoding='utf-8') as fh:
+            holder = json.load(fh)
+    holder[city] = stations
+    with open(STATIONS_PATH, 'w', encoding='utf-8', newline='') as fh:
+        json.dump(dict(sorted(holder.items())), fh, separators=(',', ':'))
     return len(stations)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--city')
-    ap.add_argument('--write-index', action='store_true')
+    ap.add_argument('--write', '--write-index', dest='write', action='store_true',
+                    help='write data/stations.json (--write-index is the old name)')
     args = ap.parse_args()
 
     bboxes = city_shapes()
@@ -402,13 +431,16 @@ def main():
     found = collect(bboxes)
 
     total = 0
+    api_only = backend_only_cities()
     for city in sorted(found):
         n = len(found[city])
         total += n
         note = ''
-        if args.write_index:
-            written = write_index(city, found[city])
-            note = f' -> wrote {written}' if written else ' -> NO CONSTANT IN index.html'
+        if args.write and city in api_only:
+            note = ' -> API-only city, not in the site holder'
+        elif args.write:
+            written = write_holder(city, found[city])
+            note = f' -> wrote {written} to data/stations.json'
         print(f'  {city:16} {n:5} stations{note}')
     print(f'\n{total:,} stations across {len(found)} cities')
     return 0

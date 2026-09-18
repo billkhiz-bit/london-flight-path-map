@@ -70,7 +70,9 @@ def block(city: str) -> str:
     out.append(f'      const {up}_NEIGHBOURHOOD_VINTAGE = "2025";')
     out.append(f'      const {up}_NEIGHBOURHOOD_MIN_SALES = 30;')
     out.append(f'      /* {up}-NEIGHBOURHOODS:END */')
-    out.append(f'      const {up}_STATIONS = [];')
+    # No station constant since 2026-09-18: stations live in data/stations.json,
+    # written by `build_city_stations.py --city <key> --write`, and the CITY_DATA
+    # entry (still hand-written) reads them with `stations: () => stationsFor('<key>')`.
 
     out.append(f'      const {up}_AIRPORTS = [')
     for ap in geo['airports']:

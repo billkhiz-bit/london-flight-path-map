@@ -308,7 +308,7 @@ without an airport needs that path to stay intact.
 
 **Adding a city — the things that bite. Points 1-3 were found doing the third city and all still apply; the scripts in the table above now handle the DATA half, so what is left is the wiring.**
 1. **`data/*` is gitignored**, un-ignored file by file, so a new city's boundaries are invisible to git BY DEFAULT. It works on your machine, every gate passes, and the deploy serves "outlines could not be loaded". Add a `!data/<city>-boroughs.json` line, a `SHELL_ASSETS` entry, and a `make data-deploy` line — `cache.addAll()` is atomic, so a precached file missing at the origin stops the service worker installing for **every** city.
-2. **`data/borough-extra.json` is the enumeration that still bites.** `hydrateBoroughExtra()` and `recalcAllScores()` are now registry-driven and name no city, but a city absent from borough-extra scores from an empty object while the API scores properly — all ten Manchester boroughs disagreed by up to 1.5 points that way, with nothing raised, because both holders *had* the data and the site never loaded it. **The gate for this now exists**: `tests/borough-score-parity.mjs` drives the real page and compares the RENDERED score against the Lambda's for all 91 boroughs. Seed a new city's entry from the Lambda (`crimeRate`/`p8` only), then `python scripts/build_borough_bands.py --write` derives the other five fields — it SKIPS any city with no borough-extra entry, so the seed comes first.
+2. **`data/borough-extra.json` is the enumeration that still bites.** `hydrateBoroughExtra()` and `recalcAllScores()` are now registry-driven and name no city, but a city absent from borough-extra scores from an empty object while the API scores properly — all ten Manchester boroughs disagreed by up to 1.5 points that way, with nothing raised, because both holders *had* the data and the site never loaded it. **The gate for this now exists**: `tests/borough-score-parity.mjs` drives the real page and compares the RENDERED score against the Lambda's for all 91 boroughs. Seed a new city's entry from the Lambda (`crimeRate`/`p8` only), then `python scripts/build_borough_bands.py --write` derives the other five fields — it SKIPS any city with no borough-extra entry, so the seed comes first. **Stations are a second holder of the same shape since 2026-09-18**: `python scripts/build_city_stations.py --city <key> --write` adds the city to `data/stations.json`, and the hand-written `CITY_DATA` entry reads it with `stations: () => stationsFor('<key>')`; a city missing from that file renders "no station near this postcode" for every search, which `tests/uk-city-panel.mjs` catches only for the four cities it drives.
 
 2a. **Generate the frontend constants, do not copy them.** `python scripts/build_city_frontend_block.py --city <key> --insert` writes `<CITY>_BOROUGH_DATA_RAW`, the airports, the corridors and the neighbourhood markers from the Lambda. It exists because the two holders use different dialects for the same geometry — `coords` vs `coordinates`, `(lat, lon)` vs `[lon, lat]`, `avgPrice` vs `avg_price` — and each has already caused a production defect. The `CITY_DATA` entry itself is still written by hand: legend copy is a provenance claim.
 3. **Map chrome comes from the registry** via `applyCityChrome()`. Do not add an `if (city === 'x')` branch; add registry fields. The legend copy in particular is a provenance claim — NYC shipped a DEFRA/LHR explainer under a "BTS AIRCRAFT NOISE" heading for months because that block had no id. Adding a registry field means adding it to **all** cities: `tests/smoke-local.mjs` asserts key parity, so a field on one city and not the others fails the build.
@@ -414,10 +414,23 @@ removed layer fails with its own name in the diff. **Any count in an assertion i
 scheduled staleness.**
 
 **Stations are DISPLAY-ONLY, and the transport nudge is gone (2026-08-12).**
-`scripts/build_city_stations.py` fills `<CITY>_STATIONS` from NaPTAN - **1,390
-stations across ten cities, down from 1,651 on 2026-09-01 (audit I19) and 1,415
-on 2026-09-15 (audit M23)** - **read
-by `nearestStations()` for the detail panel**.
+`scripts/build_city_stations.py --write` fills **`data/stations.json`** (keyed by
+city; **the holder since 2026-09-18** - until then eleven inline
+`<CITY>_STATIONS` constants, 92 KB of a `no-cache` page re-sent on every
+deploy) from NaPTAN - **1,390 stations across ten cities, down from 1,651 on
+2026-09-01 (audit I19) and 1,415 on 2026-09-15 (audit M23)** - **read by
+`nearestStations()` for the detail panel** through `stationsFor(key)`. The page
+fetches it on search intent exactly as it fetches the aircraft-quiet files
+(`ensureStations(capMs)`, awaited beside `ensureAircraftQuiet` on both result
+paths), it is NOT in `sw.js` `SHELL_ASSETS` for the same reason they are not,
+and `renderNaptanStations()` has a third state - not loaded - that renders its
+own sentence and returns true, so a slow network can never become "no station
+near this postcode". The writer skips `BACKEND_ONLY_CITIES` (read by AST from
+its one holder) so the file is what the site renders; the extraction was proven
+byte-identical to a rebuild from NaPTAN. `tests/test_station_lists.py` reads the
+same file; `make data-deploy` uploads it `no-cache` - **deploy it WITH
+`index.html`**, since a page that expects it against an origin without it says
+"station list could not be loaded" on every search.
 
 **Two things were wrong with that list until 2026-09-01, and both were MEASURED
 before being fixed.** A trailing DIRECTION is a platform, not a place: Sheffield
