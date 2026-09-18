@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-18 (evening) - mobile tooling audit: 11 -> 7, the rest upstream-pinned
+
+Every open Dependabot alert (26) was in `mobile/` - the Capacitor CLI, the
+icon generator and fastlane, none of which ships to a user. `npm audit fix`
+in `mobile/` pruned 189 orphaned lockfile entries and lifted
+`brace-expansion`, `minimatch` and `tmp`; `npm run sync` (web copy + `cap
+sync`) still runs, and the web copy derives 18 data files including the new
+`stations.json`. The remaining 7, `tar` and `sharp` among them, all sit
+inside `@capacitor/assets@3.0.5` (the latest), which pins `sharp 0.32.6`
+exactly; accepted and recorded in SECURITY.md, revisited at each native
+release. PR #4 closed as superseded (its lockfile has been on `master` since
+May); PR #14 is made redundant by the same lockfile change.
+
 ## 2026-09-18 (later) - stations leave index.html; a TfL outage lists NaPTAN under the notice
 
 **Cut 1 of the `index.html` data extraction.** The eleven `<CITY>_STATIONS`
