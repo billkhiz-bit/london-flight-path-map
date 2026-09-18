@@ -1309,15 +1309,30 @@ drift gate reads 2 until `python scripts/make.py web-deploy data-deploy`),
 longer retypes recipes), `scripts/rotate_epc_token.sh`, the UK locator
 regenerated from source, and `scripts/cloudfront_security_headers.py` ready
 behind one IAM paste. Both demos (22 and 23 Sep) were dry-run beat by beat
-against live; two text slips fixed (weekday, "58" -> 57 checks). **Still
-Bill's, unchanged**: I17 steps 1-3, the EPC token regenerate (then
-`sh scripts/rotate_epc_token.sh`), the `iam-policy.json` paste (now carries
-BOTH the I17 verbs and the CloudFront response-headers verbs - one paste
-closes both), second MFA, billing alarm, the s3.8 IAM review, PR #4 (close)
-and #14 (merge). The probe reads 5 DENIED until the paste lands. Not done,
-deliberately: `index.html` data extraction (needs its own deploy day),
-visual polish (needs Bill looking), NYC stations (needs an MTA licence
-read), the rebrand and everything behind it.
+against live; two text slips fixed (weekday, "58" -> 57 checks). **The
+afternoon, on Bill's "go" while away** (three more commits, each on a 45/45
+preflight): a TfL total outage now lists the four nearest NaPTAN stations
+UNDER the notice instead of nothing (`failure-path.mjs` asserts it on the
+DOM); **cut 1 of the extraction is done** - the eleven station arrays are
+`data/stations.json`, fetched on search intent, page 933 -> 841 KB, the
+extraction byte-verified against a NaPTAN rebuild; and `mobile/`'s
+Dependabot alerts went 11 -> 7 with the rest recorded in SECURITY.md as
+upstream-pinned inside `@capacitor/assets`. PRs #4 and #14 closed as
+superseded. **THE FRONTEND IS NOT DEPLOYED - three surfaces wait together:
+`index.html`, `data/stations.json`, `data/uk-locator.json`**, held because a
+frontend deploy is not for an away window. When Bill is back:
+`python scripts/make.py web-deploy data-deploy`, then
+`sh scripts/check_deploy_drift.sh` (expect 134 of 134 now that `stations.json`
+is an 18th data surface), then a live search in Manchester and in London -
+stations must render in both, and the drift gate must not read "MISSING
+stations.json" for the page to be honest. **Still Bill's, unchanged**: I17
+steps 1-3, the EPC token regenerate (then `sh scripts/rotate_epc_token.sh`),
+the `iam-policy.json` paste (now carries BOTH the I17 verbs and the
+CloudFront response-headers verbs - one paste closes both), second MFA,
+billing alarm, the s3.8 IAM review. The probe reads 5 DENIED until the paste
+lands. Not done, deliberately: extraction cuts 2 and 3 (their own day, see
+the safe-windows row), visual polish (needs Bill looking), NYC stations
+(needs an MTA licence read), the rebrand and everything behind it.
 
 **Where this stands after 17 Sep:** item 2 (badge edge cache) is DONE and
 verified live; the M1 row above is struck. Item 1 (I17) has its pages
