@@ -1299,12 +1299,48 @@ are in `git diff 6439c65 -- backend/lambdas/score/app.py`. Recommendation
 pending the measurement; (a) is the one this repo has already accepted the
 reasoning for.
 
+**Where this stands after 19 Sep:** **the held frontend is DEPLOYED and
+verified from the origin.** All three surfaces went out together -
+`index.html`, `data/stations.json`, `data/uk-locator.json` - on a preflight of
+**45 blocking stages PASS, `RESULT: PASS`** with no stage skipped. Verified,
+never from an exit code: all three hash-MATCH the origin, `stations.json`
+answers **200 where it answered 403** (it had never existed at the origin),
+both carry `no-cache`, both CloudFront invalidations reached **Completed**, and
+`check_deploy_drift.sh` reads **134 of 134** - 16 pages, **18** data files
+(`stations.json` is the 18th, exactly as the 18 Sep row predicted) and 100 area
+pages, `cache-control: 11 of 11`, all 20 precached assets present. A live search
+drove every city against the deployed site: Manchester renders 4 stations
+(Market Street, Piccadilly Gardens), London renders Clapham Junction.
+
+**THE DOCUMENTED ORDER WAS BACKWARDS AND IS CORRECTED: `data-deploy` FIRST,
+THEN `web-deploy`.** Both rows below, and the 18 Sep memory, said
+`python scripts/make.py web-deploy data-deploy`. That uploads and invalidates
+`index.html` - which carries **5** references to `stations.json` and **0**
+inline `_STATIONS` arrays - *before* `stations.json` reaches the origin, so for
+the window between the two invalidations every search on the live site reads
+"station list could not be loaded". Reversed there is **no functional window at
+all**, because the page that was live carried the inverse (10 inline arrays, 0
+references) and simply ignores the new file until the new page lands.
+`make.py` honours argument order - confirmed with `--dry-run` before the run,
+not assumed. The locator is a genuine wash either way: live `viewBox` was
+`0 0 130 168` against the new file's `0 0 130 148`, so either order mis-scales
+a decoration briefly, and it has a graceful fallback. **This is the
+`fonts-deploy` rule one surface along** - "runs FIRST in `web-deploy-all`, and
+that ordering is load-bearing" - and the reasoning was already written in the
+Makefile's own `stations.json` comment while the command sat in the opposite
+order in three holders. **`web-deploy-all` still lists `web-deploy` before
+`data-deploy` (Makefile line 480) and carries the same latent hazard**; it is
+benign only while `stations.json` already exists at the origin. Left alone
+deliberately - reordering a dependency line touches a file
+`tests/test_make_runner.py` parses on every preflight, so it wants its own
+change and its own run.
+
 **Where this stands after 18 Sep:** the technical backlog was worked
 through (CHANGELOG 2026-09-18): `aircraftQuietCoverage` on `/v1/environment`
 (**backend DEPLOYED 14:41 UTC on Bill's instruction, ScoreFunction alone,
 verified live in all three states**; the frontend half of the commit -
 `index.html` viewBox + the regenerated locator - is NOT deployed and the
-drift gate reads 2 until `python scripts/make.py web-deploy data-deploy`),
+drift gate reads 2 until `python scripts/make.py data-deploy web-deploy`),
 `scripts/make.py` as the Makefile runner (`deploy_hpi_roll.sh` no
 longer retypes recipes), `scripts/rotate_epc_token.sh`, the UK locator
 regenerated from source, and `scripts/cloudfront_security_headers.py` ready
@@ -1321,7 +1357,7 @@ upstream-pinned inside `@capacitor/assets`. PRs #4 and #14 closed as
 superseded. **THE FRONTEND IS NOT DEPLOYED - three surfaces wait together:
 `index.html`, `data/stations.json`, `data/uk-locator.json`**, held because a
 frontend deploy is not for an away window. When Bill is back:
-`python scripts/make.py web-deploy data-deploy`, then
+`python scripts/make.py data-deploy web-deploy`, then
 `sh scripts/check_deploy_drift.sh` (expect 134 of 134 now that `stations.json`
 is an 18th data surface), then a live search in Manchester and in London -
 stations must render in both, and the drift gate must not read "MISSING
@@ -1345,7 +1381,8 @@ the deploy per OPERATIONS s3.9. Two things found on the way: privacy.html s10
 promises "an in-app notice" for material changes and nothing implements one
 (a wording decision, in the PR body); and `check_log_retention.sh` went red on
 a tree byte-identical to HEAD because `git checkout privacy.html` rewrites
-the file CRLF under `core.autocrlf=true` and the gate did not strip ``
+the file CRLF under `core.autocrlf=true` and the gate did not strip `
+`
 from the page - it does now. Still Bill's: I17 steps 1-3, the EPC token
 rotation, AWS Marketplace after the rebrand.
 

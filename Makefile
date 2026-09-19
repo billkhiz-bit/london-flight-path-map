@@ -261,6 +261,17 @@ data-deploy:
 	# retired stations after a NaPTAN rebuild. Deploy it with index.html - the
 	# page fetches it, so a page that expects it and an origin without it is
 	# "station list could not be loaded" on every search.
+	#
+	# ORDER IS LOAD-BEARING: run data-deploy BEFORE web-deploy, never after
+	# (corrected 2026-09-19). web-deploy uploads AND invalidates index.html,
+	# which carries 5 references to this file and 0 inline _STATIONS arrays -
+	# so web-deploy-first leaves a window, between the two invalidations, in
+	# which the live page fetches a file the origin does not have. Reversed
+	# there is no window at all: the page that is live ignores this file until
+	# the new page lands. Same rule as fonts-deploy running first above, one
+	# surface along. NB web-deploy-all still lists web-deploy before
+	# data-deploy and carries the same latent hazard - benign only while this
+	# file already exists at the origin.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/stations.json \
 		s3://$(S3_BUCKET)/data/stations.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
