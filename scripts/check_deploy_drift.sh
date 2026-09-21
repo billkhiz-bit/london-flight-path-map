@@ -182,11 +182,18 @@ for local_path in $DATA_SURFACES; do
   fi
 done
 
-# The Makefile target declares 17. A MINIMUM, so adding a city's boundary file
+# The Makefile target declares 18. A MINIMUM, so adding a city's boundary file
 # raises it with no edit here while a broken parse - which would silently check
 # nothing - reds.
-if [ "$DATA_CHECKED" -lt 17 ]; then
-  printf 'FAIL: compared only %d deployed data files, expected at least 17. The\n' "$DATA_CHECKED"
+#
+# Raised 17 -> 18 on 2026-09-19, when data/stations.json became the 18th
+# file (2026-09-18) and this floor sat one BELOW reality for a day. A floor
+# that trails the real count cannot notice the thing it exists to notice:
+# at 17, stations.json could have been dropped from data-deploy and this
+# pass would have compared 17 files and reported agreement. Raise the floor
+# with the target, not after an incident.
+if [ "$DATA_CHECKED" -lt 18 ]; then
+  printf 'FAIL: compared only %d deployed data files, expected at least 18. The\n' "$DATA_CHECKED"
   printf '  data-deploy parse is broken or the files have moved - either way this\n'
   printf '  pass reported agreement it never measured.\n'
   exit 1

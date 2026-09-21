@@ -1,5 +1,47 @@
 # Changelog
 
+## 2026-09-19 - the held frontend deploys, and the runbook that would have broken it
+
+**The three surfaces held on 18 Sep went out together** - `index.html`,
+`data/stations.json`, `data/uk-locator.json` - on a preflight of 45 blocking
+stages, `RESULT: PASS`, no stage skipped. Verified from the ORIGIN, never from
+an exit code: three hash-MATCHes, `stations.json` answering **200 where it
+answered 403** (it had never existed at the origin), both carrying `no-cache`,
+both CloudFront invalidations reaching **Completed**, `check_deploy_drift.sh`
+**134 of 134** (16 pages, 18 data files, 100 area pages), `cache-control: 11 of
+11`, all 20 precached assets present. A live search drove every city against
+the deployed site: Manchester renders 4 stations (Market Street, Piccadilly
+Gardens), London renders Clapham Junction.
+
+**The documented order was backwards, and not harmlessly.** ROADMAP twice, and
+the 18 Sep memory, said `python scripts/make.py web-deploy data-deploy`.
+`web-deploy` uploads AND INVALIDATES `index.html`, which carries **5**
+references to `stations.json` and **0** inline `_STATIONS` arrays - so
+web-first would have put a page that needs the file live *before* the file
+existed at the origin at all, and every search would have read "station list
+could not be loaded" until `data-deploy` caught up. Reversed there is **no
+window**: the page that was live carries the inverse (10 arrays, 0 references)
+and ignores the new file until the new page lands. `make.py` honours argument
+order - confirmed with `--dry-run` before the run, not assumed. The locator is
+a genuine wash either way (live `viewBox` `0 0 130 168` against the new file's
+`0 0 130 148`), and it is a decoration with a graceful fallback.
+
+**The reasoning was already right in the Makefile's own `stations.json`
+comment while the command sat inverted in three holders** - mirror drift
+between a comment and a runbook, and the Makefile was the holder nobody was
+reading. Corrected in ROADMAP (both runnable commands), the Makefile comment,
+CLAUDE.md and two memory files. `web-deploy-all` (Makefile:480) still lists
+`web-deploy` before `data-deploy` and carries the same latent hazard - benign
+only while `stations.json` already exists at the origin - and is left for its
+own change, because `tests/test_make_runner.py` parses that file on every
+preflight.
+
+**`check_deploy_drift.sh`'s data floor was raised 17 -> 18.** It had sat one
+BELOW reality since `stations.json` joined on 18 Sep, and a floor that trails
+the real count cannot notice what it exists to notice: at 17, the file could
+have been dropped from `data-deploy` and the pass would have compared 17 files
+and reported agreement. Raise the floor with the target, not after an incident.
+
 ## 2026-09-18 (evening) - mobile tooling audit: 11 -> 7, the rest upstream-pinned
 
 Every open Dependabot alert (26) was in `mobile/` - the Capacitor CLI, the

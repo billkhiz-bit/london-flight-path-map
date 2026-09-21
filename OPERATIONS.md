@@ -57,13 +57,25 @@ version-pinned fonts):
 ```bash
 make web-deploy-all        # fonts first (load-bearing), then every target below
 make web-deploy            # index.html, privacy, pricing, changes, terms, api/, js/
-make data-deploy           # data/*.json incl. borough-extra.json (no-cache)
+make data-deploy           # data/*.json incl. borough-extra.json + stations.json (no-cache)
 make pwa-deploy            # manifest, sw.js, icons
 make demo-deploy           # score-demo/ incl. openapi.yaml and vendored Swagger
 make prototype-deploy      # prototype/index.html
 make meta-deploy           # robots.txt, sitemap.xml, .well-known/
 make area-deploy           # area/ - 100 pages, sync --delete, invalidates
 ```
+
+**ORDER: `data-deploy` BEFORE `web-deploy` when both are run (2026-09-19).**
+`web-deploy` uploads AND INVALIDATES `index.html`, and the page fetches
+`data/stations.json` and the two aircraft-quiet files on search intent. Run
+web first and there is a window, between the two invalidations, in which the
+live page asks for a file the origin does not yet have - on 19 Sep that was a
+404 on `stations.json`, which renders as "station list could not be loaded"
+on every search. Reversed there is no window: the page that is live does not
+reference the new file at all. Use `python scripts/make.py data-deploy
+web-deploy` (it honours argument order; `--dry-run` shows the sequence).
+**`web-deploy-all` still lists `web-deploy` first** and carries the same
+latent hazard - benign only while the data files already exist at the origin.
 
 `make` is not on PATH in Git Bash on the dev machine: run the same targets as
 `python scripts/make.py <target>` (since 2026-09-18; `--dry-run` prints the

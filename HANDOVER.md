@@ -6,6 +6,35 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
+**WHERE TO START (2026-09-19):** ROADMAP -> Open decisions -> "What each open
+decision entails", and its closing paragraph "Where this stands after 19 Sep".
+**The frontend held on 18 Sep is DEPLOYED and verified from the origin** -
+`index.html`, `data/stations.json`, `data/uk-locator.json`, all three together
+on a preflight of 45 blocking stages (`RESULT: PASS`, nothing skipped). Three
+hash-MATCHes; `stations.json` answers **200 where it answered 403**, having
+never existed at the origin; both invalidations Completed;
+`check_deploy_drift.sh` **134 of 134** (16 pages, **18** data files, 100 area
+pages); a live search renders 4 stations in Manchester and Clapham Junction in
+London. **The runbook's deploy order was BACKWARDS and is corrected: run
+`python scripts/make.py data-deploy web-deploy`, never the reverse.**
+`web-deploy` uploads AND INVALIDATES `index.html`, which carries 5 references
+to `stations.json` and 0 inline `_STATIONS` arrays, so web-first leaves a
+window in which the live page fetches a file the origin does not have.
+The Makefile's own comment on that file had the reasoning right the whole
+time while three other holders had the command inverted - mirror drift between
+a comment and a runbook. Also raised: `check_deploy_drift.sh`'s data floor
+17 -> 18, which had sat one BELOW reality since 18 Sep and so could no longer
+have noticed a dropped file. **Still open and still Bill's**: I17 steps 1-3
+(SES identity, sandbox exit, two IAM verbs), the EPC token regenerate then
+`sh scripts/rotate_epc_token.sh`, the `iam-policy.json` paste (one paste
+closes the I17 reads AND the CloudFront response-headers verbs; the
+permissions probe reads 5 DENIED until it lands), a second MFA device, the
+billing alarm, and the s3.8 IAM review. **`/audit` is due** - last full one
+was 13 Sep. Not done deliberately: extraction cuts 2-3, visual polish, NYC
+stations, the rebrand. `web-deploy-all` (Makefile:480) still lists
+`web-deploy` before `data-deploy` and wants its own change.
+
+
 **WHERE TO START (2026-09-16):** ROADMAP -> Open decisions -> "What each open
 decision entails". **The July HPI roll AND methodology v5.2 (growth anchored
 on the currency pool, ROADMAP item 9) are DEPLOYED (16 Sep, 15:40) and
