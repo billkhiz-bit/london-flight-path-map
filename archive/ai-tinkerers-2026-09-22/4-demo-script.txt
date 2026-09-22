@@ -1,0 +1,687 @@
+AI TINKERERS LONDON - TUESDAY 22 SEPTEMBER 2026
+THE DEMO SCRIPT, IN PLAIN ENGLISH
+=================================================================
+Written 2026-09-21. Everything in here was checked against the code
+and against the live system the same day. Five minutes. No slides.
+No terminal needed - the run below is browser + editor only.
+
+HOW TO USE THIS FILE
+  - Read 5-how-it-works-plain-english.md ONCE, slowly. After that
+    every screen in this demo will make sense on its own.
+  - Read "THE STORY" until you can say it without looking.
+  - Read the "JARGON CARD" once. Every technical word in the script
+    is explained there, so you never have to define one on the fly.
+  - Then rehearse "THE FIVE MINUTES" out loud, twice, with the real
+    screens open. It is written as: what is ON SCREEN, what to SAY,
+    and what it MEANS if someone asks.
+  - The Q&A at the end is longer than you need. Skim it the morning
+    of, so the answers are near the front of your mind.
+
+THE FILES IN THIS FOLDER
+  0-LAPTOP-SETUP.txt              getting all of this onto the laptop
+  1-diagram.html                  the assistant flow. Chrome, F11.
+  1b-architecture.html            the AWS pieces. Chrome, F11.
+  1-diagram-terminal.txt          the flow diagram as text, if needed.
+  2-preflight-report.txt          a saved run of the 57 checks, from today.
+  3-memory-file-VERBATIM.md       a real memory file the coding agent keeps.
+  3-memory-file-STAGE-EXCERPT.md  the readable top of it, for the stage.
+  4-demo-script.txt               this file.
+  5-how-it-works-plain-english.md how the whole thing works, no jargon.
+  6-assistant-tester.html         THE DEMO PAGE: asks the assistant from a
+                                  browser tab and shows the verdict big.
+  7-what-happens-when-you-type-a-postcode.pdf (+ .html)
+                                  the WEBSITE explained: what the browser
+                                  does when you search, from a live capture.
+                                  Print it; it is also the optional beat below.
+  8-notebooklm-aws-study-prompts.md  + notebooklm-sources/ (11 files)
+                                  AWS exam study: sources to upload, prompts.
+  9-audio-overview.mp3 (+ script) an 11-minute two-voice overview of Sky
+                                  Score and its AWS pieces, made locally.
+  10-end-card.html (+ qr-*.svg/png) the LAST screen: four QR codes - the
+                                  site, the code, LinkedIn, the write-up.
+                                  Verified to decode. F11 at 4:45, leave it up.
+  11-checks-and-aws-access.pdf (+ .html)
+                                  companion write-up: all 57 checks in one
+                                  line each, and how the coding assistant
+                                  reaches Amazon (five layers of guardrail).
+
+WHY NO TERMINAL
+  The organisers want the thing running live and the hood open. Both
+  can be done in a browser and an editor: 6-assistant-tester.html makes
+  the same request the terminal would and shows the answer and the
+  GROUNDED verdict at projector size; the code is shown in the editor.
+  The only thing a terminal adds is RUNNING the tests live (one
+  pre-typed command, one Enter, under a second). It is marked OPTIONAL
+  below. If you are comfortable pressing Enter once, do it - a room of
+  builders likes seeing tests run. If not, show the test file in the
+  editor and lose nothing.
+
+
+=================================================================
+THE STORY (three sentences - if you say nothing else, say these)
+=================================================================
+
+  I built a postcode-scoring API with a small AI assistant on it, and
+  the assistant is only allowed to explain numbers it was handed.
+
+  Forty lines of ordinary code check that it did - and if a single
+  number in its answer isn't in the data, the whole answer is thrown
+  away.
+
+  That check was wrong three times, and nothing noticed, because
+  nobody had ever tried to make it fail.
+
+The three lessons, in the order the organisers asked for:
+  WHAT I BUILT      - a data-first scoring engine; the AI lives in two
+                      narrow places (inside: the assistant; around: the
+                      coding agent that helped build it). In May I cut
+                      five AI features to get there.
+  HOW I BUILT IT    - Nova Lite is the presenter, the scoring function
+                      is the source, forty lines of Python are the
+                      control; a handful of Amazon services that sleep
+                      until called; Claude Code wrote most of it behind
+                      57 checks that run before every commit.
+  BUILDER TAKEAWAY  - an instruction is not a control; a check that has
+                      never gone red hasn't been tested; if you build
+                      with an agent, don't record a fact - record a check.
+
+
+=================================================================
+JARGON CARD (one line each, in the order they come up)
+=================================================================
+
+  API           A way for one program to ask another for data. Mine is:
+                send a postcode, get back numbers.
+  endpoint      One address on an API. /v1/chat is the assistant's.
+  JSON          The text format the numbers come back in. Curly
+                brackets, "name": value. You will see it on screen.
+  Lambda        A small program that runs on Amazon's servers only when
+                called. Each of my endpoints is one. No server to look after.
+  API Gateway   Amazon's front desk for the API: checks the key, counts
+                usage, rate-limits, passes the request to the right Lambda.
+  S3 / CloudFront  S3 is the file cabinet holding the website's files;
+                CloudFront is the worldwide network that serves them fast.
+  DynamoDB      A very fast lookup table. Holds the 2.7M UK postcodes and
+                the per-postcode noise readings.
+  Bedrock       Amazon's service for calling AI models. I call one
+                model through it: Nova 2 Lite.
+  model         The AI. It reads text in, writes text out. It does not
+                know anything about postcodes - it only knows what I
+                hand it in the request.
+  prompt        The written instructions I give the model. Mine says
+                "only use the numbers in the data; never invent one".
+  temperature   How adventurous the model is allowed to be. 0.2 is low:
+                boring on purpose.
+  grounded      My word for "every number in the answer can be pointed
+                to in the data the model was given". True or false.
+  pytest        Runs the automated tests and prints pass or fail.
+  CloudWatch    Where Amazon keeps the logs - the lines my code prints
+                while it runs in production.
+  preflight     My name for the 57 checks that run before any code is
+                saved to the project. 45 must pass ("blocking"); 12
+                only warn ("advisory").
+  gate / check  One of those 57. Same thing.
+  red / green   A check failing / passing. "Prove it goes red" means:
+                break the thing on purpose, watch the check fail, fix it,
+                watch it pass. Only then trust it.
+  Claude Code   The coding agent I build with. It writes and edits code
+                in the project; I direct it and the checks police it.
+  memory file   A note Claude Code keeps between sessions so it doesn't
+                repeat a mistake. I keep about eighty for this project.
+  credits       AWS credits - prepaid usage. The hackathon gave $200;
+                the five AI features were burning $80-115 a month.
+
+
+=================================================================
+THE FIVE MINUTES  (browser + editor; terminal optional)
+=================================================================
+
+TEXT SIZE - what to do and what not to do (measured 2026-09-21)
+  - The three demo pages (tester, two diagrams) size their own type to
+    the screen. Nothing to change; F11 and they fill it. Measured:
+      at 1920x1080  diagram titles 33px, architecture 27px,
+                    tester badge 45px / answer 42px
+      at 1366x768   diagram titles 23px, architecture 19px,
+                    tester badge 32px / answer 30px
+    So if the laptop is 1366x768, set the projector output to
+    1920x1080 if it offers it (Win+P > Duplicate, then Display
+    settings > Resolution). Everything gets a third bigger for free.
+  - Editor: font 24pt+. VS Code: Ctrl and = zooms the whole window.
+  - CloudWatch: Ctrl and + to 150%. The console copes.
+  - The LIVE website (skyscore.co.uk), if you show it at all: do NOT
+    change its text - it is a product, not a slide. Use Chrome zoom.
+    But on a 1366-wide screen stop at 150%: above that the page is
+    narrower than 900 CSS pixels and flips to the PHONE layout (bottom
+    sheet, no sidebar). At 1920 wide, 175% is safe.
+
+BEFORE YOU ARE CALLED (at the venue, takes three minutes)
+  [ ] Chrome, five tabs, in this order (the three demo pages need no
+      zoom; CloudWatch does - Ctrl and + to 150%):
+        1. 6-assistant-tester.html - paste the CI key into the key box,
+           press "Save to this tab". Press preset 1 once now to warm
+           the system (first call after a quiet spell is 4+ seconds).
+        2. 1-diagram.html  (press F11 when you switch to it)
+        3. 1b-architecture.html
+        4. 10-end-card.html (the last screen)
+        5. CloudWatch, logged in, log group
+           /aws/lambda/london-flight-map-ChatFunction-LuxoNSLxJMva,
+           filter CHAT_UNGROUNDED typed in, the 17 Sep line visible.
+  [ ] Editor, font 24pt+, three tabs:
+        backend/lambdas/chat/app.py      line 259  (verify_answer)
+        backend/lambdas/chat/app.py      line 121  (the prompt)
+        backend/tests/test_handlers.py   line 1445 (the three tests)
+  [ ] OPTIONAL terminal, font 24pt+, this line typed and NOT yet run:
+        cd backend && python -m pytest -q tests/test_handlers.py -k ChatGroundingTests
+  [ ] Notepad or the browser: 2-preflight-report.txt and
+      3-memory-file-STAGE-EXCERPT.md open, for the last minute.
+  [ ] Say "a postcode-scoring API", not the product name, until the
+      JSON is on screen. Their rule: "if a company name appears, it
+      should be in a stack trace."
+
+
+-----------------------------------------------------------------
+0:00  COLD OPEN - the thing running                        (30 sec)
+-----------------------------------------------------------------
+ON SCREEN  Chrome tab 1, the tester. Click preset 1:
+           "Is SW11 1AA quiet?"
+
+SAY (while it thinks - about a second)
+  "Hi, I'm Bilal. This is a scoring API for UK postcodes I've been
+  building for six months - aircraft noise, road noise, air quality,
+  flood risk, prices, crime, schools, transport, all from official
+  government data. It has a small AI assistant on it. I'm going to
+  show you what the assistant is allowed to do, and the forty lines
+  that decide."
+
+WHEN THE ANSWER APPEARS - point at two things:
+  1. The green badge: GROUNDED: TRUE.
+  2. The highlighted numbers in the sentence: 6.4, 73.6, 53.
+  "Every highlighted number is in the data the model was handed -
+  that's the block underneath, if anyone wants to see it. The model
+  was told: explain this, use nothing else."
+
+WHAT IT MEANS (if you need it)
+  The model didn't look anything up. My code fetched the numbers, gave
+  them to the model, and the model wrote a sentence about them.
+
+
+-----------------------------------------------------------------
+0:30  THE REFUSAL - the demo's centre                      (40 sec)
+-----------------------------------------------------------------
+ON SCREEN  Same tab. Click preset 2: "What is the score out of 100?"
+
+WHEN THE ANSWER APPEARS - point at:
+  The red badge: GROUNDED: FALSE, and the sentence
+  "I can't answer that from the data I have."
+
+SAY
+  "Watch what just happened. The score is 5.0 out of 10. The model did
+  the arithmetic correctly - fifty out of a hundred. And the check
+  threw the answer away anyway, because neither 50 nor 100 is in the
+  data.
+
+  So it just discarded a TRUE answer. That's the cost of a control
+  instead of an instruction: it can't tell a number the model worked
+  out from a number the model made up. For an endpoint about
+  someone's home, I'll pay that price every time."
+
+WHAT IT MEANS
+  This is the honest version of the whole talk. The check is dumb on
+  purpose. Dumb is what makes it trustworthy.
+
+
+-----------------------------------------------------------------
+1:10  HOW IT'S BUILT - two diagrams                        (40 sec)
+-----------------------------------------------------------------
+ON SCREEN  Tab 2, 1-diagram.html, F11. Hold 15 seconds.
+
+SAY (one sentence over it)
+  "Data comes in from the scoring function on the right - the same
+  engine the public API runs, called directly, not over the web. The
+  model sits in the middle and is handed that data plus the question.
+  And underneath, forty lines decide whether anything ships."
+
+ON SCREEN  Tab 3, 1b-architecture.html. Hold 25 seconds.
+
+SAY
+  "This is everything that runs it. People come in on the left -
+  CloudFront and S3 serve one HTML file, and the scoring happens in
+  the browser. Businesses come in on the right - API Gateway checks
+  the key and counts the free tier, eight small Python programs do the
+  work, DynamoDB holds 2.7 million postcodes and the noise readings.
+  Nothing is a server that sits switched on. And there's exactly ONE
+  AI call in the whole picture - that purple box, Nova Lite, and only
+  the chat program can make it.
+
+  It didn't start that way. At the hackathon in March this was
+  'AI-powered': a chat panel, an automatic AI summary on every
+  postcode, a multi-agent router that sent hard questions to the
+  bigger Nova Pro model, photo analysis, document analysis, a generated
+  report. In May I removed all five in one commit. Two reasons, in this
+  order: an AI summary on top of a deterministic score adds an answer
+  that varies, and a business's audit team will challenge that first;
+  and they were burning eighty to a hundred and fifteen dollars a month
+  of credits at modest traffic. What came back is that one purple box,
+  capped at three sentences, for about 25p per thousand questions."
+
+WHAT IT MEANS
+  "Less AI, better product" is not a slogan here - it is a commit from
+  7 May with the reasoning written in it, and the cost figure is from
+  that commit.
+
+
+-----------------------------------------------------------------
+1:50  POP THE HOOD - the forty lines                       (45 sec)
+-----------------------------------------------------------------
+ON SCREEN  Editor, app.py line 259, verify_answer(). Walk it in four
+           plain steps, pointing as you go. You are not reading code
+           aloud - you are pointing at where each step lives.
+
+SAY
+  "One. Pull every number out of the data the model was given. Call
+   that the haystack.
+   Two. Pull every number out of the model's reply.
+   Three. Each one has to be in the haystack. Small numbers in
+   ordinary prose - 'three things worth noting' - are ignored. UNLESS
+   they sit next to a score word, because the score scale is 0 to 10
+   too. That exception was hole number one; I'll come back to it.
+   Four. Anything left over, the reply is discarded. Not caveated. A
+   warning next to a made-up number still ships the number.
+
+   The prompt, up here [tab at line 121], says in capitals: never state
+   a number that isn't in the JSON. The third real question this got
+   in production was 'what will prices be in 2030?' - and the model
+   gave a figure. The prompt is a request. These forty lines are the
+   control. No framework, no second model judging the first."
+
+
+-----------------------------------------------------------------
+2:35  RED THEN GREEN - the three holes                    (55 sec)
+-----------------------------------------------------------------
+ON SCREEN  OPTIONAL: terminal, press Enter on the pre-typed pytest
+           line. "10 passed" in under a second. Then - or instead -
+           editor, test_handlers.py line 1445. Point at three test
+           names in turn.
+
+SAY
+  "Ten tests. Three of them exist because the check was wrong and
+  nothing noticed.
+
+  [line 1445]  For five weeks it ignored every whole number from zero
+  to ten - which is exactly the scale it exists to protect. An
+  invented score of 9 sailed through.
+
+  [line 1456]  Every answer carries a rank: 'twelfth of thirty-three'.
+  So 'three hundred and thirty thousand pounds' was grounded by the
+  thirty-three. A price, vouched for by a rank.
+
+  [line 1475]  This one I found four days ago, rehearsing this demo.
+  I asked 'what's the score out of 100' expecting the refusal you
+  just saw. It came back grounded: TRUE. Fifty out of a hundred. Right
+  arithmetic - but it passed for the wrong reason: the check stripped
+  50 down to 5, and the real score, 5.0, vouched for it. A hole found
+  by a TRUE answer that should not have passed.
+
+  Nothing had ever tried to make this check fail. It was green for
+  five weeks and it could not have gone red."
+
+WHAT IT MEANS
+  Each test was written to fail first - run it, watch it go red - and
+  only then was the code fixed and the test allowed to go green. That
+  order is the whole method.
+
+
+-----------------------------------------------------------------
+3:30  PRODUCTION - the log line                           (25 sec)
+-----------------------------------------------------------------
+ON SCREEN  Tab 4, CloudWatch. Filter: CHAT_UNGROUNDED. Point at:
+
+  [CHAT_UNGROUNDED] numbers=['2030'] question='What will house prices in SW11 be in 2030?'
+
+SAY
+  "This is the real thing, from the 17th. Someone asked for a 2030
+  price; the model gave one; the check caught the year and binned the
+  answer. I don't log the text it wrote - only the numbers and the
+  question - so I genuinely don't know what it said. That's by design."
+
+
+-----------------------------------------------------------------
+3:55  THE TAKEAWAYS - three, then stop                    (50 sec)
+-----------------------------------------------------------------
+ON SCREEN  Optional, 5 seconds each: 2-preflight-report.txt (the 57
+           names scroll past) and the memory-file excerpt.
+
+SAY
+  "Three things to take home.
+
+  One. An instruction is not a control. If your model PRESENTS data
+  rather than generates it, put a numeric check after it. It's forty
+  lines, it works with any model, it needs no second call. Steal it.
+
+  Two. A check that has never gone red has not been tested. Break the
+  thing it guards, watch it fail, then trust the green. I've counted
+  twelve checks in this one project that were green and could never
+  have failed.
+
+  Three - for anyone building with a coding agent. The notes it keeps
+  between sessions drift towards confidence. So don't let it record a
+  fact - make it record a check. [Show the memory file.] This one is
+  titled 'checks that cannot fail'. It's not a to-do list, it's the
+  method. Those 57 checks that run before every commit - they ARE the
+  memory."
+
+CLOSE - 10-end-card.html on screen (F11), leave it up through Q&A
+  "The site, the code, and me - scan whichever you want. The
+  plain-English write-up is in my bag if you'd rather have paper.
+  Happy to show any of the fifty-seven. Thanks."
+
+
+OPTIONAL WEBSITE BEAT - only if you want it, and only INSTEAD of the
+architecture diagram (it costs the same 30 seconds)         (30 sec)
+-----------------------------------------------------------------
+  Why you might: it is the most "show, don't tell" thing in the pack -
+  the browser narrates itself. Why you might not: it adds a fifth tab
+  and DevTools to drive live. Your call; both versions are honest.
+
+ON SCREEN  Chrome, skyscore.co.uk, DevTools open on the right (F12,
+           Network tab, "Fetch/XHR" filter, list cleared). Type N1 7SX,
+           Enter. The list fills as the panel draws.
+
+SAY (pointing down the list as it lands)
+  "Three data files as I start typing - aircraft-noise readings and the
+  station list. postcodes.io: 'where is this?' Then four helpers at
+  once - stations, GPs, sold prices, energy certificates - each a small
+  program that asks a public source. And notice what is NOT here:
+  there's no request for the score. The score was worked out in the
+  browser from numbers computed weeks ago from government files. No
+  AI on this page at all - the AI is on the API, behind a key, which
+  is what I'll show you now."
+
+  Then straight to the tester tab. The PDF in the pack (file 7) is the
+  same beat on paper - hand it to anyone who asks afterwards.
+
+  Setup gotcha: dock DevTools to the RIGHT (three-dot menu > Dock side)
+  so map and list are visible together; page zoom 150% max on a
+  1366-wide screen or the site flips to the phone layout.
+
+IF YOU ARE CUT TO THREE MINUTES
+  Drop the architecture diagram (say ONE line: "eight Lambdas, one AI
+  call, five AI features cut in May") and the CloudWatch tab. Keep:
+  the refusal, the function, the three test names, the three takeaways.
+
+
+=================================================================
+DELIVERY - the organisers' own notes, applied
+=================================================================
+  - Font 24pt minimum, everywhere. Browser zoom, editor, Notepad.
+    Check it from the back of the room before you start.
+  - Say the choice, not just the thing: "I chose 0.2 because...",
+    "I throw it away rather than caveat it because...", "I cut the
+    five features because...". They score on decisions explained, not
+    on features shown.
+  - Look up from the screen at the three moments that matter: the
+    refusal ("it just binned a TRUE answer"), the third hole ("found
+    rehearsing this demo"), and the three takeaways.
+  - Slow down on the takeaways. They are the only part people will
+    repeat to someone else.
+  - If something breaks, say what broke and keep going. They say so
+    explicitly: "embrace the imperfections". A broken demo with a
+    calm explanation reads better than a slick one.
+  - Rehearse out loud, twice, timed. The organisers suggest recording
+    a run, transcribing it and having an LLM critique it against
+    their criteria - record tomorrow's rehearsal on your phone and I
+    can do that pass from the transcript.
+
+
+=================================================================
+FALLBACKS - what to do when something goes wrong on stage
+=================================================================
+
+THE WIFI DIES
+  Both answers are saved as text files (do this on the laptop tonight
+  - see 0-LAPTOP-SETUP.txt, section C). Open them and say "this is
+  this morning's output, the venue wifi has gone." The code and the
+  tests need no network. You lose the CloudWatch beat; say so and move
+  on. The two diagrams are local files and always work.
+
+THE FIRST ANSWER IS SLOW (4+ seconds)
+  It's a cold start - you didn't warm it, or it went cold while you
+  waited. Say "cold start" and keep talking; it will come.
+
+THE TESTER SAYS "KEY REJECTED (403)"
+  Wrong key. It must be the CI key from .env (SKY_SCORE_API_KEY); the
+  free-tier key is denied on /v1/chat. Paste again, Save, retry.
+
+THE "OUT OF 100" QUESTION COMES BACK GROUNDED: TRUE
+  It shouldn't - the fix is deployed and it has refused every time
+  since the 17th (and twice today). But if it does, that IS the talk:
+  say "and there's a fourth hole, found live, which is the point of
+  the second takeaway", and go to the tests. Then find it afterwards.
+
+THE MODEL REFUSES ON ITS OWN ("I can't forecast prices")
+  Only relevant if you press preset 3 or go off-script. Nova Lite now
+  declines most forecasts by itself - measured, 1 in 24 leading
+  questions makes it past the prompt. Say exactly that: "the prompt
+  holds most days; the check is for the day it doesn't." Don't keep
+  trying to make it invent something.
+
+SOMEONE ASKS SOMETHING YOU DON'T KNOW
+  "I don't know - I'd have to check." Then offer to find them after.
+  This room prefers that to a guess, and the whole talk is about not
+  shipping a guess.
+
+
+=================================================================
+Q&A - likely questions, plain answers
+=================================================================
+Short sentences. Every technical word is explained where it is used.
+Two of tonight's sponsors sell "guardrails" for AI, so expect the
+first two questions.
+
+ABOUT THE FORTY-LINE CHECK
+
+Q  Why write your own check instead of using a ready-made guardrails
+   tool?
+A  Because the mistakes were about what the numbers MEAN. "12 of 33"
+   is a rank, not a price. "50" is not the same as "5.0". A general
+   tool can't know that; it doesn't know what's in my data. My check
+   is forty lines because my data has one shape. A big tool would add
+   a lot to do less.
+
+Q  Why not get a second AI to check the first one?
+A  A second AI is another set of instructions, and instructions are
+   what failed. My check is plain code: it does the same thing every
+   time, costs nothing, and takes no time. And if it's unsure, nothing
+   goes out. A judging AI, when unsure, tends to let things through.
+
+Q  What does the check miss?
+A  A real number with the wrong label. If the model said "road noise
+   is 6.4 decibels" when 6.4 is actually the quiet score, the check
+   would pass it - the number is in the data. It catches the worst
+   failure: a confident number that came from nowhere.
+
+Q  Why throw the whole answer away? Why not add a warning?
+A  A warning next to a made-up number still shows the number. People
+   read the number and skip the warning. On a question about
+   someone's home, no answer beats a wrong answer with a footnote.
+
+Q  So it throws away correct answers too?
+A  Yes - you saw it. "Fifty out of a hundred" was right, and it went
+   in the bin. That's the price. For this product I pay it. For a
+   different product I might not.
+
+Q  How fast is the check?
+A  Instant. It's comparing two lists of numbers. The slow part is the
+   AI itself, about a second.
+
+Q  Would it work with a different AI?
+A  Yes. It never looks at which AI answered. It only looks at the
+   words that came out and the data that went in. Swap the model and
+   nothing in those forty lines changes.
+
+Q  How did you find the third hole?
+A  Rehearsing this demo. I asked a question expecting it to be
+   refused, and it was accepted - for a reason that turned out to be
+   wrong. I wrote a test that failed, then fixed the code.
+
+Q  Does the AI still make things up?
+A  Rarely now. I tried eight leading questions three times each; it
+   got past the instructions once in twenty-four. The instructions
+   hold most days. The check is there for the day they don't.
+
+Q  Could someone type instructions into the question box to trick it?
+A  They could make it SAY something odd, yes. But it has no tools, no
+   memory, and no data except what I hand it, and a question can't be
+   longer than 500 characters. The check limits the numbers it can
+   say. The words it can say are not checked - I'd rather say that
+   plainly than pretend otherwise.
+
+ABOUT THE CHECKS AND THE CODING ASSISTANT
+
+Q  What happens when one of the 57 checks fails?
+A  The change can't be saved. There's no "save anyway". I fix the
+   thing and run them again. It takes about a quarter of an hour, so
+   I don't run them lightly - but I always run them.
+
+Q  Isn't 57 checks slow?
+A  Twenty-four minutes today, about fifteen normally. Yes, slow. But
+   they've caught something in nearly every batch of changes since
+   July. The fast version I had before was checking nothing.
+
+Q  Give me a check that was "green while checking nothing".
+A  The checklist itself, in July. Every result went through a command
+   that always says "fine" at the end - like asking "any problems?"
+   and only ever hearing the last person, who was the one holding the
+   door. The whole list said PASS while running nothing. Nobody
+   turned it off; it just decayed.
+
+Q  How much of the code did the AI write?
+A  Most of it. I decide what to build, read what it writes, and the
+   57 checks police it. The decisions - what to score, what to throw
+   away, what counts as "grounded" - are mine.
+
+Q  When do you write code yourself and when does it?
+A  I almost never type code now. I write the CHECK first - "when
+   this is done, this must be true" - and the assistant makes it
+   true. If we disagree about whether something works, the check
+   decides, not either of us.
+
+Q  How does the AI assistant get into your Amazon account?
+A  It doesn't have an account. When it needs to touch the live system,
+   it runs Amazon's normal command-line tools on my laptop with a
+   pass that lives in a file outside the project. That pass belongs
+   to one identity with a written list of what it may do, and
+   everything on the list is limited to things named after this
+   project. It can't see the bill, can't touch anything else, and
+   can't change its own list - I do that, by hand, through the
+   console with my phone.
+
+Q  What stops it deleting everything?
+A  Three things. A screening hook reads every command before it runs
+   and blocks deletes outright. The assistant's own safety judgement
+   refuses anything that looks like a production deploy and hands it
+   to me. And Amazon's side only lets that pass touch this project's
+   own things anyway. On the 16th of September its own safety check
+   refused a deploy and I ran the one command myself. Today it
+   refused to even fetch a file I'd just uploaded, so I checked it.
+   That's the arrangement working.
+
+Q  Does the AI deploy to production?
+A  Not without my go-ahead, and not at all on its own initiative. The
+   automated tests that run online have no Amazon pass at all - they
+   can test, not deploy. Nothing reaches the live system except from
+   my laptop, on my instruction.
+
+Q  What does "record a check, not a fact" mean?
+A  The assistant keeps notes between sessions. A note saying "the
+   tests pass" is a fact - and it was false the day it was written.
+   A note saying "before trusting a check, break the thing on purpose
+   and watch the check fail" is a check. It's still true. The useful
+   notes are all the second kind.
+
+Q  What would you do differently?
+A  Write the check before the instructions, not after the third real
+   question. And prove every check can fail on the day it's written.
+   The ones I did that for have held. The ones I didn't are the
+   twelve.
+
+ABOUT THE AMAZON SIDE AND THE FEATURES YOU CUT
+
+Q  Why did you remove the AI features?
+A  Two reasons, in this order. First, an AI summary on top of a
+   carefully checked score adds an answer that varies and is
+   sometimes wrong, and a business's auditors will challenge that
+   first. Second, the five features were costing $80-115 a month in
+   credits. The change is one commit from the 7th of May and says
+   exactly that.
+
+Q  What was the "multi-agent" part?
+A  A sorting step in the chat: easy questions went to the small
+   model, hard ones to the bigger, dearer model, and photos and
+   documents to their own readers. Impressive in a demo, expensive
+   per call, and the answers varied. It went with the rest.
+
+Q  What does the assistant cost now?
+A  About 25p per thousand questions. The check costs nothing.
+
+Q  Why Amazon, and why nothing switched on all the time?
+A  It started at Amazon's hackathon, so Amazon's tools were the
+   starting point, and the AI model only lives there. And "nothing
+   switched on" suits a service that's quiet most of the time: a
+   normal server is like renting an office all night; my pieces wake
+   up when asked and cost only when they work.
+
+Q  Why is the AI in Virginia when everything else is in London?
+A  Because that's where the model lives. It's the only piece outside
+   the UK. Only the question and the score numbers travel there -
+   nothing personal - and the privacy page says so.
+
+Q  Couldn't you have just made the AI features cheaper?
+A  Cheaper was the easy half. The problem was that they were
+   sometimes wrong, and you can't budget your way out of that.
+   Cutting to one narrow job - explain numbers you were handed -
+   fixed both.
+
+ABOUT THE MODEL AND THE STACK
+
+Q  Why a small model and not a bigger one?
+A  The job is reading numbers back in a sentence. A bigger model
+   makes things up more fluently, not less.
+
+Q  Why does the assistant ask the scoring program directly rather
+   than over the web?
+A  So the data it hands the AI is the exact same thing the API would
+   return - no second copy to drift - and no web call to time out.
+
+Q  Why three sentences and "boring" settings?
+A  Three sentences is enough to explain a score and not enough to
+   write an essay on a public service that someone else pays for.
+   "Boring" (a low creativity setting) is the goal.
+
+Q  Where does the data come from?
+A  All from official bodies, all free to reuse with credit: the
+   statistics office for postcodes and crime, the environment
+   department for noise and air, the Environment Agency for flood,
+   the Land Registry for prices, the education department for
+   schools, the transport department for stations. Each is pulled by
+   a script that can also re-check the published number against the
+   source.
+
+Q  Is it open source?
+A  The code is public to read; the licence says all rights reserved,
+   so it's "source-available" rather than open source. The check
+   itself is forty lines - take the idea, you don't need my code.
+
+ABOUT THE PRODUCT (one sentence each - no pitch)
+
+Q  What is it, actually?
+A  A 0-to-10 liveability score for a UK postcode, built from eight
+   official datasets, served as an API with a map on top.
+
+Q  Who uses it?
+A  It's live, there's an iPhone app, and I'm in pilot conversations.
+   Not the subject tonight - grab me after.
+
+Q  Can I try it?
+A  skyscore.co.uk for the map; the API has a free tier. The assistant
+   needs a key.

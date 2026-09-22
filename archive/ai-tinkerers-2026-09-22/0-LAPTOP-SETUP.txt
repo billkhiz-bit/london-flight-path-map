@@ -1,0 +1,107 @@
+GETTING THE DEMO ONTO THE LAPTOP - do this TONIGHT, verify, then again
+at the venue. Written 2026-09-21 on the desktop.
+=================================================================
+
+Two kinds of thing need to reach the laptop. One syncs by itself. The
+other does NOT and must never go through OneDrive.
+
+-----------------------------------------------------------------
+A. SYNCS BY ITSELF - this folder (OneDrive Desktop)
+-----------------------------------------------------------------
+  On the laptop, open OneDrive > Desktop > ai-tinkerers-demo. You
+  should see:
+    0-LAPTOP-SETUP.txt                (this file)
+    1-diagram.html                    (+ 1-diagram-terminal.txt)
+    1b-architecture.html              (the AWS pieces)
+    2-preflight-report.txt            (lands when today's run finishes)
+    3-memory-file-VERBATIM.md
+    3-memory-file-STAGE-EXCERPT.md
+    4-demo-script.txt                 (the one you prep from)
+    5-how-it-works-plain-english.md   (read this first, once)
+    6-assistant-tester.html           (THE DEMO PAGE - replaces the terminal)
+    7-what-happens-when-you-type-a-postcode.pdf / .html  (the website, explained)
+    8-notebooklm-aws-study-prompts.md + notebooklm-sources/
+    9-audio-overview.mp3 + script
+    10-end-card.html + qr-website/qr-github/qr-linkedin .svg/.png  (last screen)
+
+  [ ] Right-click the folder > "Always keep on this device". Otherwise a
+      file can be a cloud placeholder that needs venue wifi to open.
+  [ ] Open 1-diagram.html in Chrome once on the laptop, press F11, check
+      it fills the screen. It needs no network. If the laptop screen is
+      1366x768 the type is ~23px; plugged into a 1080p projector it is
+      ~33px. Set the output to 1920x1080 if the projector offers it.
+
+-----------------------------------------------------------------
+B. DOES NOT SYNC - the repo, the key, the tools
+-----------------------------------------------------------------
+1. THE REPO (the code you show and the tests you run)
+   Git is the only sync for repos - never a OneDrive copy.
+     cd /c/Users/bilal/projects
+     git clone https://github.com/billkhiz-bit/london-flight-path-map.git
+       (or, if it is already there:  cd london-flight-path-map && git pull)
+   [ ] git log --oneline -1   ->  47116b0 or newer
+   The demo shows only committed files (chat/app.py, test_handlers.py),
+   so the desktop's uncommitted doc edits do not matter here.
+
+2. THE API KEY (.env is gitignored - it will NOT arrive with the clone)
+   The demo needs ONE line in a file called .env at the repo root:
+     SKY_SCORE_API_KEY=<the CI key>
+   Get the value from the desktop's .env (C:\Users\bilal\projects\
+   london-flight-path-map\.env) or from Bitwarden if it is stored there.
+   Move it by typing it, a USB stick, or a Bitwarden secure note.
+   NOT via OneDrive, email, or a chat window - it is a secret.
+   The FREE-TIER key does not work on /v1/chat; it must be the CI key.
+
+3. PYTHON + TWO PACKAGES (for the pytest beat)
+     python --version            (3.11 or newer)
+     pip install boto3 pytest    (the chat Lambda imports boto3)
+
+4. A BASH TERMINAL
+   The setup lines (`set -a && source .env && set +a`) are bash. Use
+   Git Bash on the laptop, not PowerShell. Set its font to 24pt+ now
+   (right-click title bar > Options > Text) so you are not doing it on
+   stage.
+
+5. CHROME LOGGED INTO THE AWS CONSOLE (for the CloudWatch beat)
+   Console login needs the password AND the MFA device (your phone).
+   Log in the night before AND again at the venue - console sessions
+   expire. Then open: CloudWatch > Log groups >
+     /aws/lambda/london-flight-map-ChatFunction-LuxoNSLxJMva
+   and type CHAT_UNGROUNDED into the filter. The 17 Sep line is there
+   until ~17 Oct (30-day retention).
+   If the console will not log in, skip the beat - it is 30 seconds
+   and the script has a fallback line for it.
+
+6. THE EDITOR (VS Code or whatever you use), font 24pt+, repo open,
+   three tabs: chat/app.py:259, chat/app.py:121, test_handlers.py:1445.
+
+-----------------------------------------------------------------
+C0. THE REAL VERIFICATION - the demo page itself (no terminal)
+-----------------------------------------------------------------
+  Double-click 6-assistant-tester.html (it opens in Chrome from the
+  file itself - no server needed). Paste the CI key into the key box,
+  press "Save to this tab", press preset 1.
+    -> green badge GROUNDED: TRUE, three numbers highlighted.
+  Press preset 2.
+    -> red badge GROUNDED: FALSE.
+  If both appear, the demo's first 70 seconds work on this laptop. The
+  key lives in that tab only and is gone when the tab closes, so you
+  will paste it again at the venue - that is by design.
+
+-----------------------------------------------------------------
+C. ALSO VERIFY - five commands, in Git Bash (tests + wifi fallback)
+-----------------------------------------------------------------
+  cd /c/Users/bilal/projects/london-flight-path-map
+  git log --oneline -1                                   # 47116b0 or newer
+  set -a && source .env && set +a && echo "${SKY_SCORE_API_KEY:0:4}..."   # prints 4 chars, not empty
+  (cd backend && python -m pytest -q tests/test_handlers.py -k ChatGroundingTests)   # 10 passed
+  API=https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod; KEY=$SKY_SCORE_API_KEY
+  curl -s -X POST $API/v1/chat -H "x-api-key: $KEY" -H "Content-Type: application/json" \
+    -d '{"question":"Is SW11 1AA quiet?","postcode":"SW11 1AA"}' | python -m json.tool   # "grounded": true
+
+  Then save both curl outputs as the wifi fallback:
+    ... | python -m json.tool > ~/Desktop/curl-quiet.txt
+    ... (question "What is the score out of 100?") > ~/Desktop/curl-100.txt
+
+If all five work on the laptop tonight, the demo is portable. If any
+fails, the failing line tells you which of B.1-B.5 is missing.

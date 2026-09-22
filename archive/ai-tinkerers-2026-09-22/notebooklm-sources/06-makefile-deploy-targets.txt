@@ -1,0 +1,597 @@
+# Sky Score — CLI orchestration for web + PWA + native iOS/Android.
+#
+# Wraps the deploy / build / submit commands behind short targets so the
+# whole release pipeline is `make` away. Most targets shell out to the
+# canonical commands documented in OPERATIONS.md, mobile/CODEMAGIC_SETUP.md,
+# mobile/ANDROID_BUILD.md, and mobile/RELEASE_CHECKLIST.md — this file is
+# the keyboard-shortcut layer, not a new pipeline.
+#
+# Usage:
+#   make help              List all targets
+#   make web-deploy        Upload index.html + invalidate CloudFront
+#   make pwa-deploy        Upload manifest, sw.js, icons
+#   make android-build     Build signed AAB locally via gradle
+#   make android-upload    Upload AAB to Play Console internal track
+#   make ios-trigger       git push (Codemagic auto-builds on push)
+#   make ios-submit        fastlane deliver — submit latest TestFlight build for App Store review
+#   make score-book        Score a book of addresses offline to CSV (no API quota)
+#   make preflight         Run quality checks
+#
+# Requires (install once per machine):
+#   - GNU Make. Windows: not installed by default. Get via either:
+#       choco install make           (Chocolatey)
+#       scoop install make           (Scoop)
+#       winget install GnuWin32.Make (winget)
+#     CORRECTED 2026-08-04: this used to say "or use the equivalent npm-script
+#     aliases in package.json instead (e.g. `npm run deploy:web`)". THERE ARE
+#     NO deploy:* npm scripts. package.json has lint/test/preflight aliases and
+#     no deploy aliases at all, so on a machine without GNU Make — which is the
+#     default state of this one, `make` is not on PATH in Git Bash — the
+#     documented fallback did not exist and the deploy commands had to be run
+#     by hand. That is a contributing cause of audit finding 38: eleven live
+#     files reached production by hand-upload with no deploy command anywhere.
+#     RESOLVED 2026-09-18: `python scripts/make.py <target>` (or
+#     `npm run make -- <target>`) runs any target in THIS file without GNU
+#     Make. It reads the Makefile, so there is nothing to keep in step; it
+#     refuses constructs it does not implement ($(shell), ifeq, include...)
+#     rather than guessing, and tests/test_make_runner.py parses this whole
+#     file on every preflight. `--dry-run` prints the expanded commands.
+#   - AWS CLI v2 with `flightmap` profile configured
+#   - Node + npm (for the asset pipeline)
+#   - Android Studio (for the GUI-based AAB build) OR a JDK + the Android
+#     SDK on PATH (for `make android-build` via gradle CLI)
+#   - Ruby + fastlane (`gem install fastlane`) for store-submission targets
+
+AWS_PROFILE_NAME ?= flightmap
+AWS_REGION       ?= eu-west-2
+S3_BUCKET        ?= london-flight-map-frontend
+CF_DISTRIBUTION  ?= EGSSPJKLFL33M
+
+# Used by Codemagic build trigger; expected in env or .env file.
+# Get a token at codemagic.io → Teams → Personal account settings → User API tokens.
+CMG_API_TOKEN ?=
+CMG_APP_ID    ?=
+
+.PHONY: help
+help:
+	@echo "Sky Score Makefile — common targets:"
+	@echo ""
+	@echo "  Web / PWA"
+	@echo "    fonts-deploy        Upload self-hosted fonts/ (runs FIRST in web-deploy-all: sw.js precaches them)"
+	@echo "    web-deploy          Upload js/api-base.js + index/privacy/pricing/changes/terms/api + invalidate"
+	@echo "    data-deploy         Upload data/ boundaries + borough-extra + quiet datasets (run BEFORE pwa-deploy)"
+	@echo "    pwa-deploy          Upload manifest, sw.js, icons (PWA assets)"
+	@echo "    deeplinks-deploy    Upload .well-known/apple-app-site-association + assetlinks.json"
+	@echo "    demo-deploy         Upload score-demo/ (Swagger UI, openapi.yaml, status)"
+	@echo "    prototype-deploy    Upload prototype/index.html (Sky Score Radar)"
+	@echo "    meta-deploy         Upload robots.txt, sitemap.xml, .well-known/security.txt"
+	@echo "    area-deploy         Sync the 99 borough pages + area/index.html (rebuild them first)"
+	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta"
+	@echo ""
+	@echo "  iOS (Codemagic-driven)"
+	@echo "    ios-trigger         git push origin master (Codemagic auto-builds)"
+	@echo "    ios-build-status    Show recent Codemagic builds (needs CMG_API_TOKEN)"
+	@echo "    ios-submit          fastlane deliver — submit latest TestFlight build for review"
+	@echo ""
+	@echo "  Android (local-build)"
+	@echo "    android-sync        npm run sync inside mobile/ (refresh www + cap sync)"
+	@echo "    android-assets      npm run build:assets (regenerate icons + splash)"
+	@echo "    android-build       gradle bundleRelease (produces signed AAB)"
+	@echo "    android-fingerprint Print SHA-256 of release keystore (for assetlinks.json)"
+	@echo "    android-upload      fastlane supply — upload AAB to Play Console internal track"
+	@echo "    android-promote     fastlane supply — promote internal track to production"
+	@echo ""
+	@echo "  Quality"
+	@echo "    preflight           Run all quality checks (ESLint, html-validate, prettier, ruff, pytest, drift)"
+	@echo "    test-pwa            Smoke test the PWA via Playwright (needs local server running)"
+	@echo ""
+	@echo "  B2B"
+	@echo "    score-book          Score a CSV of postcodes offline: make score-book IN=book.csv OUT=scored.csv"
+	@echo ""
+	@echo "  Variables (override on the command line):"
+	@echo "    AWS_PROFILE_NAME=$(AWS_PROFILE_NAME)  AWS_REGION=$(AWS_REGION)"
+	@echo "    S3_BUCKET=$(S3_BUCKET)  CF_DISTRIBUTION=$(CF_DISTRIBUTION)"
+
+# ---------------------------------------------------------------------------
+# Web / PWA deploy
+# ---------------------------------------------------------------------------
+
+.PHONY: web-deploy
+web-deploy:
+	# js/api-base.js is the shared API base URL (window.API_BASE) that
+	# index.html and both score-demo pages load. It had no make target until
+	# 2026-07-25 — editable but never actually deployed, which matters most
+	# for the pending api.skyscore.co.uk switchover. Uploaded first so a
+	# fresh index.html never reads a stale base. no-cache keeps browsers
+	# revalidating; sw.js serves it network-first for the same reason.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/api-base.js \
+		s3://$(S3_BUCKET)/js/api-base.js \
+		--content-type "application/javascript" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# --cache-control "no-cache" added 2026-09-08 (audit s4). index.html
+	# shipped with NO Cache-Control at all - verified against the live origin,
+	# which returned Content-Type and nothing else - so browsers fell back to
+	# HEURISTIC freshness (commonly a tenth of the Last-Modified age) and could
+	# pin the entire application shell for an arbitrary period. A CloudFront
+	# invalidation cannot reach that copy, and neither can an sw.js bump: the
+	# service worker's Cache Storage is a different layer, which is exactly how
+	# borough-extra.json served a user days-stale crime figures and took 14
+	# bumps that were powerless to fix it.
+	# `no-cache` means "store it, but revalidate before use", NOT "do not
+	# store" - so this costs a conditional request and returns 304, and never
+	# a stale shell. Same reasoning, same value, as borough-extra.json in
+	# data-deploy. index.html is in sw.js SHELL_ASSETS, so the offline path is
+	# unaffected either way.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp index.html \
+		s3://$(S3_BUCKET)/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# NB: the CloudFront function sky-score-rewrite-index rewrites
+	# extensionless paths to <path>/index.html, so these MUST land at
+	# <name>/index.html keys. A flat "privacy" key is never served (the
+	# pre-2026-07-23 version of this target uploaded there — dead object,
+	# live /privacy was actually serving a manually-uploaded copy).
+	#
+	# --cache-control "no-cache" on EVERY page below, not index.html alone
+	# (2026-09-13, audit I1 of 2026-09-11). The 2026-09-08 fix above stopped
+	# at the shell; the five uploads directly beneath it in the SAME target
+	# were left bare, so /privacy and /terms - the legal documents - could pin
+	# in a reader's browser under heuristic freshness with no deploy able to
+	# dislodge them. Measured at the origin before this change: nine HTML
+	# pages served no Cache-Control at all (these five, the three under
+	# score-demo/ and prototype/). The reasoning is the block above; the
+	# value is the same so the policy is one policy: a hand-edited page
+	# revalidates, a generated area page (area-deploy) is cacheable for an
+	# hour. scripts/check_deploy_drift.sh asserts it on every page it lists.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp privacy.html \
+		s3://$(S3_BUCKET)/privacy/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp pricing.html \
+		s3://$(S3_BUCKET)/pricing/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp changes.html \
+		s3://$(S3_BUCKET)/changes/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# terms.html added 2026-08-05. Same extensionless-key rule as privacy and
+	# pricing: it MUST land at terms/index.html or /terms is never served. This
+	# is the liability page, so an unpublished copy means the one document that
+	# allocates risk exists only in git.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp terms.html \
+		s3://$(S3_BUCKET)/terms/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# api/index.html had NO target until 2026-08-03 - editable, deployed, and
+	# uploaded by hand. It is the B2B landing page, so a stale copy sells the
+	# product on claims the code no longer honours - exactly what it was doing
+	# (Ofsted as a live source, the DEFRA raster tier as primary).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp api/index.html \
+		s3://$(S3_BUCKET)/api/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# js/vendor/ likewise had no target, and this one can break the site rather
+	# than merely date it: d3.v7.min.js is in sw.js SHELL_ASSETS and cache.addAll()
+	# is ATOMIC, so if it is missing from the origin the service worker fails to
+	# install AT ALL, taking offline support for both cities with it. It returns
+	# 200 today only because a hand-upload happened to land on 2026-07-30; a
+	# fresh bucket would not. Cacheable unlike js/api-base.js above, because the
+	# filename is version-pinned and index.html carries an SRI hash for these bytes.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/vendor/ \
+		s3://$(S3_BUCKET)/js/vendor/ \
+		--recursive --content-type "application/javascript" --region $(AWS_REGION)
+	# MSYS_NO_PATHCONV=1 ON THE COMMAND, in every target (2026-09-13 audit, I15).
+	# Git Bash rewrites any argument that looks like a Unix absolute path, so
+	# '/index.html' reaches CloudFront as C:/Program Files/Git/index.html and
+	# the whole batch is rejected - AFTER every upload has succeeded, which is
+	# the 2026-08-26 incident CLAUDE.md records. Wildcard paths ('/*',
+	# '/data/*') are not mangled, so six targets were safe by accident and
+	# three (this one, pwa-deploy, meta-deploy) were not. On the command
+	# rather than a Makefile-level export because make is not on PATH here
+	# and these recipes are run by pasting them into Git Bash.
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*'
+
+.PHONY: fonts-deploy
+fonts-deploy:
+	# Self-hosted fonts, added 2026-08-05 (see scripts/vendor_fonts.py). These
+	# replaced fonts.googleapis.com / fonts.gstatic.com, which transferred every
+	# visitor's IP address to Google in the US on each page load.
+	#
+	# ORDER IS LOAD-BEARING: fonts-deploy runs FIRST in web-deploy-all, ahead of
+	# pwa-deploy. /fonts/fonts.css and the two Inter/JetBrains files are in
+	# sw.js SHELL_ASSETS, and cache.addAll() is ATOMIC — ship sw.js before the
+	# fonts exist at the origin and the service worker fails to install AT ALL,
+	# taking offline support with it. Same trap as js/vendor/d3.v7.min.js.
+	#
+	# The .woff2 files are variable fonts, one per family, and change only when
+	# vendor_fonts.py is re-run, so they cache hard. fonts.css references them by
+	# fixed name, so it gets a shorter TTL and the deploy invalidates both.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp fonts/ \
+		s3://$(S3_BUCKET)/fonts/ \
+		--recursive --exclude "*" --include "*.woff2" \
+		--content-type "font/woff2" \
+		--cache-control "public,max-age=31536000" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp fonts/fonts.css \
+		s3://$(S3_BUCKET)/fonts/fonts.css \
+		--content-type "text/css" \
+		--cache-control "public,max-age=86400" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/fonts/*'
+
+.PHONY: data-deploy
+data-deploy:
+	# Added 2026-07-30. Until now nothing under data/ had a target at all —
+	# the boundary files and the DEFRA noise PNG were uploaded by hand, which
+	# is fine right up until someone deploys sw.js without them. SHELL_ASSETS
+	# lists both boundary files and cache.addAll() is ATOMIC: one 404 and the
+	# service worker does not install, taking offline support for both cities
+	# with it. So this runs BEFORE pwa-deploy in web-deploy-all, never after.
+	@echo "Uploading data assets (boundaries + DEFRA noise raster)..."
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/london-boroughs.json \
+		s3://$(S3_BUCKET)/data/london-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	# aircraft-quiet-london.json, added 2026-08-06. 35,352 measured postcodes.
+	# LOAD-BEARING FOR CORRECTNESS, not just features: index.html reads quiet
+	# from this file wherever DEFRA has a measurement, and /v1/score reads the
+	# same measurements from DynamoDB. Ship one without the other and the site
+	# and the API publish different numbers for the same postcode — the exact
+	# divergence closed on 2026-08-03, reopened for 35,352 postcodes by a
+	# partial deploy. no-cache for the same reason as borough-extra: a pinned
+	# stale copy would serve scores from a retired methodology.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-quiet-london.json \
+		s3://$(S3_BUCKET)/data/aircraft-quiet-london.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# aircraft-quiet-regions.json, added 2026-08-12. 7,339 measured postcodes
+	# across the other eight cities, from DEFRA's per-airport coverages. Same
+	# correctness role as the London file above, and the same ordering hazard in
+	# the other direction: this file may only be served once the matching rows
+	# exist in the noise-raster table, or the SITE scores those postcodes on
+	# DEFRA while /v1/score still answers from geometry — about 2.2 score points
+	# apart, measured.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-quiet-regions.json \
+		s3://$(S3_BUCKET)/data/aircraft-quiet-regions.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# stations.json, added 2026-09-18: the 1,390 NaPTAN stations that were
+	# eleven inline <CITY>_STATIONS constants in index.html, fetched on search
+	# intent like the two aircraft-quiet files above and, like them, NOT in
+	# sw.js SHELL_ASSETS (cache.addAll is atomic; the panel has a not-loaded
+	# state). no-cache for the same reason: a pinned stale copy would list
+	# retired stations after a NaPTAN rebuild. Deploy it with index.html - the
+	# page fetches it, so a page that expects it and an origin without it is
+	# "station list could not be loaded" on every search.
+	#
+	# ORDER IS LOAD-BEARING: run data-deploy BEFORE web-deploy, never after
+	# (corrected 2026-09-19). web-deploy uploads AND invalidates index.html,
+	# which carries 5 references to this file and 0 inline _STATIONS arrays -
+	# so web-deploy-first leaves a window, between the two invalidations, in
+	# which the live page fetches a file the origin does not have. Reversed
+	# there is no window at all: the page that is live ignores this file until
+	# the new page lands. Same rule as fonts-deploy running first above, one
+	# surface along. NB web-deploy-all still lists web-deploy before
+	# data-deploy and carries the same latent hazard - benign only while this
+	# file already exists at the origin.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/stations.json \
+		s3://$(S3_BUCKET)/data/stations.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
+		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/westmidlands-boroughs.json \
+		s3://$(S3_BUCKET)/data/westmidlands-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/westyorkshire-boroughs.json \
+		s3://$(S3_BUCKET)/data/westyorkshire-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/southyorkshire-boroughs.json \
+		s3://$(S3_BUCKET)/data/southyorkshire-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/merseyside-boroughs.json \
+		s3://$(S3_BUCKET)/data/merseyside-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/tyneandwear-boroughs.json \
+		s3://$(S3_BUCKET)/data/tyneandwear-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/bristol-boroughs.json \
+		s3://$(S3_BUCKET)/data/bristol-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	# leicester + teesside, added 2026-08-11 when both left BACKEND_ONLY_CITIES.
+	# Both are in SHELL_ASSETS, so the atomic-addAll note applies to them
+	# identically: absent at the origin, the service worker stops installing for
+	# EVERY city, not just these two.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/leicester-boroughs.json \
+		s3://$(S3_BUCKET)/data/leicester-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/teesside-boroughs.json \
+		s3://$(S3_BUCKET)/data/teesside-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	# manchester-boroughs.json, added 2026-08-09 with the third city. In
+	# SHELL_ASSETS like the other two, so the atomic-addAll note above applies
+	# to it identically: missing here means the service worker stops installing
+	# for ALL three cities, not just this one.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/manchester-boroughs.json \
+		s3://$(S3_BUCKET)/data/manchester-boroughs.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/borough-extra.json \
+		s3://$(S3_BUCKET)/data/borough-extra.json \
+		--content-type "application/json" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# uk-locator.json, added 2026-08-09 with the country tier. Deliberately NOT
+	# in sw.js SHELL_ASSETS, unlike the boundary files above: cache.addAll() is
+	# atomic, and this is a decoration with a graceful fallback, so precaching
+	# it would let a missing decoration stop the service worker installing for
+	# every city. It still needs a deploy target, because a 404 here silently
+	# removes the coverage inset with only a console.warn.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/uk-locator.json \
+		s3://$(S3_BUCKET)/data/uk-locator.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	# usa-locator.json, added 2026-08-10 so the New York view gets its own
+	# silhouette instead of no inset at all. Same not-in-SHELL_ASSETS rule.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/usa-locator.json \
+		s3://$(S3_BUCKET)/data/usa-locator.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-london-lden.png \
+		s3://$(S3_BUCKET)/data/aircraft-noise-london-lden.png \
+		--content-type "image/png" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/data/*'
+
+.PHONY: pwa-deploy
+pwa-deploy:
+	@echo "Uploading PWA manifest, service worker, icons..."
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp manifest.webmanifest \
+		s3://$(S3_BUCKET)/manifest.webmanifest \
+		--content-type "application/manifest+json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp sw.js \
+		s3://$(S3_BUCKET)/sw.js \
+		--content-type "application/javascript" \
+		--cache-control "no-cache, no-store, must-revalidate" \
+		--region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp icons/ \
+		s3://$(S3_BUCKET)/icons/ \
+		--recursive --content-type "image/svg+xml" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/manifest.webmanifest' '/sw.js' '/icons/*'
+
+.PHONY: deeplinks-deploy
+deeplinks-deploy:
+	@echo "Checking for placeholder values in .well-known/..."
+	@if grep -q "TEAMID\|REPLACE:WITH" .well-known/apple-app-site-association .well-known/assetlinks.json; then \
+		echo "FAIL: placeholder values still present. Replace TEAMID and SHA-256 fingerprint first."; \
+		echo "See mobile/DEEP_LINKING.md for what to fill in."; \
+		exit 1; \
+	fi
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/apple-app-site-association \
+		s3://$(S3_BUCKET)/.well-known/apple-app-site-association \
+		--content-type "application/json" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/assetlinks.json \
+		s3://$(S3_BUCKET)/.well-known/assetlinks.json \
+		--content-type "application/json" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/.well-known/*'
+
+.PHONY: demo-deploy
+# Added 2026-08-04, closing audit finding 38. Every file below was already
+# serving 200 from CloudFront and NONE of them had a deploy command anywhere:
+# they got there by hand-upload, so the only record that they exist was the
+# live bucket. That is how api/index.html drifted until 2026-08-03, and on
+# 2026-08-04 a `make web-deploy-all` would have silently skipped two files
+# that had just been edited while still reporting success.
+#
+# openapi.yaml is the one that matters most: Swagger UI at /score-demo/
+# api-docs.html reads it, so a stale copy documents an API that no longer
+# exists. Content type must stay application/yaml (matched to what the live
+# object already serves) or the browser downloads it instead of rendering.
+#
+# --cache-control "no-cache" on the three pages and the spec (2026-09-13,
+# audit I1). Same defect as web-deploy's pages: no directive at all, so a
+# browser applied heuristic freshness and could keep serving a spec whose
+# own header records drifting twice in one day. Swagger UI fetches the YAML
+# with a plain GET, so it is subject to exactly the same cache as the page.
+# The vendored Swagger files below are left bare on purpose: they change
+# only on a deliberate vendor refresh, and that is the moment to give the
+# filename a version, as js/vendor/d3.v7.min.js has.
+demo-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/index.html \
+		s3://$(S3_BUCKET)/score-demo/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/api-docs.html \
+		s3://$(S3_BUCKET)/score-demo/api-docs.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/status.html \
+		s3://$(S3_BUCKET)/score-demo/status.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/openapi.yaml \
+		s3://$(S3_BUCKET)/score-demo/openapi.yaml \
+		--content-type "application/yaml" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# Vendored Swagger UI. Separate content types, so no --recursive here:
+	# one wrong type on the CSS and the reference page renders unstyled.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui.css \
+		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui.css \
+		--content-type "text/css" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui-bundle.js \
+		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui-bundle.js \
+		--content-type "application/javascript" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/vendor/swagger-ui-standalone-preset.js \
+		s3://$(S3_BUCKET)/score-demo/vendor/swagger-ui-standalone-preset.js \
+		--content-type "application/javascript" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/score-demo/*'
+
+.PHONY: prototype-deploy
+# Sky Score Radar. Standalone page, no shared assets, so it deploys alone.
+# Also hand-uploaded until now (most recently 2026-08-04, adding the DEFRA
+# vintage disclosure to its noise panel).
+prototype-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp prototype/index.html \
+		s3://$(S3_BUCKET)/prototype/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/prototype/*'
+
+.PHONY: meta-deploy
+# robots.txt, sitemap.xml and .well-known/security.txt. Low churn, but they
+# are the three files most likely to be edited and then forgotten, because
+# nothing visibly breaks when they go stale. security.txt in particular
+# carries a disclosure address that SECURITY.md is checked against.
+# 99 generated borough pages + the /area/ index. Regenerate with
+# `python scripts/build_area_pages.py --write` BEFORE deploying - the pages
+# carry live scores, so a stale upload publishes numbers the API has moved on
+# from. sitemap.xml is written by the same script and ships in meta-deploy.
+area-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync area/ \
+		s3://$(S3_BUCKET)/area/ \
+		--content-type "text/html" --cache-control "public,max-age=3600" \
+		--delete --region $(AWS_REGION)
+	# THE INVALIDATION WAS MISSING UNTIL 2026-09-02, and this was the only
+	# deploy target without one. Found by deploying: all 100 pages uploaded
+	# to S3 and CloudFront went on serving the old copies, so the verified
+	# origin still published Rushcliffe at `Quiet skies 10.0/10, Low` - the
+	# exact number the C1 fix existed to correct - while every upload
+	# reported success.
+	#
+	# `max-age=3600` above is what makes it silent rather than obvious: the
+	# stale window closes by itself within the hour, so a deploy checked
+	# immediately looks broken and the same deploy checked later looks fine,
+	# which reads as a flaky check rather than a missing step. Same shape as
+	# the 2026-08-26 incident recorded in CLAUDE.md - uploads succeed, cache
+	# is not cleared, and the deploy looks done.
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/area/*'
+
+meta-deploy:
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp robots.txt \
+		s3://$(S3_BUCKET)/robots.txt \
+		--content-type "text/plain" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp sitemap.xml \
+		s3://$(S3_BUCKET)/sitemap.xml \
+		--content-type "application/xml" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/security.txt \
+		s3://$(S3_BUCKET)/.well-known/security.txt \
+		--content-type "text/plain" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*'
+
+.PHONY: web-deploy-all
+# Order matters: data-deploy before pwa-deploy, because sw.js precaches the
+# boundary files and cache.addAll() fails atomically on a missing one.
+#
+# demo-deploy, prototype-deploy and meta-deploy joined on 2026-08-04. Before
+# that this target covered 4 of the 15 publicly-served surfaces while being
+# named "all", which is the shape of every gate failure in this repo: green
+# because of what it was not looking at.
+web-deploy-all: fonts-deploy web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy
+	@echo "Web + data + PWA + demo + prototype + area + meta deployed. Skip deeplinks-deploy until placeholders are filled."
+
+# ---------------------------------------------------------------------------
+# iOS (Codemagic does the heavy lifting; we just trigger and submit)
+# ---------------------------------------------------------------------------
+
+.PHONY: ios-trigger
+ios-trigger:
+	@echo "Pushing to GitHub. Codemagic will auto-trigger ios-workflow on push to master."
+	git push origin master
+
+.PHONY: ios-build-status
+ios-build-status:
+	@if [ -z "$(CMG_API_TOKEN)" ] || [ -z "$(CMG_APP_ID)" ]; then \
+		echo "Set CMG_API_TOKEN + CMG_APP_ID env vars first."; \
+		echo "Token: codemagic.io → Teams → User API tokens"; \
+		echo "App ID: visible in the URL of your codemagic app page"; \
+		exit 1; \
+	fi
+	curl -s -H "x-auth-token: $(CMG_API_TOKEN)" \
+		"https://api.codemagic.io/builds?appId=$(CMG_APP_ID)&limit=5" | \
+		jq -r '.builds[] | "\(.startedAt) \(.status) \(.workflowId) \(.buildHash)"'
+
+.PHONY: ios-submit
+ios-submit:
+	@echo "Submitting latest TestFlight build for App Store review..."
+	cd mobile && bundle exec fastlane ios submit_for_review
+
+# ---------------------------------------------------------------------------
+# Android (local Studio / gradle build, fastlane upload)
+# ---------------------------------------------------------------------------
+
+.PHONY: android-sync
+android-sync:
+	cd mobile && npm run sync
+
+.PHONY: android-assets
+android-assets:
+	cd mobile && npm run build:assets
+
+.PHONY: android-build
+android-build: android-sync android-assets
+	@echo "Building signed AAB via gradle..."
+	cd mobile/android && ./gradlew bundleRelease
+	@echo ""
+	@echo "AAB output: mobile/android/app/build/outputs/bundle/release/app-release.aab"
+
+.PHONY: android-fingerprint
+android-fingerprint:
+	@if [ -z "$(KEYSTORE_PATH)" ]; then \
+		echo "Set KEYSTORE_PATH first, e.g.:"; \
+		echo "  make android-fingerprint KEYSTORE_PATH=~/.keystores/sky-score-release.jks"; \
+		exit 1; \
+	fi
+	keytool -list -v -keystore $(KEYSTORE_PATH) -alias sky-score | grep "SHA256:"
+
+.PHONY: android-upload
+android-upload:
+	@echo "Uploading AAB to Play Console internal track..."
+	cd mobile && bundle exec fastlane android deploy_internal
+
+.PHONY: android-promote
+android-promote:
+	@echo "Promoting internal-track build to production..."
+	cd mobile && bundle exec fastlane android promote_to_production
+
+# ---------------------------------------------------------------------------
+# Bulk scoring
+# ---------------------------------------------------------------------------
+
+# Score a whole book of addresses offline, reusing the live scoring engine.
+# Consumes no API quota and needs no API key — it calls resolve_query()
+# directly, one layer below HTTP. Reads DynamoDB, so it needs the flightmap
+# profile, but it never writes anything.
+#
+#   make score-book IN=book.csv OUT=scored.csv
+#   make score-book IN=book.csv OUT=scored.csv ARGS="--persona family"
+#
+# See scripts/score_bulk.py for input formats and the --include-terminated flag.
+.PHONY: score-book
+score-book:
+	@test -n "$(IN)" || (echo "Usage: make score-book IN=book.csv OUT=scored.csv"; exit 1)
+	@test -n "$(OUT)" || (echo "Usage: make score-book IN=book.csv OUT=scored.csv"; exit 1)
+	AWS_PROFILE=flightmap python scripts/score_bulk.py --input "$(IN)" --output "$(OUT)" $(ARGS)
+
+# ---------------------------------------------------------------------------
+# Quality
+# ---------------------------------------------------------------------------
+
+# Delegates to scripts/preflight.sh so `make preflight`, `npm run preflight`
+# and the /preflight skill all run the SAME checks and report the SAME exit
+# code. The previous inline version drifted from the skill, omitted the root
+# test suite entirely, and blocked on Prettier — which every file in the repo
+# fails. `make` is also not installed on every dev machine here, so the shell
+# script is the canonical entry point and this is a convenience wrapper.
+.PHONY: preflight
+preflight:
+	sh scripts/preflight.sh
+
+.PHONY: test-pwa
+test-pwa:
+	@echo "Starting local server on :8765 (background) then running smoke test..."
+	@(npx --yes http-server -c-1 -p 8765 . > /tmp/sky-pwa-server.log 2>&1 &)
+	@sleep 2
+	node tests/pwa-check.mjs
+	@-pkill -f "http-server.*8765" 2>/dev/null || true

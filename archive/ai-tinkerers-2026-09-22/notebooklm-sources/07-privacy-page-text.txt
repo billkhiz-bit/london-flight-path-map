@@ -1,0 +1,245 @@
+Sky Score - Privacy Policy 
+
+ &#9992; "
+ />
+
+ Sky Score 
+ Privacy Policy 
+ Last updated: 2026-09-07 · Effective: 2026-05-09 
+
+ TL;DR 
+ Browsing and scoring collect no personal data and need no account. If you SAVE a place, your browser generates a random device token so your own saved list comes back to you - it identifies a device, not a person, and it is never used for tracking or advertising. See 2e. 
+ The one exception: if you request a free API key, we store the email address you give us to issue and manage that key. 
+ We don't sell anything to anyone. 
+ Your location stays on your device unless you tap "Score where I am" - then it's used once to find your postcode and discarded. 
+ Anonymous analytics (no cookies, no profiles) tell us roughly how many people use the app. 
+
+ 1. Who we are 
+
+ Sky Score is a trading name of CUBITT33 LTD, a company registered in England and Wales
+ (company number 13651304), whose registered office is 50 Pembroke Road, London W8 6NX. Web:
+ skyscore.co.uk . Contact: support@skyscore.co.uk .
+
+ For data protection purposes, we act as the data controller for the limited data described below. 
+
+ 2. What data we collect 
+
+ 2a. Data you actively give us 
+
+ Browsing and scoring: none. Using the Sky Score website or apps does not require an account, email address,
+ name, phone number, or any other identifying information. Saving a place is the one exception and is covered in 2e. There are no payment forms or surveys. Searching a postcode does
+ not collect anything; the optional score-update list described below is the only place the consumer site asks for an
+ address, and it is never a condition of seeing a score.
+
+ Score-update list (optional, added 21 August 2026): after you search a postcode you may leave an email
+ address to be told when that area's score changes. We collect the address and the postcode you searched, and nothing else.
+ We use it for that single purpose: to send you a short note when the underlying data is refreshed, which happens roughly
+ quarterly. Lawful basis: consent (UK GDPR Article 6(1)(a)), which you give by submitting the form and can withdraw at any
+ time by replying to any message or emailing us. It is never sold, never shared, and never used for marketing anything else.
+ Stored in the same signup register (DynamoDB) in our AWS account in eu-west-2 (London), marked with the source
+ consumer so it is distinguishable from an API key signup. Kept until you ask us to remove it.
+ Email support@skyscore.co.uk and we delete the record within 30 days.
+ These notes are sent by hand. We say so because the alternative is implying an automated alerting service
+ we have not built: there is no scheduled mail system behind this list today, so a note may follow a data refresh by some
+ days rather than arriving the moment a score moves.
+
+ API key signup (optional): if you request a free API key on the
+ developer demo page , we collect the email address you enter (and a display name if you
+ choose to give one). We use it solely to issue your key, enforce the one-key-per-email limit, contact you about your key if
+ we ever need to (for example abuse or deprecation notices), and revoke the key on request. Lawful basis: performance of a
+ contract (UK GDPR Article 6(1)(b)), you are asking us to issue and operate the key, with our legitimate interest in
+ preventing abuse (Article 6(1)(f)) for the rate-limit and one-key-per-email checks. The address is stored in our AWS account
+ in eu-west-2 (London), in the signup register (DynamoDB) and in the API key's own metadata; it is never sold
+ or shared for marketing, and is kept for as long as the key remains active.
+ Email support@skyscore.co.uk to delete it; we revoke the key and remove the
+ record within 30 days.
+
+ 2b. Data the app uses temporarily, on your device only 
+ Postcode lookups. Whenever you search a postcode on the website, and as you type in the search box, the text you enter is sent to api.postcodes.io to resolve it to a location. It is not stored by us. Corrected 2026-09-07: this section previously described that lookup as something only the native app did. 
+ When you tap "Score where I am" in the native iOS or Android app: 
+
+ Your device's GPS coordinates (latitude + longitude) are read by the app 
+ The coordinates are sent to api.postcodes.io (a free UK government postcode lookup service operated under the Open Government Licence) 
+ The response (your nearest UK postcode) is shown to you and used to fetch a Sky Score 
+ The coordinates are not stored, logged, profiled, or shared anywhere else 
+
+ If you deny the location permission, the rest of the app works normally - you just have to type a postcode manually. 
+
+ 2c. Anonymous usage analytics 
+
+ We use GoatCounter , an EU-hosted privacy-respecting analytics service. GoatCounter sets
+ no cookies, doesn't log IP addresses, doesn't track users across sites, and stores aggregate counts only (page views, referrers,
+ screen sizes). Comparable to a server-side log of HTTP requests with personal data scrubbed.
+
+ 2d. Server logs (AWS) 
+
+ Sky Score's backend runs on AWS Lambda + API Gateway in the eu-west-2 region (London). Each Lambda function
+ writes an execution log containing request timestamps, paths, response codes and error traces. We do not enable API Gateway
+ access logging, so no separate access log of source IPs and user agents is kept. Execution logs are retained for
+ 30 days and then deleted automatically. They are used solely for debugging and to
+ investigate suspected abuse, and we do not link them to identities.
+
+ 2e. Saved places (the device token) 
+
+ Added 2026-09-07. If you tap save on a place, your browser generates a random
+ token (a device token ) and stores it locally. That token is sent with each request to our
+ favourites endpoint so the list of places you saved comes back to you and not to
+ somebody else. The saved places and the token are stored on our side, in DynamoDB in
+ eu-west-2 .
+
+ It is created only when you save something. Browsing and scoring never generate one. 
+ It identifies a device , not a person. It is not linked to your email, your
+ API key, or anything you type. 
+ It is never used for advertising, profiling, or tracking you across sites, and it is never
+ shared. See 3. 
+ Clearing your browser storage discards it. Your saved list becomes unreachable at that
+ point, because the token was the only thing pointing at it. 
+ To have the stored list deleted, contact us ( 6) - though note that without the token
+ we cannot tell which list is yours, so send the request from the device that holds it. 
+
+ This section corrects an omission. Until 2026-09-07 this notice said browsing
+ and scoring collected "no tracking IDs" and that we almost certainly hold nothing about you.
+ The token has existed for as long as saving has, and it is stored server-side, so those
+ statements were wrong for anyone who had saved a place.
+
+ 3. What data we do NOT collect 
+
+ We do not track you across other apps or websites 
+ We do not build advertising profiles 
+ We do not sell, rent, or license any data to third parties 
+ We do not use third-party analytics that profile users (no Google Analytics, no Facebook Pixel, no Mixpanel, no Segment) 
+ We do not use cross-app identifiers (no IDFA, no ADID, no device fingerprinting) 
+ We do not access your messages, photos, contacts, calendar, microphone, or camera 
+
+ 4. Subprocessors 
+
+ Subprocessor 
+ Purpose 
+ Data 
+ Region 
+
+ Amazon Web Services (AWS) 
+ Backend compute, API Gateway, DynamoDB 
+ Lambda execution logs (30-day retention, see 2d) 
+ eu-west-2 (London) 
+
+ S3 + CloudFront 
+ Static asset delivery 
+ Standard CDN logs 
+ Multi-region 
+
+ api.postcodes.io 
+ Postcode lookup from coordinates 
+ Lat/lon (transient) 
+ UK 
+
+ GoatCounter 
+ Anonymous analytics 
+ Aggregate counts 
+
+ EU 
+
+ Codemagic 
+ Building iOS / Android binaries 
+ Source code only - no user data 
+ EU 
+
+ Apple App Store / Google Play 
+ App distribution + crash reports if you opt in 
+ Standard store telemetry 
+ Various 
+
+ Transport for London 
+ Nearest stations and line status 
+ Lat/lon (transient) 
+ UK 
+
+ MHCLG (EPC register) 
+ Energy certificates for the property panel 
+ Postcode (transient) 
+ UK 
+
+ HM Land Registry 
+ Sold price history 
+ Postcode (transient) 
+ UK 
+
+ OpenStreetMap Overpass (FOSSGIS e.V.) 
+ Nearby healthcare facilities 
+ Lat/lon (transient) 
+ Germany 
+
+ GitHub (raw.githubusercontent.com) 
+ Fallback map boundary files only 
+ Your IP address 
+ US 
+
+ FEMA, US EPA, US DOT 
+ Flood, air quality and noise map layers, New York view only 
+ Your IP address and the map area you are viewing 
+ US 
+
+ Everything in the "transient" rows above is passed straight through to answer your search and is never
+ stored by Sky Score. The rows marked US or Germany are the ones worth noting if you need UK-only
+ processing: the healthcare lookup goes to a server in Germany, and your browser loads fonts and the
+ New York map layers from US-hosted services. We correct this table when the code changes, and on
+ 2026-08-04 we corrected it because it had been incomplete rather than because the code had changed.
+
+ Full list with their respective privacy policies:
+ SUBPROCESSORS.md in our public
+ repo.
+
+ 5. Public source data 
+
+ Sky Score's content (the underlying scores) is computed from public datasets. Most are under the
+ Open Government Licence v3.0 :
+ DEFRA Strategic Noise Maps (aircraft and road), DEFRA background air quality maps, HM Land Registry House Price
+ Index and Price Paid Data, the EPC certificate register, ONS National Statistics Postcode Lookup, ONS
+ Crime in England and Wales , DfE Key Stage 4 Progress 8, DfT NaPTAN (public transport access nodes),
+ the NHS Organisation Data Service, and Environment Agency Risk of Flooding from Rivers and Sea.
+
+ Two are not, and this page previously said otherwise (corrected 2026-08-03): 
+ nearby-facility data comes from OpenStreetMap under the
+ Open Database Licence 1.0 , which is share-alike rather than
+ permissive, and TfL Open Data carries its own
+ licence and its own attribution requirement. Full per-source detail is in
+ LICENSING.md .
+ We don't request data about you from any of these sources.
+
+ 6. Your rights (UK GDPR) 
+ Even though we hold very little data about you, your UK GDPR rights apply. You can: 
+
+ Ask what data we hold about you. For most visitors this is nothing; if you have saved a place it is that list and its device token ( 2e), and if you requested an API key it is your email address 
+ Ask us to delete any data we do hold (we'll do it within 30 days) 
+ Withdraw consent to anything we're processing under consent (uninstalling the app revokes location consent) 
+ Lodge a complaint with the Information Commissioner's Office: ico.org.uk 
+
+ To exercise these rights, email support@skyscore.co.uk . 
+
+ 7. Children 
+
+ Sky Score has no minimum age requirement and does not knowingly collect data from anyone, including children. The iOS app is
+ rated 4+ on the App Store.
+
+ 8. Cookies (web only) 
+ The Sky Score website (skyscore.co.uk) does not use cookies. The native iOS and Android apps do not use cookies either. 
+
+ 9. Security 
+
+ All API calls use HTTPS (TLS 1.2+). AWS infrastructure is hosted in eu-west-2 with standard AWS security controls.
+ API rate limiting is in place. Full security posture:
+ SECURITY.md . Security issues:
+ support@skyscore.co.uk (we acknowledge within 48 hours).
+
+ 10. Changes to this policy 
+
+ Material changes (new subprocessors, new data types) update the "Last updated" date at the top of this page and are
+ listed, dated, under "Policy notices" on our changes page . Non-material changes (typos, formatting)
+ update neither. Corrected 2026-09-17: this section used to promise an in-app notice, which was never built.
+
+ 11. Contact 
+
+ Privacy questions: support@skyscore.co.uk . We aim to reply within 5 working days.
+
+ 2026 Bilal Khizar · Back to Sky Score · Terms ·
+ GitHub

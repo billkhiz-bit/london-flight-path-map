@@ -1,0 +1,456 @@
+# Sky Score
+
+**A noise + livability data API for UK and NYC property.**
+
+Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26, gaining road noise at v4.0, 2026-08-29; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
+
+> Methodology v5.2 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+>
+> **Air quality, road noise and flood risk are all SCORED, not just drawn.**
+> They are the fifth component, `environment` — air quality 0.65 / flood 0.35
+> at v3.9 (2026-08-26), re-composed to **air quality 0.45 / road noise 0.35 /
+> flood 0.20** at v4.0 (2026-08-29). The component sits at 0.14 of most personas
+> — 0.18 for `family` and `laterlife`, the two that map onto the WHO/COMEAP
+> air-pollution sensitivity groups (children, older adults) — and v4.0 changed
+> none of those: it re-composed the component, not the top-level split.
+>
+> **Road noise was the last input that was measured, mapped and reported while
+> nothing scored it.** With it, **90 of 99 boroughs are fully measured** and 9
+> are unavailable (New York's 5, no UK source applying; Cardiff's 4, Wales
+> having no English road or flood coverage). **The `partial` tier is empty as of
+> 2026-08-30**: Teesside's five were waiting on one flood tile, and the flood
+> georeferencing fix that day made a partial mosaic legal, so a single blank
+> sea tile no longer abandons a whole city. These three numbers summed to 104
+> until then, and the measured count really was 85 (audit F5). Median environment moved 8.00 → 6.65 — the honest cost of counting
+> a real adverse exposure for the first time, and not uniform: four boroughs
+> rose.
+>
+> It scores the CONTINUOUS fields, never the three-band map summaries — 68.1%
+> of boroughs share the modal air band and 54.9% the modal road band, so
+> scoring bands would put most of the country on one number. For road it is the
+> SHARE over WHO's guideline, not the median dB beside it: the median carries 41
+> distinct values to the share's 69 over an interquartile range of 1.7 dB. All
+> three ramps anchor on published thresholds (WHO 2021 guideline → the UK legal
+> limit for NO₂; 0% → 100% of addresses over WHO 2018's 53 dB Lden road
+> guideline; 0% → the EA's 10% Medium-or-High cut), never on the observed range.
+>
+> **The UK city-regions outside London are thinner than London on purpose,
+> and the gap is now four datasets rather than seven.** Road noise, flood risk
+> and air quality were derived for every borough on 2026-08-11 — DEFRA Round 4
+> road Lden, the Environment Agency's Risk of Flooding from Rivers and Sea, and
+> DEFRA background pollution maps — so all three map layers are measured
+> everywhere instead of curated for London and defaulted elsewhere. **Road
+> noise is SCORED**, at 0.35 of the `environment` component, since methodology
+> v4.0 (2026-08-29) - this line said it "remains reported and not scored" until
+> 2026-09-11, contradicting the sentence 29 lines above it in the same
+> blockquote. What is
+> still missing outside London and New York is **DEFRA-sampled aircraft noise**;
+> transport (v3.6, NaPTAN) and healthcare (v3.7, NHS ODS) are both derived
+> nationally now, and neighbourhood area search covers all nine generated
+> city-regions.
+> Aircraft bands
+> remain an estimate from runway geometry and the map legend says so rather than
+> borrowing London's DEFRA labelling — but since **v3.8** that estimate is
+> **scaled per airport by its measured DEFRA 55 dB Lden footprint**, so a small
+> airport no longer scores like a large one (Heathrow 1.000, Manchester 0.589,
+> Teesside 0.190). Validated against the 35,352 London postcodes DEFRA did
+> measure: mean absolute error against the measurement falls from 3.230 to
+> 1.879. Liveability now rests on **all four
+> measured inputs** for 79 of 99 boroughs,
+> with `context.liveResolution` reporting that per response and the absent
+> inputs having their weight **redistributed** rather than filled with a
+> placeholder. Postcode resolution works for **every** city since 2026-08-10.
+
+## Try it in 30 seconds
+
+Browser demo (no setup):
+> <https://skyscore.co.uk/score-demo/index.html>
+
+Interactive API reference (Swagger UI):
+> <https://skyscore.co.uk/score-demo/api-docs.html>
+
+Or one curl:
+
+```bash
+curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=TW3+4DX&persona=family' \
+  -H 'X-Api-Key: YOUR_KEY' -H 'Accept: application/json'
+```
+
+…returns Hounslow's score with `"quiet": 0.0` (under Heathrow's approach corridor), demonstrating the API correctly flags severe noise that listings sites obscure.
+
+## Live URLs
+
+| What | URL |
+|---|---|
+| Consumer site | <https://skyscore.co.uk/> |
+| Pricing (B2B API tiers + 90-day pilot) | <https://skyscore.co.uk/pricing> |
+| Privacy policy | <https://skyscore.co.uk/privacy> |
+| Area pages (99 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
+| Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
+| API landing page | <https://skyscore.co.uk/api/> |
+| API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
+| API reference (Swagger UI) | <https://skyscore.co.uk/score-demo/api-docs.html> |
+| OpenAPI 3.0 spec | <https://skyscore.co.uk/score-demo/openapi.yaml> |
+| `/v1/score` endpoint | <https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score> |
+| Methodology | [METHODOLOGY.md](./METHODOLOGY.md), the document that closes B2B audits |
+
+## Install
+
+Sky Score runs as a website, an installable PWA, and a native iOS / Android app — same code, three install paths.
+
+| Platform | How |
+|---|---|
+| Browser | Visit <https://skyscore.co.uk/> — no install needed |
+| Desktop / Android Chrome | Click the install icon in the address bar, or "Install Sky Score" button inside the app |
+| iOS Safari (16+) | Tap **Share → Add to Home Screen** |
+| iOS App Store | **v1.0.21 live** (<https://apps.apple.com/gb/app/sky-score/id6768118116>) — the native mobile redesign, approved after the 2026-05-29 submission. |
+| Google Play Store | Not yet listed — AAB is stale relative to master; rebuild then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md` |
+
+The native iOS and Android apps add a "Score where I am" button that uses your phone's GPS for instant scoring of your current location. See [`mobile/`](./mobile/) for the Capacitor + Codemagic build setup.
+
+## Why Sky Score exists
+
+UK property listings sites make money when transactions close. A listing that flags risks, aircraft noise, road noise, poor schools, is a bug in their funnel, not a feature. The data that materially affects whether a property is right for a buyer is systematically absent from the buyer-facing UI.
+
+Sky Score is the ethical alternative data layer:
+
+- **For buyers and renters**: a free site that shows the hidden quality factors *before* a viewing decision.
+- **For B2B integrators**, property-data aggregators (Landmark, TM Group), conveyancers, surveyors, build-to-rent operators, and Sharia-compliant home-finance providers (Al Rayan, StrideUp, Gatehouse), a documented, audit-defensible API.
+
+## API surface
+
+Seven endpoints returning JSON, listed below. **Three are API-key gated** —
+`/v1/score`, `/v1/score/batch` and `/v1/chat`, the routes that cost money to
+serve. **`/v1/chat` is additionally denied to every SELF-SERVICE key**
+(`RateLimit: 0` on `ScoreFreeUsagePlan`, verified live), and `signup` issues
+every self-service key onto that plan - so no self-service customer can reach
+it at all. Noted 2026-09-07; it had been listed simply as key-gated, which
+reads as "reachable with a key". The other four are deliberately public, each
+for its own reason:
+`/v1/regions` is discovery, so a client can find out what is supported before it
+holds a key; `/v1/changes`, so anyone can audit what moved between vintages
+without one; `/v1/environment`, because it serves a browser extension that cannot
+keep a key secret — which is why it returns measurements only and never a score;
+and `/badge`, because it renders inside an `<img>` on a third-party listing page,
+where no key can travel.
+
+> **Corrected 2026-08-31.** This paragraph read "Six endpoints. Four are
+> API-key gated. Two are deliberately public" — wrong in all three numbers,
+> against a table directly below it listing **seven** rows with **three** marked
+> Public. Verified against the running API rather than the template: `/v1/score`
+> answers 403 without a key while `/v1/regions`, `/v1/changes` and `/badge` all
+> answer 200. The routes are now NAMED rather than counted, because a count in
+> prose is scheduled staleness — this one had already gone stale twice.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/v1/score` | Score a single postcode or borough |
+| `POST` | `/v1/score/batch` | Bulk lookup, up to 100 queries per call |
+| `GET` | `/v1/regions` | Discovery, list supported cities, boroughs, postcode formats |
+| `POST` | `/v1/chat` | Retrieval-only assistant; answers are discarded if they contain a number the retrieved data does not |
+| `GET` | `/v1/changes` | **Public.** What moved between data vintages, and why |
+| `GET` | `/v1/environment` | **Public.** Aircraft/road Lden, NO2 and PM2.5 for a coordinate, each against its WHO guideline. A postcode DEFRA surveyed and found under its lowest mapped road level returns the bound `roadNoiseBelowDb` ("under 40 dB"), not silence. No weights, no persona, no composite score |
+| `GET` | `/badge` | **Public.** An embeddable SVG score badge for a postcode. Served as an `<img>`, not a script, so it renders on listing pages behind strict CSP. Reuses the same scoring path, so it cannot show a score `/v1/score` would not |
+
+Free tier: **10,000 requests/month**, 5/sec burst, 2/sec sustained. One request is one address — `/v1/score/batch` is denied per-method on the free plan, so requests and scores are the same unit and the ceiling is 10,000 scores. (Until 2026-08-21 the same ceiling was reached by a much smaller request quota multiplied by a 100-address batch - an afternoon of one live listings page. The superseded figure is deliberately not restated: a reader skimming for the limit cannot tell a quoted historical number from a live one, and neither can the drift gate that now reads this file.) Paid tiers introduced when the first paying integrator commits.
+
+## Quick-start
+
+```bash
+# Single lookup, balanced persona
+curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=N1+7SX' \
+  -H 'X-Api-Key: YOUR_KEY'
+
+# Family persona
+curl '.../v1/score?postcode=SW11+1AA&persona=family' -H 'X-Api-Key: YOUR_KEY'
+
+# Custom weights override (must sum to 1.0)
+curl '.../v1/score?postcode=TW3+4DX&weights=quiet:0.6,afford:0.2,growth:0.1,live:0.1' \
+  -H 'X-Api-Key: YOUR_KEY'
+
+# NYC ZIP
+curl '.../v1/score?postcode=10001' -H 'X-Api-Key: YOUR_KEY'
+
+# Bulk
+curl -X POST '.../v1/score/batch' -H 'X-Api-Key: YOUR_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{"queries":[{"postcode":"SW11 1AA"},{"postcode":"10001","persona":"investor"}]}'
+```
+
+Response shape (single):
+
+```json
+{
+  "score": 7.0,
+  "components": {
+    "quiet": 7.0,
+    "afford": 7.3,
+    "growth": 5.5,
+    "live": 7.8,
+    "env": 5.1
+  },
+  "context": {
+    "avgPriceGbp": 605442,
+    "priceTrendPct": 0.4,
+    "noiseImpactBand": "low",
+    "quietResolution": "postcode",
+    "liveResolution": "measured",
+    "environmentResolution": "measured"
+  },
+  "location": {
+    "city": "london",
+    "borough": "Hackney",
+    "postcode": "N1 7SX"
+  },
+  "persona": "balanced",
+  "weights": {
+    "quiet": 0.32,
+    "afford": 0.27,
+    "growth": 0.0,
+    "live": 0.27,
+    "env": 0.14
+  },
+  "methodologyVersion": "5.1",
+  "apiVersion": "1.0",
+  "sources": [
+    "Transport access: DfT NaPTAN, Open Government Licence v3.0",
+    "..."
+  ],
+  "sourceBreakdown": {
+    "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) → v3.0 Haversine to airports + flight-path geometry → v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution.",
+    "afford": "HM Land Registry UK House Price Index, July 2026 vintage, Open Government Licence v3.0. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of borough medians across ALL 94 boroughs in the sterling pool (GBP 158,435 to GBP 720,241), not against this city cohort. Affordability is therefore comparable BETWEEN cities... context.priceRankInCity carries the within-city standing that scaling used to imply.",
+    "growth": "HM Land Registry UK House Price Index, July 2026 vintage, 12-month price trend deflated by ONS CPIH (3.1% for July 2026) - REAL-terms growth since methodology v5.1, so a flat score of 5.0 means prices held their value against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct the figure scored. Methodology v5.2 scales each tail against the real-terms fastest riser and steepest faller across ALL 94 boroughs in the sterling pool, not this city cohort - a city-sized cohort put one borough per city on each rail every month by construction. Growth is therefore comparable BETWEEN cities; context.growthRankInCity carries the within-city standing. A previous vintage exists, so ?compare=previous reports real movement.",
+    "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.",
+    "env": "Air quality (0.45), Road noise (0.35), Flood risk (0.20). Weights are re-normalised over the inputs a borough actually has; a borough below the two-input floor omits the component entirely."
+  }
+}
+```
+
+> **Captured from the live API on 2026-09-07, not hand-written.** Re-capture it when the
+> methodology version moves rather than editing values by hand - and that instruction was
+> broken between those two dates. The 2026-08-04 block was later hand-edited to add
+> `"env": 6.4` while leaving `methodologyVersion: "3.5"`, four-key `weights` summing to 1.00,
+> and every other value untouched. `env` did not exist on 2026-08-04, so the block could not
+> have been the capture it claimed to be, and it advertised a five-component response under a
+> four-component weights object. A caption that forbids hand-editing does not prevent it; only
+> re-capturing does. The block above is a verbatim `/v1/score?postcode=N1+7SX` response with
+> the `sources` array elided for length.
+>
+> An earlier version carried `score: 7.7` with `methodologyVersion: "3.3"` and every
+> component value stale, and its
+> `sourceBreakdown` credited **Home Office** for crime (re-sourced to ONS Table C4 in v3.5),
+> **NHS** for healthcare (curated tiers), and **Price Paid Data** for affordability and growth
+> where the engine uses **HPI** — while the table further down this same file already said HPI.
+
+**Eight** named persona presets: `balanced`, `family`, `investor`, `firsttime`, `quietlife`,
+`renter`, `commuter`, `laterlife`. The `?weights=` parameter lets integrators apply their own
+preference profile instead. (This said "five" until 2026-08-04, omitting the last three — the
+same undercount that made the OpenAPI spec reject valid requests until it was corrected.)
+
+## What the score measures
+
+Each component is anchored to a published source, see [METHODOLOGY.md](./METHODOLOGY.md) for the full provenance.
+
+| Component | Description | Anchored to |
+|---|---|---|
+| **Quiet** | **Aircraft noise only.** Road noise is scored too, but in **Environment**, not here (v4.0, 2026-08-29) | DEFRA Strategic Noise Mapping (Round 4, 2022) aircraft Lden; WHO Environmental Noise Guidelines (2018) health thresholds. Haversine to airports + flight-path geometry, with the **DEFRA raster tier live since 2026-08-06** (`RASTER_TIER_QUARANTINED = False`) for London postcodes it covers. See [METHODOLOGY §4.5](./METHODOLOGY.md) |
+| **Affordability** | Average price, log-scaled against the national p5-p95 band of borough medians (v5.0) - comparable between cities | HM Land Registry House Price Index (HPI) |
+| **Growth** | Real-terms 12-month price trend (HPI deflated by ONS CPIH, v5.1), dual-anchored against the fastest riser and steepest faller across the whole currency pool (v5.2) - comparable between cities; `investor` persona only | HM Land Registry House Price Index (HPI); ONS CPIH (L55O) |
+| **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2023/24); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
+| **Environment** | Air quality (45%) + road noise (35%) + flood risk (20%). Scored since v3.9 (2026-08-26); road noise added at v4.0 (2026-08-29). Needs at least two of the three, so it is absent for New York and below the floor for Cardiff | DEFRA background pollution maps (PCM) against **WHO 2021** guidelines; DEFRA Round 4 **road** Lden, share of addresses over the **WHO 53 dB** guideline; Environment Agency Risk of Flooding from Rivers and Sea, share at Medium-or-High |
+
+The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and the persona weights in §5.1, against the current data snapshot.
+
+> **Corrected 2026-08-04.** This paragraph said the [worked example](./METHODOLOGY.md#6-worked-example) "reproduces the live API exactly" and that a mismatch should be reported as a bug. **§6 of that document says the opposite** — it is explicitly retained as a **historical trace of v3.0** and "no longer matches the live API, and has not since v3.2", because of the v3.2 clamp, the v3.3 weighting change and the v3.4 dual-anchor growth formula. Anyone following the old instruction would have filed a bug against a discrepancy the methodology already documents. The example is still worth reading for the *method*; it is not a current-values check.
+
+## Coverage
+
+- **London**: 33 boroughs by postcode (local ONS NSPL table, postcodes.io fallback)
+- **NYC**: 5 boroughs by ZIP (~182 residential ZIPs supported), or by borough name
+- **Greater Manchester**: 10 boroughs, by postcode or borough name.
+- **Six further UK city-regions, on the site and the API** (2026-08-10): West
+  Midlands, West Yorkshire, South Yorkshire, Merseyside, Tyne and Wear and
+  Bristol, by postcode or borough name. Prices, trends, crime, Progress 8,
+  boundaries and — since 2026-08-11 — road noise, flood risk and air quality are
+  all script-derived and verified against the publishing body; aircraft bands
+  are an **estimate from runway geometry, not DEFRA**.
+- **Cardiff and Nottingham, on `/v1/score` only.** Progress 8 is an England
+  measure so Cardiff has none, and Nottingham has 1 of 4 because Broxtowe,
+  Gedling and Rushcliffe are districts inside Nottinghamshire rather than
+  local authorities. ONS crime has the same gap for both, so neither can reach
+  the two-input liveability floor the site needs.
+- **Planned**: the rest of England and Wales. Both the price and crime loaders
+  are already parameterised by city, so roughly 318 local authorities are
+  reachable without new research. The site's locator inset names the ten UK core
+  cities and marks which are live.
+
+**What "supported" means per city**, because it is not uniform:
+
+| | London | NYC | The 7 other UK city-regions | Cardiff + Nottingham |
+|---|---|---|---|---|
+| On the consumer site | yes | yes | yes | **no - API only** |
+| Lookup | postcode or borough | ZIP or borough | postcode or borough | **borough only** |
+| Aircraft noise | DEFRA raster where covered, else geometry | curated bands from approach geometry | **runway geometry only, not DEFRA** | **runway geometry only, not DEFRA** |
+| Liveability inputs | 4 of 4 (32 of 33 boroughs) | 4 of 4 | **4 of 4** | **3 of 4**; Cardiff has no Progress 8, Wales having no England measure |
+| Quarterly comparison | yes | yes | **declines** — no prior vintage exists | **declines** — no prior vintage |
+
+### Exactly what the other UK cities are missing, against London
+
+Measured 2026-08-11. Seven of the twelve per-city datasets are now complete
+everywhere; the gap is the remaining five.
+
+| Dataset | Source | London | NYC | Other 7 UK |
+|---|---|---|---|---|
+| Boundaries | ONS | yes | yes | **yes** |
+| Prices + trend | HM Land Registry HPI | yes | yes | **yes** |
+| Crime rate | ONS Table C4 | yes | yes | **yes** |
+| Schools (Progress 8) | DfE KS4 | yes | n/a | **yes** |
+| Road noise | DEFRA Round 4 road Lden | yes | curated | **yes** (2026-08-11) |
+| Air quality | DEFRA background maps | yes | curated | **yes** (2026-08-11) |
+| Flood risk | EA Risk of Flooding from Rivers and Sea | yes | curated | **yes** (2026-08-11) |
+| Transport | **NaPTAN** rail/metro/tram within 800 m | yes | curated | **yes** (2026-08-11); plus **1,415 stations in the detail panel's nearest-stations list**, display only. The map's transport LAYER was deleted on 2026-08-12 (the markers could not be clicked - the borough path took the event - and duplicated a signal already scored). The count fell from 1,651 on 2026-09-01, when audit I19 stopped publishing one tram stop as five and dropped 806 retired NaPTAN nodes |
+| Healthcare | **NHS ODS** GP practices within 500 m | yes | curated | **yes** (2026-08-11) |
+| Neighbourhood area search | Land Registry PPD + NSPL | yes (152) | yes (127) | **yes, 481 districts** (2026-08-12; 485 until the HMLR Category B filter of 2026-09-01 dropped four below the 30-sale floor); 281 carry a curated area name corroborated against published MSOA names, and every district is majority inside the city publishing it |
+| **Aircraft noise, measured** | DEFRA Round 4 aircraft Lden | yes | XYZ tiles | **yes where DEFRA published a contour** (2026-08-12): 7 per-airport coverages, 7,339 postcodes = 0.6–3.9% per city; the rest estimated from runway geometry |
+| **Crime breakdown (top offences)** | ONS | yes | no | **no** |
+
+Two of those five carry weight in the score. Liveability weights are schools
+0.35, crime 0.30, transport 0.25, healthcare 0.10 — and **all four are measured
+for 79 of 99 boroughs**, up from 38 before v3.6, which was 35% of the weight
+unmeasured.
+
+**That figure is 79, and this paragraph said 84 while asserting it could not be
+wrong.** Corrected 2026-09-11 (audit C4) by RUNNING `app.live_resolution()`
+over all 99 records: **79 measured, 20 partial, 0 unavailable**. The old text
+claimed the number was *"counted through the Lambda's own `live_resolution()`,
+not recomputed here, so it cannot disagree"* - it was hand-written prose, it did
+disagree, and the claim of derivation is what made it expensive, because it told
+the reader not to check. The error was New York: its five boroughs were counted
+as fully measured (the per-city table above says "4 of 4"), but `p8` is `None`
+for all five, so `live_resolution` returns `partial - 3/4` for each. 84 - 5 = 79.
+
+The 20 partials are exactly the boroughs without Progress 8
+(Cardiff has none, Wales having no England measure, and Leicester and Nottingham
+sit under upper-tier county education authorities, and New York publishes no
+England measure at all) and a published crime rate is missing for 3. **None is
+`unavailable`.** The remaining gaps (measured aircraft noise, crime
+breakdown) affect what the site can *show*, not what it scores.
+
+**The largest single win left is DEFRA aircraft sampling.** Round 4 covers all
+16 English airports including every one of ours — measured 2026-08-10 — so the
+data exists and has simply not been sampled; until it is, those cities' quiet
+scores are modelled from runway geometry and calibrated on Heathrow, which is
+far larger, so the bands reach further than the airport really does.
+
+Absent liveability inputs are **not** estimated: their weight is redistributed
+across the measured ones, and `context.liveResolution` states how many were
+measured. Affordability (since v5.0) and growth (since v5.2) are anchored on
+the **whole currency pool** - the 94 sterling boroughs, or New York's five -
+so both are comparable between cities; the within-city standing each used to
+imply is published as `context.priceRankInCity` and `context.growthRankInCity`.
+(This paragraph said both were scaled within each city's cohort until
+2026-09-16, a year's worth of methodology after it stopped being true of
+affordability.)
+
+### Environmental measurements (`/v1/environment`), as at 2026-08-08
+
+These are **reported, not scored** — weighting them would change every score the
+API has ever returned. Coverage differs enormously per measurement, and the
+figures below describe **what the table actually holds**, not what the source
+grids contain:
+
+| Measurement | Coverage | Note |
+|---|---|---|
+| Aircraft Lden | ~9% of London postcodes | DEFRA's contours are localised lobes around airports. Outside them there is no reading, and the endpoint **omits the key** rather than returning a default |
+| Road Lden | Complete across the London raster | Finished 2026-08-08. Was missing everything from `UB6` onward — `W`, `WC`, `WD` — for two days before that |
+| NO₂ / PM2.5 | **Loading, ~57% of UK postcodes as at 2026-08-11** | The pass runs in postcode-alphabetical order over the whole UK, so early-alphabet regions have figures well before London does. **The borough-level `airQuality` band does not depend on this** - it is computed from the DEFRA grid CSVs directly and is complete for every city |
+
+A missing key means "not measured here", never "measured and fine" — the
+distinction is deliberate, and it is also what let an unrun loader look
+identical to genuine absence for a day. See `CHANGELOG.md` for both corrections.
+
+## Architecture
+
+Single-region AWS, fully serverless, deployed via SAM:
+
+```
+CloudFront ── S3 (frontend, prototype, score-demo, OpenAPI spec)
+                │
+API Gateway ── Lambda × 8 active ── DynamoDB (favourites, signups, DEFRA
+                                 │              noise raster, ONS NSPL postcodes)
+                                 ── External APIs (postcodes.io fallback, MHCLG EPC,
+                                                   Land Registry, TfL, NHS)
+```
+
+| Lambda | Path | Purpose |
+|---|---|---|
+| `score` | `/v1/score`, `/v1/score/batch`, `/v1/regions`, `/v1/changes`, `/v1/environment` | B2B scoring. **API-key gated on `/v1/score` and `/v1/score/batch` only** - `/v1/regions`, `/v1/changes` and `/v1/environment` are all open (verified live 2026-08-21; this row claimed `/v1/regions` was gated) |
+| `chat` | `/v1/chat` | Retrieval-only assistant; context comes from invoking `score` directly, never from the model |
+| `signup` | `/v1/signup` | Self-service API-key issuance |
+| `favourites` | `/favourites` | Consumer saved-property storage (`X-Device-Token` auth) |
+| `epc` | `/epc` | EPC certificate proxy (MHCLG `Get energy performance of buildings data`) |
+| `sold_prices` | `/sold-prices` | Land Registry Price Paid Data proxy |
+| `transport` | `/transport` | TfL Open Data station + line-status |
+| `nhs` | `/nhs` | NHS Service Search |
+
+**Removed surfaces (kept in git history):** **Four** Bedrock Lambdas (`multi_agent`, `analyze_image`, `analyze_document`, `report`) and the OpenSky-backed `live_flights` Lambda were deployed earlier but removed end-to-end in May 2026. **`chat` is NOT among them** - it was restored to the template on 2026-08-06 as a retrieval-only function and is in the table eleven lines above, which this sentence contradicted until 2026-08-22 — Bedrock to align the consumer surface with the methodology-defensibility positioning of the B2B API, OpenSky pending a written commercial-use agreement. Restoration: `git revert` of commits `69905ee` + `71a731c` + `6bad8ce` for AI features; restore `live_flights/` + flip prototype's `liveLicensed` flag for live aircraft. See `LICENSING.md` for the OpenSky context.
+
+## Tech stack
+
+- **Frontend**: single-file HTML + D3.js v7, no build step
+- **B2B Backend**: Python 3.11 Lambdas with embedded scoring data, `lru_cache`-backed postcode lookups
+- **Data residency**: AWS `eu-west-2` (London) for UK GDPR alignment
+- **API documentation**: OpenAPI 3.0 spec served from CloudFront, rendered via Swagger UI
+
+## Repo layout
+
+```
+.
+├── index.html # Consumer site (single page)
+├── prototype/ # Sky Score Radar, 3D Three.js prototype
+├── score-demo/ # B2B API browser demo + Swagger UI + OpenAPI spec
+├── backend/
+│ ├── template.yaml # SAM stack: 8 Lambdas, API Gateway (per-route throttle), 4× DynamoDB (PITR-ready), Usage Plan
+│ ├── lambdas/ # One folder per Lambda
+│ └── tests/ # Unit tests: score engine + handler suite
+├── METHODOLOGY.md # Public methodology, every threshold anchored to a published source
+├── ROADMAP.md # Rolling project plan with design notes for deferred work
+├── archive/BUILDATHON_PLAN_2026.md # Shared Futures Buildathon plan (archived)
+├── OUTREACH_LOG.md # B2B outreach pipeline tracker
+└── tests/ # Playwright E2E + per-Lambda pytest suites (rewritten 2026-07-24)
+```
+
+## Local development
+
+Backend deploys require an AWS profile and an EPC bearer token from the [MHCLG service portal](https://get-energy-performance-data.communities.gov.uk/).
+
+```bash
+cp .env.example .env
+# fill in EPC_BEARER_TOKEN
+
+set -a && source .env && set +a
+cd backend && rm -rf .aws-sam && \
+  AWS_PROFILE=flightmap sam build && \
+  AWS_PROFILE=flightmap sam deploy \
+    --parameter-overrides "EpcBearerToken=$EPC_BEARER_TOKEN"
+```
+
+Run unit tests:
+
+```bash
+python -m unittest backend.tests.test_score -v
+```
+
+Frontend deploy commands are in [`CLAUDE.md`](./CLAUDE.md).
+
+## Licence
+
+Proprietary. See [LICENSE](./LICENSE). Source-available for inspection and methodology audit; commercial use requires a licence agreement.
+
+For licensing, integration, or partnership enquiries, contact via the [live site](https://skyscore.co.uk/).
+
+## Acknowledgements
+
+The data the API returns is built on UK and US open data, MHCLG, DEFRA, HM Land Registry, ONS, Home Office, Department for Education, TfL, NHS Digital. Contains public sector information licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+
+The original consumer site was built for the Amazon Nova AI Hackathon, March 2026, where it received a build credit award. The B2B API and productisation work began May 2026; the consumer-side AI features built for the hackathon were retired from the UI in May 2026 to align the consumer surface with the methodology-defensibility positioning of the B2B API. Their Lambda code and template entries live in git history for potential future re-introduction.

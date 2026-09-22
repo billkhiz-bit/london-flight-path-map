@@ -1,0 +1,75 @@
+PREFLIGHT RUN - 2026-09-21, 15:49 to 16:13 (23 min 34 s, cold flood cache)
+sh scripts/preflight.sh on commit 47116b0 + the uncommitted 19 Sep doc edits.
+57 stages = 45 blocking + 12 advisory. Nothing red. Shown for 5 seconds at 3:55.
+
+
+PREFLIGHT, Sky Score
+====================
+
+Blocking:
+  ESLint (8 targets)                PASS
+  html-validate (9 pages)           PASS
+  ruff (backend/lambdas)            PASS
+  ruff (scripts, tests)             PASS
+  pytest (backend)                  PASS
+  pytest (root)                     PASS
+  API base-URL drift (I-N5)         PASS
+  score sanity (live API)           PASS
+  demo key reaches only /v1/score   PASS
+  prices == HM Land Registry        PASS
+  aircraft bands == geometry        PASS
+  crime == ONS Table C4             PASS
+  flood == EA service (georef)      PASS
+  site == Lambda (91 boroughs)      PASS
+  area names == MSOA names          PASS
+  openapi == score engine           PASS
+  worked example reproduces         PASS
+  no em dashes (all pages)          PASS
+  log retention == privacy.html     PASS
+  self-hosted fonts (9 pages)       PASS
+  extension extraction              PASS
+  extension panel per env state     PASS
+  Playwright e2e (--workers=2)      PASS
+  extension e2e                     PASS
+  local smoke + registry            PASS
+  degraded + offline fallbacks      PASS
+  locator inset                     PASS
+  selector tiers do not overlap     PASS
+  every city switches               PASS
+  legal links reachable on a phone  PASS
+  PWA installable (manifest + SW)   PASS
+  changes page explains why         PASS
+  map fits its box                  PASS
+  web/native layout split           PASS
+  UK cities get UK panel content    PASS
+  area pages carry real data        PASS
+  area pages match the live API     PASS
+  layers paint only real data       PASS
+  panel says what it measured       PASS
+  favourites: keyboard + not nested PASS
+  ranking claims only real order    PASS
+  panel contrast, borough (AA)      PASS
+  panel contrast, area (AA)         PASS
+  responsive, source                PASS
+  WCAG source scan (all pages)      PASS
+
+Advisory:
+  Prettier (all files deviate)      deviates (advisory, not blocking)
+  npm audit                         deviates (advisory, not blocking)
+  p8 == DfE KS4 2023/24             ok
+  borough bands == sources          ok
+  neighbourhood medians == PPD      ok
+  aircraft footprint == DEFRA       ok
+  quiet estimate == DEFRA           ok
+  aws perms == iam-policy.json      deviates (advisory, not blocking)
+  deployed == source                ok
+  site == /v1/score (6 postcodes)   ok
+  responsive, live                  ok
+  live web == tabbed layout         ok
+
+====================
+RESULT: PASS
+  advisory: Prettier (all files deviate)
+  advisory: npm audit
+  advisory: aws perms == iam-policy.json
+preflight exit=0

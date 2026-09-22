@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The model reads, the code checks</title>
+<style>
+  /* One screen, one flow. Open in Chrome, press F11. Light or dark follows the OS.
+     Type scales with the SHORTER of width and height so the flow never scrolls.
+     2.9vh is DERIVED: a binary search for the largest type that fits gave 3.3vh at
+     1366x768, 3.0vh at 1440x900, 3.1vh at 1920x1080 (2026-09-21); 2.9 leaves margin.
+     At a fixed 30px on an 870px window it had been 1148px tall - two screens. */
+  :root {
+    --bg: #fbfaf7; --ink: #15161a; --mid: #5b5e66; --line: #b9bcc4;
+    --box: #ffffff; --model: #fff3e0; --model-ink: #8a4b00;
+    --ok: #1a7f4b; --ok-bg: #e7f6ee; --no: #b3261e; --no-bg: #fdecea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141518; --ink: #f2f2f0; --mid: #a9acb4; --line: #4a4d55;
+      --box: #1e2024; --model: #3a2a10; --model-ink: #ffcc80;
+      --ok: #6fd39a; --ok-bg: #16311f; --no: #ff8a80; --no-bg: #3a1b18;
+    }
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 500 clamp(16px, min(2.1vw, 2.9vh), 34px)/1.2 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 1.5vh 4vw 2vh; }
+  h1 { font-size: 1.3em; margin: 0; letter-spacing: -0.01em; }
+  h1 small { display: block; font-size: 0.6em; font-weight: 500; color: var(--mid); margin-top: 0.3em; }
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.7vh 2vw; align-items: center; margin-top: 1.5vh; }
+  .box { background: var(--box); border: 2px solid var(--line); border-radius: 14px; padding: 0.45em 0.9em; }
+  .box b { display: block; font-size: 1.05em; }
+  .box .desc { color: var(--mid); font-size: 0.8em; display: block; margin-top: 0.15em; }
+  .model { background: var(--model); border-color: var(--model-ink); }
+  .model b { color: var(--model-ink); }
+  .check { grid-column: 1 / -1; border-width: 3px; border-color: var(--ink); }
+  .check code { font-family: ui-monospace, Consolas, monospace; font-size: 0.95em; }
+  .arrow { text-align: center; color: var(--mid); font-size: 0.85em; }
+  .arrow .glyph { display: block; font-size: 1.6em; line-height: 1; color: var(--ink); }
+  .down { grid-column: 1 / -1; text-align: center; color: var(--mid); font-size: 0.85em; }
+  .down .glyph { display: block; font-size: 1.2em; line-height: 1; color: var(--ink); }
+  .out { display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; grid-column: 1 / -1; }
+  .yes { background: var(--ok-bg); border-color: var(--ok); }
+  .yes b { color: var(--ok); }
+  .no { background: var(--no-bg); border-color: var(--no); }
+  .no b { color: var(--no); }
+  .num { display: inline-block; min-width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center;
+    border-radius: 50%; background: var(--ink); color: var(--bg); font-size: 0.7em; font-weight: 700; margin-right: 0.4em; }
+  .left { grid-column: 1; }
+  .right { grid-column: 3; }
+  .mid { grid-column: 2; }
+  .wide { grid-column: 1 / -1; }
+  @media (max-width: 800px) {
+    .flow { grid-template-columns: 1fr; }
+    .left, .right, .mid, .wide { grid-column: 1; }
+    .out { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>The model reads, the code checks
+    <small>one request through the assistant endpoint</small>
+  </h1>
+
+  <div class="flow">
+    <div class="box wide"><b><span class="num">1</span>Question + postcode</b>
+      <span class="desc">"Is SW11 1AA quiet?"</span></div>
+
+    <div class="down"><span class="glyph">&#8595;</span></div>
+
+    <div class="box left"><b><span class="num">2</span>Assistant function</b>
+      <span class="desc">AWS Lambda, Python. Has no data of its own.</span></div>
+    <div class="arrow mid"><span class="glyph">&#8646;</span>invokes directly,<br>not over the web</div>
+    <div class="box right"><b><span class="num">3</span>Scoring function</b>
+      <span class="desc">The same engine the public API runs. Returns the numbers as JSON.</span></div>
+
+    <div class="down"><span class="glyph">&#8595;</span>DATA (the only permitted source) + the question</div>
+
+    <div class="box model wide"><b><span class="num">4</span>Amazon Nova 2 Lite, on Bedrock</b>
+      <span class="desc">Its one job: explain the numbers it was handed. Temperature 0.2, 400 tokens.</span></div>
+
+    <div class="down"><span class="glyph">&#8595;</span>the model's answer</div>
+
+    <div class="box check"><b><span class="num">5</span><code>verify_answer(answer, context)</code> &mdash; about forty lines of plain Python</b>
+      <span class="desc">Pull every number out of the answer. Pull every number out of the data.
+      Every number in the answer must already be in the data.</span></div>
+
+    <div class="out">
+      <div class="box yes"><b>All present &rarr; grounded: true</b>
+        <span class="desc">The answer ships, with the data underneath it.</span></div>
+      <div class="box no"><b>Any missing &rarr; grounded: false</b>
+        <span class="desc">The answer is thrown away. Reply: "I can't answer that from the data I have."
+        Log: <code>[CHAT_UNGROUNDED] numbers=[...]</code></span></div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

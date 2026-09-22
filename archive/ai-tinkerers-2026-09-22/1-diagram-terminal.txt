@@ -1,0 +1,30 @@
+THE MODEL READS, THE CODE CHECKS - one request through the assistant
+(terminal fallback: `cat` this file at 24pt if the browser is not to hand)
+
+      question + postcode          "Is SW11 1AA quiet?"
+             |
+             v
+ +--------------------+   invokes directly,   +--------------------+
+ |  assistant Lambda  | --------------------> |  scoring Lambda    |
+ |  (has no data)     | <-------------------- |  (the real engine) |
+ +--------------------+     numbers as JSON   +--------------------+
+             |
+             |   DATA (the only permitted source)  +  the question
+             v
+ +--------------------+
+ |   Nova 2 Lite      |   its one job: explain the numbers it was handed
+ |   (Bedrock)        |   temperature 0.2, 400 tokens
+ +--------------------+
+             |   the model's answer
+             v
+ +------------------------------------------------------------+
+ |  verify_answer(answer, context)        ~40 lines of Python |
+ |  every number in the ANSWER must already be in the DATA    |
+ +------------------------------------------------------------+
+             |                              |
+   all present                        any missing
+             v                              v
+   grounded: true                     grounded: false
+   the answer ships                   the answer is THROWN AWAY
+                                      "I can't answer that from the data I have."
+                                      log: [CHAT_UNGROUNDED] numbers=[...]

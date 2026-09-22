@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What runs it</title>
+<style>
+  /* One screen. Open in Chrome, F11. Type scales with the shorter of width and
+     height so the whole picture fits without scrolling (same rule as 1-diagram).
+     2.5vh is DERIVED: largest type that fits measured 2.7vh at 1366x768, 2.6vh at
+     1440x900, 2.7vh at 1920x1080 (2026-09-21); 2.5 leaves margin. */
+  :root {
+    --bg: #fbfaf7; --ink: #15161a; --mid: #5b5e66; --line: #b9bcc4; --box: #ffffff;
+    --aws: #fff3e0; --aws-ink: #8a4b00; --data: #e8eefc; --data-ink: #1f3f8f;
+    --model: #f3e8ff; --model-ink: #5b2d91; --off: #eef0f3; --off-ink: #3d4148;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141518; --ink: #f2f2f0; --mid: #a9acb4; --line: #4a4d55; --box: #1e2024;
+      --aws: #3a2a10; --aws-ink: #ffcc80; --data: #16223a; --data-ink: #9dbcff;
+      --model: #2a1b3d; --model-ink: #d3b4ff; --off: #23262b; --off-ink: #c9ccd3; }
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 500 clamp(14px, min(1.55vw, 2.5vh), 30px)/1.15 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1600px; margin: 0 auto; padding: 1.2vh 3vw 1.5vh; }
+  h1 { font-size: 1.3em; margin: 0 0 0.1em; }
+  h1 small { display: block; font-size: 0.6em; font-weight: 500; color: var(--mid); margin-top: 0.2em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8vh 2vw; margin-top: 1vh; }
+  .col { display: grid; gap: 0.5vh; align-content: start; }
+  .box { background: var(--box); border: 2px solid var(--line); border-radius: 12px; padding: 0.4em 0.75em; }
+  .box b { display: block; }
+  .box .d { display: block; color: var(--mid); font-size: 0.78em; margin-top: 0.1em; }
+  .aws { background: var(--aws); border-color: var(--aws-ink); } .aws b { color: var(--aws-ink); }
+  .data { background: var(--data); border-color: var(--data-ink); } .data b { color: var(--data-ink); }
+  .model { background: var(--model); border-color: var(--model-ink); } .model b { color: var(--model-ink); }
+  .off { background: var(--off); border-color: var(--off-ink); } .off b { color: var(--off-ink); }
+  .arrow { text-align: center; color: var(--mid); font-size: 0.8em; line-height: 1.1; }
+  .arrow .g { display: block; font-size: 1.1em; line-height: 0.9; color: var(--ink); }
+  .lambdas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5em; }
+  .lambdas .box { padding: 0.35em 0.55em; text-align: center; }
+  .lambdas .box b { font-size: 0.92em; }
+  .full { grid-column: 1 / -1; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2vw; grid-column: 1 / -1; margin-top: 0.4vh; }
+  .region { color: var(--mid); font-size: 0.7em; font-style: italic; }
+  @media (max-width: 900px) { .grid, .three { grid-template-columns: 1fr; } .lambdas { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>What runs it
+    <small>Amazon services, London region, nothing switched on until asked</small>
+  </h1>
+
+  <div class="grid">
+    <!-- LEFT: people -->
+    <div class="col">
+      <div class="box"><b>A person's browser</b><span class="d">skyscore.co.uk - the map site, one HTML file</span></div>
+      <div class="arrow"><span class="g">&#8595;</span></div>
+      <div class="box aws"><b>CloudFront</b><span class="d">worldwide edge cache; serves the site fast, caches the score badge</span></div>
+      <div class="arrow"><span class="g">&#8595;</span></div>
+      <div class="box aws"><b>S3</b><span class="d">the file cabinet: the page, the map data, 100 area pages</span></div>
+      <div class="box data"><b>Scoring happens in the browser</b><span class="d">every borough's numbers travel with the page; postcodes.io locates the postcode</span></div>
+    </div>
+
+    <!-- RIGHT: businesses -->
+    <div class="col">
+      <div class="box"><b>A business's software</b><span class="d">api.skyscore.co.uk/v1/score - JSON in, JSON out, with an API key</span></div>
+      <div class="arrow"><span class="g">&#8595;</span></div>
+      <div class="box aws"><b>API Gateway</b><span class="d">the front desk: checks the key, counts the free tier (10,000/month), rate-limits every route</span></div>
+      <div class="arrow"><span class="g">&#8595;</span></div>
+      <div class="box aws"><b>Lambda &times; 8</b><span class="d">small Python programs that run only when called</span>
+        <div class="lambdas" style="margin-top:0.4em">
+          <div class="box"><b>score</b></div><div class="box"><b>chat</b></div><div class="box"><b>signup</b></div><div class="box"><b>favourites</b></div>
+          <div class="box"><b>epc</b></div><div class="box"><b>sold-prices</b></div><div class="box"><b>transport</b></div><div class="box"><b>nhs</b></div>
+        </div></div>
+      <div class="arrow"><span class="g">&#8595;</span></div>
+      <div class="box data"><b>DynamoDB &times; 5 tables</b><span class="d">2.7M postcodes (ONS), DEFRA noise samples per postcode, favourites, sign-ups, pending sign-ups</span></div>
+      <div class="box model"><b>Bedrock: Amazon Nova 2 Lite</b><span class="d">the one AI call, made by <i>chat</i> only. <span class="region">us-east-1 (Virginia) - the only piece outside London; the privacy page says so</span></span></div>
+    </div>
+
+    <div class="three">
+      <div class="box aws"><b>CloudWatch</b><span class="d">the logbook, 30 days. <code>[CHAT_UNGROUNDED]</code> lines live here</span></div>
+      <div class="box aws"><b>IAM + SAM</b><span class="d">one deploy user, one written policy; one template describes the whole stack</span></div>
+      <div class="box off"><b>Offline, on my machine</b><span class="d">scripts pull the government files, compute the numbers, <code>--check</code> them against the source, then deploy</span></div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

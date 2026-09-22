@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thanks</title>
+<style>
+  /* The last thing on screen. One screen, F11. Three QR codes, nothing to read.
+     The QR images are the SVGs beside this file (segno, error level M), each decoded
+     back to its URL before use. A fourth card pointing at skyscore.co.uk/talks/ (the
+     write-ups index) was removed 2026-09-22; qr-writeup.svg/.png are still beside this
+     file if it is ever wanted back. */
+  :root { --bg: #fbfaf7; --ink: #15161a; --mid: #5b5e66; --line: #b9bcc4; --box: #ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141518; --ink: #f2f2f0; --mid: #a9acb4; --line: #4a4d55; --box: #1e2024; }
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font: 500 clamp(16px, min(1.9vw, 2.6vh), 30px)/1.25 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; padding: 3vh 4vw; box-sizing: border-box; max-width: 1500px; margin: 0 auto; }
+  h1 { font-size: 1.6em; margin: 0; letter-spacing: -0.01em; }
+  h1 small { display: block; font-size: 0.55em; font-weight: 500; color: var(--mid); margin-top: 0.3em; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.2vw; align-content: center; }
+  .card { background: var(--box); border: 2px solid var(--line); border-radius: 18px; padding: 1.2em 1em 1em; text-align: center; }
+  .card img { width: min(100%, 34vh); aspect-ratio: 1; background: #fff; border-radius: 12px; padding: 0.4em; box-sizing: border-box; }
+  .card b { display: block; margin-top: 0.6em; font-size: 1.05em; }
+  .card span { display: block; color: var(--mid); font-size: 0.75em; margin-top: 0.15em; word-break: break-all; }
+  .foot { color: var(--mid); font-size: 0.8em; text-align: center; }
+  @media (max-width: 800px) { .cards { grid-template-columns: 1fr; } .card img { width: min(70vw, 30vh); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Thanks &mdash; Bilal Khizar
+    <small>Postcode in, traceable score out, and forty lines that keep the AI honest.</small>
+  </h1>
+
+  <div class="cards">
+    <div class="card">
+      <img src="qr-website.svg" alt="QR code for skyscore.co.uk">
+      <b>The site</b><span>skyscore.co.uk</span>
+    </div>
+    <div class="card">
+      <img src="qr-github.svg" alt="QR code for the public repository on GitHub">
+      <b>The code</b><span>github.com/billkhiz-bit/london-flight-path-map</span>
+    </div>
+    <div class="card">
+      <img src="qr-linkedin.svg" alt="QR code for Bilal Khizar on LinkedIn">
+      <b>Me</b><span>linkedin.com/in/bilal-khizar</span>
+    </div>
+  </div>
+
+  <p class="foot">Questions welcome. Paper copies of the write-ups are in my bag.</p>
+</main>
+</body>
+</html>

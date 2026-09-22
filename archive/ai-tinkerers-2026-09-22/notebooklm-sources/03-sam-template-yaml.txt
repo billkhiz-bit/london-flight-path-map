@@ -1,0 +1,1226 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sky Score - Backend API
+
+Globals:
+  Function:
+    # 28, not 30. Every function here is a SYNCHRONOUS API Gateway integration
+    # and APIGW cuts those at 29s, so a 30s default gave each one a second of
+    # budget no caller could ever receive. Three functions overrode it upward
+    # (45, 60, and score's deliberate 28); the default itself was the same
+    # defect at the root. Audit finding I3, 2026-08-22.
+    Timeout: 28
+    Runtime: python3.11
+    MemorySize: 256
+    Environment:
+      Variables:
+        # '*' — NOT the CloudFront URL. The site's canonical origin has been
+        # https://skyscore.co.uk since May 2026; pinning this to the legacy
+        # CloudFront domain made browsers on the canonical origin (and the
+        # native app's WebView origin) silently block every consumer data
+        # panel (epc, sold-prices, transport, nhs, favourites) — found by the
+        # 2026-07-24 audit (A-0724-C1). These are public read proxies plus a
+        # device-token-capability write endpoint; CORS never gated server-side
+        # abuse (see the Api-level comment below), and signup keeps its own
+        # stricter origin allow-list in code.
+        CORS_ORIGIN: '*'
+  Api:
+    # CORS opened to any origin so third-party browser integrations can call
+    # the public B2B endpoints (/v1/score and /v1/score/batch) directly.
+    # The score endpoints are API-key-gated, and so is /v1/chat (the one
+    # Bedrock-using function still deployed; multi_agent and its siblings
+    # live in git history only). Every other route carries its own per-method
+    # throttle. CORS does not protect against server-side abuse, so
+    # the previous CloudFront-only origin restriction was protecting against
+    # browser abuse only, opening it does not materially change the threat
+    # model. Tighten via per-Lambda origin checks if browser-from-other-origin
+    # abuse on Bedrock endpoints becomes observed.
+    Cors:
+      AllowMethods: "'GET,POST,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization,X-Api-Key,X-Device-Token'"
+      AllowOrigin: "'*'"
+    Auth:
+      DefaultAuthorizer: NONE
+
+Resources:
+
+  # --- API Gateway ---
+  FlightMapApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Description: Sky Score API
+      MethodSettings:
+        - HttpMethod: '*'
+          ResourcePath: '/*'
+          # 50/100, raised from 10/20 (2026-07-24 load test): the stage-wide
+          # throttle is shared across ALL clients and capped every key at
+          # ~5-6 successful req/s regardless of its usage plan — a single
+          # bursty Professional integration (or two customers at once) would
+          # 429 constantly. Per-customer fairness comes from usage-plan
+          # throttles (free tier: 5 burst / 2 sustained), not this ceiling;
+          # this is the whole-API circuit breaker. Signup keeps its own
+          # 1 RPS override below.
+          ThrottlingRateLimit: 50
+          ThrottlingBurstLimit: 100
+        # Per-method override on /v1/signup (audit N-Code-2). The
+        # stage ceiling above (50 RPS) would let an attacker pump
+        # ~3,000 keys/min into the AWS-account API-key quota (default
+        # 10,000) before the
+        # quota errors start. 1 RPS / 5 burst is generous for human
+        # signups but gates abuse to ~60/min.
+        - HttpMethod: POST
+          ResourcePath: /v1/signup
+          ThrottlingRateLimit: 1
+          ThrottlingBurstLimit: 5
+        # The confirm link (I17, 2026-09-15). Unauthenticated by nature - it
+        # is clicked from an email - and each click consumes its token, so
+        # the only thing to bound is guessing, which 2/5 makes hopeless
+        # against a 256-bit token. Sized structurally like /v1/regions.
+        - HttpMethod: GET
+          ResourcePath: /v1/signup/confirm
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        # Per-method override on /epc. This route is intentionally
+        # unauthenticated — the consumer site calls it from the browser with
+        # no API key, so ApiKeyRequired here would go straight to a dark EPC
+        # panel on skyscore.co.uk. Do NOT "fix" the open proxy that way.
+        # Throttling is the control instead.
+        #
+        # 3 RPS / 6 burst. The Lambda makes exactly one upstream MHCLG call
+        # per request with no memoisation, and Bill's bearer token is capped
+        # at 6,000 requests / 5 min (= 20 RPS). 3 RPS sustained is 900 per
+        # 5 min, ~15% of that quota, leaving headroom for genuine spikes and
+        # for any other consumer of the same token; 6 burst absorbs a visitor
+        # doing back-to-back postcode lookups without 429ing a real user.
+        # Without this the route inherited the 50 RPS '*/*' ceiling, so an
+        # anonymous flood could (a) exhaust the MHCLG quota and blank the EPC
+        # panel for real visitors, and (b) starve GET /v1/score through the
+        # shared stage bucket — the exact failure the 2026-07-24 soak showed.
+        #
+        # Declared here in source deliberately (same lesson as the score
+        # routes below): CloudFormation MERGES stage method settings but
+        # never removes ones it does not declare, so a console-set override
+        # on this route would be invisible to this template and would survive
+        # every deploy. This entry makes the template authoritative for /epc.
+        - HttpMethod: GET
+          ResourcePath: /epc
+          ThrottlingRateLimit: 3
+          ThrottlingBurstLimit: 6
+        # /v1/environment: unauthenticated, so throttling is the only control.
+        # Each call may make one postcodes.io reverse lookup, and postcodes.io is
+        # a free public service we do not own - the same consideration that made
+        # /epc 3 RPS. 5 RPS / 10 burst: comfortable for a person clicking through
+        # listings, and a ceiling on how hard an abuser can push a third party
+        # using our name. The per-container LRU on rounded coordinates absorbs
+        # the clustering that real browsing produces.
+        - HttpMethod: GET
+          ResourcePath: /v1/environment
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+        # /badge: unauthenticated, and EVERY request is a Lambda invocation.
+        # This said "CloudFront holds a rendered badge for 24h, so repeat
+        # traffic never reaches the origin" until 2026-09-14 (audit M1), and
+        # it does not: API Gateway's edge endpoint passes through CloudFront
+        # without caching unless API caching is enabled (it is not - a paid
+        # cache cluster), measured as `X-Cache: Miss` on three identical GETs.
+        # The 24h max-age is honoured by each viewer's BROWSER only. So this
+        # throttle is the one server-side bound, and a portal page with many
+        # concurrent first-time viewers can hit it - a 429 renders as a broken
+        # image. The fix is a decision (ROADMAP, Open decisions): a cached
+        # behaviour for /badge* on the site's own distribution, or API caching.
+        # 5 RPS sustained is ~432k badge renders a day, far beyond
+        # any legitimate embedding pattern, while capping what an enumeration
+        # of the postcode space (or a cache-busting query string) can spend of
+        # the shared stage bucket. Until this entry the route inherited the
+        # 50 RPS '*/*' ceiling - the same gap /epc had before 2026-07-24, on
+        # a route with the same no-key posture. One entry ONLY: this list
+        # renders into ORDERED UpdateStage patches where the later duplicate
+        # wins silently (see the /v1/score block below for the scar).
+        - HttpMethod: GET
+          ResourcePath: /badge
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+        # /v1/score + /v1/score/batch MUST be declared here (2026-07-24
+        # 100k soak): console-set overrides of 5 rps / 10 burst were live
+        # on both product routes and invisible to this template — CFN
+        # merges but never removes stage method settings it does not
+        # declare, so the API's two revenue endpoints were silently capped
+        # at 5 req/s for ALL customers combined. Declaring them makes the
+        # template authoritative. Per-customer fairness still comes from
+        # usage-plan throttles; these are the per-route ceilings.
+        #
+        # DO NOT add a second entry for either route below this block
+        # (2026-07-25). Until today this list declared each of these two
+        # routes TWICE — the 40/80 and 10/20 pair here, and an older
+        # "audit I-D" pair at 5/10 further down. CloudFormation renders
+        # MethodSettings into ORDERED UpdateStage patch operations, so the
+        # later entry wins: the template's effective desired state was
+        # still 5/10, identical to the pre-soak deployment, which is why
+        # CFN emitted no patch on the 2026-07-24 21:41Z update and the
+        # live 40/80 on GET /v1/score existed only as console drift from
+        # the "fixed live" step of that session. The next deploy to touch
+        # this property — adding /epc above was exactly that — would have
+        # re-emitted the collection and silently reverted the primary paid
+        # route to 5 rps for all tenants combined, reintroducing the very
+        # outage the soak was run to find. The duplicate pair is deleted;
+        # these values are now the single declared source of truth.
+        #
+        # The deleted block's rationale (audit I-D) is preserved here
+        # because the concern is still valid: per-key usage-plan caps
+        # bound cost, but one key spamming at the global ceiling can
+        # starve other tenants, so a per-route ceiling gates the
+        # noisy-neighbour case. 40/80 and 10/20 serve that purpose at the
+        # headroom the soak proved is needed; 5/10 did not.
+        - HttpMethod: GET
+          ResourcePath: /v1/score
+          ThrottlingRateLimit: 40
+          ThrottlingBurstLimit: 80
+        - HttpMethod: POST
+          ResourcePath: /v1/score/batch
+          ThrottlingRateLimit: 10
+          ThrottlingBurstLimit: 20
+        # /favourites (audit I17, 2026-09-01). All three routes inherited the
+        # 50 RPS '*/*' ceiling - the same gap /epc had before 2026-07-24 and
+        # /badge before 2026-08-21, on a route with the same no-key posture.
+        #
+        # It cannot be key-gated: the consumer site calls it from the browser
+        # with an X-Device-Token and no API key, so ApiKeyRequired would break
+        # saving on skyscore.co.uk. Throttling is the control, as it is for
+        # /epc, /v1/environment and /badge.
+        #
+        # POST and DELETE are the writes, and POST is the one that matters:
+        # FavouritesTable is PITR-backed, TTL-less and DeletionPolicy: Retain,
+        # so every row is permanent and PAY_PER_REQUEST bills each one. At the
+        # inherited ceiling one unauthenticated source could add 4.32M rows a
+        # day. 2 RPS / 5 burst is far beyond a person tapping save - it is
+        # 172,800 a day - while removing the unbounded case.
+        #
+        # GET is a read and gets more room: the page loads a device's whole
+        # list on open, and a tight limit there would 429 a real user before it
+        # inconvenienced anyone else.
+        #
+        # ONE ENTRY PER ROUTE, appended at the END of this list. See the
+        # /v1/score block above for what a duplicate costs.
+        - HttpMethod: POST
+          ResourcePath: /favourites
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        - HttpMethod: DELETE
+          ResourcePath: /favourites
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        - HttpMethod: GET
+          ResourcePath: /favourites
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+        # The last five open routes (2026-09-07). Same gap as /epc before
+        # 2026-07-24, /badge before 2026-08-21 and /favourites before
+        # 2026-09-01 - which is FOUR occasions, each closed by an audit and
+        # each recording the pattern in a comment rather than in a check.
+        # `scripts/check_route_throttles.py` is that check, and it derives the
+        # requirement from the Api events, so a sixth route is covered on the
+        # day it is added rather than at the next audit.
+        #
+        # THE NUMBERS ARE MEASURED, not picked. CloudWatch Lambda Invocations
+        # over 30 days to 2026-09-07 - each of these three routes has its OWN
+        # function, so Invocations IS the route's request count:
+        #
+        #   route          30d total   peak/hr   peak/min   peak RPS*
+        #   /nhs                3402        97         14      0.233
+        #   /sold-prices        3553       106         14      0.233
+        #   /transport          2322        63         12      0.200
+        #   /epc [reference]    3731       115         15      0.250
+        #
+        # * a FLOOR. CloudWatch standard resolution is 60s, so a burst inside
+        #   one minute cannot be seen at all. Bursts carry headroom over it.
+        #   Re-derive with `python scripts/measure_route_traffic.py`; do not
+        #   read these figures back out of this comment in a year.
+        #
+        # /epc is the calibration anchor rather than a guess: index.html
+        # fetches it on the SAME postcode lookup as the other three, so their
+        # traffic is a subset of its own, and it has run at 3 RPS / 6 burst
+        # since 2026-07-24 with no 429 reported. Anything at or below that is
+        # backed by six weeks of production evidence on a busier sibling.
+        #
+        # /sold-prices: one HM Land Registry call per request, 10s timeout, no
+        # published upstream quota. Structurally identical to /epc, so it gets
+        # /epc's proven envelope. 3 RPS is 12.8x the observed peak minute.
+        - HttpMethod: GET
+          ResourcePath: /sold-prices
+          ThrottlingRateLimit: 3
+          ThrottlingBurstLimit: 6
+        # /nhs: TIGHTER than /epc because the upstream is donated. Overpass
+        # documents a guideline of ~10,000 requests per day per IP, and Lambda
+        # egress uses AWS-managed SHARED addresses, so our real share of that
+        # is a fraction we neither know nor control (the Lambda's own comment
+        # calls it "a shared-IP lottery"). Legitimate traffic barely touches
+        # it - the whole of Greater London ships bundled with the function and
+        # answers with no network call - so only out-of-London coordinates
+        # reach Overpass, and an abuser can send those deliberately.
+        #
+        # No throttle in this range keeps a determined abuser inside a DAILY
+        # guideline: even 1 RPS is 86,400/day. What this bounds is the
+        # INSTANTANEOUS pressure against Overpass's small per-IP slot queue,
+        # and the handler already degrades to nhs.uk search links when
+        # Overpass refuses. 2 RPS is 8.6x the observed peak minute.
+        - HttpMethod: GET
+          ResourcePath: /nhs
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        # /transport: tighter for a different reason - each request makes TWO
+        # TfL calls, StopPoint then Line/{ids}/Status, and we call TfL
+        # UNREGISTERED. The Lambda's own comment records that a key is
+        # "optional for higher rate limits", so the unregistered budget is the
+        # one we are spending, and TfL does not publish the number on its API
+        # portal (checked 2026-09-07). Doubling every request against an
+        # unknown, unregistered budget is the argument for 2 RPS, not the
+        # traffic - 2 RPS is 10x the observed peak minute either way.
+        #
+        # If /transport ever needs more room, the fix is a TfL app key, not a
+        # higher number here.
+        - HttpMethod: GET
+          ResourcePath: /transport
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        # /v1/regions and /v1/changes CANNOT be measured per route: both are
+        # served by ScoreFunction alongside four other paths, the template
+        # sets no per-resource CloudWatch metrics, and neither handler logs a
+        # path - so Lambda Invocations gives a six-route total (14,753 over the
+        # same 30 days) and nothing finer. Said plainly rather than presented
+        # as a measurement, because an unmeasurable quantity reported as a
+        # number is the failure this repo keeps finding.
+        #
+        # They are sized STRUCTURALLY instead, which is knowable: neither makes
+        # any upstream call. `handle_changes` is computed once per container
+        # and never reads `event`; `handle_regions` answers from the registry.
+        # One fetch per page load - changes.html and score-demo/status.html.
+        # So 5/10, matching /badge and /v1/environment, the other two open
+        # ScoreFunction routes, and well under the 40 RPS that GET /v1/score
+        # needs out of the shared stage bucket.
+        - HttpMethod: GET
+          ResourcePath: /v1/regions
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+        - HttpMethod: GET
+          ResourcePath: /v1/changes
+          ThrottlingRateLimit: 5
+          ThrottlingBurstLimit: 10
+
+  # --- Bedrock Lambdas REMOVED 2026-05-07 ---
+  # ChatFunction, MultiAgentFunction, AnalyzeImageFunction,
+  # AnalyzeDocumentFunction, ReportFunction were all dormant in this
+  # template after the 2026-05-07 frontend removal of the AI features.
+  # Smoke-test then revealed their API routes were still publicly invokable
+  # (closed in commit 71a731c). The follow-up code-quality audit pointed
+  # out that "dormant" Lambdas with intact bedrock:InvokeModel grants are
+  # still attack surface — any future SAM template typo re-attaching the
+  # Events block would re-open them.
+  #
+  # Decision (2026-05-07): delete the Lambdas + their IAM grants
+  # entirely. Restoration recipe is "git revert" of the deletion commit
+  # plus the original AI-removal commit (69905ee). Lambda source remains
+  # in git history at last-working commit 5418d73 (live_flights pattern)
+  # and 8edd4b0 (the AI-features Lambdas).
+
+  # --- Land Registry Sold Prices (CORS proxy) ---
+  SoldPricesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/sold_prices/
+      Handler: app.handler
+      Events:
+        SoldPricesGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /sold-prices
+            Method: get
+
+  # --- EPC Energy Ratings (new MHCLG service from 2026-05-30) ---
+  EpcFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/epc/
+      Handler: app.handler
+      Environment:
+        Variables:
+          EPC_BEARER_TOKEN: !Ref EpcBearerToken
+      Events:
+        EpcGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /epc
+            Method: get
+
+  # --- TfL Transport ---
+  TransportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/transport/
+      Handler: app.handler
+      Events:
+        TransportGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /transport
+            Method: get
+
+  # --- NHS GP Surgeries ---
+  NhsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/nhs/
+      Handler: app.handler
+      # 28s, matching ScoreFunction, NOT 45 (audit finding I3, 2026-08-22).
+      # API Gateway cuts a synchronous integration at 29s, so the last 16
+      # seconds of a 45s budget were unreachable by any caller - we paid for
+      # work that could not be delivered.
+      #
+      # The important half is not the cost. `handler` catches a slow Overpass
+      # and returns NHS search links with `available: false`; at 45s that
+      # branch could never run inside the caller's window, so a slow upstream
+      # produced a raw 504 instead of the degraded answer the code was written
+      # to give. Lowering the ceiling is what makes the fallback reachable.
+      Timeout: 28
+      Events:
+        NhsGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /nhs
+            Method: get
+
+  # --- Live Aircraft Proxy REMOVED (OpenSky licensing) ---
+  # The LiveFlightsFunction (proxy to OpenSky Network /api/states/all)
+  # was removed in May 2026 because OpenSky's terms require a written
+  # agreement for any operational / commercial use, and a consumer
+  # surface on skyscore.co.uk falls under that even though the consumer
+  # site is free. The Lambda code lives in git history (last working
+  # commit: a214ba0); restore by reverting that commit and adding back
+  # OpenSkyClientId / OpenSkyClientSecret parameters once a licence is
+  # in place. Frontend was also disabled in the same change.
+
+  # AnalyzeImage / AnalyzeDocument / Report functions removed in the
+  # same deletion as Chat / MultiAgent above. See note at the top of
+  # the Resources block.
+
+  # --- Favourites (DynamoDB) ---
+  FavouritesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/favourites/
+      Handler: app.handler
+      Environment:
+        Variables:
+          FAVOURITES_TABLE: !Ref FavouritesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FavouritesTable
+      Events:
+        FavouritesGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /favourites
+            Method: get
+        FavouritesPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /favourites
+            Method: post
+        FavouritesDelete:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /favourites
+            Method: delete
+
+  # --- B2B Score API (/v1/score), API-key gated ---
+  # --- Retrieval-only chat (restored 2026-08-06) ---
+  # The five Bedrock Lambdas were deleted in 6bad8ce. This is not a restoration
+  # of the free-form assistant: the model here may only phrase data retrieved
+  # from ScoreFunction, never supply it. See lambdas/chat/app.py for why, and
+  # verify_answer() for the control that enforces it rather than requesting it.
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/chat/
+      Handler: app.handler
+      # Two sequential network hops: a ScoreFunction invoke (up to 28s worst
+      # case) then a Bedrock call. Was 60s "for headroom" - but this is a
+      # synchronous API Gateway integration and APIGW cuts at 29s, so headroom
+      # past that is time the caller has already stopped waiting for and we are
+      # still billed for. Same finding as NhsFunction above (I3, 2026-08-22).
+      Timeout: 28
+      MemorySize: 512
+      Environment:
+        Variables:
+          CORS_ORIGIN: '*'
+          SCORE_FUNCTION_NAME: !Ref ScoreFunction
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource:
+                - 'arn:aws:bedrock:*::foundation-model/amazon.nova-*'
+                - !Sub 'arn:aws:bedrock:*:${AWS::AccountId}:inference-profile/us.amazon.nova-*'
+        # Direct invoke rather than an HTTP call to /v1/score: identical code
+        # path, no API key to provision, and no way for a chat answer to drift
+        # from what the API would say. Scoped to the one function.
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource: !GetAtt ScoreFunction.Arn
+      Events:
+        ChatPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/chat
+            Method: post
+            # API KEY REQUIRED, deliberately. An unauthenticated model endpoint
+            # is a free LLM for anyone who finds it, billed to this account.
+            # /epc is an open proxy because a dark EPC panel would break the
+            # consumer site; nothing here has that excuse.
+            Auth:
+              ApiKeyRequired: true
+        ChatOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/chat
+            Method: options
+
+  ScoreFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/score/
+      Handler: app.handler
+      MemorySize: 256
+      # 28s, not 10s: a worst-case /v1/score/batch (100 queries, cold caches)
+      # could exceed 10s and lose the whole batch with no partial results
+      # (A-0724-I4). API Gateway cuts integrations at 29s, so 28s is the
+      # practical ceiling; single-score calls are unaffected (~100ms).
+      Timeout: 28
+      Environment:
+        Variables:
+          # Score endpoint is the productised B2B surface; allow any origin so
+          # third-party integrators can call it. API-key auth gates abuse.
+          CORS_ORIGIN: '*'
+          # v3.1 DEFRA raster table, Lambda checks DynamoDB first for postcode
+          # Lden samples; falls back to v3.0 Haversine if table empty/missing.
+          NOISE_RASTER_TABLE: !Ref NoiseRasterTable
+          # ONS NSPL postcode index. lookup_postcode resolves UK postcodes
+          # from this table first (~5ms) and falls back to postcodes.io over
+          # the network when the table is unset, empty, or does not hold the
+          # postcode. Unset is a silent no-op: the API behaves exactly as it
+          # did before this table existed.
+          POSTCODE_TABLE: !Ref PostcodeTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref NoiseRasterTable
+        # Read-only, never DynamoDBCrudPolicy: the Lambda must never write
+        # this table. Only the offline loader (scripts/load_nspl.py) writes,
+        # using the operator's own credentials rather than this role.
+        - DynamoDBReadPolicy:
+            TableName: !Ref PostcodeTable
+      Events:
+        ScoreGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/score
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+        ScoreBatchPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/score/batch
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+        RegionsGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/regions
+            Method: get
+        # /v1/environment is UNAUTHENTICATED - as, in fact, are /v1/regions
+        # directly above and /v1/changes. This comment said "unlike the three
+        # routes above" until 2026-08-21, which was true only of /v1/score and
+        # /v1/score/batch. RegionsGet and ChangesGet have no Auth block; both
+        # answer 200 with no key, verified live. See AUDIT_REPORT.md I1.
+        #
+        # The browser extension reads a listing page and gets coordinates; every
+        # environmental dataset here is postcode-keyed, so none of it could
+        # reach a listing without this. An extension is a public artefact - the
+        # .crx is a zip anyone can unpack - so a key-gated route is unusable
+        # there, and shipping a key would meter every install against one plan.
+        #
+        # What it exposes is measurements, not the product: no weights, no
+        # persona, no composite score. The scoring engine stays behind the key.
+        # Throttled per-method below, same posture as /epc.
+        # /badge is UNAUTHENTICATED and must be: it renders inside an <img> on
+        # third-party listing pages, which cannot carry a key. It returns an
+        # SVG of the composite score only - no components, no weights, no
+        # persona, no batch - so it exposes the number the consumer site
+        # already shows publicly and none of what the API sells. Same posture
+        # as /v1/environment directly below.
+        #
+        # max-age=86400 on the response because scores move on quarterly
+        # data vintages - but that caches in the BROWSER, not at the CDN (see
+        # the /badge throttle above, audit M1): on a busy listing page every
+        # distinct viewer's first render is still our Lambda invocation.
+        BadgeGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /badge
+            Method: get
+        EnvironmentGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/environment
+            Method: get
+        # OPTIONS carries no Auth block, matching /v1/signup and /v1/chat
+        # (2026-09-13). It declared ApiKeyRequired: true from the day the route
+        # shipped, and a CORS preflight CANNOT carry an API key - the browser
+        # sends it without credentials by specification - so the method
+        # answered 403 to every preflight, measured live. Nothing triggered
+        # one: the extension uses host_permissions (CORS bypassed) and a
+        # header-free GET is a simple request. It would have bitten the first
+        # caller to add a custom header, and the GET beside it is deliberately
+        # open anyway, so gating the preflight protected nothing.
+        EnvironmentOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/environment
+            Method: options
+        ChangesGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            # Public by design (no key): quarter-over-quarter borough
+            # movement is already public via the consumer site, and this
+            # endpoint feeds the shareable /changes page. Stage-level
+            # throttling still applies.
+            Path: /v1/changes
+            Method: get
+
+  # NOTE: this resource is the original (now-rotated) demo key. The key
+  # value itself was committed to score-demo/{index,status}.html in
+  # commits 2280148 / 07ad823, see audit C2 in AUDIT_REPORT.md.
+  # On 2026-05-06 a new key (id 1zy00lrqs5, name SkyScoreDemoKeyV2) was
+  # created out-of-band via the AWS CLI, linked to ScoreFreeUsagePlan,
+  # and the score-demo HTML files updated to use it. The original key
+  # is left here in disabled state for audit-trail purposes; future
+  # rotations should follow the same pattern (new resource alongside,
+  # disable old, eventually delete).
+  ScoreApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    DependsOn: FlightMapApiprodStage
+    Properties:
+      Name: SkyScoreFreeTierKey
+      Description: Original demo key, rotated 2026-05-06, kept disabled for audit trail.
+      Enabled: false
+      StageKeys:
+        - RestApiId: !Ref FlightMapApi
+          StageName: prod
+
+  ScoreFreeUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: FlightMapApiprodStage
+    Properties:
+      UsagePlanName: SkyScoreFreeTier
+      Description: Free tier, 10000 requests/month = 10000 scores, 5 req/sec burst.
+      # THIS PLAN IS THE SOURCE OF TRUTH FOR THE FREE TIER. NINE places mirror
+      # these numbers and none of them can read the plan at runtime:
+      # backend/lambdas/signup/app.py (the signup response), pricing.html,
+      # api/index.html, score-demo/openapi.yaml, score-demo/index.html,
+      # METHODOLOGY.md section 16, PROJECT_DOCUMENTATION.md, OPERATIONS.md and
+      # SECURITY.md. Change them together.
+      #
+      # It said SIX for a few hours on 2026-09-01 and was wrong by three. The
+      # last three were found by SWEEPING every live .md for the figure, not by
+      # reading this list - which is the third time this list has been short
+      # (score-demo/index.html 2026-08-22, METHODOLOGY.md and these three
+      # 2026-09-01). Every one of them is now READ by FreeTierQuotaDriftTests,
+      # so the list is documentation and the test is the guard. If you add a
+      # tenth, add it to QUOTA_PAGES in the same commit.
+      #
+      # METHODOLOGY.md was added on 2026-09-01, having been in no list at all
+      # while carrying "100 requests per month", "1 request per second
+      # sustained" and the 100-query batch multiplier removed on 2026-08-21 -
+      # every figure but the burst wrong. It is the SECOND mirror this list has
+      # omitted, after score-demo/index.html, and both were found only by
+      # reading the pages rather than the list.
+      #
+      # score-demo/index.html was missing from this list until 2026-08-22, and
+      # it was the one that drifted: it advertised "100 requests / month, 5
+      # burst, 1 sustained" plus a working batch multiplier - the pre-2026-08-21
+      # figures - on the page a prospect uses to try the API. A list of mirrors
+      # that omits a mirror is worse than no list, because it reads as complete.
+      # FreeTierQuotaDriftTests now asserts every page against this block, so
+      # the list is documentation and the test is the guard.
+      #
+      # REQUESTS NOW EQUAL SCORES, and that is the point of this block.
+      #
+      # Quota meters REQUESTS while the product sells SCORES, and
+      # /v1/score/batch carried up to MAX_BATCH_SIZE (100) queries per request -
+      # so the free ceiling was always Limit x 100. On 2026-07-29 the only lever
+      # available was the multiplicand, and Limit went 1000 -> 100 to bring the
+      # ceiling from 100,000 scores down to 10,000, because the old one gave away
+      # the whole volume proposition of the £499 tier in under nine minutes.
+      # That worked and it cost the wedge: 100 requests is an afternoon of one
+      # live listings page, so an integrator could not finish an evaluation.
+      #
+      # 2026-08-21 removes the multiplier instead of the volume. The per-method
+      # deny below is the same mechanism proven live for the demo key on the
+      # same day (see ScoreDemoUsagePlan): a free key gets 429 on batch, so
+      # requests and scores are the same unit and Limit can carry the intended
+      # 10,000 scores directly. Same entitlement as the 2026-07-29 decision,
+      # 100x more calls to spend it in, and Professional's published
+      # 1,000,000-score ceiling is still 100x this.
+      #
+      # WHAT A FREE KEY LOSES: bulk and chat. Bulk is deliberate -
+      # score_bulk.py is described in its own header as the Enterprise
+      # deliverable, and single lookups are the shape of an evaluation.
+      # Reasoning and rejected options: BATCH_METERING_DECISION.md. Chat is
+      # the 2026-08-24 addition: /v1/signup mints a key on this plan for any
+      # email address, and until then every one of those keys could POST
+      # /v1/chat and spend Bedrock budget - the exact exposure the demo plan
+      # below closed on 2026-08-21, on the plan whose keys are EASIER to get.
+      ApiStages:
+        - ApiId: !Ref FlightMapApi
+          Stage: prod
+          # Same per-method RateLimit-0 deny as ScoreDemoUsagePlan below, which
+          # carries the full explanation of the mechanism (keys authorise per
+          # STAGE, 0 is the only declarative way off a route, callers see 429).
+          # /v1/chat has no caller outside its own Lambda, so no free-tier
+          # integration loses anything; batch is denied so that requests and
+          # scores stay the same unit (see the block comment above). VERIFY
+          # AFTER EVERY DEPLOY - tests/demo-key-scope.mjs asks the running API,
+          # and ChatRouteDenyTests holds the template half between deploys.
+          Throttle:
+            /v1/chat/POST:
+              BurstLimit: 0
+              RateLimit: 0
+            /v1/score/batch/POST:
+              BurstLimit: 0
+              RateLimit: 0
+      Quota:
+        Limit: 10000
+        Period: MONTH
+      # RateLimit back to 2 from the 1 that accompanied the 2026-07-29 cut. That
+      # drop existed to make a 100-request drain read as sustained use rather
+      # than a burst; with 10,000 requests the monthly window is no longer
+      # something a caller can empty in minutes, so the slow-drain argument no
+      # longer applies and 1 req/sec would simply be an unhelpful integration.
+      Throttle:
+        BurstLimit: 5
+        RateLimit: 2
+
+  ScoreFreeUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ScoreApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ScoreFreeUsagePlan
+
+  # Separate plan for the ONE shared demo key embedded in score-demo/*.html,
+  # added 2026-07-29. Until now that key sat on ScoreFreeUsagePlan, so cutting
+  # the free tier to 100 req/month would have capped the whole public "Try the
+  # API" form at 100 requests shared across every visitor — a marketing page
+  # that 429s for the rest of the month, with no alarm to say it had happened.
+  #
+  # BATCH_METERING_DECISION.md §3 rejects per-endpoint plans because they force
+  # two API keys on every customer. That objection does not apply here: this is
+  # one key, on our own page, issued to nobody. The demo form only ever makes
+  # single /v1/score calls, so for this key requests genuinely equal scores and
+  # a request quota is the honest unit.
+  #
+  # Deliberately NOT a place to be stingy — this key's job is to let a prospect
+  # see a real score before they give up an email address.
+  ScoreDemoUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: FlightMapApiprodStage
+    Properties:
+      UsagePlanName: SkyScoreDemoTier
+      Description: Shared public demo key on /score-demo, 5000 requests/month.
+      ApiStages:
+        - ApiId: !Ref FlightMapApi
+          Stage: prod
+          # PER-METHOD DENY (2026-08-21). An API Gateway key authorises at the
+          # STAGE, not per route: a key on any usage plan reaches EVERY method
+          # carrying ApiKeyRequired: true. This key is PRINTED IN PAGE SOURCE on
+          # score-demo, so before this block it also opened:
+          #
+          #   POST /v1/chat        a Bedrock model, billed to this account. The
+          #                        comment on ChatPost calls an unauthenticated
+          #                        model endpoint 'a free LLM for anyone who
+          #                        finds it' - which is what this was. And
+          #                        verify_answer() is not a second line: it
+          #                        extracts NUMERIC tokens only, so any
+          #                        digit-free reply passes as grounded.
+          #   POST /v1/score/batch MAX_BATCH_SIZE is 100, so the monthly quota
+          #                        x100 in scores - 200,000 at the 2,000 this
+          #                        was written at, 20x the Free tier - without
+          #                        the email address Free asks for.
+          #
+          # RateLimit 0 is the only DECLARATIVE way to keep a key off a route;
+          # there is no per-route key association in API Gateway. It is a deny
+          # dressed as a throttle, so callers see 429 rather than 403 - the
+          # reason this is a comment and not just config.
+          #
+          # Nothing legitimate loses anything: the demo form makes single GET
+          # /v1/score calls, /v1/chat has no caller outside its own Lambda, and
+          # score_bulk.py and loadtest.mjs use customer and CI keys on other
+          # plans. The status page's batch probe DID use this key and was
+          # removed in the same commit.
+          #
+          # VERIFY AFTER EVERY DEPLOY. If API Gateway ever reads 0 as
+          # 'unlimited' rather than 'deny', this block silently stops being a
+          # control while still looking like one - the exact shape this repo
+          # keeps paying for. tests/demo-key-scope.mjs proves it live.
+          Throttle:
+            /v1/chat/POST:
+              BurstLimit: 0
+              RateLimit: 0
+            /v1/score/batch/POST:
+              BurstLimit: 0
+              RateLimit: 0
+      # 5,000, from 2,000 (2026-09-13, audit C0). The 2,000 was exhausted on
+      # 9 September and the public tester answered 429 to every prospect for
+      # four days - and most of that 2,000 was spent by our own a11y and
+      # responsive gates loading status.html, not by prospects (measured from
+      # the plan's own per-day usage: 511, 146, 195, 142, then ZERO across a
+      # weekend). The gates are stubbed now (tests/stub-live-api.mjs), so the
+      # organic rate is what remains, and it is low. 5,000 is 2.5x headroom
+      # over a month that never had a real demand problem; the plan's own
+      # 2 rps / 5 burst below is the abuse ceiling for a key printed in page
+      # source, and 5,000 keyless scores stays well under the 10,000 that an
+      # email address buys on the free tier. Quoted on score-demo/index.html
+      # and held to this value by FreeTierQuotaDriftTests.
+      Quota:
+        Limit: 5000
+        Period: MONTH
+      Throttle:
+        BurstLimit: 5
+        RateLimit: 2
+
+  # --- Self-service signup ---
+  # POST /v1/signup creates a new APIGW key, links to ScoreFreeUsagePlan,
+  # records the email in SignupsTable. Unauthenticated by design (form
+  # signup), abuse bounded by API Gateway throttle + idempotency on email.
+  # See backend/lambdas/signup/app.py for handler logic.
+  SignupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/signup/
+      Handler: app.handler
+      # 28, from 10 (2026-09-13 audit, I14). The key path makes four
+      # sequential AWS calls (GetItem, CreateApiKey, CreateUsagePlanKey,
+      # PutItem), and at 10s a single hung one killed the function before
+      # its own 503 branch could answer - the clients were on botocore's
+      # 60-second defaults. Each now carries a 5s budget (signup/app.py
+      # _BOTO_CONFIG) and 28 is the gateway-capped value every other
+      # function carries; InnerClientBudgetTests holds hops x budget under it.
+      Timeout: 28
+      MemorySize: 256
+      Environment:
+        Variables:
+          # USAGE_PLAN_NAME is hardcoded to avoid a CloudFormation circular
+          # dependency (SignupFunction → ScoreFreeUsagePlan → FlightMapApi
+          # → SignupFunction). The signup Lambda resolves the plan ID at
+          # runtime via apigateway:GET on /usageplans (cached per warm
+          # container).
+          USAGE_PLAN_NAME: SkyScoreFreeTier
+          SIGNUPS_TABLE: !Ref SignupsTable
+          # I17 (2026-09-15): verification-first signup. OFF until the SES
+          # identity is verified and the account is out of the sandbox -
+          # with it on before that, every signup 503s at the send. The flip
+          # is `--parameter-overrides SignupVerify=on`, a runbook step in
+          # OPERATIONS.md, and it needs privacy.html s2a changed in the same
+          # deploy (consent is then given by the link, not the form).
+          SIGNUP_VERIFY: !Ref SignupVerify
+          PENDING_TABLE: !Ref SignupPendingTable
+          SES_FROM: !Ref SignupSenderAddress
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref SignupsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref SignupsTable
+        # I17: the pending table is written on POST and consumed (deleted,
+        # returning the old row) on confirm. Crud rather than Write because
+        # DeleteItem with ReturnValues needs the read side too.
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SignupPendingTable
+        # I17: one plain-text email per signup, from the verified domain
+        # identity. SendEmail only; no templates, no lists, no suppression
+        # management - the Lambda cannot enumerate or delete anything in SES.
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+              Resource:
+                - !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/*'
+        - Statement:
+            # CreateApiKey. Tag-conditioned — see below for why this
+            # statement covers /apikeys ONLY.
+            - Effect: Allow
+              Action:
+                - apigateway:POST
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys'
+              Condition:
+                # Audit I-G follow-up: require the CreatedBy tag at creation
+                # time too, not just at delete. Otherwise a code-path bug that
+                # forgets tags={...} in apigw.create_api_key() would create
+                # untagged keys outside this Lambda's own DELETE scope —
+                # silent quota leak. The aws:RequestTag condition is enforced
+                # by APIGW: a create_api_key call without this exact tag
+                # value will be denied.
+                StringEquals:
+                  'aws:RequestTag/CreatedBy': 'SignupLambda'
+            # Tagging permission for the create-with-tags call above.
+            #
+            # In API Gateway, tags are a SEPARATE resource path (/tags/{arn}),
+            # not an attribute of the resource being tagged — TagResource is
+            # PUT /tags/{arn}. AWS's own tag-based-access-control example
+            # carries a standalone statement for arn:aws:apigateway:*::/tags/*
+            # alongside the resource statements, for exactly this reason.
+            #
+            # The I-G hardening (dab713d, 2026-05-07) added tags={...} to
+            # apigw.create_api_key() and the aws:RequestTag condition above,
+            # but never granted the tagging path — so every self-service
+            # signup was denied at CreateApiKey, before a key was ever made.
+            # The 2026-07-25 statement split fixed the SECOND failure
+            # (CreateUsagePlanKey) while this, the first one, stayed live.
+            # Diagnosed 2026-07-26 by elimination: failed signups leave no
+            # API key and no orphan, so the denial precedes key creation.
+            #
+            # Condition retained deliberately: dropping it would let this
+            # Lambda write arbitrary tags onto any API Gateway resource in
+            # the account, re-opening a wider hole than I-G ever closed.
+            - Effect: Allow
+              Action:
+                - apigateway:PUT
+                - apigateway:POST
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/tags/*'
+              Condition:
+                StringEquals:
+                  'aws:RequestTag/CreatedBy': 'SignupLambda'
+            # CreateUsagePlanKey. DELIBERATELY NOT tag-conditioned. Do NOT
+            # fold this back into the statement above in a future hardening
+            # pass — that merge is what broke the funnel the first time.
+            #
+            # Why the condition cannot apply here: a UsagePlanKey is not a
+            # taggable API Gateway resource. The CreateUsagePlanKey request
+            # shape is {usagePlanId, keyId, keyType} with no tags member at
+            # all (confirm with `aws apigateway create-usage-plan-key
+            # --generate-cli-skeleton`). aws:RequestTag/CreatedBy is
+            # therefore absent from the request context, StringEquals cannot
+            # match an absent key, and the call falls through to an implicit
+            # deny.
+            #
+            # That is exactly what happened between the I-G hardening
+            # (dab713d, 2026-05-07) and 2026-07-25: the merged statement made
+            # every self-service signup create an enabled key, fail to attach
+            # it to the usage plan, and return 503 AccessDeniedException —
+            # the whole B2B funnel dead, an orphaned enabled key left behind
+            # on each attempt. A security control that silently disabled the
+            # feature it was protecting.
+            #
+            # StringEqualsIfExists would also unblock the call, but only by
+            # keeping the two resources merged — and IfExists on /apikeys
+            # would silently re-open the hole I-G closed, because a
+            # create_api_key call that forgot tags={...} has no
+            # aws:RequestTag key either and would pass the same way. Two
+            # statements with one condition is the only shape that keeps both
+            # properties.
+            #
+            # Residual scope: this grants "attach any key to any usage plan
+            # in the account". keyId is not part of the CreateUsagePlanKey
+            # resource ARN, so IAM cannot narrow it further; the wildcard on
+            # the usage-plan id is separately required to avoid a circular
+            # dependency on ScoreFreeUsagePlan.
+            - Effect: Allow
+              Action:
+                - apigateway:POST
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans/*/keys'
+            - Effect: Allow
+              Action:
+                - apigateway:GET
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/usageplans'
+            - Effect: Allow
+              Action:
+                # Pre-DELETE lookup, the Lambda verifies the key's name
+                # starts with the SignupLambda prefix before deleting.
+                # Scoped via the same tag-condition as DELETE for symmetry.
+                - apigateway:GET
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+              Condition:
+                StringEquals:
+                  'aws:ResourceTag/CreatedBy': 'SignupLambda'
+            - Effect: Allow
+              Action:
+                # Rollback path, revoke a just-created key when a
+                # signup race is detected (DDB ConditionExpression fails
+                # after APIGW key already exists). Scoped via tag-based
+                # condition to keys this Lambda created (audit N-Code-1):
+                # the wildcard /apikeys/* alone would let a compromised
+                # signup Lambda delete any API key in the account.
+                - apigateway:DELETE
+              Resource:
+                - !Sub 'arn:aws:apigateway:${AWS::Region}::/apikeys/*'
+              Condition:
+                StringEquals:
+                  'aws:ResourceTag/CreatedBy': 'SignupLambda'
+      Events:
+        SignupPost:
+          # No Auth block, default is no API key required, which is the
+          # whole point of self-service signup. Abuse mitigated by per-route
+          # APIGW throttle (1 RPS / 5 burst, see MethodSettings above) +
+          # per-email idempotency in the handler.
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup
+            Method: post
+        SignupOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup
+            Method: options
+        # I17: the link in the confirmation email. GET, no key (a person
+        # clicks it from an email client), answers HTML. Throttled in
+        # MethodSettings above; test_route_throttles.py holds that.
+        SignupConfirmGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup/confirm
+            Method: get
+
+  # NOTE on signup log retention: the log group /aws/lambda/<SignupFunction>
+  # was auto-created by Lambda in May 2026, so CloudFormation cannot own it
+  # (AWS::Logs::LogGroup fails with AlreadyExists — attempted + rolled back
+  # 2026-07-23). Retention is set to 30 days OUT-OF-BAND instead:
+  #   aws logs put-retention-policy \
+  #     --log-group-name /aws/lambda/<SignupFunction physical name> \
+  #     --retention-in-days 30
+  # Re-run that command if the function is ever recreated under a new name.
+  # Rationale: signup logs must expire — the privacy policy promises
+  # delete-on-request, and the handler now logs keyIds, never raw emails.
+
+  # --- DynamoDB Table, Self-service signup audit log ---
+  # Email is the partition key (one signup per email, duplicate signups
+  # return 409 since APIGW won't let us re-show the key value after
+  # creation). Stores keyId for revocation, createdAt for analytics.
+  SignupsTable:
+    Type: AWS::DynamoDB::Table
+    # See PostcodeTable for the rationale — customer signup records are the
+    # least replaceable data in the stack.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: london-flight-map-signups
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # Enterprise readiness: 35-day point-in-time recovery for an audit
+      # log that records the only mapping between an issued API key and
+      # the email that requested it. Cost: ~$0.20/GB-month for backup
+      # storage; the table is tiny, so the bill is rounding-error money
+      # and the DR posture is meaningfully better. See OPERATIONS.md.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # --- DynamoDB Table, PENDING signups awaiting an emailed confirmation ---
+  # I17 (2026-09-15). One row per unconfirmed request, keyed by the random
+  # token in the link, expired by TTL 24 h after it was written and deleted
+  # the moment it is used. Deliberately NOT retained and NOT backed up: it
+  # holds addresses whose owners have not yet consented, and the whole point
+  # of the row is to stop existing. Nothing in it is worth recovering.
+  SignupPendingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: london-flight-map-signup-pending
+      AttributeDefinitions:
+        - AttributeName: token
+          AttributeType: S
+      KeySchema:
+        - AttributeName: token
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # NO TimeToLiveSpecification YET, deliberately. flightmap-dev holds
+      # neither dynamodb:UpdateTimeToLive nor DescribeTimeToLive (probed
+      # 2026-09-15: AccessDeniedException), so a TTL here fails the WHOLE
+      # stack's deploy - including unrelated Lambdas - until the policy is
+      # extended in the console. Expiry is enforced in code on every
+      # confirm (`expiresAt` is checked before the row is used), so the only
+      # OPERATIONAL cost of the missing TTL is storage of dead rows. The
+      # cost that matters is on privacy.html: the page cannot say an
+      # unconfirmed request is DELETED while the rows sit here forever, and
+      # tests/test_signup_verify.py holds that sentence and this key together.
+      # Once both verbs are granted (OPERATIONS.md, the SIGNUP_VERIFY
+      # runbook), add
+      #   TimeToLiveSpecification: {AttributeName: expiresAt, Enabled: true}
+      # and redeploy.
+
+  # --- DynamoDB Table, DEFRA noise raster samples (v3.1) ---
+  # Populated by an offline data-loader script that samples the DEFRA
+  # GeoTIFF at every UK postcode centroid. The Lambda reads from this table
+  # when populated; falls back to v3.0 Haversine when empty/missing.
+  # See scripts/load_defra_raster.py for the loader runbook.
+  NoiseRasterTable:
+    Type: AWS::DynamoDB::Table
+    # See PostcodeTable — 423,481 DEFRA raster rows, hours of offline loading
+    # to rebuild from the GeoTIFF.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      # Name matches the london-flight-map-* IAM-policy prefix used by the
+      # flightmap-dev deploy user, see backend/iam-policy.json.
+      TableName: london-flight-map-noise-raster
+      AttributeDefinitions:
+        - AttributeName: postcode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: postcode
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # PITR enabled. Re-running the loader from the GeoTIFF would also
+      # rebuild this table, but ~6h of compute + bandwidth is real cost,
+      # and PITR roll-back to a known-good window is far cheaper if a
+      # bad loader run corrupts a chunk of the table.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # --- DynamoDB Table, ONS NSPL postcode index ---
+  # postcode -> LAD + lat/lon for every positioned UK postcode (~2.70M rows,
+  # ONS NSPL, Open Government Licence v3.0). Populated offline by
+  # scripts/load_nspl.py. Two consumers: (1) the score Lambda resolves UK
+  # postcodes locally in milliseconds, demoting postcodes.io to a fallback —
+  # a customer backfilling 100k distinct postcodes no longer hammers a free
+  # community service; (2) the offline city-scale bulk scorer reads the same
+  # table for the Enterprise "score your whole city" CSV.
+  # Same PK format as NoiseRasterTable (uppercase, spaces removed) so the two
+  # tables share a key space and can be joined or merged without a re-key.
+  PostcodeTable:
+    Type: AWS::DynamoDB::Table
+    # Retain protects ~2.7M loaded rows AND keeps the stack recoverable.
+    # `flightmap-dev` has no dynamodb:DeleteTable grant, so a rollback that
+    # needs to delete a table is DENIED — wedging the stack in
+    # UPDATE_ROLLBACK_FAILED, which this deploy user cannot self-recover from.
+    # Retain makes CFN never attempt the delete, so the missing grant can
+    # never bite and the data survives regardless. Applied to all four tables
+    # 2026-07-26, before the NSPL loader's first run.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      # Name matches the london-flight-map-* IAM-policy prefix used by the
+      # flightmap-dev deploy user, see backend/iam-policy.json.
+      TableName: london-flight-map-postcodes
+      AttributeDefinitions:
+        - AttributeName: postcode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: postcode
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # PITR enabled. Re-running the loader from data/nspl.csv rebuilds this
+      # table, but that is ~30-60 min and ~£1.50 of write units; PITR
+      # roll-back to a known-good window is cheaper and far faster if a bad
+      # loader run corrupts a chunk of the table.
+      # Cost basis: 2,699,393 loadable rows x 1 WRU (every item is far under
+      # 1 KB) x USD 0.7065 per million WRU = USD 1.91 ~= GBP 1.51 at USD 1
+      # ~= GBP 0.79. eu-west-2 on-demand rates as published 2026-07-25;
+      # re-check at the next quarterly reload. The earlier ~£3 figure here
+      # quoted DynamoDB's pre-November-2024 write price, which was exactly
+      # double the current one — a stale quote is a 2x error. Full workings,
+      # including storage and PITR at ~GBP 0.18/month, are in the COST
+      # section of scripts/load_nspl.py.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # --- DynamoDB Table ---
+  FavouritesTable:
+    Type: AWS::DynamoDB::Table
+    # See PostcodeTable — user-saved properties, keyed to device tokens that
+    # cannot be reissued, so a lost table is unrecoverable for those users.
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: london-flight-map-favourites
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: postcode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: postcode
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      # PITR enabled. User-generated content (favourites are the only
+      # data they write to us) deserves DR protection.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+Parameters:
+  # Each secret has AllowedPattern '^.+$' so an empty / missing override
+  # fails CloudFormation parameter validation BEFORE the changeset runs.
+  # Without this, an empty string silently propagates to the Lambda env
+  # and the only sign of trouble is upstream timeouts in production
+  # (this is exactly how the May 2026 OpenSky live-flights outage was
+  # masked for weeks). SAM still preserves previously-set non-empty
+  # values when the parameter is omitted from --parameter-overrides,
+  # so narrow deploys keep working.
+  EpcBearerToken:
+    Type: String
+    AllowedPattern: '^.+$'
+    ConstraintDescription: 'EpcBearerToken must be non-empty. Get from get-energy-performance-data.communities.gov.uk My account, then pass via --parameter-overrides "EpcBearerToken=$EPC_BEARER_TOKEN".'
+    NoEcho: true
+    Description: Bearer token from get-energy-performance-data.communities.gov.uk (sign in via GOV.UK One Login, copy from the My account page). Pass at deploy time, never commit.
+  # I17 (2026-09-15). Both default to a deploy that changes nothing: the
+  # flag is off, and the sender is the address the SES identity will carry.
+  # Flip with `--parameter-overrides SignupVerify=on` once skyscore.co.uk is
+  # verified in SES eu-west-2 and the account is out of the sandbox.
+  SignupVerify:
+    Type: String
+    Default: 'off'
+    AllowedValues: ['on', 'off']
+    Description: 'on = every /v1/signup POST writes a pending row and emails a confirm link; nothing reaches the register until it is clicked.'
+  SignupSenderAddress:
+    Type: String
+    Default: 'Sky Score <noreply@skyscore.co.uk>'
+    AllowedPattern: '^.+$'
+    Description: 'From address for the confirmation email. Must belong to a verified SES identity.'
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${FlightMapApi}.execute-api.${AWS::Region}.amazonaws.com/prod/'

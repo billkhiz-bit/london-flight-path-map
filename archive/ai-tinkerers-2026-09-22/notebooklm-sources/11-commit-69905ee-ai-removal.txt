@@ -1,0 +1,79 @@
+69905ee 2026-05-07
+Remove all AI features from frontend (option 3)
+
+Strips the AI chat panel, AI insight auto-summary, multi-agent routing,
+property-photo image analysis, EPC/survey doc analysis, and AI-generated
+property report. Five Bedrock-spending features gone from the consumer site.
+
+Reasoning: methodology defensibility is the B2B story. Tacking AI summaries
+on top of deterministic scoring introduces variance that B2B audit teams
+will challenge first, and the "not fully accurate" complaint is structural
+not tunable. AWS-credit savings are the secondary win (~$80-115/month at
+modest traffic).
+
+The 5 AI Lambdas (chat, multi_agent, analyze_image, analyze_document, report)
+and their template.yaml entries stay intact — Lambda has zero idle cost on
+on-demand pricing, and re-introducing any feature later is just unhiding
+the UI block. Deliberately kept dormant rather than deleted so a constrained
+"explain in plain English" button (user-triggered, not auto-firing) remains
+a one-commit re-enable if consumer feedback warrants it.
+
+Removals:
+- HTML: chat-fab, chat-panel, report-modal, AI insight section in sidebar,
+  EPC/survey upload UI, "Generate AI Report" button.
+- CSS: all .chat-*, .report-modal/.report-content/.report-close/.report-print,
+  .upload-area, .chat-upload-btn, #ai-insight-* (~110 lines).
+- JS: chatHistory, currentViewingContext, currentReportData, MULTI_AGENT_KEYWORDS,
+  shouldUseMultiAgent, sendChatMessage, fetchInsight, formatChatReply,
+  analyzePropertyImage, analyzeDocument, generateReport, formatReportHtml,
+  closeReport, printReport, openPrintableWindow, handleDocUpload, setChatWelcome,
+  plus init handlers (~280 lines).
+- All "Powered by Amazon Nova" / "Nova Pro" branding strings (now moot).
+
+Net: -25 KB on the served HTML, JS parses clean, 12 lint warnings dropped
+along with removed code.
+
+6bad8ce 2026-05-07
+Wave 1: code-quality cleanup post-audit
+
+I-N1: Deleted 5 dormant Bedrock Lambda directories (chat, multi_agent,
+analyze_image, analyze_document, report) and their template.yaml
+Function blocks + Bedrock IAM grants. The "uncomment Events block to
+re-enable" pattern wasn't materially easier than "git revert + sam
+deploy" — both require deploys. Carrying ~800 LOC of dead code +
+permanent bedrock:InvokeModel grants on five execution roles was
+attack surface for any future SAM template typo. Restoration recipe:
+git revert this commit + the AI-removal commit (69905ee). Removed
+the ChatHandlerTests / MultiAgentHandlerTests / ReportHandlerTests
+classes from backend/tests/test_handlers.py (60 backend tests now,
+was 67).
+
+I-N2: Strengthened the prototype's `liveLicensed=false` gate — flipping
+just the flag now `throw`s on page load with a message pointing to
+OPENSKY_LICENSING_EMAIL.md and the 4 prerequisite steps. The dead
+fetchLiveData / processLiveStates / enterLiveMode functions stay (too
+entangled with the raycaster + animation loop to cleanly remove)
+but a future contributor can't accidentally re-introduce the OpenSky
+exposure by changing one line.
+
+I-N4: score Lambda's Access-Control-Allow-Origin now reads from the
+CORS_ORIGIN env var (default '*' for the B2B endpoint, set in
+template.yaml) instead of being hardcoded. Functionally identical
+since the env-var also defaults to '*'; consistent with the other
+Lambdas' pattern.
+
+M-N1: Hoisted the boto3 dynamodb client construction in score's
+_lookup_lden_raster out of the per-call path. Lazy-imported, cached
+at module scope. ~50ms saved per cache miss on the v3.1 raster path
+(which is the hot path now that the loader is ~93% through).
+
+Sub-processor consistency (free fix from enterprise audit): METHODOLOGY
+§15 said "AWS is the sole sub-processor" but LICENSING.md listed
+Cloudflare. Reconciled to "AWS is the sole sub-processor of customer
+data; Cloudflare provides DNS / domain registration with no access
+to API requests, responses, or customer data; GoatCounter analytics
+on the marketing surface only." Procurement teams will read both docs
+and catch mismatches.
+
+Tests: 60/60 passing. Deploy clean.
+

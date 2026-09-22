@@ -1,0 +1,98 @@
+SKY SCORE - AN AUDIO OVERVIEW
+Two hosts. Written 2026-09-21 from the plain-English documents in this folder.
+Every fact matches those documents. About seven minutes read aloud.
+Lines beginning "A:" are the first host; "B:" the second.
+
+A: Welcome. Today we're taking apart a small, real product called Sky Score, and using it to understand how a modern web service is built on Amazon's cloud. No jargon without an explanation. Let's start with what it actually is.
+
+B: It's a scoring service for UK postcodes. You give it a postcode, it gives you a score from zero to ten for how liveable that spot is. The score is built from eight things: aircraft noise, road noise, air quality, flood risk, house prices, crime, school results, and transport. And every one of those eight comes from an official government dataset.
+
+A: So it's not opinion. It's arithmetic over public data.
+
+B: That's the whole idea. And there are two front doors. A website with a map, for people. And what's called an API, for businesses. An API is just a way for one program to ask another for data. A property website's software sends a postcode; numbers come back; no person and no screen in between.
+
+A: Let's do the thing everyone understands: the website. I type a postcode, say N1 7SX, and press Enter. What happens?
+
+B: Think of your browser as a person at a desk with a reference book. First, as you start typing, it quietly fetches three lists it's going to need: aircraft noise readings for London, the same for the regions, and a list of stations. Then it asks a free public service called postcodes dot io one question: where is N1 7SX?
+
+A: And the answer is?
+
+B: A latitude, a longitude, and the borough: Hackney. Now here's the part that surprises people. The browser already has a table with every borough's numbers in it. That table came down with the page. So it looks up Hackney's row, does the sums, and there's your score. Five point four out of ten, in this case.
+
+A: Wait. So the score is worked out on my laptop?
+
+B: On your laptop. Nothing is sent anywhere for that step. Then, now that it knows where you are, it asks four small helpers at once: which stations are near here, any GPs nearby, what's sold at this postcode, and are there energy certificates. Each of those is a tiny program running on Amazon that fetches from a public source and hands the answer back.
+
+A: And that's it? A second later the panel is drawn.
+
+B: That's it. Nine requests in total, and if you watch them go by in the browser's own network panel, you'll notice the thing that is missing. There is no request for the score. The score never leaves your machine.
+
+A: I like that as a design. Why is it done that way?
+
+B: Because a website that is just files is the cheapest and hardest to break kind there is. There's no program running on a server that can crash at three in the morning. And it means no artificial intelligence is anywhere near the website. The AI lives on the business side, behind a key, and we'll come to it.
+
+A: Right. The business side. This is where the Amazon services come in. Take me through them, in plain terms.
+
+B: I'll use the same picture for each. The first is called API Gateway, and it's the receptionist. Every request from a business comes here first. It checks the caller's pass, which is called an API key. It counts how many times that pass has called this month against a free allowance of ten thousand. It slows down anyone hammering the door. And it sends the request to the right worker.
+
+A: The workers being?
+
+B: Lambda. That's Amazon's name for a small program that does not run all the time. It's asleep until there's a job, wakes up, does the job in a fraction of a second, and goes away. You pay per job, not per day. Sky Score has eight of them, one job each: the scoring engine, the assistant, handing out keys, saved places, and the four helpers we met on the website.
+
+A: Why is that better than just having a server?
+
+B: A server is like renting an office twenty-four hours a day, even when nobody's in it. Workers on call cost nothing when nobody's asking. And there's no office to clean, patch, or restart. For a service that's quiet most of the time, it's the cheapest way there is.
+
+A: Where do the workers get their data?
+
+B: A service called DynamoDB. Picture a very fast box of index cards. The big box holds two point seven million cards, one for every UK postcode, each saying where it is and which borough it's in. Another holds the government's noise reading for each postcode. It's fast because Sky Score only ever asks it one kind of question: the card for this postcode, please. It never needs to search across cards or add them up, so it doesn't need a full database with a program running all day.
+
+A: And the AI? You said it's on the business side.
+
+B: One service, called Bedrock, which is Amazon's door to AI models. And here's the thing: there is exactly one AI call in the whole picture, and only one worker, the assistant, is allowed to make it. The model is a small, cheap one called Nova Lite. Its only job is to explain a score in a sentence.
+
+A: That's quite restrained for something that started at an AI hackathon.
+
+B: It didn't start restrained. In March the website had five AI features: a chat panel, an automatic AI summary on every postcode, photo analysis, document analysis, and a generated report. In May all five were removed in one go.
+
+A: Why?
+
+B: Two reasons, in this order. First, an AI summary on top of a carefully checked score adds an answer that varies and is sometimes wrong. For a product about someone's home, a wrong number costs more than a dull one. Second, the five features were burning about eighty to a hundred and fifteen dollars a month in credits. What came back in August is that one narrow assistant, for about twenty-five pence per thousand questions.
+
+A: So how do you stop even that one assistant from making things up?
+
+B: This is my favourite part. The prompt, the written instructions to the model, says never state a number that isn't in the data. And the third real question it got in production was "what will house prices be in 2030?" And it gave a figure anyway.
+
+A: The instruction didn't hold.
+
+B: An instruction is not a control. What actually stops it is about forty lines of ordinary code that run after the model answers. Pull every number out of the model's sentence. Pull every number out of the data it was given. Every number in the sentence has to be in the data. If even one isn't, the whole answer is thrown away and replaced with "I can't answer that from the data I have."
+
+A: Thrown away, not flagged with a warning?
+
+B: Thrown away. A warning next to a made-up number still ships the number, and people read the number. And it goes further than you'd expect. Ask it "what's the score out of a hundred?" The model does the arithmetic correctly, fifty out of a hundred, and the check bins it anyway, because neither fifty nor a hundred is in the data. It just discarded a true answer.
+
+A: That's a real cost.
+
+B: It is, and it's taken on purpose. The check is dumb, and dumb is what makes it trustworthy. Though it wasn't perfect. It had three holes over five weeks. For a while it ignored every whole number from zero to ten, which is exactly the scale it exists to protect. Each hole was found by writing a test that failed first, then fixing the code.
+
+A: Which leads to the second lesson, I think.
+
+B: A check that has never gone red has not been tested. That applies to the whole project. Before any change is saved, fifty-seven automated checks run. Some lint the code, some run the website in a real browser, and the unusual ones re-derive the published numbers from their government source and fail if one has drifted. And twelve checks in this project's history were found to be green for months while checking nothing. Nobody switched them off. They decayed one sensible decision at a time.
+
+A: And most of the code was written with a coding assistant, wasn't it?
+
+B: Most of it, yes, with Claude Code. But the thing that makes that safe isn't the assistant. It's those fifty-seven checks, and a rule about the notes it keeps between sessions: don't record a fact, record a check. "The tests pass" is a fact, and it was false the day it was written. "Prove a check can fail before you trust it" is a check, and it's still true.
+
+A: Let's finish with the exam angle, because that's why a lot of people are listening. What does Sky Score teach about the Solutions Architect exam?
+
+B: It's a clean example of one style: fully serverless. Files in S3 served by CloudFront, a receptionist in API Gateway, workers in Lambda, index cards in DynamoDB, one AI call through Bedrock, a logbook in CloudWatch, permissions in IAM, and one blueprint file describing all of it. That covers cost optimisation, security, and performance nicely.
+
+A: And what doesn't it cover?
+
+B: Everything the serverless style avoids, which is a big part of the exam. No virtual networks, no EC2 servers, no load balancers, no relational databases, no queues. Study those elsewhere. Use Sky Score to learn the reasoning, not the coverage.
+
+A: Three things to take home, then.
+
+B: One: an instruction is not a control. If your model presents data rather than generates it, put a numeric check after it. Two: a check that has never gone red has not been tested. Break the thing it guards, watch it fail, then trust the green. Three: for anyone building with a coding assistant, don't let it record a fact. Make it record a check.
+
+A: Sky Score. Postcode in, traceable score out, and forty lines that keep the AI honest. Thanks for listening.

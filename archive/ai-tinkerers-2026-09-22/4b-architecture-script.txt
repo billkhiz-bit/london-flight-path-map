@@ -1,0 +1,238 @@
+ARCHITECTURE BEAT - THE SCRIPT
+AI Tinkerers London, Tuesday 22 September 2026
+=================================================================
+Written 2026-09-22, for the THREE-SCREEN run:
+  1. skyscore.co.uk (the website, DevTools open)
+  2. 1b-architecture.html  <- this file is for that screen
+  3. 10-end-card.html (QR codes, leave up)
+
+Runs about 2:00 as written. The "SHORT VERSION" at the foot cuts it
+to 0:40. The diagram is unchanged and accurate: the chat Lambda and
+the Bedrock box stay on screen, they are simply not led with.
+
+
+-----------------------------------------------------------------
+BRIDGE FROM THE WEBSITE (5 sec)
+-----------------------------------------------------------------
+"So that's what your browser just did. This is everything behind it,
+on one screen. Amazon's London region, and the subtitle is the point:
+nothing here is switched on until somebody asks. There is no server
+sitting idle costing me money."
+
+
+-----------------------------------------------------------------
+THE PICTURE - point as you go (40 sec)
+-----------------------------------------------------------------
+LEFT COLUMN, top to bottom:
+
+"Two kinds of visitor. People come in on the left. CloudFront is the
+worldwide cache, S3 is the file cabinet - between them they serve one
+HTML file, the map data, and a hundred area pages. And that note at
+the bottom is what you just saw in the network panel: the scoring
+happens in your browser. Every borough's numbers travel with the page.
+That's why there was no request for the score."
+
+RIGHT COLUMN, top to bottom:
+
+"Businesses come in on the right, to a different address, with an API
+key. API Gateway is the front desk - it checks the key, counts the
+free tier at ten thousand calls a month, and rate-limits every single
+route. Behind it, eight small Python programs. They run when called
+and they stop. And underneath, DynamoDB: five tables, the big one
+holding 2.7 million UK postcodes from the Office for National
+Statistics, plus a noise reading for each one."
+
+BOTTOM ROW, left to right. Do NOT lead with the purple box - it reads
+as an offer to demo the AI, and there is no AI screen in this run:
+
+"Three things underneath. The logbook, thirty days. The keycards -
+each of those eight programs gets the narrowest one that lets it do
+its job. And the floor plan: one file describes this whole picture,
+so changing the architecture is a commit."
+
+THE GREY STRIP (optional, 10 sec):
+
+"And the grey strip is the part people forget. The hard work happens
+offline on my laptop - scripts pull the government files, compute the
+numbers, check them back against the source, and only then deploy.
+The live system never does arithmetic on a government file. It looks
+one up."
+
+
+-----------------------------------------------------------------
+THE CUT - the strongest thing in the talk (40 sec)
+-----------------------------------------------------------------
+"And that purple box is what's left of the AI. At the hackathon in
+March this was 'AI-powered' - a chat panel, an automatic summary on
+every postcode, a router to a bigger model, photo analysis, document
+analysis, a generated report. In May I removed all five, in one
+commit.
+
+Two reasons, in this order. An AI summary sitting on top of a score I
+can trace adds an answer that VARIES - and a business's audit team
+will challenge that first, before they challenge anything else. And
+they were burning eighty to a hundred and fifteen dollars a month of
+credits at very modest traffic.
+
+What survived is one model call, capped at three sentences, for about
+25p per thousand questions - and it's an API endpoint behind a key,
+not a chat box on the site. There is no AI on the website at all."
+
+  That last sentence does real work: it is the payoff of the website
+  beat, it explains the absence before anyone finds it, and it is a
+  strong claim in a room where everything else is AI-first.
+
+
+-----------------------------------------------------------------
+TAKEAWAY AND HAND-OFF (20 sec)
+-----------------------------------------------------------------
+"If there's one thing to take from this picture, it's that every AI
+feature I cut made the product easier to sell. Not cheaper - easier
+to sell, because everything on this screen can be traced back to a
+government file and a date. The AI is the last mile, and it's the
+only part I had to put a guard on."
+
+Then switch to the end card.
+
+
+-----------------------------------------------------------------
+SHORT VERSION (0:40)
+-----------------------------------------------------------------
+Keep: the bridge, the left column, the cut.
+Cut:  the right column down to one line - "eight small programs, five
+      tables, all asleep until called" - and drop the grey strip.
+
+
+=================================================================
+THE FIVE SERVICES IN SIMPLE TERMS
+=================================================================
+A building, left to right: front desk -> eight small rooms that only
+light up when someone walks in -> filing cabinets -> keycards ->
+logbook -> floor plan.
+
+
+LAMBDA - a program with no computer of its own
+-----------------------------------------------------------------
+Say: "Eight small programs that run only when called, then stop."
+
+You upload the code; Amazon keeps it on a shelf. A request arrives,
+Amazon finds a machine, runs the code, sends the answer, puts it away.
+Billed per request and per millisecond. Nothing running means nothing
+billed.
+
+The eight: score (the product), chat (the assistant), signup (issues
+API keys), favourites, epc (energy certificates), sold-prices (Land
+Registry), transport (TfL), nhs (GPs and pharmacies).
+
+If pushed:
+  - COLD START. First call after a quiet spell takes about a second
+    longer while Python loads. After that the loaded copy is reused.
+  - EVERY TIMEOUT IS UNDER 29 SECONDS, deliberately. API Gateway stops
+    waiting at 29. A Lambda allowed 45 would produce a raw gateway
+    error instead of the polite fallback the code is written to give.
+  - EACH HAS ITS OWN PERMISSIONS. chat may call Bedrock; the other
+    seven may not. That is what makes "exactly one AI call in this
+    picture" checkable rather than a claim.
+  - chat calls score DIRECTLY, Lambda to Lambda, not over the
+    internet. Same engine as the public API, one less hop, no key.
+
+
+API GATEWAY - the front desk
+-----------------------------------------------------------------
+Say: "It checks your pass, counts what you've used, and shows your
+request to the right room."
+
+Every business request hits it before it hits any code: checks the API
+key, counts the call against the free tier of 10,000 a month, applies
+a rate limit, forwards it. It also owns api.skyscore.co.uk and its
+certificate.
+
+If pushed: API keys authorise PER STAGE, not per route - a key that
+can reach the API can reach every route on it. To keep free keys off
+the bulk-scoring route, that route's rate limit is set to ZERO for
+those plans. A refusal dressed as a speed limit, and the only
+declarative way to do it. Every open route also has its own limit,
+sized from MEASURED traffic rather than guessed, under a whole-API
+ceiling of 50 requests a second.
+
+
+CLOUDWATCH - the logbook
+-----------------------------------------------------------------
+Say: "Everything the code says while it's running goes in the
+logbook, and the logbook is kept for thirty days."
+
+One log group per Lambda. Where the [CHAT_UNGROUNDED] lines land. It
+also counts invocations, which is how the route limits above were
+sized from real traffic instead of guesswork.
+
+If pushed: thirty days is not a default, it is a promise - the privacy
+page states it, and a check compares what AWS is actually set to
+against what the page claims and fails if they drift. And the log
+records the NUMBERS and the QUESTION, never the text the model wrote.
+When an answer is binned, nobody knows what it said.
+
+
+IAM - the keycards
+-----------------------------------------------------------------
+Say: "Who is allowed to open which door. Everything gets the
+narrowest keycard that still lets it do its job."
+
+One deploy user for me, and a separate keycard per Lambda.
+
+If pushed: the policy is a file in the repo, and a script probes
+eighteen read-only actions against the live account to check the file
+and reality still agree. They drifted once, in September, and nothing
+could deploy until it was spotted. The lesson written down afterwards
+was "a permission is a timestamp, not a property" - you cannot read it
+off a document, you have to ask.
+
+
+SAM - the floor plan
+-----------------------------------------------------------------
+Say: "One file describes the whole building. I change the file, and
+Amazon rebuilds to match."
+
+template.yaml declares all eight Lambdas, the API and its routes, the
+five tables, the usage plans, every rate limit and every timeout.
+Deploying is two commands. Nothing is clicked into existence in a
+console.
+
+If pushed: it means the architecture is IN GIT - diffable, reviewable,
+restorable. When five AI features were removed in May, that was a
+commit you can read, not a memory of an afternoon. CloudFormation
+underneath; SAM is the shorthand for serverless.
+
+
+=================================================================
+IF ASKED
+=================================================================
+"Why no VPC / containers / Kubernetes?"
+  Nothing long-running to put in one. No EC2, no database server, no
+  load balancer, nothing to patch. The trade is cold starts, about a
+  second on the first call after a quiet spell.
+
+"Why is the scoring in the browser?"
+  Every borough's numbers are computed weeks in advance from
+  government files, so the page can carry them. The site works offline
+  and costs nothing per search. The API does the same arithmetic
+  server-side for businesses.
+
+"Why is one bit in Virginia?"
+  That model is not offered in the London region. It is the only thing
+  that leaves, it is declared on the privacy page, and a test compares
+  the code's regions against that page and fails if a new one appears.
+
+"What stops someone hammering the free API?"
+  Every route has its own rate limit, sized from measured traffic,
+  under a whole-API ceiling. The batch route is switched off entirely
+  for free keys.
+
+"Is it really eight?"
+  Eight live, in one template. There were twelve; the four Bedrock
+  ones went in May.
+
+"Can we see the assistant?"
+  "It's an API endpoint, there's no UI for it - but I've got it
+  running on the laptop, come and find me after."
+  6-assistant-tester.html is on the machine and warm. It is not on the
+  projector by choice: no venue wifi risk, no key paste on stage.
