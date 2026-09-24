@@ -3482,6 +3482,30 @@
           padding-top: 36px;
           box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
           position: relative;
+          /* THE CARD IS ITS OWN SCROLLER (2026-09-24). The sidebar above is
+             `pointer-events: none` so the map stays pannable round the card,
+             and a scroller that cannot be hit cannot be scrolled: measured at
+             390x844 with Camden open, 2304px of content in a 608px sidebar and
+             a touch swipe on the card left `scrollTop` at 0. The statistics
+             below the fold were unreachable on every phone. The sidebar is a
+             flex column of fixed height, so `overflow-y: auto` lets this item
+             shrink to the space left under the search card (an overflowing
+             item's automatic min-height is 0) and scroll inside it.
+             `overscroll-behavior` stops the end of the card's scroll chaining
+             into the page.
+             THE FLOOR KEEPS THE FOOTER OUT OF THE CARD'S SPACE. Shrinking
+             alone left `.sheet-footer` (107-133px of links) pinned under the
+             card at every width, so the card got 178px at 320x568 and 48px on
+             a landscape phone. 201px is the header's measured bottom (193px,
+             the same at 320-844 wide) plus this card's 8px margin, so the card
+             fills the rest of the sidebar and the footer overflows below it,
+             reached by scrolling the sidebar as it was before. If a long name
+             wraps the header, the card's bottom edge overflows by the extra
+             line and its content still scrolls in full. */
+          min-height: calc(100% - 201px);
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
         }
         .app[data-mview='search'] .result-close {
           display: flex;
@@ -14678,6 +14702,10 @@
           switchTab(TAB_FOR[view]);
           const sb = document.getElementById('sidebar');
           if (sb) sb.scrollTop = 0;
+          // The result card scrolls itself in the search view, so a new
+          // result must not open where the previous one was left.
+          const card = document.getElementById('tab-analysis');
+          if (card) card.scrollTop = 0;
           // Search view brings the map to the foreground - nudge D3 to
           // recompute the projection in case orientation or the keyboard
           // changed the viewport since load.
