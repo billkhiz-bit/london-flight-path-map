@@ -523,6 +523,14 @@ check "every city switches"           node tests/city-switch.mjs
 # deleting the native rule outright would pass. Proven red against the
 # original defect: 1 visible link at four viewports.
 check "legal links reachable on a phone" node tests/mobile-legal-links.mjs
+# The result card's close button, AFTER the card has been scrolled (audit M-9,
+# 2026-09-25). The card is its own scroller since 2026-09-24 and the button
+# was absolute inside it, so it scrolled to y=-3666 on a long result; every
+# other gate measures a state at its initial scroll position, where the button
+# is fine. Real CDP touch drags, and it asserts the card MOVED before judging
+# the button. A net_check because reaching a result resolves the postcode
+# through api.postcodes.io. Proven red 3 of 3 viewports on the pre-fix CSS.
+net_check "result close survives a scroll" node tests/result-close-reachable.mjs
 # TWO ORPHANED GATES, WIRED IN 2026-09-07. Both existed, both worked, and
 # neither was in any runner - the 5th and 6th found orphaned in this repo
 # after failure-path, native-sim-render and live-mobile-verify.

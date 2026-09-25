@@ -3518,7 +3518,6 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          position: absolute;
           /* CLEARS THE STICKY SEARCH CARD (2026-08-31, audit D2).
              This was `top: 4px`, which put the button at y=113 while the
              sticky `.search-box` occupies y 54-138 - so 80% of the 36x36
@@ -3531,13 +3530,27 @@
              `#tab-analysis` is `position: relative; z-index: auto`, so it
              creates no stacking context and an inner 2 loses to the search
              card's 3 directly. The same mechanism this file already documents
-             for the city chips at line 3246. */
-          top: 36px;
-          right: 4px;
+             for the city chips at line 3246.
+             STICKY SINCE 2026-09-25 (audit M-9). The card became its own
+             scroller on 2026-09-24, and an absolute child of a scroller
+             scrolls with its content: measured at 390x844 on SW11 1AA, the
+             button sat at y=-3666 once the card was read to its end, so
+             dismissing a result meant swiping back up ~3,900px. Sticky keeps
+             it in flow as the card's first child and pins it to the top of
+             the card's scrollport; the -36px bottom margin gives back the
+             space it takes, so content starts where it always did and the
+             button opens at the same y=247 it did as `absolute`. Measured
+             at 390x844, 320x568 and 844x390: y=247 at every scroll depth.
+             The cream background keeps the glyph legible over text scrolling
+             beneath it. */
+          position: sticky;
+          top: 0;
+          margin: 0 -8px -36px auto;
           width: 36px;
           height: 36px;
           border: none;
-          background: transparent;
+          border-radius: 8px;
+          background: var(--cream, #ebe8e1);
           font-size: 26px;
           line-height: 1;
           font-family: var(--font-mono);
