@@ -160,6 +160,33 @@ each has a `--check` that can go red:
 > red at **33%** on the same file. **Sampling was the whole gate; the network
 > call was the easy half.**
 
+> ## LONDON'S FLIGHT PATHS ARE DERIVED FROM THE UK AIP - v5.3, 2026-09-26
+>
+> They were HAND-DRAWN until then, and a Reddit reply caught it: Ockham and
+> Bovingdon ran due north-south into two east-west runways, and the departures
+> fanned off the runway end where the published routes run straight ahead.
+> **`scripts/build_flight_paths.py`** now generates both holders
+> (`FLIGHT_PATHS_LONDON` in the Lambda, `FLIGHT_PATHS` in index.html, between
+> `FLIGHT-PATHS-LONDON` markers) from the checked-in
+> **`data/flight-procedures.json`**: every runway's final approach to 3,000 ft
+> on its published glide path, Heathrow's NPRs from the wording of EGLL AD 2.21
+> para 8, London City's departures from its RNAV SID coding tables. `--fetch`
+> is the network half (AIP host needs a browser UA; WebFetch truncates the page,
+> curl does not); `--check` is BLOCKING. **Do not hand-edit between the
+> markers.** Stack-to-final is radar-vectored and deliberately NOT drawn.
+>
+> **The geometry was not the main error - the WEIGHT was.** Measured before
+> deciding: the correct AIP lines at full weight scored WORSE against DEFRA than
+> the hand-drawn ones (2.16 vs 1.97), because the airport and corridor terms
+> double-count near every runway. `CORRIDOR_WEIGHT = 0.3` (three holders: the
+> Lambda and both ramps in index.html, compared by
+> `test_corridor_weight_matches_the_site`) is FITTED by
+> `scripts/fit_corridor_weight.py` on a train half of 26,233 DEFRA-measured
+> postcodes and reported on the other half: 2.36 -> 1.43, every city improves.
+> **DEFRA sets the SIZE of the penalty, never the geometry** - it only maps the
+> strip around the runway, so it rewards lines that hug the axis. Other cities
+> keep centreline corridors until phase 2 (ROADMAP).
+
 > ## THE AIRCRAFT NEAR-FIELD FLOOR WAS A DISC - FIXED 2026-09-01 (audit C1)
 >
 > `footprint_for()` returns an EQUIVALENT RADIUS, `sqrt(area/pi)`, and the
@@ -364,6 +391,7 @@ without an airport needs that path to stay intact.
   The test now drops one field from a real record, renders, asserts the caveat
   NAMES what survived, and restores in a `finally`. **Borrowing a real subject for
   an edge case means the coverage expires the day the data gets better.**
+- **The AIRCRAFT-NOISE legend is a copy of each publisher's style, never a choice (2026-09-25).** It was five hand-picked rows (55-59 blue ... 75+ red) against DEFRA's ten intervals from 40 dB in teal/green/peach/plum, so London's largest painted band, 50-55 dB, read as 60-64. `NOISE_SCALE_DEFRA_LDEN` / `NOISE_SCALE_BTS` hold the publishers' ColorMaps, each city's `noiseScale` registry field picks one, and `renderNoiseScale()` draws a stepped bar through the layer's own filter. `layer-honesty.mjs` could not see it: it asserts WHETHER the scale shows, never WHAT it says. **`scripts/check_noise_legend.py`** does - blocking offline (served PNG colours == legend, both directions) and a `net_check` `--live` against DEFRA GetStyles and the BTS MapServer legend. NYC's heading `dB DNL` is UNVERIFIED (BTS's page 403s fetches; it may be LAeq,24h). Found preparing a Reddit image, not by a gate.
 - Guarded by **`tests/layer-honesty.mjs`** (in preflight), which fails in both directions: over-painting is an invented default, under-painting is a borough whose data the map cannot find. **Since 2026-08-23 it also asserts the legend**: every `FILL_LAYER_COLOURS` key has a `[data-band]` row and vice versa (city-independent, runs once), and per city the set of VISIBLE rows equals the set of bands actually painted - inverted out of the rendered `fill` attributes and read from computed style, never from the counter or the inline style the fix writes. Proven red four ways.
 - **`tests/a11y-source.mjs` reveals the band rows before scanning**, added the same day. Otherwise the EXCELLENT swatch - hidden in all eleven cities - would never be evaluated by axe and would first reach a user on the day coverage widens, never having had its contrast measured. That is exactly how three legend headings shipped at 1.00:1.
 

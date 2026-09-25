@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-09-15 - the open-decisions brief below was READ
+**Last reviewed:** 2026-09-26 - **methodology v5.3, BUILT BUT UNCOMMITTED - one preflight gate red (`map fits its box`, London, 1.9% spill from the longer AIP departure lines); see HANDOVER "WHERE TO START (2026-09-26)"**: London's flight-path corridors are derived from the UK AIP (a Reddit reply was right that the hand-drawn Ockham and Bovingdon lines ran straight into east-west runways), and the corridor penalty is FITTED against DEFRA at 0.3 of its old strength - held-out error 2.36 -> 1.43 across eight cities, London 1.879 -> 1.320 as published on `/api/`. Phase 2 (the other twelve UK airports through the same AIP derivation) is the task table below. Previous: 2026-09-25 - a fresh `/audit` (`AUDIT_REPORT_2026-09-25.md`: 0 Critical, 6 Important, 14 Minor), and everything fixable in it DEPLOYED and verified from the origin the same day: `/v1/changes` no longer calls a July figure a change from itself (I-1), the public `/talks/` write-up states both IAM gaps honestly and ships tagged (I-2, I-3), the badge carries a CSP, the phone result card's close button is sticky (M-9, gated by `tests/result-close-reachable.mjs`), and - found while preparing a Reddit image, not by any gate - **the aircraft-noise legend was a palette neither overlay uses and read London 10-15 dB louder than DEFRA** (I-6, fixed, gated by `scripts/check_noise_legend.py`). **First public marketing**: an [OC] chart posted to r/dataisbeautiful (live) and r/london (auto-removed under its self-promotion rule 6) - see OUTREACH_LOG. Still open and Bill's: **I-5** (verified signup loses keys to email link scanners - a precondition before the I17 flip), the **M-9 footer decision** (legal links unreachable while a phone result is open), NYC's legend heading `dB DNL` (unverified - BTS 403s fetches), the ICO fee (GBP 52, Cubitt33 Ltd), and GitHub's 15 Dependabot alerts (10 high; the audit counted 1 at the root). Previous: 2026-09-15 - the open-decisions brief below was READ
 AGAINST THE CODE and corrected in four places (badge cache is scriptable but
 the managed policy would 403 API Gateway; repo settings are all CLI; the July
 roll hides one decision; **M23 was missing from the list entirely**). Done
@@ -615,6 +615,22 @@ Track replies in `OUTREACH_LOG.md` (create when first reply lands). Each entry: 
 | `/v1/score` Lambda extraction | 2026-05-22 | Unblocks both API track + buildathon pre-work | **Done 2026-05-05.** Plus on the same day: bulk endpoint (`POST /v1/score/batch`, up to 100 queries), NYC borough support, methodology v2.0 (iron-clad anchoring of every threshold), OpenAPI spec, Swagger UI, CORS opened to `*`. All verified live. Free-tier API key + Usage Plan (1000/month, 5 burst). |
 | OGL attribution on data Lambdas | done | Required for any B2B sale | Done 2026-05-05, `epc`, `sold_prices`, `transport`, `nhs` now return `sources` array |
 | Methodology document | done | Required for B2B audit / Buildathon judging | Done 2026-05-05, `METHODOLOGY.md` v1.0 |
+
+### Flight-path corridors from the UK AIP - phase 2 (v5.3 follow-up, opened 2026-09-26)
+
+v5.3 derived **London's** corridors from the AIP (`scripts/build_flight_paths.py`,
+`data/flight-procedures.json`) and fitted `CORRIDOR_WEIGHT` against DEFRA
+(`scripts/fit_corridor_weight.py`). The other cities still carry
+runway-centreline corridors, now at the fitted weight. Each airport below is:
+add it to `AIRPORTS` + `HOLDERS` in the builder, add markers around that city's
+two constants, `--fetch`, eyeball it over its DEFRA GeoTIFF, `--write`, then
+re-run the fit (the weight is fitted over ALL cities, so it can move).
+
+| Airport | City | Departures source | Note |
+|---|---|---|---|
+| MAN, BHX, LBA, LPL, NCL, BRS, EMA, CWL, MME | their cities | RNAV SID coding tables, as London City | parser should mostly just work; each title reads slightly differently |
+| LGW, LTN, STN | London | coding tables | London carries NO corridor for them today (removed 2026-05-07); adding one moves outer-London scores, so decide per airport after the fit |
+| JFK, LGA, EWR | New York | FAA charts, not the UK AIP | out of scope; no DEFRA-equivalent measurement to fit against |
 
 ### Audit backlog, 13 Sep 2026 - the 24 Importants, in the order to take them
 

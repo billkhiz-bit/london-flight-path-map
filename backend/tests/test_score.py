@@ -2886,6 +2886,40 @@ class SiteApiGeometryParityTests(unittest.TestCase):
         self.assertIsNotNone(m, 'UNMAPPED_AIRPORT_SCALE missing from index.html')
         self.assertEqual(float(m.group(1)), app.UNMAPPED_AIRPORT_SCALE)
 
+    def test_corridor_weight_matches_the_site(self):
+        """v5.3 scales the corridor ladder by a fitted weight, in THREE places:
+        calc_postcode_quiet here and both quiet ramps in index.html. A weight
+        changed on one side only is a site/API divergence on every postcode near
+        a corridor, invisible to either side on its own.
+        """
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        m = re.search(r'const CORRIDOR_WEIGHT = ([\d.]+);', src)
+        self.assertIsNotNone(m, 'CORRIDOR_WEIGHT missing from index.html')
+        self.assertEqual(float(m.group(1)), app.CORRIDOR_WEIGHT)
+        # Both site ramps must actually READ it; a constant nobody applies
+        # would pass the comparison above while the ladder stayed at 1.0.
+        self.assertEqual(src.count('noiseScore += CORRIDOR_WEIGHT * pathPoints;'), 2)
+        self.assertNotRegex(src, r'PathDist < 1\) noiseScore \+= 4|PathScaled < 1\) \{\s*noiseScore \+= 4')
+
+    def test_corridor_weight_reaches_the_quiet_score(self):
+        """The weight must change the engine's answer, in proportion."""
+        # Barnes: under the outer end of Heathrow's 27L/27R finals, and far
+        # enough out that the 0 floor cannot bind and hide the proportion.
+        lat, lon = 51.4700, -0.2400
+        saved = app.CORRIDOR_WEIGHT
+        try:
+            app.CORRIDOR_WEIGHT = 0.0
+            q0 = app.calc_postcode_quiet(lat, lon, 'london', raster_lden=None)
+            app.CORRIDOR_WEIGHT = 1.0
+            q1 = app.calc_postcode_quiet(lat, lon, 'london', raster_lden=None)
+        finally:
+            app.CORRIDOR_WEIGHT = saved
+        qs = app.calc_postcode_quiet(lat, lon, 'london', raster_lden=None)
+        self.assertGreater(q1, 0.0, 'test point is clamped at 0; pick one further out')
+        self.assertGreater(q0, q1, 'a point under a final approach must lose quiet to the corridor term')
+        self.assertAlmostEqual(qs, max(0.0, q0 - saved * (q0 - q1)), places=9)
+
     def test_major_airport_registry_matches_the_site(self):
         """Site and Lambda must agree which airport earns the +2 bonus.
 

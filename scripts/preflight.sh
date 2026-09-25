@@ -234,6 +234,11 @@ check "prices == HM Land Registry"     python scripts/build_hpi_prices.py --chec
 # across the two files; --check parses all four, and a parser that knew only
 # one silently read every borough as absent.
 check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --check
+# Added 2026-09-26 (methodology v5.3). London's corridors are GENERATED from
+# the UK AIP into both holders; this regenerates them from the checked-in
+# data/flight-procedures.json and reds if either the Lambda or index.html has
+# been hand-edited away from it. Offline: the network half is --fetch.
+check "flight paths == UK AIP"         python scripts/build_flight_paths.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
@@ -786,7 +791,13 @@ advise "aircraft footprint == DEFRA"    python scripts/measure_aircraft_footprin
 # has closed four times. Advisory because data/nspl.csv is gitignored (805 MB)
 # and a fresh clone cannot run it; it reports INCONCLUSIVE, never PASS, when
 # the input is absent. --max-mae gates the number the page states.
-advise "quiet estimate == DEFRA"        python scripts/check_quiet_estimate_error.py --sample 3000 --max-mae 2.2
+advise "quiet estimate == DEFRA"        python scripts/check_quiet_estimate_error.py --sample 3000 --max-mae 1.5
+# Added 2026-09-26 (methodology v5.3). CORRIDOR_WEIGHT is FITTED on half of
+# DEFRA's measured postcodes; this re-runs the fit and reds if the shipped
+# constant is no longer the optimum at the grid's resolution. Advisory for the
+# same reason as the stage above: its inputs (NSPL, the quiet datasets) are
+# gitignored, and it reports INCONCLUSIVE rather than PASS without them.
+advise "corridor weight == DEFRA fit"   python scripts/fit_corridor_weight.py --check
 # Added 2026-09-03, and it found a live outage on its first run: the console
 # edit that applied the Observability statements REPLACED FlightMapDeployPolicy
 # instead of extending it, so S3, DynamoDB, CloudFormation, Lambda, CloudFront,

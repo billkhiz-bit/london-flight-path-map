@@ -6,6 +6,47 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
+**WHERE TO START (2026-09-26) - METHODOLOGY v5.3 IS BUILT, UNCOMMITTED, AND ONE GATE IS RED.**
+London's flight-path corridors are now generated from the UK AIP and the
+corridor penalty is fitted against DEFRA (full write-up: METHODOLOGY s4.5 and
+the 2026-09-26 changelog entry; CLAUDE.md block "LONDON'S FLIGHT PATHS ARE
+DERIVED FROM THE UK AIP"). Everything is in the WORKING TREE, not committed:
+new `scripts/build_flight_paths.py`, `scripts/fit_corridor_weight.py`,
+`data/flight-procedures.json` (un-ignored in .gitignore); edits to the score
+Lambda (generated `FLIGHT_PATHS_LONDON`, `CORRIDOR_WEIGHT = 0.3`,
+`METHODOLOGY_VERSION = '5.3'`), index.html (generated `FLIGHT_PATHS`,
+`CORRIDOR_WEIGHT` in both ramps, footer v5.3), test_score.py (two parity
+tests), preflight.sh (one blocking + one advisory stage), api/index.html
+(accuracy 1.879 -> 1.320), openapi.yaml, METHODOLOGY, README, ROADMAP, CLAUDE.md.
+
+**Preflight on 2026-09-26: everything blocking PASSES except `map fits its box`**
+- 8 of 99 combinations, **London only**, spilling 13-18 px (1.9% of width) at
+768x1024, 1366x768, 1440x900 and similar. Cause: the AIP departure routes run
+20 km along track and reach further west (towards WOD) than the old hand-drawn
+lines did, so London's drawing now overhangs its frame. Fix it BEFORE
+committing - options, cheapest first: (a) check whether `tests/map-fit.mjs`
+should be measuring corridors at all (airports outside a city's boundary are
+already clipped to the map band; corridors may deserve the same clip);
+(b) re-fit London's projection with `python scripts/fit_city_projection.py
+--city london` (changes the desktop framing slightly); (c) shorten
+`DEPARTURE_KM` - NOT preferred, 20 km is the documented policy. Then re-run
+`sh scripts/preflight.sh`. Expected and fine: `score sanity` INCONCLUSIVE
+(tree 5.3, live 5.2 until the backend deploys).
+
+**Then:** commit in TWO commits - first the unrelated 25 Sep doc echoes already
+sitting in CLAUDE.md / HANDOVER / OPERATIONS / OUTREACH_LOG / ROADMAP from the
+noise-legend work (check `git diff` - the legend lines, the Reddit posts), then
+v5.3. Deploy order as for any methodology change: backend (SAM) FIRST, then
+`python scripts/make.py data-deploy web-deploy` + `demo-deploy` (openapi.yaml
+changed) + the api/ page; verify from the origin (drift, score sanity, area
+pages, site == /v1/score). Borough scores do not move, so area pages should
+not need a rebuild (`build_area_pages.py --check` said OK). After deploy: tell
+the Reddit commenter it is fixed, if Bill wants to. Phase 2 (other airports)
+is the ROADMAP table "Flight-path corridors from the UK AIP - phase 2".
+
+**Previous WHERE TO START (2026-09-25):** everything committed is DEPLOYED and verified from the origin (`check_deploy_drift.sh` PASS, score sanity 28, area pages 99/99). Read `AUDIT_REPORT_2026-09-25.md` first: its open rows are the list. **I-5 must be fixed before `SignupVerify` is ever flipped** (OPERATIONS s3.9 top). New gates this day: `result close survives a scroll` (net), `noise legend == overlay` (blocking) and `noise legend == publishers` (net) - eight `net_check` stages now. **Never run a Playwright script while preflight is running**: it made `responsive, source` go red on a clean tree this morning. Marketing started: see OUTREACH_LOG -> Public-launch drafts (Reddit rows).
+
+
 **WHERE TO START (2026-09-19):** ROADMAP -> Open decisions -> "What each open
 decision entails", and its closing paragraph "Where this stands after 19 Sep".
 **The frontend held on 18 Sep is DEPLOYED and verified from the origin** -

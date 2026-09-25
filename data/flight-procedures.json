@@ -1,0 +1,848 @@
+{
+ "airac": "2026-09-03",
+ "publisher": "UK AIP, NATS Aeronautical Information Service",
+ "generator": "scripts/build_flight_paths.py --fetch",
+ "airports": {
+  "LHR": {
+   "city": "london",
+   "icao": "EGLL",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGLL-en-GB.html",
+   "magvar_deg": 1.24,
+   "runways": {
+    "09L": {
+     "thr": [
+      51.4775,
+      -0.484992
+     ],
+     "true_brg": 89.67,
+     "glide_deg": 3.0
+    },
+    "09R": {
+     "thr": [
+      51.464792,
+      -0.482314
+     ],
+     "true_brg": 89.68,
+     "glide_deg": 3.0
+    },
+    "27L": {
+     "thr": [
+      51.46495,
+      -0.4341
+     ],
+     "true_brg": 269.72,
+     "glide_deg": 3.0
+    },
+    "27R": {
+     "thr": [
+      51.477675,
+      -0.433283
+     ],
+     "true_brg": 269.71,
+     "glide_deg": 3.0
+    }
+   },
+   "departures": [
+    {
+     "name": "Brookmans Park",
+     "runway": "09",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to LON D1.5, then turn left onto track 049 to intercept LON VOR R070. Cross LON D10 and turn left onto BPK VOR R195, continue to BAPAG then BPK VOR.\"",
+     "waypoints": [
+      [
+       51.471313,
+       -0.433692
+      ],
+      [
+       51.471306,
+       -0.435563
+      ],
+      [
+       51.509391,
+       -0.362545
+      ],
+      [
+       51.541115,
+       -0.213557
+      ],
+      [
+       51.542512,
+       -0.208494
+      ],
+      [
+       51.544439,
+       -0.203895
+      ],
+      [
+       51.546838,
+       -0.199899
+      ],
+      [
+       51.549635,
+       -0.196628
+      ],
+      [
+       51.552746,
+       -0.194182
+      ],
+      [
+       51.749736,
+       -0.106736
+      ]
+     ]
+    },
+    {
+     "name": "Brookmans Park",
+     "runway": "27",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to be established on BUR NDB QDM 296 by LON D4. At LON D6 turn right onto CHT NDB QDM 052. At CHT NDB turn right onto BPK VOR R243 to BPK VOR.\"",
+     "waypoints": [
+      [
+       51.471146,
+       -0.483653
+      ],
+      [
+       51.49953,
+       -0.571598
+      ],
+      [
+       51.515303,
+       -0.620471
+      ],
+      [
+       51.517153,
+       -0.62515
+      ],
+      [
+       51.519485,
+       -0.629246
+      ],
+      [
+       51.522227,
+       -0.632634
+      ],
+      [
+       51.525296,
+       -0.63521
+      ],
+      [
+       51.528599,
+       -0.636898
+      ],
+      [
+       51.532035,
+       -0.637645
+      ],
+      [
+       51.535501,
+       -0.637429
+      ],
+      [
+       51.53889,
+       -0.636256
+      ],
+      [
+       51.5421,
+       -0.634162
+      ],
+      [
+       51.623144,
+       -0.518575
+      ],
+      [
+       51.749736,
+       -0.106736
+      ]
+     ]
+    },
+    {
+     "name": "Compton",
+     "runway": "09",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto NDB WOD QDM 280, continue to CPT VOR.\"",
+     "waypoints": [
+      [
+       51.471313,
+       -0.433692
+      ],
+      [
+       51.471306,
+       -0.435563
+      ],
+      [
+       51.471023,
+       -0.430049
+      ],
+      [
+       51.470145,
+       -0.424697
+      ],
+      [
+       51.468697,
+       -0.41967
+      ],
+      [
+       51.466724,
+       -0.41512
+      ],
+      [
+       51.464286,
+       -0.411186
+      ],
+      [
+       51.461457,
+       -0.407986
+      ],
+      [
+       51.458322,
+       -0.405619
+      ],
+      [
+       51.454977,
+       -0.404157
+      ],
+      [
+       51.451524,
+       -0.403643
+      ],
+      [
+       51.448067,
+       -0.404093
+      ],
+      [
+       51.444712,
+       -0.405494
+      ],
+      [
+       51.44156,
+       -0.407803
+      ],
+      [
+       51.438708,
+       -0.410951
+      ],
+      [
+       51.436241,
+       -0.41484
+      ],
+      [
+       51.434236,
+       -0.419353
+      ],
+      [
+       51.432752,
+       -0.424354
+      ],
+      [
+       51.431835,
+       -0.429689
+      ],
+      [
+       51.452783,
+       -0.8788
+      ]
+     ]
+    },
+    {
+     "name": "Compton",
+     "runway": "27",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to intercept LON VOR R255 until LON D7, then turn right onto NDB WOD QDM 268, then to CPT VOR.\"",
+     "waypoints": [
+      [
+       51.471146,
+       -0.483653
+      ],
+      [
+       51.470861,
+       -0.573272
+      ],
+      [
+       51.459359,
+       -0.648194
+      ],
+      [
+       51.458831,
+       -0.653662
+      ],
+      [
+       51.452783,
+       -0.8788
+      ]
+     ]
+    },
+    {
+     "name": "Detling",
+     "runway": "09",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto track 120. At LON D4 turn left to establish on DET VOR R282 by DET D34. Continue to DET VOR.\"",
+     "waypoints": [
+      [
+       51.471313,
+       -0.433692
+      ],
+      [
+       51.471306,
+       -0.435563
+      ],
+      [
+       51.449507,
+       -0.378238
+      ],
+      [
+       51.434432,
+       -0.286976
+      ],
+      [
+       51.304003,
+       0.597275
+      ]
+     ]
+    },
+    {
+     "name": "Detling",
+     "runway": "27",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D2, then turn left onto NDB EPM QDM 135, to EPM NDB, then continue on DET VOR R270 to DET VOR.\"",
+     "waypoints": [
+      [
+       51.471146,
+       -0.483653
+      ],
+      [
+       51.471052,
+       -0.513314
+      ],
+      [
+       51.470732,
+       -0.518823
+      ],
+      [
+       51.469817,
+       -0.524159
+      ],
+      [
+       51.468336,
+       -0.529161
+      ],
+      [
+       51.466332,
+       -0.533677
+      ],
+      [
+       51.463867,
+       -0.537569
+      ],
+      [
+       51.461016,
+       -0.540719
+      ],
+      [
+       51.457865,
+       -0.543032
+      ],
+      [
+       51.454511,
+       -0.544437
+      ],
+      [
+       51.451054,
+       -0.544891
+      ],
+      [
+       51.447601,
+       -0.544381
+      ],
+      [
+       51.444255,
+       -0.542922
+      ],
+      [
+       51.44112,
+       -0.540559
+      ],
+      [
+       51.319564,
+       -0.371978
+      ],
+      [
+       51.304003,
+       0.597275
+      ]
+     ]
+    },
+    {
+     "name": "GASGU",
+     "runway": "09",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto LON VOR R124 until LON D5, then turn right onto OCK VOR R041. At OCK VOR turn right onto OCK VOR R253 to GASGU.\"",
+     "waypoints": [
+      [
+       51.471313,
+       -0.433692
+      ],
+      [
+       51.471306,
+       -0.435563
+      ],
+      [
+       51.471023,
+       -0.430049
+      ],
+      [
+       51.470145,
+       -0.424697
+      ],
+      [
+       51.468697,
+       -0.41967
+      ],
+      [
+       51.440409,
+       -0.355797
+      ],
+      [
+       51.305047,
+       -0.447183
+      ]
+     ]
+    },
+    {
+     "name": "GOGSI",
+     "runway": "27",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to intercept LON VOR R255 until LON D7, then turn right onto WOD NDB QDM 268. Turn left at LON D13 to intercept SAM VOR R032, then to GOGSI.\"",
+     "waypoints": [
+      [
+       51.471146,
+       -0.483653
+      ],
+      [
+       51.470861,
+       -0.573272
+      ],
+      [
+       51.459359,
+       -0.648194
+      ],
+      [
+       51.458831,
+       -0.653662
+      ],
+      [
+       51.458008,
+       -0.810721
+      ],
+      [
+       51.23108,
+       -1.047954
+      ]
+     ]
+    },
+    {
+     "name": "MAXIT",
+     "runway": "27",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to intercept LON VOR R255. At LON D5 turn left onto BUR NDB QDR 160. At LON D12 turn right onto MID VOR R010 and continue to MAXIT.\"",
+     "waypoints": [
+      [
+       51.471146,
+       -0.483653
+      ],
+      [
+       51.470861,
+       -0.573272
+      ],
+      [
+       51.467327,
+       -0.596293
+      ],
+      [
+       51.427497,
+       -0.627611
+      ],
+      [
+       51.294117,
+       -0.555349
+      ],
+      [
+       51.053953,
+       -0.625003
+      ]
+     ]
+    },
+    {
+     "name": "MODMI",
+     "runway": "09",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto LON VOR R124 until LON D3.5, then turn right onto MID VOR R025, continue to MODMI.\"",
+     "waypoints": [
+      [
+       51.471313,
+       -0.433692
+      ],
+      [
+       51.471306,
+       -0.435563
+      ],
+      [
+       51.471023,
+       -0.430049
+      ],
+      [
+       51.470145,
+       -0.424697
+      ],
+      [
+       51.468697,
+       -0.41967
+      ],
+      [
+       51.45491,
+       -0.38854
+      ],
+      [
+       51.45267,
+       -0.384317
+      ],
+      [
+       51.450004,
+       -0.380779
+      ],
+      [
+       51.446993,
+       -0.378033
+      ],
+      [
+       51.443729,
+       -0.376163
+      ],
+      [
+       51.440311,
+       -0.375225
+      ],
+      [
+       51.436843,
+       -0.375248
+      ],
+      [
+       51.43343,
+       -0.376231
+      ],
+      [
+       51.053953,
+       -0.625003
+      ]
+     ]
+    },
+    {
+     "name": "ULTIB",
+     "runway": "09",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to LON D1.5, then turn left onto track 049 to intercept LON VOR R070, cross LON D10 and turn left onto BIG VOR R328. Continue to ULTIB.\"",
+     "waypoints": [
+      [
+       51.471313,
+       -0.433692
+      ],
+      [
+       51.471306,
+       -0.435563
+      ],
+      [
+       51.509391,
+       -0.362545
+      ],
+      [
+       51.541115,
+       -0.213557
+      ],
+      [
+       51.774266,
+       -0.434905
+      ]
+     ]
+    },
+    {
+     "name": "UMLAT",
+     "runway": "27",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to be established on BUR NDB QDM 296 by LON D4. At LON D7 turn right onto BUR NDB QDR 355, continue to UMLAT.\"",
+     "waypoints": [
+      [
+       51.471146,
+       -0.483653
+      ],
+      [
+       51.49953,
+       -0.571598
+      ],
+      [
+       51.523093,
+       -0.644607
+      ],
+      [
+       51.519011,
+       -0.677192
+      ],
+      [
+       51.853281,
+       -0.712233
+      ]
+     ]
+    }
+   ]
+  },
+  "LCY": {
+   "city": "london",
+   "icao": "EGLC",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGLC-en-GB.html",
+   "magvar_deg": 1.39,
+   "runways": {
+    "09": {
+     "thr": [
+      51.505572,
+      0.044328
+     ],
+     "true_brg": 92.87,
+     "glide_deg": 5.5
+    },
+    "27": {
+     "thr": [
+      51.504889,
+      0.066022
+     ],
+     "true_brg": 272.89,
+     "glide_deg": 5.5
+    }
+   },
+   "departures": [
+    {
+     "name": "BPK1A",
+     "runway": "27",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321789.pdf",
+     "waypoints": [
+      [
+       51.506778,
+       0.005772
+      ],
+      [
+       51.559011,
+       -0.019225
+      ],
+      [
+       51.576875,
+       0.015775
+      ],
+      [
+       51.594006,
+       0.049381
+      ],
+      [
+       51.749736,
+       -0.106736
+      ]
+     ],
+     "fixes": [
+      "LCW01",
+      "LCN01",
+      "LCN04",
+      "LCN05",
+      "BPK"
+     ]
+    },
+    {
+     "name": "BPK1H",
+     "runway": "09",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321786.pdf",
+     "waypoints": [
+      [
+       51.504075,
+       0.091642
+      ],
+      [
+       51.580236,
+       0.063122
+      ],
+      [
+       51.749736,
+       -0.106736
+      ]
+     ],
+     "fixes": [
+      "LCE01",
+      "LCN03",
+      "BPK"
+     ]
+    },
+    {
+     "name": "ODUKU1A",
+     "runway": "27",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/461885.pdf",
+     "waypoints": [
+      [
+       51.506778,
+       0.005772
+      ],
+      [
+       51.568914,
+       -0.004475
+      ],
+      [
+       51.605472,
+       0.206314
+      ],
+      [
+       51.592161,
+       0.287631
+      ]
+     ],
+     "fixes": [
+      "LCW01",
+      "LCN02",
+      "LCE04",
+      "ODUKU"
+     ]
+    },
+    {
+     "name": "ODUKU1H",
+     "runway": "09",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/461885.pdf",
+     "waypoints": [
+      [
+       51.504075,
+       0.091642
+      ],
+      [
+       51.554561,
+       0.164011
+      ],
+      [
+       51.592161,
+       0.287631
+      ]
+     ],
+     "fixes": [
+      "LCE01",
+      "LCE02",
+      "ODUKU"
+     ]
+    },
+    {
+     "name": "SAXBI1A",
+     "runway": "27",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321789.pdf",
+     "waypoints": [
+      [
+       51.506778,
+       0.005772
+      ],
+      [
+       51.559011,
+       -0.019225
+      ],
+      [
+       51.576875,
+       0.015775
+      ],
+      [
+       51.594006,
+       0.049381
+      ],
+      [
+       51.749736,
+       -0.106736
+      ],
+      [
+       51.751119,
+       -0.187158
+      ]
+     ],
+     "fixes": [
+      "LCW01",
+      "LCN01",
+      "LCN04",
+      "LCN05",
+      "BPK",
+      "SAXBI"
+     ]
+    },
+    {
+     "name": "SAXBI1H",
+     "runway": "09",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321786.pdf",
+     "waypoints": [
+      [
+       51.504075,
+       0.091642
+      ],
+      [
+       51.580236,
+       0.063122
+      ],
+      [
+       51.749736,
+       -0.106736
+      ],
+      [
+       51.751119,
+       -0.187158
+      ]
+     ],
+     "fixes": [
+      "LCE01",
+      "LCN03",
+      "BPK",
+      "SAXBI"
+     ]
+    },
+    {
+     "name": "SOQQA1A",
+     "runway": "27",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321783.pdf",
+     "waypoints": [
+      [
+       51.506778,
+       0.005772
+      ],
+      [
+       51.568914,
+       -0.004475
+      ],
+      [
+       51.602411,
+       0.188561
+      ],
+      [
+       51.606597,
+       0.391231
+      ]
+     ],
+     "fixes": [
+      "LCW01",
+      "LCN02",
+      "LCN06",
+      "SOQQA"
+     ]
+    },
+    {
+     "name": "SOQQA1H",
+     "runway": "09",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321783.pdf",
+     "waypoints": [
+      [
+       51.504075,
+       0.091642
+      ],
+      [
+       51.554561,
+       0.164011
+      ],
+      [
+       51.563028,
+       0.243517
+      ],
+      [
+       51.606597,
+       0.391231
+      ]
+     ],
+     "fixes": [
+      "LCE01",
+      "LCE02",
+      "LCE03",
+      "SOQQA"
+     ]
+    }
+   ]
+  }
+ }
+}
