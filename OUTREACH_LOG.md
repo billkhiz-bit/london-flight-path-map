@@ -305,6 +305,10 @@ These are the public-facing launch drafts. Different audience, different tone fr
 | HACAN West (Heathrow) | Heathrow aircraft noise charity | 🟡 draft ready | TBC |
 | Twitter/X thread | General public, property buyers | 🟡 draft ready | TBC, pair with HN launch day |
 | Hacker News Show HN | Tech audience, hobbyist devs | 🟡 draft ready | TBC, Tue/Wed morning EST |
+| Reddit r/dataisbeautiful | Data-viz audience (~1M weekly) | 🟢 **posted 2026-09-25** - [OC] DEFRA aircraft-noise map of London's boroughs; first comment carries sources, tools, the skyscore.co.uk link with a disclosure, and the 2021 COVID-year caveat | 2026-09-25 |
+| Reddit r/london | London residents | 🔴 **auto-removed 2026-09-25** under rule 6 (self-promotion: app promotion needs modmail approval in advance, usually denied). Do NOT repost. Optional: modmail asking whether the map alone, with no link, is welcome (draft given to Bill in session) | 2026-09-25 |
+
+**Lesson from the first posts (2026-09-25):** read each subreddit's self-promotion rule BEFORE posting; where in doubt, post the image with no link. r/dataisbeautiful allows [OC] with a disclosure; r/london's bot removes anything app-linked. Drafts and images live on the Desktop (`reddit-*-2026-09-25.*`, `reddit-map-post-copy-paste.txt`). A second image is ready and unposted: the house-price chart (65 of 94 city council areas rose in cash; 29 of them by less than CPIH inflation, July 2026).
 
 ### HACAN East, community outreach
 

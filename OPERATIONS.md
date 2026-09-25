@@ -413,6 +413,7 @@ under the EU Environmental Noise Directive (UK still complies post-Brexit):
 4. Deploy + invalidate (the script prints the exact commands).
 5. Commit the new PNG + reference the round version in the commit message.
 6. Update `METHODOLOGY.md` §11 with the new data year.
+7. **Run `python scripts/check_noise_legend.py --live`** (added 2026-09-25). A new round can restyle the layer, and the site's legend is a COPY of DEFRA's ColorMap (`NOISE_SCALE_DEFRA_LDEN` in `index.html`). If it reds, copy the new ColorMap from GetStyles into that constant - never choose colours by eye. Until 2026-09-25 the legend was hand-picked and read the map 10-15 dB too loud.
 
 ### 3.6 — Token Rotation
 
