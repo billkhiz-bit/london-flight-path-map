@@ -17,6 +17,7 @@ None.
 | I-3 | **Both talks PDFs were untagged** (no structure tree, reading order or language) and were the only format `/talks/` offered. | `talks/*.pdf`, `talks/index.html`, `Makefile` | **FIXED, deployed 2026-09-25.** `scripts/render_talks_pdfs.mjs` renders tagged (verified `/StructTreeRoot`, `/MarkInfo`, `/Lang`, `/Outlines`); the accessible HTML is now published and is the primary link. |
 | I-4 | **"SAVED" favourite button at 2.13-2.49:1** (10px `--orange` text). No gate reaches the state: it exists only after a save. | `index.html` `.fav-btn` | **FIXED.** `--orange-text`, measured 4.9-5.6:1 on every panel background. |
 | I-5 | **Verified signup would lose keys to email link scanners.** A GET on the confirm link consumes the token and shows the only copy of the key; Safe Links / Mimecast / Proofpoint GET every link first. Also: no per-address send cap (~86k emails/day to one address at the route throttle). | `backend/lambdas/signup/app.py` `handle_confirm`, `start_verification` | **OPEN, latent** (flag off). Recorded as blocking preconditions at the top of OPERATIONS s3.9, before the flip. |
+| I-6 | **The aircraft-noise legend described a palette neither overlay uses** (found after the audit, 25 Sep, while preparing a screenshot). Five static rows (55-59 blue, 60-64 mint, 65-69 yellow, 70-74 orange, 75+ red) against DEFRA's Round 4 style of ten intervals from 40 dB in teal, green, peach and plum. The served London PNG's largest area is 50-55 dB, the pale green halo the old legend labelled 60-64, so every visitor read the map 10-15 dB louder than DEFRA published. New York's BTS layer is a third palette again (seven bands from 45 dB). `tests/layer-honesty.mjs` checks WHETHER the scale shows, never WHAT it says. | `index.html` legend | **FIXED, deployed and verified live 2026-09-25.** `NOISE_SCALE_DEFRA_LDEN` / `NOISE_SCALE_BTS` copied from the publishers' own styles, a `noiseScale` registry field on all 11 cities, one stepped bar drawn with the layer's own filter. Gated by `scripts/check_noise_legend.py` (offline: PNG colours == legend, both directions; `--live`: equals DEFRA GetStyles and the BTS legend), proven red on one wrong swatch. **Open:** NYC's heading says `dB DNL`; BTS's page 403s automated fetches, so whether its metric is DNL or LAeq,24h is unverified. |
 
 ## Minor
 
@@ -40,7 +41,7 @@ None.
 ## Summary
 
 - Critical: 0
-- Important: 5 (4 fixed, 1 open and latent behind the off flag)
+- Important: 6 (4 fixed and deployed, I-6 fixed and deployed, I-5 open and latent behind the off flag)
 - Minor: 14 (9 fixed, 1 part-fixed (M-9: the close button; the footer half is a decision), 4 open)
 - Swept clean: chat decimals-only fix holds; `real_trend_pct` matches the site's `scoredTrend`; `aircraftQuietCoverage` wiring; nhs/transport/favourites Lambdas; extension permissions (`storage` only) and messaging; secrets (`.env`, `samconfig.toml` ignored; only the public demo key is tracked); live HSTS/`nosniff`/`no-cache`; em dashes absent from every deployed page and `talks/`; `npm audit` root 1 moderate (dev-only), `mobile/` 7 already recorded.
 

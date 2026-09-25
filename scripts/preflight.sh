@@ -609,6 +609,15 @@ net_check "area pages match the live API" node tests/area-page-freshness.mjs
 # self-consistent. Fails in BOTH directions: over-painting is an invented
 # default, under-painting is a borough whose data the map cannot find.
 check "layers paint only real data"   node tests/layer-honesty.mjs
+# The aircraft-noise legend against what the overlay paints (2026-09-25). The
+# legend was five static rows in a palette neither overlay uses, and read the
+# London map 10-15 dB louder than DEFRA published; layer-honesty checks WHETHER
+# a scale shows, never WHAT it says. Offline half: every colour in the served
+# London PNG has a legend band and vice versa. Live half: both scales equal the
+# publishers' own styles (DEFRA GetStyles, BTS MapServer legend), which is what
+# catches a restyle upstream. Both proven red on a single wrong swatch.
+check "noise legend == overlay"       python scripts/check_noise_legend.py
+net_check "noise legend == publishers" python scripts/check_noise_legend.py --live
 check "panel says what it measured"  node tests/panel-caveat.mjs
 # Saved-location rows, RENDERED and driven by keyboard (2026-09-13, audit
 # I3). No gate had ever shown axe a populated favourites list, so a

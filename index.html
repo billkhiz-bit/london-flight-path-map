@@ -691,6 +691,29 @@
         height: 8px;
         border-radius: 50%;
       }
+      /* The aircraft-noise scale (renderNoiseScale). The filter is the one
+         .layer-defra-aircraft applies to the overlay, so a block is the
+         colour the map paints rather than the publisher's raw fill. */
+      .noise-scale-bar {
+        display: flex;
+        height: 10px;
+        margin: 2px 0 2px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        filter: saturate(1.6) brightness(0.92);
+      }
+      .noise-scale-bar > span {
+        flex: 1;
+      }
+      .noise-scale-ticks {
+        display: flex;
+        font-size: 8px;
+        line-height: 1.2;
+        color: inherit;
+      }
+      .noise-scale-ticks > span {
+        flex: 1;
+      }
+
       .legend-swatch {
         width: 16px;
         height: 10px;
@@ -4064,29 +4087,10 @@
                  markLayerCoverage() hides it when nothing painted, the same
                  measured treatment its three sibling layers already had. -->
             <div id="legend-noise-scale">
-            <div class="legend-row">
-              <div class="legend-swatch" style="background: rgba(0, 77, 168, 0.5)"></div>
-              <span>55-59 dB</span>
-            </div>
-            <div class="legend-row">
-              <div class="legend-swatch" style="background: rgba(26, 242, 125, 0.5)"></div>
-              <span>60-64 dB</span>
-            </div>
-            <div class="legend-row">
-              <div class="legend-swatch" style="background: rgba(242, 184, 38, 0.5)"></div>
-              <span>
-                65-69 dB
-                <em class="legend-annotation">↓ WHO sleep</em>
-              </span>
-            </div>
-            <div class="legend-row">
-              <div class="legend-swatch" style="background: rgba(242, 125, 38, 0.5)"></div>
-              <span>70-74 dB</span>
-            </div>
-            <div class="legend-row">
-              <div class="legend-swatch" style="background: rgba(242, 38, 38, 0.5)"></div>
-              <span>75+ dB</span>
-            </div>
+              <!-- Filled by renderNoiseScale() from the city's noiseScale:
+                   each publisher's own bands and colours (2026-09-25). -->
+              <div class="noise-scale-bar" id="noise-scale-bar" role="img"></div>
+              <div class="noise-scale-ticks" id="noise-scale-ticks" aria-hidden="true"></div>
             </div>
             <!-- COLLAPSED INTO A DISCLOSURE, 2026-08-23.
                  Measured at 390x844: the expanded legend was 711px tall against
@@ -7071,6 +7075,46 @@
 
       // Compact form for table rows where horizontal space is tight (rankings,
       // compare table). Still avoids the lossy K abbreviation by using a
+      // ─── Aircraft noise legend scales ────────────────────────────────────
+      //
+      // COPIED FROM EACH PUBLISHER'S OWN STYLE, NEVER CHOSEN (2026-09-25).
+      // The legend used to be five static rows - 55-59 blue, 60-64 mint,
+      // 65-69 yellow, 70-74 orange, 75+ red - describing a palette that
+      // neither overlay uses. DEFRA's Round 4 style (GetStyles on
+      // Airport_Noise_ALL_Lden) is ten intervals from 40 dB in teal, green,
+      // peach and plum; the served London PNG carries nine of them, and its
+      // largest area by far is 50-55 dB - the pale green halo over Wandsworth
+      // and Lambeth that the old legend labelled 60-64. Every visitor read
+      // the map 10-15 dB louder than DEFRA published. New York's BTS layer
+      // (MapServer/3/legend) is a third palette again, seven bands from 45 dB.
+      //
+      // `alpha` is the publisher's own fill opacity (DEFRA draws every band
+      // at 0.5; BTS's legend swatches are opaque). renderNoiseScale() applies
+      // the SAME filter the map layer does, so a swatch is the colour painted.
+      // `from` is the band's lower bound; the last band is open-ended. The
+      // <=40 band is omitted: DEFRA draws it white at 0.5, which the layer's
+      // multiply blend renders as nothing.
+      const NOISE_SCALE_DEFRA_LDEN = [
+        { from: 40, colour: '#B8D6D1' },
+        { from: 45, colour: '#CEE4CC' },
+        { from: 50, colour: '#E2F2BF' },
+        { from: 55, colour: '#F3C683' },
+        { from: 60, colour: '#E87E4D' },
+        { from: 65, colour: '#CD463E' },
+        { from: 70, colour: '#A11A4D' },
+        { from: 75, colour: '#75085C' },
+        { from: 80, colour: '#430A4A' },
+      ].map((b) => ({ ...b, alpha: 0.5 }));
+      const NOISE_SCALE_BTS = [
+        { from: 45, colour: '#FFC107' },
+        { from: 50, colour: '#FF8000' },
+        { from: 55, colour: '#FF0000' },
+        { from: 60, colour: '#FF3399' },
+        { from: 70, colour: '#A300CC' },
+        { from: 80, colour: '#5200CC' },
+        { from: 90, colour: '#0000FF' },
+      ].map((b) => ({ ...b, alpha: 1 }));
+
       // ─── City registry ──────────────────────────────────────────────────
       //
       // WHY THIS EXISTS. Every city-dependent value used to be a binary
@@ -7148,6 +7192,7 @@
           legendPath2: 'LCY PATHS',
           legendHeli: true,
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. These contours therefore understate a typical year, most at the airports worst affected. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7207,6 +7252,7 @@
           legendPath2: 'LGA PATHS',
           legendHeli: false,
           legendNoiseTitle: 'BTS AIRCRAFT NOISE (dB DNL)',
+          noiseScale: NOISE_SCALE_BTS,
           // Was the DEFRA paragraph, live, under this BTS heading, because the
           // explainer had no id and nothing swapped it.
           legendNoiseExplainer:
@@ -7261,6 +7307,7 @@
           legendPath2: '15 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7311,6 +7358,7 @@
           legendPath2: '14 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7361,6 +7409,7 @@
           legendPath2: 'NO PATHS',
           legendHeli: false,
           legendNoiseTitle: 'AIRCRAFT NOISE (NO AIRPORT)',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> <strong>No commercial airport operates in South Yorkshire.</strong> Doncaster Sheffield closed to commercial flights in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is banded quiet on aircraft noise. That is a measured absence of a noise source, not an unmeasured city.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7411,6 +7460,7 @@
           legendPath2: '09 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7461,6 +7511,7 @@
           legendPath2: '07 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7523,6 +7574,7 @@
           legendPath2: '09 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7581,6 +7633,7 @@
           legendPath2: '05 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Teesside International Airport's runway 05/23 alignment and its extended approach centreline. <strong>DEFRA does not map this airport at all</strong> &mdash; the strategic noise-mapping duty applies to major airports, and Teesside falls below it &mdash; so unlike the other English city-regions here there is no published footprint to scale against. The distance ladder is instead <strong>floored at the smallest footprint DEFRA does publish</strong> (London City), which keeps the estimate on the cautious side without inventing a measurement. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7631,6 +7684,7 @@
           legendPath2: '09 APPROACH',
           legendHeli: false,
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -7695,6 +7749,7 @@
           // regulator's name on the legend would contradict it on the one
           // surface a consumer actually reads.
           legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
             "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; MAN is 0.589 of Heathrow&rsquo;s &mdash; so the bands do not reach as though every airport were the same size. Treat as indicative until DEFRA Round 4 is sampled per postcode for this city.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
@@ -13342,6 +13397,28 @@
           total === 1 ? data.cities[0].name : `${live} of ${total} ${data.unit || 'core cities'}`;
       }
 
+      // The aircraft-noise scale as one stepped bar, a block per published
+      // band, lower bounds beneath. A bar and not nine rows: the phone legend
+      // was cut to fit a screen on 2026-08-23, and nine rows would undo it.
+      // The swatches carry the map layer's own filter so each block is the
+      // colour actually painted (see NOISE_SCALE_DEFRA_LDEN).
+      function renderNoiseScale(scale) {
+        const bar = document.getElementById('noise-scale-bar');
+        const ticks = document.getElementById('noise-scale-ticks');
+        if (!bar || !ticks || !Array.isArray(scale) || !scale.length) return;
+        const rgba = (hex, a) =>
+          `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a})`;
+        bar.innerHTML = scale
+          .map((b) => `<span style="background: ${rgba(b.colour, b.alpha)}"></span>`)
+          .join('');
+        const last = scale.length - 1;
+        ticks.innerHTML = scale
+          .map((b, i) => `<span>${i === last ? `${b.from}+` : b.from}</span>`)
+          .join('');
+        const bands = scale.map((b, i) => (i === last ? `over ${b.from}` : `${b.from} to ${scale[i + 1].from}`));
+        bar.setAttribute('aria-label', `Noise bands in decibels, quietest to loudest: ${bands.join(', ')}`);
+      }
+
       function applyCityChrome(city) {
         const cfg = cityOf(city);
         const set = (id, text) => {
@@ -13366,6 +13443,7 @@
         if (heli) heli.style.display = cfg.legendHeli ? '' : 'none';
 
         set('legend-noise-title', cfg.legendNoiseTitle);
+        renderNoiseScale(cfg.noiseScale);
         const explainer = document.getElementById('legend-noise-explainer');
         if (explainer) explainer.innerHTML = cfg.legendNoiseExplainer;
 
