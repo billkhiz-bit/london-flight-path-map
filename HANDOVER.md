@@ -31,8 +31,8 @@ closes the I17 reads AND the CloudFront response-headers verbs; the
 permissions probe reads 5 DENIED until it lands), a second MFA device, the
 billing alarm, and the s3.8 IAM review. **`/audit` is due** - last full one
 was 13 Sep. Not done deliberately: extraction cuts 2-3, visual polish, NYC
-stations, the rebrand. `web-deploy-all` (Makefile:480) still lists
-`web-deploy` before `data-deploy` and wants its own change.
+stations, the rebrand. (`web-deploy-all` was reordered data-before-web on
+2026-09-25 and is gated.)
 
 
 **WHERE TO START (2026-09-16):** ROADMAP -> Open decisions -> "What each open

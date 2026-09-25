@@ -1107,7 +1107,14 @@ function renderSoldPrices(result, listing) {
   const section = el('section', 'c33-section');
   section.appendChild(el('h3', 'c33-h3', 'Sold nearby'));
 
-  const tx = (result.data || {}).transactions || [];
+  // A body with no `transactions` ARRAY is unreadable, not empty - the rule
+  // index.html's reader of this same endpoint adopted on 2026-09-25, and the
+  // Lambda's own (it answers 502 on an unreadable envelope). Only a real empty
+  // array is the measurement "no sales recorded".
+  const tx = (result.data || {}).transactions;
+  if (!Array.isArray(tx)) {
+    return unavailable('Sold nearby', 'unexpected response');
+  }
   if (!tx.length) {
     section.appendChild(el('p', 'c33-muted', 'No Land Registry sales recorded for this postcode.'));
     return section;

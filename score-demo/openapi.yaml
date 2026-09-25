@@ -312,7 +312,11 @@ paths:
                   self-contained (it includes the workings and caveats).
                   `marketContext` has: areas, meanTrendPct,
                   previousMeanTrendPct, fallingAreas, previousFallingAreas,
-                  benchmarks, previousBenchmarks, summary.
+                  benchmarks, previousBenchmarks, summary. Each benchmarks
+                  object carries strongestGrowthStandIn and
+                  steepestFallStandIn: true in previousBenchmarks when that
+                  yardstick comes from a city whose earlier vintage is not
+                  held, so its figure is the current one standing in.
 
   /v1/score:
     get:

@@ -267,6 +267,76 @@ for (const c of CASES) {
   console.log('');
 }
 
+// SOLD PRICES: EACH ABSENCE SAYS WHICH ABSENCE IT IS (2026-09-25).
+//
+// The panel printed "cannot be loaded directly due to browser security
+// restrictions" for a postcode with NO RECORDED SALES - the endpoint had
+// answered 200 with an empty list. The live path above only ever reaches
+// whichever state Land Registry happens to return for the probe postcode, and
+// a state reached by chance is not gated, so each one is FORCED here by
+// fulfilling /sold-prices with the Lambda's own shapes.
+console.log('Sold prices, forced states');
+const SOLD_STATES = [
+  {
+    name: 'no recorded sales (200, empty)',
+    fulfil: { status: 200, body: { postcode: 'M1 1AE', transactions: [] } },
+    want: /no recorded sales at this exact postcode/i,
+  },
+  {
+    name: 'upstream outage (503)',
+    fulfil: { status: 503, body: { error: 'Sold-prices upstream temporarily unavailable.' } },
+    want: /could not be loaded just now/i,
+  },
+  {
+    name: 'rows',
+    fulfil: {
+      status: 200,
+      body: {
+        postcode: 'M1 1AE',
+        transactions: [{ price: 250000, date: '2025-03-14', address: '12', street: 'TEST STREET', type: 'Flat' }],
+      },
+    },
+    want: /£250,000/,
+  },
+];
+await page.evaluate((city) => window.switchCity(city), 'manchester');
+await page.waitForTimeout(1200);
+for (const s of SOLD_STATES) {
+  await page.route('**/sold-prices?**', (route) =>
+    route.fulfill({
+      status: s.fulfil.status,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify(s.fulfil.body),
+    }),
+  );
+  // Blank the container first: the previous state's text satisfies the poll
+  // below otherwise, and every reading comes back one state stale.
+  await page.evaluate(() => {
+    const el = document.getElementById('sold-prices-data');
+    if (el) el.innerHTML = '';
+  });
+  await page.fill('#search-input', '');
+  await page.fill('#search-input', 'M1 1AE');
+  await page.press('#search-input', 'Enter');
+  const text = await page
+    .waitForFunction(
+      () => {
+        const el = document.getElementById('sold-prices-data');
+        const t = el ? el.innerText : '';
+        return t && !/Loading/i.test(t) ? t : false;
+      },
+      { timeout: 15000 },
+    )
+    .then((h) => h.jsonValue())
+    .catch(() => '');
+  await page.unroute('**/sold-prices?**');
+  check(`  sold prices, ${s.name}`, s.want.test(text), `reads "${text.replace(/\s+/g, ' ').slice(0, 90)}"`);
+  // The false cause must never come back, in any state.
+  check(`  sold prices, ${s.name}: no "browser security"`, !/browser security/i.test(text), '');
+}
+console.log('');
+
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
 await browser.close();

@@ -63,6 +63,7 @@ make demo-deploy           # score-demo/ incl. openapi.yaml and vendored Swagger
 make prototype-deploy      # prototype/index.html
 make meta-deploy           # robots.txt, sitemap.xml, .well-known/
 make area-deploy           # area/ - 100 pages, sync --delete, invalidates
+make talks-deploy          # talks/ - sync the write-up PDFs + index.html (standalone, not in web-deploy-all)
 ```
 
 **ORDER: `data-deploy` BEFORE `web-deploy` when both are run (2026-09-19).**
@@ -74,8 +75,8 @@ live page asks for a file the origin does not yet have - on 19 Sep that was a
 on every search. Reversed there is no window: the page that is live does not
 reference the new file at all. Use `python scripts/make.py data-deploy
 web-deploy` (it honours argument order; `--dry-run` shows the sequence).
-**`web-deploy-all` still lists `web-deploy` first** and carries the same
-latent hazard - benign only while the data files already exist at the origin.
+`web-deploy-all` follows the same order since 2026-09-25 (`fonts-deploy`,
+then `data-deploy`, then `web-deploy`), asserted by `tests/test_make_runner.py`.
 
 `make` is not on PATH in Git Bash on the dev machine: run the same targets as
 `python scripts/make.py <target>` (since 2026-09-18; `--dry-run` prints the
@@ -644,6 +645,27 @@ true state is shown - to someone who has just proven control of the address.
 identity unverified, every signup 503s at the send. So the code, the table,
 the route and the throttle are deployed with the flag OFF (a no-op deploy),
 and the flip is the LAST step below.
+
+**TWO CODE CHANGES MUST LAND BEFORE STEP 5, found by the 2026-09-25 audit.**
+Neither is live while the flag is off; both would be the moment it flips.
+
+- **The confirm link must not consume its token on a GET.** `handle_confirm`
+  deletes the pending row, mints the key and shows it once, all on the GET.
+  Corporate mail gateways (Outlook Safe Links, Mimecast, Proofpoint) GET every
+  link in an inbound email before a person opens it - so the SCANNER receives
+  the only copy of the key, the real user gets 410, and a retry answers 409
+  "already signed up" against a key nobody holds. B2B signups are the audience
+  most likely to sit behind one. Fix: the GET renders a page with a button that
+  POSTs the token; only the POST consumes it. Needs a `POST` on the confirm
+  route in `template.yaml`.
+- **A per-address resend cap.** `start_verification` sends one SES email per
+  POST, limited only by the route throttle (1 RPS, burst 5): about 86k emails a
+  day aimed at any one address, which is the SES sender reputation on the line.
+  Cap sends per address in the pending table (e.g. 3 per 24 h, same identical
+  201 either way so the cap leaks nothing).
+- Smaller, same pass: validate `postcode` against a postcode shape before it
+  goes into the email body (it is truncated and uppercased, not validated, so
+  a domain-like string can be auto-linked by a mail client).
 
 1. **SES identity (console, eu-west-2).** SES -> Identities -> Create ->
    Domain `skyscore.co.uk`, Easy DKIM. Publish the three DKIM CNAMEs SES

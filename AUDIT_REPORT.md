@@ -1,6 +1,12 @@
 # Audit Report — Sky Score
 
-> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-09-13.md`
+> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-09-25.md`
+>
+> **2026-09-25:** 0 Critical, 5 Important (4 fixed, I-5 open and latent behind
+> `SignupVerify=off`), 14 Minor (9 fixed). The paragraph below is the history
+> up to it and is kept, not overwritten.
+>
+> ### Previously: `AUDIT_REPORT_2026-09-13.md`
 >
 > Full audits ran on **2026-09-11** (`AUDIT_REPORT_2026-09-11.md` - every
 > Critical and Important in it is now CLOSED and deployed, as of 13 Sep) and

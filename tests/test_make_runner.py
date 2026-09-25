@@ -170,6 +170,17 @@ def test_web_deploy_all_ships_fonts_first():
     assert order.index('data-deploy') < order.index('pwa-deploy')
 
 
+def test_web_deploy_all_ships_data_before_the_page():
+    # index.html fetches data/stations.json and carries no inline copy, and
+    # web-deploy invalidates index.html: page-first leaves a window in which
+    # the live page asks the origin for a file it does not yet have. The
+    # standalone runbook was corrected on 2026-09-19; this target kept the
+    # old order until 2026-09-25.
+    _, targets = mk.parse((REPO_ROOT / 'Makefile').read_text(encoding='utf-8'))
+    order = mk.plan('web-deploy-all', targets)
+    assert order.index('data-deploy') < order.index('web-deploy')
+
+
 def test_data_deploy_names_the_files_the_drift_gate_expects():
     # check_deploy_drift.sh derives its data list from this same target with a
     # floor of 17; the runner must see every one of them.

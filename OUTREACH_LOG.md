@@ -87,6 +87,7 @@ LinkedIn 1st/2nd-degree connections at target companies. Higher-leverage than an
 
 | Date | Asked | Their connection | Target | Status |
 |---|---|---|---|---|
+| 2026-09-24 | **Ren AI** (AI introductions service, on trial) | Its own network; introduces directly when it finds a fit | **Heads of data or product at UK mortgage lenders, property portals and conveyancing providers** who buy property data at volume and could run a 90-day pilot against a metric they already track. Brief given: **UK first, firmly** (NYC-only US coverage is too thin for a first pilot); US buyers beyond New York welcome only as **design partners, not pilots**. Pilot described exactly as `pricing.html`: 90 days, GBP 2,500 + VAT, credited in full against a first-year licence, metric agreed day 0, day-45 review, day-90 evidence report. Fit test given: owns a metric, can get an engineer/analyst on the API within weeks, can approve GBP 2,500 without procurement. | 🟡 Awaiting introductions. **Before one lands:** decide whether warm intros go out under "Sky Score" (rebrand decided, see memory `project-rebrand-sky-score`), and check the Desktop one-pager + LOI match the terms above. Log each introduction as its own row in the relevant tier. |
 
 ---
 

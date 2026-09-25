@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 57 checks, and how the coding assistant reaches Amazon</title>
+<style>
+  /* Print-first companion to "How Sky Score works". Written 2026-09-21. The 57
+     stage names are copied from that day's preflight report; the AWS facts from
+     backend/iam-policy.json, the CI workflow, ~/.aws profile names and the
+     session's own refusals. No em dashes: the site rule. */
+  @page { size: A4; margin: 17mm 16mm; }
+  :root { --ink: #15161a; --mid: #4d5057; --line: #c9ccd3; --box: #f4f5f7; --accent: #1f4fbf;
+          --you: #fff3e0; --you-ink: #8a4b00; --web: #e8eefc; --web-ink: #1f3f8f; --aws: #e7f6ee; --aws-ink: #1a6b40;
+          --stop: #fdecea; --stop-ink: #b3261e; }
+  html, body { margin: 0; background: #fff; color: var(--ink); font: 400 12.5pt/1.5 Georgia, "Times New Roman", serif; }
+  body { max-width: 180mm; margin: 0 auto; padding: 10mm 6mm; }
+  h1, h2, h3, table, .flow, .tag, .glossary, .toc { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size: 24pt; line-height: 1.15; margin: 0 0 4pt; letter-spacing: -0.01em; }
+  .sub { color: var(--mid); font-size: 12pt; margin: 0 0 12pt; font-family: system-ui, sans-serif; }
+  h2 { font-size: 16pt; margin: 18pt 0 8pt; border-bottom: 2px solid var(--ink); padding-bottom: 3pt; break-after: avoid; }
+  h3 { font-size: 12.5pt; margin: 12pt 0 3pt; break-after: avoid; }
+  p { margin: 0 0 9pt; }
+  .big { font-size: 13.5pt; }
+  .callout { background: var(--box); border-left: 5px solid var(--accent); padding: 7pt 12pt; margin: 8pt 0 10pt; break-inside: avoid; }
+  .callout b { font-family: system-ui, sans-serif; }
+  .stop { background: var(--stop); border-left-color: var(--stop-ink); }
+  table { width: 100%; border-collapse: collapse; font-size: 9.6pt; margin: 6pt 0 10pt; }
+  th, td { border-bottom: 1px solid var(--line); padding: 3.5pt 5pt; vertical-align: top; text-align: left; }
+  th { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mid); border-bottom: 2px solid var(--ink); }
+  tr { break-inside: avoid; }
+  tr.group td { background: var(--box); font-weight: 700; font-family: system-ui, sans-serif; padding-top: 6pt; }
+  td.n { color: var(--mid); width: 4%; text-align: right; }
+  td.name { width: 30%; font-family: ui-monospace, Consolas, monospace; font-size: 9pt; }
+  td.adv { color: var(--mid); font-style: italic; }
+  /* the picture */
+  .flow { display: grid; grid-template-columns: 1fr; gap: 5pt; margin: 8pt 0 10pt; font-size: 10.5pt; }
+  .fbox { border: 1.5px solid var(--line); border-radius: 10pt; padding: 5pt 10pt; break-inside: avoid; }
+  .fbox b { display: block; font-size: 11pt; }
+  .fbox span { color: var(--mid); }
+  .you { background: var(--you); border-color: var(--you-ink); } .you b { color: var(--you-ink); }
+  .web { background: var(--web); border-color: var(--web-ink); } .web b { color: var(--web-ink); }
+  .aws { background: var(--aws); border-color: var(--aws-ink); } .aws b { color: var(--aws-ink); }
+  .gate { background: var(--stop); border-color: var(--stop-ink); } .gate b { color: var(--stop-ink); }
+  .arrow { text-align: center; color: var(--mid); font-size: 9.5pt; line-height: 1.1; }
+  .arrow i { display: block; font-style: normal; font-size: 14pt; color: var(--ink); }
+  ol.steps { padding-left: 0; list-style: none; counter-reset: s; margin: 0 0 8pt; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 32pt; margin: 0 0 8pt; break-inside: avoid; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 2pt; width: 21pt; height: 21pt; border-radius: 50%;
+    background: var(--ink); color: #fff; font: 700 11pt/21pt system-ui, sans-serif; text-align: center; }
+  ul.plain { margin: 0 0 9pt; padding-left: 18pt; } ul.plain li { margin-bottom: 4pt; }
+  .toc { font-size: 11pt; margin: 6pt 0 10pt; } .toc div { margin-bottom: 3pt; } .toc b { color: var(--accent); margin-right: 4pt; }
+  .glossary dt { font-weight: 700; margin-top: 5pt; } .glossary dd { margin: 0 0 2pt 0; }
+  .foot { color: var(--mid); font-size: 9.5pt; margin-top: 20pt; border-top: 1px solid var(--line); padding-top: 6pt; font-family: system-ui, sans-serif; }
+  @media print { body { padding: 0; max-width: none; } a { color: inherit; text-decoration: none; } }
+</style>
+</head>
+<body>
+
+<h1>The 57 checks, and how the coding assistant reaches Amazon</h1>
+<p class="sub">A companion to "How Sky Score works, in plain English" &middot; 2026-09-21</p>
+
+<div class="callout"><b>In one breath:</b> before any change to Sky Score is saved, 57 automatic checks run; 45 of them can refuse the change. Most of the code was written with a coding assistant, which reaches Amazon only through a pass that is allowed to touch Sky Score's own things and nothing else. The checks are what make that arrangement safe; the pass is what makes it limited.</div>
+
+<div class="toc">
+  <div><b>1</b> What "preflight" is, and what happens when a check fails</div>
+  <div><b>2</b> All 57 checks, one line each</div>
+  <div><b>3</b> The rule that makes the checks worth having</div>
+  <div><b>4</b> How the coding assistant reaches Amazon</div>
+  <div><b>5</b> Five layers of guardrail</div>
+  <div><b>6</b> What a deploy looks like, step by step</div>
+  <div><b>7</b> Two days the guardrails said no</div>
+</div>
+
+<h2>1 - What "preflight" is</h2>
+
+<p class="big">Preflight is a checklist that runs on my computer before any change to the project is saved into its history. One command runs all 57 in sequence and prints one line per check: <b>PASS</b>, or <b>FAIL</b> with the reason.</p>
+
+<ul class="plain">
+  <li><b>45 are blocking.</b> If one fails, the change cannot be saved until it is fixed. There is no "save anyway" button; the rule in the project's own notes says a failing check must be fixed, not skipped, even if I ask.</li>
+  <li><b>12 are advisory.</b> They print a warning and let the change through. They are advisory for a reason each: some compare the live website with the working copy (which differ by design until the next deploy), and some need large data files that a fresh copy of the project would not have.</li>
+  <li><b>It takes about 24 minutes</b> when the flood-map cache is cold, about 15 when warm. Most of that is a robot driving the real website in a real browser at eleven screen sizes, and the checks that phone a government service to compare a number.</li>
+  <li><b>Six stages need the internet.</b> They can be skipped for an offline run, but a skipped stage still prints its own line saying SKIPPED, and the final verdict says "PASS (INCOMPLETE)". A stage that vanishes from a report is indistinguishable from one that passed; that was a real bug once.</li>
+</ul>
+
+<h2>2 - All 57 checks, one line each</h2>
+<p>Names as the report prints them; explanations in plain words. Advisory checks are in italics.</p>
+
+<table>
+  <thead><tr><th>#</th><th>Name in the report</th><th>What it asks</th></tr></thead>
+  <tbody>
+    <tr class="group"><td colspan="3">Is the code tidy? (four checks, three languages)</td></tr>
+    <tr><td class="n">1</td><td class="name">ESLint (8 targets)</td><td>Reads the JavaScript for mistakes a browser would not report: an unused name, a misspelt variable, a call to something that does not exist.</td></tr>
+    <tr><td class="n">2</td><td class="name">html-validate (9 pages)</td><td>Checks the nine public pages are well-formed HTML: every tag closed, every image labelled.</td></tr>
+    <tr><td class="n">3</td><td class="name">ruff (backend/lambdas)</td><td>The same for the Python that runs on Amazon.</td></tr>
+    <tr><td class="n">4</td><td class="name">ruff (scripts, tests)</td><td>And for the scripts that build the data and the tests themselves. The tests were outside this for a month once; the one folder guarding the score engine was the one nothing checked.</td></tr>
+
+    <tr class="group"><td colspan="3">Does the arithmetic still work? (unit tests)</td></tr>
+    <tr><td class="n">5</td><td class="name">pytest (backend)</td><td>Hundreds of small tests of the scoring engine and the assistant: "given these inputs, the score must be 5.4"; "an invented number must be caught". Includes the ten tests of the forty-line check.</td></tr>
+    <tr><td class="n">6</td><td class="name">pytest (root)</td><td>Tests of the data scripts and the deploy tooling, including one that reads the whole deploy file (the Makefile) to make sure the runner can still understand it.</td></tr>
+
+    <tr class="group"><td colspan="3">Do the two halves and the documents agree with the engine? (contracts)</td></tr>
+    <tr><td class="n">7</td><td class="name">API base-URL drift (I-N5)</td><td>Every page that talks to the API uses the same address, held in one file. A page with its own copy of the address is a page that breaks silently when the address changes.</td></tr>
+    <tr><td class="n">8</td><td class="name">score sanity (live API)</td><td>Asks the live API for 28 postcodes, one per city, and checks each resolves to the right city with a well-formed score. The only check that can catch a data fault in the live system.</td></tr>
+    <tr><td class="n">9</td><td class="name">demo key reaches only /v1/score</td><td>Asks the running API whether the free and demo passes are refused on the paid batch route. The configuration says they should be; only the running system can prove it.</td></tr>
+    <tr><td class="n">16</td><td class="name">openapi == score engine</td><td>The published description of the API (which customers generate code from) must match what the engine actually returns: every field, every city, every buyer profile.</td></tr>
+    <tr><td class="n">17</td><td class="name">worked example reproduces</td><td>The methodology page shows a worked example for SW11 1AA. This recomputes it from the engine, input by input, weight by weight. It once passed for weeks while never comparing affordability at all.</td></tr>
+
+    <tr class="group"><td colspan="3">Do the published numbers still equal their source? (the unusual ones)</td></tr>
+    <tr><td class="n">10</td><td class="name">prices == HM Land Registry</td><td>Every borough's price and growth figure, re-read from the Land Registry's file and compared. Written after a month where prices matched one edition and growth matched none.</td></tr>
+    <tr><td class="n">11</td><td class="name">aircraft bands == geometry</td><td>Every borough's aircraft-noise band, re-derived from the airport positions and the measured noise footprints.</td></tr>
+    <tr><td class="n">12</td><td class="name">crime == ONS Table C4</td><td>Every borough's crime rate against the statistics office's own table, with a per-city minimum so it cannot pass by comparing nothing.</td></tr>
+    <tr><td class="n">13</td><td class="name">flood == EA service (georef)</td><td>Asks the Environment Agency's own map service what risk it reports at sample points, and compares. Samples the edges of the map first, because a positioning error shows at the edges. The first version passed a known-broken map 9 times out of 9 until it did.</td></tr>
+    <tr><td class="n">14</td><td class="name">site == Lambda (91 boroughs)</td><td>Drives the real website, reads the score it draws for every borough, and compares with the API's answer. The check from the main guide's Part 5.</td></tr>
+    <tr><td class="n">15</td><td class="name">area names == MSOA names</td><td>Every neighbourhood label (281 of them) is checked against the official small-area names for that district. It caught six labels that had been wrong for months.</td></tr>
+    <tr><td class="n">48</td><td class="name adv">p8 == DfE KS4 2023/24</td><td class="adv">Every borough's school figure against the Department for Education's file. Advisory only because that file cannot be downloaded automatically.</td></tr>
+    <tr><td class="n">49</td><td class="name adv">borough bands == sources</td><td class="adv">Road noise, air quality, flood, transport and healthcare shares, re-derived from the maps and registers. Advisory because the maps are large files a fresh copy would not have.</td></tr>
+    <tr><td class="n">50</td><td class="name adv">neighbourhood medians == PPD</td><td class="adv">The 481 neighbourhood prices, re-derived from the Land Registry's full sales file (155 MB, not kept in the project).</td></tr>
+    <tr><td class="n">51</td><td class="name adv">aircraft footprint == DEFRA</td><td class="adv">The measured size of each airport's noise footprint, re-derived from the noise maps.</td></tr>
+    <tr><td class="n">52</td><td class="name adv">quiet estimate == DEFRA</td><td class="adv">Measures how far the distance-based aircraft estimate is from the government's readings, over 35,352 London postcodes. The accuracy figure the API page publishes comes from here, so it is re-measured rather than quoted.</td></tr>
+
+    <tr class="group"><td colspan="3">Does the website behave, on every screen? (a robot drives it)</td></tr>
+    <tr><td class="n">18</td><td class="name">no em dashes (all pages)</td><td>A house style rule, enforced by a check rather than by memory.</td></tr>
+    <tr><td class="n">20</td><td class="name">self-hosted fonts (9 pages)</td><td>Every page loads its typefaces from our own site, not from Google, so no page depends on a third party or leaks a visit to one.</td></tr>
+    <tr><td class="n">21</td><td class="name">extension extraction</td><td>The browser extension (a demo for property listings) still reads the address, price and coordinates from a real saved listing page.</td></tr>
+    <tr><td class="n">22</td><td class="name">extension panel per env state</td><td>The extension's panel renders correctly for each shape of answer the environment endpoint can give, including "measured as quieter than 40 dB".</td></tr>
+    <tr><td class="n">23</td><td class="name">Playwright e2e (--workers=2)</td><td>A robot opens the live site and walks the main journeys: search, panels, saved places, install prompt.</td></tr>
+    <tr><td class="n">24</td><td class="name">extension e2e</td><td>The same robot loads the extension into a real browser on a real listing and checks what it shows against the live API.</td></tr>
+    <tr><td class="n">25</td><td class="name">local smoke + registry</td><td>Opens the working copy of the site and checks it boots, every city has every registry field, and the map library is fetched exactly once.</td></tr>
+    <tr><td class="n">26</td><td class="name">degraded + offline fallbacks</td><td>Stalls the network, launches offline, and breaks the transport service on purpose, checking the site says the honest thing each time rather than a confident absence.</td></tr>
+    <tr><td class="n">27</td><td class="name">locator inset</td><td>The small UK map in the corner draws the right city markers and none of them is a keyboard trap.</td></tr>
+    <tr><td class="n">28</td><td class="name">selector tiers do not overlap</td><td>The country and city chips never overlap each other or fall off the strip, at every width.</td></tr>
+    <tr><td class="n">29</td><td class="name">every city switches</td><td>Clicks every city chip, on a phone and on a desktop, and counts the borough outlines drawn against that city's own file. Written the day six of nine cities were found dead on the live site.</td></tr>
+    <tr><td class="n">30</td><td class="name">legal links reachable on a phone</td><td>Privacy and terms can be reached from a phone. For ten days once, the mobile home page had exactly one visible link.</td></tr>
+    <tr><td class="n">31</td><td class="name">PWA installable (manifest + SW)</td><td>The site can still be installed as an app: the manifest and the offline worker are valid and every file the worker pre-caches exists.</td></tr>
+    <tr><td class="n">32</td><td class="name">changes page explains why</td><td>The page listing score changes between data editions explains each movement rather than just listing it.</td></tr>
+    <tr><td class="n">33</td><td class="name">map fits its box</td><td>At nine screen sizes including landscape phones, every city's map is drawn inside its own frame. 53 of 90 combinations were failing when this was written, with every other check green.</td></tr>
+    <tr><td class="n">34</td><td class="name">web/native layout split</td><td>The website and the phone-app build render their different layouts as intended; neither has silently become the other.</td></tr>
+    <tr><td class="n">35</td><td class="name">UK cities get UK panel content</td><td>The panel for a UK city shows UK data sources and stations, never the New York wording.</td></tr>
+    <tr><td class="n">36</td><td class="name">area pages carry real data</td><td>The 100 static borough pages each have real figures, unique titles, and no two share a block of text. A hundred near-identical pages would count against the site.</td></tr>
+    <tr><td class="n">37</td><td class="name">area pages match the live API</td><td>Those pages bake their scores in, so this compares all 99 against the live API in one request.</td></tr>
+    <tr><td class="n">38</td><td class="name">layers paint only real data</td><td>The map's colour layers (road noise, flood, air) paint a borough only where there is a reading, and the legend shows only bands that are actually painted. Once, seven cities were painted a confident colour meaning nothing.</td></tr>
+    <tr><td class="n">39</td><td class="name">panel says what it measured</td><td>Renders the borough panel and checks its caveat names the inputs it actually has. Nothing had rendered that panel before; it had shipped the word "undefined" to users.</td></tr>
+    <tr><td class="n">40</td><td class="name">favourites: keyboard + not nested</td><td>Saved places can be added and removed by keyboard, and no button sits inside another button.</td></tr>
+    <tr><td class="n">41</td><td class="name">ranking claims only real order</td><td>When boroughs' scores are too close to rank meaningfully, the ranking table says so instead of implying an order.</td></tr>
+    <tr><td class="n">42</td><td class="name">panel contrast, borough (AA)</td><td>Measures the colour contrast of every visible piece of text in the borough panel against the accessibility standard, itself, rather than trusting a scanner that reports "could not determine" as a pass. Found 46 failures on its first run.</td></tr>
+    <tr><td class="n">43</td><td class="name">panel contrast, area (AA)</td><td>The same for the neighbourhood panel, including the state where the NHS helper says nothing is nearby.</td></tr>
+    <tr><td class="n">44</td><td class="name">responsive, source</td><td>At twelve screen sizes, nothing scrolls sideways, no control is pushed off-screen, covered by something else, or clipped above the top.</td></tr>
+    <tr><td class="n">45</td><td class="name">WCAG source scan (all pages)</td><td>An accessibility scan of 109 pages at up to three sizes, with the legend expanded so hidden text is measured too. Level AA of the current standard is blocking.</td></tr>
+
+    <tr class="group"><td colspan="3">Do the promises match reality? (the honesty checks)</td></tr>
+    <tr><td class="n">19</td><td class="name">log retention == privacy.html</td><td>Reads the retention promise off the privacy page, asks Amazon what it is actually doing, and fails on any difference.</td></tr>
+    <tr><td class="n">53</td><td class="name adv">aws perms == iam-policy.json</td><td class="adv">Exercises 18 safe Amazon actions to see which the deploy pass really has. Found a total outage on its first run: a console edit had replaced the whole permission list. "A permission is a timestamp, not a property."</td></tr>
+    <tr><td class="n">54</td><td class="name adv">deployed == source</td><td class="adv">Downloads 134 files from the live site and compares each with the working copy, so a forgotten upload is named.</td></tr>
+    <tr><td class="n">55</td><td class="name adv">site == /v1/score (6 postcodes)</td><td class="adv">The score the live website draws against the live API, for six postcodes.</td></tr>
+    <tr><td class="n">56</td><td class="name adv">responsive, live</td><td class="adv">Check 44, run against the live site instead of the working copy.</td></tr>
+    <tr><td class="n">57</td><td class="name adv">live web == tabbed layout</td><td class="adv">The live phone layout is the one that was deployed on purpose.</td></tr>
+
+    <tr class="group"><td colspan="3">Housekeeping (advisory)</td></tr>
+    <tr><td class="n">46</td><td class="name adv">Prettier (all files deviate)</td><td class="adv">Code formatting. Deliberately advisory: it would flag every file, and a permanently red check is an ignored check.</td></tr>
+    <tr><td class="n">47</td><td class="name adv">npm audit</td><td class="adv">Known vulnerabilities in the third-party packages the tooling uses.</td></tr>
+  </tbody>
+</table>
+
+<h2>3 - The rule that makes the checks worth having</h2>
+
+<div class="callout"><b>A check that has never gone red has not been tested.</b> Before a new check is trusted, the thing it guards is broken on purpose, the check is watched turning red, the break is undone, and the check is watched turning green. Only then does it count.</div>
+
+<p>The rule exists because twelve checks in this project's history were green for months while checking nothing. Nobody switched them off; each decayed one sensible decision at a time:</p>
+<ul class="plain">
+  <li>The whole checklist once piped every result through a command that always succeeds, so it said PASS while running nothing.</li>
+  <li>The accessibility scan covered one page in nine and only the most severe faults; every real fault was one grade lower.</li>
+  <li>A minimum of "at least 17 files" was left in place the day after the 18th file was added, so it could no longer notice that one going missing.</li>
+  <li>A test took its expected answers from the very list it was testing, so the two could never disagree.</li>
+  <li>A test file that guarded "the fallback shipped untested" was itself in no runner at all.</li>
+</ul>
+<p>The question that finds these is not "what does this check run?" but <b>"what would this check miss?"</b>. Names are treated as claims: a check called "all pages" that scans one page is the warning sign.</p>
+
+<h2>4 - How the coding assistant reaches Amazon</h2>
+
+<p class="big">Most of the code was written with Claude Code, a coding assistant that reads and writes the project's files under direction. It runs on my computer, not on Amazon. When it needs to touch the live system, here is the path, and where it is narrow.</p>
+
+<div class="flow">
+  <div class="fbox you"><b>1 &nbsp;Me, at the keyboard</b><span>I give the instruction. Nothing below happens without one, and going live needs an explicit "go".</span></div>
+  <div class="arrow"><i>&#8595;</i></div>
+  <div class="fbox you"><b>2 &nbsp;Claude Code, on my laptop</b><span>Reads and edits files, runs the checks, runs commands in the terminal. It has no account of its own with Amazon.</span></div>
+  <div class="arrow"><i>&#8595;</i>runs a command such as "upload this file" or "deploy the blueprint"</div>
+  <div class="fbox gate"><b>3 &nbsp;Two guards on every command</b><span>A screening hook blocks destructive commands outright (delete, force-overwrite, wipe). Claude Code's own safety classifier refuses commands it judges to be a production deploy unless I run them myself. Both have fired for real; see Part 7.</span></div>
+  <div class="arrow"><i>&#8595;</i></div>
+  <div class="fbox you"><b>4 &nbsp;Amazon's command-line tools, using a named pass</b><span>The command runs Amazon's own tools (the AWS CLI, and SAM for the blueprint) with a pass called "flightmap" that lives in a file on my laptop, outside the project, never in the code.</span></div>
+  <div class="arrow"><i>&#8595;</i>over the internet, to Amazon's London region</div>
+  <div class="fbox aws"><b>5 &nbsp;Amazon checks the pass against its written permission list</b><span>The pass belongs to one identity ("flightmap-dev") with one written list of what it may do. Every command is checked against that list before anything happens.</span></div>
+  <div class="arrow"><i>&#8595;</i></div>
+  <div class="fbox aws"><b>6 &nbsp;Only Sky Score's own things</b><span>Most of the list is restricted to things named "london-flight-map-*": the eight workers, the five card boxes, the one blueprint, the one website bucket. Two parts are wider than that, and are described honestly below.</span></div>
+</div>
+
+<h3>What the pass cannot do, and where it can do more than it should</h3>
+<ul class="plain">
+  <li><b>Edit its own list directly.</b> When a new permission is needed, I paste it in through Amazon's web console myself, which needs my password and my phone. <b>But this is not yet a hard wall, and I would rather say so.</b> To deploy the workers, the pass may create worker roles and attach permissions to them, and nothing yet limits <i>which</i> permissions. A determined holder of the pass could use that to give a new role far more than Sky Score needs. Closing it is written down as an open item (a "permissions boundary"); it waits for a console session because an untested change to these rules caused a real outage once already.</li>
+  <li><b>A second wide grant.</b> The part of the list that manages the web front door (API Gateway) covers every such front door in the London region, not only Sky Score's. There is only one today, but the list does not enforce that.</li>
+  <li><b>Use the web console at all.</b> The pass is for command-line tools only. The console is mine, protected by a second factor on my phone.</li>
+  <li><b>See the bill, other projects, or other people's accounts.</b> Not on the list, though the gap in the first point is a way round that until it is closed. Other people's accounts are out of reach either way.</li>
+  <li><b>Empty a card box or delete the website bucket.</b> The screening hook blocks delete commands before they reach Amazon, and the list keeps deletions to Sky Score's own named things even if one got through.</li>
+</ul>
+
+<h3>Where the secrets live</h3>
+<ul class="plain">
+  <li>The Amazon pass: a file in my home folder, outside the project. Never copied into the code.</li>
+  <li>The API keys and the government energy-data token: a file called <code>.env</code> in the project folder that the version history is told to ignore. The energy token is handed to the blueprint at deploy time as a hidden value, so it never appears in Amazon's own records of the deploy.</li>
+  <li>If a secret ever appears in a chat log or a terminal, it is treated as burned and replaced. There is a script for replacing the energy token that refuses to run with the old value.</li>
+  <li><b>The automated tests that run on GitHub have no Amazon pass at all.</b> They lint and test; they cannot deploy. Nothing reaches the live system except from my laptop, on my instruction.</li>
+</ul>
+
+<h2>5 - Five layers of guardrail</h2>
+<ol class="steps">
+  <li><b>The 57 checks.</b> Nothing is saved into the project until they pass, and a saved change is the only kind that gets deployed.</li>
+  <li><b>The screening hook.</b> Every terminal command the assistant proposes is read first; destructive ones are blocked before they run.</li>
+  <li><b>The safety classifier.</b> The assistant's own judgement of "this looks like a production deploy", which makes it stop and hand the command to me.</li>
+  <li><b>The written permission list on Amazon's side.</b> Even a command that gets past everything above can only touch Sky Score's own named things.</li>
+  <li><b>My go-ahead.</b> The working rule: the assistant deploys nothing without an explicit instruction, and a deploy is verified afterwards from the live address, never from the command's own "success" message.</li>
+</ol>
+<p>The layers are deliberately different in kind: a checklist, a filter, a judgement, a permission, a person. A single guardrail, however good, has one way to fail.</p>
+
+<h2>6 - What a deploy looks like, step by step</h2>
+<ol class="steps">
+  <li><b>Preflight passes</b> (Part 1) and the change is saved into the project's history.</li>
+  <li><b>Back end first.</b> SAM reads the blueprint, works out what would change ("change set"), and applies it. Only the workers whose code changed are replaced. If a data edition rolled, the API must go live before the website, so the site's copy of the numbers is never ahead of the API's.</li>
+  <li><b>Then the website</b>, from a deploy file with one named target per surface (fonts, pages, data, app files, demo, the 100 borough pages, and now the talk write-ups). The order inside it matters: data files before the page that fetches them, fonts before the offline worker that pre-caches them.</li>
+  <li><b>Then the caches are cleared</b> at the copies-in-every-city, so visitors get the new version and not last hour's.</li>
+  <li><b>Then verify from the origin.</b> Download the live files and compare with what was written (check 54). Ask the live API for the 28 postcodes (check 8). A deploy is done when the live address says so, not when the upload command said "complete". On 26 August every upload succeeded and the cache-clear failed at the very end; the deploy looked done and was not.</li>
+</ol>
+
+<h2>7 - Two days the guardrails said no</h2>
+<p><b>16 September.</b> A data release morning: the Land Registry's July prices, a methodology change, two defects found by the checks. When it came to the back-end deploy, the assistant's safety classifier refused to run it from its own session. I ran the one deploy command myself. That is the arrangement working as designed: the assistant prepared and verified everything up to the line, and the line held.</p>
+<p><b>21 September, the day this was written.</b> After uploading the plain-English write-up to the site, the assistant tried to fetch the live address to compare the file's fingerprint with the original. The classifier refused that too, judging the fetch to be part of the deploy. So the assistant stopped, said what it had tried to do and why, and asked me to run the one-line check. Thirty seconds of my time, and the rule stayed a rule rather than becoming a rule with exceptions.</p>
+
+<div class="callout"><b>What the second day shows.</b> A guardrail that only ever blocks the dangerous thing is easy to keep. One that sometimes blocks a harmless thing is the kind you are tempted to loosen. Keeping it costs a little friction on ordinary days; loosening it costs the one day it mattered.</div>
+
+<h2>Words used above</h2>
+<dl class="glossary">
+  <dt>Preflight</dt><dd>The 57-check list that runs before a change is saved. Named after the checks pilots run before take-off.</dd>
+  <dt>Blocking / advisory</dt><dd>A blocking check can refuse the change; an advisory one only warns.</dd>
+  <dt>Red / green</dt><dd>A check failing / passing. "Prove it goes red" means break the thing on purpose and watch the check fail before trusting it.</dd>
+  <dt>Pass (AWS)</dt><dd>A pair of long codes that identify one Amazon identity to Amazon's tools. Kept in a file, never in the code.</dd>
+  <dt>IAM</dt><dd>Amazon's system of identities and written permission lists. Every command is checked against the caller's list.</dd>
+  <dt>Blueprint / SAM</dt><dd>The one file describing every Amazon piece Sky Score uses, and the tool that makes the real thing match it.</dd>
+  <dt>Change set</dt><dd>SAM's list of what a deploy would alter, produced before it alters anything.</dd>
+  <dt>Deploy</dt><dd>Put a new version live.</dd>
+  <dt>Classifier</dt><dd>The coding assistant's own judgement about whether a command is safe to run without a person. It errs on the side of asking.</dd>
+</dl>
+
+<p class="foot">Sky Score &middot; stage names from the preflight report of 2026-09-21 (45 PASS, 12 advisory, 23 min 34 s); permission facts from the deploy identity's policy file and the CI workflow; the two refusals from the sessions of 16 and 21 September 2026.</p>
+
+</body>
+</html>

@@ -333,8 +333,9 @@ def real_trend_pct(nominal_pct, inflation_pct):
     the same rounded value - so a reader reproducing growth_score() from the
     response gets the engine's number, not one a rounding step away from it.
     """
-    # The SAME tie rule as round_1dp() (halves away from zero, matching the
-    # site's Math.round) rather than Python's round(): this value has a JS
+    # The SAME tie rule as round_1dp() (halves toward +infinity, exactly the
+    # site's Math.round: -2.25 -> -2.2, NOT away from zero, which this comment
+    # wrongly said until 2026-09-25) rather than Python's round(): this value has a JS
     # holder, and two languages' defaults disagree on an exact .x5 tie.
     # Inlined because round_1dp is defined below the import-time call.
     return math.floor(((1 + nominal_pct / 100.0) / (1 + inflation_pct / 100.0) - 1) * 1000.0 + 0.5) / 10
@@ -478,7 +479,7 @@ def build_comparison(current, previous, city, weights, name=None):
     # times to produce the same two answers.
     prev_set = previous_dataset(city)
     cur_bm = benchmarks(CITIES[city]['boroughs'], city)
-    prev_bm = benchmarks(prev_set, city)
+    prev_bm = benchmarks(prev_set, city, previous=True)
     cur_ranks = growth_ranks(CITIES[city]['boroughs'])
     prev_ranks = growth_ranks(prev_set)
     why = build_why(
@@ -636,7 +637,7 @@ def growth_ranks(boroughs):
     return {name: ordered.index(t) + 1 for name, t in trends.items()}
 
 
-def benchmarks(boroughs, city='london'):
+def benchmarks(boroughs, city='london', previous=False):
     """The yardsticks a vintage comparison is read against.
 
     Growth is *relative*: scored against the strongest-growing (and, since
@@ -661,6 +662,14 @@ def benchmarks(boroughs, city='london'):
     `cheapestArea`/`dearestArea` are still published, as the city's price
     RANGE for context, not as the affordability anchor - see
     `_afford_breakdown_line` for the anchor a response actually names.
+
+    `previous=True` marks the set as a PREVIOUS vintage (2026-09-25 audit
+    I-1). Only London's slice is held at that vintage (previous_dataset), so
+    every other city enters the pool at its CURRENT figures - and a yardstick
+    drawn from one of them is a current number standing in for a previous
+    one. `strongestGrowthStandIn` / `steepestFallStandIn` say so. Without
+    them `/v1/changes` published "changed from Trafford (+6.3%) to Trafford
+    (+6.3%)": the same July figure on both sides, called a change.
     """
     # The trend growth is SCORED on - real terms where an inflation series is
     # held (v5.1), nominal otherwise - because a yardstick in a different unit
@@ -678,13 +687,18 @@ def benchmarks(boroughs, city='london'):
     bottom = sorted(label for label, t in pool if t == min_trend)
     dearest = max(prices, key=lambda n: prices[n])
     cheapest = min(prices, key=lambda n: prices[n])
+    # A tie that includes one of this city's own boroughs is a measured
+    # yardstick: its figure IS held at this vintage.
+    own = set(boroughs)
     return {
         'strongestGrowthArea': top[0],
         'strongestGrowthAreas': top,
         'strongestGrowthTrendPct': max_trend,
+        'strongestGrowthStandIn': previous and not any(label in own for label in top),
         'steepestFallArea': bottom[0],
         'steepestFallAreas': bottom,
         'steepestFallTrendPct': min_trend,
+        'steepestFallStandIn': previous and not any(label in own for label in bottom),
         # v5.1: which unit the two trend yardsticks above are in.
         'growthBasis': 'real' if any('trendReal' in bd for bd in boroughs.values()) else 'nominal',
         'dearestArea': dearest,
@@ -723,7 +737,7 @@ def market_context(current_boroughs, previous_boroughs, score_changes=None):
     cur = [bd['trend'] for bd in current_boroughs.values()]
     prev = [bd['trend'] for bd in previous_boroughs.values()]
     cur_bm = benchmarks(current_boroughs, 'london')
-    prev_bm = benchmarks(previous_boroughs, 'london')
+    prev_bm = benchmarks(previous_boroughs, 'london', previous=True)
     return {
         'areas': len(cur),
         'meanTrendPct': round(sum(cur) / len(cur), 2),
@@ -736,9 +750,7 @@ def market_context(current_boroughs, previous_boroughs, score_changes=None):
             f'Across the {len(cur)} London boroughs the average 12-month price trend moved from '
             f'{round(sum(prev) / len(prev), 1):+}% to {round(sum(cur) / len(cur), 1):+}%, and the number with '
             f'falling prices went from {sum(1 for t in prev if t < 0)} to {sum(1 for t in cur if t < 0)}. '
-            f'Growth is scored against the strongest real-terms riser in the sterling pool, which changed from '
-            f'{prev_bm["strongestGrowthArea"]} ({prev_bm["strongestGrowthTrendPct"]:+}%) to '
-            f'{cur_bm["strongestGrowthArea"]} ({cur_bm["strongestGrowthTrendPct"]:+}%). '
+            + _yardstick_sentence(cur_bm, prev_bm)
             # What the SCORES did, counted from the caller's tally - never
             # inferred from the trend's sign (see the docstring). The mechanism
             # is named because it is not obvious: only price and trend move
@@ -748,6 +760,27 @@ def market_context(current_boroughs, previous_boroughs, score_changes=None):
             + _score_movement_sentence(score_changes)
         ),
     }
+
+
+def _yardstick_sentence(cur_bm, prev_bm):
+    """The growth-yardstick sentence of marketContext.summary (audit I-1).
+
+    Three cases, because the old single template ("changed from X to Y")
+    published "changed from Trafford (+6.3%) to Trafford (+6.3%)" - a July
+    figure on both sides - once v5.2 moved the yardstick outside London.
+    """
+    now = f'{cur_bm["strongestGrowthArea"]} ({cur_bm["strongestGrowthTrendPct"]:+}%)'
+    lead = 'Growth is scored against the strongest real-terms riser in the sterling pool'
+    if prev_bm.get('strongestGrowthStandIn'):
+        return (
+            f'{lead}, now {now}. Sky Score holds the earlier vintage for London only, so the '
+            'comparison reads boroughs outside London at their current figures and cannot say '
+            'whether that yardstick moved. '
+        )
+    was = f'{prev_bm["strongestGrowthArea"]} ({prev_bm["strongestGrowthTrendPct"]:+}%)'
+    if was == now:
+        return f'{lead}, {now} in both vintages. '
+    return f'{lead}, which changed from {was} to {now}. '
 
 
 def _score_movement_sentence(score_changes):
@@ -8024,7 +8057,7 @@ def handle_changes(event):
     bal = PERSONAS['balanced']
     prev_set = previous_dataset('london')
     cur_bm = benchmarks(CITIES['london']['boroughs'], 'london')
-    prev_bm = benchmarks(prev_set, 'london')
+    prev_bm = benchmarks(prev_set, 'london', previous=True)
     cur_ranks = growth_ranks(CITIES['london']['boroughs'])
     prev_ranks = growth_ranks(prev_set)
     changes = []
@@ -8410,6 +8443,9 @@ def _badge_svg(postcode, score, band_label, colour, dark=False):
 </svg>'''
 
 
+BADGE_ECHO_MAX = 10
+
+
 def _svg_response(svg, status=200, cache_seconds=86400):
     return {
         'statusCode': status,
@@ -8423,6 +8459,13 @@ def _svg_response(svg, status=200, cache_seconds=86400):
             # Explicitly NOT a JSON CORS surface. An <img> needs no CORS at all;
             # allowing it would only widen what can read this.
             'X-Content-Type-Options': 'nosniff',
+            # SINCE 2026-09-17 THIS SVG IS SERVED FROM skyscore.co.uk ITSELF
+            # (the /badge edge-cache behaviour), so it shares an origin with the
+            # app and an SVG opened as a document can run script. Escaping was
+            # the only barrier; this makes one regression in it inert rather
+            # than script on the main origin (2026-09-25 audit M-3). The same
+            # policy html_page() already sends.
+            'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
         },
         'body': svg,
     }
@@ -8456,7 +8499,10 @@ def handle_badge(event):
         # Short cache: an uncovered postcode becomes covered when a city lands,
         # and a day-long cache would keep showing "not covered" after it did.
         return _svg_response(
-            _badge_svg(postcode.upper(), '-', 'Not covered', '#636363', dark),
+            # Capped: the longest UK postcode is 8 characters with its space.
+            # Uncapped, any caller-chosen text rendered under our brand on our
+            # own origin (escaped, so spoofed wording rather than script).
+            _badge_svg(postcode.upper()[:BADGE_ECHO_MAX], '-', 'Not covered', '#636363', dark),
             status=status if status >= 400 else 404,
             cache_seconds=300,
         )

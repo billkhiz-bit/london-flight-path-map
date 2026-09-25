@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Sky Score works, in plain English</title>
+<style>
+  /* Print-first. Open in Chrome and Ctrl+P > Save as PDF, or use the PDF beside it.
+     Third version, 2026-09-21: the full guide. Same plain words and the same running
+     picture (a receptionist, workers on call, a filing cabinet, index cards), now
+     covering the numbers, the business side, the assistant, new data, the checks,
+     money, privacy and the phone app. Every fact traces to the repo or the live site. */
+  @page { size: A4; margin: 17mm 16mm; }
+  :root { --ink: #15161a; --mid: #4d5057; --line: #c9ccd3; --box: #f4f5f7; --accent: #1f4fbf;
+          --you: #fff3e0; --you-ink: #8a4b00; --web: #e8eefc; --web-ink: #1f3f8f; --aws: #e7f6ee; --aws-ink: #1a6b40;
+          --ai: #f3e8ff; --ai-ink: #5b2d91; }
+  html, body { margin: 0; background: #fff; color: var(--ink); font: 400 12.5pt/1.5 Georgia, "Times New Roman", serif; }
+  body { max-width: 180mm; margin: 0 auto; padding: 10mm 6mm; }
+  h1, h2, h3, .chat, .why, .tag, table, .glossary, .toc { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size: 26pt; line-height: 1.15; margin: 0 0 4pt; letter-spacing: -0.01em; }
+  .sub { color: var(--mid); font-size: 12pt; margin: 0 0 12pt; font-family: system-ui, sans-serif; }
+  h2 { font-size: 16pt; margin: 18pt 0 8pt; border-bottom: 2px solid var(--ink); padding-bottom: 3pt; break-after: avoid; }
+  /* parts flow; forced page-per-part left five near-empty pages in a 24-page render */
+  h3 { font-size: 12.5pt; margin: 12pt 0 3pt; break-after: avoid; }
+  p { margin: 0 0 9pt; }
+  .big { font-size: 13.5pt; }
+  .callout { background: var(--box); border-left: 5px solid var(--accent); padding: 7pt 12pt; margin: 8pt 0 10pt; break-inside: avoid; }
+  .callout b { font-family: system-ui, sans-serif; }
+  .toc { font-size: 11pt; columns: 2; column-gap: 24pt; margin: 6pt 0 10pt; }
+  .toc div { break-inside: avoid; margin-bottom: 3pt; }
+  .toc b { color: var(--accent); margin-right: 4pt; }
+  /* conversations */
+  .chat { display: grid; grid-template-columns: 1fr; gap: 5pt; margin: 8pt 0 10pt; font-size: 10.5pt; }
+  .msg { border: 1.5px solid var(--line); border-radius: 10pt; padding: 5pt 10pt; break-inside: avoid; }
+  .msg b { display: block; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1pt; }
+  .msg .q { font-style: italic; }
+  .msg .a { color: var(--mid); }
+  .msg .a strong { color: var(--ink); }
+  .you { background: var(--you); border-color: var(--you-ink); } .you b { color: var(--you-ink); }
+  .web { background: var(--web); border-color: var(--web-ink); } .web b { color: var(--web-ink); }
+  .aws { background: var(--aws); border-color: var(--aws-ink); } .aws b { color: var(--aws-ink); }
+  .ai  { background: var(--ai);  border-color: var(--ai-ink); }  .ai b  { color: var(--ai-ink); }
+  .note { text-align: center; color: var(--mid); font-size: 9.5pt; }
+  .tag { display: inline-block; font-size: 8.5pt; font-weight: 700; padding: 3pt 6pt; border-radius: 999px; margin-right: 4pt; white-space: nowrap; }
+  .tag.you { background: var(--you); color: var(--you-ink); } .tag.web { background: var(--web); color: var(--web-ink); }
+  .tag.aws { background: var(--aws); color: var(--aws-ink); } .tag.ai { background: var(--ai); color: var(--ai-ink); }
+  /* cards */
+  .why { border: 1.5px solid var(--line); border-radius: 10pt; padding: 8pt 12pt; margin: 0 0 8pt; break-inside: avoid; font-size: 11pt; line-height: 1.4; }
+  .why h3 { margin: 0 0 3pt; font-size: 13pt; }
+  .why h3 small { font-weight: 500; color: var(--mid); font-size: 10pt; margin-left: 6pt; }
+  .why dl { margin: 0; }
+  .why dt { font-weight: 700; margin-top: 4pt; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mid); }
+  .why dd { margin: 0 0 2pt 0; }
+  /* tables, screen mock, lists */
+  .screen { border: 1.5px solid var(--line); border-radius: 8pt; padding: 8pt 12pt; font-family: system-ui, sans-serif; font-size: 10.5pt; break-inside: avoid; }
+  .screen .hl { font-size: 15pt; font-weight: 800; margin: 0 0 2pt; }
+  .screen .row { display: flex; justify-content: space-between; border-top: 1px dashed var(--line); padding: 3pt 0; gap: 8pt; }
+  .screen .cap { color: var(--mid); font-size: 9.5pt; margin-top: 6pt; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.8pt; margin: 6pt 0 10pt; }
+  th, td { border-bottom: 1px solid var(--line); padding: 4pt 5pt; vertical-align: top; text-align: left; }
+  th { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mid); border-bottom: 2px solid var(--ink); }
+  td code { font: 9pt ui-monospace, Consolas, monospace; word-break: break-all; }
+  tr { break-inside: avoid; }
+  table.keep { break-inside: avoid; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  ol.steps { padding-left: 0; list-style: none; counter-reset: s; margin: 0 0 8pt; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 32pt; margin: 0 0 8pt; break-inside: avoid; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 2pt; width: 21pt; height: 21pt; border-radius: 50%;
+    background: var(--ink); color: #fff; font: 700 11pt/21pt system-ui, sans-serif; text-align: center; }
+  ul.plain { margin: 0 0 9pt; padding-left: 18pt; } ul.plain li { margin-bottom: 4pt; }
+  .glossary dt { font-weight: 700; margin-top: 5pt; } .glossary dd { margin: 0 0 2pt 0; }
+  .foot { color: var(--mid); font-size: 9.5pt; margin-top: 20pt; border-top: 1px solid var(--line); padding-top: 6pt; font-family: system-ui, sans-serif; }
+  @media print { body { padding: 0; max-width: none; } a { color: inherit; text-decoration: none; } }
+</style>
+</head>
+<body>
+
+<h1>How Sky Score works, in plain English</h1>
+<p class="sub">The full guide: what it is, what happens when you type a postcode, where the numbers come from, the Amazon pieces, the assistant, the checks, the money &middot; 2026-09-21</p>
+
+<div class="callout"><b>In one breath:</b> Sky Score turns a postcode into a score out of ten for how liveable that spot is, using eight kinds of official government data. The website does the sums on your own laptop. Businesses get the same sums from a service on Amazon. A small AI assistant can explain a score in a sentence - and forty lines of ordinary code throw its answer away if it contains a number it wasn't given.</div>
+
+<h3>What's in this guide</h3>
+<div class="toc">
+  <div><b>1</b> What it is, and who it is for</div>
+  <div><b>2</b> What happens when the page opens (2a), and when you type a postcode (2b)</div>
+  <div><b>3</b> Where the eight numbers come from</div>
+  <div><b>4</b> How eight numbers become one score</div>
+  <div><b>5</b> What happens when a business calls</div>
+  <div><b>6</b> The assistant, and the forty lines</div>
+  <div><b>7</b> The Amazon pieces, and why each is there</div>
+  <div><b>8</b> How new data gets in</div>
+  <div><b>9</b> The 57 checks</div>
+  <div><b>10</b> How it was built with a coding assistant</div>
+  <div><b>11</b> What it costs, and what it charges</div>
+  <div><b>12</b> Privacy, safety and the phone app</div>
+  <div><b>13</b> How to show it live</div>
+  <div><b>&nbsp;</b> Appendix and words used</div>
+</div>
+
+<h2>1 - What it is, and who it is for</h2>
+
+<p class="big">A postcode goes in. A score from 0 to 10 comes out. The score says how liveable that spot is, built from eight things: aircraft noise, road noise, air quality, flood risk, house prices, crime, school results and transport.</p>
+
+<p>Every one of the eight comes from an official dataset - the government departments and agencies that publish these things - and every number can be traced back to the file it came from. That is the whole idea: not opinion, but arithmetic over public data, with the working shown.</p>
+
+<p>It has <b>two front doors</b>, because it has two kinds of user:</p>
+<ul class="plain">
+  <li><b>People</b> use the <b>website</b>: a map of a city's boroughs, coloured by score, with a search box. Type a postcode and a panel opens with the score, what's behind it, the nearest stations, recent sales, energy ratings and the closest GP. It covers ten city regions in England (London, Manchester, Birmingham, Leeds, Sheffield, Liverpool, Newcastle, Bristol, Leicester, Teesside) and New York.</li>
+  <li><b>Businesses</b> - a property portal, a lender, a relocation firm - use the <b>API</b>. An API is a way for one program to ask another for data, with no person and no screen in between. Their software sends a postcode; numbers come back; they show them wherever they like. The API covers two more cities than the website (Cardiff and Nottingham).</li>
+</ul>
+
+<p>The website is the shop window; the API is the product. Both give the same answer for the same place, and an automatic check makes sure they keep agreeing.</p>
+
+<div class="callout"><b>The map is ours.</b> It is drawn from our own outlines of the boroughs, in your browser. There is no Google Maps underneath, no map company being paid per view, and the site still works with no internet once it has loaded once. A street map would also suggest a precision we do not have - every number is about a borough, not a street.</div>
+
+<h2 class="part">2a - What happens when the page opens</h2>
+
+<p class="big">Before you have typed anything, the page has already fetched everything it will need to draw the map and score a search. Here is that first second, measured on a fresh browser with nothing stored: thirteen requests, quiet after 1.3 seconds.</p>
+
+<div class="chat">
+  <div class="msg you"><b>Your browser -&gt; skyscore.co.uk</b><span class="q">"The page, please."</span><br><span class="a">The nearest of Amazon's copies hands over one file. The whole website is that file; everything else it needs, it asks for next.</span></div>
+
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"I need the drawing tool, the typefaces, and the address of the API."</span><br><span class="a">Three small fetches from the website's own shelf: the library that draws maps, two font files (ours, not Google's, so no visit is reported to a third party), and a one-line file holding the API's address, so every page agrees on where it is.</span></div>
+
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"Now the map: London's outlines, the little UK map, and the table of numbers."</span><br><span class="a">Three data files. The 33 borough shapes for London (the city it opens on). The small map of the UK with the city markers. And <strong>the reference book</strong>: one table holding every borough's inputs for every city, which is what the search in 2b looks up. Plus one picture: a see-through image of the government's aircraft-noise contours, laid over the map.</span></div>
+
+  <div class="msg aws"><b>Your browser -&gt; helper ("favourites")</b><span class="q">"Any saved places for this device?"</span><br><span class="a">The device sends a random token it made up for itself, not a name or an email. On a first visit the answer is an empty list.</span></div>
+
+  <div class="msg web"><b>Your browser -&gt; the visit counter</b><span class="q">"One visit."</span><br><span class="a">A cookieless counter that records the page and the screen size, nothing about you.</span></div>
+
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"Draw the map. Colour every borough by its score. Show the search box."</span><br><span class="a">The colours come from the same sums as a search, done for all 33 boroughs at once from the table. Nothing was asked of Amazon for those numbers.</span></div>
+
+  <div class="msg you"><b>Your browser, to itself, a moment later</b><span class="q">"Keep a copy of all this on the device."</span><br><span class="a">The page installs a small helper, the <strong>offline worker</strong>, which quietly stores the page, the drawing tool, the fonts, the outlines for all eleven cities and the table of numbers on your device.</span></div>
+</div>
+
+<div class="callout"><b>The second visit is the point.</b> Measured on the same browser: thirteen requests again, but <strong>ten of them are answered from the device's own store</strong> without touching the network. Only the visit counter and the saved-places check go out. That is why the site opens in under a second on a repeat visit, and why it still opens with no signal at all. Switching to another city fetches nothing either; its outlines were stored on the first visit.</div>
+
+<p>Two things that are <em>not</em> fetched at load, on purpose: the aircraft-noise readings and the station list. They are only needed once you search, so they are fetched the moment you start typing (2b, first line), not before. A page that fetches everything it might ever need is slow for everyone to serve the few who search.</p>
+
+<h2>2b - What happens when you type N1 7SX</h2>
+
+<p class="big">Think of your browser as a person at a desk with a reference book. Here is the conversation it has, in the order it happens. The whole thing takes about a second.</p>
+
+<div class="chat">
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"Someone's typing. I'll fetch the three lists I'll need in a moment: the aircraft-noise readings for London, the same for the regions, and the list of stations."</span><br><span class="a">Three files come down from the website's own shelf. This happens once per visit.</span></div>
+
+  <div class="msg web"><b>Your browser &rarr; postcodes.io (a free public service)</b><span class="q">"Where is N1 7SX?"</span><br><span class="a">Answer: "Latitude 51.53, longitude &minus;0.09. It is in <strong>Hackney</strong>." postcodes.io is a free lookup built on the government's postcode register. It knows where every UK postcode is.</span></div>
+
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"Hackney. My table has a row for Hackney: house prices, crime, schools, transport, air quality, road noise, flood risk. I'll do the sums."</span><br><span class="a">The score is worked out <strong>right here, on your laptop</strong>. The table of numbers came with the page when it loaded. Nothing is sent anywhere for this step.</span></div>
+
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"For aircraft noise I can do better than the borough. Is N1 7SX in the noise-readings list?"</span><br><span class="a">If the government measured aircraft noise at this exact postcode, that reading is used. If not, the browser estimates it from how far the postcode is from the flight paths. This is the only number that is about your exact postcode; everything else is about the borough, and the page says so.</span></div>
+
+  <div class="note">Now it knows the location, so it sends four questions at the same time, to four small helpers I run on Amazon:</div>
+
+  <div class="msg aws"><b>Your browser &rarr; helper 1 ("transport")</b><span class="q">"Which stations are near this spot, and are the lines running?"</span><br><span class="a">"Angel, 780 m. Essex Road, 848 m. Old Street, 916 m. Northern line: good service."</span></div>
+  <div class="msg aws"><b>Your browser &rarr; helper 2 ("nhs")</b><span class="q">"Any GPs, pharmacies or clinics within a 20-minute walk?"</span><br><span class="a">"Prebend Street Surgery, 407 m. St Peter's Street Medical Practice &hellip;"</span></div>
+  <div class="msg aws"><b>Your browser &rarr; helper 3 ("sold-prices")</b><span class="q">"What has sold at this postcode?"</span><br><span class="a">"Windsor House, Wenlock Road: &pound;490,000 in 2015; &pound;190,000 in 2011 &hellip;" (from HM Land Registry)</span></div>
+  <div class="msg aws"><b>Your browser &rarr; helper 4 ("epc")</b><span class="q">"Any energy certificates at this postcode?"</span><br><span class="a">"79 of them. Average band C." (from the government's energy-certificate register)</span></div>
+
+  <div class="msg you"><b>Your browser, to itself</b><span class="q">"Got everything. Draw the panel."</span><br><span class="a">Score and the four component scores at the top (from its own sums), then stations, sales, energy, NHS (from the four helpers).</span></div>
+</div>
+
+<p><span class="tag you">your browser, on its own</span> <span class="tag web">a free public service</span> <span class="tag aws">a small helper I run on Amazon</span></p>
+
+<div class="callout"><b>The important thing it did <u>not</u> do:</b> it never asked anyone for the score. The score is sums done on your laptop, over numbers that were worked out weeks ago from government files. No artificial intelligence is involved anywhere on the website.</div>
+
+<h3>What ends up on the screen for N1 7SX</h3>
+<div class="screen">
+  <p class="hl">5.4 / 10 - Mixed</p>
+  <div>"Mixed picture. This location scores well on some factors but is held back by high prices."</div>
+  <div class="row"><span>Quiet Skies (aircraft noise)</span><b>7.0 / 10</b></div>
+  <div class="row"><span>Affordability</span><b>1.1 / 10</b></div>
+  <div class="row"><span>Growth (prices, adjusted for inflation)</span><b>3.8 / 10</b></div>
+  <div class="row"><span>Liveability (crime, schools, transport, healthcare)</span><b>7.8 / 10</b></div>
+  <div class="row"><span>Environment (air, road noise, flood)</span><b>5.2 / 10</b></div>
+  <p class="cap">Under the scores it says: <em>"Quiet Skies uses your location's noise data. Other scores are Hackney borough averages."</em> That sentence is the honesty line: it tells you which number is about your postcode (one) and which are about your borough (the rest).</p>
+</div>
+
+<h2 class="part">3 - Where the eight numbers come from</h2>
+
+<p class="big">Each of the eight inputs is a real measurement, published by a named public body, turned into a number per borough by a script on my computer. Here is each one: what it measures, who publishes it, and how it becomes a mark out of ten.</p>
+
+<table>
+  <thead><tr><th style="width:15%">Input</th><th style="width:24%">Who publishes it</th><th>What is measured, and how it becomes 0&ndash;10</th></tr></thead>
+  <tbody>
+    <tr><td><b>Aircraft noise</b></td><td>DEFRA (the environment department), plus airport positions</td><td>DEFRA's noise maps give a decibel reading for about 42,000 postcodes near airports. Where they exist, that reading is used. Elsewhere, the distance from the flight paths stands in - and the scale is set per airport by how big its measured noise footprint is, so a small regional airport is not scored like Heathrow.</td></tr>
+    <tr><td><b>Road noise</b></td><td>DEFRA</td><td>The share of a borough's addresses where road noise is above the World Health Organisation's guideline (53 decibels). 0% of addresses over the line scores 10; 100% scores 0.</td></tr>
+    <tr><td><b>Air quality</b></td><td>DEFRA</td><td>Two pollutants, nitrogen dioxide and fine particles, each compared with the WHO guideline. The worse of the two counts. At the WHO level scores 10; at the UK legal limit scores 0.</td></tr>
+    <tr><td><b>Flood risk</b></td><td>Environment Agency</td><td>The share of addresses at medium-or-high risk of flooding from rivers or the sea. 0% scores 10; 10% or more scores 0 (the Agency's own cut-off).</td></tr>
+    <tr><td><b>House prices</b></td><td>HM Land Registry (its monthly price index)</td><td>The borough's typical price, compared with every borough in the country - not just the same city. See "affordability is national" in Part 4.</td></tr>
+    <tr><td><b>Price growth</b></td><td>HM Land Registry, and ONS for inflation</td><td>How much prices moved in the last twelve months, <em>after</em> taking off inflation. A borough whose prices rose 3% while inflation was 3% has not really grown.</td></tr>
+    <tr><td><b>Crime</b></td><td>ONS (the statistics office), from police records</td><td>Offences per 1,000 residents in the year. Fewer is better.</td></tr>
+    <tr><td><b>Schools</b></td><td>Department for Education</td><td>"Progress 8": how much progress pupils make between age 11 and 16 compared with pupils who started at the same level. A measure of how good the teaching is, rather than how well-off the intake is. Not published for Wales, which is why Cardiff has no schools score.</td></tr>
+    <tr><td><b>Transport</b></td><td>Department for Transport (its register of every station and stop)</td><td>The share of addresses within 800 metres - about ten minutes' walk - of a railway, underground, metro or tram stop.</td></tr>
+    <tr><td><b>Healthcare</b></td><td>NHS (its list of GP surgeries)</td><td>The share of addresses within 500 metres of a GP surgery. 500 m was chosen by measurement: at 1 km nearly every borough scored top, which is true and useless.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout"><b>Two honest limits.</b> First, most of these are about the <em>borough</em>, not your street - Hackney is Hackney whether you live by the canal or by the A10. Only aircraft noise is measured per postcode. Second, DEFRA's noise maps were made in 2021, a year with far fewer flights than normal, so the aircraft readings are on the quiet side. The methodology page says both of these out loud.</div>
+
+<h2 class="part">4 - How eight numbers become one score</h2>
+
+<p class="big">The eight inputs are first grouped into <b>five components</b>, each a mark out of ten. Then the five are blended with weights that depend on who is asking.</p>
+
+<table class="keep">
+  <thead><tr><th style="width:22%">Component</th><th>What is inside it</th></tr></thead>
+  <tbody>
+    <tr><td><b>Quiet Skies</b></td><td>Aircraft noise alone. The headline of the product - it started as a flight-path map.</td></tr>
+    <tr><td><b>Affordability</b></td><td>House prices, compared nationally.</td></tr>
+    <tr><td><b>Growth</b></td><td>Price growth after inflation.</td></tr>
+    <tr><td><b>Liveability</b></td><td>Crime, schools, transport and healthcare, blended together.</td></tr>
+    <tr><td><b>Environment</b></td><td>Air quality (45%), road noise (35%) and flood risk (20%).</td></tr>
+  </tbody>
+</table>
+
+<h3>Weights: the same numbers, different people</h3>
+<p>A retired couple and a landlord care about different things, so the site offers <b>buyer profiles</b>. Each profile is just a different set of weights over the same five components. "Balanced" is the default. The weights always add up to 100%.</p>
+
+<table class="keep">
+  <thead><tr><th>Profile</th><th class="num">Quiet Skies</th><th class="num">Affordability</th><th class="num">Growth</th><th class="num">Liveability</th><th class="num">Environment</th></tr></thead>
+  <tbody>
+    <tr><td><b>Balanced</b> (default)</td><td class="num">32%</td><td class="num">27%</td><td class="num">0%</td><td class="num">27%</td><td class="num">14%</td></tr>
+    <tr><td>Family</td><td class="num">18%</td><td class="num">18%</td><td class="num">0%</td><td class="num">46%</td><td class="num">18%</td></tr>
+    <tr><td>First-time buyer</td><td class="num">16%</td><td class="num">43%</td><td class="num">0%</td><td class="num">27%</td><td class="num">14%</td></tr>
+    <tr><td>Investor</td><td class="num">9%</td><td class="num">26%</td><td class="num">34%</td><td class="num">17%</td><td class="num">14%</td></tr>
+    <tr><td>Quiet life</td><td class="num">48%</td><td class="num">19%</td><td class="num">0%</td><td class="num">19%</td><td class="num">14%</td></tr>
+    <tr><td>Renter</td><td class="num">26%</td><td class="num">30%</td><td class="num">0%</td><td class="num">30%</td><td class="num">14%</td></tr>
+    <tr><td>Commuter</td><td class="num">21%</td><td class="num">30%</td><td class="num">0%</td><td class="num">35%</td><td class="num">14%</td></tr>
+    <tr><td>Later life</td><td class="num">36%</td><td class="num">14%</td><td class="num">0%</td><td class="num">32%</td><td class="num">18%</td></tr>
+  </tbody>
+</table>
+
+<p>Notice that <b>growth counts for nothing</b> in every profile except Investor. A rising market is good news for a landlord and bad news for a first-time buyer, so it is not a "liveability" quality at all - it is only scored for the one person it helps.</p>
+
+<h3>A worked example: N1 7SX, Balanced</h3>
+<p>7.0 &times; 32% + 1.1 &times; 27% + 3.8 &times; 0% + 7.8 &times; 27% + 5.2 &times; 14% = 2.24 + 0.30 + 0 + 2.11 + 0.73 = <b>5.38, shown as 5.4</b>. The sums are done with the unrounded components and rounded once at the end, so if you redo them from the rounded figures on the screen you can be out by up to a tenth. The methodology page says so, and a check makes sure that bound stays true.</p>
+
+<h3>Three design choices worth knowing</h3>
+<ol class="steps">
+  <li><b>Affordability is national, on a curve.</b> A borough's price is placed between the 5th and 95th percentile of every borough in the country, on a logarithmic scale - which is a way of saying the gap between &pound;150,000 and &pound;300,000 counts the same as the gap between &pound;300,000 and &pound;600,000. Before September 2026 it was compared only within its own city, which made the cheapest borough in a dear city look "affordable" (Barking scored 10) and the dearest in a cheap city look "unaffordable" (Stockton scored 0). Now Barking is 4.4 and Stockton 9.5, which is what the prices actually say.</li>
+  <li><b>Growth is after inflation, and against the whole country.</b> Same reasoning: a city with four boroughs would always have one at the top and one at the bottom, whatever the numbers, so the comparison is national.</li>
+  <li><b>A missing input is left out, not faked.</b> If a borough has no schools figure (Wales) or no flood data (New York), that component is dropped and the other weights are scaled up to fill the gap. The response says which weights were actually used. Nothing is ever filled in with an average and passed off as measured.</li>
+</ol>
+
+<h2 class="part">5 - What happens when a business calls</h2>
+
+<p class="big">The website does the sums itself. A business cannot - its software has no table of numbers - so it asks the API, and the sums are done on Amazon. Same conversation format, different building.</p>
+
+<div class="chat">
+  <div class="msg web"><b>The business's software &rarr; api.skyscore.co.uk</b><span class="q">"Score for SW11 1AA, please. Here is my pass."</span><br><span class="a">The "pass" is an API key - a long code that says who is calling. Sent with every request.</span></div>
+
+  <div class="msg aws"><b>The receptionist (API Gateway)</b><span class="q">"Pass is valid. That's your 4,212th call this month, under the 10,000 free. You're not calling too fast. Sending you to the score worker."</span><br><span class="a">Amazon runs this receptionist. It also refuses calls from a pass that is over its allowance, and slows down anyone hammering the door.</span></div>
+
+  <div class="msg aws"><b>The score worker (a Lambda) &rarr; the index-card box (DynamoDB)</b><span class="q">"The card for SW11 1AA, please."</span><br><span class="a">Back comes: latitude, longitude, and the borough - Wandsworth. 2.7 million cards, one per UK postcode, from the government's own register. This is the API's version of asking postcodes.io.</span></div>
+
+  <div class="msg aws"><b>The score worker &rarr; the noise-readings box</b><span class="q">"Any aircraft-noise reading for SW11 1AA?"</span><br><span class="a">"Yes: measured." The same DEFRA readings the website carries, held here as cards.</span></div>
+
+  <div class="msg aws"><b>The score worker, to itself</b><span class="q">"Wandsworth's row, the noise reading, Balanced weights. Sums. Round once."</span><br><span class="a">The same arithmetic the website does. It comes out at 5.0 for this postcode.</span></div>
+
+  <div class="msg aws"><b>The score worker &rarr; the business</b><span class="q">"Score 5.0. Quiet Skies 6.4, Affordability 0.3, Growth 3.2, Liveability 7.8, Environment 5.6. Weights used: 32/27/0/27/14. Sources: HM Land Registry price index, July 2026; ONS crime; ONS postcode register; DEFRA noise mapping; DfT station register; NHS &hellip; Methodology version 5.2."</span><br><span class="a">Every answer carries its <strong>sources and its version</strong>, because the business's own auditors will ask. The terms require them to pass the sources on to their users too.</span></div>
+</div>
+
+<p>Two things the business gets that the website does not: a machine-readable answer it can store or display anywhere, and a way to ask about many postcodes at once (on the paid plans). One thing it does not get: the four helpers - stations, sales, energy, NHS - which are for the website's panel.</p>
+
+<div class="callout"><b>Why the website and the API must agree.</b> Two copies of the same arithmetic, in two languages, on two machines. Twice in the project's history they disagreed while every input matched - once because the website had never loaded a city's numbers at all. So before any change is saved, a check drives the real website, reads the score it draws for every one of 91 boroughs, and compares it with the API's answer. The score you see and the score a business is charged for are the same number, and that is a checked fact, not a hope.</div>
+
+<h2 class="part">6 - The assistant, and the forty lines</h2>
+
+<p class="big">There is one place AI is used: an assistant on the API that explains a score in a sentence. Here is one question going through it - and the part of Sky Score most worth understanding.</p>
+
+<div class="chat">
+  <div class="msg web"><b>A business &rarr; the assistant ("/v1/chat")</b><span class="q">"Is SW11 1AA quiet?"</span></div>
+
+  <div class="msg aws"><b>The assistant worker &rarr; the score worker</b><span class="q">"Score for SW11 1AA, please."</span><br><span class="a">Asked <strong>directly</strong>, worker to worker, not over the web - so the data it gets is exactly what the API would return, with nothing in between to drift.</span></div>
+
+  <div class="msg ai"><b>The assistant worker &rarr; the AI model (Nova 2 Lite, through Bedrock)</b><span class="q">"Here is the data - the ONLY thing you may use. Here is the question. Explain the numbers. Never state a number that is not in the data."</span><br><span class="a">The model is a small, cheap one. Its whole job is reading numbers back in English. It is allowed about three sentences.</span></div>
+
+  <div class="msg ai"><b>The model &rarr; the assistant worker</b><span class="q">"SW11 1AA is moderately quiet, with a quiet component score of 6.4. Road noise is 73.6 dB, above the WHO guideline of 53 dB."</span></div>
+
+  <div class="msg aws"><b>The forty lines of code (verify_answer)</b><span class="q">"Numbers in the answer: 6.4, 73.6, 53. Numbers in the data: &hellip; 6.4 &hellip; 73.6 &hellip; 53 &hellip; All present. Ship it."</span><br><span class="a">Answer goes back with <strong>grounded: true</strong>.</span></div>
+</div>
+
+<h3>And when the model goes beyond the data</h3>
+<div class="chat">
+  <div class="msg web"><b>A business &rarr; the assistant</b><span class="q">"What is the score out of 100?"</span></div>
+  <div class="msg ai"><b>The model</b><span class="q">"The score is 5.0 out of 10, which is 50 out of 100."</span><br><span class="a">Correct arithmetic.</span></div>
+  <div class="msg aws"><b>The forty lines</b><span class="q">"Numbers in the answer: 5.0, 10, 50, 100. Is 50 in the data? No. Is 100 in the data? No. <strong>Throw the answer away.</strong>"</span><br><span class="a">What goes back instead: "I can't answer that from the data I have for this location," with <strong>grounded: false</strong>, and a line in the logbook naming the refused numbers.</span></div>
+</div>
+
+<p>It just discarded a <em>true</em> answer. That is the cost of a rule that cannot tell a number the model worked out from a number the model made up - and on a service about someone's home, the cost is worth paying. A warning next to a made-up number would still ship the number, and people read the number.</p>
+
+<h3>Why it is built this way</h3>
+<ol class="steps">
+  <li><b>An instruction is not a control.</b> The written instructions to the model say, in capitals, never invent a number. The third real question the assistant ever got was "what will prices be in 2030?" - and the model gave a figure. Instructions are requests. The forty lines are the control.</li>
+  <li><b>It is deliberately dumb.</b> It does not understand the sentence; it only checks that every number in it was handed over. That is why it works with any model and needs no second AI to judge the first. A judge would be another instruction.</li>
+  <li><b>It had three holes, and nobody noticed for five weeks.</b> For a while it ignored every whole number from 0 to 10 - the very scale it exists to protect. Each hole was closed by writing a test that failed first, then fixing the code. Which is the subject of Part 9.</li>
+</ol>
+
+<h2 class="part">7 - The Amazon pieces, and why each one is there</h2>
+
+<p class="big">Sky Score runs on Amazon Web Services (AWS) - Amazon's business of renting out computers and storage by the minute. We rent nine kinds of thing. None of them is a computer that sits switched on all day. Each is described the same way: <b>what it is</b>, in everyday terms; <b>what we use it for</b>; and <b>why</b> this and not something else.</p>
+
+<div class="why"><h3>S3 <small>the filing cabinet</small></h3><dl>
+  <dt>What it is</dt><dd>A place to keep files. You put a file in; it stays there until you take it out.</dd>
+  <dt>What we use it for</dt><dd>Every file the website is made of: the page itself, the map outlines, the table of borough numbers, the noise readings, the station list, and 100 small pages, one per borough.</dd>
+  <dt>Why</dt><dd>A website that is <em>just files</em> is the cheapest and hardest-to-break kind there is. There is no program running to crash. Storing all of it costs pennies a month.</dd>
+</dl></div>
+
+<div class="why"><h3>CloudFront <small>photocopies in every city</small></h3><dl>
+  <dt>What it is</dt><dd>A network of Amazon buildings around the world that each keep a copy of your files. A visitor gets the copy nearest to them.</dd>
+  <dt>What we use it for</dt><dd>Serving skyscore.co.uk. Someone in Manchester gets the page from a copy in the UK, not from the filing cabinet in London every time. It also keeps a copy of the little score badge that other websites can embed.</dd>
+  <dt>Why</dt><dd>Speed and cost: copies close to the visitor arrive faster, and the filing cabinet is bothered less. It also lets us add the security settings every serious website needs, in one place.</dd>
+</dl></div>
+
+<div class="why"><h3>API Gateway <small>the receptionist</small></h3><dl>
+  <dt>What it is</dt><dd>The front desk for the business side. Every request from a business, or from the website's four helpers, comes through here first.</dd>
+  <dt>What we use it for</dt><dd>Checking the caller's pass, counting calls against the free allowance (10,000 a month), slowing anyone who hammers the door, and sending each request to the right worker.</dd>
+  <dt>Why</dt><dd>Because these jobs are boring, important and easy to get wrong. A receptionist that Amazon runs and that never sleeps is better than one I write myself.</dd>
+</dl></div>
+
+<div class="why"><h3>Lambda <small>workers on call - eight of them</small></h3><dl>
+  <dt>What it is</dt><dd>A small program that does not run all the time. It is <em>woken up</em> when there is a job, does the job in a fraction of a second, and goes away again. You pay per job, not per day.</dd>
+  <dt>What we use it for</dt><dd>Eight jobs, one worker each: <b>score</b> (the business API), <b>chat</b> (the assistant), <b>signup</b> (handing out passes), <b>favourites</b> (saved places), and the four helpers the website uses: <b>transport</b>, <b>nhs</b>, <b>sold-prices</b>, <b>epc</b>.</dd>
+  <dt>Why</dt><dd>A normal server is like renting an office 24 hours a day even when nobody is in it. Workers on call cost nothing when nobody is asking, and there is no office to clean, patch or restart. For a service that is quiet most of the time, this is the cheapest way there is.</dd>
+</dl></div>
+
+<div class="why"><h3>DynamoDB <small>the index-card box</small></h3><dl>
+  <dt>What it is</dt><dd>A very fast box of index cards. Give it a card's number and it hands you the card at once, however many cards there are.</dd>
+  <dt>What we use it for</dt><dd>Five boxes. The big one holds 2.7 million cards, one per UK postcode. Another holds the noise reading per postcode. The other three are small: saved places, sign-ups, and sign-ups waiting to be confirmed.</dd>
+  <dt>Why</dt><dd>We only ever ask one question of it: "the card for this postcode, please." We never need to search across cards or add them up. So we do not need a full database with a program running all day - just a fast box, paid for by the lookup.</dd>
+</dl></div>
+
+<div class="why"><h3>Bedrock <small>the door to the AI model</small></h3><dl>
+  <dt>What it is</dt><dd>Amazon's service for talking to AI language models without running one yourself. You send text in, text comes back.</dd>
+  <dt>What we use it for</dt><dd>One thing only: the assistant in Part 6. Only the chat worker is allowed to knock on this door.</dd>
+  <dt>Why</dt><dd>Reading numbers back in English does not need a clever model - a cleverer one invents more fluently, not less. This is also the <em>only</em> piece of Sky Score outside the UK: the model lives in Amazon's Virginia region, so the question and the score numbers travel there. Nothing personal does, and the privacy page says so.</dd>
+</dl></div>
+
+<div class="why"><h3>CloudWatch <small>the logbook</small></h3><dl>
+  <dt>What it is</dt><dd>Every worker writes down what it did. CloudWatch is where those notes go, kept for 30 days.</dd>
+  <dt>What we use it for</dt><dd>Finding out what happened when something goes wrong - and seeing the forty lines catch the model. Each catch is one line, with the numbers that were refused.</dd>
+  <dt>Why</dt><dd>Workers on call leave nothing behind when they finish, so without a logbook there would be no way to look back. Thirty days is enough to investigate and short enough to keep the privacy promise.</dd>
+</dl></div>
+
+<div class="why"><h3>IAM <small>the keys and passes</small></h3><dl>
+  <dt>What it is</dt><dd>Who is allowed to do what. Every worker, and every person, has a written list of what they may touch.</dd>
+  <dt>What we use it for</dt><dd>One "deploy" identity, with one written list, may put new versions in place. Each worker is allowed only what its job needs.</dd>
+  <dt>Why</dt><dd>If something is broken into or goes wrong, the damage is limited to what that one identity was allowed to do. It also means the coding assistant I build with cannot change the live system by accident - going live needs my explicit go-ahead.</dd>
+</dl></div>
+
+<div class="why"><h3>CloudFormation, via "SAM" <small>the blueprint</small></h3><dl>
+  <dt>What it is</dt><dd>A single document that describes every piece above. "Deploying" means telling Amazon: make the real thing match this document.</dd>
+  <dt>What we use it for</dt><dd>Everything on the business side is set up from that one file. Nothing was clicked together by hand and then forgotten.</dd>
+  <dt>Why</dt><dd>A thing set up by hand cannot be rebuilt, reviewed or checked. A blueprint can be read, tested, and put back exactly if something is lost.</dd>
+</dl></div>
+
+<h3>Two things we deliberately do not rent</h3>
+<ol class="steps">
+  <li><b>No always-on computer.</b> There is no server to log into. Every piece above either stores files or wakes up for a job.</li>
+  <li><b>No map service.</b> See Part 1: our own outlines, drawn in the browser.</li>
+</ol>
+
+<h3>What got taken out, and why</h3>
+<p>In March there were five AI features on the website: a chat panel, an automatic AI summary on every postcode, photo analysis, document analysis and a generated report. In May all five were removed in one go. The main reason: an AI summary on top of a carefully checked score adds an answer that varies and is sometimes wrong. The second reason: they were costing about $80&ndash;115 a month in credits. What came back in August is the one narrow assistant in Part 6, for about 25p per thousand questions.</p>
+
+<h2 class="part">8 - How new data gets in</h2>
+
+<p class="big">The numbers on the site are not fetched live from the government. They are computed on my computer, checked, and then published - on a rhythm set by whoever publishes each dataset.</p>
+
+<table class="keep">
+  <thead><tr><th style="width:26%">Dataset</th><th style="width:22%">How often it changes</th><th>What a "roll" involves</th></tr></thead>
+  <tbody>
+    <tr><td>House prices (Land Registry index)</td><td>Monthly, mid-month</td><td>Download the new month; recompute every borough's price and growth; add the month's inflation figure; deploy the API first, then the site, so the two never disagree in between.</td></tr>
+    <tr><td>Postcodes (ONS register)</td><td>Every three months (Feb, May, Aug, Nov)</td><td>Reload the 2.7-million-card box (about an hour), then re-run every script that reads the file, because several of the borough numbers are shares of postcodes. Sky Score reloads when an edition's changes are worth it - the August 2026 one added 5,494 postcodes and moved 72,554 a few metres.</td></tr>
+    <tr><td>Crime (ONS)</td><td>Quarterly</td><td>Download the table; compare every borough's rate against it; update and deploy.</td></tr>
+    <tr><td>Schools (DfE)</td><td>Yearly</td><td>Same pattern. The 2023/24 figures are the last with a "Progress 8" score for some years, because the pandemic removed the baseline tests.</td></tr>
+    <tr><td>Noise and air maps (DEFRA), flood (EA), stations (DfT), GPs (NHS)</td><td>Rarely (noise every five years)</td><td>Re-sample the maps at every postcode; recompute the shares.</td></tr>
+  </tbody>
+</table>
+
+<h3>The four steps of every roll</h3>
+<ol class="steps">
+  <li><b>Download</b> the official file from the publisher.</li>
+  <li><b>Compute</b> each borough's number from it, with a script that is the same every time.</li>
+  <li><b>Check</b>: a second mode of the same script re-derives the published numbers from the source and fails loudly if any has drifted. Several of these checks run before every change is saved, so a stale number cannot slip through.</li>
+  <li><b>Deploy</b>, in a fixed order: the API first (because the site's copy of the numbers must never be ahead of the API's), then the site, then confirm from the live address that what is served matches what was written.</li>
+</ol>
+
+<div class="callout"><b>Why the order matters, with a real example.</b> On 19 September the station list moved out of the page into its own file. Deploying the page first would have put a page that <em>needs</em> the file live before the file existed - every search would have said "station list could not be loaded" for a few minutes. Deploying the file first leaves no gap. The written instructions had it backwards in three places; the comment in the deploy script had it right. Reading the script rather than the notes is what caught it.</div>
+
+<h2 class="part">9 - The 57 checks</h2>
+
+<p class="big">Before any change to Sky Score is saved, a checklist of 57 automatic checks runs. 45 must pass or the change is refused; 12 only warn. I call it "preflight". It takes about a quarter of an hour.</p>
+
+<table class="keep">
+  <thead><tr><th style="width:28%">Kind of check</th><th>What it does, in plain terms</th></tr></thead>
+  <tbody>
+    <tr><td><b>Code tidiness</b></td><td>Reads every file for mistakes a compiler would not catch - an unused name, a misspelt variable.</td></tr>
+    <tr><td><b>Unit tests</b></td><td>Runs hundreds of small tests of the arithmetic: "given these inputs, the score must be 5.4". Includes the ten tests of the forty lines.</td></tr>
+    <tr><td><b>The website, driven by a robot</b></td><td>Opens the real page in a real browser, clicks every city, opens the panels, resizes to phone sizes, and checks nothing is off-screen, covered, or unreadable. Also runs an accessibility scan to the international standard.</td></tr>
+    <tr><td><b>Website equals API</b></td><td>The check from Part 5: 91 boroughs, score on the page versus score from the API.</td></tr>
+    <tr><td><b>Numbers equal their source</b></td><td>The unusual ones. Prices equal Land Registry's. Crime equals ONS's table. Flood equals what the Environment Agency's own service says at sample points. Progress 8 equals DfE's. If a published number has drifted from its source, the change is refused.</td></tr>
+    <tr><td><b>Promises equal reality</b></td><td>The privacy page says logs are kept 30 days; a check asks Amazon and fails if they are not. The documentation's worked example is recomputed against the live API.</td></tr>
+    <tr><td><b>Deployed equals written</b></td><td>134 files on the live site are compared with the versions on disk.</td></tr>
+  </tbody>
+</table>
+
+<h3>The rule that makes the checks worth having</h3>
+<p><b>A check that has never gone red has not been tested.</b> Before a new check is trusted, the thing it guards is broken on purpose, the check is watched turning red, the break is undone, and the check is watched turning green. Only then does it count.</p>
+<p>That rule exists because twelve checks in this project's history turned out to be green for months while checking nothing. Nobody switched them off. One piped its results into a command that always succeeds, so the whole checklist said PASS while running nothing. One scanned only the home page and only for the most severe faults, so every real fault was invisible. One had a minimum of "at least 17 files" the day after the 18th file was added - so it could no longer notice that one file going missing. Each decision was sensible on its own; together they made a check that could not fail. Asking "what would this check <em>miss</em>?" is how they were found.</p>
+
+<h2 class="part">10 - How it was built with a coding assistant</h2>
+
+<p class="big">Most of the code was written over six months with a coding assistant called Claude Code - an AI that reads and writes the project's files under direction. Here is the working arrangement, because it is different from "the AI wrote it".</p>
+
+<ol class="steps">
+  <li><b>I own the judgement; it owns the typing.</b> What to score, what to throw away, what counts as grounded, which datasets are trustworthy - mine. The code that carries those decisions out - mostly its.</li>
+  <li><b>The check comes first.</b> I describe what must be true when the work is done; the assistant makes it true; the check decides whether it is. If we disagree about whether something works, neither of us settles it - the check does.</li>
+  <li><b>It cannot go live on its own.</b> Putting a new version live needs my explicit go-ahead. On one occasion its own safety layer refused a production deploy, and I ran the step myself.</li>
+  <li><b>It keeps notes between sessions, and the notes must record checks, not facts.</b> "The tests pass" is a fact, and it was false the day it was written. "Prove a check can fail before you trust it" is a check, and it is still true. About eighty such notes exist for this project; the useful ones are all of the second kind.</li>
+</ol>
+
+<div class="callout"><b>What this is and isn't.</b> It is not "vibe coding" - accepting whatever comes out. It is closer to directing a very fast, very literal junior who never gets tired and never remembers yesterday unless you write it down. The 57 checks are what make that safe.</div>
+
+<h2 class="part">11 - What it costs, and what it charges</h2>
+
+<h3>What it costs to run</h3>
+<p>Because nothing is switched on until asked, a quiet month costs very little: file storage is pennies, the workers and the index cards are paid per job and per lookup, and the copies-in-every-city are paid per visit. The one figure worth remembering is the assistant: about <b>25p per thousand questions</b>. For contrast, the five AI features removed in May were costing <b>$80&ndash;115 a month</b> at modest traffic - most of it the bigger model they called.</p>
+
+<h3>What it charges</h3>
+<table class="keep">
+  <thead><tr><th style="width:26%">Who</th><th style="width:22%">Price</th><th>What they get</th></tr></thead>
+  <tbody>
+    <tr><td>People using the website or the phone app</td><td>Free</td><td>Everything on the map and in the panel. No account needed.</td></tr>
+    <tr><td>A business trying the API</td><td>Free tier</td><td>10,000 scores a month with a self-issued pass. No batch requests.</td></tr>
+    <tr><td>Professional</td><td>&pound;499 a month</td><td>A much larger allowance and batch requests (many postcodes in one call).</td></tr>
+    <tr><td>Pilot</td><td>&pound;2,500 for 90 days</td><td>Working alongside a first customer to fit the API to their use.</td></tr>
+    <tr><td>Enterprise</td><td>By agreement</td><td>Bulk scoring of whole portfolios, delivered as files.</td></tr>
+  </tbody>
+</table>
+<p>The data underneath is all published under the Open Government Licence, which allows commercial use as long as the source is credited - which is why every API answer carries its sources, and why the terms require customers to pass them on.</p>
+
+<h2 class="part">12 - Privacy, safety and the phone app</h2>
+
+<h3>What leaves your device, and where it goes</h3>
+<ul class="plain">
+  <li><b>On the website</b>: the postcode you typed goes to postcodes.io (to find it) and to the four helpers (for the extras). Nothing else. No account, no cookies; the visit counter is a cookieless one that keeps no personal data.</li>
+  <li><b>Saved places</b> ("favourites") are stored against a random token your device makes up, not a name or an email.</li>
+  <li><b>Through the API</b>: the postcode and the caller's pass. Through the assistant: the question and the score numbers go to the AI model in Virginia - the only thing that leaves the UK - and the answer comes back. Nothing personal is sent, and the model is not allowed to remember anything.</li>
+  <li><b>Logs</b> are kept 30 days, and a check confirms that is really what Amazon is doing.</li>
+  <li><b>Sign-ups</b> for an API pass keep an email address. A stricter "confirm by email first" path is built and switched off until the sending address is verified.</li>
+</ul>
+
+<h3>Keeping the door shut</h3>
+<ul class="plain">
+  <li>Every business request needs a pass; every pass has an allowance; every route has a speed limit, sized from measured traffic.</li>
+  <li>The badge that other websites can embed is an image, not a script, so a portal's own security settings cannot block it and it cannot run anything on their page.</li>
+  <li>Anything typed by a user is checked before it is used - a postcode must look like a postcode, a question is capped at 500 characters.</li>
+</ul>
+
+<h3>The phone app</h3>
+<p>It is the same page, three ways. On the web, as-is. As an "installable" website on Android and iPhone (Add to Home Screen), which also works offline once loaded. And as a native iPhone app on the App Store, which wraps the same page and adds one native feature: a "score where I am" button that uses the phone's location. Web changes go live at once; the App Store version needs a new build and Apple's review, so it is refreshed every few weeks rather than every day. An Android version is built but not yet in the Play Store.</p>
+
+<h2 class="part">13 - How to show Part 2b live in 30 seconds</h2>
+<ol class="steps">
+  <li>Open skyscore.co.uk in Chrome. Press <b>F12</b>. A panel opens: click <b>Network</b> at the top of it, then the <b>Fetch/XHR</b> button so only data requests are shown. Click the small &#128465; icon to empty the list.</li>
+  <li>Type <b>N1 7SX</b> in the search box and press Enter.</li>
+  <li>Watch the list fill: three files, postcodes.io, then the four helpers landing together. Read them out. Then: "and notice there is no request for the score."</li>
+  <li>Tip: drag the panel to the right-hand side (the three dots in its corner &rarr; Dock side) so the map and the list are visible together. Zoom the page to 150% at most on a 1366-wide screen, or it switches to its phone layout.</li>
+</ol>
+
+<h2 class="appendix">Appendix - the nine requests as the browser writes them</h2>
+<p>Captured live on 2026-09-21 while searching SW11 1AA; the same nine appear for any UK postcode.</p>
+<table class="keep">
+  <thead><tr><th style="width:4%">#</th><th style="width:48%">What the browser asked for</th><th>Plain English</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>/data/aircraft-quiet-london.json</code></td><td>London aircraft-noise readings (35,352 postcodes)</td></tr>
+    <tr><td>2</td><td><code>/data/aircraft-quiet-regions.json</code></td><td>the same for seven regional airports (7,339 postcodes)</td></tr>
+    <tr><td>3</td><td><code>/data/stations.json</code></td><td>the station list (1,390 stops, ten cities)</td></tr>
+    <tr><td>4</td><td><code>api.postcodes.io/postcodes/SW111AA/autocomplete</code></td><td>the suggestions as you type</td></tr>
+    <tr><td>5</td><td><code>api.postcodes.io/postcodes/SW111AA</code></td><td>"where is this postcode?"</td></tr>
+    <tr><td>6</td><td><code>/transport?lat=51.464&amp;lon=-0.164</code></td><td>helper 1: stations and line status</td></tr>
+    <tr><td>7</td><td><code>/nhs?lat=51.464&amp;lon=-0.164</code></td><td>helper 2: GPs and clinics nearby</td></tr>
+    <tr><td>8</td><td><code>/sold-prices?postcode=SW11 1AA</code></td><td>helper 3: recent sales</td></tr>
+    <tr><td>9</td><td><code>/epc?postcode=SW11 1AA</code></td><td>helper 4: energy certificates</td></tr>
+  </tbody>
+</table>
+
+<h2>Words used above</h2>
+<dl class="glossary">
+  <dt>Browser</dt><dd>Chrome, Safari, Edge - the program you view websites in. It does more than display pages; it can do sums and ask questions of other computers.</dd>
+  <dt>Request</dt><dd>One question the browser sends over the internet, and the one answer that comes back.</dd>
+  <dt>API</dt><dd>A way for one program to ask another for data, without a person or a screen in between. Sky Score's API: send a postcode, get numbers back.</dd>
+  <dt>API key / pass</dt><dd>A long code that identifies who is calling, so their usage can be counted.</dd>
+  <dt>Component</dt><dd>One of the five marks out of ten (Quiet Skies, Affordability, Growth, Liveability, Environment) that are blended into the score.</dd>
+  <dt>Weights / profile</dt><dd>How much each component counts. A profile is a named set of weights: Balanced, Family, Investor, and so on.</dd>
+  <dt>Percentile</dt><dd>Where a value sits in a line-up. The 95th percentile price is dearer than 95 out of every 100 boroughs.</dd>
+  <dt>Deploy</dt><dd>Put a new version live.</dd>
+  <dt>Roll</dt><dd>Bringing in a new edition of a dataset and recomputing everything that depends on it.</dd>
+  <dt>Check / gate</dt><dd>One of the 57 automatic tests that run before a change is saved. "Red" means it failed; "green" means it passed.</dd>
+  <dt>Region</dt><dd>One of Amazon's clusters of buildings. Sky Score uses London; the AI model is only in Virginia.</dd>
+  <dt>Open Government Licence</dt><dd>The licence most UK public data is published under: free to use, including commercially, if you say where it came from.</dd>
+</dl>
+
+<p class="foot">Sky Score &middot; requests captured live and panel values for N1 7SX read from the live site, 2026-09-21. Weights from the scoring engine; prices from the pricing page; removal figures from the commit of 7 May 2026; data-roll rhythms from the operations runbook. Methodology version 5.2.</p>
+
+</body>
+</html>

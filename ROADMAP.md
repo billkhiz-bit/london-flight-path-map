@@ -1328,12 +1328,9 @@ a decoration briefly, and it has a graceful fallback. **This is the
 `fonts-deploy` rule one surface along** - "runs FIRST in `web-deploy-all`, and
 that ordering is load-bearing" - and the reasoning was already written in the
 Makefile's own `stations.json` comment while the command sat in the opposite
-order in three holders. **`web-deploy-all` still lists `web-deploy` before
-`data-deploy` (Makefile line 480) and carries the same latent hazard**; it is
-benign only while `stations.json` already exists at the origin. Left alone
-deliberately - reordering a dependency line touches a file
-`tests/test_make_runner.py` parses on every preflight, so it wants its own
-change and its own run.
+order in three holders. ~~`web-deploy-all` still lists `web-deploy` before
+`data-deploy`~~ **Reordered 2026-09-25** (`fonts data web pwa ...`) and gated by
+`test_web_deploy_all_ships_data_before_the_page`, proven red on the old line.
 
 **Where this stands after 18 Sep:** the technical backlog was worked
 through (CHANGELOG 2026-09-18): `aircraftQuietCoverage` on `/v1/environment`

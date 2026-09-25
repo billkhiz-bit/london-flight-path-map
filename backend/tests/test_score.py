@@ -426,11 +426,38 @@ class TrendsFeatureTests(unittest.TestCase):
         # beats +6.3% in either.
         self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Trafford (Greater Manchester)')
         self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Trafford (Greater Manchester)')
+        # ...and that "previous" Trafford figure is JULY's: no city outside
+        # London is held at the previous vintage. Audit I-1 (2026-09-25): the
+        # summary called it a change from itself. It must say it stands in.
+        self.assertTrue(m['previousBenchmarks']['strongestGrowthStandIn'])
+        self.assertFalse(m['benchmarks']['strongestGrowthStandIn'])
+        self.assertNotIn('changed from', m['summary'])
+        self.assertIn('cannot say whether that yardstick moved', m['summary'])
         self.assertIn('sterling pool', m['summary'])
         s = body['summary']
         self.assertIn(f"{s['risers']} rose, {s['fallers']} fell", m['summary'])
         self.assertNotIn('Most scores fell', m['summary'])
         self.assertIn('national price band', m['summary'])
+
+    def test_yardstick_sentence_only_claims_a_change_it_measured(self):
+        # CONSTRUCTED cohorts, not live data: London must hold the pool's top
+        # riser for the non-stand-in branches, and live data can stop giving
+        # it that on the next roll (feedback-borrowed-edge-cases-expire).
+        base = app.CITIES['london']['boroughs']
+        a, b = sorted(base)[:2]
+
+        def with_top(name, pct):
+            out = {k: dict(v) for k, v in base.items()}
+            out[name].update(trend=pct, trendReal=pct)
+            return out
+
+        same = app.market_context(with_top(a, 50.0), with_top(a, 50.0))
+        self.assertFalse(same['previousBenchmarks']['strongestGrowthStandIn'])
+        self.assertIn(f'{a} (+50.0%) in both vintages', same['summary'])
+        self.assertNotIn('changed from', same['summary'])
+
+        moved = app.market_context(with_top(b, 60.0), with_top(a, 50.0))
+        self.assertIn(f'changed from {a} (+50.0%) to {b} (+60.0%)', moved['summary'])
 
     def test_market_context_sentence_counts_scores_not_trend(self):
         # The July 2026 shape, constructed: the trend falls while most scores
@@ -3735,6 +3762,23 @@ class BadgeTests(unittest.TestCase):
         # Short cache: an uncovered postcode becomes covered when a city lands,
         # and a day-long cache would go on saying otherwise after it did.
         self.assertIn('max-age=300', res['headers']['Cache-Control'])
+
+    def test_badge_is_script_inert_on_our_own_origin(self):
+        # Served from skyscore.co.uk since 2026-09-17, so an SVG opened as a
+        # document shares the app's origin. Audit M-3, 2026-09-25: the CSP is
+        # what keeps a future escaping regression from becoming script there,
+        # on every branch - the covered one and the error ones.
+        for params in ({'postcode': 'SW11 1AA'}, {'postcode': 'ZZ99 9ZZ'}, None):
+            csp = self._svg(params)['headers'].get('Content-Security-Policy', '')
+            self.assertIn("default-src 'none'", csp, params)
+            self.assertNotIn('script-src', csp, params)
+
+    def test_uncovered_badge_echoes_no_more_than_a_postcode(self):
+        spoof = 'CALL 0800 000 000 FOR A BETTER SCORE'
+        body = self._svg({'postcode': spoof})['body']
+        self.assertIn('Not covered', body)
+        self.assertNotIn('BETTER SCORE', body)
+        self.assertIn(spoof.upper()[: app.BADGE_ECHO_MAX], body)
 
     def test_missing_postcode_is_a_badge_not_a_stack_trace(self):
         res = self._svg(None)

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky Score - talks and write-ups</title>
+<meta name="description" content="Plain-English write-ups handed out at talks about Sky Score: how it works, the 57 checks, and how the coding assistant reaches Amazon.">
+<meta name="robots" content="noindex">
+<style>
+  /* Deliberately plain: no scripts, no external fonts, no em dashes. This page is
+     what the QR code on the talk's end card points at. Deployed by `make
+     talks-deploy`, which syncs this file and the PDFs beside it. */
+  :root { --bg: #fbfaf7; --ink: #15161a; --mid: #5b5e66; --line: #c9ccd3; --box: #ffffff; --accent: #1f4fbf; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141518; --ink: #f2f2f0; --mid: #a9acb4; --line: #4a4d55; --box: #1e2024; --accent: #8ab4ff; }
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 400 18px/1.5 Georgia, "Times New Roman", serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { font: 700 30px/1.15 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sub { color: var(--mid); margin: 0 0 28px; font-family: system-ui, sans-serif; font-size: 16px; }
+  a.doc { display: block; background: var(--box); border: 2px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; margin: 0 0 16px; color: inherit; text-decoration: none; }
+  a.doc:hover, a.doc:focus-visible { border-color: var(--accent); outline: none; }
+  a.doc b { display: block; font: 700 20px/1.25 system-ui, sans-serif; color: var(--accent); }
+  a.doc span { display: block; color: var(--mid); font-size: 16px; margin-top: 6px; }
+  a.doc small { display: block; color: var(--mid); font-family: system-ui, sans-serif; font-size: 13px; margin-top: 8px; }
+  p.pdf { margin: -8px 0 18px 4px; font-family: system-ui, sans-serif; font-size: 15px; }
+  p.pdf a { color: var(--accent); }
+  p.back { margin-top: 32px; font-family: system-ui, sans-serif; font-size: 15px; }
+  p.back a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Talks and write-ups</h1>
+  <p class="sub">Plain-English explanations handed out with talks about Sky Score. Each reads in the browser, with a PDF copy for printing.</p>
+
+  <a class="doc" href="/talks/how-sky-score-works.html">
+    <b>How Sky Score works, in plain English</b>
+    <span>What happens when you type a postcode, where the eight numbers come from, how they become one score, the Amazon pieces and why each is there, the assistant and the forty lines, how new data gets in, the checks, the money, privacy.</span>
+    <small>20 pages, A4. First given out at AI Tinkerers London, 22 September 2026.</small>
+  </a>
+  <p class="pdf"><a href="/talks/how-sky-score-works.pdf">Download How Sky Score works as a PDF (20 pages)</a></p>
+
+  <a class="doc" href="/talks/how-the-checks-work.html">
+    <b>The 57 checks, and how the coding assistant reaches Amazon</b>
+    <span>Every check that runs before a change is saved, one line each; the rule that makes them worth having; and how a coding assistant gets a limited pass to the live system, with five layers of guardrail.</span>
+    <small>10 pages, A4. Companion to the first.</small>
+  </a>
+  <p class="pdf"><a href="/talks/how-the-checks-work.pdf">Download The 57 checks as a PDF (10 pages)</a></p>
+
+  <p class="back"><a href="/">Back to the map</a> &middot; <a href="/api/">The API</a></p>
+</main>
+</body>
+</html>

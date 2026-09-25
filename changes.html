@@ -401,11 +401,20 @@
   function renderMarketContext(m) {
     if (!m) return;
     document.getElementById('market-summary').textContent = m.summary;
+    // `=== true`, never truthiness: a response from before 2026-09-25 lacks
+    // the field, and there the old row is the best available. Where it is
+    // true the "previous" figure is the CURRENT one standing in (only London
+    // holds an earlier vintage), and printing it as "Was" repeated July's
+    // number as May's - audit I-1.
+    const prevBm = m.previousBenchmarks;
+    const was = prevBm.strongestGrowthStandIn === true
+      ? 'Not held: only London has the earlier vintage'
+      : prevBm.strongestGrowthArea + ' (' + signed(prevBm.strongestGrowthTrendPct, '%') + ')';
     const stats = [
       ['Average trend', signed(m.previousMeanTrendPct, '%') + ' → ' + signed(m.meanTrendPct, '%')],
       ['Boroughs with falling prices', m.previousFallingAreas + ' → ' + m.fallingAreas],
       ['Strongest grower', m.benchmarks.strongestGrowthArea + ' (' + signed(m.benchmarks.strongestGrowthTrendPct, '%') + ')'],
-      ['Was', m.previousBenchmarks.strongestGrowthArea + ' (' + signed(m.previousBenchmarks.strongestGrowthTrendPct, '%') + ')'],
+      ['Was', was],
     ];
     document.getElementById('market-stats').innerHTML = stats
       .map(([k, v]) => '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd></div>')

@@ -2325,13 +2325,20 @@
         transition: all 0.15s;
         color: var(--mid);
       }
+      /* --orange-text, not --orange, as TEXT (2026-09-25 audit): "SAVED" is
+         10px and --orange measured 2.49:1 on the sidebar and 2.13:1 on the
+         phone card's --cream. --orange-text over the 5% tint measures
+         4.9-5.6:1 across the panel backgrounds. The BORDER
+         keeps the brand orange: it is decoration beside a text label, not
+         the only cue. No gate reached this state - it exists only after a
+         save - so it was never measured. */
       .fav-btn:hover {
         border-color: var(--orange);
-        color: var(--orange);
+        color: var(--orange-text);
       }
       .fav-btn.saved {
         border-color: var(--orange);
-        color: var(--orange);
+        color: var(--orange-text);
         background: rgba(242, 125, 38, 0.05);
       }
       .fav-btn svg {
@@ -8386,7 +8393,11 @@
       }
       let _stationsPromise = null;
       function ensureStations(capMs) {
-        if (!_stationsPromise) _stationsPromise = hydrateStations();
+        // A FAILED load is not memoised (2026-09-25 audit M-2): one transient
+        // 5xx or offline blip otherwise pinned "unavailable for now" on every
+        // later search until a reload, which the panel's own wording denies.
+        // The next search retries; a load in flight or done is still shared.
+        if (!_stationsPromise || STATIONS_STATE === 'failed') _stationsPromise = hydrateStations();
         if (!capMs) return _stationsPromise;
         return Promise.race([_stationsPromise, new Promise((r) => setTimeout(r, capMs))]);
       }
@@ -9646,8 +9657,16 @@
       // borough not found" for every falsy return, so a stalled network told the
       // user their perfectly valid postcode did not exist. A wrong diagnosis is
       // worse than a vague one: it sends them off to re-type a correct query.
+      // The SAME shape rule as the Lambda's lookup_postcode (audit 2026-09-07):
+      // anything else is inserted into a postcodes.io PATH, so a deep link
+      // carrying '/', '..', '?' or '#' made the browser ask for a different
+      // resource (2026-09-25 audit M-B, the client twin of that server fix).
+      const POSTCODE_SHAPE = /^[A-Z0-9]{1,8}$/;
+
       async function lookupPostcode(postcode, search) {
         const clean = postcode.replace(/\s+/g, '').toUpperCase();
+        // Not a postcode shape: a genuine "not found", never a request.
+        if (!POSTCODE_SHAPE.test(clean)) return { result: null, failure: null };
         const signal = searchSignal(search, SEARCH_TIMEOUT_MS);
         try {
           // Try full postcode first
@@ -10223,12 +10242,27 @@
       // ============================================================
       // PROPERTY LISTINGS (Land Registry + external links)
       // ============================================================
+      // THREE OUTCOMES, NOT TWO (2026-09-25). The Lambda already separates a
+      // postcode with no recorded sales (200, `transactions: []`) from an
+      // upstream it could not ask (5xx). This function folded the first into
+      // null and the second into 'cors-blocked', and the renderer printed ONE
+      // sentence for both - "cannot be loaded directly due to browser security
+      // restrictions" - which was true of neither: the endpoint sends CORS `*`
+      // and had answered 200. Found rehearsing the 22 Sep demo on SW11 1AA, a
+      // station forecourt with no sales. Absence rendered as the wrong cause.
+      //   array         -> rows to render
+      //   'none'        -> measured: Land Registry holds no sale at this postcode
+      //   'unavailable' -> we could not ask (HTTP error, bad body, network)
+      //   null          -> aborted; the caller has moved on and renders nothing
       async function fetchSoldPrices(postcode, signal) {
         try {
           const resp = await fetch(`${API_BASE}/sold-prices?postcode=${encodeURIComponent(postcode)}`, { signal: withDeadline(signal, PANEL_TIMEOUT_MS) });
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           const data = await resp.json();
-          if (!data.transactions || data.transactions.length === 0) return null;
+          // Array.isArray, not truthiness: a missing key is an unreadable
+          // envelope, not an empty one - the Lambda's own I13 distinction.
+          if (!data || !Array.isArray(data.transactions)) throw new Error('unexpected shape');
+          if (data.transactions.length === 0) return 'none';
           return data.transactions.map((t) => ({
             price: t.price,
             date: t.date,
@@ -10238,7 +10272,7 @@
         } catch (e) {
           if (isAbortError(e)) return null;
           console.warn('Sold prices API failed:', e);
-          return 'cors-blocked';
+          return 'unavailable';
         }
       }
 
@@ -10314,7 +10348,7 @@
         return (
           `<a href="${site}/?postcode=${pc}" target="_blank" rel="noopener">` +
           `<img src="${BADGE_BASE}?postcode=${pc}" ` +
-          `width="220" height="64" alt="Sky Score for ${postcode}"></a>`
+          `width="220" height="64" alt="Sky Score for ${escapeHtml(postcode)}"></a>`
         );
       }
 
@@ -10790,7 +10824,7 @@
         const el = document.getElementById(containerId);
         if (!el) return;
         const pc = encodeURIComponent((postcode || '').replace(/\s+/g, '-'));
-        if (soldData === 'cors-blocked' || !soldData) {
+        if (!Array.isArray(soldData)) {
           // BRANCH ON CITY. buildPropertyLinks() has always done this; this
           // function never did, so every NYC visitor whose sold prices failed
           // to load was handed a Rightmove link built from a US ZIP.
@@ -10821,9 +10855,16 @@
         <a class="property-link" href="https://landregistry.data.gov.uk/app/ppd" target="_blank" rel="noopener">
           HM Land Registry Search<span class="link-arrow">&#8599;</span></a>
       </div>`;
+          // Say WHICH absence this is. 'none' is a reading and is worded as
+          // one; anything else is a failure to ask and must not read as
+          // "nothing sold here".
+          const reason =
+            soldData === 'none'
+              ? 'HM Land Registry has no recorded sales at this exact postcode.'
+              : 'Sold prices could not be loaded just now.';
           el.innerHTML = `<p class="info-note" style="margin-top:0;">
-      Sold prices cannot be loaded directly due to browser security restrictions.
-      View sold prices for this area on these official sources:</p>${
+      ${reason}
+      Sold prices for the surrounding area are also published here:</p>${
         currentCity === 'nyc' ? nycLinks : ukLinks
       }`;
           return;
@@ -10916,7 +10957,7 @@
 
       async function fetchAutocomplete(partial) {
         const clean = partial.replace(/\s+/g, '').toUpperCase();
-        if (clean.length < 2) return [];
+        if (clean.length < 2 || !POSTCODE_SHAPE.test(clean)) return [];
         try {
           const resp = await fetch('https://api.postcodes.io/postcodes/' + clean + '/autocomplete');
           const data = await resp.json();

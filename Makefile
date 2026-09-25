@@ -66,6 +66,7 @@ help:
 	@echo "    prototype-deploy    Upload prototype/index.html (Sky Score Radar)"
 	@echo "    meta-deploy         Upload robots.txt, sitemap.xml, .well-known/security.txt"
 	@echo "    area-deploy         Sync the 99 borough pages + area/index.html (rebuild them first)"
+	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta"
 	@echo ""
 	@echo "  iOS (Codemagic-driven)"
@@ -269,9 +270,8 @@ data-deploy:
 	# which the live page fetches a file the origin does not have. Reversed
 	# there is no window at all: the page that is live ignores this file until
 	# the new page lands. Same rule as fonts-deploy running first above, one
-	# surface along. NB web-deploy-all still lists web-deploy before
-	# data-deploy and carries the same latent hazard - benign only while this
-	# file already exists at the origin.
+	# surface along. web-deploy-all follows the same order since 2026-09-25
+	# (it listed web-deploy first until then); test_make_runner.py asserts it.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/stations.json \
 		s3://$(S3_BUCKET)/data/stations.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
@@ -480,15 +480,37 @@ meta-deploy:
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*'
 
+.PHONY: talks-deploy
+talks-deploy:
+	# The plain-English write-ups handed out at talks (AI Tinkerers, 2026-09-22)
+	# and the index page the end-card QR code points at (/talks/). A live file
+	# with no deploy command is how api/index.html once sold the product on
+	# retired claims for months (audit finding 38), so this target exists even
+	# for a handful of files. Each PDF is rendered from the .html beside it by
+	# `node scripts/render_talks_pdfs.mjs` (TAGGED, A4, print media); commit
+	# both and deploy both - since 2026-09-25 the .html IS the primary format,
+	# because an untagged PDF was the only thing /talks/ offered a screen
+	# reader. No --delete: a stale
+	# write-up is a judgement, not a sync error. Standalone on purpose: not a
+	# product surface, so web-deploy-all does not run it and
+	# check_deploy_drift.sh does not compare it.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync talks/ s3://$(S3_BUCKET)/talks/  \
+		--exclude "*" --include "*.pdf" --include "*.html"  \
+		--cache-control "public,max-age=3600" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) --paths '/talks/*'
+
 .PHONY: web-deploy-all
 # Order matters: data-deploy before pwa-deploy, because sw.js precaches the
-# boundary files and cache.addAll() fails atomically on a missing one.
+# boundary files and cache.addAll() fails atomically on a missing one. And
+# data-deploy before web-deploy: the page fetches data/stations.json, so the
+# file must be at the origin before the new page is invalidated (2026-09-25).
 #
 # demo-deploy, prototype-deploy and meta-deploy joined on 2026-08-04. Before
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: fonts-deploy web-deploy data-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy
+web-deploy-all: fonts-deploy data-deploy web-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy
 	@echo "Web + data + PWA + demo + prototype + area + meta deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------
