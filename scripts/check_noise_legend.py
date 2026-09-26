@@ -84,6 +84,21 @@ def check_png(defra):
     for c in sorted(legend - painted):
         fails.append(f'the legend shows {c} and the London overlay never paints it')
     print(f'  offline: {len(painted)} colours painted in {LONDON_PNG.name}, {len(legend)} legend bands')
+    # EVERY OTHER CITY'S PNG (2026-09-26, scripts/build_aircraft_rasters.py).
+    # One direction only: every colour a city paints must be a legend band.
+    # The reverse is a London property - a smaller airport never reaches the
+    # loudest intervals, so "every band painted" would fail on a true map.
+    meta_path = ROOT / 'data' / 'aircraft-noise-rasters.json'
+    if meta_path.exists():
+        for m in json.loads(meta_path.read_text(encoding='utf-8'))['cities'].values():
+            png = ROOT / m['png'].lstrip('/')
+            cim = Image.open(png).convert('RGBA')
+            cc = Counter(hexcolour(p) for p in cim.getdata() if p[3] > 0)
+            ct = sum(cc.values())
+            cp = {c for c, n in cc.items() if n / ct > MIN_SHARE} - DEFRA_INVISIBLE
+            for c in sorted(cp - legend):
+                fails.append(f'{png.name} paints {c} ({cc[c] / ct:.1%} of it) and the legend has no band for it')
+            print(f'  offline: {len(cp)} colours painted in {png.name}, all must be legend bands')
     return fails
 
 

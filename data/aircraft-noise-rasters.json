@@ -1,0 +1,111 @@
+{
+ "source": "https://environment.data.gov.uk/spatialdata/airport-noise-all-metrics-england-round-4/wms layer Airport_Noise_ALL_Lden (DEFRA strategic noise mapping Round 4, 2021 traffic)",
+ "generator": "scripts/build_aircraft_rasters.py --fetch",
+ "cities": {
+  "manchester": {
+   "png": "/data/aircraft-noise-manchester-lden.png",
+   "bbox": {
+    "minLat": 53.14,
+    "minLon": -2.76,
+    "maxLat": 53.72,
+    "maxLon": -1.88
+   },
+   "px": [
+    2048,
+    1350
+   ],
+   "paintedShare": 0.0197,
+   "bytes": 16175
+  },
+  "westmidlands": {
+   "png": "/data/aircraft-noise-westmidlands-lden.png",
+   "bbox": {
+    "minLat": 52.24,
+    "minLon": -2.24,
+    "maxLat": 52.69,
+    "maxLon": -1.39
+   },
+   "px": [
+    2048,
+    1084
+   ],
+   "paintedShare": 0.0156,
+   "bytes": 14990
+  },
+  "westyorkshire": {
+   "png": "/data/aircraft-noise-westyorkshire-lden.png",
+   "bbox": {
+    "minLat": 53.49,
+    "minLon": -2.2,
+    "maxLat": 54.08,
+    "maxLon": -1.17
+   },
+   "px": [
+    2048,
+    1173
+   ],
+   "paintedShare": 0.0038,
+   "bytes": 11842
+  },
+  "merseyside": {
+   "png": "/data/aircraft-noise-merseyside-lden.png",
+   "bbox": {
+    "minLat": 53.12,
+    "minLon": -3.26,
+    "maxLat": 53.73,
+    "maxLon": -2.53
+   },
+   "px": [
+    2048,
+    1711
+   ],
+   "paintedShare": 0.0259,
+   "bytes": 16635
+  },
+  "tyneandwear": {
+   "png": "/data/aircraft-noise-tyneandwear-lden.png",
+   "bbox": {
+    "minLat": 54.77,
+    "minLon": -2.01,
+    "maxLat": 55.25,
+    "maxLon": -1.32
+   },
+   "px": [
+    2048,
+    1425
+   ],
+   "paintedShare": 0.0105,
+   "bytes": 14513
+  },
+  "bristol": {
+   "png": "/data/aircraft-noise-bristol-lden.png",
+   "bbox": {
+    "minLat": 51.17,
+    "minLon": -3.15,
+    "maxLat": 51.71,
+    "maxLon": -2.22
+   },
+   "px": [
+    2048,
+    1189
+   ],
+   "paintedShare": 0.0341,
+   "bytes": 12042
+  },
+  "leicester": {
+   "png": "/data/aircraft-noise-leicester-lden.png",
+   "bbox": {
+    "minLat": 52.36,
+    "minLon": -1.65,
+    "maxLat": 53.04,
+    "maxLon": -0.63
+   },
+   "px": [
+    2048,
+    1365
+   ],
+   "paintedShare": 0.0956,
+   "bytes": 18606
+  }
+ }
+}

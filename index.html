@@ -4087,12 +4087,12 @@
             >
               DEFRA AIRCRAFT NOISE (dB Lden)
             </div>
-            <!-- The five dB bands describe a DEFRA raster. Only London and NYC
-                 ever paint one, so for the other nine cities this scale
-                 described a surface that is not on the map at any zoom -
-                 five confident decibel bands over geometry-derived corridors.
-                 markLayerCoverage() hides it when nothing painted, the same
-                 measured treatment its three sibling layers already had. -->
+            <!-- The dB bands describe a raster. London, New York and, since
+                 2026-09-26, the seven cities DEFRA Round 4 maps paint one
+                 (AIRCRAFT_RASTERS); Teesside and South Yorkshire do not, and
+                 a scale there would describe a surface that is not on the
+                 map. markLayerCoverage() hides it when nothing painted, the
+                 same measured treatment its three sibling layers have. -->
             <div id="legend-noise-scale">
               <!-- Filled by renderNoiseScale() from the city's noiseScale:
                    each publisher's own bands and colours (2026-09-25). -->
@@ -7040,14 +7040,14 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Solihull, Coventry or Dudley) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'BIRMINGHAM FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Birmingham Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7091,14 +7091,14 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Leeds, Bradford or Wakefield) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LEEDS BRADFORD FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Leeds Bradford Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7193,14 +7193,14 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Liverpool, Wirral or Sefton) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LIVERPOOL FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Liverpool John Lennon Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7244,14 +7244,14 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Newcastle, Gateshead or Sunderland) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'NEWCASTLE FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Newcastle Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7307,14 +7307,14 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Leicester, Charnwood or Hinckley and Bosworth) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'EAST MIDLANDS FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around East Midlands Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7417,14 +7417,14 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Bristol, Bath or Weston) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'BRISTOL AIRPORT FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. DEFRA has published a Round 4 surface for this airport; we have not yet sampled it, so the gap is ours and not the regulator's. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Bristol Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7478,7 +7478,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
+          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'MANCHESTER FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -7486,10 +7486,10 @@
           // provenance is explicit that they are an estimate; putting a
           // regulator's name on the legend would contradict it on the one
           // surface a consumer actually reads.
-          legendNoiseTitle: 'ESTIMATED AIRCRAFT NOISE',
+          legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> An <strong>estimate</strong>, not a measurement. Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry, <strong>not sampled from the DEFRA strategic noise maps</strong> that cover London. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; MAN is 0.589 of Heathrow&rsquo;s &mdash; so the bands do not reach as though every airport were the same size. Treat as indicative until DEFRA Round 4 is sampled per postcode for this city.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Manchester Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong> &mdash; MAN is 0.589 of Heathrow&rsquo;s &mdash; so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8644,6 +8644,23 @@
         minLat: 51.1,
         maxLat: 51.78,
       };
+      // Every city's DEFRA aircraft-noise PNG and the box it was rendered for
+      // (2026-09-26). London's was the only one; a reader asked why Manchester
+      // showed "no data other than the approach lines". The box a PNG was
+      // rendered for and the box it is positioned at must be the same numbers,
+      // so this table is generated from data/aircraft-noise-rasters.json.
+      // AIRCRAFT-RASTERS:START (generated by scripts/build_aircraft_rasters.py --write; do not hand-edit)
+      const AIRCRAFT_RASTERS = {
+        london: { url: '/data/aircraft-noise-london-lden.png', bbox: LONDON_AIRCRAFT_BBOX },
+        manchester: { url: '/data/aircraft-noise-manchester-lden.png', bbox: { minLon: -2.76, maxLon: -1.88, minLat: 53.14, maxLat: 53.72 } },
+        westmidlands: { url: '/data/aircraft-noise-westmidlands-lden.png', bbox: { minLon: -2.24, maxLon: -1.39, minLat: 52.24, maxLat: 52.69 } },
+        westyorkshire: { url: '/data/aircraft-noise-westyorkshire-lden.png', bbox: { minLon: -2.2, maxLon: -1.17, minLat: 53.49, maxLat: 54.08 } },
+        merseyside: { url: '/data/aircraft-noise-merseyside-lden.png', bbox: { minLon: -3.26, maxLon: -2.53, minLat: 53.12, maxLat: 53.73 } },
+        tyneandwear: { url: '/data/aircraft-noise-tyneandwear-lden.png', bbox: { minLon: -2.01, maxLon: -1.32, minLat: 54.77, maxLat: 55.25 } },
+        bristol: { url: '/data/aircraft-noise-bristol-lden.png', bbox: { minLon: -3.15, maxLon: -2.22, minLat: 51.17, maxLat: 51.71 } },
+        leicester: { url: '/data/aircraft-noise-leicester-lden.png', bbox: { minLon: -1.65, maxLon: -0.63, minLat: 52.36, maxLat: 53.04 } },
+      };
+      // AIRCRAFT-RASTERS:END
       // 4096 px (visual fix-DEFRA-2): user reported the contour bands were
       // "barely visible" after the fix-DEFRA-1 single-fetch refactor. Root
       // cause: at 2048 px source covering ~50 km wide, each pixel was ~25 m
@@ -9352,8 +9369,10 @@
               markLayerCoverage();
             }
           );
-        } else if (currentCity === 'london') {
-          // LONDON ONLY, and the guard is new (2026-08-11). This branch used to
+        } else if (AIRCRAFT_RASTERS[currentCity]) {
+          // EVERY CITY WITH A DEFRA RASTER since 2026-09-26 (was LONDON ONLY).
+          // The guard below is from 2026-08-11 and still matters: a city must
+          // position ITS OWN PNG at ITS OWN box, which AIRCRAFT_RASTERS keys. This branch used to
           // be a bare `else`, so every non-NYC city fetched
           // /data/aircraft-noise-london-lden.png and positioned it at
           // LONDON_AIRCRAFT_BBOX - projected through the CURRENT city's
@@ -9366,15 +9385,16 @@
           // Idempotent: only fetch on first show / after city switch / after
           // window resize. Per-pan calls hit this guard and return immediately.
           // visual fix-DEFRA-1.
-          if (aircraftRasterLoadedFor === 'london') {
+          const raster = AIRCRAFT_RASTERS[currentCity];
+          if (aircraftRasterLoadedFor === currentCity) {
             // Already REQUESTED - which is not the same as painted, so ask the
             // element whether its image actually arrived rather than assuming
             // it did. `data-loaded` is set in the onload below.
             const doneEl = document.getElementById('defra-aircraft-img');
             aircraftScalePainted = Boolean(doneEl && doneEl.hasAttribute('data-loaded'));
           }
-          if (aircraftRasterLoadedFor !== 'london') {
-            const lb = LONDON_AIRCRAFT_BBOX;
+          if (aircraftRasterLoadedFor !== currentCity) {
+            const lb = raster.bbox;
             // visual fix-DEFRA-5: PNG is now self-hosted on our CloudFront
             // edge instead of fetched from DEFRA's GeoServer on every load.
             // Cuts the visible lag from ~500-1000 ms (WMS render + UK→edge
@@ -9384,7 +9404,7 @@
             // re-running scripts/refresh_aircraft_noise.sh whenever DEFRA
             // publishes a new noise mapping round (currently Round 4 / 2022;
             // Round 5 expected 2027).
-            const url = '/data/aircraft-noise-london-lden.png';
+            const url = raster.url;
             // Position in g-local coordinates by projecting the bbox corners.
             // The SVG zoom transform handles all subsequent pan/zoom natively
             // - no further WMS requests are made.
@@ -9433,7 +9453,7 @@
               // Set at REQUEST time, deliberately: this is the fetch-once
               // guard, not the painted flag, and it is cleared on city switch.
               // Re-assigning the href on every repaint would restart the fetch.
-              aircraftRasterLoadedFor = 'london';
+              aircraftRasterLoadedFor = currentCity;
               // The legend is drawn before the raster finishes loading, so it
               // has to be told again once it has - which is what the onload
               // above now does. This call reflects the not-yet-loaded state.
