@@ -78,6 +78,8 @@ Not customer outreach — enquiries to data providers about licensing terms. Tra
 | Date | Contact | Company | Topic | Channel | Status | Notes / Next action |
 |---|---|---|---|---|---|---|
 | 2026-05-07 | `contact@opensky-network.org` | OpenSky Network | Licensing for live aircraft positions on consumer surface | Email (Ticket #835285) | 🟡 Awaiting reply | Auto-responder received same day. Volunteer non-profit, slow / possibly silent. Chase if no human reply by 2026-06-04 (4 weeks). Draft + ticket info in `OPENSKY_LICENSING_EMAIL.md`. Live-flights feature already removed in commit `6f6ce7d` pending reply. |
+| 2026-09-26 | Tom Paine (`tom@aioue.net`), a user near Norwich | - | SUPPORT, not licensing: "The closest airport is Norwich airport, not Heathrow." Real defect: an uncovered postcode was analysed against the city on screen (reproduced: NR2 1NE told "Nearest airport: Stansted", "low aircraft noise") | Email to support | ✅ **Replied 2026-09-26** ("in the middle of fixing it") | Fix + gate `tests/outside-coverage.mjs` on `ship-v54-and-defra-layer`; also fixed "St. Helens". He may reply asking to hear when Norwich is covered - Norwich is not on EXPANSION.md, promise no date. |
+| 2026-09-26 | CAA ERCD + Heathrow noise team (addresses to confirm) | Civil Aviation Authority / Heathrow Airport | 2024 Lden, Lnight and N65/N60 contours as GIS files + reuse licence (ROADMAP option C; unlocks a normal-year aircraft layer AND the N65 "how often" metric) | Email | 📝 **Drafted, not sent** | Draft at `OneDrive/Desktop/caa-ercd-data-request-2026-09-26.txt`. Quotes the measured understatement (Heathrow 55 dB Lden 148.4 km² in 2024 vs DEFRA 2021's 75.6 km²). Product deliberately unnamed pending the rebrand. |
 
 ---
 

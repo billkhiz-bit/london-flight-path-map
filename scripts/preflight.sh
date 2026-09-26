@@ -244,6 +244,11 @@ check "flight paths == UK AIP"         python scripts/build_flight_paths.py --ch
 # loaded and advertised under a decibel scale; a hand-edited box would slide
 # the contours off their airport. Offline: the PNGs and their JSON are checked in.
 check "aircraft rasters == DEFRA renders" python scripts/build_aircraft_rasters.py --check
+# The COVID-year understatement is PUBLISHED as a measured figure (legend, API
+# page, METHODOLOGY). Every page must quote what data/covid-understatement.json
+# holds, so a re-measurement cannot leave a stale number live. Offline; the
+# DEFRA re-measurement half is INCONCLUSIVE without the gitignored GeoTIFF.
+check "COVID understatement == pages"   python scripts/measure_covid_understatement.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
@@ -599,6 +604,12 @@ check "web/native layout split"       node tests/native-sim-render.mjs
 # borough-score-parity compares SCORES. Both passed while nine UK cities
 # answered an area search with "NYC subway data coming soon".
 check "UK cities get UK panel content" node tests/uk-city-panel.mjs
+# A postcode no city covers must be TOLD so, never analysed against the city on
+# screen (2026-09-26: a user near Norwich was told Heathrow/Stansted was his
+# nearest airport and that aircraft noise was low). Also holds all 86 covered
+# boroughs' postcodes.io spellings to their own city ("St. Helens" did not).
+# postcodes.io is stubbed, so this needs no network.
+check "outside coverage is said, not analysed" node tests/outside-coverage.mjs
 # 99 static area pages are the site's only indexable surface; thin or
 # duplicated ones are worse than none (doorway pages), so this asserts
 # CONTENT and that the sitemap agrees in both directions.

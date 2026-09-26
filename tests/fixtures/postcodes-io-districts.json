@@ -1,0 +1,435 @@
+{
+ "note": "postcodes.io admin_district spelling for one live postcode per borough the SITE covers, and the city it must derive to. Generated 2026-09-26 from NSPL + the postcodes.io bulk endpoint; used by tests/outside-coverage.mjs. postcodes.io wrote \"St. Helens\" where the registry says \"St Helens\", which is how that borough came to be analysed against the wrong city.",
+ "districts": [
+  {
+   "admin_district": "Bath and North East Somerset",
+   "city": "bristol",
+   "postcode": "BA1 0SD"
+  },
+  {
+   "admin_district": "Bristol, City of",
+   "city": "bristol",
+   "postcode": "BS1 1BT"
+  },
+  {
+   "admin_district": "North Somerset",
+   "city": "bristol",
+   "postcode": "BS13 8AD"
+  },
+  {
+   "admin_district": "South Gloucestershire",
+   "city": "bristol",
+   "postcode": "BA1 8AQ"
+  },
+  {
+   "admin_district": "Blaby",
+   "city": "leicester",
+   "postcode": "LE10 3AA"
+  },
+  {
+   "admin_district": "Charnwood",
+   "city": "leicester",
+   "postcode": "LE11 1AB"
+  },
+  {
+   "admin_district": "Harborough",
+   "city": "leicester",
+   "postcode": "LE14 2QX"
+  },
+  {
+   "admin_district": "Hinckley and Bosworth",
+   "city": "leicester",
+   "postcode": "CV10 0RY"
+  },
+  {
+   "admin_district": "Leicester",
+   "city": "leicester",
+   "postcode": "LE1 1AD"
+  },
+  {
+   "admin_district": "Melton",
+   "city": "leicester",
+   "postcode": "LE13 0AA"
+  },
+  {
+   "admin_district": "North West Leicestershire",
+   "city": "leicester",
+   "postcode": "B79 0PJ"
+  },
+  {
+   "admin_district": "Oadby and Wigston",
+   "city": "leicester",
+   "postcode": "LE18 1AA"
+  },
+  {
+   "admin_district": "Barking and Dagenham",
+   "city": "london",
+   "postcode": "IG11 0AA"
+  },
+  {
+   "admin_district": "Barnet",
+   "city": "london",
+   "postcode": "EN4 0NH"
+  },
+  {
+   "admin_district": "Bexley",
+   "city": "london",
+   "postcode": "DA1 3LD"
+  },
+  {
+   "admin_district": "Brent",
+   "city": "london",
+   "postcode": "HA0 1AD"
+  },
+  {
+   "admin_district": "Brent",
+   "city": "london",
+   "postcode": "NW10 5NU"
+  },
+  {
+   "admin_district": "Bromley",
+   "city": "london",
+   "postcode": "BR1 1AA"
+  },
+  {
+   "admin_district": "Camden",
+   "city": "london",
+   "postcode": "EC1M 3HA"
+  },
+  {
+   "admin_district": "City of London",
+   "city": "london",
+   "postcode": "E1 6AN"
+  },
+  {
+   "admin_district": "Croydon",
+   "city": "london",
+   "postcode": "BR3 3BZ"
+  },
+  {
+   "admin_district": "Ealing",
+   "city": "london",
+   "postcode": "HA0 1AX"
+  },
+  {
+   "admin_district": "Enfield",
+   "city": "london",
+   "postcode": "EN1 1AL"
+  },
+  {
+   "admin_district": "Greenwich",
+   "city": "london",
+   "postcode": "BR7 6DN"
+  },
+  {
+   "admin_district": "Hackney",
+   "city": "london",
+   "postcode": "E1 6AW"
+  },
+  {
+   "admin_district": "Hammersmith and Fulham",
+   "city": "london",
+   "postcode": "NW10 4UY"
+  },
+  {
+   "admin_district": "Haringey",
+   "city": "london",
+   "postcode": "N10 1AF"
+  },
+  {
+   "admin_district": "Harrow",
+   "city": "london",
+   "postcode": "HA1 1AA"
+  },
+  {
+   "admin_district": "Havering",
+   "city": "london",
+   "postcode": "CM13 3JA"
+  },
+  {
+   "admin_district": "Hillingdon",
+   "city": "london",
+   "postcode": "HA4 0AA"
+  },
+  {
+   "admin_district": "Hounslow",
+   "city": "london",
+   "postcode": "TW1 1AG"
+  },
+  {
+   "admin_district": "Islington",
+   "city": "london",
+   "postcode": "E8 2BB"
+  },
+  {
+   "admin_district": "Kingston upon Thames",
+   "city": "london",
+   "postcode": "KT1 1AE"
+  },
+  {
+   "admin_district": "Lambeth",
+   "city": "london",
+   "postcode": "CR4 1TL"
+  },
+  {
+   "admin_district": "Lewisham",
+   "city": "london",
+   "postcode": "BR1 4BY"
+  },
+  {
+   "admin_district": "Merton",
+   "city": "london",
+   "postcode": "CR4 1AA"
+  },
+  {
+   "admin_district": "Newham",
+   "city": "london",
+   "postcode": "E12 5AB"
+  },
+  {
+   "admin_district": "Redbridge",
+   "city": "london",
+   "postcode": "E11 1PB"
+  },
+  {
+   "admin_district": "Richmond upon Thames",
+   "city": "london",
+   "postcode": "KT1 4AA"
+  },
+  {
+   "admin_district": "Southwark",
+   "city": "london",
+   "postcode": "SE1 0AB"
+  },
+  {
+   "admin_district": "Sutton",
+   "city": "london",
+   "postcode": "CR0 3AQ"
+  },
+  {
+   "admin_district": "Tower Hamlets",
+   "city": "london",
+   "postcode": "E1 0AA"
+  },
+  {
+   "admin_district": "Waltham Forest",
+   "city": "london",
+   "postcode": "E10 5AB"
+  },
+  {
+   "admin_district": "Wandsworth",
+   "city": "london",
+   "postcode": "SW11 1AD"
+  },
+  {
+   "admin_district": "Westminster",
+   "city": "london",
+   "postcode": "EC4A 2AH"
+  },
+  {
+   "admin_district": "Bolton",
+   "city": "manchester",
+   "postcode": "BL1 1AP"
+  },
+  {
+   "admin_district": "Bury",
+   "city": "manchester",
+   "postcode": "BL0 0AA"
+  },
+  {
+   "admin_district": "Manchester",
+   "city": "manchester",
+   "postcode": "M1 1AD"
+  },
+  {
+   "admin_district": "Oldham",
+   "city": "manchester",
+   "postcode": "M24 1GN"
+  },
+  {
+   "admin_district": "Rochdale",
+   "city": "manchester",
+   "postcode": "BL9 6TR"
+  },
+  {
+   "admin_district": "Salford",
+   "city": "manchester",
+   "postcode": "M27 0AA"
+  },
+  {
+   "admin_district": "Stockport",
+   "city": "manchester",
+   "postcode": "M19 1RR"
+  },
+  {
+   "admin_district": "Tameside",
+   "city": "manchester",
+   "postcode": "M11 4PH"
+  },
+  {
+   "admin_district": "Trafford",
+   "city": "manchester",
+   "postcode": "M15 4AB"
+  },
+  {
+   "admin_district": "Wigan",
+   "city": "manchester",
+   "postcode": "M28 1AA"
+  },
+  {
+   "admin_district": "Knowsley",
+   "city": "merseyside",
+   "postcode": "L10 0AD"
+  },
+  {
+   "admin_district": "Liverpool",
+   "city": "merseyside",
+   "postcode": "L1 0AA"
+  },
+  {
+   "admin_district": "Sefton",
+   "city": "merseyside",
+   "postcode": "L10 1NB"
+  },
+  {
+   "admin_district": "St. Helens",
+   "city": "merseyside",
+   "postcode": "L34 2AA"
+  },
+  {
+   "admin_district": "Wirral",
+   "city": "merseyside",
+   "postcode": "CH41 0AA"
+  },
+  {
+   "admin_district": "Barnsley",
+   "city": "southyorkshire",
+   "postcode": "DN5 7HR"
+  },
+  {
+   "admin_district": "Doncaster",
+   "city": "southyorkshire",
+   "postcode": "DN1 1AF"
+  },
+  {
+   "admin_district": "Rotherham",
+   "city": "southyorkshire",
+   "postcode": "DN11 9PJ"
+  },
+  {
+   "admin_district": "Sheffield",
+   "city": "southyorkshire",
+   "postcode": "S1 1AD"
+  },
+  {
+   "admin_district": "Darlington",
+   "city": "teesside",
+   "postcode": "DL1 1AG"
+  },
+  {
+   "admin_district": "Hartlepool",
+   "city": "teesside",
+   "postcode": "TS22 5BF"
+  },
+  {
+   "admin_district": "Middlesbrough",
+   "city": "teesside",
+   "postcode": "TS1 1AD"
+  },
+  {
+   "admin_district": "Redcar and Cleveland",
+   "city": "teesside",
+   "postcode": "TS10 1AB"
+  },
+  {
+   "admin_district": "Stockton-on-Tees",
+   "city": "teesside",
+   "postcode": "DL2 1HP"
+  },
+  {
+   "admin_district": "Gateshead",
+   "city": "tyneandwear",
+   "postcode": "DH2 1AH"
+  },
+  {
+   "admin_district": "Newcastle upon Tyne",
+   "city": "tyneandwear",
+   "postcode": "NE1 1AE"
+  },
+  {
+   "admin_district": "North Tyneside",
+   "city": "tyneandwear",
+   "postcode": "NE12 5AB"
+  },
+  {
+   "admin_district": "South Tyneside",
+   "city": "tyneandwear",
+   "postcode": "NE10 8YB"
+  },
+  {
+   "admin_district": "Sunderland",
+   "city": "tyneandwear",
+   "postcode": "DH3 1RB"
+  },
+  {
+   "admin_district": "Birmingham",
+   "city": "westmidlands",
+   "postcode": "B1 1BA"
+  },
+  {
+   "admin_district": "Coventry",
+   "city": "westmidlands",
+   "postcode": "CV1 1AH"
+  },
+  {
+   "admin_district": "Dudley",
+   "city": "westmidlands",
+   "postcode": "B62 0AA"
+  },
+  {
+   "admin_district": "Sandwell",
+   "city": "westmidlands",
+   "postcode": "B16 0NA"
+  },
+  {
+   "admin_district": "Solihull",
+   "city": "westmidlands",
+   "postcode": "B14 4LJ"
+  },
+  {
+   "admin_district": "Walsall",
+   "city": "westmidlands",
+   "postcode": "B43 7AJ"
+  },
+  {
+   "admin_district": "Wolverhampton",
+   "city": "westmidlands",
+   "postcode": "DY3 1LT"
+  },
+  {
+   "admin_district": "Bradford",
+   "city": "westyorkshire",
+   "postcode": "BD1 1AF"
+  },
+  {
+   "admin_district": "Calderdale",
+   "city": "westyorkshire",
+   "postcode": "BD13 1LT"
+  },
+  {
+   "admin_district": "Kirklees",
+   "city": "westyorkshire",
+   "postcode": "BD11 2AA"
+  },
+  {
+   "admin_district": "Leeds",
+   "city": "westyorkshire",
+   "postcode": "BD10 0FE"
+  },
+  {
+   "admin_district": "Wakefield",
+   "city": "westyorkshire",
+   "postcode": "DN6 7EW"
+  }
+ ]
+}

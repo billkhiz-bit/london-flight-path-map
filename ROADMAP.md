@@ -684,7 +684,64 @@ PATHS" for "LHR PATHS"). Still open:
 | **Number-above metric (N65 / N70)** alongside Lden | Two readers: Battersea "one plane every 5 mins" and a noise-complaints officer - annoyance lives in how OFTEN, which an energy average hides. The CAA publishes N65 contours for Heathrow; nothing publishes it nationally | methodology decision; measure coverage first |
 | **A newer aircraft yardstick than DEFRA 2021** | "Massive difference between Chiswick and Feltham": DEFRA 2021 (a COVID year) puts W4 2PJ and TW13 4AA 0.5 apart (7.3 vs 7.8), and the raster outranks the geometry, which separates them (4.8 vs 2.8). Candidates: the CAA's annual Heathrow contours (ERCD). The fitted weight must be refitted against whatever replaces it | research first |
 | **DEFRA aircraft layer on the map outside London** - **BUILT on branch `defra-layer-other-cities` (2026-09-26), not deployed** | "No data for Manchester other than the approach lines" - seven per-airport rasters were LOADED for scoring but never PAINTED. `scripts/build_aircraft_rasters.py` renders DEFRA's own layer over each covered city's box (boundary + airport) into `data/aircraft-noise-<city>-lden.png` (11-18 KB each), generates the site's `AIRCRAFT_RASTERS` table from the checked-in JSON, refuses a blank render, and drops a neighbouring airport's contour where the box edge cuts it (Liverpool's tip on Manchester's map). Blocking stage `aircraft rasters == DEFRA renders`, proven red on a blank PNG and on a moved box; `check_noise_legend.py` now also asserts every city PNG paints only legend colours. The seven cities' legend copy said 'runway geometry, NOT DEFRA' - rewritten to say what is drawn, keeping each airport's measured footprint ratio. Teesside is not in Round 4. Ship: `make.py data-deploy web-deploy` (data first - the page references the PNGs). Expect a small `index.html` merge conflict with v5.4 (adjacent registry lines) | done, awaiting deploy |
-| **"Outdoor exposure" in the copy** | A Hounslow resident: with double glazing you hear them only outside. Lden is a facade/outdoor quantity; the labels do not say so | copy only |
+| **"Outdoor exposure" in the copy** - **done on `ship-v54-and-defra-layer` (2026-09-26)** | A Hounslow resident: with double glazing you hear them only outside. Lden is a facade/outdoor quantity; the labels did not say so. Now on the quiet-score line, every legend explainer, the API page and METHODOLOGY | done |
+| **COVID understatement measured** - **done, same branch** | Heathrow 55 dB Lden: DEFRA 2021 **75.6 km²** vs CAA 2024 **148.4 km²** (ERCD 2501 Table 12) - about half. Published as a caveat, never a correction; `scripts/measure_covid_understatement.py --check` is blocking and reds if a page stops quoting the JSON. `CORRIDOR_WEIGHT` marked provisional: it is fitted against the same 2021 map | done |
+
+#### Option C: CAA 2024 contours as the London aircraft layer - the drawbacks, measured 2026-09-26
+
+The CAA's ERCD Report 2501 carries Heathrow's 2024 Lden, Lnight, N65, N70 and N60
+contours, from a normal year (traffic 0.5% below 2019). It is the best available
+fix for the COVID understatement and the only source for N65. What using it
+would actually involve, from inspecting the report rather than assuming:
+
+1. **There is no data, only pictures.** The 41 Appendix B figures are embedded
+   raster images (e.g. 1338x1892 px), not vectors: pdfplumber finds zero curves.
+   Each shows contour LINES, 2024 in black overlaid on 2006 in red, broken by
+   circled dB labels, on a grey Ordnance Survey basemap, with **no coordinate
+   grid**, only a scale bar. Digitising means colour-separating thin lines from
+   a busy basemap, closing broken polygons, assigning levels by nesting, and
+   georeferencing by hand from road junctions. Positional error is unmeasured
+   and likely tens of metres or more, which matters when the product's claim
+   is postcode precision.
+2. **Two licences, neither OGL.** The contours are CAA/airport material (the
+   reports say contours from 2016 are commissioned and published by the
+   airports), and the figure prints "Crown copyright ... Ordnance Survey
+   Licence number 100016105": data digitised from an OS-based figure raises
+   OS derived-data rights too. Every input today is OGL, which is both the
+   product's public-sector pitch and what `terms.html` and the `sources`
+   array promise integrators. A non-OGL input breaks that unless licensed.
+3. **It REMOVES data below 55 dB.** The Lden contours start at 55 dB. Measured
+   on DEFRA's Heathrow raster: **62% of its mapped area (124.2 of 199.8 km²)
+   lies below 55 dB**, which is where most of London's exposure is and where
+   the ramp still grades quiet. Swapping sources would drop those readings
+   back to the geometry estimate; blending the two (2024 above 55, 2021
+   below) puts a model seam exactly at 55 dB.
+4. **Heathrow only, in practice.** ERCD covers Heathrow, Gatwick and Stansted;
+   Gatwick's and Stansted's contours barely reach any borough we score. So
+   London would move to 2024 while every other city stays on 2021, and
+   **cross-city comparisons would reflect vintage, not noise** - the exact
+   incomparability methodology v5.0 was built to remove.
+5. **It would silently re-scale every other city.** The aircraft ladder divides
+   each airport's DEFRA footprint by Heathrow's (`LHR` = 1.000). Doubling
+   Heathrow's footprint from 2024 data while the others stay 2021 would halve
+   every other airport's ratio and make every other city quieter overnight.
+   Footprint scaling would have to stay on DEFRA even if the layer moved.
+6. **Everything downstream re-fits.** The corridor weight, the published
+   estimator error, borough bands, area pages and the quiet validation set
+   are all defined against DEFRA; each would need re-deriving, and a
+   methodology version.
+7. **Annual, manual, and superseded.** A new PDF each August, re-digitised by
+   hand, with no API. DEFRA Round 5 (due 2027, OGL, every airport, a
+   representative year) replaces it for free - so C is likely one to two
+   years of value for the largest piece of work on this list.
+
+**Verdict: do not digitise.** Ask for the GIS files and a licence (drafted:
+`OneDrive/Desktop/caa-ercd-data-request-2026-09-26.txt`, logged in
+OUTREACH_LOG). If they arrive as vectors with reuse rights, points 1 and 2
+disappear and **C-lite** becomes worth doing: draw the 2024 55 dB outline over
+London's map as a labelled "normal-year extent" line, scoring nothing, plus N65
+as a displayed overlay. That answers the Chiswick/Feltham and Battersea
+comments visually without touching points 3-6. Scoring on it waits for Round 5.
 
 ### Audit backlog, 13 Sep 2026 - the 24 Importants, in the order to take them
 

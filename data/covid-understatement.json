@@ -1,0 +1,38 @@
+{
+ "airport": "LHR",
+ "defra": "DEFRA strategic noise mapping Round 4 (2021 traffic), Heathrow Lden coverage, measured by this script",
+ "caa": "CAA ERCD Report 2501 (August 2025), Table 12: Heathrow 2024 Lden contours",
+ "caveat": "Different models and inputs; an order of magnitude for a caveat, never a correction factor.",
+ "rows": [
+  {
+   "lden_db": 55,
+   "defra_2021_km2": 75.6,
+   "caa_2024_km2": 148.4,
+   "ratio": 2.0
+  },
+  {
+   "lden_db": 60,
+   "defra_2021_km2": 30.1,
+   "caa_2024_km2": 60.3,
+   "ratio": 2.0
+  },
+  {
+   "lden_db": 65,
+   "defra_2021_km2": 9.1,
+   "caa_2024_km2": 22.3,
+   "ratio": 2.5
+  },
+  {
+   "lden_db": 70,
+   "defra_2021_km2": 3.2,
+   "caa_2024_km2": 6.7,
+   "ratio": 2.1
+  },
+  {
+   "lden_db": 75,
+   "defra_2021_km2": 1.5,
+   "caa_2024_km2": 2.5,
+   "ratio": 1.7
+  }
+ ]
+}
