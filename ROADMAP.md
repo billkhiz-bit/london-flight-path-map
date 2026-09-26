@@ -626,11 +626,53 @@ add it to `AIRPORTS` + `HOLDERS` in the builder, add markers around that city's
 two constants, `--fetch`, eyeball it over its DEFRA GeoTIFF, `--write`, then
 re-run the fit (the weight is fitted over ALL cities, so it can move).
 
+**SURVEYED 2026-09-26 against AIRAC 2026-09-03 with the builder's own parsers.
+The row this replaced said all nine publish "RNAV SID coding tables, as London
+City"; that was an assumption, and it was false for seven of the nine.**
+
+| Airport | City | Finals (AD 2.12 + 2.19) | Departures source | Verdict |
+|---|---|---|---|---|
+| **BHX** | West Midlands | parses | **RNAV SID coding tables, 8 routes, parse today** | do first |
+| **NCL** | Tyne and Wear | parses | **RNAV SID coding tables, 3 routes (GIRLI), parse today** | do first |
+| MAN | Greater Manchester | **23L has no ILS glide angle in AD 2.19** | conventional SIDs ("RNAV substitution only"), no coding tables | finals now; take 23L's angle from its RNP approach coding table (VPA), never a default |
+| CWL | Cardiff | **12 has no ILS glide angle** | conventional SIDs | finals now; same VPA route for 12 |
+| LBA, LPL, BRS, EMA | W Yorks, Merseyside, Bristol, Leicester + Nottingham | parse | conventional SIDs, no coding tables | finals now |
+| MME | Teesside | parses | **no SIDs published at all** | finals only - that is the true answer, not a gap |
+
+- **Conventional SID chart PDFs do not extract**: pdfplumber returns mirrored,
+  fragmented vector text (tried on MAN). The only route to those six airports'
+  departures is the Heathrow one - geometrise the AD 2.21 noise-route WORDING,
+  quoting each sentence - roughly a day per airport. Do it only if the v5.4 fit
+  shows departure geometry moves the error; busiest first (MAN, then BRS/EMA).
+- **EMA feeds TWO cities** (Leicester and Nottingham); `AIRPORTS[...]['city']` is
+  a single key and must become a list.
+- **Every one of these cities today carries two runway-centreline "Approach"
+  lines and no departures**, and Manchester draws one pair for two runways, so
+  AIP finals alone are a real correction. Plan: **v5.4** = AIP finals for all
+  nine + coding-table departures for BHX and NCL + refit `CORRIDOR_WEIGHT` +
+  area-page rebuild; conventional-SID airports after, one at a time.
+
 | Airport | City | Departures source | Note |
 |---|---|---|---|
-| MAN, BHX, LBA, LPL, NCL, BRS, EMA, CWL, MME | their cities | RNAV SID coding tables, as London City | parser should mostly just work; each title reads slightly differently |
 | LGW, LTN, STN | London | coding tables | London carries NO corridor for them today (removed 2026-05-07); adding one moves outer-London scores, so decide per airport after the fit |
 | JFK, LGA, EWR | New York | FAA charts, not the UK AIP | out of scope; no DEFRA-equivalent measurement to fit against |
+
+### From the first public feedback (r/dataisbeautiful, 2026-09-25/26)
+
+Triaged against the code on 2026-09-26. **Shipped the same day**: AIP-derived
+London paths (nebber: "look up the SIDs... nobody turns that early"); the
+selected borough drawn as an OUTLINE, not a black fill (18 upvotes: "having a
+selected area all black really gets in the way"); heliports drawn by their scored
+traffic tier with place-name labels and a two-row legend (King's vs Battersea;
+"What's King? What's BHL?"); London's legend naming the lines ("HEATHROW FLIGHT
+PATHS" for "LHR PATHS"). Still open:
+
+| Item | Why | Size |
+|---|---|---|
+| **Number-above metric (N65 / N70)** alongside Lden | Two readers: Battersea "one plane every 5 mins" and a noise-complaints officer - annoyance lives in how OFTEN, which an energy average hides. The CAA publishes N65 contours for Heathrow; nothing publishes it nationally | methodology decision; measure coverage first |
+| **A newer aircraft yardstick than DEFRA 2021** | "Massive difference between Chiswick and Feltham": DEFRA 2021 (a COVID year) puts W4 2PJ and TW13 4AA 0.5 apart (7.3 vs 7.8), and the raster outranks the geometry, which separates them (4.8 vs 2.8). Candidates: the CAA's annual Heathrow contours (ERCD). The fitted weight must be refitted against whatever replaces it | research first |
+| **DEFRA aircraft layer on the map outside London** | "No data for Manchester other than the approach lines" - seven per-airport rasters are LOADED for scoring but never PAINTED | frontend + data-deploy |
+| **"Outdoor exposure" in the copy** | A Hounslow resident: with double glazing you hear them only outside. Lden is a facade/outdoor quantity; the labels do not say so | copy only |
 
 ### Audit backlog, 13 Sep 2026 - the 24 Importants, in the order to take them
 

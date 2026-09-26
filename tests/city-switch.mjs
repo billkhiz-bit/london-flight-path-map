@@ -258,9 +258,9 @@ for (const vp of VIEWPORTS) {
 // where it is guaranteed is the honest bar. Recorded as an open finding.
 console.log('\n--- area-page deep links ---');
 {
-  // Desktop: panel AND map selection. `dark === 1` is the load-bearing part -
-  // a score row only proves a panel rendered, where a dark outline proves the
-  // MAP selection happened.
+  // Desktop: panel AND map selection. `dark === 1` (one drawn outline) is the
+  // load-bearing part - a score row only proves a panel rendered, where the
+  // outline proves the MAP selection happened.
   const { context: dCtx, pg: dPage } = await openAt({ width: 1440, height: 900, label: 'desktop' });
   for (const [query, borough] of [
     ['?city=london&borough=Camden', 'Camden'],
@@ -274,13 +274,18 @@ console.log('\n--- area-page deep links ---');
       const r = await dPage.evaluate(() => ({
         rows: document.querySelectorAll('#sidebar-content .score-breakdown .score-row').length,
         text: (document.querySelector('#sidebar-content')?.innerText || '').replace(/\s+/g, ' '),
-        dark: document.querySelectorAll('path.borough[fill="#141414"]').length,
+        // The selection is an OUTLINE since 2026-09-26: count the drawn outline,
+        // and fail any borough still FILLED black - the Reddit complaint that
+        // replaced the fill ("having a selected area all black really gets in
+        // the way") must not come back through a re-render path.
+        dark: document.querySelectorAll('.layer-selection path').length,
+        blackFill: document.querySelectorAll('path.borough[fill="#141414"]').length,
       }));
       const ok = borough
-        ? r.rows > 0 && r.dark === 1 && r.text.includes(borough)
+        ? r.rows > 0 && r.dark === 1 && r.blackFill === 0 && r.text.includes(borough)
         : r.rows === 0 && /Search by area/.test(r.text);
       if (!ok) fail++;
-      console.log(`  ${ok ? 'ok  ' : 'FAIL'} desktop ${query.padEnd(44)} rows=${r.rows} selected=${r.dark}`);
+      console.log(`  ${ok ? 'ok  ' : 'FAIL'} desktop ${query.padEnd(44)} rows=${r.rows} selected=${r.dark} blackFill=${r.blackFill}`);
     } catch (e) {
       fail++;
       console.log(`  FAIL desktop ${query.padEnd(44)} ${e.message.split('\n')[0]}`);

@@ -4059,18 +4059,25 @@
           </button>
           <div class="legend-row">
             <div class="legend-line" style="border-color: var(--orange)"></div>
-            <span id="legend-path1">LHR PATHS</span>
+            <span id="legend-path1">HEATHROW FLIGHT PATHS</span>
           </div>
           <div class="legend-row">
             <div class="legend-line" style="border-color: var(--blue)"></div>
-            <span id="legend-path2">LCY PATHS</span>
+            <span id="legend-path2">LONDON CITY FLIGHT PATHS</span>
           </div>
           <div class="legend-row" id="legend-heli-row">
             <div
               class="legend-dot"
               style="background: #9333ea; width: 6px; height: 6px; transform: rotate(45deg); border-radius: 0"
             ></div>
-            <span>HELIPORT</span>
+            <span>HELIPORT / AIRFIELD</span>
+          </div>
+          <div class="legend-row" id="legend-hems-row">
+            <div
+              class="legend-dot"
+              style="background: #fafaf9; border: 1px solid #9333ea; width: 4px; height: 4px; transform: rotate(45deg); border-radius: 0"
+            ></div>
+            <span>AIR AMBULANCE PAD</span>
           </div>
           <div id="legend-aircraft-group">
             <div
@@ -6368,6 +6375,7 @@
       const HELIPORTS = [
         {
           code: 'BHL',
+          label: 'Battersea',
           name: 'London Heliport (Battersea)',
           coords: [-0.178, 51.47],
           movementsPerYear: 12000,
@@ -6377,6 +6385,7 @@
         },
         {
           code: 'ELS',
+          label: 'Elstree',
           name: 'Elstree Aerodrome',
           coords: [-0.3258, 51.6558],
           movementsPerYear: 12367,
@@ -6386,6 +6395,7 @@
         },
         {
           code: 'DEN',
+          label: 'Denham',
           name: 'Denham Aerodrome',
           coords: [-0.5133, 51.5789],
           movementsPerYear: null,
@@ -6396,6 +6406,7 @@
         },
         {
           code: 'HEMS',
+          label: 'Royal London',
           name: 'Royal London Hospital Helipad',
           coords: [-0.0593, 51.5178],
           movementsPerYear: 1600,
@@ -6406,6 +6417,7 @@
         },
         {
           code: 'KING',
+          label: "King's",
           name: "King's College Hosp Helipad",
           coords: [-0.0941, 51.4688],
           movementsPerYear: 800,
@@ -6943,8 +6955,8 @@
           emptyStateHint:
             'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.',
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
-          legendPath1: 'LHR PATHS',
-          legendPath2: 'LCY PATHS',
+          legendPath1: 'HEATHROW FLIGHT PATHS',
+          legendPath2: 'LONDON CITY FLIGHT PATHS',
           legendHeli: true,
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
@@ -11062,11 +11074,7 @@
             const borData = matchBorough(analysis.borough);
             if (borData) {
               selectedBorough = borData.name;
-              g.selectAll('path.borough').attr('fill', (d) => {
-                const n = getName(d);
-                const m = matchBorough(n);
-                return m && m.name === selectedBorough ? '#141414' : '#E4E3E0';
-              });
+              paintBoroughSelection();
               g.selectAll('.noise-overlay').remove();
               const activeBorFeatures = cityOf(currentCity).features();
               const feature = activeBorFeatures.find((f) => {
@@ -11127,11 +11135,7 @@
 
         if (boroughData) {
           selectedBorough = boroughData.name;
-          g.selectAll('path.borough').attr('fill', (d) => {
-            const n = getName(d);
-            const m = matchBorough(n);
-            return m && m.name === selectedBorough ? '#141414' : '#E4E3E0';
-          });
+          paintBoroughSelection();
           g.selectAll('.noise-overlay').remove();
           const pcBorFeatures = cityOf(currentCity).features();
           const feature = pcBorFeatures.find((f) => {
@@ -11153,6 +11157,42 @@
       // ============================================================
       // RENDER FUNCTIONS
       // ============================================================
+      // ONE HOLDER FOR HOW A SELECTED BOROUGH IS DRAWN (2026-09-26). It was a
+      // solid #141414 fill, written out in seven places in two dialects, and a
+      // Reddit reply named the result: on a colour-coded noise map the selected
+      // borough was the one area you could not read, because every overlay drew
+      // over near-black. It is now an OUTLINE in its own layer, above the fills
+      // and below the labels, so whatever is painted inside stays visible.
+      // tests/city-switch.mjs asserts the drawn outline, and that no borough is
+      // filled black.
+      const BOROUGH_FILL = '#E4E3E0';
+      function isSelectedFeature(d) {
+        const n = getName(d);
+        const m = matchBorough(n);
+        return (m && m.name === selectedBorough) || n === selectedBorough;
+      }
+      function paintBoroughSelection() {
+        g.selectAll('path.borough').attr('fill', BOROUGH_FILL);
+        g.selectAll('.layer-selection').remove();
+        const picked = g.selectAll('path.borough').filter(isSelectedFeature);
+        if (picked.empty()) return;
+        // Above every fill layer and the flight paths, below the airport
+        // markers and the labels. With neither drawn yet (mid-render) it
+        // appends, and renderLabels() repaints once the stack is complete.
+        const sg = g
+          .insert('g', () => g.node().querySelector(':scope > .layer-airports, :scope > .layer-labels'))
+          .attr('class', 'layer-selection')
+          .style('pointer-events', 'none');
+        picked.each(function () {
+          sg.append('path')
+            .attr('d', this.getAttribute('d'))
+            .attr('fill', 'none')
+            .attr('stroke', '#141414')
+            .attr('stroke-width', 2.5)
+            .attr('stroke-linejoin', 'round');
+        });
+      }
+
       function renderBoroughs() {
         const bg = g.append('g').attr('class', 'layer-boroughs');
         bg.selectAll('path.borough')
@@ -11170,36 +11210,20 @@
           // borough record), so a city whose GeoJSON spells a borough
           // differently never matched here. Both forms are accepted, exactly as
           // the sibling handler does it.
-          .attr('fill', (d) => {
-            const n = getName(d);
-            const m = matchBorough(n);
-            return (m && m.name === selectedBorough) || n === selectedBorough
-              ? '#141414'
-              : '#E4E3E0';
-          })
+          .attr('fill', BOROUGH_FILL)
           .attr('stroke', '#141414')
           .attr('stroke-width', 0.5)
           .on('mouseover', function (e, d) {
-            const n = getName(d);
-            if (n !== selectedBorough) d3.select(this).attr('fill', '#C8C7C4');
+            if (!isSelectedFeature(d)) d3.select(this).attr('fill', '#C8C7C4');
           })
-          .on('mouseout', function (e, d) {
-            const n = getName(d);
-            const m = matchBorough(n);
-            d3.select(this).attr(
-              'fill',
-              (m && m.name === selectedBorough) || n === selectedBorough ? '#141414' : '#E4E3E0'
-            );
+          .on('mouseout', function () {
+            d3.select(this).attr('fill', BOROUGH_FILL);
           })
           .on('click', function (e, d) {
             const n = getName(d);
             const data = matchBorough(n);
             selectedBorough = data ? data.name : n;
-            g.selectAll('path.borough').attr('fill', (dd) => {
-              const nn = getName(dd);
-              const mm = matchBorough(nn);
-              return (mm && mm.name === selectedBorough) || nn === selectedBorough ? '#141414' : '#E4E3E0';
-            });
+            paintBoroughSelection();
             g.selectAll('.noise-overlay').remove();
             if (data) {
               renderNoiseOverlay(d);
@@ -11506,6 +11530,8 @@
             .attr('opacity', 0.9)
             .style('pointer-events', 'none');
         });
+        // The last layer every render path draws, so the stack is complete.
+        paintBoroughSelection();
       }
 
       function renderNoiseOverlay(feature) {
@@ -13190,8 +13216,10 @@
 
         set('legend-path1', cfg.legendPath1);
         set('legend-path2', cfg.legendPath2);
-        const heli = document.getElementById('legend-heli-row');
-        if (heli) heli.style.display = cfg.legendHeli ? '' : 'none';
+        for (const id of ['legend-heli-row', 'legend-hems-row']) {
+          const row = document.getElementById(id);
+          if (row) row.style.display = cfg.legendHeli ? '' : 'none';
+        }
 
         set('legend-noise-title', cfg.legendNoiseTitle);
         renderNoiseScale(cfg.noiseScale);
@@ -13355,24 +13383,21 @@
           .append('path')
           .attr('class', 'borough')
           .attr('d', pathGenerator)
-          .attr('fill', '#E4E3E0')
+          .attr('fill', BOROUGH_FILL)
           .attr('stroke', '#141414')
           .attr('stroke-width', 0.5)
-          .on('mouseover', function () {
-            d3.select(this).attr('fill', '#C8C7C4');
+          .on('mouseover', function (e, d) {
+            if (!isSelectedFeature(d)) d3.select(this).attr('fill', '#C8C7C4');
           })
-          .on('mouseout', function (e, d) {
-            const n = d.properties.name;
-            d3.select(this).attr('fill', n === selectedBorough ? '#141414' : '#E4E3E0');
+          .on('mouseout', function () {
+            d3.select(this).attr('fill', BOROUGH_FILL);
           })
           .on('click', function (e, d) {
             const n = d.properties.name;
             const data = nycData[n];
             if (!data) return;
             selectedBorough = n;
-            g.selectAll('path.borough').attr('fill', (dd) =>
-              dd.properties.name === selectedBorough ? '#141414' : '#E4E3E0'
-            );
+            paintBoroughSelection();
             updateSidebar({ name: n, ...data });
           });
       }
@@ -13495,22 +13520,34 @@
             .attr('stroke-width', 3)
             .attr('paint-order', 'stroke');
         });
+        // DRAWN BY TRAFFIC TIER (2026-09-26). The score already weights an
+        // air-ambulance pad (~800-1,600 movements a year) a band below a
+        // commercial heliport (~12,000) - `bands` - but the map drew all five
+        // identically and labelled them with bare codes, so a Reddit reader
+        // asked "What's King? What's BHL?" and another pointed out that King's
+        // sees far less traffic than Battersea. The tier is read from `bands`,
+        // the scored quantity, so the drawing cannot disagree with the score.
         helis.forEach((hp) => {
           const [x, y] = projection(hp.coords);
-          ag.append('rect')
-            .attr('x', x - 3)
-            .attr('y', y - 3)
-            .attr('width', 6)
-            .attr('height', 6)
-            .attr('fill', '#9333ea')
-            .attr('stroke', '#FAFAF9')
-            .attr('stroke-width', 0.5)
+          const busy = hp.bands[0] >= 2;
+          const r = busy ? 3 : 2.2;
+          const mk = ag
+            .append('rect')
+            .attr('x', x - r)
+            .attr('y', y - r)
+            .attr('width', r * 2)
+            .attr('height', r * 2)
+            .attr('fill', busy ? '#9333ea' : '#FAFAF9')
+            .attr('stroke', busy ? '#FAFAF9' : '#9333ea')
+            .attr('stroke-width', busy ? 0.5 : 1)
             .attr('transform', 'rotate(45,' + x + ',' + y + ')');
+          const moves = hp.movementsPerYear ? ', about ' + hp.movementsPerYear.toLocaleString('en-GB') + ' movements a year' : '';
+          mk.append('title').text(hp.name + moves);
           ag.append('text')
             .attr('class', 'heliport-label')
             .attr('x', x + 6)
             .attr('y', y + 3)
-            .text(hp.code)
+            .text(hp.label.toUpperCase())
             .attr('font-size', '7px')
             .attr('font-family', 'var(--font-mono)')
             .attr('font-weight', '500')
@@ -13873,11 +13910,7 @@
         const activeBD = getActiveBoroughData();
         const data = activeBD[name];
         if (!data) return;
-        g.selectAll('path.borough').attr('fill', (d) => {
-          const n = getName(d);
-          const m = matchBorough(n);
-          return m && m.name === selectedBorough ? '#141414' : '#E4E3E0';
-        });
+        paintBoroughSelection();
         g.selectAll('.noise-overlay').remove();
         const activeBorFeatures = cityOf(currentCity).features();
         const feature = activeBorFeatures.find((f) => {

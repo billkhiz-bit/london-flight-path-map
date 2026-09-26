@@ -6,7 +6,30 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-09-26) - METHODOLOGY v5.3 IS BUILT, UNCOMMITTED, AND ONE GATE IS RED.**
+**WHERE TO START (2026-09-26, evening) - v5.3 IS DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+Master `236657f`. Backend first, via a REVIEWED changeset: the classifier refused
+a blind `sam deploy` ("Blind Apply"), so the changeset was created with
+`--no-execute-changeset`, described (ScoreFunction `Code` the only direct change;
+ChatFunctionRole, ChatFunction and the API were `Dynamic` re-evaluations caused
+by `ScoreFunction.Arn`, no replacement), then executed. **Use that route for
+every SAM deploy from Claude's session.** Then `make.py data-deploy web-deploy
+demo-deploy`, three invalidations completed. Live `/v1/score` serves 5.3; drift
+134/134, area pages 99/99, site == /v1/score 6/6. The red `map fits its box` was
+the gate unioning corridor tails with geography - corridors are measured apart
+now (runway end on screen, tail may leave). **Score sanity then went red on
+UB9 6JH (Harefield)**: 4.0 -> 8.0 because v5.3 deleted the hand-drawn Bovingdon
+line it sat 0.9 km from; it is outside DEFRA's Heathrow extent entirely. Bill
+chose to retarget the probe (`BAND_TEST_EXEMPT` + its own assertion, 3a).
+
+**Same evening, a Reddit-feedback wave (see ROADMAP "From the first public
+feedback")**: selected borough is an OUTLINE via one holder,
+`paintBoroughSelection()` (was a #141414 fill in seven places); heliports drawn
+by scored tier with place names and a two-row legend; London legend names the
+lines. Whether it is committed and deployed: check `git log` and
+`check_deploy_drift.sh` - do not trust this sentence. **Next: v5.4** (ROADMAP
+phase 2 - AIP finals for nine airports, BHX + NCL coding-table departures).
+
+**PREVIOUS WHERE TO START (2026-09-26, morning) - v5.3 built, uncommitted, one gate red (all resolved above).**
 London's flight-path corridors are now generated from the UK AIP and the
 corridor penalty is fitted against DEFRA (full write-up: METHODOLOGY s4.5 and
 the 2026-09-26 changelog entry; CLAUDE.md block "LONDON'S FLIGHT PATHS ARE

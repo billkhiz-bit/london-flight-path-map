@@ -55,6 +55,21 @@ DEFAULT_BASE = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'
 # exactly the failure this replaced.
 DEFAULT_KEY = None
 
+# Probes the borough-band test in section 3 must NOT judge, each with its reason.
+# A band is a borough label; these postcodes sit where the borough's airport
+# does not reach, so the label contradicting them is the product working.
+#
+# UB9 6JH (2026-09-26, v5.3): Hillingdon is 'severe' because Heathrow is in it,
+# but Harefield is outside the extent of DEFRA's Heathrow noise map altogether.
+# It read 4.0 until v5.3 only because it sat 0.9 km from a HAND-DRAWN
+# "Bovingdon Stack" line - one of the invented stack-to-runway lines a Reddit
+# reply called out. The nearest published route is now 7.1 km away and it
+# scores 8.0, correctly. It was chosen for Denham aerodrome, so section 3a
+# asserts that instead. Do not add a probe here without its own assertion.
+BAND_TEST_EXEMPT = {
+    'UB9 6JH': 'outside DEFRA Heathrow extent; probe exists for Denham (3a)',
+}
+
 # A spread chosen to span the noise gradient, not a convenience sample. Includes
 # the airport itself, the approach corridor, inner and outer London.
 PROBES = [
@@ -384,6 +399,8 @@ def main():
         # section 2 above still holds raster-resolved Heathrow to <= 3.0.
         if (ctx.get('quietResolution') or '') == 'raster':
             continue
+        if pc in BAND_TEST_EXEMPT:
+            continue
 
         if band == 'severe' and q > 5.0:
             contradictions.append(f'{pc}: band=severe but quiet={q}')
@@ -391,6 +408,16 @@ def main():
             contradictions.append(f'{pc}: band=low but quiet={q}')
     check('noiseImpactBand agrees with quiet', not contradictions,
           '; '.join(contradictions))
+
+    # 3a. What each band-exempt probe was chosen for, asserted instead. Harefield
+    #     is ~3.7 km from Denham aerodrome, so the rotary term must still reach
+    #     it: a silent 10.0 there would mean that term had stopped applying.
+    loud_enough = [f'{pc}: quiet={(b.get("components") or {}).get("quiet")}'
+                   for pc, _, b in rows if pc in BAND_TEST_EXEMPT
+                   and not ((b.get('components') or {}).get('quiet', 10.0) < 10.0)]
+    missing = sorted(set(BAND_TEST_EXEMPT) - {pc for pc, _, _ in rows})
+    check('band-exempt probes keep their own check', not loud_enough and not missing,
+          '; '.join(loud_enough + [f'{pc}: not probed' for pc in missing]))
 
     # 4. A defaulted component must never present as a measurement. This is what
     #    liveResolution was added for; assert it actually means something.
