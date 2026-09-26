@@ -13404,8 +13404,13 @@
           // Audit visual fix-3: stroke at 1.5/2.25 px @ 0.7 opacity (was
           // 1/1.5 px @ 0.5) - visible over hi-DPI basemap + DEFRA raster.
           // Solid line (no dasharray) reads as "corridor" not "draft".
+          // data-flight names which END is the runway (coordinates run in the
+          // order flown: an arrival ends there, a departure starts there), so
+          // tests/map-fit.mjs can hold that end on screen while letting the
+          // outer tail leave the frame, as the published routes do.
           pg.append('path')
             .attr('d', line(lineData))
+            .attr('data-flight', fp.type)
             .attr('fill', 'none')
             .attr('stroke', color)
             .attr('stroke-width', fp.freq === 'high' ? 2.25 : 1.5)

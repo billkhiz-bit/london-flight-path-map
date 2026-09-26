@@ -90,13 +90,26 @@ function measure() {
   const svg = document.getElementById('map-svg');
   if (!svg) return { error: 'no #map-svg' };
   const box = svg.getBoundingClientRect();
-  const drawn = [...svg.querySelectorAll('path')].filter((p) => {
+  const visible = (p) => {
     try {
       return p.getBBox().width > 0;
     } catch {
       return false;
     }
+  };
+  // CORRIDORS ARE NOT GEOGRAPHY (v5.3, 2026-09-26). Since the London corridors
+  // were derived from the UK AIP, departures run 20 km along track and leave
+  // the frame to the west, exactly as the aircraft do - and this union counted
+  // that as the map spilling (13-18 px at desktop widths) while every borough
+  // fitted. They are measured separately below under their own rule.
+  const corridorEls = [...svg.querySelectorAll('path[data-flight]')].filter(visible);
+  const corridors = corridorEls.map((p) => {
+    const len = p.getTotalLength();
+    const a = p.getPointAtLength(0);
+    const z = p.getPointAtLength(len);
+    return { type: p.getAttribute('data-flight'), start: [a.x, a.y], end: [z.x, z.y], len };
   });
+  const drawn = [...svg.querySelectorAll('path:not([data-flight])')].filter(visible);
   if (!drawn.length) return { error: 'no geography drawn' };
   let x0 = Infinity;
   let y0 = Infinity;
@@ -114,6 +127,7 @@ function measure() {
     boxH: box.height,
     geoW: x1 - x0,
     geoH: y1 - y0,
+    corridors,
     over: {
       left: Math.max(0, -x0),
       right: Math.max(0, x1 - box.width),
@@ -123,9 +137,36 @@ function measure() {
   };
 }
 
+// What a corridor owes the viewer. `c` is one drawn flight path:
+//   { type: 'arrival' | 'departure', start: [x, y], end: [x, y], len }
+// in the SVG's user space, the same space as boxW x boxH. Coordinates run in
+// the order flown, so the RUNWAY is `end` for an arrival and `start` for a
+// departure; the other end is the outer tail, 3,000 ft out on a final or 20 km
+// along track on a departure. Return null if the corridor is acceptable, or a
+// short reason string if it is not.
+//
+// THE RULE: the RUNWAY END must be on screen; the outer tail may leave it. A
+// departure really does fly off the map, but a corridor whose runway is off
+// screen is a line with no visible origin - it reads as belonging to nothing.
+// Strict on purpose: when phase 2 adds an airport outside a city's frame (LGW,
+// LTN, STN for London), this is where that decision gets forced rather than
+// slipping through. The margin is the widest stroke (2.25 px) rounded up, so a
+// threshold drawn on the edge is not a failure. This is a floor, not full
+// visibility: on phones the SVG is also clipped to --map-band-top/bottom.
+const CORRIDOR_EDGE_PX = 3;
+function corridorProblem(c, boxW, boxH) {
+  const [x, y] = c.type === 'arrival' ? c.end : c.start;
+  const m = CORRIDOR_EDGE_PX;
+  if (x >= -m && y >= -m && x <= boxW + m && y <= boxH + m) return null;
+  return `runway end at (${Math.round(x)}, ${Math.round(y)}) is outside the ${Math.round(boxW)}x${Math.round(boxH)} box`;
+}
+
 const browser = await chromium.launch();
 const failures = [];
 let checks = 0;
+// Corridors judged across the whole run. A rule that only ever saw zero
+// corridors has checked nothing, so the run fails below if this stays 0.
+let corridorsChecked = 0;
 // Set on the first viewport pass, from CITY_DATA, so the floor below is the
 // registry's own count rather than a literal that goes stale on city twelve.
 let CITY_COUNT = 0;
@@ -194,6 +235,14 @@ for (const [w, h, label] of VIEWPORTS) {
       console.log(`  FAIL  ${city.label.padEnd(20)} ${m.error}`);
       continue;
     }
+    for (const c of m.corridors) {
+      corridorsChecked++;
+      const why = corridorProblem(c, m.boxW, m.boxH);
+      if (why) {
+        failures.push(`${w}x${h} ${city.label}: ${c.type} corridor ${why}`);
+        console.log(`  FAIL  ${city.label.padEnd(20)} ${c.type} corridor ${why}`);
+      }
+    }
     const spill = Math.round(m.over.left + m.over.right + m.over.top + m.over.bottom);
     const fill = Math.max(m.geoW / m.boxW, m.geoH / m.boxH);
     const line = `${city.label.padEnd(20)} ${Math.round(m.geoW)}x${Math.round(m.geoH)} in ${Math.round(m.boxW)}x${Math.round(m.boxH)}  fill ${(fill * 100).toFixed(0)}%`;
@@ -232,6 +281,11 @@ if (checks < EXPECTED_CHECKS) {
   console.error(
     `\nFAIL: only ${checks} city/viewport combinations were measured; expected ${EXPECTED_CHECKS} (${CITY_COUNT} cities x ${VIEWPORTS.length} viewports).`
   );
+  process.exit(1);
+}
+
+if (corridorsChecked === 0) {
+  console.error('\nFAIL: no flight-path corridor was measured at any viewport; the corridor rule checked nothing.');
   process.exit(1);
 }
 
