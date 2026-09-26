@@ -76,19 +76,53 @@ STEP_KM = 1.0  # every corridor in the repo is resampled to 1 km; see CLAUDE.md
 DEPARTURE_KM = 20.0
 FINAL_TOP_FT = 3000.0
 
-# Airports, and the city whose corridor list each one feeds. The city key is
-# the score Lambda's; the constants are the two holders' names for its list.
+# Airports, and the cities whose corridor lists each one feeds. City keys are
+# the score Lambda's. `departures` says where the departure routes come from:
+#   npr-text     Heathrow: Noise Preferential Routes geometrised from AD 2.21
+#   rnav-coding  the RNAV SID coding tables (London City, Birmingham, Newcastle)
+#   conventional SIDs exist but are conventional, with no coding tables, and the
+#                chart PDFs do not extract; NOT drawn until each is geometrised
+#                from its wording the way Heathrow's are (ROADMAP phase 2)
+#   none         no SIDs published at all (Teesside), so there is nothing to draw
+# Surveyed against AIRAC 2026-09-03 on 2026-09-26; see ROADMAP phase 2.
 AIRPORTS = {
-    'LHR': {'city': 'london', 'icao': 'EGLL', 'departures': 'npr-text'},
-    'LCY': {'city': 'london', 'icao': 'EGLC', 'departures': 'rnav-coding'},
+    'LHR': {'cities': ['london'], 'icao': 'EGLL', 'departures': 'npr-text'},
+    'LCY': {'cities': ['london'], 'icao': 'EGLC', 'departures': 'rnav-coding'},
+    'MAN': {'cities': ['manchester'], 'icao': 'EGCC', 'departures': 'conventional'},
+    'BHX': {'cities': ['westmidlands'], 'icao': 'EGBB', 'departures': 'rnav-coding'},
+    'LBA': {'cities': ['westyorkshire'], 'icao': 'EGNM', 'departures': 'conventional'},
+    'LPL': {'cities': ['merseyside'], 'icao': 'EGGP', 'departures': 'conventional'},
+    'NCL': {'cities': ['tyneandwear'], 'icao': 'EGNT', 'departures': 'rnav-coding'},
+    'BRS': {'cities': ['bristol'], 'icao': 'EGGD', 'departures': 'conventional'},
+    # East Midlands sits between the two cities and feeds both lists.
+    'EMA': {'cities': ['leicester', 'nottingham'], 'icao': 'EGNX', 'departures': 'conventional'},
+    'CWL': {'cities': ['cardiff'], 'icao': 'EGFF', 'departures': 'conventional'},
+    'MME': {'cities': ['teesside'], 'icao': 'EGNV', 'departures': 'none'},
 }
+# The two holders' names for each city's list. `site` is None for a city the
+# consumer site does not render (BACKEND_ONLY_CITIES: Cardiff, Nottingham).
 HOLDERS = {
     'london': {'lambda': 'FLIGHT_PATHS_LONDON', 'site': 'FLIGHT_PATHS'},
+    'manchester': {'lambda': 'FLIGHT_PATHS_MANCHESTER', 'site': 'MANCHESTER_FLIGHT_PATHS'},
+    'westmidlands': {'lambda': 'FLIGHT_PATHS_WESTMIDLANDS', 'site': 'WESTMIDLANDS_FLIGHT_PATHS'},
+    'westyorkshire': {'lambda': 'FLIGHT_PATHS_WESTYORKSHIRE', 'site': 'WESTYORKSHIRE_FLIGHT_PATHS'},
+    'merseyside': {'lambda': 'FLIGHT_PATHS_MERSEYSIDE', 'site': 'MERSEYSIDE_FLIGHT_PATHS'},
+    'tyneandwear': {'lambda': 'FLIGHT_PATHS_TYNEANDWEAR', 'site': 'TYNEANDWEAR_FLIGHT_PATHS'},
+    'bristol': {'lambda': 'FLIGHT_PATHS_BRISTOL', 'site': 'BRISTOL_FLIGHT_PATHS'},
+    'leicester': {'lambda': 'FLIGHT_PATHS_LEICESTER', 'site': 'LEICESTER_FLIGHT_PATHS'},
+    'nottingham': {'lambda': 'FLIGHT_PATHS_NOTTINGHAM', 'site': None},
+    'cardiff': {'lambda': 'FLIGHT_PATHS_CARDIFF', 'site': None},
+    'teesside': {'lambda': 'FLIGHT_PATHS_TEESSIDE', 'site': 'TEESSIDE_FLIGHT_PATHS'},
 }
+
+
 # How often each final is in use cannot be read from the AIP; it only sets the
-# stroke width on the map. Heathrow and London City both land westerly on
-# roughly 70% of days, so the westerly final is drawn heavier.
-BUSY_FINALS = {'27', '27L', '27R'}
+# stroke width on the map. The UK's prevailing wind is westerly, so the final
+# that lands into the west (true bearing 200-340) is drawn heavier. For
+# Heathrow and London City that is exactly the 27s, as it was when this was a
+# literal list.
+def busy_final(true_brg):
+    return 200.0 <= true_brg <= 340.0
 
 
 # --------------------------------------------------------------------------
@@ -231,10 +265,12 @@ def read_runways(text):
     return {d: {'thr': (dms(la), dms(lo)), 'true_brg': float(b)} for (d, b), (la, lo) in zip(desig, thr, strict=True)}
 
 
-def read_glide(text, runways):
-    """{designator: glide angle} from AD 2.19. A runway without an ILS glide
-    path is an error, not a default: a steep approach (London City, 5.5 deg)
-    drawn at 3 deg would be nearly twice as long as the real one."""
+def read_glide(text, runways, raw=None):
+    """{designator: (glide angle, source)} from AD 2.19, and for a runway with
+    no ILS, from the VERTICAL PATH ANGLE its RNP approach chart prints (MAN 23L
+    and CWL 12 both publish 3.0). A runway with neither is an error, not a
+    default: a steep approach (London City, 5.5 deg) drawn at 3 deg would be
+    nearly twice as long as the real one."""
     # Heathrow prints "(RWY 09L) 3 deg ILS Ref"; London City prints the runway
     # once, on the localiser row, and the angle alone on the glide-path row
     # after it. So walk both kinds of token in order and carry the last runway.
@@ -244,10 +280,20 @@ def read_glide(text, runways):
         if m[1]:
             current = m[1]
         elif current and current not in found:
-            found[current] = float(m[2])
+            found[current] = (float(m[2]), 'AD 2.19 ILS glide path')
+    for d in sorted(set(runways) - set(found)):
+        if raw is None:
+            break
+        for title, url in chart_links(raw, r'INSTRUMENT APPROACH CHART[^<]*RNP'):
+            if not re.search(rf'RWY {d}\b', title):
+                continue
+            vpa = re.search(r'VERTICAL PATH ANG\w*\s+(\d(?:\.\d+)?)', pdf_text(url))
+            if vpa:
+                found[d] = (float(vpa[1]), f'RNP approach chart VPA, {url}')
+                break
     missing = sorted(set(runways) - set(found))
     if missing:
-        raise SystemExit(f'no ILS glide angle published for runway(s) {missing}')
+        raise SystemExit(f'no ILS glide angle or RNP VPA published for runway(s) {missing}')
     return {d: found[d] for d in runways}
 
 
@@ -457,20 +503,23 @@ def do_fetch():
     for code, meta in AIRPORTS.items():
         url, raw, text = page(meta['icao'])
         runways = read_runways(text)
-        glide = read_glide(text, runways)
+        glide = read_glide(text, runways, raw)
         magvar = read_magvar(text)
         if meta['departures'] == 'rnav-coding':
             deps = rnav_departures(raw, runways)
-        else:
+        elif meta['departures'] == 'npr-text':
             deps = heathrow_departures(text, runways, magvar, raw)
+        else:
+            deps = []
         data['airports'][code] = {
-            'city': meta['city'],
+            'cities': meta['cities'],
             'icao': meta['icao'],
             'page': url,
             'magvar_deg': magvar,
+            'departures_method': meta['departures'],
             'runways': {
                 d: {'thr': [round(r['thr'][0], 6), round(r['thr'][1], 6)], 'true_brg': r['true_brg'],
-                    'glide_deg': glide[d]}
+                    'glide_deg': glide[d][0], 'glide_source': glide[d][1]}
                 for d, r in sorted(runways.items())
             },
             'departures': deps,
@@ -504,7 +553,7 @@ def corridors(data):
             if norm(sub(pts[-1], thr)) > 1e-6:
                 pts.append(thr)
             paths.append({'name': f'{code} {d} final approach', 'airport': code, 'type': 'arrival',
-                          'freq': 'high' if d in BUSY_FINALS else 'medium',
+                          'freq': 'high' if busy_final(r['true_brg']) else 'medium',
                           'coords': [pl.ll(p) for p in pts]})
         seen = set()
         for dep in ap['departures']:
@@ -522,7 +571,8 @@ def corridors(data):
             seen.add(key)
             paths.append({'name': f'{code} {rwy} departure via {dep["name"]}', 'airport': code,
                           'type': 'departure', 'freq': 'medium', 'coords': [pl.ll(p) for p in pts]})
-        out.setdefault(ap['city'], []).extend(paths)
+        for city in ap['cities']:
+            out.setdefault(city, []).extend(paths)
     return {c: [{**p, 'coords': [(round(la, 4), round(lo, 4)) for la, lo in p['coords']]} for p in ps]
             for c, ps in out.items()}
 
@@ -592,10 +642,10 @@ def do_check_or_write(write):
         if city not in HOLDERS:
             raise SystemExit(f'{city} has procedures but no holder constants in HOLDERS')
         n_pts = sum(len(p['coords']) for p in paths)
-        for path, lang, body in (
-            (LAMBDA, 'py', render_lambda(city, paths)),
-            (SITE, 'js', render_site(city, paths)),
-        ):
+        holders = [(LAMBDA, 'py', render_lambda(city, paths))]
+        if HOLDERS[city]['site']:
+            holders.append((SITE, 'js', render_site(city, paths)))
+        for path, lang, body in holders:
             start, end = marker(city, lang)
             if replace_block(path, start, end, body, write):
                 stale.append(f'{path.name} ({city})')

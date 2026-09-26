@@ -184,8 +184,13 @@ each has a `--check` that can go red:
 > `scripts/fit_corridor_weight.py` on a train half of 26,233 DEFRA-measured
 > postcodes and reported on the other half: 2.36 -> 1.43, every city improves.
 > **DEFRA sets the SIZE of the penalty, never the geometry** - it only maps the
-> strip around the runway, so it rewards lines that hug the axis. Other cities
-> keep centreline corridors until phase 2 (ROADMAP).
+> strip around the runway, so it rewards lines that hug the axis.
+> **v5.4 extends it to all nine other UK airports** (finals everywhere; SID
+> coding-table departures only at BHX and NCL - the other six publish
+> conventional SIDs whose charts do not extract, and Teesside publishes none;
+> MAN 23L / CWL 12 take their RNP charts' VPA). `AIRPORTS[...]['cities']` is a
+> LIST (EMA feeds Leicester and Nottingham); `HOLDERS[...]['site']` is None for
+> the two API-only cities. It left DEFRA error unchanged at 1.431.
 
 > ## THE AIRCRAFT NEAR-FIELD FLOOR WAS A DISC - FIXED 2026-09-01 (audit C1)
 >

@@ -6,7 +6,20 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-09-26, evening) - v5.3 IS DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+**WHERE TO START (2026-09-26, late) - v5.4 IS BUILT ON BRANCH `v54-aip-other-airports`, NOT DEPLOYED.**
+Built while Bill was away; deploying it is his decision because it changes API
+output. The nine other UK airports now take the same AIP derivation as London
+(finals everywhere, SID coding-table departures at BHX and NCL). Measured:
+DEFRA error unchanged (1.431), weight unchanged (0.30), 5.2% of sampled
+geometry-tier postcodes move by a mean -0.02, borough scores and area pages do
+not move. Also fixes the ten-city legend showing two swatches for one-colour
+lines. See ROADMAP phase 2 for the numbers and the ship order; METHODOLOGY
+changelog v5.4. To ship: merge to master (fast-forward), SAM through a reviewed
+changeset ([[feedback-sam-deploy-via-reviewed-changeset]] in memory), then
+`python scripts/make.py data-deploy web-deploy demo-deploy`, then drift, score
+sanity, area freshness, site-api parity.
+
+**PREVIOUS: (2026-09-26, evening) - v5.3 IS DEPLOYED AND VERIFIED FROM THE ORIGIN.**
 Master `236657f`. Backend first, via a REVIEWED changeset: the classifier refused
 a blind `sam deploy` ("Blind Apply"), so the changeset was created with
 `--no-execute-changeset`, described (ScoreFunction `Code` the only direct change;

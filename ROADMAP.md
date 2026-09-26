@@ -646,7 +646,19 @@ City"; that was an assumption, and it was false for seven of the nine.**
   shows departure geometry moves the error; busiest first (MAN, then BRS/EMA).
 - **EMA feeds TWO cities** (Leicester and Nottingham); `AIRPORTS[...]['city']` is
   a single key and must become a list.
-- **Every one of these cities today carries two runway-centreline "Approach"
+- **v5.4 IS BUILT on branch `v54-aip-other-airports` (2026-09-26), NOT
+  DEPLOYED - it moves API output, so shipping it is Bill's call.** All nine
+  airports' finals (MAN 23L / CWL 12 from their RNP charts' 3.0 deg VPA), BHX
+  and NCL departures from coding tables, EMA feeding both Leicester and
+  Nottingham. Measured: held-out error vs DEFRA 1.431 -> 1.431, fitted weight
+  still 0.30; 5.2% of 17,926 sampled geometry-tier postcodes move, mean -0.02,
+  0.3% by >= 1 point (nearly all under the new BHX/NCL departures); borough
+  bands and area pages unchanged. Also fixes a PRE-EXISTING legend defect: in
+  ten cities every line was drawn default blue under an orange AND a blue
+  swatch; now one orange row per airport, empty rows hidden. Ship order when
+  approved: SAM via a reviewed changeset, then `make.py data-deploy web-deploy
+  demo-deploy` (openapi example changed), then verify from the origin.
+- **Before v5.4, every one of these cities carried two runway-centreline "Approach"
   lines and no departures**, and Manchester draws one pair for two runways, so
   AIP finals alone are a real correction. Plan: **v5.4** = AIP finals for all
   nine + coding-table departures for BHX and NCL + refit `CORRIDOR_WEIGHT` +

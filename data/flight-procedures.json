@@ -4,10 +4,13 @@
  "generator": "scripts/build_flight_paths.py --fetch",
  "airports": {
   "LHR": {
-   "city": "london",
+   "cities": [
+    "london"
+   ],
    "icao": "EGLL",
    "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGLL-en-GB.html",
    "magvar_deg": 1.24,
+   "departures_method": "npr-text",
    "runways": {
     "09L": {
      "thr": [
@@ -15,7 +18,8 @@
       -0.484992
      ],
      "true_brg": 89.67,
-     "glide_deg": 3.0
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
     },
     "09R": {
      "thr": [
@@ -23,7 +27,8 @@
       -0.482314
      ],
      "true_brg": 89.68,
-     "glide_deg": 3.0
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
     },
     "27L": {
      "thr": [
@@ -31,7 +36,8 @@
       -0.4341
      ],
      "true_brg": 269.72,
-     "glide_deg": 3.0
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
     },
     "27R": {
      "thr": [
@@ -39,7 +45,8 @@
       -0.433283
      ],
      "true_brg": 269.71,
-     "glide_deg": 3.0
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
     }
    },
    "departures": [
@@ -582,10 +589,13 @@
    ]
   },
   "LCY": {
-   "city": "london",
+   "cities": [
+    "london"
+   ],
    "icao": "EGLC",
    "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGLC-en-GB.html",
    "magvar_deg": 1.39,
+   "departures_method": "rnav-coding",
    "runways": {
     "09": {
      "thr": [
@@ -593,7 +603,8 @@
       0.044328
      ],
      "true_brg": 92.87,
-     "glide_deg": 5.5
+     "glide_deg": 5.5,
+     "glide_source": "AD 2.19 ILS glide path"
     },
     "27": {
      "thr": [
@@ -601,7 +612,8 @@
       0.066022
      ],
      "true_brg": 272.89,
-     "glide_deg": 5.5
+     "glide_deg": 5.5,
+     "glide_source": "AD 2.19 ILS glide path"
     }
    },
    "departures": [
@@ -843,6 +855,646 @@
      ]
     }
    ]
+  },
+  "MAN": {
+   "cities": [
+    "manchester"
+   ],
+   "icao": "EGCC",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGCC-en-GB.html",
+   "magvar_deg": 0.46,
+   "departures_method": "conventional",
+   "runways": {
+    "05L": {
+     "thr": [
+      53.347556,
+      -2.287764
+     ],
+     "true_brg": 51.06,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "05R": {
+     "thr": [
+      53.331975,
+      -2.310661
+     ],
+     "true_brg": 51.04,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "23L": {
+     "thr": [
+      53.348153,
+      -2.277206
+     ],
+     "true_brg": 231.07,
+     "glide_deg": 3.0,
+     "glide_source": "RNP approach chart VPA, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/508363.pdf"
+    },
+    "23R": {
+     "thr": [
+      53.361319,
+      -2.259281
+     ],
+     "true_brg": 231.09,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
+  },
+  "BHX": {
+   "cities": [
+    "westmidlands"
+   ],
+   "icao": "EGBB",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGBB-en-GB.html",
+   "magvar_deg": 0.73,
+   "departures_method": "rnav-coding",
+   "runways": {
+    "15": {
+     "thr": [
+      52.463478,
+      -1.758731
+     ],
+     "true_brg": 145.81,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "33": {
+     "thr": [
+      52.446272,
+      -1.7396
+     ],
+     "true_brg": 325.82,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": [
+    {
+     "name": "ADMEX1M",
+     "runway": "33",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "waypoints": [
+      [
+       52.491017,
+       -1.789386
+      ],
+      [
+       52.529578,
+       -1.672319
+      ],
+      [
+       52.461397,
+       -1.561619
+      ],
+      [
+       52.360889,
+       -1.462447
+      ]
+     ],
+     "fixes": [
+      "BBN31",
+      "BBE21",
+      "BBE20",
+      "ADMEX"
+     ]
+    },
+    {
+     "name": "BRUMI1M",
+     "runway": "33",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "waypoints": [
+      [
+       52.52325,
+       -1.825333
+      ],
+      [
+       52.507842,
+       -1.908519
+      ],
+      [
+       52.458206,
+       -1.945317
+      ],
+      [
+       52.377003,
+       -2.005317
+      ]
+     ],
+     "fixes": [
+      "BBW01",
+      "BBW02",
+      "BBW04",
+      "BRUMI"
+     ]
+    },
+    {
+     "name": "COWLY2Y",
+     "runway": "15",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501181.pdf",
+     "waypoints": [
+      [
+       52.412467,
+       -1.702069
+      ],
+      [
+       52.382081,
+       -1.689553
+      ],
+      [
+       52.352903,
+       -1.665872
+      ],
+      [
+       52.256517,
+       -1.566356
+      ],
+      [
+       52.196531,
+       -1.518711
+      ],
+      [
+       51.615994,
+       -1.064922
+      ]
+     ],
+     "fixes": [
+      "BBS02",
+      "BBS04",
+      "BBS06",
+      "BBE13",
+      "BBE17",
+      "COWLY"
+     ]
+    },
+    {
+     "name": "CPT2Y",
+     "runway": "15",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501184.pdf",
+     "waypoints": [
+      [
+       52.412467,
+       -1.702069
+      ],
+      [
+       52.382081,
+       -1.689553
+      ],
+      [
+       52.352903,
+       -1.665872
+      ],
+      [
+       52.247642,
+       -1.596408
+      ],
+      [
+       52.183975,
+       -1.564175
+      ],
+      [
+       51.491572,
+       -1.219692
+      ]
+     ],
+     "fixes": [
+      "BBS02",
+      "BBS04",
+      "BBS06",
+      "BBS13",
+      "BBS17",
+      "CPT"
+     ]
+    },
+    {
+     "name": "DTY2Y",
+     "runway": "15",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501181.pdf",
+     "waypoints": [
+      [
+       52.412467,
+       -1.702069
+      ],
+      [
+       52.382081,
+       -1.689553
+      ],
+      [
+       52.352903,
+       -1.665872
+      ],
+      [
+       52.342864,
+       -1.578144
+      ],
+      [
+       52.314661,
+       -1.488636
+      ],
+      [
+       52.281178,
+       -1.394736
+      ],
+      [
+       52.256014,
+       -1.324406
+      ],
+      [
+       52.180142,
+       -1.113789
+      ]
+     ],
+     "fixes": [
+      "BBS02",
+      "BBS04",
+      "BBS06",
+      "BBE09",
+      "BBE12",
+      "BBE16",
+      "BBE19",
+      "DTY"
+     ]
+    },
+    {
+     "name": "LUVUM1M",
+     "runway": "33",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "waypoints": [
+      [
+       52.493517,
+       -1.792167
+      ],
+      [
+       52.664889,
+       -1.757175
+      ],
+      [
+       52.714447,
+       -1.747003
+      ]
+     ],
+     "fixes": [
+      "BBN30",
+      "BBN32",
+      "LUVUM"
+     ]
+    },
+    {
+     "name": "LUVUM1Y",
+     "runway": "15",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501184.pdf",
+     "waypoints": [
+      [
+       52.401094,
+       -1.689461
+      ],
+      [
+       52.411319,
+       -1.615236
+      ],
+      [
+       52.455456,
+       -1.596117
+      ],
+      [
+       52.512058,
+       -1.601458
+      ],
+      [
+       52.6387,
+       -1.692358
+      ],
+      [
+       52.714447,
+       -1.747003
+      ]
+     ],
+     "fixes": [
+      "BBE23",
+      "BBE24",
+      "BBE25",
+      "BBN11",
+      "BBN12",
+      "LUVUM"
+     ]
+    },
+    {
+     "name": "UNGAP1M",
+     "runway": "33",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "waypoints": [
+      [
+       52.491017,
+       -1.789386
+      ],
+      [
+       52.529578,
+       -1.672319
+      ],
+      [
+       52.461397,
+       -1.561619
+      ],
+      [
+       52.358192,
+       -1.394158
+      ]
+     ],
+     "fixes": [
+      "BBN31",
+      "BBE21",
+      "BBE20",
+      "UNGAP"
+     ]
+    }
+   ]
+  },
+  "LBA": {
+   "cities": [
+    "westyorkshire"
+   ],
+   "icao": "EGNM",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNM-en-GB.html",
+   "magvar_deg": 0.63,
+   "departures_method": "conventional",
+   "runways": {
+    "14": {
+     "thr": [
+      53.871431,
+      -1.669078
+     ],
+     "true_brg": 137.73,
+     "glide_deg": 3.5,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "32": {
+     "thr": [
+      53.860364,
+      -1.652067
+     ],
+     "true_brg": 317.75,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
+  },
+  "LPL": {
+   "cities": [
+    "merseyside"
+   ],
+   "icao": "EGGP",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGGP-en-GB.html",
+   "magvar_deg": 0.26,
+   "departures_method": "conventional",
+   "runways": {
+    "09": {
+     "thr": [
+      53.332886,
+      -2.866003
+     ],
+     "true_brg": 85.6,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "27": {
+     "thr": [
+      53.334417,
+      -2.832711
+     ],
+     "true_brg": 265.62,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
+  },
+  "NCL": {
+   "cities": [
+    "tyneandwear"
+   ],
+   "icao": "EGNT",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNT-en-GB.html",
+   "magvar_deg": 0.51,
+   "departures_method": "rnav-coding",
+   "runways": {
+    "07": {
+     "thr": [
+      55.033986,
+      -1.704633
+     ],
+     "true_brg": 65.19,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "25": {
+     "thr": [
+      55.041794,
+      -1.675211
+     ],
+     "true_brg": 245.21,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": [
+    {
+     "name": "GIRLI1T",
+     "runway": "07",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/404530.pdf",
+     "waypoints": [
+      [
+       55.07965,
+       -1.531986
+      ],
+      [
+       54.975144,
+       -1.532442
+      ],
+      [
+       54.711253,
+       -1.803192
+      ]
+     ],
+     "fixes": [
+      "NTE05",
+      "NTS12",
+      "GIRLI"
+     ]
+    },
+    {
+     "name": "GIRLI1Y",
+     "runway": "25",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/404530.pdf",
+     "waypoints": [
+      [
+       55.012492,
+       -1.785478
+      ],
+      [
+       54.926092,
+       -1.744475
+      ],
+      [
+       54.711253,
+       -1.803192
+      ]
+     ],
+     "fixes": [
+      "NTW03",
+      "NTS08",
+      "GIRLI"
+     ]
+    },
+    {
+     "name": "GIRLI3X",
+     "runway": "25",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/404530.pdf",
+     "waypoints": [
+      [
+       55.023128,
+       -1.745486
+      ],
+      [
+       54.815261,
+       -1.887261
+      ],
+      [
+       54.711253,
+       -1.803192
+      ]
+     ],
+     "fixes": [
+      "NTW02",
+      "NITUD",
+      "GIRLI"
+     ]
+    }
+   ]
+  },
+  "BRS": {
+   "cities": [
+    "bristol"
+   ],
+   "icao": "EGGD",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGGD-en-GB.html",
+   "magvar_deg": 0.49,
+   "departures_method": "conventional",
+   "runways": {
+    "09": {
+     "thr": [
+      51.382108,
+      -2.733503
+     ],
+     "true_brg": 86.43,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "27": {
+     "thr": [
+      51.383158,
+      -2.706528
+     ],
+     "true_brg": 266.45,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
+  },
+  "EMA": {
+   "cities": [
+    "leicester",
+    "nottingham"
+   ],
+   "icao": "EGNX",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNX-en-GB.html",
+   "magvar_deg": 0.84,
+   "departures_method": "conventional",
+   "runways": {
+    "09": {
+     "thr": [
+      52.830656,
+      -1.346906
+     ],
+     "true_brg": 88.26,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "27": {
+     "thr": [
+      52.831356,
+      -1.308594
+     ],
+     "true_brg": 268.29,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
+  },
+  "CWL": {
+   "cities": [
+    "cardiff"
+   ],
+   "icao": "EGFF",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGFF-en-GB.html",
+   "magvar_deg": 0.28,
+   "departures_method": "conventional",
+   "runways": {
+    "12": {
+     "thr": [
+      51.400478,
+      -3.355603
+     ],
+     "true_brg": 116.76,
+     "glide_deg": 3.0,
+     "glide_source": "RNP approach chart VPA, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/511875.pdf"
+    },
+    "30": {
+     "thr": [
+      51.392453,
+      -3.330178
+     ],
+     "true_brg": 296.78,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
+  },
+  "MME": {
+   "cities": [
+    "teesside"
+   ],
+   "icao": "EGNV",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNV-en-GB.html",
+   "magvar_deg": 0.65,
+   "departures_method": "none",
+   "runways": {
+    "05": {
+     "thr": [
+      54.502231,
+      -1.442428
+     ],
+     "true_brg": 47.44,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    },
+    "23": {
+     "thr": [
+      54.516139,
+      -1.416392
+     ],
+     "true_brg": 227.46,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
   }
  }
 }
