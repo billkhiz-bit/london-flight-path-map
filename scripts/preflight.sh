@@ -239,6 +239,11 @@ check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --
 # data/flight-procedures.json and reds if either the Lambda or index.html has
 # been hand-edited away from it. Offline: the network half is --fetch.
 check "flight paths == UK AIP"         python scripts/build_flight_paths.py --check
+# Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
+# the box it was rendered for (2026-09-26). A transparent PNG would be marked
+# loaded and advertised under a decibel scale; a hand-edited box would slide
+# the contours off their airport. Offline: the PNGs and their JSON are checked in.
+check "aircraft rasters == DEFRA renders" python scripts/build_aircraft_rasters.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
