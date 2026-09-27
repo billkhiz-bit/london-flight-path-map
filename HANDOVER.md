@@ -6,7 +6,28 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-09-26, late) - v5.4 IS BUILT ON BRANCH `v54-aip-other-airports`, NOT DEPLOYED.**
+**PAUSED 2026-09-27 00:xx - FOUR FILES UNCOMMITTED, NOT DEPLOYED.** `index.html` removes one sentence
+from the not-covered panel at Bill's request ("Measuring <place> against another city's airports would
+give you a confident answer about the wrong place." - gone); CLAUDE.md, HANDOVER.md and ROADMAP.md carry
+the deploy echo and the NR2 1NE spot-check. To finish: `sh scripts/preflight.sh` (first check no stray
+`node tests/...` processes hold a port - a stopped preflight orphaned one and crashed `result close
+survives a scroll` with EADDRINUSE), commit, `python scripts/make.py web-deploy`, then search NR2 1NE
+live and confirm the sentence is gone.
+
+**WHERE TO START (2026-09-26, night) - v5.4 + DEFRA LAYER + NORWICH FIX ARE DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+Master `8cb8e31` (fast-forward of `ship-v54-and-defra-layer`). SAM via a reviewed
+changeset (ScoreFunction `Code` the only direct change), then `make.py data-deploy
+web-deploy demo-deploy`, three invalidations completed. Verified: live `/v1/score`
+5.4; drift 141/141 (25 data files - the seven city PNGs); score sanity PASS on 28
+at 5.4 vs 5.4; area pages 99/99; site == API 6/6; live browser: NR2 1NE renders
+NOT COVERED YET, L34 2AA ("St. Helens") lands on Merseyside with Liverpool's
+DEFRA map, Manchester paints its DEFRA PNG. Tom Paine (the Norwich report) has
+been replied to ("in the middle of fixing it"); a follow-up saying it is live is
+now TRUE. Uncovered-postcode spot-check: search NR2 1NE (Norwich) - it must say NOT
+COVERED YET. Next: the CAA data request (drafted, not sent) and ROADMAP phase 2's
+conventional-SID airports. Previous entry, now superseded:
+
+**(2026-09-26, late) - v5.4 WAS BUILT ON BRANCH `v54-aip-other-airports`, NOT DEPLOYED.**
 Built while Bill was away; deploying it is his decision because it changes API
 output. The nine other UK airports now take the same AIP derivation as London
 (finals everywhere, SID coding-table departures at BHX and NCL). Measured:

@@ -261,6 +261,18 @@ and is corrected. We have not SAMPLED it. Use the **per-airport** coverages
 which is 26,097 x 48,046 - 1.25 billion cells. The host needs a browser
 User-Agent; without one it answers 403 and looks bot-blocked.
 
+**A POSTCODE NO CITY COVERS IS TOLD SO (2026-09-26, deployed).** The site used to
+analyse it against whichever city was on screen: a user near Norwich emailed that
+it named a London airport, and live, NR2 1NE read "Nearest airport: Stansted
+(109.4 km)" and "low aircraft noise", ~5 km from Norwich Airport. It now renders
+NOT COVERED YET (`renderOutsideCoverage()`), and a null from
+`deriveCityFromBorough()` is a third state, never "keep the current city".
+**Spot-check with `NR2 1NE`** - the standard uncovered postcode. The same audit
+found "St. Helens" (postcodes.io) vs "St Helens" (registry): both matchers drop
+full stops now. Gate: `tests/outside-coverage.mjs`, blocking, postcodes.io
+stubbed, plus all 86 covered boroughs' real postcodes.io spellings in
+`tests/fixtures/postcodes-io-districts.json`. The API already 404s these.
+
 **Postcode-level scoring works for every city — REALLY, since 2026-08-12.** The
 gate was `if city != 'london': return 400` and was lifted on 2026-08-10, and the
 recorded reason for it — that NSPL writes the borough attribute for London LADs
