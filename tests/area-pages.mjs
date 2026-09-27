@@ -224,9 +224,11 @@ for (const [, boroughs] of Object.entries(extra)) {
 const pagesWithoutRoad = pages.filter((p) => !/>Road noise</.test(readFileSync(p.file, 'utf8')));
 // Only cities that HAVE a borough-extra entry are comparable: NYC has no road
 // data at all and is counted on both sides, Cardiff and Nottingham have no
-// entry, so their pages are excluded from the page-side count.
+// entry, so their pages are excluded from the page-side count. Greater Norwich
+// (API-only since 2026-09-27) is the same shape.
+const BACKEND_ONLY_AREAS = ['/area/cardiff/', '/area/nottingham/', '/area/norwich/'];
 const comparablePagesWithoutRoad = pagesWithoutRoad.filter(
-  (p) => !p.url.startsWith('/area/cardiff/') && !p.url.startsWith('/area/nottingham/'),
+  (p) => !BACKEND_ONLY_AREAS.some((prefix) => p.url.startsWith(prefix)),
 );
 check(
   'every borough with road data shows it (holder lookup resolves aliases)',

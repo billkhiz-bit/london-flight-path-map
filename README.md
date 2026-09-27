@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26, gaining road noise at v4.0, 2026-08-29; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v5.4 · API v1.0 · Live in production · **13 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **12 UK city-regions** (94 UK boroughs), 2 of them API-only · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v5.4 · API v1.0 · Live in production · **14 cities on `/v1/score`, 11 on the consumer site** · 91 boroughs on both, compared site-vs-Lambda on the rendered score, plus **13 UK city-regions** (97 UK boroughs), 3 of them API-only (Cardiff, Nottingham, Greater Norwich) · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **Air quality, road noise and flood risk are all SCORED, not just drawn.**
 > They are the fifth component, `environment` — air quality 0.65 / flood 0.35
@@ -85,7 +85,7 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | Consumer site | <https://skyscore.co.uk/> |
 | Pricing (B2B API tiers + 90-day pilot) | <https://skyscore.co.uk/pricing> |
 | Privacy policy | <https://skyscore.co.uk/privacy> |
-| Area pages (99 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
+| Area pages (102 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
 | Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
 | API landing page | <https://skyscore.co.uk/api/> |
 | API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
@@ -345,7 +345,7 @@ far larger, so the bands reach further than the airport really does.
 Absent liveability inputs are **not** estimated: their weight is redistributed
 across the measured ones, and `context.liveResolution` states how many were
 measured. Affordability (since v5.0) and growth (since v5.2) are anchored on
-the **whole currency pool** - the 94 sterling boroughs, or New York's five -
+the **whole currency pool** - the 97 sterling boroughs, or New York's five -
 so both are comparable between cities; the within-city standing each used to
 imply is published as `context.priceRankInCity` and `context.growthRankInCity`.
 (This paragraph said both were scaled within each city's cohort until

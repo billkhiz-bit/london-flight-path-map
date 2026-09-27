@@ -94,6 +94,13 @@ BACKEND_ONLY_CITIES = frozenset({
     # The other six left on 2026-08-10 when p8 landed and they went on the site.
     'cardiff',
     'nottingham',
+    # Greater Norwich JOINED on 2026-09-27 as an API-only PREVIEW, on judgement
+    # rather than data: all three authorities hold 3 of 4 liveability inputs
+    # (Progress 8 is published for Norfolk, not its districts), the same as
+    # Leicester's districts, which ARE on the site. It is here because the site
+    # half (CITY_DATA, chip, map, stations, neighbourhoods) has not been built,
+    # and leaving is the one-way door described above.
+    'norwich',
     # Leicester and Teesside LEFT on 2026-08-11, once the site half was built
     # and all 13 boroughs were output-compared site-vs-Lambda. They were never
     # here for data reasons: Teesside publishes Progress 8 for all five

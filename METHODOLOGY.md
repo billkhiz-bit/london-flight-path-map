@@ -50,7 +50,7 @@ The product exists to address a structural information asymmetry in UK property:
 **Currently supported:**
 - 33 London boroughs (32 boroughs plus the City of London), UK postcode resolution
 - 5 NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island), borough-name lookup or 5-digit US ZIP auto-detection (~182 residential ZIPs covered, ~110 with per-ZIP centroid for finer quiet-score precision)
-- **12 UK city-regions, 94 boroughs, by postcode or by borough name.** London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4), Nottingham (4). The "postcode resolution is London-only, two separate blockers" note that stood here was retired in stages: the `resolve_query()` gate was lifted 2026-08-10, and on **2026-08-12** the last of it went — `city` had still defaulted to `london` because nothing derived it from the resolved LAD, so a postcode-only query for any other city returned "Borough not currently supported in london". Verified live across all 12.
+- **13 UK city-regions, 97 boroughs, by postcode or by borough name.** London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4), Nottingham (4), Greater Norwich (3, API-only since 2026-09-27: Norwich, Broadland, South Norfolk). The "postcode resolution is London-only, two separate blockers" note that stood here was retired in stages: the `resolve_query()` gate was lifted 2026-08-10, and on **2026-08-12** the last of it went — `city` had still defaulted to `london` because nothing derived it from the resolved LAD, so a postcode-only query for any other city returned "Borough not currently supported in london". Verified live across all 12.
 
 **Sub-borough granularity differs by city, and the consumer-site ranking says
 so per city.** London and New York rank *named areas* whose median prices are
@@ -1350,15 +1350,20 @@ carries `measuredAtLocation: true` here.
 > `quietResolution` before hand-deriving quiet for any postcode.**
 
 **Affordability = 0.3.** Log scale against the NATIONAL price band (§4.2) since
-methodology v5.0, not the London cohort: the 5th and 95th percentiles of all 94
-borough medians in the sterling pool, `p5 = 158,435`, `p95 = 720,241`:
+methodology v5.0, not the London cohort: the 5th and 95th percentiles of all 97
+borough medians in the sterling pool, `p5 = 159,100`, `p95 = 716,131`:
 
 ```
-afford = ln(720,241 / 686,076) / ln(720,241 / 158,435) x 10
-       = 0.04860 / 1.51424 x 10
-       = 0.3209...
+afford = ln(716,131 / 686,076) / ln(716,131 / 159,100) x 10
+       = 0.04287 / 1.50433 x 10
+       = 0.2850...
        -> 0.3
 ```
+
+(The pool grew from 94 to 97 on 2026-09-27, when Greater Norwich joined the API.
+It moved both anchors - p5 158,435 -> 159,100, p95 720,241 -> 716,131 - and
+Wandsworth's affordability stayed 0.3. A new city always moves the national
+band; that is the anchor doing what §4.2 says.)
 
 This is the figure that moves most at v5.0, and the direction is the point.
 Wandsworth's GBP 686,076 is mid-table among 33 London boroughs and under the
@@ -2277,6 +2282,8 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 10. **UK GDPR / Data Protection Act 2018**, ICO guidance on legitimate-interest assessment for property due diligence: <https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/legitimate-interests/>
 
 ## 20. Changelog
+
+- **2026-09-27 (coverage, no version change)**, **Greater Norwich joins the API as a preview: Norwich, Broadland and South Norfolk.** Raised by a member of the public near Norwich on 2026-09-26, whose postcode had been measured against London's airports (fixed that day: uncovered postcodes now say so). (1) *Composition:* the three authorities of the Greater Norwich Local Plan, not all of Norfolk. Leicester was widened to its county because affordability was then min-max within a city; since v5.0 it is national, so a three-authority cohort no longer manufactures spread. (2) *Measured before building:* every input but one is published per authority. HM Land Registry HPI (July 2026) and ONS Table C4 each carry a row per authority, and crime agrees for 3 of 3. **Progress 8 is published for Norfolk, not its districts**, so none of the three carries it, as for Nottingham's districts; each measures 3 of 4 liveability inputs. Road noise, air quality and flood were derived from the DEFRA and EA national coverages by the same scripts as every other English city, over live postcodes only. (3) *Aircraft noise:* **Norwich International is not mapped by DEFRA Round 4** (GetCapabilities lists 16 airports; it is not one), so quiet is geometry-only with the ladder floored at the smallest mapped airport, as at Teesside and Cardiff: pessimistic. Its two finals come from the UK AIP. Runway 27 uses its ILS glide path (3.0°). Runway 09 has neither an ILS nor an RNP approach, so the builder gained a third published source, the NDB chart's *recommended profile* gradient (5.3%, which is 3.03°); a runway with none of the three is still an error, never a default. Norwich publishes no SIDs, so no departures are drawn. (4) *Why no version change, and what moved anyway:* no weight, threshold or formula changed, but the sterling pool is the API's coverage, so adding three boroughs moved the national anchors (affordability p5 158,435 → 159,100, p95 720,241 → 716,131; growth bounds unchanged). **33 of 792 existing borough/persona scores move by exactly 0.1, 4 of 99 under `balanced`** (Haringey 6.1 → 6.0, City of London 4.2 → 4.1, Knowsley 7.6 → 7.7, Stockton-on-Tees 6.3 → 6.4). The worked example (§6) holds at affordability 0.3. (5) *API-only on judgement:* Greater Norwich joins `BACKEND_ONLY_CITIES` because the map half (chip, boundaries, stations, neighbourhoods) is not built. Its three scorecard pages are published under `/area/norwich/`, and the site's not-covered panel now links a borough's scorecard for every API-only city - Cardiff and Nottingham too - keyed on the ONS code postcodes.io returns.
 
 - **2026-09-26 (documentation)**, **The COVID-year understatement is measured, not described.** DEFRA's 2021 Heathrow 55 dB Lden contour (75.6 km², measured from its GeoTIFF) against the CAA's 2024 model (148.4 km², ERCD Report 2501 Table 12): about half the normal-year area. Published in the legend, the API page and the Round 4 vintage limitation below the dB-to-score table, with the full table; `scripts/measure_covid_understatement.py --check` fails if any of those pages stops quoting the figures it holds. No score changes: it is a caveat, not a correction. The fitted corridor weight is marked provisional for the same reason, and every aircraft figure is now labelled an outdoor level.
 - **2026-09-26 (v5.4)**, **The AIP derivation extended to the nine other UK airports.** (1) *Change:* every non-London UK city carried two hand-placed runway-centreline lines, and Manchester one pair for two runways. `scripts/build_flight_paths.py` now derives all eleven UK airports: finals from AD 2.12 thresholds and bearings and AD 2.19 glide angles, or, where a runway has no ILS (MAN 23L, CWL 12), the vertical path angle printed on its RNP approach chart - sourced, never a default; departures from SID coding tables at Birmingham and Newcastle. (2) *Surveyed, not assumed:* the plan recorded before this said all nine published coding tables; measured against AIRAC 2026-09-03, seven do not. Six publish conventional SIDs whose chart PDFs extract as fragments, and Teesside publishes none. Those departures are left undrawn rather than guessed, and are ROADMAP phase 2. (3) *Measured before deciding:* held-out error against DEFRA **1.431 → 1.431**, and the fitted weight is still **0.30** - DEFRA maps only the strip around each runway, where the old and new lines coincide, so this is a correctness change the yardstick neither rewards nor penalises, which is the case §4.5 anticipates. On 17,926 sampled live postcodes DEFRA did not measure, **5.2% move**, mean **−0.02**, and **0.3% by a point or more**, nearly all under the new Birmingham and Newcastle departures. (4) *Unaffected:* borough bands (114 of 114) and all 99 area pages; London's geometry is byte-identical to v5.3.

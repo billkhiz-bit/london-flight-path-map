@@ -1495,6 +1495,36 @@
     }
    },
    "departures": []
+  },
+  "NWI": {
+   "cities": [
+    "norwich"
+   ],
+   "icao": "EGSH",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGSH-en-GB.html",
+   "magvar_deg": 1.71,
+   "departures_method": "none",
+   "runways": {
+    "09": {
+     "thr": [
+      52.675831,
+      1.269056
+     ],
+     "true_brg": 89.28,
+     "glide_deg": 3.03,
+     "glide_source": "approach chart recommended profile 5.3%, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/496739.pdf"
+    },
+    "27": {
+     "thr": [
+      52.676033,
+      1.296272
+     ],
+     "true_brg": 269.3,
+     "glide_deg": 3.0,
+     "glide_source": "AD 2.19 ILS glide path"
+    }
+   },
+   "departures": []
   }
  }
 }

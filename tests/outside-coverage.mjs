@@ -18,9 +18,15 @@
 //      86) derives to its own city. A registry rename or a new punctuation
 //      quirk fails here, not in a user's inbox.
 //   2. Through the real search box, at desktop and phone widths:
-//      - a Norwich postcode renders NOT COVERED YET, names Norwich, lists the
-//        covered cities, and carries no "Nearest airport" claim at all;
+//      - an Exeter postcode renders NOT COVERED YET, lists the covered cities,
+//        links no scorecard and carries no "Nearest airport" claim at all;
+//      - a Norwich postcode (API-only since 2026-09-27) renders NOT ON THE MAP
+//        YET and links /area/norwich/norwich/, again with no airport claim;
 //      - a "St. Helens" postcode lands on Merseyside with a real analysis.
+//   3. Offline, the AREA_SCORECARDS table: every URL in it is a page that
+//      exists in area/, an outcode-style NAME lookup ("Nottingham", which the
+//      registry holds as "City of Nottingham") finds its card, and a name no
+//      card holds finds none.
 //   postcodes.io is STUBBED with its real response shape, and every other
 //   off-site request is aborted, so no third party can make this flaky.
 //
@@ -66,7 +72,14 @@ const sthelens = fixture.districts.find((d) => d.admin_district === 'St. Helens'
 
 // Real postcodes.io shapes (trimmed to the fields the page reads).
 const STUBS = {
-  NR21NE: { postcode: 'NR2 1NE', latitude: 52.628, longitude: 1.2921, admin_district: 'Norwich', admin_ward: 'Mancroft', country: 'England' },
+  NR21NE: {
+    postcode: 'NR2 1NE', latitude: 52.628, longitude: 1.2921, admin_district: 'Norwich', admin_ward: 'Mancroft', country: 'England',
+    codes: { admin_district: 'E07000148' },
+  },
+  EX11HS: {
+    postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter', admin_ward: "St David's", country: 'England',
+    codes: { admin_district: 'E07000041' },
+  },
   [sthelens.postcode.replace(/\s/g, '')]: {
     postcode: sthelens.postcode, latitude: 53.4186, longitude: -2.8196, admin_district: 'St. Helens', admin_ward: 'Rainhill', country: 'England',
   },
@@ -93,6 +106,36 @@ const browser = await chromium.launch();
   await page.close();
 }
 
+// 3. The scorecard table itself.
+{
+  const page = await browser.newPage();
+  await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof scorecardFor === 'function', { timeout: 20000 });
+  const cards = await page.evaluate(() => AREA_SCORECARDS);
+  checks++;
+  if (cards.length < 3) failures.push(`AREA_SCORECARDS holds ${cards.length} entries; an empty table would link nothing`);
+  for (const c of cards) {
+    checks++;
+    const res = await fetch(BASE + c.url.replace(/^\//, ''));
+    await res.arrayBuffer();
+    if (res.status !== 200) failures.push(`scorecard ${c.url} (${c.borough}) is linked but answers ${res.status}`);
+  }
+  const lookups = await page.evaluate(() => ({
+    nottingham: scorecardFor({ admin_district: 'Nottingham' })?.url ?? null,
+    broadland: scorecardFor({ admin_district: 'Broadland' })?.url ?? null,
+    exeter: scorecardFor({ admin_district: 'Exeter' }),
+  }));
+  checks++;
+  const lOk =
+    lookups.nottingham === '/area/nottingham/city-of-nottingham/' &&
+    lookups.broadland === '/area/norwich/broadland/' &&
+    lookups.exeter === null;
+  if (!lOk) failures.push(`scorecard name lookup: ${JSON.stringify(lookups)}`);
+  console.log(`  ${lOk ? 'ok  ' : 'FAIL'} ${cards.length} scorecards link real pages; name fallback finds only its own`);
+  await page.close();
+}
+
 // 2. Through the search box.
 async function search(vp, query) {
   const ctx = await browser.newContext({ viewport: vp, isMobile: vp.width < 900, hasTouch: vp.width < 900 });
@@ -116,6 +159,7 @@ async function search(vp, query) {
     title: document.getElementById('sidebar-title').textContent.trim(),
     text: document.getElementById('sidebar-content').innerText.replace(/\s+/g, ' '),
     city: document.querySelector('.city-selector .city-btn.active')?.textContent?.trim() ?? '',
+    link: document.querySelector('#sidebar-content .empty-state a')?.getAttribute('href') ?? null,
   }));
   await ctx.close();
   return state;
@@ -125,15 +169,26 @@ for (const vp of [
   { width: 1440, height: 900, label: 'desktop' },
   { width: 390, height: 844, label: 'phone' },
 ]) {
+  const x = await search(vp, 'EX1 1HS');
+  checks++;
+  const xOk =
+    x.title === 'NOT COVERED YET' &&
+    /Exeter/.test(x.text) &&
+    !/nearest airport/i.test(x.text) &&
+    /Greater Manchester/.test(x.text) &&
+    x.link === null;
+  if (!xOk) failures.push(`${vp.label} EX1 1HS: title "${x.title}", link ${x.link}, text "${x.text.slice(0, 160)}"`);
+  console.log(`  ${xOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(8)} Exeter says not covered, links nothing, claims no airport`);
+
   const n = await search(vp, 'NR2 1NE');
   checks++;
   const nOk =
-    n.title === 'NOT COVERED YET' &&
+    n.title === 'NOT ON THE MAP YET' &&
     /Norwich/.test(n.text) &&
     !/nearest airport/i.test(n.text) &&
-    /Greater Manchester/.test(n.text);
-  if (!nOk) failures.push(`${vp.label} NR2 1NE: title "${n.title}", text "${n.text.slice(0, 160)}"`);
-  console.log(`  ${nOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(8)} Norwich says not covered, claims no airport`);
+    n.link === '/area/norwich/norwich/';
+  if (!nOk) failures.push(`${vp.label} NR2 1NE: title "${n.title}", link ${n.link}, text "${n.text.slice(0, 160)}"`);
+  console.log(`  ${nOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(8)} Norwich links its scorecard, claims no airport`);
 
   const s = await search(vp, sthelens.postcode);
   checks++;
@@ -145,8 +200,9 @@ for (const vp of [
 await browser.close();
 server.close();
 
-if (checks < fixture.districts.length + 4) {
-  console.error(`\nFAIL: ran ${checks} checks, expected ${fixture.districts.length + 4}.`);
+// districts + table size + at least 3 page fetches + lookups + 3 per viewport x 2.
+if (checks < fixture.districts.length + 11) {
+  console.error(`\nFAIL: ran ${checks} checks, expected at least ${fixture.districts.length + 11}.`);
   process.exit(1);
 }
 if (failures.length) {

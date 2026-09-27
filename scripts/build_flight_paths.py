@@ -98,9 +98,13 @@ AIRPORTS = {
     'EMA': {'cities': ['leicester', 'nottingham'], 'icao': 'EGNX', 'departures': 'conventional'},
     'CWL': {'cities': ['cardiff'], 'icao': 'EGFF', 'departures': 'conventional'},
     'MME': {'cities': ['teesside'], 'icao': 'EGNV', 'departures': 'none'},
+    # Norwich (2026-09-27): no SIDs published, as at Teesside. Runway 09 has no
+    # ILS and no RNP approach, so read_glide takes its NDB chart's recommended
+    # profile gradient.
+    'NWI': {'cities': ['norwich'], 'icao': 'EGSH', 'departures': 'none'},
 }
 # The two holders' names for each city's list. `site` is None for a city the
-# consumer site does not render (BACKEND_ONLY_CITIES: Cardiff, Nottingham).
+# consumer site does not render (BACKEND_ONLY_CITIES: Cardiff, Nottingham, Norwich).
 HOLDERS = {
     'london': {'lambda': 'FLIGHT_PATHS_LONDON', 'site': 'FLIGHT_PATHS'},
     'manchester': {'lambda': 'FLIGHT_PATHS_MANCHESTER', 'site': 'MANCHESTER_FLIGHT_PATHS'},
@@ -113,6 +117,7 @@ HOLDERS = {
     'nottingham': {'lambda': 'FLIGHT_PATHS_NOTTINGHAM', 'site': None},
     'cardiff': {'lambda': 'FLIGHT_PATHS_CARDIFF', 'site': None},
     'teesside': {'lambda': 'FLIGHT_PATHS_TEESSIDE', 'site': 'TEESSIDE_FLIGHT_PATHS'},
+    'norwich': {'lambda': 'FLIGHT_PATHS_NORWICH', 'site': None},
 }
 
 
@@ -290,6 +295,22 @@ def read_glide(text, runways, raw=None):
             vpa = re.search(r'VERTICAL PATH ANG\w*\s+(\d(?:\.\d+)?)', pdf_text(url))
             if vpa:
                 found[d] = (float(vpa[1]), f'RNP approach chart VPA, {url}')
+                break
+    # Third source, for a runway with neither an ILS nor an RNP approach (Norwich
+    # 09, 2026-09-27): a non-precision chart prints its RECOMMENDED PROFILE as a
+    # gradient ("Gradient 5.3%, 322FT/NM"). That is the published descent the
+    # procedure is built on, converted rather than assumed - atan(5.3%) is 3.03
+    # deg. Still an error, never a default, when a runway has none of the three.
+    for d in sorted(set(runways) - set(found)):
+        if raw is None:
+            break
+        for title, url in chart_links(raw, r'INSTRUMENT APPROACH CHART[^<]*'):
+            if not re.search(rf'RWY {d}\b', title):
+                continue
+            grad = re.search(r'RECOMMENDED PROFILE\s+Gradient\s+(\d(?:\.\d+)?)%', pdf_text(url))
+            if grad:
+                angle = round(math.degrees(math.atan(float(grad[1]) / 100)), 2)
+                found[d] = (angle, f'approach chart recommended profile {grad[1]}%, {url}')
                 break
     missing = sorted(set(runways) - set(found))
     if missing:

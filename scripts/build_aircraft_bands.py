@@ -122,6 +122,14 @@ AIRPORTS = {
         "lat": 54.509201, "lon": -1.42941,
         "le": (54.502201, -1.442430), "he": (54.516201, -1.416380), "runway": "05/23",
     },
+    # Norwich International, in Broadland. Runway ends are the 09 and 27
+    # threshold coordinates from UK AIP AD 2.12 (AIRAC 2026-09-03). Not mapped
+    # by DEFRA Round 4, so it keeps the disc, exactly as Teesside and Cardiff do.
+    "norwich": {
+        "code": "NWI", "name": "Norwich", "icao": "EGSH",
+        "lat": 52.675833, "lon": 1.282778,
+        "le": (52.675831, 1.269056), "he": (52.676033, 1.296272), "runway": "09/27",
+    },
     "cardiff": {
         "code": "CWL", "name": "Cardiff", "icao": "EGFF",
         "lat": 51.396702, "lon": -3.34333,

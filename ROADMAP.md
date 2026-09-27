@@ -638,12 +638,23 @@ City"; that was an assumption, and it was false for seven of the nine.**
 | CWL | Cardiff | **12 has no ILS glide angle** | conventional SIDs | finals now; same VPA route for 12 |
 | LBA, LPL, BRS, EMA | W Yorks, Merseyside, Bristol, Leicester + Nottingham | parse | conventional SIDs, no coding tables | finals now |
 | MME | Teesside | parses | **no SIDs published at all** | finals only - that is the true answer, not a gap |
+| NWI | Greater Norwich (API-only, 2026-09-27) | 27 from its ILS; **09 has neither ILS nor RNP**, so its NDB chart's RECOMMENDED PROFILE gradient (5.3% = 3.03 deg) - a third published source added to `read_glide` | **no SIDs published at all** | finals only, as Teesside |
 
 - **Conventional SID chart PDFs do not extract**: pdfplumber returns mirrored,
   fragmented vector text (tried on MAN). The only route to those six airports'
   departures is the Heathrow one - geometrise the AD 2.21 noise-route WORDING,
   quoting each sentence - roughly a day per airport. Do it only if the v5.4 fit
   shows departure geometry moves the error; busiest first (MAN, then BRS/EMA).
+  **The v5.4 fit answered that (re-read 2026-09-27): it does not.** Adding BHX
+  and NCL departures left held-out error at 1.431 and the weight at 0.30,
+  because DEFRA only maps the strip around each runway. So phase 2 cannot be
+  justified on SCORING accuracy against the current yardstick; its case is the
+  MAP (readers see approach lines and no departures - "no data for Manchester
+  other than the approach lines") and the postcodes beyond DEFRA's strip, where
+  there is nothing to fit against. If done: MAN only first, one day, one
+  changeset, and measure the 17,926-postcode movement as v5.4 did. Better
+  sequencing: after the CAA Heathrow contours arrive (a newer yardstick may
+  reward departures where DEFRA 2021 cannot).
 - **EMA feeds TWO cities** (Leicester and Nottingham); `AIRPORTS[...]['city']` is
   a single key and must become a list.
 - **v5.4 IS DEPLOYED (2026-09-26, master `8cb8e31`) and verified from the

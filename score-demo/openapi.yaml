@@ -33,11 +33,11 @@ info:
     The methodology is reproducible: a worked example walks through every
     calculation against a real postcode.
 
-    **Coverage.** 13 city-regions, 99 boroughs. 94 UK boroughs across 12
+    **Coverage.** 14 city-regions, 102 boroughs. 97 UK boroughs across 13
     city-regions - London (33), Greater Manchester (10), West Midlands (7),
     Leicester (8), West Yorkshire (5), Merseyside (5), Tyne and Wear (5),
-    Teesside (5), South Yorkshire (4), Bristol (4), Cardiff (4) and
-    Nottingham (4) - resolved by UK postcode, plus 5 NYC boroughs by
+    Teesside (5), South Yorkshire (4), Bristol (4), Cardiff (4),
+    Nottingham (4) and Greater Norwich (3) - resolved by UK postcode, plus 5 NYC boroughs by
     borough-name lookup or 5-digit US ZIP auto-detection (~182 residential
     ZIPs covered; ~110 with per-ZIP centroid for finer quiet-score
     resolution). GET /v1/regions returns the authoritative list and needs no
@@ -407,7 +407,7 @@ paths:
             type: string
             enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                    merseyside, tyneandwear, bristol, leicester, teesside,
-                   cardiff, nottingham]
+                   cardiff, nottingham, norwich]
             default: london
         - name: persona
           in: query
@@ -761,7 +761,7 @@ components:
                 type: string
                 enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                        merseyside, tyneandwear, bristol, leicester, teesside,
-                       cardiff, nottingham]
+                       cardiff, nottingham, norwich]
               name:
                 type: string
               country:
@@ -1008,7 +1008,7 @@ components:
           type: string
           enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                  merseyside, tyneandwear, bristol, leicester, teesside,
-                 cardiff, nottingham]
+                 cardiff, nottingham, norwich]
         postcode:
           type: string
         borough:
@@ -1165,7 +1165,7 @@ components:
                 type: string
                 enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                        merseyside, tyneandwear, bristol, leicester, teesside,
-                       cardiff, nottingham]
+                       cardiff, nottingham, norwich]
               persona:
                 type: string
                 enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, laterlife]

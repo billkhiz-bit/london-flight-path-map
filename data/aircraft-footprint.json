@@ -291,6 +291,10 @@
       "code": "CWL",
       "reason": "airport is not mapped by DEFRA Round 4, so no contour exists to test"
     },
+    "norwich": {
+      "code": "NWI",
+      "reason": "airport is not mapped by DEFRA Round 4, so no contour exists to test"
+    },
     "southyorkshire": {
       "code": null,
       "reason": "no operating commercial airport"

@@ -118,6 +118,10 @@ PROBES = [
     ('TS1 2AZ', 'Middlesbrough town centre'),
     ('NG1 5FS', 'Nottingham city centre'),
     ('CF10 1EP', 'Cardiff city centre'),
+    # Greater Norwich, added 2026-09-27. NR2 1NE is the postcode the Norwich
+    # report of 2026-09-26 was reproduced on. This probe reds until the backend
+    # carrying Norwich is deployed - which is the deploy order, not a defect.
+    ('NR2 1NE', 'Norwich city centre'),
     # NYC, added 2026-08-24. It was the ONE city with no probe, and it is the
     # one whose pipeline shares nothing with the others - ZIP resolution instead
     # of NSPL, FAA/BTS provenance instead of DEFRA, curated flood bands instead
@@ -140,6 +144,7 @@ EXPECT_CITY = {
     'TS1 2AZ': 'teesside',
     'NG1 5FS': 'nottingham',
     'CF10 1EP': 'cardiff',
+    'NR2 1NE': 'norwich',
     '10001': 'nyc',
 }
 

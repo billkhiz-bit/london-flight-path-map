@@ -261,6 +261,19 @@ CITY_LADS = {
         "Newport": "W06000022",
         "Caerphilly": "W06000018",
     },
+    # Greater Norwich (added 2026-09-27, API-only): the three authorities of the
+    # Greater Norwich Local Plan, which is the real planning geography, and the
+    # one Norwich Airport sits in (Broadland). NOT the whole of Norfolk, as
+    # Leicester was widened to its county: that widening existed because
+    # affordability was min-max within the city, and since v5.0 it is anchored
+    # on the national pool, so a three-authority cohort no longer manufactures
+    # spread. King's Lynn and Great Yarmouth are 60-70 km away and are not what
+    # anyone searching "Norwich" means.
+    "norwich": {
+        "Norwich": "E07000148",
+        "Broadland": "E07000144",
+        "South Norfolk": "E07000149",
+    },
 }
 
 # Cities the score Lambda actually holds, so --check has something to compare

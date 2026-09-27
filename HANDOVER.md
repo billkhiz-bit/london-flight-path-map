@@ -6,13 +6,23 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**PAUSED 2026-09-27 00:xx - FOUR FILES UNCOMMITTED, NOT DEPLOYED.** `index.html` removes one sentence
-from the not-covered panel at Bill's request ("Measuring <place> against another city's airports would
-give you a confident answer about the wrong place." - gone); CLAUDE.md, HANDOVER.md and ROADMAP.md carry
-the deploy echo and the NR2 1NE spot-check. To finish: `sh scripts/preflight.sh` (first check no stray
-`node tests/...` processes hold a port - a stopped preflight orphaned one and crashed `result close
-survives a scroll` with EADDRINUSE), commit, `python scripts/make.py web-deploy`, then search NR2 1NE
-live and confirm the sentence is gone.
+**WHERE TO START (2026-09-27) - GREATER NORWICH IS BUILT ON BRANCH `norwich-api-preview`, NOT MERGED, NOT DEPLOYED.**
+Deploying it changes API output (33 of 792 borough/persona scores move by 0.1 because the national
+price band moves), so it is Bill's call. Master carries `812a00e` (the not-covered sentence trim,
+committed after a full green preflight, NOT yet deployed - the Norwich deploy ships it too).
+What the branch adds: `norwich` in the Lambda (3 boroughs, `BACKEND_ONLY_CITIES`), AIP finals for
+Norwich International (runway 09 from its NDB chart's recommended-profile gradient), bands, crime,
+prices, three scorecard pages under `area/norwich/`, all 102 area pages rebuilt (they said methodology
+5.2 against a 5.4 engine), and the not-covered panel linking a scorecard for every API-only borough.
+**Ship order when approved** (backend first - the live gates `score sanity` and `area pages match the
+live API` stay red until it lands, by design): merge to master (fast-forward), SAM through a reviewed
+changeset ([[feedback-sam-deploy-via-reviewed-changeset]]), then `python scripts/make.py data-deploy
+web-deploy area-deploy meta-deploy demo-deploy` (openapi + sitemap changed), then drift, score sanity,
+area freshness, site-api parity, and search NR2 1NE live: it must read NOT ON THE MAP YET and link
+`/area/norwich/norwich/`; `EX1 1HS` must still read NOT COVERED YET. Optional after deploy:
+`CITIES=norwich sh scripts/load_road_rasters.sh` (it passes `--live-only` itself) for the per-postcode road tier on
+`/v1/environment` (the borough score does not need it). Then reply to the Norwich reporter with the
+scorecard link.
 
 **WHERE TO START (2026-09-26, night) - v5.4 + DEFRA LAYER + NORWICH FIX ARE DEPLOYED AND VERIFIED FROM THE ORIGIN.**
 Master `8cb8e31` (fast-forward of `ship-v54-and-defra-layer`). SAM via a reviewed

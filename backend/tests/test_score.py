@@ -229,11 +229,21 @@ class TrendsFeatureTests(unittest.TestCase):
         # persona and REPORTED as unweighted under balanced, and it moved
         # 3.5 -> 3.2. Asserted on the published components, the same surface
         # a caller reads.
+        #
+        # RE-PINNED 0.3 -> 0.2 for the PREVIOUS vintage on 2026-09-27, when
+        # Greater Norwich joined the sterling pool. Its three boroughs pulled
+        # the national p95 from 720,241 to 710,652, and Wandsworth's June price
+        # (680,105) sits close enough to the ceiling for that to cross a
+        # rounding boundary. The current vintage still reads 0.3. This is the
+        # national anchor doing what it says - a new city moves every city's
+        # affordability a little - and national_price_bounds() already records
+        # that the previous-vintage pool is today's pool with London's slice
+        # swapped, so this row moves whenever any other city's price does.
         previous = app.calc_score(
             'Wandsworth', 'london', app.PERSONAS['balanced'],
             boroughs_override=app.previous_dataset('london'),
         )
-        self.assertEqual(previous['components']['afford'], 0.3)
+        self.assertEqual(previous['components']['afford'], 0.2)
         self.assertEqual(body['components']['afford'], 0.3)
         self.assertNotEqual(previous['components']['growth'], body['components']['growth'])
         self.assertEqual([u['factor'] for u in comp['why']['unweighted']], ['growth'])
@@ -3303,6 +3313,9 @@ class PostcodeCityDerivationTests(unittest.TestCase):
         ('TS1 2AZ', 'teesside'),
         ('NG1 5FS', 'nottingham'),
         ('CF10 1EP', 'cardiff'),
+        # NR2 1NE is the postcode the Norwich report of 2026-09-26 was
+        # reproduced on, when it was analysed against London's airports.
+        ('NR2 1NE', 'norwich'),
     ]
 
     def test_every_city_resolves_from_a_postcode_alone(self):

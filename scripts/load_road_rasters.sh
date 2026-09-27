@@ -42,7 +42,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT" || exit 1
 LOG="$ROOT/roadload.log"
 
-CITIES="${CITIES:-nottingham teesside leicester tyneandwear bristol southyorkshire merseyside westmidlands westyorkshire manchester london}"
+CITIES="${CITIES:-norwich nottingham teesside leicester tyneandwear bristol southyorkshire merseyside westmidlands westyorkshire manchester london}"
 
 say() { printf '%s  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" | tee -a "$LOG"; }
 

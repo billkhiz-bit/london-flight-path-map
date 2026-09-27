@@ -126,6 +126,10 @@ CITY_PFA = {
     # takes a tuple, so this needs no new machinery - but the include-list is
     # what stops it collecting the whole of South Wales and Gwent.
     'cardiff': ('South Wales', 'Gwent'),
+    # Greater Norwich, added 2026-09-27. Norfolk Constabulary covers the whole
+    # county, so this takes the include-list below: three of Norfolk's seven
+    # CSP rows. Unlike Nottingham, each of the three is published separately.
+    'norwich': ('Norfolk',),
     # Nottingham, added 2026-09-07. The reason it was held back was sound and
     # covered only THREE of its four boroughs: ONS publishes `Nottingham` and
     # `South Nottinghamshire`, and Broxtowe, Gedling and Rushcliffe sit inside
@@ -226,6 +230,7 @@ CSP_INCLUDE = {
     # Broxtowe, Gedling and Rushcliffe together, and admitting it would mean
     # publishing one measurement as three.
     'nottingham': frozenset({'Nottingham'}),
+    'norwich': frozenset({'Norwich', 'Broadland', 'South Norfolk'}),  # Norfolk has seven CSPs
     'teesside': frozenset({
         'Hartlepool', 'Middlesbrough', 'Redcar and Cleveland', 'Stockton-on-Tees',
         'Darlington',
