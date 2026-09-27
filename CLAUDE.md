@@ -71,7 +71,7 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
-**FOURTEEN cities on `/v1/score`; ELEVEN on the consumer site, as of 2026-09-27** (Greater Norwich joined the API on branch `norwich-api-preview`; see the Norwich block below - until that branch is merged and deployed, live is still thirteen).
+**FOURTEEN cities on `/v1/score`; ELEVEN on the consumer site, as of 2026-09-27** (Greater Norwich joined the API that day, deployed and verified from the origin; see the Norwich block below).
 
 - **On both site and API (11):** London (33), NYC (5), Greater Manchester (10),
   West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5),

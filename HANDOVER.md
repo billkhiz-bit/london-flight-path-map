@@ -6,7 +6,17 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-09-27) - GREATER NORWICH IS BUILT ON BRANCH `norwich-api-preview`, NOT MERGED, NOT DEPLOYED.**
+**WHERE TO START (2026-09-27, later) - GREATER NORWICH IS DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+Master `4592c1d`, pushed. SAM via a reviewed changeset (ScoreFunction `Code` the only direct change),
+then `make.py data-deploy web-deploy area-deploy meta-deploy demo-deploy`, all invalidations Completed.
+Verified: drift PASS (16 pages, 25 data files, 103 area pages); score sanity PASS on 29 postcodes incl.
+NR2 1NE -> norwich; area freshness 102 of 102; site == API 6 of 6; SW11 1AA still 5.0 / afford 0.3.
+Live browser at 1440 and 390: NR2 1NE and NG1 5FS read NOT ON THE MAP YET with their scorecard links,
+EX1 1HS reads NOT COVERED YET with no link. Still to do: send the Norwich reporter the scorecard links;
+optionally `CITIES=norwich sh scripts/load_road_rasters.sh` for the per-postcode road tier.
+Previous entry, now superseded:
+
+**(2026-09-27) - GREATER NORWICH WAS BUILT ON BRANCH `norwich-api-preview`, NOT MERGED, NOT DEPLOYED.**
 Deploying it changes API output (33 of 792 borough/persona scores move by 0.1 because the national
 price band moves), so it is Bill's call. Master carries `812a00e` (the not-covered sentence trim,
 committed after a full green preflight, NOT yet deployed - the Norwich deploy ships it too).

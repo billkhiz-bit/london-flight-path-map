@@ -44,7 +44,7 @@ new sources.
 
 | # | City-region | Likely LADs | 2025 sales | Notes |
 |---|---|---|---|---|
-| - | **Greater Norwich** | Norwich, Broadland, South Norfolk | ~6.5k | **API-ONLY PREVIEW, 2026-09-27** (branch `norwich-api-preview`). Not ranked on volume - built on demand, after a Norwich user's report. 3 of 4 liveability inputs everywhere (no district P8); airport not in DEFRA Round 4 (geometry, floored). Promoting it to the site needs CITY_DATA, chip, stations, neighbourhoods and a projection fit |
+| - | **Greater Norwich** | Norwich, Broadland, South Norfolk | ~6.5k | **API-ONLY PREVIEW, DEPLOYED 2026-09-27.** Not ranked on volume - built on demand, after a Norwich user's report. 3 of 4 liveability inputs everywhere (no district P8); airport not in DEFRA Round 4 (geometry, floored). Promoting it to the site needs CITY_DATA, chip, stations, neighbourhoods and a projection fit |
 | 1 | **Nottingham** | already in `LAD_TO_BOROUGH` | ~20k | **API-only, and now promotable.** Healthcare (v3.7) took Broxtowe, Gedling and Rushcliffe to two measured inputs, so they clear the floor - it stays back on judgement (`live` 2.6 on two inputs), not impossibility |
 | ~~2~~ | ~~**Leicester**~~ | **DONE 2026-08-11, ON THE SITE.** City plus all 7 Leicestershire districts | ~15k | Widened from 4 to 8: a 4-authority cohort spans only 230k-281k |
 | 3 | **Bournemouth + Poole** | BCP, Dorset | ~14k | **NOT VIABLE as a 2-authority cohort.** 315,473 vs 326,381 is 3.5%, which min-max over two items renders as a 10-point affordability spread. Needs a wider grouping (a Solent region of 5) or leave out |
