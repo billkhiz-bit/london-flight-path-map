@@ -12,8 +12,8 @@ then `make.py data-deploy web-deploy area-deploy meta-deploy demo-deploy`, all i
 Verified: drift PASS (16 pages, 25 data files, 103 area pages); score sanity PASS on 29 postcodes incl.
 NR2 1NE -> norwich; area freshness 102 of 102; site == API 6 of 6; SW11 1AA still 5.0 / afford 0.3.
 Live browser at 1440 and 390: NR2 1NE and NG1 5FS read NOT ON THE MAP YET with their scorecard links,
-EX1 1HS reads NOT COVERED YET with no link. Still to do: send the Norwich reporter the scorecard links;
-optionally `CITIES=norwich sh scripts/load_road_rasters.sh` for the per-postcode road tier.
+EX1 1HS reads NOT COVERED YET with no link. **Next: ROADMAP -> "RECOMMENDED NEXT, in order"** (Norwich reply,
+CAA request, ICO fee, Dependabot triage, the rename). Optional: `CITIES=norwich sh scripts/load_road_rasters.sh`.
 Previous entry, now superseded:
 
 **(2026-09-27) - GREATER NORWICH WAS BUILT ON BRANCH `norwich-api-preview`, NOT MERGED, NOT DEPLOYED.**
