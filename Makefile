@@ -67,7 +67,8 @@ help:
 	@echo "    meta-deploy         Upload robots.txt, sitemap.xml, .well-known/security.txt, preview.png"
 	@echo "    area-deploy         Sync the 99 borough pages + area/index.html (rebuild them first)"
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
-	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta"
+	@echo "    open-data-deploy    Upload open-data/ (borough CSV + its page; rebuild with the area pages)"
+	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data"
 	@echo ""
 	@echo "  iOS (Codemagic-driven)"
 	@echo "    ios-trigger         git push origin master (Codemagic auto-builds)"
@@ -510,6 +511,23 @@ meta-deploy:
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png'
 
+.PHONY: open-data-deploy
+open-data-deploy:
+	# The borough CSV and the page documenting it (2026-09-28), both written by
+	# scripts/build_area_pages.py --write from the same resolve_query() as the
+	# area pages. Its own target because area-deploy forces text/html on every
+	# file, which would serve the CSV as a web page. Rebuild with the area pages
+	# after every vintage roll; --check reds while either is stale.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp open-data/index.html \
+		s3://$(S3_BUCKET)/open-data/index.html \
+		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp open-data/sky-score-boroughs.csv \
+		s3://$(S3_BUCKET)/open-data/sky-score-boroughs.csv \
+		--content-type "text/csv; charset=utf-8" --cache-control "no-cache" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/open-data/*'
+
 .PHONY: talks-deploy
 talks-deploy:
 	# The plain-English write-ups handed out at talks (AI Tinkerers, 2026-09-22)
@@ -540,7 +558,7 @@ talks-deploy:
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: fonts-deploy data-deploy web-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy
+web-deploy-all: fonts-deploy data-deploy web-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy
 	@echo "Web + data + PWA + demo + prototype + area + meta deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------

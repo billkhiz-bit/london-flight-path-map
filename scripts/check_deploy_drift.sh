@@ -38,6 +38,8 @@ index.html|index.html
 pricing.html|pricing
 privacy.html|privacy
 terms.html|terms
+open-data/index.html|open-data/
+open-data/sky-score-boroughs.csv|open-data/sky-score-boroughs.csv
 changes.html|changes
 api/index.html|api/
 score-demo/index.html|score-demo/index.html

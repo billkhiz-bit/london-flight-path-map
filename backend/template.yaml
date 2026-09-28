@@ -81,6 +81,14 @@ Resources:
           ResourcePath: /v1/signup/confirm
           ThrottlingRateLimit: 2
           ThrottlingBurstLimit: 5
+        # The confirm BUTTON (2026-09-28, audit I-5 of 25 Sep). The GET above
+        # only renders a page; this POST is what consumes the token, so a mail
+        # scanner that prefetches the link can no longer take the only copy of
+        # a key. Same structural sizing as the GET.
+        - HttpMethod: POST
+          ResourcePath: /v1/signup/confirm
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
         # Per-method override on /epc. This route is intentionally
         # unauthenticated — the consumer site calls it from the browser with
         # no API key, so ApiKeyRequired here would go straight to a dark EPC
@@ -1018,6 +1026,14 @@ Resources:
             RestApiId: !Ref FlightMapApi
             Path: /v1/signup/confirm
             Method: get
+        # The button on that page POSTs here, and only this consumes the
+        # token. A GET must be safe to prefetch (audit I-5, 25 Sep).
+        SignupConfirmPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup/confirm
+            Method: post
 
   # NOTE on signup log retention: the log group /aws/lambda/<SignupFunction>
   # was auto-created by Lambda in May 2026, so CloudFormation cannot own it

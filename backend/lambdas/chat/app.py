@@ -399,7 +399,12 @@ def _handle(event, context):
         # Do NOT return the text. A fluent answer containing a number that came
         # from nowhere is the single failure this endpoint exists to prevent,
         # and shipping it with a warning attached would still put it on screen.
-        logger.warning('[CHAT_UNGROUNDED] numbers=%r question=%r', ungrounded, question[:120])
+        # The numbers are the evidence the control fired and came from the
+        # MODEL, not the user. The question text is deliberately not logged
+        # (it did log 120 characters until 2026-09-28): a caller can type
+        # anything, including personal data, and privacy.html s2d does not
+        # cover it. Its length is enough to tell a probe from a real question.
+        logger.warning('[CHAT_UNGROUNDED] numbers=%r question_chars=%d', ungrounded, len(question))
         return response(
             200,
             {

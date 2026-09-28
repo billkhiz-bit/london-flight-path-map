@@ -490,6 +490,7 @@ INDEX = """<!doctype html>
 <main>
 <h1>Every area we cover</h1>
 <p class="sub">{n} boroughs across {c} city regions. Each page carries the published measurements behind that area's score.</p>
+<p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
 {body}
 <p class="sub" style="margin-top:32px;"><a href="/">Back to the map</a> &middot; <a href="/api/">For developers</a></p>
 </main>
@@ -541,6 +542,9 @@ def main() -> int:
         if sync_scorecards(pages, write=False):
             print('FAIL: index.html AREA_SCORECARDS is stale - run --write')
             return 1
+        if sync_open_data(write=False):
+            print('FAIL: open-data/ is stale against /v1/score - run --write')
+            return 1
         print('OK')
         return 0
 
@@ -564,7 +568,8 @@ def main() -> int:
 
     write_sitemap([p for p, _ in pages])
     sync_scorecards(pages, write=True)
-    print(f'wrote {len(pages)} pages + index + sitemap + index.html scorecard links')
+    sync_open_data(write=True)
+    print(f'wrote {len(pages)} pages + index + sitemap + index.html scorecard links + open-data/')
     return 0
 
 
@@ -640,8 +645,206 @@ def sync_scorecards(pages, write: bool) -> bool:
     return True
 
 
+# --------------------------------------------------------------------------
+# Open data download (2026-09-28)
+# --------------------------------------------------------------------------
+# One CSV of every UK borough's published score and inputs, plus a page that
+# says what each column is and where it comes from. Built HERE, from the same
+# resolve_query() the area pages and /v1/score use, in the same run: a second
+# script would be a second holder of the scores, and the first vintage roll
+# that reran one and not the other would publish two answers.
+#
+# UK rows only. New York's inputs come from US publishers under their own
+# terms, and one licence line has to be true of every row.
+#
+# No timestamp in the file, so --check can regenerate it and compare byte for
+# byte; the price vintage and methodology version say how current it is.
+OPEN_DATA = REPO / 'open-data'
+OPEN_DATA_CSV = 'sky-score-boroughs.csv'
+
+# (column, what it is). The page's table is generated from this list, so the
+# documentation cannot describe a column the file does not have.
+OPEN_DATA_COLUMNS = [
+    ('city', 'Sky Score city key'),
+    ('city_name', 'City region'),
+    ('borough', 'Borough or district, as Sky Score names it'),
+    ('ons_code', 'ONS local authority code, for joining to other datasets'),
+    ('coverage', '"map and API", or "API preview" for areas not yet on the map'),
+    ('score', 'Sky Score, 0-10, balanced persona'),
+    ('quiet', 'Quiet skies component, 0-10 (higher is quieter)'),
+    ('afford', 'Affordability component, 0-10, national log scale'),
+    ('growth', 'Price growth component, 0-10, real terms'),
+    ('live', 'Liveability component, 0-10'),
+    ('env', 'Environment component, 0-10 (air, road noise, flood)'),
+    ('avg_price_gbp', 'Average price, HM Land Registry UK House Price Index'),
+    ('price_trend_pct', '12-month price change, nominal, %'),
+    ('price_trend_real_pct', '12-month price change after ONS CPIH inflation, %'),
+    ('crime_per_1000', 'Recorded offences excluding fraud per 1,000 residents, ONS Table C4'),
+    ('progress8', 'DfE Progress 8, 2023/24 (England only; blank where not published)'),
+    ('rail_within_800m_pct', 'Share of postcodes within 800 m of a rail, metro or tram stop (NaPTAN), %'),
+    ('healthcare_within_500m_pct', 'Share of postcodes within 500 m of a GP practice (NHS ODS), %'),
+    ('air_quality_who_ratio', 'Worse of NO2 and PM2.5 as a multiple of the WHO 2021 guideline (DEFRA)'),
+    ('road_noise_above_who_pct', 'Share of postcodes above the WHO 53 dB Lden road guideline (DEFRA Round 4), %'),
+    ('flood_medium_or_high_pct', 'Share of postcodes at Medium or High flood risk (Environment Agency RoFRS), %'),
+    ('methodology_version', 'Sky Score methodology version the scores were computed under'),
+    ('price_vintage', 'UK House Price Index month the prices are from'),
+]
+
+
+def open_data_rows() -> list[list]:
+    """One row per UK borough the API scores, sorted, absent values blank."""
+    backend_only = backend_only_cities()
+    code_for = {(c, b): code for code, (c, b) in app.LAD_TO_BOROUGH.items()}
+    rows = []
+    for city in sorted(app.CITIES):
+        if city == 'nyc':
+            continue
+        for borough in sorted(app.CITIES[city]['boroughs']):
+            body, status = app.resolve_query({'borough': borough, 'city': city})
+            if status != 200 or not isinstance(body.get('score'), (int, float)):
+                raise SystemExit(f'open data: {city}/{borough} did not score ({status}); refusing a partial file')
+            comp, ctx = body.get('components') or {}, body.get('context') or {}
+            rec, painted = app.CITIES[city]['boroughs'][borough], _painted_for(city, borough)
+
+            def first(*vals):
+                return next((v for v in vals if v not in (None, '')), '')
+
+            rows.append([
+                city, CITY_LABEL.get(city, city.title()), borough, code_for.get((city, borough), ''),
+                'API preview' if city in backend_only else 'map and API',
+                body['score'], comp.get('quiet', ''), comp.get('afford', ''), comp.get('growth', ''),
+                comp.get('live', ''), comp.get('env', ''),
+                first(ctx.get('avgPriceGbp')), first(ctx.get('priceTrendPct')), first(ctx.get('priceTrendRealPct')),
+                first(rec.get('crimeRate')), first(rec.get('p8')),
+                first(painted.get('transportWithin800mPct')), first(painted.get('healthcareWithin500mPct')),
+                first(rec.get('airQualityWhoRatio'), painted.get('airQualityWhoRatio')),
+                first(rec.get('roadNoiseAboveWhoPct'), painted.get('roadNoiseAboveWhoPct')),
+                first(rec.get('floodMediumOrHighPct'), painted.get('floodMediumOrHighPct')),
+                body.get('methodologyVersion', ''), app.SNAPSHOT_VINTAGE_LABEL,
+            ])
+    return rows
+
+
+def open_data_csv(rows) -> str:
+    import csv  # noqa: PLC0415
+    import io  # noqa: PLC0415
+
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator='\n')
+    w.writerow([c for c, _ in OPEN_DATA_COLUMNS])
+    w.writerows(rows)
+    return buf.getvalue()
+
+
+OPEN_DATA_PAGE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Open data - Sky Score</title>
+<meta name="description" content="Download Sky Score's borough-level scores and inputs for {n} UK areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices, from open government data." />
+<link rel="canonical" href="{site}/open-data/" />
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<style>
+  :root {{ color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
+  * {{ box-sizing:border-box; }}
+  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
+  .wrap {{ max-width:760px; margin:0 auto; padding:24px 20px 64px; }}
+  a {{ color:var(--orange); }}
+  nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
+  h1 {{ font-size:28px; line-height:1.25; margin:0 0 6px; }}
+  h2 {{ font-size:18px; margin:32px 0 8px; }}
+  .sub {{ color:var(--mid); margin:0 0 20px; }}
+  .dl {{ display:inline-block; padding:12px 18px; border:1px solid var(--line); border-radius:8px; background:var(--bg); font-weight:600; }}
+  .tw {{ overflow-x:auto; }}
+  table {{ width:100%; border-collapse:collapse; font-size:13px; }}
+  th, td {{ text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }}
+  th {{ font-weight:600; }}
+  code {{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; }}
+  footer {{ margin-top:40px; font-size:12px; color:var(--mid); }}
+  @media (prefers-color-scheme: dark) {{
+    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
+    body {{ background:#141414; }}
+  }}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; Open data</nav>
+<main>
+<h1>Open data</h1>
+<p class="sub">Every UK area Sky Score covers, in one file: the published score, its five components and the measurements behind them. {n} areas across {c} city regions. Prices: {vintage} UK House Price Index. Methodology version {methodology}.</p>
+<p><a class="dl" href="/open-data/{csv}" download>Download {csv} (CSV)</a></p>
+
+<h2>Licence and attribution</h2>
+<p>{licence}</p>
+<p>Built entirely from open government data, used under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>. If you reuse this file, please also credit the original publishers: DEFRA (noise and air quality), the Environment Agency (flood risk), ONS (crime, postcode lookup), the Department for Education (Progress 8), HM Land Registry (prices), the Department for Transport (NaPTAN) and the NHS Organisation Data Service (GP practices).</p>
+
+<h2>What each column means</h2>
+<div class="tw">
+<table>
+<caption class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Columns in {csv}</caption>
+<thead><tr><th scope="col">Column</th><th scope="col">Meaning</th></tr></thead>
+<tbody>
+{columns}
+</tbody>
+</table>
+</div>
+
+<h2>Read before using</h2>
+<p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's 2024 figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
+</main>
+<footer>
+<p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+</footer>
+</div>
+</body>
+</html>
+"""
+
+# DECIDED BY BILL 2026-09-28: no competitor reselling. CC BY-NC 4.0, plus an
+# explicit extra grant for journalism and academic research, because "non-
+# commercial" is fuzzy and would otherwise deter exactly the reuse wanted (a
+# newspaper is a business). A licensor may grant MORE than the licence, never
+# less. Bulk resale or product use needs written permission.
+OPEN_DATA_LICENCE = (
+    'Sky Score’s scores in this file are released under '
+    '<a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0</a>: '
+    'free to use, share and adapt for non-commercial purposes, with credit to "Sky Score (skyscore.co.uk)". '
+    '<strong>In addition</strong>, journalists may publish figures, tables and charts from it in news reporting, '
+    'including in commercial publications, and academic researchers may use it in published research, in each case '
+    'with that credit. Reselling the dataset, redistributing it in bulk, or building it into a commercial product or '
+    'service needs written permission: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.'
+)
+
+
+def open_data_files() -> dict[str, str]:
+    rows = open_data_rows()
+    columns = '\n'.join(f'<tr><td><code>{e(c)}</code></td><td>{e(d)}</td></tr>' for c, d in OPEN_DATA_COLUMNS)
+    page = OPEN_DATA_PAGE.format(
+        n=len(rows), c=len({r[0] for r in rows}), site=SITE, csv=OPEN_DATA_CSV,
+        vintage=e(app.SNAPSHOT_VINTAGE_LABEL), methodology=e(app.METHODOLOGY_VERSION),
+        licence=OPEN_DATA_LICENCE, columns=columns)
+    return {OPEN_DATA_CSV: open_data_csv(rows), 'index.html': page}
+
+
+def sync_open_data(write: bool) -> bool:
+    """True if open-data/ is (or, with write, was) out of date."""
+    stale = False
+    for name, content in open_data_files().items():
+        path = OPEN_DATA / name
+        current = path.read_text(encoding='utf-8').replace('\r\n', '\n') if path.exists() else None
+        if current != content:
+            stale = True
+            if write:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding='utf-8', newline='\n')
+    return stale
+
+
 STATIC_URLS = [
     ('/', '1.0', 'weekly'),
+    ('/open-data/', '0.7', 'monthly'),
     ('/pricing', '0.8', 'monthly'),
     ('/privacy', '0.3', 'yearly'),
     ('/api/', '0.9', 'monthly'),

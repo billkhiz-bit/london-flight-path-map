@@ -14,6 +14,7 @@ const PAGES = [
   { path: '/pricing', name: 'pricing' },
   { path: '/privacy', name: 'privacy' },
   { path: '/terms', name: 'terms of use' },
+  { path: '/open-data/', name: 'open data' },
   { path: '/api/', name: 'API landing' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },

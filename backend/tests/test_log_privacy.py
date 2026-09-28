@@ -22,8 +22,11 @@ import unittest
 from pathlib import Path
 
 LAMBDAS = Path(__file__).resolve().parent.parent / 'lambdas'
-LOCATION_NAMES = {'postcode', 'postcode_clean', 'clean', 'pc', 'outcode', 'lat', 'lon', 'lng', 'latitude', 'longitude'}
-SCRUBBERS = {'_log_district', '_log_coarse'}
+LOCATION_NAMES = {'postcode', 'postcode_clean', 'clean', 'pc', 'outcode', 'lat', 'lon', 'lng', 'latitude', 'longitude',
+                  # Free text a caller typed (/v1/chat). Not a location, but the
+                  # same promise: s2d does not cover it. Its len() is fine.
+                  'question'}
+SCRUBBERS = {'_log_district', '_log_coarse', 'len'}  # len(): a size is not the value
 
 
 def _raw_location_names(node):

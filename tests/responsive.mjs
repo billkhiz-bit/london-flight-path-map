@@ -108,6 +108,7 @@ const PAGES = [
   { name: 'pricing', slug: 'pricing' },
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
+  { name: 'open data', slug: 'open-data/index' },
   { name: 'what changed', slug: 'changes', settle: 2500 },
   { name: 'API landing', slug: 'api/index' },
   { name: 'score demo', slug: 'score-demo/index' },

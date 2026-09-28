@@ -177,10 +177,11 @@ EXPECTED RUNTIME, COST AND RESUMABILITY:
 
   CHANGED 2026-07-27: _flush_batch now uses BatchWriteItem, 25 items per
   signed request, which removes ~96% of the round trips the measurement above
-  was bound by. THE NEXT FULL LOAD IS THEREFORE UNMEASURED. Expect well under
-  an hour, but treat any figure quoted here as a projection until a real run
-  replaces it — this docstring has already been wrong by 10x once, in the
-  optimistic direction, for exactly this reason.
+  was bound by. MEASURED 2026-09-09 on the August 2026 roll: 2,704,825 rows
+  in 58 MINUTES on this BatchWriteItem path (this said "unmeasured, expect
+  well under an hour" until 2026-09-28 - the run had already happened). Treat
+  58 minutes as one measurement, not a promise: this docstring has been wrong
+  by 10x once already, in the optimistic direction.
 
   That speedup needs dynamodb:BatchWriteItem. GRANTED as of 2026-09-04,
   verified by probing with an empty request - a validation error rather than

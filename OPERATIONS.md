@@ -649,6 +649,16 @@ and the flip is the LAST step below.
 
 **TWO CODE CHANGES MUST LAND BEFORE STEP 5, found by the 2026-09-25 audit.**
 Neither is live while the flag is off; both would be the moment it flips.
+**BOTH LANDED ON MASTER 2026-09-28, with the flag still off** (plus the
+postcode point below): the GET renders a Confirm button and only its POST
+consumes the token (`SignupConfirmPost` + its own 2/5 throttle); sends are
+capped at `SEND_CAP_PER_DAY = 3` per address per UTC day by a hashed counter
+row in the pending table, failing open, identical 201 either way; only a UK
+postcode SHAPE reaches the email body. `ScannerSafeConfirmTests`,
+`SendCapTests`, `EmailPostcodeTests` in `backend/tests/test_signup_verify.py`,
+the first proven red on the old GET-consumes behaviour. **Branch
+`i17-flip-verification-on` predates this and must be rebased onto master
+before it is merged.** The detail below is kept as the reasoning.
 
 - **The confirm link must not consume its token on a GET.** `handle_confirm`
   deletes the pending row, mints the key and shows it once, all on the GET.

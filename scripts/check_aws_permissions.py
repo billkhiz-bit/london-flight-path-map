@@ -10,10 +10,12 @@ the present tense with no re-check attached, and it surfaced only because the
 BLOCKING `log retention == privacy.html` stage happens to need the same verb.
 
 **A permission is a timestamp, not a property.** `backend/iam-policy.json` is
-the repo's record of the policy the deploy user SHOULD hold, and it is
-aspirational - `load_nspl.py:170` and `load_defra_raster.py:295` both already
-say in comments that appearing in that file "proves nothing", and until now
-nothing compared it to the live account.
+the repo's record of the policy the deploy user SHOULD hold - a record of
+INTENT, not of the live account. It was pasted back whole on 2026-09-04 and
+matched the account then, but only a probe can say it still does:
+`load_defra_raster.py` makes the same point in its UpdateItem comment. Until
+this script existed nothing compared the two. (This paragraph called the file
+"aspirational" and cited loader line numbers that had moved, until 2026-09-28.)
 
 WHY IT IS A CAPABILITY PROBE AND NOT A POLICY DIFF. The obvious check is to
 read the live policy and diff it. That is impossible from here:

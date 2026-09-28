@@ -1,0 +1,98 @@
+city,city_name,borough,ons_code,coverage,score,quiet,afford,growth,live,env,avg_price_gbp,price_trend_pct,price_trend_real_pct,crime_per_1000,progress8,rail_within_800m_pct,healthcare_within_500m_pct,air_quality_who_ratio,road_noise_above_who_pct,flood_medium_or_high_pct,methodology_version,price_vintage
+bristol,Bristol,Bath and North East Somerset,E06000022,map and API,5.2,5.0,3.7,4.2,5.4,7.8,409045,-0.7,-3.7,79.0,0.16,16.9,34.8,1.36,33.8,2.38,5.4,July 2026
+bristol,Bristol,City of Bristol,E06000023,map and API,6.8,10.0,4.7,4.8,4.5,7.8,352262,2.1,-1.0,131.0,-0.01,30.7,43.0,1.51,34.7,0.96,5.4,July 2026
+bristol,Bristol,North Somerset,E06000024,map and API,4.9,3.0,5.5,5.6,4.9,8.4,313638,3.8,0.7,81.8,-0.05,14.5,29.4,1.28,26.3,1.29,5.4,July 2026
+bristol,Bristol,South Gloucestershire,E06000025,map and API,7.0,10.0,4.9,5.2,4.9,8.1,341833,3.4,0.3,73.8,-0.16,11.4,25.8,1.5,31.3,0.32,5.4,July 2026
+cardiff,Cardiff,Caerphilly,W06000018,API preview,8.2,10.0,8.6,5.9,5.7,,197272,4.2,1.1,85.3,,,,1.58,,,5.4,July 2026
+cardiff,Cardiff,Cardiff,W06000015,API preview,7.4,10.0,6.4,4.9,5.4,,272252,2.7,-0.4,93.8,,,,1.85,,,5.4,July 2026
+cardiff,Cardiff,Newport,W06000022,API preview,7.4,10.0,7.6,4.8,4.2,,229200,2.0,-1.1,109.4,,,,1.66,,,5.4,July 2026
+cardiff,Cardiff,Vale of Glamorgan,W06000014,API preview,5.7,5.0,5.7,7.4,6.4,,303112,6.2,3.0,60.8,,,,1.34,,,5.4,July 2026
+leicester,Leicestershire,Blaby,E07000129,map and API,7.4,10.0,6.0,4.7,5.7,7.4,289282,1.9,-1.2,59.2,,6.4,30.6,1.73,40.7,0.56,5.4,July 2026
+leicester,Leicestershire,Charnwood,E07000130,map and API,6.6,7.5,6.4,4.8,5.4,7.1,273945,2.3,-0.8,67.9,,19.4,35.1,1.9,31.4,2.06,5.4,July 2026
+leicester,Leicestershire,Harborough,E07000131,map and API,7.2,10.0,4.8,9.1,6.0,7.9,347010,8.5,5.2,44.4,,8.5,21.4,1.6,33.9,0.08,5.4,July 2026
+leicester,Leicestershire,Hinckley and Bosworth,E07000132,map and API,7.6,10.0,6.7,4.7,5.7,7.6,260187,1.7,-1.4,59.5,,10.5,29.9,1.76,36.1,0.04,5.4,July 2026
+leicester,Leicestershire,Leicester,E06000016,map and API,7.6,10.0,7.6,4.2,4.9,7.1,227322,-0.9,-3.9,110.0,0.1,12.0,60.3,1.91,35.5,1.34,5.4,July 2026
+leicester,Leicestershire,Melton,E07000133,map and API,7.5,10.0,6.2,4.7,5.8,7.7,282521,1.5,-1.6,56.8,,14.1,15.7,1.53,39.6,0.64,5.4,July 2026
+leicester,Leicestershire,North West Leicestershire,E07000134,map and API,5.9,5.0,6.2,5.1,5.7,7.6,280530,3.2,0.1,59.2,,0.0,18.7,1.74,33.0,0.79,5.4,July 2026
+leicester,Leicestershire,Oadby and Wigston,E07000135,map and API,7.7,10.0,7.0,3.5,5.9,7.6,251253,-4.2,-7.1,53.6,,11.3,30.5,1.9,28.5,0.25,5.4,July 2026
+london,London,Barking and Dagenham,E09000002,map and API,7.0,10.0,4.3,6.7,6.5,6.3,375604,5.3,2.1,84.2,0.24,48.3,75.8,1.97,60.4,0.9,5.4,July 2026
+london,London,Barnet,E09000003,map and API,5.8,7.5,1.2,3.3,7.9,6.5,600560,-4.9,-7.8,67.8,0.61,59.9,56.0,1.93,56.2,0.73,5.4,July 2026
+london,London,Bexley,E09000004,map and API,6.8,10.0,3.7,4.8,6.2,6.9,413343,2.0,-1.1,60.2,-0.02,44.8,52.9,1.77,53.5,0.55,5.4,July 2026
+london,London,Brent,E09000005,map and API,5.9,7.5,1.8,3.8,8.2,5.9,546135,-2.6,-5.5,89.3,0.58,78.1,72.2,2.18,60.1,1.36,5.4,July 2026
+london,London,Bromley,E09000006,map and API,6.6,10.0,2.2,3.7,6.6,7.2,511670,-3.1,-6.0,69.1,0.05,52.8,39.0,1.65,45.9,1.31,5.4,July 2026
+london,London,Camden,E09000007,map and API,5.3,10.0,0.0,2.2,5.5,4.5,815159,-10.1,-12.8,173.3,-0.14,97.7,87.4,2.92,73.7,0.0,5.4,July 2026
+london,London,City of London,E09000001,map and API,4.1,7.5,0.1,0.7,4.8,3.1,710652,-17.4,-19.9,190,,100.0,37.4,3.39,95.4,0.0,5.4,July 2026
+london,London,Croydon,E09000008,map and API,5.4,5.0,4.0,3.6,6.5,6.9,390041,-3.4,-6.3,80.4,-0.04,65.9,52.0,1.76,47.5,1.51,5.4,July 2026
+london,London,Ealing,E09000009,map and API,3.8,1.5,1.3,4.5,7.6,6.3,585216,0.8,-2.2,80.5,0.56,69.2,68.5,2.1,54.9,0.5,5.4,July 2026
+london,London,Enfield,E09000010,map and API,6.6,10.0,2.8,4.5,6.4,6.3,471019,0.6,-2.4,85.2,0.09,67.1,49.3,1.91,61.0,0.79,5.4,July 2026
+london,London,Greenwich,E09000011,map and API,5.0,5.0,2.9,4.0,6.4,6.2,462589,-1.4,-4.4,90.3,-0.01,62.1,64.3,2.12,54.7,1.17,5.4,July 2026
+london,London,Hackney,E09000012,map and API,6.3,10.0,1.1,3.8,7.8,5.2,605442,-2.6,-5.5,116.5,0.51,90.7,83.1,2.56,64.9,1.17,5.4,July 2026
+london,London,Hammersmith and Fulham,E09000013,map and API,3.9,3.0,0.0,2.5,8.0,5.4,738048,-9.0,-11.7,107.0,0.52,88.3,81.4,2.45,68.5,0.0,5.4,July 2026
+london,London,Haringey,E09000014,map and API,6.0,10.0,0.8,4.6,6.6,6.1,638690,1.0,-2.0,104.6,0.3,73.9,73.2,2.14,57.5,0.7,5.4,July 2026
+london,London,Harrow,E09000015,map and API,6.8,10.0,2.0,3.8,7.8,7.0,526493,-2.8,-5.7,59.5,0.46,64.2,56.8,1.88,43.5,0.85,5.4,July 2026
+london,London,Havering,E09000016,map and API,6.7,10.0,3.1,4.8,6.0,7.2,448648,2.1,-1.0,68.3,0.11,33.8,46.4,1.72,49.0,0.18,5.4,July 2026
+london,London,Hillingdon,E09000017,map and API,3.2,0.0,2.8,4.1,5.7,6.7,470875,-1.3,-4.3,91.6,0.24,40.4,47.5,1.87,51.6,0.87,5.4,July 2026
+london,London,Hounslow,E09000018,map and API,3.4,0.0,2.1,4.7,7.2,6.1,525435,1.7,-1.4,87.4,0.45,61.7,52.2,2.09,62.8,0.33,5.4,July 2026
+london,London,Islington,E09000019,map and API,5.9,10.0,0.4,3.3,6.9,5.0,674592,-4.9,-7.8,131.2,0.15,98.9,89.9,2.82,65.0,0.0,5.4,July 2026
+london,London,Kensington and Chelsea,E09000020,map and API,4.1,5.0,0.0,1.4,6.9,4.7,1232640,-14.1,-16.7,145.8,0.3,88.5,88.0,2.76,74.9,0.02,5.4,July 2026
+london,London,Kingston upon Thames,E09000021,map and API,5.7,7.5,1.3,5.2,8.0,5.7,591555,3.3,0.2,66.8,0.65,65.1,51.3,1.87,53.5,5.58,5.4,July 2026
+london,London,Lambeth,E09000022,map and API,4.8,5.0,1.9,3.0,7.0,5.9,536623,-6.3,-9.1,114.4,0.0,86.0,78.5,2.39,56.2,0.28,5.4,July 2026
+london,London,Lewisham,E09000023,map and API,5.9,7.5,2.5,4.5,7.2,6.1,488658,0.7,-2.3,94.2,0.1,82.1,61.6,2.1,50.7,2.34,5.4,July 2026
+london,London,Merton,E09000024,map and API,5.9,7.5,1.0,4.2,8.8,6.3,615890,-0.9,-3.9,59.3,0.61,76.5,58.3,1.97,55.0,1.39,5.4,July 2026
+london,London,Newham,E09000025,map and API,4.8,3.0,4.0,3.3,7.4,5.7,390349,-5.0,-7.9,104.0,0.28,81.1,68.3,2.32,67.2,0.0,5.4,July 2026
+london,London,Redbridge,E09000026,map and API,6.8,10.0,2.6,3.8,7.6,6.2,481297,-2.7,-5.6,74.3,0.52,61.1,56.6,1.98,61.5,1.04,5.4,July 2026
+london,London,Richmond upon Thames,E09000027,map and API,3.5,1.5,0.0,4.2,7.8,6.3,803249,-0.8,-3.8,57.3,0.43,69.8,56.7,1.92,56.1,1.69,5.4,July 2026
+london,London,Southwark,E09000028,map and API,5.5,7.5,1.5,4.4,6.9,5.7,572478,0.1,-2.9,120.8,0.46,61.7,79.4,2.59,55.8,0.01,5.4,July 2026
+london,London,Sutton,E09000029,map and API,7.1,10.0,3.0,4.5,7.5,7.2,452654,0.6,-2.4,60.3,0.45,60.9,47.7,1.73,48.1,0.29,5.4,July 2026
+london,London,Tower Hamlets,E09000030,map and API,5.9,7.5,3.1,1.3,7.3,4.7,447796,-14.4,-17.0,106.6,0.13,97.0,86.9,2.73,74.3,0.72,5.4,July 2026
+london,London,Waltham Forest,E09000031,map and API,6.3,10.0,2.0,4.9,6.4,6.1,529102,2.8,-0.3,80.2,-0.1,65.9,68.2,2.09,58.0,1.22,5.4,July 2026
+london,London,Wandsworth,E09000032,map and API,4.6,5.0,0.3,3.2,7.8,5.6,686076,-5.5,-8.3,76.4,0.49,74.8,77.4,2.27,58.8,2.11,5.4,July 2026
+london,London,Westminster,E09000033,map and API,3.8,5.0,0.0,0.0,6.1,3.8,876788,-20.7,-23.1,355.5,0.47,99.7,81.6,3.11,87.7,0.02,5.4,July 2026
+manchester,Greater Manchester,Bolton,E08000001,map and API,7.7,10.0,8.3,7.1,4.8,7.1,204379,5.9,2.7,98.0,0.05,21.1,45.4,1.55,54.4,0.69,5.4,July 2026
+manchester,Greater Manchester,Bury,E08000002,map and API,7.5,10.0,7.2,4.9,5.2,7.1,242437,2.8,-0.3,92.1,-0.09,32.3,34.0,1.5,55.5,1.02,5.4,July 2026
+manchester,Greater Manchester,Manchester,E08000003,map and API,5.9,5.0,6.9,4.6,5.5,6.6,252309,1.2,-1.8,142.7,0.07,64.1,54.6,1.74,57.3,1.2,5.4,July 2026
+manchester,Greater Manchester,Oldham,E08000004,map and API,7.6,10.0,7.9,6.3,4.7,7.2,217171,4.7,1.6,106.6,-0.2,36.5,38.4,1.57,53.5,0.51,5.4,July 2026
+manchester,Greater Manchester,Rochdale,E08000005,map and API,7.6,10.0,8.2,6.1,4.5,7.1,209389,4.5,1.4,104.6,-0.3,33.1,42.5,1.53,53.3,1.09,5.4,July 2026
+manchester,Greater Manchester,Salford,E08000006,map and API,7.3,10.0,7.6,4.4,4.4,6.5,229462,0.3,-2.7,105.8,-0.35,43.8,48.6,1.71,64.2,0.7,5.4,July 2026
+manchester,Greater Manchester,Stockport,E08000007,map and API,5.0,3.0,5.4,5.9,5.8,7.5,317913,4.2,1.1,74.8,0.09,45.9,39.6,1.56,44.9,0.43,5.4,July 2026
+manchester,Greater Manchester,Tameside,E08000008,map and API,7.7,10.0,8.2,4.3,4.9,7.1,209723,-0.1,-3.1,96.4,-0.21,46.7,44.4,1.59,54.8,0.38,5.4,July 2026
+manchester,Greater Manchester,Trafford,E08000009,map and API,5.6,5.0,3.9,10.0,7.0,7.4,400688,9.6,6.3,74.9,0.35,52.9,36.0,1.48,51.6,0.33,5.4,July 2026
+manchester,Greater Manchester,Wigan,E08000010,map and API,7.7,10.0,8.7,5.6,4.3,7.1,194551,3.9,0.8,91.0,-0.32,17.9,38.4,1.63,46.8,1.34,5.4,July 2026
+merseyside,Merseyside,Knowsley,E08000011,map and API,7.7,10.0,8.9,4.5,3.9,7.2,188727,0.9,-2.1,81.8,-0.9,39.1,42.6,1.75,46.0,0.21,5.4,July 2026
+merseyside,Merseyside,Liverpool,E08000012,map and API,6.1,5.0,8.9,8.8,4.1,7.2,189036,8.1,4.8,124.1,-0.48,37.5,57.8,1.61,51.2,0.29,5.4,July 2026
+merseyside,Merseyside,Sefton,E08000014,map and API,7.6,10.0,7.7,5.5,4.9,7.4,224289,3.7,0.6,75.5,-0.41,48.8,38.1,1.76,40.6,0.26,5.4,July 2026
+merseyside,Merseyside,St Helens,E08000013,map and API,8.0,10.0,9.0,8.3,4.9,7.4,185154,7.3,4.1,86.4,-0.32,32.3,37.3,1.59,46.3,0.29,5.4,July 2026
+merseyside,Merseyside,Wirral,E08000015,map and API,7.8,10.0,7.8,7.8,5.4,7.6,221849,6.7,3.5,71.1,-0.16,39.8,41.0,1.34,50.8,0.55,5.4,July 2026
+norwich,Greater Norwich,Broadland,E07000144,API preview,5.2,3.0,5.5,5.0,6.0,8.2,313407,2.9,-0.2,34.8,,,,1.46,29.5,0.62,5.4,July 2026
+norwich,Greater Norwich,Norwich,E07000148,API preview,5.9,5.0,7.7,3.9,4.6,7.2,224323,-2.3,-5.2,108.9,,,,1.66,48.9,0.43,5.4,July 2026
+norwich,Greater Norwich,South Norfolk,E07000149,API preview,7.4,10.0,5.5,4.7,6.0,8.1,311587,1.5,-1.6,41.7,,,,1.39,34.1,0.56,5.4,July 2026
+nottingham,Nottinghamshire,Broxtowe,E07000172,API preview,6.4,7.5,6.9,4.2,4.0,7.4,253021,-0.8,-3.8,,,,,1.75,36.9,0.75,5.4,July 2026
+nottingham,Nottinghamshire,City of Nottingham,E06000018,API preview,7.7,10.0,8.8,4.1,4.5,6.6,190200,-1.3,-4.3,124.9,-0.25,,,1.82,43.0,3.47,5.4,July 2026
+nottingham,Nottinghamshire,Gedling,E07000173,API preview,6.9,10.0,7.2,4.5,2.6,7.5,241473,0.9,-2.1,,,,,1.7,28.4,2.44,5.4,July 2026
+nottingham,Nottinghamshire,Rushcliffe,E07000176,API preview,4.8,5.0,5.3,4.0,2.6,7.9,324012,-1.5,-4.5,,,,,1.64,28.7,0.58,5.4,July 2026
+southyorkshire,South Yorkshire,Barnsley,E08000038,map and API,7.9,10.0,9.3,5.3,4.2,7.8,175733,3.5,0.4,95.1,-0.32,20.1,34.9,1.3,44.1,0.93,5.4,July 2026
+southyorkshire,South Yorkshire,Doncaster,E08000017,map and API,7.9,10.0,9.5,6.3,4.3,6.8,172305,4.7,1.6,117.3,0.0,14.1,32.4,1.25,38.9,7.49,5.4,July 2026
+southyorkshire,South Yorkshire,Rotherham,E08000018,map and API,7.9,10.0,8.8,4.7,4.5,7.8,191496,1.7,-1.4,93.1,-0.18,9.6,35.9,1.38,41.0,1.11,5.4,July 2026
+southyorkshire,South Yorkshire,Sheffield,E08000039,map and API,7.8,10.0,7.9,4.9,5.2,7.6,219539,2.8,-0.3,96.9,-0.16,36.4,53.4,1.38,46.9,0.92,5.4,July 2026
+teesside,Teesside,Darlington,E06000005,map and API,6.5,5.0,10.0,5.0,4.8,6.3,159988,2.9,-0.2,91.0,-0.32,28.7,35.6,1.37,53.3,6.15,5.4,July 2026
+teesside,Teesside,Hartlepool,E06000001,map and API,7.8,10.0,10.0,6.8,3.1,7.7,136894,5.5,2.3,134.2,-0.47,15.0,36.0,1.36,48.1,0.41,5.4,July 2026
+teesside,Teesside,Middlesbrough,E06000002,map and API,7.7,10.0,10.0,5.5,2.9,7.1,140909,3.7,0.6,150.0,-0.45,17.9,33.6,1.58,53.6,0.55,5.4,July 2026
+teesside,Teesside,Redcar and Cleveland,E06000003,map and API,8.0,10.0,10.0,5.9,3.8,7.7,151341,4.2,1.1,108.9,-0.36,22.7,26.5,1.3,47.5,0.74,5.4,July 2026
+teesside,Teesside,Stockton-on-Tees,E06000004,map and API,6.4,5.0,9.6,5.0,4.2,7.4,170029,3.0,-0.1,107.9,-0.19,20.4,24.2,1.46,45.3,1.84,5.4,July 2026
+tyneandwear,Tyne and Wear,Gateshead,E08000037,map and API,8.1,10.0,10.0,5.5,4.6,7.0,155550,3.7,0.6,87.8,-0.14,20.3,38.6,1.45,59.8,1.0,5.4,July 2026
+tyneandwear,Tyne and Wear,Newcastle upon Tyne,E08000021,map and API,5.4,3.0,8.2,5.8,4.5,7.0,207547,4.1,1.0,107.4,-0.28,39.0,46.5,1.57,60.0,0.1,5.4,July 2026
+tyneandwear,Tyne and Wear,North Tyneside,E08000022,map and API,6.2,5.0,8.3,7.6,5.3,6.9,205744,6.5,3.3,81.8,-0.15,49.4,38.1,1.65,59.3,0.2,5.4,July 2026
+tyneandwear,Tyne and Wear,South Tyneside,E08000023,map and API,8.1,10.0,9.9,6.7,4.5,7.1,161372,5.3,2.1,96.6,-0.39,49.9,37.6,1.64,56.6,0.0,5.4,July 2026
+tyneandwear,Tyne and Wear,Sunderland,E08000024,map and API,8.0,10.0,10.0,6.3,4.2,7.1,147114,4.8,1.6,93.6,-0.31,20.3,34.2,1.58,55.8,0.15,5.4,July 2026
+westmidlands,West Midlands,Birmingham,E08000025,map and API,5.4,3.0,7.4,4.9,5.3,7.1,234150,2.5,-0.6,114.2,0.06,36.9,50.7,1.71,46.9,1.17,5.4,July 2026
+westmidlands,West Midlands,Coventry,E08000026,map and API,7.7,10.0,7.6,5.5,5.2,7.2,227679,3.7,0.6,88.4,0.01,9.1,52.0,1.61,51.7,0.16,5.4,July 2026
+westmidlands,West Midlands,Dudley,E08000027,map and API,7.6,10.0,7.5,5.3,5.0,7.4,232196,3.5,0.4,74.5,-0.12,19.5,39.3,1.54,50.0,0.14,5.4,July 2026
+westmidlands,West Midlands,Sandwell,E08000028,map and API,7.8,10.0,8.3,4.3,5.3,6.7,205743,-0.4,-3.4,95.9,-0.16,42.3,53.1,1.8,58.7,0.41,5.4,July 2026
+westmidlands,West Midlands,Solihull,E08000029,map and API,4.7,3.0,5.0,5.2,5.0,7.6,337112,3.3,0.2,79.5,-0.06,18.8,35.6,1.6,40.7,0.26,5.4,July 2026
+westmidlands,West Midlands,Walsall,E08000030,map and API,7.5,10.0,8.0,4.7,4.4,6.8,215329,1.5,-1.6,92.9,-0.22,19.1,41.3,1.69,54.5,1.08,5.4,July 2026
+westmidlands,West Midlands,Wolverhampton,E08000031,map and API,7.6,10.0,7.8,8.2,4.7,7.6,220559,7.2,4.0,92.0,-0.05,21.1,48.4,1.55,44.6,0.17,5.4,July 2026
+westyorkshire,West Yorkshire,Bradford,E08000032,map and API,7.8,10.0,9.1,4.9,4.3,7.3,182766,2.5,-0.6,117.0,-0.28,25.6,43.4,1.43,49.9,1.34,5.4,July 2026
+westyorkshire,West Yorkshire,Calderdale,E08000033,map and API,7.7,10.0,8.8,6.0,4.6,6.6,191540,4.3,1.2,103.4,0.02,20.9,35.7,1.38,57.9,4.04,5.4,July 2026
+westyorkshire,West Yorkshire,Kirklees,E08000034,map and API,7.8,10.0,8.2,7.3,5.0,7.3,208987,6.1,2.9,87.6,0.07,17.7,40.5,1.41,52.0,1.48,5.4,July 2026
+westyorkshire,West Yorkshire,Leeds,E08000035,map and API,5.7,5.0,7.1,5.6,4.5,7.3,247695,3.8,0.7,114.6,0.1,15.8,43.1,1.5,51.1,0.87,5.4,July 2026
+westyorkshire,West Yorkshire,Wakefield,E08000036,map and API,7.9,10.0,8.5,5.8,5.1,7.5,199347,4.1,1.0,105.8,0.04,28.5,31.4,1.41,49.0,1.08,5.4,July 2026

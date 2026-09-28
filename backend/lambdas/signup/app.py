@@ -84,6 +84,17 @@ SES_FROM = os.environ.get('SES_FROM', 'Sky Score <noreply@skyscore.co.uk>')
 # replayed after the fact even if this check were skipped.
 PENDING_TTL_SECONDS = 24 * 3600
 TOKEN_PATTERN = re.compile(r'^[A-Za-z0-9_-]{20,64}$')
+# Verification emails per address per UTC day (audit I-5, 25 Sep). The route
+# throttle alone allowed ~86k sends a day at one address - the SES sender
+# reputation on the line. Over the cap the reply is still the identical 201,
+# so the cap cannot be used to learn anything about an address.
+SEND_CAP_PER_DAY = 3
+# Counter rows share the pending table under a key TOKEN_PATTERN can never
+# match ('#' is outside it), so no confirm link can ever reach one.
+SEND_COUNTER_PREFIX = 'sendcap#'
+# A UK postcode SHAPE. Only a match goes into the email body: the field is
+# free text, and a mail client auto-links anything domain-shaped.
+UK_POSTCODE = re.compile(r'^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$')
 KEY_NAME_PREFIX = 'SkyScoreUserKey-'
 # Tag applied to every key created by this Lambda (audit N-Code-1).
 # IAM policy on apigateway:DELETE has a matching tag-condition so a
@@ -701,6 +712,22 @@ def start_verification(email, name, source, postcode, event):
     person who clicks the link will see the true state on the confirm page,
     where only someone who controls the address can read it.
     """
+    accepted = response(
+        201,
+        {
+            'status': 'pending',
+            'message': (
+                'Check your email for a link to confirm this address. '
+                'The link works for 24 hours.'
+            ),
+        },
+        event,
+    )
+    if not send_allowed(email):
+        # Same 201 as a real send: the cap must not become an oracle.
+        logger.warning('[SIGNUP_SEND_CAPPED] cap=%d/day', SEND_CAP_PER_DAY)
+        return accepted
+
     token = secrets.token_urlsafe(32)
     now = int(time.time())
     try:
@@ -738,17 +765,38 @@ def start_verification(email, name, source, postcode, event):
             503, {'error': 'Could not send the confirmation email. Please try again later.'}, event
         )
 
-    return response(
-        201,
-        {
-            'status': 'pending',
-            'message': (
-                'Check your email for a link to confirm this address. '
-                'The link works for 24 hours.'
-            ),
-        },
-        event,
-    )
+    return accepted
+
+
+def send_allowed(email):
+    """True while this address is under SEND_CAP_PER_DAY for the UTC day.
+
+    One atomic counter per (address, day), keyed on a HASH of the address so
+    the counter row holds no email, and expiring with the pending rows. Fails
+    OPEN on a DynamoDB error: the route throttle still bounds sends, and
+    failing closed would lock every real signup out whenever the counter was
+    unreadable.
+    """
+    import hashlib
+
+    day = datetime.now(UTC).strftime('%Y-%m-%d')
+    digest = hashlib.sha256(email.encode('utf-8')).hexdigest()
+    try:
+        out = ddb.update_item(
+            TableName=PENDING_TABLE,
+            Key={'token': {'S': f'{SEND_COUNTER_PREFIX}{digest}#{day}'}},
+            UpdateExpression='ADD sends :one SET expiresAt = if_not_exists(expiresAt, :exp)',
+            ExpressionAttributeValues={
+                ':one': {'N': '1'},
+                ':exp': {'N': str(int(time.time()) + PENDING_TTL_SECONDS)},
+            },
+            ReturnValues='UPDATED_NEW',
+        )
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.warning('[SIGNUP_SEND_COUNTER_FAILED] code=%s (failing open)', code)
+        return True
+    return int(out.get('Attributes', {}).get('sends', {}).get('N', '1')) <= SEND_CAP_PER_DAY
 
 
 def send_confirmation_email(email, source, postcode, link):
@@ -756,9 +804,12 @@ def send_confirmation_email(email, source, postcode, link):
     beyond the address it is sent to; the link carries the token alone."""
     if source == 'consumer':
         subject = 'Confirm your Sky Score updates'
+        # Only a real postcode shape reaches the body; anything else could be
+        # a domain a mail client turns into a link inside OUR email.
+        shown = postcode if UK_POSTCODE.match(postcode or '') else 'an area'
         what = (
             f'Someone - probably you - asked for an email when the Sky Score for '
-            f'{postcode or "an area"} changes. Confirm it here:'
+            f'{shown} changes. Confirm it here:'
         )
     else:
         subject = 'Confirm your Sky Score API key request'
@@ -804,17 +855,80 @@ def html_page(status, title, body):
             'Cache-Control': 'no-store',
             'X-Content-Type-Options': 'nosniff',
             'Referrer-Policy': 'no-referrer',
-            'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
+            # form-action is NOT covered by default-src, so it is named: the
+            # confirm button may post back to this origin and nowhere else.
+            'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
         },
         'body': _PAGE.format(title=html.escape(title), body=body),
     }
 
 
-def handle_confirm(event):
-    """GET /v1/signup/confirm?token= : consume the pending row and finish."""
+_INVALID_LINK = ('That link is not valid',
+                 '<p>The confirmation link is incomplete. Open it exactly as it appears in the email.</p>')
+_EXPIRED_LINK = ('That link has expired or was already used',
+                 '<p>Confirmation links work once, for 24 hours. '
+                 '<a href="https://skyscore.co.uk/score-demo/">Request a new one</a>.</p>')
+
+
+def _form_token(event):
+    """The token from a form POST body (urlencoded, possibly base64), or ''."""
+    from urllib.parse import parse_qs
+
+    raw = event.get('body') or ''
+    if event.get('isBase64Encoded'):
+        import base64
+
+        try:
+            raw = base64.b64decode(raw).decode()
+        except (ValueError, UnicodeDecodeError):
+            return ''
+    return (parse_qs(raw).get('token') or [''])[0].strip()
+
+
+def handle_confirm_get(event):
+    """GET /v1/signup/confirm?token= : SHOW the confirm button, change nothing.
+
+    A GET used to consume the token and mint the key (audit I-5, 25 Sep).
+    Corporate mail gateways (Safe Links, Mimecast, Proofpoint) fetch every
+    link in an inbound email before a person opens it, so the SCANNER got the
+    only copy of the key and the person got a 410. Now this only reads the
+    row (strongly consistent, never deleting it) and renders a button whose
+    POST does the work; scanners fetch links, they do not submit forms.
+    """
     token = ((event.get('queryStringParameters') or {}).get('token') or '').strip()
     if not TOKEN_PATTERN.match(token):
-        return html_page(400, 'That link is not valid', '<p>The confirmation link is incomplete. Open it exactly as it appears in the email.</p>')
+        return html_page(400, *_INVALID_LINK)
+    try:
+        row = ddb.get_item(
+            TableName=PENDING_TABLE, Key={'token': {'S': token}}, ConsistentRead=True
+        ).get('Item')
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[SIGNUP_CONFIRM_LOOKUP_FAILED] code=%s', code)
+        return html_page(503, 'Please try again', '<p>We could not check that link just now. Try it again in a minute.</p>')
+    if not row or int(row.get('expiresAt', {}).get('N', '0')) < int(time.time()):
+        return html_page(410, *_EXPIRED_LINK)
+    what = ('email updates' if row.get('source', {}).get('S') == 'consumer'
+            else 'a free Sky Score API key')
+    return html_page(
+        200, 'Confirm your email address',
+        f'<p>Press the button to confirm this address for {html.escape(what)}.</p>'
+        f'<form method="post"><input type="hidden" name="token" value="{html.escape(token)}">'
+        '<button type="submit" style="font:inherit;padding:12px 20px;border-radius:6px;'
+        'border:0;background:#1d4ed8;color:#fff;cursor:pointer">Confirm</button></form>',
+    )
+
+
+def handle_confirm(event):
+    """POST /v1/signup/confirm : consume the pending row and finish.
+
+    Only the button on the GET page reaches this. The token comes from the
+    form body; the query string is accepted too because the form posts back
+    to the URL it was served from.
+    """
+    token = _form_token(event) or ((event.get('queryStringParameters') or {}).get('token') or '').strip()
+    if not TOKEN_PATTERN.match(token):
+        return html_page(400, *_INVALID_LINK)
     try:
         # Read AND burn in one call: a second click, or a second tab, finds
         # nothing, so one email can never mint two keys.
@@ -826,11 +940,7 @@ def handle_confirm(event):
         logger.error('[SIGNUP_CONFIRM_LOOKUP_FAILED] code=%s', code)
         return html_page(503, 'Please try again', '<p>We could not check that link just now. Try it again in a minute.</p>')
     if not old or int(old.get('expiresAt', {}).get('N', '0')) < int(time.time()):
-        return html_page(
-            410, 'That link has expired or was already used',
-            '<p>Confirmation links work once, for 24 hours. '
-            '<a href="https://skyscore.co.uk/score-demo/">Request a new one</a>.</p>',
-        )
+        return html_page(410, *_EXPIRED_LINK)
     email = old['email']['S']
     name = old.get('name', {}).get('S', '')
     source = old.get('source', {}).get('S', 'api')
@@ -868,12 +978,15 @@ def handle_confirm(event):
 def handler(event, context):
     method = (event.get('httpMethod') or 'POST').upper()
     try:
+        is_confirm = (event.get('path') or '').rstrip('/').endswith('/confirm')
         if method == 'OPTIONS':
             return handle_options(event)
+        if method == 'POST' and is_confirm:
+            return handle_confirm(event)
         if method == 'POST':
             return handle_post(event)
-        if method == 'GET' and (event.get('path') or '').rstrip('/').endswith('/confirm'):
-            return handle_confirm(event)
+        if method == 'GET' and is_confirm:
+            return handle_confirm_get(event)
         return response(405, {'error': f'Method {method} not allowed.'}, event)
     except Exception as exc:
         # Top-level guard, never let an unhandled exception escape the

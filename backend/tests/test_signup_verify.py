@@ -62,6 +62,18 @@ def post(body):
     }
 
 
+def post_confirm(token):
+    """The confirm BUTTON: a form POST carrying the token in the body."""
+    return {
+        'httpMethod': 'POST',
+        'path': '/v1/signup/confirm',
+        'body': f'token={token}' if token is not None else '',
+        'queryStringParameters': None,
+        'requestContext': {'domainName': 'x.execute-api.eu-west-2.amazonaws.com', 'stage': 'prod'},
+        'headers': {'content-type': 'application/x-www-form-urlencoded'},
+    }
+
+
 def get_confirm(token):
     return {
         'httpMethod': 'GET',
@@ -76,6 +88,7 @@ class VerifyOnPostTests(unittest.TestCase):
     def setUp(self):
         self.app = load_signup()
         self.ddb = MagicMock()
+        self.ddb.update_item.return_value = {'Attributes': {'sends': {'N': '1'}}}
         self.ses = MagicMock()
         self.patches = [
             patch.object(self.app, 'SIGNUP_VERIFY', True),
@@ -178,17 +191,17 @@ class ConfirmTests(unittest.TestCase):
 
     def test_malformed_token_is_a_400_page_without_touching_the_table(self):
         for token in (None, '', 'short', 'has space ' + 'x' * 20, '<script>' + 'x' * 20):
-            r = self.app.handler(get_confirm(token), None)
+            r = self.app.handler(post_confirm(token), None)
             self.assertEqual(r['statusCode'], 400)
             self.assertIn('text/html', r['headers']['Content-Type'])
         self.ddb.delete_item.assert_not_called()
 
     def test_unknown_or_expired_token_is_a_410_page(self):
         self.ddb.delete_item.return_value = {}
-        r = self.app.handler(get_confirm('A' * 43), None)
+        r = self.app.handler(post_confirm('A' * 43), None)
         self.assertEqual(r['statusCode'], 410)
         self.ddb.delete_item.return_value = {'Attributes': self._pending(expiresAt={'N': str(int(time.time()) - 5)})}
-        r = self.app.handler(get_confirm('A' * 43), None)
+        r = self.app.handler(post_confirm('A' * 43), None)
         self.assertEqual(r['statusCode'], 410)
 
     def test_token_is_consumed_in_one_call_and_the_key_is_shown_once(self):
@@ -196,7 +209,7 @@ class ConfirmTests(unittest.TestCase):
         with patch.object(self.app, 'get_existing_signup', return_value=None), \
              patch.object(self.app, 'create_api_key', return_value=('kid123', 'SECRET<KEY>')), \
              patch.object(self.app, 'record_signup', return_value=None):
-            r = self.app.handler(get_confirm('A' * 43), None)
+            r = self.app.handler(post_confirm('A' * 43), None)
         dl = self.ddb.delete_item.call_args.kwargs
         self.assertEqual(dl['TableName'], self.app.PENDING_TABLE)
         self.assertEqual(dl['ReturnValues'], 'ALL_OLD')
@@ -212,7 +225,7 @@ class ConfirmTests(unittest.TestCase):
         with patch.object(self.app, 'get_existing_signup', return_value=None), \
              patch.object(self.app, 'record_signup') as rec, \
              patch.object(self.app, 'create_api_key', side_effect=AssertionError('no key for a consumer')):
-            r = self.app.handler(get_confirm('A' * 43), None)
+            r = self.app.handler(post_confirm('A' * 43), None)
         self.assertEqual(r['statusCode'], 200)
         self.assertEqual(rec.call_args.kwargs['source'], 'consumer')
         self.assertEqual(rec.call_args.kwargs['postcode'], 'SW11 1AA')
@@ -223,16 +236,140 @@ class ConfirmTests(unittest.TestCase):
         existing = {'email': {'S': 'a@example.com'}, 'keyId': {'S': 'kid'}}
         with patch.object(self.app, 'get_existing_signup', return_value=existing), \
              patch.object(self.app, 'create_api_key', side_effect=AssertionError('no second key')):
-            r = self.app.handler(get_confirm('A' * 43), None)
+            r = self.app.handler(post_confirm('A' * 43), None)
         self.assertEqual(r['statusCode'], 200)
         self.assertIn('Already signed up', r['body'])
 
     def test_a_transient_completion_failure_asks_for_a_new_link(self):
         self.ddb.delete_item.return_value = {'Attributes': self._pending()}
         with patch.object(self.app, 'get_existing_signup', side_effect=self.app.SignupLookupError()):
-            r = self.app.handler(get_confirm('A' * 43), None)
+            r = self.app.handler(post_confirm('A' * 43), None)
         self.assertEqual(r['statusCode'], 503)
         self.assertIn('Request a new link', r['body'])
+
+
+class ScannerSafeConfirmTests(unittest.TestCase):
+    """Audit I-5 (25 Sep): opening the link must change nothing.
+
+    Mail gateways fetch every link before a person does. While the GET
+    consumed the token, the scanner took the only copy of the key.
+    """
+
+    def setUp(self):
+        self.app = load_signup()
+        self.ddb = MagicMock()
+        self.patches = [
+            patch.object(self.app, 'SIGNUP_VERIFY', True),
+            patch.object(self.app, 'ddb', self.ddb),
+            patch.object(self.app, 'ses', MagicMock()),
+            patch.object(self.app, 'create_api_key', side_effect=AssertionError('a GET minted a key')),
+            patch.object(self.app, 'record_signup', side_effect=AssertionError('a GET wrote the register')),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+
+    def _row(self, **over):
+        row = {'token': {'S': 'A' * 43}, 'email': {'S': 'a@example.com'}, 'source': {'S': 'api'},
+               'expiresAt': {'N': str(int(time.time()) + 3600)}}
+        row.update(over)
+        return row
+
+    def test_a_get_renders_a_button_and_never_deletes_the_token(self):
+        self.ddb.get_item.return_value = {'Item': self._row()}
+        for _ in range(3):  # a scanner, a preview pane, then the person
+            r = self.app.handler(get_confirm('A' * 43), None)
+            self.assertEqual(r['statusCode'], 200)
+        self.ddb.delete_item.assert_not_called()
+        self.assertTrue(self.ddb.get_item.call_args.kwargs['ConsistentRead'])
+        self.assertIn('<form method="post">', r['body'])
+        self.assertIn('name="token" value="' + 'A' * 43 + '"', r['body'])
+        self.assertIn("form-action 'self'", r['headers']['Content-Security-Policy'])
+
+    def test_a_get_for_an_unknown_or_expired_token_is_a_410_and_deletes_nothing(self):
+        self.ddb.get_item.return_value = {}
+        self.assertEqual(self.app.handler(get_confirm('A' * 43), None)['statusCode'], 410)
+        self.ddb.get_item.return_value = {'Item': self._row(expiresAt={'N': str(int(time.time()) - 5)})}
+        self.assertEqual(self.app.handler(get_confirm('A' * 43), None)['statusCode'], 410)
+        self.ddb.delete_item.assert_not_called()
+
+    def test_a_counter_row_can_never_be_confirmed(self):
+        # Counter keys contain '#', which TOKEN_PATTERN excludes.
+        key = self.app.SEND_COUNTER_PREFIX + 'f' * 64 + '#2026-09-28'
+        self.assertIsNone(self.app.TOKEN_PATTERN.match(key))
+        self.assertEqual(self.app.handler(get_confirm(key), None)['statusCode'], 400)
+        self.ddb.get_item.assert_not_called()
+
+
+class SendCapTests(unittest.TestCase):
+    def setUp(self):
+        self.app = load_signup()
+        self.ddb = MagicMock()
+        self.ses = MagicMock()
+        self.patches = [
+            patch.object(self.app, 'SIGNUP_VERIFY', True),
+            patch.object(self.app, 'ddb', self.ddb),
+            patch.object(self.app, 'ses', self.ses),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+
+    def _sends(self, n):
+        self.ddb.update_item.return_value = {'Attributes': {'sends': {'N': str(n)}}}
+
+    def test_over_the_cap_is_the_same_201_with_nothing_written_or_sent(self):
+        self._sends(self.app.SEND_CAP_PER_DAY)
+        under = self.app.handler(post({'email': 'a@example.com'}), None)
+        self.assertEqual(self.ses.send_email.call_count, 1)
+        self.ddb.reset_mock()
+        self.ses.reset_mock()
+        self._sends(self.app.SEND_CAP_PER_DAY + 1)
+        over = self.app.handler(post({'email': 'a@example.com'}), None)
+        self.assertEqual((over['statusCode'], over['body']), (under['statusCode'], under['body']),
+                         'the cap must not be visible in the reply')
+        self.ses.send_email.assert_not_called()
+        self.ddb.put_item.assert_not_called()
+
+    def test_the_counter_row_holds_a_hash_not_the_address(self):
+        self._sends(1)
+        self.app.handler(post({'email': 'someone@example.com'}), None)
+        call = self.ddb.update_item.call_args.kwargs
+        self.assertEqual(call['TableName'], self.app.PENDING_TABLE)
+        self.assertNotIn('someone', json.dumps(call))
+        self.assertTrue(call['Key']['token']['S'].startswith(self.app.SEND_COUNTER_PREFIX))
+        self.assertIn('expiresAt', call['UpdateExpression'])
+
+    def test_an_unreadable_counter_fails_open(self):
+        self.ddb.update_item.side_effect = ClientError({'Error': {'Code': 'ProvisionedThroughputExceededException', 'Message': ''}}, 'UpdateItem')
+        r = self.app.handler(post({'email': 'a@example.com'}), None)
+        self.assertEqual(r['statusCode'], 201)
+        self.ses.send_email.assert_called_once()
+
+
+class EmailPostcodeTests(unittest.TestCase):
+    def _body(self, postcode):
+        app = load_signup()
+        ses = MagicMock()
+        with patch.object(app, 'ses', ses):
+            app.send_confirmation_email('a@example.com', 'consumer', postcode, 'https://x/confirm?token=t')
+        return ses.send_email.call_args.kwargs['Content']['Simple']['Body']['Text']['Data']
+
+    def test_a_real_postcode_is_shown(self):
+        for pc in ('SW11 1AA', 'M1 1AE', 'EC1A 1BB', 'B338TH'):
+            self.assertIn(pc, self._body(pc))
+
+    def test_anything_domain_shaped_or_odd_is_not_put_in_the_email(self):
+        for pc in ('EVIL.COM', 'WWW.X.CO', 'HTTP://A', 'SW11 1AA X', '<B>'):
+            body = self._body(pc)
+            self.assertNotIn(pc, body)
+            self.assertIn('an area', body)
 
 
 class FlagOffTests(unittest.TestCase):
