@@ -413,7 +413,8 @@ hdr() { printf '%s\n' "$SHELL_HEADERS" | grep -i "^$1:" | head -1 | cut -d' ' -f
 # silently drop when someone swaps the policy - the failure mode this pass
 # exists for, and one the drift hashes above are blind to because the BODY is
 # unchanged.
-for h in strict-transport-security x-content-type-options referrer-policy x-frame-options; do
+# permissions-policy joined 2026-09-28, when sky-score-security-headers went live.
+for h in strict-transport-security x-content-type-options referrer-policy x-frame-options permissions-policy; do
   v=$(hdr "$h")
   if [ -z "$v" ]; then
     printf '  shell %s: ABSENT\n' "$h"
@@ -428,14 +429,15 @@ done
 # X-Frame-Options carries the CSPs' STATED intent, because theirs cannot.
 # Every page declares `frame-ancestors 'none'` in a <meta> CSP, where that
 # directive is IGNORED - so this header is the only thing actually refusing to
-# be framed. DENY matches what the pages claim; SAMEORIGIN is the weaker state
-# that was inherited from the managed policy and is accepted so this does not
-# red before the console work lands. Anything else is a misconfiguration.
+# be framed. DENY matches what the pages claim, and the custom policy has
+# served it since 2026-09-28. SAMEORIGIN used to be accepted as the state
+# inherited from the managed policy; now it would mean the site fell back to
+# that policy, so it reds. (Absent is caught by the presence loop above.)
 XFO=$(hdr 'x-frame-options' | tr 'A-Z' 'a-z')
 case "$XFO" in
-  deny|sameorigin|'') ;;
+  deny|'') ;;
   *)
-    printf 'FAIL: x-frame-options is "%s", expected DENY or SAMEORIGIN.\n' "$XFO"
+    printf 'FAIL: x-frame-options is "%s", expected DENY (the custom policy).\n' "$XFO"
     HEADER_FAILED=1
     ;;
 esac
@@ -450,11 +452,11 @@ esac
 # permanent exemption. A header in neither the loop above nor this list is
 # simply unguarded, which is why new ones belong in one or the other.
 #
-# permissions-policy: needs a CUSTOM response headers policy, because the
-# managed one cannot carry it and cannot be edited. flightmap-dev is denied
-# cloudfront:CreateResponseHeadersPolicy, so this is console work. The value to
-# set is in ROADMAP under the CloudFront item.
-PENDING_HEADERS="permissions-policy"
+# EMPTY since 2026-09-28: permissions-policy was the only entry and is now
+# served by sky-score-security-headers (scripts/cloudfront_security_headers.py),
+# so it moved to the guarded loop above. Keep the mechanism - a future header
+# awaiting console work goes here, not unguarded.
+PENDING_HEADERS=""
 for h in $PENDING_HEADERS; do
   if [ -n "$(hdr "$h")" ]; then
     printf '  shell %s: %s\n' "$h" "$(hdr "$h")"

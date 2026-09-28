@@ -203,8 +203,29 @@ def head(url):
         return res.status, {k.lower(): v for k, v in res.headers.items()}
 
 
+def badge_own_csp():
+    """The CSP the score Lambda sets on the /badge SVG, read from its ONE holder.
+
+    The rule below exists because a DISTRIBUTION-wide CSP header blanks the
+    prototype. /badge is different: the Lambda sets its own CSP on that one
+    response, on purpose - an SVG is a script-capable document served from our
+    origin (CLAUDE.md, "Public surfaces"). The first --verify after --apply
+    (2026-09-28) failed /badge on exactly that header. Read, not copied, so the
+    exemption cannot drift from the value it exempts.
+    """
+    import re  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    src = (Path(__file__).resolve().parent.parent / 'backend' / 'lambdas' / 'score' / 'app.py').read_text(encoding='utf-8')
+    found = re.findall(r"'Content-Security-Policy': \"([^\"]+)\"", src)
+    if len(found) != 1:
+        raise SystemExit(f'expected exactly one Content-Security-Policy in the score Lambda, found {len(found)}')
+    return found[0]
+
+
 def verify():
     failures = 0
+    badge_csp = badge_own_csp()
     for path in VERIFY_PATHS:
         url = SITE + path
         try:
@@ -220,7 +241,11 @@ def verify():
             got = headers.get(name)
             if got != want:
                 problems.append(f'{name}={got!r} (want {want!r})')
-        if 'content-security-policy' in headers:
+        csp = headers.get('content-security-policy')
+        if path.startswith('/badge'):
+            if csp != badge_csp:
+                problems.append(f'/badge CSP {csp!r} is not the Lambda\'s own {badge_csp!r}')
+        elif csp is not None:
             problems.append('a CSP HEADER is present - that blanks the prototype, remove it')
         if problems:
             failures += 1
