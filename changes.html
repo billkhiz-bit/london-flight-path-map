@@ -263,6 +263,10 @@
   <section class="notices" id="policy-notices" aria-labelledby="policy-notices-h">
     <h2 id="policy-notices-h">Policy notices</h2>
     <ul>
+      <li><time datetime="2026-09-28">28 September 2026</time> - Privacy policy s2d: server logs now record the ID of the API
+        key used for each API call (an identifier, never the key itself), so API usage can be counted. Logs that previously
+        wrote a full postcode or a precise location when a lookup failed now keep only the district (for example SW11) and a
+        location to about 1 km. Still no IP addresses or user agents; still deleted after 30 days.</li>
       <li><time datetime="2026-09-07">7 September 2026</time> - Privacy policy s2b corrected: postcode lookups go to
         api.postcodes.io from the website as well as the native app; the section had described it as native-only.</li>
       <li><time datetime="2026-08-21">21 August 2026</time> - Privacy policy s2a: the optional score-update email list was

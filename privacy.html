@@ -195,7 +195,7 @@
       <header>
         <a href="/">&larr; Sky Score</a>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-09-07 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-09-28 · Effective: 2026-05-09</p>
       </header>
 
       <main>
@@ -281,10 +281,12 @@
       <h3>2d. Server logs (AWS)</h3>
       <p>
         Sky Score's backend runs on AWS Lambda + API Gateway in the <code>eu-west-2</code> region (London). Each Lambda function
-        writes an execution log containing request timestamps, paths, response codes and error traces. We do not enable API Gateway
-        access logging, so no separate access log of source IPs and user agents is kept. Execution logs are retained for
-        <strong>30 days</strong> and then deleted automatically. They are used solely for debugging and to
-        investigate suspected abuse, and we do not link them to identities.
+        writes an execution log containing request timestamps, paths, response codes, error traces and, for API calls, the ID of
+        the API key used (an identifier, never the key itself). Postcodes are recorded only as the district (for example SW11)
+        when a lookup fails, and locations only to about 1 km. We do not enable API Gateway access logging, so no log of source
+        IPs or user agents is kept. Execution logs are retained for <strong>30 days</strong> and then deleted automatically.
+        They are used for debugging, investigating suspected abuse and counting API usage. A key ID can be matched to the
+        account that holds it, but we do so only to investigate abuse or to answer that account's own support request.
       </p>
 
       <h3>2e. Saved places (the device token)</h3>

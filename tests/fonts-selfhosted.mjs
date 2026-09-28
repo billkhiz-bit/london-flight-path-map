@@ -25,6 +25,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
+import { stubLiveApi, assertStubFired } from './stub-live-api.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 8099;
@@ -113,8 +114,17 @@ console.log(`${failures === 0 ? 'PASS' : 'FAIL'}  fonts.css declared weight rang
 
 const browser = await chromium.launch();
 
+// score-demo/status.html probes /v1/score with the PUBLIC demo key on load, so
+// without the stub every run of this gate spent real demo quota. It was missed
+// when the stub was written (2026-09-11, "both current callers") and found on
+// 2026-09-28 by reading the demo key's daily usage, which only means anything
+// as a prospect signal once no gate spends it. Summed across pages because
+// only status.html fires; zero at the end means the stub stopped matching.
+const stubHits = { count: 0, paths: [] };
+
 for (const { path: page_path, sans, mono } of CASES) {
   const page = await browser.newPage();
+  const hits = await stubLiveApi(page);
   const violations = [];
   const failed = [];
 
@@ -180,11 +190,15 @@ for (const { path: page_path, sans, mono } of CASES) {
   if (failed.length) console.log(`      FONT REQ FAILED: ${failed.join(' | ')}`);
   if (result.errored.length) console.log(`      FACE ERROR: ${result.errored.join(', ')}`);
 
+  stubHits.count += hits.count;
+  stubHits.paths.push(...hits.paths);
   await page.close();
 }
 
 await browser.close();
 server.close();
+
+if (!assertStubFired(stubHits, 'fonts-selfhosted')) failures++;
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' PAGE(S) FAILED'}`);
 process.exit(failures === 0 ? 0 : 1);

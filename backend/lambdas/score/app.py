@@ -31,6 +31,28 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+def _log_district(postcode):
+    """The postcode DISTRICT for log lines ('SW11 1AA' -> 'SW11'), never the full
+    postcode. A full postcode averages ~15 homes and can point at one, and
+    privacy.html s2d promises logs hold the district only. Each Lambda deploys
+    alone, so each carries this copy; backend/tests/test_log_privacy.py holds
+    all of them to the same rule.
+    """
+    clean = re.sub(r'\s', '', str(postcode or '')).upper()
+    return clean[:-3] if len(clean) >= 5 else '?'
+
+
+def _log_coarse(lat, lon):
+    """Coordinates for log lines at 2 dp (~1 km, district-sized), never full
+    precision: 4 dp is ~11 m, finer than a postcode. privacy.html s2d promises
+    this; backend/tests/test_log_privacy.py holds every Lambda to it.
+    """
+    try:
+        return f'{float(lat):.2f},{float(lon):.2f}'
+    except (TypeError, ValueError):
+        return '?'
+
+
 def _make_lru(maxsize):
     """OrderedDict-backed LRU cache that does NOT cache None results.
 
@@ -5039,7 +5061,7 @@ def _plausible_value(value, floor, ceiling, log_tag, key, postcode_clean='', kno
         if value != known_fill:
             logger.warning(
                 '[%s] postcode=%s err=implausible-%s value=%s',
-                log_tag, postcode_clean, key, value)
+                log_tag, _log_district(postcode_clean), key, value)
         return None
     return value
 
@@ -5073,13 +5095,13 @@ def _lookup_lden_raster(postcode_clean):
         # Same consequence as a failed GetItem — the raster tier drops and the
         # returned score silently changes — so it carries the same alarmable
         # prefix. _get_ddb_client has already logged the specific cause.
-        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=no-ddb-client', postcode_clean)
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=no-ddb-client', _log_district(postcode_clean))
         return None
 
     try:
         from botocore.exceptions import BotoCoreError, ClientError
     except ImportError:
-        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=botocore-import-failed', postcode_clean)
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=botocore-import-failed', _log_district(postcode_clean))
         return None
 
     try:
@@ -5100,7 +5122,7 @@ def _lookup_lden_raster(postcode_clean):
         # Alarm on it:
         #   fields @timestamp, @message
         #   | filter @message like /\[SCORE_RASTER_DEGRADED\]/
-        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', _log_district(postcode_clean), exc)
         return None
 
     item = result.get('Item') or {}
@@ -5225,7 +5247,7 @@ def _lookup_noise_row(postcode_clean):
             ProjectionExpression='ldenDb, roadLdenDb, roadLdenBelowDb, no2Ugm3, pm25Ugm3',
         )
     except (BotoCoreError, ClientError) as exc:
-        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', postcode_clean, exc)
+        logger.warning('[SCORE_RASTER_DEGRADED] postcode=%s err=%r', _log_district(postcode_clean), exc)
         return None
 
     item = result.get('Item') or {}
@@ -7897,7 +7919,7 @@ def _lookup_postcode_local(clean, include_terminated=False):
         # the one failure mode the forward-compatible design makes invisible.
         result = ddb.get_item(TableName=POSTCODE_TABLE, Key={'postcode': {'S': clean}})
     except (BotoCoreError, ClientError) as exc:
-        logger.warning('DDB postcode lookup failed for %s: %s', clean, exc)
+        logger.warning('DDB postcode lookup failed for %s: %s', _log_district(clean), exc)
         return None
 
     item = result.get('Item') or {}
@@ -7972,10 +7994,10 @@ def _fetch_postcode(clean):
         with urlopen(req, timeout=5) as resp:
             payload = json.loads(resp.read().decode())
     except (HTTPError, URLError, TimeoutError) as exc:
-        logger.warning('postcodes.io lookup failed for %s: %s', clean, exc)
+        logger.warning('postcodes.io lookup failed for %s: %s', _log_district(clean), exc)
         return None
     except json.JSONDecodeError as exc:
-        logger.warning('postcodes.io returned non-JSON for %s: %s', clean, exc)
+        logger.warning('postcodes.io returned non-JSON for %s: %s', _log_district(clean), exc)
         return None
     if payload.get('status') != 200:
         return None
@@ -8018,10 +8040,10 @@ def reverse_geocode(lat, lon):
         with urlopen(req, timeout=5) as resp:
             payload = json.loads(resp.read().decode())
     except (HTTPError, URLError, TimeoutError) as exc:
-        logger.warning('postcodes.io reverse lookup failed for %s: %s', key, exc)
+        logger.warning('postcodes.io reverse lookup failed for %s: %s', _log_coarse(lat, lon), exc)
         return None
     except json.JSONDecodeError as exc:
-        logger.warning('postcodes.io returned non-JSON for %s: %s', key, exc)
+        logger.warning('postcodes.io returned non-JSON for %s: %s', _log_coarse(lat, lon), exc)
         return None
 
     # A coordinate in the sea returns status 200 with result: null. That is a
@@ -9550,6 +9572,34 @@ def handle_batch(event, context=None):
     )
 
 
+def log_request(event, status):
+    """One line per request: WHICH KEY called WHICH route, and nothing else.
+
+    Added 2026-09-28 because nothing could say whether anyone outside the
+    project had ever used the API: API Gateway keeps per-key DAILY totals only,
+    access logging is off (privacy.html s2d promises so), and the demo key is
+    shared by the public tester and, until that day, by our own gates.
+
+    The key ID is API Gateway's identifier (e.g. `1zy00lrqs5`), never the
+    secret value. Deliberately absent: source IP, user agent, the query string
+    and so the POSTCODE (a postcode can identify a home), and the body.
+    privacy.html s2d names exactly these fields; widening this line means
+    widening that sentence in the same deploy.
+    """
+    identity = (event.get('requestContext') or {}).get('identity') or {}
+    logger.info(
+        '[API_REQUEST] %s',
+        json.dumps(
+            {
+                'method': (event.get('httpMethod') or 'GET').upper(),
+                'route': event.get('resource') or event.get('path'),
+                'status': status,
+                'apiKeyId': identity.get('apiKeyId'),
+            }
+        ),
+    )
+
+
 def handler(event, context):
     method = (event.get('httpMethod') or 'GET').upper()
     try:
@@ -9558,11 +9608,17 @@ def handler(event, context):
         if method == 'POST':
             # context carries the invocation deadline the batch path budgets
             # against; see _BATCH_DEADLINE_MARGIN_S.
-            return handle_batch(event, context)
-        return handle_get(event)
+            result = handle_batch(event, context)
+        else:
+            result = handle_get(event)
     except Exception as exc:  # final guard, never let internals leak
         logger.exception('Unhandled exception in score handler: %s', exc)
-        return response(500, {'error': 'Internal server error'})
+        result = response(500, {'error': 'Internal server error'})
+    try:
+        log_request(event, result.get('statusCode'))
+    except Exception:  # noqa: S110 - a log line must never fail a request
+        pass
+    return result
 
 
 def cors_headers():

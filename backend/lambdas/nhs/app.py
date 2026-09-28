@@ -76,6 +76,17 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+def _log_coarse(lat, lon):
+    """Coordinates for log lines at 2 dp (~1 km, district-sized), never full
+    precision: 4 dp is ~11 m, finer than a postcode. privacy.html s2d promises
+    this; backend/tests/test_log_privacy.py holds every Lambda to it.
+    """
+    try:
+        return f'{float(lat):.2f},{float(lon):.2f}'
+    except (TypeError, ValueError):
+        return '?'
+
+
 def haversine(lat1, lon1, lat2, lon2):
     """Great-circle distance in metres."""
     r = 6_371_000
@@ -370,19 +381,17 @@ def handler(event, context):
                 return response(200, buckets)
             logger.info(
                 'Inside the bundle bbox but no service within %sm; deferring to '
-                'Overpass. lat=%s lon=%s',
+                'Overpass. near=%s',
                 SEARCH_RADIUS_M,
-                lat,
-                lon,
+                _log_coarse(lat, lon),
             )
 
         try:
             elements = query_overpass(lat, lon)
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
             logger.warning(
-                'Overpass unavailable, using fallback links. lat=%s lon=%s err=%s',
-                lat,
-                lon,
+                'Overpass unavailable, using fallback links. near=%s err=%s',
+                _log_coarse(lat, lon),
                 exc,
             )
             buckets = all_fallback()

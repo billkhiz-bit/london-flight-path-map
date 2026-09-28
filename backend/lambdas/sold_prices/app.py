@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -10,6 +11,17 @@ CORS_ORIGIN = os.environ.get('CORS_ORIGIN', '*')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+
+def _log_district(postcode):
+    """The postcode DISTRICT for log lines ('SW11 1AA' -> 'SW11'), never the full
+    postcode. A full postcode averages ~15 homes and can point at one, and
+    privacy.html s2d promises logs hold the district only. Each Lambda deploys
+    alone, so each carries this copy; backend/tests/test_log_privacy.py holds
+    all of them to the same rule.
+    """
+    clean = re.sub(r'\s', '', str(postcode or '')).upper()
+    return clean[:-3] if len(clean) >= 5 else '?'
 
 OGL_ATTRIBUTION = (
     'Sold prices: HM Land Registry. Contains public sector information licensed under the Open Government Licence v3.0.'
@@ -95,7 +107,7 @@ def handler(event, context):
             with urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode())
         except (HTTPError, URLError, TimeoutError) as exc:
-            logger.warning('Land Registry lookup failed for %s: %s', postcode, exc)
+            logger.warning('Land Registry lookup failed for %s: %s', _log_district(postcode), exc)
             return response(
                 503,
                 {
@@ -104,7 +116,7 @@ def handler(event, context):
                 },
             )
         except json.JSONDecodeError as exc:
-            logger.warning('Land Registry returned non-JSON for %s: %s', postcode, exc)
+            logger.warning('Land Registry returned non-JSON for %s: %s', _log_district(postcode), exc)
             return response(
                 502,
                 {
@@ -124,7 +136,7 @@ def handler(event, context):
         result = data.get('result') if isinstance(data, dict) else None
         items = result.get('items') if isinstance(result, dict) else None
         if not isinstance(items, list):
-            logger.warning('Land Registry envelope unreadable for %s: keys=%s', postcode,
+            logger.warning('Land Registry envelope unreadable for %s: keys=%s', _log_district(postcode),
                            sorted(data.keys()) if isinstance(data, dict) else type(data).__name__)
             return response(
                 502,

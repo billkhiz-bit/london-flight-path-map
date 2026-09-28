@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { stubLiveApi } from '../stub-live-api.mjs';
 
 // Every public page, not just the homepage.
 //
@@ -39,7 +40,15 @@ const PAGES = [
 test.describe('Accessibility', () => {
   for (const { path, name, waitFor, disableRules } of PAGES) {
     test(`WCAG 2.1 AA scan: ${name} (${path})`, async ({ page }) => {
+      // status.html probes /v1/score with the PUBLIC demo key on load; without
+      // this every e2e run spent real demo quota (found 2026-09-28 - see
+      // tests/stub-live-api.mjs). Wait for the page's own probe to be answered
+      // before asserting, so a slow load cannot pass for a stub that missed.
+      const hits = await stubLiveApi(page);
       await page.goto(path);
+      if (path.includes('status.html')) {
+        await expect.poll(() => hits.count, { timeout: 10_000 }).toBeGreaterThan(0);
+      }
       if (waitFor) {
         await expect(page.locator(waitFor)).toBeHidden({ timeout: 15_000 });
       }
