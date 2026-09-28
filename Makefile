@@ -64,7 +64,7 @@ help:
 	@echo "    deeplinks-deploy    Upload .well-known/apple-app-site-association + assetlinks.json"
 	@echo "    demo-deploy         Upload score-demo/ (Swagger UI, openapi.yaml, status)"
 	@echo "    prototype-deploy    Upload prototype/index.html (Sky Score Radar)"
-	@echo "    meta-deploy         Upload robots.txt, sitemap.xml, .well-known/security.txt"
+	@echo "    meta-deploy         Upload robots.txt, sitemap.xml, .well-known/security.txt, preview.png"
 	@echo "    area-deploy         Sync the 99 borough pages + area/index.html (rebuild them first)"
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta"
@@ -500,9 +500,15 @@ meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp .well-known/security.txt \
 		s3://$(S3_BUCKET)/.well-known/security.txt \
 		--content-type "text/plain" --region $(AWS_REGION)
+	# The link-preview card (og:image / twitter:image in index.html). Both
+	# tags pointed at this key from launch while the file did not exist, so
+	# every shared link rendered the platform's placeholder (found 2026-09-28).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp preview.png \
+		s3://$(S3_BUCKET)/preview.png \
+		--content-type "image/png" --cache-control "public,max-age=86400" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*'
+		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png'
 
 .PHONY: talks-deploy
 talks-deploy:

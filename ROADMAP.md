@@ -589,6 +589,7 @@ The product. Wraps the scoring engine into a stable, documented, monetisable end
 **Buildathon**: over (event was 2026-06-07). Plan archived at `archive/BUILDATHON_PLAN_2026.md` on 2026-08-24; this line had still called it the active focus 78 days later.
 
 **Pending applications**:
+- **Deep Tech London Expo, 8 Oct 2026, Shoreditch** (drafted 2026-09-28; Bill to submit at `deeptech.london/expo`). Free table if no round raised - Cubitt33 has raised nothing, no grants; the table includes 3 tickets and needs a founder there all day. Fit is the weak point (the floor is hardware and hard science), so the pitch leads with the open government science data and the lockdown noise-map finding, in plain English. Answers at `OneDrive/Desktop/deep-tech-london-expo-2026-10-08-form.txt`; black-and-white logos (wordmark as outlines, Geist Bold) at `OneDrive/Desktop/sky-score-logo-bw.svg` and `-mark-bw.svg`, generated from `mobile/assets/logo.svg`. **Open: the ringed mark reads as a CROSSHAIR in flat black** - a tick-free variant is offered, not made. Their page still says "hear back before September", so free places may be gone.
 - Emergent Ventures / Mercatus (£45k, submitted 2026-04-20, expect response within ~1 week of submission, chase if no reply by 2026-05-12)
 - Red Bull Basement (submitted 2026-04-12, awaiting shortlist)
 

@@ -48,6 +48,7 @@ prototype/index.html|prototype/index.html
 robots.txt|robots.txt
 sitemap.xml|sitemap.xml
 .well-known/security.txt|.well-known/security.txt
+preview.png|preview.png
 js/api-base.js|js/api-base.js
 fonts/fonts.css|fonts/fonts.css
 '
