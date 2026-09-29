@@ -222,7 +222,17 @@ AWS_PROFILE=flightmap aws dynamodb describe-continuous-backups \
 ```
 Look for `"PointInTimeRecoveryStatus": "ENABLED"`.
 
-### 3.2 — CloudFront Response-Headers Policy (Permissions-Policy + X-Frame-Options)
+### 3.2 — CloudFront Response-Headers Policy (Permissions-Policy + X-Frame-Options) — **DONE 2026-09-28**
+
+**Applied and verified 2026-09-28** by `scripts/cloudfront_security_headers.py --apply`
+then `--verify` (all three URLs ok): policy `sky-score-security-headers`
+(`86cf117a-ec31-4ab6-af7d-90f825c1b0e7`) on the default behaviour AND `/badge`,
+which had carried no policy at all. Live: `Permissions-Policy` as in the script,
+`X-Frame-Options: DENY`. `--verify` first failed `/badge` on the CSP the score
+Lambda sets on that SVG on purpose; it now requires exactly the Lambda's own
+value there (read from its one holder) and still reds on a CSP header anywhere
+else. `check_deploy_drift.sh` guards `permissions-policy` and reds on
+SAMEORIGIN; its PENDING list is empty. The procedure below is the history.
 
 **REWRITTEN 2026-09-08 against what is actually served.** The version below
 had three problems, all of the kind this repo keeps finding: it did not say
@@ -352,7 +362,13 @@ small Lambda + API Gateway endpoint dumping the JSON POST to CloudWatch.
 the JSON POST and dumps it to CloudWatch Logs. ~30 min build, but adds
 a moving piece to maintain.
 
-### 3.4 — Billing Alarm — **NOT CREATED (measured 2026-09-08)**
+### 3.4 — Billing Alarm — **NOT CREATED (measured 2026-09-08); started 2026-09-28**
+
+2026-09-28: the browser extension cannot read AWS Billing pages (permission
+denied on that domain), so ticking **Receive CloudWatch billing alerts** is
+Bill's, at the console. Once ticked, the SNS topic, subscription and the
+us-east-1 alarm follow `AWS_BILLING_ALARM_SETUP.md`; `flightmap-dev` can only
+manage `london-flight-map-*` alarms in eu-west-2, so they are console work too.
 
 See `AWS_BILLING_ALARM_SETUP.md` (must be created in `us-east-1`, requires
 billing-data alarm permissions).
@@ -545,6 +561,20 @@ that bullet describing a state that did not exist is what the finding was.
 
 ### 3.8 - Close the deploy user's privilege-escalation path - **OPEN, raised 2026-09-07**
 
+> **THE POLICY FILE CARRIES A PLACEHOLDER - NEVER PASTE IT RAW (found 2026-09-28).**
+> `backend/iam-policy.json` writes `REPLACE_WITH_YOUR_AWS_ACCOUNT_ID` in nine
+> statements' resources. Pasted as-is, CloudFormation, Lambda, DynamoDB and logs
+> would all be scoped to an account that does not exist - **every deploy
+> denied**, the 3 Sep outage again. Found by diffing the LIVE policy against the
+> file statement by statement before the 28 Sep paste. Paste a copy with
+> `072674217857` substituted, and diff it against the live version first: on
+> 28 Sep the diff was "removes nothing, adds exactly 10 actions, no existing
+> statement's scope changes". The first console save that day stored an
+> UNCHANGED version 12 (the paste had not reached the editor) - re-read the
+> saved JSON, never trust "saved". Result: probe **23 granted, 0 denied**, and a
+> real `sam deploy` reached "No changes to deploy". This paste did NOT close the
+> escalation below; it only added the I17 and headers verbs.
+
 **Found by the 2026-09-07 audit (C3), verified by reading the live policy.
 NOT applied, deliberately - see "why this is not already done" below.**
 
@@ -677,6 +707,17 @@ before it is merged.** The detail below is kept as the reasoning.
 - Smaller, same pass: validate `postcode` against a postcode shape before it
   goes into the email body (it is truncated and uppercased, not validated, so
   a domain-like string can be auto-linked by a mail client).
+
+**STATUS 2026-09-28: step 1 DONE except SPF/DMARC; step 3 DONE; step 2 NOT YET.**
+Identity `skyscore.co.uk` created in eu-west-2, Easy DKIM RSA-2048; the three
+DKIM CNAMEs were published in Cloudflare (DNS only) and the identity reads
+**verified, DKIM SUCCESS** the same hour. The SPF merge and the DMARC record
+are Bill's: the auto-mode classifier refuses DNS changes from Claude's session
+(it allowed the three adds, then blocked the SPF edit). Email runs on Cloudflare
+Email Routing, so SPF must be ONE record:
+`v=spf1 include:_spf.mx.cloudflare.net include:amazonses.com ~all`.
+The IAM paste of step 3 landed (23 granted, 0 denied). Step 2 (sandbox exit)
+is the next action; the TTL in the template follows step 3.
 
 1. **SES identity (console, eu-west-2).** SES -> Identities -> Create ->
    Domain `skyscore.co.uk`, Easy DKIM. Publish the three DKIM CNAMEs SES
