@@ -1633,8 +1633,9 @@ s6's worked example exactly.
 **VERIFICATION-FIRST SIGNUP IS BUILT AND OFF (I17 option A, 2026-09-15).**
 `SIGNUP_VERIFY` (template parameter `SignupVerify`, default `off`). On: the
 POST writes a pending row (`london-flight-map-signup-pending`, random token,
-24 h enforced in code; no TTL in the template because flightmap-dev lacks
-`dynamodb:UpdateTimeToLive` and a TTL would fail the WHOLE stack's deploy),
+24 h enforced in code AND by a DynamoDB TTL on `expiresAt` since 2026-09-29 -
+until the 28 Sep IAM paste flightmap-dev lacked `dynamodb:UpdateTimeToLive`,
+and a TTL would have failed the WHOLE stack's deploy),
 sends one SES email, and answers ONE identical 201 for every address; the
 signup runs on `GET /v1/signup/confirm?token=` through `complete_signup()`,
 the ONE holder of the rules for both modes, and renders HTML from the Lambda.

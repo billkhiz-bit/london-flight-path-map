@@ -411,11 +411,11 @@ class VerifyPagesAndTemplateTests(unittest.TestCase):
     a minute late is one that under-discloses.
 
     The deletion clause is the one a runbook could not hold. The pending
-    table has no TTL until two IAM verbs are granted (template.yaml comment on
-    SignupPendingTable), and the template's own comment calls the missing TTL a
-    cost of "nothing" - true operationally, false the moment privacy.html says
-    the request is deleted. So the branch carrying the page edits is RED here
-    until the TTL lands, and cannot be merged early by accident.
+    table had no TTL until two IAM verbs were granted (landed on master
+    2026-09-29), and the missing TTL cost "nothing" operationally while being
+    false the moment privacy.html says the request is deleted. So a page that
+    claims deletion is RED here whenever the TTL is absent - the branch that
+    carries the page edits was red on exactly this until that day.
     """
 
     @classmethod

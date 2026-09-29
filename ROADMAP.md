@@ -1216,8 +1216,8 @@ day.
   the demo page's `pending` branch, 13 tests. Deploying it changes NOTHING
   until the flag is flipped, and the flip is **OPERATIONS.md s3.9**: SES
   identity + DKIM at Cloudflare, sandbox exit, two IAM verbs for the TTL
-  (`UpdateTimeToLive`/`DescribeTimeToLive`, both denied today - the
-  classifier refused to edit `iam-policy.json`, so that edit is Bill's),
+  (`UpdateTimeToLive`/`DescribeTimeToLive` - granted by the 28 Sep paste;
+  the TTL itself landed on master 2026-09-29),
   the privacy.html s2a wording in the same deploy, then
   `--parameter-overrides SignupVerify=on`.
 - **Bill is leaning to A (2026-09-15). What A changes in the POLICIES, read

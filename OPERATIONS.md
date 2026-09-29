@@ -717,7 +717,10 @@ are Bill's: the auto-mode classifier refuses DNS changes from Claude's session
 Email Routing, so SPF must be ONE record:
 `v=spf1 include:_spf.mx.cloudflare.net include:amazonses.com ~all`.
 The IAM paste of step 3 landed (23 granted, 0 denied). Step 2 (sandbox exit)
-is the next action; the TTL in the template follows step 3.
+is the next action. **The TTL landed on master 2026-09-29**, not on the branch as
+step 3 below says: with the flag off nothing writes to the table, so deploying it
+alone proves the two verbs on a deploy that changes no behaviour, instead of
+first meeting them inside the flip.
 
 1. **SES identity (console, eu-west-2).** SES -> Identities -> Create ->
    Domain `skyscore.co.uk`, Easy DKIM. Publish the three DKIM CNAMEs SES

@@ -1090,20 +1090,21 @@ Resources:
         - AttributeName: token
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-      # NO TimeToLiveSpecification YET, deliberately. flightmap-dev holds
-      # neither dynamodb:UpdateTimeToLive nor DescribeTimeToLive (probed
-      # 2026-09-15: AccessDeniedException), so a TTL here fails the WHOLE
-      # stack's deploy - including unrelated Lambdas - until the policy is
-      # extended in the console. Expiry is enforced in code on every
-      # confirm (`expiresAt` is checked before the row is used), so the only
-      # OPERATIONAL cost of the missing TTL is storage of dead rows. The
-      # cost that matters is on privacy.html: the page cannot say an
-      # unconfirmed request is DELETED while the rows sit here forever, and
-      # tests/test_signup_verify.py holds that sentence and this key together.
-      # Once both verbs are granted (OPERATIONS.md, the SIGNUP_VERIFY
-      # runbook), add
-      #   TimeToLiveSpecification: {AttributeName: expiresAt, Enabled: true}
-      # and redeploy.
+      # TTL since 2026-09-29, once dynamodb:UpdateTimeToLive and
+      # DescribeTimeToLive were granted (IAM paste 2026-09-28, probe 23/0;
+      # before it, a TTL here failed the WHOLE stack's deploy). Landed on
+      # master with SignupVerify still off, so it is deployed and proven on
+      # its own rather than first meeting production inside the flip.
+      # Expiry is ALSO enforced in code on every confirm (`expiresAt` is
+      # checked before the row is used): DynamoDB deletes expired rows
+      # lazily, typically within days, so the TTL is what makes
+      # privacy.html's "deleted" true and the code check is what makes a
+      # stale token useless in the meantime. tests/test_signup_verify.py
+      # holds this key and that sentence together. The send-cap counter
+      # rows carry the same attribute and expire on the same clock.
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
 
   # --- DynamoDB Table, DEFRA noise raster samples (v3.1) ---
   # Populated by an offline data-loader script that samples the DEFRA
