@@ -46,6 +46,30 @@ lenders and journalists are buying.
 **Councils cannot usually endorse or buy from a small supplier without
 procurement.** Never pitch; offer a free tool and ask for corrections.
 
+## Local and London air-quality contacts (added 2026-09-29)
+
+Found through a residents' group message about an air-quality survey in Earls Court,
+where Bill lives. Being a resident is the introduction, so these go **now**: they are
+about the data, not the brand. Order matters - each one's reply makes the next easier.
+
+| # | Who | Why they would care | How | When |
+|---|---|---|---|---|
+| L1 | **Earls Court Society, Environmental Group** | Preparing a Mayor's Air Quality Fund bid with the council and Breathe London; the one-pager gives them the official baseline | Resident email + one-page summary (drafted, `OneDrive/Desktop/earls-court-society-email-2026-09-29.txt`) | Now |
+| L2 | **The residents' association network that forwarded it** | Their members asked to answer the survey; the same summary answers "how bad is it here" | Only after L1 replies, and only if L1 is happy for it to be shared | After L1 |
+| L3 | **Neighbouring amenity societies** (Kensington, Chelsea, and Hammersmith and Fulham groups near Earls Court) | Same question for their own streets; a per-area summary is an hour's work each | Offer a free summary for their area | After L1 |
+| L4 | **RBKC environment / air-quality team** | Already working with L1 | Through L1, never cold; offer data and ask for corrections (councils: no pitch) | Via L1 |
+| L5 | **Breathe London (GLA)** | Its sensors fill the gap our data admits (roadside air) | Apply for the API key; the "intended use" answer is the introduction | Now |
+| L6 | **Imperial College Environmental Research Group** | Involved in Breathe London; already draft 3B in the research outreach file | Send 3B, mentioning Breathe London | Now |
+| L7 | **The university hosting the survey** (the form runs on City St George's, University of London's survey platform) | Suggests an academic partner analysing the results | Ask L1 who, rather than guessing; offer the dataset for the analysis | After L1 |
+| L8 | **Geovation (Ordnance Survey)** | PropTech support programme; data clinic 2026-09-30 | In person | 2026-09-30 |
+
+**Clean-air campaign groups:** usable, carefully. Unlike Heathrow expansion, "cleaner air"
+has no opposing side, so neutrality is not at stake the same way - but keep to supplying
+data, never co-signing a campaign position.
+
+**The Earls Court regeneration developer** is a potential COMMERCIAL contact (site
+context for a large development) and so waits for the rename like rows 5-10.
+
 ## Facts safe to quote
 
 Each is measured and in the repo. Re-check the source before quoting if the date is old.
