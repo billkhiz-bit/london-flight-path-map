@@ -68,8 +68,8 @@ template, at `Desktop/SKY_SCORE_OUTREACH_2026-07-28.md`.
 > flood, planning and environmental risk, and noise sits outside that stack today. The DMCC
 > material information rules are what make that gap expensive rather than merely untidy.
 >
-> If the output looks useful, what I would propose is a fixed scope 90 day pilot. £2,500 plus
-> VAT, one success metric agreed before any integration work starts, a review at day 45 and a
+> If the output looks useful, what I would propose is a fixed scope 90 day pilot at £2,500:
+> one success metric agreed before any integration work starts, a review at day 45 and a
 > written evidence report at day 90. The fee is credited in full against a licence if you
 > continue, and the report is yours either way. Terms:
 > [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
@@ -110,7 +110,7 @@ template, at `Desktop/SKY_SCORE_OUTREACH_2026-07-28.md`.
 > could not otherwise have seen before committing, which sits naturally with Hifz al-Mal and
 > Hifz an-Nasl.
 >
-> If it is useful, the concrete proposal is a 90 day pilot at £2,500 plus VAT. One metric your
+> If it is useful, the concrete proposal is a 90 day pilot at £2,500. One metric your
 > team already cares about, agreed at day 0, a review at day 45, a written evidence report at
 > day 90, and the fee credited against a licence if you continue. Terms:
 > [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
@@ -140,8 +140,8 @@ is not commercial proof.
 > automatically unfair, with the CMA able to fine for it directly. Most of the data already
 > exists. It just is not in one place per property.
 >
-> If it would be useful in your listings or your client reports, I run a 90 day pilot at £2,500
-> plus VAT. One success metric agreed before we start, a review at day 45, a written evidence
+> If it would be useful in your listings or your client reports, I run a 90 day pilot at £2,500.
+> One success metric agreed before we start, a review at day 45, a written evidence
 > report at day 90, and the fee credited against a licence if you carry on. Terms:
 > [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
 >
@@ -188,7 +188,7 @@ Post-Haatch reframe: the ask is no longer "a 20-minute call to discuss" — it i
 >
 > [Company]'s [reports / search products] cover flood, planning and environmental risk — but no defensible noise layer, the gap the DMCC material-information rules make expensive to ignore.
 >
-> Rather than a long procurement conversation, I run a fixed-scope 90-day pilot: **£2,500 + VAT**, one success metric agreed at day 0, review at day 45, written evidence report at day 90 — and the fee is credited in full against a licence if you continue. Terms: [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+> Rather than a long procurement conversation, I run a fixed-scope 90-day pilot: **£2,500**, one success metric agreed at day 0, review at day 45, written evidence report at day 90 — and the fee is credited in full against a licence if you continue. Terms: [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
 >
 > Worth a 20-minute call to scope the metric?
 >
@@ -205,7 +205,7 @@ Post-Haatch reframe: the ask is no longer "a 20-minute call to discuss" — it i
 >
 > Every score is deterministic and anchored to published DEFRA / Ofsted / ONS thresholds — no AI layer, methodology fully public for Sharia-board or audit scrutiny.
 >
-> The concrete proposal: a **90-day pilot, £2,500 + VAT**, one metric your team already cares about (e.g. environmental-harm flags per postcode vs manual review), agreed at day 0, written evidence report at day 90, fee credited against a licence if you continue. Terms: [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
+> The concrete proposal: a **90-day pilot, £2,500**, one metric your team already cares about (e.g. environmental-harm flags per postcode vs manual review), agreed at day 0, written evidence report at day 90, fee credited against a licence if you continue. Terms: [skyscore.co.uk/pricing](https://skyscore.co.uk/pricing?utm_source=outreach-{SLUG}&utm_medium=email&utm_campaign={YYYY-MM})
 >
 > Would a 20-minute scoping call be worthwhile?
 >

@@ -10092,10 +10092,19 @@
           'Air Quality',
           extra.airQuality,
           extra.airQuality,
-          extra.aqNote ||
-            (extra.no2AnnualMeanUgm3
+          // Measured figures FIRST, then any curated note - the flood row above
+          // does the same. Until 2026-09-29 this was `aqNote || measured`, so
+          // all 33 London boroughs (the only ones with a curated note) hid
+          // their DEFRA NO2/PM2.5 behind a sentence, while every other city
+          // showed the numbers.
+          [
+            extra.no2AnnualMeanUgm3
               ? `NO2 ${extra.no2AnnualMeanUgm3} and PM2.5 ${extra.pm25AnnualMeanUgm3} ug/m3 annual mean. WHO 2021 guidelines are 10 and 5.`
-              : ''),
+              : '',
+            extra.aqNote || '',
+          ]
+            .filter(Boolean)
+            .join(' '),
           extra.airQualityVintage
             ? `SOURCE: ${extra.airQualityVintage}`
             : 'TOGGLE "AIR QUALITY" ON MAP · BOROUGH-LEVEL RATING (CURATED)'

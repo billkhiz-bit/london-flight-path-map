@@ -684,6 +684,10 @@ OPEN_DATA_COLUMNS = [
     ('rail_within_800m_pct', 'Share of postcodes within 800 m of a rail, metro or tram stop (NaPTAN), %'),
     ('healthcare_within_500m_pct', 'Share of postcodes within 500 m of a GP practice (NHS ODS), %'),
     ('air_quality_who_ratio', 'Worse of NO2 and PM2.5 as a multiple of the WHO 2021 guideline (DEFRA)'),
+    # Added 2026-09-29: journalists and researchers recognise the pollutants, not our ratio.
+    # Blank for the API-preview areas, whose borough averages are derived but not yet held.
+    ('no2_ugm3', 'Nitrogen dioxide, borough average of the DEFRA background annual mean, ug/m3 (WHO guideline 10; blank for API-preview areas)'),
+    ('pm25_ugm3', 'Fine particles (PM2.5), borough average of the DEFRA background annual mean, ug/m3 (WHO guideline 5; blank for API-preview areas)'),
     ('road_noise_above_who_pct', 'Share of postcodes above the WHO 53 dB Lden road guideline (DEFRA Round 4), %'),
     ('flood_medium_or_high_pct', 'Share of postcodes at Medium or High flood risk (Environment Agency RoFRS), %'),
     ('methodology_version', 'Sky Score methodology version the scores were computed under'),
@@ -718,6 +722,7 @@ def open_data_rows() -> list[list]:
                 first(rec.get('crimeRate')), first(rec.get('p8')),
                 first(painted.get('transportWithin800mPct')), first(painted.get('healthcareWithin500mPct')),
                 first(rec.get('airQualityWhoRatio'), painted.get('airQualityWhoRatio')),
+                first(painted.get('no2AnnualMeanUgm3')), first(painted.get('pm25AnnualMeanUgm3')),
                 first(rec.get('roadNoiseAboveWhoPct'), painted.get('roadNoiseAboveWhoPct')),
                 first(rec.get('floodMediumOrHighPct'), painted.get('floodMediumOrHighPct')),
                 body.get('methodologyVersion', ''), app.SNAPSHOT_VINTAGE_LABEL,
