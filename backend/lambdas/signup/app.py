@@ -155,6 +155,8 @@ def _origin_for_request(event):
 def cors_headers(event):
     return {
         'Access-Control-Allow-Origin': _origin_for_request(event),
+        'Strict-Transport-Security': 'max-age=31536000',
+        'X-Content-Type-Options': 'nosniff',
         'Access-Control-Allow-Methods': 'POST,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Max-Age': '86400',
@@ -854,6 +856,7 @@ def html_page(status, title, body):
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'no-store',
             'X-Content-Type-Options': 'nosniff',
+            'Strict-Transport-Security': 'max-age=31536000',
             'Referrer-Policy': 'no-referrer',
             # form-action is NOT covered by default-src, so it is named: the
             # confirm button may post back to this origin and nowhere else.

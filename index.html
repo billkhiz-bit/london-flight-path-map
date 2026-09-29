@@ -12542,13 +12542,20 @@
     <div class="sidebar-section notify-block">
       <h3>TELL ME WHEN THIS CHANGES</h3>
       <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
-      <form id="notify-form" class="notify-form" novalidate>
+      <!-- method="post": JS handles the submit, but without JS a form with no
+           method GETs, putting the email in the URL (history, analytics).
+           Found by an OWASP ZAP baseline scan, 2026-09-29. -->
+      <form id="notify-form" class="notify-form" method="post" novalidate>
         <label class="visually-hidden" for="notify-email">Email address for score updates</label>
         <input id="notify-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="notify-privacy" />
         <button id="notify-btn" type="submit">Notify me</button>
       </form>
       <p id="notify-result" class="info-note" role="status" aria-live="polite" style="margin-top:6px;"></p>
       <p id="notify-privacy" class="info-note" style="margin-top:4px;font-size:11px;">One email per refresh at most. No marketing, no sharing. <a href="/privacy" style="color:var(--orange-text);">How we handle it</a>.</p>
+    </div>
+    <div class="sidebar-section">
+      <h3>SPOTTED SOMETHING WRONG?</h3>
+      <p class="info-note" style="margin-top:0;">If a figure looks wrong for ${escapeHtml(analysis.postcode || analysis.borough || 'this area')}, <a href="mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: ' + (analysis.postcode || analysis.borough || 'area'))}" data-event="report-mistake-click" style="color:var(--orange-text);">tell us</a>. Local knowledge is the best check on data like this.</p>
     </div>
     <div class="sidebar-section">
       <h3>YOUR NEXT STEPS</h3>

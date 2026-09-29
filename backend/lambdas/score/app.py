@@ -9341,6 +9341,7 @@ def _svg_response(svg, status=200, cache_seconds=86400):
             # Explicitly NOT a JSON CORS surface. An <img> needs no CORS at all;
             # allowing it would only widen what can read this.
             'X-Content-Type-Options': 'nosniff',
+            'Strict-Transport-Security': 'max-age=31536000',
             # SINCE 2026-09-17 THIS SVG IS SERVED FROM skyscore.co.uk ITSELF
             # (the /badge edge-cache behaviour), so it shares an origin with the
             # app and an SVG opened as a document can run script. Escaping was
@@ -9624,6 +9625,8 @@ def handler(event, context):
 def cors_headers():
     return {
         'Access-Control-Allow-Origin': CORS_ORIGIN,
+        'Strict-Transport-Security': 'max-age=31536000',
+        'X-Content-Type-Options': 'nosniff',
         'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key',
         'Access-Control-Max-Age': '86400',

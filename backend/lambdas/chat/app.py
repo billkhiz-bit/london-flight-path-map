@@ -138,6 +138,8 @@ You are a presenter of retrieved data, not a source of it."""
 def cors_headers():
     return {
         'Access-Control-Allow-Origin': CORS_ORIGIN,
+        'Strict-Transport-Security': 'max-age=31536000',
+        'X-Content-Type-Options': 'nosniff',
         'Access-Control-Allow-Methods': 'POST,OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key',
         'Access-Control-Max-Age': '86400',

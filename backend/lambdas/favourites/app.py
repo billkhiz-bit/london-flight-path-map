@@ -290,6 +290,8 @@ def response(status, body):
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': CORS_ORIGIN,
+            'Strict-Transport-Security': 'max-age=31536000',
+            'X-Content-Type-Options': 'nosniff',
             'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Device-Token',
             'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
         },

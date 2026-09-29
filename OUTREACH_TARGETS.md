@@ -70,6 +70,49 @@ data, never co-signing a campaign position.
 **The Earls Court regeneration developer** is a potential COMMERCIAL contact (site
 context for a large development) and so waits for the rename like rows 5-10.
 
+## Community plan (agreed 2026-09-29)
+
+**Goal: be the trusted local source for "what is it like to live here", so B2B
+conversations can say "as used by".** A residents' group citing Sky Score in a
+funding bid is worth more to a lender than any advert.
+
+Three strands feeding one loop:
+
+1. **Local groups (the engine).** Free one-page area summaries for residents'
+   associations, amenity societies and neighbourhood forums - the evidence they
+   need for bids, objections and council meetings. `scripts/area_summary.mjs`
+   generates one from a postcode list in about a minute.
+2. **Findings (the megaphone).** One real finding a month on LinkedIn under
+   Bill's own name (survives the rename); helpful answers on r/HousingUK and
+   city subreddits, linking only when it adds something (about 90/10); the
+   occasional data chart. A LinkedIn newsletter grows out of the posts. A site
+   email newsletter waits: it needs its own PECR consent, a privacy.html change,
+   unsubscribe handling, the ICO fee and SPF/DMARC. The score-update list is
+   NOT a newsletter list.
+3. **Listening (the retention).** "Spotted something wrong? Tell us" on every
+   result panel (since 2026-09-29); "you asked, we fixed" follow-ups with the
+   reporter's permission; a hand-kept list of 10-20 **insiders** emailed
+   personally before each monthly data update.
+
+**Start narrow: local groups, in London, from Earls Court** (rows L1-L7 above).
+Bill is a resident, the chain already exists, and one group actually USING a
+summary is the first case study. Do not spread across cities until one works.
+
+**Weekly rhythm, time-boxed at about 3 hours:** one group offer or follow-up;
+three or four helpful Reddit answers; one LinkedIn post; five minutes on Friday
+updating the tracker.
+
+**End-of-October measures:** 5 groups offered a summary; 2 used or forwarded
+it; **1 permission to say "as used by"**; 10 insiders; community referrals
+trending up in GoatCounter. If none of five used it, change the offer before
+doing more of it.
+
+**Not now:** a forum (empty forums read as abandoned, and a user-to-user
+service brings Online Safety Act duties), Discord/Slack, giveaways, paid ads.
+
+The working tracker is Bill's spreadsheet (Desktop, not the repo, because it
+holds contact details): Contacts, Community and Insiders tabs.
+
 ## Facts safe to quote
 
 Each is measured and in the repo. Re-check the source before quoting if the date is old.

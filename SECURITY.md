@@ -172,8 +172,10 @@ To be transparent (procurement teams catch overstated claims):
 |---|---|---|
 | SOC 2 Type I / II | 🔴 Not yet | Multi-year track; starts once first enterprise customer requires it (~£8-15k/yr Drata/Vanta) |
 | ISO 27001 | 🔴 Not yet | Same |
-| Cyber Essentials Plus | 🔴 Not yet | Lower bar (~£1.5k); will add when first UK enterprise customer asks |
-| Independent penetration test | 🔴 Not yet | ~£3-5k for a 3-day external test; commission once revenue justifies it |
+| Cyber Essentials (basic) | 🟡 Planned | Self-assessment, about GBP 384 inc. VAT for a micro organisation (IASME standard fee). Before applying: an admin IAM user for daily AWS work instead of root, and MFA on every cloud service - v3.3 (from 27 Apr 2026) fails an application outright otherwise |
+| Cyber Essentials Plus | 🔴 Not yet | Adds a technical audit (~GBP 1.5k+); when first UK enterprise customer asks |
+| Independent penetration test | 🔴 Not yet | Commission when a buyer's security questionnaire asks for a recent report (a test is a snapshot, so one bought unasked is bought twice); CREST-accredited, fixed scope. Get current quotes - the old ~GBP 3-5k figure is an unverified estimate |
+| Automated scanning | 🟢 **Passive OWASP ZAP baseline, 2026-09-29** | Site 0 fail / 16 warn, API 0 fail / 5 warn. Three findings fixed the same day: the vendored Swagger UI (bundled DOMPurify 3.1.4 with known CVEs, now 5.33.0 / 3.4.13), HSTS + nosniff on every API response (guarded by `backend/tests/test_security_headers.py`), and a notify form with no method. The rest are recorded trade-offs (meta CSP and 'unsafe-inline', GoatCounter without SRI, CORS `*`) or false positives. **A baseline scan is not a penetration test** |
 | DPA template | 🔴 Not yet | CommonPaper / PandaDoc UK template; 2-3 hr legal review when first asked |
 | MSA template | 🔴 Not yet | CommonPaper SaaS MSA + Sky Score schedule; 1-day legal effort |
 | Professional indemnity / cyber liability insurance | 🔴 Not yet | Hiscox / Markel quote ~£400-800/yr for solo dev pre-revenue; purchase when a contract specifically requires it |

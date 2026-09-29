@@ -158,9 +158,11 @@
 
 <main id="swagger-ui"></main>
 
-<!-- Self-hosted Swagger UI 5.17.14 (see CSP comment above). SHA-384 of each
-     vendored file verified against the previously pinned SRI hashes at
-     download time; same-origin makes integrity attributes redundant. -->
+<!-- Self-hosted Swagger UI 5.33.0 (see CSP comment above), from the npm
+     package swagger-ui-dist@5.33.0, files copied byte-for-byte. Refreshed
+     2026-09-29 from 5.17.14 because an OWASP ZAP baseline flagged the
+     DOMPurify 3.1.4 bundled inside it (known CVEs); 5.33.0 bundles 3.4.13.
+     Same-origin makes integrity attributes redundant. -->
 <script src="./vendor/swagger-ui-bundle.js"></script>
 <script src="./vendor/swagger-ui-standalone-preset.js"></script>
 <script>
@@ -220,6 +222,14 @@
     document
       .querySelectorAll('#swagger-ui select:not([aria-label]):not([id="filter"])')
       .forEach((el) => el.setAttribute('aria-label', 'Select API server'));
+    // WCAG 1.3.1 heading order, 2026-09-29. Swagger UI 5.33 renders the API
+    // title as an <h1> (5.17 used <h2>), so the page went H1 (ours) -> H1 ->
+    // H3 (the operation tags) and axe's heading-order failed. The page keeps
+    // its own H1; Swagger's title is announced as level 2. Same after-render
+    // patch as the select above, for the same reason: it survives upgrades.
+    document
+      .querySelectorAll('#swagger-ui h1:not([aria-level])')
+      .forEach((el) => el.setAttribute('aria-level', '2'));
   }
 
   if (window.MutationObserver) {
