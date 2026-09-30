@@ -63,6 +63,19 @@ for (const city of readdirSync(areaRoot)) {
 }
 check('pages were generated', pages.length > 50, `${pages.length} pages`);
 
+// The cities the SITE can open, read from index.html's CITY_DATA (2026-09-30).
+// bootFromQuery() ignores any other `?city=`, so a page in one of the eleven
+// preview cities has no map to link to. Used by the CTA check below and by
+// "every map link names a city the site can open" at the end, which also
+// floors this set so an unparsed registry reds rather than exempting every page.
+const indexHtml = readFileSync(join(ROOT, 'index.html'), 'utf8').replace(/\r\n/g, '\n');
+const cdStart = indexHtml.indexOf('const CITY_DATA = {');
+const cdEnd = cdStart === -1 ? -1 : indexHtml.indexOf('\n      };\n', cdStart);
+const siteCities = new Set(
+  cdEnd === -1 ? [] : [...indexHtml.slice(cdStart, cdEnd).matchAll(/^ {8}([a-z]+): \{/gm)].map((m) => m[1]),
+);
+const cityOf = (url) => url.split('/')[2];
+
 // --- sitemap agreement, both directions ------------------------------------
 const sitemap = readFileSync(join(ROOT, 'sitemap.xml'), 'utf8');
 const listed = new Set(
@@ -141,6 +154,7 @@ check(
 const noScript = [];
 const noScore = [];
 const badCta = [];
+let ctaChecked = 0;
 for (const pg of pages) {
   const html = readFileSync(pg.file, 'utf8');
   if (/<script/i.test(html)) noScript.push(pg.url);
@@ -156,9 +170,12 @@ for (const pg of pages) {
   // present meant a page that failed the score check silently vanished from
   // this one too - one assertion becoming an escape hatch from another, which
   // is the shape this file exists to catch. Found while red-proofing it.
-  if (pg.url !== '/area/' && !/href="\/\?city=[^"]*&amp;borough=[^"]+"/.test(html)) {
-    badCta.push(pg.url);
-  }
+  // A preview city has no map, so its page has no map link to deep-link
+  // (2026-09-30) - excluded by URL too, and COUNTED, so the exemption cannot
+  // quietly swallow every page.
+  if (pg.url === '/area/' || !siteCities.has(cityOf(pg.url))) continue;
+  ctaChecked += 1;
+  if (!/href="\/\?city=[^"]*&amp;borough=[^"]+"/.test(html)) badCta.push(pg.url);
 }
 check(
   'every page carries no script tag',
@@ -172,8 +189,8 @@ check(
 );
 check(
   'every CTA deep-links to a borough',
-  badCta.length === 0,
-  badCta.length ? `${badCta.length} page(s) link without &borough=: ${badCta.slice(0, 3).join(', ')}` : `${pages.length - badCta.length} checked`,
+  badCta.length === 0 && ctaChecked > 0,
+  badCta.length ? `${badCta.length} page(s) link without &borough=: ${badCta.slice(0, 3).join(', ')}` : `${ctaChecked} on-map pages checked`,
 );
 
 // --- provenance and holder-lookup gates (2026-08-31, audits C3 and I5) ------
@@ -297,6 +314,43 @@ check(
   uncredited.length
     ? `${uncredited.length}: ${uncredited.slice(0, 4).join('; ')}`
     : `${examined} of ${pages.length} pages examined`,
+);
+
+// A MAP LINK MUST NAME A CITY THE MAP CAN OPEN (2026-09-30).
+//
+// Every page carried "Open <borough> on the Sky Score map" -> /?city=<city>,
+// the eleven preview pages included, and bootFromQuery() IGNORES a city that
+// CITY_DATA does not hold - so Norwich's link opened LONDON's map, the exact
+// complaint a Norwich user had written in about. The cities the site can open
+// are read from index.html's CITY_DATA, never from the builder's
+// BACKEND_ONLY_CITIES: a gate reading the writer's own list agrees with the
+// writer by construction (`siteCities` is parsed near the top of this file).
+// Both floors are there so a regex that stops matching (a reformatted
+// registry, a reworded link) reds instead of passing on nothing.
+const deadMapLinks = [];
+const mapPromises = [];
+let mapLinks = 0;
+for (const page of pages) {
+  const html = readFileSync(page.file, 'utf8');
+  for (const m of html.matchAll(/href="\/\?city=([^"&]+)/g)) {
+    mapLinks += 1;
+    if (!siteCities.has(m[1])) deadMapLinks.push(`${page.url} -> ?city=${m[1]}`);
+  }
+  if (!siteCities.has(cityOf(page.url)) && /See it on the map|the map shows postcode-level detail/.test(html)) {
+    mapPromises.push(page.url);
+  }
+}
+check(
+  'every map link names a city the site can open',
+  siteCities.size >= 10 && mapLinks > 0 && deadMapLinks.length === 0,
+  deadMapLinks.length
+    ? `${deadMapLinks.length}: ${deadMapLinks.slice(0, 3).join('; ')}`
+    : `${mapLinks} links, ${siteCities.size} cities on the map`,
+);
+check(
+  'a page off the map does not promise the map',
+  mapPromises.length === 0,
+  mapPromises.length ? `${mapPromises.length}: ${mapPromises.slice(0, 3).join('; ')}` : '',
 );
 
 console.log('');

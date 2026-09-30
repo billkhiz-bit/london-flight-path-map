@@ -41,7 +41,7 @@ web-deploy demo-deploy`, three invalidations completed. Verified: live `/v1/scor
 5.4; drift 141/141 (25 data files - the seven city PNGs); score sanity PASS on 28
 at 5.4 vs 5.4; area pages 99/99; site == API 6/6; live browser: NR2 1NE renders
 NOT COVERED YET, L34 2AA ("St. Helens") lands on Merseyside with Liverpool's
-DEFRA map, Manchester paints its DEFRA PNG. Tom Paine (the Norwich report) has
+DEFRA map, Manchester paints its DEFRA PNG. The Norwich user (the Norwich report) has
 been replied to ("in the middle of fixing it"); a follow-up saying it is live is
 now TRUE. Uncovered-postcode spot-check: search NR2 1NE (Norwich) - it must say NOT
 COVERED YET. Next: the CAA data request (drafted, not sent) and ROADMAP phase 2's

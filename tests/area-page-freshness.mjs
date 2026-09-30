@@ -69,8 +69,13 @@ if (!existsSync(areaRoot)) {
 
 // city dir -> the `city` value /v1/score expects. The page path is a slug, and
 // slugs are lossy: `city-of-bristol` is the BOROUGH slug, not the city key.
-// The city key is carried in the page itself, in the map link, so it is read
-// from there rather than reconstructed.
+// The city key is carried in the page itself, on <main data-city>, so it is
+// read from there rather than reconstructed.
+//
+// The builder writes both attributes through html.escape(quote=True), so undo
+// exactly the five entities that produces.
+const unescapeHtml = (s) =>
+  s.replace(/&(amp|lt|gt|quot|#x27);/g, (_, n) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#x27': "'" })[n]);
 const pages = [];
 for (const cityDir of readdirSync(areaRoot)) {
   const dir = join(areaRoot, cityDir);
@@ -80,10 +85,13 @@ for (const cityDir of readdirSync(areaRoot)) {
     if (!existsSync(file)) continue;
     const html = readFileSync(file, 'utf8');
     const score = (html.match(/<span class="n">([\d.]+)<\/span>/) || [])[1];
-    // Both taken from the map CTA, which carries the exact strings the API
-    // wants. Parsing the <h1> instead would mean un-escaping and un-slugging.
-    const link = html.match(/href="\/\?city=([^&"]+)&amp;borough=([^"]+)"/);
-    if (!score || !link) {
+    // Both from <main data-city data-borough>, the page's machine-readable
+    // identity, which carries the exact strings the API wants (2026-09-30).
+    // This used to read the map CTA - until the preview pages stopped offering
+    // a map they do not have, and a user-facing link turned out to be the only
+    // place a page said who it was. Parsing the <h1> would mean un-slugging.
+    const id = html.match(/<main[^>]*\sdata-city="([^"]+)"[^>]*\sdata-borough="([^"]+)"/);
+    if (!score || !id) {
       console.error(`FAIL: could not read score/city/borough from ${file}`);
       console.error('      The page template changed and this gate can no longer');
       console.error('      read it. Fix the parse, do not delete the check.');
@@ -92,8 +100,8 @@ for (const cityDir of readdirSync(areaRoot)) {
     pages.push({
       file: `area/${cityDir}/${boroughDir}/`,
       baked: Number(score),
-      city: decodeURIComponent(link[1]),
-      borough: decodeURIComponent(link[2].replace(/\+/g, ' ')),
+      city: unescapeHtml(id[1]),
+      borough: unescapeHtml(id[2]),
     });
   }
 }

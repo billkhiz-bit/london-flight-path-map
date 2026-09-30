@@ -658,6 +658,16 @@ previously got a shell.
   99 against the live API in **ONE batch request** (1 CI quota unit, not 99 -
   a blocking gate that spends a consumable is how `score sanity` once blocked
   every commit in this repo). **Rerun the builder after any vintage roll.**
+- **A page's identity is `<main data-city data-borough>`, not its map link
+  (2026-09-30).** Every page linked "Open <borough> on the Sky Score map" to
+  `/?city=<key>`, and `bootFromQuery()` IGNORES a city `CITY_DATA` lacks, so the
+  11 preview pages (Cardiff, Nottingham, Norwich) opened LONDON's map - the
+  defect the Norwich user had reported, reached from the page built to fix it.
+  Preview pages now say "Not on the map yet". The freshness gate had been
+  reading city and borough OUT OF that link, so it moved to the data attributes;
+  `tests/area-pages.mjs` reads the cities the site can open from `CITY_DATA`
+  (never from `BACKEND_ONLY_CITIES`) and reds on any map link naming another.
+  **Do not make a user-facing link the only place a page says who it is.**
 - `tests/area-pages.mjs` asserts CONTENT, not existence: a fact floor, unique
   titles and descriptions, and that **no two pages share a fact block**. 99 thin
   or near-identical pages is a doorway network and worse for the domain than
