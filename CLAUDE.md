@@ -1453,6 +1453,38 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 
 ## Known Issues
 
+> ## ~~OPEN 2026-09-29: API GATEWAY ERROR RESPONSES LACK HSTS + NOSNIFF~~ DEPLOYED 2026-09-30
+> 
+> Every Lambda response sends both since `7df6d4e`, and
+> `backend/tests/test_security_headers.py` fails any new response path that
+> does not - **eight Lambdas each build their own headers, so the test is the
+> only thing keeping them in step**. A path with NO route is answered by API
+> Gateway itself, so `GatewayResponses` DEFAULT_4XX/5XX in
+> `backend/template.yaml` carry both too. **The body template is PINNED to API
+> Gateway's own default** (`{"message":$context.error.messageString}`, read off
+> the live API before the deploy) - this note said "headers only, never add a
+> ResponseTemplate" until then, which was the risky option: SAM's
+> `generate_swagger()` writes `responseTemplates: {}` whenever none is given,
+> and THROTTLED / QUOTA_EXCEEDED inherit from DEFAULT_4XX, while
+> `tests/demo-key-scope.mjs` reads the 429 `messageString` to tell a method
+> throttle from a quota. The test reds on the template dropped OR customised
+> (both proven). **Verified from the origin:** the reviewed changeset touched
+> `FlightMapApi.Body`, a new deployment and the stage's `DeploymentId` only (no
+> Lambda, and `MethodSettings` unchanged); `get-gateway-responses` shows
+> THROTTLED, QUOTA_EXCEEDED and MISSING_AUTHENTICATION_TOKEN inheriting both
+> headers AND the default template; eight unrouted paths answer 403 with HSTS +
+> nosniff and an unchanged `{"message":"Missing Authentication Token"}`; and
+> `demo-key-scope.mjs` is 6 of 6 PASS on "Too Many Requests" bodies.
+> 
+> Same day, also shipped: Swagger UI 5.33.0 (5.17.14 bundled a vulnerable
+> DOMPurify; 5.33 renders its title as `<h1>`, so the page gives it
+> `aria-level="2"` after render or heading-order fails); London borough panels
+> show DEFRA NO2/PM2.5 before the curated `aqNote` (it used to REPLACE them);
+> the open-data CSV gains `no2_ugm3`/`pm25_ugm3`; "+ VAT" removed - **Cubitt33
+> is not VAT-registered, never quote "+ VAT"**. `node scripts/area_summary.mjs`
+> makes the free community one-pager from the live API (see OUTREACH_TARGETS
+> "Community plan").
+
 > ## ~~THE 11-13 SEP WAVE IS COMMITTED AND NOT DEPLOYED~~ DEPLOYED 2026-09-13
 >
 > All five surfaces went out on 13 Sep and were verified FROM THE ORIGIN, not

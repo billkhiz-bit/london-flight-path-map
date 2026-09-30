@@ -50,6 +50,35 @@ Resources:
     Properties:
       StageName: prod
       Description: Sky Score API
+      # HSTS + nosniff on API Gateway's OWN error responses (2026-09-29). The
+      # Lambdas set both since the ZAP baseline that day, but a request for a
+      # path with no route (/robots.txt, /prod/) is answered 403 by API
+      # Gateway itself and never reaches a Lambda - the re-scan still flagged
+      # five.
+      #
+      # The body template is PINNED to API Gateway's own default, copied from
+      # `get-gateway-responses` on the live API (2026-09-30). Omitting it is
+      # NOT "leave the body alone": SAM's ApiGatewayResponse.generate_swagger()
+      # writes `responseTemplates: {}` whenever none is given, and THROTTLED /
+      # QUOTA_EXCEEDED inherit from DEFAULT_4XX. tests/demo-key-scope.mjs reads
+      # that body to tell 'Too Many Requests' (method throttle) from 'Limit
+      # Exceeded' (quota), so never customise it either.
+      # Guarded by backend/tests/test_security_headers.py.
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Strict-Transport-Security: "'max-age=31536000'"
+              X-Content-Type-Options: "'nosniff'"
+          ResponseTemplates:
+            application/json: '{"message":$context.error.messageString}'
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Strict-Transport-Security: "'max-age=31536000'"
+              X-Content-Type-Options: "'nosniff'"
+          ResponseTemplates:
+            application/json: '{"message":$context.error.messageString}'
       MethodSettings:
         - HttpMethod: '*'
           ResourcePath: '/*'

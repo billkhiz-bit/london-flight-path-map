@@ -23,6 +23,9 @@ REQUIRED = {
     'Strict-Transport-Security': 'max-age=31536000',  # same value the site serves
     'X-Content-Type-Options': 'nosniff',
 }
+# API Gateway's default gateway-response body, read off the live API with
+# `get-gateway-responses` on 2026-09-30 (every type carried exactly this).
+GATEWAY_DEFAULT_TEMPLATE = '{"message":$context.error.messageString}'
 
 
 def _str_keys(d):
@@ -68,6 +71,33 @@ class SecurityHeaderTests(unittest.TestCase):
                         missing.append(f'{app.parent.name}/app.py:{line} lacks {name}: {value}')
         self.assertGreaterEqual(seen, 10, 'found fewer header dicts than exist today - the walker, not the code, changed')
         self.assertEqual(missing, [], '\n'.join(missing))
+
+
+    def test_api_gateway_error_responses_set_them_too(self):
+        # A path with no route is answered by API Gateway itself, never a
+        # Lambda, so the template's GatewayResponses must carry both headers.
+        lines = (LAMBDAS.parent / 'template.yaml').read_text(encoding='utf-8').splitlines()
+        start = next((i for i, ln in enumerate(lines) if ln == '      GatewayResponses:'), None)
+        self.assertIsNotNone(start, 'FlightMapApi has no GatewayResponses block')
+        block = []
+        for ln in lines[start + 1:]:
+            if ln.strip() and not ln.startswith('        '):
+                break  # back at the Properties level: the block has ended
+            block.append(ln)
+        for kind in ('DEFAULT_4XX', 'DEFAULT_5XX'):
+            at = next((i for i, ln in enumerate(block) if ln == f'        {kind}:'), None)
+            self.assertIsNotNone(at, f'{kind} missing from GatewayResponses')
+            chunk = []
+            for ln in block[at + 1:]:
+                if ln.startswith('        ') and not ln.startswith('         '):
+                    break  # next DEFAULT_* entry
+                chunk.append(ln.strip())
+            for name, value in REQUIRED.items():
+                self.assertIn(f"{name}: \"'{value}'\"", chunk, f'{kind} lacks {name}')
+            # Omitted, SAM writes `responseTemplates: {}`; customised, the 429
+            # bodies demo-key-scope.mjs classifies on change. Either way, red.
+            self.assertIn(f"application/json: '{GATEWAY_DEFAULT_TEMPLATE}'", chunk,
+                          f"{kind} body template is not API Gateway's own default")
 
 
 if __name__ == '__main__':
