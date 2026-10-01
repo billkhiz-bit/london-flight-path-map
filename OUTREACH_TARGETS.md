@@ -58,10 +58,10 @@ about the data, not the brand. Order matters - each one's reply makes the next e
 | L2 | **The residents' association network that forwarded it** | Their members asked to answer the survey; the same summary answers "how bad is it here" | Only after L1 replies, and only if L1 is happy for it to be shared | After L1 |
 | L3 | **Neighbouring amenity societies** (Kensington, Chelsea, and Hammersmith and Fulham groups near Earls Court) | Same question for their own streets; a per-area summary is an hour's work each | Offer a free summary for their area | After L1 |
 | L4 | **RBKC environment / air-quality team** | Already working with L1 | Through L1, never cold; offer data and ask for corrections (councils: no pitch) | Via L1 |
-| L5 | **Breathe London (GLA)** | Its sensors fill the gap our data admits (roadside air) | Apply for the API key; the "intended use" answer is the introduction | Now |
-| L6 | **Imperial College Environmental Research Group** | Involved in Breathe London; already draft 3B in the research outreach file | Send 3B, mentioning Breathe London | Now |
+| L5 | **Breathe London (GLA)** | Its sensors fill the gap our data admits (roadside air) | Ask L1 for an introduction first (L1 works with Breathe London and has a node on Warwick Road); failing that, apply for the API key, where the "intended use" answer is the introduction | After the L1 call (1 Oct) |
+| L6 | **Imperial College Environmental Research Group** | Involved in Breathe London; already draft 3B in the research outreach file | Send 3B, mentioning Breathe London (and the L1 introduction, if there is one) | After the L1 call (1 Oct) |
 | L7 | **The university hosting the survey** (the form runs on City St George's, University of London's survey platform) | Suggests an academic partner analysing the results | Ask L1 who, rather than guessing; offer the dataset for the analysis | After L1 |
-| L8 | **Geovation (Ordnance Survey)** | PropTech support programme; data clinic 2026-09-30 | In person | 2026-09-30 |
+| L8 | **Geovation (Ordnance Survey)** | Clinic held 2026-09-30 (cut short; the lead offered a follow-up video call). Its accelerator is run with OS and HM Land Registry, and a 2026 priority theme is "Risk & Resilience" - property-level environmental risk, close to what Sky Score is - with up to GBP 20k equity-free funding and partner introductions (search summaries; confirm on geovation.uk) | Video call: next intake and what makes a strong PropTech application, partner introductions, OS/HMLR data licences. Draft in `OneDrive/Desktop/outreach-drafts-2026-09-30.txt` | Now (warm) |
 
 **Clean-air campaign groups:** usable, carefully. Unlike Heathrow expansion, "cleaner air"
 has no opposing side, so neutrality is not at stake the same way - but keep to supplying
@@ -125,7 +125,8 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 | Every input is open government data under the Open Government Licence | LICENSING.md | current |
 | Crime checked against ONS Table C4; prices against HM Land Registry HPI; flood against the EA's own map service, before every release | blocking preflight stages | current |
 | Neighbourhood prices use HM Land Registry Category A sales only, as HMLR's own statistics do | `build_city_neighbourhoods.py --check` | 2026-09-01 |
-| Aircraft-noise estimate error vs DEFRA: MAE 1.879 on 35,352 London postcodes near airports, reading louder than DEFRA (pessimistic) | `scripts/check_quiet_estimate_error.py` | 2026-09-02 |
+| Aircraft-noise estimate error vs DEFRA: **MAE 1.32** on 35,441 London postcodes near airports (1.879 before v5.3), bias -0.15, reading slightly louder than DEFRA (pessimistic). Near airports only - never a global accuracy figure | `scripts/check_quiet_estimate_error.py` (re-run) | 2026-09-30 |
+| A runway-shaped airport term would cut that error by roughly a quarter to a third on DEFRA's noise strip and by about 40% in the quieter ground around it. **Measured, NOT live**: say "isn't live yet". **Quote the fractions, not the decimals**: the exact figures depend on which (k, w) pair ships, which is still open (held-out test half: 1.43 -> 1.11 / 1.23 -> 0.72 at k = 4, w = 0.45; 1.43 -> 0.98 / 1.23 -> 0.71 at k = 6, w = 0.50) | `scripts/fit_airport_shape.py` (re-runs it, about 20 s) | 2026-10-01 |
 
 ## Never say
 

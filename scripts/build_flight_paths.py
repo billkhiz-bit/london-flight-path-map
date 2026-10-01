@@ -84,6 +84,9 @@ FINAL_TOP_FT = 3000.0
 #                chart PDFs do not extract; NOT drawn until each is geometrised
 #                from its wording the way Heathrow's are (ROADMAP phase 2)
 #   none         no SIDs published at all (Teesside), so there is nothing to draw
+#   not-drawn    RUNWAYS ONLY: the airport feeds no city's corridor list, so no
+#                final or departure is drawn and no glide angle is read. The
+#                record exists for the runway AXIS (scripts/fit_airport_shape.py)
 # Surveyed against AIRAC 2026-09-03 on 2026-09-26; see ROADMAP phase 2.
 AIRPORTS = {
     'LHR': {'cities': ['london'], 'icao': 'EGLL', 'departures': 'npr-text'},
@@ -102,6 +105,16 @@ AIRPORTS = {
     # ILS and no RNP approach, so read_glide takes its NDB chart's recommended
     # profile gradient.
     'NWI': {'cities': ['norwich'], 'icao': 'EGSH', 'departures': 'none'},
+    # London's three outer airports (2026-10-01). London has carried NO corridor
+    # for them since 2026-05-07, and adding one moves outer-London scores, which
+    # is its own decision (ROADMAP phase 2). They are recorded for their runway
+    # axis alone, so the airport-shape fit stops treating them as circles. Two of
+    # them list a parallel runway with no ILS (Gatwick's standby 08L/26R,
+    # Stansted's 04C/22C), which read_glide would rightly refuse - another
+    # reason a runways-only record reads no glide angle.
+    'LGW': {'cities': [], 'icao': 'EGKK', 'departures': 'not-drawn'},
+    'STN': {'cities': [], 'icao': 'EGSS', 'departures': 'not-drawn'},
+    'LTN': {'cities': [], 'icao': 'EGGW', 'departures': 'not-drawn'},
 }
 # The two holders' names for each city's list. `site` is None for a city the
 # consumer site does not render (BACKEND_ONLY_CITIES: Cardiff, Nottingham, Norwich).
@@ -524,7 +537,8 @@ def do_fetch():
     for code, meta in AIRPORTS.items():
         url, raw, text = page(meta['icao'])
         runways = read_runways(text)
-        glide = read_glide(text, runways, raw)
+        drawn = meta['departures'] != 'not-drawn'
+        glide = read_glide(text, runways, raw) if drawn else {}
         magvar = read_magvar(text)
         if meta['departures'] == 'rnav-coding':
             deps = rnav_departures(raw, runways)
@@ -540,7 +554,7 @@ def do_fetch():
             'departures_method': meta['departures'],
             'runways': {
                 d: {'thr': [round(r['thr'][0], 6), round(r['thr'][1], 6)], 'true_brg': r['true_brg'],
-                    'glide_deg': glide[d][0], 'glide_source': glide[d][1]}
+                    **({'glide_deg': glide[d][0], 'glide_source': glide[d][1]} if drawn else {})}
                 for d, r in sorted(runways.items())
             },
             'departures': deps,
@@ -563,6 +577,8 @@ def corridors(data):
     """{city: [path, ...]} in the Lambda's dialect: (lat, lon) tuples, `coords`."""
     out = {}
     for code, ap in sorted(data['airports'].items()):
+        if not ap['cities']:  # a runways-only record ('not-drawn') draws nothing
+            continue
         rw = ap['runways']
         pl = Plane(*next(iter(rw.values()))['thr'])
         paths = []

@@ -45,6 +45,7 @@ import functools
 import html
 import json
 import re
+import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -594,9 +595,12 @@ def main() -> int:
         INDEX.format(n=len(pages), c=len(by_city), site=SITE, body='\n'.join(body)),
         encoding='utf-8', newline='\n')
 
-    write_sitemap([p for p, _ in pages])
     sync_scorecards(pages, write=True)
     sync_open_data(write=True)
+    # LAST: it dates each URL by whether its file changed, so every file this
+    # run writes (index.html's scorecard links and open-data/ included) must
+    # already be on disk.
+    write_sitemap([p for p, _ in pages])
     print(f'wrote {len(pages)} pages + index + sitemap + index.html scorecard links + open-data/')
     return 0
 
@@ -892,25 +896,70 @@ STATIC_URLS = [
 ]
 
 
+def source_file(loc: str) -> str:
+    """The repo file a sitemap URL serves, as CloudFront's rewrite maps it."""
+    if loc.endswith('/'):
+        return loc[1:] + 'index.html'
+    return loc[1:] if loc.endswith('.html') else loc[1:] + '.html'
+
+
+def last_changed(files: list[str]) -> dict[str, str]:
+    """{repo file: YYYY-MM-DD its content last changed}, read from git.
+
+    A file that differs from HEAD, or that git has never seen, changed today;
+    otherwise it is the date of the last commit that touched it. Until
+    2026-10-01 every URL carried the build date, so one changed page told
+    crawlers that all 112 had changed - and a lastmod that always says "today"
+    is one a crawler learns to ignore (Google reads it only where it is
+    "consistently and verifiably accurate").
+    """
+    today = datetime.now(UTC).strftime('%Y-%m-%d')
+
+    def git(*args: str) -> str:
+        # Literal arguments and paths this script built; nothing user-supplied.
+        return subprocess.run(['git', *args, '--', *files], cwd=REPO, capture_output=True,  # noqa: S603, S607
+                              text=True, encoding='utf-8', check=True).stdout
+
+    try:
+        status = git('status', '--porcelain', '--untracked-files=all')
+        log = git('log', '--format=%x00%cs', '--name-only')
+    except (OSError, subprocess.CalledProcessError) as exc:
+        print(f'WARNING: git unavailable ({exc}); every sitemap URL is dated today')
+        return dict.fromkeys(files, today)
+    dates: dict[str, str] = {}
+    when = None
+    for line in log.splitlines():
+        if line.startswith('\x00'):
+            when = line[1:]
+        elif line and line not in dates:
+            dates[line] = when  # newest first, so the first sighting is the last change
+    for line in status.splitlines():
+        dates[line[3:].split(' -> ')[-1].strip('"')] = today
+    return {f: dates.get(f, today) for f in files}
+
+
 def write_sitemap(paths: list[str]) -> None:
     """Rewrite sitemap.xml from what was actually generated.
 
     Generated, never hand-edited: a sitemap listing a page that does not exist
     is a crawl error on every miss, and one omitting pages that do exist wastes
     the whole exercise. Deriving it from the same list that wrote the files
-    means the two cannot disagree.
+    means the two cannot disagree. Each lastmod is the date that URL's file
+    last changed (last_changed), never the date of the build.
     """
-    today = datetime.now(UTC).strftime('%Y-%m-%d')
+    urls = [(loc, prio, freq) for loc, prio, freq in STATIC_URLS]
+    urls.append(('/area/', '0.8', 'monthly'))
+    urls += [(f'/area/{p}/', '0.6', 'monthly') for p in sorted(paths)]
+    files = [source_file(loc) for loc, _, _ in urls]
+    missing = [f for f in files if not (REPO / f).exists()]
+    if missing:
+        raise SystemExit(f'sitemap URLs with no file behind them: {missing}')
+    dated = last_changed(files)
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for loc, prio, freq in STATIC_URLS:
-        out.append(f'  <url><loc>{SITE}{loc}</loc><lastmod>{today}</lastmod>'
+    for (loc, prio, freq), f in zip(urls, files, strict=True):
+        out.append(f'  <url><loc>{SITE}{loc}</loc><lastmod>{dated[f]}</lastmod>'
                    f'<changefreq>{freq}</changefreq><priority>{prio}</priority></url>')
-    out.append(f'  <url><loc>{SITE}/area/</loc><lastmod>{today}</lastmod>'
-               f'<changefreq>monthly</changefreq><priority>0.8</priority></url>')
-    for p in sorted(paths):
-        out.append(f'  <url><loc>{SITE}/area/{p}/</loc><lastmod>{today}</lastmod>'
-                   f'<changefreq>monthly</changefreq><priority>0.6</priority></url>')
     out.append('</urlset>')
     (REPO / 'sitemap.xml').write_text('\n'.join(out) + '\n', encoding='utf-8', newline='\n')
 

@@ -6,7 +6,41 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-09-27, later) - GREATER NORWICH IS DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+**WHERE TO START (2026-10-01).** Local work, nothing deployed: (1) Gatwick, Stansted and Luton runway
+records in `data/flight-procedures.json` as `not-drawn` (runway axis only: no corridor, so no score
+moves; the twelve existing airports re-fetched byte-identical). (2) **`scripts/fit_airport_shape.py`**,
+the v5.5 measurement made re-runnable (about 20 s; both reproduce-the-engine guards hold). It found the
+30 Sep figures were taken with the corridor weight HELD at 0.45; refitted per k, k = 4 goes to w = 0.35
+and reads slightly optimistic along the runway axis (+0.17), while k = 6 / w = 0.50 is the most accurate
+on the strip (0.983) and neutral on the axis (+0.02), and k = 4 stays better off the strip (0.614 vs
+0.711). **The go-ahead is now for a (k, w) pair; the rule goes in `recommend()` (a TODO).** (3)
+`sitemap.xml` `lastmod` is each file's last change, read from git, not the build date - reaches the
+live sitemap only with `python scripts/make.py meta-deploy`. A West Kensington one-pager for the
+Earl's Court call (L3) is on the Desktop. Previous entry follows.
+
+**WHERE TO START (2026-09-30) - EVERYTHING IS DEPLOYED AND VERIFIED; WHAT IS LEFT IS BILL'S TO SEND.**
+Master `c95124c`, pushed; drift PASS (19 pages, 25 data files, 103 area pages). Shipped today:
+(1) `b4dc5f0` - HSTS + nosniff on API Gateway's OWN error responses (the last ZAP finding), through a
+reviewed changeset (API body, deployment, stage only); the body template is PINNED to API Gateway's
+default because SAM writes `responseTemplates: {}` when none is given; `demo-key-scope.mjs` 6 of 6.
+(2) `c95124c` - the 11 preview area pages (Cardiff, Nottingham, Norwich) no longer link "Open on the
+map" to `/?city=<key>`, which opened LONDON's map; each page's identity is now `<main data-city
+data-borough>`, which `area-page-freshness.mjs` reads (102 of 102). (3) A member of the public's and
+an organiser's name and email removed from `OUTREACH_LOG.md` and this file - the repo is public;
+they remain in history, and rewriting it is Bill's call.
+**Measured, not shipped:** v5.5, a runway-shaped airport term at k = 4 (ROADMAP row "Time of day and
+flight altitude"); needs Bill's go-ahead and Gatwick/Stansted/Luton runway records first.
+**Waiting on Bill** (drafts in `OneDrive/Desktop/outreach-drafts-2026-09-30.txt`): the Norwich user's
+follow-up, the CAA request to `noise@caa.co.uk` (verified), the Geovation follow-up (video call
+offered; its accelerator fits), the ICO fee, and the Earl's Court call **Thu 1 Oct 18:00** - hold
+Breathe London, Imperial and OUTREACH_TARGETS L2-L7 until after it.
+**Two traps from today:** TaskStop on a background preflight kills the wrapper, not `sh
+preflight.sh`, which keeps writing to the same log - give each run its own log and read `PREFLIGHT
+EXIT`; and a laptop sleep mid-run hangs `every city switches` indefinitely - keep it awake.
+**Next: ROADMAP -> "RECOMMENDED NEXT, in order".**
+Previous entry, now superseded:
+
+**(2026-09-27, later) - GREATER NORWICH IS DEPLOYED AND VERIFIED FROM THE ORIGIN.**
 Master `4592c1d`, pushed. SAM via a reviewed changeset (ScoreFunction `Code` the only direct change),
 then `make.py data-deploy web-deploy area-deploy meta-deploy demo-deploy`, all invalidations Completed.
 Verified: drift PASS (16 pages, 25 data files, 103 area pages); score sanity PASS on 29 postcodes incl.

@@ -1525,6 +1525,106 @@
     }
    },
    "departures": []
+  },
+  "LGW": {
+   "cities": [],
+   "icao": "EGKK",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGKK-en-GB.html",
+   "magvar_deg": 1.34,
+   "departures_method": "not-drawn",
+   "runways": {
+    "08L": {
+     "thr": [
+      51.147511,
+      -0.208103
+     ],
+     "true_brg": 77.63
+    },
+    "08R": {
+     "thr": [
+      51.145867,
+      -0.206811
+     ],
+     "true_brg": 77.63
+    },
+    "26L": {
+     "thr": [
+      51.150672,
+      -0.171944
+     ],
+     "true_brg": 257.65
+    },
+    "26R": {
+     "thr": [
+      51.151025,
+      -0.182611
+     ],
+     "true_brg": 257.65
+    }
+   },
+   "departures": []
+  },
+  "STN": {
+   "cities": [],
+   "icao": "EGSS",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGSS-en-GB.html",
+   "magvar_deg": 1.43,
+   "departures_method": "not-drawn",
+   "runways": {
+    "04": {
+     "thr": [
+      51.877042,
+      0.222861
+     ],
+     "true_brg": 42.87
+    },
+    "04C": {
+     "thr": [
+      51.882644,
+      0.231267
+     ],
+     "true_brg": 42.87
+    },
+    "22": {
+     "thr": [
+      51.895158,
+      0.250044
+     ],
+     "true_brg": 222.89
+    },
+    "22C": {
+     "thr": [
+      51.889556,
+      0.241633
+     ],
+     "true_brg": 222.88
+    }
+   },
+   "departures": []
+  },
+  "LTN": {
+   "cities": [],
+   "icao": "EGGW",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGGW-en-GB.html",
+   "magvar_deg": 1.23,
+   "departures_method": "not-drawn",
+   "runways": {
+    "07": {
+     "thr": [
+      51.872014,
+      -0.383586
+     ],
+     "true_brg": 74.38
+    },
+    "25": {
+     "thr": [
+      51.877044,
+      -0.354486
+     ],
+     "true_brg": 254.4
+    }
+   },
+   "departures": []
   }
  }
 }
