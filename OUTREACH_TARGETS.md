@@ -125,8 +125,8 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 | Every input is open government data under the Open Government Licence | LICENSING.md | current |
 | Crime checked against ONS Table C4; prices against HM Land Registry HPI; flood against the EA's own map service, before every release | blocking preflight stages | current |
 | Neighbourhood prices use HM Land Registry Category A sales only, as HMLR's own statistics do | `build_city_neighbourhoods.py --check` | 2026-09-01 |
-| Aircraft-noise estimate error vs DEFRA: **MAE 1.32** on 35,441 London postcodes near airports (1.879 before v5.3), bias -0.15, reading slightly louder than DEFRA (pessimistic). Near airports only - never a global accuracy figure | `scripts/check_quiet_estimate_error.py` (re-run) | 2026-09-30 |
-| A runway-shaped airport term would cut that error by roughly a quarter to a third on DEFRA's noise strip and by about 40% in the quieter ground around it. **Measured, NOT live**: say "isn't live yet". **Quote the fractions, not the decimals**: the exact figures depend on which (k, w) pair ships, which is still open (held-out test half: 1.43 -> 1.11 / 1.23 -> 0.72 at k = 4, w = 0.45; 1.43 -> 0.98 / 1.23 -> 0.71 at k = 6, w = 0.50) | `scripts/fit_airport_shape.py` (re-runs it, about 20 s) | 2026-10-01 |
+| Aircraft-noise estimate error vs DEFRA: **MAE 1.03** on 35,441 London postcodes near airports (1.879 before v5.3, 1.32 before v5.5), bias -0.29, reading louder than DEFRA (pessimistic). Near airports only - never a global accuracy figure. **Quote only once v5.5 is live** (until then the live figure is 1.32) | `scripts/check_quiet_estimate_error.py` (re-run) | 2026-10-01 |
+| v5.5 makes the airport term follow the runway instead of a circle: held-out error against DEFRA falls by a fifth on its noise strip (1.43 -> 1.14) and by over a third in the quieter ground beside it (1.23 -> 0.77), in every city, and **no city reads quieter than DEFRA measured** (that is a rule of the fit, checked city by city). **Quote only once deployed** | `scripts/fit_airport_shape.py` (about 20 s) | 2026-10-01 |
 
 ## Never say
 

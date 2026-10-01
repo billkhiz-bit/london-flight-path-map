@@ -15,12 +15,19 @@ yardstick cannot judge a corridor where it leaves that strip. It is used to set
 the SIZE of the corridor penalty, never to choose the geometry, which comes
 from the AIP (scripts/build_flight_paths.py).
 
+SINCE v5.5 (2026-10-01) THIS IS NOT THE WEIGHT'S GATE. CORRIDOR_WEIGHT is fitted
+jointly with the runway-shaped airport term, under a per-city rule that no city
+may come to read quieter than DEFRA, by scripts/fit_airport_shape.py - whose
+--check is the preflight stage. This fit has no such rule, so through the v5.5
+engine it returns 0.35 against the shipped 0.5, and its --check was retired
+rather than left to red on a correct tree. It still reports the unconstrained
+optimum, which is the yardstick for how much accuracy the rule costs.
+
 data/nspl.csv is gitignored (964 MB), so this is advisory: without it, or
 without the checked-in aircraft-quiet datasets, it reports INCONCLUSIVE and
 exits 0.
 
     python scripts/fit_corridor_weight.py           # fit and report
-    python scripts/fit_corridor_weight.py --check   # exit 1 if the shipped weight is not the fit
 """
 
 from __future__ import annotations
@@ -38,7 +45,8 @@ ROOT = Path(__file__).resolve().parents[1]
 NSPL = ROOT / 'data' / 'nspl.csv'
 MEASURED = [ROOT / 'data' / 'aircraft-quiet-london.json', ROOT / 'data' / 'aircraft-quiet-regions.json']
 GRID = [round(i * 0.05, 2) for i in range(21)]
-# The shipped constant is compared to the fit at the grid's own resolution.
+# A shipped constant is compared to a fit at the grid's own resolution
+# (fit_airport_shape.py --check reads it from here).
 TOLERANCE = 0.05
 MIN_PER_CITY = 150  # below this a city's test half is too thin to report
 
@@ -111,9 +119,7 @@ def mae(rows, w):
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--check', action='store_true')
-    args = ap.parse_args()
+    argparse.ArgumentParser(description=__doc__.split('\n')[0]).parse_args()
     app = load_app()
     rows = collect(app)
     if not rows:
@@ -125,7 +131,10 @@ def main():
     best = min(GRID, key=lambda w: (round(fits[w], 6), -w))
     print(f'{len(rows):,} measured postcodes, {len(train):,} train / {len(test):,} test')
     print('train MAE by weight: ' + '  '.join(f'{w:.2f}:{fits[w]:.3f}' for w in GRID))
-    print(f'\nFITTED CORRIDOR_WEIGHT = {best:.2f} (shipped {app.CORRIDOR_WEIGHT:.2f})\n')
+    print(
+        f'\nUNCONSTRAINED FIT = {best:.2f} (shipped {app.CORRIDOR_WEIGHT:.2f}, fitted under the per-city rule by '
+        'fit_airport_shape.py)\n'
+    )
     print(f'{"city":15} {"test n":>7} {"MAE w=1.00":>11} {"MAE fitted":>11} {"bias fitted":>12}')
     cities = sorted({r[0] for r in rows})
     for city in cities + ['ALL']:
@@ -135,9 +144,6 @@ def main():
             continue
         bias = st.mean(errors(sub, best))
         print(f'{city:15} {len(sub):>7} {mae(sub, 1.0):>11.3f} {mae(sub, best):>11.3f} {bias:>+12.2f}')
-    if args.check and abs(best - app.CORRIDOR_WEIGHT) > TOLERANCE:
-        print(f'\nFAIL: shipped CORRIDOR_WEIGHT {app.CORRIDOR_WEIGHT} is not the fit {best}')
-        return 1
     return 0
 
 

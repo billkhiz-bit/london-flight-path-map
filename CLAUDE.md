@@ -208,6 +208,23 @@ each has a `--check` that can go red:
 > MAN 23L / CWL 12 take their RNP charts' VPA). `AIRPORTS[...]['cities']` is a
 > LIST (EMA feeds Leicester and Nottingham); `HOLDERS[...]['site']` is None for
 > the two API-only cities. It left DEFRA error unchanged at 1.431.
+>
+> **v5.5 (2026-10-01): the AIRPORT term is runway-shaped, not a circle.**
+> `airport_distance_km()` (Lambda) / `runwayShapedKm()` (both site ramps) read
+> `sqrt(along^2 + (AIRPORT_SHAPE_K * side)^2)` across each airport's runway
+> axis, `AIRPORT_SHAPE_K = 4`, and **`CORRIDOR_WEIGHT` is 0.5 now, not 0.3**.
+> `RUNWAY_AXIS_DEG` is GENERATED into both holders by `build_flight_paths.py`
+> (`RUNWAY-AXES` markers, under the same blocking `--check`); LGW/STN/LTN carry
+> `not-drawn` runway-only records for it. **The pair is fitted together by
+> `scripts/fit_airport_shape.py`** (advisory `--check` in preflight, which
+> REPLACED `fit_corridor_weight.py --check`: that unconstrained fit now returns
+> 0.35 against a correct 0.5). **The fit's rule is PER CITY: no city may come to
+> read quieter than DEFRA.** Pooled, k = 6 / w = 0.5 looked best and neutral
+> (-0.01) while reading quieter than DEFRA in FIVE of eight cities (West
+> Midlands +0.66) - London is 72% of the strip and hid them. Held-out: strip
+> 1.431 -> 1.141, beside the strip 1.226 -> 0.770, every city better and every
+> city's bias negative. London's published figure 1.320 -> 1.032. Borough
+> bands, borough scores and area pages do not move (only the version they print).
 
 > ## THE AIRCRAFT NEAR-FIELD FLOOR WAS A DISC - FIXED 2026-09-01 (audit C1)
 >

@@ -693,7 +693,7 @@ components:
           $ref: '#/components/schemas/AppliedWeights'
         methodologyVersion:
           type: string
-          example: "5.4"
+          example: "5.5"
         methodologyUrl:
           type: string
           format: uri

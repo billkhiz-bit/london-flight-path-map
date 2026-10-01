@@ -6,7 +6,21 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-10-01).** Local work, nothing deployed: (1) Gatwick, Stansted and Luton runway
+**WHERE TO START (2026-10-01, later) - METHODOLOGY v5.5 BUILT: THE AIRPORT TERM IS RUNWAY-SHAPED.**
+`AIRPORT_SHAPE_K = 4` and `CORRIDOR_WEIGHT` 0.3 -> 0.5 in the Lambda and both site ramps
+(`airport_distance_km` / `runwayShapedKm`), `RUNWAY_AXIS_DEG` generated into both by
+`build_flight_paths.py`. Site vs Lambda shaped distance agree to 3e-13 at 3,800 points, 0 ladder
+disagreements. Fitted by `fit_airport_shape.py` under a PER-CITY rule (no city may come to read quieter
+than DEFRA); its `--check` replaced `fit_corridor_weight.py --check` in preflight. Held-out: strip
+1.431 -> 1.141, beside 1.226 -> 0.770, every city better and louder-than-DEFRA; London published
+1.32 -> 1.03 (`api/index.html` updated). Bill approved k = 6 / w = 0.5 first; it was withdrawn before
+shipping because per city it read quieter than DEFRA in five of eight cities, which the pooled figure
+hid (London is 72% of the strip). Borough scores, bands, area pages and open-data: version string only.
+**Deploy order: backend (reviewed changeset) -> `site-api-parity.mjs` with the LOCAL site against the
+live v5.5 API -> `web-deploy area-deploy meta-deploy demo-deploy` -> verify from the origin.** The
+earlier entry below covers this morning's work (runway records, the fit script, sitemap dates).
+
+**(2026-10-01, morning).** Local work, nothing deployed: (1) Gatwick, Stansted and Luton runway
 records in `data/flight-procedures.json` as `not-drawn` (runway axis only: no corridor, so no score
 moves; the twelve existing airports re-fetched byte-identical). (2) **`scripts/fit_airport_shape.py`**,
 the v5.5 measurement made re-runnable (about 20 s; both reproduce-the-engine guards hold). It found the

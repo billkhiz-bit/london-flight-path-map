@@ -12,6 +12,7 @@ Lambda evolves (bulk endpoint, future per-postcode noise sampling, etc.).
 """
 
 import json
+import math
 import os
 import re
 import sys
@@ -2930,6 +2931,57 @@ class SiteApiGeometryParityTests(unittest.TestCase):
         self.assertGreater(q0, q1, 'a point under a final approach must lose quiet to the corridor term')
         self.assertAlmostEqual(qs, max(0.0, q0 - saved * (q0 - q1)), places=9)
 
+    def test_airport_shape_matches_the_site(self):
+        """v5.5 makes the airport term runway-shaped in THREE places, like the
+        corridor weight above: calc_postcode_quiet here and both ramps in
+        index.html. The constant, the axes and the two call sites are all
+        compared, because a shape applied on one side only is a site/API
+        divergence beside every runway.
+        """
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        m = re.search(r'const AIRPORT_SHAPE_K = ([\d.]+);', src)
+        self.assertIsNotNone(m, 'AIRPORT_SHAPE_K missing from index.html')
+        self.assertEqual(float(m.group(1)), app.AIRPORT_SHAPE_K)
+        m = re.search(r'const RUNWAY_AXIS_DEG = \{([^}]*)\};', src)
+        self.assertIsNotNone(m, 'RUNWAY_AXIS_DEG missing from index.html')
+        site = {k: float(v) for k, v in re.findall(r'(\w+): ([\d.]+)', m.group(1))}
+        self.assertEqual(site, app.RUNWAY_AXIS_DEG)
+        # Both ramps must READ it: a shape nobody applies passes the
+        # comparisons above while the site keeps scoring a circle. The
+        # lookbehind skips the function's own definition line.
+        self.assertEqual(len(re.findall(r'(?<!function )runwayShapedKm\(lat, lon, ap, ', src)), 2)
+
+    def test_airport_distance_is_a_strip_not_a_circle(self):
+        """Down the runway the distance is the plain one; beside it, K times."""
+        lhr = next(ap for ap in app.CITY_GEOMETRY['london']['airports'] if ap['code'] == 'LHR')
+        # Heathrow's axis is 89.7 deg true, so 10 km east is along it and
+        # 10 km north is across it.
+        east = (lhr['lat'], lhr['lon'] + 10 / (111.32 * math.cos(math.radians(lhr['lat']))))
+        north = (lhr['lat'] + 10 / 111.2, lhr['lon'])
+        for pt, factor, tol in ((east, 1.0, 1e-3), (north, app.AIRPORT_SHAPE_K, 1e-2)):
+            plain = app.haversine_km(*pt, lhr['lat'], lhr['lon'])
+            self.assertAlmostEqual(app.airport_distance_km(*pt, lhr) / plain, factor, delta=tol)
+        # An airport with no axis keeps a circle, exactly.
+        jfk = next(ap for ap in app.CITY_GEOMETRY['nyc']['airports'] if ap['code'] == 'JFK')
+        self.assertNotIn('JFK', app.RUNWAY_AXIS_DEG)
+        pt = (jfk['lat'] + 0.05, jfk['lon'] + 0.05)
+        self.assertEqual(app.airport_distance_km(*pt, jfk), app.haversine_km(*pt, jfk['lat'], jfk['lon']))
+
+    def test_airport_shape_reaches_the_quiet_score(self):
+        """Beside a runway, the shaped term must read QUIETER than the circle."""
+        # 8 km due north of Heathrow: as a circle that is 8 effective km, ladder
+        # 3 plus the major-airport 2; across the axis it is K times further.
+        lat, lon = 51.47 + 8 / 111.2, -0.4543
+        saved = app.AIRPORT_SHAPE_K
+        try:
+            app.AIRPORT_SHAPE_K = 1.0
+            circle = app.calc_postcode_quiet(lat, lon, 'london', raster_lden=None)
+        finally:
+            app.AIRPORT_SHAPE_K = saved
+        shaped = app.calc_postcode_quiet(lat, lon, 'london', raster_lden=None)
+        self.assertGreater(shaped, circle)
+
     def test_major_airport_registry_matches_the_site(self):
         """Site and Lambda must agree which airport earns the +2 bonus.
 
@@ -3553,12 +3605,16 @@ class EnvironmentCityDerivationTests(unittest.TestCase):
         )
         # London's geometry does not know MAN exists, so it reports perfection.
         self.assertEqual(under_london, 10.0)
-        # Asserted as a floor on the GAP, not on 2.0 exactly: the ladder is
-        # allowed to be recalibrated (v3.8 already rescaled every airport), and
-        # pinning the figure would make this fail on an intended change while
-        # still not proving the city was derived. Any count in an assertion is
-        # scheduled staleness.
-        self.assertLess(under_manchester, under_london - 5.0)
+        # Asserted as a GAP, not a figure: the ladder is allowed to be
+        # recalibrated, and pinning a number would fail on an intended change
+        # while still not proving the city was derived. Any count in an
+        # assertion is scheduled staleness - and this one was: until v5.5 it
+        # demanded a gap of 5 points, and the point sits 38 deg off MAN's
+        # runway axis, INSIDE DEFRA's Manchester raster box on a blank cell,
+        # i.e. measured below 49 dB (quiet >= 7.8). The circle's 3.4 was the
+        # defect v5.5 fixed; the runway-shaped term reads 5.0. What this test
+        # exists to prove is that Manchester's geometry HEARS the airport.
+        self.assertLess(under_manchester, under_london)
 
     def test_union_fallback_hears_the_nearest_airport(self):
         """Outside every city, take the loudest geometry — never London's."""

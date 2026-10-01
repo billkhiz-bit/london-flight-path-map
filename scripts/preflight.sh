@@ -808,12 +808,16 @@ advise "aircraft footprint == DEFRA"    python scripts/measure_aircraft_footprin
 # and a fresh clone cannot run it; it reports INCONCLUSIVE, never PASS, when
 # the input is absent. --max-mae gates the number the page states.
 advise "quiet estimate == DEFRA"        python scripts/check_quiet_estimate_error.py --sample 3000 --max-mae 1.5
-# Added 2026-09-26 (methodology v5.3). CORRIDOR_WEIGHT is FITTED on half of
-# DEFRA's measured postcodes; this re-runs the fit and reds if the shipped
-# constant is no longer the optimum at the grid's resolution. Advisory for the
-# same reason as the stage above: its inputs (NSPL, the quiet datasets) are
-# gitignored, and it reports INCONCLUSIVE rather than PASS without them.
-advise "corridor weight == DEFRA fit"   python scripts/fit_corridor_weight.py --check
+# Added 2026-09-26 (methodology v5.3) as fit_corridor_weight.py --check;
+# REPLACED 2026-10-01 (v5.5). CORRIDOR_WEIGHT is now fitted JOINTLY with
+# AIRPORT_SHAPE_K, under a per-city rule that no city may come to read quieter
+# than DEFRA, so the unconstrained corridor fit returns 0.35 against a correct
+# 0.5 and its check would red on a right tree. One invariant, one holder: this
+# re-runs the joint fit and reds if the shipped PAIR is no longer the rule's
+# pick. Advisory for the same reason as the stage above: its inputs (NSPL, the
+# quiet datasets, eight DEFRA GeoTIFFs) are gitignored, and it reports
+# INCONCLUSIVE rather than PASS without them.
+advise "airport shape == DEFRA fit"     python scripts/fit_airport_shape.py --check
 # Added 2026-09-03, and it found a live outage on its first run: the console
 # edit that applied the Observability statements REPLACED FlightMapDeployPolicy
 # instead of extending it, so S3, DynamoDB, CloudFormation, Lambda, CloudFront,
