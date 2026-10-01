@@ -6,7 +6,20 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-10-01, later) - METHODOLOGY v5.5 BUILT: THE AIRPORT TERM IS RUNWAY-SHAPED.**
+**WHERE TO START (2026-10-01, later) - METHODOLOGY v5.5 DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+Master `3d4ae39`, pushed. SAM through a reviewed changeset (ScoreFunction `Code` the only direct change;
+ChatFunctionRole/ChatFunction/FlightMapApi `Dynamic` on its ARN, nothing replaced); live `/v1/score`
+answers `methodologyVersion 5.5`, M22 5RX quiet 3.4 -> 5.0 matching the local engine; score sanity PASS
+on 29. Before the web deploy, the LOCAL site was run against the live v5.5 API (site-api-parity, 6 of
+6 incl. three postcodes v5.5 moves). Then `make.py web-deploy area-deploy meta-deploy demo-deploy
+open-data-deploy`, five invalidations Completed; drift PASS (19 pages, 25 data files, 103 area pages),
+area freshness 102 of 102, live site == API 6 of 6, live page serves K = 4 / weight 0.5, `/api/`
+publishes MAE 1.03, live sitemap carries real dates. **Trap hit doing it**: a cleanup that killed the
+local server by matching "http.server 8931" in process command lines also matched - and killed - the
+Bash process running the cleanup, before the deploy line ran. Nothing reached S3 (no log was created);
+the deploy was re-run on its own. Match on a PID, never on a command-line substring your own shell carries.
+
+**What v5.5 is: THE AIRPORT TERM IS RUNWAY-SHAPED.**
 `AIRPORT_SHAPE_K = 4` and `CORRIDOR_WEIGHT` 0.3 -> 0.5 in the Lambda and both site ramps
 (`airport_distance_km` / `runwayShapedKm`), `RUNWAY_AXIS_DEG` generated into both by
 `build_flight_paths.py`. Site vs Lambda shaped distance agree to 3e-13 at 3,800 points, 0 ladder
@@ -16,9 +29,9 @@ than DEFRA); its `--check` replaced `fit_corridor_weight.py --check` in prefligh
 1.32 -> 1.03 (`api/index.html` updated). Bill approved k = 6 / w = 0.5 first; it was withdrawn before
 shipping because per city it read quieter than DEFRA in five of eight cities, which the pooled figure
 hid (London is 72% of the strip). Borough scores, bands, area pages and open-data: version string only.
-**Deploy order: backend (reviewed changeset) -> `site-api-parity.mjs` with the LOCAL site against the
-live v5.5 API -> `web-deploy area-deploy meta-deploy demo-deploy` -> verify from the origin.** The
-earlier entry below covers this morning's work (runway records, the fit script, sitemap dates).
+The earlier entry below covers this morning's work (runway records, the fit script, sitemap dates).
+**Next: ROADMAP -> "RECOMMENDED NEXT, in order"** - all Bill's (Norwich reply, CAA request, ICO fee,
+Geovation follow-up, the rename); the weekly `/audit` is due from 2 Oct.
 
 **(2026-10-01, morning).** Local work, nothing deployed: (1) Gatwick, Stansted and Luton runway
 records in `data/flight-procedures.json` as `not-drawn` (runway axis only: no corridor, so no score
