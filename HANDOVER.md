@@ -6,7 +6,26 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-10-01, later) - METHODOLOGY v5.5 DEPLOYED AND VERIFIED FROM THE ORIGIN.**
+**WHERE TO START (2026-10-01, evening) - AIR QUALITY ON DEFRA 2024, AND A FRESHNESS CHECK FOR EVERY DATASET.**
+Master `b812311`, pushed. Air quality rolled 2022 -> 2024 (Bill: don't wait for 2025): 377 borough
+fields, `env` up on 88 of 93 boroughs (mean +0.31), 46 of 102 balanced scores moved by at most 0.2,
+SW11 1AA 5.0 -> 5.1 (METHODOLOGY s6 re-derived, 20 of 20). Backend via reviewed changeset (ScoreFunction
+Code only); `data-deploy area-deploy open-data-deploy meta-deploy`, four invalidations Completed; drift
+PASS, area freshness 102 of 102, site == API 6 of 6, live CSV Wandsworth NO2 18.9. Per-postcode NO2/
+PM2.5 reloaded `--live-only` from the 2024 grids (detached, PID-launched, `aqload.log`).
+**`scripts/check_data_freshness.py`** (advisory preflight "data == publishers' latest") lists EVERY
+dataset: 8 checked against their publishers, the rest with the reason. It found the crime workbook URL
+dead since August behind a cache (now `XLSX_FILE`, copied from ONS's page; proven by re-downloading,
+byte-identical) and AIRAC 2026-10-01 (re-fetched; only Newcastle's SID PDF id changed). The roll also
+found `build_borough_bands.py` reading its own hard-coded 2022 files - `PCM_YEAR` in both scripts now,
+and the mirrors test checks the FILES. Breathe London's API data is OGL v3.0 (OUTREACH_TARGETS L5).
+Per-postcode load COMPLETE 18:25: 1,797,567 written (same as August), 0 failed, live `/v1/environment`
+at SW5 9NJ serves NO2 24.0 / PM2.5 9.6 labelled 2024. One-pagers regenerated as NEW files (the 2022
+ones Bill sent are kept): `OneDrive/Desktop/earls-court-air-and-noise-summary-2024.pdf` and
+`west-kensington-air-and-noise-summary-2024.pdf`. RBKC is now 6th-highest NO2 of 33 (was 5th).
+**Next:** 2025 air roll ~mid-Oct (same steps; the freshness stage flags it).
+
+**(2026-10-01, later) - METHODOLOGY v5.5 DEPLOYED AND VERIFIED FROM THE ORIGIN.**
 Master `3d4ae39`, pushed. SAM through a reviewed changeset (ScoreFunction `Code` the only direct change;
 ChatFunctionRole/ChatFunction/FlightMapApi `Dynamic` on its ARN, nothing replaced); live `/v1/score`
 answers `methodologyVersion 5.5`, M22 5RX quiet 3.4 -> 5.0 matching the local engine; score sanity PASS
