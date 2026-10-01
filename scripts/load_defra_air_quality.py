@@ -51,8 +51,15 @@ except ImportError:  # pragma: no cover - depends on how the file was loaded
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-NO2_CSV = Path('data/defra_mapno22022.csv')
-PM25_CSV = Path('data/defra_mappm252022g.csv')
+# The PCM year served. ONE holder for the files below; the year is mirrored in
+# the score Lambda's source line, build_borough_bands.AQ_VINTAGE and METHODOLOGY,
+# and tests/test_script_mirrors.py fails if any of them names another year.
+# scripts/check_air_quality_vintage.py (advisory preflight) reports when DEFRA
+# publishes a newer one - 2023 and 2024 both came out unnoticed while this said
+# 2022, because nothing asked.
+PCM_YEAR = 2022
+NO2_CSV = Path(f'data/defra_mapno2{PCM_YEAR}.csv')
+PM25_CSV = Path(f'data/defra_mappm25{PCM_YEAR}g.csv')
 NSPL_CSV = Path('data/nspl.csv')
 TABLE_NAME = 'london-flight-map-noise-raster'
 AWS_REGION = 'eu-west-2'

@@ -859,6 +859,16 @@ if [ "$SKIP_E2E" -eq 0 ]; then
   # when it fails; a number here can only ever go stale.
   advise "deployed == source"            sh scripts/check_deploy_drift.sh
 
+  # Added 2026-10-01. Asks DEFRA's datastore whether a newer PCM air-quality
+  # year exists than the one served. 2023 and 2024 were both published while
+  # the product served 2022, unnoticed for eight weeks, because the year was a
+  # filename nothing compared with anything. Advisory: it describes an upstream
+  # release, not this commit, and it SHOULD read "deviates" in the weeks between
+  # DEFRA publishing and the roll. Network-bound, so it lives in this block.
+  # The offline half - every holder names the same year - is blocking, in
+  # tests/test_script_mirrors.py.
+  advise "air quality == DEFRA's latest"  python scripts/check_air_quality_vintage.py
+
   # Compares the score the LIVE SITE renders against what /v1/score returns for
   # the same postcode — the only check that reads the OUTPUT rather than the
   # inputs. Three site/API divergences have shipped, and each survived because

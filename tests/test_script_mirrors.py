@@ -18,6 +18,9 @@ correct copy is fine only while something fails when it stops being correct.
 Offline. Imports the scripts from source; their heavy imports are lazy.
 """
 
+import os
+import re
+
 import pytest
 
 from .conftest import load_script
@@ -39,3 +42,56 @@ def test_mirrored_sets_agree(mod_a, name_a, mod_b, name_b):
         'disagree about which cities (or stop types) exist.'
     )
     assert a, f'{mod_a}.{name_a} is empty - an emptied exclusion list is a silent widening'
+
+
+# --- the DEFRA air-quality year (2026-10-01) --------------------------------
+# One year, four holders: the loader's PCM_YEAR (which names the files it
+# reads), the builder's AQ_VINTAGE, the score Lambda's source line, and
+# METHODOLOGY's source table. A roll that moves three of them publishes figures
+# from one year under a label naming another.
+
+REPO = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
+
+
+def _years(path, pattern):
+    text = open(os.path.join(REPO, path), encoding='utf-8').read()
+    return {int(y) for y in re.findall(pattern, text)}
+
+
+def test_pcm_air_quality_year_is_one_year_everywhere():
+    year = load_script('load_defra_air_quality').PCM_YEAR
+    loader = load_script('load_defra_air_quality')
+    assert str(year) in loader.NO2_CSV.name and str(year) in loader.PM25_CSV.name
+    holders = {
+        'scripts/build_borough_bands.py AQ_VINTAGE': {
+            int(y) for y in re.findall(r'(\d{4}) annual mean', load_script('build_borough_bands').AQ_VINTAGE)
+        },
+        'backend/lambdas/score/app.py source line': _years(
+            'backend/lambdas/score/app.py', r'background pollution maps \(PCM\), annual mean (\d{4})'
+        ),
+        'METHODOLOGY.md source table': _years(
+            'METHODOLOGY.md', r'DEFRA background pollution maps \((\d{4}) annual mean'
+        ),
+    }
+    for where, found in holders.items():
+        assert found, f'{where}: no PCM year found - the pattern this test reads has moved'
+        assert found == {year}, (
+            f'{where} names {sorted(found)} but the loader serves PCM {year}. A roll changes all of them.'
+        )
+
+
+def test_air_quality_freshness_probe():
+    """The probe's two failure directions, without the network."""
+    check = load_script('check_air_quality_vintage')
+
+    def probe_for(published):
+        return lambda url: any(f'no2{y}.csv' in url or f'pm25{y}g.csv' in url for y in published)
+
+    assert check.latest_published(2022, 2026, probe_for({2022, 2023, 2024})) == 2024
+    assert check.latest_published(2022, 2026, probe_for({2022})) == 2022
+    # A year counts only when BOTH files exist.
+    half = lambda url: 'no2' in url or url.endswith('pm252022g.csv')  # noqa: E731
+    assert check.latest_published(2022, 2026, half) == 2022
+    # Renamed files: the served year no longer resolves, so "nothing newer" is
+    # not evidence of being current - the probe must refuse, not report fresh.
+    assert check.latest_published(2022, 2026, probe_for(set())) is None
