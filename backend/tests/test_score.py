@@ -216,7 +216,14 @@ class TrendsFeatureTests(unittest.TestCase):
         # mixes "this borough moved" with "the national distribution moved".
         # `marketContext` on /v1/changes exists to make that visible, and the
         # attribution block still decomposes the score change exactly.
-        self.assertEqual(comp['scoreChange'], 0.0)
+        #
+        # RE-PINNED 0.0 -> 0.1 on the DEFRA PCM 2022 -> 2024 roll (2026-10-01),
+        # by the v3.9 mechanism above, checked rather than assumed: `env` is
+        # 6.2 in BOTH vintages (cleaner air reaches both alike), and the only
+        # attributed movement is still affordability 0.2 -> 0.3 (+0.03
+        # weighted). Adding the same +0.08 to both raw totals moved them across
+        # a 1dp rounding boundary: previous 4.6, current 4.7.
+        self.assertEqual(comp['scoreChange'], 0.1)
         # Asserted so the 0.0 above cannot pass on a comparison that computed
         # nothing: the vintages genuinely differ and the comparison must have
         # seen it. A bare 0.0 is indistinguishable from a broken comparison,
@@ -969,10 +976,16 @@ class CalcScoreTests(unittest.TestCase):
         # cross-city pairs; it is 0 now. London falls by a mean of 1.55 points
         # and Teesside rises 1.28, which is what pricing London against the
         # country rather than against itself is FOR.
+        # 4.6 -> 4.7 on the DEFRA PCM 2022 -> 2024 roll (2026-10-01). Air got
+        # cleaner, not the method: Wandsworth's airQualityWhoRatio fell 2.27 ->
+        # 1.89, so `env` rose 5.6 -> 6.2, and at 0.14 of `balanced` that +0.08
+        # crossed a rounding boundary. The other four components are unchanged,
+        # which is the invariant: an air-quality roll may move `env` and the
+        # total, and nothing else.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 4.6)
-        self.assertEqual(result['components']['env'], 5.6)
+        self.assertEqual(result['score'], 4.7)
+        self.assertEqual(result['components']['env'], 6.2)
         self.assertEqual(result['components']['quiet'], 5.0)
         # 6.7 under the May vintage, 6.5 under June's, 0.4 under the v5.0
         # national log anchor, 0.3 at the July roll (686,076 against a p95 of

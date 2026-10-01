@@ -71,7 +71,7 @@ PROCEDURES = ROOT / 'data' / 'flight-procedures.json'
 LAMBDA = ROOT / 'backend' / 'lambdas' / 'score' / 'app.py'
 SITE = ROOT / 'index.html'
 
-AIRAC = '2026-09-03'
+AIRAC = '2026-10-01'
 EAIP = f'https://www.aurora.nats.co.uk/htmlAIP/Publications/{AIRAC}-AIRAC/html/eAIP/'
 GRAPHICS = f'https://www.aurora.nats.co.uk/htmlAIP/Publications/{AIRAC}-AIRAC/graphics/'
 # The host answers 403 without a browser User-Agent, like DEFRA's.

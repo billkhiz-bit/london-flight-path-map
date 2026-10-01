@@ -1,5 +1,5 @@
 {
- "airac": "2026-09-03",
+ "airac": "2026-10-01",
  "publisher": "UK AIP, NATS Aeronautical Information Service",
  "generator": "scripts/build_flight_paths.py --fetch",
  "airports": {
@@ -8,7 +8,7 @@
     "london"
    ],
    "icao": "EGLL",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGLL-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGLL-en-GB.html",
    "magvar_deg": 1.24,
    "departures_method": "npr-text",
    "runways": {
@@ -53,7 +53,7 @@
     {
      "name": "Brookmans Park",
      "runway": "09",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to LON D1.5, then turn left onto track 049 to intercept LON VOR R070. Cross LON D10 and turn left onto BPK VOR R195, continue to BAPAG then BPK VOR.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Climb straight ahead to LON D1.5, then turn left onto track 049 to intercept LON VOR R070. Cross LON D10 and turn left onto BPK VOR R195, continue to BAPAG then BPK VOR.\"",
      "waypoints": [
       [
        51.471313,
@@ -100,7 +100,7 @@
     {
      "name": "Brookmans Park",
      "runway": "27",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to be established on BUR NDB QDM 296 by LON D4. At LON D6 turn right onto CHT NDB QDM 052. At CHT NDB turn right onto BPK VOR R243 to BPK VOR.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Climb straight ahead to be established on BUR NDB QDM 296 by LON D4. At LON D6 turn right onto CHT NDB QDM 052. At CHT NDB turn right onto BPK VOR R243 to BPK VOR.\"",
      "waypoints": [
       [
        51.471146,
@@ -163,7 +163,7 @@
     {
      "name": "Compton",
      "runway": "09",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto NDB WOD QDM 280, continue to CPT VOR.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to LON D1.5, then turn right onto NDB WOD QDM 280, continue to CPT VOR.\"",
      "waypoints": [
       [
        51.471313,
@@ -250,7 +250,7 @@
     {
      "name": "Compton",
      "runway": "27",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to intercept LON VOR R255 until LON D7, then turn right onto NDB WOD QDM 268, then to CPT VOR.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to intercept LON VOR R255 until LON D7, then turn right onto NDB WOD QDM 268, then to CPT VOR.\"",
      "waypoints": [
       [
        51.471146,
@@ -277,7 +277,7 @@
     {
      "name": "Detling",
      "runway": "09",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto track 120. At LON D4 turn left to establish on DET VOR R282 by DET D34. Continue to DET VOR.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to LON D1.5, then turn right onto track 120. At LON D4 turn left to establish on DET VOR R282 by DET D34. Continue to DET VOR.\"",
      "waypoints": [
       [
        51.471313,
@@ -304,7 +304,7 @@
     {
      "name": "Detling",
      "runway": "27",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D2, then turn left onto NDB EPM QDM 135, to EPM NDB, then continue on DET VOR R270 to DET VOR.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to LON D2, then turn left onto NDB EPM QDM 135, to EPM NDB, then continue on DET VOR R270 to DET VOR.\"",
      "waypoints": [
       [
        51.471146,
@@ -375,7 +375,7 @@
     {
      "name": "GASGU",
      "runway": "09",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto LON VOR R124 until LON D5, then turn right onto OCK VOR R041. At OCK VOR turn right onto OCK VOR R253 to GASGU.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to LON D1.5, then turn right onto LON VOR R124 until LON D5, then turn right onto OCK VOR R041. At OCK VOR turn right onto OCK VOR R253 to GASGU.\"",
      "waypoints": [
       [
        51.471313,
@@ -410,7 +410,7 @@
     {
      "name": "GOGSI",
      "runway": "27",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to intercept LON VOR R255 until LON D7, then turn right onto WOD NDB QDM 268. Turn left at LON D13 to intercept SAM VOR R032, then to GOGSI.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to intercept LON VOR R255 until LON D7, then turn right onto WOD NDB QDM 268. Turn left at LON D13 to intercept SAM VOR R032, then to GOGSI.\"",
      "waypoints": [
       [
        51.471146,
@@ -441,7 +441,7 @@
     {
      "name": "MAXIT",
      "runway": "27",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to intercept LON VOR R255. At LON D5 turn left onto BUR NDB QDR 160. At LON D12 turn right onto MID VOR R010 and continue to MAXIT.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to intercept LON VOR R255. At LON D5 turn left onto BUR NDB QDR 160. At LON D12 turn right onto MID VOR R010 and continue to MAXIT.\"",
      "waypoints": [
       [
        51.471146,
@@ -472,7 +472,7 @@
     {
      "name": "MODMI",
      "runway": "09",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Straight ahead to LON D1.5, then turn right onto LON VOR R124 until LON D3.5, then turn right onto MID VOR R025, continue to MODMI.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Straight ahead to LON D1.5, then turn right onto LON VOR R124 until LON D3.5, then turn right onto MID VOR R025, continue to MODMI.\"",
      "waypoints": [
       [
        51.471313,
@@ -535,7 +535,7 @@
     {
      "name": "ULTIB",
      "runway": "09",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to LON D1.5, then turn left onto track 049 to intercept LON VOR R070, cross LON D10 and turn left onto BIG VOR R328. Continue to ULTIB.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Climb straight ahead to LON D1.5, then turn left onto track 049 to intercept LON VOR R070, cross LON D10 and turn left onto BIG VOR R328. Continue to ULTIB.\"",
      "waypoints": [
       [
        51.471313,
@@ -562,7 +562,7 @@
     {
      "name": "UMLAT",
      "runway": "27",
-     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-09-03: \"Climb straight ahead to be established on BUR NDB QDM 296 by LON D4. At LON D7 turn right onto BUR NDB QDR 355, continue to UMLAT.\"",
+     "source": "EGLL AD 2.21 para 8 (NPR), AIRAC 2026-10-01: \"Climb straight ahead to be established on BUR NDB QDM 296 by LON D4. At LON D7 turn right onto BUR NDB QDR 355, continue to UMLAT.\"",
      "waypoints": [
       [
        51.471146,
@@ -593,7 +593,7 @@
     "london"
    ],
    "icao": "EGLC",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGLC-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGLC-en-GB.html",
    "magvar_deg": 1.39,
    "departures_method": "rnav-coding",
    "runways": {
@@ -620,7 +620,7 @@
     {
      "name": "BPK1A",
      "runway": "27",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321789.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/321789.pdf",
      "waypoints": [
       [
        51.506778,
@@ -654,7 +654,7 @@
     {
      "name": "BPK1H",
      "runway": "09",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321786.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/321786.pdf",
      "waypoints": [
       [
        51.504075,
@@ -678,7 +678,7 @@
     {
      "name": "ODUKU1A",
      "runway": "27",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/461885.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/461885.pdf",
      "waypoints": [
       [
        51.506778,
@@ -707,7 +707,7 @@
     {
      "name": "ODUKU1H",
      "runway": "09",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/461885.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/461885.pdf",
      "waypoints": [
       [
        51.504075,
@@ -731,7 +731,7 @@
     {
      "name": "SAXBI1A",
      "runway": "27",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321789.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/321789.pdf",
      "waypoints": [
       [
        51.506778,
@@ -770,7 +770,7 @@
     {
      "name": "SAXBI1H",
      "runway": "09",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321786.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/321786.pdf",
      "waypoints": [
       [
        51.504075,
@@ -799,7 +799,7 @@
     {
      "name": "SOQQA1A",
      "runway": "27",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321783.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/321783.pdf",
      "waypoints": [
       [
        51.506778,
@@ -828,7 +828,7 @@
     {
      "name": "SOQQA1H",
      "runway": "09",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/321783.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/321783.pdf",
      "waypoints": [
       [
        51.504075,
@@ -861,7 +861,7 @@
     "manchester"
    ],
    "icao": "EGCC",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGCC-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGCC-en-GB.html",
    "magvar_deg": 0.46,
    "departures_method": "conventional",
    "runways": {
@@ -890,7 +890,7 @@
      ],
      "true_brg": 231.07,
      "glide_deg": 3.0,
-     "glide_source": "RNP approach chart VPA, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/508363.pdf"
+     "glide_source": "RNP approach chart VPA, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/508363.pdf"
     },
     "23R": {
      "thr": [
@@ -909,7 +909,7 @@
     "westmidlands"
    ],
    "icao": "EGBB",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGBB-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGBB-en-GB.html",
    "magvar_deg": 0.73,
    "departures_method": "rnav-coding",
    "runways": {
@@ -936,7 +936,7 @@
     {
      "name": "ADMEX1M",
      "runway": "33",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501187.pdf",
      "waypoints": [
       [
        52.491017,
@@ -965,7 +965,7 @@
     {
      "name": "BRUMI1M",
      "runway": "33",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501187.pdf",
      "waypoints": [
       [
        52.52325,
@@ -994,7 +994,7 @@
     {
      "name": "COWLY2Y",
      "runway": "15",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501181.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501181.pdf",
      "waypoints": [
       [
        52.412467,
@@ -1033,7 +1033,7 @@
     {
      "name": "CPT2Y",
      "runway": "15",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501184.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501184.pdf",
      "waypoints": [
       [
        52.412467,
@@ -1072,7 +1072,7 @@
     {
      "name": "DTY2Y",
      "runway": "15",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501181.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501181.pdf",
      "waypoints": [
       [
        52.412467,
@@ -1121,7 +1121,7 @@
     {
      "name": "LUVUM1M",
      "runway": "33",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501187.pdf",
      "waypoints": [
       [
        52.493517,
@@ -1145,7 +1145,7 @@
     {
      "name": "LUVUM1Y",
      "runway": "15",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501184.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501184.pdf",
      "waypoints": [
       [
        52.401094,
@@ -1184,7 +1184,7 @@
     {
      "name": "UNGAP1M",
      "runway": "33",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/501187.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/501187.pdf",
      "waypoints": [
       [
        52.491017,
@@ -1217,7 +1217,7 @@
     "westyorkshire"
    ],
    "icao": "EGNM",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNM-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGNM-en-GB.html",
    "magvar_deg": 0.63,
    "departures_method": "conventional",
    "runways": {
@@ -1247,7 +1247,7 @@
     "merseyside"
    ],
    "icao": "EGGP",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGGP-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGGP-en-GB.html",
    "magvar_deg": 0.26,
    "departures_method": "conventional",
    "runways": {
@@ -1277,7 +1277,7 @@
     "tyneandwear"
    ],
    "icao": "EGNT",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNT-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGNT-en-GB.html",
    "magvar_deg": 0.51,
    "departures_method": "rnav-coding",
    "runways": {
@@ -1304,7 +1304,7 @@
     {
      "name": "GIRLI1T",
      "runway": "07",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/404530.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/520351.pdf",
      "waypoints": [
       [
        55.07965,
@@ -1328,7 +1328,7 @@
     {
      "name": "GIRLI1Y",
      "runway": "25",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/404530.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/520351.pdf",
      "waypoints": [
       [
        55.012492,
@@ -1352,7 +1352,7 @@
     {
      "name": "GIRLI3X",
      "runway": "25",
-     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/404530.pdf",
+     "source": "SID coding table, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/520351.pdf",
      "waypoints": [
       [
        55.023128,
@@ -1380,7 +1380,7 @@
     "bristol"
    ],
    "icao": "EGGD",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGGD-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGGD-en-GB.html",
    "magvar_deg": 0.49,
    "departures_method": "conventional",
    "runways": {
@@ -1411,7 +1411,7 @@
     "nottingham"
    ],
    "icao": "EGNX",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNX-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGNX-en-GB.html",
    "magvar_deg": 0.84,
    "departures_method": "conventional",
    "runways": {
@@ -1441,7 +1441,7 @@
     "cardiff"
    ],
    "icao": "EGFF",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGFF-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGFF-en-GB.html",
    "magvar_deg": 0.28,
    "departures_method": "conventional",
    "runways": {
@@ -1452,7 +1452,7 @@
      ],
      "true_brg": 116.76,
      "glide_deg": 3.0,
-     "glide_source": "RNP approach chart VPA, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/511875.pdf"
+     "glide_source": "RNP approach chart VPA, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/511875.pdf"
     },
     "30": {
      "thr": [
@@ -1471,7 +1471,7 @@
     "teesside"
    ],
    "icao": "EGNV",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGNV-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGNV-en-GB.html",
    "magvar_deg": 0.65,
    "departures_method": "none",
    "runways": {
@@ -1501,7 +1501,7 @@
     "norwich"
    ],
    "icao": "EGSH",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGSH-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGSH-en-GB.html",
    "magvar_deg": 1.71,
    "departures_method": "none",
    "runways": {
@@ -1512,7 +1512,7 @@
      ],
      "true_brg": 89.28,
      "glide_deg": 3.03,
-     "glide_source": "approach chart recommended profile 5.3%, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/graphics/496739.pdf"
+     "glide_source": "approach chart recommended profile 5.3%, https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/graphics/496739.pdf"
     },
     "27": {
      "thr": [
@@ -1529,7 +1529,7 @@
   "LGW": {
    "cities": [],
    "icao": "EGKK",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGKK-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGKK-en-GB.html",
    "magvar_deg": 1.34,
    "departures_method": "not-drawn",
    "runways": {
@@ -1567,7 +1567,7 @@
   "STN": {
    "cities": [],
    "icao": "EGSS",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGSS-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGSS-en-GB.html",
    "magvar_deg": 1.43,
    "departures_method": "not-drawn",
    "runways": {
@@ -1605,7 +1605,7 @@
   "LTN": {
    "cities": [],
    "icao": "EGGW",
-   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-09-03-AIRAC/html/eAIP/EG-AD-2.EGGW-en-GB.html",
+   "page": "https://www.aurora.nats.co.uk/htmlAIP/Publications/2026-10-01-AIRAC/html/eAIP/EG-AD-2.EGGW-en-GB.html",
    "magvar_deg": 1.23,
    "departures_method": "not-drawn",
    "runways": {

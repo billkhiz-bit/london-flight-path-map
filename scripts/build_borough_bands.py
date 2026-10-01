@@ -59,7 +59,7 @@ a percentile: a band that is defined relative to the other boroughs cannot say
                The median is still recorded, as `roadNoiseLdenMedian`, because it
                is what the detail panel can state plainly.
 
-  AIR QUALITY  DEFRA background pollution maps, 1 km grid, 2022 annual means.
+  AIR QUALITY  DEFRA background pollution maps, 1 km grid, 2024 annual means.
                Each borough's mean NO2 and PM2.5 is expressed as a ratio to its
                WHO 2021 guideline (NO2 10, PM2.5 5 ug/m3) and the WORSE of the
                two decides the band - the limiting pollutant, not an average of
@@ -155,8 +155,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA = REPO_ROOT / 'data'
 NSPL_CSV = DATA / 'nspl.csv'
-NO2_CSV = DATA / 'defra_mapno22022.csv'
-PM25_CSV = DATA / 'defra_mappm252022g.csv'
+# The DEFRA PCM year read here AND printed in AQ_VINTAGE below. A mirror of
+# load_defra_air_quality.PCM_YEAR: tests/test_script_mirrors.py fails if they
+# differ, or if either file name or label names another year. Until 2026-10-01
+# the file names here were literals the test did not read, so a roll could have
+# relabelled every holder 2024 while this kept deriving the scores from 2022.
+PCM_YEAR = 2024
+NO2_CSV = DATA / f'defra_mapno2{PCM_YEAR}.csv'
+PM25_CSV = DATA / f'defra_mappm25{PCM_YEAR}g.csv'
 BOROUGH_EXTRA = DATA / 'borough-extra.json'
 SCORE_APP = REPO_ROOT / 'backend' / 'lambdas' / 'score' / 'app.py'
 
@@ -178,7 +184,7 @@ FLOOD_MEDIUM_OR_HIGH = (3, 4)
 FLOOD_UNAVAILABLE = 255
 
 ROAD_VINTAGE = 'DEFRA Strategic Noise Mapping Round 4 (published 2022), road Lden'
-AQ_VINTAGE = 'DEFRA background pollution maps, 2022 annual mean, 1 km grid'
+AQ_VINTAGE = f'DEFRA background pollution maps, {PCM_YEAR} annual mean, 1 km grid'
 FLOOD_VINTAGE = 'Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2)'
 TRANSPORT_VINTAGE = 'NaPTAN (DfT) rail, metro and tram access nodes'
 HEALTH_VINTAGE = 'NHS Organisation Data Service, active GP practices and branch surgeries'

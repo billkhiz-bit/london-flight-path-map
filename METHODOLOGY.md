@@ -1346,7 +1346,7 @@ p8:                   0.49        # DfE Key Stage 4 Progress 8, 2023/24 Revised
 crimeRate:            76.4        # ONS Table C4, offences per 1,000
 transport:            'good'      # NaPTAN, share of postcodes within 800 m
 healthcare:           'excellent' # NHS ODS, GP practices within 500 m
-airQualityWhoRatio:   2.27        # DEFRA PCM, worse of NO2/PM2.5 vs WHO 2021
+airQualityWhoRatio:   1.89        # DEFRA PCM 2024, worse of NO2/PM2.5 vs WHO 2021
 roadNoiseAboveWhoPct: 58.8        # DEFRA Round 4 road Lden, share over 53 dB
 floodMediumOrHighPct: 2.11        # EA RoFRS, share at Medium-or-High
 impact:               'moderate'  # borough aircraft band, reported not scored here
@@ -1441,19 +1441,23 @@ live = 7.45 x 0.35 + 8.24 x 0.30 + 7 x 0.25 + 10 x 0.10
      -> 7.8
 ```
 
-**Environment = 5.6.** Air quality 0.45 / road noise 0.35 / flood 0.20 (§4.7),
+**Environment = 6.2.** Air quality 0.45 / road noise 0.35 / flood 0.20 (§4.7),
 each anchored on a published threshold:
 
 ```
-air quality  ratio 2.27 vs WHO 2021    -> 5.767
+air quality  ratio 1.89 vs WHO 2021    -> 7.033
 road noise   58.8% over WHO 53 dB Lden -> 4.120
 flood        2.11% at Medium-or-High   -> 7.890
 
-env = 5.767 x 0.45 + 4.120 x 0.35 + 7.890 x 0.20
-    = 2.595 + 1.442 + 1.578
-    = 5.615
-    -> 5.6
+env = 7.033 x 0.45 + 4.120 x 0.35 + 7.890 x 0.20
+    = 3.165 + 1.442 + 1.578
+    = 6.185
+    -> 6.2
 ```
+
+> Air quality moved on the **DEFRA PCM 2022 -> 2024 roll** (2026-10-01): the
+> ratio fell 2.27 -> 1.89 as background NO2 and PM2.5 fell, so `env` rose
+> 5.6 -> 6.2 and the score 5.0 -> 5.1. The method did not change.
 
 > The road and flood shares here moved on the **August 2026 NSPL roll**
 > (2026-09-10): 58.7 -> 58.8 and 2.14 -> 2.11, from 72,554 postcode positions
@@ -1467,15 +1471,15 @@ Balanced weights are `quiet 0.32 / afford 0.27 / growth 0.00 / live 0.27 /
 env 0.14`:
 
 ```
-score = 6.4 x 0.32 + 0.3 x 0.27 + 3.2 x 0.00 + 7.8 x 0.27 + 5.6 x 0.14
-      = 2.048 + 0.081 + 0.000 + 2.106 + 0.784
-      = 5.019
-      -> 5.0
+score = 6.4 x 0.32 + 0.3 x 0.27 + 3.2 x 0.00 + 7.8 x 0.27 + 6.2 x 0.14
+      = 2.048 + 0.081 + 0.000 + 2.106 + 0.868
+      = 5.103
+      -> 5.1
 ```
 
-The whole of the 1.7-point fall from v4.0's 6.7 is affordability, 6.5 -> 0.3.
-No other component moved: Wandsworth is now priced against the country instead
-of against the other 32 London boroughs. (The July 2026 roll moved affordability
+Since v4.0's 6.7, affordability has taken 1.7 points (6.5 -> 0.3): Wandsworth
+is now priced against the country instead of against the other 32 London
+boroughs. The October 2026 air-quality roll gave 0.1 back. (The July 2026 roll moved affordability
 0.4 -> 0.3 and growth 3.6 -> 3.2; the total held at 5.0 because growth carries
 no weight here and 0.027 of affordability did not cross a rounding boundary.)
 
@@ -1484,9 +1488,9 @@ no weight here and 0.027 of affordability did not cross a rounding boundary.)
 ```
 GET /v1/score?postcode=SW11+1AA
 -> {
-     "score": 5.0,
+     "score": 5.1,
      "components": { "quiet": 6.4, "afford": 0.3, "growth": 3.2,
-                     "live": 7.8, "env": 5.6 },
+                     "live": 7.8, "env": 6.2 },
      "weights":    { "quiet": 0.32, "afford": 0.27, "growth": 0.00,
                      "live": 0.27, "env": 0.14 },
      "context": {
@@ -1564,7 +1568,7 @@ always published alongside the weights that produced it.
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
 | **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England, scored in `quiet`. The **road** Lden surface is published in the same round; it drives the consumer-site road-noise overlay, the `roadNoise` borough band, and — since methodology v4.0 (2026-08-29) — **0.35 of the `environment` component**, via the share of addresses over the WHO 53 dB Lden guideline. It does not enter `quiet`. See §4.7 and §7.1 | Open Government Licence v3.0 | 5-yearly (next: 2027) |
-| **DEFRA background pollution maps (2022 annual mean, 1 km grid)** | NO₂ and PM2.5 concentrations behind the `airQuality` borough band and the `/v1/environment` measurements. **Not** the Daily Air Quality Index, which is a daily station reading and describes today's weather as much as the place | Open Government Licence v3.0 | Annual |
+| **DEFRA background pollution maps (2024 annual mean, 1 km grid)** | NO₂ and PM2.5 concentrations behind the `airQuality` borough band and the `/v1/environment` measurements. **Not** the Daily Air Quality Index, which is a daily station reading and describes today's weather as much as the place | Open Government Licence v3.0 | Annual |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **ONS CPIH, 12-month rate, all items** (series L55O, dataset MM23) | Deflates the HPI trend to real terms for the `growth` component, since v5.1. One value per vintage month, held in the engine (`CPIH_12M_PCT`) and compared against the ONS series by `build_hpi_prices.py --check` | Open Government Licence v3.0 | Monthly, rolled with the HPI vintage |
 | **MHCLG Energy Performance Certificates** (new "Get energy performance of buildings data" service from 2026-05-30) | Per-property EPC bands | Open Government Licence v3.0 | Quarterly |
@@ -2302,6 +2306,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-10-01 (data, no version change)**, **Air quality rolled from DEFRA's 2022 background maps to 2024.** (1) *Why:* the loader was built in August against 2022 while 2023 and 2024 were already published, and nothing compared the served year with DEFRA's; `scripts/check_data_freshness.py` (advisory preflight) now asks every publisher, and the served year is ONE constant (`PCM_YEAR`) mirrored in the builder, the score Lambda's source line and §7's source table, with a blocking test that fails if any names another year - or reads another year's files. 2025 is due around mid-October and will roll the same way. (2) *What moved:* background NO₂ and PM2.5 fell almost everywhere (Leicester 16.4 → 14.4 µg/m³ NO₂; Earls Court SW5 27.7 → 24.0). 377 borough fields re-derived; four Leicestershire districts moved from `moderate` to `good` air. The `environment` component moved on 88 of 93 boroughs, mean **+0.31** (range −0.4 to +0.8); **46 of 102 `balanced` scores moved, by at most 0.2** (370 of 816 across all personas, mean +0.09). The worked example (§6) moves 5.0 → 5.1, `env` 5.6 → 6.2, from air alone. The per-postcode NO₂/PM2.5 that `/v1/environment` reports were reloaded from the same 2024 grids. (3) *Unchanged:* the method, every threshold and weight, and the WHO 2021 anchors. Background maps still understate the kerb of main roads, as §4.7 says. (Same day, no score effect: the flight-path procedures moved to AIRAC 2026-10-01 - re-fetched and compared, nothing changed but Newcastle's SID table being reissued under a new number with identical waypoints.)
 - **2026-10-01 (v5.5)**, **The airport term is runway-shaped, not a circle.** (1) *Defect:* the geometry tier laddered the straight-line distance to each airport whatever the direction, so it read postcodes beside a runway as if they sat under its approach. Measured 3–15 km out on DEFRA's strip: error 1.30 within 15° of the runway axis, **3.66 at 30–60°, all of it too loud**. The audit-C1 disc defect (fixed for borough bands on 2026-09-01) one tier down. Found by breaking the estimator's error down by direction while testing a suggestion from Geovation's data clinic (2026-09-30) that flight altitude would help; altitude improved it by under 1% and is not used. (2) *Change:* the airport distance is `sqrt(along² + (4 × side)²)` across each airport's runway axis (§4.5; axes from UK AIP AD 2.12, generated into both holders by `build_flight_paths.py`, under its blocking `--check`), and `CORRIDOR_WEIGHT` is refitted **0.3 → 0.5** with it. Gatwick, Stansted and Luton gain runway records for their axes alone; they still feed no corridor. (3) *Measured before deciding, and the decision changed twice in a day:* `scripts/fit_airport_shape.py` scores every candidate against DEFRA's strip AND against blank cells inside each DEFRA raster's box, read as below that raster's measured floor (164,699 exact and 14,895 bound readings beside the strip). The 2026-09-30 scratch figures for k = 4 turned out to hold the weight at 0.45; refitted, k = 6 at 0.5 looked best overall. **Per city, it read quieter than DEFRA in five of eight cities** (West Midlands +0.66), hidden in the pooled figure because London is 72% of the strip. The rule is now per city: no city may come to read quieter than DEFRA, then the lowest combined error. (4) *Effect, held-out test half:* strip error **1.431 → 1.141**, beside the strip **1.226 → 0.770**, every city better, every city's bias negative (Greater Manchester **+0.20 → −0.16**, the one city the circle read quieter than DEFRA), strip readings over a point quieter than DEFRA **23.3% → 15.8%**. London's full-set figure, published on the API page, **1.320 → 1.032**, bias **−0.146 → −0.292**. On a 1% sample of DEFRA-unmeasured live postcodes, 31% move, mean **+0.31** quiet (about +0.10 `balanced`): 15.7% quieter beside runways (up to +5.8), 15.2% louder under corridors (at most −0.8). (5) *Unaffected:* DEFRA-measured postcodes (scored from the raster), borough bands (117 of 117), borough scores, the area pages and the open-data file, other than the version they print. (6) *Guard:* `fit_airport_shape.py --check` (advisory: its inputs are gitignored) fails if the shipped pair stops being the rule's pick, replacing `fit_corridor_weight.py --check`, whose unconstrained fit now returns 0.35 against a correct 0.5. **Provisional**, like the corridor weight: DEFRA Round 4 maps 2021.
 - **2026-09-27 (coverage, no version change)**, **Greater Norwich joins the API as a preview: Norwich, Broadland and South Norfolk.** Raised by a member of the public near Norwich on 2026-09-26, whose postcode had been measured against London's airports (fixed that day: uncovered postcodes now say so). (1) *Composition:* the three authorities of the Greater Norwich Local Plan, not all of Norfolk. Leicester was widened to its county because affordability was then min-max within a city; since v5.0 it is national, so a three-authority cohort no longer manufactures spread. (2) *Measured before building:* every input but one is published per authority. HM Land Registry HPI (July 2026) and ONS Table C4 each carry a row per authority, and crime agrees for 3 of 3. **Progress 8 is published for Norfolk, not its districts**, so none of the three carries it, as for Nottingham's districts; each measures 3 of 4 liveability inputs. Road noise, air quality and flood were derived from the DEFRA and EA national coverages by the same scripts as every other English city, over live postcodes only. (3) *Aircraft noise:* **Norwich International is not mapped by DEFRA Round 4** (GetCapabilities lists 16 airports; it is not one), so quiet is geometry-only with the ladder floored at the smallest mapped airport, as at Teesside and Cardiff: pessimistic. Its two finals come from the UK AIP. Runway 27 uses its ILS glide path (3.0°). Runway 09 has neither an ILS nor an RNP approach, so the builder gained a third published source, the NDB chart's *recommended profile* gradient (5.3%, which is 3.03°); a runway with none of the three is still an error, never a default. Norwich publishes no SIDs, so no departures are drawn. (4) *Why no version change, and what moved anyway:* no weight, threshold or formula changed, but the sterling pool is the API's coverage, so adding three boroughs moved the national anchors (affordability p5 158,435 → 159,100, p95 720,241 → 716,131; growth bounds unchanged). **33 of 792 existing borough/persona scores move by exactly 0.1, 4 of 99 under `balanced`** (Haringey 6.1 → 6.0, City of London 4.2 → 4.1, Knowsley 7.6 → 7.7, Stockton-on-Tees 6.3 → 6.4). The worked example (§6) holds at affordability 0.3. (5) *API-only on judgement:* Greater Norwich joins `BACKEND_ONLY_CITIES` because the map half (chip, boundaries, stations, neighbourhoods) is not built. Its three scorecard pages are published under `/area/norwich/`, and the site's not-covered panel now links a borough's scorecard for every API-only city - Cardiff and Nottingham too - keyed on the ONS code postcodes.io returns.
 

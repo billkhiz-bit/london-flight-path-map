@@ -59,9 +59,16 @@ def _years(path, pattern):
 
 
 def test_pcm_air_quality_year_is_one_year_everywhere():
-    year = load_script('load_defra_air_quality').PCM_YEAR
     loader = load_script('load_defra_air_quality')
-    assert str(year) in loader.NO2_CSV.name and str(year) in loader.PM25_CSV.name
+    builder = load_script('build_borough_bands')
+    year = loader.PCM_YEAR
+    # The FILES each script reads, not only the labels it prints: a roll that
+    # relabelled everything 2024 while the builder still read 2022 would pass a
+    # label-only test (the first version of this one) and publish the wrong year.
+    for name, mod in (('load_defra_air_quality', loader), ('build_borough_bands', builder)):
+        assert mod.PCM_YEAR == year, f'scripts/{name}.py PCM_YEAR is {mod.PCM_YEAR}, the loader serves {year}'
+        for path in (mod.NO2_CSV, mod.PM25_CSV):
+            assert str(year) in path.name, f'scripts/{name}.py reads {path.name}, not PCM {year}'
     holders = {
         'scripts/build_borough_bands.py AQ_VINTAGE': {
             int(y) for y in re.findall(r'(\d{4}) annual mean', load_script('build_borough_bands').AQ_VINTAGE)

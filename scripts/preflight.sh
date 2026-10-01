@@ -859,15 +859,17 @@ if [ "$SKIP_E2E" -eq 0 ]; then
   # when it fails; a number here can only ever go stale.
   advise "deployed == source"            sh scripts/check_deploy_drift.sh
 
-  # Added 2026-10-01. Asks DEFRA's datastore whether a newer PCM air-quality
-  # year exists than the one served. 2023 and 2024 were both published while
-  # the product served 2022, unnoticed for eight weeks, because the year was a
-  # filename nothing compared with anything. Advisory: it describes an upstream
-  # release, not this commit, and it SHOULD read "deviates" in the weeks between
-  # DEFRA publishing and the roll. Network-bound, so it lives in this block.
-  # The offline half - every holder names the same year - is blocking, in
-  # tests/test_script_mirrors.py.
-  advise "air quality == DEFRA's latest"  python scripts/check_air_quality_vintage.py
+  # Added 2026-10-01. Asks every publisher that can be asked whether it has
+  # released something newer than we serve, and lists every other dataset with
+  # the reason it is not checked. Air quality served 2022 while 2023 and 2024
+  # were out, unnoticed for eight weeks; the same day the crime workbook's URL
+  # was found to have 404'd since August behind a cache. It replaced an
+  # air-only stage the same day: one invariant, one stage. Advisory - it
+  # describes upstream releases, not this commit, and SHOULD read "deviates"
+  # between a publisher releasing and the roll. Network-bound, so it lives here.
+  # The offline halves are blocking: tests/test_data_freshness.py (the parsers)
+  # and tests/test_script_mirrors.py (one air-quality year in every holder).
+  advise "data == publishers' latest"     python scripts/check_data_freshness.py
 
   # Compares the score the LIVE SITE renders against what /v1/score returns for
   # the same postcode — the only check that reads the OUTPUT rather than the

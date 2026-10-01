@@ -64,9 +64,19 @@ import urllib.request
 from pathlib import Path
 
 EDITION = 'yearendingmarch2026'
+# COPIED from the dataset page, never built from EDITION (2026-10-01). ONS names
+# each edition's file differently - pfatablesyemarch2026, pfatablesyedec2025,
+# policeforceareatablesyesep25, policeforceareatablesyejune25final - so the
+# f-string that used to build it (`pfatablesye{EDITION[4:]}`) produced a URL
+# that 404s, recorded below on 2026-08-31 and left: every run since read the
+# cache, and a fresh clone could not fetch the workbook at all. On a roll,
+# take the new href from
+# https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables
+# (scripts/check_data_freshness.py lists it, and fails if this one stops resolving).
+XLSX_FILE = 'pfatablesyemarch2026.xlsx'
 XLSX_URL = (
     'https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/crimeandjustice/'
-    f'datasets/policeforceareadatatables/{EDITION}/pfatablesye{EDITION[4:]}.xlsx'
+    f'datasets/policeforceareadatatables/{EDITION}/{XLSX_FILE}'
 )
 CACHE = Path('data/ons_pfa_tables.xlsx')
 EXTRA = Path('data/borough-extra.json')
@@ -306,7 +316,8 @@ def load_table(city='london'):
     # exit 0, no network.
     #
     # Keying the cache filename on EDITION was tried first and REVERTED: it
-    # forces a re-download, and the ONS URL 404s today, so a working blocking
+    # forces a re-download, and the ONS URL 404'd then (fixed 2026-10-01 - it was
+    # BUILT from EDITION; see XLSX_FILE), so a working blocking
     # gate would go red for a reason that has nothing to do with the data. This
     # asks the artefact what it is instead, which needs no network and cannot be
     # satisfied by a stale file.

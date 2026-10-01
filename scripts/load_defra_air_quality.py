@@ -15,8 +15,8 @@ score the right measure is the annual mean concentration on a modelled grid,
 which is what the PCM background maps publish and what the WHO guidelines below
 are expressed against.
 
-  NO2   annual mean, 2022    WHO 2021 guideline: 10 ug/m3
-  PM2.5 annual mean, 2022    WHO 2021 guideline:  5 ug/m3
+  NO2   annual mean, 2024    WHO 2021 guideline: 10 ug/m3
+  PM2.5 annual mean, 2024    WHO 2021 guideline:  5 ug/m3
 
 COVERAGE. Unlike the aircraft noise raster (6.2% of its grid carries data), these
 cover the whole UK land surface — 254,905 cells. So air quality does not inherit
@@ -57,7 +57,7 @@ if hasattr(sys.stdout, 'reconfigure'):
 # scripts/check_air_quality_vintage.py (advisory preflight) reports when DEFRA
 # publishes a newer one - 2023 and 2024 both came out unnoticed while this said
 # 2022, because nothing asked.
-PCM_YEAR = 2022
+PCM_YEAR = 2024
 NO2_CSV = Path(f'data/defra_mapno2{PCM_YEAR}.csv')
 PM25_CSV = Path(f'data/defra_mappm25{PCM_YEAR}g.csv')
 NSPL_CSV = Path('data/nspl.csv')

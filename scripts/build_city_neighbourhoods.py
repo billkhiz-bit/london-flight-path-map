@@ -91,6 +91,10 @@ from collections import defaultdict
 PPD_URL = (
     'http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com/pp-{year}.csv'
 )
+# The complete calendar years of Price Paid the published medians are built
+# from - the `--years` default, named so scripts/check_data_freshness.py can
+# read what is served and say when a newer complete year exists.
+PPD_YEARS = [2025]
 
 # Boroughs come from the score Lambda's LAD_TO_BOROUGH, not from a table here.
 #
@@ -1243,7 +1247,7 @@ def build_city(city, keep_by_city, placement, dropped_thin, args):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--years', nargs='+', type=int, default=[2025])
+    ap.add_argument('--years', nargs='+', type=int, default=PPD_YEARS)
     ap.add_argument('--min-sales', type=int, default=DEFAULT_MIN_SALES)
     ap.add_argument('--city', help='one city key; default is every generated city')
     ap.add_argument(
