@@ -294,7 +294,8 @@ for (const city of cities) {
   //
   // Every tile in #us-aircraft-tiles is a remote fetch that removes itself on
   // error, so the group is populated synchronously and can empty a moment
-  // later. NYC's come from geo.dot.gov, measured at 11.6 s for a metadata call
+  // later. NYC's came from geo.dot.gov (BTS's ArcGIS Online tiles since
+  // 2026-10-02), measured at 11.6 s for a metadata call
   // on 2026-08-29. There are three states, and only two of them are meaningful:
   //
   //   settled, painted   images present, scale shown        -> compare

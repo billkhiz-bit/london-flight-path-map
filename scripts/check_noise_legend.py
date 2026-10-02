@@ -20,15 +20,27 @@ be wrong by describing a colour the map never paints as easily as by missing
 one it does.
 
 --live (network): NOISE_SCALE_DEFRA_LDEN equals DEFRA's own ColorMap
-(GetStyles), and NOISE_SCALE_BTS equals BTS's own legend swatches. This is what
-catches a publisher restyling a layer under us.
+(GetStyles), and the colours of NOISE_SCALE_BTS equal the colours BTS's tiles
+actually paint. This is what catches a publisher restyling a layer under us.
+
+THE BTS HALF CHANGED ON 2026-10-02, AND IT IS WEAKER THAN IT WAS. It used to
+read BTS's own legend from geo.dot.gov and compare colour AND decibel band.
+That host stopped answering, and the service BTS now publishes (the 2022
+edition, on tiles.arcgis.com) is a tile cache with NO legend endpoint. So this
+half samples tiles over five large airports and compares COLOURS, both
+directions. The band VALUES in NOISE_SCALE_BTS (45, 50, 55, 60, 70, 80, 90) are
+what the 2020 service's legend published when they were copied on 2026-09-25;
+the 2022 tiles use the same seven colours, but nothing published and
+machine-readable says the 2022 breaks are the same, and bts.gov answers 403 to
+a script. If BTS ever publishes a legend for the tile service, compare the
+values again.
 
     python scripts/check_noise_legend.py [--live]
 """
 
-import base64
 import io
 import json
+import math
 import re
 import sys
 import urllib.request
@@ -44,7 +56,21 @@ DEFRA_STYLES = (
     'https://environment.data.gov.uk/spatialdata/airport-noise-all-metrics-england-round-4/wms'
     '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetStyles&LAYERS=Airport_Noise_ALL_Lden'
 )
-BTS_LEGEND = 'https://geo.dot.gov/server/rest/services/Hosted/NTAD_Noise_2020_CONUS_Aviation/MapServer/legend?f=json'
+# BTS's 2022 aviation noise tiles: the service index.html's US_MAP_SERVICES
+# names, read from there so the two cannot drift.
+BTS_TILE_ZOOM = 11
+# Large airports, so every band up to the loudest is painted somewhere.
+BTS_SAMPLES = {
+    'JFK': (40.6413, -73.7781),
+    'LAX': (33.9416, -118.4085),
+    'ORD': (41.9742, -87.9073),
+    'SFO': (37.6213, -122.3790),
+    'ATL': (33.6407, -84.4277),
+}
+# Fewer tiles than this and the source was not really read.
+BTS_MIN_TILES = 3
+# A colour on this many pixels across the samples counts as painted.
+BTS_MIN_PIXELS = 5
 # DEFRA draws <=40 dB white at 0.5; the layer's multiply blend renders it as
 # nothing, so the site's scale omits it and this check must too.
 DEFRA_INVISIBLE = {'#FFFFFF'}
@@ -102,10 +128,47 @@ def check_png(defra):
     return fails
 
 
-def fetch(url):
+def fetch_bytes(url):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=30) as r:
-        return r.read().decode('utf-8', 'replace')
+        return r.read()
+
+
+def fetch(url):
+    return fetch_bytes(url).decode('utf-8', 'replace')
+
+
+def bts_tile_service():
+    """The aircraft tile service index.html actually requests."""
+    src = INDEX.read_text(encoding='utf-8')
+    m = re.search(r"const US_MAP_SERVICES = \{\s*aircraft: \{.*?url: '([^']+)'", src, re.S)
+    if not m:
+        sys.exit('FAIL: US_MAP_SERVICES.aircraft.url not found in index.html')
+    return m.group(1)
+
+
+def bts_painted_colours():
+    """(colours BTS's tiles paint over the sample airports, tiles read)."""
+    base = bts_tile_service()
+    n = 2**BTS_TILE_ZOOM
+    counts = Counter()
+    tiles = 0
+    for name, (lat, lon) in BTS_SAMPLES.items():
+        x = int((lon + 180) / 360 * n)
+        y = int((1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n)
+        try:
+            im = Image.open(io.BytesIO(fetch_bytes(f'{base}/tile/{BTS_TILE_ZOOM}/{y}/{x}'))).convert('RGBA')
+        except Exception as exc:  # noqa: BLE001 - counted below; one airport's tile may be missing
+            print(f'  live: BTS tile over {name} not read ({exc})')
+            continue
+        counts.update(hexcolour(p) for p in im.getdata() if p[3] > 0)
+        tiles += 1
+    # An absolute floor, NOT MIN_SHARE. The loudest band (90 dB and over) is a
+    # few dozen pixels at the runway ends, a share far under MIN_SHARE, and the
+    # share test silently dropped it - so a legend missing that band passed.
+    # These tiles carry no blended edge pixels (eight exact colours, measured),
+    # so a handful of pixels is a painted band, not noise.
+    return {c for c, k in counts.items() if k >= BTS_MIN_PIXELS}, tiles
 
 
 def check_live(defra, bts):
@@ -127,20 +190,18 @@ def check_live(defra, bts):
         print(f'  live: DEFRA ColorMap {len(published)} bands compared')
     except Exception as exc:  # noqa: BLE001 - reported as a failure, never swallowed
         fails.append(f'could not read DEFRA style ({exc})')
-    try:
-        legend = json.loads(fetch(BTS_LEGEND))
-        rows = next(L['legend'] for L in legend['layers'] if L['layerId'] == 3)
-        published = []
-        for row in rows:
-            px = Image.open(io.BytesIO(base64.b64decode(row['imageData']))).convert('RGBA').getdata()
-            colour = Counter(hexcolour(p) for p in px if p[3] > 0).most_common(1)[0][0]
-            low = int(float(re.findall(r'[\d.]+', row['label'])[0]))
-            published.append((low, colour))
-        if published != bts:
-            fails.append(f'BTS legend differs from NOISE_SCALE_BTS:\n      BTS  {published}\n      site {bts}')
-        print(f'  live: BTS legend {len(published)} bands compared')
-    except Exception as exc:  # noqa: BLE001
-        fails.append(f'could not read BTS legend ({exc})')
+    painted, tiles = bts_painted_colours()
+    legend = {c for _, c in bts}
+    if tiles < BTS_MIN_TILES:
+        # Unreadable is a FAILURE here, never a pass: this is the half that
+        # reported nothing while the old host was already dead.
+        fails.append(f'could not read BTS tiles ({tiles} of {len(BTS_SAMPLES)} sample tiles answered)')
+    else:
+        for c in sorted(painted - legend):
+            fails.append(f'BTS tiles paint {c} and NOISE_SCALE_BTS has no band for it')
+        for c in sorted(legend - painted):
+            fails.append(f'NOISE_SCALE_BTS shows {c} and no sampled BTS tile paints it')
+        print(f'  live: BTS tiles {len(painted)} colours painted over {tiles} airports, {len(legend)} legend bands')
     return fails
 
 

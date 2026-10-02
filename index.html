@@ -12,7 +12,7 @@
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://skyscore.co.uk https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://geo.dot.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://skyscore.co.uk https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://tiles.arcgis.com https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -6996,12 +6996,12 @@
           legendPath1: 'JFK PATHS',
           legendPath2: 'LGA PATHS',
           legendHeli: false,
-          legendNoiseTitle: 'BTS AIRCRAFT NOISE (dB DNL)',
+          legendNoiseTitle: 'BTS AIRCRAFT NOISE (dB LAeq, 24 H)',
           noiseScale: NOISE_SCALE_BTS,
           // Was the DEFRA paragraph, live, under this BTS heading, because the
           // explainer had no id and nothing swapped it.
           legendNoiseExplainer:
-            "<strong>What this is:</strong> Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading.",
+            "<strong>What this is:</strong> Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading. <strong>The coloured layer</strong> is the US Bureau of Transportation Statistics' National Transportation Noise Map for 2022: a 24-hour average of aircraft noise (LAeq). BTS publishes it to track national trends and says it should not be used to judge the noise at an individual location.",
           legendRoadTitle: 'DOT ROAD NOISE',
           legendFloodTitle: 'FEMA FLOOD RISK',
           legendAqTitle: 'EPA BOROUGH AIR QUALITY',
@@ -8731,20 +8731,34 @@
       // Removing it also retired two CSP entries: environment.data.gov.uk and
       // ukair.maps.rcdo.co.uk appeared ONLY here and in the policy, so the page
       // was granting network access to two third-party hosts it never called.
-      // geo.dot.gov, gispub.epa.gov and hazards.fema.gov are NOT removed - they
-      // carry live url: entries for the NYC noise, EPA air-quality and FEMA flood
-      // layers. raw.githubusercontent.com stays too: still a boundary fallback.
+      // raw.githubusercontent.com stays too: still a boundary fallback.
+      //
+      // geo.dot.gov LEFT the policy on 2026-10-02, the same way. The host
+      // stopped answering (connection refused or timed out from two networks),
+      // so the New York noise layer painted nothing and the legend correctly
+      // said "(NO DATA)" - and `tests/city-switch.mjs` went red on the timeout,
+      // which is how a blocking gate came to fail on an unchanged tree. BTS had
+      // moved: its own notes on the 2022 edition (released May 2026) name
+      // tiles.arcgis.com as the place its web services live. `aircraft` below
+      // is that service. The `road` entry pointed at the same dead host and
+      // was read by nothing, so it is deleted, not repointed.
+      //
+      // STILL OPEN: `flood` and `airQuality` are ALSO read by nothing - only
+      // `aircraft.url` is referenced anywhere - yet gispub.epa.gov and
+      // hazards.fema.gov remain in the policy and in privacy.html, LICENSING
+      // and SUBPROCESSORS as hosts a visitor's browser contacts. Removing them
+      // changes those three documents, so it is its own change.
       // US equivalents (BTS/FEMA/EPA - federal government data)
       const US_MAP_SERVICES = {
         aircraft: {
-          // Bureau of Transportation Statistics - National Transportation Noise Map (Aviation 2020)
-          url: 'https://geo.dot.gov/server/rest/services/Hosted/NTAD_Noise_2020_CONUS_Aviation/MapServer',
-          type: 'arcgis-export',
-        },
-        road: {
-          // Bureau of Transportation Statistics - National Transportation Noise Map (Road 2020)
-          url: 'https://geo.dot.gov/server/rest/services/Hosted/NTAD_Noise_2020_CONUS_Road/MapServer',
-          type: 'arcgis-export',
+          // Bureau of Transportation Statistics - National Transportation Noise
+          // Map, 2022 edition (aviation, lower 48 states). A cached TILE service
+          // (`TilesOnly`, EPSG:3857, tiles to zoom 12 over New York), which is
+          // what renderTileGrid() has always asked for: `/tile/{z}/{y}/{x}`.
+          // The metric is a 24-hour average, LAeq - BTS says so in as many
+          // words - NOT DNL, which the legend claimed until this date.
+          url: 'https://tiles.arcgis.com/tiles/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Noise_2022_CONUS_aviation/MapServer',
+          type: 'arcgis-tiles',
         },
         flood: {
           // FEMA National Flood Hazard Layer - REST export
@@ -9330,7 +9344,8 @@
         // ONSETTLE EXISTS BECAUSE APPENDING A TILE IS NOT PAINTING ONE.
         // Every <image> here is a remote fetch, and each one removes itself on
         // error, so the container is populated synchronously and can be empty a
-        // moment later. NYC's tiles come from geo.dot.gov, measured at 11.6 s
+        // moment later. NYC's tiles came from geo.dot.gov (until 2026-10-02;
+        // they are BTS's ArcGIS Online tiles now), measured at 11.6 s
         // for a metadata call on 2026-08-29 - slow enough that the caller's
         // "the surface is painted" assumption was routinely false. onSettle
         // fires once every appended tile has loaded or failed, with the number
