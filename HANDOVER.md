@@ -23,6 +23,29 @@ Per-postcode load COMPLETE 18:25: 1,797,567 written (same as August), 0 failed, 
 at SW5 9NJ serves NO2 24.0 / PM2.5 9.6 labelled 2024. One-pagers regenerated as NEW files (the 2022
 ones Bill sent are kept): `OneDrive/Desktop/earls-court-air-and-noise-summary-2024.pdf` and
 `west-kensington-air-and-noise-summary-2024.pdf`. RBKC is now 6th-highest NO2 of 33 (was 5th).
+Same evening: the Earl's Court call led to a Breathe London introduction and an invitation to Breathe
+London's Data Visualisation Working Group (Thu 8 Oct, 13:00); replies drafted in
+`OneDrive/Desktop/emails-to-send-2026-10-02.txt` for Bill to schedule. **Makerversity "Makers with a
+Mission" application SUBMITTED** (CLAUDE.md "Submissions").
+**2026-10-02: Geovation follow-up call held**, went well; Bill invited to Geovation's Slack. The advice
+was to narrow to the flight-path niche (Crystal Roof, part of Geovation, already covers broad noise by
+postcode), keep freemium, and keep going with community groups; also that the first view confuses. Every
+UX point was checked on the live site and is tabled in ROADMAP "Geovation feedback (2026-10-02)", with
+one small defect found (the first-run hint survives a borough click). Nothing built yet.
+Later the same day: **`scripts/address_noise_report.mjs`** (new, uncommitted) makes a one-page aircraft-noise
+report per postcode from the live API + `data/flight-procedures.json`; sample for TW9 3PZ on the Desktop.
+ROADMAP "Monetisation, ranked" has the ranking, the Breathe London display-only rules and a re-survey of
+every airport's departure charts (AIRAC 2026-10-01, unchanged). **Open gate found: `LICENSING.md` has no
+entry for the UK AIP.** Sent today: the refreshed one-pagers to the Earl's Court lead and the Working
+Group request; the Breathe London reply and the Norwich reply are drafted on the Desktop, not confirmed sent.
+**Evening, 2 Oct - NEXT IS THE SAN FRANCISCO BAY AREA (Bill's ruling), and New York's noise layer was
+found dead.** `geo.dot.gov` stopped answering, so New York painted no aircraft noise and the blocking
+`every city switches` gate went red on an unchanged tree. Fixed in the source: the layer now reads BTS's
+2022 tiles on `tiles.arcgis.com`, the heading says 24-hour LAeq (it said DNL), and the live legend check
+compares tile colours. **NOT DEPLOYED - Bill has been asked.** Bay Area plan, sources (each one called)
+and the list of by-name New York branches to generalise first are in EXPANSION.md "San Francisco";
+areas are Bay Area CITIES; work continues on branch `us-bay-area`. Also new today: an Earl's-Court-style
+sheet for any area with `--aircraft`, and `scripts/flight_geometry.mjs` shared by both report generators.
 **Next:** 2025 air roll ~mid-Oct (same steps; the freshness stage flags it).
 
 **(2026-10-01, later) - METHODOLOGY v5.5 DEPLOYED AND VERIFIED FROM THE ORIGIN.**
