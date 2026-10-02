@@ -312,7 +312,13 @@ departure, 26 are on the noise map.
   overhead** (Castro Valley and San Lorenzo among them) and are named under
   the table, since they are in no city's row.
 - **Still to do for the scored city (stages 2-5 below are unchanged):** the
-  by-name New York branches, prices, crime, ZIP search, area pages.
+  by-name New York branches, prices, crime, ZIP search, area pages. **Bill, the
+  same evening: "have San Francisco as part of the map" - so stage 2 is next.**
+  `design/hp-engine.js` already draws the 50 cities, the FAA routes and the BTS
+  picture as a city beside the UK ones, from this page's files, which is the
+  target picture. The one-way-door rules above still apply: outlines must be
+  un-ignored by name, the file must not be called `*-boroughs.json`, and
+  `BACKEND_ONLY_PRICES` has no currency filter.
 
 **What a second US city must touch** (code survey 2026-10-02; line numbers
 omitted because they move - search for the names). New York is wired in BY

@@ -684,13 +684,40 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
 
 - [x] Derive the routes from the FAA's CIFP (`build_us_flight_paths.py`).
 - [x] Build and gate the page (`build_bay_area_page.py --check`, blocking).
-- [ ] Deploy: `python scripts/make.py bay-area-deploy meta-deploy`, then add
-      `/bay-area/` to `tests/e2e/accessibility.spec.js` (it scans CloudFront).
+- [x] **DEPLOYED 2026-10-02 (22:05 UTC) and verified from the origin**: every
+      uploaded file hash-equal to source, three invalidations Completed,
+      `/bay-area/` 200 with `no-cache`, the no-slash address keeps its noise
+      shading, drift 22 pages / 25 data files / 103 area pages, and the live
+      WCAG scan passes (`/bay-area/` is in `tests/e2e/accessibility.spec.js`).
+      Linked from both footers of the main site ("Bay Area") and from `/area/`.
 - [ ] Post it where Bay Area residents are (Bill's to do). Never say "how often
       planes fly over": the page says where the routes are, not their traffic.
 - [ ] Each new FAA cycle (28 days): re-fetch the record, `--write` the page,
       re-render `share.png` if a line moved, redeploy. `--check` reds until then.
-- [ ] The scored city: stages 2-5 in EXPANSION.md.
+- [ ] **The scored city: stages 2-5 in EXPANSION.md. Bill, 2 Oct evening: "have
+      San Francisco as part of the map" - so this is NEXT, not later.** First
+      step is generalising the by-name New York branches (EXPANSION.md lists
+      them); the homepage mockups already draw the Bay Area as a city on the
+      map from the page's own files, which is what it will look like.
+
+### Homepage redesign (opened 2026-10-02, after Geovation)
+
+Geovation: the first view confuses (flight lines before the visitor knows what
+the site is); Bill: "a grid system like Hometrack". The path so far, all in
+`design/` and none deployed:
+
+- v1 `homepage-grid.html`, six bordered cards; Google Stitch's rendering of it
+  (prompt in `homepage-stitch-prompt.md`) "looks like a report itself" (Bill).
+- v2-v5: four directions as WORKING pages on one engine (`hp-engine.js`): the
+  live map with city chips (the Bay Area included), and a postcode search that
+  resolves through postcodes.io and shows the live `/v1/environment` figures.
+- **Narrowed to v2 (map with a floating panel) and v3 (ask first), with two
+  variations each: v2a, v2b, v3a, v3b.** `homepage-variants.html` is the chooser.
+
+Open, Bill's: which of the six; whether it replaces `/` and where the full map
+then lives (the same `index.html` runs in the native app, about twenty gates
+and 103 area-page links assume the map at `/`); build under "Sky Score" or
+after the rename. Audiences on every version follow the Constraints above.
 
 ### Open after the New York noise-layer repoint (2026-10-02)
 

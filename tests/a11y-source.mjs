@@ -57,8 +57,6 @@ const PAGES = [
   { path: '/privacy', name: 'privacy' },
   { path: '/terms', name: 'terms of use' },
   { path: '/open-data/', name: 'open data' },
-  // Not yet in the e2e list this one mirrors: that spec scans CloudFront, and
-  // a page cannot be there before the deploy this gate exists to guard.
   { path: '/bay-area/', name: 'Bay Area flight paths' },
   { path: '/api/', name: 'API landing' },
   {

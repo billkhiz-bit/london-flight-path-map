@@ -940,7 +940,8 @@ as complete.** The pages are now asserted against the plan.
 scored city later; plan in EXPANSION.md). The 50 cities of the four counties
 round SFO, OAK and SJC, the FAA's coded routes, and BTS's 2022 noise map.
 `scripts/build_bay_area_page.py --fetch | --write | --check`; do not hand-edit
-`bay-area/index.html`. It publishes **no score and no decibel figure** (the
+`bay-area/index.html`. **DEPLOYED 2026-10-02**, linked from both footers of
+`index.html` ("Bay Area") and from `/area/`. It publishes **no score and no decibel figure** (the
 2022 tile service has no legend, so the band values are unverified), carries
 the FAA's warranty disclaimer its licence requires, and says "where the routes
 are, not how many aircraft use them".
