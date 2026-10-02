@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sky Score - homepage grid (mockup)</title>
+    <!--
+      MOCKUP, 2026-10-02. Not deployed, not linked, in no gate. See design/README.md.
+
+      Bill's brief: "making the homepage a grid system like Hometrack where we
+      have the map, API, how we can help, how the data can help". Hometrack's
+      page is a headline, two buttons, then grids of cards by product and by
+      audience. This answers the same brief in Sky Score's own terms, and it
+      answers Geovation's (2026-10-02): the first view should say what this is
+      and make search obvious, where today it opens on unexplained flight lines.
+
+      What is REAL here and what is not:
+        - the hero map draws data/london-boroughs.json, DEFRA's aircraft PNG and
+          Heathrow's approaches from data/flight-procedures.json;
+        - the figures (57 dB at TW9 3PZ, Earl's Court 2.4x, 97 council areas,
+          10,000 lookups) are the live product's, as of this date;
+        - the search box and the buttons go NOWHERE useful yet. Wiring them is
+          the decision this mockup exists to inform.
+
+      Palette, type and the bordered-chip language are the live site's
+      (index.html :root), per Bill's 2026-08-30 verdict.
+    -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #e4e3e0;
+        --dark: #141414;
+        --mid: #636363;
+        --light: #c8c7c4;
+        --white: #fafaf9;
+        --orange: #f27d26;
+        --orange-ink: #a85416;
+        --font-display: 'Geist', system-ui, sans-serif;
+        --font-body: 'Inter', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        --gutter: clamp(16px, 4vw, 48px);
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      .wrap { max-width: 1240px; margin: 0 auto; padding: 0 var(--gutter); }
+
+      /* The mono label: the live site's chip language, used for every eyebrow. */
+      /* #55554f, not --mid: --mid (#636363) is 4.68:1 on the white panel but under
+         4.5:1 on --bg, and most labels here sit on --bg. */
+      .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: #55554f; }
+
+      header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; }
+      .brand { font-family: var(--font-mono); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+      nav.top-nav a { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 6px 10px; border: 1px solid transparent; }
+      nav.top-nav a:hover { border-color: var(--dark); }
+
+      /* ---- hero: the question, the field, and the real map beside them ---- */
+      .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(20px, 4vw, 56px); align-items: center; padding: clamp(20px, 5vw, 56px) 0 clamp(24px, 4vw, 44px); }
+      h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 5.2vw, 64px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 16px; text-wrap: balance; }
+      .lede { font-size: clamp(15px, 1.5vw, 18px); color: #3a3a38; max-width: 46ch; margin: 0 0 24px; }
+      form.check { display: flex; border: 2px solid var(--dark); background: var(--white); max-width: 460px; }
+      form.check input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 18px var(--font-mono); letter-spacing: 1px; padding: 14px 16px; color: var(--dark); text-transform: uppercase; }
+      form.check input::placeholder { color: #8a8985; text-transform: none; letter-spacing: 0; font-family: var(--font-body); font-size: 16px; }
+      form.check input:focus { outline: none; }
+      form.check:focus-within { outline: 3px solid var(--orange); outline-offset: 2px; }
+      form.check button { border: 0; background: var(--dark); color: var(--white); font: 500 11px var(--font-mono); letter-spacing: 2px; text-transform: uppercase; padding: 0 22px; cursor: pointer; }
+      form.check button:hover { background: var(--orange-ink); }
+      .tries { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+      .chip { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; padding: 5px 10px; border: 1px solid var(--dark); background: transparent; }
+      .chip:hover { background: var(--dark); color: var(--white); }
+
+      figure.map { margin: 0; border: 1px solid var(--dark); background: var(--white); position: relative; }
+      figure.map svg { display: block; width: 100%; height: auto; }
+      figure.map figcaption { border-top: 1px solid var(--dark); padding: 9px 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+      .boro { fill: #efeeea; stroke: #b9b7b0; stroke-width: 0.6; }
+      .final { stroke: var(--orange); stroke-width: 2.2; fill: none; }
+      .runway { stroke: var(--dark); stroke-width: 4; }
+      .pin-ring { fill: var(--white); stroke: var(--dark); stroke-width: 2.5; }
+      .tag-plate { fill: var(--dark); }
+      .tag-text { fill: var(--white); font: 500 11px var(--font-mono); letter-spacing: 1px; }
+      .map-note { font: 400 10px var(--font-mono); fill: var(--mid); letter-spacing: 0.8px; }
+
+      /* ---- the noise ruler: DEFRA's own bands, used as the page's one rule ---- */
+      .ruler { display: grid; grid-template-columns: repeat(9, 1fr); border: 1px solid var(--dark); }
+      .ruler span { height: 14px; }
+      .ruler-ticks { display: grid; grid-template-columns: repeat(9, 1fr); margin: 5px 0 0; }
+      .ruler-ticks span { font: 400 10px var(--font-mono); color: var(--mid); }
+      .ruler-cap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+
+      /* ---- the grid ---- */
+      section.grid-wrap { padding: clamp(28px, 5vw, 56px) 0 0; }
+      h2 { font-family: var(--font-display); font-weight: 600; font-size: clamp(22px, 2.6vw, 30px); letter-spacing: -0.02em; line-height: 1.1; margin: 6px 0 20px; }
+      .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+      .tile { background: var(--white); border: 1px solid var(--dark); padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; text-decoration: none; position: relative; }
+      .tile h3 { font-family: var(--font-display); font-weight: 600; font-size: 21px; letter-spacing: -0.01em; line-height: 1.15; margin: 0; }
+      .tile p { margin: 0; color: #3a3a38; }
+      .tile .go { margin-top: auto; font: 500 10px var(--font-mono); letter-spacing: 1.6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+      .tile .go::after { content: ''; width: 18px; height: 1px; background: currentColor; transition: width 0.18s ease; }
+      a.tile:hover { background: var(--dark); color: var(--white); }
+      a.tile:hover p, a.tile:hover .label { color: #d8d7d3; }
+      a.tile:hover .go::after { width: 34px; }
+      a.tile:hover .stat, a.tile:hover pre, a.tile:hover .chip { border-color: #6b6a66; }
+      .t-map { grid-column: span 5; }
+      .t-report { grid-column: span 4; }
+      .t-api { grid-column: span 3; }
+      .t-group, .t-open, .t-check { grid-column: span 4; }
+      .cities { display: flex; flex-wrap: wrap; gap: 5px; }
+      .cities .chip { font-size: 9px; padding: 4px 8px; }
+      a.tile:hover .cities .chip { color: var(--white); }
+      .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .stat { border: 1px solid var(--light); padding: 8px 10px; }
+      .stat b { display: block; font: 700 22px var(--font-display); letter-spacing: -0.02em; line-height: 1; }
+      .stat span { font-size: 11.5px; color: var(--mid); }
+      a.tile:hover .stat span { color: #d8d7d3; }
+      pre { margin: 0; font: 400 11.5px/1.55 var(--font-mono); border: 1px solid var(--light); padding: 10px; overflow-x: auto; white-space: pre; }
+      .quote { font: 600 17px/1.25 var(--font-display); letter-spacing: -0.01em; }
+      ul.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+      ul.checks li { display: grid; grid-template-columns: 9ch 1fr; gap: 8px; font-size: 13.5px; border-top: 1px solid var(--light); padding-top: 6px; }
+      ul.checks li b { font: 500 10px var(--font-mono); letter-spacing: 1px; text-transform: uppercase; padding-top: 3px; }
+
+      /* ---- who it helps ---- */
+      .who { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--dark); background: var(--white); }
+      .who div { padding: 16px; border-right: 1px solid var(--light); }
+      .who div:last-child { border-right: 0; }
+      .who h3 { font: 600 15px/1.2 var(--font-display); margin: 0 0 6px; }
+      .who p { margin: 0; font-size: 13px; color: #3a3a38; }
+
+      footer { margin-top: clamp(32px, 6vw, 72px); border-top: 1px solid var(--dark); padding: 18px 0 40px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      .mock { position: fixed; right: 12px; bottom: 12px; background: var(--orange); color: var(--dark); font: 500 10px var(--font-mono); letter-spacing: 1.4px; text-transform: uppercase; padding: 6px 10px; border: 1px solid var(--dark); }
+
+      @media (max-width: 980px) {
+        .hero { grid-template-columns: 1fr; }
+        .t-map, .t-report, .t-api, .t-group, .t-open, .t-check { grid-column: span 6; }
+        .who { grid-template-columns: repeat(3, 1fr); }
+        .who div:nth-child(3) { border-right: 0; }
+        .who div:nth-child(-n + 3) { border-bottom: 1px solid var(--light); }
+      }
+      @media (max-width: 620px) {
+        nav.top-nav { display: none; }
+        .t-map, .t-report, .t-api, .t-group, .t-open, .t-check { grid-column: span 12; }
+        .tile { min-height: 0; }
+        .who { grid-template-columns: 1fr; }
+        .who div { border-right: 0; border-bottom: 1px solid var(--light); }
+        .who div:last-child { border-bottom: 0; }
+        form.check button { padding: 0 16px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <a class="brand" href="/">Sky Score</a>
+        <nav class="top-nav" aria-label="Sections">
+          <a href="#map">Map</a>
+          <a href="#report">Reports</a>
+          <a href="#api">API</a>
+          <a href="#open">Open data</a>
+          <a href="/pricing">Pricing</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="h1">
+          <div>
+            <p class="label">Aircraft noise, air and flood risk, by postcode</p>
+            <h1 id="h1">How loud are the planes where you want to live?</h1>
+            <p class="lede">
+              Type a postcode. You get the official noise, air quality and flood figures for that street, the flight
+              routes that pass it, and the name of the public body behind every number.
+            </p>
+            <form class="check" action="/" method="get" role="search" aria-label="Check a postcode">
+              <label class="label" for="pc" style="position: absolute; left: -9999px">Postcode</label>
+              <input id="pc" name="postcode" type="text" autocomplete="postal-code" placeholder="Enter a postcode" />
+              <button type="submit">Check</button>
+            </form>
+            <div class="tries">
+              <span class="label">Try</span>
+              <a class="chip" href="/?postcode=TW9+3PZ">TW9 3PZ</a>
+              <a class="chip" href="/?postcode=SW11+1AA">SW11 1AA</a>
+              <a class="chip" href="/?postcode=B33+0YS">B33 0YS</a>
+              <a class="chip" href="/?postcode=M22+5RX">M22 5RX</a>
+            </div>
+          </div>
+
+          <figure class="map">
+            <svg id="hero-map" viewBox="0 0 640 400" role="img" aria-label="West London with Heathrow's two approach lines and DEFRA's aircraft noise contours. A pin marks postcode TW9 3PZ in Kew, where the map reads 57 decibels."></svg>
+            <figcaption>
+              <span class="label">West London, DEFRA noise map and Heathrow's published approaches</span>
+              <span class="label">Example postcode</span>
+            </figcaption>
+          </figure>
+        </section>
+
+        <div aria-label="Aircraft noise scale in decibels, quietest to loudest">
+          <div class="ruler" id="ruler" aria-hidden="true"></div>
+          <div class="ruler-ticks" id="ruler-ticks" aria-hidden="true"></div>
+          <div class="ruler-cap">
+            <span class="label">Aircraft noise, decibels (Lden). The colours are DEFRA's own.</span>
+            <span class="label">World Health Organization guideline: 45</span>
+          </div>
+        </div>
+
+        <section class="grid-wrap" aria-labelledby="g1">
+          <p class="label">Four ways in</p>
+          <h2 id="g1">One set of official figures, however you need it</h2>
+          <div class="grid">
+            <a class="tile t-map" id="map" href="/">
+              <span class="label">The map</span>
+              <h3>See a whole city at once</h3>
+              <p>Every borough, with flight routes, aircraft and road noise, air quality and flood risk. Free, with nothing to sign up for.</p>
+              <div class="cities" aria-label="Cities covered">
+                <span class="chip">London</span><span class="chip">Greater Manchester</span><span class="chip">West Midlands</span
+                ><span class="chip">West Yorkshire</span><span class="chip">Merseyside</span><span class="chip">Tyne and Wear</span
+                ><span class="chip">South Yorkshire</span><span class="chip">Bristol</span><span class="chip">Leicester</span
+                ><span class="chip">Teesside</span><span class="chip">New York</span>
+              </div>
+              <span class="go">Open the map</span>
+            </a>
+
+            <a class="tile t-report" id="report" href="#">
+              <span class="label">The report</span>
+              <h3>One page on one postcode</h3>
+              <div class="stats" aria-label="Sample report for TW9 3PZ, Kew">
+                <div class="stat"><b>57 dB</b><span>aircraft noise, against a guideline of 45</span></div>
+                <div class="stat"><b>0.1 km</b><span>from Heathrow's northern approach</span></div>
+                <div class="stat"><b>1,800 ft</b><span>height of landing aircraft there</span></div>
+                <div class="stat"><b>61%</b><span>of TW9 postcodes are quieter</span></div>
+              </div>
+              <p>For buying agents, relocation firms and surveyors.</p>
+              <span class="go">See the sample</span>
+            </a>
+
+            <a class="tile t-api" id="api" href="/api/">
+              <span class="label">The API</span>
+              <h3>The same figures, in your own system</h3>
+              <pre aria-label="Example request and response">GET /v1/score?postcode=SW11+1AA
+
+{ "score": 5.1,
+  "quiet": 6.4,
+  "sources": [ ... ] }</pre>
+              <p>10,000 lookups a month free.</p>
+              <span class="go">Read the docs</span>
+            </a>
+
+            <a class="tile t-group" href="#">
+              <span class="label">For residents' groups</span>
+              <h3>A free summary for your streets</h3>
+              <p class="quote">"Earl's Court: nitrogen dioxide is 2.4 times the WHO guideline."</p>
+              <p>One page of the official figures for the streets you name, for a funding bid, a consultation or a meeting.</p>
+              <span class="go">Ask for one</span>
+            </a>
+
+            <a class="tile t-open" id="open" href="/open-data/">
+              <span class="label">Open data</span>
+              <h3>Every council area in one file</h3>
+              <p>97 council areas: noise, air quality, flood risk, crime and prices. Free to reuse and cite, for researchers and journalists.</p>
+              <pre aria-label="The first columns of the file">borough,   score, quiet, env
+Camden,      5.4,  10.0, 4.9
+Hounslow,    3.4,   0.0, 6.5
+Norwich,     6.0,   5.0, 7.5</pre>
+              <span class="go">Download the CSV</span>
+            </a>
+
+            <div class="tile t-check">
+              <span class="label">How it is checked</span>
+              <h3>Every number goes back to its source</h3>
+              <ul class="checks">
+                <li><b>Prices</b><span>compared with HM Land Registry before each release</span></li>
+                <li><b>Crime</b><span>compared with the Office for National Statistics</span></li>
+                <li><b>Flood</b><span>compared with the Environment Agency's own map</span></li>
+                <li><b>Routes</b><span>drawn from the official aeronautical publications</span></li>
+              </ul>
+              <a class="go" href="#">Read the method</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid-wrap" aria-labelledby="g2">
+          <p class="label">Who it helps</p>
+          <h2 id="g2">What you can do with it</h2>
+          <div class="who">
+            <div><h3>Buying or renting</h3><p>Check a street before a viewing, on a day the wind may be sending the planes the other way.</p></div>
+            <div><h3>Buying agents and relocation firms</h3><p>Put a sourced, one-page answer in front of a client before they ask.</p></div>
+            <div><h3>Residents' groups</h3><p>Start a bid or a consultation response from the official baseline.</p></div>
+            <div><h3>Islamic home finance</h3><p>Environmental checks on an address, with an affordability measure that uses prices only.</p></div>
+            <div><h3>Conveyancers and surveyors</h3><p>Add aircraft noise to the searches and reports you already produce.</p></div>
+            <div><h3>Researchers and journalists</h3><p>Rank and compare areas from one open, documented file.</p></div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span class="label">All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
+        <span class="label">Mockup. Nothing here is live.</span>
+      </footer>
+    </div>
+    <div class="mock">Mockup - not deployed</div>
+
+    <script src="/js/vendor/d3.v7.min.js"></script>
+    <script>
+      // DEFRA Round 4 aircraft Lden bands: the same colours the live legend uses.
+      const DEFRA = [
+        [40, '#B8D6D1'], [45, '#CEE4CC'], [50, '#E2F2BF'], [55, '#F3C683'], [60, '#E87E4D'],
+        [65, '#CD463E'], [70, '#A11A4D'], [75, '#75085C'], [80, '#430A4A'],
+      ];
+      document.getElementById('ruler').innerHTML = DEFRA.map(([, c]) => `<span style="background:${c}"></span>`).join('');
+      document.getElementById('ruler-ticks').innerHTML = DEFRA.map(([f], i) => `<span>${f}${i === DEFRA.length - 1 ? '+' : ''}</span>`).join('');
+
+      // The hero map: real boundaries, DEFRA's PNG, and Heathrow's approaches
+      // from the checked-in AIP record. Nothing here is drawn by hand.
+      const W = 640, H = 400;
+      const PNG = { url: '/data/aircraft-noise-london-lden.png', minLon: -0.85, maxLon: 0.4, minLat: 51.1, maxLat: 51.78 };
+      const PIN = { lat: 51.477, lon: -0.285, text: 'TW9 3PZ  57 dB' };
+      const svg = d3.select('#hero-map');
+      const projection = d3.geoMercator().center([-0.345, 51.468]).scale(98000).translate([W / 2, H / 2]);
+      const path = d3.geoPath(projection);
+      const dest = (lat, lon, brg, km) => {
+        const R = 6371.0088, d = km / R, b = (brg * Math.PI) / 180, la = (lat * Math.PI) / 180, lo = (lon * Math.PI) / 180;
+        const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+        const lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+        return [(lo2 * 180) / Math.PI, (la2 * 180) / Math.PI];
+      };
+      Promise.all([d3.json('/data/london-boroughs.json'), d3.json('/data/flight-procedures.json')]).then(([boroughs, proc]) => {
+        svg.append('g').selectAll('path').data(boroughs.features).join('path').attr('class', 'boro').attr('d', path);
+        const [x0, y0] = projection([PNG.minLon, PNG.maxLat]);
+        const [x1, y1] = projection([PNG.maxLon, PNG.minLat]);
+        svg.append('image').attr('href', PNG.url).attr('x', x0).attr('y', y0).attr('width', x1 - x0).attr('height', y1 - y0)
+          .attr('preserveAspectRatio', 'none').style('mix-blend-mode', 'multiply');
+        const lhr = proc.airports.LHR.runways;
+        for (const rwy of ['27L', '27R']) {
+          const r = lhr[rwy];
+          const outer = dest(r.thr[0], r.thr[1], r.true_brg + 180, (3000 * 0.0003048) / Math.tan((r.glide_deg * Math.PI) / 180));
+          const a = projection([r.thr[1], r.thr[0]]), b = projection(outer);
+          svg.append('line').attr('class', 'final').attr('x1', a[0]).attr('y1', a[1]).attr('x2', b[0]).attr('y2', b[1]);
+        }
+        for (const [a, b] of [['09L', '27R'], ['09R', '27L']]) {
+          const p = projection([lhr[a].thr[1], lhr[a].thr[0]]), q = projection([lhr[b].thr[1], lhr[b].thr[0]]);
+          svg.append('line').attr('class', 'runway').attr('x1', p[0]).attr('y1', p[1]).attr('x2', q[0]).attr('y2', q[1]);
+        }
+        const h = projection([-0.4543, 51.47]);
+        svg.append('text').attr('class', 'map-note').attr('x', h[0]).attr('y', h[1] + 30).attr('text-anchor', 'middle').text('HEATHROW');
+        const [px, py] = projection([PIN.lon, PIN.lat]);
+        svg.append('circle').attr('class', 'pin-ring').attr('cx', px).attr('cy', py).attr('r', 7);
+        svg.append('circle').attr('cx', px).attr('cy', py).attr('r', 2.2);
+        const w = PIN.text.length * 7.4 + 16;
+        svg.append('rect').attr('class', 'tag-plate').attr('x', px - w / 2).attr('y', py - 36).attr('width', w).attr('height', 22);
+        svg.append('text').attr('class', 'tag-text').attr('x', px).attr('y', py - 21).attr('text-anchor', 'middle').text(PIN.text);
+      });
+    </script>
+  </body>
+</html>

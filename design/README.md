@@ -22,6 +22,8 @@ python -m http.server 8932 --bind 127.0.0.1
 | `stitch-live.html` | Stitch's *actual* generated design (its Tailwind config spliced verbatim) wired to live data. |
 | `stitch/` | The raw Stitch output, unmodified. Static, invented content. |
 | `map-basemap.html` | **Street basemap vs vector**, same data on both grounds. Prototype for a dependency decision, not a proposal. |
+| `homepage-grid.html` | **A grid homepage, 2026-10-02.** Bill's brief: "a grid system like Hometrack where we have the map, API, how we can help, how the data can help". A headline question and a postcode field, a hero map drawn from the real boundary, noise and AIP files, then six cards (map, report, API, residents' groups, open data, how it is checked) and a six-way "who it helps" row. The audiences follow ROADMAP's Constraints: no estate agents, no conventional lenders. **The search box and buttons go nowhere yet** - whether this replaces `/` (and where the map then lives) is the decision it exists to inform. |
+| `homepage-stitch-prompt.md` | **The same homepage as a prompt for Google Stitch, 2026-10-02.** Bill liked the grid and wanted it improved, so the brief, the real copy and the live palette (including DEFRA's own nine noise colours, read from `NOISE_SCALE_DEFRA_LDEN`, not recalled) are written out for a design tool to take further. The Stitch project is "Sky Score homepage grid" in Bill's account. Stitch output is a picture to judge, not code to ship. |
 | `compare.html` | Side-by-side or single-pane viewer for everything above. |
 
 ## What `desktop-combined.html` combines, and why
