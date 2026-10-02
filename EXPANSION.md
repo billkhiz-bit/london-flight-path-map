@@ -155,8 +155,8 @@ quiet score comes from the flight-path geometry, labelled as an estimate.
 
 **Three things the survey found that are not about San Francisco:**
 
-1. **NEW YORK'S AIRCRAFT-NOISE LAYER IS DEAD ON THE LIVE SITE** (FIXED in
-   the source the same day, stage 0 below; live once deployed).
+1. **NEW YORK'S AIRCRAFT-NOISE LAYER IS DEAD ON THE LIVE SITE** (FIXED and
+   DEPLOYED the same day, stage 0 below; verified from the origin).
    `geo.dot.gov` (both noise entries in `US_MAP_SERVICES`) refuses connections
    from two networks; the live page times out twice and the legend reads "BTS
    AIRCRAFT NOISE (dB DNL) (NO DATA)". The honesty mechanism worked; the layer
@@ -186,6 +186,52 @@ routes, noise tiles, quiet scores. (3) Crime, transit and the other liveability
 inputs. (4) Prices, once Zillow's terms are read. (5) Area pages and a launch
 post.
 
+**STAGE 1 DONE 2026-10-02 (branch `us-bay-area`): the record, not the wiring.**
+`scripts/build_us_flight_paths.py` parses the CIFP into
+`data/us-flight-procedures.json`, the same shape as the UK record: seven
+airports (SFO, OAK, SJC; JFK, LGA, EWR, TEB), 42 runway ends, 69 departure
+transitions, cycle 2610. `--check` is a blocking preflight stage and re-derives
+the record from the zip whenever the (gitignored) zip is on disk. It feeds NO
+holder: nothing in the Lambda or index.html reads it yet.
+
+- **Verified against a second source, not against itself.** Drawn over BTS's
+  2022 noise tiles, every airport's approach lines lie along the noise lobes.
+  And the bearing MEASURED between each runway's two thresholds agrees with the
+  published magnetic bearing plus variation at all 42 runway ends.
+- **What it refuses to draw, each learnt from the real file.** A route stops
+  where radar vectors begin (Oakland's COAST9 would otherwise have been a
+  straight line to a fix 90 km away); an initial fix the route never reached is
+  not drawn to; a fix that only anchors a course is not a point (San Jose's
+  SUNOL1 names the Oakland VOR); and a runway with no published glide angle
+  gets none (SFO 01L/01R, OAK 15/33, JFK 13R, TEB 01), with the reason.
+- **The review before the first commit found two FALSE statements in the
+  record, both an absence written up as a fact.** Oakland's SLNT3 is one
+  common-route record keyed to runway 30; the builder read runways only from
+  runway transitions, found none, and recorded the departure as leaving all
+  eight runways, the two general-aviation ones included. And Kennedy 13R and
+  Teterboro 01 said "none published" when the FAA's own not-coded list names
+  an approach to each (R13RZ, R01): published, not coded. The reason now says
+  which of three things is true - not coded, none published, or (when the list
+  was not read) none in the file. Same pass: `--check` with no zip on disk
+  compared the record with itself and printed PASS, on what is every fresh
+  clone; it prints UNVERIFIED now, which preflight shows as INCONCLUSIVE. Ten
+  new tests, each proven red by removing its fix.
+- **NEW YORK'S MAIN DEPARTURES ARE NOT IN THE FILE AT ALL.** The FAA's own
+  Not_In_CIFP list names JFK5, LGA7, EWR5, LIB5 and TEB4 (by their names
+  the airports' own radar-vector departures; the list does not say, and the
+  charts were not read) - so Kennedy has 3 coded transitions with fixes and
+  Newark 1. The
+  record names what is missing (`procedures_not_coded`). Consequence: deriving
+  New York gives every approach line and few departure lines, so its
+  hand-drawn departures cannot simply be swapped for derived ones. The Bay
+  Area is better served: San Francisco has 22 coded transitions.
+- **A licence obligation arrives with the first published route.** The CIFP is
+  "not copyrighted", but the FAA "requires that product developers ... include
+  warranty disclaimers" (LICENSING.md). No page carries one yet.
+- **`tests/fixtures/*` is ignored by default**, like `data/*`: the real KSJC
+  excerpt the parser tests read had to be un-ignored by name, or they pass
+  here and fail on every fresh clone.
+
 **DECIDED 2026-10-02 (Bill): an "area" is a BAY AREA CITY**, accepting the
 bigger build - San Francisco as one area beside South San Francisco, Millbrae,
 Oakland, Alameda, San Jose and the rest, because that is where the aircraft
@@ -195,6 +241,78 @@ figures are the candidate, NOT yet called); boundaries come from the Census
 place file; and San Francisco's 41 neighbourhoods become the NEIGHBOURHOOD
 ranking beneath the city, as London's are beneath its boroughs. Which cities,
 and the key (`bayarea`, not `sanfrancisco`), are stage 2's first decisions.
+
+**WHICH CITIES, MEASURED 2026-10-02 (the rule is still Bill's to pick).** Every
+incorporated city and town in the Census place file
+(`www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_06_place_500k.zip`, 1.4 MB,
+public domain, no key) inside a box round the bay was tested against the
+stage 1 record: each runway's final approach back to 3,000 ft, and the first
+30 km of every coded departure.
+
+| Rule | Cities | What the map looks like |
+|---|---|---|
+| A route passes over or within 1 km | **33** | Holes: Belmont and San Carlos missing between San Mateo and Redwood City; Palo Alto and Mountain View missing |
+| The four counties that hold the three airports (San Francisco, San Mateo, Santa Clara, Alameda) | **50** | Continuous. Holds 31 of the 33; Danville and San Ramon (Contra Costa) are the two outside. Seven of the 50 have no route within 5 km (Cupertino, Gilroy, Los Altos, Los Altos Hills, Los Gatos, Monte Sereno, Saratoga) |
+| All nine Bay Area counties | about 100 | Marin, Sonoma, Napa and Solano add 22 cities with no route within 1 km |
+
+- **A city map has holes that are not cities.** Twelve unincorporated
+  communities (Census "CDPs") have a route within 1 km, and six sit directly
+  under Oakland's approaches: Castro Valley, San Lorenzo, Ashland, Cherryland,
+  Fairview and (San Francisco's) El Granada. The place file carries them too
+  (`LSAD` 57 against 25 for a city and 43 for a town), so they can be drawn as
+  areas; whether they can be SCORED depends on each later source naming them.
+- **The file has no county column.** A place was put in a county by its
+  centroid against the 20m county file; good enough to count, not to publish.
+- **Shapefile only, and no shapefile library is installed here.** The format
+  is simple enough to read with `struct` (about 30 lines); do that rather than
+  add a dependency to a build script.
+- **Palo Alto's well-known complaint is about ARRIVALS at 4,000-5,000 ft**,
+  which nothing here draws: arrivals before the final approach are radar
+  vectored in the UK and are not drawn there either. If the Bay Area needs
+  them, the CIFP codes the STARs (subsection E); stage 1 did not parse them.
+
+**DECIDED 2026-10-02 (Bill), and BUILT the same day: a flight-path page FIRST,
+the four airport counties, 50 cities.** `/bay-area/` is a standalone page, not
+a city on the map: `scripts/build_bay_area_page.py` renders it from the stage 1
+record, the Census outlines (`data/us-bayarea-places.json`) and BTS's noise
+picture stitched onto our own origin. No score, no decibel figure, one inline
+SVG, no script but the visit counter. `--check` is a blocking preflight stage.
+What it says of each city: the share of its area on the noise map (the table's
+order), whether a final approach or a coded departure passes overhead, and the
+lowest height on the glide path. 15 of 50 have an approach overhead, 17 a
+departure, 26 are on the noise map.
+
+- **BTS's noise map is LAND ONLY.** San Francisco's main approach (runways
+  28L/28R, over the bay) is on painted pixels for 2% of its last 8 km; its lobe
+  appears only where it crosses the shore at Foster City. A cross-check that
+  asked for every approach to lie on the picture failed a correctly placed one.
+  It asks for every THRESHOLD, and each airport's best-covered approach.
+- **The map also holds airports nobody here draws** (Livermore, a strip beside
+  Sunnyvale, others). Livermore is 36% on the noise map from its own airfield.
+  That is why the column is "aircraft noise" and names no airport.
+- **Order by the noise map, never by route geometry.** San Francisco's runway
+  10 approaches are published and rarely flown; by "lowest aircraft overhead"
+  they put San Bruno and South San Francisco at the top for the wrong reason.
+  The FAA file says where a route is, not how often it is used.
+- **The Census outlines are 1:500,000 and cannot settle anything within a few
+  hundred feet.** Against the UNSIMPLIFIED file, San Jose's runway 12R
+  threshold is 126 m inside Santa Clara. "The airport is inside the city" is
+  therefore decided by the airport's reference point, and a height under 500 ft
+  is printed as "under 500 ft, beside the airport".
+- **San Francisco's boundary includes the Farallon Islands**, 45 km out to sea,
+  so a box round every ring is mostly ocean: the frame and the county test use
+  each place's largest ring.
+- **The place file has no county column.** A city is put in a county by points
+  strictly INSIDE it (its edge may be the county line), and the count per
+  county is asserted: 1, 20, 15 and 14.
+- **Runway ends with no published glide angle are not drawn** (SFO 01L/01R,
+  OAK 15/33), and arrivals before the final approach are not drawn at all:
+  Palo Alto, known for exactly those, shows no line and the page says why.
+- **Twenty-eight unincorporated communities are outlined; seven have a route
+  overhead** (Castro Valley and San Lorenzo among them) and are named under
+  the table, since they are in no city's row.
+- **Still to do for the scored city (stages 2-5 below are unchanged):** the
+  by-name New York branches, prices, crime, ZIP search, area pages.
 
 **What a second US city must touch** (code survey 2026-10-02; line numbers
 omitted because they move - search for the names). New York is wired in BY

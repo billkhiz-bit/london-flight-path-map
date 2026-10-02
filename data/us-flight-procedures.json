@@ -1,0 +1,1983 @@
+{
+ "cycle": "2610",
+ "effective": "2026-10-01",
+ "created": "09-SEP-2026",
+ "publisher": "FAA Coded Instrument Flight Procedures (CIFP), a work of the US government",
+ "generator": "scripts/build_us_flight_paths.py --fetch",
+ "airports": {
+  "SFO": {
+   "cities": [
+    "bayarea"
+   ],
+   "icao": "KSFO",
+   "ref": [
+    37.618806,
+    -122.375417
+   ],
+   "magvar_deg": 14.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "01L": {
+     "thr": [
+      37.609453,
+      -122.381897
+     ],
+     "true_brg": 27.7,
+     "mag_brg": 14.0,
+     "glide_deg": null,
+     "glide_source": "none published: no ILS glide slope and no approach vertical angle in the CIFP, and none listed as uncoded"
+    },
+    "01R": {
+     "thr": [
+      37.607692,
+      -122.380139
+     ],
+     "true_brg": 27.7,
+     "mag_brg": 14.0,
+     "glide_deg": null,
+     "glide_source": "none published: no ILS glide slope and no approach vertical angle in the CIFP, and none listed as uncoded"
+    },
+    "10L": {
+     "thr": [
+      37.628739,
+      -122.393392
+     ],
+     "true_brg": 117.89,
+     "mag_brg": 104.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP approach R10L vertical angle"
+    },
+    "10R": {
+     "thr": [
+      37.626292,
+      -122.393106
+     ],
+     "true_brg": 117.89,
+     "mag_brg": 104.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP approach R10RY vertical angle"
+    },
+    "19L": {
+     "thr": [
+      37.627342,
+      -122.367111
+     ],
+     "true_brg": 207.71,
+     "mag_brg": 194.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ISIA"
+    },
+    "19R": {
+     "thr": [
+      37.626481,
+      -122.370608
+     ],
+     "true_brg": 207.71,
+     "mag_brg": 194.0,
+     "glide_deg": 3.15,
+     "glide_source": "CIFP approach R19RY vertical angle"
+    },
+    "28L": {
+     "thr": [
+      37.612097,
+      -122.359264
+     ],
+     "true_brg": 297.91,
+     "mag_brg": 284.0,
+     "glide_deg": 2.85,
+     "glide_source": "CIFP ILS glide slope ISFO"
+    },
+    "28R": {
+     "thr": [
+      37.613919,
+      -122.358058
+     ],
+     "true_brg": 297.91,
+     "mag_brg": 284.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IGWQ"
+    }
+   },
+   "departures": [
+    {
+     "name": "CIITY3",
+     "runway": "10L",
+     "runways": [
+      "10L"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID CIITY3 transition RW10L: VA 104M to 520 ft; DF ORYAN; TF SAHEY; TF CIITY",
+     "waypoints": [
+      [
+       37.604922,
+       -122.336611
+      ],
+      [
+       37.56845,
+       -122.244556
+      ],
+      [
+       37.533117,
+       -122.149511
+      ]
+     ],
+     "fixes": [
+      "ORYAN",
+      "SAHEY",
+      "CIITY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "CIITY3",
+     "runway": "10R",
+     "runways": [
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID CIITY3 transition RW10R: VA 104M to 520 ft; DF URRSA; TF SAHEY; TF CIITY",
+     "waypoints": [
+      [
+       37.603111,
+       -122.337842
+      ],
+      [
+       37.56845,
+       -122.244556
+      ],
+      [
+       37.533117,
+       -122.149511
+      ]
+     ],
+     "fixes": [
+      "URRSA",
+      "SAHEY",
+      "CIITY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "CIITY3",
+     "runway": "19",
+     "runways": [
+      "19L",
+      "19R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID CIITY3 transition RW19B: VA 194M to 520 ft; DF CIITY",
+     "waypoints": [
+      [
+       37.533117,
+       -122.149511
+      ]
+     ],
+     "fixes": [
+      "CIITY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "GAPP7",
+     "runway": "01",
+     "runways": [
+      "01L",
+      "01R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW01B: CA 14M to 413 ft; FM SFO",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "GAPP7",
+     "runway": "10",
+     "runways": [
+      "10L",
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW10B: CF BARTN; TF OSI; FM OSI",
+     "waypoints": [
+      [
+       37.548436,
+       -122.083881
+      ],
+      [
+       37.3925,
+       -122.281303
+      ]
+     ],
+     "fixes": [
+      "BARTN",
+      "OSI"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "GAPP7",
+     "runway": "19",
+     "runways": [
+      "19L",
+      "19R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW19B: CA 194M to 413 ft; CF BARTN; TF OSI; FM OSI",
+     "waypoints": [
+      [
+       37.548436,
+       -122.083881
+      ],
+      [
+       37.3925,
+       -122.281303
+      ]
+     ],
+     "fixes": [
+      "BARTN",
+      "OSI"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "GAPP7",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW28B: CF NORMM; FM NORMM",
+     "waypoints": [
+      [
+       37.720208,
+       -122.613172
+      ]
+     ],
+     "fixes": [
+      "NORMM"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "GNNRR3",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID GNNRR3 transition RW28B: VA 284M to 513 ft; DF GNNRR",
+     "waypoints": [
+      [
+       37.674744,
+       -122.503383
+      ]
+     ],
+     "fixes": [
+      "GNNRR"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "MOLEN9",
+     "runway": "10",
+     "runways": [
+      "10L",
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID MOLEN9 transition RW10B: CF SIPLY; VI 233M; CF STINS; TF MOLEN",
+     "waypoints": [
+      [
+       37.585333,
+       -122.2335
+      ],
+      [
+       37.823678,
+       -122.756683
+      ],
+      [
+       37.997872,
+       -123.086797
+      ]
+     ],
+     "fixes": [
+      "SIPLY",
+      "STINS",
+      "MOLEN"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "MOLEN9",
+     "runway": "19",
+     "runways": [
+      "19L",
+      "19R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID MOLEN9 transition RW19B: CA 194M to 413 ft; VI 53M; CF SIPLY; VI 233M; CF STINS; TF MOLEN",
+     "waypoints": [
+      [
+       37.585333,
+       -122.2335
+      ],
+      [
+       37.823678,
+       -122.756683
+      ],
+      [
+       37.997872,
+       -123.086797
+      ]
+     ],
+     "fixes": [
+      "SIPLY",
+      "STINS",
+      "MOLEN"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "MOLEN9",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID MOLEN9 transition RW28B: CF WESLA; CF MOLEN",
+     "waypoints": [
+      [
+       37.664372,
+       -122.480292
+      ],
+      [
+       37.997872,
+       -123.086797
+      ]
+     ],
+     "fixes": [
+      "WESLA",
+      "MOLEN"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "NIITE4",
+     "runway": "01",
+     "runways": [
+      "01L",
+      "01R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID NIITE4 transition RW01B: VA 14M to 520 ft; DF MDBAY; TF HUSSH; TF NIITE",
+     "waypoints": [
+      [
+       37.684775,
+       -122.303606
+      ],
+      [
+       37.7495,
+       -122.338592
+      ],
+      [
+       37.845242,
+       -122.386869
+      ]
+     ],
+     "fixes": [
+      "MDBAY",
+      "HUSSH",
+      "NIITE"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "NIITE4",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID NIITE4 transition RW28B: VA 284M to 520 ft; DF GALOO; TF NIITE",
+     "waypoints": [
+      [
+       37.731147,
+       -122.331217
+      ],
+      [
+       37.845242,
+       -122.386869
+      ]
+     ],
+     "fixes": [
+      "GALOO",
+      "NIITE"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SAHEY4",
+     "runway": "10L",
+     "runways": [
+      "10L"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SAHEY4 transition RW10L: VA 104M to 520 ft; DF ORYAN; TF SAHEY",
+     "waypoints": [
+      [
+       37.604922,
+       -122.336611
+      ],
+      [
+       37.56845,
+       -122.244556
+      ]
+     ],
+     "fixes": [
+      "ORYAN",
+      "SAHEY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SAHEY4",
+     "runway": "10R",
+     "runways": [
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SAHEY4 transition RW10R: VA 104M to 520 ft; DF URRSA; TF SAHEY",
+     "waypoints": [
+      [
+       37.603111,
+       -122.337842
+      ],
+      [
+       37.56845,
+       -122.244556
+      ]
+     ],
+     "fixes": [
+      "URRSA",
+      "SAHEY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SAHEY4",
+     "runway": "19",
+     "runways": [
+      "19L",
+      "19R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SAHEY4 transition RW19B: VA 194M to 520 ft; DF SAHEY",
+     "waypoints": [
+      [
+       37.56845,
+       -122.244556
+      ]
+     ],
+     "fixes": [
+      "SAHEY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SEGUL1",
+     "runway": "01",
+     "runways": [
+      "01L",
+      "01R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SEGUL1 transition RW01B: VA 14M to 513 ft; DF SEPDY; DF WAMMY; TF SEGUL",
+     "waypoints": [
+      [
+       37.682064,
+       -122.350956
+      ],
+      [
+       37.541064,
+       -122.724056
+      ],
+      [
+       36.963036,
+       -122.572131
+      ]
+     ],
+     "fixes": [
+      "SEPDY",
+      "WAMMY",
+      "SEGUL"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SEGUL1",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SEGUL1 transition RW28B: VA 284M to 513 ft; DF SENZY; DF WAMMY; TF SEGUL",
+     "waypoints": [
+      [
+       37.6665,
+       -122.485167
+      ],
+      [
+       37.541064,
+       -122.724056
+      ],
+      [
+       36.963036,
+       -122.572131
+      ]
+     ],
+     "fixes": [
+      "SENZY",
+      "WAMMY",
+      "SEGUL"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SNTNA2",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SNTNA2 transition RW28B: VA 284M to 520 ft; DF KYNNG; TF KRLOS; TF SNTNA",
+     "waypoints": [
+      [
+       37.6826,
+       -122.52375
+      ],
+      [
+       37.804489,
+       -122.52845
+      ],
+      [
+       37.837786,
+       -122.434239
+      ]
+     ],
+     "fixes": [
+      "KYNNG",
+      "KRLOS",
+      "SNTNA"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SSTIK5",
+     "runway": "01",
+     "runways": [
+      "01L",
+      "01R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID SSTIK5 transition RW01B: VA 14M to 520 ft; DF SSTIK; DF PORTE",
+     "waypoints": [
+      [
+       37.678344,
+       -122.361658
+      ],
+      [
+       37.489786,
+       -122.474578
+      ]
+     ],
+     "fixes": [
+      "SSTIK",
+      "PORTE"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "TRUKN2",
+     "runway": "01",
+     "runways": [
+      "01L",
+      "01R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID TRUKN2 transition RW01B: VA 14M to 520 ft; DF TYDYE; TF TRUKN",
+     "waypoints": [
+      [
+       37.689319,
+       -122.268944
+      ],
+      [
+       37.717558,
+       -122.214589
+      ]
+     ],
+     "fixes": [
+      "TYDYE",
+      "TRUKN"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "TRUKN2",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID TRUKN2 transition RW28B: VA 284M to 520 ft; DF TRUKN",
+     "waypoints": [
+      [
+       37.717558,
+       -122.214589
+      ]
+     ],
+     "fixes": [
+      "TRUKN"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "WESLA5",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSFO SID WESLA5 transition RW28B: VA 284M to 520 ft; DF WESLA; DF PORTE",
+     "waypoints": [
+      [
+       37.664372,
+       -122.480292
+      ],
+      [
+       37.489786,
+       -122.474578
+      ]
+     ],
+     "fixes": [
+      "WESLA",
+      "PORTE"
+     ],
+     "vectored": false
+    }
+   ],
+   "procedures_not_coded": [
+    "SFO5"
+   ]
+  },
+  "OAK": {
+   "cities": [
+    "bayarea"
+   ],
+   "icao": "KOAK",
+   "ref": [
+    37.721261,
+    -122.22115
+   ],
+   "magvar_deg": 14.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "10L": {
+     "thr": [
+      37.730469,
+      -122.222181
+     ],
+     "true_brg": 112.25,
+     "mag_brg": 98.0,
+     "glide_deg": 2.79,
+     "glide_source": "CIFP approach R10L vertical angle"
+    },
+    "10R": {
+     "thr": [
+      37.728708,
+      -122.225903
+     ],
+     "true_brg": 112.23,
+     "mag_brg": 98.0,
+     "glide_deg": 2.82,
+     "glide_source": "CIFP approach R10R vertical angle"
+    },
+    "12": {
+     "thr": [
+      37.720064,
+      -122.242114
+     ],
+     "true_brg": 130.11,
+     "mag_brg": 116.0,
+     "glide_deg": 2.75,
+     "glide_source": "CIFP ILS glide slope IAAZ"
+    },
+    "15": {
+     "thr": [
+      37.740292,
+      -122.222808
+     ],
+     "true_brg": 164.49,
+     "mag_brg": 150.0,
+     "glide_deg": null,
+     "glide_source": "none published: no ILS glide slope and no approach vertical angle in the CIFP, and none listed as uncoded"
+    },
+    "28L": {
+     "thr": [
+      37.722275,
+      -122.206008
+     ],
+     "true_brg": 292.24,
+     "mag_brg": 278.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP approach R28LY vertical angle"
+    },
+    "28R": {
+     "thr": [
+      37.724814,
+      -122.204708
+     ],
+     "true_brg": 292.26,
+     "mag_brg": 278.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IOAK"
+    },
+    "30": {
+     "thr": [
+      37.701694,
+      -122.214561
+     ],
+     "true_brg": 310.13,
+     "mag_brg": 296.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IINB"
+    },
+    "33": {
+     "thr": [
+      37.731364,
+      -122.219675
+     ],
+     "true_brg": 344.49,
+     "mag_brg": 330.0,
+     "glide_deg": null,
+     "glide_source": "none published: no ILS glide slope and no approach vertical angle in the CIFP, and none listed as uncoded"
+    }
+   },
+   "departures": [
+    {
+     "name": "CNDEL5",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID CNDEL5 transition RW28B: VA 278M to 520 ft; DF LEJAY; TF CNDEL; DF PORTE",
+     "waypoints": [
+      [
+       37.761703,
+       -122.304675
+      ],
+      [
+       37.783269,
+       -122.336758
+      ],
+      [
+       37.489786,
+       -122.474578
+      ]
+     ],
+     "fixes": [
+      "LEJAY",
+      "CNDEL",
+      "PORTE"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "CNDEL5",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID CNDEL5 transition RW30: VA 296M to 520 ft; DF LEJAY; TF CNDEL; DF PORTE",
+     "waypoints": [
+      [
+       37.761703,
+       -122.304675
+      ],
+      [
+       37.783269,
+       -122.336758
+      ],
+      [
+       37.489786,
+       -122.474578
+      ]
+     ],
+     "fixes": [
+      "LEJAY",
+      "CNDEL",
+      "PORTE"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "COAST9",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID COAST9 transition RW28B: VD 278M to 2000 ft; VM 278M; CF SEGUL; IF SEGUL; TF CYPRS; TF MCKEY",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "COAST9",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID COAST9 transition RW30: VD 296M to 2000 ft; VM 296M; CF SEGUL; IF SEGUL; TF CYPRS; TF MCKEY",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "HUSSH2",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID HUSSH2 transition RW30: VA 296M to 520 ft; DF HUSSH; TF NIITE",
+     "waypoints": [
+      [
+       37.7495,
+       -122.338592
+      ],
+      [
+       37.845242,
+       -122.386869
+      ]
+     ],
+     "fixes": [
+      "HUSSH",
+      "NIITE"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "KATFH3",
+     "runway": "10",
+     "runways": [
+      "10L",
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID KATFH3 transition RW10B: VA 98M to 520 ft; DF ROWLY; TF VYYDA; TF KATFH",
+     "waypoints": [
+      [
+       37.599964,
+       -122.099489
+      ],
+      [
+       37.549239,
+       -122.081703
+      ],
+      [
+       37.452147,
+       -122.047453
+      ]
+     ],
+     "fixes": [
+      "ROWLY",
+      "VYYDA",
+      "KATFH"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "KATFH3",
+     "runway": "12",
+     "runways": [
+      "12"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID KATFH3 transition RW12: VA 116M to 520 ft; DF ROWLY; TF VYYDA; TF KATFH",
+     "waypoints": [
+      [
+       37.599964,
+       -122.099489
+      ],
+      [
+       37.549239,
+       -122.081703
+      ],
+      [
+       37.452147,
+       -122.047453
+      ]
+     ],
+     "fixes": [
+      "ROWLY",
+      "VYYDA",
+      "KATFH"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "NUEVO8",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID NUEVO8 transition RW28B: VD 278M to 2000 ft; VM 278M; CF SAPLY; IF SAPLY; TF EUGEN",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "NUEVO8",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID NUEVO8 transition RW30: VD 296M to 2000 ft; VM 296M; CF SAPLY; IF SAPLY; TF EUGEN",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "OAK6",
+     "runway": "10",
+     "runways": [
+      "10L",
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW10B: VM 98M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "OAK6",
+     "runway": "12",
+     "runways": [
+      "12"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW12: VM 116M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "OAK6",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW28B: VD 278M to 2000 ft; VM 278M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "OAK6",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW30: VD 290M to 2000 ft; VM 290M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "QUAKE2",
+     "runway": "10",
+     "runways": [
+      "10L",
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW10B: VA 98M to 409 ft; VM 270M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "QUAKE2",
+     "runway": "12",
+     "runways": [
+      "12"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW12: VA 116M to 409 ft; VM 270M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "QUAKE2",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW28B: VD 278M to 2000 ft; VM 278M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "QUAKE2",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW30: VD 296M to 2000 ft; VM 296M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SALAD5",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SALAD5 transition RW28B: VA 278M to 409 ft; VI 97M; CF SALAD",
+     "waypoints": [
+      [
+       37.773867,
+       -121.960189
+      ]
+     ],
+     "fixes": [
+      "SALAD"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SKYL1",
+     "runway": "10",
+     "runways": [
+      "10L",
+      "10R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW10B: VA 98M to 409 ft; CF SIXDY; CF SIWBI; TF SIZXO; TF WAGES",
+     "waypoints": [
+      [
+       37.647,
+       -122.146067
+      ],
+      [
+       37.504858,
+       -122.076106
+      ],
+      [
+       37.357311,
+       -121.978219
+      ],
+      [
+       36.991033,
+       -121.737061
+      ]
+     ],
+     "fixes": [
+      "SIXDY",
+      "SIWBI",
+      "SIZXO",
+      "WAGES"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SKYL1",
+     "runway": "12",
+     "runways": [
+      "12"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW12: VM 116M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SKYL1",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW28B: VD 278M to 2000 ft; VM 278M; CF PORTE; TF OSI; TF WAGES",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SKYL1",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW30: VD 296M to 2000 ft; VM 296M",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SLNT3",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SLNT3 transition RW30: IF REBAS",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SUNNE1",
+     "runway": "28",
+     "runways": [
+      "28L",
+      "28R"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SUNNE1 transition RW28B: VA 278M to 409 ft; VM 120M; DF SUNNE",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SUNNE1",
+     "runway": "30",
+     "runways": [
+      "30"
+     ],
+     "source": "FAA CIFP cycle 2610, KOAK SID SUNNE1 transition RW30: VA 296M to 409 ft; VM 120M; DF SUNNE",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    }
+   ],
+   "procedures_not_coded": [
+    "NIMI6"
+   ]
+  },
+  "SJC": {
+   "cities": [
+    "bayarea"
+   ],
+   "icao": "KSJC",
+   "ref": [
+    37.362994,
+    -121.928619
+   ],
+   "magvar_deg": 13.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "12L": {
+     "thr": [
+      37.372294,
+      -121.937217
+     ],
+     "true_brg": 138.93,
+     "mag_brg": 126.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP approach R12LY vertical angle"
+    },
+    "12R": {
+     "thr": [
+      37.37105,
+      -121.93905
+     ],
+     "true_brg": 138.93,
+     "mag_brg": 126.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ISLV"
+    },
+    "30L": {
+     "thr": [
+      37.356239,
+      -121.922814
+     ],
+     "true_brg": 318.94,
+     "mag_brg": 306.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ISJC"
+    },
+    "30R": {
+     "thr": [
+      37.357503,
+      -121.921
+     ],
+     "true_brg": 318.94,
+     "mag_brg": 306.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP approach R30RY vertical angle"
+    }
+   },
+   "departures": [
+    {
+     "name": "ALMDN4",
+     "runway": "12",
+     "runways": [
+      "12L",
+      "12R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID ALMDN4 transition RW12B: VA 126M to 570 ft; DF NEVSE; TF KIELY; TF ALMDN",
+     "waypoints": [
+      [
+       37.291683,
+       -121.847806
+      ],
+      [
+       37.348817,
+       -121.757431
+      ],
+      [
+       37.457328,
+       -121.755639
+      ]
+     ],
+     "fixes": [
+      "NEVSE",
+      "KIELY",
+      "ALMDN"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "BMRNG4",
+     "runway": "12",
+     "runways": [
+      "12L",
+      "12R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID BMRNG4 transition RW12B: VA 126M to 570 ft; VM 126M; DF GRRIF; IF GRRIF; TF BMRNG",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "LOUPE1",
+     "runway": "30L",
+     "runways": [
+      "30L"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID LOUPE1 transition RW30L: VA 306M to 562 ft; DF STCLR; DF LOUPE; FM LOUPE; IF SJC; TF BMRNG",
+     "waypoints": [
+      [
+       37.398072,
+       -121.968694
+      ],
+      [
+       37.353167,
+       -121.803961
+      ]
+     ],
+     "fixes": [
+      "STCLR",
+      "LOUPE"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "LOUPE1",
+     "runway": "30R",
+     "runways": [
+      "30R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID LOUPE1 transition RW30R: VA 306M to 562 ft; DF MLPTS; DF LOUPE; FM LOUPE; IF SJC; TF BMRNG",
+     "waypoints": [
+      [
+       37.399211,
+       -121.966742
+      ],
+      [
+       37.353167,
+       -121.803961
+      ]
+     ],
+     "fixes": [
+      "MLPTS",
+      "LOUPE"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "SJC3",
+     "runway": "30",
+     "runways": [
+      "30L",
+      "30R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID SJC3 transition RW30B: IF MOONY",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SPTNS1",
+     "runway": "30L",
+     "runways": [
+      "30L"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID SPTNS1 transition RW30L: VA 306M to 570 ft; DF STCLR; DF SPTNS; TF TECKY",
+     "waypoints": [
+      [
+       37.398072,
+       -121.968694
+      ],
+      [
+       37.327697,
+       -121.786919
+      ],
+      [
+       37.064331,
+       -121.489014
+      ]
+     ],
+     "fixes": [
+      "STCLR",
+      "SPTNS",
+      "TECKY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SPTNS1",
+     "runway": "30R",
+     "runways": [
+      "30R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID SPTNS1 transition RW30R: VA 306M to 570 ft; DF MLPTS; DF SPTNS; TF TECKY",
+     "waypoints": [
+      [
+       37.399211,
+       -121.966742
+      ],
+      [
+       37.327697,
+       -121.786919
+      ],
+      [
+       37.064331,
+       -121.489014
+      ]
+     ],
+     "fixes": [
+      "MLPTS",
+      "SPTNS",
+      "TECKY"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "SUNOL1",
+     "runway": "12",
+     "runways": [
+      "12L",
+      "12R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID SUNOL1 transition RW12B: VI 126M; FA OAK; VM 303M; CF SUNOL",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "SUNOL1",
+     "runway": "30",
+     "runways": [
+      "30L",
+      "30R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID SUNOL1 transition RW30B: VD 306M; VI 43M; CF SUNOL",
+     "waypoints": [
+      [
+       37.605531,
+       -121.810281
+      ]
+     ],
+     "fixes": [
+      "SUNOL"
+     ],
+     "vectored": false
+    },
+    {
+     "name": "TECKY4",
+     "runway": "12",
+     "runways": [
+      "12L",
+      "12R"
+     ],
+     "source": "FAA CIFP cycle 2610, KSJC SID TECKY4 transition RW12B: VA 126M to 570 ft; DF NEVSE; TF TECKY",
+     "waypoints": [
+      [
+       37.291683,
+       -121.847806
+      ],
+      [
+       37.064331,
+       -121.489014
+      ]
+     ],
+     "fixes": [
+      "NEVSE",
+      "TECKY"
+     ],
+     "vectored": false
+    }
+   ],
+   "procedures_not_coded": []
+  },
+  "JFK": {
+   "cities": [
+    "nyc"
+   ],
+   "icao": "KJFK",
+   "ref": [
+    40.639928,
+    -73.778692
+   ],
+   "magvar_deg": -13.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "04L": {
+     "thr": [
+      40.623106,
+      -73.784736
+     ],
+     "true_brg": 30.66,
+     "mag_brg": 44.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IHIQ"
+    },
+    "04R": {
+     "thr": [
+      40.625428,
+      -73.770344
+     ],
+     "true_brg": 30.67,
+     "mag_brg": 44.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IJFK"
+    },
+    "13L": {
+     "thr": [
+      40.656492,
+      -73.787431
+     ],
+     "true_brg": 120.85,
+     "mag_brg": 134.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ITLK"
+    },
+    "13R": {
+     "thr": [
+      40.645494,
+      -73.810386
+     ],
+     "true_brg": 120.84,
+     "mag_brg": 134.0,
+     "glide_deg": null,
+     "glide_source": "not coded: the FAA publishes R13RZ to this runway but this cycle does not code it, and no other coded approach carries a vertical angle"
+    },
+    "22L": {
+     "thr": [
+      40.645236,
+      -73.754861
+     ],
+     "true_brg": 210.68,
+     "mag_brg": 224.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IIWY"
+    },
+    "22R": {
+     "thr": [
+      40.642433,
+      -73.769636
+     ],
+     "true_brg": 210.67,
+     "mag_brg": 224.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IJOC"
+    },
+    "31L": {
+     "thr": [
+      40.632578,
+      -73.781886
+     ],
+     "true_brg": 300.86,
+     "mag_brg": 314.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IMOH"
+    },
+    "31R": {
+     "thr": [
+      40.645167,
+      -73.762453
+     ],
+     "true_brg": 300.87,
+     "mag_brg": 314.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IRTH"
+    }
+   },
+   "departures": [
+    {
+     "name": "DEEZZ6",
+     "runway": "04L",
+     "runways": [
+      "04L"
+     ],
+     "source": "FAA CIFP cycle 2610, KJFK SID DEEZZ6 transition RW04L: VA 44M to 520 ft; DF PONAE; VM 99M; IF DEEZZ; TF HEERO",
+     "waypoints": [
+      [
+       40.672214,
+       -73.74635
+      ]
+     ],
+     "fixes": [
+      "PONAE"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "DEEZZ6",
+     "runway": "04R",
+     "runways": [
+      "04R"
+     ],
+     "source": "FAA CIFP cycle 2610, KJFK SID DEEZZ6 transition RW04R: VA 44M to 520 ft; VM 99M; IF DEEZZ; TF HEERO",
+     "waypoints": [],
+     "fixes": [],
+     "vectored": true
+    },
+    {
+     "name": "DEEZZ6",
+     "runway": "31",
+     "runways": [
+      "31L",
+      "31R"
+     ],
+     "source": "FAA CIFP cycle 2610, KJFK SID DEEZZ6 transition RW31B: VA 314M to 520 ft; DF SKORR; TF CESID; TF YNKEE; FM YNKEE; IF DEEZZ; TF HEERO",
+     "waypoints": [
+      [
+       40.596392,
+       -73.8894
+      ],
+      [
+       40.540233,
+       -73.856956
+      ],
+      [
+       40.483583,
+       -73.849217
+      ]
+     ],
+     "fixes": [
+      "SKORR",
+      "CESID",
+      "YNKEE"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "SKORR6",
+     "runway": "31",
+     "runways": [
+      "31L",
+      "31R"
+     ],
+     "source": "FAA CIFP cycle 2610, KJFK SID SKORR6 transition RW31B: VA 314M to 520 ft; DF SKORR",
+     "waypoints": [
+      [
+       40.596392,
+       -73.8894
+      ]
+     ],
+     "fixes": [
+      "SKORR"
+     ],
+     "vectored": false
+    }
+   ],
+   "procedures_not_coded": [
+    "JFK5"
+   ]
+  },
+  "LGA": {
+   "cities": [
+    "nyc"
+   ],
+   "icao": "KLGA",
+   "ref": [
+    40.777242,
+    -73.872606
+   ],
+   "magvar_deg": -12.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "04": {
+     "thr": [
+      40.769164,
+      -73.884119
+     ],
+     "true_brg": 32.03,
+     "mag_brg": 44.0,
+     "glide_deg": 3.14,
+     "glide_source": "CIFP ILS glide slope ILGA"
+    },
+    "13": {
+     "thr": [
+      40.782297,
+      -73.878519
+     ],
+     "true_brg": 122.23,
+     "mag_brg": 134.0,
+     "glide_deg": 3.1,
+     "glide_source": "CIFP ILS glide slope IGDI"
+    },
+    "22": {
+     "thr": [
+      40.785436,
+      -73.870672
+     ],
+     "true_brg": 212.04,
+     "mag_brg": 224.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IURD"
+    },
+    "31": {
+     "thr": [
+      40.772072,
+      -73.857111
+     ],
+     "true_brg": 302.25,
+     "mag_brg": 314.0,
+     "glide_deg": 3.1,
+     "glide_source": "CIFP approach R31-Y vertical angle"
+    }
+   },
+   "departures": [
+    {
+     "name": "GLDMN8",
+     "runway": "13",
+     "runways": [
+      "13"
+     ],
+     "source": "FAA CIFP cycle 2610, KLGA SID GLDMN8 transition RW13: VI 134M; CF KIWIE; TF VOBOZ; TF GLDMN; FM GLDMN",
+     "waypoints": [
+      [
+       40.712783,
+       -73.825903
+      ],
+      [
+       40.668717,
+       -73.892811
+      ],
+      [
+       40.703469,
+       -73.969983
+      ]
+     ],
+     "fixes": [
+      "KIWIE",
+      "VOBOZ",
+      "GLDMN"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "HOPEA3",
+     "runway": "22",
+     "runways": [
+      "22"
+     ],
+     "source": "FAA CIFP cycle 2610, KLGA SID HOPEA3 transition RW22: VI 224M; CF HOPEA; TF CRI; TF ASALT; FM ASALT",
+     "waypoints": [
+      [
+       40.690481,
+       -73.899258
+      ],
+      [
+       40.612469,
+       -73.894464
+      ],
+      [
+       40.527589,
+       -73.963939
+      ]
+     ],
+     "fixes": [
+      "HOPEA",
+      "CRI",
+      "ASALT"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "JUTES4",
+     "runway": "22",
+     "runways": [
+      "22"
+     ],
+     "source": "FAA CIFP cycle 2610, KLGA SID JUTES4 transition RW22: VA 224M to 540 ft; DF JUTES; TF TNNIS; VM 45M",
+     "waypoints": [
+      [
+       40.800083,
+       -73.757194
+      ],
+      [
+       40.879444,
+       -73.703758
+      ]
+     ],
+     "fixes": [
+      "JUTES",
+      "TNNIS"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "NTHNS6",
+     "runway": "13",
+     "runways": [
+      "13"
+     ],
+     "source": "FAA CIFP cycle 2610, KLGA SID NTHNS6 transition RW13: VI 134M; CF KIWIE; TF NTHNS; TF CNRSE; TF ASALT; FM ASALT",
+     "waypoints": [
+      [
+       40.712783,
+       -73.825903
+      ],
+      [
+       40.671744,
+       -73.836958
+      ],
+      [
+       40.622425,
+       -73.886914
+      ],
+      [
+       40.527589,
+       -73.963939
+      ]
+     ],
+     "fixes": [
+      "KIWIE",
+      "NTHNS",
+      "CNRSE",
+      "ASALT"
+     ],
+     "vectored": true
+    },
+    {
+     "name": "TNNIS6",
+     "runway": "13",
+     "runways": [
+      "13"
+     ],
+     "source": "FAA CIFP cycle 2610, KLGA SID TNNIS6 transition RW13: VI 134M; CF JUTES; TF TNNIS; FM TNNIS",
+     "waypoints": [
+      [
+       40.800083,
+       -73.757194
+      ],
+      [
+       40.879444,
+       -73.703758
+      ]
+     ],
+     "fixes": [
+      "JUTES",
+      "TNNIS"
+     ],
+     "vectored": true
+    }
+   ],
+   "procedures_not_coded": [
+    "LGA7"
+   ]
+  },
+  "EWR": {
+   "cities": [
+    "nyc"
+   ],
+   "icao": "KEWR",
+   "ref": [
+    40.692481,
+    -74.168689
+   ],
+   "magvar_deg": -13.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "04L": {
+     "thr": [
+      40.681658,
+      -74.175458
+     ],
+     "true_brg": 25.73,
+     "mag_brg": 39.0,
+     "glide_deg": 3.1,
+     "glide_source": "CIFP ILS glide slope IEWR"
+    },
+    "04R": {
+     "thr": [
+      40.680525,
+      -74.172375
+     ],
+     "true_brg": 25.74,
+     "mag_brg": 39.0,
+     "glide_deg": 2.95,
+     "glide_source": "CIFP ILS glide slope IEZA"
+    },
+    "11": {
+     "thr": [
+      40.702806,
+      -74.180708
+     ],
+     "true_brg": 95.0,
+     "mag_brg": 108.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope IGPR"
+    },
+    "22L": {
+     "thr": [
+      40.697856,
+      -74.161356
+     ],
+     "true_brg": 205.74,
+     "mag_brg": 219.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ILSQ"
+    },
+    "22R": {
+     "thr": [
+      40.699,
+      -74.164433
+     ],
+     "true_brg": 205.74,
+     "mag_brg": 219.0,
+     "glide_deg": 3.1,
+     "glide_source": "CIFP ILS glide slope IJNN"
+    },
+    "29": {
+     "thr": [
+      40.701253,
+      -74.15735
+     ],
+     "true_brg": 275.02,
+     "mag_brg": 288.0,
+     "glide_deg": 3.5,
+     "glide_source": "CIFP approach R29-X vertical angle"
+    }
+   },
+   "departures": [
+    {
+     "name": "PORTT4",
+     "runway": "22",
+     "runways": [
+      "22L",
+      "22R"
+     ],
+     "source": "FAA CIFP cycle 2610, KEWR SID PORTT4 transition RW22B: VA 219M to 518 ft; DF BAGGA; TF PORTT",
+     "waypoints": [
+      [
+       40.6218,
+       -74.192183
+      ],
+      [
+       40.590806,
+       -74.29395
+      ]
+     ],
+     "fixes": [
+      "BAGGA",
+      "PORTT"
+     ],
+     "vectored": false
+    }
+   ],
+   "procedures_not_coded": [
+    "DEVL1",
+    "EWR5",
+    "LIB5"
+   ]
+  },
+  "TEB": {
+   "cities": [
+    "nyc"
+   ],
+   "icao": "KTEB",
+   "ref": [
+    40.850103,
+    -74.060833
+   ],
+   "magvar_deg": -12.0,
+   "departures_method": "cifp-coded",
+   "runways": {
+    "01": {
+     "thr": [
+      40.840794,
+      -74.060214
+     ],
+     "true_brg": 3.19,
+     "mag_brg": 15.0,
+     "glide_deg": null,
+     "glide_source": "not coded: the FAA publishes R01 to this runway but this cycle does not code it, and no other coded approach carries a vertical angle"
+    },
+    "06": {
+     "thr": [
+      40.846728,
+      -74.070292
+     ],
+     "true_brg": 48.05,
+     "mag_brg": 60.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ITEB"
+    },
+    "19": {
+     "thr": [
+      40.855756,
+      -74.059111
+     ],
+     "true_brg": 183.19,
+     "mag_brg": 195.0,
+     "glide_deg": 3.0,
+     "glide_source": "CIFP ILS glide slope ITJL"
+    },
+    "24": {
+     "thr": [
+      40.857739,
+      -74.054094
+     ],
+     "true_brg": 228.06,
+     "mag_brg": 240.0,
+     "glide_deg": 3.2,
+     "glide_source": "CIFP approach R24 vertical angle"
+    }
+   },
+   "departures": [
+    {
+     "name": "WENTZ1",
+     "runway": "24",
+     "runways": [
+      "24"
+     ],
+     "source": "FAA CIFP cycle 2610, KTEB SID WENTZ1 transition RW24: VA 240M to 520 ft; DF DAVIM; TF WENTZ; TF RUUDY; FM RUUDY",
+     "waypoints": [
+      [
+       40.828969,
+       -74.096403
+      ],
+      [
+       40.813319,
+       -74.15315
+      ],
+      [
+       40.815589,
+       -74.278175
+      ]
+     ],
+     "fixes": [
+      "DAVIM",
+      "WENTZ",
+      "RUUDY"
+     ],
+     "vectored": true
+    }
+   ],
+   "procedures_not_coded": [
+    "TEB4"
+   ]
+  }
+ }
+}

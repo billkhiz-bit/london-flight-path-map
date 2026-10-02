@@ -934,6 +934,29 @@ the signup Lambda. `template.yaml`'s own list of mirrors omitted this file.
 **A list of mirrors that omits a mirror is worse than no list, because it reads
 as complete.** The pages are now asserted against the plan.
 
+## The Bay Area flight-path page, `/bay-area/` (2026-10-02)
+
+**A standalone static page, NOT a city on the map** (Bill's ruling: page first,
+scored city later; plan in EXPANSION.md). The 50 cities of the four counties
+round SFO, OAK and SJC, the FAA's coded routes, and BTS's 2022 noise map.
+`scripts/build_bay_area_page.py --fetch | --write | --check`; do not hand-edit
+`bay-area/index.html`. It publishes **no score and no decibel figure** (the
+2022 tile service has no legend, so the band values are unverified), carries
+the FAA's warranty disclaimer its licence requires, and says "where the routes
+are, not how many aircraft use them".
+
+- **Ordered by share of the city on the noise map, not by route geometry**: SFO's
+  runway 10 approaches are published and rarely flown.
+- **BTS's map is land only.** An approach over the bay is unpainted, so the
+  cross-check asks for every threshold and each airport's best approach.
+- **The Census outlines are 1:500,000**: SJC's 12R threshold is 126 m inside
+  Santa Clara. Nothing on the page depends on a boundary to that precision.
+- **`data/us-bayarea-places.json` is deliberately not `*-boroughs.json`**: that
+  suffix is globbed to enumerate cities, and two fetchers would go and ask
+  DEFRA and the Environment Agency for California.
+- `tests/test_bay_area_page.py` breaks the REAL inputs one way at a time (a
+  mis-paired shapefile record, a picture one tile out, a missing city).
+
 ## Scale direction — do NOT "fix" the apparent site/extension disagreement
 
 **Scores rise, measurements rise, and the label names which.** See `METHODOLOGY.md` §11.0.
@@ -1105,6 +1128,8 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | `area-deploy` | **the 99 static borough pages + `area/index.html`** (`s3 sync --delete`). **Was MISSING FROM THIS TABLE until 2026-09-02**, which is the same "a list that omits a member reads as complete" trap this file records about `template.yaml`'s free-tier mirrors. It also had **no CloudFront invalidation** until that date - the only target without one - so all 100 pages uploaded, every command reported success, and CloudFront served the OLD pages for up to the hour its `max-age=3600` allows. That is what made it silent: check immediately and the deploy looks broken, check later and it looks fine, which reads as a flaky check rather than a missing step |
 | `talks-deploy` | **new (2026-09-21)** - `aws s3 sync` of `talks/`: the plain-English write-ups (`how-sky-score-works.pdf`, `how-the-checks-work.pdf`, each rendered TAGGED from the `.html` beside it by `node scripts/render_talks_pdfs.mjs`; commit both, and both are uploaded - the `.html` is the primary format since 2026-09-25) and `talks/index.html`, which is what the end-card QR code points at (`skyscore.co.uk/talks/`). No `--delete`. **Standalone**: not a product surface, so not in `web-deploy-all` and not compared by `check_deploy_drift.sh`. Exists because a live file with no deploy command is audit finding 38's shape. **No em dashes** - the gate does not scan `talks/`, so the rule is kept by hand here |
 | `deeplinks-deploy` | `.well-known/apple-app-site-association` + `assetlinks.json`. **NOT in `web-deploy-all`**, deliberately: the target refuses to run while the files hold `TEAMID`/`REPLACE:WITH` placeholders (see `mobile/DEEP_LINKING.md`). Omitted from this table until 2026-09-14 (audit M29) |
+| `open-data-deploy` | `open-data/index.html` + the borough CSV (2026-09-28). In `web-deploy-all`. **Absent from this table until 2026-10-02**, the list-that-omits-a-member trap again |
+| `bay-area-deploy` | **new (2026-10-02)** - `bay-area/index.html`, its BTS noise picture and `share.png`. In `web-deploy-all`. The page is GENERATED: `python scripts/build_bay_area_page.py --write` (`--check` is blocking), from `data/us-flight-procedures.json`, `data/us-bayarea-places.json` and the picture. **A new FAA cycle reds `--check` until `--write` is re-run.** The picture's name carries its edition because `sw.js` serves same-origin images cache-first |
 | `web-deploy-all` | all of the above bar `deeplinks-deploy` and `talks-deploy`, `fonts-deploy` first |
 
 The last three were added closing audit finding 38: **eleven live files had no

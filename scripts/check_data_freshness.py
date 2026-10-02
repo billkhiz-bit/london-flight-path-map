@@ -46,6 +46,7 @@ import build_city_neighbourhoods  # noqa: E402
 import build_flight_paths  # noqa: E402
 import build_hpi_prices  # noqa: E402
 import build_progress8  # noqa: E402
+import build_us_flight_paths  # noqa: E402
 import check_air_quality_vintage  # noqa: E402
 import load_defra_air_quality  # noqa: E402
 import load_nspl  # noqa: E402
@@ -213,6 +214,20 @@ def airac():
             '(only the date moving means no procedure changed)')
 
 
+def cifp():
+    served = json.loads(build_us_flight_paths.RECORD.read_text(encoding='utf-8'))['effective']
+    # A page that will not load raises, and main() reports INCONCLUSIVE, as for
+    # every other row. BROKEN is kept for a page that LOADED and links no zip:
+    # catching the outage here printed "links no CIFP zip" for a timeout.
+    stamps = sorted(set(build_us_flight_paths.ZIP_URL.findall(fetch_text(build_us_flight_paths.PAGE))))
+    if not stamps:
+        return served, '?', 'BROKEN', 'the FAA download page loaded but links no CIFP zip'
+    # The page lists the cycle in effect and, near a changeover, the next one.
+    current = f'20{stamps[0][:2]}-{stamps[0][2:4]}-{stamps[0][4:]}'
+    return (served, current, 'NEWER' if current > served else 'current',
+            'every 28 days; build_us_flight_paths.py --fetch and --check (feeds no published route yet)')
+
+
 def ppd():
     served = max(build_city_neighbourhoods.PPD_YEARS)
     latest = latest_complete_year(
@@ -231,6 +246,7 @@ CHECKED = [
     ('DfE school results (KS4 Progress 8)', ks4),
     ('DEFRA noise maps (road + aircraft)', noise),
     ('UK AIP flight procedures (AIRAC)', airac),
+    ('FAA CIFP flight procedures (US)', cifp),
     ('HM Land Registry Price Paid (medians)', ppd),
 ]
 

@@ -1,0 +1,500 @@
+HDR01FAACIFP18      001P013203969192610  09-SEP-202612:03:55  U.S.A. DOT FAA                                                113023A4
+SUSAP KSJCK2ASJC     0     110YHN37214678W121554303E013000062         1800018000C    MNAR    MINETA SAN JOSE INTL          167272609
+SUSAP KSJCK2CALMDN K20    W     N37272638W121452030                       E0127     NAR           ALMDN                    167282605
+SUSAP KSJCK2CAPLLE K20    W     N37020087W121474694                       E0126     NAR           APLLE                    167292605
+SUSAP KSJCK2CARTAQ K20    C     N37274804W122022534                       E0127     NAR           ARTAQ                    167302605
+SUSAP KSJCK2CAXXXX K20    W     N38010918W121384230                       E0128     NAR           AXXXX                    167312605
+SUSAP KSJCK2CBAXBE K20    W     N36461383W121365689                       E0125     NAR           BAXBE                    167322605
+SUSAP KSJCK2CBMRNG K20    W     N37370113W121575690                       E0128     NAR           BMRNG                    167332605
+SUSAP KSJCK2CCANDA K20    W     N37232253W118470191                       E0121     NAR           CANDA                    167342605
+SUSAP KSJCK2CCFBJT K20    A     N37140087W122001453                       E0127     NAR           CFBJT(CNF)               167352605
+SUSAP KSJCK2CCFBKG K20    A     N37162792W121532973                       E0127     NAR           CFBKG(CNF)               167362605
+SUSAP KSJCK2CCFBKP K20    A     N37163144W121532426                       E0127     NAR           CFBKP(CNF)               167372605
+SUSAP KSJCK2CCFBLF K20    A     N37231492W122005648                       E0127     NAR           CFBLF(CNF)               167382605
+SUSAP KSJCK2CCFBLQ K20    A     N37231481W122005644                       E0127     NAR           CFBLQ(CNF)               167392605
+SUSAP KSJCK2CCFBNV K20    A     N37231251W122005972                       E0127     NAR           CFBNV(CNF)               167402605
+SUSAP KSJCK2CCOKOR K20    W     N37165857W121502183                       E0127     NAR           COKOR                    167412605
+SUSAP KSJCK2CDEEII K20    W     N37485261W121520275                       E0128     NAR           DEEII                    167422605
+SUSAP KSJCK2CEDMND K20    W     N37135491W121555659                       E0127     NAR           EDMND                    167432605
+SUSAP KSJCK2CFATHM K20    R     N37475183W122473223                       E0129     NAR           FATHM                    167442605
+SUSAP KSJCK2CFODPA K20    W     N37132383W121551912                       E0127     NAR           FODPA                    167452605
+SUSAP KSJCK2CFORUL K20    C     N37191583W121530345                       E0127     NAR           FORUL                    167462605
+SUSAP KSJCK2CFOXAG K20    W     N37243831W121585698                       E0127     NAR           FOXAG                    167472605
+SUSAP KSJCK2CFRLON K20    W     N37514635W122473343                       E0129     NAR           FRLON                    167482605
+SUSAP KSJCK2CGAARY K20    W     N37112741W121541550                       E0127     NAR           GAARY                    167492605
+SUSAP KSJCK2CGGUGL K20    W     N37073168W121513420                       E0126     NAR           GGUGL                    167502605
+SUSAP KSJCK2CGGULF K20    W     N38512796W123050681                       E0132     NAR           GGULF                    167512605
+SUSAP KSJCK2CGOTEE K20    W     N37021511W121220505                       E0125     NAR           GOTEE                    167522605
+SUSAP KSJCK2CGRRIF K20    W     N37270154W121571066                       E0127     NAR           GRRIF                    167532605
+SUSAP KSJCK2CGSTEE K20    W     N37034495W121401103                       E0126     NAR           GSTEE                    167542605
+SUSAP KSJCK2CGUUYY K20    W     N36441320W121315305                       E0125     NAR           GUUYY                    167552605
+SUSAP KSJCK2CGYLET K20    W     N37272000W119000500                       E0122     NAR           GYLET                    167562605
+SUSAP KSJCK2CHEPAP K20    W     N37115720W121585789                       E0127     NAR           HEPAP                    167572605
+SUSAP KSJCK2CHILUD K20    W     N37192490W121530187                       E0127     NAR           HILUD                    167582605
+SUSAP KSJCK2CHINIR K20    W     N37244295W121585056                       E0127     NAR           HINIR                    167592605
+SUSAP KSJCK2CHITIR K20    W     N37192484W122002661                       E0127     NAR           HITIR                    167602605
+SUSAP KSJCK2CHIVAK K20    C     N37151472W121483989                       E0127     NAR           HIVAK                    167612605
+SUSAP KSJCK2CHNNLE K20    W     N37485356W121304376                       E0127     NAR           HNNLE                    167622605
+SUSAP KSJCK2CHOOLU K20    C     N37281705W122025747                       E0127     NAR           HOOLU                    167632605
+SUSAP KSJCK2CHOSBO K20    W     N37152280W121484871                       E0127     NAR           HOSBO                    167642605
+SUSAP KSJCK2CHRNER K20    W     N38190072W122013471                       E0129     NAR           HRNER                    167652605
+SUSAP KSJCK2CJEGSA K20    W     N37143466W121521975                       E0127     NAR           JEGSA                    167662605
+SUSAP KSJCK2CJENES K20    R     N37134258W121465939                       E0127     NAR           JENES                    167672605
+SUSAP KSJCK2CJESEN K20    W     N37174139W121583205                       E0127     NAR           JESEN                    167682605
+SUSAP KSJCK2CJFREE K20    W     N36393220W120561457                       E0124     NAR           JFREE                    167692605
+SUSAP KSJCK2CJILNA K20    W     N37135492W122095650                       E0127     NAR           JILNA                    167702605
+SUSAP KSJCK2CKAESS K20    W     N37493786W121381128                       E0128     NAR           KAESS                    167712504
+SUSAP KSJCK2CKIELY K20    W     N37205574W121452675                       E0127     NAR           KIELY                    167722605
+SUSAP KSJCK2CKIRVE K20    W     N37151155W121482778                       E0127     NAR           KIRVE                    167732605
+SUSAP KSJCK2CKLIDE K20    C     N37095103W121424698                       E0126     NAR           KLIDE                    167742605
+SUSAP KSJCK2CKNGRY K20    W     N38004160W117332828                       E0120     NAR           KNGRY                    167752605
+SUSAP KSJCK2CLOUPE K20    W     N37211140W121481426                       E0127     NAR           LOUPE                    167762605
+SUSAP KSJCK2CMDOWS K20    W     N39470341W119074196                       E0127     NAR           MDOWS                    167772605
+SUSAP KSJCK2CMETTA K20    W     N37235379W122075094                       E0127     NAR           METTA                    167782605
+SUSAP KSJCK2CMISSS K20    W     N37283824W122290101                       E0128     NAR           MISSS                    167792605
+SUSAP KSJCK2CMLPTS K20    W     N37235716W121580027                       E0127     NAR           MLPTS                    167802605
+SUSAP KSJCK2CMNTNA K20    W     N37321949W122374563                       E0129     NAR           MNTNA                    167812504
+SUSAP KSJCK2CMOONY K20    R     N37081880W121341959                       E0126     NAR           MOONY                    167822605
+SUSAP KSJCK2CMUSSK K20    W     N37291995W122035522                       E0128     NAR           MUSSK                    167832504
+SUSAP KSJCK2CNEVSE K20    R     N37173006W121505210                       E0127     NAR           NEVSE                    167842605
+SUSAP KSJCK2CNIBUY K20    W     N37252330W122014269                       E0127     NAR           NIBUY                    167852605
+SUSAP KSJCK2CNIKKT K20    W     N37055311W121073615                       E0125     NAR           NIKKT                    167862605
+SUSAP KSJCK2CNTFLX K20    W     N37261795W122074834                       E0128     NAR           NTFLX                    167872603
+SUSAP KSJCK2COMSEE K20    W     N37262255W122003998                       E0127     NAR           OMSEE                    167882605
+SUSAP KSJCK2COUCHH K20    W     N37082266W120451683                       E0125     NAR           OUCHH                    167892605
+SUSAP KSJCK2CPPEGS K20    W     N37233146W122165420                       E0128     NAR           PPEGS                    167902605
+SUSAP KSJCK2CPUAKO K20    W     N37251819W122014233                       E0127     NAR           PUAKO                    167912605
+SUSAP KSJCK2CRAZRR K20    W     N37105268W120225399                       E0124     NAR           RAZRR                    167922605
+SUSAP KSJCK2CRERAE K20    W     N37235418W122081083                       E0127     NAR           RERAE                    167932605
+SUSAP KSJCK2CROANA K20    W     N37380863W121434306                       E0127     NAR           ROANA                    167942605
+SUSAP KSJCK2CROSTE K20    W     N37284610W122031791                       E0128     NAR           ROSTE                    167952504
+SUSAP KSJCK2CSCOPR K20    W     N37091830W121374932                       E0126     NAR           SCOPR                    167962605
+SUSAP KSJCK2CSEKKO K20    W     N37074631W121240301                       E0126     NAR           SEKKO                    167972605
+SUSAP KSJCK2CSHIKK K20    W     N37000389W121305739                       E0126     NAR           SHIKK                    167982605
+SUSAP KSJCK2CSIBAE K20    W     N37143697W121521362                       E0127     NAR           SIBAE                    167992605
+SUSAP KSJCK2CSILCN K20    W     N36211312W121172683                       E0124     NAR           SILCN                    168002605
+SUSAP KSJCK2CSNDAR K20    W     N37275256W122051868                       E0128     NAR           SNDAR                    168012603
+SUSAP KSJCK2CSPTNS K20    W     N37193971W121471291                       E0127     NAR           SPTNS                    168022605
+SUSAP KSJCK2CSTCLR K20    W     N37235306W121580730                       E0127     NAR           STCLR                    168032605
+SUSAP KSJCK2CSTSHH K20    W     N38063688W119401609                       E0124     NAR           STSHH                    168042605
+SUSAP KSJCK2CSTUBL K20    W     N37133990W119564916                       E0123     NAR           STUBL                    168052605
+SUSAP KSJCK2CSWIGS K20    W     N37122818W121381760                       E0126     NAR           SWIGS                    168062605
+SUSAP KSJCK2CTECKY K20    W     N37035159W121292045                       E0126     NAR           TECKY                    168072605
+SUSAP KSJCK2CTRCOT K20    W     N37045506W121441908                       E0126     NAR           TRCOT                    168082605
+SUSAP KSJCK2CTROXX K20    W     N36002909W120574040                       E0123     NAR           TROXX                    168092605
+SUSAP KSJCK2CTUZGY K20    W     N37175543W121512398                       E0127     NAR           TUZGY                    168102605
+SUSAP KSJCK2CVLLEY K20    W     N36295587W121255099                       E0125     NAR           VLLEY                    168112504
+SUSAP KSJCK2CVLREE K20    W     N36363568W121002494                       E0124     NAR           VLREE                    168122605
+SUSAP KSJCK2CWADVA K20    W     N37234204W122131162                       E0128     NAR           WADVA                    168132605
+SUSAP KSJCK2CWLSSN K20    W     N36553010W121364093                       E0126     NAR           WLSSN                    168142605
+SUSAP KSJCK2CWOXAR K20    W     N37175104W121513069                       E0127     NAR           WOXAR                    168152605
+SUSAP KSJCK2CYADUT K20    W     N37114857W122010374                       E0127     NAR           YADUT                    168162605
+SUSAP KSJCK2CZORSA K20    W     N37214666W122030238                       E0127     NAR           ZORSA                    168172605
+SUSAP KSJCK2CZUCKR K20    W     N37215424W122052562                       E0127     NAR           ZUCKR                    168182605
+SUSAP KSJCK2CZULUP K20    C     N37122041W121452988                       E0126     NAR           ZULUP                    168192605
+SUSAP KSJCK2DALMDN44RW12B 010         0        VA                     1258        + 00570     18000                        168201802
+SUSAP KSJCK2DALMDN44RW12B 020NEVSEK2PC0E       DF                                                                          168211802
+SUSAP KSJCK2DALMDN44RW12B 030KIELYK2PC0E       TF                                                                          168221802
+SUSAP KSJCK2DALMDN44RW12B 040ALMDNK2PC0EE      TF                                 - 12000                                  168231802
+SUSAP KSJCK2DALMDN46HRNER 010ALMDNK2PC0E       IF                                 - 12000     18000                        168241802
+SUSAP KSJCK2DALMDN46HRNER 020DEEIIK2PC0E       TF                                                                          168251802
+SUSAP KSJCK2DALMDN46HRNER 030HRNERK2PC0EE      TF                                                                          168261802
+SUSAP KSJCK2DALMDN46MOGEE 010ALMDNK2PC0E       IF                                 - 12000     18000                        168271802
+SUSAP KSJCK2DALMDN46MOGEE 020ROANAK2PC0E       TF                                                                          168281802
+SUSAP KSJCK2DALMDN46MOGEE 030KAESSK2PC0E       TF                                                                          168291802
+SUSAP KSJCK2DALMDN46MOGEE 040MOGEEK2EA0EE      TF                                                                          168301802
+SUSAP KSJCK2DALMDN46ORRCA 010ALMDNK2PC0E       IF                                 - 12000     18000                        168311802
+SUSAP KSJCK2DALMDN46ORRCA 020ROANAK2PC0E       TF                                                                          168321802
+SUSAP KSJCK2DALMDN46ORRCA 030AXXXXK2PC0E       TF                                                                          168331802
+SUSAP KSJCK2DALMDN46ORRCA 040ORRCAK2EA0EE      TF                                                                          168341802
+SUSAP KSJCK2DALMDN46SYRAH 010ALMDNK2PC0E       IF                                 - 12000     18000                        168351802
+SUSAP KSJCK2DALMDN46SYRAH 020ROANAK2PC0E       TF                                                                          168361802
+SUSAP KSJCK2DALMDN46SYRAH 030SYRAHK2EA0EE      TF                                                                          168371802
+SUSAP KSJCK2DALMDN46TIPRE 010ALMDNK2PC0E       IF                                 - 12000     18000                        168381802
+SUSAP KSJCK2DALMDN46TIPRE 020ROANAK2PC0E       TF                                                                          168391802
+SUSAP KSJCK2DALMDN46TIPRE 030HNNLEK2PC0E       TF                                                                          168401802
+SUSAP KSJCK2DALMDN46TIPRE 040TIPREK2EA0EE      TF                                                                          168411802
+SUSAP KSJCK2DBMRNG44RW12B 010         0        VA                     1258        + 00570     18000                        168421608
+SUSAP KSJCK2DBMRNG44RW12B 020         0        VM                     1258                                                 168431608
+SUSAP KSJCK2DBMRNG44RW12B 030GRRIFK2PC0EE      DF                                 + 13000                                  168441608
+SUSAP KSJCK2DBMRNG45      010GRRIFK2PC0E       IF                                 + 13000     18000                        168451608
+SUSAP KSJCK2DBMRNG45      020BMRNGK2PC0EE      TF                                                                          168461608
+SUSAP KSJCK2DBMRNG46HRNER 010BMRNGK2PC0E       IF                                             18000                        168471608
+SUSAP KSJCK2DBMRNG46HRNER 020HRNERK2PC0EE      TF                                                                          168481608
+SUSAP KSJCK2DBMRNG46MOGEE 010BMRNGK2PC0E       IF                                             18000                        168491608
+SUSAP KSJCK2DBMRNG46MOGEE 020AXXXXK2PC0E       TF                                                                          168501608
+SUSAP KSJCK2DBMRNG46MOGEE 030MOGEEK2EA0EE      TF                                                                          168511608
+SUSAP KSJCK2DBMRNG46ORRCA 010BMRNGK2PC0E       IF                                             18000                        168521608
+SUSAP KSJCK2DBMRNG46ORRCA 020DEEIIK2PC0E       TF                                                                          168531608
+SUSAP KSJCK2DBMRNG46ORRCA 030ORRCAK2EA0EE      TF                                                                          168541608
+SUSAP KSJCK2DBMRNG46SYRAH 010BMRNGK2PC0E       IF                                             18000                        168551608
+SUSAP KSJCK2DBMRNG46SYRAH 020HNNLEK2PC0E       TF                                                                          168561608
+SUSAP KSJCK2DBMRNG46SYRAH 030SYRAHK2EA0EE      TF                                                                          168571608
+SUSAP KSJCK2DBMRNG46TIPRE 010BMRNGK2PC0E       IF                                             18000                        168581608
+SUSAP KSJCK2DBMRNG46TIPRE 020KAESSK2PC0E       TF                                                                          168591608
+SUSAP KSJCK2DBMRNG46TIPRE 030TIPREK2EA0EE      TF                                                                          168601608
+SUSAP KSJCK2DLOUPE14RW30L 010         0        VA                     3058        + 00562     18000       KSJC  K2PA       168612405
+SUSAP KSJCK2DLOUPE14RW30L 020STCLRK2PC0EY      DF                                                                          168622405
+SUSAP KSJCK2DLOUPE14RW30L 030LOUPEK2PC0E   R   DF                                   05000          230               -     168632405
+SUSAP KSJCK2DLOUPE14RW30L 040LOUPEK2PC0EE      FM BAM K2      218429881300    D                                            168642405
+SUSAP KSJCK2DLOUPE14RW30R 010         0        VA                     3058        + 00562     18000                        168652405
+SUSAP KSJCK2DLOUPE14RW30R 020MLPTSK2PC0EY      DF                                                                          168662405
+SUSAP KSJCK2DLOUPE14RW30R 030LOUPEK2PC0E   R   DF                                   05000          230               -     168672405
+SUSAP KSJCK2DLOUPE14RW30R 040LOUPEK2PC0EE      FM BAM K2      218429881300    D                                            168682405
+SUSAP KSJCK2DLOUPE15      010SJC  K2D 0V       IF                                   05000     18000                        168692405
+SUSAP KSJCK2DLOUPE15      020BMRNGK2PC0EE      TF                                                                          168702405
+SUSAP KSJCK2DLOUPE16HRNER 010BMRNGK2PC0E       IF                                             18000                        168712405
+SUSAP KSJCK2DLOUPE16HRNER 020HRNERK2PC0EE      TF                                                                          168722405
+SUSAP KSJCK2DLOUPE16MOGEE 010BMRNGK2PC0E       IF                                             18000                        168732405
+SUSAP KSJCK2DLOUPE16MOGEE 020AXXXXK2PC0E       TF                                                                          168742405
+SUSAP KSJCK2DLOUPE16MOGEE 030MOGEEK2EA0EE      TF                                                                          168752405
+SUSAP KSJCK2DLOUPE16ORRCA 010BMRNGK2PC0E       IF                                             18000                        168762405
+SUSAP KSJCK2DLOUPE16ORRCA 020DEEIIK2PC0E       TF                                                                          168772405
+SUSAP KSJCK2DLOUPE16ORRCA 030ORRCAK2EA0EE      TF                                                                          168782405
+SUSAP KSJCK2DLOUPE16SYRAH 010BMRNGK2PC0E       IF                                             18000                        168792405
+SUSAP KSJCK2DLOUPE16SYRAH 020HNNLEK2PC0E       TF                                                                          168802405
+SUSAP KSJCK2DLOUPE16SYRAH 030SYRAHK2EA0EE      TF                                                                          168812405
+SUSAP KSJCK2DLOUPE16TIPRE 010BMRNGK2PC0E       IF                                             18000                        168822405
+SUSAP KSJCK2DLOUPE16TIPRE 020KAESSK2PC0E       TF                                                                          168832405
+SUSAP KSJCK2DLOUPE16TIPRE 030TIPREK2EA0EE      TF                                                                          168842405
+SUSAP KSJCK2DSJC3  1RW30B 010MOONYK2PC0EE      IF                                             18000                        168852213
+SUSAP KSJCK2DSJC3  3AVE   010MOONYK2PC0E       IF                                             18000                        168862213
+SUSAP KSJCK2DSJC3  3AVE   020AVE  K2D 0VE      TF                                                                          168871909
+SUSAP KSJCK2DSJC3  3PXN   010MOONYK2PC0E       IF                                             18000                        168882213
+SUSAP KSJCK2DSJC3  3PXN   020PXN  K2D 0VE      TF                                                                          168891909
+SUSAP KSJCK2DSPTNS14RW30L 010         0        VA                     3058        + 00570     18000                        168902201
+SUSAP KSJCK2DSPTNS14RW30L 020STCLRK2PC0EY      DF                                 + 00900          230               -     168912201
+SUSAP KSJCK2DSPTNS14RW30L 030SPTNSK2PC0E   R   DF                                   05000                                  168922201
+SUSAP KSJCK2DSPTNS14RW30L 040TECKYK2PC0EE      TF                                 + 13000                                  168932201
+SUSAP KSJCK2DSPTNS14RW30R 010         0        VA                     3058        + 00570     18000                        168942201
+SUSAP KSJCK2DSPTNS14RW30R 020MLPTSK2PC0EY      DF                                 + 00900          230               -     168952201
+SUSAP KSJCK2DSPTNS14RW30R 030SPTNSK2PC0E   R   DF                                   05000                                  168962201
+SUSAP KSJCK2DSPTNS14RW30R 040TECKYK2PC0EE      TF                                 + 13000                                  168972201
+SUSAP KSJCK2DSPTNS16JFREE 010TECKYK2PC0E       IF                                 + 13000     18000                        168982201
+SUSAP KSJCK2DSPTNS16JFREE 020JFREEK2PC0EE      TF                                                                          168992201
+SUSAP KSJCK2DSPTNS16VLREE 010TECKYK2PC0E       IF                                 + 13000     18000                        169002201
+SUSAP KSJCK2DSPTNS16VLREE 020VLREEK2PC0EE      TF                                                                          169012201
+SUSAP KSJCK2DSUNOL11RW12B 010         0        VI                     1258                    18000                        169021909
+SUSAP KSJCK2DSUNOL11RW12B 020OAK  K2D 0V       FA OAK K2      000000001290    D   + 04500                                  169031909
+SUSAP KSJCK2DSUNOL11RW12B 030         0    L   VMY                    3030                                                 169041909
+SUSAP KSJCK2DSUNOL11RW12B 040SUNOLK2EA0EE      CF SJC K2      0089015300890100D     05000                                  169051909
+SUSAP KSJCK2DSUNOL11RW30B 010         0        VD SJC K2              30580018D               18000                        169061909
+SUSAP KSJCK2DSUNOL11RW30B 020         0    R   VIY                    0430                                                 169071909
+SUSAP KSJCK2DSUNOL11RW30B 030SUNOLK2EA0EE      CF SJC K2      0089015300890100D     05000                                  169081909
+SUSAP KSJCK2DSUNOL13LIN   010SUNOLK2EA0E       IF                                   05000     18000                        169091909
+SUSAP KSJCK2DSUNOL13LIN   020LIN  K2D 0VE      TF                                                                          169101909
+SUSAP KSJCK2DSUNOL13SAC   010SUNOLK2EA0E       IF                                   05000     18000                        169111909
+SUSAP KSJCK2DSUNOL13SAC   020SAC  K2D 0VE      TF                                                                          169121909
+SUSAP KSJCK2DTECKY44RW12B 010         0        VA                     1258        + 00570     18000                        169132201
+SUSAP KSJCK2DTECKY44RW12B 020NEVSEK2PC0E       DF                                                                          169142201
+SUSAP KSJCK2DTECKY44RW12B 030TECKYK2PC0EE      TF                                 + 13000                                  169152201
+SUSAP KSJCK2DTECKY46JFREE 010TECKYK2PC0E       IF                                 + 13000     18000                        169162201
+SUSAP KSJCK2DTECKY46JFREE 020JFREEK2PC0EE      TF                                                                          169172201
+SUSAP KSJCK2DTECKY46VLREE 010TECKYK2PC0E       IF                                 + 13000     18000                        169182201
+SUSAP KSJCK2DTECKY46VLREE 020VLREEK2PC0EE      TF                                                                          169192201
+SUSAP KSJCK2EBRINY21FMG   010FMG  K2D 0V       IF                                             18000                        169202103
+SUSAP KSJCK2EBRINY21FMG   020ILA  K2D 0V       TF                                                                          169212103
+SUSAP KSJCK2EBRINY21FMG   030ENI  K2D 0V       TF                                                                          169222103
+SUSAP KSJCK2EBRINY21FMG   040PYE  K2D 0VE      TF                                                                          169232103
+SUSAP KSJCK2EBRINY21RBL   010RBL  K2D 0V       IF                                             18000                        169241610
+SUSAP KSJCK2EBRINY21RBL   020ENI  K2D 0V       TF                                                                          169252103
+SUSAP KSJCK2EBRINY21RBL   030PYE  K2D 0VE      TF                                                                          169262103
+SUSAP KSJCK2EBRINY23RW12R 010PYE  K2D 0V       IF                                             18000                        169272103
+SUSAP KSJCK2EBRINY23RW12R 020FATHMK2PC0E       TF                                                                          169282103
+SUSAP KSJCK2EBRINY23RW12R 030BRINYP EA0E       TF                                                                          169292103
+SUSAP KSJCK2EBRINY23RW12R 040OSI  K2D 0VE      TF                                                                          169302103
+SUSAP KSJCK2EBRIXX44CHBLI 010CHBLIK2EA0E       IF                                 + FL280     18000                        169312403
+SUSAP KSJCK2EBRIXX44CHBLI 020GRIJOK2EA0E       TF                                 + FL220          280                     169322403
+SUSAP KSJCK2EBRIXX44CHBLI 030ZINNNK2EA0E       TF                                                                          169332403
+SUSAP KSJCK2EBRIXX44CHBLI 040CORKKK2EA0E       TF                                 + 14000                                  169342403
+SUSAP KSJCK2EBRIXX44CHBLI 050BRIXXK2EA0EE      TF                                   12000          250                     169352403
+SUSAP KSJCK2EBRIXX45ALL   010BRIXXK2EA0E       IF                                   12000     18000250                     169362403
+SUSAP KSJCK2EBRIXX45ALL   020LUYTAK2EA0EY      TF                                   12000                                  169372403
+SUSAP KSJCK2EBRIXX45ALL   030LUYTAK2EA0EE      FM NFG K2      303933761400    D                                            169382403
+SUSAP KSJCK2EFRLON24GGULF 010GGULFK2PC0E       IF                                 + FL280     18000                        169391608
+SUSAP KSJCK2EFRLON24GGULF 020FRLONK2PC0EE      TF                                 + 13000          280                     169401608
+SUSAP KSJCK2EFRLON25ALL   010FRLONK2PC0E       IF                                 + 13000     18000280                     169411608
+SUSAP KSJCK2EFRLON25ALL   020STLERK2EA0E       TF                                   12000          250                     169421608
+SUSAP KSJCK2EFRLON25ALL   030MNTNAK2PC0E       TF                                                                          169431608
+SUSAP KSJCK2EFRLON25ALL   040MISSSK2PC0E       TF                                   07000                                  169441608
+SUSAP KSJCK2EFRLON25ALL   050PPEGSK2PC0EY      TF                                   05500          210                     169451608
+SUSAP KSJCK2EFRLON25ALL   060PPEGSK2PC0EE      FM PSP K2      295135551400    D                                            169461608
+SUSAP KSJCK2EPYE3  1ENI   010ENI  K2D 0V       IF                                             18000                        169471707
+SUSAP KSJCK2EPYE3  1ENI   020PYE  K2D 0VE      TF                                                                          169482102
+SUSAP KSJCK2EPYE3  1SAC   010SAC  K2D 0V       IF                                             18000                        169491707
+SUSAP KSJCK2EPYE3  1SAC   020POPESK2EA0E       TF                                                                          169501707
+SUSAP KSJCK2EPYE3  1SAC   030PYE  K2D 0VE      TF                                                                          169512102
+SUSAP KSJCK2EPYE3  2ALL   010PYE  K2D 0V       IF                                             18000                        169522102
+SUSAP KSJCK2EPYE3  2ALL   020STINSK2EA0E       TF                                                                          169532102
+SUSAP KSJCK2EPYE3  2ALL   030HADLYK2EA0E       TF                                                                          169541707
+SUSAP KSJCK2EPYE3  2ALL   040OSI  K2D 0VE      TF                                                                          169551707
+SUSAP KSJCK2ERAZRR54FAANG 010FAANGK2EA0E       IF                                             18000                        169562207
+SUSAP KSJCK2ERAZRR54FAANG 020STUBLK2PC0EE      TF                                 B FL270FL240     280                     169572207
+SUSAP KSJCK2ERAZRR54KNGRY 010KNGRYK2PC0E       IF                                             18000                        169582207
+SUSAP KSJCK2ERAZRR54KNGRY 020GYLETK2PC0E       TF                                                                          169592207
+SUSAP KSJCK2ERAZRR54KNGRY 030STUBLK2PC0EE      TF                                 B FL270FL240     280                     169602207
+SUSAP KSJCK2ERAZRR54MDOWS 010MDOWSK2PC0E       IF                                             18000                        169612207
+SUSAP KSJCK2ERAZRR54MDOWS 020STSHHK2PC0E       TF                                                                          169622207
+SUSAP KSJCK2ERAZRR54MDOWS 030STUBLK2PC0EE      TF                                 B FL270FL240     280                     169632207
+SUSAP KSJCK2ERAZRR54RUSME 010RUSMEK2EA0E       IF                                             18000                        169642207
+SUSAP KSJCK2ERAZRR54RUSME 020CANDAK2PC0E       TF                                                                          169652207
+SUSAP KSJCK2ERAZRR54RUSME 030STUBLK2PC0EE      TF                                 B FL270FL240     280                     169662207
+SUSAP KSJCK2ERAZRR55      010STUBLK2PC0E       IF                                 B FL270FL24018000                        169672207
+SUSAP KSJCK2ERAZRR55      020RAZRRK2PC0E       TF                                 B FL220FL200                             169682207
+SUSAP KSJCK2ERAZRR55      030OUCHHK2PC0E       TF                                 B FL19016000                             169692207
+SUSAP KSJCK2ERAZRR55      040NIKKTK2PC0EE      TF                                 B 1400010000                             169702207
+SUSAP KSJCK2ERAZRR56RW12B 010NIKKTK2PC0E       IF                                 B 140001000018000                        169712207
+SUSAP KSJCK2ERAZRR56RW12B 020GOTEEK2PC0E       TF                                 B 1200010000                             169722207
+SUSAP KSJCK2ERAZRR56RW12B 030SHIKKK2PC0E       TF                                                                          169732207
+SUSAP KSJCK2ERAZRR56RW12B 040TRCOTK2PC0E       TF                                 + 09000          240                     169742207
+SUSAP KSJCK2ERAZRR56RW12B 050GGUGLK2PC0E       TF                                 B 0800007000                             169752207
+SUSAP KSJCK2ERAZRR56RW12B 060GAARYK2PC0E       TF                                 + 05800                                  169762207
+SUSAP KSJCK2ERAZRR56RW12B 070EDMNDK2PC0E       TF                                 + 05600                                  169772207
+SUSAP KSJCK2ERAZRR56RW12B 080JESENK2PC0E       TF                                 + 04100                                  169782207
+SUSAP KSJCK2ERAZRR56RW12B 090HITIRK2PC0EY      TF                                   04000                                  169792207
+SUSAP KSJCK2ERAZRR56RW12B 100HITIRK2PC0EE      FM BAM K2      219430733055    D                                            169802207
+SUSAP KSJCK2ERAZRR56RW30B 010NIKKTK2PC0E       IF                                 B 140001000018000                        169812207
+SUSAP KSJCK2ERAZRR56RW30B 020SEKKOK2PC0E       TF                                 B 1000008000     250                     169822207
+SUSAP KSJCK2ERAZRR56RW30B 030SCOPRK2PC0E       TF                                 B 0700005000                             169832207
+SUSAP KSJCK2ERAZRR56RW30B 040KLIDEK2PC0EE      TF                                 + 04000          230                     169842207
+SUSAP KSJCK2ERISTI14ORRCA 010ORRCAK2EA0E       IF                                             18000                        169851707
+SUSAP KSJCK2ERISTI14ORRCA 020HAIREK2EA0E       TF                                                                          169861707
+SUSAP KSJCK2ERISTI14ORRCA 030BYRONK2EA0E       TF                                                                          169871707
+SUSAP KSJCK2ERISTI14ORRCA 040TRACYK2EA0E       TF                                                                          169881707
+SUSAP KSJCK2ERISTI14ORRCA 050MOVDDK2EA0E       TF                                                                          169891707
+SUSAP KSJCK2ERISTI14ORRCA 060RISTIK2EA0EE      TF                                                                          169901707
+SUSAP KSJCK2ERISTI14TIPRE 010TIPREK2EA0E       IF                                             18000                        169911707
+SUSAP KSJCK2ERISTI14TIPRE 020OOWENK2EA0E       TF                                                                          169921707
+SUSAP KSJCK2ERISTI14TIPRE 030MOVDDK2EA0E       TF                                                                          169931707
+SUSAP KSJCK2ERISTI14TIPRE 040RISTIK2EA0EE      TF                                                                          169941707
+SUSAP KSJCK2ERISTI15ALL   010RISTIK2EA0E       IF                                             18000                        169951707
+SUSAP KSJCK2ERISTI15ALL   020CEDESK2EA0EY      TF                                   09000                                  169961707
+SUSAP KSJCK2ERISTI15ALL   030KSJC K2PA0AE      VM                     2200                                                 169971707
+SUSAP KSJCK2EROBIE51AVE   010AVE  K2D 0V       IF                                             18000                        169981909
+SUSAP KSJCK2EROBIE51AVE   020ROBIEK2EA0EE      TF                                                                          169991909
+SUSAP KSJCK2EROBIE51RZS   010RZS  K2D 0V       IF                                             18000                        170001909
+SUSAP KSJCK2EROBIE51RZS   020ROBIEK2EA0EE      TF                                                                          170011909
+SUSAP KSJCK2EROBIE52ALL   010ROBIEK2EA0E       IF                                             18000                        170021909
+SUSAP KSJCK2EROBIE52ALL   020GOALIK2EA0E       TF                                                                          170031909
+SUSAP KSJCK2EROBIE52ALL   030SNS  K2D 0V       TF                                                                          170041909
+SUSAP KSJCK2EROBIE52ALL   040GILROK2EA0EE      TF                                                                          170051909
+SUSAP KSJCK2ESILCN64TROXX 010TROXXK2PC0E       IF                                 B FL320FL26018000280                     170062207
+SUSAP KSJCK2ESILCN64TROXX 020SILCNK2PC0EE      TF                                 + FL200                                  170072207
+SUSAP KSJCK2ESILCN65      010SILCNK2PC0E       IF                                 + FL200     18000                        170082207
+SUSAP KSJCK2ESILCN65      020VLLEYK2PC0EE      TF                                 B FL19015000                             170092207
+SUSAP KSJCK2ESILCN66RW12B 010VLLEYK2PC0E       IF                                 B FL1901500018000                        170102207
+SUSAP KSJCK2ESILCN66RW12B 020BAXBEK2PC0E       TF                                 + 12000                                  170112207
+SUSAP KSJCK2ESILCN66RW12B 030APLLEK2PC0E       TF                                 + 09000          240                     170122207
+SUSAP KSJCK2ESILCN66RW12B 040GGUGLK2PC0E       TF                                 B 0800007000                             170132207
+SUSAP KSJCK2ESILCN66RW12B 050GAARYK2PC0E       TF                                 + 05800                                  170142207
+SUSAP KSJCK2ESILCN66RW12B 060EDMNDK2PC0E       TF                                 + 05600                                  170152207
+SUSAP KSJCK2ESILCN66RW12B 070JESENK2PC0E       TF                                 + 04100                                  170162207
+SUSAP KSJCK2ESILCN66RW12B 080HITIRK2PC0EY      TF                                   04000                                  170172207
+SUSAP KSJCK2ESILCN66RW12B 090HITIRK2PC0EE      FM BAM K2      219430733055    D                                            170182207
+SUSAP KSJCK2ESILCN66RW30B 010VLLEYK2PC0E       IF                                 B FL1901500018000                        170192207
+SUSAP KSJCK2ESILCN66RW30B 020GUUYYK2PC0E       TF                                 + 11000                                  170202207
+SUSAP KSJCK2ESILCN66RW30B 030WLSSNK2PC0E       TF                                 B 1100008000     250                     170212207
+SUSAP KSJCK2ESILCN66RW30B 040GSTEEK2PC0E       TF                                 B 0720004200                             170222207
+SUSAP KSJCK2ESILCN66RW30B 050KLIDEK2PC0EE      TF                                 + 04000          230                     170232207
+SUSAP KSJCK2FH12LZ AARTAQ 010ARTAQK2PC0E  A    IF                                             18000                 A FS   170241503
+SUSAP KSJCK2FH12LZ AARTAQ 020OMSEEK2PC0E  B 010TF                                 + 01800                           A FS   170251503
+SUSAP KSJCK2FH12LZ AARTAQ 030HINIRK2PC0EE   010TF                                 + 01100                           A FS   170261503
+SUSAP KSJCK2FH12LZ AHITIR 010HITIRK2PC0E  B    IF                                   04000     18000                 A FS   170271509
+SUSAP KSJCK2FH12LZ AHITIR 020ZORSAK2PC0E    010TF                                 + 03000          210              A-FS   170281509
+SUSAP KSJCK2FH12LZ AHITIR 030NIBUYK2PC0E   R010RF       0022303058    06090045    + 01800                 CFBLQ K2PCA FS   170292203
+SUSAP KSJCK2FH12LZ AHITIR 040HINIRK2PC0EE  R010RF       0022200609    12580025    + 01100                 CFBLF K2PCA FS   170301608
+SUSAP KSJCK2FH12LZ AWADVA 010WADVAK2PC0E  A    IF                                 + 04500     18000                 A FS   170311509
+SUSAP KSJCK2FH12LZ AWADVA 020RERAEK2PC0E  B 010TF                                 + 03500                           A FS   170321509
+SUSAP KSJCK2FH12LZ AWADVA 030NIBUYK2PC0E    010TF                                 + 01800          210              A-FS   170331509
+SUSAP KSJCK2FH12LZ AWADVA 040HINIRK2PC0EE  R010RF       0022200609    12580025    + 01100                 CFBLF K2PCA FS   170341608
+SUSAP KSJCK2FH12LZ H      020HINIRK2PC1E  F    IF                                 + 01100     18000       RW12L K2PGA FS   170351310
+SUSAP KSJCK2FH12LZ H      020HINIRK2PC2W                                                A031A182                      FS   170361503
+SUSAP KSJCK2FH12LZ H      030RW12LK2PG0GY M 031TF                                   00095             -300          A FS   170371503
+SUSAP KSJCK2FH12LZ H      040COKORK2PC0E M  010TF                                                                   A FS   170381503
+SUSAP KSJCK2FH12LZ H      050GILROK2EA0EY   010TF                                 + 04600                           A FS   170391503
+SUSAP KSJCK2FH12LZ H      060GILROK2EA0EE  L   HM                     12450050    + 04600                           A FS   170401608
+SUSAP KSJCK2FH12RZ AARTAQ 010ARTAQK2PC0E  A    IF                                             18000                 A FS   170411503
+SUSAP KSJCK2FH12RZ AARTAQ 020SUNNEK2EA0E  B 010TF                                 + 01800                           A FS   170422106
+SUSAP KSJCK2FH12RZ AARTAQ 030FOXAGK2PC0EE   010TF                                 + 01100                           A FS   170431503
+SUSAP KSJCK2FH12RZ AHITIR 010HITIRK2PC0E  B    IF                                   04000     18000                 A FS   170441509
+SUSAP KSJCK2FH12RZ AHITIR 020ZORSAK2PC0E    010TF                                 + 03000          210              A-FS   170451509
+SUSAP KSJCK2FH12RZ AHITIR 030PUAKOK2PC0E   R010RF       0021703058    06170044    + 01800                 CFBNV K2PCA FS   170462203
+SUSAP KSJCK2FH12RZ AHITIR 040FOXAGK2PC0EE  R010RF       0021700617    12580024    + 01100                 CFBNV K2PCA FS   170472203
+SUSAP KSJCK2FH12RZ AWADVA 010WADVAK2PC0E  A    IF                                 + 04500     18000                 A FS   170481509
+SUSAP KSJCK2FH12RZ AWADVA 020RERAEK2PC0E  B 010TF                                 + 03500                           A FS   170491509
+SUSAP KSJCK2FH12RZ AWADVA 030PUAKOK2PC0E    010TF                                 + 01800          210              A-FS   170501509
+SUSAP KSJCK2FH12RZ AWADVA 040FOXAGK2PC0EE  R010RF       0021700617    12580024    + 01100                 CFBNV K2PCA FS   170512203
+SUSAP KSJCK2FH12RZ H      020FOXAGK2PC1E  F    IF                                 + 01100     18000       RW12R K2PGA FS   170521310
+SUSAP KSJCK2FH12RZ H      020FOXAGK2PC2W                                                A031A152                      FS   170531503
+SUSAP KSJCK2FH12RZ H      030RW12RK2PG0GY M 031TF                                   00096             -300          A FS   170541503
+SUSAP KSJCK2FH12RZ H      040HOSBOK2PC0E M  010TF                                                                   A FS   170551503
+SUSAP KSJCK2FH12RZ H      050GILROK2EA0EY   010TF                                 + 04600                           A FS   170561503
+SUSAP KSJCK2FH12RZ H      060GILROK2EA0EE  L   HM                     12450050    + 04600                           A FS   170571608
+SUSAP KSJCK2FH30LZ ABORED 010BOREDK2EA0E  A    IF                                 + 05200     18000                 A FS   170582112
+SUSAP KSJCK2FH30LZ ABORED 020SWIGSK2PC0E    010TF                                 + 05200                           A FS   170592112
+SUSAP KSJCK2FH30LZ ABORED 030KLIDEK2PC0E    010TF                                 + 04000          230              A-FS   170602112
+SUSAP KSJCK2FH30LZ ABORED 040ZULUPK2PC0E  B 010TF                                 + 03600                           A FS   170612112
+SUSAP KSJCK2FH30LZ ABORED 050HOSBOK2PC0E    010TF                                 + 02600                           A FS   170622112
+SUSAP KSJCK2FH30LZ ABORED 060WOXARK2PC0EE   071TF                                 + 01600                           A FS   170632112
+SUSAP KSJCK2FH30LZ AJILNA 010JILNAK2PC0E  A    IF                                   07000     18000                 A FS   170641503
+SUSAP KSJCK2FH30LZ AJILNA 020YADUTK2PC0E    010TF                                 + 05300          210              A-FS   170652106
+SUSAP KSJCK2FH30LZ AJILNA 030HEPAPK2PC0E  BL010RF       0023000935    05060017    + 04700                 CFBJT K2PCA FS   170662106
+SUSAP KSJCK2FH30LZ AJILNA 040FODPAK2PC0E    031TF                                 + 03400                           A FS   170672106
+SUSAP KSJCK2FH30LZ AJILNA 050JEGSAK2PC0E    051TF                                 + 02800          180              A-FS   170682106
+SUSAP KSJCK2FH30LZ AJILNA 060WOXARK2PC0EE  L051RF       0021000507    30590039    + 01600                 CFBKG K2PCA FS   170691608
+SUSAP KSJCK2FH30LZ AKLIDE 010KLIDEK2PC0E  A    IF                                 + 04000     18000230              A-FS   170702112
+SUSAP KSJCK2FH30LZ AKLIDE 020ZULUPK2PC0E  B 010TF                                 + 03600                           A FS   170712112
+SUSAP KSJCK2FH30LZ AKLIDE 030HOSBOK2PC0E    010TF                                 + 02600                           A FS   170722112
+SUSAP KSJCK2FH30LZ AKLIDE 040WOXARK2PC0EE   071TF                                 + 01600                           A FS   170732112
+SUSAP KSJCK2FH30LZ H      020WOXARK2PC1E  F    IF                                 + 01600     18000       RW30L K2PGA FS   170741310
+SUSAP KSJCK2FH30LZ H      020WOXARK2PC2W                                                A011A021A031                  FS   170752112
+SUSAP KSJCK2FH30LZ H      030RW30LK2PG0GY M 031TF                                   00111             -300          A FS   170761503
+SUSAP KSJCK2FH30LZ H      040ARTAQK2PC0EYM  010TF                                 + 02000                           A FS   170772106
+SUSAP KSJCK2FH30LZ H      050ARTAQK2PC0EE  R   HM                     12570040    + 02000                           A FS   170782106
+SUSAP KSJCK2FH30RZ ABORED 010BOREDK2EA0E  A    IF                                 + 05200     18000                 A FS   170792112
+SUSAP KSJCK2FH30RZ ABORED 020SWIGSK2PC0E    010TF                                 + 05200                           A FS   170802112
+SUSAP KSJCK2FH30RZ ABORED 030KLIDEK2PC0E    010TF                                 + 04000          230              A-FS   170812112
+SUSAP KSJCK2FH30RZ ABORED 040ZULUPK2PC0E  B 010TF                                 + 03600                           A FS   170822112
+SUSAP KSJCK2FH30RZ ABORED 050KIRVEK2PC0E    010TF                                 + 02600                           A FS   170832112
+SUSAP KSJCK2FH30RZ ABORED 060TUZGYK2PC0EE   071TF                                 + 01600                           A FS   170842112
+SUSAP KSJCK2FH30RZ AJILNA 010JILNAK2PC0E  A    IF                                   07000     18000                 A FS   170851503
+SUSAP KSJCK2FH30RZ AJILNA 020YADUTK2PC0E    010TF                                 + 05300          210              A-FS   170862106
+SUSAP KSJCK2FH30RZ AJILNA 030HEPAPK2PC0E  BL010RF       0023000935    05060017    + 04700                 CFBJT K2PCA FS   170872106
+SUSAP KSJCK2FH30RZ AJILNA 040FODPAK2PC0E    031TF                                 + 03400                           A FS   170882106
+SUSAP KSJCK2FH30RZ AJILNA 050SIBAEK2PC0E    051TF                                 + 02800          180              A-FS   170892106
+SUSAP KSJCK2FH30RZ AJILNA 060TUZGYK2PC0EE  L051RF       0021200507    30590039    + 01600                 CFBKP K2PCA FS   170901608
+SUSAP KSJCK2FH30RZ AKLIDE 010KLIDEK2PC0E  A    IF                                 + 04000     18000230              A-FS   170912112
+SUSAP KSJCK2FH30RZ AKLIDE 020ZULUPK2PC0E  B 010TF                                 + 03600                           A FS   170922112
+SUSAP KSJCK2FH30RZ AKLIDE 030KIRVEK2PC0E    010TF                                 + 02600                           A FS   170932112
+SUSAP KSJCK2FH30RZ AKLIDE 040TUZGYK2PC0EE   071TF                                 + 01600                           A FS   170942112
+SUSAP KSJCK2FH30RZ H      020TUZGYK2PC1E  F    IF                                 + 01600     18000       RW30R K2PGA FS   170951310
+SUSAP KSJCK2FH30RZ H      020TUZGYK2PC2W                                                A031A021A112                  FS   170961310
+SUSAP KSJCK2FH30RZ H      030RW30RK2PG0GY M 031TF                                   00110             -300          A FS   170971503
+SUSAP KSJCK2FH30RZ H      040         0  M     CA                     3059        + 00600                           A FS   170981608
+SUSAP KSJCK2FH30RZ H      050ARTAQK2PC0EY   010DF                                 + 02000                           A FS   170992106
+SUSAP KSJCK2FH30RZ H      060ARTAQK2PC0EE  R   HM                     12570040    + 02000                           A FS   171002106
+SUSAP KSJCK2FI12R  AHITIR 010HITIRK2PC0E  A    IF                                   04000     18000                 0 PS   171012603
+SUSAP KSJCK2FI12R  AHITIR 020ZUCKRK2PC0E    010TF                                 + 03000          230              0-PS   171022603
+SUSAP KSJCK2FI12R  AHITIR 030METTAK2PC0E    010TF                                 + 02500                           0 PS   171032603
+SUSAP KSJCK2FI12R  AHITIR 040NTFLXK2PC0E    010TF                                 + 02100          210              0-PS   171042603
+SUSAP KSJCK2FI12R  AHITIR 050SNDARK2PC0E    010TF                                 + 01800                           0 PS   171052603
+SUSAP KSJCK2FI12R  AHITIR 060HOOLUK2PC0EE B 010TF ISLVK2      30580096        PI    01800          200              0-PS   171062603
+SUSAP KSJCK2FI12R  I      010HOOLUK2PC0E  I    IF ISLVK2      30580096        PI  I 018000180018000200              0-DS   171072603
+SUSAP KSJCK2FI12R  I      020SUNNEK2EA0E  F    CF ISLVK2      3058007012600026PI  H 0180001800            SJC   K2D 0 DS   171082603
+SUSAP KSJCK2FI12R  I      030RW12RK2PG0GY M    CF ISLVK2      3058001612600054PI    00096             -300          0 DS   171091608
+SUSAP KSJCK2FI12R  I      040         0  M     CA                     1258        + 00500                           0 DS   171101608
+SUSAP KSJCK2FI12R  I      050GILROK2EA0EY      CF SJC K2      1214026712140260D   + 04000                           0 DS   171111608
+SUSAP KSJCK2FI12R  I      060GILROK2EA0EE  L   HM                     3014T010    + 04000                           0 DS   171121608
+SUSAP KSJCK2FI30L  ABORED 010BOREDK2EA0E  A    IF                                             18000                 0 PS   171132010
+SUSAP KSJCK2FI30L  ABORED 020SWIGSK2PC0E    010TF                                 + 05200                           0 PS   171142010
+SUSAP KSJCK2FI30L  ABORED 030KLIDEK2PC0E    010TF                                 + 04000          230              0-PS   171152010
+SUSAP KSJCK2FI30L  ABORED 040ZULUPK2PC0EE B    CF ISJCK2      1258013430580033PI  + 03600                           0 PS   171162010
+SUSAP KSJCK2FI30L  AKLIDE 010KLIDEK2PC0E  A    IF                                 + 04000     18000230              0-DS   171172010
+SUSAP KSJCK2FI30L  AKLIDE 020ZULUPK2PC0EE B    CF ISJCK2      1258013430580033PI  + 03600                           0 DS   171182010
+SUSAP KSJCK2FI30L  I      010ZULUPK2PC0E  I    IF ISJCK2      12580134        PI  J 036000270018000                 0 DS   171192010
+SUSAP KSJCK2FI30L  I      011JENESK2PC0E       CF ISJCK2      1258011630600018PI  + 03200                           0 DS   171202010
+SUSAP KSJCK2FI30L  I      020HIVAKK2PC0E  F    CF ISJCK2      1258009630600020PI  H 0270002700            SJC   K2D 0 DS   171212010
+SUSAP KSJCK2FI30L  I      030RW30LK2PG0GY M    CF ISJCK2      1258001430600081PI    00111             -300          0 DS   171221608
+SUSAP KSJCK2FI30L  I      040ARTAQK2PC0EYM     CF SJC K2      3033007030330085D   + 01900                           0 DS   171232010
+SUSAP KSJCK2FI30L  I      050ARTAQK2PC0EE  R   HM                     1257T010    + 01900                           0 DS   171242010
+SUSAP KSJCK2FL12R  AHITIR 010HITIRK2PC0E  A    IF                                   04000     18000                 0 PS   171252603
+SUSAP KSJCK2FL12R  AHITIR 020ZUCKRK2PC0E    010TF                                 + 03000          230              0-PS   171262603
+SUSAP KSJCK2FL12R  AHITIR 030METTAK2PC0E    010TF                                 + 02500                           0 PS   171272603
+SUSAP KSJCK2FL12R  AHITIR 040NTFLXK2PC0E    010TF                                 + 02100          210              0-PS   171282603
+SUSAP KSJCK2FL12R  AHITIR 050SNDARK2PC0E    010TF                                 + 01800                           0 PS   171292603
+SUSAP KSJCK2FL12R  AHITIR 060HOOLUK2PC0EE B 010TF ISLVK2      30580096        PI    01800          200              0-PS   171302603
+SUSAP KSJCK2FL12R  L      010HOOLUK2PC0E  I    IF ISLVK2      30580096        PI    01800     18000200              0-DS   171312603
+SUSAP KSJCK2FL12R  L      020SUNNEK2EA0E  F    CF ISLVK2      3058007012600026PI  + 01800                 SJC   K2D 0 DS   171322603
+SUSAP KSJCK2FL12R  L      030RW12RK2PG0GY M    CF ISLVK2      3058001612600054PI    00096             -300          0 DS   171332603
+SUSAP KSJCK2FL12R  L      040         0  M     CA                     1258        + 00500                           0 DS   171341608
+SUSAP KSJCK2FL12R  L      050GILROK2EA0EY      CF SJC K2      1214026712140260D   + 04000                           0 DS   171351503
+SUSAP KSJCK2FL12R  L      060GILROK2EA0EE  L   HM                     3014T010    + 04000                           0 DS   171361503
+SUSAP KSJCK2FL30L  ABORED 010BOREDK2EA0E  A    IF                                             18000                 0 PS   171372010
+SUSAP KSJCK2FL30L  ABORED 020SWIGSK2PC0E    010TF                                 + 05200                           0 PS   171382010
+SUSAP KSJCK2FL30L  ABORED 030KLIDEK2PC0E  B 010TF                                 + 04000          230              0-PS   171392010
+SUSAP KSJCK2FL30L  ABORED 040ZULUPK2PC0EE B    CF ISJCK2      1258013430580033PI  + 03600                           0 PS   171402010
+SUSAP KSJCK2FL30L  AKLIDE 010KLIDEK2PC0E  A    IF                                 + 04000     18000230              0-DS   171412010
+SUSAP KSJCK2FL30L  AKLIDE 020ZULUPK2PC0EE B    CF ISJCK2      1258013430580033PI  + 03600                           0 DS   171422010
+SUSAP KSJCK2FL30L  L      010ZULUPK2PC0E  I    IF ISJCK2      12580134        PI  + 03600     18000                 0 DS   171432010
+SUSAP KSJCK2FL30L  L      011JENESK2PC0E       CF ISJCK2      1258011630600018PI  + 03200                           0 DS   171442010
+SUSAP KSJCK2FL30L  L      020HIVAKK2PC0E  F    CF ISJCK2      1258009630600020PI  + 02700                 SJC   K2D 0 DS   171451608
+SUSAP KSJCK2FL30L  L      021FORULK2PC0E S     CF ISJCK2      1258004230600053PI  + 01000             -300          0 DS   171462010
+SUSAP KSJCK2FL30L  L      030RW30LK2PG0GY M    CF ISJCK2      1258001430600028PI    00111             -300          0 DS   171472010
+SUSAP KSJCK2FL30L  L      040ARTAQK2PC0EYM     CF SJC K2      3033007030330085D   + 01900                           0 DS   171482010
+SUSAP KSJCK2FL30L  L      050ARTAQK2PC0EE  R   HM                     1257T010    + 01900                           0 DS   171492010
+SUSAP KSJCK2FR12LY R      010ROSTEK2PC0E  I    IF                                 + 02300     18000                 A JS   171501608
+SUSAP KSJCK2FR12LY R      020OMSEEK2PC1E  F 010TF                                 + 01800                 RW12L K2PGA JS   171512112
+SUSAP KSJCK2FR12LY R      020OMSEEK2PC2WALPV       ALNAV/VNAV ALNAV                                                   JS   171521310
+SUSAP KSJCK2FR12LY R      030RW12LK2PG0GY M 031TF                                   00095             -300          A JS   171532112
+SUSAP KSJCK2FR12LY R      040         0  M     CA                     1258        + 00294                           A JS   171541608
+SUSAP KSJCK2FR12LY R      050COKORK2PC0E    010DF                                                                   A JS   171552112
+SUSAP KSJCK2FR12LY R      060GILROK2EA0EY   010TF                                 + 04600                           A JS   171562112
+SUSAP KSJCK2FR12LY R      070GILROK2EA0EE  L   HM                     30440040    + 04600                           A JS   171571608
+SUSAP KSJCK2FR12RY R      010ARTAQK2PC0E  I    IF                                 + 01800     18000                 A JS   171581608
+SUSAP KSJCK2FR12RY R      020SUNNEK2EA1E  F 010TF                                 + 01800                 RW12R K2PGA JS   171592112
+SUSAP KSJCK2FR12RY R      020SUNNEK2EA2WALPV       ALNAV/VNAV ALNAV                                                   JS   171602106
+SUSAP KSJCK2FR12RY R      030RW12RK2PG0GY M 031TF                                   00096             -300          A JS   171612112
+SUSAP KSJCK2FR12RY R      040         0  M     CA                     1258        + 00246                           A JS   171621608
+SUSAP KSJCK2FR12RY R      050HIVAKK2PC0E    010DF                                                                   A JS   171632112
+SUSAP KSJCK2FR12RY R      060GILROK2EA0EY   010TF                                 + 04600                           A JS   171642112
+SUSAP KSJCK2FR12RY R      070GILROK2EA0EE  L   HM                     12450050    + 04600                           A JS   171651608
+SUSAP KSJCK2FR30LY ABORED 010BOREDK2EA0E  A    IF                                             18000                 A JS   171661504
+SUSAP KSJCK2FR30LY ABORED 020SWIGSK2PC0E    010TF                                 + 05200                           A JS   171672112
+SUSAP KSJCK2FR30LY ABORED 030KLIDEK2PC0E    010TF                                 + 04000          230              A-JS   171682302
+SUSAP KSJCK2FR30LY ABORED 040ZULUPK2PC0EE B 010TF                                 + 02800                           A JS   171692112
+SUSAP KSJCK2FR30LY AKLIDE 010KLIDEK2PC0E  A    IF                                 + 04000     18000230              A-JS   171702302
+SUSAP KSJCK2FR30LY AKLIDE 020ZULUPK2PC0EE B 010TF                                 + 02800                           A JS   171712112
+SUSAP KSJCK2FR30LY R      010ZULUPK2PC0E  I    IF                                 + 02800     18000                 A JS   171722112
+SUSAP KSJCK2FR30LY R      020HIVAKK2PC1E  F 010TF                                 + 02600                 RW30L K2PGA JS   171732112
+SUSAP KSJCK2FR30LY R      020HIVAKK2PC2WALPV       ALNAV/VNAV ALNAV                                                   JS   171741504
+SUSAP KSJCK2FR30LY R      021FORULK2PC0E S  031TF                                 V 0100001003        -300          A JS   171752112
+SUSAP KSJCK2FR30LY R      030RW30LK2PG0GY M 031TF                                   00111             -300          A JS   171762112
+SUSAP KSJCK2FR30LY R      040         0  M     CA                     3059        + 00257                           A JS   171771608
+SUSAP KSJCK2FR30LY R      050MUSSKK2PC0EY   010DF                                 + 02300                           A JS   171782112
+SUSAP KSJCK2FR30LY R      060MUSSKK2PC0EE  R   HM                     12580040    + 02300                           A JS   171792112
+SUSAP KSJCK2FR30RY ABORED 010BOREDK2EA0E  A    IF                                             18000                 A JS   171801505
+SUSAP KSJCK2FR30RY ABORED 020SWIGSK2PC0E    010TF                                 + 05200                           A JS   171812112
+SUSAP KSJCK2FR30RY ABORED 030KLIDEK2PC0E    010TF                                 + 04000          230              A-JS   171822302
+SUSAP KSJCK2FR30RY ABORED 040ZULUPK2PC0EE B 010TF                                 + 03600                           A JS   171832112
+SUSAP KSJCK2FR30RY AKLIDE 010KLIDEK2PC0E  A    IF                                 + 04000     18000230              A-JS   171842302
+SUSAP KSJCK2FR30RY AKLIDE 020ZULUPK2PC0EE B 010TF                                 + 03600                           A JS   171852112
+SUSAP KSJCK2FR30RY R      010ZULUPK2PC0E  I    IF                                 + 03600     18000                 A JS   171862112
+SUSAP KSJCK2FR30RY R      011KIRVEK2PC0E    010TF                                 + 02600                           A JS   171872112
+SUSAP KSJCK2FR30RY R      020COKORK2PC1E  F 010TF                                 + 02000                 RW30R K2PGA JS   171882112
+SUSAP KSJCK2FR30RY R      020COKORK2PC2WALPV       ALNAV/VNAV ALNAV                                                   JS   171891310
+SUSAP KSJCK2FR30RY R      021HILUDK2PC0E S  031TF                                 V 0096000970        -300          A JS   171902112
+SUSAP KSJCK2FR30RY R      030RW30RK2PG0GY M 031TF                                   00110             -300          A JS   171912112
+SUSAP KSJCK2FR30RY R      040         0  M     CA                     3059        + 00255                           A JS   171921608
+SUSAP KSJCK2FR30RY R      050MUSSKK2PC0EY   010DF                                 + 02300                           A JS   171932112
+SUSAP KSJCK2FR30RY R      060MUSSKK2PC0EE  R   HM                     12580040    + 02300                           A JS   171942112
+SUSAP KSJCK2GRW12L   0110001260 N37222026W121561398         -0021200038130757150R                                          171952607
+SUSAP KSJCK2GRW12R   0110001260 N37221578W121562058         -0021100038129758150IISLV1                                     171962607
+SUSAP KSJCK2GRW30L   0110003060 N37212246W121552213         -0015300057253754150IISJC2                                     171972010
+SUSAP KSJCK2GRW30R   0110003060 N37212701W121551560         -0015800055253755150R                                          171982607
+SUSAP KSJCK2IISJC2   011090RW30LN37222719W1215633113058N37213301W1215527880238 11090461300E01305400049                     171992607
+SUSAP KSJCK2IISLV1   011090RW12RN37210304W1215500861258N37220603W1215614590072 10600460300E01305800037                     172002501
+SUSAP KSJCK2PR12LY RW12L001Y0000W12B0N3722202515W12156139700-002110300N3721081260W12154549155106750000000570F4005006AF80EF0172011503
+SUSAP KSJCK2PR12LY RW12L002E      +00115+00115LPV       69501                                                              172021010
+SUSAP KSJCK2PR12RY RW12R001Y0000W12A0N3722157695W12156205710-002110300N3721035700W12155014375106750000000580F4003506B0170EE172031503
+SUSAP KSJCK2PR12RY RW12R002E      +00115+00115LPV       90106                                                              172041503
+SUSAP KSJCK2PR30LY RW30L001Y0000W30A0N3721224560W12155221300-001530300N3722295930W12156357285106750168000544F4003507D57DCF1172052112
+SUSAP KSJCK2PR30LY RW30L002E      +00174+00174LPV       97306                                                              172062112
+SUSAP KSJCK2PR30RY RW30R001Y0000W30B0N3721270145W12155156100-001580300N3722341505W12156292110106750168000550F400350C5C2BA25172072112
+SUSAP KSJCK2PR30RY RW30R002E      +00168+00168LPV       72901                                                              172081010
+SUSAP KSJCK2SKSJC K2PA                0   18018005625                                                                  M   172092405
+SUSAP KSJCK2SRW12LK2PG                0   18018005725                                                                  M   172101509
+SUSAP KSJCK2SRW12RK2PG                0   18018005725                                                                  M   172111509
+SUSAP KSJCK2SRW30LK2PG                0   18018005625                                                                  M   172120912
+SUSAP KSJCK2SRW30RK2PG                0   18018005625                                                                  M   172130804
+SUSAP KSJCK2SSJC  K2D                 0   18018005625                                                                  M   172141210
+SUSAD        AVE   K2011710VDHW N35384911W119584298    N35384911W119584298E0160007102     NARAVENAL                        249941703
+SUSAD        LIN   K2011480VDHW N38042849W121001389    N38042849W121001389E0170002662     NARLINDEN                        255062012
+SUSAD        OAK   K2011680VDHW N37433333W122132493    N37433333W122132493E0170000132     NAROAKLAND                       256642213
+SUSAD        PXN   K2011260VTLW N36425565W120464326    N36425565W120464326E0160020601     NARPANOCHE                       257632609
+SUSAD        SAC   K2011520VTHW N38263746W121330595    N38263746W121330595E0170000032     NARSACRAMENTO                    258111903
+SUSAD        SJC   K2011410VDLW N37222896W121564081    N37222896W121564081E0160000351     NARSAN JOSE                      258411811
+SUSAEAENRT   MOGEE K20    W   H N38201000W121232300                       E0128     NAR           MOGEE                    446542605
+SUSAEAENRT   ORRCA K20    W   H N38263717W121330584                       E0129     NAR           ORRCA                    463062605
+SUSAEAENRT   SUNOL K20    C   L N37361991W121483701                       E0127     NAR           SUNOL                    503452605
+SUSAEAENRT   SYRAH K20    W   H N37592778W121061112                       E0127     NAR           SYRAH                    504722605
+SUSAEAENRT   TIPRE K20    W   B N38122100W121020900                       E0127     NAR           TIPRE                    510242605

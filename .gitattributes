@@ -10,3 +10,7 @@ js/vendor/* -text
 # and the browser silently falls back to a system font. Same reasoning as
 # js/vendor/ above, minus the SRI hash.
 fonts/*.woff2 -text
+# A real excerpt of the FAA's CIFP: fixed-width ARINC 424, 132 characters a
+# record, most of them ending in spaces. Kept byte for byte; a record that
+# loses its trailing spaces is a record the parser rightly refuses.
+tests/fixtures/cifp-*.txt -text

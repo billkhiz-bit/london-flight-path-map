@@ -40,6 +40,8 @@ privacy.html|privacy
 terms.html|terms
 open-data/index.html|open-data/
 open-data/sky-score-boroughs.csv|open-data/sky-score-boroughs.csv
+bay-area/index.html|bay-area/
+bay-area/share.png|bay-area/share.png
 changes.html|changes
 api/index.html|api/
 score-demo/index.html|score-demo/index.html
@@ -54,6 +56,16 @@ preview.png|preview.png
 js/api-base.js|js/api-base.js
 fonts/fonts.css|fonts/fonts.css
 '
+
+# The Bay Area noise picture is named after its own content
+# (aircraft-noise-laeq-2022-<hash>.png), so that a rebuilt one cannot stay
+# pinned under an old name. Its entry is therefore DERIVED from what is on
+# disk: a line written here would name a file that stops existing at the next
+# rebuild, and the pass would report a missing local file instead of drift.
+for picture in bay-area/aircraft-noise-*.png; do
+  [ -f "$picture" ] && SURFACES="$SURFACES
+$picture|$picture"
+done
 
 DRIFTED=0
 CHECKED=0

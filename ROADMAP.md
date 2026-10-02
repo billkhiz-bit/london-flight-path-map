@@ -676,6 +676,22 @@ far sparser than Breathe London, but it would give every city a "nearest officia
 row, so London gains a layer rather than being the only city with measurements. Licence and
 update rhythm for that API: not yet read.
 
+### The Bay Area flight-path page (built 2026-10-02)
+
+Bill's rulings: the Bay Area goes live as a flight-path PAGE first (`/bay-area/`),
+covering the 50 cities of the four counties round SFO, OAK and SJC; the scored
+city on the map follows. Detail and what was learnt: EXPANSION.md.
+
+- [x] Derive the routes from the FAA's CIFP (`build_us_flight_paths.py`).
+- [x] Build and gate the page (`build_bay_area_page.py --check`, blocking).
+- [ ] Deploy: `python scripts/make.py bay-area-deploy meta-deploy`, then add
+      `/bay-area/` to `tests/e2e/accessibility.spec.js` (it scans CloudFront).
+- [ ] Post it where Bay Area residents are (Bill's to do). Never say "how often
+      planes fly over": the page says where the routes are, not their traffic.
+- [ ] Each new FAA cycle (28 days): re-fetch the record, `--write` the page,
+      re-render `share.png` if a line moved, redeploy. `--check` reds until then.
+- [ ] The scored city: stages 2-5 in EXPANSION.md.
+
 ### Open after the New York noise-layer repoint (2026-10-02)
 
 - **`US_MAP_SERVICES.flood` and `.airQuality` are read by nothing**, yet
@@ -687,8 +703,7 @@ update rhythm for that API: not yet read.
 - **The BTS decibel breaks are unverified for the 2022 edition.** The tile
   service publishes no legend and bts.gov answers 403 to a script. Read
   BTS's page in a browser and confirm 45 / 50 / 55 / 60 / 70 / 80 / 90.
-- **Deploy.** The repoint is in the source; New York's layer stays dead on the
-  live site until `python scripts/make.py web-deploy` runs.
+- ~~**Deploy.**~~ **DEPLOYED 2026-10-02 (17:24 UTC) on Bill's instruction and verified from the origin**: invalidation Completed, live `index.html` and `privacy.html` hash-equal to source, drift PASS (19 pages, 25 data files, 103 area pages), and the live New York map loads 2 tiles from `tiles.arcgis.com` under the corrected heading.
 
 ### Critical path
 

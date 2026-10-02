@@ -520,6 +520,7 @@ INDEX = """<!doctype html>
 <h1>Every area we cover</h1>
 <p class="sub">{n} boroughs across {c} city regions. Each page carries the published measurements behind that area's score.</p>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
+<p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
 {body}
 <p class="sub" style="margin-top:32px;"><a href="/">Back to the map</a> &middot; <a href="/api/">For developers</a></p>
 </main>
@@ -886,6 +887,7 @@ def sync_open_data(write: bool) -> bool:
 STATIC_URLS = [
     ('/', '1.0', 'weekly'),
     ('/open-data/', '0.7', 'monthly'),
+    ('/bay-area/', '0.8', 'monthly'),
     ('/pricing', '0.8', 'monthly'),
     ('/privacy', '0.3', 'yearly'),
     ('/api/', '0.9', 'monthly'),

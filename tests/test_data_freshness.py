@@ -77,5 +77,29 @@ def test_every_checked_row_reads_its_served_version_from_a_holder():
     assert fresh.load_defra_air_quality.PCM_YEAR
     assert fresh.build_progress8.VINTAGE
     assert fresh.build_flight_paths.AIRAC
+    assert fresh.build_us_flight_paths.RECORD.exists() and fresh.build_us_flight_paths.ZIP_URL
     assert fresh.build_city_neighbourhoods.PPD_YEARS
     assert fresh.CHECKED and all(callable(f) for _, f in fresh.CHECKED)
+
+
+def test_a_faa_outage_is_inconclusive_and_a_page_with_no_zip_is_broken(monkeypatch):
+    # An outage must raise, so main() reports INCONCLUSIVE as it does for every
+    # other row. The first version caught it and printed BROKEN "links no CIFP
+    # zip" for a timeout, which blames the page for the network.
+    import urllib.error
+
+    import pytest
+
+    def down(url):
+        raise urllib.error.URLError('timed out')
+
+    monkeypatch.setattr(fresh, 'fetch_text', down)
+    with pytest.raises(urllib.error.URLError):
+        fresh.cifp()
+
+    monkeypatch.setattr(fresh, 'fetch_text', lambda url: '<html>no links today</html>')
+    assert fresh.cifp()[2] == 'BROKEN'
+
+    link = 'https://aeronav.faa.gov/Upload_313-d/cifp/CIFP_991231.zip'
+    monkeypatch.setattr(fresh, 'fetch_text', lambda url: f'<a href="{link}">')
+    assert fresh.cifp()[1:3] == ('2099-12-31', 'NEWER')

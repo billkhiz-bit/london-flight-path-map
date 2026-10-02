@@ -239,6 +239,19 @@ check "aircraft bands == geometry"     python scripts/build_aircraft_bands.py --
 # data/flight-procedures.json and reds if either the Lambda or index.html has
 # been hand-edited away from it. Offline: the network half is --fetch.
 check "flight paths == UK AIP"         python scripts/build_flight_paths.py --check
+# Added 2026-10-02. The US sibling: data/us-flight-procedures.json, derived
+# from the FAA's CIFP, must be internally sound (every runway opposite its
+# reciprocal, measured bearing agreeing with the published magnetic one, a
+# glide angle or the reason there is none), and IDENTICAL to what its zip
+# derives whenever that gitignored zip is on disk. It feeds no holder yet -
+# New York's corridors are still hand-drawn - so this gates the record alone.
+# Offline: the network half is --fetch.
+check "US flight paths == FAA CIFP"    python scripts/build_us_flight_paths.py --check
+# The Bay Area flight-path page states, of fifty cities, which routes pass
+# overhead and how low. It is rendered from the record above, the Census
+# outlines and BTS's noise picture, and this re-renders it: a new CIFP cycle,
+# or a hand edit, reds here until --write is re-run. Offline, a few seconds.
+check "Bay Area page == its inputs"    python scripts/build_bay_area_page.py --check
 # Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
 # the box it was rendered for (2026-09-26). A transparent PNG would be marked
 # loaded and advertised under a decibel scale; a hand-edited box would slide

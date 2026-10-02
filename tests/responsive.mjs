@@ -109,6 +109,7 @@ const PAGES = [
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
   { name: 'open data', slug: 'open-data/index' },
+  { name: 'Bay Area flight paths', slug: 'bay-area/index' },
   { name: 'what changed', slug: 'changes', settle: 2500 },
   { name: 'API landing', slug: 'api/index' },
   { name: 'score demo', slug: 'score-demo/index' },

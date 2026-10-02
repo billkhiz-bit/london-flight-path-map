@@ -68,7 +68,8 @@ help:
 	@echo "    area-deploy         Sync the 99 borough pages + area/index.html (rebuild them first)"
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    open-data-deploy    Upload open-data/ (borough CSV + its page; rebuild with the area pages)"
-	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data"
+	@echo "    bay-area-deploy     Upload bay-area/ (the Bay Area flight-path page + its noise picture)"
+	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data + bay area"
 	@echo ""
 	@echo "  iOS (Codemagic-driven)"
 	@echo "    ios-trigger         git push origin master (Codemagic auto-builds)"
@@ -528,6 +529,32 @@ open-data-deploy:
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/open-data/*'
 
+.PHONY: bay-area-deploy
+bay-area-deploy:
+	# The San Francisco Bay Area flight-path page (2026-10-02) and the BTS
+	# noise picture it draws, both written by scripts/build_bay_area_page.py
+	# (--check is a blocking preflight stage).
+	#
+	# PICTURES FIRST, THEN THE PAGE. The noise picture is named after its own
+	# content (aircraft-noise-laeq-2022-<hash>.png), so a rebuilt one has a
+	# new name and the page that names it must not arrive before it does: the
+	# stations.json trap, where the page was live for a window pointing at a
+	# file the origin did not have. The content name is also what lets the
+	# picture be cached for a day although sw.js serves same-origin images
+	# cache-first and never asks again. --check refuses a superseded picture
+	# left in the folder, so this uploads exactly the two the page uses:
+	# the noise picture and share.png, its link preview
+	# (node scripts/render_bay_area_share.mjs).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp bay-area/ s3://$(S3_BUCKET)/bay-area/ \
+		--recursive --exclude "*" --include "*.png" \
+		--content-type "image/png" --cache-control "public,max-age=86400" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp bay-area/index.html \
+		s3://$(S3_BUCKET)/bay-area/index.html \
+		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/bay-area/*'
+
 .PHONY: talks-deploy
 talks-deploy:
 	# The plain-English write-ups handed out at talks (AI Tinkerers, 2026-09-22)
@@ -558,8 +585,8 @@ talks-deploy:
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: fonts-deploy data-deploy web-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy
-	@echo "Web + data + PWA + demo + prototype + area + meta deployed. Skip deeplinks-deploy until placeholders are filled."
+web-deploy-all: fonts-deploy data-deploy web-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy bay-area-deploy
+	@echo "Web + data + PWA + demo + prototype + area + meta + open data + Bay Area deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------
 # iOS (Codemagic does the heavy lifting; we just trigger and submit)
