@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sky Score homepage, version 3: ask first (mockup)</title>
+    <!--
+      MOCKUP, NOT DEPLOYED. Variant "ask first": the question and the search
+      box come before anything else, centred and large, like a search engine;
+      the map is the second screen, full width. Same working engine as v2
+      (design/hp-engine.js): the search and the map are live.
+    -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        --bg: #f6f5f1; --paper: #fff; --dark: #141414; --mid: #55554f; --line: #e2e0da; --orange: #f27d26; --orange-ink: #a85416; --water: #d9e3e8;
+        --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        --gutter: clamp(16px, 4vw, 48px);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px var(--gutter); }
+      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; text-decoration: none; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+      nav.top-nav a { font-size: 14px; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--mid); }
+      nav.top-nav a:hover { background: #ebe9e3; color: var(--dark); }
+
+      .ask { text-align: center; padding: 56px var(--gutter) 36px; }
+      .eyebrow { font: 500 12px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--mid); margin: 0 0 18px; }
+      .ask h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(38px, 6vw, 72px); line-height: 1; letter-spacing: -0.035em; margin: 0 auto 18px; max-width: 16ch; text-wrap: balance; }
+      .ask p.lead { margin: 0 auto 28px; color: var(--mid); font-size: 18px; max-width: 52ch; }
+      .panel { max-width: 680px; margin: 0 auto; text-align: left; }
+      form.check { display: flex; gap: 8px; background: var(--paper); padding: 8px; border-radius: 999px; box-shadow: 0 12px 34px rgba(20, 20, 20, 0.1); }
+      form.check input { flex: 1; min-width: 0; font: 500 19px var(--font-body); padding: 12px 18px; border: 0; border-radius: 999px; background: transparent; color: var(--dark); }
+      form.check input::placeholder { color: #8a8985; }
+      form.check button { font: 600 16px var(--font-body); padding: 12px 24px; border: 0; border-radius: 999px; background: var(--orange); color: var(--dark); cursor: pointer; }
+      form.check button:hover { background: #ff9440; }
+      .try { margin: 14px 0 0; font-size: 13px; color: var(--mid); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: center; }
+      .try button { font: 500 13px var(--font-mono); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; color: var(--dark); }
+      .try button:hover { border-color: var(--dark); }
+      .status { margin: 10px 0 0; font-size: 14px; color: var(--mid); min-height: 1.4em; text-align: center; }
+      .answer { display: none; margin: 18px auto 0; background: var(--paper); border-radius: 16px; padding: 20px 22px; box-shadow: 0 8px 24px rgba(20, 20, 20, 0.06); }
+      .answer.is-open { display: block; }
+      .answer h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0 0 2px; }
+      .answer .where { font-size: 13px; color: var(--mid); margin: 0 0 12px; }
+      .rows { display: grid; gap: 9px; }
+      .row { display: grid; grid-template-columns: 124px 1fr 128px; gap: 10px; align-items: center; font-size: 13px; }
+      .row .bar { height: 10px; border-radius: 5px; background: #ebe9e3; position: relative; overflow: hidden; }
+      .row .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--orange); border-radius: 5px; }
+      .row .bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--dark); }
+      .row .val { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+      .row .val small { color: var(--mid); font-size: 11px; display: block; white-space: normal; }
+      .answer .more { margin: 12px 0 0; font-size: 14px; }
+      .answer .more a { color: var(--orange-ink); font-weight: 600; }
+
+      .mapband { position: relative; margin: 0 var(--gutter); height: min(64vh, 680px); min-height: 380px; border-radius: 20px; overflow: hidden; background: var(--water); }
+      .mapband svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .mapband svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; cursor: pointer; }
+      .mapband svg .boro:hover, .mapband svg .boro.is-selected { fill: #ffe6cf; }
+      .mapband svg .final { stroke: #141414; stroke-width: 1.8; }
+      .mapband svg .ap { font: 700 12px var(--font-mono); fill: #141414; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+      .mapband svg .pin { fill: var(--orange); stroke: #141414; stroke-width: 1.5; }
+      .mapband svg .pin-ring { fill: none; stroke: var(--orange); stroke-width: 2; opacity: 0.8; }
+      .chips { position: absolute; left: 20px; bottom: 18px; display: flex; gap: 6px; flex-wrap: wrap; max-width: calc(100% - 40px); }
+      .chips button, .chips a { font: 500 13px var(--font-body); padding: 7px 12px; border-radius: 999px; border: 1px solid transparent; background: rgba(255, 255, 255, 0.92); color: var(--dark); cursor: pointer; text-decoration: none; }
+      .chips button[aria-pressed='true'] { background: var(--dark); color: #fff; }
+      .chips a { border-color: var(--dark); }
+      .legend { position: absolute; right: 20px; top: 16px; font-size: 12px; color: var(--mid); background: rgba(255, 255, 255, 0.92); padding: 8px 12px; border-radius: 10px; display: flex; gap: 14px; align-items: center; }
+      .legend i { display: inline-block; width: 22px; height: 0; border-top: 2px solid #141414; margin-right: 6px; vertical-align: middle; }
+      .legend .ramp { display: inline-flex; margin-right: 6px; vertical-align: middle; }
+      .legend .ramp b { width: 9px; height: 10px; display: block; }
+      .maptitle { position: absolute; left: 20px; top: 16px; font: 600 14px var(--font-body); background: rgba(255, 255, 255, 0.92); padding: 8px 12px; border-radius: 10px; }
+      .tip { position: absolute; pointer-events: none; background: var(--dark); color: #fff; font-size: 13px; padding: 8px 10px; border-radius: 8px; display: none; max-width: 260px; line-height: 1.35; }
+      .tip b { display: block; font-size: 14px; }
+
+      section.cards { padding: 56px var(--gutter) 8px; }
+      section.cards h2, section.who h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.8vw, 34px); letter-spacing: -0.02em; margin: 0 0 20px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+      .card { background: var(--paper); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px; }
+      .card h3 { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 0; }
+      .card p { margin: 0; color: var(--mid); }
+      .card a.go { margin-top: auto; align-self: flex-start; font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
+      section.who { padding: 40px var(--gutter) 56px; }
+      section.who p { margin: 0; max-width: 80ch; font-size: 17px; color: var(--mid); }
+      section.who p b { color: var(--dark); font-weight: 600; }
+      footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer a { color: var(--mid); }
+      .mock { position: fixed; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
+      @media (max-width: 760px) {
+        .ask { padding-top: 32px; }
+        form.check { border-radius: 16px; flex-direction: column; }
+        form.check input, form.check button { border-radius: 12px; }
+        .row { grid-template-columns: 96px 1fr 100px; }
+        .mapband { margin: 0 12px; height: 56vh; }
+        .legend { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <span class="mock" aria-hidden="true">Mockup v3 - not deployed</span>
+    <header class="top">
+      <a class="brand" href="/">Sky Score</a>
+      <nav class="top-nav" aria-label="Site"><a href="/">Map</a><a href="#reports">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a><a href="/bay-area/">Bay Area</a></nav>
+    </header>
+    <main>
+      <section class="ask">
+        <p class="eyebrow">Aircraft noise, air and flood risk, by postcode</p>
+        <h1>How loud are the planes where you want to live?</h1>
+        <p class="lead">The official noise and air figures for any street, with the flight routes that pass it and the public body behind every number.</p>
+        <div class="panel">
+          <form class="check" id="check">
+            <label for="pc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Postcode</label>
+            <input id="pc" name="pc" placeholder="Type a postcode" autocomplete="postal-code" />
+            <button type="submit">Check</button>
+          </form>
+          <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="E16 2PX">E16 2PX</button></p>
+          <p class="status" id="status" aria-live="polite"></p>
+          <div class="answer" id="answer">
+            <h2 id="ans-title"></h2>
+            <p class="where" id="ans-where"></p>
+            <div class="rows" id="ans-rows"></div>
+            <p class="more"><a id="ans-link" href="/">See the full picture on the map</a></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mapband" aria-label="Map">
+        <svg id="map" role="img" aria-label="Map of the selected city with its boroughs, airports and published approach lines"></svg>
+        <div class="tip" id="tip" aria-hidden="true"></div>
+        <div class="maptitle">Every city we cover, with its flight paths</div>
+        <div class="legend" aria-hidden="true"><span><i></i>Published approach</span><span><span class="ramp" id="ramp"></span>Aircraft noise, quieter to louder</span></div>
+        <div class="chips" id="chips" role="group" aria-label="Choose a city"></div>
+      </section>
+
+      <section class="cards" aria-labelledby="ways">
+        <h2 id="ways">Three ways to use it</h2>
+        <div class="grid">
+          <article class="card"><h3>Check an address</h3><p>Aircraft and road noise, air quality and flood risk for any postcode in the cities we cover, each with its source.</p><a class="go" href="#pc">Check a postcode</a></article>
+          <article class="card" id="reports"><h3>Reports for your street</h3><p>One page of the official figures for the streets you name. Free for residents' groups; a sourced answer for buying agents and surveyors.</p><a class="go" href="mailto:support@skyscore.co.uk?subject=Street%20report">Ask for one</a></article>
+          <article class="card"><h3>Data for your business</h3><p>The same figures through an API, or as one open file of every council area to rank and compare. 10,000 lookups a month free.</p><a class="go" href="/api/">Read the docs</a></article>
+        </div>
+      </section>
+      <section class="who" aria-labelledby="who">
+        <h2 id="who">Who it is for</h2>
+        <p><b>Buying or renting</b>: check a street before a viewing. <b>Buying agents and relocation firms</b>: a sourced answer before the client asks. <b>Residents' groups</b>: start a bid from the official baseline. <b>Islamic home finance</b>: environmental checks with an affordability measure that uses prices only. <b>Conveyancers and surveyors</b>: add aircraft noise to the reports you already produce. <b>Researchers and journalists</b>: one open, documented file.</p>
+      </section>
+    </main>
+    <footer>
+      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
+      <span><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+    </footer>
+    <script src="/js/vendor/d3.v7.min.js"></script>
+    <script src="hp-engine.js"></script>
+  </body>
+</html>

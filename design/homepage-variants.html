@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Homepage mockups: four directions (not deployed)</title>
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      body { margin: 0; background: #f4f3ef; color: #141414; font-family: 'Inter', system-ui, sans-serif; padding: 40px clamp(16px, 4vw, 48px); }
+      h1 { font-family: 'Geist', system-ui, sans-serif; letter-spacing: -0.02em; margin: 0 0 6px; }
+      p.sub { color: #55554f; margin: 0 0 28px; max-width: 70ch; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+      a.card { display: block; background: #fbfaf8; border-radius: 16px; padding: 22px; text-decoration: none; color: inherit; }
+      a.card:hover { outline: 2px solid #f27d26; }
+      a.card b { font-family: 'Geist', system-ui, sans-serif; font-size: 20px; display: block; margin-bottom: 6px; }
+      a.card span { color: #55554f; font-size: 15px; }
+      .mock { position: fixed; right: 10px; bottom: 10px; font: 600 11px 'JetBrains Mono', monospace; background: #fff3e6; color: #a85416; border: 1px solid #f27d26; padding: 4px 8px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <span class="mock">Mockups - not deployed</span>
+    <h1>Four homepage directions</h1>
+    <p class="sub">Narrowed to v2 and v3, with two variations of each. All share the same working parts: the live map, the city chips and a postcode search that shows real figures from the live endpoint. Only the layout and mood differ. Try a postcode on each.</p>
+    <div class="grid">
+      <a class="card" href="homepage-v2.html"><b>v2: Map with a floating panel</b><span>The map fills the hero; the question, search and answer sit in one card over its left side. Three cards below.</span></a>
+      <a class="card" href="homepage-v2a.html"><b>v2a: Panel on the right</b><span>The same, mirrored: the map reads first, the question and search on the right.</span></a>
+      <a class="card" href="homepage-v2b.html"><b>v2b: Question above the map</b><span>The question and search sit above the map in a band, the map runs full width, and the answer appears as a card over the map.</span></a>
+      <a class="card" href="homepage-v3.html"><b>v3: Ask first</b><span>A big centred question and a search bar like a search engine; the map is the second screen, full width.</span></a>
+      <a class="card" href="homepage-v3a.html"><b>v3a: Ask first, map behind</b><span>The same, with the noise map faded in behind the question so the subject is visible from the first pixel.</span></a>
+      <a class="card" href="homepage-v3b.html"><b>v3b: Ask first, answer on the map</b><span>The same, but the answer lands on the map and the page scrolls to it, so question, map and answer are one picture.</span></a>
+      <a class="card" href="homepage-v4.html"><b>v4: Split screen</b><span>Text column on the left with the search, the answer and three things to do; the map fills the right half edge to edge.</span></a>
+      <a class="card" href="homepage-v5.html"><b>v5: Night map</b><span>Full-screen dark map with the noise colours glowing; the question bottom-left, the search bar at the foot. The boldest.</span></a>
+      <a class="card" href="homepage-grid.html"><b>v1: The grid (for comparison)</b><span>The first mockup, six bordered cards. The one the Stitch rendering came from.</span></a>
+    </div>
+  </body>
+</html>
