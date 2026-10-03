@@ -287,6 +287,42 @@ console.log('unknown city throws:      ', registry.throwsOnUnknown, '(must be tr
 console.log('every city declares same keys:', registry.keysMatch);
 if (registry.missing.length) console.log('  MISSING:', registry.missing.join(', '));
 
+// --- A SECOND US city must not fall into New York's branches, nor the UK's ---
+//
+// Added 2026-10-03, before the Bay Area joins the map. New York was skipped BY
+// NAME where the page matches a UK admin_district to a city, so any other US
+// city would have been searched: one sharing a name with an English district
+// would have claimed its postcodes. No real second US city exists yet, and
+// borrowing one would expire the day it is added, so one is CONSTRUCTED from
+// New York's entry, asked the registry's two questions, and removed.
+const secondUs = await page.evaluate(() => {
+  const out = { isUk: null, fromTiles: null, londonIsUk: null, manchesterFromTiles: null, claimsBrooklyn: 'threw' };
+  CITY_DATA.__second_us__ = { ...CITY_DATA.nyc };
+  try {
+    out.isUk = isUkCity('__second_us__');
+    out.fromTiles = paintsNoiseFromTiles('__second_us__');
+    out.londonIsUk = isUkCity('london');
+    out.manchesterFromTiles = paintsNoiseFromTiles('manchester');
+    // The copy holds New York's boroughs, so by name it would match "Brooklyn".
+    out.claimsBrooklyn = deriveCityFromBorough('Brooklyn');
+  } catch (e) {
+    out.claimsBrooklyn = `threw: ${e.message}`;
+  } finally {
+    delete CITY_DATA.__second_us__;
+  }
+  return out;
+});
+const secondUsOk =
+  secondUs.isUk === false &&
+  secondUs.fromTiles === true &&
+  secondUs.londonIsUk === true &&
+  secondUs.manchesterFromTiles === false &&
+  secondUs.claimsBrooklyn === null;
+console.log('');
+console.log('--- a second US city ---');
+console.log('asked of the registry:    ', JSON.stringify(secondUs));
+console.log('falls into no by-name branch:', secondUsOk, '(must be true)');
+
 await browser.close();
 
 const ok =
@@ -310,7 +346,8 @@ const ok =
   registry.known.length > 0 &&
   registry.unresolved.length === 0 &&
   registry.throwsOnUnknown &&
-  registry.keysMatch;
+  registry.keysMatch &&
+  secondUsOk;
 
 console.log('\nRESULT:', ok ? 'PASS' : 'FAIL');
 process.exit(ok ? 0 : 1);

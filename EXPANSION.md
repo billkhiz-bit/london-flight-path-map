@@ -371,6 +371,24 @@ on the registry, before any Bay Area data exists:
 - **Tests extend, they do not block:** the NYC-specific tests pass untouched
   with a second US city present, so each gap above ships green unless a test
   is added for it.
+- **STARTED 2026-10-03 on branch `bay-area-on-map` (release 1, step 1).** The
+  page had ELEVEN tests of New York by name in code; the rest of the matches
+  are comments. Five asked what KIND of city this is and now ask the
+  registry: the three noise-tile branches through `paintsNoiseFromTiles()`,
+  and the two UK-only-service branches (the admin-district match and the
+  autocomplete) through `isUkCity()`, which already existed for the EPC and
+  sold-price panels. Six carry New York's own CONTENT and stay by name until
+  the Bay Area's equivalent exists: the ZIP table, the altitude bands,
+  `crimeNote`, the two listing-link branches and the flight-tracking advice.
+  The Lambda's six are untouched and go with the Bay Area's Lambda entry, in
+  the deploy that adds it. **`tests/test_us_city_branches.py` declares all
+  twelve that remain** and fails on a new one or on a declared one that has
+  gone; `tests/smoke-local.mjs` CONSTRUCTS a second US city and proves no UK
+  lookup claims it (red on the old by-name skip, where the constructed city
+  claimed "Brooklyn"). Next in release 1: the Bay Area's registry entry
+  (outlines un-ignored by name, not `*-boroughs.json`), its routes and noise
+  tiles on the live map, the ZIP tables, then the Lambda entry and the quiet
+  estimate, which need a backend deploy.
 
 **The liveability component is now fully measured**, so depth is no longer the
 blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.

@@ -614,7 +614,7 @@ Most of what matters now is not code. Owner in brackets.
 
 | # | Task | Why now | Owner / size |
 |---|---|---|---|
-| 1 | **Send the Norwich reporter the scorecard links** (draft in `OneDrive/Desktop/outreach-drafts-2026-09-30.txt`, replacing the lost 27 Sep scratchpad one. Until 30 Sep those scorecards ended "Open Norwich on the Sky Score map", which opened LONDON's map - the defect he reported; fixed and live in `c95124c`, so the links are safe to send) | Closing the loop fast on public feedback is the cheapest trust there is; the links are live | Bill, 5 min |
+| 1 | ~~**Send the Norwich reporter the scorecard links**~~ **SENT; he replied warmly on 2026-10-03** (OUTREACH_LOG; two ideas from his reply are parked below under "Parked idea"). Original: (draft in `OneDrive/Desktop/outreach-drafts-2026-09-30.txt`, replacing the lost 27 Sep scratchpad one. Until 30 Sep those scorecards ended "Open Norwich on the Sky Score map", which opened LONDON's map - the defect he reported; fixed and live in `c95124c`, so the links are safe to send) | Closing the loop fast on public feedback is the cheapest trust there is; the links are live | Bill, 5 min |
 | 2 | **Send the CAA data request** (drafted 26 Sep, refreshed 30 Sep in the same Desktop file; **to `noise@caa.co.uk`**, verified from the CAA's own ERCD report. No Heathrow address could be verified, so the email asks the CAA who holds the airports' reuse rights instead of guessing one) | The ERCD Heathrow contours are the newer yardstick the Chiswick/Feltham complaint needs, and they gate phase 2 and the `CORRIDOR_WEIGHT` refit | Bill, 10 min |
 | 3 | **Pay the ICO fee** (GBP 52, Cubitt33 Ltd) | Legal obligation, open since August | Bill, 5 min |
 | 4 | ~~**Triage the 16 Dependabot alerts**~~ **Done 2026-09-28.** All 16 were in `mobile/` build tooling; **none reached the site, the Lambdas or the extension**. Ruby (5): fastlane 2.233.1 -> 2.240.1 plus excon 1.6.0 / json 2.21.2 - the old fastlane capped faraday at 1.x and rubyzip below 3, so no patch fitted under it; `bundle exec fastlane lanes` loads every lane. npm (11): all via `@capacitor/assets` 3.0.5, the LATEST release, which pins sharp 0.32.6 exactly - fixed with `overrides` (sharp ^0.35.4, tar ^7.5.22, uuid ^11.1.1), `npm audit` 0. **Verified by running the generator**, not reading: 148 Android files, 0 "Unable to load" lines (its known silent-failure signature), and old-vs-new output within 1.6/255 mean per channel, visually identical. **Unverified until the next Codemagic iOS build**: sharp 0.35 on Codemagic's macOS. Found doing it: the COMMITTED Android icons differ from what either tool generates (up to 27/255), so they were not produced by the pipeline as it stands | Claude, done |
@@ -884,6 +884,45 @@ Kept for reference; nothing is built or promised.
   Earl's Court call) whether Imperial would partner or its nodes can carry
   noise; ask one residents' group whether it would host. A one-page pilot
   proposal is the artefact to write when Bill picks this up.
+- **A possible host, not to be chased** (2026-10-03): the user near Norwich
+  whose email led to the uncovered-postcode fix wrote that he would host a
+  roof microphone with API access if he had the time, which he does not at
+  present. Recorded so the offer is not forgotten; ask again only if a pilot
+  is actually being set up.
+
+### Parked idea: light aircraft, leaded fuel and schools (raised by a user, 2026-10-03)
+
+The same correspondent suggested a light-aircraft-only layer: piston aircraft
+burn leaded aviation fuel, and he thinks it should not be flown over schools.
+He also expects it would draw press and Hacker News interest. Kept for
+reference; nothing is built or promised.
+
+- **What is established** (searched 2026-10-03): a study commissioned by
+  Santa Clara County of more than 14,000 blood samples from children living
+  near Reid-Hillview airport found lead levels rising with proximity to the
+  airport, higher downwind, and rising with piston-aircraft traffic; the
+  county stopped the sale of leaded fuel at its airports in January 2022. The
+  US EPA published a final finding in October 2023 that lead emissions from
+  aircraft engines endanger public health, and the FAA and industry have
+  pledged a lead-free fleet by the end of 2030. **Reid-Hillview is in San
+  Jose, inside the four counties of our Bay Area coverage.** The UK position
+  was not checked.
+- **What we do not hold**: light aircraft mostly fly visually, off the
+  published instrument routes the map draws, so there is no official line to
+  plot. Showing where they actually fly needs track data (the OpenSky licence
+  question again, and many light aircraft do not broadcast).
+- **The version that could be stood behind**: no flight lines and no exposure
+  estimate. A map of the airfields where piston aircraft are based (the FAA's
+  airport records in the US; the AIP and the CAA's aerodrome list here)
+  beside the schools within a stated distance (official school registers in
+  both countries), citing the regulators' own findings. A statement of
+  proximity, labelled as that.
+- **The caution**: ROADMAP's rule for commissioned work applies - stay a data
+  supplier, never a campaigner. The wording would need the same care as the
+  noise pages: what is near what, from whose data, and nothing about any
+  child's health.
+- **Where it would fit**: as part of the Bay Area release, where the best
+  evidence and a local audience both are, before any UK version.
 
 Open, Bill's (the choice among the six is made: v2, 2 Oct): whether it replaces `/` and where the full map
 then lives (the same `index.html` runs in the native app, about twenty gates

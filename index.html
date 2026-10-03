@@ -7543,6 +7543,20 @@
         return entry;
       }
 
+      // WHAT KIND OF CITY, ASKED OF THE REGISTRY AND NEVER BY NAME (2026-10-03).
+      // New York was the only US city, so "is this New York?" stood in for two
+      // different questions, and a second US city (the Bay Area, EXPANSION.md)
+      // would have fallen into the UK's branch at each of them, silently:
+      //  - is this a city the UK-only services know (postcodes.io's
+      //    admin_district and autocomplete)? That is isUkCity(), further down,
+      //    which already asked the registry for the EPC and sold-price panels.
+      //  - is its aircraft-noise picture a tile service (BTS) rather than one
+      //    raster per city (DEFRA)? That is the question below.
+      // tests/test_us_city_branches.py declares every by-name test that remains
+      // and fails on a new one; tests/smoke-local.mjs builds a second US city
+      // and asks both of it.
+      const paintsNoiseFromTiles = (id) => cityOf(id).noiseScale === NOISE_SCALE_BTS;
+
       // clearer format: £1.35M or £680K. Falls back to N/A when missing.
       function formatPriceCompact(rawPrice, city) {
         if (rawPrice == null || rawPrice === 0) return 'N/A';
@@ -9443,7 +9457,7 @@
           maxLon = bottomRight[0];
         // BBOX: minlat,minlon,maxlat,maxlon for WMS EPSG:4326
         const bbox = `${minLat},${minLon},${maxLat},${maxLon}`;
-        const isNyc = currentCity === 'nyc';
+        const fromTiles = paintsNoiseFromTiles(currentCity);
 
         function setImg(id, url) {
           // Use D3 selection for proper SVG namespace handling
@@ -9485,7 +9499,7 @@
         // own `++aircraftTileGeneration` below still runs, so its render is
         // unaffected; only a callback from a PREVIOUS entry goes stale.
         aircraftTileGeneration += 1;
-        if (isNyc) {
+        if (fromTiles) {
           // NYC still uses XYZ slippy tiles, which DO need re-rendering on
           // pan/zoom for new tiles to load at the current viewport.
           //
@@ -11567,7 +11581,7 @@
           .style('filter', 'saturate(1.6) brightness(0.92)')
           .style('mix-blend-mode', 'multiply');
         if (!layers['defra-aircraft']) aircraftG.style('display', 'none');
-        if (currentCity === 'nyc') {
+        if (paintsNoiseFromTiles(currentCity)) {
           aircraftG.attr('id', 'us-aircraft-tiles');
         } else {
           aircraftG
@@ -13457,10 +13471,11 @@
         const rotated = name.match(/^(.+),\s*(City|Royal Borough|Borough)\s+of$/i);
         if (rotated) name = `${rotated[2]} of ${rotated[1]}`;
         for (const cityKey of Object.keys(CITY_DATA)) {
-          // NYC boroughs arrive through the ZIP path, never through a UK
-          // admin_district, and its registry names would false-match nothing -
-          // but skipping it is cheaper than proving that forever.
-          if (cityKey === 'nyc') continue;
+          // A US city's areas arrive through the ZIP path, never through a UK
+          // admin_district. This skipped New York BY NAME, which a second US
+          // city would have walked straight past: a Bay Area city sharing a
+          // name with an English district would have claimed its postcodes.
+          if (!isUkCity(cityKey)) continue;
           for (const key of Object.keys(cityOf(cityKey).boroughData())) {
             if (boroughNameMatches(key, name)) return cityKey;
           }
@@ -14311,7 +14326,7 @@
             // (slippy XYZ tiles need new tiles loaded for the new viewport).
             // London is a single pre-fetched raster positioned in g-coords
             // - D3's transform handles all pan/zoom natively, no refetch.
-            if (currentCity === 'nyc') {
+            if (paintsNoiseFromTiles(currentCity)) {
               clearTimeout(zoomTileTimer);
               zoomTileTimer = setTimeout(() => {
                 updateDefraTiles();
@@ -14668,7 +14683,8 @@
             return;
           }
           acDebounceTimer = setTimeout(async () => {
-            if (currentCity === 'nyc') {
+            // The suggestions come from postcodes.io, which knows the UK only.
+            if (!isUkCity(currentCity)) {
               showAutocomplete([]);
             } else {
               const results = await fetchAutocomplete(val);
