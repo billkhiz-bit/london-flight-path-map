@@ -314,10 +314,33 @@ await page.waitForFunction(() => document.querySelector('#borough h2')?.textCont
 const palo = await page.locator('#borough .facts dd').first().textContent();
 ok(/SJC 12R, [\d.]+ km to the/.test(palo), 'Palo Alto card names SJC 12R as the nearest runway (as the Bay Area page does)', palo);
 ok((await page.locator('#chips button[data-city="bayarea"]').getAttribute('aria-pressed')) === 'true', 'the Bay Area chip is pressed');
-await page.fill('#pc', '94301');
+// A Bay Area ZIP opens its city with the ZIP's own pin, and says how much of the ZIP is in that city.
+const zipFact = (label) => page.locator('#borough .facts div', { has: page.locator('dt', { hasText: label }) }).locator('dd').textContent();
+const searchZip = async (code, heading) => {
+  await page.fill('#pc', code);
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction((h) => document.querySelector('#borough.is-open h2')?.textContent === h, heading, { timeout: 10000 });
+};
+await searchZip('94301', 'Palo Alto');
+ok(/^In Palo Alto\./.test(await zipFact('ZIP 94301')) && /Nearest runway: (SJC|SFO|OAK)/.test(await zipFact('At its centre')), 'ZIP 94301 opens Palo Alto, says it is in it, and names the nearest runway from its centre', `${await zipFact('ZIP 94301')} | ${await zipFact('At its centre')}`);
+// The Census centre point and the drawn outline are two sources: the pin must land on the city it names.
+const underPin = await page.locator('#map .pin').evaluate((c) => {
+  const r = c.getBoundingClientRect();
+  return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.getAttribute('aria-label') || '';
+});
+ok((await page.locator('#map .pin').count()) === 1 && underPin.startsWith('Palo Alto'), 'the ZIP\'s pin is drawn, inside the city the ZIP is said to be in', underPin);
+ok(await page.evaluate(() => location.search) === '?city=bayarea&postcode=94301', 'URL carries ?city=bayarea&postcode=<ZIP>');
+await searchZip('95014', 'Cupertino');
+ok(/^44% of the ZIP area's land is in Cupertino/.test(await zipFact('ZIP 95014')), 'a ZIP that is mostly hills says how much of it is in the city, not that it is the city', await zipFact('ZIP 95014'));
+await searchZip('94305', 'ZIP 94305');
+ok(/^Mostly in Stanford: 51%/.test(await zipFact('ZIP 94305')), 'a ZIP in a community the map does not draw gets its own card and names the community', await zipFact('ZIP 94305'));
+await searchZip('94074', 'ZIP 94074');
+ok(/^In no city\./.test(await zipFact('ZIP 94074')) && /San Mateo County/.test(await page.locator('#borough .where').textContent()), 'a ZIP in no city says so and names its county');
+// A ZIP outside the four counties: a sentence, and nothing else moves (no pin, no card, the city stays).
+await page.fill('#pc', '90210');
 await page.press('#pc', 'Enter');
-await page.waitForTimeout(300);
-ok(/ZIP lookup is not built yet/.test(await page.locator('#status').textContent()), 'a ZIP says what to type instead');
+await page.waitForFunction(() => /not a ZIP in the four Bay Area counties/.test(document.querySelector('#status')?.textContent || ''), null, { timeout: 10000 });
+ok((await page.locator('#map .pin').count()) === 0 && (await cardOpen().count()) === 0 && (await page.locator('#chips button[data-city="bayarea"]').getAttribute('aria-pressed')) === 'true', 'a ZIP outside the four counties gets a sentence: no pin, no card, the map stays put');
 await page.fill('#pc', 'Cardiff');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Cardiff', null, { timeout: 10000 });
@@ -350,6 +373,9 @@ ok((await boroCount()) === 33 && !/Not on the map yet/.test(mismatchWhere), 'a c
 await page.goto(`${BASE}?postcode=TW9+3PZ`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#answer.is-open', { timeout: 20000 });
 ok((await page.locator('#ans-title').textContent()) === 'TW9 3PZ' && (await page.inputValue('#pc')) === 'TW9 3PZ', '?postcode= runs the search on load');
+await page.goto(`${BASE}?city=bayarea&postcode=94612`, { waitUntil: 'domcontentloaded' });
+await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Oakland', null, { timeout: 20000 });
+ok((await page.locator('#map .pin').count()) === 1 && (await page.locator('#chips button[data-city="bayarea"]').getAttribute('aria-pressed')) === 'true', 'a ZIP in the URL boots the Bay Area with its city open and its pin drawn');
 
 // 14. A phone: the card scrolls into view on a tap and the controls sit inside the viewport.
 await page.setViewportSize({ width: 390, height: 844 });

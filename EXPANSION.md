@@ -389,6 +389,35 @@ on the registry, before any Bay Area data exists:
   (outlines un-ignored by name, not `*-boroughs.json`), its routes and noise
   tiles on the live map, the ZIP tables, then the Lambda entry and the quiet
   estimate, which need a backend deploy.
+- **ZIP TABLE BUILT 2026-10-04, and ZIP search is live on the new front page
+  first.** `scripts/build_bayarea_zips.py` derives `data/us-bayarea-zips.json`
+  from three Census files, all plain downloads with no key (the 2024 ZCTA
+  gazetteer and the 2020 ZCTA-to-county and ZCTA-to-place relationship
+  files): **165 ZIP areas** (San Francisco 28, San Mateo 30, Santa Clara 58,
+  Alameda 49), each with its centre point, its county and the city holding
+  the most of its land WITH that share. `--check` is a blocking preflight
+  stage; with the Census files absent it still tests the table against the
+  city outlines (93 of 94 centre points fall inside the city named).
+  - **The rule was got wrong first, and the data showed it.** Naming a city
+    only at half the land or more left 34 ZIPs in "no city", 95014
+    (Cupertino, 44%) and 94550 (Livermore, 5%) among them, because those ZIP
+    areas reach far into empty hills. The half-or-more rule is for publishing
+    a STATISTIC under a label; finding the city a person means is a different
+    job. Now the largest held city is always named with its share (162 named:
+    94 at 90% or more, 37 at half to 90%, 31 under half), and the page words
+    it by the share. Three lie in no city the map holds.
+  - **The land in no city is a ROW in the relationship file** (an empty place
+    GEOID), and it is the largest row for 31 ZIPs. It is never "the place".
+  - **The guessed floor refused the real table**: "about 300 ZIP areas" was
+    from memory; the count, taken two ways, is 165 (173 touch the counties).
+  - **The point is the ZIP AREA's internal point**, which in a hill ZIP sits
+    in open country, not where its people live. A population centre needs
+    block-level counts; not built, and said on the card ("At its centre").
+  - On `/preview/` a ZIP opens its city's card with the ZIP's own pin, the
+    share in words, and the nearest runway and approach from the ZIP's centre;
+    a ZIP outside the four counties gets a sentence and nothing moves. The
+    live map and the Lambda still use New York's hand-built tables; this file
+    is what replaces the by-name ZIP branch there.
 
 **The liveability component is now fully measured**, so depth is no longer the
 blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.

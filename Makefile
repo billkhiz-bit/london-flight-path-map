@@ -610,11 +610,18 @@ preview-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-flight-procedures.json \
 		s3://$(S3_BUCKET)/data/us-flight-procedures.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# The Bay Area's ZIP areas, which the search reads on the first ZIP typed
+	# (scripts/build_bayarea_zips.py). Here with the four above, for the same
+	# reason, until the live map and the Lambda read it too.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zips.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-zips.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/preview/*' '/js/flight_geometry.mjs' \
 			'/data/flight-procedures.json' '/data/aircraft-noise-rasters.json' \
-			'/data/us-bayarea-places.json' '/data/us-flight-procedures.json'
+			'/data/us-bayarea-places.json' '/data/us-flight-procedures.json' \
+			'/data/us-bayarea-zips.json'
 
 .PHONY: talks-deploy
 talks-deploy:

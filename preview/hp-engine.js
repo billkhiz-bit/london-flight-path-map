@@ -65,6 +65,7 @@ const tip = byId('tip');
 const state = {
   city: null, boroughs: null, extra: null, proc: null, rasters: null, projection: null,
   usProc: null, usNoise: null, usPlaces: null,
+  usZips: null, // the Census ZIP areas of the four Bay Area counties, fetched on the first ZIP typed
   rows: [], // the open-data CSV, one object per council area
   layers: { noise: true, lines: true, streets: false },
   zoom: null, k: 1,
@@ -530,17 +531,23 @@ function selectBorough(name, opts = {}) {
   state.selected = f ? featureName(f) : row.borough;
   svg.selectAll('.boro').classed('is-selected', (d) => featureName(d) === state.selected);
   byId('answer')?.classList.remove('is-open');
-  clearPin();
+  // A ZIP search opens its city's card WITH the ZIP's pin; any other way in, the pin's answer has closed.
+  if (!opts.zip) clearPin();
   const card = byId('borough');
   if (!card) return true;
-  card.innerHTML = f?.properties.planar ? placeCardHtml(f) : boroughCardHtml(row || { borough: name, city: state.city }, f);
-  card.classList.add('is-open');
-  panelState();
-  card.querySelector('#borough-close')?.addEventListener('click', () => closeBorough(true));
-  setQuery({ city: row ? row.city : state.city, borough: state.selected });
+  openCard(f?.properties.planar ? placeCardHtml(f, opts.zip) : boroughCardHtml(row || { borough: name, city: state.city }, f));
+  setQuery(opts.zip ? { city: state.city, postcode: opts.zip.code } : { city: row ? row.city : state.city, borough: state.selected });
   if (opts.scroll && window.matchMedia('(max-width: 760px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (opts.focus) card.querySelector('h2')?.focus();
   return true;
+}
+function openCard(html) {
+  const card = byId('borough');
+  if (!card) return;
+  card.innerHTML = html;
+  card.classList.add('is-open');
+  panelState();
+  card.querySelector('#borough-close')?.addEventListener('click', () => closeBorough(true));
 }
 // The pin marks the postcode whose answer is open. When that answer closes the
 // pin goes with it, or the next answer (a postcode no city covers draws none of
@@ -594,7 +601,7 @@ function boroughCardHtml(row, f) {
     <dl class="facts">${facts}</dl>
     <p class="more">${links}</p>`;
 }
-function placeCardHtml(f) {
+function placeCardHtml(f, zip) {
   const name = featureName(f);
   const ring = mainRing(f);
   const lat = d3.mean(ring, (p) => p[1]), lon = d3.mean(ring, (p) => p[0]);
@@ -602,7 +609,28 @@ function placeCardHtml(f) {
   return `${closeButton}
     <h2 tabindex="-1">${esc(name)}</h2>
     <p class="where">${esc(f.properties.county)} County, California. Not scored: the Bay Area page shows where the routes are, not a score.</p>
-    <dl class="facts"><div><dt>Nearest runway</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : 'none within 30 km'}</dd></div></dl>
+    <dl class="facts">${zip ? zipFactsHtml(zip) : ''}<div><dt>Nearest runway</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : 'none within 30 km'}</dd></div></dl>
+    <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
+}
+// A ZIP is a Census ZIP area, and its share of land in the city is what keeps
+// the city's name honest: 94301 is Palo Alto, 95014 is 44% Cupertino and
+// mostly empty hills. The words follow the share (scripts/build_bayarea_zips.py).
+function zipShareText(zip) {
+  const pct = Math.round(zip.share * 100);
+  if (zip.share >= 0.9) return `In ${zip.place}.`;
+  if (zip.share >= 0.5) return `Mostly in ${zip.place}: ${pct}% of the ZIP area's land.`;
+  return `${pct}% of the ZIP area's land is in ${zip.place}; the rest is in other cities or in none.`;
+}
+function zipFactsHtml(zip) {
+  return `<div><dt>ZIP ${esc(zip.code)}</dt><dd>${esc(zip.place ? zipShareText(zip) : 'In no city.')} <small>US Census, 2020</small></dd></div>
+    <div><dt>At its centre</dt><dd>${esc(routesText(state.usProc, zip.lat, zip.lon))}</dd></div>`;
+}
+// A ZIP area that lies in no city we hold still has a centre and a nearest runway.
+function zipCardHtml(zip) {
+  return `${closeButton}
+    <h2 tabindex="-1">ZIP ${esc(zip.code)}</h2>
+    <p class="where">${esc(zip.county)} County, California. Not scored.</p>
+    <dl class="facts">${zipFactsHtml(zip)}</dl>
     <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
 }
 
@@ -672,12 +700,7 @@ async function search(raw) {
   if (cityKey) { say(''); closeBorough(false); await show(cityKey); setQuery({ city: cityKey }); return; }
 
   const pc = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
-  if (/^\d{5}$/.test(pc)) {
-    // A US ZIP: the live endpoint takes UK postcodes only, and the site holds no ZIP geocoder.
-    say('ZIP lookup is not built yet. Try a Bay Area city by name, like Palo Alto.');
-    if (state.city !== 'bayarea') await show('bayarea');
-    return;
-  }
+  if (/^\d{5}$/.test(pc)) { await searchZip(pc); return; }
   say('Looking it up...');
   closeBorough(false);
   try {
@@ -696,6 +719,37 @@ async function search(raw) {
   } catch {
     say('Could not reach the data just now. Try again in a moment.');
   }
+}
+// ---- a US ZIP: the Census's ZIP areas for the four Bay Area counties ----
+// The table is derived by scripts/build_bayarea_zips.py. A ZIP outside it gets
+// a sentence and nothing else: no pin, and the map stays where it is, because
+// a point drawn on whichever city is on screen is how the live site once told
+// a Norwich reader about Stansted.
+async function searchZip(code) {
+  closeBorough(false);
+  if (!state.usZips) {
+    try {
+      state.usZips = (await d3.json('/data/us-bayarea-zips.json')).zips;
+    } catch {
+      say('Could not load the ZIP list just now. Try again in a moment.');
+      return;
+    }
+  }
+  const found = state.usZips[code];
+  if (!found) {
+    say(`${code} is not a ZIP in the four Bay Area counties on the map (San Francisco, San Mateo, Santa Clara and Alameda). New York's ZIPs are on the live map.`);
+    return;
+  }
+  const zip = { code, ...found };
+  say('');
+  const pin = { lat: zip.lat, lon: zip.lon };
+  if (state.city !== 'bayarea') await show('bayarea', pin); else draw(pin);
+  if (zip.place && selectBorough(zip.place, { scroll: true, zip })) return;
+  // No city holds any of it (or the city is one the map does not draw): the ZIP's own card.
+  state.selected = null;
+  byId('answer')?.classList.remove('is-open');
+  openCard(zipCardHtml(zip));
+  setQuery({ city: 'bayarea', postcode: code });
 }
 async function bayAreaPlace(text) {
   if (state.usPlaces) return null;

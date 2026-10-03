@@ -711,6 +711,13 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       the launch post. Release 1 starts with the by-name New York branches
       (counted 3 Oct: 18 comparisons in `index.html`, 7 and three tables in
       the score Lambda, 10 scripts).
+- [x] **Release 1, step 1 (2026-10-03, branch `bay-area-on-map`)**: five of the
+      page's eleven by-name New York tests now ask the registry; the rest are
+      declared in `tests/test_us_city_branches.py`.
+- [x] **Release 1, ZIP codes (2026-10-04)**: `data/us-bayarea-zips.json`, 165
+      ZIP areas from three Census files, and ZIP search on `/preview/`
+      (EXPANSION.md has what the data taught). Next: the Bay Area's entry in
+      the live map's registry, then the Lambda entry and its deploy.
 - [ ] **Prices by the public-domain route need a free Census API key**
       (American Community Survey median home values, with FHFA for the
       trend), which avoids Zillow's unread terms. Bill's to request at

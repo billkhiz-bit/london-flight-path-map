@@ -252,6 +252,12 @@ check "US flight paths == FAA CIFP"    python scripts/build_us_flight_paths.py -
 # outlines and BTS's noise picture, and this re-renders it: a new CIFP cycle,
 # or a hand edit, reds here until --write is re-run. Offline, a few seconds.
 check "Bay Area page == its inputs"    python scripts/build_bay_area_page.py --check
+# The Bay Area's ZIP table (2026-10-04): which city a ZIP is in, how much of
+# it, and where its centre is. Re-derived from the Census files whenever they
+# are on disk (data/census/, gitignored); always checked against a second
+# source that IS on disk, the city outlines, so a table pairing ZIPs with the
+# wrong cities reds even on a fresh clone. Offline, under a second.
+check "Bay Area ZIPs == Census"        python scripts/build_bayarea_zips.py --check
 # Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
 # the box it was rendered for (2026-09-26). A transparent PNG would be marked
 # loaded and advertised under a decibel scale; a hand-edited box would slide
