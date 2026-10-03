@@ -16,6 +16,7 @@
 //
 // Run: node tests/preview-home.mjs   (in preflight, blocking)
 import { chromium } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, dirname } from 'node:path';
@@ -91,6 +92,12 @@ await context.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
+// Every file this run reads off the working tree, for the upload check at the end.
+const fetched = new Set();
+page.on('response', (res) => {
+  const u = new URL(res.url());
+  if (u.hostname === '127.0.0.1' && res.status() === 200) fetched.add(u.pathname);
+});
 const boroCount = () => page.locator('#map .boro').count();
 const cardOpen = () => page.locator('#borough.is-open');
 const answerOpen = () => page.locator('#answer.is-open');
@@ -347,6 +354,37 @@ const cardTop = await page.locator('#borough').evaluate((e) => e.getBoundingClie
 ok(cardTop >= -1 && cardTop < 844, 'on a phone the card is brought into view', `top ${Math.round(cardTop)}px`);
 const inside = await page.locator('#toggle-noise, #zoom-in, #zoom-out, #zoom-reset').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= 390; }));
 ok(inside.every(Boolean), 'layer and zoom controls are inside a phone viewport');
+
+// 15. Every file this run fetched is one a Makefile target uploads. This gate serves the working tree, where
+// a file no target deploys looks exactly like one that is live: on 2026-10-03 four data files the engine reads
+// had no upload line (the live map carries their contents inline), and the deployed page would have opened on
+// "The map could not load". The rules are read from `make.py --dry-run`, so the Makefile stays the one holder.
+await page.goto(`${BASE}reports/`, { waitUntil: 'domcontentloaded' });
+const pdfs = await page.locator('a[href$=".pdf"]').evaluateAll((as) => as.map((a) => new URL(a.href).pathname));
+for (const p of pdfs) if ((await page.request.get(`http://127.0.0.1:${PORT}${p}`)).status() === 200) fetched.add(p);
+ok(pdfs.length >= 2 && pdfs.every((p) => fetched.has(p)), 'the reports page links sample PDFs that exist', pdfs.join(' '));
+const makefile = await readFile(join(ROOT, 'Makefile'), 'utf8');
+const deployTargets = [...makefile.matchAll(/^([a-z0-9-]+-deploy):/gm)].map((m) => m[1]);
+const dryRun = execFileSync('python', ['scripts/make.py', '--dry-run', ...deployTargets], { cwd: ROOT, encoding: 'utf8' });
+const rules = [];
+for (const line of dryRun.split(/\r?\n/)) {
+  const m = /aws s3 (cp|sync)\s+(\S+)\s+s3:\/\/[^/\s]+\/(\S*)/.exec(line);
+  if (!m) continue;
+  const [, verb, src, dest] = m;
+  // aws's --include patterns match the path under the source folder, and * crosses a slash.
+  const includes = [...line.matchAll(/--include\s+"([^"]+)"/g)].map((x) => new RegExp(`^${x[1].replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
+  if (verb === 'sync' || /--recursive/.test(line)) rules.push({ prefix: dest, includes });
+  else rules.push({ key: dest.endsWith('/') ? dest + src.split('/').pop() : dest });
+}
+// CloudFront's rewrite: a folder or an extensionless path is served from its index.html.
+const keyOf = (p) => (p.endsWith('/') ? `${p}index.html` : extname(p) ? p : `${p}/index.html`).replace(/^\//, '');
+const isUploaded = (p) => {
+  const key = keyOf(p);
+  return rules.some((r) => (r.key ? r.key === key : key.startsWith(r.prefix) && (!r.includes.length || r.includes.some((g) => g.test(key.slice(r.prefix.length))))));
+};
+const orphans = [...fetched].filter((p) => !isUploaded(p)).sort();
+ok(fetched.has('/preview/hp-engine.js') && fetched.has('/data/london-boroughs.json') && rules.length >= 20, 'the upload check saw the page\'s files and the Makefile\'s upload lines', `${fetched.size} files fetched, ${rules.length} upload rules`);
+ok(orphans.length === 0, `every one of the ${fetched.size} files the page fetched is one a Makefile target uploads`, orphans.join(', '));
 
 ok(errors.length === 0, 'no page errors', errors.join(' | '));
 await browser.close();

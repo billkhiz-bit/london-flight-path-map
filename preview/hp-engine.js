@@ -655,7 +655,7 @@ function render(postcode, district, city, e, lat, lon) {
   for (const [label, v, who] of [['Nitrogen dioxide', e.no2AnnualMeanUgm3, e.no2WhoGuidelineUgm3], ['Fine particles', e.pm25AnnualMeanUgm3, e.pm25WhoGuidelineUgm3]]) {
     rows.push(v == null
       ? `<div class="row"><span>${label}</span><span class="bar"></span><span class="val">not measured</span></div>`
-      : `<div class="row"><span>${label}</span>${bar(v, who)}<span class="val">${v} ug/m3<small>WHO ${who} &middot; DEFRA</small></span></div>`);
+      : `<div class="row"><span>${label}</span>${bar(v, who)}<span class="val">${v} µg/m³<small>WHO ${who} &middot; DEFRA</small></span></div>`);
   }
   const rowsEl = byId('ans-rows');
   if (rowsEl) rowsEl.innerHTML = rows.join('');

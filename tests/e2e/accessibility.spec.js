@@ -16,6 +16,11 @@ const PAGES = [
   { path: '/terms', name: 'terms of use' },
   { path: '/open-data/', name: 'open data' },
   { path: '/bay-area/', name: 'Bay Area flight paths' },
+  // The new front page under trial, deployed 2026-10-03. Its council areas are
+  // controls drawn after the data lands, so the scan waits for them: scanned
+  // at load it would pass on a page with no map in it.
+  { path: '/preview/', name: 'new front page (preview)', ready: '#map .boro' },
+  { path: '/preview/reports/', name: 'reports (preview)' },
   { path: '/api/', name: 'API landing' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },
@@ -40,7 +45,7 @@ const PAGES = [
 ];
 
 test.describe('Accessibility', () => {
-  for (const { path, name, waitFor, disableRules } of PAGES) {
+  for (const { path, name, waitFor, ready, disableRules } of PAGES) {
     test(`WCAG 2.1 AA scan: ${name} (${path})`, async ({ page }) => {
       // status.html probes /v1/score with the PUBLIC demo key on load; without
       // this every e2e run spent real demo quota (found 2026-09-28 - see
@@ -53,6 +58,9 @@ test.describe('Accessibility', () => {
       }
       if (waitFor) {
         await expect(page.locator(waitFor)).toBeHidden({ timeout: 15_000 });
+      }
+      if (ready) {
+        await expect(page.locator(ready).first()).toBeVisible({ timeout: 15_000 });
       }
 
       let builder = new AxeBuilder({ page }).withTags([

@@ -114,3 +114,12 @@ commit does not go out regardless of what else is green:
   `git ls-files --eol`) before and after and restore with `sed -i 's/$/\r/'`
   on the now-LF file. Same lesson as memory
   `feedback-bash-heredoc-and-crlf-patching`, sixth instance.
+- **A green preflight says nothing about what git will commit (2026-10-03).**
+  Every gate reads the working tree, so a file an old `.gitignore` line
+  swallows passes all of them here and is missing on any fresh clone. An
+  unanchored `reports/` (meant for a test-output folder at the root) hid
+  `preview/reports/` - a page and two PDFs that five gates read - and
+  `git status` still printed `?? preview/`, which reads as "all of it is
+  new". Before the first commit of a new directory run
+  `git add -n <dir>` and compare the list with `ls -R`; anchor ignore
+  lines for root folders with a leading slash.

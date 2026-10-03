@@ -744,7 +744,7 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   sends `aircraftQuietEstimated`), and an uncovered postcode was pinned on
   whichever city was on screen - both now gated, and `outside` coverage says
   so rather than printing the 10/10 the endpoint returns for it. Gate:
-  `tests/preview-home.mjs` (66 checks, offline, blocking), whose first run
+  `tests/preview-home.mjs` (69 checks, offline, blocking), whose first run
   found a third: the 14px hover band of Heathrow's 27L approach stole
   Hounslow's tap, so routes now take no pointer events at all and the svg
   measures the pointer's distance to them instead. **And a fourth, in
@@ -771,6 +771,22 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   file could draw one city's council areas under another's routes; route
   tooltips fired where the line is clipped away; and `?city=` beat
   `?borough=` when the two disagreed.
+- **DEPLOYED 2026-10-03 on Bill's instruction and verified from the origin**:
+  `https://skyscore.co.uk/preview/`. `pwa-deploy` then `preview-deploy`, both
+  invalidations Completed, 11 files hash-equal to source, the live worker
+  reads v1.0.36, and a browser driven against the LIVE page at desktop and
+  phone widths drew all ten UK cities and the Bay Area, opened Camden's card,
+  answered TW9 3PZ from the real API and served both PDFs with no failed
+  request. **The deploy itself found one more**: four data files the engine
+  reads (`flight-procedures.json`, `aircraft-noise-rasters.json`,
+  `us-bayarea-places.json`, `us-flight-procedures.json`) had never been at
+  the origin - the live map carries their contents inline - so the page would
+  have opened on "The map could not load". Caught by curling the origin
+  before uploading; no source gate could see it, since they all serve the
+  working tree. `preview-deploy` uploads them now, and the gate's last check
+  (69 checks) fails any file the page fetches that no Makefile target
+  uploads. Both pages joined the CloudFront accessibility scan. Next: Bill
+  tries it on a phone, then the open decisions below.
 
 Open, Bill's: which of the six; whether it replaces `/` and where the full map
 then lives (the same `index.html` runs in the native app, about twenty gates

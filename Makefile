@@ -590,9 +590,31 @@ preview-deploy:
 		s3://$(S3_BUCKET)/js/flight_geometry.mjs \
 		--content-type "application/javascript" \
 		--cache-control "no-cache" --region $(AWS_REGION)
+	# Four data files the engine reads at run time that no other target
+	# uploads: the live map and the Bay Area page carry their contents
+	# inline, generated, so until 2026-10-03 the origin had never held them
+	# and the deployed preview would have opened on "The map could not
+	# load". Here for the same reason as the module above; they move to
+	# data-deploy when this page becomes the front door. The last check in
+	# tests/preview-home.mjs fails any file the page fetches that no target
+	# uploads.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/flight-procedures.json \
+		s3://$(S3_BUCKET)/data/flight-procedures.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-rasters.json \
+		s3://$(S3_BUCKET)/data/aircraft-noise-rasters.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-places.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-places.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-flight-procedures.json \
+		s3://$(S3_BUCKET)/data/us-flight-procedures.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/preview/*' '/js/flight_geometry.mjs'
+		--paths '/preview/*' '/js/flight_geometry.mjs' \
+			'/data/flight-procedures.json' '/data/aircraft-noise-rasters.json' \
+			'/data/us-bayarea-places.json' '/data/us-flight-procedures.json'
 
 .PHONY: talks-deploy
 talks-deploy:
