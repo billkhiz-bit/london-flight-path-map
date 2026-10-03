@@ -56,15 +56,22 @@ version-pinned fonts):
 
 ```bash
 make web-deploy-all        # fonts first (load-bearing), then every target below
-make web-deploy            # index.html, privacy, pricing, changes, terms, api/, js/
+make web-deploy            # index.html, privacy, pricing, changes, terms, api/, js/ (api-base.js + flight_geometry.mjs)
 make data-deploy           # data/*.json incl. borough-extra.json + stations.json (no-cache)
 make pwa-deploy            # manifest, sw.js, icons
 make demo-deploy           # score-demo/ incl. openapi.yaml and vendored Swagger
 make prototype-deploy      # prototype/index.html
 make meta-deploy           # robots.txt, sitemap.xml, .well-known/
 make area-deploy           # area/ - 100 pages, sync --delete, invalidates
+make open-data-deploy      # open-data/ - the page + the borough CSV (the new front page reads the CSV)
+make bay-area-deploy       # bay-area/ - the Bay Area flight-path page + its noise picture
 make talks-deploy          # talks/ - sync the write-up PDFs + index.html (standalone, not in web-deploy-all)
+make preview-deploy        # preview/ - the new front page under trial + js/flight_geometry.mjs (standalone, noindex, not in web-deploy-all)
 ```
+
+(This list named eight targets and omitted `open-data-deploy` and
+`bay-area-deploy` until 2026-10-03, when `preview-deploy` was added - count
+the `.PHONY` lines in the Makefile rather than trusting it.)
 
 **ORDER: `data-deploy` BEFORE `web-deploy` when both are run (2026-09-19).**
 `web-deploy` uploads AND INVALIDATES `index.html`, and the page fetches

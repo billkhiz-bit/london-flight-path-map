@@ -181,8 +181,8 @@ fi
 # now extension/. The command was right; the label understated it, which is the
 # same failure mode as a gate that overstates — either way the name stops
 # describing what actually ran.
-check "ESLint (8 targets)"             npm run lint
-check "html-validate (9 pages)"        npm run lint:html
+check "ESLint (10 targets)"            npm run lint
+check "html-validate (11 pages)"       npm run lint:html
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
 # backend/tests/ was outside every ruff target until 2026-08-04, so the suite
 # that guards the score engine was the one directory nothing linted — it had
@@ -623,6 +623,15 @@ check "UK cities get UK panel content" node tests/uk-city-panel.mjs
 # boroughs' postcodes.io spellings to their own city ("St. Helens" did not).
 # postcodes.io is stubbed, so this needs no network.
 check "outside coverage is said, not analysed" node tests/outside-coverage.mjs
+# The new front page under trial (/preview/, branch homepage-v2, 2026-10-03)
+# is a tool: a borough tap opens its figures, the search takes a postcode or
+# a place name, the routes explain themselves, the URL carries the state. The
+# a11y, responsive and fonts gates scan its LANDING state only, so this one
+# drives every interaction and reads what it rendered - the card's score
+# against the open data CSV, the estimate row the mockup never drew, a
+# postcode outside every city getting no pin. postcodes.io and
+# /v1/environment are stubbed with real shapes; no network.
+check "preview home is a tool, not a picture" node tests/preview-home.mjs
 # 99 static area pages are the site's only indexable surface; thin or
 # duplicated ones are worse than none (doorway pages), so this asserts
 # CONTENT and that the sitemap agrees in both directions.

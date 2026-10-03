@@ -1,0 +1,685 @@
+/* global d3 */
+/* The engine behind the new homepage (preview/index.html) and its mockups
+   (design/homepage-v*.html): the live map, the city chips, the working
+   postcode-or-place search, the council-area card, the layer toggles and the
+   zoom. Each layout is markup round the same ids (#map, #chips, #check, #pc,
+   #status, #answer and its parts, #borough and its parts, #ramp, the toggles
+   and zoom buttons); any of them may be absent from a mockup, so every lookup
+   tolerates a missing element. One copy, here.
+
+   What it reads, all served by this site: the borough outlines, borough-extra,
+   flight-procedures and the noise pictures the live map uses, plus the open
+   data CSV (/open-data/) for every council area's Sky Score - so a borough
+   tap shows a real score without an API key and without spending anyone's
+   quota. A postcode goes to postcodes.io and then the key-free
+   /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
+   holder the two report generators use. */
+import { AIRPORT_NAME, compass, plane, routesNear, towards } from '/js/flight_geometry.mjs';
+
+// ---- what the page knows: the same data files the live site ships ----
+const DEFRA = ['#B8D6D1', '#CEE4CC', '#E2F2BF', '#F3C683', '#E87E4D', '#CD463E', '#A11A4D', '#75085C', '#430A4A'];
+const CITIES = [
+  ['london', 'London'], ['manchester', 'Greater Manchester'], ['westmidlands', 'West Midlands'],
+  ['westyorkshire', 'West Yorkshire'], ['southyorkshire', 'South Yorkshire'], ['merseyside', 'Merseyside'],
+  ['tyneandwear', 'Tyne and Wear'], ['bristol', 'Bristol'], ['leicester', 'Leicester'], ['teesside', 'Teesside'],
+  ['bayarea', 'San Francisco Bay Area'],
+];
+const CITY_NAME = Object.fromEntries(CITIES);
+// The Bay Area is not a city on the live map yet: its outlines are the Census
+// places the /bay-area/ page is built from, its routes the FAA record, its
+// noise picture the one that page serves. Drawn here to show what "on the
+// map" would look like.
+const US = { bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', noiseDir: '/bay-area/' } };
+// London's picture is the one file not described by aircraft-noise-rasters.json.
+const LONDON_PNG = { png: '/data/aircraft-noise-london-lden.png', bbox: { minLon: -0.85, maxLon: 0.4, minLat: 51.1, maxLat: 51.78 } };
+// js/api-base.js is the one holder of the API host; the literal is for a mockup opened without it.
+const ENV = `${window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'}/v1/environment`;
+const CSV = '/open-data/sky-score-boroughs.csv';
+const FT_KM = 0.0003048;
+// How far out an airport counts as "near" a searched postcode, and how close to
+// an approach line a street must be to be called "under" it. The street report
+// (scripts/address_noise_report.mjs) uses the same two cut-offs.
+const AIRPORT_SCOPE_KM = 30;
+const UNDER_LINE_KM = 1.0;
+const ZOOM_MAX = 6;
+const ZOOM_STEP = 1.6;
+
+const byId = (id) => document.getElementById(id);
+const svg = d3.select('#map');
+const tip = byId('tip');
+const state = {
+  city: null, boroughs: null, extra: null, proc: null, rasters: null, projection: null,
+  usProc: null, usNoise: null, usPlaces: null,
+  rows: [], // the open-data CSV, one object per council area
+  layers: { noise: true, lines: true },
+  zoom: null, k: 1,
+  routes: [], // every drawn route as view-space segments with its tooltip, for the pointer-distance check
+  selected: null, // the name of the council area or Bay Area place whose card is open
+};
+
+const ramp = byId('ramp');
+if (ramp) ramp.innerHTML = DEFRA.map((c) => `<b style="background:${c}"></b>`).join('');
+
+const dest = (lat, lon, brg, km) => {
+  const R = 6371.0088, d = km / R, b = (brg * Math.PI) / 180, la = (lat * Math.PI) / 180, lo = (lon * Math.PI) / 180;
+  const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+  const lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+  return [(lo2 * 180) / Math.PI, (la2 * 180) / Math.PI];
+};
+const size = () => { const r = svg.node().getBoundingClientRect(); return [Math.max(320, r.width), Math.max(300, r.height)]; };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Same normalisation as the live map's borough matcher: postcodes.io writes
+// "Bristol, City of" and "St. Helens" where the registry has "City of Bristol"
+// and "St Helens".
+const norm = (s) => String(s).toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' ').trim().replace(/^(.*) city of$/, 'city of $1');
+// build_area_pages.py's slug(): lowercase, runs of anything else become one hyphen.
+const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const fmt1 = (v) => (v === '' || v == null ? null : Number(v).toFixed(1));
+const km = (d) => (d < 10 ? d.toFixed(1) : Math.round(d)) + ' km';
+const ugm3 = (v) => (v === '' || v == null ? '' : ` (${v} µg/m³)`);
+
+// ---- the open data CSV: every council area's score, no key needed ----
+function parseCsv(text) {
+  const rows = [];
+  let field = '', row = [], quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; } else if (c === '"') quoted = false; else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { row.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(field); rows.push(row); field = ''; row = []; }
+    else field += c;
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  const [head, ...body] = rows.filter((r) => r.length > 1);
+  return body.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
+}
+const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) || null;
+
+async function load() {
+  const [extra, proc, rasters, csv] = await Promise.all([
+    d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
+    d3.text(CSV).catch(() => ''),
+  ]);
+  Object.assign(state, { extra, proc, rasters, rows: csv ? parseCsv(csv) : [] });
+  renderChips();
+  bindControls();
+  await bootFromQuery();
+}
+
+function renderChips() {
+  const box = byId('chips');
+  if (!box) return;
+  box.innerHTML = '';
+  for (const [key, name] of CITIES) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = name; b.dataset.city = key; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => { show(key); setQuery({ city: key }); });
+    box.append(b);
+  }
+  for (const [href, name] of [['/?city=nyc', 'New York']]) {
+    const a = document.createElement('a'); a.href = href; a.textContent = name; box.append(a);
+  }
+}
+
+// ---- the URL: the same names the live map reads, so links carry across ----
+async function bootFromQuery() {
+  const q = new URLSearchParams(location.search);
+  const city = (q.get('city') || '').toLowerCase().trim();
+  const postcode = (q.get('postcode') || '').trim();
+  const borough = (q.get('borough') || '').trim();
+  const row = borough ? rowFor(borough) : null;
+  // A council area names its own city: ?city=manchester&borough=Camden opens London.
+  const start = row && CITY_NAME[row.city] ? row.city : CITY_NAME[city] ? city : 'london';
+  await show(start);
+  if (postcode) {
+    const input = byId('pc');
+    if (input) { input.value = postcode; await search(postcode); }
+  } else if (borough) {
+    selectBorough(borough);
+  }
+}
+function setQuery(parts) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(parts)) if (v) q.set(k, v);
+  const s = q.toString();
+  history.replaceState(null, '', s ? `?${s}` : location.pathname);
+}
+
+// ---- the map ----
+async function loadBayArea() {
+  const [places, proc] = await Promise.all([d3.json(US.bayarea.places), d3.json(US.bayarea.proc)]);
+  state.usProc = proc;
+  state.usPlaces = places;
+  // The picture's frame is in web-mercator pixels at the zoom it was fetched at.
+  const [x0, y0, x1, y1] = places.frame.px;
+  const n = 256 * 2 ** places.frame.zoom;
+  const lonlat = (px, py) => [(px / n) * 360 - 180, (Math.atan(Math.sinh(Math.PI * (1 - (2 * py) / n))) * 180) / Math.PI];
+  const [minLon, maxLat] = lonlat(x0, y0);
+  const [maxLon, minLat] = lonlat(x1, y1);
+  state.usNoise = { png: US.bayarea.noiseDir + places.noise.file, bbox: { minLon, maxLon, minLat, maxLat } };
+  // Shapefile rings wind the opposite way to what d3's spherical geometry
+  // expects for holes, so these are drawn on the plane (see planarPath).
+  const features = places.places
+    .filter((p) => p.kind !== 'cdp')
+    .map((p) => ({ type: 'Feature', properties: { name: p.name, county: p.county, planar: true }, geometry: { type: 'MultiPolygon', coordinates: p.rings.map((r) => [r]) } }));
+  return { type: 'FeatureCollection', features };
+}
+
+const ringArea = (ring) => Math.abs(d3.sum(ring, (p, i) => { const q = ring[(i + 1) % ring.length]; return p[0] * q[1] - q[0] * p[1]; }));
+// Each place's LARGEST ring only: San Francisco's outline includes the Farallon Islands, 45 km out to sea.
+const mainRing = (f) => d3.greatest(f.geometry.coordinates, (poly) => ringArea(poly[0]))[0];
+
+function fitTarget(fc) {
+  // A plain bounding box, wound clockwise, which d3 fits without reading each ring.
+  const pts = fc.features.flatMap(mainRing);
+  const lons = pts.map((p) => p[0]), lats = pts.map((p) => p[1]);
+  const a = Math.min(...lons), b = Math.max(...lons), c = Math.min(...lats), d = Math.max(...lats);
+  return { type: 'Polygon', coordinates: [[[a, c], [a, d], [b, d], [b, c], [a, c]]] };
+}
+
+let showSeq = 0;
+async function show(key, pin) {
+  const seq = ++showSeq;
+  const boroughs = key === 'bayarea' ? await loadBayArea() : await d3.json(`/data/${key}-boroughs.json`);
+  // The latest request owns the map: an outline file that lands late must not
+  // draw one city's council areas under another's routes and noise picture.
+  if (seq !== showSeq) return;
+  state.city = key;
+  state.boroughs = boroughs;
+  document.querySelectorAll('#chips button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.city === key)));
+  if (state.zoom) svg.call(state.zoom.transform, d3.zoomIdentity);
+  draw(pin);
+}
+
+// London's 2013 ONS file names its property LAD13NM; the live map's featureName() reads the same set.
+const featureName = (f) => { const p = f.properties; return p.name || p.NAME || p.LAD13NM || p.LAD21NM || p.LAD24NM || ''; };
+
+function draw(pin) {
+  const [W, H] = size();
+  hideTip();
+  svg.attr('viewBox', `0 0 ${W} ${H}`).selectAll('*').remove();
+  // Each layout says how much of the map a floating panel covers, in pixels at desktop width.
+  const inset = document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : { left: 0, top: 0, right: 0, bottom: 0 };
+  const wide = W > 760;
+  const planar = state.boroughs.features.some((f) => f.properties.planar);
+  const projection = d3.geoMercator().fitExtent(
+    [[(wide ? inset.left : 0) + 24, (wide ? inset.top : 0) + 24], [W - (wide ? inset.right : 0) - 24, H - (wide ? inset.bottom : 0) - 64]],
+    planar ? fitTarget(state.boroughs) : state.boroughs,
+  );
+  state.projection = projection;
+  state.pin = pin || null;
+  const geoPath = d3.geoPath(projection);
+  const planarPath = (f) =>
+    f.geometry.coordinates
+      .map((poly) => poly.map((ring) => 'M' + ring.map((pt) => projection(pt).map((v) => v.toFixed(1)).join(' ')).join('L') + 'Z').join(''))
+      .join('');
+  const path = (f) => (f.properties.planar ? planarPath(f) : geoPath(f));
+
+  // Everything drawn sits in one group the zoom transforms.
+  const view = svg.append('g').attr('class', 'view');
+  // The noise picture is cut to the city's outline: DEFRA's London export reaches Gatwick,
+  // and a lobe floating beside the map reads as a mistake.
+  view.append('clipPath').attr('id', 'city-clip').selectAll('path').data(state.boroughs.features).join('path').attr('d', path);
+  view.append('g').selectAll('path').data(state.boroughs.features).join('path')
+    .attr('class', 'boro').attr('d', path).attr('fill-rule', 'evenodd')
+    .classed('is-selected', (d) => featureName(d) === state.selected)
+    // A borough is a control: it opens the council area's card. role=img on the
+    // svg would hide these from assistive tech, so the svg is a group instead.
+    .attr('role', 'button').attr('tabindex', 0)
+    .attr('aria-label', (d) => `${featureName(d)}: open its figures`)
+    .on('mousemove', (ev, d) => showTip(ev, boroughTipHtml(d)))
+    .on('mouseleave', hideTip)
+    .on('focus', (ev, d) => {
+      // The bbox is in view space; the tip is placed in screen space, so apply the zoom.
+      const r = ev.currentTarget.getBBox();
+      const [x, y] = d3.zoomTransform(svg.node()).apply([r.x + r.width / 2, r.y + r.height / 2]);
+      showTipAt(x, y, boroughTipHtml(d));
+    })
+    .on('blur', hideTip)
+    .on('click', (ev, d) => selectBorough(featureName(d), { scroll: true }))
+    .on('keydown', (ev, d) => {
+      if (ev.key !== 'Enter' && ev.key !== ' ') return;
+      ev.preventDefault();
+      selectBorough(featureName(d), { scroll: true, focus: true });
+    });
+
+  const raster = state.city === 'london' ? LONDON_PNG : state.city === 'bayarea' ? state.usNoise : state.rasters.cities[state.city];
+  if (raster) {
+    const [x0, y0] = projection([raster.bbox.minLon, raster.bbox.maxLat]);
+    const [x1, y1] = projection([raster.bbox.maxLon, raster.bbox.minLat]);
+    view.append('image').attr('id', 'noise-image').attr('href', raster.png).attr('x', x0).attr('y', y0).attr('width', x1 - x0).attr('height', y1 - y0)
+      .attr('preserveAspectRatio', 'none').style('mix-blend-mode', document.body.dataset.noiseBlend || 'multiply').attr('clip-path', 'url(#city-clip)').style('pointer-events', 'none')
+      .style('display', state.layers.noise ? null : 'none');
+  }
+  markLayerCoverage('noise', Boolean(raster));
+
+  // Routes are cut to the city's outline too: a departure runs 50 km to its
+  // last waypoint, and a dozen of them crossing the whole hero read as noise.
+  const lines = view.append('g').attr('class', 'lines').attr('clip-path', 'url(#city-clip)').style('display', state.layers.lines ? null : 'none');
+  state.routes = [];
+  const marks = view.append('g').attr('class', 'marks').style('pointer-events', 'none');
+  const proc = state.city === 'bayarea' ? state.usProc : state.proc;
+  let drawn = 0;
+  for (const [code, ap] of Object.entries(proc.airports)) {
+    if (!(ap.cities || []).includes(state.city)) continue;
+    const name = AIRPORT_NAME[code] || ap.name || code;
+    for (const [rwy, r] of Object.entries(ap.runways)) {
+      if (r.glide_deg == null || !r.thr) continue;
+      const far = dest(r.thr[0], r.thr[1], r.true_brg + 180, (3000 * FT_KM) / Math.tan((r.glide_deg * Math.PI) / 180));
+      const a = projection([r.thr[1], r.thr[0]]), b = projection(far);
+      const html = `<b>${esc(name)} runway ${esc(rwy)}</b>Final approach on a ${r.glide_deg}&deg; glide path, aircraft descending towards the ${towards(r.true_brg)}, drawn from 3,000 ft down to the runway.`;
+      lines.append('line').attr('class', 'final').attr('x1', a[0]).attr('y1', a[1]).attr('x2', b[0]).attr('y2', b[1]);
+      state.routes.push({ pts: [a, b], html });
+      drawn++;
+    }
+    for (const dep of ap.departures || []) {
+      if (!dep.waypoints || dep.waypoints.length < 2) continue;
+      const html = `<b>${esc(name)} departure ${esc(dep.name)}</b>Published departure route from runway ${esc(dep.runway)}, heading ${towards(parseInt(dep.runway, 10) * 10)} at first.`;
+      const pts = dep.waypoints.map(([la, lo]) => projection([lo, la]));
+      lines.append('path').attr('class', 'departure').attr('d', 'M' + pts.map((pt) => pt.map((v) => v.toFixed(1)).join(' ')).join('L'));
+      state.routes.push({ pts, html });
+      drawn++;
+    }
+    const thr = Object.values(ap.runways).map((r) => r.thr).filter(Boolean);
+    if (thr.length) {
+      const p = projection([d3.mean(thr, (t) => t[1]), d3.mean(thr, (t) => t[0])]);
+      marks.append('rect').attr('class', 'ap-box').attr('x', p[0] - 4).attr('y', p[1] - 4).attr('width', 8).attr('height', 8).attr('fill', '#f27d26').attr('stroke', '#141414');
+      marks.append('text').attr('class', 'ap').attr('x', p[0] + 8).attr('y', p[1] - 6).text(code).append('title').text(name);
+    }
+  }
+  markLayerCoverage('lines', drawn > 0);
+  if (pin) {
+    const [px, py] = projection([pin.lon, pin.lat]);
+    marks.append('circle').attr('class', 'pin-ring').attr('cx', px).attr('cy', py).attr('r', 9);
+    marks.append('circle').attr('class', 'pin').attr('cx', px).attr('cy', py).attr('r', 4);
+  }
+  bindZoom(W, H);
+  applyScale();
+}
+
+// A 1.8px line cannot be hovered, and a wide invisible twin of it STEALS the
+// tap from the borough beneath (the first run of tests/preview-home.mjs could
+// not click Hounslow through Heathrow's 27L approach). So routes have no hit
+// area at all: the svg measures the pointer's distance to every drawn route
+// and shows the route's tooltip when it is within a few pixels. Boroughs keep
+// every click. Bubbles after the borough's own handler, so a near route wins.
+const ROUTE_HOVER_PX = 7;
+function routeNear(ev) {
+  if (!state.layers.lines || !state.routes.length) return null;
+  // The lines are clipped to the city's outline but state.routes keeps every
+  // segment, so only a pointer over a council area can be over a drawn line.
+  if (!ev.target.classList?.contains('boro')) return null;
+  const r = svg.node().getBoundingClientRect();
+  const t = d3.zoomTransform(svg.node());
+  const [vx, vy] = t.invert([ev.clientX - r.left, ev.clientY - r.top]);
+  let best = { d: Infinity, route: null };
+  for (const route of state.routes) {
+    for (let i = 0; i + 1 < route.pts.length; i++) {
+      const [ax, ay] = route.pts[i], [bx, by] = route.pts[i + 1];
+      const abx = bx - ax, aby = by - ay;
+      const s = Math.max(0, Math.min(1, ((vx - ax) * abx + (vy - ay) * aby) / (abx * abx + aby * aby || 1)));
+      const d = Math.hypot(vx - (ax + s * abx), vy - (ay + s * aby)) * t.k;
+      if (d < best.d) best = { d, route };
+    }
+  }
+  return best.d <= ROUTE_HOVER_PX ? best.route : null;
+}
+svg.on('mousemove.routes', (ev) => { const route = routeNear(ev); if (route) showTip(ev, route.html); })
+  .on('click.routes', (ev) => { const route = routeNear(ev); if (route) showTip(ev, route.html); })
+  .on('mouseleave.routes', hideTip);
+
+function boroughTipHtml(d) {
+  const name = featureName(d);
+  if (d.properties.planar) return `<b>${esc(name)}</b>${esc(d.properties.county)} County. Click for the nearest runway.`;
+  const row = rowFor(name);
+  const x = (state.extra[state.city] || {})[name] || {};
+  const bits = [];
+  if (row && row.score !== '') bits.push(`Sky Score ${esc(row.score)} of 10`);
+  if (x.roadNoiseAboveWhoPct != null) bits.push(`${Math.round(x.roadNoiseAboveWhoPct)}% of addresses over WHO's road-noise guideline`);
+  bits.push('Click for the council area\'s figures');
+  return `<b>${esc(name)}</b>${bits.join('<br>')}`;
+}
+function showTip(ev, html) {
+  const r = svg.node().getBoundingClientRect();
+  showTipAt(ev.clientX - r.left, ev.clientY - r.top, html);
+}
+function showTipAt(x, y, html) {
+  if (!tip) return;
+  const r = svg.node().getBoundingClientRect();
+  tip.innerHTML = html;
+  tip.style.display = 'block';
+  tip.style.left = `${Math.max(0, Math.min(x + 14, r.width - 270))}px`;
+  tip.style.top = `${Math.max(0, Math.min(y + 14, r.height - 80))}px`;
+}
+function hideTip() { if (tip) tip.style.display = 'none'; }
+
+// A toggle for a layer the city does not have is disabled and says so, the way
+// the live map's legend measures "(NO DATA)" from what the render produced.
+function markLayerCoverage(layer, has) {
+  const b = byId(`toggle-${layer}`);
+  if (!b) return;
+  b.disabled = !has;
+  b.title = has ? '' : 'Not published for this city';
+}
+
+// ---- zoom: buttons on every device, drag with a mouse, ctrl+wheel; a finger
+// scrolls the page, as it must on a phone whose hero is half the screen ----
+function bindZoom(W, H) {
+  if (!state.zoom) {
+    state.zoom = d3.zoom().scaleExtent([1, ZOOM_MAX])
+      .filter((ev) => (ev.type === 'wheel' ? ev.ctrlKey || ev.metaKey : ev.type.startsWith('touch') ? false : !ev.button))
+      .on('zoom', (ev) => {
+        state.k = ev.transform.k;
+        svg.select('.view').attr('transform', ev.transform);
+        applyScale();
+        hideTip();
+      });
+    svg.call(state.zoom).on('dblclick.zoom', null);
+  }
+  state.zoom.translateExtent([[0, 0], [W, H]]).extent([[0, 0], [W, H]]);
+  const t = d3.zoomTransform(svg.node());
+  svg.select('.view').attr('transform', t);
+  state.k = t.k;
+}
+// Marks and labels keep their on-screen size whatever the zoom; strokes do the
+// same through vector-effect in the CSS.
+function applyScale() {
+  const k = state.k || 1;
+  svg.selectAll('.ap').attr('font-size', `${12 / k}px`);
+  svg.selectAll('.ap-box').attr('width', 8 / k).attr('height', 8 / k).attr('transform', `translate(${4 - 4 / k} ${4 - 4 / k})`);
+  svg.selectAll('.pin').attr('r', 4 / k);
+  svg.selectAll('.pin-ring').attr('r', 9 / k);
+  const reset = byId('zoom-reset');
+  if (reset) reset.disabled = k === 1;
+}
+function zoomBy(f) {
+  if (!state.zoom) return;
+  svg.transition().duration(250).call(state.zoom.scaleBy, f);
+}
+
+function bindControls() {
+  byId('zoom-in')?.addEventListener('click', () => zoomBy(ZOOM_STEP));
+  byId('zoom-out')?.addEventListener('click', () => zoomBy(1 / ZOOM_STEP));
+  byId('zoom-reset')?.addEventListener('click', () => svg.transition().duration(250).call(state.zoom.transform, d3.zoomIdentity));
+  for (const layer of ['noise', 'lines']) {
+    const b = byId(`toggle-${layer}`);
+    if (!b) continue;
+    b.setAttribute('aria-pressed', String(state.layers[layer]));
+    b.addEventListener('click', () => {
+      state.layers[layer] = !state.layers[layer];
+      b.setAttribute('aria-pressed', String(state.layers[layer]));
+      svg.select(layer === 'noise' ? '#noise-image' : '.lines').style('display', state.layers[layer] ? null : 'none');
+    });
+  }
+  byId('borough-close')?.addEventListener('click', () => closeBorough(true));
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { hideTip(); closeBorough(false); } });
+  window.addEventListener('resize', () => { if (state.boroughs) draw(state.pin); });
+}
+
+// ---- the council-area card: the open data CSV's row for the borough ----
+const COMPONENTS = [['quiet', 'Quiet skies'], ['afford', 'Affordability'], ['growth', 'Growth'], ['live', 'Liveability'], ['env', 'Environment']];
+// The facts under the score, in the order they are read. Each is a label, the
+// CSV column, and how to print it; a blank cell prints as "not published"
+// rather than as a number.
+const CARD_FACTS = [
+  ['Average price', 'avg_price_gbp', (v, r) => `£${Number(v).toLocaleString('en-GB')} (${r.price_vintage})`],
+  ['Crime', 'crime_per_1000', (v) => `${v} offences per 1,000 people a year`],
+  ['Road noise', 'road_noise_above_who_pct', (v) => `${v}% of addresses over the WHO guideline (53 dB)`],
+  // The ratio is the WORSE of the two pollutants, so it is claimed for neither; some rows hold it without the concentrations.
+  ['Air quality', 'air_quality_who_ratio', (v, r) => `${v}× the WHO guideline, on the worse of NO₂${ugm3(r.no2_ugm3)} and fine particles${ugm3(r.pm25_ugm3)}`],
+  ['Flood risk', 'flood_medium_or_high_pct', (v) => `${v}% of addresses at medium or high risk`],
+  ['Rail or tram', 'rail_within_800m_pct', (v) => `${v}% of addresses within 800 m of a station`],
+];
+
+function selectBorough(name, opts = {}) {
+  const f = state.boroughs?.features.find((x) => norm(featureName(x)) === norm(name));
+  const row = rowFor(name);
+  if (!f && !row) return false;
+  state.selected = f ? featureName(f) : row.borough;
+  svg.selectAll('.boro').classed('is-selected', (d) => featureName(d) === state.selected);
+  byId('answer')?.classList.remove('is-open');
+  clearPin();
+  const card = byId('borough');
+  if (!card) return true;
+  card.innerHTML = f?.properties.planar ? placeCardHtml(f) : boroughCardHtml(row || { borough: name, city: state.city }, f);
+  card.classList.add('is-open');
+  panelState();
+  card.querySelector('#borough-close')?.addEventListener('click', () => closeBorough(true));
+  setQuery({ city: row ? row.city : state.city, borough: state.selected });
+  if (opts.scroll && window.matchMedia('(max-width: 760px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (opts.focus) card.querySelector('h2')?.focus();
+  return true;
+}
+// The pin marks the postcode whose answer is open. When that answer closes the
+// pin goes with it, or the next answer (a postcode no city covers draws none of
+// its own) is read against the last search's spot.
+function clearPin() {
+  state.pin = null;
+  svg.selectAll('.pin, .pin-ring').remove();
+}
+function closeBorough(refocus) {
+  const card = byId('borough');
+  if (!card?.classList.contains('is-open')) return;
+  card.classList.remove('is-open');
+  panelState();
+  state.selected = null;
+  svg.selectAll('.boro').classed('is-selected', false);
+  setQuery({ city: state.city });
+  if (refocus) byId('pc')?.focus();
+}
+// Once there is a result the question makes way for it: the panel's heading
+// shrinks and the lead and examples hide, so the answer stays on one screen
+// (the measured reason v2 was chosen).
+function panelState() {
+  const panel = byId('answer')?.closest('.panel') || byId('borough')?.closest('.panel');
+  if (!panel) return;
+  panel.classList.toggle('has-result', Boolean(byId('answer')?.classList.contains('is-open') || byId('borough')?.classList.contains('is-open')));
+}
+const closeButton = '<button type="button" id="borough-close" class="close" aria-label="Close">&times;</button>';
+function boroughCardHtml(row, f) {
+  const cityName = row.city_name || CITY_NAME[row.city] || '';
+  const onMap = Boolean(f);
+  const bars = COMPONENTS.map(([k, label]) => {
+    const v = fmt1(row[k]);
+    return v == null
+      ? `<div class="row"><span>${label}</span><span class="bar"></span><span class="val">not scored</span></div>`
+      : `<div class="row"><span>${label}</span><span class="bar"><i style="width:${Number(v) * 10}%"></i></span><span class="val">${v} / 10</span></div>`;
+  }).join('');
+  const facts = CARD_FACTS.map(([label, col, print]) => {
+    const v = row[col];
+    return `<div><dt>${label}</dt><dd>${v === '' || v == null ? 'not published for this area' : esc(print(v, row))}</dd></div>`;
+  }).join('');
+  const score = fmt1(row.score);
+  const links = [
+    row.ons_code ? `<a href="/area/${esc(row.city)}/${slug(row.borough)}/">Full scorecard</a>` : '',
+    onMap ? `<a href="/?city=${esc(row.city)}&amp;borough=${encodeURIComponent(row.borough)}">Open on the live map</a>` : '',
+  ].filter(Boolean).join(' &middot; ');
+  return `${closeButton}
+    <h2 tabindex="-1">${esc(row.borough)}</h2>
+    <p class="where">Council area in ${esc(cityName)}${onMap ? '' : '. Not on the map yet: figures only'}.</p>
+    ${score == null ? '<p class="score"><span>Not scored: too few inputs</span></p>' : `<p class="score"><strong>${score}</strong><span>Sky Score out of 10, balanced weighting, method ${esc(row.methodology_version)}</span></p>`}
+    <div class="rows">${bars}</div>
+    <dl class="facts">${facts}</dl>
+    <p class="more">${links}</p>`;
+}
+function placeCardHtml(f) {
+  const name = featureName(f);
+  const ring = mainRing(f);
+  const lat = d3.mean(ring, (p) => p[1]), lon = d3.mean(ring, (p) => p[0]);
+  const near = nearestRunway(state.usProc, lat, lon);
+  return `${closeButton}
+    <h2 tabindex="-1">${esc(name)}</h2>
+    <p class="where">${esc(f.properties.county)} County, California. Not scored: the Bay Area page shows where the routes are, not a score.</p>
+    <dl class="facts"><div><dt>Nearest runway</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : 'none within 30 km'}</dd></div></dl>
+    <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
+}
+
+// ---- runway geometry for a point: the report generators' own arithmetic ----
+function nearestRunway(proc, lat, lon) {
+  const pl = plane(lat, lon);
+  const near = routesNear(proc, pl, AIRPORT_SCOPE_KM);
+  const ap = near.scope[0];
+  if (!ap) return null;
+  // The nearest END of the nearest strip names the runway; the strip distance is the figure.
+  let best = null;
+  for (const [rwy, r] of Object.entries(proc.airports[ap.code].runways)) {
+    const d = Math.hypot(...pl.xy(...r.thr));
+    if (!best || d < best.d) best = { rwy, d };
+  }
+  return { code: ap.code, name: AIRPORT_NAME[ap.code] || proc.airports[ap.code].name || ap.code, rwy: best.rwy, dist: ap.dist, dir: compass(ap.q) };
+}
+// Plain text: its one caller sets textContent, so escaping here would print the entities.
+function routesText(proc, lat, lon) {
+  const pl = plane(lat, lon);
+  const near = routesNear(proc, pl, AIRPORT_SCOPE_KM);
+  const ap = near.scope[0];
+  if (!ap) return `No runway within ${AIRPORT_SCOPE_KM} km.`;
+  const name = AIRPORT_NAME[ap.code] || ap.code;
+  const under = near.finals.filter((x) => x.beside && x.dist <= UNDER_LINE_KM).sort((a, b) => a.dist - b.dist)[0];
+  const nearestFinal = near.finals.sort((a, b) => a.dist - b.dist)[0];
+  const parts = [`Nearest runway: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
+  if (under) {
+    parts.push(`Under the ${AIRPORT_NAME[under.code] || under.code} ${under.rwy} final approach, ${under.dist < 0.05 ? 'on the centreline' : `${km(under.dist)} from the centreline`}, aircraft at about ${(Math.round(under.heightFt / 100) * 100).toLocaleString('en-GB')} ft here.`);
+  } else if (nearestFinal && nearestFinal.dist <= AIRPORT_SCOPE_KM) {
+    parts.push(`Nearest published approach: ${AIRPORT_NAME[nearestFinal.code] || nearestFinal.code} ${nearestFinal.rwy}, ${km(nearestFinal.dist)} to the ${compass(nearestFinal.q)}.`);
+  }
+  if (ap.method === 'none') parts.push('Departure routes: none published for this airport.');
+  return parts.join(' ');
+}
+
+// ---- the search: a postcode (postcodes.io, then the live environment endpoint) or a place name ----
+const form = byId('check');
+const status = byId('status');
+const answer = byId('answer');
+const say = (s) => { if (status) status.textContent = s; };
+document.querySelectorAll('.try button').forEach((b) => b.addEventListener('click', () => { const i = byId('pc'); if (i) i.value = b.dataset.pc; form?.requestSubmit(); }));
+form?.addEventListener('submit', (ev) => { ev.preventDefault(); search(byId('pc')?.value || ''); });
+
+async function search(raw) {
+  const text = raw.trim();
+  if (!text) return;
+  answer?.classList.remove('is-open');
+  clearPin();
+  // A place name first: a borough, a Bay Area city or a city region.
+  const row = rowFor(text);
+  if (row) {
+    say('');
+    if (CITY_NAME[row.city] && row.city !== state.city) await show(row.city);
+    selectBorough(row.borough, { scroll: true });
+    return;
+  }
+  const place = state.usPlaces?.places.find((p) => p.kind !== 'cdp' && norm(p.name) === norm(text))
+    || (await bayAreaPlace(text));
+  if (place) {
+    say('');
+    if (state.city !== 'bayarea') await show('bayarea');
+    selectBorough(place.name, { scroll: true });
+    return;
+  }
+  const cityKey = CITIES.find(([k, n]) => norm(n) === norm(text) || k === norm(text).replace(/\s/g, ''))?.[0];
+  if (cityKey) { say(''); closeBorough(false); await show(cityKey); setQuery({ city: cityKey }); return; }
+
+  const pc = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+  if (/^\d{5}$/.test(pc)) {
+    // A US ZIP: the live endpoint takes UK postcodes only, and the site holds no ZIP geocoder.
+    say('ZIP lookup is not built yet. Try a Bay Area city by name, like Palo Alto.');
+    if (state.city !== 'bayarea') await show('bayarea');
+    return;
+  }
+  say('Looking it up...');
+  closeBorough(false);
+  try {
+    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
+    if (!geo.result) { say('That postcode was not found, and no place on the map has that name.'); return; }
+    const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
+    const city = cityOf(district);
+    // A postcode no city covers gets no pin: a pin on whichever city is on
+    // screen is how the live site once told a Norwich reader about Stansted.
+    if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
+    const env = await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
+    if (!env.environment) { say(env.error || 'No figures for that spot.'); return; }
+    say(city ? '' : `${geo.result.postcode} is outside the cities on the map. Here are the figures we hold for it.`);
+    render(geo.result.postcode, district, city, env.environment, lat, lon);
+    setQuery({ city: city || state.city, postcode: geo.result.postcode });
+  } catch {
+    say('Could not reach the data just now. Try again in a moment.');
+  }
+}
+async function bayAreaPlace(text) {
+  if (state.usPlaces) return null;
+  // Only fetch the Bay Area file for a name that found no UK match.
+  try {
+    const places = await d3.json(US.bayarea.places);
+    return places.places.find((p) => p.kind !== 'cdp' && norm(p.name) === norm(text)) || null;
+  } catch { return null; }
+}
+
+function cityOf(district) {
+  for (const [key, boroughs] of Object.entries(state.extra)) {
+    if (Object.keys(boroughs).some((b) => norm(b) === norm(district))) return CITY_NAME[key] ? key : null;
+  }
+  return null;
+}
+
+function render(postcode, district, city, e, lat, lon) {
+  const title = byId('ans-title'), where = byId('ans-where');
+  if (title) title.textContent = postcode;
+  if (where) where.textContent = district + (city ? '' : ' (not yet on the map: figures only)');
+  const bar = (v, who) => { const max = who * 2; return `<span class="bar"><i style="width:${Math.min(100, (v / max) * 100)}%"></i><b style="left:${(who / max) * 100}%" title="WHO guideline ${who}"></b></span>`; };
+  const rows = [];
+  // Aircraft: measured, or the site's own estimate from the published routes,
+  // or outside every city - never the "outside" estimate, which is a maximum
+  // taken from nothing nearby and would read as a quiet verdict.
+  if (e.aircraftNoiseLdenDb != null) {
+    rows.push(`<div class="row"><span>Aircraft noise</span>${bar(e.aircraftNoiseLdenDb, e.aircraftNoiseWhoGuidelineDb)}<span class="val">${e.aircraftNoiseLdenDb} dB<small>WHO ${e.aircraftNoiseWhoGuidelineDb} &middot; DEFRA, measured</small></span></div>`);
+  } else if (e.aircraftQuietCoverage === 'outside') {
+    rows.push('<div class="row"><span>Aircraft noise</span><span class="bar"></span><span class="val">not covered<small>outside the cities we map</small></span></div>');
+  } else if (e.aircraftQuietEstimated != null) {
+    // Among measurements a longer bar is worse, so the quiet score is turned
+    // round (10 minus it) and named for the noise, as the extension prints it.
+    const noise = 10 - e.aircraftQuietEstimated;
+    rows.push(`<div class="row"><span>Aircraft noise</span><span class="bar"><i style="width:${noise * 10}%"></i></span><span class="val">${noise.toFixed(1)} / 10<small>estimate from the routes, not measured</small></span></div>`);
+  } else {
+    rows.push('<div class="row"><span>Aircraft noise</span><span class="bar"></span><span class="val">not measured</span></div>');
+  }
+  if (e.roadNoiseLdenDb != null) {
+    rows.push(`<div class="row"><span>Road noise</span>${bar(e.roadNoiseLdenDb, e.roadNoiseWhoGuidelineDb)}<span class="val">${e.roadNoiseLdenDb} dB<small>WHO ${e.roadNoiseWhoGuidelineDb} &middot; DEFRA</small></span></div>`);
+  } else if (e.roadNoiseBelowDb != null) {
+    // DEFRA surveyed the ground and found it under its lowest mapped band: quiet, not missing.
+    rows.push(`<div class="row"><span>Road noise</span><span class="bar"></span><span class="val">under ${e.roadNoiseBelowDb} dB<small>surveyed, below the lowest band</small></span></div>`);
+  } else {
+    rows.push('<div class="row"><span>Road noise</span><span class="bar"></span><span class="val">not held here</span></div>');
+  }
+  for (const [label, v, who] of [['Nitrogen dioxide', e.no2AnnualMeanUgm3, e.no2WhoGuidelineUgm3], ['Fine particles', e.pm25AnnualMeanUgm3, e.pm25WhoGuidelineUgm3]]) {
+    rows.push(v == null
+      ? `<div class="row"><span>${label}</span><span class="bar"></span><span class="val">not measured</span></div>`
+      : `<div class="row"><span>${label}</span>${bar(v, who)}<span class="val">${v} ug/m3<small>WHO ${who} &middot; DEFRA</small></span></div>`);
+  }
+  const rowsEl = byId('ans-rows');
+  if (rowsEl) rowsEl.innerHTML = rows.join('');
+
+  const routes = byId('ans-routes');
+  if (routes) routes.textContent = city && state.proc ? routesText(state.proc, lat, lon) : '';
+  const area = byId('ans-area');
+  if (area) {
+    const row = city ? rowFor(district) : null;
+    area.innerHTML = row
+      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of addresses at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button>`
+      : '';
+    area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
+  }
+  const link = byId('ans-link');
+  if (link) link.href = city ? `/?city=${city}&postcode=${encodeURIComponent(postcode)}` : '/';
+  answer?.classList.add('is-open');
+  panelState();
+  // Two layout hooks: a panel that only exists once there is an answer (v2b),
+  // and a map to bring into view when the answer lands on it (v3b).
+  const opens = document.body.dataset.answerOpens;
+  if (opens) document.querySelector(opens)?.classList.add('is-open');
+  const scrollTo = document.body.dataset.scrollTo;
+  if (scrollTo) document.querySelector(scrollTo)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+load().catch((e) => say(`The map could not load: ${e.message}`));

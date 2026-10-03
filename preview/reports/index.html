@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reports: one page of official figures for a street or an area - Sky Score</title>
+    <meta name="description" content="One-page reports built from official data: aircraft noise for a single address, with the published approach that passes it, or an air and noise summary for a whole area. Free for residents' groups." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'self';" />
+    <!--
+      PREVIEW (branch homepage-v2, 2026-10-02): the Reports page the new front
+      page links to. Both samples are real output of the generators in
+      scripts/ (address_noise_report.mjs, area_summary.mjs) on live data, so
+      what is promised here is what the scripts make. No prices: that
+      decision is open in ROADMAP.md.
+    -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+        --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        --gutter: clamp(16px, 4vw, 48px);
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
+      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+      nav.top-nav a { font-size: 14px; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--mid); }
+      nav.top-nav a:hover, nav.top-nav a[aria-current] { background: #e9e8e3; color: var(--dark); }
+      main { padding: 24px var(--gutter) 40px; max-width: 1080px; }
+      h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; max-width: 18ch; text-wrap: balance; }
+      p.lead { margin: 0 0 36px; color: var(--mid); font-size: 18px; max-width: 58ch; }
+      .reports { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 0 0 44px; }
+      article { background: var(--paper); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 12px; }
+      article h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; letter-spacing: -0.01em; margin: 0; }
+      article p { margin: 0; color: var(--mid); }
+      article ul { margin: 0; padding-left: 20px; color: var(--mid); }
+      article ul li { margin: 4px 0; }
+      article .for { font-size: 14px; color: var(--mid); margin-top: 4px; }
+      article .for b { color: var(--dark); font-weight: 600; }
+      .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 8px; }
+      a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
+      a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
+      a.go.quiet:hover { background: #ebe9e3; }
+      h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.6vw, 30px); letter-spacing: -0.02em; margin: 0 0 14px; }
+      .how { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; margin: 0 0 44px; }
+      .how div b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 17px; margin-bottom: 4px; }
+      .how div { color: var(--mid); font-size: 15px; }
+      p.note { margin: 0; color: var(--mid); max-width: 70ch; font-size: 15px; }
+      footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer a { color: var(--mid); }
+      .mock { position: fixed; pointer-events: none; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
+    </style>
+  </head>
+  <body>
+    <span class="mock" aria-hidden="true">Preview</span>
+    <header class="top">
+      <a class="brand" href="/preview/">Sky Score</a>
+      <nav class="top-nav" aria-label="Site">
+        <a href="/">Live map</a>
+        <a href="/preview/reports/" aria-current="page">Reports</a>
+        <a href="/api/">API</a>
+        <a href="/open-data/">Open data</a>
+        <a href="/bay-area/">Bay Area</a>
+      </nav>
+    </header>
+    <main>
+      <h1>One page of official figures, for a street or a whole area</h1>
+      <p class="lead">Every number on a report comes from a public body's own published data, with the source and its date printed beside it. Nothing is estimated by us unless it says so.</p>
+
+      <div class="reports">
+        <article>
+          <h2>Aircraft noise for one address</h2>
+          <p>What the official noise map says at a postcode, and which published approach or departure route passes it, how close, and how high the aircraft are there.</p>
+          <ul>
+            <li>Aircraft noise at the postcode against the WHO guideline of 45 dB</li>
+            <li>The nearest published routes, with the aircraft's height on the glide path</li>
+            <li>How the postcode compares with its neighbours in the same district</li>
+            <li>A map of the routes round it, from the official aeronautical publication</li>
+          </ul>
+          <p class="for"><b>For:</b> buyers and renters, buying agents and relocation firms, conveyancers and surveyors.</p>
+          <div class="actions"><a class="go" href="/preview/reports/sample-street-report-kew.pdf">See the sample (Kew, TW9)</a><a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Street%20report">Ask for one</a></div>
+        </article>
+        <article>
+          <h2>Air and noise summary for an area</h2>
+          <p>The official figures for the streets you name, side by side: air quality, road noise and the nearest runway, with the area's place among the 97 council areas we compare.</p>
+          <ul>
+            <li>Nitrogen dioxide and fine particles against the WHO guidelines, street by street</li>
+            <li>The share of the area's postcodes above the WHO road-noise guideline</li>
+            <li>Distance and direction to the nearest runway for each street</li>
+            <li>Where the area ranks for air quality and road noise</li>
+          </ul>
+          <p class="for"><b>For:</b> residents' groups, for a funding bid, a consultation response or a meeting. Free.</p>
+          <div class="actions"><a class="go" href="/preview/reports/sample-area-summary-norwich.pdf">See the sample (Norwich)</a><a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Area%20summary">Ask for one</a></div>
+        </article>
+      </div>
+
+      <h2 class="sec">How a report is made</h2>
+      <div class="how">
+        <div><b>Official sources only</b>DEFRA's noise and air maps, the aeronautical publications the routes are drawn from, and the Environment Agency's flood map. Each figure carries its source and date.</div>
+        <div><b>Checked before it leaves</b>The same checks that gate the website run on the data a report reads: prices against HM Land Registry, crime against the Office for National Statistics, flood against the Environment Agency's own service.</div>
+        <div><b>Honest about estimates</b>Where the noise map has no reading for a street, the report says so and shows our estimate from the published routes as an estimate, never as a measurement.</div>
+        <div><b>What it does not say</b>How often aircraft fly a route: the official files say where the routes are, not their traffic. And nothing about a property we have not measured.</div>
+      </div>
+
+      <p class="note">Area summaries are free for residents' groups. For firms, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> with the address or area and we will reply with what we can produce. Reports cover the city regions on <a href="/">the map</a>; the San Francisco Bay Area has <a href="/bay-area/">its own page</a> for now.</p>
+    </main>
+    <footer>
+      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
+      <span><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+    </footer>
+  </body>
+</html>

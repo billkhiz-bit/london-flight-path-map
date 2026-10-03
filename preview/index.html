@@ -3,17 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sky Score homepage, version 2b: question above, answer on the map (mockup)</title>
+    <title>Sky Score: how loud are the planes where you want to live?</title>
+    <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Open government data for English city regions, New York and the San Francisco Bay Area." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; base-uri 'self'; form-action 'self';" />
     <!--
-      MOCKUP, NOT DEPLOYED. Version 2 of the grid homepage, after Bill's verdict
-      on the Stitch rendering of version 1: "it looks like a report itself".
-      Version 1's grammar was a datasheet's: bordered boxes, small uppercase
-      mono labels, a table, a code sample, a ticked list. This one is a tool:
-      the real map is the hero and you can use it; the search works, against
-      postcodes.io and the live, key-free /v1/environment endpoint; three cards
-      instead of six; one line of audiences. Every figure shown is live or
-      from the checked-in data files. Nothing here is a design decision for
-      the product yet.
+      PREVIEW of the new homepage (branch homepage-v2, 2026-10-02), served at
+      /preview/ so it can be tried on a phone against the live data. Not the
+      site's front door: /index.html is. noindex until it is.
     -->
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
@@ -38,28 +35,33 @@
       :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
 
       header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
-      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; }
       nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
       nav.top-nav a { font-size: 14px; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--mid); }
       nav.top-nav a:hover { background: #e9e8e3; color: var(--dark); }
 
       /* The hero IS the map. Everything else floats on it. */
-      .intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); gap: 32px; align-items: end; padding: 28px var(--gutter) 22px; }
-      .intro h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(34px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.035em; margin: 0 0 10px; text-wrap: balance; }
-      .intro p.lead { margin: 0; color: var(--mid); font-size: 17px; max-width: 48ch; }
-      .hero { position: relative; margin: 0 var(--gutter); height: min(66vh, 700px); min-height: 460px; border-radius: 18px; overflow: hidden; background: var(--water); }
-      .hero svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-      .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; transition: fill 0.15s; cursor: pointer; }
+      .hero { position: relative; margin: 0 var(--gutter); height: min(72vh, 760px); min-height: 520px; border-radius: 18px; overflow: hidden; background: var(--water); }
+      .hero svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+      .hero svg:active { cursor: grabbing; }
+      /* Strokes keep their on-screen width at any zoom; the engine counter-scales the marks. */
+      .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; vector-effect: non-scaling-stroke; transition: fill 0.15s; cursor: pointer; }
       .hero svg .boro:hover, .hero svg .boro.is-selected { fill: #ffe6cf; }
-      .hero svg .final { stroke: #141414; stroke-width: 1.8; }
+      .hero svg .boro:focus-visible { outline: none; stroke: var(--orange); stroke-width: 3; }
+      .hero svg .final { stroke: #141414; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+      .hero svg .departure { stroke: #141414; stroke-width: 1.4; stroke-dasharray: 5 4; fill: none; vector-effect: non-scaling-stroke; }
+      /* Routes have no hit area: the engine measures the pointer's distance to them, so a borough beneath keeps its tap. */
+      .hero svg .lines { pointer-events: none; }
       .hero svg .runway { stroke: #141414; stroke-width: 4; }
       .hero svg .ap { font: 700 12px var(--font-mono); fill: #141414; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
-      .hero svg .pin { fill: var(--orange); stroke: #141414; stroke-width: 1.5; }
-      .hero svg .pin-ring { fill: none; stroke: var(--orange); stroke-width: 2; opacity: 0.8; }
+      .hero svg .pin { fill: var(--orange); stroke: #141414; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+      .hero svg .pin-ring { fill: none; stroke: var(--orange); stroke-width: 2; opacity: 0.8; vector-effect: non-scaling-stroke; }
 
-      .panel { position: absolute; right: 24px; top: 24px; width: min(440px, calc(100% - 48px)); background: rgba(251, 250, 248, 0.96); border-radius: 16px; padding: 18px 20px 16px; box-shadow: 0 10px 30px rgba(20, 20, 20, 0.12); display: none; }
-      .panel.is-open { display: block; }
+      .panel { position: absolute; left: 24px; top: 24px; width: min(520px, calc(100% - 48px)); max-height: calc(100% - 48px); overflow-y: auto; background: rgba(251, 250, 248, 0.94); backdrop-filter: blur(6px); border-radius: 16px; padding: 24px 24px 20px; box-shadow: 0 10px 30px rgba(20, 20, 20, 0.12); }
       .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 10px; text-wrap: balance; }
+      /* Once there is an answer or a card, the question makes way for it so the result stays on one screen. */
+      .panel.has-result h1 { font-size: 22px; margin-bottom: 8px; }
+      .panel.has-result .lead, .panel.has-result .try { display: none; }
       .panel p.lead { margin: 0 0 16px; color: var(--mid); font-size: 16px; max-width: 46ch; }
       form.check { display: flex; gap: 8px; }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
@@ -72,7 +74,7 @@
       .status { margin: 10px 0 0; font-size: 14px; color: var(--mid); min-height: 1.4em; }
 
       /* The answer slides in under the question, on the same panel. */
-      .answer { display: none; }
+      .answer { display: none; margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
       .answer.is-open { display: block; }
       .answer .ans-pc { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin: 0 0 2px; }
       .answer .where { font-size: 13px; color: var(--mid); margin: 0 0 12px; }
@@ -83,17 +85,46 @@
       .row .bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--dark); }
       .row .val { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
       .row .val small { color: var(--mid); font-size: 11px; display: block; white-space: normal; }
-      .answer .more { margin: 12px 0 0; font-size: 14px; }
-      .answer .more a { color: var(--orange-ink); font-weight: 600; }
+      .answer .more, .borough .more { margin: 12px 0 0; font-size: 14px; }
+      .answer .more a, .borough .more a { color: var(--orange-ink); font-weight: 600; }
+      .answer .routes, .answer .area { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
+      .answer .area b { color: var(--dark); font-weight: 600; }
+      button.linkish { font: inherit; font-weight: 600; color: var(--orange-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
 
-      .chips { position: absolute; left: 24px; bottom: 20px; display: flex; gap: 6px; flex-wrap: wrap; max-width: calc(100% - 48px); }
+      /* The council-area card: what a borough tap opens, in the same panel. */
+      .borough { display: none; position: relative; margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+      .borough.is-open { display: block; }
+      .borough h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 0 28px 2px 0; }
+      .borough .where { font-size: 13px; color: var(--mid); margin: 0 0 10px; }
+      .borough .score { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px; }
+      .borough .score strong { font-family: var(--font-display); font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+      .borough .score span { font-size: 13px; color: var(--mid); }
+      .borough .close { position: absolute; right: 0; top: 10px; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--dark); font-size: 20px; line-height: 1; cursor: pointer; }
+      .borough .close:hover { border-color: var(--dark); }
+      .borough .facts { margin: 12px 0 0; display: grid; gap: 6px; font-size: 13px; }
+      .borough .facts div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; }
+      .borough .facts dt { color: var(--mid); }
+      .borough .facts dd { margin: 0; }
+
+      .chips { position: absolute; right: 24px; bottom: 20px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: min(56%, calc(100% - 48px)); }
       .chips button, .chips a { font: 500 13px var(--font-body); padding: 7px 12px; border-radius: 999px; border: 1px solid transparent; background: rgba(251, 250, 248, 0.92); color: var(--dark); cursor: pointer; text-decoration: none; }
       .chips button[aria-pressed='true'] { background: var(--dark); color: #fff; }
       .chips a { border-color: var(--dark); }
-      .legend { position: absolute; left: 24px; top: 20px; max-width: 48%; font-size: 12px; color: var(--mid); background: rgba(251, 250, 248, 0.92); padding: 8px 12px; border-radius: 10px; display: flex; gap: 14px; align-items: center; }
+      /* The legend is the layer control: each row is a button that shows or hides what it names. */
+      .legend { position: absolute; right: 24px; top: 20px; max-width: 48%; font-size: 12px; color: var(--mid); background: rgba(251, 250, 248, 0.92); padding: 6px 8px; border-radius: 10px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+      .legend button { font: 500 12px var(--font-body); color: var(--dark); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 5px 8px; cursor: pointer; display: inline-flex; align-items: center; min-height: 28px; }
+      .legend button[aria-pressed='false'] { color: var(--mid); text-decoration: line-through; }
+      .legend button:hover:not(:disabled) { border-color: var(--line); background: #fff; }
+      .legend button:disabled { opacity: 0.45; cursor: default; text-decoration: none; }
       .legend i { display: inline-block; width: 22px; height: 0; border-top: 2px solid #141414; margin-right: 6px; vertical-align: middle; }
+      .legend i.dash { border-top-style: dashed; }
+      .legend .short { display: none; }
       .legend .ramp { display: inline-flex; margin-right: 6px; vertical-align: middle; }
       .legend .ramp b { width: 9px; height: 10px; display: block; }
+      .zoom { position: absolute; right: 24px; top: 68px; display: flex; flex-direction: column; gap: 4px; }
+      .zoom button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: rgba(251, 250, 248, 0.95); color: var(--dark); font: 600 18px var(--font-body); cursor: pointer; }
+      .zoom button:hover:not(:disabled) { border-color: var(--dark); }
+      .zoom button:disabled { opacity: 0.4; cursor: default; }
 
       .tip { position: absolute; pointer-events: none; background: var(--dark); color: #fff; font-size: 13px; padding: 8px 10px; border-radius: 8px; display: none; max-width: 260px; line-height: 1.35; }
       .tip b { display: block; font-size: 14px; }
@@ -118,26 +149,34 @@
       .mock { position: fixed; pointer-events: none; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
 
       @media (max-width: 760px) {
-        .intro { grid-template-columns: 1fr; gap: 14px; padding: 20px 16px 16px; }
         .hero { margin: 0 12px; height: auto; min-height: 0; display: flex; flex-direction: column; border-radius: 14px; }
-        .panel { position: static; width: auto; border-radius: 0; box-shadow: none; background: var(--paper); padding: 16px; }
+        /* On a phone the question, the search and the answer come first and the map follows: measured, the answer otherwise opened a whole screen below the box. */
+        .panel { position: static; order: -1; width: auto; border-radius: 0; box-shadow: none; backdrop-filter: none; background: var(--paper); padding: 20px 18px 16px; }
         .hero .mapwrap { position: relative; height: 52vh; min-height: 320px; }
         .hero svg { position: absolute; }
         /* A scroll strip, as the live site's city chips are on a phone: wrapped, twelve chips stood taller than the map and reached up into the panel. */
         .chips { left: 12px; right: 12px; bottom: 12px; max-width: none; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; }
         .chips button, .chips a { flex: 0 0 auto; }
-        .legend { display: none; }
+        /* The layer buttons stay: on a phone they are the only way to see the map under the noise picture. Short labels there. */
+        .legend { left: 12px; right: 60px; top: 12px; max-width: none; padding: 4px 6px; }
+        .legend .long { display: none; }
+        .legend .short { display: inline; }
+        .legend .ramp b { width: 6px; height: 9px; }
+        .zoom { right: 12px; top: 12px; }
         .row { grid-template-columns: 96px 1fr 84px; }
+        .borough .facts div { grid-template-columns: 1fr; gap: 0; }
+        .panel { max-height: none; overflow: visible; }
       }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     </style>
   </head>
-  <body data-map-inset='{"left":0,"top":0,"right":0,"bottom":0}' data-answer-opens="#panel">
-    <span class="mock" aria-hidden="true">Mockup v2b - not deployed</span>
+  <body data-map-inset='{"left":566,"top":0,"right":0,"bottom":0}'>
+    <span class="mock" aria-hidden="true">Preview</span>
     <header class="top">
       <a class="brand" href="/">Sky Score</a>
       <nav class="top-nav" aria-label="Site">
-        <a href="/">Map</a>
-        <a href="#reports">Reports</a>
+        <a href="/">Live map</a>
+        <a href="/preview/reports/">Reports</a>
         <a href="/api/">API</a>
         <a href="/open-data/">Open data</a>
         <a href="/bay-area/">Bay Area</a>
@@ -145,38 +184,41 @@
     </header>
 
     <main>
-      <section class="intro">
-        <div>
-          <h1>How loud are the planes where you want to live?</h1>
-          <p class="lead">Type a postcode and get the official noise and air figures for that street, with the flight routes that pass it.</p>
-        </div>
-        <div>
-          <form class="check" id="check">
-            <label for="pc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Postcode</label>
-            <input type="text" id="pc" name="pc" placeholder="Postcode, e.g. TW9 3PZ" autocomplete="postal-code" inputmode="text" />
-            <button type="submit">Check</button>
-          </form>
-          <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="E16 2PX">E16 2PX</button></p>
-          <p class="status" id="status" aria-live="polite"></p>
-        </div>
-      </section>
-      <section class="hero" aria-label="Map">
+      <section class="hero" aria-label="Map and postcode check">
         <div class="mapwrap">
-          <svg id="map" role="img" aria-label="Map of the selected city with its boroughs, airports and published approach lines"></svg>
+          <!-- A group, not an image: each borough inside is a button that opens its figures. -->
+          <svg id="map" role="group" aria-label="Map of the selected city. Each council area is a button that opens its figures; the lines are the published approach and departure routes."></svg>
           <div class="tip" id="tip" aria-hidden="true"></div>
-          <div class="legend" aria-hidden="true">
-            <span><i></i>Published approach</span>
-            <span><span class="ramp" id="ramp"></span>Aircraft noise, quieter to louder</span>
+          <div class="legend" role="group" aria-label="Map layers">
+            <button type="button" id="toggle-lines" aria-pressed="true"><i></i><span class="long">Approach </span><i class="dash" style="margin-left:6px"></i><span class="long">Departure</span><span class="short">Routes</span></button>
+            <button type="button" id="toggle-noise" aria-pressed="true"><span class="ramp" id="ramp"></span><span class="long">Aircraft noise, quieter to louder</span><span class="short">Noise</span></button>
+          </div>
+          <div class="zoom" role="group" aria-label="Zoom">
+            <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+            <button type="button" id="zoom-reset" aria-label="Reset the view" disabled>&#8634;</button>
           </div>
           <div class="chips" id="chips" role="group" aria-label="Choose a city"></div>
         </div>
-        <div class="panel" id="panel">
+        <div class="panel">
+          <h1>How loud are the planes where you want to live?</h1>
+          <p class="lead">Type a postcode and get the official noise and air figures for that street, with the flight routes that pass it. Or tap a council area on the map.</p>
+          <form class="check" id="check">
+            <label for="pc" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Postcode or place</label>
+            <input type="text" id="pc" name="pc" placeholder="Postcode or place" autocomplete="postal-code" inputmode="text" />
+            <button type="submit">Check</button>
+          </form>
+          <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>
+          <p class="status" id="status" aria-live="polite"></p>
           <div class="answer" id="answer">
             <p class="ans-pc" id="ans-title"></p>
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
+            <p class="routes" id="ans-routes"></p>
+            <p class="area" id="ans-area"></p>
             <p class="more"><a id="ans-link" href="/">See the full picture on the map</a></p>
           </div>
+          <div class="borough" id="borough" aria-live="polite"></div>
         </div>
       </section>
 
@@ -193,7 +235,7 @@
             <h3>Reports for your street</h3>
             <p>One page of the official figures for the streets you name. Free for residents' groups; for buying agents and surveyors, a sourced answer to hand to a client.</p>
             <div class="fig">1 page<small>every number with its source and its date</small></div>
-            <a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Street%20report">Ask for one</a>
+            <a class="go quiet" href="/preview/reports/">See a sample</a>
           </article>
           <article class="card">
             <h3>Data for your business</h3>
@@ -211,12 +253,13 @@
     </main>
 
     <footer>
-      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
+      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd. This is a preview of a new front page; <a href="/">the current site</a> is unchanged.</span>
       <span><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
 
     <script src="/js/vendor/d3.v7.min.js"></script>
     <script src="/js/api-base.js"></script>
+    <!-- A module: it imports the runway geometry the report generators use, js/flight_geometry.mjs. -->
     <script type="module" src="/preview/hp-engine.js"></script>
   </body>
 </html>

@@ -207,7 +207,20 @@
 // against 6.65, which is the site/API divergence class this repo has shipped
 // three times. /data/ is network-first since v1.0.34, so the JSON alone would
 // have refreshed; the shell is what pins the arithmetic.
-const VERSION = 'v1.0.35';
+// v1.0.36 (2026-10-03): /preview/ (the new front page under trial) and
+// /open-data/ join /js/ and /data/ as network-first. Both are versionless
+// URLs with mutable contents: preview/hp-engine.js is deployed no-cache and
+// changes on every iteration of the trial, and open-data/sky-score-boroughs.csv
+// is the holder the preview reads every council area's Sky Score from and
+// rolls with each data vintage. Under the cache-first default in the fetch
+// handler, a device that had ever visited the live site - so, the phone the
+// preview is being tried on - would keep the first engine and the first CSV
+// it fetched for as long as the worker lived, while the page (network-first)
+// moved on without them: the borough-extra.json shape, on the page built to
+// replace the front door. Found reading the fetch handler before the first
+// preview deploy, not by a gate; tests/test_badge_edge_cache.py's rule for
+// /badge is the nearest guard and it is per-path.
+const VERSION = 'v1.0.36';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
@@ -334,6 +347,24 @@ self.addEventListener('fetch', (event) => {
   // (see header note), so the freshest copy must win whenever there is a
   // network; the cache is the offline fallback only.
   if (url.origin === self.location.origin && url.pathname.startsWith('/js/')) {
+    event.respondWith(networkFirstAsset(req));
+    return;
+  }
+
+  // Same-origin /preview/ and /open-data/: network-first, for exactly the
+  // reason /js/ is (see the v1.0.36 note above VERSION). The preview's engine
+  // and the open-data CSV it reads are versionless and mutable; cache-first
+  // would pin the first copy fetched for the life of the worker.
+  // /score-demo/openapi.yaml is the same shape: uploaded no-cache (demo-deploy)
+  // because the Swagger page renders it, and found cache-first here by
+  // tests/test_sw_no_cache_prefixes.py on the day that test was written.
+  // The vendored Swagger UI beside it stays cache-first; it is version-pinned.
+  if (
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/preview/') ||
+      url.pathname.startsWith('/open-data/') ||
+      url.pathname === '/score-demo/openapi.yaml')
+  ) {
     event.respondWith(networkFirstAsset(req));
     return;
   }

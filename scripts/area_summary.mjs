@@ -39,7 +39,7 @@ import { readFile, rename, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { AIRPORT_NAME, compass, plane, routesNear } from './flight_geometry.mjs';
+import { AIRPORT_NAME, compass, plane, routesNear } from '../js/flight_geometry.mjs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment';
 const WHO = { no2: 10, pm25: 5, road: 53, aircraft: 45 };

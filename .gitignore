@@ -26,7 +26,9 @@ mobile/.preview/
 .vscode/
 .idea/
 node_modules/
-reports/
+# Root-anchored: unanchored, it matched preview/reports/ too, so the reports
+# page and its two sample PDFs were invisible to git while five gates read them.
+/reports/
 playwright-report/
 test-results/
 

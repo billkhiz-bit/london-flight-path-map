@@ -110,6 +110,9 @@ const PAGES = [
   { name: 'terms of use', slug: 'terms' },
   { name: 'open data', slug: 'open-data/index' },
   { name: 'Bay Area flight paths', slug: 'bay-area/index' },
+  // The new front page under trial (branch homepage-v2) and its reports page.
+  { name: 'preview home', slug: 'preview/index', settle: 2500 },
+  { name: 'preview reports', slug: 'preview/reports/index' },
   { name: 'what changed', slug: 'changes', settle: 2500 },
   { name: 'API landing', slug: 'api/index' },
   { name: 'score demo', slug: 'score-demo/index' },

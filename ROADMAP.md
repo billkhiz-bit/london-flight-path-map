@@ -713,6 +713,64 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   resolves through postcodes.io and shows the live `/v1/environment` figures.
 - **Narrowed to v2 (map with a floating panel) and v3 (ask first), with two
   variations each: v2a, v2b, v3a, v3b.** `homepage-variants.html` is the chooser.
+  v1, v4 and v5 deleted at Bill's request (in history at `3452301`).
+- **Measured, not judged, 2 Oct evening:** at desktop and phone, is the search
+  on the first screen, and after a search is the answer on screen without
+  scrolling. v2 is the only one with question, answer and the pin on one
+  screen; v3 the simplest first screen; v3b scrolls the search box away on a
+  phone; v2b opens the answer a screen below the box on a phone. **Bill chose
+  v2** ("go with recommended").
+- **`/preview/` is v2 as a working site, branch `homepage-v2`**: the live map
+  with the Bay Area as a city chip, the working search, a new `/preview/reports/`
+  page with two real sample PDFs, phone layout measured at five widths, all the
+  source gates (`make preview-deploy`, noindex). The live front page is
+  untouched until Bill has tried it on a phone.
+- **3 Oct: the mockup became a TOOL** (Bill: "make the mockup into a fully
+  interactive website before deploying"). A borough tap opens the council
+  area's card in the panel - Sky Score, five components, price, crime, road,
+  air, flood, rail - read from the open data CSV (`/open-data/`), so it costs
+  no key and no quota, with links to the scorecard page and the live map;
+  boroughs are keyboard buttons (the svg stopped being `role="img"`). Routes
+  explain themselves on hover or tap (airport, runway, glide, direction), and
+  London draws its departures too; two layer toggles and a zoom. The search
+  takes a postcode OR a place name (a borough anywhere, a Bay Area city, a
+  city region); a ZIP says what to type instead. The answer gained the
+  nearest runway and "under which approach, at what height", from
+  `js/flight_geometry.mjs` - MOVED from `scripts/` so the browser and the two
+  report generators share one holder - plus the council area's score and
+  flood share. The URL carries `?city=` / `?postcode=` / `?borough=` in and
+  out, the same names the live map reads. **Two mockup defects found doing
+  it**: the estimate row never rendered (it read `aircraftQuiet`; the API
+  sends `aircraftQuietEstimated`), and an uncovered postcode was pinned on
+  whichever city was on screen - both now gated, and `outside` coverage says
+  so rather than printing the 10/10 the endpoint returns for it. Gate:
+  `tests/preview-home.mjs` (66 checks, offline, blocking), whose first run
+  found a third: the 14px hover band of Heathrow's 27L approach stole
+  Hounslow's tap, so routes now take no pointer events at all and the svg
+  measures the pointer's distance to them instead. **And a fourth, in
+  `sw.js`, before the deploy**: same-origin paths are cache-first by default
+  there, so the engine (no-cache) and the open-data CSV would have pinned in
+  Cache Storage on any phone that had visited the live site - the
+  `borough-extra.json` incident on the page meant to replace the front door.
+  v1.0.36 routes `/preview/`, `/open-data/` and `/score-demo/openapi.yaml`
+  network-first; `tests/test_sw_no_cache_prefixes.py` derives the rule from
+  the Makefile's `no-cache` uploads and found `openapi.yaml` the same way.
+  **Deploy is therefore `pwa-deploy` + `preview-deploy`**, not the preview
+  alone. **And a fifth, at the commit**: `.gitignore` carried an unanchored
+  `reports/`, so `preview/reports/` (the page and both sample PDFs) was
+  invisible to git while five gates read it - green here, red on any fresh
+  clone, the `data/*` trap on a page. It is `/reports/` now. **The review
+  before the commit found six more in the engine, each given a check that
+  was red first** (57 checks became 66): the air-quality fact printed the
+  worse-of-two WHO ratio as NO2's (PM2.5's on more than 60 of 97 rows; empty
+  brackets on the 11 API-only rows, which hold no concentrations); an
+  uncovered postcode left the LAST search's pin on the map, which the gate's
+  own city switch had been clearing; the estimated row read `Quiet skies
+  9.0 / 10` beside a 10% bar and is `Aircraft noise 1.0 / 10` now, the
+  extension's reading of the same field (METHODOLOGY s11.0); a late outline
+  file could draw one city's council areas under another's routes; route
+  tooltips fired where the line is clipped away; and `?city=` beat
+  `?borough=` when the two disagreed.
 
 Open, Bill's: which of the six; whether it replaces `/` and where the full map
 then lives (the same `index.html` runs in the native app, about twenty gates

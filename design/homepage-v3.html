@@ -39,12 +39,12 @@
       form.check button { font: 600 16px var(--font-body); padding: 12px 24px; border: 0; border-radius: 999px; background: var(--orange); color: var(--dark); cursor: pointer; }
       form.check button:hover { background: #ff9440; }
       .try { margin: 14px 0 0; font-size: 13px; color: var(--mid); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: center; }
-      .try button { font: 500 13px var(--font-mono); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; color: var(--dark); }
+      .try button { font: 500 13px var(--font-mono); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; color: var(--dark); }
       .try button:hover { border-color: var(--dark); }
       .status { margin: 10px 0 0; font-size: 14px; color: var(--mid); min-height: 1.4em; text-align: center; }
       .answer { display: none; margin: 18px auto 0; background: var(--paper); border-radius: 16px; padding: 20px 22px; box-shadow: 0 8px 24px rgba(20, 20, 20, 0.06); }
       .answer.is-open { display: block; }
-      .answer h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0 0 2px; }
+      .answer .ans-pc { font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0 0 2px; }
       .answer .where { font-size: 13px; color: var(--mid); margin: 0 0 12px; }
       .rows { display: grid; gap: 9px; }
       .row { display: grid; grid-template-columns: 124px 1fr 128px; gap: 10px; align-items: center; font-size: 13px; }
@@ -88,7 +88,7 @@
       section.who p b { color: var(--dark); font-weight: 600; }
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer a { color: var(--mid); }
-      .mock { position: fixed; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
+      .mock { position: fixed; pointer-events: none; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
       @media (max-width: 760px) {
         .ask { padding-top: 32px; }
         form.check { border-radius: 16px; flex-direction: column; }
@@ -113,13 +113,13 @@
         <div class="panel">
           <form class="check" id="check">
             <label for="pc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Postcode</label>
-            <input id="pc" name="pc" placeholder="Type a postcode" autocomplete="postal-code" />
+            <input type="text" id="pc" name="pc" placeholder="Type a postcode" autocomplete="postal-code" />
             <button type="submit">Check</button>
           </form>
           <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="E16 2PX">E16 2PX</button></p>
           <p class="status" id="status" aria-live="polite"></p>
           <div class="answer" id="answer">
-            <h2 id="ans-title"></h2>
+            <p class="ans-pc" id="ans-title"></p>
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
             <p class="more"><a id="ans-link" href="/">See the full picture on the map</a></p>
@@ -153,6 +153,7 @@
       <span><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
     <script src="/js/vendor/d3.v7.min.js"></script>
-    <script src="hp-engine.js"></script>
+    <script src="/js/api-base.js"></script>
+    <script type="module" src="/preview/hp-engine.js"></script>
   </body>
 </html>

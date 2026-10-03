@@ -37,7 +37,7 @@ import { readFile, rename, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { AIRPORT_NAME, ORIGIN, add, compass, mul, plane, reciprocal, routesNear } from './flight_geometry.mjs';
+import { AIRPORT_NAME, ORIGIN, add, compass, mul, plane, reciprocal, routesNear } from '../js/flight_geometry.mjs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment';
 // A route further away than this is not listed. A judgement, stated on the page.

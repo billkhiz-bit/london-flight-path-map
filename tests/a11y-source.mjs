@@ -58,6 +58,9 @@ const PAGES = [
   { path: '/terms', name: 'terms of use' },
   { path: '/open-data/', name: 'open data' },
   { path: '/bay-area/', name: 'Bay Area flight paths' },
+  // renderedWhen, not waitFor: waitFor also waits for the live app's locator inset, which this page lacks.
+  { path: '/preview/', name: 'preview home', renderedWhen: '#map .boro' },
+  { path: '/preview/reports/', name: 'preview reports' },
   { path: '/api/', name: 'API landing' },
   {
     path: '/changes',

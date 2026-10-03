@@ -49,6 +49,8 @@ const CASES = [
   { path: '/terms.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/open-data/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/bay-area/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
+  { path: '/preview/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
+  { path: '/preview/reports/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/privacy.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/pricing.html', sans: 'Geist', mono: 'Geist Mono' },
   { path: '/changes.html', sans: 'Geist', mono: 'Geist Mono' },

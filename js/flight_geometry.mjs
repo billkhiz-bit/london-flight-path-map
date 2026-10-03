@@ -7,6 +7,13 @@
  * under an approach line", and two copies of that arithmetic would drift the
  * way every mirrored pair in this repo has.
  *
+ * It lives under js/ rather than scripts/ since 2026-10-03 because the new
+ * front page (preview/hp-engine.js) is the THIRD consumer and runs in the
+ * browser: it answers "nearest runway" and "under which approach, at what
+ * height" for a searched postcode with this same arithmetic. No Node imports,
+ * on purpose - the file is served as-is (web-deploy and preview-deploy both
+ * upload it).
+ *
  * Everything here is GEOMETRY FROM PUBLISHED POSITIONS: runway thresholds,
  * true bearings, glide angles and departure waypoints, as the UK AIP gives
  * them. Nothing in this file estimates loudness.

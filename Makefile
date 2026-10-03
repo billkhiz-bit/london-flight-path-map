@@ -69,6 +69,7 @@ help:
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    open-data-deploy    Upload open-data/ (borough CSV + its page; rebuild with the area pages)"
 	@echo "    bay-area-deploy     Upload bay-area/ (the Bay Area flight-path page + its noise picture)"
+	@echo "    preview-deploy      Upload preview/ (the new front page under trial; standalone, noindex)"
 	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data + bay area"
 	@echo ""
 	@echo "  iOS (Codemagic-driven)"
@@ -109,6 +110,15 @@ web-deploy:
 	# revalidating; sw.js serves it network-first for the same reason.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/api-base.js \
 		s3://$(S3_BUCKET)/js/api-base.js \
+		--content-type "application/javascript" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	# js/flight_geometry.mjs (moved from scripts/ on 2026-10-03): the runway
+	# geometry the two report generators AND the new front page's engine
+	# import. It lives under js/ so the browser can load it; this target owns
+	# js/, and preview-deploy uploads the same file to the same key so the
+	# preview never fetches a module the origin lacks.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/flight_geometry.mjs \
+		s3://$(S3_BUCKET)/js/flight_geometry.mjs \
 		--content-type "application/javascript" \
 		--cache-control "no-cache" --region $(AWS_REGION)
 	# --cache-control "no-cache" added 2026-09-08 (audit s4). index.html
@@ -554,6 +564,35 @@ bay-area-deploy:
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/bay-area/*'
+
+.PHONY: preview-deploy
+preview-deploy:
+	# The new front page under trial (branch homepage-v2, 2026-10-02) at
+	# /preview/, with its reports page, the shared engine and two sample
+	# PDFs. Standalone on purpose, like talks-deploy: it is not the site's
+	# front door (noindex), so web-deploy-all does not run it and
+	# check_deploy_drift.sh does not compare it. Pages no-cache, so a change
+	# reaches the phone it is being tried on; the PDFs for a day.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync preview/ s3://$(S3_BUCKET)/preview/  \
+		--exclude "*" --include "*.html"  \
+		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync preview/ s3://$(S3_BUCKET)/preview/  \
+		--exclude "*" --include "*.js"  \
+		--content-type "application/javascript" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync preview/ s3://$(S3_BUCKET)/preview/  \
+		--exclude "*" --include "*.pdf"  \
+		--content-type "application/pdf" --cache-control "public,max-age=86400" --region $(AWS_REGION)
+	# The engine is a module that imports js/flight_geometry.mjs (one holder
+	# with the report generators). Uploaded here as well as by web-deploy,
+	# because the preview can go out on its own and must not fetch a module
+	# the origin does not have. Same key, so the two cannot disagree.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/flight_geometry.mjs \
+		s3://$(S3_BUCKET)/js/flight_geometry.mjs \
+		--content-type "application/javascript" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/preview/*' '/js/flight_geometry.mjs'
 
 .PHONY: talks-deploy
 talks-deploy:

@@ -314,7 +314,7 @@ departure, 26 are on the noise map.
 - **Still to do for the scored city (stages 2-5 below are unchanged):** the
   by-name New York branches, prices, crime, ZIP search, area pages. **Bill, the
   same evening: "have San Francisco as part of the map" - so stage 2 is next.**
-  `design/hp-engine.js` already draws the 50 cities, the FAA routes and the BTS
+  `preview/hp-engine.js` (was `design/`) already draws the 50 cities, the FAA routes and the BTS
   picture as a city beside the UK ones, from this page's files, which is the
   target picture. The one-way-door rules above still apply: outlines must be
   un-ignored by name, the file must not be called `*-boroughs.json`, and
