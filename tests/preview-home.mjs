@@ -74,10 +74,18 @@ const ok = (cond, label, detail = '') => {
   if (!cond) failures.push(label + (detail ? `: ${detail}` : ''));
 };
 
+// The OS street-map trial: every request the page makes of api.os.uk, answered with a 1x1 PNG.
+const osTiles = [];
+const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1366, height: 820 } });
 await context.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
   const url = new URL(route.request().url());
+  if (url.hostname === 'api.os.uk') {
+    osTiles.push(url.href);
+    return route.fulfill({ status: 200, contentType: 'image/png', body: PNG_1PX });
+  }
   if (url.hostname === 'api.postcodes.io') {
     const key = url.pathname.split('/').pop().toUpperCase();
     const result = GEO[key] || null;
@@ -385,6 +393,59 @@ const isUploaded = (p) => {
 const orphans = [...fetched].filter((p) => !isUploaded(p)).sort();
 ok(fetched.has('/preview/hp-engine.js') && fetched.has('/data/london-boroughs.json') && rules.length >= 20, 'the upload check saw the page\'s files and the Makefile\'s upload lines', `${fetched.size} files fetched, ${rules.length} upload rules`);
 ok(orphans.length === 0, `every one of the ${fetched.size} files the page fetched is one a Makefile target uploads`, orphans.join(', '));
+
+// 16. What a report costs lives on the reports page alone, and both pages reach pricing and the council areas.
+const reportsText = await page.locator('main').textContent();
+ok(/Your own home: free/.test(reportsText) && /Firms: £35 a report/.test(reportsText) && /not a conveyancing search/.test(reportsText) && !/\+ ?VAT/.test(reportsText), 'the reports page prices a report: free for your own home, £35 for firms, no VAT added, not a conveyancing search');
+const footReports = await page.locator('footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await waitMap();
+const frontText = await page.locator('body').textContent();
+const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+ok(!/£35/.test(frontText) && frontLinks.includes('/preview/reports/#prices'), 'the front page links to the price and does not repeat it');
+ok(['/pricing', '/area/'].every((h) => frontLinks.includes(h) && footReports.includes(h)), 'pricing and the council areas are linked from both preview pages', `${frontLinks.join(' ')} | ${footReports.join(' ')}`);
+for (const p of ['/pricing', '/area/']) ok((await page.request.get(`http://127.0.0.1:${PORT}${p === '/pricing' ? '/pricing.html' : p}`)).status() === 200, `${p} is a page that exists`);
+
+// 17. The OS street-map trial. No key is in the source: nothing is asked of api.os.uk until a device is given
+// one, the key leaves the address bar, and each tile sits where web-mercator says it should - checked against
+// the pin of a known postcode, because a tile grid that is off by one still looks like a map.
+ok(osTiles.length === 0, 'nothing was requested from api.os.uk in the whole run without a key', osTiles.slice(0, 2).join(' '));
+ok(await page.locator('#toggle-streets').isHidden(), 'the Streets button is hidden without a key');
+await page.setViewportSize({ width: 1366, height: 820 });
+await page.goto(`${BASE}?oskey=TESTKEY1234`, { waitUntil: 'domcontentloaded' });
+await waitMap();
+ok(!(await page.evaluate(() => location.search)).includes('oskey'), 'the key leaves the address bar');
+await page.fill('#pc', 'TW9 3PZ');
+await page.press('#pc', 'Enter');
+await page.waitForSelector('#map .pin', { timeout: 10000 });
+const tiles = await page.locator('#map .streets image').evaluateAll((els) => els.map((e) => ({ href: e.getAttribute('href'), x: +e.getAttribute('x'), y: +e.getAttribute('y'), w: +e.getAttribute('width') })));
+const parsed = tiles.map((t) => ({ ...t, m: /^https:\/\/api\.os\.uk\/maps\/raster\/v1\/zxy\/Light_3857\/(\d+)\/(\d+)\/(\d+)\.png\?key=TESTKEY1234$/.exec(t.href) }));
+ok(tiles.length >= 6 && parsed.every((t) => t.m), 'with a key the map draws OS tiles from the documented address', `${tiles.length} tiles; ${tiles[0]?.href}`);
+ok(parsed.every((t) => t.m && +t.m[1] >= 7 && +t.m[1] <= 16), 'every tile is in the free OpenData zoom band (7 to 16)', parsed[0]?.m?.[1]);
+ok(await page.locator('#map').evaluate((s) => s.classList.contains('has-streets')) && /Crown copyright/.test(await page.locator('#os-credit').textContent()) && (await page.locator('#os-credit').isVisible()), 'the OS credit shows while the streets do');
+if (parsed.length && parsed.every((t) => t.m)) {
+  const z = +parsed[0].m[1], n = 2 ** z, { latitude: lat, longitude: lon } = GEO.TW93PZ;
+  const fx = ((lon + 180) / 360) * n;
+  const rad = (lat * Math.PI) / 180;
+  const fy = ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n;
+  const home = parsed.find((t) => +t.m[2] === Math.floor(fx) && +t.m[3] === Math.floor(fy));
+  const pin = await page.locator('#map .pin').evaluate((c) => [+c.getAttribute('cx'), +c.getAttribute('cy')]);
+  const ts = home ? home.w - 0.5 : 0;
+  const want = home ? [home.x + (fx - Math.floor(fx)) * ts, home.y + (fy - Math.floor(fy)) * ts] : [NaN, NaN];
+  ok(Boolean(home) && Math.abs(pin[0] - want[0]) < 1 && Math.abs(pin[1] - want[1]) < 1, 'the pin sits where its own tile says the postcode is (the grid is georeferenced)', `pin ${pin.map((v) => v.toFixed(1))}, tile says ${want.map((v) => v.toFixed(1))}`);
+}
+await page.locator('#toggle-streets').click();
+ok((await page.locator('#map .streets image').count()) === 0 && (await page.locator('#os-credit').isHidden()) && (await page.locator('#toggle-streets').getAttribute('aria-pressed')) === 'false', 'the Streets button takes the tiles and the credit away');
+await page.locator('#toggle-streets').click();
+await page.waitForTimeout(500); // let London's tiles finish asking before counting what the Bay Area asks for
+const beforeBay = osTiles.length;
+await page.locator('#chips button[data-city="bayarea"]').click();
+await page.waitForFunction(() => document.querySelector('#chips button[data-city="bayarea"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length > 20, null, { timeout: 15000 });
+await page.waitForTimeout(300);
+ok((await page.locator('#toggle-streets').isDisabled()) && (await page.locator('#map .streets image').count()) === 0 && osTiles.length === beforeBay, 'the Bay Area asks Ordnance Survey for nothing: it maps Great Britain only', `${osTiles.length - beforeBay} requests`);
+await page.goto(`${BASE}?oskey=off`, { waitUntil: 'domcontentloaded' });
+await waitMap();
+ok((await page.locator('#toggle-streets').isHidden()) && (await page.locator('#map .streets image').count()) === 0, '?oskey=off forgets the key');
 
 ok(errors.length === 0, 'no page errors', errors.join(' | '));
 await browser.close();

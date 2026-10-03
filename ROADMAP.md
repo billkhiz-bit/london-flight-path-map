@@ -623,6 +623,8 @@ Most of what matters now is not code. Owner in brackets.
 
 Parked on purpose: phase 2 departures (until the CAA data - the v5.4 fit showed DEFRA cannot reward them); Norwich on the map (watch scorecard traffic first); I17 (**28 Sep: IAM paste DONE - probe 23 granted, 0 denied; SES identity VERIFIED, DKIM SUCCESS; I17 code landed on master with the flag off.** **29 Sep: TTL deployed on master (live table reads ENABLED); PR #15 rebased, reworded to "press Confirm", and GREEN.** Left: SPF merge + DMARC in Cloudflare and the SES sandbox-exit request, both Bill's; then merge PR #15, which IS the flip - OPERATIONS s3.9); the Android rebuild (after the rename, so it goes through review once). Optional: `CITIES=norwich sh scripts/load_road_rasters.sh` for the per-postcode road tier on `/v1/environment`.
 
+**Added 2026-10-03, all Bill's and all short:** (a) a free OS Data Hub key on the OpenData plan, then open `/preview/?oskey=<key>` once on each device to judge the street-map trial; (b) before the first PAID report, indemnity insurance and NATS AIS's written confirmation on reusing AIP-derived routes (`LICENSING.md`); (c) a free Census API key, after the Bay Area map release; (d) try `/preview/` on a phone and rule on when it replaces `/`.
+
 ### Geovation feedback (2026-10-02): positioning and the first view
 
 From the follow-up call (OUTREACH_LOG). Each UX point was **checked on the live site the same
@@ -636,7 +638,7 @@ is built yet.
 | **The flight noise shown at load may confuse** | At load the boroughs are UNFILLED and the only colour is two layers that start on (`layers = { paths: true, 'defra-aircraft': true }` in `index.html`): animated corridor lines plus DEFRA's 40-80+ dB contours, explained by a legend in "dB Lden". No plain sentence says what the colours mean. On desktop the strapline is small grey text, partly covered by the first-run hint | A one-line plain caption on the map ("Orange lines: where Heathrow's planes fly. Coloured areas: how loud it is on average, measured by DEFRA"); or start on the borough scores and let the noise layers be one tap away. Gates that move: `layer-honesty`, `responsive`, `map-fit`, a11y. Claude, after Bill picks |
 | **Make search more obvious** | Desktop: the search box is in the right-hand panel under "PROPERTY INTELLIGENCE"; the map, where the eye lands, carries only a dismissible hint. **Phone: the tabbed search view hides `.sidebar-header`, `.empty-state` and `.first-hint`, so a first-time visitor sees no product name and no "what is this"**, and the first thing under the search card is the nine footer links (put there on purpose by audit C2 so the legal links are reachable; move them, do not hide them) | A headline question at the search ("Check aircraft noise at your postcode") on both layouts; a phone heading. Claude |
 | **Noise charts when you click an area** | A borough click gives a score card and five component bars; noise is ONE bar ("Quiet skies 7.5/10"). Nothing shows decibels, how the borough compares with its neighbours, or how noise varies across it | A small chart of the borough's postcodes per DEFRA band (data already held: the per-postcode aircraft-quiet datasets and road share). **Do not say "how often planes pass"**: that is N65, which we do not hold. Claude, after Bill picks |
-| **OS open maps API** | No basemap, by recorded decision (CLAUDE.md "There is NO basemap") | OS Data Hub's OpenData plan (Maps, Names, Features APIs) is free and unlimited; Premium carries GBP 1,000/month of free transactions. **He meant the map background (confirmed 2026-10-02). COSTED: GBP 0 in tiles.** Every zoom the map reaches sits in OS's free OpenData band (web-map zoom 7-16; OS: "Open layers are available to all users of the API regardless of which Data Hub plan is used, at no cost"): measured from the CITY_DATA scales and `scaleExtent([0.5, 8])`, desktop runs zoom 8.6-13.6 (14.6 on retina), London's default view is 10.2, and only a 320px phone fully zoomed out on the widest city dips to 6.9, where OS serves nothing (clamp). Premium (MasterMap) starts at zoom 17, which the 8x cap never reaches. Two routes: **(A) OS Maps API live** - an OS Data Hub key visible in the page (keep it on the OpenData plan so a copied key cannot spend), CSP `img-src` widened, a runtime dependency, no offline basemap; **(B) self-host OS Open Zoomstack (OGL) clipped to our cities** on our own S3/CloudFront - no key, no CSP change, low zooms precachable, egress inside CloudFront's always-free 1 TB/month. Either way attribution: "Contains OS data (c) Crown copyright and database right". The real cost is engineering time and the two non-money objections that still stand (offline launch, street detail implying precision the borough scores lack). **Cheapest next step:** point `design/map-basemap.html`'s raster toggle at OS OpenData tiles (needs a free Data Hub key) and judge it on screen. **OS Names API for place-name search** is still worth a separate look |
+| **OS open maps API** | No basemap, by recorded decision (CLAUDE.md "There is NO basemap") | OS Data Hub's OpenData plan (Maps, Names, Features APIs) is free and unlimited; Premium carries GBP 1,000/month of free transactions. **He meant the map background (confirmed 2026-10-02). COSTED: GBP 0 in tiles.** Every zoom the map reaches sits in OS's free OpenData band (web-map zoom 7-16; OS: "Open layers are available to all users of the API regardless of which Data Hub plan is used, at no cost"): measured from the CITY_DATA scales and `scaleExtent([0.5, 8])`, desktop runs zoom 8.6-13.6 (14.6 on retina), London's default view is 10.2, and only a 320px phone fully zoomed out on the widest city dips to 6.9, where OS serves nothing (clamp). Premium (MasterMap) starts at zoom 17, which the 8x cap never reaches. Two routes: **(A) OS Maps API live** - an OS Data Hub key visible in the page (keep it on the OpenData plan so a copied key cannot spend), CSP `img-src` widened, a runtime dependency, no offline basemap; **(B) self-host OS Open Zoomstack (OGL) clipped to our cities** on our own S3/CloudFront - no key, no CSP change, low zooms precachable, egress inside CloudFront's always-free 1 TB/month. Either way attribution: "Contains OS data (c) Crown copyright and database right". The real cost is engineering time and the two non-money objections that still stand (offline launch, street detail implying precision the borough scores lack). **Cheapest next step:** point `design/map-basemap.html`'s raster toggle at OS OpenData tiles (needs a free Data Hub key) and judge it on screen. **Superseded 2026-10-03: the trial is BUILT on `/preview/`** (route A, behind a key pasted per device, never in the source - see "Homepage redesign"); it needs only Bill's free Data Hub key to be judged on screen. **OS Names API for place-name search** is still worth a separate look |
 | **Profit from generated reports** (like the Earl's Court one-pager) | `scripts/area_summary.mjs` makes one from live data in about a minute. Two decisions already bound who pays: **consumers stay free** (23 Jul) and **community one-pagers are free** (29 Sep community plan) | Sell the SAME generator to businesses on the buyer's side: buying and relocation agents, surveyors, developers' and planning consultants (site screening, never a formal assessment). **Not estate or letting agents, and not conventional lenders or insurers** ("Constraints"). The niche version is an **aircraft-noise report per address** (routes overhead, DEFRA level, the 2021 caveat). Gates: the rename first; never presented as a conveyancing environmental search; check PI insurance; OGL attribution and no implied Breathe London endorsement. **Test by hand before building**: a payment link plus the script, offered to two or three warm contacts. Bill, decision |
 | **Browser extension is a decent idea** | Unlisted MV3 demo, ship gates in `extension/README.md` | Publish after the rename, so it goes through store review once |
 | **Defect found while checking** | **The first-run hint does not dismiss on a borough click**, though its comment says it does (`index.html`, "Hidden once ... (search, borough click, layer toggle)": only search focus, the layer toggles and a 30 s timer are wired). Seen live: the hint stayed on screen through three borough clicks | Small fix in the borough click handler. Claude |
@@ -654,7 +656,7 @@ would give it away.
 
 | # | Route | Why this rank | Gate |
 |---|---|---|---|
-| 1 | **Aircraft-noise address reports for businesses, sold by hand** (buying and relocation agents, surveyors, developers' consultants; **NOT estate agents** - corrected the same day against "Constraints" above, which this table was first written without reading: estate agents are misaligned, and conventional lenders and insurers are out under the riba-free rule) | Cheapest test of whether anyone pays; uses the niche. **SAMPLE BUILT 2026-10-02: `scripts/address_noise_report.mjs`** (one page per postcode: DEFRA level against the WHO guideline, a map of the contours and published routes, each route's closest point and the approach height there, the postcode's place among its district's live postcodes, the 2021 caveat). Sample for TW9 3PZ (Kew) on the Desktop. Run on four postcodes (measured, outside the contours, a neighbour-resolved postcode, Teesside); lint clean; **no automated test yet** | Not a conveyancing search; PI insurance checked; price is a guess until someone pays. **NEW GATE: the UK AIP's reuse terms have never been read. `LICENSING.md` has no entry for it at all**, though the map has drawn AIP-derived routes since v5.3 - read NATS/CAA's terms and add the entry before any report is SOLD |
+| 1 | **Aircraft-noise address reports for businesses, sold by hand** (buying and relocation agents, surveyors, developers' consultants; **NOT estate agents** - corrected the same day against "Constraints" above, which this table was first written without reading: estate agents are misaligned, and conventional lenders and insurers are out under the riba-free rule) | Cheapest test of whether anyone pays; uses the niche. **SAMPLE BUILT 2026-10-02: `scripts/address_noise_report.mjs`** (one page per postcode: DEFRA level against the WHO guideline, a map of the contours and published routes, each route's closest point and the approach height there, the postcode's place among its district's live postcodes, the 2021 caveat). Sample for TW9 3PZ (Kew) on the Desktop. Run on four postcodes (measured, outside the contours, a neighbour-resolved postcode, Teesside); lint clean; **no automated test yet** | Not a conveyancing search; PI insurance checked; price is a guess until someone pays. **NEW GATE: the UK AIP's reuse terms have never been read. `LICENSING.md` has no entry for it at all**, though the map has drawn AIP-derived routes since v5.3 - read NATS/CAA's terms and add the entry before any report is SOLD. **DONE 2026-10-03: read, and LICENSING.md has the row; no licence is granted in terms, so ask NATS AIS in writing before the first paid report. Price set the same day: GBP 35 a report for firms, free for individuals and residents' groups** |
 | 2 | **Commissioned area studies** (councils, developers, groups holding grant money) | The free community one-pager is the sample; a few per year matter at this size | Stay a data supplier, never a campaigner |
 | 3 | ~~**Badge / widget subscription for agents and property sites**~~ **WITHDRAWN the same day**: it sells to estate agents and listing sites, which "Constraints" rules out (their incentive is to push the sale through), and only flattering listings would embed it | `/badge` exists and is edge-cached; keep it free for buyers' advisers and community pages | - |
 | 4 | **API and data licensing** (the existing ladder), pitched as an aircraft-noise layer, not a general score | Largest contracts, slowest cycle | Rename, then outreach |
@@ -699,6 +701,27 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       step is generalising the by-name New York branches (EXPANSION.md lists
       them); the homepage mockups already draw the Bay Area as a city on the
       map from the page's own files, which is what it will look like.
+- [ ] **RULED 2026-10-03 (Bill): two releases.** (1) ON THE MAP, honestly
+      scoped: the 50 cities, the FAA routes, the noise picture, city and ZIP
+      search, and a Quiet Skies ESTIMATE per city and ZIP, labelled as one -
+      and NO overall Sky Score, because a composite from one estimated input
+      would break the two-input floor every other city is held to. (2)
+      SCORED: prices and the liveability inputs, then the overall score, San
+      Francisco's 41 neighbourhoods as the neighbourhood tier, area pages and
+      the launch post. Release 1 starts with the by-name New York branches
+      (counted 3 Oct: 18 comparisons in `index.html`, 7 and three tables in
+      the score Lambda, 10 scripts).
+- [ ] **Prices by the public-domain route need a free Census API key**
+      (American Community Survey median home values, with FHFA for the
+      trend), which avoids Zillow's unread terms. Bill's to request at
+      `api.census.gov/data/key_signup.html`; he will do it after the map
+      release. It goes in `.env`, never in source. Not needed for release 1.
+- [ ] **Reports in the Bay Area follow England's rule** (Bill, 3 Oct): free
+      for a person's own home and for residents' groups, firms pay. What can
+      be made there today is a ROUTES summary (which routes pass, how close,
+      how high), not a noise level: BTS says its map "should not be used to
+      evaluate noise levels in individual locations", and the 2022 band
+      values are unverified.
 
 ### Homepage redesign (opened 2026-10-02, after Geovation)
 
@@ -787,8 +810,82 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   (69 checks) fails any file the page fetches that no Makefile target
   uploads. Both pages joined the CloudFront accessibility scan. Next: Bill
   tries it on a phone, then the open decisions below.
+- **Bill's rulings, 2026-10-03, and what was built on them the same day:**
+  - **Reports are free for individuals** (a buyer or renter, their own home,
+    one at a time) **and for residents' groups; firms pay GBP 35 a report**,
+    first one free, ten for GBP 250, an area or site study from GBP 150.
+    Quoted flat: Cubitt33 is not VAT-registered. `/preview/reports/#prices`
+    is the ONE holder of the report price; the front page links to it and the
+    gate fails if it repeats the figure. `/pricing` lost its last
+    "+ VAT where applicable". Still Bill's before the first SALE: indemnity
+    insurance, and NATS's written confirmation (below).
+  - **The AIP reuse terms are now READ** (the gate "Monetisation, ranked"
+    row 1 recorded as never done) and `LICENSING.md` has the row: the AIP's
+    own terms (GEN 0.1 section 5) grant no licence in so many words but
+    acknowledge third parties putting the information in their own products
+    "with or without charge" and place liability on the user; NATS's
+    corporate website terms forbid commercial reuse of that website's
+    content. No term read forbids the free uses. Ask NATS AIS in writing
+    before the first paid report.
+  - **Every offering has a page**: all 30 links on the two preview pages
+    resolved; pricing and the council-area index were not linked from the
+    preview at all and now are (cards and both footers). API, open data and
+    pricing still land on current-design pages whose header leads back to
+    the current map; new-design versions are not built.
+  - **OS street-map trial, on the preview only**: the OS Maps API's
+    `Light_3857` tiles under the map, behind a Streets button that exists
+    only on a device given a Data Hub key (`/preview/?oskey=<key>` stores it
+    in that browser and removes it from the address bar; `?oskey=off`
+    forgets it). No key is in the source and no ordinary visitor's browser
+    contacts `api.os.uk`. The gate stubs the tiles and checks the grid
+    against the pin of a known postcode (proven red with the grid shifted
+    one tile). **Waiting on Bill: a free OS Data Hub key on the OpenData
+    plan.** If it earns its place, ship self-hosted OS Open Zoomstack, not
+    the keyed API (LICENSING row).
+  - The free-tier figure on the preview's third card is now under
+    `FreeTierQuotaDriftTests`; it was an unguarded mirror.
 
-Open, Bill's: which of the six; whether it replaces `/` and where the full map
+- **MERGED TO MASTER 2026-10-03 on Bill's instruction**: a fast-forward to
+  `0c2445e` (master had not moved since the branch was cut), CI green on all
+  four jobs. Master now equals what is live, sw.js v1.0.36 included, so a
+  deploy from master cannot roll the worker back. Work continues on
+  `homepage-v2`; fast-forward master after each deploy so the two stay level.
+
+### Parked idea: a community noise-sensor network (raised 2026-10-03)
+
+Bill: "an initiative like Breathe London but for flight and road noise".
+Kept for reference; nothing is built or promised.
+
+- **Why it fits**: sensors answer the two things published data cannot - how
+  OFTEN aircraft pass (N65, which we do not hold) and what levels are THIS
+  year (DEFRA's map models 2021). It is also what residents' groups ask for,
+  and it is hardware, which the Makerversity residency (applied 1 Oct) and
+  the declined Deep Tech Expo both turn on.
+- **What exists already** (searched 2026-10-03, not contacted): Breathe
+  London is run by Imperial's Environmental Research Group on sensors from a
+  commercial supplier, with about GBP 1.5m from the Mayor and Bloomberg
+  Philanthropies for 195 sensors, and a sponsorship scheme that gives
+  community groups nodes at no cost. For aircraft noise, a German volunteer
+  body (Deutscher Fluglaermdienst) reports 790 stations round 56 airports in
+  nine European countries and Canada, data open; whether any are in the UK
+  was not established. The Open University ran a six-site citizen study at
+  London City Airport with a phone app said to be accurate to about 2 dB.
+  Heathrow publishes its own monitors.
+- **The honest limits**: a network of that size needs institutional money
+  and calibration; cheap microphones give indicative levels that must never
+  be set beside DEFRA's as equals; telling aircraft from traffic needs
+  flight-track data (the OpenSky licence question again); a device must send
+  sound LEVELS only, never audio; and siting needs each host's consent.
+- **The shape that could work**: a pilot, not a network - three to five
+  sensors with one residents' group under one flight path for three months,
+  with a partner doing the calibration, published openly, funded by a grant.
+- **First steps, all free**: ask the German body whether it has UK stations
+  and takes new ones; ask the Breathe London contact (introduced via the
+  Earl's Court call) whether Imperial would partner or its nodes can carry
+  noise; ask one residents' group whether it would host. A one-page pilot
+  proposal is the artefact to write when Bill picks this up.
+
+Open, Bill's (the choice among the six is made: v2, 2 Oct): whether it replaces `/` and where the full map
 then lives (the same `index.html` runs in the native app, about twenty gates
 and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.

@@ -319,6 +319,21 @@ departure, 26 are on the noise map.
   target picture. The one-way-door rules above still apply: outlines must be
   un-ignored by name, the file must not be called `*-boroughs.json`, and
   `BACKEND_ONLY_PRICES` has no currency filter.
+- **RULED 2026-10-03 (Bill): the scored city ships in TWO RELEASES.**
+  Release 1 puts the Bay Area on the main map with what is already held and
+  checked - 50 cities, routes, the noise picture, city and ZIP search, a
+  Quiet Skies estimate per city and ZIP - and NO overall score: one
+  estimated input is not a composite, and every other city is held to a
+  two-input floor. Release 2 adds prices and the liveability inputs, and
+  with them the overall score, the neighbourhood tier, area pages and the
+  launch post. ZIP search needs a ZIP-to-city table and ZIP centre points;
+  the Census publishes both as files (gazetteer and relationship files),
+  believed to be plain downloads needing no key - not yet fetched. Prices by
+  the public-domain route are ACS median home values through the Census API
+  (the free key in point 3 above; Bill's to request, after release 1) with
+  FHFA for the trend; Zillow stays behind its unread terms. Reports there
+  follow England's rule: free for a person's own home and for residents'
+  groups, and until a level can be stood behind they are routes summaries.
 
 **What a second US city must touch** (code survey 2026-10-02; line numbers
 omitted because they move - search for the names). New York is wired in BY

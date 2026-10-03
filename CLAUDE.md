@@ -937,7 +937,7 @@ as complete.** The pages are now asserted against the plan.
 ## The Bay Area flight-path page, `/bay-area/` (2026-10-02)
 
 **A standalone static page, NOT a city on the map** (Bill's ruling: page first,
-scored city later; plan in EXPANSION.md). The 50 cities of the four counties
+scored city later; plan in EXPANSION.md). **Ruled 2026-10-03: the scored city follows in TWO RELEASES** - on the main map first (the 50 cities, routes, noise picture, city and ZIP search, a Quiet Skies ESTIMATE, and NO overall score, since one estimated input is not a composite), scored second (prices by the Census route, liveability inputs, the neighbourhood tier, area pages). EXPANSION.md has what each needs; the by-name New York branches come first. The 50 cities of the four counties
 round SFO, OAK and SJC, the FAA's coded routes, and BTS's 2022 noise map.
 `scripts/build_bay_area_page.py --fetch | --write | --check`; do not hand-edit
 `bay-area/index.html`. **DEPLOYED 2026-10-02**, linked from both footers of
@@ -989,6 +989,21 @@ cannot be `cache.addAll`'d, and `tests/failure-path.mjs` asserts an offline
 launch), permanent provider attribution, and per-load billing if it is Google.
 The product argument is separate and stronger: **street detail implies a
 precision we do not have**, since every figure published is borough-level.
+
+**2026-10-03: there is a street-map TRIAL, on `/preview/` only, and the decision
+above still stands for the live map.** Bill asked to trial Ordnance Survey's
+maps (Geovation's suggestion, costed in ROADMAP at GBP 0 in tiles). The preview
+is where it can be judged without touching the two objections: it is not in the
+app shell, so offline launch is not at stake, and its answers are postcode-level
+with a pin. `drawStreets()` in `preview/hp-engine.js` lays OS Maps API tiles
+under the d3 map by plain web-mercator arithmetic (no MapLibre, no d3-tile).
+**No key is in the source**: `/preview/?oskey=<key>` stores a Data Hub key in
+that browser and strips it from the URL, the Streets button is hidden without
+one, and `tests/preview-home.mjs` asserts nothing is ever requested from
+`api.os.uk` keyless. The grid is checked against the pin of a known postcode,
+because a tile grid one tile out still looks like a map (the flood-georef
+lesson). If it ships, ship self-hosted OS Open Zoomstack: no key in a page, no
+CSP host, no third party in the visitor's browser (LICENSING.md has the row).
 
 **Two gotchas found building it, both the "graceful failure" shape:**
 
@@ -1131,7 +1146,7 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | `deeplinks-deploy` | `.well-known/apple-app-site-association` + `assetlinks.json`. **NOT in `web-deploy-all`**, deliberately: the target refuses to run while the files hold `TEAMID`/`REPLACE:WITH` placeholders (see `mobile/DEEP_LINKING.md`). Omitted from this table until 2026-09-14 (audit M29) |
 | `open-data-deploy` | `open-data/index.html` + the borough CSV (2026-09-28). In `web-deploy-all`. **Absent from this table until 2026-10-02**, the list-that-omits-a-member trap again |
 | `bay-area-deploy` | **new (2026-10-02)** - `bay-area/index.html`, its BTS noise picture and `share.png`. In `web-deploy-all`. The page is GENERATED: `python scripts/build_bay_area_page.py --write` (`--check` is blocking), from `data/us-flight-procedures.json`, `data/us-bayarea-places.json` and the picture. **A new FAA cycle reds `--check` until `--write` is re-run.** The picture's name carries its edition because `sw.js` serves same-origin images cache-first |
-| `preview-deploy` | **new (2026-10-02)** - `preview/`: the NEW FRONT PAGE under trial (`index.html`, v2 of the homepage redesign), its `reports/` page with two sample PDFs, and `hp-engine.js`, the one copy of the live map + working search that `design/homepage-v*.html` also load. Standalone like `talks-deploy` (not in `web-deploy-all`, not in the drift check), `noindex`, pages `no-cache`. Branch `homepage-v2`. **Since 2026-10-03 the engine is an ES MODULE importing `js/flight_geometry.mjs`** (moved from `scripts/`; the two report generators import it from there too - one holder), and this target uploads that module as well as `web-deploy` does, to the same key, so the preview never fetches a module the origin lacks. **It also uploads four data files the engine reads and nothing else deploys** (`flight-procedures.json`, `aircraft-noise-rasters.json`, `us-bayarea-places.json`, `us-flight-procedures.json`): the live map and the Bay Area page carry their contents inline, generated, so the origin had never held them and the first deploy would have opened on "The map could not load". Found by curling the origin BEFORE deploying, not by a gate - every source gate serves the working tree, where an undeployed file looks live - so the last check in `tests/preview-home.mjs` now fails any file the page fetches that no Makefile target uploads (read from `make.py --dry-run`). **DEPLOYED 2026-10-03**, `pwa-deploy` first (sw.js v1.0.36), verified from the origin. The page is a tool: borough cards read the open data CSV (no key, no quota), the search takes a place name, the URL carries `?city=`/`?postcode=`/`?borough=` exactly as the live map reads them. Gate: `tests/preview-home.mjs`, blocking, offline. When it becomes the front door, `index.html` moves to `/map/` and about twenty gates and 103 area-page links move with it |
+| `preview-deploy` | **new (2026-10-02)** - `preview/`: the NEW FRONT PAGE under trial (`index.html`, v2 of the homepage redesign), its `reports/` page with two sample PDFs, and `hp-engine.js`, the one copy of the live map + working search that `design/homepage-v*.html` also load. Standalone like `talks-deploy` (not in `web-deploy-all`, not in the drift check), `noindex`, pages `no-cache`. Branch `homepage-v2`, **fast-forwarded into master on 2026-10-03** so master equals what is live (keep the two level after each deploy). **Since 2026-10-03 the engine is an ES MODULE importing `js/flight_geometry.mjs`** (moved from `scripts/`; the two report generators import it from there too - one holder), and this target uploads that module as well as `web-deploy` does, to the same key, so the preview never fetches a module the origin lacks. **It also uploads four data files the engine reads and nothing else deploys** (`flight-procedures.json`, `aircraft-noise-rasters.json`, `us-bayarea-places.json`, `us-flight-procedures.json`): the live map and the Bay Area page carry their contents inline, generated, so the origin had never held them and the first deploy would have opened on "The map could not load". Found by curling the origin BEFORE deploying, not by a gate - every source gate serves the working tree, where an undeployed file looks live - so the last check in `tests/preview-home.mjs` now fails any file the page fetches that no Makefile target uploads (read from `make.py --dry-run`). **DEPLOYED 2026-10-03**, `pwa-deploy` first (sw.js v1.0.36), verified from the origin. The page is a tool: borough cards read the open data CSV (no key, no quota), the search takes a place name, the URL carries `?city=`/`?postcode=`/`?borough=` exactly as the live map reads them. Gate: `tests/preview-home.mjs`, blocking, offline. When it becomes the front door, `index.html` moves to `/map/` and about twenty gates and 103 area-page links move with it |
 | `web-deploy-all` | all of the above bar `deeplinks-deploy`, `talks-deploy` and `preview-deploy`, `fonts-deploy` first |
 
 The last three were added closing audit finding 38: **eleven live files had no

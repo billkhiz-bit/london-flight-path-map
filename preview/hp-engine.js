@@ -44,6 +44,21 @@ const UNDER_LINE_KM = 1.0;
 const ZOOM_MAX = 6;
 const ZOOM_STEP = 1.6;
 
+// ---- trial (2026-10-03): an Ordnance Survey street background ----
+// The OS Maps API's OpenData layers cost nothing at any zoom this map reaches
+// (ROADMAP "OS open maps API"), but need a Data Hub key. No key is in the
+// source: opening /preview/?oskey=<key> once stores it on that device and
+// takes it out of the address bar; ?oskey=off forgets it. Without a key the
+// Streets button stays hidden and nothing is asked of api.os.uk.
+const OS_LAYER = 'Light_3857'; // the muted style, so the noise picture reads over it; Road_3857 and Outdoor_3857 also exist
+const OS_ZOOM = [7, 16]; // the OpenData band; Premium starts at 17
+const OS_MAX_TILES = 80;
+const OS_KEY_STORE = 'osMapsKey';
+const osKey = {
+  get() { try { return localStorage.getItem(OS_KEY_STORE) || ''; } catch { return ''; } },
+  set(v) { try { if (v) localStorage.setItem(OS_KEY_STORE, v); else localStorage.removeItem(OS_KEY_STORE); } catch { /* storage blocked: the trial stays off */ } },
+};
+
 const byId = (id) => document.getElementById(id);
 const svg = d3.select('#map');
 const tip = byId('tip');
@@ -51,7 +66,7 @@ const state = {
   city: null, boroughs: null, extra: null, proc: null, rasters: null, projection: null,
   usProc: null, usNoise: null, usPlaces: null,
   rows: [], // the open-data CSV, one object per council area
-  layers: { noise: true, lines: true },
+  layers: { noise: true, lines: true, streets: false },
   zoom: null, k: 1,
   routes: [], // every drawn route as view-space segments with its tooltip, for the pointer-distance check
   selected: null, // the name of the council area or Bay Area place whose card is open
@@ -103,6 +118,7 @@ async function load() {
     d3.text(CSV).catch(() => ''),
   ]);
   Object.assign(state, { extra, proc, rasters, rows: csv ? parseCsv(csv) : [] });
+  readOsKey();
   renderChips();
   bindControls();
   await bootFromQuery();
@@ -121,6 +137,21 @@ function renderChips() {
   for (const [href, name] of [['/?city=nyc', 'New York']]) {
     const a = document.createElement('a'); a.href = href; a.textContent = name; box.append(a);
   }
+}
+
+// ?oskey= is read once and removed, so a key is never left in a link that gets
+// shared or bookmarked. Anything that is not a plain token is ignored.
+function readOsKey() {
+  const q = new URLSearchParams(location.search);
+  const given = q.get('oskey');
+  if (given != null) {
+    if (given === 'off') osKey.set('');
+    else if (/^[A-Za-z0-9]{8,64}$/.test(given)) osKey.set(given);
+    q.delete('oskey');
+    const s = q.toString();
+    history.replaceState(null, '', s ? `?${s}` : location.pathname);
+  }
+  state.layers.streets = Boolean(osKey.get());
 }
 
 // ---- the URL: the same names the live map reads, so links carry across ----
@@ -189,6 +220,9 @@ async function show(key, pin) {
   state.city = key;
   state.boroughs = boroughs;
   document.querySelectorAll('#chips button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.city === key)));
+  // The reset below ends a zoom, which re-tiles the street map: with no
+  // projection it has nothing to tile, so the old city's tiles are not fetched.
+  state.projection = null;
   if (state.zoom) svg.call(state.zoom.transform, d3.zoomIdentity);
   draw(pin);
 }
@@ -222,6 +256,8 @@ function draw(pin) {
   // The noise picture is cut to the city's outline: DEFRA's London export reaches Gatwick,
   // and a lobe floating beside the map reads as a mistake.
   view.append('clipPath').attr('id', 'city-clip').selectAll('path').data(state.boroughs.features).join('path').attr('d', path);
+  // The street-map trial sits under everything; drawStreets() fills it.
+  view.append('g').attr('class', 'streets').style('pointer-events', 'none');
   view.append('g').selectAll('path').data(state.boroughs.features).join('path')
     .attr('class', 'boro').attr('d', path).attr('fill-rule', 'evenodd')
     .classed('is-selected', (d) => featureName(d) === state.selected)
@@ -297,6 +333,55 @@ function draw(pin) {
   }
   bindZoom(W, H);
   applyScale();
+  drawStreets();
+}
+
+// Web-mercator tiles under a d3 mercator. With the projection's default centre
+// the world is 2*pi*k view pixels square, centred on its translate, so tile
+// (x, y) at zoom z sits at a fixed place in view space and the zoom transform
+// carries it with everything else. Re-tiled when a zoom ends, at the level
+// whose tiles are nearest 256 px on screen.
+const OS_CREDIT = byId('os-credit')?.textContent || '';
+function drawStreets() {
+  const key = osKey.get();
+  // OS maps Great Britain only: the Bay Area keeps its plain ground.
+  const can = Boolean(key) && state.city !== 'bayarea';
+  const on = can && state.layers.streets;
+  const b = byId('toggle-streets');
+  if (b) {
+    b.hidden = !key;
+    b.disabled = Boolean(key) && !can;
+    b.title = b.disabled ? 'Ordnance Survey maps Great Britain only' : '';
+    b.setAttribute('aria-pressed', String(on));
+  }
+  svg.classed('has-streets', on);
+  const credit = byId('os-credit');
+  if (credit) { credit.hidden = !on; credit.textContent = OS_CREDIT; }
+  const g = svg.select('.streets');
+  if (g.empty() || !state.projection) return;
+  g.selectAll('*').remove();
+  if (!on) return;
+  const [W, H] = size();
+  const world = 2 * Math.PI * state.projection.scale();
+  const [tx, ty] = state.projection.translate();
+  const t = d3.zoomTransform(svg.node());
+  const z = Math.max(OS_ZOOM[0], Math.min(OS_ZOOM[1], Math.round(Math.log2((world * t.k) / 256))));
+  const n = 2 ** z, ts = world / n;
+  const x0 = tx - world / 2, y0 = ty - world / 2;
+  const [vx0, vy0] = t.invert([0, 0]), [vx1, vy1] = t.invert([W, H]);
+  const index = (v, origin) => Math.max(0, Math.min(n - 1, Math.floor((v - origin) / ts)));
+  const tiles = [];
+  for (let x = index(vx0, x0); x <= index(vx1, x0); x++) {
+    for (let y = index(vy0, y0); y <= index(vy1, y0); y++) tiles.push([x, y]);
+  }
+  if (tiles.length > OS_MAX_TILES) return;
+  g.selectAll('image').data(tiles).join('image')
+    .attr('href', ([x, y]) => `https://api.os.uk/maps/raster/v1/zxy/${OS_LAYER}/${z}/${x}/${y}.png?key=${encodeURIComponent(key)}`)
+    .attr('x', ([x]) => x0 + x * ts).attr('y', ([, y]) => y0 + y * ts)
+    // Half a view pixel of overlap hides the hairline between tiles at fractional sizes.
+    .attr('width', ts + 0.5).attr('height', ts + 0.5).attr('preserveAspectRatio', 'none')
+    // A refused key must not look like a plain map: say so where the credit is.
+    .on('error', () => { if (credit) credit.textContent = 'The OS map could not load. Check the key.'; });
 }
 
 // A 1.8px line cannot be hovered, and a wide invisible twin of it STEALS the
@@ -375,7 +460,8 @@ function bindZoom(W, H) {
         svg.select('.view').attr('transform', ev.transform);
         applyScale();
         hideTip();
-      });
+      })
+      .on('end', drawStreets);
     svg.call(state.zoom).on('dblclick.zoom', null);
   }
   state.zoom.translateExtent([[0, 0], [W, H]]).extent([[0, 0], [W, H]]);
@@ -413,6 +499,10 @@ function bindControls() {
       svg.select(layer === 'noise' ? '#noise-image' : '.lines').style('display', state.layers[layer] ? null : 'none');
     });
   }
+  byId('toggle-streets')?.addEventListener('click', () => {
+    state.layers.streets = !state.layers.streets;
+    drawStreets();
+  });
   byId('borough-close')?.addEventListener('click', () => closeBorough(true));
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { hideTip(); closeBorough(false); } });
   window.addEventListener('resize', () => { if (state.boroughs) draw(state.pin); });

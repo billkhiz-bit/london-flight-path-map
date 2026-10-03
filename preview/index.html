@@ -6,7 +6,7 @@
     <title>Sky Score: how loud are the planes where you want to live?</title>
     <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Open government data for English city regions, New York and the San Francisco Bay Area." />
     <meta name="robots" content="noindex, nofollow" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://api.os.uk; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; base-uri 'self'; form-action 'self';" />
     <!--
       PREVIEW of the new homepage (branch homepage-v2, 2026-10-02), served at
       /preview/ so it can be tried on a phone against the live data. Not the
@@ -56,6 +56,10 @@
       .hero svg .ap { font: 700 12px var(--font-mono); fill: #141414; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
       .hero svg .pin { fill: var(--orange); stroke: #141414; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
       .hero svg .pin-ring { fill: none; stroke: var(--orange); stroke-width: 2; opacity: 0.8; vector-effect: non-scaling-stroke; }
+      /* The street-map trial: council areas go see-through so the streets beneath them read. */
+      .hero svg.has-streets .boro { fill-opacity: 0.12; stroke: #55554f; }
+      .hero svg.has-streets .boro:hover, .hero svg.has-streets .boro.is-selected { fill-opacity: 0.45; }
+      .os-credit { position: absolute; left: 24px; bottom: 6px; margin: 0; font-size: 10px; color: var(--dark); background: rgba(251, 250, 248, 0.85); padding: 1px 6px; border-radius: 4px; pointer-events: none; }
 
       .panel { position: absolute; left: 24px; top: 24px; width: min(520px, calc(100% - 48px)); max-height: calc(100% - 48px); overflow-y: auto; background: rgba(251, 250, 248, 0.94); backdrop-filter: blur(6px); border-radius: 16px; padding: 24px 24px 20px; box-shadow: 0 10px 30px rgba(20, 20, 20, 0.12); }
       .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 10px; text-wrap: balance; }
@@ -116,6 +120,8 @@
       .legend button[aria-pressed='false'] { color: var(--mid); text-decoration: line-through; }
       .legend button:hover:not(:disabled) { border-color: var(--line); background: #fff; }
       .legend button:disabled { opacity: 0.45; cursor: default; text-decoration: none; }
+      /* display: inline-flex above would otherwise beat the hidden attribute. */
+      .legend button[hidden] { display: none; }
       .legend i { display: inline-block; width: 22px; height: 0; border-top: 2px solid #141414; margin-right: 6px; vertical-align: middle; }
       .legend i.dash { border-top-style: dashed; }
       .legend .short { display: none; }
@@ -139,6 +145,9 @@
       .card .fig small { display: block; font: 400 13px var(--font-body); color: var(--mid); margin-top: 4px; }
       .card a.go { margin-top: auto; align-self: flex-start; font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
       .card a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
+      .card .go-row { margin-top: auto; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+      .card .go-row a.go { margin-top: 0; }
+      .card a.also { display: inline-block; padding: 5px 0; font-size: 14px; font-weight: 600; color: var(--orange-ink); }
 
       section.who { padding: 40px var(--gutter) 56px; }
       section.who p { margin: 0; max-width: 80ch; font-size: 17px; color: var(--mid); }
@@ -163,6 +172,8 @@
         .legend .short { display: inline; }
         .legend .ramp b { width: 6px; height: 9px; }
         .zoom { right: 12px; top: 12px; }
+        /* Above the city strip, which runs along the bottom edge on a phone. */
+        .os-credit { left: 12px; bottom: 52px; }
         .row { grid-template-columns: 96px 1fr 84px; }
         .borough .facts div { grid-template-columns: 1fr; gap: 0; }
         .panel { max-height: none; overflow: visible; }
@@ -192,7 +203,10 @@
           <div class="legend" role="group" aria-label="Map layers">
             <button type="button" id="toggle-lines" aria-pressed="true"><i></i><span class="long">Approach </span><i class="dash" style="margin-left:6px"></i><span class="long">Departure</span><span class="short">Routes</span></button>
             <button type="button" id="toggle-noise" aria-pressed="true"><span class="ramp" id="ramp"></span><span class="long">Aircraft noise, quieter to louder</span><span class="short">Noise</span></button>
+            <!-- A trial (2026-10-03): an Ordnance Survey street background. Hidden unless this device holds an OS Data Hub key; see the engine. -->
+            <button type="button" id="toggle-streets" aria-pressed="false" hidden>Streets</button>
           </div>
+          <p class="os-credit" id="os-credit" hidden>Contains OS data &copy; Crown copyright and database right 2026</p>
           <div class="zoom" role="group" aria-label="Zoom">
             <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
             <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
@@ -229,19 +243,19 @@
             <h3>Check an address</h3>
             <p>Aircraft and road noise, air quality and flood risk for any postcode in the cities we cover, with the public body behind each figure.</p>
             <div class="fig">97<small>council areas across England and New York, and 50 Bay Area cities</small></div>
-            <a class="go" href="#pc">Check a postcode</a>
+            <div class="go-row"><a class="go" href="#pc">Check a postcode</a><a class="also" href="/area/">Every council area</a></div>
           </article>
           <article class="card" id="reports">
             <h3>Reports for your street</h3>
-            <p>One page of the official figures for the streets you name. Free for residents' groups; for buying agents and surveyors, a sourced answer to hand to a client.</p>
+            <p>One page of the official figures for the streets you name. Free for your own home and for residents' groups; for buying agents and surveyors, a sourced answer to hand to a client.</p>
             <div class="fig">1 page<small>every number with its source and its date</small></div>
-            <a class="go quiet" href="/preview/reports/">See a sample</a>
+            <div class="go-row"><a class="go quiet" href="/preview/reports/">See a sample</a><a class="also" href="/preview/reports/#prices">What it costs</a></div>
           </article>
           <article class="card">
             <h3>Data for your business</h3>
             <p>The same figures through an API, in your own system, or as one open file of every council area to rank and compare.</p>
             <div class="fig">10,000<small>lookups a month on the free tier</small></div>
-            <a class="go quiet" href="/api/">Read the docs</a>
+            <div class="go-row"><a class="go quiet" href="/api/">Read the docs</a><a class="also" href="/pricing">Pricing</a></div>
           </article>
         </div>
       </section>
@@ -254,7 +268,7 @@
 
     <footer>
       <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd. This is a preview of a new front page; <a href="/">the current site</a> is unchanged.</span>
-      <span><a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+      <span><a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
 
     <script src="/js/vendor/d3.v7.min.js"></script>
