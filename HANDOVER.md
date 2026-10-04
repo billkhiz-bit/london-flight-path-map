@@ -6,6 +6,40 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
+**WHERE TO START (2026-10-04) - THE NEW FRONT PAGE IS ON TRIAL AT `/preview/`, AND THE BAY AREA BUILD HAS BEGUN.**
+Master `35f1a2b`, pushed, CI green, and equal to what is live. Two branches were fast-forwarded into
+it over 3-4 October: `homepage-v2` and `bay-area-on-map`. Work continues on `bay-area-on-map`;
+fast-forward master after each deploy (`git push origin <sha>:master`, then
+`git fetch . origin/master:master`) so a deploy from master cannot roll anything back.
+- **`https://skyscore.co.uk/preview/`** is homepage v2 as a working site (`noindex`): the map with a
+  postcode, ZIP or place search on it, council-area cards from the open data CSV, a reports page with
+  prices, and the Bay Area as a city. `tests/preview-home.mjs` is its gate (91 checks, blocking).
+  Deploy is `python scripts/make.py pwa-deploy preview-deploy` (the worker only when `sw.js` changed).
+- **Bill's rulings, 3 Oct**: reports are free for a person's own home and for residents' groups and
+  GBP 35 for firms (one holder: `/preview/reports/#prices`); the Bay Area joins the main map in TWO
+  releases, on the map first with a Quiet Skies estimate and NO overall score.
+- **Bay Area release 1, so far**: five of the page's eleven by-name New York tests ask the registry
+  and `tests/test_us_city_branches.py` declares the twelve that remain;
+  `scripts/build_bayarea_zips.py` derives `data/us-bayarea-zips.json` (165 ZIP areas, Census,
+  `--check` blocking) and ZIP search is live on the preview. **NEXT**: a proposal to Bill for how a
+  city with no overall score looks in the live map's score panel and ranking, then its registry
+  entry, then the Lambda entry (a backend deploy, which is Bill's command).
+- **Waiting on Bill** (ROADMAP "RECOMMENDED NEXT" has the list): a free OS Data Hub key to judge the
+  street-map trial (`/preview/?oskey=<key>`); indemnity insurance and NATS AIS's written confirmation
+  before the first PAID report; when the preview replaces `/`; a free Census API key, after release 1.
+- **Parked in ROADMAP**, for reference: a community noise-sensor network, and a light-aircraft,
+  leaded-fuel-and-schools layer (both from 3 Oct).
+- **What these two days taught, each now a check or a skill note**: an unanchored `.gitignore` line
+  hid a whole new directory from git while every gate was green (`git add -n <dir>` before the first
+  commit); every source gate serves the working tree, so four data files with no upload line passed
+  them all (curl the origin for everything a new page fetches before its first deploy; the gate's
+  last check now does the offline half); a test's own setup step cleared the stale pin it was meant
+  to catch; a second `isUkCity` declaration stopped the whole page script; and two guesses written as
+  facts (a "half or more" land rule, "about 300 ZIP areas") were both refused by the real data.
+- **The machine**: a full preflight is 35 to 40 minutes. Run it in the background to a log with the
+  exit code appended, one heavy thing at a time; free memory fell to 2.7 GB during the browser stages
+  with Chrome open.
+
 **WHERE TO START (2026-10-01, evening) - AIR QUALITY ON DEFRA 2024, AND A FRESHNESS CHECK FOR EVERY DATASET.**
 Master `b812311`, pushed. Air quality rolled 2022 -> 2024 (Bill: don't wait for 2025): 377 borough
 fields, `env` up on 88 of 93 boroughs (mean +0.31), 46 of 102 balanced scores moved by at most 0.2,

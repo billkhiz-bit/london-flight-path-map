@@ -718,6 +718,14 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       ZIP areas from three Census files, and ZIP search on `/preview/`
       (EXPANSION.md has what the data taught). Next: the Bay Area's entry in
       the live map's registry, then the Lambda entry and its deploy.
+- [x] **Both steps MERGED AND DEPLOYED 2026-10-04 on Bill's instruction**:
+      master fast-forwarded to `35f1a2b` (CI green), `web-deploy` and
+      `preview-deploy`, both invalidations Completed, five files hash-equal
+      to source. Driven in a browser against the live origin: the map still
+      draws London, New York's noise tiles and Manchester's DEFRA picture
+      with no page error, and on `/preview/` 94301 opens Palo Alto with its
+      pin, 95014 says 44% of it is in Cupertino and 90210 is told it is not
+      covered, at desktop and phone widths.
 - [ ] **Prices by the public-domain route need a free Census API key**
       (American Community Survey median home values, with FHFA for the
       trend), which avoids Zillow's unread terms. Bill's to request at
@@ -857,6 +865,8 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   four jobs. Master now equals what is live, sw.js v1.0.36 included, so a
   deploy from master cannot roll the worker back. Work continues on
   `homepage-v2`; fast-forward master after each deploy so the two stay level.
+  (Since then master has moved on with `bay-area-on-map`: `35f1a2b` on
+  2026-10-04. `homepage-v2` is fully contained in it.)
 
 ### Parked idea: a community noise-sensor network (raised 2026-10-03)
 

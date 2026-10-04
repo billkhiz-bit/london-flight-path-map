@@ -957,6 +957,21 @@ are, not how many aircraft use them".
   DEFRA and the Environment Agency for California.
 - `tests/test_bay_area_page.py` breaks the REAL inputs one way at a time (a
   mis-paired shapefile record, a picture one tile out, a missing city).
+- **Release 1 of the scored city is under way** (branch `bay-area-on-map`,
+  fast-forwarded into master as it goes). Done by 2026-10-04: five of the
+  page's eleven by-name New York tests ask the registry
+  (`paintsNoiseFromTiles()`, and `isUkCity()`, which already existed), and
+  **`tests/test_us_city_branches.py` DECLARES the twelve that remain**: a new
+  `=== 'nyc'` fails the build, so ask the registry or declare it there with
+  its reason. **`data/us-bayarea-zips.json`** (165 ZIP areas from three Census
+  files; `scripts/build_bayarea_zips.py --check` is blocking) names the city
+  holding the most of each ZIP's land WITH its share. Do not drop the share,
+  and do not bring back "name a city only at half or more": that left
+  Cupertino's and Livermore's ZIPs in no city, because both reach into empty
+  hills. ZIP search is live on `/preview/` only; the live map and the Lambda
+  still use New York's hand-built tables. Next is the Bay Area's entry in
+  the live map's registry, where a city with no overall score is a new state
+  for the score panel and the ranking.
 
 ## Scale direction — do NOT "fix" the apparent site/extension disagreement
 

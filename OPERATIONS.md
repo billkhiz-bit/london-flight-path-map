@@ -66,7 +66,7 @@ make area-deploy           # area/ - 100 pages, sync --delete, invalidates
 make open-data-deploy      # open-data/ - the page + the borough CSV (the new front page reads the CSV)
 make bay-area-deploy       # bay-area/ - the Bay Area flight-path page + its noise picture
 make talks-deploy          # talks/ - sync the write-up PDFs + index.html (standalone, not in web-deploy-all)
-make preview-deploy        # preview/ - the new front page under trial + js/flight_geometry.mjs (standalone, noindex, not in web-deploy-all)
+make preview-deploy        # preview/ - the new front page under trial + js/flight_geometry.mjs + the five data files its engine reads (standalone, noindex, not in web-deploy-all; run pwa-deploy with it whenever sw.js changed)
 ```
 
 (This list named eight targets and omitted `open-data-deploy` and

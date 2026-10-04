@@ -418,6 +418,8 @@ on the registry, before any Bay Area data exists:
     a ZIP outside the four counties gets a sentence and nothing moves. The
     live map and the Lambda still use New York's hand-built tables; this file
     is what replaces the by-name ZIP branch there.
+  - **Merged to master and deployed 2026-10-04** (`35f1a2b`, verified from
+    the origin; ROADMAP has the record).
 
 **The liveability component is now fully measured**, so depth is no longer the
 blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.
