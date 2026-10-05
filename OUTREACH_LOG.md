@@ -20,11 +20,11 @@ Warm contacts made in person that have no row anywhere else. This section exists
 because the Build Night 1 entry below already records the same failure once -
 *"Not captured (recover before the trail cools): the names/companies of the 6
 LinkedIn connections"* - and an unwritten contact decays exactly the way the
-Mike Holden / Bold Legal route did.
+Landmark director / Bold Legal route did.
 
 | Date | Contact | Channel | Status | Notes / Next action |
 |---|---|---|---|---|
-| 2026-08-27 | **Zubayr** (surname, organisation and role TO CONFIRM with Bill) | In person; email address now held | 🟢 Re-opened, ours to send | Bumped into him again. He **apologised for not seeing the earlier message**, said Bill is **free to message him again**, and **gave his email**. So the earlier silence was not a decline: a stalled thread has been explicitly reopened by the other side, which is the warmest state in this file short of a signed customer. **Blocked only on facts that were never written down** - who he is, which organisation, and what the original message asked. Nothing in this repo, in the `~/.claude` memory directory, or under `OneDrive/Desktop` names him (searched 2026-08-28). **Next action: Bill supplies those three, then draft and send within 48h** - the cadence note below is explicit that in-person contacts are warmest immediately. |
+| 2026-08-27 | A contact met in person (name in Bill's tracker, not here: this repo is public) | In person; email address now held | 🟢 Re-opened, ours to send | Bumped into him again. He **apologised for not seeing the earlier message**, said Bill is **free to message him again**, and **gave his email**. So the earlier silence was not a decline: a stalled thread has been explicitly reopened by the other side, which is the warmest state in this file short of a signed customer. **Blocked only on facts that were never written down** - who he is, which organisation, and what the original message asked. Nothing in this repo, in the `~/.claude` memory directory, or under `OneDrive/Desktop` names him (searched 2026-08-28). **Next action: Bill supplies those three, then draft and send within 48h** - the cadence note below is explicit that in-person contacts are warmest immediately. |
 
 ---
 
@@ -36,11 +36,11 @@ One deal puts Sky Score into thousands of conveyancing searches. Long sales cycl
 
 | Date | Contact | Company | Role | Channel | Status | Notes / Next action |
 |---|---|---|---|---|---|---|
-| 2026-05-21 | **Mike Holden, Divisional Director** (named) | Landmark Information Group | Data Partnerships | **In person: Bold Legal Group Conf, 17 Jun** (he's a panellist) · LinkedIn · form fallback | 🟡 Draft ready | Best route is in-person at Bold Legal soirée 17 Jun, or LinkedIn-connect referencing it. Draft below (Riskview noise-gap, licensing pitch). No public email. |
+| 2026-05-21 | **A divisional director** (name in Bill's tracker, not here) | Landmark Information Group | Data Partnerships | **In person: Bold Legal Group Conf, 17 Jun** (he's a panellist) · LinkedIn · form fallback | 🟡 Draft ready | Best route is in-person at Bold Legal soirée 17 Jun, or LinkedIn-connect referencing it. Draft below (Riskview noise-gap, licensing pitch). No public email. |
 | 2026-05-21 | TBC (Data Partnerships / Product) | Groundsure | Data Partnerships | Form · 01273 257755 · LinkedIn for named contact | 🟡 To draft | Cleanest product fit — env-search authority already shipping a ClimateIndex product; noise slots into report suite. |
 | 2026-05-21 | TBC (BD / Insight & Data team) | Dye & Durham / FCI / SearchFlow | Data Partnerships | `FCI-Admin@dyedurham.com` (alias) · `dyedurham.co.uk/contact` · LinkedIn | 🟡 To draft | Biggest distribution (SearchFlow = #1 conveyancing search, 1M+/yr). FCI = their env-reports arm. |
 | 2026-05-21 | TBC (Data Partnerships) | TM Group | Data Partnerships | Form (`helpdesk@` weak) · LinkedIn | 🟡 Draft ready | Draft below. Conveyancing search leader. |
-| 2026-05-21 | Lukky Ahmed (CEO) / Kamil Kluza (COO) | Climate X | Founder / Product | `enquiries@climate-x.com` · LinkedIn founder-direct | 🟡 Draft ready | Draft below. **Partner, not sale** — complementary (flood/climate vs noise). |
+| 2026-05-21 | The CEO and COO (names in Bill's tracker, not here) | Climate X | Founder / Product | `enquiries@climate-x.com` · LinkedIn founder-direct | 🟡 Draft ready | Draft below. **Partner, not sale** — complementary (flood/climate vs noise). |
 
 ---
 
@@ -104,7 +104,7 @@ In-person beats cold email/form — an event is the "named-person" channel in it
 
 | Event | Date | Venue | Why / who's there | Action |
 |---|---|---|---|---|
-| **Bold Legal Group Conveyancing Conference & Soirée** | **Wed 17 Jun 2026** | Regent's University, London | ⭐ **Landmark confirmed** — Mike Holden (Divisional Director) on a panel. Exhibition + evening soirée (informal networking). Groundsure/TM/FCI orbit this. | Verify ticket price/availability; LinkedIn-connect Mike Holden referencing it. **Best in-person route to Tier 1.** |
+| **Bold Legal Group Conveyancing Conference & Soirée** | **Wed 17 Jun 2026** | Regent's University, London | ⭐ **Landmark confirmed** — a Landmark divisional director on a panel. Exhibition + evening soirée (informal networking). Groundsure/TM/FCI orbit this. | Verify ticket price/availability; LinkedIn-connect that director referencing it. **Best in-person route to Tier 1.** |
 | **GEO Business 2026** | **3–4 Jun 2026** | ExCeL London | **FREE.** 6,100+ attendees, 110+ exhibitors (OS, Esri; Landmark/Sprift typically present). Location-data focus. | Confirm Bill's 3–4 Jun geospatial application = this; attend. |
 | UKREiiF | 19–21 May 2026 | Leeds (Royal Armouries) | 16k+ real-estate/investment/infra + PropTech Hub (Climate X-type crowd). | **Missed for 2026** (ended 21 May). Plan for 2027 (Leeds confirmed). |
 | **AI Tinkerers London** | **Mon 22 Sep 2026** | London | Technical demo audience; the retrieval-only `/v1/chat` grounding check | Demo proposal submitted 2026-09-15; rehearsed live 2026-09-17 (found and fixed a third grounding hole). Slot not confirmed at submission. |
@@ -121,7 +121,7 @@ Recurring conveyancing circuit (search providers exhibit through the year, track
 |---|---|---|---|
 | **Build Night 1** | **Thu 30 Jul 2026** | Demo'd Sky Score in person to several attendees; feedback positive; live site visits landed during/after the demo. **6 LinkedIn connections made.** Name + `skyscore.co.uk` written on the organisers' support sheet. | Organisers offered **funding / networks support via their partners**, routed through a Google Sheet. **Sheet completed by Bill 2026-07-31.** Now awaiting partner intros — no action owed by us. |
 
-| **AI Demo Nights London #12** | **applied; outcome 2026-08-26** | London | AI/demo audience; the organiser (contact in Bill's tracker, not here: this repo is public) | **NOT SELECTED, but top 10 of applications against 6 spots.** Organiser: *"It was a very close decision. Please apply again for the next event because I'd genuinely love to see how the project develops."* **This is a WARM contact who has explicitly invited follow-up** — the rename gate applies to cold channels only, so nothing blocks replying. **Next action: reply thanking him, ask when #13 opens and how to be notified, and lead with what has changed since applying — methodology v3.9 shipped 2026-08-26 (air quality + flood became scored components, 94 of 99 boroughs measured).** Do not let this decay the way the Mike Holden / Bold Legal route did. |
+| **AI Demo Nights London #12** | **applied; outcome 2026-08-26** | London | AI/demo audience; the organiser (contact in Bill's tracker, not here: this repo is public) | **NOT SELECTED, but top 10 of applications against 6 spots.** Organiser: *"It was a very close decision. Please apply again for the next event because I'd genuinely love to see how the project develops."* **This is a WARM contact who has explicitly invited follow-up** — the rename gate applies to cold channels only, so nothing blocks replying. **Next action: reply thanking him, ask when #13 opens and how to be notified, and lead with what has changed since applying — methodology v3.9 shipped 2026-08-26 (air quality + flood became scored components, 94 of 99 boroughs measured).** Do not let this decay the way the Landmark director / Bold Legal route did. |
 
 **Build Night 1 detail.** The organisers' ask was: "if you're happy for us to support you with funding/networks via our partners, please fill in this spreadsheet". Sheet columns: name, product, one-liner, URL, solo/team, team members, consent to stay in touch (Y/N), consent to be submitted as a "rocket" to **Collective Continuum** (Y/N). Bill filled it in on 31 Jul; the answers given to the two consent fields were not recorded here.
 

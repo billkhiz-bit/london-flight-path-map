@@ -1400,8 +1400,8 @@ Headlines:
 "Draft ready" or "To draft". Eleven weeks. Zero sent. The signups table holds
 one row**, which is a test.
 
-One identified route has already expired in the interval: the log names Mike
-Holden at Landmark as a panellist at the **Bold Legal Group Conference, 17
+One identified route has already expired in the interval: the log names a
+divisional director at Landmark as a panellist at the **Bold Legal Group Conference, 17
 June**, calling it the best route. That passed seven weeks ago. **Identified-but-
 unsent decays** — the same shape as the DEFRA loaders, work correctly specified
 and never actually run.
