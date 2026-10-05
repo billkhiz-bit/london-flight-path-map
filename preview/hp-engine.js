@@ -312,9 +312,13 @@ function draw(pin) {
     .attr('aria-label', (d) => `${featureName(d)}: open its figures`)
     .on('mousemove', (ev, d) => showTip(ev, boroughTipHtml(d)))
     .on('mouseleave', hideTip)
-    .on('focus', (ev, d) => {
+    .on('focus', async (ev, d) => {
+      const el = ev.currentTarget;
+      // Tabbing to an area off a zoomed map brings it in first (M-16).
+      await bringIntoView(el);
+      if (document.activeElement !== el) return;
       // The bbox is in view space; the tip is placed in screen space, so apply the zoom.
-      const r = ev.currentTarget.getBBox();
+      const r = el.getBBox();
       const [x, y] = d3.zoomTransform(svg.node()).apply([r.x + r.width / 2, r.y + r.height / 2]);
       showTipAt(x, y, boroughTipHtml(d));
     })
@@ -525,6 +529,30 @@ function applyScale() {
   const reset = byId('zoom-reset');
   if (reset) reset.disabled = k === 1;
 }
+// A zoomed map cannot be dragged by a finger (a finger scrolls the page, which
+// a phone whose hero is half the screen needs) or by a key, so the map moves to
+// the council area instead (audit 2026-10-05 M-16, WCAG 2.5.7: 13 of London's
+// 33 were off the box after three zoom-ins at 390 wide). Tabbing to an area off
+// the box brings it in; opening one centres it, so tapping an area at the edge
+// is how a finger moves the map. Resolves when the map has stopped moving.
+function bringIntoView(el, { centre = false } = {}) {
+  if (!state.zoom || !el) return Promise.resolve();
+  const t = d3.zoomTransform(svg.node());
+  if (t.k <= 1) return Promise.resolve();
+  const [W, H] = size();
+  // On a wide screen the floating panel covers the left of the map: aim beside it.
+  const wide = !window.matchMedia(STACKED).matches;
+  const inset = wide && !inIntro() && document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : { left: 0, top: 0, right: 0, bottom: 0 };
+  const box = { x0: inset.left, y0: inset.top, x1: W - inset.right, y1: H - inset.bottom };
+  const r = el.getBBox();
+  const cx = r.x + r.width / 2;
+  const cy = r.y + r.height / 2;
+  const [sx, sy] = t.apply([cx, cy]);
+  if (!centre && sx >= box.x0 && sx <= box.x1 && sy >= box.y0 && sy <= box.y1) return Promise.resolve();
+  return svg.transition().duration(250)
+    .call(state.zoom.translateTo, cx, cy, [(box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2])
+    .end().catch(() => {});
+}
 function zoomBy(f) {
   if (!state.zoom) return;
   svg.transition().duration(250).call(state.zoom.scaleBy, f);
@@ -590,6 +618,8 @@ function selectBorough(name, opts = {}) {
   leaveIntro();
   state.selected = f ? featureName(f) : row.borough;
   svg.selectAll('.boro').classed('is-selected', (d) => featureName(d) === state.selected);
+  // On a zoomed map, the area opened moves to the middle (M-16).
+  bringIntoView(svg.selectAll('.boro').filter((d) => featureName(d) === state.selected).node(), { centre: true });
   byId('answer')?.classList.remove('is-open');
   // A ZIP search opens its city's card WITH the ZIP's pin; any other way in, the pin's answer has closed.
   if (!opts.zip) clearPin();
@@ -913,7 +943,7 @@ function render(postcode, district, city, e, lat, lon) {
     // DEFRA surveyed the ground and found it under its lowest mapped band: quiet, not missing.
     rows.push(`<div class="row"><span>Road noise</span><span class="bar"></span><span class="val">under ${e.roadNoiseBelowDb} dB<small>surveyed, below the lowest band</small></span></div>`);
   } else {
-    rows.push('<div class="row"><span>Road noise</span><span class="bar"></span><span class="val">not held here</span></div>');
+    rows.push('<div class="row"><span>Road noise</span><span class="bar"></span><span class="val"><small>not held here</small></span></div>');
   }
   for (const [label, v, who] of [['Nitrogen dioxide', e.no2AnnualMeanUgm3, e.no2WhoGuidelineUgm3], ['Fine particles', e.pm25AnnualMeanUgm3, e.pm25WhoGuidelineUgm3]]) {
     rows.push(v == null

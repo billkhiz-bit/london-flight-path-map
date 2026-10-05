@@ -1079,6 +1079,10 @@ PAGE_HTML = """<!doctype html>
   .map {{ display:block; width:100%; height:auto; border:1px solid var(--line); }}
   .map .ap {{ font:700 13px 'JetBrains Mono',ui-monospace,monospace; fill:#141414; paint-order:stroke; stroke:#fff; stroke-width:3px; }}
   .map .ct {{ font:500 9.5px 'Inter',system-ui,sans-serif; fill:#141414; paint-order:stroke; stroke:#fff; stroke-width:2.5px; }}
+  /* The map is drawn 900 units wide, so on a phone it renders at about 40%: the city
+     names came out 3-4px tall (audit 2026-10-05 M-19). Below 600px they go - the table
+     beneath names every city - and the three airport codes grow to stay legible. */
+  @media (max-width: 600px) {{ .map .ct {{ display:none; }} .map .ap {{ font-size:28px; stroke-width:6px; }} }}
   .key {{ display:flex; flex-wrap:wrap; gap:6px 22px; margin:10px 0 0; padding:0; list-style:none; font-size:13px; color:var(--mid); }}
   .key li {{ display:flex; align-items:center; gap:8px; }}
   .key i {{ display:inline-block; width:26px; height:0; border-top:2px solid #141414; }}

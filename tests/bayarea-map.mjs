@@ -27,6 +27,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inflateSync } from 'node:zlib';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 8955;
@@ -82,6 +83,22 @@ const panel = (page) =>
       onScreen: !!top && (top === first || first.contains(top)),
     };
   });
+
+// The colour actually on screen at one point, from a 1x1 screenshot. With one pixel in
+// one row, every PNG filter reduces to the raw bytes, so no decoder is needed: inflate
+// the image data and skip the row's filter byte.
+async function pixelAt(page, x, y) {
+  const png = await page.screenshot({ clip: { x: Math.round(x), y: Math.round(y), width: 1, height: 1 } });
+  const idat = [];
+  for (let at = 8; at < png.length; ) {
+    const len = png.readUInt32BE(at);
+    if (png.toString('latin1', at + 4, at + 8) === 'IDAT') idat.push(png.subarray(at + 8, at + 8 + len));
+    at += 12 + len;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  return [raw[1], raw[2], raw[3]];
+}
+let desktopNoiseBlock = null;
 
 const browser = await chromium.launch();
 for (const vp of [
@@ -261,6 +278,30 @@ for (const vp of [
   });
   ok(hint === '', `${L} a ?city=bayarea link shows no UK "type a postcode" hint`, hint);
 
+  // The noise scale's blocks are translucent, as the map paints them. On the phone's
+  // dark legend they composited darker than anything on the map (audit 2026-10-05
+  // M-19), so the same block must show the same colour on a phone as on a desktop.
+  // Measured in rendered pixels, not in the style the fix sets. On London's map: its
+  // DEFRA picture is self-hosted and paints offline, where BTS's tiles (aborted here)
+  // leave the Bay Area's scale correctly hidden. This loop is the live map's
+  // desktop-and-phone pair, which is why the check lives in it.
+  {
+    await page.goto(`${BASE}?city=london`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => { const g = document.getElementById('legend-noise-scale'); return g && getComputedStyle(g).display !== 'none'; }, null, { timeout: 20000 }).catch(() => {});
+    await page.evaluate(() => { const t = document.getElementById('legend-toggle'); if (t && t.getAttribute('aria-expanded') === 'false') t.click(); });
+    const block = page.locator('#noise-scale-bar > span').nth(2);
+    await block.scrollIntoViewIfNeeded().catch(() => {});
+    const box = await block.boundingBox();
+    const rgb = box ? await pixelAt(page, box.x + box.width / 2, box.y + box.height / 2) : null;
+    if (vp.width > 900) {
+      desktopNoiseBlock = rgb;
+      ok(Boolean(rgb), `${L} the noise scale is drawn`, '');
+    } else {
+      const gap = rgb && desktopNoiseBlock ? Math.max(...rgb.map((v, i) => Math.abs(v - desktopNoiseBlock[i]))) : 255;
+      ok(gap <= 4, `${L} a noise-scale block shows the colour it shows on a desktop (audit M-19)`, `phone ${rgb} vs desktop ${desktopNoiseBlock}`);
+    }
+  }
+
   ok(errors.length === 0, `${L} no page errors`, errors.join(' | '));
   await ctx.close();
 }
@@ -285,6 +326,22 @@ for (const vp of [
   const early = await page.evaluate(() => ({ title: document.getElementById('sidebar-title').textContent.trim(), err: window.__early || '' }));
   ok(/ZIP 94066/i.test(early.title) && !early.err && errors.length === 0, 'a ZIP searched before the map is built waits for it and lands', `${early.title} / ${early.err} / ${errors.join(' | ')}`);
   await page.close();
+}
+
+// /bay-area/ on a phone (audit 2026-10-05 M-19): its map is drawn 900 units wide, so
+// at 390px every label rendered at 40% - city names 3-4px tall. Measured on the
+// rendered text, not on the stylesheet: every label still SHOWING must be legible.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}bay-area/`, { waitUntil: 'domcontentloaded' });
+  const labels = await page.$$eval('svg.map text', (ts) =>
+    ts.filter((t) => getComputedStyle(t).display !== 'none' && t.getBoundingClientRect().height > 0).map((t) => ({ text: t.textContent, h: t.getBoundingClientRect().height })),
+  );
+  const small = labels.filter((l) => l.h < 9);
+  ok(labels.length >= 3 && small.length === 0, `/bay-area/ at 390px: every map label showing is legible (${labels.length} showing)`, small.slice(0, 4).map((l) => `${l.text} ${l.h.toFixed(1)}px`).join(', '));
+  await ctx.close();
 }
 
 await browser.close();

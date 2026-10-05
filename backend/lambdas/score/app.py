@@ -4885,7 +4885,7 @@ def airport_distance_km(lat, lon, ap):
     calc_postcode_quiet uses it; a displayed "nearest airport, x km" stays the
     plain distance. An airport with no axis in RUNWAY_AXIS_DEG keeps a circle.
 
-    Mirrored by airportDistanceKm in index.html. The factor depends on the
+    Mirrored by runwayShapedKm in index.html. The factor depends on the
     angle off the axis only through cos^2 and sin^2, so which end of the
     runway the bearing is measured from cannot change it.
     """
@@ -9282,8 +9282,8 @@ def handle_environment(event):
         # fails silently and always in the flattering direction: it does not
         # know about the airport you live under, so it reports quiet.
         #
-        # When the postcode sits outside all thirteen cities - 68% of live UK
-        # postcodes, measured against NSPL - take the LOUDEST reading any of our
+        # When the postcode sits outside every city we cover - 68% of live UK
+        # postcodes, measured against NSPL with thirteen cities - take the LOUDEST reading any of our
         # geometries gives rather than one city's. Two reasons it is safe here
         # and would not be above: /v1/score 404s those postcodes, so there is no
         # per-city answer to contradict; and a maximum cannot under-report,

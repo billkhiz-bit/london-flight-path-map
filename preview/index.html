@@ -67,6 +67,7 @@
       .panel.has-result h1 { font-size: 22px; margin-bottom: 8px; }
       .panel.has-result .lead, .panel.has-result .try { display: none; }
       .panel p.lead { margin: 0 0 16px; color: var(--mid); font-size: 16px; max-width: 46ch; }
+      .field-label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
       form.check { display: flex; gap: 8px; }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
       /* --mid, 7.4:1 on white. The placeholder is the field's only visible label,
@@ -238,9 +239,11 @@
         <div class="panel">
           <h1>How loud are the planes where you want to live?</h1>
           <p class="lead">Type a postcode and get the official noise and air figures for that street, with the flight routes that pass it. Or tap a council area on the map.</p>
+          <!-- A visible label (audit 2026-10-05 I-6): the placeholder was the only one, and
+               it was cut to "Postcode, ZIP o" at 320 wide. The placeholder is now an example. -->
+          <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
-            <label for="pc" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Postcode, ZIP or place</label>
-            <input type="text" id="pc" name="pc" placeholder="Postcode, ZIP or place" autocomplete="postal-code" inputmode="text" />
+            <input type="text" id="pc" name="pc" placeholder="e.g. TW9 3PZ" autocomplete="postal-code" inputmode="text" />
             <button type="submit">Check</button>
           </form>
           <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>

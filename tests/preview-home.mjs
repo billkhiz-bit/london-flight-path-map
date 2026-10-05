@@ -459,6 +459,23 @@ ok((await page.locator('#map .pin').count()) === 1 && (await page.locator('#chip
 
 // 14. A phone: the card scrolls into view on a tap and the controls sit inside the viewport.
 await page.setViewportSize({ width: 390, height: 844 });
+// "not held here" is a note, not a value: on a phone it ran 17px past its row
+// (audit M-19). Exeter's stub has no road reading, so its answer carries it.
+{
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitMap();
+  await page.fill('#pc', 'EX1 1HS');
+  await page.press('#pc', 'Enter');
+  await page.waitForSelector('#answer.is-open', { timeout: 15000 });
+  const spill = await page.evaluate(() => {
+    const row = [...document.querySelectorAll('#ans-rows .row')].find((r) => /not held here/.test(r.textContent));
+    if (!row) return null;
+    const range = document.createRange();
+    range.selectNodeContents(row.querySelector('.val'));
+    return Math.round(range.getBoundingClientRect().right - row.getBoundingClientRect().right);
+  });
+  ok(spill !== null && spill <= 0, 'on a phone, "not held here" stays inside its row (audit M-19)', spill === null ? 'no such row' : `${spill}px past the row`);
+}
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitMap();
 await page.locator('#map .boro[aria-label^="Camden"]').click({ force: true });
@@ -481,10 +498,78 @@ ok(cardTop >= -1 && cardTop < 844, 'on a phone the card is brought into view', `
   await tp.waitForSelector('#borough.is-open');
   await tp.waitForTimeout(700);
   ok(await tp.locator('#tip').isHidden(), 'on a phone, a tapped council area takes its tooltip off the map (audit M-15)');
+
+  // A zoomed map moves without a drag (audit M-16, WCAG 2.5.7): a finger scrolls the
+  // page, so after three zoom-ins 13 of London's 33 areas were off the box with no
+  // way to reach them. Tabbing to one brings it in; tapping one centres it.
+  for (let i = 0; i < 3; i++) { await tp.locator('#zoom-in').tap(); await tp.waitForTimeout(350); }
+  const where = (name) => tp.evaluate((n) => {
+    const box = document.getElementById('map').getBoundingClientRect();
+    const r = document.querySelector(`#map .boro[aria-label^="${n}"]`).getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    return { inside: x >= box.left && x <= box.right && y >= box.top && y <= box.bottom, off: Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2)) };
+  }, name);
+  const offBox = await tp.evaluate(() => {
+    const box = document.getElementById('map').getBoundingClientRect();
+    return [...document.querySelectorAll('#map .boro')].filter((p) => { const r = p.getBoundingClientRect(); const x = r.left + r.width / 2, y = r.top + r.height / 2; return x < box.left || x > box.right || y < box.top || y > box.bottom; }).map((p) => p.getAttribute('aria-label').split(':')[0]);
+  });
+  ok(offBox.length > 0, `zoomed in three times at 390 wide, areas are off the map box (${offBox.length})`, '');
+  if (offBox.length) {
+    await tp.locator(`#map .boro[aria-label^="${offBox[0]}"]`).focus();
+    await tp.waitForTimeout(600);
+    const tabbed = await where(offBox[0]);
+    ok(tabbed.inside, `Tab to ${offBox[0]}, off the zoomed map, brings it into the box (audit M-16)`, JSON.stringify(tabbed));
+  }
+  const edge = await tp.evaluate(() => {
+    const box = document.getElementById('map').getBoundingClientRect();
+    const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+    const seen = [...document.querySelectorAll('#map .boro')].map((p) => { const r = p.getBoundingClientRect(); return { n: p.getAttribute('aria-label').split(':')[0], x: r.left + r.width / 2, y: r.top + r.height / 2 }; })
+      .filter((b) => b.x > box.left + 20 && b.x < box.right - 20 && b.y > box.top + 20 && b.y < box.bottom - 20)
+      .map((b) => ({ ...b, d: Math.hypot(b.x - cx, b.y - cy) })).sort((a, b) => b.d - a.d);
+    return seen[0] ? { n: seen[0].n, d: seen[0].d } : null;
+  });
+  if (edge) {
+    await tp.locator(`#map .boro[aria-label^="${edge.n}"]`).tap({ force: true });
+    await tp.waitForTimeout(800);
+    const tapped = await where(edge.n);
+    ok(tapped.off < Math.max(30, edge.d / 3), `tapping ${edge.n} at the edge of the zoomed map centres it (audit M-16)`, `${Math.round(edge.d)}px from the middle -> ${Math.round(tapped.off)}px`);
+  } else ok(false, 'tapping an area at the edge of the zoomed map centres it (audit M-16)', 'no area inside the box to tap');
   await touch.close();
 }
 const inside = await page.locator('#toggle-noise, #zoom-in, #zoom-out, #zoom-reset').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= 390; }));
 ok(inside.every(Boolean), 'layer and zoom controls are inside a phone viewport');
+
+// London's noise picture is the one box the engine types for itself (no data file
+// describes it); the holder is LONDON_AIRCRAFT_BBOX in index.html (audit M-13).
+{
+  const engine = await readFile(join(ROOT, 'preview', 'hp-engine.js'), 'utf8');
+  const live = await readFile(join(ROOT, 'index.html'), 'utf8');
+  const nums = (s) => (s || '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
+  const mine = nums(engine.match(/const LONDON_PNG = \{[^}]*bbox: \{([^}]*)\}/)?.[1]);
+  const holder = live.match(/const LONDON_AIRCRAFT_BBOX = \{([^}]*)\}/)?.[1] || '';
+  const want = ['minLon', 'maxLon', 'minLat', 'maxLat'].map((k) => Number(holder.match(new RegExp(`${k}:\\s*(-?[\\d.]+)`))?.[1]));
+  ok(mine.length === 4 && want.every(Number.isFinite) && mine.every((v, i) => v === want[i]), 'the preview places London\'s noise picture where the live map does', `${mine} vs ${want}`);
+}
+
+// The search has a visible label, and its placeholder fits the box at 320 wide
+// (audit I-6: the placeholder WAS the label, cut to "Postcode, ZIP o").
+{
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitMap();
+  const f = await page.evaluate(() => {
+    const input = document.getElementById('pc');
+    const label = document.querySelector('label[for="pc"]');
+    const lr = label?.getBoundingClientRect();
+    const cs = getComputedStyle(input);
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    return { label: label?.textContent.trim() || '', seen: !!lr && lr.width > 40 && lr.height >= 10, need: Math.ceil(ctx.measureText(input.placeholder).width), room: Math.floor(room) };
+  });
+  ok(f.seen && /postcode/i.test(f.label), 'the search box has a visible label (audit I-6)', JSON.stringify(f));
+  ok(f.need <= f.room, 'its placeholder fits the box at 320 wide', `${f.need}px of text in ${f.room}px`);
+}
 
 // 14a. Tablets and landscape phones stack the panel above the map (audit I-4): the
 // floating panel lay over the toggles and chips from 761px to about 1180px wide.
@@ -500,7 +585,10 @@ for (const vp of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }, { 
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await waitMap();
   const lay = await page.evaluate(() => {
-    const hit = (id) => { const el = document.getElementById(id); const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === el || el.contains(t)); };
+    // Scrolled into view first: the question is whether anything COVERS the control, and
+    // elementFromPoint answers nothing for a point below the fold (a 24px label once
+    // moved the toggles 0-28px past it at 844x390, and the check went red on nothing).
+    const hit = (id) => { const el = document.getElementById(id); el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === el || el.contains(t)); };
     const panel = document.querySelector('.panel').getBoundingClientRect();
     const map = document.querySelector('.mapwrap').getBoundingClientRect();
     return { toggles: hit('toggle-lines') && hit('toggle-noise'), overlap: Math.max(0, Math.min(panel.bottom, map.bottom) - Math.max(panel.top, map.top)) > 1 && Math.max(0, Math.min(panel.right, map.right) - Math.max(panel.left, map.left)) > 1 };

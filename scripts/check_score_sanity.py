@@ -63,8 +63,8 @@ DEFAULT_KEY = None
 # but Harefield is outside the extent of DEFRA's Heathrow noise map altogether.
 # It read 4.0 until v5.3 only because it sat 0.9 km from a HAND-DRAWN
 # "Bovingdon Stack" line - one of the invented stack-to-runway lines a Reddit
-# reply called out. The nearest published route is now 7.1 km away and it
-# scores 8.0, correctly. It was chosen for Denham aerodrome, so section 3a
+# reply called out. The nearest published route is now 7.1 km away: it
+# scored 8.0 at v5.3 and 9.0 since v5.5's runway-shaped airport term, correctly. It was chosen for Denham aerodrome, so section 3a
 # asserts that instead. Do not add a probe here without its own assertion.
 BAND_TEST_EXEMPT = {
     'UB9 6JH': 'outside DEFRA Heathrow extent; probe exists for Denham (3a)',

@@ -638,10 +638,10 @@ Strike a row here in the commit that closes it.
 | I-3 | Privacy notice has no section on email, and the register says Cloudflare sees no payload while it routes the mail | Claude drafts, **Bill approves the wording** (legal page) |
 | ~~I-4~~ | ~~`/preview/` layout collides from 761px to about 1180px wide~~ **Fixed 2026-10-05**: stacked below 1280px and on short screens, one query for CSS and engine | Done; worth a look on a tablet |
 | ~~I-5~~ | ~~`/preview/` search box is tab stop 56, no skip link~~ **Fixed 2026-10-05**: skip link, and the panel first in the page | Done |
-| I-6 | `/preview/` placeholder is the only visible label, at 3.50:1, cut off under 390px. **Part-fixed 2026-10-05** (contrast); truncation under 390px left | Claude, small |
+| ~~I-6~~ | ~~`/preview/` placeholder is the only visible label~~ **Fixed 2026-10-05**: a visible label and an example placeholder that fits at 320 | Done |
 | I-7 | Focus rings at 2.1-2.7:1 on the new pages and on the main map (1.4.11 asks 3:1) | Claude, small; the ring colour is a brand call |
 | I-8 | **Decision:** the borough Quiet skies band says 0.0 for Hillingdon while most of its postcodes estimate 8-10. Keep "worst exposure in the borough" and say so where it is printed, or re-derive the band from the postcode tier (a methodology version) | **Bill** |
-| Minors | 20. **Closed 2026-10-05:** M-2 (in source; **the score and sold-prices Lambdas need Bill's backend deploy**), M-4, M-5, M-6, M-8, M-9, M-10, M-11, M-12, M-14, and the Bay Area order and open-data scroller of M-19. **Part-done:** M-15, M-17, M-18. M-3 is recorded as a precondition of the signup flip. **Open:** M-1 (OS key in the service worker cache; trial devices only), M-7, M-13 (comments in the Lambda and `sw.js`, left so neither needs a deploy for a comment), M-16, the rest of M-19, M-20 | Claude, an hour or two |
+| Minors | 20. **Closed 2026-10-05:** M-2 (in source; **the score and sold-prices Lambdas need Bill's backend deploy**), M-4, M-5, M-6, M-8, M-9, M-10, M-11, M-12, M-14, and the Bay Area order and open-data scroller of M-19. **Part-done:** M-15, M-17, M-18. M-3 is recorded as a precondition of the signup flip. **Also closed 2026-10-05:** M-1 (the key moved to the fragment), M-7, M-13 bar the `sw.js` comment (it waits for the next real `sw.js` change), M-16, and M-19 bar the laptop card fold. **Bill's calls:** M-20 (where the phone footer goes) and the card fold | Bill: two layout choices |
 
 ### Geovation feedback (2026-10-02): positioning and the first view
 
