@@ -976,7 +976,11 @@ def airfield_cell(c):
 
 
 def order(cities):
-    return sorted(cities, key=lambda c: (-round(c['noise_pct'], 1), c['nearest_km'], c['name']))
+    # Any shading ranks above none: rounded to 1 dp, Hillsborough's 0.04% tied
+    # with 0.0, and the tie fell to route distance, so 'Under 1%' sat below two
+    # 'None' rows under a heading promising the noise-map order (audit
+    # 2026-10-05 M-19). Rounding still keeps float noise from reordering ties.
+    return sorted(cities, key=lambda c: (c['noise_pct'] <= 0, -round(c['noise_pct'], 1), c['nearest_km'], c['name']))
 
 
 def render_map(f, data):

@@ -799,6 +799,7 @@ OPEN_DATA_PAGE = """<!doctype html>
   .sub {{ color:var(--mid); margin:0 0 20px; }}
   .dl {{ display:inline-block; padding:12px 18px; border:1px solid var(--line); border-radius:8px; background:var(--bg); font-weight:600; }}
   .tw {{ overflow-x:auto; }}
+  .tw:focus-visible {{ outline:2px solid var(--orange); outline-offset:2px; }}
   table {{ width:100%; border-collapse:collapse; font-size:13px; }}
   th, td {{ text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }}
   th {{ font-weight:600; }}
@@ -823,7 +824,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <p>Built entirely from open government data, used under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>. If you reuse this file, please also credit the original publishers: DEFRA (noise and air quality), the Environment Agency (flood risk), ONS (crime, postcode lookup), the Department for Education (Progress 8), HM Land Registry (prices), the Department for Transport (NaPTAN) and the NHS Organisation Data Service (GP practices).</p>
 
 <h2>What each column means</h2>
-<div class="tw">
+<div class="tw" tabindex="0" role="region" aria-label="What each column means, scrolls sideways on a narrow screen">
 <table>
 <caption class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Columns in {csv}</caption>
 <thead><tr><th scope="col">Column</th><th scope="col">Meaning</th></tr></thead>

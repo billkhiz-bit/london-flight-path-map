@@ -179,6 +179,11 @@ for (const vp of [
     return { hidden: !box || box.hidden || getComputedStyle(box).display === 'none', region: document.querySelector('.locator-region')?.textContent || '' };
   });
   ok(inset.hidden, `${L} a ?city=bayarea link shows no inset, not England's arriving late`, inset.region);
+  const hint = await page.evaluate(() => {
+    const h = document.getElementById('first-hint');
+    return !h || getComputedStyle(h).display === 'none' ? '' : h.textContent.replace(/\s+/g, ' ').trim();
+  });
+  ok(hint === '', `${L} a ?city=bayarea link shows no UK "type a postcode" hint`, hint);
 
   ok(errors.length === 0, `${L} no page errors`, errors.join(' | '));
   await ctx.close();
@@ -186,7 +191,7 @@ for (const vp of [
 await browser.close();
 server.close();
 
-const EXPECTED = 2 * 11;
+const EXPECTED = 2 * 12;
 if (checks < EXPECTED) {
   console.error(`\nFAIL: ran ${checks} checks, expected ${EXPECTED}.`);
   process.exit(1);

@@ -433,3 +433,14 @@ def test_the_picture_is_asked_for_by_a_root_path_and_named_after_its_content(pag
 def test_the_page_has_no_em_dash_and_no_inline_script(page):
     assert '—' not in page
     assert len(re.findall(r'<script\b', page)) == 1 and 'gc.zgo.at/count.js' in page
+
+
+def test_any_shading_ranks_above_none():
+    """'Under 1%' above 'None' (audit 2026-10-05 M-19): rounded to 1 dp, 0.04% tied
+    with 0.0 and the tie fell to route distance, under a heading promising the
+    noise-map order."""
+    cities = [
+        {'name': 'Unshaded, route overhead', 'noise_pct': 0.0, 'nearest_km': 0.0},
+        {'name': 'Barely shaded, route far', 'noise_pct': 0.04, 'nearest_km': 5.0},
+    ]
+    assert [c['name'] for c in bay.order(cities)] == ['Barely shaded, route far', 'Unshaded, route overhead']

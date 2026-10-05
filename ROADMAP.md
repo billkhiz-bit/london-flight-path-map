@@ -641,7 +641,7 @@ Strike a row here in the commit that closes it.
 | I-6 | `/preview/` placeholder is the only visible label, at 3.50:1, cut off under 390px. **Part-fixed 2026-10-05** (contrast); truncation under 390px left | Claude, small |
 | I-7 | Focus rings at 2.1-2.7:1 on the new pages and on the main map (1.4.11 asks 3:1) | Claude, small; the ring colour is a brand call |
 | I-8 | **Decision:** the borough Quiet skies band says 0.0 for Hillingdon while most of its postcodes estimate 8-10. Keep "worst exposure in the borough" and say so where it is printed, or re-derive the band from the postcode tier (a methodology version) | **Bill** |
-| Minors | 20, of which M-4 (names in `OUTREACH_LOG.md`) and M-1 (the OS key in the service worker's cache) are the two worth doing first | Claude, an hour or two in all |
+| Minors | 20. **Closed 2026-10-05:** M-2 (in source; **the score and sold-prices Lambdas need Bill's backend deploy**), M-4, M-5, M-6, M-8, M-9, M-10, M-11, M-12, M-14, and the Bay Area order and open-data scroller of M-19. **Part-done:** M-15, M-17, M-18. M-3 is recorded as a precondition of the signup flip. **Open:** M-1 (OS key in the service worker cache; trial devices only), M-7, M-13 (comments in the Lambda and `sw.js`, left so neither needs a deploy for a comment), M-16, the rest of M-19, M-20 | Claude, an hour or two |
 
 ### Geovation feedback (2026-10-02): positioning and the first view
 
@@ -744,7 +744,9 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       with no page error, and on `/preview/` 94301 opens Palo Alto with its
       pin, 95014 says 44% of it is in Cupertino and 90210 is told it is not
       covered, at desktop and phone widths.
-- [x] **Release 1 on the LIVE map, BUILT 2026-10-05** (Bill ruled the same day:
+- [x] **Release 1 on the LIVE map, BUILT AND DEPLOYED 2026-10-05** (`24cf782`, inset fix `6b39f59`;
+      verified from the origin at desktop and phone: BTS tiles paint, ZIP 94066 opens
+      San Bruno's facts, no inset, no page errors). Bill ruled the same day:
       facts and no number, ranking by noise-map share). Done: items 1-4 and 6 below,
       bar the locator marker (the Bay Area has no inset: `usa-locator.json` marks
       New York alone); item 5 turned out moot, because the parity gates read

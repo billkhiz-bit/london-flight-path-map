@@ -13697,6 +13697,11 @@
         cancelSearch();
         const searchAtStart = searchSeq;
         currentCity = city;
+        // The first-visit hint is UK copy - "Type a postcode (e.g. SW11 1AA) or
+        // click a borough to see its score" - wrong for New York and for the
+        // unscored Bay Area (2026-10-05). Off on a US city, and NOT saved as
+        // seen, so a later UK visit can still show it.
+        if (!isUkCity(city)) document.getElementById('first-hint')?.classList.add('dismissed');
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
         aircraftRasterLoadedFor = null;
