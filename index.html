@@ -11154,7 +11154,7 @@
         if (status) status.textContent = '';
       }
 
-      function showAutocomplete(results) {
+      function showAutocomplete(results, extra = []) {
         const dropdown = document.getElementById('autocomplete-dropdown');
         const input = document.getElementById('search-input');
         acHighlightIndex = -1;
@@ -11181,12 +11181,14 @@
           .filter((a) => a.toLowerCase().startsWith(inputVal))
           .slice(0, 5);
 
-        const hasAny = boroughMatches.length > 0 || areaMatches.length > 0 || (results && results.length > 0);
+        const hasAny = boroughMatches.length > 0 || areaMatches.length > 0 || (results && results.length > 0) || extra.length > 0;
+        // The Bay Area's areas are cities, not boroughs.
+        const boroughLabel = Object.values(activeBoroughs).some((d) => d && d.facts) ? 'City' : 'Borough';
         // F-UX-8: announce the suggestion count to screen readers via the
         // aria-live status region. Updated even on "no results" so SR users
         // get feedback that their typing produced no matches.
         const status = document.getElementById('autocomplete-status');
-        const total = boroughMatches.length + areaMatches.length + (results ? results.length : 0);
+        const total = boroughMatches.length + areaMatches.length + (results ? results.length : 0) + extra.length;
         if (status) {
           status.textContent =
             total === 0
@@ -11214,7 +11216,7 @@
         boroughMatches.forEach((b) => {
           const safeB = escapeHtml(b);
           html += `<div class="autocomplete-item" id="ac-item-${idx}" role="option" aria-selected="false" data-type="borough" data-value="${escapeHtmlAttr(b)}" data-index="${idx}">
-      <span class="ac-postcode">${safeB}</span><span class="ac-area">Borough</span></div>`;
+      <span class="ac-postcode">${safeB}</span><span class="ac-area">${boroughLabel}</span></div>`;
           idx++;
         });
         areaMatches.forEach((a) => {
@@ -11230,6 +11232,11 @@
       <span class="ac-postcode">${safePc}</span></div>`;
           idx++;
         });
+        extra.forEach((x) => {
+          html += `<div class="autocomplete-item" id="ac-item-${idx}" role="option" aria-selected="false" data-type="${x.type}" data-value="${escapeHtmlAttr(x.value)}" data-index="${idx}">
+      <span class="ac-postcode">${escapeHtml(x.value)}</span><span class="ac-area">${escapeHtml(x.meta)}</span></div>`;
+          idx++;
+        });
         dropdown.innerHTML = html;
         dropdown.classList.add('visible');
         input.setAttribute('aria-expanded', 'true');
@@ -11243,6 +11250,8 @@
             if (item.dataset.type === 'borough') {
               const match = matchBorough(val);
               if (match) selectBoroughByName(match.name);
+            } else if (item.dataset.type === 'nhood') {
+              openNeighbourhood(val);
             } else if (item.dataset.type === 'area') {
               triggerSearch(val);
             } else {
@@ -14584,6 +14593,40 @@
       // fetched on the first ZIP typed. Asked BEFORE New York's hand-built table:
       // the two hold different ZIPs, so the order changes no answer.
       let bayAreaZips = null;
+
+      // Suggestions the UK lookup cannot give (2026-10-05): the Bay Area's ZIPs
+      // from ANY city - a five-digit code is never a UK postcode, so nothing UK
+      // is shadowed - and, on the Bay Area's map, San Francisco's neighbourhoods.
+      // Typing "940" offered nothing until then: postcodes.io knows the UK only.
+      async function bayAreaSuggestions(val) {
+        const out = [];
+        if (/^\d{2,5}$/.test(val)) {
+          try {
+            bayAreaZips ??= (await d3.json('/data/us-bayarea-zips.json')).zips;
+          } catch {
+            bayAreaZips = null;
+            return out;
+          }
+          for (const code of Object.keys(bayAreaZips).sort()) {
+            if (!code.startsWith(val)) continue;
+            const z = bayAreaZips[code];
+            out.push({ type: 'zip', value: code, meta: `ZIP · ${z.place || z.county + ' County'}` });
+            if (out.length >= 6) break;
+          }
+        } else if (currentCity === 'bayarea') {
+          try {
+            const fc = await loadBayTier('neighbourhoods');
+            const v = val.toLowerCase();
+            for (const f of fc.features) {
+              if (f.properties.name.toLowerCase().includes(v)) out.push({ type: 'nhood', value: f.properties.name, meta: 'San Francisco neighbourhood' });
+              if (out.length >= 4) break;
+            }
+          } catch {
+            // No neighbourhood suggestions this time; the search still finds them.
+          }
+        }
+        return out;
+      }
       async function handleBayAreaZip(raw) {
         try {
           bayAreaZips ??= (await d3.json('/data/us-bayarea-zips.json')).zips;
@@ -15189,12 +15232,13 @@
             return;
           }
           acDebounceTimer = setTimeout(async () => {
-            // The suggestions come from postcodes.io, which knows the UK only.
+            const extra = await bayAreaSuggestions(val);
+            // The postcode suggestions come from postcodes.io, which knows the UK only.
             if (!isUkCity(currentCity)) {
-              showAutocomplete([]);
+              showAutocomplete([], extra);
             } else {
               const results = await fetchAutocomplete(val);
-              showAutocomplete(results.length > 0 ? results : []);
+              showAutocomplete(results.length > 0 ? results : [], extra);
             }
           }, 250);
         });
@@ -15218,6 +15262,8 @@
               if (type === 'borough') {
                 const match = matchBorough(val);
                 if (match) selectBoroughByName(match.name);
+              } else if (type === 'nhood') {
+                openNeighbourhood(val);
               } else if (type === 'area') {
                 triggerSearch(val);
               } else {

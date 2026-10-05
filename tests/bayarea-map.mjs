@@ -190,6 +190,31 @@ for (const vp of [
   });
   ok(nhRank.n === 41 && nhRank.first === 'Visitacion Valley', `${L} the ranking toggles to San Francisco's 41 neighbourhoods, noise-map order`, JSON.stringify(nhRank));
 
+  // 4d. Suggestions as you type, which the UK lookup could not give: on the Bay
+  // Area's map a neighbourhood, and its cities labelled as cities.
+  const suggest = async (text) => {
+    await page.fill('#search-input', '');
+    await page.fill('#search-input', text);
+    await page.waitForFunction(() => document.querySelectorAll('#autocomplete-dropdown .autocomplete-item').length > 0, null, { timeout: 8000 }).catch(() => {});
+    return page.evaluate(() => [...document.querySelectorAll('#autocomplete-dropdown .autocomplete-item')].map((i) => `${i.dataset.type}:${i.dataset.value}:${i.querySelector('.ac-area')?.textContent || ''}`));
+  };
+  const nhSuggest = await suggest('Exce');
+  ok(nhSuggest.includes('nhood:Excelsior:San Francisco neighbourhood'), `${L} typing "Exce" on the Bay Area suggests the Excelsior neighbourhood`, nhSuggest.join(' | '));
+  const citySuggest = await suggest('San B');
+  ok(citySuggest.includes('borough:San Bruno:City'), `${L} the Bay Area's cities are suggested as cities, not boroughs`, citySuggest.join(' | '));
+
+  // 4e. A ZIP suggested from London's map, chosen with a click.
+  await page.evaluate(() => switchCity('london'));
+  await page.waitForFunction(() => document.querySelectorAll('path.borough').length === 33, null, { timeout: 20000 });
+  const zipSuggest = await suggest('9406');
+  ok(zipSuggest.includes('zip:94066:ZIP · San Bruno'), `${L} typing "9406" on London's map suggests ZIP 94066`, zipSuggest.join(' | '));
+  await page.locator('#autocomplete-dropdown .autocomplete-item[data-value="94066"]').click();
+  await page.waitForFunction(() => /ZIP 94066/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
+  ok(/ZIP 94066/i.test((await panel(page)).title), `${L} choosing the suggested ZIP opens it`, (await panel(page)).title);
+  await page.evaluate(() => triggerSearch('94128'));
+  await page.waitForFunction(() => /ZIP 94128/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
+  ok(/inside the ZIP area/.test((await panel(page)).text), `${L} a ZIP holding an airport says it is inside the ZIP area, not "the city"`, (await panel(page)).text.slice(0, 260));
+
   // 5. A Bay Area city name from London (postcodes.io answers 404, so only the Bay Area can find it).
   await page.evaluate(() => switchCity('london'));
   await page.waitForFunction(() => document.querySelectorAll('path.borough').length === 33, null, { timeout: 20000 });
@@ -237,7 +262,7 @@ for (const vp of [
 await browser.close();
 server.close();
 
-const EXPECTED = 2 * 16;
+const EXPECTED = 2 * 21;
 if (checks < EXPECTED) {
   console.error(`\nFAIL: ran ${checks} checks, expected ${EXPECTED}.`);
   process.exit(1);

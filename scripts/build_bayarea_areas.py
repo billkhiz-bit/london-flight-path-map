@@ -110,6 +110,13 @@ def context():
     return measure, (west, south, east, north), record
 
 
+def within(facts, what):
+    """The page's cell says 'The airport is inside the city': true of a city's
+    row, not of a ZIP or a neighbourhood holding an airport (ZIP 94128 holds SFO)."""
+    facts['approach'] = facts['approach'].replace('The airport is inside the city', f'The airport is inside the {what}')
+    return facts
+
+
 def feature(props, polys):
     return {'type': 'Feature', 'properties': props, 'geometry': {'type': 'MultiPolygon', 'coordinates': polys}}
 
@@ -140,7 +147,9 @@ def sf_outlines(frame_box, stored):
 def build_sf(measure, frame_box, stored):
     outlines, dropped = sf_outlines(frame_box, stored)
     measured = [measure(name, polys) for name, polys in outlines.items()]
-    ranked = {c['name']: cities.row_facts(c, rank) for rank, c in enumerate(page.order(measured), 1)}
+    ranked = {
+        c['name']: within(cities.row_facts(c, rank), 'neighbourhood') for rank, c in enumerate(page.order(measured), 1)
+    }
     fc = {
         'type': 'FeatureCollection',
         'source': 'DataSF Analysis Neighborhoods (j2bu-swwd), Open Data Commons PDDL',
@@ -196,7 +205,7 @@ def build_zips(measure, frame_box, stored):
     features = []
     for code in sorted(outlines):
         c = measure(code, outlines[code])
-        facts = cities.row_facts(c, 0)
+        facts = within(cities.row_facts(c, 0), 'ZIP area')
         del facts['rank']  # a ZIP is looked up, never ranked
         features.append(feature({'zip': code, **facts}, outlines[code]))
     fc = {
